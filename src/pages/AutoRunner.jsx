@@ -14,6 +14,13 @@ import SessionResumePrompt from '@/components/operations/SessionResumePrompt';
 import { STEPS, buildStepPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
+import { llmStep, createSession, updateSession, recordStepResult, getSession, listSessions } from '@/lib/flowaiClient';
+
+// Wraps llmStep so each step has a hard fallback path even if the network blips.
+async function invokeStepLLM(prompt) {
+  const data = await llmStep(prompt, { complexity: 'routine', maxTokens: 1500 });
+  return data.text || '';
+}
 
 function StepCard({ step, index, status, result, elapsed, onExpand, isExpanded, inputName, isCompare, compareResults, sessionInput, sessionObjective, crawlStatus }) {
   const cfg = {
@@ -132,15 +139,24 @@ export default function AutoRunner() {
   // (2) check sessionStorage for new config, (3) check DB for any running session
   useEffect(() => {
     const init = async () => {
-      // Check for a specific session to resume (set by Dashboard session card click)
+      // Check for a specific session to resume (set by My Sessions click).
       const resumeId = sessionStorage.getItem('flowai_resume_session_id');
       if (resumeId) {
         try { sessionStorage.removeItem('flowai_resume_session_id'); } catch {}
-        try {
-          const sessions = await base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 10);
-          const match = sessions.find(s => s.id === resumeId) || sessions[0];
-          if (match) { setResumeSession(match); return; }
-        } catch {}
+        const match = getSession(resumeId);
+        if (match && match.status !== 'completed') {
+          // Adapt localStorage shape to the prompt that SessionResumePrompt expects.
+          setResumeSession({
+            id: match.id,
+            product_name: (match.inputs || []).map(i => i.name).join(' + '),
+            product_url: (match.inputs || []).filter(i => i.type === 'url').map(i => i.value).join(', '),
+            started_at: new Date(match.startedAt).toISOString(),
+            current_step: match.currentStep || 0,
+            step_results: match.stepResults || {},
+            overall_status: match.status,
+          });
+          return;
+        }
       }
 
       // Check sessionStorage for new session config from Workspace / LandingPage
@@ -150,15 +166,19 @@ export default function AutoRunner() {
         return;
       }
 
-      // Always check DB for any running session — never show blank input panel if one exists
-      try {
-        const sessions = await base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 1);
-        if (sessions[0]) {
-          setResumeSession(sessions[0]);
-          return;
-        }
-      } catch {}
-      // No active session — idle, show input panel
+      // Surface the most recent running session, if any, so we can resume it.
+      const running = listSessions().find(s => s.status === 'running');
+      if (running) {
+        setResumeSession({
+          id: running.id,
+          product_name: (running.inputs || []).map(i => i.name).join(' + '),
+          product_url: (running.inputs || []).filter(i => i.type === 'url').map(i => i.value).join(', '),
+          started_at: new Date(running.startedAt).toISOString(),
+          current_step: running.currentStep || 0,
+          step_results: running.stepResults || {},
+          overall_status: running.status,
+        });
+      }
     };
     init();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -201,8 +221,7 @@ export default function AutoRunner() {
             STEPS.forEach((s, si) => { obj[s.key] = ir[si]; });
             return obj;
           }));
-          const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-          const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          const output = await invokeStepLLM(prompt);
           stepResult = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
           results[i] = stepResult;
           inputs.forEach((_, idx) => { allInputResults[idx][i] = stepResult; });
@@ -210,8 +229,7 @@ export default function AutoRunner() {
           const perInputResults = await Promise.all(
             inputs.map(async (inp, idx) => {
               const prompt = buildStepPrompt(STEPS[i].key, inp, multiMode, inputs, pageContexts[idx], objective);
-              const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-              const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+              const output = await invokeStepLLM(prompt);
               return { inputName: inp.name, full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
             })
           );
@@ -267,8 +285,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
           }
 
           const prompt = buildStepPrompt(STEPS[i].key, inp, null, null, pageContexts[0], objective, crawlCtx);
-          const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-          const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          const output = await invokeStepLLM(prompt);
           stepResult = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
           // Carry screenshots forward for QA display
           if (results[i]?._screenshots) stepResult._screenshots = results[i]._screenshots;
@@ -276,13 +293,10 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
           allInputResults[0][i] = stepResult;
         }
         statuses[i] = 'complete';
-      // Persist step result to DB
+      // Persist step result locally (works offline / without Base44).
       if (sessionDbIdRef.current) {
-        base44.entities.AutoSession.update(sessionDbIdRef.current, {
-          current_step: i + 1,
-          step_results: Object.fromEntries(STEPS.map((s, si) => [s.key, results[si] ? { summary: results[si].summary, full_output: (results[si].full_output || '').slice(0, 2000) } : null])),
-          overall_status: 'running',
-        }).catch(() => {});
+        recordStepResult(sessionDbIdRef.current, STEPS[i].key, stepResult);
+        updateSession(sessionDbIdRef.current, { currentStep: i + 1, status: 'running' });
       }
       logAction({ actionType: 'step_completed', stepName: STEPS[i].label, sessionId: sessionDbIdRef.current || '', productUrl: config.inputs[0]?.value || '', outcome: 'complete', mode: 'auto' });
       } catch (e) {
@@ -307,7 +321,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
     if (allComplete) {
       setShowFinalReport(true);
       if (sessionDbIdRef.current) {
-        base44.entities.AutoSession.update(sessionDbIdRef.current, { overall_status: 'completed', completed_at: new Date().toISOString() }).catch(() => {});
+        updateSession(sessionDbIdRef.current, { status: 'completed', completedAt: Date.now() });
       }
     }
     savedStateRef.current = null;
@@ -331,14 +345,14 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
     const { inputs } = config;
     timerRef.current = setInterval(() => setTotalElapsed(t => t + 1), 1000);
 
-    const dbSession = await base44.entities.AutoSession.create({
-      product_name: inputs.map(i => i.name).join(' + '),
-      product_url: inputs.filter(i => i.type === 'url').map(i => i.value).join(', '),
-      overall_status: 'running',
-      current_step: 1,
-      started_at: new Date().toISOString(),
-      step_results: {},
-    }).catch(() => null);
+    // Persist a session record in localStorage so it shows up in My Sessions.
+    const dbSession = createSession({
+      inputs,
+      objective: config.objective,
+      mode: 'auto',
+      multiMode: config.multiMode || null,
+      autoParams: config.autoParams || null,
+    });
     sessionDbIdRef.current = dbSession?.id || null;
     setResumeSession(null);
     logAction({ actionType: 'session_started', sessionId: dbSession?.id || '', productUrl: inputs[0]?.value || '', mode: 'auto' });

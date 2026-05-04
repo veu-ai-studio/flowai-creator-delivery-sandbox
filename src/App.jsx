@@ -62,6 +62,7 @@ import Clearance from './pages/Clearance';
 import CreatorStudio from './pages/CreatorStudio';
 import MyCreations from './pages/MyCreations';
 import AutoRunner from './pages/AutoRunner';
+import MySessions from './pages/MySessions';
 import GuidedStep from './pages/GuidedStep';
 import ManualStep from './pages/ManualStep';
 import MainDashboard from './pages/MainDashboard';
@@ -159,6 +160,7 @@ const AuthenticatedApp = () => {
         <Route path="/workspace" element={<Navigate to="/configuration" replace />} />
         <Route path="/my-products" element={<MyCreations />} />
         <Route path="/auto-runner" element={<AutoRunner />} />
+        <Route path="/my-sessions" element={<MySessions />} />
         <Route path="/guided/:step" element={<GuidedStep />} />
         <Route path="/manual/:step" element={<ManualStep />} />
         <Route path="/onboarding" element={<Onboarding />} />

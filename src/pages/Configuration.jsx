@@ -8,6 +8,7 @@ import {
   SlidersHorizontal, ListChecks, Pencil, Link2, Layers, Target,
   Zap, Clock, Wrench, Loader2, ChevronRight, Mic, MicOff, Plus, Check, X
 } from 'lucide-react';
+import { listProducts as listLocalProducts, createProduct as createLocalProduct } from '@/lib/flowaiClient';
 
 const SPEECH_SUPPORTED = typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -89,26 +90,59 @@ export default function Configuration() {
   }, [modeParam]);
 
   useEffect(() => {
+    let resolved = false;
     base44.entities.CreatedProduct.list('-created_date').then(data => {
-      setProducts(data);
-      if (data[0]) setSelectedProductId(data[0].id);
+      resolved = true;
+      const local = listLocalProducts();
+      const merged = [...data, ...local.filter(l => !data.some(b => b.product_name === l.product_name))];
+      setProducts(merged);
+      if (merged[0]) setSelectedProductId(merged[0].id);
       setLoadingProducts(false);
-    }).catch(() => setLoadingProducts(false));
+    }).catch(() => {
+      resolved = true;
+      const local = listLocalProducts();
+      setProducts(local);
+      if (local[0]) setSelectedProductId(local[0].id);
+      setLoadingProducts(false);
+    });
+    setTimeout(() => {
+      if (!resolved) {
+        const local = listLocalProducts();
+        setProducts(local);
+        if (local[0]) setSelectedProductId(local[0].id);
+        setLoadingProducts(false);
+      }
+    }, 1500);
   }, []);
 
   const selectedProduct = products.find(p => p.id === selectedProductId);
 
-  // Inline product creation
+  // Inline product creation — try Base44, fall back to localStorage so it
+  // always succeeds and immediately appears in the list.
   const saveNewProduct = async () => {
     if (!newProductName.trim()) return;
     setSavingProduct(true);
-    const created = await base44.entities.CreatedProduct.create({
-      product_name: newProductName.trim(),
-      base44_url: newProductUrl.trim() || undefined,
-      client_name: 'VEU AI Studio',
-      creation_mode: 'describe',
-      created_at: new Date().toISOString(),
-    });
+    let created = null;
+    try {
+      created = await base44.entities.CreatedProduct.create({
+        product_name: newProductName.trim(),
+        base44_url: newProductUrl.trim() || undefined,
+        client_name: 'VEU AI Studio',
+        creation_mode: 'describe',
+        created_at: new Date().toISOString(),
+      });
+    } catch {
+      created = createLocalProduct({
+        product_name: newProductName.trim(),
+        base44_url: newProductUrl.trim(),
+      });
+    }
+    if (!created) {
+      created = createLocalProduct({
+        product_name: newProductName.trim(),
+        base44_url: newProductUrl.trim(),
+      });
+    }
     const updated = [...products, created];
     setProducts(updated);
     setSelectedProductId(created.id);

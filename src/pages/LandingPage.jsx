@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { saveSessionConfig } from './Configuration';
 import UniversalNav from '@/components/shared/UniversalNav';
+import { researchUrl, describeProduct, listProducts } from '@/lib/flowaiClient';
 
 const SPEECH_SUPPORTED = typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -38,7 +39,7 @@ Login email (optional — for authenticated testing):
 Login password (optional — for authenticated testing): `;
 
 // ─── CARD A — URL ─────────────────────────────────────────────────────────────
-function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, onTestFetch, testing }) {
+function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, onTestFetch, testing, analysis }) {
   return (
     <div
       onClick={onActivate}
@@ -70,7 +71,7 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
           disabled={!url.trim() || testing}
         >
           {testing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
-          Test Fetch
+          {testing ? 'Researching…' : 'Test Fetch'}
         </Button>
       </div>
 
@@ -79,7 +80,7 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
         {fetchStatus === 'ok' && (
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Page reachable — FlowAI can read this URL
+            <CheckCircle2 className="h-3.5 w-3.5" /> Page reachable — FlowAI fetched and analyzed this URL
           </motion.div>
         )}
         {fetchStatus === 'fail' && (
@@ -90,13 +91,21 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
         )}
       </AnimatePresence>
 
+      {/* Live Claude analysis */}
+      {analysis && fetchStatus === 'ok' && (
+        <div onClick={e => e.stopPropagation()} className="rounded-lg border border-primary/20 bg-background/40 p-3 max-h-72 overflow-auto">
+          <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-2">Claude Research Brief</p>
+          <pre className="text-[11px] text-foreground whitespace-pre-wrap font-mono leading-relaxed">{analysis}</pre>
+        </div>
+      )}
+
       <p className="text-[10px] text-amber-400">Note: URL must be publicly accessible. Authenticated or private apps use Card B or C.</p>
     </div>
   );
 }
 
 // ─── CARD B — DESCRIBE ────────────────────────────────────────────────────────
-function CardB({ active, onActivate, description, setDescription, products, loadingProducts }) {
+function CardB({ active, onActivate, description, setDescription, products, loadingProducts, enrichment, enriching, onGetSuggestions }) {
   const [listening, setListening] = useState(false);
   const recRef = useRef(null);
 
@@ -187,7 +196,27 @@ function CardB({ active, onActivate, description, setDescription, products, load
             </div>
           </div>
         )}
+
+        {/* Get Suggestions — calls Claude with the description */}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 text-[11px] gap-1.5"
+          onClick={e => { e.stopPropagation(); onActivate(); onGetSuggestions(); }}
+          disabled={!description.trim() || enriching}
+        >
+          {enriching ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+          {enriching ? 'Asking Claude…' : 'Get Suggestions'}
+        </Button>
       </div>
+
+      {/* Enrichment output */}
+      {enrichment && (
+        <div onClick={e => e.stopPropagation()} className="rounded-lg border border-primary/20 bg-background/40 p-3 max-h-72 overflow-auto">
+          <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-2">Claude Enrichment & Suggestions</p>
+          <pre className="text-[11px] text-foreground whitespace-pre-wrap font-mono leading-relaxed">{enrichment}</pre>
+        </div>
+      )}
     </div>
   );
 }
@@ -307,11 +336,26 @@ export default function LandingPage() {
     base44.auth.me().then(u => { if (u?.full_name) setUserName(u.full_name); }).catch(() => {});
   }, []);
 
-  // Products for Card B
+  // Products for Card B — try Base44 first, fall back to localStorage so the
+  // app still has products to load from when Base44 is unavailable.
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   useEffect(() => {
-    base44.entities.CreatedProduct.list('-created_date').then(d => { setProducts(d); setLoadingProducts(false); }).catch(() => setLoadingProducts(false));
+    let resolved = false;
+    base44.entities.CreatedProduct.list('-created_date').then(d => {
+      resolved = true;
+      const local = listProducts();
+      // Merge by product_name+url (Base44 takes precedence for identical entries)
+      const merged = [...d, ...local.filter(l => !d.some(b => b.product_name === l.product_name))];
+      setProducts(merged);
+      setLoadingProducts(false);
+    }).catch(() => {
+      resolved = true;
+      setProducts(listProducts());
+      setLoadingProducts(false);
+    });
+    // Safety net: if base44 hangs, surface local products after 1.5s
+    setTimeout(() => { if (!resolved) { setProducts(listProducts()); setLoadingProducts(false); } }, 1500);
   }, []);
 
   // Active card (A | B | C | null)
@@ -321,9 +365,12 @@ export default function LandingPage() {
   const [urlInput, setUrlInput] = useState('');
   const [fetchStatus, setFetchStatus] = useState(null); // null | 'ok' | 'fail'
   const [testing, setTesting] = useState(false);
+  const [urlAnalysis, setUrlAnalysis] = useState(''); // Claude research brief
 
   // Card B
   const [description, setDescription] = useState('');
+  const [enrichment, setEnrichment] = useState(''); // Claude suggestions
+  const [enriching, setEnriching] = useState(false);
 
   // Card C
   const [pastedContent, setPastedContent] = useState('');
@@ -340,35 +387,56 @@ export default function LandingPage() {
   const [mode, setMode] = useState('auto');
   const [depth, setDepth] = useState('Standard');
 
-  // ── Test Fetch (Card A) ──
-  const PROXY = 'https://attached-assets-victor2081new.replit.app';
-
+  // ── Test Fetch (Card A) — calls /api/research-url which fetches the page
+  // server-side AND asks Claude for a structured research brief in one shot.
   const testFetch = async () => {
     if (!urlInput.trim()) return;
     setTesting(true);
     setFetchStatus(null);
+    setUrlAnalysis('');
+
+    const objectiveLabel = objective === 'custom'
+      ? (customObjective.trim() || 'Custom objective')
+      : OBJECTIVES.find(o => o.value === objective)?.label || objective;
+
     try {
-      const response = await fetch(`${PROXY}/fetch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: urlInput.trim() }),
-      });
-      const data = await response.json();
-      if (data.title || data.bodyText) {
-        const pageContext = `Title: ${data.title}\nMeta: ${data.metaDescription}\nHeadings: ${data.headings?.map(h => h.text).join(' | ')}\nBody: ${data.bodyText}`;
-        // Store in session config for all 8 steps to use
+      const data = await researchUrl(urlInput.trim(), { objective: objectiveLabel });
+      if (data.ok && data.reachable) {
+        // Cache page content for the Auto Runner so it doesn't refetch.
         try {
           const existing = JSON.parse(sessionStorage.getItem('flowai_session_config') || '{}');
+          const pageContext = `Title: ${data.page?.title}\nMeta: ${data.page?.metaDescription}\nHeadings: ${(data.page?.headings || []).map(h => h.text).join(' | ')}\nBody: ${data.page?.bodyTextSnippet}`;
           sessionStorage.setItem('flowai_session_config', JSON.stringify({ ...existing, pageContext }));
         } catch {}
+        setUrlAnalysis(data.analysis || '');
         setFetchStatus('ok');
       } else {
         setFetchStatus('fail');
+        setUrlAnalysis(data?.reason ? `Could not reach page: ${data.reason}` : '');
       }
-    } catch {
+    } catch (e) {
       setFetchStatus('fail');
+      setUrlAnalysis(`Error: ${e.message || e}`);
     }
     setTesting(false);
+  };
+
+  // ── Get Suggestions (Card B) — sends description to Claude for enrichment
+  const getSuggestions = async () => {
+    if (!description.trim()) return;
+    setEnriching(true);
+    setEnrichment('');
+    try {
+      const data = await describeProduct({ description: description.trim() });
+      if (data.ok) {
+        setEnrichment(data.analysis || '');
+      } else {
+        setEnrichment(`Error: ${data.error || 'Unknown'}${data.details ? ' — ' + data.details : ''}`);
+      }
+    } catch (e) {
+      setEnrichment(`Error: ${e.message || e}`);
+    }
+    setEnriching(false);
   };
 
   // ── Objective voice ──
@@ -500,6 +568,7 @@ export default function LandingPage() {
               setFetchStatus={setFetchStatus}
               onTestFetch={testFetch}
               testing={testing}
+              analysis={urlAnalysis}
             />
             <CardB
               active={activeCard === 'B'}
@@ -508,6 +577,9 @@ export default function LandingPage() {
               setDescription={setDescription}
               products={products}
               loadingProducts={loadingProducts}
+              enrichment={enrichment}
+              enriching={enriching}
+              onGetSuggestions={getSuggestions}
             />
             <CardC
               active={activeCard === 'C'}
@@ -658,7 +730,7 @@ export default function LandingPage() {
           <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-5 sm:overflow-visible">
             {[
               { label: 'My Products',        path: '/my-products',    icon: Layers },
-              { label: 'Session History',    path: '/auto-runner',    icon: History },
+              { label: 'My Sessions',        path: '/my-sessions',    icon: History },
               { label: 'Clearance Protocol', path: '/clearance',      icon: ShieldCheck },
               { label: 'Governance Dashboard', path: '/governance',   icon: BarChart3 },
               { label: 'Release Notes',      path: '/release-notes',  icon: BookOpen },

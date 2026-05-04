@@ -85,27 +85,58 @@ Every section must end with a LAUNCH GATE: GO / HOLD / BLOCKER.`,
 
 const PROXY = 'https://attached-assets-victor2081new.replit.app';
 
-export async function fetchPageContext(input, base44) {
-  if (input.type !== 'url' || !input.value?.trim()) return null;
-
-  const url = input.value.trim();
-
+// Try the Replit proxy first (richer extraction when it's up); on any failure,
+// fall back to our own /api/fetch-url. This keeps the app working even when
+// the Replit instance is sleeping or down.
+async function tryProxyFetch(url) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 8000);
   try {
     const response = await fetch(`${PROXY}/fetch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
+      signal: ctrl.signal,
     });
+    if (!response.ok) return null;
     const data = await response.json();
-    if (!data.title && !data.bodyText) {
-      return { fetchFailed: true, reason: 'No content returned from proxy' };
-    }
+    if (!data.title && !data.bodyText) return null;
     return {
       content: `Title: ${data.title}\nMeta: ${data.metaDescription}\nHeadings: ${data.headings?.map(h => h.text).join(' | ')}\nBody: ${data.bodyText}`,
     };
-  } catch (err) {
-    return { fetchFailed: true, reason: err.message || 'Proxy fetch failed' };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
   }
+}
+
+async function tryVercelFetch(url) {
+  try {
+    const r = await fetch('/api/fetch-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await r.json();
+    if (!data.ok) return { fetchFailed: true, reason: data.reason || 'Fetch failed' };
+    return {
+      content: `Title: ${data.title}\nMeta: ${data.metaDescription}\nHeadings: ${(data.headings || []).map(h => h.text).join(' | ')}\nBody: ${data.bodyText}`,
+    };
+  } catch (err) {
+    return { fetchFailed: true, reason: err.message || 'Fetch failed' };
+  }
+}
+
+// eslint-disable-next-line no-unused-vars
+export async function fetchPageContext(input, base44) {
+  if (input.type !== 'url' || !input.value?.trim()) return null;
+  const url = input.value.trim();
+  // 1) Replit proxy (best-effort)
+  const viaProxy = await tryProxyFetch(url);
+  if (viaProxy) return viaProxy;
+  // 2) Our own Vercel endpoint
+  return await tryVercelFetch(url);
 }
 
 // ─── PLAYWRIGHT CRAWL ─────────────────────────────────────────────────────────
