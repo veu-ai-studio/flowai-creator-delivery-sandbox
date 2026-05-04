@@ -1,0 +1,42 @@
+{
+  "name": "DemoEnvironment",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "synthetic_data": {
+      "type": "object",
+      "description": "Generated synthetic demo data as JSON"
+    },
+    "demo_status": {
+      "type": "string",
+      "enum": [
+        "not_generated",
+        "generating",
+        "ready",
+        "needs_update"
+      ],
+      "default": "not_generated"
+    },
+    "tour_script": {
+      "type": "string",
+      "description": "JSON tour script in Shepherd.js format"
+    },
+    "microsite_content": {
+      "type": "string",
+      "description": "Complete HTML/CSS for standalone demo microsite"
+    },
+    "microsite_deployed": {
+      "type": "boolean",
+      "default": false
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "product_name"
+  ]
+}

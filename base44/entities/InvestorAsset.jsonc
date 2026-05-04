@@ -1,0 +1,25 @@
+{
+  "name": "InvestorAsset",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "asset_type": {
+      "type": "string",
+      "enum": [
+        "pitch_deck",
+        "portfolio_page"
+      ],
+      "description": "Type of investor asset"
+    },
+    "content": {
+      "type": "object",
+      "description": "Generated content as JSON"
+    }
+  },
+  "required": [
+    "product_name",
+    "asset_type"
+  ]
+}

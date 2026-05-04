@@ -1,0 +1,48 @@
+{
+  "name": "ManualSession",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "product_url": {
+      "type": "string"
+    },
+    "current_step": {
+      "type": "number",
+      "default": 1
+    },
+    "step_statuses": {
+      "type": "object"
+    },
+    "step_notes": {
+      "type": "object"
+    },
+    "step_started_at": {
+      "type": "object"
+    },
+    "step_completed_at": {
+      "type": "object"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_active_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "complete"
+      ],
+      "default": "not_started"
+    }
+  },
+  "required": [
+    "product_name"
+  ]
+}

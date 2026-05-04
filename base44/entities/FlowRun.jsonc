@@ -1,0 +1,47 @@
+{
+  "name": "FlowRun",
+  "type": "object",
+  "properties": {
+    "flow_id": {
+      "type": "string",
+      "description": "ID of the SavedFlow"
+    },
+    "flow_name": {
+      "type": "string",
+      "description": "Name of the flow at run time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "error",
+        "partial"
+      ],
+      "description": "Outcome of the run"
+    },
+    "duration_ms": {
+      "type": "number",
+      "description": "Total execution time in ms"
+    },
+    "node_count": {
+      "type": "number",
+      "description": "Number of nodes executed"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error details if run failed"
+    },
+    "input_preview": {
+      "type": "string",
+      "description": "First 200 chars of user input"
+    },
+    "output_preview": {
+      "type": "string",
+      "description": "First 200 chars of output"
+    }
+  },
+  "required": [
+    "flow_name",
+    "status"
+  ]
+}

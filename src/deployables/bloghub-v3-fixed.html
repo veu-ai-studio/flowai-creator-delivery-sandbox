@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlogHub - Content Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100">
+    <div id="app"></div>
+    <script>
+        const state = {
+            data: JSON.parse(localStorage.getItem('bloghub-hardened')) || { articles: [], isPro: false },
+            get isPro() { return this.data.isPro || false; },
+            get articles() { return this.data.articles || [] },
+            searchTerm: '',
+            filterCategory: 'all',
+            editingIndex: null
+        };
+
+        const categories = ['Tech', 'Travel', 'Lifestyle', 'Business'];
+
+        function createArticle(title, content, category) {
+            if (!title.trim() || !content.trim()) {
+                showAlert('⚠️ Fill all fields', 'error');
+                return false;
+            }
+            const limit = state.isPro ? Infinity : 5;
+            if (state.articles.length >= limit && state.editingIndex === null) {
+                showAlert(`🔒 Free plan limited to ${limit} articles. Upgrade!`, 'warning');
+                return false;
+            }
+            const article = {
+                title,
+                content,
+                category,
+                author: 'You',
+                created: new Date().toLocaleDateString(),
+                words: content.split(/\s+/).length
+            };
+            state.data.articles.unshift(article);
+            save();
+            showAlert('✅ Article published!', 'success');
+            return true;
+        }
+
+        function deleteArticle(index) {
+            if (confirm('Delete this article?')) {
+                state.data.articles.splice(index, 1);
+                save();
+                showAlert('Article deleted', 'info');
+            }
+        }
+
+        function editArticle(index) {
+            const article = getFilteredArticles()[index];
+            document.getElementById('title').value = article.title;
+            document.getElementById('content').value = article.content;
+            document.getElementById('category').value = article.category;
+            state.editingIndex = index;
+            document.getElementById('submitBtn').textContent = 'Update';
+            window.scrollTo(0, 0);
+        }
+
+        function getReadingTime(words) {
+            return Math.max(1, Math.ceil(words / 200));
+        }
+
+        function getFilteredArticles() {
+            return state.articles.filter(a => {
+                const matchSearch = !state.searchTerm || a.title.toLowerCase().includes(state.searchTerm.toLowerCase());
+                const matchCategory = state.filterCategory === 'all' || a.category === state.filterCategory;
+                return matchSearch && matchCategory;
+            });
+        }
+
+        function upgradePro() {
+            if (confirm('Upgrade to Pro? Unlimited articles!')) {
+                state.data.isPro = true;
+                save();
+                showAlert('🎉 Upgraded to Pro!', 'success');
+            }
+        }
+
+        function save() {
+            localStorage.setItem('bloghub-hardened', JSON.stringify(state.data));
+            render();
+        }
+
+        function showAlert(msg, type = 'info') {
+            const colors = { success: 'bg-emerald-500/20 text-emerald-400', error: 'bg-red-500/20 text-red-400', warning: 'bg-amber-500/20 text-amber-400', info: 'bg-blue-500/20 text-blue-400' };
+            const el = document.createElement('div');
+            el.className = `fixed top-4 left-4 p-3 rounded-lg text-sm font-semibold ${colors[type]} z-50`;
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        function submitArticle() {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const category = document.getElementById('category').value;
+            
+            if (state.editingIndex !== null) {
+                state.data.articles.splice(state.editingIndex, 1);
+            }
+            
+            if (createArticle(title, content, category)) {
+                document.getElementById('title').value = '';
+                document.getElementById('content').value = '';
+                document.getElementById('category').value = 'Tech';
+                document.getElementById('submitBtn').textContent = 'Publish';
+                state.editingIndex = null;
+            }
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            const plan = state.isPro ? '✅ Pro' : 'Free';
+            const planBtn = state.isPro ? '' : '<button onclick="upgradePro()" class="px-3 py-1 bg-primary hover:bg-primary/90 rounded text-sm font-semibold">Upgrade</button>';
+            
+            const filtered = getFilteredArticles();
+            const articlesHtml = filtered.length === 0 
+                ? '<p class="text-gray-400 text-sm">No articles found...</p>'
+                : filtered.map((a, i) => {
+                    const readTime = getReadingTime(a.words);
+                    return `
+                    <div class="bg-gray-900 p-4 rounded border border-gray-800 hover:border-gray-700">
+                        <h3 class="font-bold text-white text-lg">${a.title}</h3>
+                        <p class="text-gray-400 text-sm mt-1 line-clamp-2">${a.content}</p>
+                        <div class="flex justify-between items-center mt-3">
+                            <div class="flex gap-2 text-xs text-gray-500">
+                                <span>${a.author}</span>
+                                <span>•</span>
+                                <span>${a.category}</span>
+                                <span>•</span>
+                                <span>${readTime} min read</span>
+                                <span>•</span>
+                                <span>${a.created}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="editArticle(${state.articles.indexOf(a)})" class="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs">Edit</button>
+                                <button onclick="deleteArticle(${state.articles.indexOf(a)})" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+
+            app.innerHTML = `
+                <nav class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center sticky top-0 z-40">
+                    <h1 class="text-xl font-bold">BlogHub</h1>
+                    <div class="flex gap-4 items-center text-sm">
+                        <span class="text-gray-400">Articles: <span class="font-bold">${state.articles.length}</span></span>
+                        <span class="text-gray-400">Plan: <span class="font-bold">${plan}</span></span>
+                        ${planBtn}
+                    </div>
+                </nav>
+
+                <div class="max-w-5xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- Form -->
+                    <div class="lg:col-span-1 bg-gray-900 border border-gray-800 p-4 rounded h-fit">
+                        <h3 class="font-bold mb-4">Write Article</h3>
+                        <div class="space-y-3">
+                            <input id="title" type="text" placeholder="Title" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500 text-sm">
+                            <textarea id="content" placeholder="Content" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500 text-sm h-24 resize-none"></textarea>
+                            <select id="category" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white text-sm">
+                                ${categories.map(c => `<option>${c}</option>`).join('')}
+                            </select>
+                            <button id="submitBtn" onclick="submitArticle()" class="w-full bg-emerald-600 hover:bg-emerald-700 p-2 rounded font-semibold text-sm">Publish</button>
+                        </div>
+                    </div>
+
+                    <!-- Articles List -->
+                    <div class="lg:col-span-3 space-y-4">
+                        <div class="space-y-2">
+                            <input id="search" type="text" placeholder="Search articles..." class="w-full bg-gray-900 border border-gray-800 p-2 rounded text-white placeholder-gray-500" oninput="state.searchTerm = this.value; render()">
+                            <select id="filterCategory" class="w-full bg-gray-900 border border-gray-800 p-2 rounded text-white text-sm" onchange="state.filterCategory = this.value; render()">
+                                <option value="all">All Categories</option>
+                                ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="space-y-3">
+                            ${articlesHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        render();
+    </script>
+</body>
+</html>

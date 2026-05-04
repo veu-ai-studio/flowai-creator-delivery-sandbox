@@ -1,0 +1,68 @@
+{
+  "name": "ProductEnvironment",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "dev_url": {
+      "type": "string",
+      "description": "Development / Base44 URL"
+    },
+    "prod_url": {
+      "type": "string",
+      "description": "Production custom domain URL (empty if pending)"
+    },
+    "prod_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "live",
+        "degraded",
+        "down"
+      ],
+      "default": "pending"
+    },
+    "dev_score": {
+      "type": "number",
+      "description": "Last audit score for dev env (0-10)"
+    },
+    "prod_score": {
+      "type": "number",
+      "description": "Last audit score for prod env (0-10)"
+    },
+    "last_checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "in_sync",
+        "minor_drift",
+        "major_drift",
+        "out_of_sync",
+        "unknown"
+      ],
+      "default": "unknown"
+    },
+    "sync_report": {
+      "type": "object",
+      "description": "Last sync analysis result"
+    },
+    "score_history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of {date, dev_score, prod_score} snapshots"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "product_name",
+    "dev_url"
+  ]
+}

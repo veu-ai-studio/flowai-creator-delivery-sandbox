@@ -1,0 +1,39 @@
+{
+  "name": "ProductStack",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "is_veu_product": {
+      "type": "boolean",
+      "default": false
+    },
+    "tools": {
+      "type": "object",
+      "description": "Tools organized by category"
+    },
+    "total_monthly_cost_estimate": {
+      "type": "number"
+    },
+    "africa_status": {
+      "type": "string",
+      "enum": [
+        "all_green",
+        "some_limited",
+        "issues_flagged"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "product_name"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "name": "TestReport",
+  "type": "object",
+  "properties": {
+    "target_url": {
+      "type": "string"
+    },
+    "navigation_score": {
+      "type": "string"
+    },
+    "functionality_score": {
+      "type": "string"
+    },
+    "data_integrity_score": {
+      "type": "string"
+    },
+    "ui_rendering_score": {
+      "type": "string"
+    },
+    "api_health_score": {
+      "type": "string"
+    },
+    "integration_score": {
+      "type": "string"
+    },
+    "regression_score": {
+      "type": "string"
+    },
+    "test_score_percentage": {
+      "type": "number"
+    },
+    "blocking_issues": {
+      "type": "string"
+    },
+    "regression_flags": {
+      "type": "string"
+    },
+    "baseline_summary": {
+      "type": "string"
+    },
+    "dimension_scores": {
+      "type": "object"
+    },
+    "linked_job_id": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "is_self_test": {
+      "type": "boolean",
+      "default": false
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "target_url",
+    "test_score_percentage"
+  ]
+}

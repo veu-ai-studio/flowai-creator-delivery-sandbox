@@ -1,0 +1,37 @@
+{
+  "name": "CompetitorBenchmark",
+  "type": "object",
+  "properties": {
+    "your_site_url": {
+      "type": "string",
+      "description": "Your website URL"
+    },
+    "competitor_url": {
+      "type": "string",
+      "description": "Competitor website URL"
+    },
+    "your_scores": {
+      "type": "object",
+      "description": "Your site scores"
+    },
+    "competitor_scores": {
+      "type": "object",
+      "description": "Competitor scores"
+    },
+    "gaps": {
+      "type": "object",
+      "description": "Score gaps per layer"
+    },
+    "insights": {
+      "type": "array",
+      "description": "Competitive insights",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "your_site_url",
+    "competitor_url"
+  ]
+}

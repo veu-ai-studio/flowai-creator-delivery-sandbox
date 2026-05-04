@@ -1,0 +1,192 @@
+export const FLOW_TEMPLATES = [
+  {
+    id: "summarizer",
+    name: "Text Summarizer",
+    description: "Takes any text input and produces a concise summary using AI.",
+    category: "AI",
+    difficulty: "Beginner",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 80, y: 120 }, config: { label: "Text to Summarize", placeholder: "Paste your text here..." } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 340, y: 120 }, config: { model: "gpt-4o-mini", systemPrompt: "You are an expert summarizer. Produce a concise, clear summary in 3-5 bullet points.", temperature: "0.4" } },
+      { id: "node_t3", type: "output", label: "Output Block", position: { x: 600, y: 120 }, config: { format: "text", label: "Summary" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+    ],
+    variables: [],
+  },
+  {
+    id: "sentiment",
+    name: "Sentiment Classifier",
+    description: "Classifies text as positive, negative, or neutral and branches the pipeline accordingly.",
+    category: "AI + Logic",
+    difficulty: "Intermediate",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 60, y: 140 }, config: { label: "Customer Review", placeholder: "Enter customer review..." } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 300, y: 140 }, config: { model: "gpt-4o-mini", systemPrompt: "Classify the sentiment. Reply with exactly one word: positive, negative, or neutral.", temperature: "0.1" } },
+      { id: "node_t3", type: "condition", label: "Condition Block", position: { x: 540, y: 140 }, config: { operator: "contains", conditionValue: "positive" } },
+      { id: "node_t4", type: "output", label: "Output Block", position: { x: 780, y: 80 }, config: { format: "text", label: "Positive Result" } },
+      { id: "node_t5", type: "output", label: "Output Block", position: { x: 780, y: 200 }, config: { format: "text", label: "Negative/Neutral Result" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+      { id: "edge_t3_t4", from: "node_t3", to: "node_t4" },
+      { id: "edge_t3_t5", from: "node_t3", to: "node_t5" },
+    ],
+    variables: [],
+  },
+  {
+    id: "translator",
+    name: "Language Translator",
+    description: "Translates user input into a configurable target language using a flow variable.",
+    category: "AI",
+    difficulty: "Beginner",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 80, y: 120 }, config: { label: "Text to Translate", placeholder: "Enter text..." } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 340, y: 120 }, config: { model: "gpt-4o-mini", systemPrompt: "Translate the following text to {{target_language}}. Output only the translated text, nothing else.", temperature: "0.3" } },
+      { id: "node_t3", type: "output", label: "Output Block", position: { x: 600, y: 120 }, config: { format: "text", label: "Translation" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+    ],
+    variables: [{ key: "target_language", value: "Spanish" }],
+  },
+  {
+    id: "json_extractor",
+    name: "JSON Data Extractor",
+    description: "Extracts structured data from unstructured text and returns validated JSON output.",
+    category: "Data",
+    difficulty: "Intermediate",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 80, y: 120 }, config: { label: "Raw Text", placeholder: "Paste unstructured text..." } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 340, y: 120 }, config: { model: "gpt-4o-mini", systemPrompt: "Extract key information from the text. Return JSON with fields: name, date, amount, description.", temperature: "0.1", jsonSchema: '{"type":"object","properties":{"name":{"type":"string"},"date":{"type":"string"},"amount":{"type":"string"},"description":{"type":"string"}},"required":["name"]}' } },
+      { id: "node_t3", type: "output", label: "Output Block", position: { x: 600, y: 120 }, config: { format: "json", label: "Extracted Data" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+    ],
+    variables: [],
+  },
+  {
+    id: "email_drafter",
+    name: "Email Drafter",
+    description: "Drafts a professional email from bullet points or a brief description, then trims whitespace.",
+    category: "Productivity",
+    difficulty: "Beginner",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 80, y: 120 }, config: { label: "Email Brief", placeholder: "e.g. Follow up on meeting, discuss budget, ask for timeline..." } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 300, y: 120 }, config: { model: "gpt-4o-mini", systemPrompt: "You are a professional email writer. Draft a clear, concise, friendly email. Include subject line and body.", temperature: "0.7" } },
+      { id: "node_t3", type: "action", label: "Action Block", position: { x: 520, y: 120 }, config: { actionType: "trim" } },
+      { id: "node_t4", type: "output", label: "Output Block", position: { x: 720, y: 120 }, config: { format: "text", label: "Draft Email" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+      { id: "edge_t3_t4", from: "node_t3", to: "node_t4" },
+    ],
+    variables: [],
+  },
+  {
+    id: "code_reviewer",
+    name: "Code Reviewer",
+    description: "Reviews code snippets and provides structured feedback with suggested improvements.",
+    category: "Dev",
+    difficulty: "Beginner",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 80, y: 120 }, config: { label: "Code Snippet", placeholder: "Paste your code here..." } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 340, y: 120 }, config: { model: "gpt-4o-mini", systemPrompt: "You are a senior software engineer. Review the code and provide: 1) Issues found, 2) Suggestions for improvement, 3) A revised version.", temperature: "0.3" } },
+      { id: "node_t3", type: "output", label: "Output Block", position: { x: 600, y: 120 }, config: { format: "text", label: "Code Review" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+    ],
+    variables: [],
+  },
+  {
+    id: "qa_bot",
+    name: "Q&A Bot",
+    description: "Answers questions using a customizable knowledge base provided as a variable.",
+    category: "AI",
+    difficulty: "Intermediate",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 80, y: 120 }, config: { label: "User Question", placeholder: "Ask a question..." } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 340, y: 120 }, config: { model: "gpt-4o-mini", systemPrompt: "You are a helpful assistant. Use this knowledge base to answer questions:\n\n{{knowledge_base}}\n\nIf the answer is not in the knowledge base, say so clearly.", temperature: "0.3" } },
+      { id: "node_t3", type: "output", label: "Output Block", position: { x: 600, y: 120 }, config: { format: "text", label: "Answer" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+    ],
+    variables: [{ key: "knowledge_base", value: "Our company was founded in 2020. We offer SaaS products for automation." }],
+  },
+  {
+    id: "content_moderator",
+    name: "Content Moderator",
+    description: "Checks user content for policy violations and routes to approved or rejected output.",
+    category: "AI + Logic",
+    difficulty: "Advanced",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 60, y: 140 }, config: { label: "User Content", placeholder: "Enter content to moderate..." } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 300, y: 140 }, config: { model: "gpt-4o-mini", systemPrompt: "You are a content moderator. Analyse the following content. Reply with exactly one word: safe or unsafe.", temperature: "0.1" } },
+      { id: "node_t3", type: "condition", label: "Condition Block", position: { x: 540, y: 140 }, config: { operator: "contains", conditionValue: "safe" } },
+      { id: "node_t4", type: "output", label: "Output Block", position: { x: 780, y: 80 }, config: { format: "text", label: "✅ Approved" } },
+      { id: "node_t5", type: "output", label: "Output Block", position: { x: 780, y: 210 }, config: { format: "text", label: "🚫 Flagged" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+      { id: "edge_t3_t4", from: "node_t3", to: "node_t4" },
+      { id: "edge_t3_t5", from: "node_t3", to: "node_t5" },
+    ],
+    variables: [],
+  },
+  {
+    id: "blog_writer",
+    name: "Blog Post Writer",
+    description: "Generates a full blog post outline and draft from a title and target audience variable.",
+    category: "Productivity",
+    difficulty: "Beginner",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 80, y: 120 }, config: { label: "Blog Topic", placeholder: "e.g. The future of remote work in 2025" } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 300, y: 120 }, config: { model: "gpt-4o-mini", systemPrompt: "You are a skilled blog writer. Write a 400-word blog post for {{audience}} on the given topic. Include a catchy title, intro, 3 sections, and a conclusion.", temperature: "0.8" } },
+      { id: "node_t3", type: "action", label: "Action Block", position: { x: 520, y: 120 }, config: { actionType: "trim" } },
+      { id: "node_t4", type: "output", label: "Output Block", position: { x: 720, y: 120 }, config: { format: "text", label: "Blog Post" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+      { id: "edge_t3_t4", from: "node_t3", to: "node_t4" },
+    ],
+    variables: [{ key: "audience", value: "tech-savvy professionals" }],
+  },
+  {
+    id: "sql_generator",
+    name: "SQL Query Generator",
+    description: "Converts plain-English data questions into SQL queries with explanations.",
+    category: "Dev",
+    difficulty: "Intermediate",
+    nodes: [
+      { id: "node_t1", type: "input", label: "Input Block", position: { x: 80, y: 120 }, config: { label: "Data Question", placeholder: "e.g. Show me top 10 customers by revenue last month" } },
+      { id: "node_t2", type: "ai", label: "AI Block", position: { x: 340, y: 120 }, config: { model: "gpt-4o-mini", systemPrompt: "You are a SQL expert. Convert the question into a SQL query. Schema: {{db_schema}}. Return the SQL query followed by a brief explanation.", temperature: "0.2" } },
+      { id: "node_t3", type: "output", label: "Output Block", position: { x: 600, y: 120 }, config: { format: "text", label: "SQL Query" } },
+    ],
+    edges: [
+      { id: "edge_t1_t2", from: "node_t1", to: "node_t2" },
+      { id: "edge_t2_t3", from: "node_t2", to: "node_t3" },
+    ],
+    variables: [{ key: "db_schema", value: "users(id, name, email), orders(id, user_id, amount, created_at)" }],
+  },
+];
+
+export const TEMPLATE_CATEGORIES = ["All", "AI", "AI + Logic", "Data", "Productivity", "Dev"];
+
+export const DIFFICULTY_COLORS = {
+  Beginner:     "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  Intermediate: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  Advanced:     "bg-red-500/10 text-red-400 border-red-500/20",
+};

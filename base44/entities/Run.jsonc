@@ -1,0 +1,60 @@
+{
+  "name": "Run",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "qa_audit",
+        "research",
+        "design",
+        "build",
+        "deploy",
+        "pipeline"
+      ],
+      "description": "Run type"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "success",
+        "failed"
+      ],
+      "default": "queued"
+    },
+    "input": {
+      "type": "string",
+      "description": "Input context/URL"
+    },
+    "output": {
+      "type": "object",
+      "description": "Run result data"
+    },
+    "scores": {
+      "type": "object",
+      "description": "QA scores if applicable"
+    },
+    "duration_ms": {
+      "type": "number"
+    },
+    "error": {
+      "type": "string"
+    },
+    "job_id": {
+      "type": "string",
+      "description": "Async job reference"
+    }
+  },
+  "required": [
+    "user_email",
+    "type"
+  ]
+}

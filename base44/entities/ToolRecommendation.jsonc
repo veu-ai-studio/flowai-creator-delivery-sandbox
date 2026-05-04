@@ -1,0 +1,32 @@
+{
+  "name": "ToolRecommendation",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string"
+    },
+    "target_market": {
+      "type": "string"
+    },
+    "budget": {
+      "type": "string"
+    },
+    "requirements": {
+      "type": "object"
+    },
+    "recommendations": {
+      "type": "object"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "product_name",
+    "stage"
+  ]
+}

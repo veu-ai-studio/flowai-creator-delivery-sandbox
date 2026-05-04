@@ -1,0 +1,68 @@
+{
+  "name": "GovernanceSession",
+  "type": "object",
+  "properties": {
+    "owner_email": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused",
+        "completed",
+        "cancelled"
+      ],
+      "default": "active"
+    },
+    "urls": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of {url, is_spa, context, id} objects"
+    },
+    "selected_activities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "e.g. ['self_test','self_audit','self_heal']"
+    },
+    "session_settings": {
+      "type": "object",
+      "description": "iteration_mode, url_processing, gate_timing, evaluation_goal"
+    },
+    "current_url_index": {
+      "type": "number",
+      "default": 0
+    },
+    "current_activity": {
+      "type": "string"
+    },
+    "current_gate": {
+      "type": "number"
+    },
+    "elapsed_seconds": {
+      "type": "number",
+      "default": 0
+    },
+    "gates_pending": {
+      "type": "number",
+      "default": 0
+    },
+    "capability_transfer": {
+      "type": "object",
+      "description": "Per-URL capability selections"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "owner_email",
+    "urls",
+    "selected_activities"
+  ]
+}

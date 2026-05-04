@@ -1,0 +1,56 @@
+{
+  "name": "GuidedSession",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "product_url": {
+      "type": "string"
+    },
+    "current_step": {
+      "type": "number",
+      "default": 1
+    },
+    "step_statuses": {
+      "type": "object",
+      "description": "Array of 8 status objects"
+    },
+    "step_notes": {
+      "type": "object",
+      "description": "Operator notes per step"
+    },
+    "step_started_at": {
+      "type": "object",
+      "description": "Timestamp when each step began"
+    },
+    "step_completed_at": {
+      "type": "object",
+      "description": "Timestamp when each step was completed"
+    },
+    "mode_switches": {
+      "type": "object",
+      "description": "Record of any switches between Auto/Guided/Manual"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_active_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "complete"
+      ],
+      "default": "not_started"
+    }
+  },
+  "required": [
+    "product_name"
+  ]
+}

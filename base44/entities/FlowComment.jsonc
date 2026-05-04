@@ -1,0 +1,42 @@
+{
+  "name": "FlowComment",
+  "type": "object",
+  "properties": {
+    "flow_id": {
+      "type": "string",
+      "description": "ID of the SavedFlow"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Display name of the commenter"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Email of the commenter"
+    },
+    "message": {
+      "type": "string",
+      "description": "Comment text"
+    },
+    "node_id": {
+      "type": "string",
+      "description": "Optional: node this comment is attached to"
+    },
+    "reply_to_id": {
+      "type": "string",
+      "description": "ID of the comment being replied to"
+    },
+    "reply_to_preview": {
+      "type": "string",
+      "description": "First 60 chars of the parent message for display"
+    },
+    "reactions": {
+      "type": "object",
+      "description": "Map of emoji \u2192 array of user emails who reacted"
+    }
+  },
+  "required": [
+    "flow_id",
+    "message"
+  ]
+}

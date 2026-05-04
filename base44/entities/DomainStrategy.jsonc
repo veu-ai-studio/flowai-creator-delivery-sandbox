@@ -1,0 +1,55 @@
+{
+  "name": "DomainStrategy",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "current_url": {
+      "type": "string"
+    },
+    "recommended_domain": {
+      "type": "string"
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dns_records": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "professional_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "domain_rationale": {
+      "type": "string"
+    },
+    "cost_estimate": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "recommended",
+        "registered",
+        "dns_configured",
+        "live"
+      ],
+      "default": "recommended"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "product_name"
+  ]
+}

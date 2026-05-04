@@ -1,0 +1,691 @@
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Zap, Clock, Wrench, Link2, Pencil, Clipboard, Mic, MicOff,
+  CheckCircle2, XCircle, Loader2, UploadCloud, ChevronRight,
+  Layers, Users, History, ShieldCheck, BookOpen, BarChart3, X
+} from 'lucide-react';
+import { saveSessionConfig } from './Configuration';
+import UniversalNav from '@/components/shared/UniversalNav';
+
+const SPEECH_SUPPORTED = typeof window !== 'undefined' &&
+  !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+const OBJECTIVES = [
+  { value: 'audit_demo',       label: 'Audit for prospect demo readiness' },
+  { value: 'investor_review',  label: 'Prepare for investor review' },
+  { value: 'full_governance',  label: 'Full governance and clearance cycle' },
+  { value: 'compare',          label: 'Compare two or more products' },
+  { value: 'combine',          label: 'Combine inputs into a unified specification' },
+  { value: 'benchmark',        label: 'Benchmark against competitors' },
+  { value: 'launch_readiness', label: 'Launch readiness check' },
+  { value: 'custom',           label: 'Custom — I will describe my objective' },
+];
+
+const DEPTHS = ['Quick', 'Standard', 'Deep'];
+
+const DESCRIPTION_TEMPLATE = `Product Name: 
+What it does: 
+Target audience: 
+Key features: 
+Current known issues: 
+Live URL (optional): 
+Login email (optional — for authenticated testing): 
+Login password (optional — for authenticated testing): `;
+
+// ─── CARD A — URL ─────────────────────────────────────────────────────────────
+function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, onTestFetch, testing }) {
+  return (
+    <div
+      onClick={onActivate}
+      className={`rounded-xl border p-5 cursor-pointer transition-all space-y-3 ${
+        active ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-primary/30 opacity-80'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <Link2 className={`h-4 w-4 ${active ? 'text-primary' : 'text-muted-foreground'}`} />
+        <p className={`text-sm font-bold ${active ? 'text-primary' : 'text-foreground'}`}>Analyze a Live Product</p>
+        {active && <span className="ml-auto text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+      </div>
+      <p className="text-[11px] text-muted-foreground">FlowAI will fetch and analyze the public-facing pages of your product.</p>
+
+      <div className="flex gap-2 items-center">
+        <Input
+          value={url}
+          onChange={e => { setUrl(e.target.value); setFetchStatus(null); }}
+          onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); setUrl(t); setFetchStatus(null); }}
+          onClick={e => { e.stopPropagation(); onActivate(); }}
+          placeholder="https://saigedemo.com"
+          className="h-9 text-sm flex-1"
+        />
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-9 text-xs shrink-0 gap-1.5"
+          onClick={e => { e.stopPropagation(); onTestFetch(); }}
+          disabled={!url.trim() || testing}
+        >
+          {testing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+          Test Fetch
+        </Button>
+      </div>
+
+      {/* Fetch result */}
+      <AnimatePresence>
+        {fetchStatus === 'ok' && (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Page reachable — FlowAI can read this URL
+          </motion.div>
+        )}
+        {fetchStatus === 'fail' && (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="flex items-center gap-2 text-red-400 text-xs font-semibold">
+            <XCircle className="h-3.5 w-3.5" /> Page could not be reached — use Card B or C instead
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <p className="text-[10px] text-amber-400">Note: URL must be publicly accessible. Authenticated or private apps use Card B or C.</p>
+    </div>
+  );
+}
+
+// ─── CARD B — DESCRIBE ────────────────────────────────────────────────────────
+function CardB({ active, onActivate, description, setDescription, products, loadingProducts }) {
+  const [listening, setListening] = useState(false);
+  const recRef = useRef(null);
+
+  const toggleVoice = (e) => {
+    e.stopPropagation();
+    if (listening) { recRef.current?.stop(); setListening(false); return; }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const r = new SR();
+    r.continuous = false; r.interimResults = false; r.lang = 'en-US';
+    r.onresult = (ev) => setDescription(prev => prev + ev.results[0][0].transcript);
+    r.onend = () => setListening(false);
+    r.onerror = () => setListening(false);
+    recRef.current = r;
+    r.start();
+    setListening(true);
+  };
+
+  const loadProduct = (e, product) => {
+    e.stopPropagation();
+    setDescription(
+      `Product Name: ${product.product_name}\nWhat it does: ${product.description || ''}\nTarget audience: ${product.target_audience || ''}\nKey features: \nCurrent known issues: \nLive URL (optional): ${product.base44_url || ''}`
+    );
+  };
+
+  return (
+    <div
+      onClick={onActivate}
+      className={`rounded-xl border p-5 cursor-pointer transition-all space-y-3 ${
+        active ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-primary/30 opacity-80'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <Pencil className={`h-4 w-4 ${active ? 'text-primary' : 'text-muted-foreground'}`} />
+        <p className={`text-sm font-bold ${active ? 'text-primary' : 'text-foreground'}`}>Describe Your Product</p>
+        {active && <span className="ml-auto text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+      </div>
+      <p className="text-[11px] text-muted-foreground">Type or speak a description. Best for authenticated apps, internal tools, or early-stage products.</p>
+
+      <textarea
+        value={description}
+        onChange={e => setDescription(e.target.value)}
+        onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); setDescription(prev => prev + t); }}
+        onClick={e => { e.stopPropagation(); onActivate(); }}
+        placeholder={DESCRIPTION_TEMPLATE}
+        rows={7}
+        className="w-full text-xs bg-background border border-input rounded-md px-3 py-2 resize-none text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring font-mono"
+      />
+
+      <p className="text-[10px] text-muted-foreground/60 italic">
+        🔒 Credentials are used only for this session and are never stored.
+      </p>
+
+      <div className="flex gap-2 items-center flex-wrap">
+        {SPEECH_SUPPORTED && (
+          <button
+            onClick={toggleVoice}
+            className={`flex items-center gap-1 text-[11px] h-7 px-2.5 rounded border transition-all font-semibold ${
+              listening
+                ? 'border-red-500/50 bg-red-500/10 text-red-400 animate-pulse'
+                : 'border-border text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {listening ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+            {listening ? 'Stop' : 'Voice Input'}
+          </button>
+        )}
+
+        {/* Load from My Products */}
+        {!loadingProducts && products.length > 0 && (
+          <div className="relative group">
+            <button
+              onClick={e => e.stopPropagation()}
+              className="flex items-center gap-1 text-[11px] h-7 px-2.5 rounded border border-border text-muted-foreground hover:text-foreground font-semibold transition-all"
+            >
+              <Layers className="h-3 w-3" /> Load from My Products ▾
+            </button>
+            <div className="absolute top-8 left-0 z-20 bg-card border border-border rounded-lg shadow-lg p-1 min-w-48 hidden group-hover:block">
+              {products.map(p => (
+                <button
+                  key={p.id}
+                  onClick={e => loadProduct(e, p)}
+                  className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-secondary/50 rounded transition-colors truncate block"
+                >
+                  {p.product_name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── CARD C — PASTE / UPLOAD ──────────────────────────────────────────────────
+function CardC({ active, onActivate, pastedContent, setPastedContent, uploadedFiles, setUploadedFiles, uploading, setUploading }) {
+  const fileInputRef = useRef(null);
+
+  const handleFileDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = Array.from(e.dataTransfer?.files || e.target?.files || []);
+    if (!files.length) return;
+    setUploading(true);
+    const uploaded = [];
+    for (const file of files) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      uploaded.push({ name: file.name, url: file_url });
+    }
+    setUploadedFiles(prev => [...prev, ...uploaded]);
+    setUploading(false);
+  };
+
+  return (
+    <div
+      onClick={onActivate}
+      className={`rounded-xl border p-5 cursor-pointer transition-all space-y-3 ${
+        active ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-primary/30 opacity-80'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <Clipboard className={`h-4 w-4 ${active ? 'text-primary' : 'text-muted-foreground'}`} />
+        <p className={`text-sm font-bold ${active ? 'text-primary' : 'text-foreground'}`}>Paste Content or Upload Screenshots</p>
+        {active && <span className="ml-auto text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+      </div>
+      <p className="text-[11px] text-muted-foreground">Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly.</p>
+
+      <textarea
+        value={pastedContent}
+        onChange={e => setPastedContent(e.target.value)}
+        onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); setPastedContent(prev => prev + t); }}
+        onClick={e => { e.stopPropagation(); onActivate(); }}
+        placeholder="Paste any page content, copy, or notes here…"
+        rows={4}
+        className="w-full text-xs bg-background border border-input rounded-md px-3 py-2 resize-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+      />
+
+      {/* Upload zone */}
+      <div
+        onDragOver={e => e.preventDefault()}
+        onDrop={handleFileDrop}
+        onClick={e => { e.stopPropagation(); onActivate(); fileInputRef.current?.click(); }}
+        className="border border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/40 transition-colors"
+      >
+        <input ref={fileInputRef} type="file" multiple accept="image/png,image/jpeg,application/pdf" className="hidden" onChange={handleFileDrop} />
+        {uploading ? (
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Uploading…</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <UploadCloud className="h-4 w-4" />
+            <span className="text-xs">Drop screenshots here or click to upload — PNG, JPG, PDF</span>
+          </div>
+        )}
+      </div>
+
+      {/* Uploaded files list */}
+      {uploadedFiles.length > 0 && (
+        <div className="space-y-1">
+          {uploadedFiles.map((f, i) => (
+            <div key={i} className="flex items-center justify-between gap-2 text-[11px] text-emerald-400">
+              <span className="truncate">{f.name}</span>
+              <button onClick={e => { e.stopPropagation(); setUploadedFiles(prev => prev.filter((_, j) => j !== i)); }}>
+                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p className="text-[10px] text-muted-foreground">Combine with Card B for best results on authenticated products.</p>
+    </div>
+  );
+}
+
+// ─── MAIN LANDING PAGE ────────────────────────────────────────────────────────
+export default function LandingPage() {
+  const navigate = useNavigate();
+
+  // Global paste fix for all inputs on this page
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const target = e.target;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        const text = e.clipboardData.getData('text/plain');
+        if (text) {
+          e.preventDefault();
+          const proto = target.tagName === 'INPUT'
+            ? window.HTMLInputElement.prototype
+            : window.HTMLTextAreaElement.prototype;
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+          nativeInputValueSetter.call(target, target.value + text);
+          target.dispatchEvent(new Event('input', { bubbles: true }));
+          target.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    };
+    document.addEventListener('paste', handlePaste, true);
+    return () => document.removeEventListener('paste', handlePaste, true);
+  }, []);
+
+  // User info
+  const [userName, setUserName] = useState('');
+  useEffect(() => {
+    base44.auth.me().then(u => { if (u?.full_name) setUserName(u.full_name); }).catch(() => {});
+  }, []);
+
+  // Products for Card B
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  useEffect(() => {
+    base44.entities.CreatedProduct.list('-created_date').then(d => { setProducts(d); setLoadingProducts(false); }).catch(() => setLoadingProducts(false));
+  }, []);
+
+  // Active card (A | B | C | null)
+  const [activeCard, setActiveCard] = useState(null);
+
+  // Card A
+  const [urlInput, setUrlInput] = useState('');
+  const [fetchStatus, setFetchStatus] = useState(null); // null | 'ok' | 'fail'
+  const [testing, setTesting] = useState(false);
+
+  // Card B
+  const [description, setDescription] = useState('');
+
+  // Card C
+  const [pastedContent, setPastedContent] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  // Objective
+  const [objective, setObjective] = useState('audit_demo');
+  const [customObjective, setCustomObjective] = useState('');
+  const [objListening, setObjListening] = useState(false);
+  const objRecRef = useRef(null);
+
+  // Mode
+  const [mode, setMode] = useState('auto');
+  const [depth, setDepth] = useState('Standard');
+
+  // ── Test Fetch (Card A) ──
+  const PROXY = 'https://attached-assets-victor2081new.replit.app';
+
+  const testFetch = async () => {
+    if (!urlInput.trim()) return;
+    setTesting(true);
+    setFetchStatus(null);
+    try {
+      const response = await fetch(`${PROXY}/fetch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: urlInput.trim() }),
+      });
+      const data = await response.json();
+      if (data.title || data.bodyText) {
+        const pageContext = `Title: ${data.title}\nMeta: ${data.metaDescription}\nHeadings: ${data.headings?.map(h => h.text).join(' | ')}\nBody: ${data.bodyText}`;
+        // Store in session config for all 8 steps to use
+        try {
+          const existing = JSON.parse(sessionStorage.getItem('flowai_session_config') || '{}');
+          sessionStorage.setItem('flowai_session_config', JSON.stringify({ ...existing, pageContext }));
+        } catch {}
+        setFetchStatus('ok');
+      } else {
+        setFetchStatus('fail');
+      }
+    } catch {
+      setFetchStatus('fail');
+    }
+    setTesting(false);
+  };
+
+  // ── Objective voice ──
+  const toggleObjVoice = () => {
+    if (objListening) { objRecRef.current?.stop(); setObjListening(false); return; }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const r = new SR();
+    r.continuous = false; r.interimResults = false; r.lang = 'en-US';
+    r.onresult = (e) => setCustomObjective(prev => prev ? prev + ' ' + e.results[0][0].transcript : e.results[0][0].transcript);
+    r.onend = () => setObjListening(false);
+    r.onerror = () => setObjListening(false);
+    objRecRef.current = r;
+    r.start();
+    setObjListening(true);
+  };
+
+  // ── Valid input check ──
+  const hasValidInput =
+    (activeCard === 'A' && !!urlInput.trim()) ||
+    (activeCard === 'B' && !!description.trim()) ||
+    (activeCard === 'C' && (!!pastedContent.trim() || uploadedFiles.length > 0));
+
+  // ── Launch ──
+  const launch = () => {
+    const effectiveObjective = objective === 'custom'
+      ? (customObjective.trim() || 'Custom objective')
+      : OBJECTIVES.find(o => o.value === objective)?.label || objective;
+
+    let inputs = [];
+    let inputMethod = 'describe';
+    if (activeCard === 'A') {
+      inputs = [{ id: 1, type: 'url', value: urlInput.trim(), name: 'Input A' }];
+      inputMethod = 'clone';
+    } else if (activeCard === 'B') {
+      // Extract optional credentials from description template fields
+      const emailMatch = description.match(/Login email \(optional.*?\):\s*(.+)/i);
+      const passMatch  = description.match(/Login password \(optional.*?\):\s*(.+)/i);
+      const creds = (emailMatch?.[1]?.trim() && passMatch?.[1]?.trim())
+        ? { email: emailMatch[1].trim(), password: passMatch[1].trim() }
+        : null;
+      inputs = [{ id: 1, type: 'description', value: description.trim(), name: 'Input A', credentials: creds }];
+      inputMethod = 'describe';
+    } else if (activeCard === 'C') {
+      const combinedContent = [
+        pastedContent.trim(),
+        uploadedFiles.length > 0 ? `[Uploaded files: ${uploadedFiles.map(f => f.name).join(', ')}]` : '',
+      ].filter(Boolean).join('\n\n');
+      inputs = [{ id: 1, type: 'description', value: combinedContent, name: 'Input A', file_urls: uploadedFiles.map(f => f.url) }];
+      inputMethod = 'describe';
+    }
+
+    const config = {
+      inputs,
+      inputMethod,
+      objective: effectiveObjective,
+      opsMode: mode,
+      autoParams: {
+        depth: `${depth} (${depth === 'Quick' ? '3–5 min' : depth === 'Standard' ? '8–10 min' : '15–20 min'})`,
+        benchmark: false,
+        threshold: '80%',
+        maxReruns: 2,
+        format: 'Summary',
+      },
+      multiMode: null,
+      product: null,
+    };
+
+    saveSessionConfig(config);
+
+    if (mode === 'auto') navigate('/auto-runner');
+    else if (mode === 'guided') navigate('/guided/research');
+    else navigate('/manual/research');
+  };
+
+  const launchLabel = mode === 'auto'
+    ? 'Launch Auto Run →'
+    : mode === 'guided'
+    ? 'Start Guided Session →'
+    : 'Start Manual Session →';
+
+  return (
+    <div className="min-h-screen bg-background text-foreground font-inter">
+
+      {/* ── SECTION 1: HEADER ── */}
+      <header className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-20">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Zap className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-foreground leading-tight">FlowAI</div>
+              <div className="text-[10px] text-muted-foreground leading-tight">VEU AI Studio Internal Operations Platform</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-[11px]">
+            <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> FlowAI Ready
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground">Mode: <span className="text-foreground font-semibold">Supervised</span></span>
+            {userName && (
+              <>
+                <span className="text-muted-foreground">·</span>
+                <span className="text-foreground font-semibold">{userName}</span>
+              </>
+            )}
+            <UniversalNav className="ml-2" />
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-6 pb-2">
+          <p className="text-xs text-muted-foreground">Choose how you want to work with your product, then select your operation mode.</p>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+
+        {/* ── SECTION 2: THREE INPUT CARDS ── */}
+        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Step 1 — Select Your Input</p>
+          <div className="grid grid-cols-1 gap-4">
+            <CardA
+              active={activeCard === 'A'}
+              onActivate={() => setActiveCard('A')}
+              url={urlInput}
+              setUrl={setUrlInput}
+              fetchStatus={fetchStatus}
+              setFetchStatus={setFetchStatus}
+              onTestFetch={testFetch}
+              testing={testing}
+            />
+            <CardB
+              active={activeCard === 'B'}
+              onActivate={() => setActiveCard('B')}
+              description={description}
+              setDescription={setDescription}
+              products={products}
+              loadingProducts={loadingProducts}
+            />
+            <CardC
+              active={activeCard === 'C'}
+              onActivate={() => setActiveCard('C')}
+              pastedContent={pastedContent}
+              setPastedContent={setPastedContent}
+              uploadedFiles={uploadedFiles}
+              setUploadedFiles={setUploadedFiles}
+              uploading={uploading}
+              setUploading={setUploading}
+            />
+          </div>
+        </motion.section>
+
+        {/* ── SECTION 3: OBJECTIVE ── */}
+        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Step 2 — What do you want to accomplish?</p>
+          <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+            <select
+              value={objective}
+              onChange={e => setObjective(e.target.value)}
+              className="w-full h-9 text-sm rounded-md border border-input bg-background px-3 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              {OBJECTIVES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <AnimatePresence>
+              {objective === 'custom' && (
+                <motion.div key="custom" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                  <div className="flex gap-2 items-center pt-1">
+                    <Input
+                      value={customObjective}
+                      onChange={e => setCustomObjective(e.target.value)}
+                      onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); setCustomObjective(t); }}
+                      placeholder="Describe your objective…"
+                      className="h-9 text-sm flex-1"
+                    />
+                    {SPEECH_SUPPORTED && (
+                      <button
+                        onClick={toggleObjVoice}
+                        className={`h-9 w-9 flex items-center justify-center rounded-md border shrink-0 transition-all ${objListening ? 'border-red-500/50 bg-red-500/10 text-red-400 animate-pulse' : 'border-input text-muted-foreground hover:text-foreground'}`}
+                      >
+                        {objListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.section>
+
+        {/* ── SECTION 4: OPERATION MODE ── */}
+        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Step 3 — Select Operation Mode</p>
+          <div className="grid grid-cols-1 gap-4">
+
+            {/* Auto */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setMode('auto')}
+              onKeyDown={e => e.key === 'Enter' && setMode('auto')}
+              className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${mode === 'auto' ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-primary/30'}`}
+            >
+              <div className="flex items-center gap-2">
+                <Zap className={`h-4 w-4 ${mode === 'auto' ? 'text-primary' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-bold ${mode === 'auto' ? 'text-primary' : 'text-foreground'}`}>Auto</span>
+                {mode === 'auto' && <span className="ml-auto text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">FlowAI executes all 8 steps automatically. You review the final report.</p>
+              <div className="space-y-1.5" onClick={e => e.stopPropagation()}>
+                <p className="text-[10px] font-semibold text-muted-foreground">Analysis Depth</p>
+                <div className="flex gap-1.5">
+                  {DEPTHS.map(d => (
+                    <button
+                      key={d}
+                      onClick={e => { e.stopPropagation(); setDepth(d); setMode('auto'); }}
+                      className={`text-[10px] px-2 py-0.5 rounded border transition-all font-semibold ${depth === d && mode === 'auto' ? 'border-primary/50 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Guided */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setMode('guided')}
+              onKeyDown={e => e.key === 'Enter' && setMode('guided')}
+              className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${mode === 'guided' ? 'border-amber-500/60 bg-amber-500/5 ring-1 ring-amber-500/20' : 'border-border bg-card hover:border-amber-500/30'}`}
+            >
+              <div className="flex items-center gap-2">
+                <Clock className={`h-4 w-4 ${mode === 'guided' ? 'text-amber-400' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-bold ${mode === 'guided' ? 'text-amber-400' : 'text-foreground'}`}>Guided</span>
+                {mode === 'guided' && <span className="ml-auto text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">FlowAI proposes each step. You approve, modify, or skip before execution.</p>
+              <p className="text-[10px] text-muted-foreground">Minutes to hours · 8 approval gates</p>
+            </div>
+
+            {/* Manual */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setMode('manual')}
+              onKeyDown={e => e.key === 'Enter' && setMode('manual')}
+              className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${mode === 'manual' ? 'border-border bg-secondary/30 ring-1 ring-border' : 'border-border bg-card hover:border-primary/30'}`}
+            >
+              <div className="flex items-center gap-2">
+                <Wrench className={`h-4 w-4 ${mode === 'manual' ? 'text-foreground' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-bold ${mode === 'manual' ? 'text-foreground' : 'text-foreground'}`}>Manual</span>
+                {mode === 'manual' && <span className="ml-auto text-[10px] font-bold text-foreground bg-secondary px-2 py-0.5 rounded-full">SELECTED</span>}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">You direct each step. FlowAI executes what you specify and assists on demand.</p>
+              <p className="text-[10px] text-muted-foreground">Hours to days · Full operator control</p>
+            </div>
+
+          </div>
+        </motion.section>
+
+        {/* ── SECTION 5: LAUNCH ── */}
+        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground">
+              {hasValidInput
+                ? <span className="text-foreground font-semibold">Ready — {activeCard === 'A' ? 'URL' : activeCard === 'B' ? 'Description' : 'Pasted content'} loaded · {OBJECTIVES.find(o => o.value === objective)?.label}</span>
+                : <span>Select an input above to enable launch</span>
+              }
+            </div>
+            <Button
+              onClick={launch}
+              disabled={!hasValidInput}
+              size="lg"
+              className="gap-2 w-full sm:min-w-[220px] sm:w-auto text-sm font-bold min-h-[48px]"
+            >
+              <ChevronRight className="h-4 w-4" />
+              {launchLabel}
+            </Button>
+          </div>
+        </motion.section>
+
+        {/* ── SECTION 6: QUICK ACCESS PANEL ── */}
+        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Quick Access</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-5 sm:overflow-visible">
+            {[
+              { label: 'My Products',        path: '/my-products',    icon: Layers },
+              { label: 'Session History',    path: '/auto-runner',    icon: History },
+              { label: 'Clearance Protocol', path: '/clearance',      icon: ShieldCheck },
+              { label: 'Governance Dashboard', path: '/governance',   icon: BarChart3 },
+              { label: 'Release Notes',      path: '/release-notes',  icon: BookOpen },
+            ].map(({ label, path, icon: Icon }) => (
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-card text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all"
+              >
+                <Icon className="h-3.5 w-3.5 shrink-0" /> {label}
+              </button>
+            ))}
+          </div>
+        </motion.section>
+
+      </main>
+
+      <footer className="border-t border-border py-6 px-6 mt-8">
+        <div className="max-w-6xl mx-auto text-center text-[11px] text-muted-foreground space-y-1">
+          <div>FlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio</div>
+          <div>
+            <button onClick={() => navigate('/landing')} className="text-[11px] text-primary hover:text-primary/80 transition-colors">
+              About FlowAI →
+            </button>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

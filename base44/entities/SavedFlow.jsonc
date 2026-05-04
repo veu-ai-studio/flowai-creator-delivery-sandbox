@@ -1,0 +1,36 @@
+{
+  "name": "SavedFlow",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the flow"
+    },
+    "nodes": {
+      "type": "array",
+      "description": "Array of node objects",
+      "items": {
+        "type": "object"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Array of edge connections between nodes",
+      "items": {
+        "type": "object"
+      }
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of the flow"
+    },
+    "last_run": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this flow was last executed"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

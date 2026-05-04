@@ -1,0 +1,75 @@
+{
+  "name": "TokenUsage",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Unique governance session ID"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "User who launched the session"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of user"
+    },
+    "user_role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "operator",
+        "client"
+      ],
+      "description": "User role at time of session"
+    },
+    "target_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of target URLs for this session"
+    },
+    "activities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of selected activities (self-test, self-audit, etc)"
+    },
+    "tokens_consumed": {
+      "type": "number",
+      "description": "Total tokens consumed in session"
+    },
+    "cost_usd": {
+      "type": "number",
+      "description": "Total cost in USD"
+    },
+    "gate_decisions": {
+      "type": "object",
+      "description": "Gate decisions made during session"
+    },
+    "session_outcome": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "paused",
+        "failed",
+        "pending"
+      ],
+      "default": "pending",
+      "description": "Final outcome of the session"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "session_id",
+    "user_email",
+    "user_role",
+    "target_urls",
+    "activities"
+  ]
+}

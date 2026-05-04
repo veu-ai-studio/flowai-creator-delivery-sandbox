@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ContentGenius - AI Writing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100">
+    <div id="app"></div>
+    <script>
+        const state = {
+            data: JSON.parse(localStorage.getItem('contentgenius-hardened')) || { generations: [], isPro: false },
+            get isPro() { return this.data.isPro || false; },
+            get generations() { return this.data.generations || []; },
+            get genCount() { return this.generations.length; }
+        };
+
+        const examples = [
+            "Write a funny poem about coding bugs",
+            "Create a marketing headline for a SaaS product",
+            "Generate a product description for headphones"
+        ];
+
+        function generate(prompt) {
+            if (!prompt.trim()) {
+                showAlert('⚠️ Enter a prompt', 'error');
+                return;
+            }
+            const limit = state.isPro ? Infinity : 10;
+            if (state.genCount >= limit) {
+                showAlert(`🔒 Free limit reached. Upgrade to Pro!`, 'warning');
+                return;
+            }
+            showLoading(true);
+            setTimeout(() => {
+                const results = [
+                    `Generated content: "${prompt}" - A witty, creative response that perfectly captures the essence of your request with clever wordplay and engaging narrative style.`,
+                    `✨ ${prompt} - Here's a brilliant piece that combines creativity, relevance, and impact to deliver exactly what you asked for.`,
+                    `💡 Based on "${prompt}" - Creative output that demonstrates understanding and provides valuable, actionable content.`
+                ];
+                const result = results[Math.floor(Math.random() * results.length)];
+                const gen = { prompt, result, timestamp: new Date().toLocaleString() };
+                state.data.generations.unshift(gen);
+                save();
+                showLoading(false);
+                showAlert('✅ Generated!', 'success');
+            }, 1500);
+        }
+
+        function deleteGen(index) {
+            if (confirm('Delete this generation?')) {
+                state.data.generations.splice(index, 1);
+                save();
+                showAlert('Deleted', 'info');
+            }
+        }
+
+        function copyResult(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('✅ Copied!', 'success');
+            });
+        }
+
+        function exportResult(text) {
+            const el = document.createElement('a');
+            el.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+            el.download = 'content.txt';
+            el.click();
+            showAlert('💾 Exported!', 'success');
+        }
+
+        function upgradePro() {
+            if (confirm('Upgrade to Pro? Unlimited generations!')) {
+                state.data.isPro = true;
+                save();
+                showAlert('🎉 Upgraded to Pro!', 'success');
+            }
+        }
+
+        function save() {
+            localStorage.setItem('contentgenius-hardened', JSON.stringify(state.data));
+            render();
+        }
+
+        function showAlert(msg, type = 'info') {
+            const colors = { success: 'bg-emerald-500/20 text-emerald-400', error: 'bg-red-500/20 text-red-400', warning: 'bg-amber-500/20 text-amber-400', info: 'bg-blue-500/20 text-blue-400' };
+            const el = document.createElement('div');
+            el.className = `fixed top-4 left-4 p-3 rounded-lg text-sm font-semibold ${colors[type]} z-50`;
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        function showLoading(show) {
+            const el = document.getElementById('loading');
+            if (el) el.style.display = show ? 'block' : 'none';
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            const limit = state.isPro ? '∞' : '10';
+            const count = state.genCount;
+            const plan = state.isPro ? '✅ Pro' : 'Free';
+            const planBtn = state.isPro ? '' : '<button onclick="upgradePro()" class="px-3 py-1 bg-primary hover:bg-primary/90 rounded text-sm font-semibold">Upgrade to Pro</button>';
+
+            let historyHtml = state.generations.length === 0 
+                ? '<p class="text-gray-400 text-sm">No generations yet...</p>'
+                : state.generations.map((g, i) => `
+                    <div class="bg-gray-900 p-3 rounded border border-gray-800 hover:border-gray-700 cursor-pointer" onclick="document.getElementById('promptInput').value = '${g.prompt.replace(/'/g, "\\'")}'; document.getElementById('resultPanel').innerHTML = '<div class=\\'bg-gray-900 p-4 rounded border border-gray-800\\'>\\n<p class=\\'text-gray-300\\'>${g.result.replace(/'/g, "\\'")}\\n</p>\\n<div class=\\'flex gap-2 mt-3\\'>\\n<button onclick=\\\"copyResult(\\\'${g.result.replace(/'/g, "\\'")}\\\')\\\">📋 Copy</button>\\n<button onclick=\\\"exportResult(\\\'${g.result.replace(/'/g, "\\'")}\\\')\\\">💾 Export</button>\\n</div>\\n</div>'">
+                        <p class="text-sm font-semibold text-white">${g.prompt.substring(0, 50)}...</p>
+                        <p class="text-xs text-gray-500 mt-1">${g.timestamp}</p>
+                        <button onclick="event.stopPropagation(); deleteGen(${i})" class="text-xs text-red-400 hover:text-red-300 mt-2">🗑️ Delete</button>
+                    </div>
+                `).join('');
+
+            app.innerHTML = `
+                <nav class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center sticky top-0 z-40">
+                    <h1 class="text-xl font-bold">ContentGenius</h1>
+                    <div class="flex gap-4 items-center text-sm">
+                        <span class="text-gray-400">Gens: <span class="font-bold">${count}/${limit}</span></span>
+                        <span class="text-gray-400">Plan: <span class="font-bold">${plan}</span></span>
+                        ${planBtn}
+                    </div>
+                </nav>
+
+                <div class="max-w-4xl mx-auto p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <!-- Input -->
+                    <div class="md:col-span-3 space-y-4">
+                        <div>
+                            <label class="text-sm font-semibold text-gray-300 block mb-2">Your Prompt</label>
+                            <textarea id="promptInput" placeholder="Enter your content prompt..." class="w-full bg-gray-900 border border-gray-800 p-3 rounded text-white placeholder-gray-500 h-24"></textarea>
+                        </div>
+                        <button onclick="generate(document.getElementById('promptInput').value)" class="w-full bg-primary hover:bg-primary/90 p-3 rounded font-semibold">Generate</button>
+
+                        <div id="loading" style="display:none" class="bg-blue-500/10 border border-blue-500/30 p-4 rounded text-blue-400 text-sm">⏳ Generating...</div>
+
+                        <div>
+                            <label class="text-sm font-semibold text-gray-300 block mb-2">Result</label>
+                            <div id="resultPanel" class="bg-gray-900 border border-gray-800 p-4 rounded min-h-24 text-gray-400">
+                                No generation yet...
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-semibold text-gray-300 block mb-2">Examples</label>
+                            <div class="space-y-2">
+                                ${examples.map(ex => `<button onclick="document.getElementById('promptInput').value = '${ex}'" class="w-full text-left bg-gray-900 border border-gray-800 hover:border-gray-700 p-2 rounded text-sm text-gray-300">💡 ${ex}</button>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History -->
+                    <div class="md:col-span-1 bg-gray-900 border border-gray-800 p-4 rounded">
+                        <h3 class="font-semibold mb-3 text-sm">History</h3>
+                        <div class="space-y-2 max-h-96 overflow-y-auto">
+                            ${historyHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        render();
+    </script>
+</body>
+</html>

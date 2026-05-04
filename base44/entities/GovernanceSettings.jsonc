@@ -1,0 +1,34 @@
+{
+  "name": "GovernanceSettings",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Owner email for this settings record"
+    },
+    "score_drop_threshold": {
+      "type": "number"
+    },
+    "optimize_threshold": {
+      "type": "number"
+    },
+    "upgrade_gain_threshold": {
+      "type": "number"
+    },
+    "high_risk_separate": {
+      "type": "boolean",
+      "default": true
+    },
+    "auto_protect_on_heal": {
+      "type": "boolean",
+      "default": true
+    },
+    "require_80pct_test_for_upgrade": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

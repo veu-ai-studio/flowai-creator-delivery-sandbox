@@ -1,0 +1,54 @@
+{
+  "name": "QAAuditReport",
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "description": "Target URL audited"
+    },
+    "scores": {
+      "type": "object",
+      "description": "Overall and layer scores",
+      "properties": {
+        "overall": {
+          "type": "number"
+        },
+        "ui_ux": {
+          "type": "number"
+        },
+        "api": {
+          "type": "number"
+        },
+        "logic": {
+          "type": "number"
+        },
+        "business_value": {
+          "type": "number"
+        }
+      }
+    },
+    "issues": {
+      "type": "object",
+      "description": "Issues found per layer"
+    },
+    "recommendations": {
+      "type": "array",
+      "description": "List of recommendations",
+      "items": {
+        "type": "object"
+      }
+    },
+    "crawl_data": {
+      "type": "object",
+      "description": "Raw crawl snapshot"
+    },
+    "report_notes": {
+      "type": "string",
+      "description": "Optional user notes about the audit"
+    }
+  },
+  "required": [
+    "url",
+    "scores"
+  ]
+}

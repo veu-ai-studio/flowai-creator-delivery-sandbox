@@ -1,0 +1,48 @@
+{
+  "name": "FlowVersion",
+  "type": "object",
+  "properties": {
+    "flow_id": {
+      "type": "string",
+      "description": "ID of the parent SavedFlow"
+    },
+    "flow_name": {
+      "type": "string",
+      "description": "Name of the flow at time of save"
+    },
+    "version_number": {
+      "type": "number",
+      "description": "Auto-incrementing version number"
+    },
+    "nodes": {
+      "type": "array",
+      "description": "Snapshot of nodes at this version",
+      "items": {
+        "type": "object"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Snapshot of edges at this version",
+      "items": {
+        "type": "object"
+      }
+    },
+    "variables": {
+      "type": "array",
+      "description": "Flow-level variables at this version",
+      "items": {
+        "type": "object"
+      }
+    },
+    "label": {
+      "type": "string",
+      "description": "Optional user-defined label for this version"
+    }
+  },
+  "required": [
+    "flow_id",
+    "flow_name",
+    "version_number"
+  ]
+}

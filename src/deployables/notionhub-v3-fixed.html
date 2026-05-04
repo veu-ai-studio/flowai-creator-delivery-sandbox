@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotionHub - Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100">
+    <div id="app"></div>
+    <script>
+        const state = {
+            data: JSON.parse(localStorage.getItem('notionhub-hardened')) || { notes: [], tasks: [], links: [], isPro: false },
+            get isPro() { return this.data.isPro || false; },
+            section: 'notes', // notes | tasks | links
+            searchTerm: ''
+        };
+
+        // Notes
+        function createNote(title, content) {
+            if (!title.trim() || !content.trim()) {
+                showAlert('⚠️ Fill all fields', 'error');
+                return false;
+            }
+            const note = { title, content, created: new Date().toLocaleDateString() };
+            state.data.notes.unshift(note);
+            save();
+            showAlert('✅ Note saved!', 'success');
+            return true;
+        }
+
+        function deleteNote(index) {
+            if (confirm('Delete note?')) {
+                state.data.notes.splice(index, 1);
+                save();
+                showAlert('Note deleted', 'info');
+            }
+        }
+
+        // Tasks
+        function createTask(text) {
+            if (!text.trim()) {
+                showAlert('⚠️ Enter task text', 'error');
+                return false;
+            }
+            state.data.tasks.push({ text, done: false });
+            save();
+            return true;
+        }
+
+        function toggleTask(index) {
+            state.data.tasks[index].done = !state.data.tasks[index].done;
+            save();
+        }
+
+        function deleteTask(index) {
+            state.data.tasks.splice(index, 1);
+            save();
+        }
+
+        // Links
+        function createLink(from, to) {
+            if (!from.trim() || !to.trim()) {
+                showAlert('⚠️ Fill both fields', 'error');
+                return false;
+            }
+            state.data.links.push({ from, to });
+            save();
+            showAlert('✅ Link created!', 'success');
+            return true;
+        }
+
+        function deleteLink(index) {
+            state.data.links.splice(index, 1);
+            save();
+        }
+
+        function upgradePro() {
+            if (confirm('Upgrade to Pro?')) {
+                state.data.isPro = true;
+                save();
+                showAlert('🎉 Upgraded to Pro!', 'success');
+            }
+        }
+
+        function save() {
+            localStorage.setItem('notionhub-hardened', JSON.stringify(state.data));
+            render();
+        }
+
+        function showAlert(msg, type = 'info') {
+            const colors = { success: 'bg-emerald-500/20 text-emerald-400', error: 'bg-red-500/20 text-red-400', warning: 'bg-amber-500/20 text-amber-400', info: 'bg-blue-500/20 text-blue-400' };
+            const el = document.createElement('div');
+            el.className = `fixed top-4 left-4 p-3 rounded-lg text-sm font-semibold ${colors[type]} z-50`;
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            const plan = state.isPro ? '✅ Pro' : 'Free';
+            const planBtn = state.isPro ? '' : '<button onclick="upgradePro()" class="px-3 py-1 bg-primary hover:bg-primary/90 rounded text-sm font-semibold">Upgrade</button>';
+
+            let contentHtml = '';
+
+            if (state.section === 'notes') {
+                const notesHtml = state.data.notes.length === 0
+                    ? '<p class="text-gray-400 text-sm">No notes yet...</p>'
+                    : state.data.notes.map((n, i) => `
+                        <div class="bg-gray-900 p-4 rounded border border-gray-800 hover:border-gray-700">
+                            <h3 class="font-bold text-white">${n.title}</h3>
+                            <p class="text-gray-400 text-sm mt-2">${n.content}</p>
+                            <div class="flex justify-between items-center mt-3">
+                                <span class="text-xs text-gray-500">${n.created}</span>
+                                <button onclick="deleteNote(${i})" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Delete</button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                contentHtml = `
+                    <div class="space-y-4">
+                        <form onsubmit="event.preventDefault(); const t = document.getElementById('noteTitle').value; const c = document.getElementById('noteContent').value; if(createNote(t, c)) { document.getElementById('noteTitle').value = ''; document.getElementById('noteContent').value = ''; }" class="bg-gray-900 border border-gray-800 p-4 rounded space-y-3">
+                            <input id="noteTitle" type="text" placeholder="Note title" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500 text-sm">
+                            <textarea id="noteContent" placeholder="Note content" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500 text-sm h-24"></textarea>
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 p-2 rounded font-semibold text-sm">Save Note</button>
+                        </form>
+                        <div class="space-y-3">
+                            ${notesHtml}
+                        </div>
+                    </div>
+                `;
+            } else if (state.section === 'tasks') {
+                const tasksHtml = state.data.tasks.length === 0
+                    ? '<p class="text-gray-400 text-sm">No tasks yet...</p>'
+                    : state.data.tasks.map((t, i) => `
+                        <div class="flex items-center gap-3 bg-gray-900 p-3 rounded border border-gray-800">
+                            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask(${i})" class="w-4 h-4 cursor-pointer">
+                            <span class="flex-1 text-sm ${t.done ? 'line-through text-gray-500' : 'text-white'}">${t.text}</span>
+                            <button onclick="deleteTask(${i})" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Delete</button>
+                        </div>
+                    `).join('');
+
+                contentHtml = `
+                    <div class="space-y-4">
+                        <form onsubmit="event.preventDefault(); const t = document.getElementById('taskInput').value; if(createTask(t)) { document.getElementById('taskInput').value = ''; render(); }" class="flex gap-2">
+                            <input id="taskInput" type="text" placeholder="Add a task..." class="flex-1 bg-gray-900 border border-gray-800 p-2 rounded text-white placeholder-gray-500 text-sm">
+                            <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded font-semibold text-sm">Add</button>
+                        </form>
+                        <div class="space-y-2">
+                            ${tasksHtml}
+                        </div>
+                    </div>
+                `;
+            } else if (state.section === 'links') {
+                const linksHtml = state.data.links.length === 0
+                    ? '<p class="text-gray-400 text-sm">No links yet...</p>'
+                    : state.data.links.map((l, i) => `
+                        <div class="flex items-center justify-between bg-gray-900 p-3 rounded border border-gray-800">
+                            <span class="text-sm text-white">${l.from} 🔗 ${l.to}</span>
+                            <button onclick="deleteLink(${i})" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Delete</button>
+                        </div>
+                    `).join('');
+
+                contentHtml = `
+                    <div class="space-y-4">
+                        <form onsubmit="event.preventDefault(); const f = document.getElementById('linkFrom').value; const t = document.getElementById('linkTo').value; if(createLink(f, t)) { document.getElementById('linkFrom').value = ''; document.getElementById('linkTo').value = ''; }" class="bg-gray-900 border border-gray-800 p-4 rounded space-y-3">
+                            <input id="linkFrom" type="text" placeholder="From (e.g., Note: Title)" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500 text-sm">
+                            <input id="linkTo" type="text" placeholder="To (e.g., Task: Text)" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500 text-sm">
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 p-2 rounded font-semibold text-sm">Create Link</button>
+                        </form>
+                        <div class="space-y-2">
+                            ${linksHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            app.innerHTML = `
+                <nav class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center sticky top-0 z-40">
+                    <h1 class="text-xl font-bold">NotionHub</h1>
+                    <div class="flex gap-4 items-center text-sm">
+                        <span class="text-gray-400">Plan: <span class="font-bold">${plan}</span></span>
+                        ${planBtn}
+                    </div>
+                </nav>
+
+                <div class="max-w-4xl mx-auto p-6">
+                    <div class="flex gap-4 mb-6 sticky top-16 z-30">
+                        <button onclick="state.section='notes'; render()" class="flex-1 py-3 rounded font-semibold transition ${state.section === 'notes' ? 'bg-primary text-primary-foreground' : 'bg-gray-900 border border-gray-800 text-gray-300 hover:bg-gray-800'}">📝 Notes</button>
+                        <button onclick="state.section='tasks'; render()" class="flex-1 py-3 rounded font-semibold transition ${state.section === 'tasks' ? 'bg-primary text-primary-foreground' : 'bg-gray-900 border border-gray-800 text-gray-300 hover:bg-gray-800'}">✅ Tasks</button>
+                        <button onclick="state.section='links'; render()" class="flex-1 py-3 rounded font-semibold transition ${state.section === 'links' ? 'bg-primary text-primary-foreground' : 'bg-gray-900 border border-gray-800 text-gray-300 hover:bg-gray-800'}">🔗 Links</button>
+                    </div>
+
+                    ${contentHtml}
+                </div>
+            `;
+        }
+
+        render();
+    </script>
+</body>
+</html>

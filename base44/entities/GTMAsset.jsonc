@@ -1,0 +1,27 @@
+{
+  "name": "GTMAsset",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "asset_type": {
+      "type": "string",
+      "enum": [
+        "email_sequence",
+        "linkedin_posts",
+        "executive_summary",
+        "pilot_proposal"
+      ],
+      "description": "Type of GTM asset"
+    },
+    "content": {
+      "type": "string",
+      "description": "Generated content as text or JSON string"
+    }
+  },
+  "required": [
+    "product_name",
+    "asset_type"
+  ]
+}

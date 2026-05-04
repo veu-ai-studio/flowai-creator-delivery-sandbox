@@ -1,0 +1,70 @@
+{
+  "name": "CreatedProduct",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "creation_mode": {
+      "type": "string",
+      "enum": [
+        "describe",
+        "clone",
+        "synthesize"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "target_audience": {
+      "type": "string"
+    },
+    "target_market": {
+      "type": "string"
+    },
+    "industry": {
+      "type": "string"
+    },
+    "source_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "product_strategy": {
+      "type": "string"
+    },
+    "technical_architecture": {
+      "type": "string"
+    },
+    "build_sprint": {
+      "type": "string"
+    },
+    "recommended_stack": {
+      "type": "object"
+    },
+    "attribution": {
+      "type": "string"
+    },
+    "clearance_status": {
+      "type": "string",
+      "default": "not_started"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "product_name",
+    "client_name",
+    "creation_mode"
+  ]
+}

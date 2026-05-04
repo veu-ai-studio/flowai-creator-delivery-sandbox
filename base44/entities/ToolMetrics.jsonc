@@ -1,0 +1,54 @@
+{
+  "name": "ToolMetrics",
+  "type": "object",
+  "properties": {
+    "tool_id": {
+      "type": "string",
+      "description": "Unique tool identifier e.g. chatgpt, claude, vercel, replit"
+    },
+    "tool_name": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string",
+      "enum": [
+        "reasoning",
+        "deployment",
+        "execution",
+        "auditing",
+        "crawling"
+      ],
+      "description": "What this tool does"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Associated pipeline run"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "success": {
+      "type": "boolean"
+    },
+    "latency_ms": {
+      "type": "number"
+    },
+    "cost_usd": {
+      "type": "number",
+      "description": "Estimated cost in USD for this operation"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "task_type": {
+      "type": "string",
+      "description": "What task was performed"
+    }
+  },
+  "required": [
+    "tool_id",
+    "tool_name",
+    "capability",
+    "success"
+  ]
+}

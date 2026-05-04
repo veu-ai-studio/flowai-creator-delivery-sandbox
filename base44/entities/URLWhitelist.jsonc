@@ -1,0 +1,40 @@
+{
+  "name": "URLWhitelist",
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "description": "Approved URL for governance targeting"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the URL"
+    },
+    "added_by": {
+      "type": "string",
+      "description": "Email of user who added this URL"
+    },
+    "added_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_temporary": {
+      "type": "boolean",
+      "default": false,
+      "description": "Temporary access granted for 24 hours"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Expiry timestamp for temporary access"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this whitelist entry is currently active"
+    }
+  },
+  "required": [
+    "url"
+  ]
+}

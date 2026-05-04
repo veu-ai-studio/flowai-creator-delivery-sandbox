@@ -1,0 +1,51 @@
+{
+  "name": "DeploymentScaffold",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "target_url": {
+      "type": "string"
+    },
+    "recommended_stack": {
+      "type": "string"
+    },
+    "readme": {
+      "type": "string"
+    },
+    "schema_sql": {
+      "type": "string"
+    },
+    "vercel_config": {
+      "type": "string"
+    },
+    "env_example": {
+      "type": "string"
+    },
+    "migration_checklist": {
+      "type": "string"
+    },
+    "api_routes": {
+      "type": "string"
+    },
+    "readiness_score": {
+      "type": "number"
+    },
+    "readiness_report": {
+      "type": "object"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "generated",
+        "in_progress",
+        "deployed"
+      ],
+      "default": "generated"
+    }
+  },
+  "required": [
+    "product_name"
+  ]
+}

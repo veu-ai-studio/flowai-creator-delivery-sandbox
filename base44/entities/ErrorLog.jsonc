@@ -1,0 +1,37 @@
+{
+  "name": "ErrorLog",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "description": "Which function/page caused the error"
+    },
+    "message": {
+      "type": "string"
+    },
+    "stack": {
+      "type": "string"
+    },
+    "context": {
+      "type": "object",
+      "description": "Additional context data"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    }
+  },
+  "required": [
+    "source",
+    "message"
+  ]
+}

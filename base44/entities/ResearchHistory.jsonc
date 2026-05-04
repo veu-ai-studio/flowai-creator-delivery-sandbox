@@ -1,0 +1,62 @@
+{
+  "name": "ResearchHistory",
+  "type": "object",
+  "properties": {
+    "owner_email": {
+      "type": "string"
+    },
+    "query": {
+      "type": "string",
+      "description": "Input query / URL / company name"
+    },
+    "industry": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "competitors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "opportunities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "key_features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "positioning": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "target_audience": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "market_size": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "owner_email",
+    "query"
+  ]
+}

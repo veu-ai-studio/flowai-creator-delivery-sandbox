@@ -1,0 +1,60 @@
+{
+  "name": "BrandSystem",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "default": "1.0"
+    },
+    "primary_color": {
+      "type": "string"
+    },
+    "secondary_color": {
+      "type": "string"
+    },
+    "accent_color": {
+      "type": "string"
+    },
+    "background_primary": {
+      "type": "string"
+    },
+    "background_secondary": {
+      "type": "string"
+    },
+    "heading_font": {
+      "type": "string"
+    },
+    "body_font": {
+      "type": "string"
+    },
+    "brand_voice": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tagline_options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "css_variables": {
+      "type": "string"
+    },
+    "component_standards": {
+      "type": "object"
+    },
+    "product_variants": {
+      "type": "object",
+      "description": "Per-product accent color, tagline, value prop"
+    },
+    "logo_brief": {
+      "type": "string"
+    },
+    "raw_output": {
+      "type": "object"
+    }
+  },
+  "required": []
+}

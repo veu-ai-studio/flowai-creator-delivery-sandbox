@@ -1,0 +1,60 @@
+{
+  "name": "GitHubSync",
+  "type": "object",
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "description": "ID of parent QAAuditReport"
+    },
+    "github_repo": {
+      "type": "string",
+      "description": "Repository in owner/repo format"
+    },
+    "github_issue_number": {
+      "type": "integer",
+      "description": "Created or linked GitHub issue number"
+    },
+    "issue_title": {
+      "type": "string",
+      "description": "GitHub issue title"
+    },
+    "issue_body": {
+      "type": "string",
+      "description": "GitHub issue description with audit findings"
+    },
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "GitHub labels applied"
+    },
+    "assignee": {
+      "type": "string",
+      "description": "GitHub username to assign"
+    },
+    "synced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "created",
+        "updated",
+        "closed",
+        "error"
+      ],
+      "default": "pending"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error details if sync failed"
+    }
+  },
+  "required": [
+    "report_id",
+    "github_repo"
+  ]
+}

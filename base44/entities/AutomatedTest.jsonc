@@ -1,0 +1,69 @@
+{
+  "name": "AutomatedTest",
+  "type": "object",
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "description": "ID of parent QAAuditReport"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL being tested"
+    },
+    "test_type": {
+      "type": "string",
+      "enum": [
+        "unit",
+        "integration",
+        "e2e",
+        "accessibility",
+        "performance"
+      ],
+      "description": "Type of test generated"
+    },
+    "framework": {
+      "type": "string",
+      "enum": [
+        "playwright",
+        "cypress",
+        "jest",
+        "selenium"
+      ],
+      "description": "Test framework"
+    },
+    "test_code": {
+      "type": "string",
+      "description": "Generated test code"
+    },
+    "coverage_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "What the test covers"
+    },
+    "ready_to_run": {
+      "type": "boolean",
+      "default": false,
+      "description": "Test is ready for execution"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "generated",
+        "reviewed",
+        "approved",
+        "running",
+        "passed",
+        "failed"
+      ],
+      "default": "generated"
+    }
+  },
+  "required": [
+    "report_id",
+    "url",
+    "test_type",
+    "test_code"
+  ]
+}

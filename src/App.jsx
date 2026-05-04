@@ -1,0 +1,221 @@
+import { Toaster } from "@/components/ui/toaster"
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClientInstance } from '@/lib/query-client'
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import PageNotFound from './lib/PageNotFound';
+import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { OrchestrationProvider } from '@/lib/OrchestrationContext';
+import { AgenticModeProvider } from '@/lib/AgenticModeContext';
+import { JobProvider } from '@/lib/JobContext';
+import { SessionProvider } from '@/lib/SessionContext';
+import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import ErrorBoundary from '@/components/ErrorBoundary';
+
+import AppLayout from './components/layout/AppLayout';
+import Dashboard from './pages/Dashboard';
+import FlowDesigner from './pages/FlowDesigner';
+import RunFlow from './pages/RunFlow';
+import Flows from './pages/Flows';
+import Analytics from './pages/Analytics';
+import RunHistory from './pages/RunHistory';
+import Templates from './pages/Templates';
+import Variables from './pages/Variables';
+import QAAudit from './pages/QAAudit';
+import Research from './pages/Research';
+import Design from './pages/Design';
+import Build from './pages/Build';
+import Pipeline from './pages/Pipeline';
+import GTMPlatform from './pages/GTMPlatform';
+import RealtimeDashboard from './pages/RealtimeDashboard';
+import ProjectTemplates from './pages/ProjectTemplates';
+import Billing from './pages/Billing';
+import ActivityLog from './pages/ActivityLog';
+import AIFeedbackLoop from './pages/AIFeedbackLoop';
+import LandingPage from './pages/LandingPage';
+import ModelMarketplace from './pages/ModelMarketplace';
+import PlatformIntelligence from './pages/PlatformIntelligence';
+import SelfUpgrade from './pages/SelfUpgrade';
+import ExternalUpgrade from './pages/ExternalUpgrade';
+import SelfVerification from './pages/SelfVerification';
+import AutonomousEngine from './pages/AutonomousEngine';
+import PortfolioEngine from './pages/PortfolioEngine';
+import MasterOrchestrator from './pages/MasterOrchestrator';
+import ProductGenerator from './pages/ProductGenerator';
+import GTMEngine from './pages/GTMEngine';
+import SelfProtection from './pages/SelfProtection';
+import SelfHealing from './pages/SelfHealing';
+import Governance from './pages/Governance';
+import DomainManager from './pages/DomainManager';
+import BrandSystem from './pages/BrandSystem';
+import WhiteLabel from './pages/WhiteLabel';
+import DataExport from './pages/DataExport';
+import Architecture from './pages/Architecture';
+import Environments from './pages/Environments';
+import ProductionMonitor from './pages/ProductionMonitor';
+import DemoGenerator from './pages/DemoGenerator';
+import InvestorStudio from './pages/InvestorStudio';
+import GTMAssets from './pages/GTMAssets';
+import PlatformIntelligenceMarketplace from './pages/PlatformIntelligenceMarketplace';
+import CompareTools from './pages/CompareTools';
+import MyStack from './pages/MyStack';
+import Clearance from './pages/Clearance';
+import CreatorStudio from './pages/CreatorStudio';
+import MyCreations from './pages/MyCreations';
+import AutoRunner from './pages/AutoRunner';
+import GuidedStep from './pages/GuidedStep';
+import ManualStep from './pages/ManualStep';
+import MainDashboard from './pages/MainDashboard';
+import Configuration from './pages/Configuration';
+import Onboarding from './pages/Onboarding';
+import ReleaseNotes from './pages/ReleaseNotes';
+import UsersStub from './pages/UsersStub';
+import URLWhitelistStub from './pages/URLWhitelistStub';
+import CostControlsStub from './pages/CostControlsStub';
+import AuditTrail from './pages/AuditTrail';
+import AppStoreDistribution from './pages/AppStoreDistribution';
+import CapabilityTransfer from './pages/CapabilityTransfer';
+import CapabilityPackageSelfRenewal from './pages/CapabilityPackageSelfRenewal';
+import CapabilityPackageSelfProtection from './pages/CapabilityPackageSelfProtection';
+import CapabilityInstallSelfRenewal from './pages/CapabilityInstallSelfRenewal';
+import CapabilityInstallSelfProtection from './pages/CapabilityInstallSelfProtection';
+import TermsOfUse from './pages/TermsOfUse';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import MarketingPage from './pages/MarketingPage';
+
+const AuthenticatedApp = () => {
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+
+  if (isLoadingPublicSettings || isLoadingAuth) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (authError) {
+    if (authError.type === 'user_not_registered') {
+      return <UserNotRegisteredError />;
+    } else if (authError.type === 'auth_required') {
+      navigateToLogin();
+      return null;
+    }
+  }
+
+  return (
+    <ErrorBoundary>
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route path="/old-dashboard" element={<Dashboard />} />
+
+        <Route path="/flow-designer" element={<FlowDesigner />} />
+        <Route path="/run-flow" element={<RunFlow />} />
+        <Route path="/flows" element={<Flows />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/run-history" element={<RunHistory />} />
+        <Route path="/templates" element={<Templates />} />
+        <Route path="/variables" element={<Variables />} />
+        <Route path="/qa-audit" element={<QAAudit />} />
+        <Route path="/research" element={<Research />} />
+        <Route path="/design" element={<Design />} />
+        <Route path="/build" element={<Build />} />
+        <Route path="/pipeline" element={<Pipeline />} />
+        <Route path="/gtm" element={<GTMPlatform />} />
+        <Route path="/realtime" element={<RealtimeDashboard />} />
+        <Route path="/templates-library" element={<ProjectTemplates />} />
+        <Route path="/billing" element={<Billing />} />
+        <Route path="/activity" element={<ActivityLog />} />
+        <Route path="/ai-feedback" element={<AIFeedbackLoop />} />
+        <Route path="/marketplace" element={<ModelMarketplace />} />
+        <Route path="/intelligence" element={<PlatformIntelligence />} />
+        <Route path="/self-upgrade" element={<SelfUpgrade />} />
+        <Route path="/external-upgrade" element={<ExternalUpgrade />} />
+        <Route path="/self-verification" element={<SelfVerification />} />
+        <Route path="/autonomous-engine" element={<AutonomousEngine />} />
+        <Route path="/portfolio-engine" element={<PortfolioEngine />} />
+        <Route path="/master-orchestrator" element={<MasterOrchestrator />} />
+        <Route path="/product-generator" element={<ProductGenerator />} />
+        <Route path="/gtm-engine" element={<GTMEngine />} />
+        <Route path="/self-protection" element={<SelfProtection />} />
+        <Route path="/self-healing" element={<SelfHealing />} />
+        <Route path="/governance" element={<Governance />} />
+        <Route path="/domain-manager" element={<DomainManager />} />
+        <Route path="/brand-system" element={<BrandSystem />} />
+        <Route path="/white-label" element={<WhiteLabel />} />
+        <Route path="/data-export" element={<DataExport />} />
+        <Route path="/architecture" element={<Architecture />} />
+        <Route path="/environments" element={<Environments />} />
+        <Route path="/production-monitor" element={<ProductionMonitor />} />
+        <Route path="/demo-generator" element={<DemoGenerator />} />
+        <Route path="/investor-studio" element={<InvestorStudio />} />
+        <Route path="/gtm-assets" element={<GTMAssets />} />
+        <Route path="/marketplace/intelligence" element={<PlatformIntelligenceMarketplace />} />
+        <Route path="/compare-tools" element={<CompareTools />} />
+        <Route path="/my-stack" element={<MyStack />} />
+        <Route path="/clearance" element={<Clearance />} />
+        {/* NEW ROUTES — UX-C */}
+        <Route path="/dashboard" element={<MainDashboard />} />
+        <Route path="/configuration" element={<Configuration />} />
+        <Route path="/workspace" element={<Navigate to="/configuration" replace />} />
+        <Route path="/my-products" element={<MyCreations />} />
+        <Route path="/auto-runner" element={<AutoRunner />} />
+        <Route path="/guided/:step" element={<GuidedStep />} />
+        <Route path="/manual/:step" element={<ManualStep />} />
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/release-notes" element={<ReleaseNotes />} />
+        <Route path="/users" element={<UsersStub />} />
+        <Route path="/url-whitelist" element={<URLWhitelistStub />} />
+        <Route path="/cost-controls" element={<CostControlsStub />} />
+        <Route path="/audit-trail" element={<AuditTrail />} />
+        <Route path="/app-store-distribution" element={<AppStoreDistribution />} />
+        <Route path="/capability-transfer" element={<CapabilityTransfer />} />
+        <Route path="/capability-packages/self-renewal" element={<CapabilityPackageSelfRenewal />} />
+        <Route path="/capability-packages/self-protection" element={<CapabilityPackageSelfProtection />} />
+        <Route path="/capability-packages/self-renewal/install" element={<CapabilityInstallSelfRenewal />} />
+        <Route path="/capability-packages/self-protection/install" element={<CapabilityInstallSelfProtection />} />
+        <Route path="/terms-of-use" element={<TermsOfUse />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        {/* Legacy redirects — Phase 5 cleanup */}
+        <Route path="/flows" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/flow-designer" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/run-flow" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/run-history" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/variables" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/old-dashboard" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/autonomous-engine" element={<Navigate to="/auto-runner" replace />} />
+        {/* Legacy aliases */}
+        <Route path="/creator-studio" element={<Navigate to="/configuration" replace />} />
+        <Route path="/my-creations" element={<MyCreations />} />
+      </Route>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/landing" element={<MarketingPage />} />
+      <Route path="/about" element={<Navigate to="/landing" replace />} />
+      <Route path="*" element={<PageNotFound />} />
+
+    </Routes>
+    </ErrorBoundary>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <OrchestrationProvider>
+      <AgenticModeProvider>
+      <JobProvider>
+      <SessionProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </SessionProvider>
+      </JobProvider>
+      </AgenticModeProvider>
+      </OrchestrationProvider>
+    </AuthProvider>
+  )
+}
+
+export default App

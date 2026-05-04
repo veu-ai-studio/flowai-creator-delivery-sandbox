@@ -1,0 +1,57 @@
+{
+  "name": "Job",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "crawl",
+        "build",
+        "deploy",
+        "qa",
+        "pipeline"
+      ],
+      "description": "Job type"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "done",
+        "failed"
+      ],
+      "default": "queued"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Job input data"
+    },
+    "result": {
+      "type": "object",
+      "description": "Job output data"
+    },
+    "error": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "progress": {
+      "type": "number",
+      "description": "0-100"
+    }
+  },
+  "required": [
+    "user_email",
+    "type"
+  ]
+}

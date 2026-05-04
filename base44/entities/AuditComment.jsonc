@@ -1,0 +1,38 @@
+{
+  "name": "AuditComment",
+  "type": "object",
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "description": "ID of QAAuditReport"
+    },
+    "workspace_id": {
+      "type": "string",
+      "description": "ID of TeamWorkspace"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Email of commenter"
+    },
+    "content": {
+      "type": "string",
+      "description": "Comment text"
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false
+    },
+    "mentions": {
+      "type": "array",
+      "description": "Emails mentioned in comment",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "report_id",
+    "workspace_id",
+    "content"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "name": "AlertConfig",
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "description": "Target URL to monitor"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email to send alerts to"
+    },
+    "triggers": {
+      "type": "object",
+      "description": "Alert trigger configuration",
+      "properties": {
+        "on_score_drop": {
+          "type": "boolean",
+          "default": false
+        },
+        "score_drop_threshold": {
+          "type": "number",
+          "default": 2,
+          "description": "Points below which to alert"
+        },
+        "on_critical_issues": {
+          "type": "boolean",
+          "default": false
+        },
+        "on_audit_complete": {
+          "type": "boolean",
+          "default": false
+        },
+        "batch_digest_hours": {
+          "type": "number",
+          "default": 24,
+          "description": "Hours between digest emails"
+        }
+      }
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_alert_sent": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "url",
+    "email",
+    "triggers"
+  ]
+}

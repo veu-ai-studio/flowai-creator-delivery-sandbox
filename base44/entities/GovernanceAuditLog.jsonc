@@ -1,0 +1,51 @@
+{
+  "name": "GovernanceAuditLog",
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "user": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "product_url": {
+      "type": "string"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "session_started",
+        "step_completed",
+        "proposal_approved",
+        "proposal_modified",
+        "proposal_skipped",
+        "findings_approved",
+        "findings_rerun",
+        "fix_applied",
+        "fix_skipped",
+        "clearance_decision_issued",
+        "clearance_accepted_and_locked"
+      ]
+    },
+    "action_detail": {
+      "type": "string"
+    },
+    "step_name": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "action_type",
+    "user"
+  ]
+}

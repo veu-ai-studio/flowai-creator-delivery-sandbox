@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buffer v3 - Social Scheduling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100">
+    <div id="app"></div>
+    <script>
+        // State management
+        const state = {
+            posts: JSON.parse(localStorage.getItem('buffer-hardened')) || { posts: [], isPro: false },
+            get isPro() { return this.posts.isPro || false; },
+            get posts_list() { return this.posts.posts || []; }
+        };
+
+        // API Endpoints
+        window.API = {
+            async get() {
+                return { status: 'ok', service: 'buffer-v3-hardened API', timestamp: new Date().toISOString() };
+            },
+            async run(input) {
+                return { success: true, result: 'Processed by Buffer', input, timestamp: new Date().toISOString() };
+            }
+        };
+
+        // Expose APIs globally for fetch calls
+        window.handleApiGet = async () => JSON.stringify(await window.API.get());
+        window.handleApiRun = async (input) => JSON.stringify(await window.API.run(input));
+
+        // Actions
+        function createPost(title, content, status) {
+            if (!title.trim()) {
+                showAlert('Title is required', 'error');
+                return false;
+            }
+            const freeLimit = 5;
+            const postCount = state.posts_list.length;
+            if (!state.isPro && postCount >= freeLimit) {
+                showAlert('🔒 Free plan limited to 5 posts. Upgrade to Pro!', 'warning');
+                return false;
+            }
+            const post = { title, content, status, created: new Date().toLocaleDateString() };
+            state.posts.posts.unshift(post);
+            save();
+            showAlert('✅ Post saved!', 'success');
+            return true;
+        }
+
+        function editPost(index, title, content, status) {
+            if (!title.trim()) {
+                showAlert('Title is required', 'error');
+                return false;
+            }
+            state.posts.posts.splice(index, 1);
+            const post = { title, content, status, created: new Date().toLocaleDateString() };
+            state.posts.posts.unshift(post);
+            save();
+            showAlert('✅ Post updated!', 'success');
+            return true;
+        }
+
+        function deletePost(index) {
+            if (confirm('Delete this post?')) {
+                state.posts.posts.splice(index, 1);
+                save();
+                showAlert('Post deleted', 'info');
+            }
+        }
+
+        function upgradePro() {
+            if (confirm('Upgrade to Pro? All features unlocked!')) {
+                state.posts.isPro = true;
+                save();
+                showAlert('🎉 Upgraded to Pro!', 'success');
+            }
+        }
+
+        function save() {
+            localStorage.setItem('buffer-hardened', JSON.stringify(state.posts));
+            render();
+        }
+
+        function showAlert(msg, type = 'info') {
+            const alertEl = document.createElement('div');
+            const colors = { success: 'bg-emerald-500/20 text-emerald-400', error: 'bg-red-500/20 text-red-400', warning: 'bg-amber-500/20 text-amber-400', info: 'bg-blue-500/20 text-blue-400' };
+            alertEl.className = `fixed top-4 left-4 p-3 rounded-lg text-sm font-semibold ${colors[type]} z-50`;
+            alertEl.textContent = msg;
+            document.body.appendChild(alertEl);
+            setTimeout(() => alertEl.remove(), 3000);
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            const plan = state.isPro ? '✅ Pro' : 'Free';
+            const planBtn = state.isPro ? '' : '<button onclick="upgradePro()" class="px-3 py-1 bg-primary hover:bg-primary/90 rounded text-sm font-semibold">Upgrade to Pro</button>';
+            
+            let postsHtml = state.posts_list.length === 0 
+                ? '<p class="text-gray-400 text-sm">No posts yet...</p>'
+                : state.posts_list.map((p, i) => `
+                    <div class="bg-gray-900 p-4 rounded-lg border border-gray-800 hover:border-gray-700">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h3 class="font-bold text-white">${p.title}</h3>
+                                <p class="text-gray-400 text-sm mt-1">${p.content}</p>
+                                <div class="flex gap-2 items-center mt-2">
+                                    <span class="text-xs px-2 py-0.5 rounded ${p.status === 'draft' ? 'bg-gray-700 text-gray-300' : p.status === 'scheduled' ? 'bg-blue-500/20 text-blue-400' : 'bg-emerald-500/20 text-emerald-400'}">${p.status}</span>
+                                    <span class="text-xs text-gray-500">${p.created}</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="editPost(${i}, '${p.title}', '${p.content}', '${p.status}')" class="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs">Edit</button>
+                                <button onclick="deletePost(${i})" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+            app.innerHTML = `
+                <nav class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center sticky top-0 z-40">
+                    <h1 class="text-xl font-bold">Buffer v3</h1>
+                    <div class="flex gap-4 items-center text-sm">
+                        <span class="text-gray-400">Plan: <span class="font-bold text-white">${plan}</span></span>
+                        ${planBtn}
+                    </div>
+                </nav>
+
+                <div class="max-w-2xl mx-auto p-6 space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold">Posts (${state.posts_list.length})</h2>
+                        <button onclick="toggleForm()" class="px-4 py-2 bg-primary hover:bg-primary/90 rounded font-semibold">+ New Post</button>
+                    </div>
+
+                    <form id="postForm" class="bg-gray-900 p-6 rounded-lg border border-gray-800 hidden space-y-4">
+                        <input id="postTitle" type="text" placeholder="Post title" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500">
+                        <textarea id="postContent" placeholder="Post content" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500 h-24"></textarea>
+                        <select id="postStatus" class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white">
+                            <option value="draft">Draft</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="published">Published</option>
+                        </select>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="submitPost()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 p-2 rounded font-semibold">Save Post</button>
+                            <button type="button" onclick="toggleForm()" class="flex-1 bg-gray-700 hover:bg-gray-600 p-2 rounded font-semibold">Cancel</button>
+                        </div>
+                    </form>
+
+                    <div class="space-y-3">
+                        ${postsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.toggleForm = () => {
+            document.getElementById('postForm').classList.toggle('hidden');
+        };
+
+        window.submitPost = () => {
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            const status = document.getElementById('postStatus').value;
+            if (createPost(title, content, status)) {
+                document.getElementById('postTitle').value = '';
+                document.getElementById('postContent').value = '';
+                document.getElementById('postStatus').value = 'draft';
+                toggleForm();
+            }
+        };
+
+        window.editPost = (index, title, content, status) => {
+            deletePost(index);
+            document.getElementById('postTitle').value = title;
+            document.getElementById('postContent').value = content;
+            document.getElementById('postStatus').value = status;
+            document.getElementById('postForm').classList.remove('hidden');
+        };
+
+        render();
+    </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopHub - Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100">
+    <div id="app"></div>
+    <script>
+        const state = {
+            data: JSON.parse(localStorage.getItem('shophub-hardened')) || { cart: [], isPro: false },
+            get isPro() { return this.data.isPro || false; },
+            get cart() { return this.data.cart || [] },
+            view: 'products' // products | cart
+        };
+
+        const allProducts = [
+            { id: 1, name: 'Laptop', price: 999, pro: false },
+            { id: 2, name: 'Mouse', price: 25, pro: false },
+            { id: 3, name: 'Keyboard', price: 75, pro: false },
+            { id: 4, name: 'Monitor', price: 299, pro: false },
+            { id: 5, name: 'Headphones', price: 150, pro: false },
+            { id: 6, name: 'Webcam Pro', price: 120, pro: true },
+            { id: 7, name: 'USB Hub', price: 45, pro: true }
+        ];
+
+        function getVisibleProducts() {
+            return state.isPro ? allProducts : allProducts.slice(0, 5);
+        }
+
+        function addToCart(productId, qty) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+            for (let i = 0; i < qty; i++) {
+                state.data.cart.push({ id: product.id, name: product.name, price: product.price });
+            }
+            save();
+            showAlert(`✅ ${product.name} added!`, 'success');
+        }
+
+        function removeFromCart(index) {
+            state.data.cart.splice(index, 1);
+            save();
+            showAlert('Removed', 'info');
+        }
+
+        function getTotal() {
+            return state.cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
+        }
+
+        function checkout() {
+            const name = document.getElementById('checkoutName')?.value || '';
+            const email = document.getElementById('checkoutEmail')?.value || '';
+            const address = document.getElementById('checkoutAddress')?.value || '';
+            
+            if (!name || !email || !address) {
+                showAlert('⚠️ Fill all fields', 'error');
+                return;
+            }
+            const total = getTotal();
+            showAlert(`🎉 Order placed for $${total}!`, 'success');
+            state.data.cart = [];
+            save();
+            state.view = 'products';
+            render();
+        }
+
+        function upgradePro() {
+            if (confirm('Upgrade to Pro? Access all products!')) {
+                state.data.isPro = true;
+                save();
+                showAlert('🎉 Upgraded to Pro!', 'success');
+            }
+        }
+
+        function save() {
+            localStorage.setItem('shophub-hardened', JSON.stringify(state.data));
+            render();
+        }
+
+        function showAlert(msg, type = 'info') {
+            const colors = { success: 'bg-emerald-500/20 text-emerald-400', error: 'bg-red-500/20 text-red-400', warning: 'bg-amber-500/20 text-amber-400', info: 'bg-blue-500/20 text-blue-400' };
+            const el = document.createElement('div');
+            el.className = `fixed top-4 left-4 p-3 rounded-lg text-sm font-semibold ${colors[type]} z-50`;
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            const plan = state.isPro ? '✅ Pro' : 'Free';
+            const planBtn = state.isPro ? '' : '<button onclick="upgradePro()" class="px-3 py-1 bg-primary hover:bg-primary/90 rounded text-sm font-semibold">Upgrade</button>';
+            const cartCount = state.cart.length;
+
+            if (state.view === 'products') {
+                const products = getVisibleProducts();
+                const productsHtml = products.map(p => `
+                    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-gray-700">
+                        <h3 class="font-bold text-white">${p.name}</h3>
+                        <p class="text-lg font-semibold text-emerald-400 mt-2">$${p.price}</p>
+                        ${p.pro && !state.isPro ? '<p class="text-xs text-amber-400 mt-2">🔒 Pro Only</p>' : ''}
+                        <div class="flex gap-2 mt-3">
+                            <input type="number" id="qty${p.id}" value="1" min="1" class="flex-1 bg-gray-800 border border-gray-700 p-2 rounded text-white text-sm">
+                            <button onclick="addToCart(${p.id}, parseInt(document.getElementById('qty${p.id}').value))" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-semibold">Add</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                app.innerHTML = `
+                    <nav class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center sticky top-0 z-40">
+                        <h1 class="text-xl font-bold">ShopHub</h1>
+                        <div class="flex gap-4 items-center text-sm">
+                            <span class="text-gray-400">Plan: <span class="font-bold">${plan}</span></span>
+                            ${planBtn}
+                            <button onclick="state.view='cart'; render()" class="px-3 py-2 bg-primary hover:bg-primary/90 rounded font-semibold relative">
+                                🛒 Cart
+                                ${cartCount > 0 ? `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">${cartCount}</span>` : ''}
+                            </button>
+                        </div>
+                    </nav>
+
+                    <div class="max-w-6xl mx-auto p-6">
+                        <h2 class="text-2xl font-bold mb-4">Products (${products.length})</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${productsHtml}
+                        </div>
+                    </div>
+                `;
+            } else {
+                const cartHtml = state.cart.length === 0 
+                    ? '<p class="text-gray-400">Your cart is empty.</p>'
+                    : state.cart.map((item, i) => `
+                        <div class="flex justify-between items-center bg-gray-900 p-3 rounded border border-gray-800">
+                            <div>
+                                <p class="font-semibold">${item.name}</p>
+                                <p class="text-sm text-gray-400">$${item.price}</p>
+                            </div>
+                            <button onclick="removeFromCart(${i})" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">Remove</button>
+                        </div>
+                    `).join('');
+
+                const total = getTotal();
+
+                app.innerHTML = `
+                    <nav class="bg-gray-900 border-b border-gray-800 p-4 flex justify-between items-center sticky top-0 z-40">
+                        <h1 class="text-xl font-bold">ShopHub - Cart</h1>
+                        <button onclick="state.view='products'; render()" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm">← Back</button>
+                    </nav>
+
+                    <div class="max-w-2xl mx-auto p-6 space-y-6">
+                        <div class="space-y-3">
+                            ${cartHtml}
+                        </div>
+
+                        ${state.cart.length > 0 ? `
+                            <div class="bg-gray-900 border border-gray-800 p-4 rounded">
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-lg font-bold">Total:</span>
+                                    <span class="text-2xl font-bold text-emerald-400">$${total}</span>
+                                </div>
+
+                                <form class="space-y-3" onsubmit="event.preventDefault(); checkout()">
+                                    <input id="checkoutName" type="text" placeholder="Full Name" required class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500">
+                                    <input id="checkoutEmail" type="email" placeholder="Email" required class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500">
+                                    <input id="checkoutAddress" type="text" placeholder="Address" required class="w-full bg-gray-800 border border-gray-700 p-2 rounded text-white placeholder-gray-500">
+                                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 p-3 rounded font-semibold">Complete Purchase</button>
+                                </form>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        render();
+    </script>
+</body>
+</html>

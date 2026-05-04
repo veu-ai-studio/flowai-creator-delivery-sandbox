@@ -1,0 +1,57 @@
+{
+  "name": "NotificationConfig",
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "description": "Target URL being monitored"
+    },
+    "slack_webhook_url": {
+      "type": "string",
+      "description": "Slack webhook URL for notifications"
+    },
+    "slack_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "email_recipients": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Email addresses to notify"
+    },
+    "email_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "github_repo": {
+      "type": "string",
+      "description": "GitHub repo (owner/repo format)"
+    },
+    "github_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "create_issues_for_critical": {
+      "type": "boolean",
+      "default": true,
+      "description": "Auto-create GitHub issues for critical findings"
+    },
+    "notify_on_score_change": {
+      "type": "boolean",
+      "default": true
+    },
+    "notify_on_critical_issues": {
+      "type": "boolean",
+      "default": true
+    },
+    "notify_on_accessibility_failures": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "url"
+  ]
+}

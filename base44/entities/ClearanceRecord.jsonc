@@ -1,0 +1,157 @@
+{
+  "name": "ClearanceRecord",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "base44_url": {
+      "type": "string"
+    },
+    "custom_domain": {
+      "type": "string"
+    },
+    "target_audience": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "step1_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "passed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "step1_score": {
+      "type": "number"
+    },
+    "step1_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "step2_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "passed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "step2_score": {
+      "type": "number"
+    },
+    "step2_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "step3_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "passed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "step3_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "step4_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "passed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "step4_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "step5_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "passed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "step5_demo_approved": {
+      "type": "boolean",
+      "default": false
+    },
+    "step5_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "step6_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "passed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "step6_domain_entered": {
+      "type": "boolean",
+      "default": false
+    },
+    "step6_dns_confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "step6_completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "cleared",
+        "blocked"
+      ],
+      "default": "not_started"
+    },
+    "cleared_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sprint2_blocking_issues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sprint2_fix_sprint": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "product_name"
+  ]
+}

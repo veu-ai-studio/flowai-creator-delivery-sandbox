@@ -1,0 +1,36 @@
+{
+  "name": "UsageRecord",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "run",
+        "deploy",
+        "audit",
+        "research",
+        "build"
+      ],
+      "description": "Billed action"
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "free",
+        "pro"
+      ],
+      "default": "free"
+    },
+    "count": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "user_email",
+    "action"
+  ]
+}

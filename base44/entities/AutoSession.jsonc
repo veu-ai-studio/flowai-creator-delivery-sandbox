@@ -1,0 +1,48 @@
+{
+  "name": "AutoSession",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string"
+    },
+    "product_url": {
+      "type": "string"
+    },
+    "step_results": {
+      "type": "object",
+      "description": "Array of 8 step objects each with step_name, status, duration_seconds, output_summary, full_output"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": [
+        "running",
+        "completed",
+        "failed",
+        "paused"
+      ],
+      "default": "running"
+    },
+    "current_step": {
+      "type": "number",
+      "default": 1
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "final_approved": {
+      "type": "boolean",
+      "default": false
+    },
+    "deliverables": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "product_name"
+  ]
+}
