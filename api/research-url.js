@@ -1,50 +1,40 @@
 // POST /api/research-url
-// Body: { url: string, objective?: string }
-// Fetches the page, hands it to Claude, returns structured findings.
+// Body: { url: string, objective?: string, force?: 'browserless'|'playwright-endpoint'|'simple-fetch' }
+// Crawls the page (JS-rendered when possible), then asks Claude for a research brief.
 
-import { setCorsHeaders, callClaude, fetchUrlAsText, extractTextFromHtml } from './_lib/claude.js';
+import { setCorsHeaders, callClaude } from './_lib/claude.js';
+import { crawl, summarisePageForPrompt } from './_lib/crawler.js';
+import { recordCost } from './_lib/cost.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
 
-  const { url, objective } = req.body || {};
+  const { url, objective, force, sessionId } = req.body || {};
   if (typeof url !== 'string' || !url.trim()) {
     return res.status(400).json({ error: 'Body must include "url" string.' });
   }
 
-  // Normalise URL
-  let target = url.trim();
-  if (!/^https?:\/\//i.test(target)) target = 'https://' + target;
-
-  const fetchResult = await fetchUrlAsText(target);
-  if (!fetchResult.ok) {
+  const page = await crawl(url, { force });
+  if (!page.ok) {
     return res.status(200).json({
       ok: false,
       reachable: false,
-      reason: fetchResult.reason,
-      url: target,
+      reason: page.reason,
+      attempts: page.attempts,
+      url: page.url,
     });
   }
 
-  const page = extractTextFromHtml(fetchResult.html, target);
+  const objectiveLine = objective ? `Session objective: ${objective}\n\n` : '';
+  const pageBlock = summarisePageForPrompt(page);
 
-  const objectiveLine = objective
-    ? `Session objective: ${objective}\n\n`
-    : '';
+  const prompt = `${objectiveLine}You are FlowAI's research engine. Produce a concise structured research brief for the product, based ONLY on the fetched page content below.
 
-  const prompt = `${objectiveLine}You are FlowAI's research engine. Produce a concise structured research brief for the product at the URL below, based ONLY on the fetched page content.
+${pageBlock}
 
-URL: ${page.url}
-Title: ${page.title}
-Meta description: ${page.metaDescription}
-Headings: ${page.headings.map((h) => `${h.tag}: ${h.text}`).join(' | ')}
-
-Page body (truncated):
-${page.bodyText.slice(0, 8000)}
-
-Produce the brief in this format (use plain text headers, no markdown bold):
+Produce the brief in this format (plain text headers, no markdown bold):
 
 PRODUCT OVERVIEW
 - One sentence on what the product does (quote from the page).
@@ -71,21 +61,20 @@ NEXT ACTION
 If the page content is insufficient, say so explicitly and stop. Do not speculate beyond the page.`;
 
   try {
-    const claude = await callClaude({
-      prompt,
-      maxTokens: 1000,
-      complexity: 'routine',
-    });
-
+    const claude = await callClaude({ prompt, maxTokens: 1000, complexity: 'routine' });
+    recordCost({ endpoint: '/api/research-url', sessionId, ...claude });
     return res.status(200).json({
       ok: true,
       reachable: true,
       url: page.url,
+      method: page.method,
+      jsRendered: page.jsRendered,
+      warnings: page.warnings,
       page: {
         title: page.title,
         metaDescription: page.metaDescription,
-        headings: page.headings.slice(0, 10),
-        bodyTextSnippet: page.bodyText.slice(0, 1500),
+        headings: (page.headings || []).slice(0, 10),
+        bodyTextSnippet: (page.bodyText || '').slice(0, 1500),
       },
       analysis: claude.text,
       model: claude.model,
@@ -97,10 +86,7 @@ If the page content is insufficient, say so explicitly and stop. Do not speculat
       reachable: true,
       error: 'Claude call failed',
       details: e.message || String(e),
-      page: {
-        title: page.title,
-        metaDescription: page.metaDescription,
-      },
+      page: { title: page.title, metaDescription: page.metaDescription },
     });
   }
 }

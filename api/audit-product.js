@@ -1,8 +1,10 @@
 // POST /api/audit-product
-// Body: { url: string, auditType?: 'demo'|'investor'|'launch'|'governance', pageContent?: string }
-// Returns a four-dimension scored audit (Content, UX, Technical, Compliance) plus overall verdict.
+// Body: { url: string, auditType?: 'demo'|'investor'|'launch'|'governance', pageContent?: string, force?, sessionId? }
+// Returns a four-dimension scored audit (Content, UX, Technical, Compliance).
 
-import { setCorsHeaders, callClaude, fetchUrlAsText, extractTextFromHtml } from './_lib/claude.js';
+import { setCorsHeaders, callClaude } from './_lib/claude.js';
+import { crawl, summarisePageForPrompt } from './_lib/crawler.js';
+import { recordCost } from './_lib/cost.js';
 
 const AUDIT_LENSES = {
   demo: 'Audit specifically for prospect demo readiness. Every finding must rate DEMO RISK as SAFE / CAUTION / BLOCKER.',
@@ -16,39 +18,45 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
 
-  const { url, auditType = 'demo', pageContent: providedContent } = req.body || {};
+  const { url, auditType = 'demo', pageContent: providedContent, force, sessionId } = req.body || {};
   if (typeof url !== 'string' || !url.trim()) {
     return res.status(400).json({ error: 'Body must include "url" string.' });
   }
 
-  let target = url.trim();
-  if (!/^https?:\/\//i.test(target)) target = 'https://' + target;
+  let pageBlock = providedContent;
+  let pageMeta = null;
 
-  // Use caller-provided page content if available (avoid double fetch); else fetch.
-  let pageContext = providedContent;
-  let page = null;
-  if (!pageContext) {
-    const fetchResult = await fetchUrlAsText(target);
-    if (!fetchResult.ok) {
+  if (!pageBlock) {
+    const page = await crawl(url, { force });
+    if (!page.ok) {
       return res.status(200).json({
         ok: false,
         reachable: false,
-        reason: fetchResult.reason,
-        url: target,
+        reason: page.reason,
+        attempts: page.attempts,
+        url: page.url,
       });
     }
-    page = extractTextFromHtml(fetchResult.html, target);
-    pageContext = `Title: ${page.title}\nMeta: ${page.metaDescription}\nHeadings: ${page.headings.map((h) => h.text).join(' | ')}\n\nBody:\n${page.bodyText.slice(0, 8000)}`;
+    pageBlock = summarisePageForPrompt(page);
+    pageMeta = {
+      method: page.method,
+      jsRendered: page.jsRendered,
+      title: page.title,
+      metaDescription: page.metaDescription,
+      headings: (page.headings || []).slice(0, 10),
+      warnings: page.warnings,
+      url: page.url,
+    };
   }
 
   const lens = AUDIT_LENSES[auditType] || AUDIT_LENSES.demo;
 
-  const prompt = `You are FlowAI's quality audit engine. Score the product at ${target} across four dimensions.
+  const prompt = `You are FlowAI's quality audit engine. Score the product across four dimensions.
 
 ${lens}
 
 Page content:
-${pageContext}
+${pageBlock}
 
 Score each dimension 0-25. Format the output exactly like this — plain text, no markdown bold:
 
@@ -74,33 +82,19 @@ TOP 3 ISSUES
 VERDICT: One sentence specific to this product.`;
 
   try {
-    const claude = await callClaude({
-      prompt,
-      maxTokens: 1000,
-      complexity: 'routine',
-    });
-
+    const claude = await callClaude({ prompt, maxTokens: 1000, complexity: 'routine' });
+    recordCost({ endpoint: '/api/audit-product', sessionId, ...claude });
     return res.status(200).json({
       ok: true,
       reachable: true,
-      url: target,
+      url: pageMeta?.url || url,
       auditType,
       analysis: claude.text,
       model: claude.model,
       usage: claude.usage,
-      page: page
-        ? {
-            title: page.title,
-            metaDescription: page.metaDescription,
-            headings: page.headings.slice(0, 10),
-          }
-        : undefined,
+      page: pageMeta || undefined,
     });
   } catch (e) {
-    return res.status(500).json({
-      ok: false,
-      error: 'Claude call failed',
-      details: e.message || String(e),
-    });
+    return res.status(500).json({ ok: false, error: 'Claude call failed', details: e.message || String(e) });
   }
 }

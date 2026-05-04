@@ -1,15 +1,16 @@
 // POST /api/describe-product
-// Body: { description: string, productName?: string, audience?: string, features?: string }
-// Takes a product description form and returns enrichment + suggestions.
+// Body: { description: string, productName?: string, audience?: string, features?: string, sessionId? }
+// Returns enrichment + suggestions for a product description.
 
 import { setCorsHeaders, callClaude } from './_lib/claude.js';
+import { recordCost } from './_lib/cost.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
 
-  const { description, productName, audience, features } = req.body || {};
+  const { description, productName, audience, features, sessionId } = req.body || {};
   if (typeof description !== 'string' || !description.trim()) {
     return res.status(400).json({ error: 'Body must include non-empty "description" string.' });
   }
@@ -55,12 +56,8 @@ OPEN QUESTIONS
 - Up to 3 questions the operator should answer to improve the brief.`;
 
   try {
-    const claude = await callClaude({
-      prompt,
-      maxTokens: 1000,
-      complexity: 'routine',
-    });
-
+    const claude = await callClaude({ prompt, maxTokens: 1000, complexity: 'routine' });
+    recordCost({ endpoint: '/api/describe-product', sessionId, ...claude });
     return res.status(200).json({
       ok: true,
       analysis: claude.text,
@@ -68,10 +65,6 @@ OPEN QUESTIONS
       usage: claude.usage,
     });
   } catch (e) {
-    return res.status(500).json({
-      ok: false,
-      error: 'Claude call failed',
-      details: e.message || String(e),
-    });
+    return res.status(500).json({ ok: false, error: 'Claude call failed', details: e.message || String(e) });
   }
 }
