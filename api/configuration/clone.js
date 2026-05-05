@@ -26,6 +26,7 @@ import { crawl, summarisePageForPrompt, captureScreenshot } from '../_lib/crawle
 import { saveSnapshot, listObjectives } from '../_lib/configRegistry.js';
 import { runStart, runClaude, runComplete, runFail, setProgress, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
 import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
+import { withRequestLog } from '../_lib/requestLog.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
 
@@ -272,7 +273,7 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
   }
 }
 
-export default async function handler(req, res) {
+async function cloneHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
@@ -283,5 +284,7 @@ export default async function handler(req, res) {
   if (!result.ok) return res.status(500).json(result);
   return res.status(200).json(result);
 }
+
+export default withRequestLog(cloneHandler, { endpoint: '/api/configuration/clone' });
 
 export const config = { maxDuration: 90 };

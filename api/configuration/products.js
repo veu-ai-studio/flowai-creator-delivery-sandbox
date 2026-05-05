@@ -14,10 +14,11 @@ import {
 } from '../_lib/configRegistry.js';
 import { resolveOrgId } from '../_lib/tenant.js';
 import { logger } from '../_lib/logger.js';
+import { withRequestLog } from '../_lib/requestLog.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
 
-export default async function handler(req, res) {
+async function productsHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
 
@@ -65,3 +66,5 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, error: e.message || String(e) });
   }
 }
+
+export default withRequestLog(productsHandler, { endpoint: '/api/configuration/products' });

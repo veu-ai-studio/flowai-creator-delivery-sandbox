@@ -13,6 +13,7 @@ import { setCorsHeaders } from '../_lib/claude.js';
 import { resolveOrgId } from '../_lib/tenant.js';
 import { runStart, runClaude, runComplete, runFail, setProgress, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
 import { listObjectives, getProduct } from '../_lib/configRegistry.js';
+import { withRequestLog } from '../_lib/requestLog.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
 
@@ -166,7 +167,7 @@ Both parts are required. Do not add commentary after the JSON block.`;
 }
 
 // HTTP handler — thin wrapper around execute().
-export default async function handler(req, res) {
+async function describeHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
@@ -177,5 +178,7 @@ export default async function handler(req, res) {
   if (!result.ok) return res.status(500).json(result);
   return res.status(200).json(result);
 }
+
+export default withRequestLog(describeHandler, { endpoint: '/api/configuration/describe' });
 
 export const config = { maxDuration: 60 };

@@ -28,6 +28,7 @@ import { resolveOrgId } from '../_lib/tenant.js';
 import { createRun, getRun, getSnapshot, updateRun } from '../_lib/configRegistry.js';
 import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
 import { logger } from '../_lib/logger.js';
+import { withRequestLog } from '../_lib/requestLog.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
 
@@ -42,7 +43,7 @@ function estimateEta(agent, payload) {
   return 30;
 }
 
-export default async function handler(req, res) {
+async function orchestratorRunHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
 
@@ -195,6 +196,8 @@ function summariseInput(agent, payload) {
   if (agent === 'describe') return { descriptionLength: (payload?.description || '').length };
   return {};
 }
+
+export default withRequestLog(orchestratorRunHandler, { endpoint: '/api/orchestrator/run' });
 
 // Vercel: give the function up to 90s. Pull-resume mode means a polling GET
 // can drive a full clone (capture + 2 Claude calls = 30-90s) inside one

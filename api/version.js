@@ -5,6 +5,7 @@
 // thing a deploy verifier or operator checks.
 
 import { setCorsHeaders } from './_lib/claude.js';
+import { withRequestLog } from './_lib/requestLog.js';
 import { selectedBackend } from './_lib/db.js';
 import { isInngestEnabled } from './_lib/inngest.js';
 import { isAuthRequired, isClerkConfigured } from './_lib/auth.js';
@@ -40,7 +41,7 @@ try {
 // while after deploy; first instantiation is close-enough to deploy time.)
 const STARTED_AT = new Date().toISOString();
 
-export default async function handler(req, res) {
+async function versionHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Use GET' });
@@ -97,3 +98,5 @@ export default async function handler(req, res) {
     },
   });
 }
+
+export default withRequestLog(versionHandler, { endpoint: '/api/version' });

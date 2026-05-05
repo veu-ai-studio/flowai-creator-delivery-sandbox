@@ -24,6 +24,7 @@ import { isEmailConfigured } from './_lib/email.js';
 import { isEmbeddingsConfigured, embeddingDimensions } from './_lib/embeddings.js';
 import { isAxiomConfigured } from './_lib/logger.js';
 import { isSupabaseConfigured, getSupabase } from './_lib/supabase.js';
+import { withRequestLog } from './_lib/requestLog.js';
 
 // ─── Probe helpers ────────────────────────────────────────────────────
 
@@ -154,7 +155,7 @@ async function probeAxiom() {
 
 // ─── Handler ──────────────────────────────────────────────────────────
 
-export default async function handler(req, res) {
+async function diagnosticHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Use GET' });
@@ -210,5 +211,7 @@ export default async function handler(req, res) {
     },
   });
 }
+
+export default withRequestLog(diagnosticHandler, { endpoint: '/api/diagnostic' });
 
 export const config = { maxDuration: 30 };
