@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "total_30d": 218.40,
+    "avg_per_run": 4.37,
+    "active_sessions": 2
+  },
+  "by_product": [
+    { "name": "SAIGE", "cost": 72.10, "runs": 18 },
+    { "name": "PressAI", "cost": 51.30, "runs": 13 },
+    { "name": "ReachSMS", "cost": 38.60, "runs": 9 },
+    { "name": "RelTwin", "cost": 44.20, "runs": 11 },
+    { "name": "MyBirthSafe", "cost": 12.20, "runs": 4 }
+  ],
+  "daily": [
+    { "date": "Apr 6",  "cost": 6.2 },
+    { "date": "Apr 7",  "cost": 8.1 },
+    { "date": "Apr 8",  "cost": 4.4 },
+    { "date": "Apr 9",  "cost": 11.3 },
+    { "date": "Apr 10", "cost": 7.8 },
+    { "date": "Apr 11", "cost": 5.5 },
+    { "date": "Apr 12", "cost": 9.0 },
+    { "date": "Apr 13", "cost": 3.2 },
+    { "date": "Apr 14", "cost": 12.1 },
+    { "date": "Apr 15", "cost": 6.7 },
+    { "date": "Apr 16", "cost": 8.9 },
+    { "date": "Apr 17", "cost": 4.1 },
+    { "date": "Apr 18", "cost": 7.3 },
+    { "date": "Apr 19", "cost": 5.8 },
+    { "date": "Apr 20", "cost": 10.2 },
+    { "date": "Apr 21", "cost": 6.4 },
+    { "date": "Apr 22", "cost": 9.7 },
+    { "date": "Apr 23", "cost": 4.9 },
+    { "date": "Apr 24", "cost": 8.3 },
+    { "date": "Apr 25", "cost": 6.1 },
+    { "date": "Apr 26", "cost": 11.5 },
+    { "date": "Apr 27", "cost": 7.0 },
+    { "date": "Apr 28", "cost": 5.3 },
+    { "date": "Apr 29", "cost": 9.8 },
+    { "date": "Apr 30", "cost": 4.7 },
+    { "date": "May 1",  "cost": 8.6 },
+    { "date": "May 2",  "cost": 6.9 },
+    { "date": "May 3",  "cost": 10.4 },
+    { "date": "May 4",  "cost": 7.2 },
+    { "date": "May 5",  "cost": 5.1 }
+  ]
+}

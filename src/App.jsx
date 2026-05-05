@@ -86,6 +86,10 @@ import PortfolioDashboard from './pages/PortfolioDashboard';
 import ProductRegistry from './pages/ProductRegistry';
 import RunsHistory from './pages/RunsHistory';
 import OrgSettings from './pages/OrgSettings';
+import VEUaaSMarketing from './pages/VEUaaSMarketing';
+import DemoSandbox from './pages/DemoSandbox';
+import LiveDemo from './pages/LiveDemo';
+import EnterpriseDemo from './pages/EnterpriseDemo';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -199,6 +203,11 @@ const AuthenticatedApp = () => {
       </Route>
       <Route path="/" element={<LandingPage />} />
       <Route path="/landing" element={<MarketingPage />} />
+      {/* GTM Demo Tiers — public, no AppLayout */}
+      <Route path="/veaas" element={<VEUaaSMarketing />} />
+      <Route path="/demo" element={<DemoSandbox />} />
+      <Route path="/live-demo" element={<LiveDemo />} />
+      <Route path="/enterprise-demo" element={<EnterpriseDemo />} />
       <Route path="/about" element={<Navigate to="/landing" replace />} />
       <Route path="*" element={<PageNotFound />} />
 

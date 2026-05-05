@@ -1,0 +1,12 @@
+[
+  { "id": "run-001", "product": "SAIGE", "type": "auto", "status": "completed", "verdict": "CLEARED", "steps": 8, "started_at": "2026-05-04T14:00:00Z", "duration_min": 9, "score": 8.4 },
+  { "id": "run-002", "product": "RelTwin", "type": "auto", "status": "completed", "verdict": "CLEARED", "steps": 8, "started_at": "2026-05-04T07:00:00Z", "duration_min": 11, "score": 7.8 },
+  { "id": "run-003", "product": "PressAI", "type": "guided", "status": "completed", "verdict": "CONDITIONAL", "steps": 6, "started_at": "2026-05-03T09:00:00Z", "duration_min": 42, "score": 7.1 },
+  { "id": "run-004", "product": "ReachSMS", "type": "auto", "status": "completed", "verdict": "CONDITIONAL", "steps": 8, "started_at": "2026-05-02T18:30:00Z", "duration_min": 8, "score": 6.2 },
+  { "id": "run-005", "product": "MyBirthSafe", "type": "manual", "status": "completed", "verdict": "NOT CLEARED", "steps": 4, "started_at": "2026-05-01T12:00:00Z", "duration_min": 90, "score": 5.9 },
+  { "id": "run-006", "product": "SAIGE", "type": "auto", "status": "completed", "verdict": "CLEARED", "steps": 8, "started_at": "2026-05-01T08:00:00Z", "duration_min": 10, "score": 8.1 },
+  { "id": "run-007", "product": "RelTwin", "type": "guided", "status": "completed", "verdict": "CLEARED", "steps": 8, "started_at": "2026-04-30T11:00:00Z", "duration_min": 38, "score": 7.6 },
+  { "id": "run-008", "product": "PressAI", "type": "auto", "status": "completed", "verdict": "CONDITIONAL", "steps": 8, "started_at": "2026-04-29T15:00:00Z", "duration_min": 9, "score": 6.8 },
+  { "id": "run-009", "product": "SAIGE", "type": "auto", "status": "completed", "verdict": "CLEARED", "steps": 8, "started_at": "2026-04-28T14:00:00Z", "duration_min": 10, "score": 8.0 },
+  { "id": "run-010", "product": "ReachSMS", "type": "guided", "status": "completed", "verdict": "NOT CLEARED", "steps": 5, "started_at": "2026-04-27T10:00:00Z", "duration_min": 55, "score": 5.4 }
+]
