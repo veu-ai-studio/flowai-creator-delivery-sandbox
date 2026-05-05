@@ -19,81 +19,21 @@ import {
   upsertObjective as upsertMemoryObjective,
 } from '../_lib/configRegistry.js';
 import { logger } from '../_lib/logger.js';
+import { ORG, VEU_PRODUCTS } from '../_lib/productDomains.js';
 
-const ORG = {
-  id: 'veu-ai-studio',          // human-readable id we use everywhere today
-  clerk_org_id: null,            // tomorrow Clerk assigns the canonical id
-  name: 'VEU AI Studio',
-  slug: 'veu-ai-studio',
-  plan: 'free',
-};
-
-// Canonical VEU portfolio. Update here when products are added/renamed.
-const VEU_SEED = [
-  {
-    name: 'SAIGE',
-    slug: 'saige',
-    live_url: 'https://saigedemo.com',
-    description: 'Sustainability + ESG + EHS + CSR enterprise impact platform',
-    type: 'web',
-    status: 'active',
-    tags: ['sustainability', 'esg', 'ehs'],
-    objectives: [
-      { type: 'goal', value: 'Capture early-access registrations from sustainability/EHS leaders', weight: 1 },
-      { type: 'preference', value: 'Audit lens: investor_review and full_governance', weight: 1 },
-    ],
-  },
-  {
-    name: 'PressAI',
-    slug: 'pressai',
-    live_url: 'https://ourpublishingai.com',
-    description: 'AI publishing platform for authors and publishers',
-    type: 'web',
-    status: 'active',
-    tags: ['publishing', 'agentic'],
-    objectives: [
-      { type: 'goal', value: 'Drive free sign-ups and convert to Creator/Professional/Enterprise tiers', weight: 1 },
-      { type: 'constraint', value: 'AI disclosure required (EU AI Act, US state laws)', weight: 1 },
-    ],
-  },
-  {
-    name: 'ReachSMS',
-    slug: 'reachsms',
-    live_url: '',                                  // TODO — URL unknown, document gap
-    description: 'SMS community engagement for nonprofits',
-    type: 'web',
-    status: 'draft',                               // demoted from active until URL confirmed
-    tags: ['sms', 'nonprofit'],
-    objectives: [
-      { type: 'preference', value: 'Audit lens: nonprofit GTM, mobile-first', weight: 1 },
-    ],
-  },
-  {
-    name: 'RelTwin',
-    slug: 'reltwin',
-    live_url: '',                                  // TODO — URL unknown, document gap
-    description: 'Relationship intelligence for coaches and HR',
-    type: 'web',
-    status: 'draft',                               // demoted until canonical URL confirmed
-    tags: ['hr', 'coaching'],
-    objectives: [
-      { type: 'preference', value: 'Audit lens: B2B SaaS, privacy-first', weight: 1 },
-    ],
-  },
-  {
-    name: 'MyBirthSafe',
-    slug: 'mybirthsafe',
-    live_url: 'https://safe-path.base44.app',
-    description: 'Maternal health platform for Africa',
-    type: 'web',
-    status: 'active',
-    tags: ['health', 'maternal', 'africa'],
-    objectives: [
-      { type: 'constraint', value: 'PII / health-data compliance (HIPAA-equivalent jurisdictional rules)', weight: 2 },
-      { type: 'preference', value: 'Audit lens: full_governance', weight: 1 },
-    ],
-  },
-];
+// Canonical VEU portfolio comes from productDomains.js. Update domains there,
+// not here. The seed shape mirrors the schema configRegistry.createProduct
+// expects; objectives are seeded separately for the memory adapter.
+const VEU_SEED = VEU_PRODUCTS.map((p) => ({
+  name: p.name,
+  slug: p.slug,
+  live_url: p.live_url,
+  description: p.description,
+  type: p.type,
+  status: p.status,
+  tags: p.tags,
+  objectives: p.objectives || [],
+}));
 
 // ─── Supabase seeders ────────────────────────────────────────────────
 

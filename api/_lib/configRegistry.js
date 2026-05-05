@@ -253,20 +253,18 @@ export function getSnapshot(runId) {
 }
 
 // ─── Seed VEU portfolio (idempotent) ────────────────────────────────────
+//
+// Product domains are configured in /api/_lib/productDomains.js as the
+// single source of truth. Don't add product URLs here.
 
-const VEU_SEED = [
-  { name: 'SAIGE',       slug: 'saige',       live_url: 'https://saigedemo.com',         description: 'Sustainability + ESG + EHS + CSR enterprise impact platform', tags: ['sustainability', 'esg'], org_id: 'veu-ai-studio' },
-  { name: 'PressAI',     slug: 'pressai',     live_url: 'https://ourpublishingai.com',   description: 'AI publishing platform for authors and publishers',           tags: ['publishing'],            org_id: 'veu-ai-studio' },
-  { name: 'ReachSMS',    slug: 'reachsms',    live_url: 'https://ourcommunitiesai.com',  description: 'SMS community engagement for nonprofits',                     tags: ['sms', 'nonprofit'],      org_id: 'veu-ai-studio' },
-  { name: 'RelTwin',     slug: 'reltwin',     live_url: 'https://reltwin.com',           description: 'Relationship intelligence for coaches and HR',                tags: ['hr', 'coaching'],        org_id: 'veu-ai-studio' },
-  { name: 'MyBirthSafe', slug: 'mybirthsafe', live_url: 'https://safe-path.base44.app',  description: 'Maternal health platform for Africa',                         tags: ['health', 'maternal'],    org_id: 'veu-ai-studio' },
-];
+import { veuSeed, ORG as VEU_ORG } from './productDomains.js';
 
 export function seedVeuPortfolio() {
   const created = [];
-  for (const seed of VEU_SEED) {
+  for (const seed of veuSeed({ orgId: VEU_ORG.id })) {
     if (products.has(seed.slug)) continue;
-    created.push(createProduct(seed, { orgId: 'veu-ai-studio' }));
+    if (!seed.live_url) continue;             // skip drafts with unknown URLs
+    created.push(createProduct(seed, { orgId: VEU_ORG.id }));
   }
   return created;
 }
