@@ -204,7 +204,7 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/landing" element={<MarketingPage />} />
       {/* GTM Demo Tiers — public, no AppLayout */}
-      <Route path="/veaas" element={<VEUaaSMarketing />} />
+      <Route path="/veuaas" element={<VEUaaSMarketing />} />
       <Route path="/demo" element={<DemoSandbox />} />
       <Route path="/live-demo" element={<LiveDemo />} />
       <Route path="/enterprise-demo" element={<EnterpriseDemo />} />

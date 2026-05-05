@@ -67,7 +67,7 @@ export default function DemoSandbox() {
             <span className="text-sm font-bold text-foreground">FlowAI Demo Sandbox</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/veaas')} className="text-xs h-8">Back to Marketing</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/veuaas')} className="text-xs h-8">Back to Marketing</Button>
             <Button size="sm" onClick={() => navigate('/enterprise-demo')} className="text-xs h-8 gap-1.5">
               <ShieldCheck className="h-3 w-3" /> Book a Real Demo
             </Button>
