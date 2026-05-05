@@ -60,23 +60,19 @@ async function probeAnthropic() {
 async function probeBrowserless() {
   const present = Boolean(process.env.BROWSERLESS_API_KEY);
   if (!present) return { ok: false, configured: false, reason: 'BROWSERLESS_API_KEY not set' };
-  // Probe: hit the /pressure endpoint which Browserless exposes for health
-  // checks and doesn't consume a session.
-  try {
-    const r = await fetch(`https://chrome.browserless.io/pressure?token=${encodeURIComponent(process.env.BROWSERLESS_API_KEY)}`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(6000),
-    });
-    if (!r.ok) {
-      const txt = await r.text().catch(() => '');
-      return { ok: false, configured: true, status: r.status, reason: txt.slice(0, 150) };
-    }
-    let pressure = null;
-    try { pressure = await r.json(); } catch {}
-    return { ok: true, configured: true, pressure: pressure?.pressure ?? null };
-  } catch (e) {
-    return { ok: false, configured: true, reason: e.message };
-  }
+  // Browserless doesn't have a free no-session health endpoint, and a real
+  // /content call costs $. Env presence + key shape check is the cheap probe;
+  // real connectivity is verified by /api/configuration/clone.
+  const key = process.env.BROWSERLESS_API_KEY;
+  // Cheap shape sanity check — Browserless tokens are typically 30+ chars.
+  const looksValid = typeof key === 'string' && key.length >= 16;
+  return {
+    ok: looksValid,
+    configured: true,
+    keyShapeValid: looksValid,
+    note: 'env-only probe (real call costs a session)',
+    reason: looksValid ? null : 'BROWSERLESS_API_KEY shape looks invalid',
+  };
 }
 
 async function probeSupabase() {
