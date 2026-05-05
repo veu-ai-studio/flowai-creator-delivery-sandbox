@@ -262,6 +262,80 @@ export function markRecommendationPicked(id, { picked_tool_slug, override_tool_s
   return rec;
 }
 
+// ─── Provider feedback (qualitative ratings) ──────────────────────────
+//
+// Feedback differs from outcomes: outcomes are observable metrics
+// (cost/latency/success) emitted by the lifecycle engine; feedback is
+// the provider's subjective rating after using a tool (1-5 stars +
+// comment + tags). Feedback also feeds the ranking machinery by
+// shadow-writing a provider_satisfaction outcome, so existing weights
+// pick it up without special-casing.
+
+const FEEDBACK = [];
+
+export function recordFeedback({
+  tool_slug, org_id, product_id, lifecycle_run_id, recommendation_id,
+  rating, comment, tags, would_recommend,
+}) {
+  const tool = TOOLS_BY_SLUG[tool_slug];
+  if (!tool) throw new Error(`Unknown tool slug: ${tool_slug}`);
+  const ratingNum = Number(rating);
+  if (!Number.isFinite(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+    throw new Error('rating must be a number 1-5');
+  }
+  const entry = {
+    id: 'fb_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8),
+    tool_slug,
+    org_id: org_id || null,
+    product_id: product_id || null,
+    lifecycle_run_id: lifecycle_run_id || null,
+    recommendation_id: recommendation_id || null,
+    rating: ratingNum,
+    comment: comment || '',
+    tags: Array.isArray(tags) ? tags : [],
+    would_recommend: would_recommend != null ? !!would_recommend : null,
+    recorded_at: new Date().toISOString(),
+  };
+  FEEDBACK.push(entry);
+
+  // Shadow-write a satisfaction-only outcome so the dynamic ranker picks
+  // up qualitative feedback without a separate code path.
+  recordOutcome({
+    tool_slug, org_id, product_id, lifecycle_run_id,
+    success: ratingNum >= 3,
+    provider_satisfaction: ratingNum,
+    metadata: { source: 'feedback', feedback_id: entry.id },
+  });
+
+  return entry;
+}
+
+export function listFeedback({ tool_slug, org_id, lifecycle_run_id } = {}) {
+  let arr = FEEDBACK.slice();
+  if (tool_slug) arr = arr.filter((f) => f.tool_slug === tool_slug);
+  if (org_id) arr = arr.filter((f) => f.org_id === org_id);
+  if (lifecycle_run_id) arr = arr.filter((f) => f.lifecycle_run_id === lifecycle_run_id);
+  return arr;
+}
+
+export function summariseFeedback(toolSlug) {
+  const arr = FEEDBACK.filter((f) => f.tool_slug === toolSlug);
+  if (!arr.length) return null;
+  const ratings = arr.map((f) => f.rating);
+  const avg = ratings.reduce((s, v) => s + v, 0) / ratings.length;
+  const recommendCount = arr.filter((f) => f.would_recommend === true).length;
+  const recommendable = arr.filter((f) => f.would_recommend != null).length;
+  return {
+    total: arr.length,
+    avg_rating: Math.round(avg * 10) / 10,
+    rating_distribution: [1, 2, 3, 4, 5].reduce((acc, r) => {
+      acc[r] = ratings.filter((x) => x === r).length;
+      return acc;
+    }, {}),
+    would_recommend_rate: recommendable ? recommendCount / recommendable : null,
+  };
+}
+
 // ─── Provider preferences (per-org weight overrides) ──────────────────
 
 const PROVIDER_PREFS = new Map();      // org_id → preferences
