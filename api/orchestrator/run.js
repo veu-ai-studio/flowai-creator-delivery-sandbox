@@ -23,15 +23,13 @@
 // run via _run_id — they update progress / partial_output throughout.
 
 import { setCorsHeaders } from '../_lib/claude.js';
-import { agents } from '../_lib/orchestrator.js';
+import { agents, isConfigurationMode } from '../_lib/orchestrator.js';
 import { resolveOrgId } from '../_lib/tenant.js';
 import { createRun, getRun, getSnapshot, updateRun } from '../_lib/configRegistry.js';
 import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
 import { logger } from '../_lib/logger.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
-
-const CONFIGURATION_AGENTS = new Set(['clone', 'synthesize', 'describe']);
 
 // Eta hint per agent (in seconds). Crude heuristic; refined via observation.
 function estimateEta(agent, payload) {
@@ -114,10 +112,9 @@ export default async function handler(req, res) {
   }
 
   const orgId = resolveOrgId(req) || payload.org_id || DEFAULT_ORG;
-  const isConfigurationMode = CONFIGURATION_AGENTS.has(agent);
 
   // ─── Path A: configuration mode (long-running) ──────────────────────
-  if (isConfigurationMode) {
+  if (isConfigurationMode(agent)) {
     // Pre-create the run record so we can return the run_id immediately.
     // Stash the dispatch (agent + payload) in metadata so a polling GET
     // can pull-resume the work if the background promise was killed.

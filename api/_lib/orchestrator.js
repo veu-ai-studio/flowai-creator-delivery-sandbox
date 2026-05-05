@@ -3,11 +3,14 @@
 //
 // Adding a new provider:
 //   1. Create /api/_lib/orchestrator/agents/<name>.js implementing the
-//      { isEnabled, validate, run, health, retry } contract.
-//   2. Import + register it below.
-//   3. /api/orchestrator/health automatically picks it up.
+//      { isEnabled, validate, run, retry, health, description } contract.
+//      Use `successEnvelope` / `envelope` / `ErrorCodes` from contracts.js.
+//   2. Import it in /api/_lib/orchestrator/agents/index.js and add one entry
+//      to the AGENTS array.
+//   3. Done. /api/orchestrator/health and /api/orchestrator/run automatically
+//      pick it up. No edits required to this file, run.js, or health.js.
 //
-// Why not just import each provider directly? Because:
+// Why centralised:
 //   * Cost tracking, retry policy, error envelope, and per-agent health all
 //     live in one place — no duplicate boilerplate per endpoint.
 //   * Tomorrow we can swap providers (Claude → Gemini, Browserless → Apify)
@@ -16,47 +19,21 @@
 //     inline and async paths share identical contracts.
 
 import { agents } from './orchestrator/registry.js';
-import { claudeAgent } from './orchestrator/agents/claude.js';
-import { browserlessAgent } from './orchestrator/agents/crawler.js';
-import { supabaseAgent } from './orchestrator/agents/supabase.js';
-import { inngestAgent } from './orchestrator/agents/inngest.js';
-import { clerkAgent } from './orchestrator/agents/clerk.js';
-import { resendAgent } from './orchestrator/agents/resend.js';
-import { voyageAgent } from './orchestrator/agents/voyage.js';
-import { axiomAgent } from './orchestrator/agents/axiom.js';
-import { base44Agent } from './orchestrator/agents/base44.js';
-import { replitAgent } from './orchestrator/agents/replit.js';
-import { vercelAgent } from './orchestrator/agents/vercel.js';
-import { playwrightAgent } from './orchestrator/agents/playwright.js';
-import { cloneAgent, synthesizeAgent, describeAgent } from './orchestrator/agents/configuration.js';
+import { AGENTS, isConfigurationMode } from './orchestrator/agents/index.js';
 
 let _registered = false;
 
 export function ensureAgentsRegistered() {
   if (_registered) return;
-  agents.register('claude', claudeAgent);
-  agents.register('browserless', browserlessAgent);
-  agents.register('supabase', supabaseAgent);
-  agents.register('inngest', inngestAgent);
-  agents.register('clerk', clerkAgent);
-  agents.register('resend', resendAgent);
-  agents.register('voyage', voyageAgent);
-  agents.register('axiom', axiomAgent);
-  agents.register('base44', base44Agent);
-  agents.register('replit', replitAgent);
-  agents.register('vercel', vercelAgent);
-  agents.register('playwright', playwrightAgent);
-  // Configuration mode agents — invokable via /api/orchestrator/run
-  // { mode: 'clone'|'synthesize'|'describe', payload }
-  agents.register('clone', cloneAgent);
-  agents.register('synthesize', synthesizeAgent);
-  agents.register('describe', describeAgent);
+  for (const [name, agent] of AGENTS) {
+    agents.register(name, agent);
+  }
   _registered = true;
 }
 
 ensureAgentsRegistered();
 
-export { agents };
+export { agents, isConfigurationMode };
 export { ErrorCodes, envelope, successEnvelope } from './orchestrator/contracts.js';
 
 // ─── Step orchestration ──────────────────────────────────────────────────
