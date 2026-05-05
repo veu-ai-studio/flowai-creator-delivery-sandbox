@@ -10,13 +10,15 @@
 import { setCorsHeaders } from './_lib/claude.js';
 import { listProducts, createProduct } from './_lib/db.js';
 import { stats } from './_lib/products.js';
-import { resolveOrgId } from './_lib/tenant.js';
+import { requireAuth } from './_lib/auth.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const orgId = resolveOrgId(req);
+  const ctx = await requireAuth(req, res);
+  if (!ctx) return; // 401 already written
+  const orgId = ctx.orgId;
 
   if (req.method === 'GET') {
     const { status, q, sort, limit, offset } = req.query || {};
