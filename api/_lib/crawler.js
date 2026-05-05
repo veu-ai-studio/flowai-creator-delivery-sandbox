@@ -57,6 +57,50 @@ async function viaBrowserless(url, apiKey) {
   }
 }
 
+// Capture a PNG screenshot via Browserless /screenshot endpoint. Returns
+// { ok, contentType, sizeBytes, base64? } — we don't persist the binary in
+// memory, only the metadata; the report records "captured: <bytes>". When
+// Vercel Blob / Supabase storage activates tomorrow, this is where we'd save.
+export async function captureScreenshot(url, { fullPage = true, viewport = { width: 1280, height: 800 } } = {}) {
+  const apiKey = process.env.BROWSERLESS_API_KEY;
+  if (!apiKey) return { ok: false, reason: 'BROWSERLESS_API_KEY not set' };
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), BROWSERLESS_TIMEOUT_MS);
+  try {
+    const r = await fetch(`https://chrome.browserless.io/screenshot?token=${encodeURIComponent(apiKey)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        options: { fullPage, type: 'png', omitBackground: false },
+        viewport,
+        gotoOptions: { waitUntil: 'networkidle2', timeout: 25000 },
+      }),
+      signal: controller.signal,
+    });
+    if (!r.ok) {
+      const txt = await r.text().catch(() => '');
+      return { ok: false, reason: `Browserless screenshot ${r.status}: ${txt.slice(0, 200)}` };
+    }
+    const buf = await r.arrayBuffer();
+    const sizeBytes = buf.byteLength;
+    // Don't return the full base64 (would balloon JSON responses); just stats.
+    return {
+      ok: true,
+      contentType: r.headers.get('content-type') || 'image/png',
+      sizeBytes,
+      sizeKB: Math.round(sizeBytes / 1024),
+      capturedAt: new Date().toISOString(),
+      // TODO: when object storage is wired, upload buffer here and return URL.
+      storage: 'not-persisted-in-v1',
+    };
+  } catch (e) {
+    return { ok: false, reason: e.name === 'AbortError' ? 'Browserless screenshot timed out' : (e.message || String(e)) };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function viaPlaywrightEndpoint(url, endpoint) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), PLAYWRIGHT_TIMEOUT_MS);

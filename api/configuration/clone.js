@@ -22,7 +22,7 @@
 
 import { setCorsHeaders } from '../_lib/claude.js';
 import { resolveOrgId } from '../_lib/tenant.js';
-import { crawl, summarisePageForPrompt } from '../_lib/crawler.js';
+import { crawl, summarisePageForPrompt, captureScreenshot } from '../_lib/crawler.js';
 import { saveSnapshot, listObjectives } from '../_lib/configRegistry.js';
 import { runStart, runClaude, runComplete, runFail, setProgress, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
 import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
@@ -82,12 +82,22 @@ export async function execute(input = {}) {
       warnings: page.warnings || [],
       capturedAt: new Date().toISOString(),
     };
+    // Optional screenshot pass via Browserless. Doesn't persist binary in v1
+    // (no object storage yet) — records capture metadata so the report can
+    // reference it.
+    let screenshotMeta = null;
+    if (opts.captureScreenshot) {
+      setProgress(ctx, { step: 'capture_screenshot', percent: 20, etaSec: 50 });
+      screenshotMeta = await captureScreenshot(url.trim(), { fullPage: true });
+      snapshot.screenshot = screenshotMeta;
+    }
+
     saveSnapshot(ctx.run.id, snapshot);
     setProgress(ctx, {
       step: 'capture_complete',
       percent: 30,
       etaSec: 35,
-      partial: { snapshot: { url: snapshot.url, title: snapshot.title, jsRendered: snapshot.jsRendered, method: snapshot.method } },
+      partial: { snapshot: { url: snapshot.url, title: snapshot.title, jsRendered: snapshot.jsRendered, method: snapshot.method, screenshot: screenshotMeta } },
     });
 
     // ─── Step 2: architecture analysis ──────────────────────────────────
@@ -232,6 +242,7 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
         ...snapshot,
         bodyText: undefined, // strip heavy field from the response shape
         bodyTextSnippet: (snapshot.bodyText || '').slice(0, 1500),
+        screenshot: screenshotMeta,
       },
       architecture,
       improvement_plan: improvementPlan,
