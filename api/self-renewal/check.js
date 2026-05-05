@@ -6,7 +6,8 @@
 import { setCorsHeaders, callClaude } from '../_lib/claude.js';
 import { crawl, summarisePageForPrompt } from '../_lib/crawler.js';
 import { recordCost } from '../_lib/cost.js';
-import { append } from '../_lib/auditlog.js';
+import { appendAuditEntry, appendCostEvent } from '../_lib/db.js';
+import { resolveOrgId, resolveProductId } from '../_lib/tenant.js';
 import { buildStepPrompt, buildJsonEnvelopePrompt, parseJsonEnvelope, stripJsonEnvelope } from '../_lib/stepPrompts.js';
 
 export default async function handler(req, res) {
@@ -14,7 +15,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
 
-  const { url, description, pageContent, sessionId, productId, force, objective } = req.body || {};
+  const { url, description, pageContent, sessionId, force, objective } = req.body || {};
+  const orgId = resolveOrgId(req);
+  const productId = req.body?.productId || resolveProductId(req);
 
   let pageBlock = pageContent;
   let pageMeta = null;
@@ -43,13 +46,14 @@ export default async function handler(req, res) {
   try {
     const claude = await callClaude({ prompt: finalPrompt, maxTokens: 1500, complexity: 'routine', timeoutMs: 90000 });
     const cost = recordCost({ endpoint: '/api/self-renewal/check', sessionId, ...claude });
-    append({
+    await appendCostEvent({ endpoint: '/api/self-renewal/check', sessionId, orgId, productId, ...claude }).catch(() => {});
+    await appendAuditEntry({
       actionType: 'self_renewal_check',
-      sessionId, productId,
+      orgId, productId, sessionId,
       productUrl: input.type === 'url' ? input.value : null,
       severity: 'info',
       detail: { score: parseJsonEnvelope(claude.text)?.score ?? null },
-    });
+    }).catch(() => {});
     return res.status(200).json({
       ok: true,
       text: stripJsonEnvelope(claude.text),

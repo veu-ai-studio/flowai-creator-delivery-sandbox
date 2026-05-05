@@ -9,7 +9,8 @@
 import { setCorsHeaders, callClaude } from '../_lib/claude.js';
 import { crawl, summarisePageForPrompt } from '../_lib/crawler.js';
 import { recordCost } from '../_lib/cost.js';
-import { append } from '../_lib/auditlog.js';
+import { appendAuditEntry, appendClearanceCheck, appendCostEvent } from '../_lib/db.js';
+import { resolveOrgId, resolveProductId } from '../_lib/tenant.js';
 import { buildStepPrompt, buildJsonEnvelopePrompt, parseJsonEnvelope, stripJsonEnvelope } from '../_lib/stepPrompts.js';
 
 const DECISION_RE = /CLEARANCE DECISION[\s\S]*?(CLEARED|CONDITIONAL|NOT\s*CLEARED)/i;
@@ -25,7 +26,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
 
-  const { url, description, pageContent, priorResults, sessionId, productId, force, objective } = req.body || {};
+  const { url, description, pageContent, priorResults, sessionId, force, objective } = req.body || {};
+  const orgId = resolveOrgId(req);
+  const productId = req.body?.productId || resolveProductId(req);
 
   const input = description
     ? { type: 'description', value: description, name: 'Clearance Input' }
@@ -57,13 +60,21 @@ export default async function handler(req, res) {
     const display = stripJsonEnvelope(claude.text);
     const json = parseJsonEnvelope(claude.text);
     const decision = extractDecision(display);
-    append({
+    // Persist via db.js (memory or Supabase, depending on backend)
+    await appendCostEvent({ endpoint: '/api/clearance/run', sessionId, orgId, productId, ...claude }).catch(() => {});
+    await appendClearanceCheck({
+      orgId, productId, runId: sessionId,
+      decision, score: json?.score ?? null,
+      conditions: json?.conditions || [],
+      output: display,
+    }).catch(() => {});
+    await appendAuditEntry({
       actionType: 'clearance_run',
-      sessionId, productId,
+      orgId, productId, sessionId,
       productUrl: input.type === 'url' ? input.value : null,
       severity: decision === 'NOT CLEARED' ? 'warning' : 'info',
       detail: { decision, score: json?.score ?? null },
-    });
+    }).catch(() => {});
     return res.status(200).json({
       ok: true,
       decision,
