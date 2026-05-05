@@ -126,7 +126,7 @@ export default function EnterpriseDemo() {
             <span className="text-sm font-bold text-foreground">FlowAI Enterprise Demo</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/veaas')} className="text-xs h-8">Marketing Site</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/veuaas')} className="text-xs h-8">Marketing Site</Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/demo')} className="text-xs h-8">Sandbox</Button>
           </div>
         </div>

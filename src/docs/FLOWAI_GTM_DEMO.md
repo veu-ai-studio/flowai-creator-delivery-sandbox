@@ -21,7 +21,7 @@ The demo stack has **four tiers** calibrated to buyer journey stage.
 ---
 
 ## Tier 1 — Top of Funnel: Marketing Site
-**Route:** `/veaas`  
+**Route:** `/veuaas`  
 **File:** `pages/VEUaaSMarketing.jsx`  
 **Target:** Cold traffic, first impression  
 **Backend needed:** None (fully static/mocked)  
@@ -147,7 +147,7 @@ All four tiers live in the **same Vercel project** as the main FlowAI product. E
 
 | Tier | Base44 Route | Vercel Domain Alias |
 |------|-------------|---------------------|
-| 1 | `/veaas` | `veaas.com` |
+| 1 | `/veuaas` | `veaas.com` |
 | 2 | `/demo` | `demo.veaas.com` |
 | 3 | `/live-demo` | `live.veaas.com` |
 | 4 | `/enterprise-demo` | `enterprise.veaas.com` |
@@ -166,4 +166,3 @@ Demo org data can never bleed into production — enforced by Supabase RLS at th
 Tier 4 form submit  →  POST /api/leads  →  Supabase leads table
                                         →  Resend (notify demo@veuaistudio.com)
                                         →  (Phase 6) CRM webhook
-``

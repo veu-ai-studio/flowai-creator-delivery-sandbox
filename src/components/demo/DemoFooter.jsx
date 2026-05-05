@@ -10,7 +10,7 @@ export default function DemoFooter() {
           <span>FlowAI · VEUaaS</span>
         </div>
         <div className="flex gap-4 text-xs text-muted-foreground">
-          <a href="/veaas" className="hover:text-foreground transition-colors">Marketing</a>
+          <a href="/veuaas" className="hover:text-foreground transition-colors">Marketing</a>
           <a href="/demo" className="hover:text-foreground transition-colors">Sandbox</a>
           <a href="/live-demo" className="hover:text-foreground transition-colors">Live Demo</a>
           <a href="/enterprise-demo" className="hover:text-foreground transition-colors">Enterprise</a>

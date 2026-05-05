@@ -60,7 +60,7 @@ This is not a one-time migration step. It is the ongoing CI/CD pipeline for the 
 │                                                                  │
 │  Domain Aliases:                                                 │
 │  flowai.veuaistudio.com  →  Main product (AppLayout)            │
-│  veaas.com               →  Tier 1: VEUaaSMarketing             │
+│  veaas.com               →  Tier 1: VEUaaSMarketing  (route: /veuaas)             │
 │  demo.veaas.com          →  Tier 2: DemoSandbox                 │
 │  live.veaas.com          →  Tier 3: LiveDemo                    │
 │  enterprise.veaas.com    →  Tier 4: EnterpriseDemo              │
@@ -115,7 +115,7 @@ Routes fall into two categories:
 ```
 /                    LandingPage (main workspace entry)
 /landing             MarketingPage
-/veaas               VEUaaSMarketing       ← Tier 1
+/veuaas              VEUaaSMarketing       ← Tier 1
 /demo                DemoSandbox           ← Tier 2
 /live-demo           LiveDemo              ← Tier 3
 /enterprise-demo     EnterpriseDemo        ← Tier 4
@@ -200,7 +200,7 @@ RLS Rules (critical):
 
 | Tier | Route | Domain | Buyer Stage | Backend | Auth |
 |------|-------|--------|-------------|---------|------|
-| 1 | `/veaas` | `veaas.com` | Cold traffic | None | None |
+| 1 | `/veuaas` | `veaas.com` | Cold traffic | None | None |
 | 2 | `/demo` | `demo.veaas.com` | Warm/self-qualified | Optional | None |
 | 3 | `/live-demo` | `live.veaas.com` | High-intent | Real (demo org) | Email only |
 | 4 | `/enterprise-demo` | `enterprise.veaas.com` | Sales-qualified | Real (lead scoped) | Lead form |

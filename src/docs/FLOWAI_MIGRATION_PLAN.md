@@ -76,7 +76,7 @@ It shares the product's design system, component library, backend endpoints, and
 
 | Tier | Name | Route (Base44) | Public Domain | Buyer Stage |
 |------|------|----------------|---------------|-------------|
-| 1 | Marketing Site | `/veaas` | `veaas.com` | Cold traffic |
+| 1 | Marketing Site | `/veuaas` | `veaas.com` | Cold traffic |
 | 2 | Self-Serve Sandbox | `/demo` | `demo.veaas.com` | Warm / self-qualified |
 | 3 | Live Public Demo | `/live-demo` | `live.veaas.com` | High-intent evaluators |
 | 4 | Enterprise Guided Demo | `/enterprise-demo` | `enterprise.veaas.com` | Sales-qualified |
@@ -150,7 +150,7 @@ POST /api/leads
 | Domain | Vercel Alias Target | Auth Required | Demo Tier |
 |--------|---------------------|---------------|-----------|
 | `flowai.veuaistudio.com` | `/` (AppLayout routes) | Yes | N/A — production |
-| `veaas.com` | `/veaas` | No | Tier 1 |
+| `veaas.com` | `/veuaas` | No | Tier 1 |
 | `demo.veaas.com` | `/demo` | No | Tier 2 |
 | `live.veaas.com` | `/live-demo` | No | Tier 3 |
 | `enterprise.veaas.com` | `/enterprise-demo` | No | Tier 4 |
@@ -209,4 +209,3 @@ Sprint {name}: {one-line summary}
 All backend migrations:
 ```
 API: migrate {functionName} to /api/{route}
-``
