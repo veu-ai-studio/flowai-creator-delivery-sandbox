@@ -67,9 +67,14 @@ export async function getInngestFunctions() {
   const client = await getClient();
   const fns = [];
 
+  // Inngest v4.x signature: createFunction({ id, trigger, ... }, handler)
   fns.push(client.createFunction(
-    { id: 'auto-runner-step-executor', name: 'Auto Runner step executor', retries: 2 },
-    { event: 'flowai/run-step.requested' },
+    {
+      id: 'auto-runner-step-executor',
+      name: 'Auto Runner step executor',
+      retries: 2,
+      trigger: { event: 'flowai/run-step.requested' },
+    },
     async ({ event, step }) => {
       const { runStepInline } = await import('./jobs/runStep.js');
       return await step.run('execute', () => runStepInline(event.data));
@@ -77,8 +82,12 @@ export async function getInngestFunctions() {
   ));
 
   fns.push(client.createFunction(
-    { id: 'scheduled-clearance-check', name: 'Scheduled clearance check', retries: 1 },
-    { event: 'flowai/clearance.scheduled' },
+    {
+      id: 'scheduled-clearance-check',
+      name: 'Scheduled clearance check',
+      retries: 1,
+      trigger: { event: 'flowai/clearance.scheduled' },
+    },
     async ({ event, step }) => {
       const { runScheduledClearance } = await import('./jobs/scheduledClearance.js');
       return await step.run('clearance', () => runScheduledClearance(event.data));
@@ -86,8 +95,11 @@ export async function getInngestFunctions() {
   ));
 
   fns.push(client.createFunction(
-    { id: 'cost-rollup-daily', name: 'Daily cost rollup' },
-    { cron: '0 2 * * *' }, // 02:00 UTC daily
+    {
+      id: 'cost-rollup-daily',
+      name: 'Daily cost rollup',
+      trigger: { cron: '0 2 * * *' }, // 02:00 UTC daily
+    },
     async ({ step }) => {
       const { rollupYesterdayCosts } = await import('./jobs/costRollup.js');
       return await step.run('rollup', () => rollupYesterdayCosts());
