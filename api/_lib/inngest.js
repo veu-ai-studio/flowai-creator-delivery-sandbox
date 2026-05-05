@@ -108,6 +108,18 @@ export async function getInngestFunctions() {
 
   fns.push(client.createFunction(
     {
+      id: 'marketplace-rerank-weekly',
+      name: 'Weekly marketplace re-rank',
+      trigger: { cron: '0 3 * * 1' }, // 03:00 UTC every Monday
+    },
+    async ({ step }) => {
+      const { rerankAllTools } = await import('./jobs/marketplaceRerank.js');
+      return await step.run('rerank', () => rerankAllTools({ trigger: 'cron-weekly' }));
+    },
+  ));
+
+  fns.push(client.createFunction(
+    {
       id: 'orchestrator-run-executor',
       name: 'Orchestrator run executor',
       retries: 2,
