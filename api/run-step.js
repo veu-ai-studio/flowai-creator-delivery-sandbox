@@ -1,24 +1,16 @@
 // POST /api/run-step
-// Body: {
-//   step: 'research'|'design'|'build'|'qa_audit'|'deploy'|'govern'|'gtm'|'monitor',
-//   input: { type: 'url'|'description', value: string, name?: string },
-//   objective?: string,
-//   priorResults?: { research: '...', design: '...', ... }   // for monitor
-//   pageContent?: string,    // optional pre-fetched page block; if absent we crawl
-//   force?: 'browserless'|'playwright-endpoint'|'simple-fetch',
-//   sessionId?: string,
-//   mode?: 'auto'|'guided'|'manual'
-// }
-//
-// Returns { ok, step, model, text, json, score, verdict, topIssues, tags, page, usage, cost }
+// Dispatcher for the 8 Auto Runner / Guided / Manual steps.
+// Today: runs inline (matches previous behaviour exactly).
+// Tomorrow: when INNGEST_BACKEND !== 'inline' and both keys are set, the
+// request returns immediately with a job id and the work happens in Inngest.
+// The UI can either await the inline result (current shape) or poll for the
+// Inngest job — both paths return the same JSON envelope.
 
-import { setCorsHeaders, callClaude } from './_lib/claude.js';
-import { crawl, summarisePageForPrompt } from './_lib/crawler.js';
-import { recordCost } from './_lib/cost.js';
-import {
-  STEP_KEYS, STEP_LABELS, STEP_TOKENS, STEP_COMPLEXITY,
-  buildStepPrompt, buildJsonEnvelopePrompt, parseJsonEnvelope, stripJsonEnvelope,
-} from './_lib/stepPrompts.js';
+import { setCorsHeaders } from './_lib/claude.js';
+import { STEP_KEYS, STEP_LABELS } from './_lib/stepPrompts.js';
+import { runStepInline } from './_lib/jobs/runStep.js';
+import { isInngestEnabled, sendEvent } from './_lib/inngest.js';
+import { resolveOrgId, resolveProductId } from './_lib/tenant.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
@@ -27,7 +19,7 @@ export default async function handler(req, res) {
 
   const {
     step, input = {}, objective, priorResults, pageContent,
-    force, sessionId, mode = 'auto',
+    force, sessionId, mode = 'auto', async: asyncRequested = false,
   } = req.body || {};
 
   if (!STEP_KEYS.includes(step)) {
@@ -37,66 +29,29 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Body must include input { type, value }.' });
   }
 
-  // Crawl if URL input and no page content was passed in.
-  let pageBlock = pageContent || null;
-  let pageMeta = null;
-  if (!pageBlock && input.type === 'url') {
-    const page = await crawl(input.value, { force });
-    if (page.ok) {
-      pageBlock = summarisePageForPrompt(page);
-      pageMeta = {
-        method: page.method,
-        jsRendered: page.jsRendered,
-        title: page.title,
-        metaDescription: page.metaDescription,
-        warnings: page.warnings,
-      };
-    } else {
-      pageBlock = `Page fetch failed: ${page.reason}. Provide a Browserless API key for full crawling.`;
-      pageMeta = { method: 'failed', reason: page.reason, attempts: page.attempts };
-    }
+  const orgId = resolveOrgId(req);
+  const productId = req.body?.productId || resolveProductId(req);
+
+  // Async path: when Inngest is enabled AND caller opts in, fire-and-forget.
+  if (asyncRequested && isInngestEnabled()) {
+    const evt = await sendEvent('flowai/run-step.requested', {
+      step, input, objective, priorResults, pageContent, force, sessionId, orgId, productId, mode,
+    });
+    return res.status(202).json({
+      ok: true, async: true, ids: evt.ids,
+      step, stepLabel: STEP_LABELS[step], mode,
+      message: 'Job dispatched to Inngest. Poll cost-summary or audit-log for completion.',
+    });
   }
 
-  const textPrompt = buildStepPrompt(step, { input, pageBlock, objective, priorResults });
-  const finalPrompt = buildJsonEnvelopePrompt(step, textPrompt);
-
+  // Default: inline (today's behaviour).
   try {
-    const claude = await callClaude({
-      prompt: finalPrompt,
-      maxTokens: STEP_TOKENS[step] || 1500,
-      complexity: STEP_COMPLEXITY[step] || 'routine',
-      timeoutMs: 90000,
+    const result = await runStepInline({
+      step, input, objective, priorResults, pageContent, force,
+      sessionId, orgId, productId, mode,
     });
-    const cost = recordCost({ endpoint: '/api/run-step', sessionId, ...claude });
-
-    const json = parseJsonEnvelope(claude.text);
-    const display = stripJsonEnvelope(claude.text);
-
-    return res.status(200).json({
-      ok: true,
-      step,
-      stepLabel: STEP_LABELS[step],
-      mode,
-      model: claude.model,
-      text: display,
-      raw: claude.text,
-      json,
-      score: json?.score ?? null,
-      verdict: json?.verdict ?? null,
-      topIssues: json?.topIssues ?? [],
-      tags: json?.tags ?? [],
-      page: pageMeta,
-      usage: claude.usage,
-      stop_reason: claude.stop_reason,
-      cost,
-    });
+    return res.status(200).json(result);
   } catch (e) {
-    return res.status(500).json({
-      ok: false,
-      step,
-      error: 'Claude call failed',
-      details: e.message || String(e),
-      status: e.status,
-    });
+    return res.status(500).json({ ok: false, step, error: 'Step execution failed', details: e.message || String(e) });
   }
 }
