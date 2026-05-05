@@ -13,9 +13,27 @@ import { isEmbeddingsConfigured } from './_lib/embeddings.js';
 import { isAxiomConfigured } from './_lib/logger.js';
 import { isSupabaseConfigured } from './_lib/supabase.js';
 
-// Read package.json at module load. Vercel bundles /package.json into the
-// function, so this works in production.
-import pkg from '../package.json' assert { type: 'json' };
+// Read package.json at module load using fs. The `assert { type: 'json' }`
+// syntax is unreliable across Node versions / bundlers; fs is portable.
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+let pkg = { name: 'flowai-api', version: '0.0.0', dependencies: {} };
+try {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  // Try a few candidate paths (Vercel's bundle layout differs from local).
+  for (const candidate of [
+    join(__dirname, '..', 'package.json'),
+    join(process.cwd(), 'package.json'),
+  ]) {
+    try {
+      pkg = JSON.parse(readFileSync(candidate, 'utf8'));
+      break;
+    } catch {}
+  }
+} catch {}
 
 // Module-level startup time approximates the deploy timestamp from the
 // running function's perspective. (Vercel's function instances live for a
