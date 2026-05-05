@@ -68,7 +68,9 @@ interface OrchestratorRunResponse {
 
 **Errors (400):** `{ error: string }` for unknown agent or missing required field.
 
-### GET `/api/orchestrator/status/:run_id`
+### GET `/api/orchestrator/run?run_id=<id>` (canonical) or `/api/orchestrator/status/:run_id` (alias)
+
+> **Why colocated:** Vercel function instances do NOT share in-memory state across different function files. Putting status under the same `run.js` file means polls hit the same function instance pool as the POST dispatch — within warm-instance affinity (typical for FlowAI's traffic) the run is consistently visible. The `/status/:run_id` path remains as an alias that internally forwards to the colocated GET. When Supabase is wired the registry becomes durable across instances and the dual-path no longer matters.
 
 ```ts
 interface OrchestratorStatusResponse {

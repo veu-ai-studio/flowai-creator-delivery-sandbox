@@ -25,7 +25,7 @@
 import { setCorsHeaders } from '../_lib/claude.js';
 import { agents } from '../_lib/orchestrator.js';
 import { resolveOrgId } from '../_lib/tenant.js';
-import { createRun } from '../_lib/configRegistry.js';
+import { createRun, getRun, getSnapshot } from '../_lib/configRegistry.js';
 import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
 import { logger } from '../_lib/logger.js';
 
@@ -47,7 +47,39 @@ function estimateEta(agent, payload) {
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  // ── GET path: status polling ────────────────────────────────────────
+  // Co-located here so polls hit the same function (and thus the same
+  // in-memory run registry) as the POST dispatch. This is the canonical
+  // status endpoint until Supabase makes runs durable across instances.
+  if (req.method === 'GET') {
+    const runId = req.query?.run_id || req.query?.runId;
+    if (!runId) return res.status(400).json({ error: 'GET requires ?run_id=<id>' });
+    const run = getRun(runId);
+    if (!run) return res.status(404).json({ error: 'Not found', run_id: runId });
+    const orgId = resolveOrgId(req) || 'veu-ai-studio';
+    if (run.org_id && run.org_id !== orgId) return res.status(404).json({ error: 'Not found', run_id: runId });
+    const snapshot = run.mode === 'clone' ? getSnapshot(runId) : null;
+    return res.status(200).json({
+      run_id: run.id,
+      agent: run.mode,
+      org_id: run.org_id,
+      product_id: run.product_id,
+      status: run.status,
+      progress: run.progress || null,
+      partial_output: run.partial_output || null,
+      output: run.status === 'completed' ? run.output : null,
+      error: run.error || null,
+      cost_usd: run.cost_usd || 0,
+      quality_score: run.quality_score,
+      started_at: run.started_at,
+      completed_at: run.completed_at,
+      duration_ms: run.duration_ms,
+      has_snapshot: Boolean(snapshot),
+    });
+  }
+
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST or GET ?run_id=<id>' });
 
   const { agent, payload = {}, product_id: productId, sync = false } = req.body || {};
   if (!agent || typeof agent !== 'string') {
@@ -90,7 +122,7 @@ export default async function handler(req, res) {
         agent,
         org_id: orgId,
         product_id: fullPayload.product_id,
-        polling_url: `/api/orchestrator/status/${run.id}`,
+        polling_url: `/api/orchestrator/run?run_id=${run.id}`,
         eta_sec: estimateEta(agent, payload),
         backend: 'inngest',
       });

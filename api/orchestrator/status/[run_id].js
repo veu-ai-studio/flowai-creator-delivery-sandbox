@@ -1,20 +1,15 @@
-// GET /api/orchestrator/status/:run_id
+// GET /api/orchestrator/status/:run_id  →  307 redirect to
+// /api/orchestrator/run?run_id=<id>
 //
-// Polled by clients after POST /api/orchestrator/run. Returns:
-//   {
-//     run_id, agent (mode), status: 'queued'|'running'|'completed'|'failed',
-//     progress: { step, percent, etaSec },
-//     partial_output: <agent-specific snapshot during execution>,
-//     output: <full result when completed>,
-//     cost_usd, quality_score, error?,
-//     started_at, completed_at, duration_ms
-//   }
+// The canonical status endpoint is now co-located with /api/orchestrator/run
+// so polls hit the same function instance pool as the POST that created the
+// run. (Across Vercel functions in-memory state isn't shared; this restores
+// at-warmth-affinity reliability without yet needing Supabase.)
+//
+// This shim stays so the spec'd path /api/orchestrator/status/:run_id still
+// works for existing clients.
 
 import { setCorsHeaders } from '../../_lib/claude.js';
-import { getRun, getSnapshot } from '../../_lib/configRegistry.js';
-import { resolveOrgId } from '../../_lib/tenant.js';
-
-const DEFAULT_ORG = 'veu-ai-studio';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
@@ -24,31 +19,18 @@ export default async function handler(req, res) {
   const runId = req.query?.run_id;
   if (!runId) return res.status(400).json({ error: 'Missing run_id in path' });
 
-  const run = getRun(runId);
-  if (!run) return res.status(404).json({ error: 'Not found', run_id: runId });
-
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
-  if (run.org_id && run.org_id !== orgId) {
-    return res.status(404).json({ error: 'Not found', run_id: runId });
+  // Internal forward — fetch directly so we return JSON in the same response,
+  // not a 307 redirect (avoids polling clients having to follow redirects).
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const host = req.headers.host;
+  const target = `${proto}://${host}/api/orchestrator/run?run_id=${encodeURIComponent(runId)}`;
+  try {
+    const r = await fetch(target, { headers: { 'x-flowai-internal': '1' } });
+    const text = await r.text();
+    res.status(r.status);
+    res.setHeader('content-type', r.headers.get('content-type') || 'application/json');
+    return res.send(text);
+  } catch (e) {
+    return res.status(500).json({ error: 'status forward failed', details: e.message });
   }
-
-  const snapshot = run.mode === 'clone' ? getSnapshot(runId) : null;
-
-  return res.status(200).json({
-    run_id: run.id,
-    agent: run.mode,
-    org_id: run.org_id,
-    product_id: run.product_id,
-    status: run.status,
-    progress: run.progress || null,
-    partial_output: run.partial_output || null,
-    output: run.status === 'completed' ? run.output : null,
-    error: run.error || null,
-    cost_usd: run.cost_usd || 0,
-    quality_score: run.quality_score,
-    started_at: run.started_at,
-    completed_at: run.completed_at,
-    duration_ms: run.duration_ms,
-    has_snapshot: Boolean(snapshot),
-  });
 }
