@@ -1,45 +1,21 @@
 // Configuration mode agents (clone, synthesize, describe).
 //
 // Each mode is exposed as an orchestrator agent so it's invokable from
-// /api/orchestrator/run with a uniform { mode, payload } shape, regardless
+// /api/orchestrator/run with a uniform { agent, payload } shape, regardless
 // of whether the call originates from FlowAI itself, SAIGE, PressAI, etc.
+//
+// Implementation detail: the agents call the configuration handlers' pure
+// `execute()` exports directly. No HTTP-shim faux req/res, no dynamic import
+// path resolution at runtime — both of those caused silent failures inside
+// Vercel's bundle. Direct imports are bundled by Vercel as part of the
+// orchestrator function's dependency tree, so they always resolve.
 
 import { successEnvelope, envelope, ErrorCodes } from '../contracts.js';
+import { execute as executeClone } from '../../../configuration/clone.js';
+import { execute as executeSynthesize } from '../../../configuration/synthesize.js';
+import { execute as executeDescribe } from '../../../configuration/describe.js';
 
-// Lazy import the mode handlers so the orchestrator/health endpoint doesn't
-// pay for them at module load (each handler imports the crawler + Claude
-// chains transitively).
-
-async function invokeHandler(modulePath, body, req, res) {
-  // Synthesize a minimal req/res so the handler can reuse its existing
-  // logic. The handler writes JSON to res; we capture it.
-  return new Promise(async (resolve, reject) => {
-    let captured = null;
-    let statusCode = 200;
-    const fauxRes = {
-      setHeader() {},
-      status(code) { statusCode = code; return this; },
-      end() { resolve({ statusCode, body: null }); },
-      json(obj) { captured = obj; resolve({ statusCode, body: obj }); },
-    };
-    const fauxReq = {
-      method: 'POST',
-      headers: req?.headers || {},
-      query: {},
-      body,
-    };
-    try {
-      const mod = await import(modulePath);
-      const handler = mod.default || mod;
-      await handler(fauxReq, fauxRes);
-      if (captured == null) resolve({ statusCode, body: null });
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
-
-function makeAgent({ name, description, modulePath, validate }) {
+function makeAgent({ name, description, executeFn, validate }) {
   return {
     description,
     isEnabled() { return Boolean(process.env.ANTHROPIC_API_KEY); },
@@ -47,17 +23,17 @@ function makeAgent({ name, description, modulePath, validate }) {
     retry: { attempts: 1, backoffMs: 0 },
     async run(input) {
       try {
-        const { statusCode, body } = await invokeHandler(modulePath, input, input?._req, input?._res);
-        if (statusCode >= 400) {
+        const result = await executeFn(input || {});
+        if (!result || result.ok === false) {
           return envelope({
             agent: name,
-            code: statusCode === 400 ? ErrorCodes.INVALID_INPUT : ErrorCodes.UPSTREAM_ERROR,
-            message: body?.error || body?.details || `${name} returned ${statusCode}`,
-            retriable: statusCode >= 500,
-            details: body,
+            code: result?.error?.includes?.('required') ? ErrorCodes.INVALID_INPUT : ErrorCodes.UPSTREAM_ERROR,
+            message: result?.error || 'unknown error',
+            retriable: false,
+            details: result,
           });
         }
-        return successEnvelope({ agent: name, output: body, meta: { statusCode } });
+        return successEnvelope({ agent: name, output: result });
       } catch (e) {
         return envelope({ agent: name, code: ErrorCodes.UNKNOWN, message: e.message, retriable: false });
       }
@@ -71,7 +47,7 @@ function makeAgent({ name, description, modulePath, validate }) {
 export const cloneAgent = makeAgent({
   name: 'clone',
   description: 'Configuration mode: capture URL → architecture analysis + improvement plan',
-  modulePath: '../../../configuration/clone.js',
+  executeFn: executeClone,
   validate(input) {
     if (typeof input?.url !== 'string' || !input.url.trim()) {
       return { ok: false, error: 'url is required (string)' };
@@ -83,7 +59,7 @@ export const cloneAgent = makeAgent({
 export const synthesizeAgent = makeAgent({
   name: 'synthesize',
   description: 'Configuration mode: combine 2+ inputs (URL/text/file) → unified spec + improvement plan',
-  modulePath: '../../../configuration/synthesize.js',
+  executeFn: executeSynthesize,
   validate(input) {
     if (!Array.isArray(input?.inputs) || input.inputs.length < 2) {
       return { ok: false, error: 'inputs[] required (>=2 items)' };
@@ -95,7 +71,7 @@ export const synthesizeAgent = makeAgent({
 export const describeAgent = makeAgent({
   name: 'describe',
   description: 'Configuration mode: free-form description → structured product spec',
-  modulePath: '../../../configuration/describe.js',
+  executeFn: executeDescribe,
   validate(input) {
     if (typeof input?.description !== 'string' || !input.description.trim()) {
       return { ok: false, error: 'description is required (string)' };

@@ -27,28 +27,22 @@ import { runStart, runClaude, runComplete, runFail, setProgress, parseFencedJson
 
 const DEFAULT_ORG = 'veu-ai-studio';
 
-export default async function handler(req, res) {
-  setCorsHeaders(req, res);
-  if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
-
+export async function execute(input = {}) {
   const {
-    inputs, objective, product_id: productId, options = {},
+    inputs, objective, product_id: productId, org_id: orgIdInput, options = {},
     _run_id: existingRunId,
-  } = req.body || {};
+  } = input;
 
   if (!Array.isArray(inputs) || inputs.length < 2) {
-    return res.status(400).json({ error: 'Body must include "inputs" array with at least 2 items.' });
+    return { ok: false, error: 'inputs[] required (>=2 items)' };
   }
-
-  // Validate input shapes
   for (const inp of inputs) {
-    if (!inp || typeof inp !== 'object') return res.status(400).json({ error: 'Each input must be an object.' });
-    if (!['url', 'text', 'file'].includes(inp.type)) return res.status(400).json({ error: `Bad input type "${inp.type}". Use url|text|file.` });
-    if (typeof inp.value !== 'string' || !inp.value.trim()) return res.status(400).json({ error: 'Each input must have non-empty "value".' });
+    if (!inp || typeof inp !== 'object') return { ok: false, error: 'each input must be an object' };
+    if (!['url', 'text', 'file'].includes(inp.type)) return { ok: false, error: `bad input type "${inp.type}"` };
+    if (typeof inp.value !== 'string' || !inp.value.trim()) return { ok: false, error: 'each input must have non-empty value' };
   }
 
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const orgId = orgIdInput || DEFAULT_ORG;
   const useEmbeddings = options.useEmbeddings !== false;
 
   const ctx = await runStart({
@@ -258,7 +252,7 @@ PART 2 — JSON:
 
     await runComplete(ctx, { output, qualityScore });
 
-    return res.status(200).json({
+    return {
       ok: true,
       run_id: ctx.run.id,
       mode: 'synthesize',
@@ -267,16 +261,28 @@ PART 2 — JSON:
       ...output,
       cost_usd: ctx.totalCostUSD,
       durationMs: Date.now() - ctx.t0,
-    });
+    };
   } catch (e) {
     await runFail(ctx, e);
-    return res.status(500).json({
+    return {
       ok: false,
       run_id: ctx.run?.id,
       error: 'synthesize failed',
       details: e.message || String(e),
-    });
+    };
   }
+}
+
+export default async function handler(req, res) {
+  setCorsHeaders(req, res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const result = await execute({ ...(req.body || {}), org_id: orgId });
+  if (!result.ok && /required|each input/.test(result.error || '')) return res.status(400).json(result);
+  if (!result.ok) return res.status(500).json(result);
+  return res.status(200).json(result);
 }
 
 export const config = { maxDuration: 90 };

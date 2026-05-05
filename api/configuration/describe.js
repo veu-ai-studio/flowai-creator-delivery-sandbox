@@ -16,22 +16,21 @@ import { listObjectives, getProduct } from '../_lib/configRegistry.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
 
-export default async function handler(req, res) {
-  setCorsHeaders(req, res);
-  if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
-
+// Pure function used by both the HTTP handler and the orchestrator agent.
+// Returns { ok, run_id, brief, spec, quality_score, model, usage, cost_usd, ... }
+// or { ok: false, error, details, run_id? }.
+export async function execute(input = {}) {
   const {
     description, productName, audience, features,
-    objective, product_id: productId, save = true,
+    objective, product_id: productId, org_id: orgIdInput, save = true,
     _run_id: existingRunId,
-  } = req.body || {};
+  } = input;
 
   if (typeof description !== 'string' || !description.trim()) {
-    return res.status(400).json({ error: 'Body must include "description" string.' });
+    return { ok: false, error: 'description is required (string)' };
   }
 
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const orgId = orgIdInput || DEFAULT_ORG;
 
   // Pull product-level objectives if a product is referenced.
   let productObjectives = [];
@@ -141,7 +140,7 @@ Both parts are required. Do not add commentary after the JSON block.`;
 
     await runComplete(ctx, { output, qualityScore });
 
-    return res.status(200).json({
+    return {
       ok: true,
       run_id: ctx.run.id,
       mode: 'describe',
@@ -154,16 +153,29 @@ Both parts are required. Do not add commentary after the JSON block.`;
       usage: claude.usage,
       cost_usd: ctx.totalCostUSD,
       saved: save,
-    });
+    };
   } catch (e) {
     await runFail(ctx, e);
-    return res.status(500).json({
+    return {
       ok: false,
       run_id: ctx.run?.id,
       error: 'describe failed',
       details: e.message || String(e),
-    });
+    };
   }
+}
+
+// HTTP handler — thin wrapper around execute().
+export default async function handler(req, res) {
+  setCorsHeaders(req, res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const result = await execute({ ...(req.body || {}), org_id: orgId });
+  if (!result.ok && result.error === 'description is required (string)') return res.status(400).json(result);
+  if (!result.ok) return res.status(500).json(result);
+  return res.status(200).json(result);
 }
 
 export const config = { maxDuration: 60 };

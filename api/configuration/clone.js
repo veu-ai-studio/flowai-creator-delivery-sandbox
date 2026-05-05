@@ -29,21 +29,17 @@ import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
 
-export default async function handler(req, res) {
-  setCorsHeaders(req, res);
-  if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
-
+export async function execute(input = {}) {
   const {
-    url, product_id: productId, options = {},
+    url, product_id: productId, org_id: orgIdInput, options = {},
     _run_id: existingRunId,
-  } = req.body || {};
+  } = input;
 
   if (typeof url !== 'string' || !url.trim()) {
-    return res.status(400).json({ error: 'Body must include "url" string.' });
+    return { ok: false, error: 'url is required (string)' };
   }
 
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const orgId = orgIdInput || DEFAULT_ORG;
   const opts = {
     captureScreenshot: !!options.captureScreenshot,
     architectureAnalysis: options.architectureAnalysis !== false,
@@ -56,10 +52,8 @@ export default async function handler(req, res) {
     const evt = await sendEvent('flowai/configuration.clone.requested', {
       url, orgId, productId, options: opts,
     });
-    return res.status(202).json({
-      ok: true, async: true, ids: evt.ids,
-      message: 'Clone job dispatched to Inngest. Poll /api/configuration/runs/:id for status.',
-    });
+    return { ok: true, async: true, ids: evt.ids,
+      message: 'Clone job dispatched to Inngest. Poll /api/orchestrator/run?run_id=... for status.' };
   }
 
   const ctx = await runStart({
@@ -246,7 +240,7 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
 
     await runComplete(ctx, { output, qualityScore });
 
-    return res.status(200).json({
+    return {
       ok: true,
       run_id: ctx.run.id,
       mode: 'clone',
@@ -255,16 +249,28 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
       ...output,
       cost_usd: ctx.totalCostUSD,
       durationMs: Date.now() - ctx.t0,
-    });
+    };
   } catch (e) {
     await runFail(ctx, e);
-    return res.status(500).json({
+    return {
       ok: false,
       run_id: ctx.run?.id,
       error: 'clone failed',
       details: e.message || String(e),
-    });
+    };
   }
+}
+
+export default async function handler(req, res) {
+  setCorsHeaders(req, res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const result = await execute({ ...(req.body || {}), org_id: orgId });
+  if (!result.ok && result.error === 'url is required (string)') return res.status(400).json(result);
+  if (!result.ok) return res.status(500).json(result);
+  return res.status(200).json(result);
 }
 
 export const config = { maxDuration: 90 };
