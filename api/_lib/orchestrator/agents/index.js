@@ -23,6 +23,7 @@ import { replitAgent } from './replit.js';
 import { vercelAgent } from './vercel.js';
 import { playwrightAgent } from './playwright.js';
 import { cloneAgent, synthesizeAgent, describeAgent } from './configuration.js';
+import { superCustomerAgent } from '../../superCustomerAgent.js';
 
 // Each entry: [registry-name, agent module export].
 // The configuration agents are tagged with `category: 'mode'` for UI grouping.
@@ -44,11 +45,13 @@ export const AGENTS = [
   ['clone',        cloneAgent],
   ['synthesize',   synthesizeAgent],
   ['describe',     describeAgent],
+  // Audit mode agents — long-running product audits
+  ['super-customer', superCustomerAgent],
 ];
 
-// Convenience set for callers that need to differentiate configuration
-// (long-running) agents from short-call platform agents.
-export const CONFIGURATION_MODE_NAMES = new Set(['clone', 'synthesize', 'describe']);
+// Convenience set for callers that need to differentiate long-running modes
+// (need async + poll + progress) from short-call platform agents.
+export const CONFIGURATION_MODE_NAMES = new Set(['clone', 'synthesize', 'describe', 'super-customer']);
 
 export function isConfigurationMode(name) {
   return CONFIGURATION_MODE_NAMES.has(name);
