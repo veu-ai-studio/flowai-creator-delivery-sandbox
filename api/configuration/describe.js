@@ -11,7 +11,7 @@
 
 import { setCorsHeaders } from '../_lib/claude.js';
 import { resolveOrgId } from '../_lib/tenant.js';
-import { runStart, runClaude, runComplete, runFail, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
+import { runStart, runClaude, runComplete, runFail, setProgress, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
 import { listObjectives, getProduct } from '../_lib/configRegistry.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
@@ -24,6 +24,7 @@ export default async function handler(req, res) {
   const {
     description, productName, audience, features,
     objective, product_id: productId, save = true,
+    _run_id: existingRunId,
   } = req.body || {};
 
   if (typeof description !== 'string' || !description.trim()) {
@@ -42,9 +43,11 @@ export default async function handler(req, res) {
     mode: 'describe',
     orgId, productId,
     input: { description: description.slice(0, 500), productName, audience, features, objective },
+    existingRunId,
   });
 
   try {
+    setProgress(ctx, { step: 'preparing_prompt', percent: 15, etaSec: 25 });
     const objectiveLines = productObjectives.length
       ? `\nProduct-level objectives bound to this product:\n${productObjectives.map((o) => `- [${o.type}] ${o.value} (weight=${o.weight})`).join('\n')}\n`
       : '';
@@ -114,12 +117,16 @@ PART 2 — MACHINE-READABLE SPEC (a single fenced JSON block):
 
 Both parts are required. Do not add commentary after the JSON block.`;
 
+    setProgress(ctx, { step: 'calling_claude', percent: 40, etaSec: 18 });
+
     const claude = await runClaude(ctx, {
       prompt,
       maxTokens: 1500,
       complexity: 'routine',
       callLabel: 'describe',
     });
+
+    setProgress(ctx, { step: 'parsing_output', percent: 85, etaSec: 3 });
 
     const json = parseFencedJson(claude.text);
     const display = stripFencedJson(claude.text);

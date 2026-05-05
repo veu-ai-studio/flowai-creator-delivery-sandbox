@@ -28,6 +28,7 @@ import { base44Agent } from './orchestrator/agents/base44.js';
 import { replitAgent } from './orchestrator/agents/replit.js';
 import { vercelAgent } from './orchestrator/agents/vercel.js';
 import { playwrightAgent } from './orchestrator/agents/playwright.js';
+import { cloneAgent, synthesizeAgent, describeAgent } from './orchestrator/agents/configuration.js';
 
 let _registered = false;
 
@@ -45,6 +46,11 @@ export function ensureAgentsRegistered() {
   agents.register('replit', replitAgent);
   agents.register('vercel', vercelAgent);
   agents.register('playwright', playwrightAgent);
+  // Configuration mode agents — invokable via /api/orchestrator/run
+  // { mode: 'clone'|'synthesize'|'describe', payload }
+  agents.register('clone', cloneAgent);
+  agents.register('synthesize', synthesizeAgent);
+  agents.register('describe', describeAgent);
   _registered = true;
 }
 

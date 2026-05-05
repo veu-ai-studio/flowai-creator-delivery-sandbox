@@ -24,7 +24,7 @@ import { setCorsHeaders } from '../_lib/claude.js';
 import { resolveOrgId } from '../_lib/tenant.js';
 import { crawl, summarisePageForPrompt } from '../_lib/crawler.js';
 import { saveSnapshot, listObjectives } from '../_lib/configRegistry.js';
-import { runStart, runClaude, runComplete, runFail, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
+import { runStart, runClaude, runComplete, runFail, setProgress, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
 import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
@@ -36,6 +36,7 @@ export default async function handler(req, res) {
 
   const {
     url, product_id: productId, options = {},
+    _run_id: existingRunId,
   } = req.body || {};
 
   if (typeof url !== 'string' || !url.trim()) {
@@ -65,10 +66,12 @@ export default async function handler(req, res) {
     mode: 'clone',
     orgId, productId,
     input: { url: url.trim(), options: opts },
+    existingRunId,
   });
 
   try {
     // ─── Step 1: capture (Browserless via crawler chain) ────────────────
+    setProgress(ctx, { step: 'capture', percent: 10, etaSec: 60 });
     const page = await crawl(url.trim());
     if (!page.ok) {
       throw new Error(`Capture failed: ${page.reason}`);
@@ -86,6 +89,12 @@ export default async function handler(req, res) {
       capturedAt: new Date().toISOString(),
     };
     saveSnapshot(ctx.run.id, snapshot);
+    setProgress(ctx, {
+      step: 'capture_complete',
+      percent: 30,
+      etaSec: 35,
+      partial: { snapshot: { url: snapshot.url, title: snapshot.title, jsRendered: snapshot.jsRendered, method: snapshot.method } },
+    });
 
     // ─── Step 2: architecture analysis ──────────────────────────────────
     const productObjectives = productId ? listObjectives({ orgId, productId }) : [];
@@ -143,6 +152,7 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
 }
 \`\`\``;
 
+      setProgress(ctx, { step: 'architecture_analysis', percent: 40, etaSec: 25 });
       const archClaude = await runClaude(ctx, {
         prompt: archPrompt,
         maxTokens: 1500,
@@ -154,6 +164,12 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
         json: parseFencedJson(archClaude.text),
         model: archClaude.model,
       };
+      setProgress(ctx, {
+        step: 'architecture_complete',
+        percent: 60,
+        etaSec: 18,
+        partial: { architecture },
+      });
     }
 
     // ─── Step 3: improvement plan ───────────────────────────────────────
@@ -196,6 +212,7 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
 }
 \`\`\``;
 
+      setProgress(ctx, { step: 'improvement_plan', percent: 70, etaSec: 12 });
       const planClaude = await runClaude(ctx, {
         prompt: planPrompt,
         maxTokens: 1800,
@@ -207,6 +224,7 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
         json: parseFencedJson(planClaude.text),
         model: planClaude.model,
       };
+      setProgress(ctx, { step: 'improvement_plan_complete', percent: 90, etaSec: 3 });
     }
 
     // Quality score: prefer plan score, then architecture score, then extract.

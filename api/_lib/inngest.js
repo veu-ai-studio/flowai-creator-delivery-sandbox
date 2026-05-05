@@ -106,6 +106,19 @@ export async function getInngestFunctions() {
     },
   ));
 
+  fns.push(client.createFunction(
+    {
+      id: 'orchestrator-run-executor',
+      name: 'Orchestrator run executor',
+      retries: 2,
+      trigger: { event: 'flowai/orchestrator.run.requested' },
+    },
+    async ({ event, step }) => {
+      const { runOrchestratorEvent } = await import('./jobs/orchestratorRun.js');
+      return await step.run('execute', () => runOrchestratorEvent(event.data));
+    },
+  ));
+
   _functions = fns;
   return _functions;
 }

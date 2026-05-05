@@ -8,7 +8,7 @@ import {
   appendCostEvent, appendAuditEntry, appendClearanceCheck,
 } from './db.js';
 import {
-  createRun, updateRun, recordProductAudit,
+  createRun, updateRun, getRun, recordProductAudit,
 } from './configRegistry.js';
 import { logger } from './logger.js';
 
@@ -22,8 +22,23 @@ import { logger } from './logger.js';
 // runClaude() can be called multiple times within a single run (e.g. clone
 // does a snapshot pass then an analysis pass). All token counts roll up.
 
-export async function runStart({ mode, orgId, productId, input, metadata }) {
-  const run = createRun({ mode, orgId, productId, status: 'running', input, metadata });
+export async function runStart({ mode, orgId, productId, input, metadata, existingRunId }) {
+  let run;
+  if (existingRunId) {
+    run = getRun(existingRunId);
+    if (run) {
+      // Promote the queued run to running
+      run = updateRun(existingRunId, {
+        status: 'running',
+        input: input || run.input,
+        metadata: metadata || run.metadata,
+        progress: { step: 'started', percent: 5, etaSec: null },
+      });
+    }
+  }
+  if (!run) {
+    run = createRun({ mode, orgId, productId, status: 'running', input, metadata });
+  }
   await appendAuditEntry({
     actionType: `configuration.${mode}.started`,
     severity: 'info',
@@ -43,6 +58,22 @@ export async function runStart({ mode, orgId, productId, input, metadata }) {
     totalCostUSD: 0,
     t0: Date.now(),
   };
+}
+
+// Update the run's progress field and partial_output for the status endpoint
+// to surface during execution. Safe to call multiple times.
+export function setProgress(ctx, { step, percent, partial, etaSec }) {
+  if (!ctx?.run?.id) return;
+  const patch = {};
+  if (step != null || percent != null || etaSec != null) {
+    patch.progress = {
+      step: step || ctx.run.progress?.step,
+      percent: typeof percent === 'number' ? percent : (ctx.run.progress?.percent ?? 0),
+      etaSec: etaSec ?? ctx.run.progress?.etaSec ?? null,
+    };
+  }
+  if (partial !== undefined) patch.partial_output = partial;
+  if (Object.keys(patch).length) updateRun(ctx.run.id, patch);
 }
 
 // One Claude call inside an active run. Records cost both in-process and via

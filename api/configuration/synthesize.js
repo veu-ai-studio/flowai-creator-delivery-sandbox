@@ -23,7 +23,7 @@ import { resolveOrgId } from '../_lib/tenant.js';
 import { crawl, summarisePageForPrompt } from '../_lib/crawler.js';
 import { embedBatch, isEmbeddingsConfigured } from '../_lib/embeddings.js';
 import { listObjectives } from '../_lib/configRegistry.js';
-import { runStart, runClaude, runComplete, runFail, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
+import { runStart, runClaude, runComplete, runFail, setProgress, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
 
@@ -34,6 +34,7 @@ export default async function handler(req, res) {
 
   const {
     inputs, objective, product_id: productId, options = {},
+    _run_id: existingRunId,
   } = req.body || {};
 
   if (!Array.isArray(inputs) || inputs.length < 2) {
@@ -54,10 +55,12 @@ export default async function handler(req, res) {
     mode: 'synthesize',
     orgId, productId,
     input: { inputs: inputs.map((i) => ({ type: i.type, valueLength: i.value.length, label: i.label, weight: i.weight })), objective },
+    existingRunId,
   });
 
   try {
     // ─── Step 1: capture all inputs ─────────────────────────────────────
+    setProgress(ctx, { step: 'capturing_inputs', percent: 10, etaSec: inputs.length * 12 });
     const captured = await Promise.all(inputs.map(async (inp, idx) => {
       const label = inp.label || `Input ${String.fromCharCode(65 + idx)}`;
       const weight = typeof inp.weight === 'number' ? inp.weight : 1;
@@ -86,10 +89,12 @@ export default async function handler(req, res) {
     }));
 
     const failedCaptures = captured.filter((c) => !c.ok);
+    setProgress(ctx, { step: 'inputs_captured', percent: 30, etaSec: 35, partial: { captured: captured.length, failed: failedCaptures.length } });
 
     // ─── Step 2: optional embedding pass for dedup / weighting ──────────
     let embeddingsReport = null;
     if (useEmbeddings && isEmbeddingsConfigured()) {
+      setProgress(ctx, { step: 'embeddings', percent: 40, etaSec: 30 });
       const texts = captured.map((c) => (c.summary || '').slice(0, 4000));
       const vectors = await embedBatch(texts, { inputType: 'document' });
       // Pairwise cosine to surface near-duplicate inputs.
@@ -174,6 +179,7 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
 }
 \`\`\``;
 
+    setProgress(ctx, { step: 'synthesis', percent: 55, etaSec: 25 });
     const synthClaude = await runClaude(ctx, {
       prompt: synthesisPrompt,
       maxTokens: 2000,
@@ -183,6 +189,7 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
 
     const synthJson = parseFencedJson(synthClaude.text);
     const synthText = stripFencedJson(synthClaude.text);
+    setProgress(ctx, { step: 'synthesis_complete', percent: 75, etaSec: 12, partial: { unified_spec: { text: synthText.slice(0, 800), json: synthJson } } });
 
     // ─── Step 4: improvement plan over the unified spec ─────────────────
     const planPrompt = `You are FlowAI's product improvement engine. Given the synthesized spec below, produce a prioritized improvement plan to take it from spec to launch.
@@ -222,6 +229,7 @@ PART 2 — JSON:
 }
 \`\`\``;
 
+    setProgress(ctx, { step: 'improvement_plan', percent: 80, etaSec: 10 });
     const planClaude = await runClaude(ctx, {
       prompt: planPrompt,
       maxTokens: 1800,
@@ -231,6 +239,7 @@ PART 2 — JSON:
 
     const planJson = parseFencedJson(planClaude.text);
     const planText = stripFencedJson(planClaude.text);
+    setProgress(ctx, { step: 'finalising', percent: 95, etaSec: 2 });
 
     const qualityScore = synthJson?.quality_score
       ?? planJson?.quality_score

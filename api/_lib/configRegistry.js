@@ -186,15 +186,17 @@ export function deleteObjective(id, { orgId } = {}) {
 
 // ─── Configuration runs (clone / synthesize / describe) ─────────────────
 
-export function createRun({ mode, orgId, productId, status = 'running', input, metadata } = {}) {
+export function createRun({ id, mode, orgId, productId, status = 'running', input, metadata, progress } = {}) {
   const run = {
-    id: newId(`${mode || 'run'}`),
+    id: id || newId(`${mode || 'run'}`),
     org_id: orgId || null,
     product_id: productId || null,
     mode,                                  // 'clone' | 'synthesize' | 'describe'
     status,                                // 'queued' | 'running' | 'completed' | 'failed'
     input: input || null,
     output: null,
+    partial_output: null,                  // populated during execution
+    progress: progress || { step: status, percent: status === 'queued' ? 0 : 5, etaSec: null },
     error: null,
     metadata: metadata || {},
     cost_usd: 0,
