@@ -26,9 +26,10 @@ export function selectedBackend() {
   return isSupabaseConfigured() ? 'supabase' : 'memory';
 }
 
+// Axiom-backed structured logger (console fallback when AXIOM_TOKEN unset).
+import { logger as _logger } from './logger.js';
 function log(scope, msg, extra) {
-  // Replaced by Axiom logger in /api/_lib/logger.js once that's in.
-  if (process.env.NODE_ENV !== 'test') console.log(`[db:${scope}] ${msg}`, extra || '');
+  _logger.debug(`db.${scope}: ${msg}`, extra || {});
 }
 
 // ─── Products ────────────────────────────────────────────────────────────

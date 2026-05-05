@@ -9,8 +9,11 @@ import {
   STEP_TOKENS, STEP_COMPLEXITY, STEP_LABELS,
 } from '../stepPrompts.js';
 import { appendCostEvent, recordRunStep, appendAuditEntry } from '../db.js';
+import { logger } from '../logger.js';
 
 export async function runStepInline({ step, input, objective, priorResults, pageContent, force, sessionId, orgId, productId, mode } = {}) {
+  const t0 = Date.now();
+  logger.info('step.started', { step, mode, orgId, productId, runId: sessionId, endpoint: '/api/run-step' });
   let pageBlock = pageContent || null;
   let pageMeta = null;
 
@@ -51,6 +54,15 @@ export async function runStepInline({ step, input, objective, priorResults, page
     severity: 'info',
     detail: { step, mode, score: json?.score ?? null },
   }).catch(() => {});
+
+  const durationMs = Date.now() - t0;
+  logger.info('step.completed', {
+    step, mode, orgId, productId, runId: sessionId,
+    durationMs,
+    inputTokens: claude.usage?.input_tokens, outputTokens: claude.usage?.output_tokens,
+    score: json?.score ?? null,
+    endpoint: '/api/run-step',
+  });
 
   return {
     ok: true,
