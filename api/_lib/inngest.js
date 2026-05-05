@@ -11,36 +11,47 @@
 //     same as before. Tomorrow: flip env, restart, jobs go async.
 //   * sendEvent() is a thin wrapper around inngest.send() that no-ops when
 //     disabled. Auto Runner can call it unconditionally.
+//   * Function definitions and the serve adapter are LAZY — they're only
+//     constructed when /api/inngest is actually hit, so the orchestrator
+//     health endpoint can import this file without forcing inngest's HTTP
+//     serve adapter to load (which would otherwise crash if the SDK's
+//     Express helper isn't compatible with Vercel's runtime at cold start).
 
-import { Inngest } from 'inngest';
+let _Inngest = null;
+let _client = null;
+let _functions = null;
 
-let cached = null;
+async function loadInngestClass() {
+  if (_Inngest) return _Inngest;
+  const mod = await import('inngest');
+  _Inngest = mod.Inngest;
+  return _Inngest;
+}
 
 export function isInngestEnabled() {
   if (process.env.INNGEST_BACKEND === 'inline') return false;
   return Boolean(process.env.INNGEST_EVENT_KEY && process.env.INNGEST_SIGNING_KEY);
 }
 
-export function getInngest() {
-  if (cached) return cached;
-  // Inngest's client doesn't blow up without keys — it falls back to dev mode.
-  cached = new Inngest({
+async function getClient() {
+  if (_client) return _client;
+  const Inngest = await loadInngestClass();
+  _client = new Inngest({
     id: 'flowai',
     name: 'FlowAI / VEUaaS',
     eventKey: process.env.INNGEST_EVENT_KEY,
   });
-  return cached;
+  return _client;
 }
 
 export async function sendEvent(name, data = {}, { user, ts } = {}) {
   if (!isInngestEnabled()) {
-    // No-op in inline mode — caller runs the work directly.
     return { ok: false, reason: 'inngest disabled', enabled: false };
   }
   try {
-    const result = await getInngest().send({
-      name,
-      data,
+    const client = await getClient();
+    const result = await client.send({
+      name, data,
       user: user || undefined,
       ts: ts || Date.now(),
     });
@@ -50,45 +61,63 @@ export async function sendEvent(name, data = {}, { user, ts } = {}) {
   }
 }
 
-// ─── Function definitions ────────────────────────────────────────────────
+// Lazy function registry — built on first /api/inngest invocation.
+export async function getInngestFunctions() {
+  if (_functions) return _functions;
+  const client = await getClient();
+  const fns = [];
 
-const inngest = getInngest();
+  fns.push(client.createFunction(
+    { id: 'auto-runner-step-executor', name: 'Auto Runner step executor', retries: 2 },
+    { event: 'flowai/run-step.requested' },
+    async ({ event, step }) => {
+      const { runStepInline } = await import('./jobs/runStep.js');
+      return await step.run('execute', () => runStepInline(event.data));
+    },
+  ));
 
-// Auto Runner step executor: triggered by `flowai/run-step.requested`.
-// Payload: { step, input, objective, priorResults?, sessionId, orgId, productId, mode }
-export const autoRunnerStepExecutor = inngest.createFunction(
-  { id: 'auto-runner-step-executor', name: 'Auto Runner step executor', retries: 2 },
-  { event: 'flowai/run-step.requested' },
-  async ({ event, step }) => {
-    const { runStepInline } = await import('./jobs/runStep.js');
-    return await step.run('execute', () => runStepInline(event.data));
-  },
-);
+  fns.push(client.createFunction(
+    { id: 'scheduled-clearance-check', name: 'Scheduled clearance check', retries: 1 },
+    { event: 'flowai/clearance.scheduled' },
+    async ({ event, step }) => {
+      const { runScheduledClearance } = await import('./jobs/scheduledClearance.js');
+      return await step.run('clearance', () => runScheduledClearance(event.data));
+    },
+  ));
 
-// Scheduled clearance check: cron-driven, runs the clearance protocol on a
-// product and persists the result. Payload: { productId, orgId, url? }
-export const scheduledClearanceCheck = inngest.createFunction(
-  { id: 'scheduled-clearance-check', name: 'Scheduled clearance check', retries: 1 },
-  { event: 'flowai/clearance.scheduled' },
-  async ({ event, step }) => {
-    const { runScheduledClearance } = await import('./jobs/scheduledClearance.js');
-    return await step.run('clearance', () => runScheduledClearance(event.data));
-  },
-);
+  fns.push(client.createFunction(
+    { id: 'cost-rollup-daily', name: 'Daily cost rollup' },
+    { cron: '0 2 * * *' }, // 02:00 UTC daily
+    async ({ step }) => {
+      const { rollupYesterdayCosts } = await import('./jobs/costRollup.js');
+      return await step.run('rollup', () => rollupYesterdayCosts());
+    },
+  ));
 
-// Daily cost rollup: aggregates the previous 24h of cost events per org.
-// Triggered by Inngest's cron expression.
-export const costRollupDaily = inngest.createFunction(
-  { id: 'cost-rollup-daily', name: 'Daily cost rollup' },
-  { cron: '0 2 * * *' }, // 02:00 UTC daily
-  async ({ step }) => {
-    const { rollupYesterdayCosts } = await import('./jobs/costRollup.js');
-    return await step.run('rollup', () => rollupYesterdayCosts());
-  },
-);
+  _functions = fns;
+  return _functions;
+}
 
-export const inngestFunctions = [
-  autoRunnerStepExecutor,
-  scheduledClearanceCheck,
-  costRollupDaily,
-];
+// Lazy serve handler — used by /api/inngest. Tries the lambda adapter first
+// (best fit for Vercel's serverless runtime), falls back to express adapter
+// if needed.
+export async function getServeHandler() {
+  const client = await getClient();
+  const functions = await getInngestFunctions();
+  let serve;
+  try {
+    ({ serve } = await import('inngest/lambda'));
+  } catch {
+    ({ serve } = await import('inngest/express'));
+  }
+  return serve({
+    client, functions,
+    signingKey: process.env.INNGEST_SIGNING_KEY,
+  });
+}
+
+// Public client accessor (sync) for orchestrator agent. Returns null when
+// Inngest is disabled — agent will short-circuit gracefully.
+export function getInngestSync() {
+  return _client;
+}

@@ -1,6 +1,9 @@
 // Inngest agent — event dispatch.
 
 import { sendEvent, isInngestEnabled } from '../../inngest.js';
+// NOTE: this agent only uses sendEvent + isInngestEnabled, both of which are
+// now lazy in the lib (no top-level Inngest constructor calls), so importing
+// this module is safe even when env vars are absent.
 import { successEnvelope, envelope, ErrorCodes, validateInngestInput } from '../contracts.js';
 
 export const inngestAgent = {

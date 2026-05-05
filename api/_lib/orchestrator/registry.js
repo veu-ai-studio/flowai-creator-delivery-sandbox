@@ -82,22 +82,25 @@ export const agents = {
 
   async health() {
     const out = {};
-    await Promise.all(_agents.entries().map ? [] : []); // unused, keep map iteration simple below
-    for (const [name, agent] of _agents.entries()) {
-      const enabled = typeof agent.isEnabled === 'function' ? !!agent.isEnabled() : true;
-      let detail = null;
-      if (enabled && typeof agent.health === 'function') {
-        try { detail = await agent.health(); }
-        catch (e) { detail = { ok: false, error: e.message || String(e) }; }
-      }
-      out[name] = {
-        registered: true,
-        enabled,
-        description: agent.description || '',
-        retry: agent.retry || { attempts: 1, backoffMs: 0 },
-        health: detail,
-      };
-    }
+    // Run all agent health checks in parallel; any throw is caught per-agent.
+    const checks = await Promise.all(
+      Array.from(_agents.entries()).map(async ([name, agent]) => {
+        const enabled = typeof agent.isEnabled === 'function' ? !!agent.isEnabled() : true;
+        let detail = null;
+        if (enabled && typeof agent.health === 'function') {
+          try { detail = await agent.health(); }
+          catch (e) { detail = { ok: false, error: e.message || String(e) }; }
+        }
+        return [name, {
+          registered: true,
+          enabled,
+          description: agent.description || '',
+          retry: agent.retry || { attempts: 1, backoffMs: 0 },
+          health: detail,
+        }];
+      }),
+    );
+    for (const [name, info] of checks) out[name] = info;
     return out;
   },
 };

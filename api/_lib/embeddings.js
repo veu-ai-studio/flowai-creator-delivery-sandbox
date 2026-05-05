@@ -12,17 +12,28 @@
 // clearance_checks (see 0001_initial.sql). Population is deferred to a future
 // background job.
 
-import { VoyageAIClient } from 'voyageai';
+// Voyage SDK is lazy-loaded so importing this module doesn't pay the cost
+// (or risk a crash) at cold start when VOYAGE_API_KEY isn't set.
 
 const DEFAULT_MODEL = 'voyage-3-lite';
 
 let cached = null;
+let loadFailed = false;
 
-function getClient() {
+async function getClient() {
   if (cached) return cached;
+  if (loadFailed) return null;
   if (!process.env.VOYAGE_API_KEY) return null;
-  cached = new VoyageAIClient({ apiKey: process.env.VOYAGE_API_KEY });
-  return cached;
+  try {
+    const mod = await import('voyageai');
+    const Client = mod.VoyageAIClient || mod.default || mod;
+    cached = new Client({ apiKey: process.env.VOYAGE_API_KEY });
+    return cached;
+  } catch (e) {
+    loadFailed = true;
+    console.warn('[embeddings] failed to load voyageai:', e.message);
+    return null;
+  }
 }
 
 export function isEmbeddingsConfigured() {
@@ -41,7 +52,7 @@ export function embeddingDimensions() {
 
 // Returns Float32 vector of length `embeddingDimensions()`, or null if disabled.
 export async function embedText(text, { inputType = 'document' } = {}) {
-  const client = getClient();
+  const client = await getClient();
   if (!client) return null;
   if (!text || !String(text).trim()) return null;
   try {
@@ -58,7 +69,7 @@ export async function embedText(text, { inputType = 'document' } = {}) {
 }
 
 export async function embedBatch(texts = [], { inputType = 'document', batchSize = 64 } = {}) {
-  const client = getClient();
+  const client = await getClient();
   if (!client) return texts.map(() => null);
   const out = [];
   for (let i = 0; i < texts.length; i += batchSize) {
@@ -97,7 +108,7 @@ function cosine(a, b) {
 // — that path runs on Supabase and skips this helper.
 export async function similaritySearch(query, items = [], { textField = 'text', topK = 10 } = {}) {
   if (!query || !items.length) return [];
-  const client = getClient();
+  const client = await getClient();
 
   // Fallback: simple substring scoring when Voyage is unavailable.
   if (!client) {

@@ -16,18 +16,25 @@
 //   logger.info('step.completed', { orgId, productId, runId, stepNumber: 4, durationMs: 1820, costUSD: 0.012 });
 //   logger.error('claude.failed', { orgId, runId, error: e.message });
 
-import { Axiom } from '@axiomhq/js';
+// Axiom SDK is lazy-loaded so importing this module never crashes at cold
+// start, even if the package fails to resolve (graceful console fallback).
 
 const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
 
 let cached = null;
-function getAxiom() {
+let loadAttempted = false;
+
+async function getAxiom() {
   if (cached !== null) return cached;
+  if (loadAttempted) return cached; // already tried
+  loadAttempted = true;
   if (!process.env.AXIOM_TOKEN || !process.env.AXIOM_DATASET) {
     cached = false;
     return false;
   }
   try {
+    const mod = await import('@axiomhq/js');
+    const Axiom = mod.Axiom || mod.default;
     cached = new Axiom({ token: process.env.AXIOM_TOKEN });
   } catch (e) {
     console.warn('[logger] Axiom init failed:', e.message);
@@ -73,13 +80,12 @@ function emit(level, msg, fields = {}) {
   consoleFn(`[${level}] ${msg}`, JSON.stringify({ orgId: entry.orgId, runId: entry.runId, durationMs: entry.durationMs, costUSD: entry.costUSD, ...(fields.error ? { error: fields.error } : {}) }));
 
   if (process.env.AXIOM_DRY_RUN === 'true') return;
-  const ax = getAxiom();
-  if (!ax) return;
-  try {
-    ax.ingest(process.env.AXIOM_DATASET, [entry]);
-  } catch (e) {
-    // Don't throw from logger — never break the request path.
-  }
+  // Fire-and-forget Axiom ingest. Never throws into the request path.
+  getAxiom().then((ax) => {
+    if (!ax) return;
+    try { ax.ingest(process.env.AXIOM_DATASET, [entry]); }
+    catch (_) { /* swallow */ }
+  }).catch(() => {});
 }
 
 export const logger = {
@@ -92,7 +98,7 @@ export const logger = {
 // Used in graceful shutdown / before serverless function returns to ensure
 // queued events flush. Safe to await even if Axiom isn't configured.
 export async function flushLogs() {
-  const ax = getAxiom();
+  const ax = await getAxiom();
   if (!ax) return;
   try { await ax.flush(); } catch {}
 }

@@ -10,14 +10,26 @@
 // sendEmail() handles transport. Today: no API key set → sendEmail returns
 // { ok: false, reason: 'resend not configured' } and never throws.
 
-import { Resend } from 'resend';
+// Resend SDK is lazy-loaded so this module is safe to import even when the
+// resend package fails to resolve at cold start (very unlikely but cheap).
 
 let cached = null;
-function getResend() {
+let loadFailed = false;
+
+async function getResend() {
   if (cached) return cached;
+  if (loadFailed) return null;
   if (!process.env.RESEND_API_KEY) return null;
-  cached = new Resend(process.env.RESEND_API_KEY);
-  return cached;
+  try {
+    const mod = await import('resend');
+    const Resend = mod.Resend || mod.default;
+    cached = new Resend(process.env.RESEND_API_KEY);
+    return cached;
+  } catch (e) {
+    loadFailed = true;
+    console.warn('[email] failed to load resend SDK:', e.message);
+    return null;
+  }
 }
 
 export function isEmailConfigured() {
@@ -122,7 +134,7 @@ export async function sendEmail({ to, subject, html, text, from, replyTo, tags }
   if (process.env.EMAIL_DRY_RUN === 'true') {
     return { ok: true, dryRun: true, to, subject };
   }
-  const client = getResend();
+  const client = await getResend();
   if (!client) {
     return { ok: false, reason: 'resend not configured (RESEND_API_KEY missing)' };
   }
