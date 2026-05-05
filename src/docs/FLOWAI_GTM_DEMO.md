@@ -126,3 +126,44 @@ The demo stack has **four tiers** calibrated to buyer journey stage.
 - Tiers 3 and 4 attempt real API calls, fall back to mock on failure
 - `org_id: "demo-org-public"` on all Tier 3 API calls
 - Footer on every tier: "Built by VEU AI Studio · © 2026"
+
+---
+
+## Architecture Integration — Permanent Standards
+
+> **Updated 2026-05-05** — This document is now a section of the broader FlowAI architecture.
+> The canonical architecture references are:
+> - `docs/FLOWAI_ARCHITECTURE.md` — system-wide architecture, Base44-permanent standard, demo tier design system inheritance
+> - `docs/FLOWAI_MIGRATION_PLAN.md` — hosting decisions, domain routing, seed data strategy, lead flow
+> - `docs/FLOWAI_API_CONTRACT.md` — full spec for all endpoints including GTM-specific routes
+
+### Base44 Standard (applies to all four tiers)
+
+Base44 is the **permanent UI builder** for all four demo tiers. All page iterations, component changes, and design updates are made in Base44 and flow to Vercel via the GitHub auto-mirror. This is not a temporary arrangement — it is the permanent workflow.
+
+### Hosting — Single Vercel Project
+
+All four tiers live in the **same Vercel project** as the main FlowAI product. Each tier is a route within the React app, aliased to a separate domain via Vercel domain configuration. There is no separate marketing Vercel project.
+
+| Tier | Base44 Route | Vercel Domain Alias |
+|------|-------------|---------------------|
+| 1 | `/veaas` | `veaas.com` |
+| 2 | `/demo` | `demo.veaas.com` |
+| 3 | `/live-demo` | `live.veaas.com` |
+| 4 | `/enterprise-demo` | `enterprise.veaas.com` |
+
+### Seed Data Isolation
+
+- Tiers 1 & 2: Static JSON imports — no backend, no isolation needed
+- Tier 3: `org_id: "demo-org-public"` — daily seeded via `GET /api/admin/seed-demo` (cron 06:00 UTC)
+- Tier 4: `org_id: "demo-org-enterprise-{email_hash}"` — seeded per lead submission
+
+Demo org data can never bleed into production — enforced by Supabase RLS at the database level.
+
+### Lead Flow
+
+```
+Tier 4 form submit  →  POST /api/leads  →  Supabase leads table
+                                        →  Resend (notify demo@veuaistudio.com)
+                                        →  (Phase 6) CRM webhook
+``
