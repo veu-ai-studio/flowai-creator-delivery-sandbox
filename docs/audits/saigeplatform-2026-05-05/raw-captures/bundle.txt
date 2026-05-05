@@ -1,0 +1,264 @@
+═══ TIER: home ═══ (https://saigeplatform.com/) Quality score: 54
+
+Architecture summary:
+PART 1 â€” ARCHITECTURE SUMMARY (plain text, no markdown bold)
+
+PRODUCT IDENTITY
+- Headline/pitch: "Audit-Grade ESG Intelligence. In Days, Not Quarters." â€” an AI-powered platform unifying ESG, EHS, SDGs, CSR, and Sustainability into a single defensible Enterprise Impact Performance (EIP) score for board reporting, investor disclosure, and regulatory filings.
+
+PRIMARY OBJECTIVE
+- The page drives visitors toward two primary conversion actions: requesting a product demo ("Request Demo") and reading supporting methodology documentation ("Read the EIP Methodology"). Secondary objectives include establishing credibility with enterprise sustainability leaders and communicating breadth of framework coverage to qualify prospects.
+
+INFORMATION ARCHITECTURE
+- 1. Hero/Above-the-fold: Headline, sub-pitch, key stats (22 agents, 5 domains, 16+ frameworks, 1 EIP score), and dual CTAs anchoring the value proposition.
+- 2. Framework Coverage: Horizontal signal bar listing supported standards (GRI, CSRD, TCFD, SASB, ISO, CDP) with a "enter once, map everywhere" message, followed by placeholder partner logos.
+- 3. Social Proof / Customer Evidence: One real testimonial (Victor Udo, Bucknell University) and two pending enterprise testimonial slots, plus a case study headline.
+- 4. Platform Intelligence / Agent Catalog: Two-tier breakdown of 22 AI agents across 5 domain-specialist agents and 10+ cross-domain operational agents, including KPI alerts, materiality matrix, and EIP Score agent.
+- 5. Practitioner Workflows, Sector Coverage, and Bottom CTA: Eight named practitioner tools, an agentic workflow diagram, four industry verticals with "Learn more" links, a repeat demo CTA block, and a security/compliance footer signal strip.
+
+CONTENT INVENTORY
+- Visible CTAs: "Request Demo", "Read the EIP Methodology", "Sign In", "Go to Home", "Mission Control â†’", "Learn more" (x4, one per sector vertical), "â† Back"
+- Visible forms or input affordances: No inline form fields are rendered in the captured body text; demo requests appear to route to a CTA button without an embedded form visible in the snapshot.
+- Trust signals: One named testimonial with credentials (Victor Udo, FNSE, PhD, Former Director of Sustainability, Bucknell University); claimed outcome stat ("~30% carbon reduction, Top-25 Green University ranking"); platform stats (22 AI agents, 5 domains, 16+ frameworks); security badges (TLS 1.3, AES-256, GDPR-Ready, Audit Log, Multi-tenant Architecture, SSO Ready); cost/confidence claims ("Cut ESG reporting cost by 60%, Raise audit confidence by 100%"); SOC 2 Type II readiness in progress disclosure; five placeholder enterprise partner logo slots (unconfirmed); two pending enterprise testimonial slots.
+
+TECH SIGNALS
+- JS-rendered page (browserless capture method confirms client-side rendering dependency, likely React or a similar SPA framework).
+- Language switcher present (EN/EspaÃ±ol/FranÃ§ais), suggesting i18n middleware or a localization library.
+- Multi-tenant a (truncated)
+
+Improvement plan:
+PART 1 â€” IMPROVEMENT PLAN (plain text, no markdown bold)
+
+EXECUTIVE SUMMARY
+The single biggest opportunity is converting the two pending enterprise testimonial slots and five placeholder partner logos into real social proof, as enterprise buyers require peer-validated credibility before engaging sales â€” without this, the sophisticated agent taxonomy and EIP methodology claims feel unsubstantiated and will suppress demo request conversions. The single biggest risk is that the combination of visible placeholder text ("[ENTERPRISE PARTNER LOGO PENDING]", "[ENTERPRISE TESTIMONIAL PENDING â€” contact sales@saige.com to be featured]") rendered on a live production page actively signals to enterprise prospects that the product is pre-launch or unproven, creating the opposite of the audit-grade trust the headline promises and potentially disqualifying SAIGE before a single demo is booked.
+
+PRIORITIZED IMPROVEMENTS (max 7)
+
+[P0] [trust] Remove or gate all visible placeholder content â€” Replace "[ENTERPRISE PARTNER LOGO PENDING]" logo slots and "[ENTERPRISE TESTIMONIAL PENDING]" blocks with either real references or a single honest statement such as "Reference clients available under NDA â€” contact sales" to stop the page from broadcasting unfinished state to every enterprise visitor who lands on it.
+
+[P0] [conversion] Embed a lightweight inline demo request form in the hero â€” The current "Request Demo" CTA routes away from the page with no visible form; adding a 3-field inline form (Name, Work Email, Company Size) directly beneath the hero subheading removes a full navigation step and captures intent at peak attention.
+
+[P1] [trust] Secure and prominently display at least two named enterprise testimonials with verifiable titles, company names, and outcome metrics â€” The single Victor Udo reference is credible but is framed as "SAIGE-style methodology" rather than direct platform use, which a skeptical enterprise buyer will notice; two Fortune 500 or public-sector CSO quotes with specific quantified outcomes would dramatically shift conversion.
+
+[P1] [technical] Fix the heading hierarchy from h1 â†’ h3 â†’ h2 â€” The page jumps directly from the h1 hero headline to an h3 ("One Platform. Every Major Framework.") before introducing h2 elements, breaking WCAG 1.3.1 and degrading screen reader navigation; change the framework coverage heading to h2 and audit all subsequent heading levels to enforce a strict sequential order.
+
+[P1] [copy] Rewrite the cost and confidence claims with sourcing transparency â€” "Cut ESG reporting cost by 60%" and "Raise audit confidence by 100%" are high-impact claims currently footnoted only as "based on EIP methodology benchmarks"; replace the footnote with a linked methodology PDF excerpt or a named pilot customer outcome to give procurement and legal reviewers a reference they can validate.
+
+[P2] [design] Add meaningful alt text and confirmed logos to all image slots â€” Placeholder logo images with no alt text fail WC (truncated)
+
+═══ TIER: live-demo ═══ (https://saigeplatform.com/live-demo) Quality score: 62
+
+Architecture summary:
+PART 1 â€” ARCHITECTURE SUMMARY (plain text, no markdown bold)
+
+---
+
+PRODUCT IDENTITY
+- Headline: "Live SAIGE Demo"
+- One-line pitch: "An AI-powered tool to help you understand and reduce your environmental impact."
+
+---
+
+PRIMARY OBJECTIVE
+- The page is designed to get visitors to register their organization and receive an instant AI-generated ESG analysis. A secondary objective is to encourage exploration of pre-loaded demo organizations as a low-friction entry point for prospective enterprise customers.
+
+---
+
+INFORMATION ARCHITECTURE
+- Section 1: Environment banner â€” alerts users this is a shared public sandbox that resets daily and warns against entering real organizational data.
+- Section 2: Hero / registration prompt â€” headline, sub-pitch, and primary registration call to action with usage constraints noted (one analysis per email per day).
+- Section 3: Pre-loaded demo organizations â€” three sample organizations (Bucknell University, Nexatek Manufacturing, ClearPath Energy Co.) displayed with sector labels, EIP scores, and framework badges (GRI, TCFD, STARS).
+- Section 4: ESG analysis form â€” instructs the user to enter org name and industry to receive an instant EIP estimate and risk callouts, with a "Register My Organization" action.
+- Section 5: Footer-level attribution â€” builder credit (VEU AI Studio) and demo domain (saigedemo.com).
+
+---
+
+CONTENT INVENTORY
+
+Visible CTAs:
+- "Book Enterprise Demo"
+- "Explore in Full Sandbox"
+- "Register My Organization"
+- Navigation/header link implied by "Sandbox"
+
+Visible forms or input affordances:
+- Organization registration form accepting at minimum org name and email (implied by "1 analysis per email per day") and industry field.
+
+Trust signals:
+- Three pre-loaded demo organizations with realistic EIP scores (64â€“78) and recognized ESG framework badges: GRI, TCFD, STARS.
+- Statement "Live backend Â· Real AI Â· Shared demo environment" indicating production-grade AI is running.
+- Usage constraint framing ("1 analysis per email per day Â· No credit card Â· No account required") reduces friction and builds credibility.
+- Builder attribution to VEU AI Studio with a dedicated demo domain (saigedemo.com).
+
+---
+
+TECH SIGNALS
+- Page is JS-rendered (captured via browserless), indicating a modern SPA or SSR framework (likely React, Next.js, or similar).
+- Separate demo domain (saigedemo.com) from marketing domain (saigeplatform.com), suggesting environment isolation between production and sandbox.
+- "Live backend Â· Real AI" copy implies active API calls to an AI inference layer (likely LLM-based scoring) rather than static mock data.
+- Daily data reset logic implies scheduled backend jobs or time-keyed database partitioning.
+- No CDN, hosting provider, or build toolchain explicitly identifiable from the truncated body text alone.
+
+---
+
+ACCESSIBILITY SIGNALS
+- Heading hierarchy is present and logical: h1 ("Live SAIGE Demo") followed by h2 ("Get your organization's ESG analysis"), which is correct two (truncated)
+
+Improvement plan:
+PART 1 â€” IMPROVEMENT PLAN (plain text, no markdown bold)
+
+---
+
+EXECUTIVE SUMMARY
+
+The single biggest opportunity is converting sandbox explorers into enterprise pipeline by strengthening the bridge between the demo experience and the "Book Enterprise Demo" CTA â€” currently that path is buried and unsupported by social proof, outcome data, or urgency. The single biggest risk is that the environment warning banner ("data is shared and reset daily â€” do not enter real organizational data") actively undermines trust at the exact moment a visitor is deciding whether to engage, and without mitigation it will cause high-intent prospects to abandon before reaching the registration form.
+
+---
+
+PRIORITIZED IMPROVEMENTS (max 7)
+
+P0 | trust | Reframe the environment warning banner â€” the current banner leads with risk language ("do not enter real data") which primes visitors for distrust before they see any value; replace it with a positively framed sandbox assurance such as "Safe to explore â€” this is a dedicated demo environment using anonymized sample data" and move the data-sharing caveat to a secondary tooltip or footer note rather than the hero zone.
+
+P0 | conversion | Elevate "Book Enterprise Demo" into a persistent, high-contrast CTA â€” the enterprise booking action is the highest commercial value event on the page but is currently treated as a peer to sandbox exploration; make it a sticky header button with a differentiating label such as "Get a Private Enterprise Demo" and add a one-line value qualifier beneath it ("custom data, private environment, dedicated CSM").
+
+P1 | trust | Add quantified outcome claims and third-party validation â€” the page asserts AI-powered ESG analysis but offers no evidence of accuracy, methodology, or customer results; add at minimum one cited statistic (e.g., "organizations using SAIGE reduced reporting time by X%"), one recognized framework endorsement, or one named customer logo to anchor credibility before the registration form.
+
+P1 | copy | Clarify what the EIP Score means before asking users to register â€” visitors are presented with EIP scores of 64â€“78 on the demo cards but are given no explanation of the scale, what constitutes a good score, or what the analysis will reveal for their own organization; add a single-sentence tooltip or inline explainer ("EIP Score: 0â€“100 scale measuring Environmental Impact Performance across GRI, TCFD, and STARS criteria") on each card and above the registration form.
+
+P1 | conversion | Add a micro-conversion path for visitors not ready to register â€” the current page forces a binary choice between full registration and passive sandbox browsing with no middle option; introduce a "See a sample report" link that opens a pre-generated PDF or modal showing what the AI output looks like, reducing perceived commitment and accelerating trust.
+
+P2 | compliance | Add accessible labels to all emoji-based icons and confirm form field label elements â€” the sector icons (ðŸŽ“,  (truncated)
+
+═══ TIER: investor ═══ (https://saigeplatform.com/investor) Quality score: 4
+
+Architecture summary:
+PART 1 â€” ARCHITECTURE SUMMARY
+
+PRODUCT IDENTITY
+- Headline from the page: "404 | Page Not Found"
+- The meta description offers the closest product pitch: "An AI-powered tool to help you understand and reduce your environmental impact." However, this is from the site-level metadata, not the investor page content itself.
+
+PRIMARY OBJECTIVE
+- The page has no intentional visitor objective. It is an error/fallback page whose sole functional purpose is to inform the user that the requested route (/investor) does not exist and redirect them back to the home page. No conversion, lead capture, or content consumption goal is achievable here.
+
+INFORMATION ARCHITECTURE
+- Section 1: Page title/browser tab label ("investor | SAIGE") â€” inherited site framing
+- Section 2: Error code display ("404") â€” primary visual signal to the user
+- Section 3: Error explanation ("Page Not Found" with message: The page "investor" could not be found in this application.) â€” contextual clarification
+- Section 4: Recovery navigation ("Go Home" link) â€” sole navigational affordance
+- Section 5: No further content sections exist; the page is structurally minimal
+
+CONTENT INVENTORY
+- Visible CTAs: "Go Home"
+- Visible forms or input affordances: None. No search bar, no email capture, no contact form is present.
+- Trust signals: None. No logos, testimonials, partner badges, statistics, or social proof elements are present on this error page.
+
+TECH SIGNALS
+- The page is JS-rendered (captured via browserless), indicating a JavaScript-driven frontend framework such as React, Next.js, or similar SPA/SSG tooling
+- The structured 404 message referencing the slug "investor" by name suggests a dynamic routing system that interpolates the attempted path into the error template, consistent with Next.js or a custom React Router implementation
+- No CDN, hosting provider, or performance-specific signals are discernible from the truncated body
+- The meta description is populated despite being a 404, suggesting global/shared metadata configuration rather than per-page SEO management
+
+ACCESSIBILITY SIGNALS
+- Heading hierarchy is present but limited: h1 ("404") followed by h2 ("Page Not Found") â€” the hierarchy is logical but the h1 choice of a numeric error code rather than a descriptive label is suboptimal for screen reader users
+- No alt-text signals are detectable; no images appear to be present on the page
+- Contrast and color accessibility cannot be assessed from the captured text alone
+- The page is structurally sparse, which limits both accessibility risks and accessibility opportunities
+
+QUALITY SCORE: 4/100
+- This page scores critically low because it is an unintentional 404 error state rather than a designed investor-facing page, providing no meaningful content, no trust signals, no conversion pathways, and no architectural substance relevant to the intended audience or business objective.
+
+---
+
+PART 2 â€” MACHINE-READABLE
+
+Improvement plan:
+PART 1 â€” IMPROVEMENT PLAN (plain text, no markdown bold):
+
+EXECUTIVE SUMMARY
+The single biggest opportunity is to build and publish an actual /investor page that serves the intended audience with pitch materials, traction data, and a contact pathway, since no such page exists and any investor arriving at this URL leaves with zero information. The single biggest risk is that active fundraising or investor outreach is being undermined in real time by this broken route, meaning every investor link shared in decks, emails, or press converts to a dead end and erodes credibility at the most sensitive stage of a company relationship.
+
+PRIORITIZED IMPROVEMENTS (max 7)
+
+[P0] [technical] fix-broken-investor-route â€” The /investor path returns a 404, meaning the page either was never built or was deleted; immediately create and deploy a valid route at this URL so the intended audience lands on real content rather than an error state.
+
+[P0] [conversion] build-investor-landing-page â€” No pitch content, contact mechanism, or call to action exists for investors; design and publish a dedicated investor page containing a brief company thesis, key traction metrics, team credibility signals, and a direct contact or data room request form.
+
+[P1] [technical] return-correct-http-status â€” The JS-rendered 404 page may be serving a 200 HTTP status code to crawlers and link validators depending on framework configuration; verify the server returns a true 404 HTTP header for this route to prevent indexing of the error state and ensure monitoring tools flag the broken page correctly.
+
+[P1] [trust] add-investor-trust-signals â€” Any future investor page must include team bios with prior company logos, advisors, existing backers if any, and relevant press mentions; investors make rapid credibility judgments and the complete absence of social proof on a broken page compounds the negative signal.
+
+[P1] [copy] fix-global-meta-description â€” The meta description reads as a generic end-user product pitch rather than an investor-oriented framing; at minimum scope the meta to the investor audience or implement per-page metadata so the tab and search preview communicate the right context to the right viewer.
+
+[P2] [design] improve-404-page-fallback-experience â€” The current 404 template offers only a Go Home link with no search, no suggested pages, and no branded context; upgrade the fallback page to include a site search input, links to key sections, and a support contact option so misdirected users can self-recover without abandoning.
+
+[P2] [technical] improve-404-heading-accessibility â€” The h1 element contains the numeric string 404 rather than a descriptive label, which is suboptimal for screen readers; change h1 to a human-readable string such as Page Not Found and move the error code to a visually prominent but semantically secondary element.
+
+QUICK WINS (max 3)
+
+1. Add a true server-side 404 HTTP status header to the /investor route if the framework is not already re (truncated)
+
+═══ TIER: app ═══ (https://saigeplatform.com/app) Quality score: 4
+
+Architecture summary:
+PART 1 â€” ARCHITECTURE SUMMARY
+
+PRODUCT IDENTITY
+- Headline: "404 | Page Not Found"
+- One-line pitch (from meta description): "An AI-powered tool to help you understand and reduce your environmental impact."
+
+PRIMARY OBJECTIVE
+- The page has no functional primary objective in its current state. It is a 404 error page, and its sole recoverable action is to redirect the visitor back to the homepage via a "Go Home" link. No conversion, sign-up, or informational goal is being served.
+
+INFORMATION ARCHITECTURE
+- 1. Page title bar / browser tab: "app | SAIGE"
+- 2. Primary error heading (h1): "404"
+- 3. Secondary error descriptor (h2): "Page Not Found"
+- 4. Explanatory body text: 'The page "app" could not be found in this application.'
+- 5. Recovery navigation: "Go Home" link
+
+CONTENT INVENTORY
+- Visible CTAs: "Go Home"
+- Visible forms or input affordances: None detected. No search field, no email capture, no login form present on this error page.
+- Trust signals: None. No logos, testimonials, partner badges, user statistics, or social proof elements are present on this error page.
+
+TECH SIGNALS
+- JavaScript rendering required (captured via browserless/JS-rendered method), suggesting a client-side or hybrid framework such as Next.js, Nuxt, or a similar SPA/SSR framework.
+- The URL path structure (/app) and the error message phrasing ("could not be found in this application") are consistent with Next.js or similar React-based routing conventions.
+- No CDN, hosting provider, or performance-specific signals are discernible from the truncated body content alone.
+- Meta description is present and populated, suggesting at least basic SEO configuration is in place at the framework level.
+
+ACCESSIBILITY SIGNALS
+- Heading hierarchy is irregular for an error page: h1 contains "404" (a numeric code rather than a descriptive label) and h2 contains "Page Not Found" (more descriptive). Reversing or combining these would better serve screen reader users.
+- No alt-text presence can be confirmed or denied from the available content; no images are referenced in the captured body.
+- Contrast indicators cannot be assessed from text content alone; no inline styles or class names indicating color choices are present in the truncated capture.
+- The single navigation element ("Go Home") appears to be a plain text link, which should be keyboard-accessible if properly implemented.
+
+QUALITY SCORE: 4/100
+- This page scores extremely low because it is a broken 404 error state delivering zero intended content, no conversion pathways, no trust signals, and no substantive information architecture beyond a minimal error message and a single recovery link, making it essentially non-functional as a product or landing page.
+
+---
+
+PART 2 â€” MACHINE-READABLE
+
+Improvement plan:
+PART 1 â€” IMPROVEMENT PLAN (plain text, no markdown bold):
+
+EXECUTIVE SUMMARY
+The single biggest opportunity is to transform this dead-end 404 error page into a lightweight recovery and acquisition surface by surfacing the product's core value proposition, a working app entry point, and at minimum one conversion pathway, converting an otherwise total loss visit into a potential user. The single biggest risk is that the /app route being broken suggests a routing or deployment misconfiguration that may be actively blocking users who were sent a direct link to the product, meaning every marketing, referral, or onboarding email pointing to /app is silently failing and losing real users right now.
+
+PRIORITIZED IMPROVEMENTS (max 7)
+
+[P0] [technical] fix-broken-app-route â€” The /app route is returning a 404 despite being the canonical product URL referenced in the page title, indicating a deployment, routing, or authentication misconfiguration that must be resolved immediately; audit the Next.js or SPA router configuration to ensure /app either renders the authenticated app shell, redirects to a login page, or correctly serves the intended entry point.
+
+[P0] [conversion] add-working-app-entry-cta â€” The 404 page offers zero path to the actual product; replace or supplement the "Go Home" link with a direct "Try SAIGE" or "Get Started" CTA that routes to the correct, functioning app or sign-up flow.
+
+[P1] [technical] audit-inbound-link-integrity â€” Any marketing materials, email campaigns, social links, or SEO-indexed pages pointing to /app are currently sending users to a dead end; run a full inbound link audit and either fix the destination URL or implement a 301 redirect from /app to the correct authenticated entry point.
+
+[P1] [copy] rewrite-404-page-messaging â€” The current error copy is generic and cold; rewrite it to reflect the SAIGE brand voice, acknowledge the user's intent ("Looks like you were trying to reach the SAIGE app"), and immediately re-orient them with a clear next step that reinforces the product's environmental impact value proposition.
+
+[P1] [design] elevate-404-page-to-branded-recovery-surface â€” The page has no visual identity, trust signals, or brand presence; add the SAIGE logo, a brief one-line product description, and at least two navigation options such as login, sign up, and learn more so the page functions as a minimal but credible brand touchpoint rather than a dead end.
+
+[P2] [trust] surface-social-proof-or-value-signal â€” Even on a 404 page, a single data point or short testimonial such as "Join X users already reducing their carbon footprint" would maintain credibility and reduce bounce intent; add one quantified trust signal pulled from existing marketing assets.
+
+[P2] [compliance] fix-heading-hierarchy-for-accessibility â€” The current h1 contains only the numeric code "404" which is non-descriptive for screen readers; change h1 to "Page Not Found" and demote the numeric code to a visually prominent span or ar (truncated)

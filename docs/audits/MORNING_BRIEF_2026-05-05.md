@@ -6,9 +6,11 @@
 
 ## TL;DR
 
-- **SAIGE audit complete** — health score **58/100**. 5 P0s, 7 P1s, 5 P2s, 1 P3 (18 issues total). Single sharpest risk: **a compliance product whose marketing site has no cookie consent or privacy policy**.
-- **PressAI fix sprint complete** — health score still **38/100** (no fixes shipped from this repo because PressAI source isn't in the FlowAI codebase). All 10 P0+P1 issues queued for you in two tracks: 5 ready to dispatch immediately, 5 need a 30-minute decision pass.
-- **Decisions queue: 5 items** (CTA copy, tagline approval, stat substantiation, compliance status, email backend choice) — see §3 below.
+- **🔴 NEW — SAIGE independent verification on saigeplatform.com:** blind audit score **47/100** — *down* from saigedemo.com baseline (58) and *down* from Base44's self-reported ~63. Two of four tier surfaces (`/investor`, `/app`) **soft-404**. Home page shows literal `[PENDING]` placeholder strings. **Buyer-readiness verdict: NOT READY this week.** See §8 below.
+- **SAIGE audit on saigedemo.com (legacy)** — health score 58/100. 18 issues. The legacy domain is being retired via 301 to saigeplatform.com per [`saige-cutover-plan.md`](saige-cutover-plan.md).
+- **PressAI fix sprint** — Code shipped 4 backend endpoints (commit `b176518`) closing the backend half of P0-001/002/003 and P1-004. Base44 still owns the UI half of those + 6 pure-UI issues. Score moves from 38 → projected ~75-82 once Base44 ships + Victor decides.
+- **Migration playbook + runbook + cutover plan** committed for the saigedemo→saigeplatform transition (commits `98d3fc0`, `7a77bb3`, `60b744d`).
+- **Decisions queue is now 11 items** across SAIGE saigeplatform (6 new) and PressAI (5 unchanged). See §3 below.
 
 ---
 
@@ -179,3 +181,42 @@ Five items need your input. Each is a 1-minute decision; total 5-10 min of your 
 ```
 
 All artifacts live under `docs/audits/` in the `flowai` repo. GitHub renders markdown; tap any link above to drill in.
+
+---
+
+## 8. SAIGE INDEPENDENT VERIFICATION — saigeplatform.com (added end-of-day)
+
+**Headline:** **47 / 100** (blind audit) · saigedemo.com baseline 58 · Base44 self-reported ~63 · **Δ −11 vs baseline · −16 vs self-report**.
+
+### Did Base44's self-reported fixes hold up under independent audit? **Partially.**
+
+Specifically:
+- ✅ The fixes Base44 reported on `/live-demo` did land — that surface scored 62, marginally above the 58 baseline.
+- ❌ The score gap traces to **un-shipped tier surfaces**, not regressed quality on shipped ones. Half of the four advertised tier URLs (`/investor`, `/app`) return soft-404s.
+- ❌ Home page still contains literal `[ENTERPRISE PARTNER LOGO PENDING]` and `[ENTERPRISE TESTIMONIAL PENDING]` placeholder strings — credibility-killer.
+
+### Top 3 issues remaining
+
+1. **[P0]** `/investor` returns soft-404 — Tier 4 surface advertised but not built.
+2. **[P0]** `/app` returns soft-404 — Tier 1 surface advertised but not built.
+3. **[P0]** `[PENDING]` placeholder strings visible on the home page — broadcasts pre-launch state to anyone scanning for trust signals.
+
+### Buyer readiness verdict: **🔴 NOT READY** for this week's buyer review
+
+Even if you steer the conversation away from `/investor` and `/app`, those URLs will appear in any thoughtful buyer's manual exploration. The placeholder strings on home are the credibility-killer regardless of demo flow.
+
+**Recommendation: postpone the buyer demo by 5-7 days.** With ~6 hours of focused work the demo passes the "would I be embarrassed by this" test — score moves to ~60. Adding 5-7 days takes it from passable to credible (~70-75). For an institutional VC or enterprise procurement diligence specifically, the 5-7 day path is the only honest option.
+
+**Fastest path to credible:** make Decisions 1-5 in [`VICTOR_DECISIONS_NEEDED.md`](https://github.com/victor2081new-cloud/flowai/blob/main/docs/audits/saigeplatform-2026-05-05/VICTOR_DECISIONS_NEEDED.md) (15 minutes), dispatch both backlogs, demo Day 6-7.
+
+### Direct GitHub links
+
+- 📄 [SAIGE saigeplatform EXECUTIVE_SUMMARY.md](https://github.com/victor2081new-cloud/flowai/blob/main/docs/audits/saigeplatform-2026-05-05/EXECUTIVE_SUMMARY.md)
+- 🗳️ [SAIGE saigeplatform VICTOR_DECISIONS_NEEDED.md](https://github.com/victor2081new-cloud/flowai/blob/main/docs/audits/saigeplatform-2026-05-05/VICTOR_DECISIONS_NEEDED.md) — **active work surface**
+- 💻 [SAIGE saigeplatform CLAUDE_CODE_BACKLOG.md](https://github.com/victor2081new-cloud/flowai/blob/main/docs/audits/saigeplatform-2026-05-05/CLAUDE_CODE_BACKLOG.md)
+- 🎨 [SAIGE saigeplatform BASE44_FIX_QUEUE.md](https://github.com/victor2081new-cloud/flowai/blob/main/docs/audits/saigeplatform-2026-05-05/BASE44_FIX_QUEUE.md)
+- 📁 [SAIGE saigeplatform raw-captures/](https://github.com/victor2081new-cloud/flowai/tree/main/docs/audits/saigeplatform-2026-05-05/raw-captures)
+
+### What this audit demonstrates about the Super Customer Agent
+
+The agent doesn't see prior baselines or self-reported fixes. It graded the live product blind and produced a number 16 points below the self-report. **Independent verification is now an operational capability** — every product audit going forward gets this same blind grading lens. For VEUaaS commercial sales, this is the artifact buyers pay for: a third-party verifier's score on the live product, not the operator's self-report.
