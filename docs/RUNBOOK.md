@@ -226,3 +226,162 @@ curl -s https://flowai-dun.vercel.app/api/diagnostic | jq '.summary'
 
 If `failingCount > 0` at end of day, page on-call — auto-paging via Resend
 becomes possible once Resend is activated and the Self-Renewal cron is wired.
+
+---
+
+## 5. Migration Cutover Checklist
+
+The day each product migrates to a new canonical domain (or to the four-tier demo standard), follow this checklist in order. **Do not skip steps**, even when they look redundant — each one closes a specific failure mode.
+
+The strategic context for migrations lives in [`/docs/MIGRATION_PLAYBOOK.md`](MIGRATION_PLAYBOOK.md). Per-product cutover plans live in `/docs/audits/{product}-cutover-plan.md` (e.g., [`saige-cutover-plan.md`](audits/saige-cutover-plan.md)).
+
+### Pre-cutover (T-7 to T-1 days)
+
+- [ ] **Per-product cutover plan exists** in `/docs/audits/{product}-cutover-plan.md` and is reviewed.
+- [ ] **`productDomains.js` updated** with the new `live_url`, `target_url`, and any `legacy_domains` entries. PR merged to main.
+- [ ] **Vercel project deployed and green** at the new canonical domain. Verify with `curl /api/version`.
+- [ ] **Pre-migration audit run** via Super Customer Agent against both old and new domains. Health score on new ≥ old. No regressions.
+- [ ] **301 redirect rule pre-drafted** at the DNS provider in *paused / disabled* state (Cloudflare Page Rules support this; for other providers, prepare the rule but don't activate).
+- [ ] **Notify stakeholders** of the cutover window (24h advance for portfolio products, 7d for production-critical).
+
+### Cutover day (T-0)
+
+#### Step 1 — Final pre-flight (15 minutes)
+
+```bash
+# 1. Confirm Vercel project is deployed and green
+curl -s https://flowai-dun.vercel.app/api/version | jq '{ commit, env }'
+
+# 2. Confirm new canonical domain renders all four tiers
+curl -sI https://newcanonical.com/             # Tier 2 — waitlist / marketing
+curl -sI https://newcanonical.com/live-demo    # Tier 3 — audited demo
+curl -sI https://newcanonical.com/investor     # Tier 4 — investor demo
+curl -sI https://newcanonical.com/app          # Tier 1 — live (auth-gated; expect 200 for the login page)
+```
+
+All four must return 200. If any returns 404 or 500, **abort the cutover** and fix.
+
+#### Step 2 — Configure DNS for the new domain
+
+Pick the appropriate path:
+
+**Path A — New domain (first time being served):**
+- At Cloudflare / Route 53 / DNS provider: add `CNAME` or `A` record pointing at Vercel's hosting endpoint.
+  - For Vercel: `cname.vercel-dns.com` for `www.canonical.com`, or A record `76.76.21.21` for the apex.
+- In Vercel project Settings → Domains: add `canonical.com` and `www.canonical.com`.
+- Wait for DNS propagation. Verify with `dig canonical.com +short`.
+
+**Path B — Existing domain that's already serving (no DNS change needed):**
+- Skip to step 3.
+
+#### Step 3 — Configure 301 redirects for legacy domains
+
+For every entry in `productDomains.js` → `legacy_domains` with `status: 'active'`:
+
+**Cloudflare Page Rule:**
+1. Cloudflare → Domain (legacy) → Rules → Page Rules → Create Page Rule
+2. URL pattern: `*legacy.com/*`
+3. Setting: Forwarding URL
+4. Status: 301 — Permanent Redirect
+5. Destination: `https://canonical.com/target-path/$1` (replace `target-path` with the value from `legacy_domains[].target_path`)
+6. Save and **enable** the rule
+
+**Vercel `vercel.json` (when both domains are on Vercel):**
+1. Add the legacy domain to the canonical's Vercel project (Settings → Domains)
+2. Update `vercel.json`:
+   ```json
+   {
+     "redirects": [
+       { "source": "/(.*)", "destination": "https://canonical.com/target-path/$1", "permanent": true,
+         "has": [{ "type": "host", "value": "legacy.com" }] }
+     ]
+   }
+   ```
+3. Push the change → wait for redeploy to go green
+
+#### Step 4 — Update hardcoded references in /api and /src
+
+```bash
+# From the repo root, audit for any hardcoded old domain reference
+grep -r "old-domain.com" /api /src 2>/dev/null
+
+# Expected: only matches inside productDomains.js (the legacy_domains array)
+# If matches surface elsewhere, update them to read from productDomains.js
+```
+
+If `/src` contains any hardcoded references, those are Base44 territory — file a Base44 task and queue, do not edit `/src` from the backend side.
+
+#### Step 5 — Smoke test all four tiers from the new URL
+
+```bash
+# All four must return 200
+for path in / /live-demo /investor /app; do
+  echo "Testing canonical.com$path"
+  curl -sI "https://canonical.com$path" | head -1
+done
+
+# All legacy domains must return 301 with the right Location header
+for legacy in legacy1.com legacy2.com; do
+  echo "Testing redirect from $legacy"
+  curl -sI "https://$legacy/" | head -3
+done
+```
+
+**Acceptance:**
+- Every canonical path returns 200
+- Every legacy domain returns 301 → correct `Location` pointing at the canonical
+- Sub-paths preserved (`https://legacy.com/foo` → `https://canonical.com/target/foo`)
+- Query strings preserved
+
+#### Step 6 — Re-audit immediately
+
+```bash
+curl -X POST https://flowai-dun.vercel.app/api/audits/super-customer/run \
+  -H "Content-Type: application/json" \
+  -H "x-flowai-org-id: veu-ai-studio" \
+  -d '{
+    "url": "https://canonical.com",
+    "product_id": "<slug>",
+    "depth": "quick",
+    "max_page_count": 5,
+    "objective": "Post-cutover regression check"
+  }'
+```
+
+Compare to pre-cutover baseline. Any new P0 issue introduced by the cutover means **roll back**.
+
+#### Step 7 — Update productDomains.js to reflect cutover state
+
+In `/api/_lib/productDomains.js`, update the migrated product's entry:
+- For each retired legacy domain, change `status: 'active'` → `status: 'redirected'`
+
+```js
+legacy_domains: [
+  {
+    domain: 'saigedemo.com',
+    target_path: '/live-demo',
+    status: 'redirected',                            // was 'active'
+    notes: '...',
+  },
+],
+```
+
+Push the change so the orchestrator + admin/seed reflect post-cutover state.
+
+### Monitor for 24 hours before declaring cutover complete
+
+- **Hour 1:** verify `/api/diagnostic` still returns `ok:true`. Spot-check the 301 with a fresh browser (no cache).
+- **Hour 4:** Vercel logs review — any 500s on the canonical? Any 404s that should have been redirected?
+- **Hour 12:** review Cloudflare / Vercel analytics — traffic patterns on the canonical match expectations? Legacy domain still serving traffic (means redirect not propagated for some users)?
+- **Hour 24:** declare cutover complete OR schedule a fix-forward sprint based on findings.
+
+### Rollback procedure
+
+If anything goes wrong in steps 5-6:
+
+1. **Disable the 301 redirect** (Cloudflare: pause Page Rule; Vercel: revert vercel.json).
+2. **Verify legacy domain serves the old content** again — `curl -sI https://legacy.com` returns 200 from the legacy host.
+3. **Document the failure mode** in the per-product cutover plan.
+4. **Schedule re-attempt** only after the failure mode is reproduced + fixed in a non-production environment.
+
+Per-product rollback plans live in each product's `/docs/audits/{product}-cutover-plan.md`.
