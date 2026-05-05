@@ -279,6 +279,8 @@ PART 2 — JSON:
   }
 }
 
+export const config = { maxDuration: 90 };
+
 function cosine(a, b) {
   if (!a || !b || a.length !== b.length) return null;
   let dot = 0, na = 0, nb = 0;

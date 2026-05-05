@@ -25,7 +25,7 @@
 import { setCorsHeaders } from '../_lib/claude.js';
 import { agents } from '../_lib/orchestrator.js';
 import { resolveOrgId } from '../_lib/tenant.js';
-import { createRun, getRun, getSnapshot } from '../_lib/configRegistry.js';
+import { createRun, getRun, getSnapshot, updateRun } from '../_lib/configRegistry.js';
 import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
 import { logger } from '../_lib/logger.js';
 
@@ -48,17 +48,41 @@ export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  // ── GET path: status polling ────────────────────────────────────────
-  // Co-located here so polls hit the same function (and thus the same
-  // in-memory run registry) as the POST dispatch. This is the canonical
-  // status endpoint until Supabase makes runs durable across instances.
+  // ── GET path: status polling + pull-resume ─────────────────────────
+  // On Vercel Node serverless, the function is killed once res.end() is
+  // called. So the POST dispatch can't reliably run work in background.
+  // Mitigation: when a poll arrives and finds the run still 'queued' (no
+  // background work executed), we acquire a lock and run the work
+  // synchronously inside this GET request. Pollers thus drive execution.
+  // Subsequent polls see 'running' (or 'completed') and just return state.
+  // When INNGEST is configured, the POST already dispatched via Inngest,
+  // so the run will be 'running' or 'completed' by the time the first
+  // poll arrives — pull-resume is a no-op.
   if (req.method === 'GET') {
     const runId = req.query?.run_id || req.query?.runId;
     if (!runId) return res.status(400).json({ error: 'GET requires ?run_id=<id>' });
-    const run = getRun(runId);
+    let run = getRun(runId);
     if (!run) return res.status(404).json({ error: 'Not found', run_id: runId });
     const orgId = resolveOrgId(req) || 'veu-ai-studio';
     if (run.org_id && run.org_id !== orgId) return res.status(404).json({ error: 'Not found', run_id: runId });
+
+    // Pull-resume: queued → running → completed in this request.
+    if (run.status === 'queued' && run.metadata?._dispatch) {
+      // Try to acquire a lock (transitions to 'running'). If another caller
+      // already did, this becomes a no-op poll.
+      const ts = Date.now();
+      updateRun(runId, { status: 'running', metadata: { ...run.metadata, _resumed_at: ts } });
+      // Stash agent + payload from POST-time dispatch hint
+      const { agent, payload } = run.metadata._dispatch;
+      // Run the work — blocks until completed/failed
+      try {
+        await agents.run(agent, payload);
+      } catch (e) {
+        logger.error('orchestrator.pull_resume.failed', { runId, error: e.message });
+      }
+      run = getRun(runId);
+    }
+
     const snapshot = run.mode === 'clone' ? getSnapshot(runId) : null;
     return res.status(200).json({
       run_id: run.id,
@@ -95,6 +119,13 @@ export default async function handler(req, res) {
   // ─── Path A: configuration mode (long-running) ──────────────────────
   if (isConfigurationMode) {
     // Pre-create the run record so we can return the run_id immediately.
+    // Stash the dispatch (agent + payload) in metadata so a polling GET
+    // can pull-resume the work if the background promise was killed.
+    const fullPayload = {
+      ...payload,
+      org_id: orgId,
+      product_id: productId || payload.product_id || null,
+    };
     const run = createRun({
       mode: agent,
       orgId,
@@ -102,14 +133,11 @@ export default async function handler(req, res) {
       status: 'queued',
       input: summariseInput(agent, payload),
       progress: { step: 'queued', percent: 0, etaSec: estimateEta(agent, payload) },
+      metadata: { _dispatch: { agent, payload: fullPayload } },
     });
-
-    const fullPayload = {
-      ...payload,
-      org_id: orgId,
-      product_id: productId || payload.product_id || null,
-      _run_id: run.id,
-    };
+    fullPayload._run_id = run.id;
+    // Update the stashed payload so it includes _run_id for pull-resume.
+    updateRun(run.id, { metadata: { _dispatch: { agent, payload: fullPayload } } });
 
     // ── Inngest dispatch ───────────────────────────────────────────────
     if (isInngestEnabled() && !sync) {
@@ -171,8 +199,9 @@ function summariseInput(agent, payload) {
   return {};
 }
 
-// Vercel: give the function up to 60s for inline-background dispatch to keep
-// the unawaited promise alive long enough to finish a clone/synthesize run.
+// Vercel: give the function up to 90s. Pull-resume mode means a polling GET
+// can drive a full clone (capture + 2 Claude calls = 30-90s) inside one
+// request. Once Inngest activates, the GET path becomes a thin status read.
 export const config = {
-  maxDuration: 60,
+  maxDuration: 90,
 };

@@ -94,7 +94,16 @@ interface OrchestratorStatusResponse {
 
 **Recommended polling cadence:** 2s for the first 30s, then 5s after that. Stop polling on `status: completed | failed`.
 
-**Limitation today:** The run registry is in-process memory on Vercel. The same warm function instance is likely to serve both `/run` and `/status/:run_id` (low traffic), but a cold-started status request may return 404 for a recent run. This goes away when Supabase is wired (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`).
+**Pull-resume execution model:** Vercel's Node serverless runtime kills the function after `res.end()`, so the POST dispatch can't reliably run work in the background today. Mitigation: the GET polling endpoint detects a `queued` run, atomically transitions it to `running`, and DRIVES the work to completion inside that GET request. The first poll thus blocks for the full work duration (~30s describe, ~60s clone, ~90s synthesize) and returns `status: 'completed'` with the full output. Subsequent polls (if the client makes them) immediately return the completed state.
+
+**Polling client behaviour:**
+1. POST returns 202 with `run_id` (<1s).
+2. First GET poll may take up to 90s to return — set client fetch timeout accordingly.
+3. Returns `status: 'completed'` with `output` populated.
+
+**When INNGEST_EVENT_KEY activates tomorrow,** the work runs in Inngest's worker pool from the moment of POST. Polls become thin status reads. The contract is identical from the client's perspective.
+
+**Limitation today:** Same warm function instance affinity applies to the polling endpoint. Across Vercel cold starts, an old run may return 404. Supabase activation makes runs durable.
 
 ---
 

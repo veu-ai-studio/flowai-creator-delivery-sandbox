@@ -266,3 +266,5 @@ PART 2 — MACHINE-READABLE (single fenced JSON block):
     });
   }
 }
+
+export const config = { maxDuration: 90 };

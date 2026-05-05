@@ -165,3 +165,5 @@ Both parts are required. Do not add commentary after the JSON block.`;
     });
   }
 }
+
+export const config = { maxDuration: 60 };
