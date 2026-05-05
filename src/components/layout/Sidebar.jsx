@@ -85,6 +85,7 @@ const navSections = [
       { label: "Release Notes",        path: "/release-notes", icon: BookOpen,   tooltip: "Complete history of every sprint delivered — what was built and when." },
       { label: "Users",                path: "/users",         icon: Users,      tooltip: "Manage operator and client accounts. Control who has access to which features." },
       { label: "URL Whitelist",        path: "/url-whitelist", icon: List,       tooltip: "Manage approved URLs for governance sessions. Add, remove, or grant temporary access." },
+      { label: "Cost & Usage",          path: "/cost-usage",    icon: CreditCard, tooltip: "Track token usage and cost breakdown by session, with monthly totals." },
       { label: "Cost Controls",        path: "/cost-controls", icon: Sliders,    tooltip: "Set token budgets, session limits, and usage alerts to manage API costs." },
       { label: "Governance Settings",  path: "/governance",    icon: Shield,     tooltip: "Configure thresholds for Self-Protect, Self-Optimize, and Self-Upgrade triggers." },
       { label: "Audit Trail",          path: "/audit-trail",   icon: FileText,   tooltip: "Tamper-evident log of every FlowAI action — read only." },

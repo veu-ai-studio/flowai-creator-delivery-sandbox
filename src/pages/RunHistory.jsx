@@ -271,8 +271,22 @@ export default function RunHistory() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border bg-card/50 min-h-[240px] flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">No runs found.</p>
+          <div className="rounded-xl border border-dashed border-border bg-card/50 min-h-[240px] flex flex-col items-center justify-center gap-3 py-12">
+            <History className="h-8 w-8 text-muted-foreground/30" />
+            <p className="text-sm font-semibold text-muted-foreground">
+              {search || filterStatus !== 'all' ? 'No runs match your filters' : 'No runs recorded yet'}
+            </p>
+            <p className="text-xs text-muted-foreground/60 text-center max-w-xs">
+              {search || filterStatus !== 'all'
+                ? 'Try clearing the search or changing the status filter.'
+                : 'Run a flow from the Auto Runner or Workspace to see execution history here.'}
+            </p>
+            {(search || filterStatus !== 'all') && (
+              <button onClick={() => { setSearch(''); setFilterStatus('all'); }}
+                className="text-xs text-primary hover:text-primary/80 font-semibold transition-colors">
+                Clear Filters
+              </button>
+            )}
           </div>
         ) : (
           <AnimatePresence>

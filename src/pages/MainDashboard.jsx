@@ -127,9 +127,13 @@ export default function MainDashboard() {
           {/* Panel 1 — Product Health */}
           <Panel title="My Products Health" className="lg:col-span-2">
             {portfolio.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-sm text-muted-foreground">No products registered yet.</p>
-                <Button size="sm" className="mt-3 gap-1.5 text-xs" onClick={() => navigate('/workspace')}>
+              <div className="flex flex-col items-center justify-center py-10 gap-3">
+                <Zap className="h-8 w-8 text-muted-foreground/30" />
+                <p className="text-sm font-semibold text-muted-foreground">No products registered yet</p>
+                <p className="text-xs text-muted-foreground/60 text-center max-w-xs">
+                  Create your first product from Workspace to start tracking health, scores, and session history here.
+                </p>
+                <Button size="sm" className="mt-1 gap-1.5 text-xs" onClick={() => navigate('/')}>
                   <Zap className="h-3.5 w-3.5" /> Create Your First Product
                 </Button>
               </div>
@@ -177,7 +181,11 @@ export default function MainDashboard() {
               </button>
             </div>
             {autoSessions.length === 0 && guidedSessions.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No active sessions</p>
+              <div className="flex flex-col items-center justify-center py-6 gap-2">
+                <Activity className="h-6 w-6 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground font-semibold">No active sessions</p>
+                <p className="text-[10px] text-muted-foreground/60 text-center">Start an Auto or Guided operation to see live session progress here.</p>
+              </div>
             ) : (() => {
               // Merge and cap at 5 total
               const allSessions = [
@@ -254,7 +262,11 @@ export default function MainDashboard() {
           {/* Panel 4 — Recent Activity */}
           <Panel title="Recent Activity">
             {recentActivity.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+              <div className="flex flex-col items-center justify-center py-6 gap-2">
+                <TrendingUp className="h-6 w-6 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground font-semibold">No activity yet</p>
+                <p className="text-[10px] text-muted-foreground/60 text-center">Run a QA audit or self-test to see results here.</p>
+              </div>
             ) : (
               <div className="space-y-1.5">
                 {recentActivity.slice(0, 8).map((a, i) => (

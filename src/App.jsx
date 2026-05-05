@@ -62,7 +62,6 @@ import Clearance from './pages/Clearance';
 import CreatorStudio from './pages/CreatorStudio';
 import MyCreations from './pages/MyCreations';
 import AutoRunner from './pages/AutoRunner';
-import MySessions from './pages/MySessions';
 import GuidedStep from './pages/GuidedStep';
 import ManualStep from './pages/ManualStep';
 import MainDashboard from './pages/MainDashboard';
@@ -82,6 +81,7 @@ import CapabilityInstallSelfProtection from './pages/CapabilityInstallSelfProtec
 import TermsOfUse from './pages/TermsOfUse';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import MarketingPage from './pages/MarketingPage';
+import CostUsage from './pages/CostUsage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -160,7 +160,6 @@ const AuthenticatedApp = () => {
         <Route path="/workspace" element={<Navigate to="/configuration" replace />} />
         <Route path="/my-products" element={<MyCreations />} />
         <Route path="/auto-runner" element={<AutoRunner />} />
-        <Route path="/my-sessions" element={<MySessions />} />
         <Route path="/guided/:step" element={<GuidedStep />} />
         <Route path="/manual/:step" element={<ManualStep />} />
         <Route path="/onboarding" element={<Onboarding />} />
@@ -177,6 +176,7 @@ const AuthenticatedApp = () => {
         <Route path="/capability-packages/self-protection/install" element={<CapabilityInstallSelfProtection />} />
         <Route path="/terms-of-use" element={<TermsOfUse />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/cost-usage" element={<CostUsage />} />
         {/* Legacy redirects — Phase 5 cleanup */}
         <Route path="/flows" element={<Navigate to="/dashboard" replace />} />
         <Route path="/flow-designer" element={<Navigate to="/dashboard" replace />} />
