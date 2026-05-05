@@ -82,6 +82,10 @@ import TermsOfUse from './pages/TermsOfUse';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import MarketingPage from './pages/MarketingPage';
 import CostUsage from './pages/CostUsage';
+import PortfolioDashboard from './pages/PortfolioDashboard';
+import ProductRegistry from './pages/ProductRegistry';
+import RunsHistory from './pages/RunsHistory';
+import OrgSettings from './pages/OrgSettings';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -177,6 +181,10 @@ const AuthenticatedApp = () => {
         <Route path="/terms-of-use" element={<TermsOfUse />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/cost-usage" element={<CostUsage />} />
+        <Route path="/portfolio" element={<PortfolioDashboard />} />
+        <Route path="/products" element={<ProductRegistry />} />
+        <Route path="/runs" element={<RunsHistory />} />
+        <Route path="/settings" element={<OrgSettings />} />
         {/* Legacy redirects — Phase 5 cleanup */}
         <Route path="/flows" element={<Navigate to="/dashboard" replace />} />
         <Route path="/flow-designer" element={<Navigate to="/dashboard" replace />} />

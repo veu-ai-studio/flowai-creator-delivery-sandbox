@@ -5,7 +5,7 @@ import { useSession } from '@/lib/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import {
   Shield, Clock, CheckCircle2, AlertTriangle,
-  Loader2, BarChart3, Zap, GitBranch, RefreshCw, ExternalLink, Save
+  Loader2, BarChart3, Zap, GitBranch, RefreshCw, ExternalLink, Save, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,14 +30,45 @@ const GATE_LABELS = {
   'rolled-back':       { label: 'Rolled back',                      color: 'text-red-400',    border: 'border-red-500/30',   bg: 'bg-red-500/5' },
 };
 
+const TOOL_MARKETPLACE = [
+  { name: 'Playwright',   category: 'Testing',     desc: 'Browser automation & crawling' },
+  { name: 'Lighthouse',   category: 'Performance', desc: 'Page performance scoring' },
+  { name: 'axe-core',     category: 'Accessibility',desc: 'WCAG compliance checks' },
+  { name: 'Claude 3.5',   category: 'AI',          desc: 'Analysis and reasoning' },
+  { name: 'GPT-4o',       category: 'AI',          desc: 'Code generation and review' },
+  { name: 'Voyage AI',    category: 'AI',          desc: 'Vector embeddings for search' },
+  { name: 'Vercel',       category: 'Deploy',      desc: 'Serverless deployment' },
+  { name: 'Replit',       category: 'Execute',     desc: 'Code execution environment' },
+  { name: 'Supabase',     category: 'Data',        desc: 'Postgres persistence' },
+  { name: 'Inngest',      category: 'Jobs',        desc: 'Background job orchestration' },
+  { name: 'Resend',       category: 'Comms',       desc: 'Email delivery' },
+  { name: 'Axiom',        category: 'Logging',     desc: 'Structured observability' },
+  { name: 'Clerk',        category: 'Auth',        desc: 'Multi-tenant authentication' },
+];
+
+const TOOL_CAT_COLORS = {
+  Testing:     'text-blue-400 bg-blue-400/10',
+  Performance: 'text-amber-400 bg-amber-400/10',
+  Accessibility:'text-purple-400 bg-purple-400/10',
+  AI:          'text-primary bg-primary/10',
+  Deploy:      'text-emerald-400 bg-emerald-400/10',
+  Execute:     'text-cyan-400 bg-cyan-400/10',
+  Data:        'text-indigo-400 bg-indigo-400/10',
+  Jobs:        'text-violet-400 bg-violet-400/10',
+  Comms:       'text-pink-400 bg-pink-400/10',
+  Logging:     'text-muted-foreground bg-secondary',
+  Auth:        'text-emerald-400 bg-emerald-400/10',
+};
+
 const PANELS = [
-  { key: 'queue',    label: 'Active Queue',     icon: Shield },
-  { key: 'timeline', label: 'Timeline',         icon: Clock },
-  { key: 'health',   label: 'System Health',    icon: BarChart3 },
-  { key: 'tests',    label: 'Self-Test History',icon: CheckCircle2 },
-  { key: 'audits',   label: 'Audit History',    icon: BarChart3 },
-  { key: 'transfers',label: 'Cap. Transfers',   icon: GitBranch },
-  { key: 'settings', label: 'Settings',         icon: Zap },
+  { key: 'queue',       label: 'Active Queue',      icon: Shield },
+  { key: 'audit',       label: 'Audit Log',         icon: BarChart3 },
+  { key: 'renewal',     label: 'Self-Renewal',      icon: RefreshCw },
+  { key: 'marketplace', label: 'Tool Marketplace',  icon: Zap },
+  { key: 'timeline',    label: 'Timeline',          icon: Clock },
+  { key: 'health',      label: 'System Health',     icon: CheckCircle2 },
+  { key: 'tests',       label: 'Self-Test History', icon: CheckCircle2 },
+  { key: 'settings',    label: 'Settings',          icon: Zap },
 ];
 
 export default function Governance() {
@@ -305,6 +336,74 @@ export default function Governance() {
                   </div>
                 ))
               )}
+            </div>
+          )}
+
+          {/* AUDIT LOG */}
+          {activePanel === 'audit' && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground mb-2">Paginated governance event log. All run starts, clearance decisions, product additions, and failures appear here.</p>
+              {[...jobs, ...testReports.slice(0, 5), ...auditReports.slice(0, 5)]
+                .sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0))
+                .slice(0, 20).map((item, i) => (
+                  <div key={item.id || i} className="flex gap-3 items-start p-3 rounded-lg border border-border bg-card">
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground">{item.type || item.target_url || item.url || '—'}</p>
+                      <p className="text-[10px] text-muted-foreground">{item.status || item.test_score_percentage != null ? `Score: ${item.test_score_percentage}%` : item.scores?.overall ? `Score: ${item.scores.overall}/10` : ''}</p>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {item.created_date ? formatDistanceToNow(new Date(item.created_date), { addSuffix: true }) : '—'}
+                    </span>
+                  </div>
+                ))}
+              {jobs.length === 0 && testReports.length === 0 && auditReports.length === 0 && (
+                <div className="text-center py-12">
+                  <FileText className="h-8 w-8 text-muted-foreground/20 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No governance events recorded yet.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* SELF-RENEWAL */}
+          {activePanel === 'renewal' && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Per-product self-renewal status. Trigger a new cycle or view last report.</p>
+              {portfolio.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground text-sm">No products registered yet.</div>
+              ) : portfolio.map(p => (
+                <div key={p.id} className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{p.label || p.url}</p>
+                    <p className="text-[10px] text-muted-foreground">Last renewal: {p.last_run_at ? formatDistanceToNow(new Date(p.last_run_at), { addSuffix: true }) : 'Never'}</p>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5" onClick={() => navigate('/guided/govern')}>
+                    <RefreshCw className="h-3 w-3" /> Trigger Renewal
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* TOOL MARKETPLACE */}
+          {activePanel === 'marketplace' && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">FlowAI Tool Intelligence Marketplace — {TOOL_MARKETPLACE.length} tools across {new Set(TOOL_MARKETPLACE.map(t => t.category)).size} categories.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {TOOL_MARKETPLACE.map(tool => {
+                  const catStyle = TOOL_CAT_COLORS[tool.category] || 'text-muted-foreground bg-secondary';
+                  return (
+                    <div key={tool.name} className="rounded-xl border border-border bg-card p-4 space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-foreground">{tool.name}</p>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${catStyle}`}>{tool.category}</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">{tool.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

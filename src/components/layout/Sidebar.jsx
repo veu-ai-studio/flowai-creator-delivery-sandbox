@@ -7,17 +7,21 @@ import {
   Search, GitBranch, Hammer, ShieldCheck, Megaphone, Activity,
   BarChart3, ChevronDown, BookOpen, Users, List, CreditCard, Sliders, Shield, RefreshCw, Layers, Link2, FileText, Smartphone, Package
 } from "lucide-react";
+// Alias — Layers already imported above, used for Portfolio section icon
 
 // ─── SIX-SECTION NAV STRUCTURE ───────────────────────────────────────────────
 
 const navSections = [
   {
-    title: "DASHBOARD",
-    description: "Command Center",
-    icon: LayoutDashboard,
-    tooltip: "Your command center — product health, active sessions, pending gates, and quick actions",
+    title: "PORTFOLIO",
+    description: "Multi-Product OS",
+    icon: Layers,
+    tooltip: "Portfolio-level view across all VEU AI Studio products",
     items: [
-      { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, tooltip: "Overview of all products, active sessions, pending gates, and quick-launch buttons" },
+      { label: "Portfolio Dashboard", path: "/portfolio", icon: LayoutDashboard, tooltip: "Hero stats, product grid, active runs and demo-ready count across all products" },
+      { label: "Product Registry",    path: "/products",  icon: Package,       tooltip: "Table of all registered products with status, scores, and row actions" },
+      { label: "Run History",         path: "/runs",      icon: Play,          tooltip: "All 8-step pipeline runs across all products — filterable by product, status, date" },
+      { label: "Dashboard",           path: "/dashboard", icon: LayoutDashboard, tooltip: "Single-product command center — health, sessions, pending gates, quick actions" },
     ],
   },
   {
@@ -90,6 +94,7 @@ const navSections = [
       { label: "Governance Settings",  path: "/governance",    icon: Shield,     tooltip: "Configure thresholds for Self-Protect, Self-Optimize, and Self-Upgrade triggers." },
       { label: "Audit Trail",          path: "/audit-trail",   icon: FileText,   tooltip: "Tamper-evident log of every FlowAI action — read only." },
       { label: "Capability Transfer",  path: "/capability-transfer", icon: Package,  tooltip: "Install Self-Renewal and Self-Protection into any Base44 product with one sprint." },
+      { label: "Org & Settings",       path: "/settings",      icon: Settings,   tooltip: "Organization info, members, and integration status." },
     ],
   },
 ];
@@ -183,6 +188,7 @@ export default function Sidebar() {
   }, [navigate]);
 
   const [openSections, setOpenSections] = useState({
+    "PORTFOLIO": true,
     "DASHBOARD": true,
     "CONFIGURATION": true,
     "AUTO OPERATIONS": false,
