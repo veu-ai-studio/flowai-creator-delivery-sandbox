@@ -1,6 +1,6 @@
 # FlowAI — Backend Wiring Status
 
-**Last updated:** 2026-05-05  
+**Last updated:** 2026-05-06  
 **Purpose:** Documents which UI components call which backend endpoints, and tracks gaps between UI expectations and live backend availability.
 
 ---
@@ -140,7 +140,21 @@ There is no mock fallback flag (`VITE_USE_API_BACKEND`) in the codebase. The Con
 
 ---
 
-## 5. Next Actions for Backend Sprint
+## 5. Agent Infrastructure — W2 Deliverables (2026-05-06)
+
+Three foundational W2 files are now committed to `/src/lib/`:
+
+| File | Owner | Purpose |
+|------|-------|---------|
+| `lib/agents/BaseAgent.js` | W2 | Single contract all 20 Super Agents implement. Includes canonical AGENT_IDS roster, AUTHORITY boundaries, PRODUCT_SCOPES, and runtime `guard()` enforcement. |
+| `lib/agents/MessageSchema.js` | W2 | Agent-to-agent message envelope contract. 40 topic constants, per-topic payload validators, `validateEnvelope()`, `makeEnvelope()`. |
+| `lib/governance/ScoreEvaluator.js` | W2 | Governance + Readiness rubrics (weights validated to sum to 100). `ScoreEvaluator` class, `clearanceDecision()`, `toDefectRegister()`. Clearance threshold: 95. No grandfathering. |
+
+**Defect register:** `docs/w2/v3-defect-register.md` — 17 agent-side defects + 5 cross-workstream flags. D-016 (authority enforcement) and D-015 (canonical roster) are closed by the BaseAgent delivery above.
+
+---
+
+## 6. Next Actions for Backend Sprint
 
 The following endpoints need to be built (Claude Code) before the wiring gaps can be closed:
 
