@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import { BaseAgent, AUTHORITY } from '@/lib/agents/BaseAgent';
+import { CredentialAdapter } from '@/lib/shared/CredentialAdapter';
 
 class TestAgent extends BaseAgent {
   static charter() {
@@ -26,7 +27,7 @@ const STUB = {
   productScope: 'flowai',
 };
 
-function runTests() {
+async function runTests() {
   const results = [];
 
   // TEST 1 — missing environment throws
@@ -61,6 +62,64 @@ function runTests() {
     results.push({ id: 4, pass: false, msg: e.message });
   }
 
+  // TEST 4 — CredentialAdapter constructs in browser context (no process.env)
+  let adapter = null;
+  try {
+    adapter = new CredentialAdapter({
+      project: 'flowai', environment: 'prod',
+      expectedKeys: ['SOME_API_KEY'],
+    });
+    results.push({ id: 4, pass: true, msg: 'CredentialAdapter constructed in browser context' });
+  } catch (e) {
+    results.push({ id: 4, pass: false, msg: e.message });
+  }
+
+  // TEST 5 — probe returns "expected" for declared key with no Doppler/fallback
+  if (adapter) {
+    try {
+      const status = await adapter.probe('SOME_API_KEY');
+      const pass = status === 'expected';
+      results.push({ id: 5, pass, msg: `probe returned status="${status}" (expect "expected")` });
+    } catch (e) {
+      results.push({ id: 5, pass: false, msg: e.message });
+    }
+  } else {
+    results.push({ id: 5, pass: false, msg: 'Skipped — adapter not constructed' });
+  }
+
+  // TEST 6 — probe returns "missing" for undeclared key
+  if (adapter) {
+    try {
+      const status = await adapter.probe('UNKNOWN_KEY');
+      const pass = status === 'missing';
+      results.push({ id: 6, pass, msg: `probe returned status="${status}" for undeclared key (expect "missing")` });
+    } catch (e) {
+      results.push({ id: 6, pass: false, msg: e.message });
+    }
+  } else {
+    results.push({ id: 6, pass: false, msg: 'Skipped — adapter not constructed' });
+  }
+
+  // TEST 7 — invalid project throws
+  try {
+    new CredentialAdapter({ project: 'unknown-project', environment: 'prod' });
+    results.push({ id: 7, pass: false, msg: 'Expected throw — did not throw' });
+  } catch (e) {
+    results.push({ id: 7, pass: true, msg: `unknown project throws — ${e.message}` });
+  }
+
+  // TEST 8 — slug-unsafe providerId throws
+  if (adapter) {
+    try {
+      await adapter.getProviderSecret('bad_id', 'API_KEY');
+      results.push({ id: 8, pass: false, msg: 'Expected throw — did not throw' });
+    } catch (e) {
+      results.push({ id: 8, pass: true, msg: `slug-unsafe providerId throws — ${e.message}` });
+    }
+  } else {
+    results.push({ id: 8, pass: false, msg: 'Skipped — adapter not constructed' });
+  }
+
   return results;
 }
 
@@ -68,7 +127,7 @@ export default function BaseAgentTest() {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    setResults(runTests());
+    runTests().then(setResults);
   }, []);
 
   const passed = results.filter(r => r.pass).length;
@@ -77,7 +136,7 @@ export default function BaseAgentTest() {
   return (
     <div className="p-8 max-w-2xl space-y-4 font-mono text-sm">
       <h1 className="text-xl font-bold text-foreground">
-        BaseAgent Packet 1.5 — Smoke Tests
+        BaseAgent + CredentialAdapter — Packet 1.5 Smoke Tests
       </h1>
       <p className={`text-xs font-bold ${passed === total ? 'text-emerald-400' : 'text-red-400'}`}>
         {passed}/{total} PASSED
