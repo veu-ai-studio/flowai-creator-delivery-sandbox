@@ -1,30 +1,20 @@
 /**
  * BaseAgent — VEU AI Studio FlowAI
  * ---------------------------------------------------------------------------
- * Authored by: W2 (Backend Super Agents)
- * Status:      RATIFIED by W0
+ * Status:      G2 RATIFIED + Packet 1.5 amendment (adds `environment` dep)
  * Owner:       /src/lib/agents/BaseAgent.js
  * Consumers:   All 20 FlowAI Super Agents (#1–#20)
  *
- * PURPOSE
- *   Single contract every Super Agent implements. Eliminates per-agent
- *   scaffolding drift. Without this, building 11 net-new agents to a 95%
- *   readiness bar consistently is not achievable.
- *
- * NON-GOALS
- *   - Not an LLM client. Agents bring their own model client via deps.
- *   - Not a tool registry. The Tool Intelligence Marketplace (W3) owns that.
- *   - Not a scoring engine. /lib/governance/* owns rubric execution.
+ * AMENDMENT NOTE (Packet 1.5)
+ *   Added `environment` to required deps. Validated against productScope:
+ *     - flowai:  accepts 'prod' | 'staging'
+ *     - products: accepts 'prod' | 'staging' | 'demo' | 'live-demo' | 'sales-demo'
  * ---------------------------------------------------------------------------
  */
 
 'use strict';
 
-// ===========================================================================
-// 1. CANONICAL AGENT ROSTER — locked per W0 broadcast
-// ===========================================================================
-
-const AGENT_IDS = Object.freeze({
+export const AGENT_IDS = Object.freeze({
   LIFECYCLE_ENGINE:        1,
   CODE_BUILDER:            2,
   SELF_RENEWAL:            3,
@@ -47,21 +37,16 @@ const AGENT_IDS = Object.freeze({
   ENVIRONMENTAL_IMPACTS:   20,
 });
 
-const FLOWAI_ONLY_AGENTS = Object.freeze(new Set([4, 5, 8, 11, 12, 14, 16, 18]));
-const EMBEDDED_AGENTS    = Object.freeze(new Set([1, 2, 3, 6, 7, 9, 10, 13, 15, 17, 19, 20]));
+export const FLOWAI_ONLY_AGENTS = Object.freeze(new Set([4, 5, 8, 11, 12, 14, 16, 18]));
+export const EMBEDDED_AGENTS    = Object.freeze(new Set([1, 2, 3, 6, 7, 9, 10, 13, 15, 17, 19, 20]));
 
-// Sanity: every ID is in exactly one of the two sets.
 (function validateRosterPartition() {
   const all = new Set([...FLOWAI_ONLY_AGENTS, ...EMBEDDED_AGENTS]);
   if (all.size !== 20) throw new Error('Roster partition invalid: expected 20 unique IDs');
   for (let i = 1; i <= 20; i++) if (!all.has(i)) throw new Error(`Agent ID ${i} missing from roster`);
 })();
 
-// ===========================================================================
-// 2. AUTHORITY BOUNDARIES — declarative, enforced by runner
-// ===========================================================================
-
-const AUTHORITY = Object.freeze({
+export const AUTHORITY = Object.freeze({
   RECOMMEND_ONLY:        'recommend_only',
   DRAFT_ONLY:            'draft_only',
   AUTO_CONTAIN_KNOWN:    'auto_contain_known',
@@ -69,11 +54,7 @@ const AUTHORITY = Object.freeze({
   REQUIRES_HUMAN_GATE:   'requires_human_gate',
 });
 
-// ===========================================================================
-// 3. PRODUCT SCOPES — for embedded agents
-// ===========================================================================
-
-const PRODUCT_SCOPES = Object.freeze({
+export const PRODUCT_SCOPES = Object.freeze({
   FLOWAI:       'flowai',
   SAIGE:        'saige',
   RELTWIN:      'reltwin',
@@ -82,13 +63,25 @@ const PRODUCT_SCOPES = Object.freeze({
   MYBIRTHSAFE:  'mybirthsafe',
 });
 
-// ===========================================================================
-// 4. AGENT CONTRACT
-// ===========================================================================
+export const ENVIRONMENTS = Object.freeze({
+  PROD:        'prod',
+  STAGING:     'staging',
+  DEMO:        'demo',
+  LIVE_DEMO:   'live-demo',
+  SALES_DEMO:  'sales-demo',
+});
 
-class BaseAgent {
+const FLOWAI_VALID_ENVS  = Object.freeze(new Set(['prod', 'staging']));
+const PRODUCT_VALID_ENVS = Object.freeze(new Set(['prod', 'staging', 'demo', 'live-demo', 'sales-demo']));
+
+export function isValidEnvironmentForScope(productScope, environment) {
+  if (productScope === PRODUCT_SCOPES.FLOWAI) return FLOWAI_VALID_ENVS.has(environment);
+  return PRODUCT_VALID_ENVS.has(environment);
+}
+
+export class BaseAgent {
   constructor(deps = {}) {
-    const required = ['logger', 'messageBus', 'auditLog', 'clock', 'productScope'];
+    const required = ['logger', 'messageBus', 'auditLog', 'clock', 'productScope', 'environment'];
     for (const k of required) {
       if (deps[k] === undefined) throw new Error(`BaseAgent: missing dependency "${k}"`);
     }
@@ -104,6 +97,15 @@ class BaseAgent {
         `Agent #${charter.id} is FlowAI-only but constructed with productScope="${deps.productScope}"`
       );
     }
+    if (!isValidEnvironmentForScope(deps.productScope, deps.environment)) {
+      const valid = deps.productScope === PRODUCT_SCOPES.FLOWAI
+        ? [...FLOWAI_VALID_ENVS]
+        : [...PRODUCT_VALID_ENVS];
+      throw new Error(
+        `Agent #${charter.id}: environment="${deps.environment}" is not valid for productScope="${deps.productScope}". ` +
+        `Valid: [${valid.join(', ')}]`
+      );
+    }
   }
 
   async run(input = {}) {
@@ -115,11 +117,13 @@ class BaseAgent {
       input: Object.freeze({ ...input }),
       agentId: this.charter.id,
       productScope: this.deps.productScope,
+      environment: this.deps.environment,
     });
 
     await this.deps.auditLog.write({
       runId, agentId: ctx.agentId, phase: 'run.start',
-      productScope: ctx.productScope, input: ctx.input, at: startedAt,
+      productScope: ctx.productScope, environment: ctx.environment,
+      input: ctx.input, at: startedAt,
     });
 
     try {
@@ -173,7 +177,7 @@ class BaseAgent {
     return this.deps.messageBus.publish({
       topic,
       payload,
-      from: { agentId: this.charter.id, productScope: this.deps.productScope },
+      from: { agentId: this.charter.id, productScope: this.deps.productScope, environment: this.deps.environment },
       runId: runId ?? null,
       at: this.deps.clock.now(),
     });
@@ -181,9 +185,9 @@ class BaseAgent {
 
   async subscribe(topic, handler) {
     if (!topic || typeof topic !== 'string') throw new Error('subscribe: topic required');
-    if (typeof handler !== 'function')         throw new Error('subscribe: handler must be a function');
+    if (typeof handler !== 'function') throw new Error('subscribe: handler must be a function');
     return this.deps.messageBus.subscribe(topic, handler, {
-      agentId: this.charter.id, productScope: this.deps.productScope,
+      agentId: this.charter.id, productScope: this.deps.productScope, environment: this.deps.environment,
     });
   }
 
@@ -247,12 +251,3 @@ class BaseAgent {
     }
   }
 }
-
-export {
-  BaseAgent,
-  AGENT_IDS,
-  FLOWAI_ONLY_AGENTS,
-  EMBEDDED_AGENTS,
-  AUTHORITY,
-  PRODUCT_SCOPES,
-};
