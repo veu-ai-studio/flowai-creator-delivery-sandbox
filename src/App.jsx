@@ -90,6 +90,7 @@ import VEUaaSMarketing from './pages/VEUaaSMarketing';
 import DemoSandbox from './pages/DemoSandbox';
 import LiveDemo from './pages/LiveDemo';
 import EnterpriseDemo from './pages/EnterpriseDemo';
+import BaseAgentTest from './pages/BaseAgentTest';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -208,6 +209,7 @@ const AuthenticatedApp = () => {
       <Route path="/demo" element={<DemoSandbox />} />
       <Route path="/live-demo" element={<LiveDemo />} />
       <Route path="/enterprise-demo" element={<EnterpriseDemo />} />
+      <Route path="/base-agent-test" element={<BaseAgentTest />} />
       <Route path="/about" element={<Navigate to="/landing" replace />} />
       <Route path="*" element={<PageNotFound />} />
 
