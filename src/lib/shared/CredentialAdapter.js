@@ -3,6 +3,7 @@
  * ---------------------------------------------------------------------------
  * Owner:       /src/lib/shared/CredentialAdapter.js  (W5 territory)
  * Status:      Authored by W2, ratified by W0, placed by W5.
+ * Hotfix A:    Removed process.env reference. Browser-safe by construction.
  *
  * Path resolution per W1 Doppler vault architecture:
  *   Static keys (embedded agents):   <productScope>/<environment>/<key>
@@ -13,6 +14,13 @@
  *
  * provider_id and customer_id MUST be slug-safe (no underscores).
  * Subkeys may contain underscores (API_KEY, WEBHOOK_SECRET, etc.).
+ *
+ * BROWSER SAFETY (Hotfix A)
+ *   This file is imported by browser-side ESM in Base44. There is no Node
+ *   `process` global. The `envFallback` parameter still exists for callers
+ *   that explicitly inject a fallback object (server-side use, test harnesses,
+ *   future Node-side use). The default is an empty object — never
+ *   `process.env`.
  * ---------------------------------------------------------------------------
  */
 
@@ -46,6 +54,9 @@ export class CredentialAdapter {
     this.environment = opts.environment;
     this.dopplerClient = opts.dopplerClient ?? null;
     this.expectedKeys = new Set(opts.expectedKeys ?? []);
+    // Hotfix A: default to empty object. Callers may inject an explicit fallback
+    // (e.g. server-side env vars, test stubs) but the default no longer
+    // references the global `process` — that does not exist in browser ESM.
     this.envFallback = opts.envFallback ?? {};
     this.clock = opts.clock ?? { now: () => Date.now() };
     this.logger = opts.logger ?? null;
