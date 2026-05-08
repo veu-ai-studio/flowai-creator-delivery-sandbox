@@ -9,7 +9,7 @@ import StepResultPanel from '@/components/operations/StepResultPanel';
 import FinalReport from '@/components/operations/FinalReport';
 import SessionContextBanner from '@/components/operations/SessionContextBanner';
 import FetchFailurePrompt from '@/components/operations/FetchFailurePrompt';
-import { STEPS, buildStepPrompt, buildProposalPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi } from '@/lib/operationsEngine';
+import { STEPS, buildStepPrompt, buildProposalPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi, invokeLlmViaApi } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
 import {
@@ -219,8 +219,12 @@ export default function GuidedStep() {
         cfg.objective,
         modification || null
       );
-      const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-      const text = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+      // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+      let text = await invokeLlmViaApi(prompt, { sessionId: session?.id, endpoint: `/api/llm-step:propose:${stepMeta.key}` });
+      if (!text) {
+        const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
+        text = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+      }
       setProposal(text);
       setPhase('awaiting_approval');
       logAction({ actionType: modification ? 'proposal_modified' : 'proposal_approved', stepName: stepMeta.label, sessionId: session?.id || '', productUrl: cfg.inputs[0]?.value || '', mode: 'guided' });
@@ -309,15 +313,23 @@ export default function GuidedStep() {
           return obj;
         });
         const prompt = buildFinalReportPrompt(multiMode, inputs, allInputStepResults);
-        const res = await base44.integrations.Core.InvokeLLM({ prompt });
-        const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+        // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+        let output = await invokeLlmViaApi(prompt, { sessionId: session?.id, endpoint: '/api/llm-step:final' });
+        if (!output) {
+          const res = await base44.integrations.Core.InvokeLLM({ prompt });
+          output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+        }
         result = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
       } else if (isMulti) {
         const perInputResults = await Promise.all(
           inputs.map(async (inp, idx) => {
             const prompt = buildStepPrompt(stepMeta.key, inp, multiMode, inputs, contexts[idx], objective);
-            const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-            const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+            // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+            let output = await invokeLlmViaApi(prompt, { sessionId: session?.id, endpoint: `/api/llm-step:${stepMeta.key}` });
+            if (!output) {
+              const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
+              output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+            }
             return { inputName: inp.name, full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
           })
         );
@@ -378,8 +390,12 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
             }
           }
           const prompt = buildStepPrompt(stepMeta.key, inp, null, null, contexts[0], objective, crawlCtx);
-          const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-          const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+          let output = await invokeLlmViaApi(prompt, { sessionId: session?.id, endpoint: `/api/llm-step:${stepMeta.key}` });
+          if (!output) {
+            const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
+            output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          }
           const screenshots = result?._screenshots;
           result = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
           if (screenshots) result._screenshots = screenshots;
@@ -421,8 +437,12 @@ Previous findings:
 ${stepResult.full_output}
 
 Please revise and expand your findings incorporating the user's request. Maintain the same structured format and objective lens.`;
-      const res = await base44.integrations.Core.InvokeLLM({ prompt: refinementPrompt, model: 'claude_sonnet_4_6' });
-      const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+      // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+      let output = await invokeLlmViaApi(refinementPrompt, { sessionId: session?.id, endpoint: `/api/llm-step:refine:${stepMeta.key}` });
+      if (!output) {
+        const res = await base44.integrations.Core.InvokeLLM({ prompt: refinementPrompt, model: 'claude_sonnet_4_6' });
+        output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+      }
       const revised = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
       setStepResult(revised);
       const updatedResults = { ...allStepResults, [stepMeta.key]: revised };

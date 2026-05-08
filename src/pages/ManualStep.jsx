@@ -8,7 +8,7 @@ import ManualTracker from '@/components/operations/ManualTracker';
 import SessionInputPanel from '@/components/operations/SessionInputPanel';
 import StepResultPanel from '@/components/operations/StepResultPanel';
 import SessionContextBanner from '@/components/operations/SessionContextBanner';
-import { STEPS, buildStepPrompt, fetchPageContext, researchViaApi } from '@/lib/operationsEngine';
+import { STEPS, buildStepPrompt, fetchPageContext, researchViaApi, invokeLlmViaApi } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
 import {
@@ -140,8 +140,12 @@ export default function ManualStep() {
       if (!usedResearchApi) {
         const pageContext = await fetchPageContext(inp, base44);
         const prompt = buildStepPrompt(stepMeta.key, inp, cfg.multiMode, cfg.inputs, pageContext, cfg.objective);
-        const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-        const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+        // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+        let output = await invokeLlmViaApi(prompt, { sessionId: session?.id, endpoint: `/api/llm-step:${stepMeta.key}` });
+        if (!output) {
+          const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
+          output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+        }
         setAiResult({ full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') });
       }
     } catch (e) {

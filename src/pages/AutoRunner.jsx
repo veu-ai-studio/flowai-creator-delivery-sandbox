@@ -11,7 +11,7 @@ import SessionContextBanner from '@/components/operations/SessionContextBanner';
 import FetchFailurePrompt from '@/components/operations/FetchFailurePrompt';
 import ClearanceProtocolPrompt from '@/components/operations/ClearanceProtocolPrompt';
 import SessionResumePrompt from '@/components/operations/SessionResumePrompt';
-import { STEPS, buildStepPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi } from '@/lib/operationsEngine';
+import { STEPS, buildStepPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi, invokeLlmViaApi } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
 
@@ -201,8 +201,12 @@ export default function AutoRunner() {
             STEPS.forEach((s, si) => { obj[s.key] = ir[si]; });
             return obj;
           }));
-          const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-          const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+          let output = await invokeLlmViaApi(prompt, { sessionId: sessionDbIdRef.current, endpoint: '/api/llm-step:final' });
+          if (!output) {
+            const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
+            output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          }
           stepResult = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
           results[i] = stepResult;
           inputs.forEach((_, idx) => { allInputResults[idx][i] = stepResult; });
@@ -210,8 +214,12 @@ export default function AutoRunner() {
           const perInputResults = await Promise.all(
             inputs.map(async (inp, idx) => {
               const prompt = buildStepPrompt(STEPS[i].key, inp, multiMode, inputs, pageContexts[idx], objective);
-              const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-              const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+              // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+              let output = await invokeLlmViaApi(prompt, { sessionId: sessionDbIdRef.current, endpoint: `/api/llm-step:${STEPS[i].key}` });
+              if (!output) {
+                const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
+                output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+              }
               return { inputName: inp.name, full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
             })
           );
@@ -302,8 +310,12 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
           }
 
           const prompt = buildStepPrompt(STEPS[i].key, inp, null, null, pageContexts[0], objective, crawlCtx);
-          const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-          const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+          let output = await invokeLlmViaApi(prompt, { sessionId: sessionDbIdRef.current, endpoint: `/api/llm-step:${STEPS[i].key}` });
+          if (!output) {
+            const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
+            output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          }
           stepResult = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
           // Carry screenshots forward for QA display
           if (results[i]?._screenshots) stepResult._screenshots = results[i]._screenshots;

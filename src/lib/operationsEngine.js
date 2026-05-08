@@ -195,6 +195,51 @@ export async function researchViaApi(url, objective, sessionId) {
   }
 }
 
+// ─── LLM INVOKE VIA /api/llm-step (Vercel-side Claude passthrough) ───────────
+// Generic counterpart to researchViaApi. Used by AutoRunner / GuidedStep /
+// ManualStep to execute step prompts on deployments where Base44's
+// `Core.InvokeLLM` is not reachable (Vercel).
+//
+// /api/llm-step accepts { prompt, complexity?, maxTokens?, sessionId?, endpoint? }
+// and returns { text, model, usage, stop_reason, cost } on success or
+// { error, details } on failure (HTTP 5xx).
+//
+// This helper returns the `text` field on success, null on any non-success
+// (HTTP fail, missing/empty text, JSON parse error, network error). The
+// caller can then fall through to the existing `Core.InvokeLLM` path so
+// Base44 deployments keep working unchanged.
+//
+// Note: server caps maxTokens at 2000. Pass `complexity: 'complex'` to route
+// to Opus instead of Sonnet for the (rare) prompts that need it.
+export async function invokeLlmViaApi(prompt, opts = {}) {
+  if (typeof prompt !== 'string' || !prompt.trim()) return null;
+  const {
+    complexity = 'routine',
+    maxTokens = 2000,
+    sessionId,
+    endpoint = '/api/llm-step',
+  } = opts;
+  try {
+    const response = await fetch('/api/llm-step', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        complexity,
+        maxTokens,
+        sessionId: sessionId || undefined,
+        endpoint,
+      }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json().catch(() => null);
+    if (!data || typeof data.text !== 'string' || data.text.length === 0) return null;
+    return data.text;
+  } catch {
+    return null;
+  }
+}
+
 // ─── STEP PROMPT BUILDER ──────────────────────────────────────────────────────
 
 export function buildStepPrompt(stepKey, input, multiMode = null, allInputs = null, pageContext = null, objective = null, crawlContext = null) {
