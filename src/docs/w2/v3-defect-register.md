@@ -43,7 +43,8 @@
 **Fix sketch:** Subscribe to `4.provider.suspended.v1`; reject pending intakes for suspended providers. Customer IDs must be slug-safe.
 
 ### D-009 — Agent #6 Research / #7 Design: net-new builds, escalated to Wave 1
-**Status:** RESOLVED IN PACKET 1. Stubs at `/src/lib/agents/06-research.js` and `/src/lib/agents/07-design.js`.
+**Status:** REOPENED 2026-05-07. Falsely resolved per W2 Part 1 audit — the claimed stub files at `/src/lib/agents/06-research.js` and `/src/lib/agents/07-design.js` did not exist on disk. Reopened by W2 Part 2 build. Status: in-progress on `feature/agents-overnight` branch.
+**Original status (false):** RESOLVED IN PACKET 1. Stubs at `/src/lib/agents/06-research.js` and `/src/lib/agents/07-design.js`.
 
 ### D-010 — Agent #8 Quality Audit: self-audit problem
 **Severity:** Critical  
@@ -68,7 +69,8 @@
 **Cross-workstream:** W5.
 
 ### D-015 — No canonical agent registry
-**Status:** RESOLVED IN PACKET 1. `/src/lib/agents/AgentRegistry.js` delivered.
+**Status:** REOPENED 2026-05-07. Falsely resolved per W2 Part 1 audit — `/src/lib/agents/AgentRegistry.js` did not exist on disk. Reopened by W2 Part 2 build. Status: in-progress on `feature/agents-overnight` branch.
+**Original status (false):** RESOLVED IN PACKET 1. `/src/lib/agents/AgentRegistry.js` delivered.
 
 ### D-016 — Authority boundaries conventional, not enforced
 **Severity:** Critical  
