@@ -148,6 +148,53 @@ export async function runInteractiveTests(url, actions = []) {
   }
 }
 
+// ─── RESEARCH VIA /api/research-url (Vercel-side Browserless + Claude) ───────
+// Used by AutoRunner / GuidedStep / ManualStep for the Research step on
+// deployments where Base44's `Core.InvokeLLM` is not reachable (Vercel).
+//
+// The Vercel handler at api/research-url.js returns:
+//   success: 200 { ok: true,  reachable: true,  analysis: <string>, page: {...}, ... }
+//   page-fail: 200 { ok: false, reachable: false, reason, attempts, url }
+//   llm-fail: 500 { ok: false, reachable: true, error, details }
+//
+// This helper returns:
+//   { analysis: <string>, page: {...} }   — on usable success
+//   null                                  — on any non-success (caller falls
+//                                           through to base44 InvokeLLM)
+//
+// Returning null on failure keeps Base44 deployments untouched: the helper
+// fails fast, the caller falls through to the existing InvokeLLM path that
+// already works on Base44.
+export async function researchViaApi(url, objective, sessionId) {
+  if (typeof url !== 'string' || !url.trim()) return null;
+  try {
+    const response = await fetch('/api/research-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: url.trim(),
+        objective: objective || undefined,
+        sessionId: sessionId || undefined,
+      }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json().catch(() => null);
+    if (!data || data.ok !== true) return null;
+    if (typeof data.analysis !== 'string' || data.analysis.length === 0) return null;
+    return {
+      analysis: data.analysis,
+      page: data.page || null,
+      method: data.method || null,
+      jsRendered: !!data.jsRendered,
+      warnings: Array.isArray(data.warnings) ? data.warnings : [],
+      usage: data.usage || null,
+      model: data.model || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // ─── STEP PROMPT BUILDER ──────────────────────────────────────────────────────
 
 export function buildStepPrompt(stepKey, input, multiMode = null, allInputs = null, pageContext = null, objective = null, crawlContext = null) {

@@ -11,7 +11,7 @@ import SessionContextBanner from '@/components/operations/SessionContextBanner';
 import FetchFailurePrompt from '@/components/operations/FetchFailurePrompt';
 import ClearanceProtocolPrompt from '@/components/operations/ClearanceProtocolPrompt';
 import SessionResumePrompt from '@/components/operations/SessionResumePrompt';
-import { STEPS, buildStepPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl } from '@/lib/operationsEngine';
+import { STEPS, buildStepPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
 
@@ -231,6 +231,41 @@ export default function AutoRunner() {
             clearInterval(timerRef.current);
             setSessionState('paused');
             return;
+          }
+
+          // ── Research step: prefer Vercel-side /api/research-url when available ──
+          // On Vercel, base44.integrations.Core.InvokeLLM has no backend and 404s.
+          // /api/research-url runs Browserless + Claude server-side and returns
+          // { ok: true, analysis: <brief text>, page: {...}, ... } on success.
+          // researchViaApi returns null on any non-success; we then fall through
+          // to the existing InvokeLLM path so Base44 deployments keep working.
+          if (STEPS[i].key === 'research' && inp.type === 'url') {
+            const apiResult = await researchViaApi(inp.value, objective, sessionDbIdRef.current);
+            if (apiResult && typeof apiResult.analysis === 'string' && apiResult.analysis.length > 0) {
+              const output = apiResult.analysis;
+              stepResult = {
+                full_output: output,
+                summary: output.slice(0, 120).replace(/\n/g, ' '),
+                _researchSource: 'api',
+              };
+              results[i] = stepResult;
+              allInputResults[0][i] = stepResult;
+              statuses[i] = 'complete';
+              if (sessionDbIdRef.current) {
+                base44.entities.AutoSession.update(sessionDbIdRef.current, {
+                  current_step: i + 1,
+                  step_results: Object.fromEntries(STEPS.map((s, si) => [s.key, results[si] ? { summary: results[si].summary, full_output: (results[si].full_output || '').slice(0, 2000) } : null])),
+                  overall_status: 'running',
+                }).catch(() => {});
+              }
+              logAction({ actionType: 'step_completed', stepName: STEPS[i].label, sessionId: sessionDbIdRef.current || '', productUrl: config.inputs[0]?.value || '', outcome: 'complete', mode: 'auto' });
+              clearInterval(stepTimer);
+              elapseds[i] = Math.floor((Date.now() - stepStart) / 1000);
+              setStepStatuses([...statuses]);
+              setStepResults([...results]);
+              setStepElapsed([...elapseds]);
+              continue;
+            }
           }
 
           // ── Playwright crawl for Build (step 3) and QA Audit (step 4) ──

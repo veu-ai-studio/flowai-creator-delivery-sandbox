@@ -9,7 +9,7 @@ import StepResultPanel from '@/components/operations/StepResultPanel';
 import FinalReport from '@/components/operations/FinalReport';
 import SessionContextBanner from '@/components/operations/SessionContextBanner';
 import FetchFailurePrompt from '@/components/operations/FetchFailurePrompt';
-import { STEPS, buildStepPrompt, buildProposalPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl } from '@/lib/operationsEngine';
+import { STEPS, buildStepPrompt, buildProposalPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
 import {
@@ -324,19 +324,41 @@ export default function GuidedStep() {
         cResults = perInputResults;
         result = { full_output: perInputResults[0]?.full_output || '', summary: `${inputs.length} inputs analyzed`, compareResults: perInputResults };
       } else {
-        // ── Playwright crawl for Build (step 3) and QA Audit (step 4) ──
-        let crawlCtx = null;
         const inp = inputs[0];
-        if ((stepMeta.key === 'build' || stepMeta.key === 'qa_audit') && inp.type === 'url') {
-          const captureScreenshots = stepMeta.key === 'qa_audit';
-          setCrawlStatus({ state: 'crawling', url: inp.value, pages: 0, issues: 0 });
-          const crawlResult = await runCrawl(inp.value, { capture_screenshots: captureScreenshots, credentials: inp.credentials || null });
-          if (crawlResult.success) {
-            const d = crawlResult.data;
-            const pagesCount = d?.summary?.total_pages_crawled ?? 0;
-            const issuesCount = (d?.issues_found?.length ?? 0) + (d?.broken_links?.length ?? 0) + (d?.rendering_errors?.length ?? 0);
-            setCrawlStatus({ state: 'done', url: inp.value, pages: pagesCount, issues: issuesCount });
-            crawlCtx = `\n━━━ REAL PLAYWRIGHT CRAWL DATA — USE AS PRIMARY EVIDENCE ━━━
+
+        // ── Research step: prefer Vercel-side /api/research-url when available ──
+        // On Vercel, base44.integrations.Core.InvokeLLM has no backend and 404s.
+        // /api/research-url runs Browserless + Claude server-side and returns
+        // { ok: true, analysis: <brief text>, page: {...}, ... } on success.
+        // researchViaApi returns null on any non-success; we then fall through
+        // to the existing InvokeLLM path so Base44 deployments keep working.
+        let usedResearchApi = false;
+        if (stepMeta.key === 'research' && inp.type === 'url') {
+          const apiResult = await researchViaApi(inp.value, objective, session?.id);
+          if (apiResult && typeof apiResult.analysis === 'string' && apiResult.analysis.length > 0) {
+            const output = apiResult.analysis;
+            result = {
+              full_output: output,
+              summary: output.slice(0, 120).replace(/\n/g, ' '),
+              _researchSource: 'api',
+            };
+            usedResearchApi = true;
+          }
+        }
+
+        if (!usedResearchApi) {
+          // ── Playwright crawl for Build (step 3) and QA Audit (step 4) ──
+          let crawlCtx = null;
+          if ((stepMeta.key === 'build' || stepMeta.key === 'qa_audit') && inp.type === 'url') {
+            const captureScreenshots = stepMeta.key === 'qa_audit';
+            setCrawlStatus({ state: 'crawling', url: inp.value, pages: 0, issues: 0 });
+            const crawlResult = await runCrawl(inp.value, { capture_screenshots: captureScreenshots, credentials: inp.credentials || null });
+            if (crawlResult.success) {
+              const d = crawlResult.data;
+              const pagesCount = d?.summary?.total_pages_crawled ?? 0;
+              const issuesCount = (d?.issues_found?.length ?? 0) + (d?.broken_links?.length ?? 0) + (d?.rendering_errors?.length ?? 0);
+              setCrawlStatus({ state: 'done', url: inp.value, pages: pagesCount, issues: issuesCount });
+              crawlCtx = `\n━━━ REAL PLAYWRIGHT CRAWL DATA — USE AS PRIMARY EVIDENCE ━━━
 Pages crawled: ${pagesCount}
 Links tested: ${d?.summary?.total_links_tested ?? 'N/A'}
 Broken links: ${JSON.stringify(d?.broken_links ?? [])}
@@ -346,21 +368,22 @@ Issues detected: ${JSON.stringify(d?.issues_found ?? [])}
 Console errors: ${JSON.stringify(d?.console_errors ?? [])}
 ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.screenshots.length} pages` : ''}
 ━━━ END CRAWL DATA ━━━`;
-            if (captureScreenshots && d?.screenshots) {
-              result = result || {};
-              result._screenshots = d.screenshots;
+              if (captureScreenshots && d?.screenshots) {
+                result = result || {};
+                result._screenshots = d.screenshots;
+              }
+            } else {
+              setCrawlStatus({ state: 'failed', url: inp.value });
+              crawlCtx = `Crawl unavailable — ${crawlResult.reason}. Proceed with description-based analysis.`;
             }
-          } else {
-            setCrawlStatus({ state: 'failed', url: inp.value });
-            crawlCtx = `Crawl unavailable — ${crawlResult.reason}. Proceed with description-based analysis.`;
           }
+          const prompt = buildStepPrompt(stepMeta.key, inp, null, null, contexts[0], objective, crawlCtx);
+          const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
+          const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          const screenshots = result?._screenshots;
+          result = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
+          if (screenshots) result._screenshots = screenshots;
         }
-        const prompt = buildStepPrompt(stepMeta.key, inp, null, null, contexts[0], objective, crawlCtx);
-        const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-        const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
-        const screenshots = result?._screenshots;
-        result = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
-        if (screenshots) result._screenshots = screenshots;
       }
 
       setStepResult(result);
