@@ -55,8 +55,8 @@ export const VEU_PRODUCTS = [
       {
         domain: 'saigedemo.com',
         target_path: '/live-demo',
-        status: 'active',                // not yet redirected; cutover planned
-        notes: 'Pre-dates the four-tier demo standard. Contains the SAIGE waitlist + animated EIP scoring widget. After cutover, redirects to saigeplatform.com/live-demo.',
+        status: 'redirected',            // W4 Phase 4b cutover landed; saigedemo.com 301 → saigeplatform.com/live-demo
+        notes: 'Pre-dates the four-tier demo standard. Contained the SAIGE waitlist + animated EIP scoring widget. As of W4 Phase 4b cutover, 301-redirected to saigeplatform.com/live-demo.',
       },
     ],
     objectives: [
