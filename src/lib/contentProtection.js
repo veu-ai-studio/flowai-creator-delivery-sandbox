@@ -1,14 +1,28 @@
 // ─── FLOWAI CONTENT PROTECTION — PHASE 1 ─────────────────────────────────────
 // Installs right-click disable, DevTools detection, and session security
 // Must be called once from AppLayout.
+//
+// PA #2.5a — Env Gate:
+//   The two install*Protection() entry points consult
+//   `isAntiTamperEnabled()` from /src/lib/security/anti-tamper-gate. When the
+//   gate returns false (preview / development / unknown env), the installers
+//   short-circuit to a noop and return a noop cleanup so DevTools, F12, and
+//   right-click stay usable for development debugging. The session XOR
+//   storage helpers and audit/anomaly probes below are NOT gated — they are
+//   not anti-tamper protections; they are bookkeeping.
 
 import { base44 } from '@/api/base44Client';
+import { isAntiTamperEnabled } from '@/lib/security/anti-tamper-gate';
 
 // ── Right-click disable ──
 // Allow Edge's built-in Web Capture (Ctrl+Shift+S) — detected via Edg/ in userAgent
 const isEdge = typeof navigator !== 'undefined' && /Edg\//.test(navigator.userAgent);
 
 export function installRightClickProtection() {
+  // PA #2.5a — gate by environment. Preview / dev → noop.
+  if (!isAntiTamperEnabled()) {
+    return () => { /* gate off — noop cleanup */ };
+  }
   const handler = (e) => {
     // Allow Edge Web Capture shortcut (Ctrl+Shift+S) — do not block
     if (isEdge && e.ctrlKey && e.shiftKey) return;
@@ -43,6 +57,10 @@ function showProtectionNotice() {
 // ── DevTools detection ──
 let devToolsOpen = false;
 export function installDevToolsDetection() {
+  // PA #2.5a — gate by environment. Preview / dev → noop so F12 stays open.
+  if (!isAntiTamperEnabled()) {
+    return () => { /* gate off — noop cleanup */ };
+  }
   const threshold = 160;
   const check = () => {
     const widthDiff = window.outerWidth - window.innerWidth > threshold;

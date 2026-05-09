@@ -3,8 +3,13 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Shield, Loader2, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { resolveProxyBaseUrl } from '@/lib/platform-health/proxy-url';
 
-const PROXY = 'https://attached-assets-victor2081new.replit.app';
+// PA #2.5b — Fetch Proxy URL is env-configurable via
+// VITE_FLOWAI_FETCH_PROXY_URL (resolved by lib/platform-health/proxy-url.js).
+// Set it to '/api' in Vercel env vars to point the dashboard at the
+// Vercel-internal /api/health endpoint.
+const PROXY = resolveProxyBaseUrl();
 
 function HealthDot({ status }) {
   if (status === 'green') return <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 inline-block animate-pulse" />;
