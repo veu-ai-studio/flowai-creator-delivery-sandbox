@@ -114,7 +114,7 @@ export const VEU_PRODUCTS = [
     type: 'web',
     status: 'active',
     tags: ['health', 'maternal', 'africa'],
-    live_url: 'https://safe-path.base44.app',
+    live_url: '',                        // canonical domain TBD; prior staging URL scrubbed per W4 IP-hygiene Tier 1.b
     target_url: '',
     legacy_domains: [],
     objectives: [
