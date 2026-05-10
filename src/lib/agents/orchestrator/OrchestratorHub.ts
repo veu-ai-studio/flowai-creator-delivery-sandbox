@@ -337,6 +337,172 @@ export class OrchestratorHub {
       orchestratorOnly,
     };
   }
+
+  // ── Agent wire-in (PA #2.7) ──────────────────────────────────────────────
+  //
+  // The hub holds opaque references to a registered always-on supervisor
+  // (Agent #1) and a step-key → step-owner map (Agent #2 today, more later).
+  // Wiring is observe-only: invoking a step-owner calls its `recommend()`
+  // method and returns the recommendation envelope to the caller WITHOUT
+  // blocking step execution. recommend_only authority is enforced upstream
+  // by each agent's plan/act guard.
+
+  private alwaysOnSupervisor: { detach: () => void } | null = null;
+  private readonly stepOwners: Map<string, StepOwnerAgent> = new Map();
+
+  /**
+   * Wire an always-on supervisor (Agent #1). The agent must already be
+   * configured with the same MessageBus + ColdStore the hub uses. The hub
+   * just calls the agent's broadcast-attach method and remembers the detach
+   * handle for graceful shutdown.
+   *
+   * Idempotent — re-attaching the SAME agent is a noop. Attaching a
+   * different agent throws (only one always-on supervisor at a time).
+   */
+  attachLifecycleAgent(agent: AlwaysOnAgent): void {
+    if (!agent || typeof agent.attachAsAlwaysOnSupervisor !== 'function') {
+      throw new TypeError(
+        'attachLifecycleAgent: agent must expose attachAsAlwaysOnSupervisor()',
+      );
+    }
+    if (this.alwaysOnSupervisor !== null) {
+      // Idempotent: if the SAME agent is being re-attached, return.
+      if ((this.alwaysOnSupervisor as { _agent?: unknown })._agent === agent) return;
+      throw new Error('attachLifecycleAgent: another always-on supervisor is already attached');
+    }
+    const detach = agent.attachAsAlwaysOnSupervisor();
+    this.alwaysOnSupervisor = Object.assign({ detach }, { _agent: agent });
+  }
+
+  /**
+   * Detach the always-on supervisor. Idempotent.
+   */
+  detachLifecycleAgent(): void {
+    if (this.alwaysOnSupervisor) {
+      try { this.alwaysOnSupervisor.detach(); } catch { /* already-unsubscribed */ }
+      this.alwaysOnSupervisor = null;
+    }
+  }
+
+  /**
+   * Wire a step-owner agent (Agent #2 today). The agent must expose a
+   * `recommend(ctx)` method returning the canonical recommendation envelope.
+   *
+   * Idempotent for same-agent registration; conflict throws.
+   */
+  registerStepOwnerAgent(stepKey: string, agent: StepOwnerAgent): void {
+    if (typeof stepKey !== 'string' || !stepKey) {
+      throw new TypeError('registerStepOwnerAgent: stepKey required');
+    }
+    if (!agent || typeof agent.recommend !== 'function') {
+      throw new TypeError('registerStepOwnerAgent: agent must expose recommend(ctx)');
+    }
+    const prior = this.stepOwners.get(stepKey);
+    if (prior && prior !== agent) {
+      throw new Error(
+        `registerStepOwnerAgent: step "${stepKey}" already has a different owner attached`,
+      );
+    }
+    this.stepOwners.set(stepKey, agent);
+  }
+
+  /**
+   * Look up the step-owner for a step key. Returns undefined when no agent
+   * is registered.
+   */
+  getStepOwnerAgent(stepKey: string): StepOwnerAgent | undefined {
+    return this.stepOwners.get(stepKey);
+  }
+
+  /**
+   * Invoke the step-owner for a step key and return its recommendation
+   * envelope. Non-blocking: the recommendation is informational. If no
+   * step-owner is registered for this step, returns null. If the agent
+   * throws, surfaces the error as a low-confidence recommendation envelope
+   * — the orchestrator never propagates step-owner failures up to the
+   * caller (recommend_only invariant).
+   */
+  async invokeStepOwner(
+    stepKey: string,
+    ctx: { runId: string; productId?: string; spec?: unknown; sourceSpecRef?: string | null; stepInputs?: unknown },
+  ): Promise<StepOwnerRecommendation | null> {
+    const agent = this.stepOwners.get(stepKey);
+    if (!agent) return null;
+    // PA #2.7 peer nice-to-have #2: keep recommend_only non-blocking end-to-
+    // end — return a low-confidence envelope on missing runId instead of
+    // throwing. Callers (Auto Runner) never have to wrap this in try/catch.
+    if (!ctx || typeof ctx.runId !== 'string' || !ctx.runId) {
+      return Object.freeze({
+        agent_id: 0,
+        recommendation: 'invokeStepOwner: ctx.runId required',
+        confidence: 0,
+        metadata: { ok: false, error: 'missing runId', stepKey },
+      });
+    }
+    try {
+      const rec = await agent.recommend(ctx);
+      // Defensive shape validation — surface the recommendation as-is when
+      // it matches the contract; wrap when it doesn't.
+      if (
+        rec &&
+        typeof rec.agent_id === 'number' &&
+        typeof rec.recommendation === 'string' &&
+        typeof rec.confidence === 'number' &&
+        rec.metadata && typeof rec.metadata === 'object'
+      ) {
+        return rec as StepOwnerRecommendation;
+      }
+      return Object.freeze({
+        agent_id: 0,
+        recommendation: 'invalid recommendation envelope from step-owner',
+        confidence: 0,
+        metadata: { ok: false, error: 'malformed recommendation', stepKey, runId: ctx.runId, raw: rec },
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return Object.freeze({
+        agent_id: 0,
+        recommendation: `step-owner threw: ${msg}`,
+        confidence: 0,
+        metadata: { ok: false, error: msg, stepKey, runId: ctx.runId },
+      });
+    }
+  }
+}
+
+// ── Wire-in agent shapes (PA #2.7) ─────────────────────────────────────────
+
+/**
+ * Minimum surface the OrchestratorHub consumes from an always-on agent.
+ * Agent #1 (LifecycleEngine) satisfies this via attachAsAlwaysOnSupervisor.
+ */
+export interface AlwaysOnAgent {
+  attachAsAlwaysOnSupervisor(): () => void;
+}
+
+/**
+ * Canonical step-owner recommendation envelope. Every step-owner returns
+ * this shape from its recommend() method.
+ */
+export interface StepOwnerRecommendation {
+  readonly agent_id: number;
+  readonly recommendation: string;
+  readonly confidence: number;
+  readonly metadata: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Minimum surface the OrchestratorHub consumes from a step-owner agent.
+ * Agent #2 (CodeBuilder) satisfies this via recommend(ctx).
+ */
+export interface StepOwnerAgent {
+  recommend(ctx: {
+    runId: string;
+    productId?: string;
+    spec?: unknown;
+    sourceSpecRef?: string | null;
+    stepInputs?: unknown;
+  }): Promise<StepOwnerRecommendation>;
 }
 
 // ── In-memory store implementations (for tests + local dev) ──────────────────

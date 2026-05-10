@@ -364,6 +364,76 @@ export class Agent2CodeBuilder extends BaseAgent {
     };
   }
 
+  // ── Step-owner recommendation API (PA #2.7) ───────────────────────────────
+
+  /**
+   * Build-step recommendation for the OrchestratorHub. recommend_only —
+   * never executes side effects. Wraps plan() and shapes the output to
+   * the canonical `{ agent_id, recommendation, confidence, metadata }`
+   * envelope every step-owner returns.
+   *
+   * @param {{ runId: string, productId?: string, spec?: object, sourceSpecRef?: string|null, stepInputs?: object }} ctx
+   * @returns {Promise<{ agent_id: 2, recommendation: string, confidence: number, metadata: object }>}
+   */
+  async recommend(ctx) {
+    if (!ctx || typeof ctx.runId !== 'string' || !ctx.runId) {
+      throw new Error('Agent2CodeBuilder.recommend: ctx.runId required');
+    }
+    // The plan-level input shape mirrors what AutoRunner sends through the
+    // MessageBus: { kind: 'build.request', runId, spec, sourceSpecRef? }.
+    const planInput = {
+      kind: 'build.request',
+      runId: ctx.runId,
+      spec: ctx.spec ?? ctx.stepInputs ?? {},
+      sourceSpecRef: ctx.sourceSpecRef ?? null,
+    };
+    let plan;
+    try {
+      plan = await this.plan({ input: planInput, runId: ctx.runId });
+    } catch (e) {
+      // recommend_only — surface failure as a low-confidence recommendation
+      // rather than throwing back at the orchestrator. The orchestrator
+      // never blocks on Agent #2.
+      return Object.freeze({
+        agent_id: 2,
+        recommendation: `build precheck threw: ${e?.message ?? e}`,
+        confidence: 0,
+        metadata: Object.freeze({
+          ok: false,
+          error: String(e?.message ?? e),
+          runId: ctx.runId,
+          productId: ctx.productId ?? null,
+        }),
+      });
+    }
+    const completed = plan.outcome === 'completed';
+    // Confidence model (intentionally simple, easy to evolve):
+    //   completed             → 0.9
+    //   failed / retryable    → 0.3
+    //   failed / non-retry    → 0.1
+    let confidence;
+    if (completed) confidence = 0.9;
+    else if (plan.retryable) confidence = 0.3;
+    else confidence = 0.1;
+    return Object.freeze({
+      agent_id: 2,
+      recommendation: plan.summary,
+      confidence,
+      metadata: Object.freeze({
+        ok: completed,
+        outcome: plan.outcome,
+        hash: plan.hash ?? null,
+        sourceSpecRef: plan.sourceSpecRef ?? null,
+        failurePhase: plan.failurePhase ?? null,
+        retryable: plan.retryable ?? null,
+        afterBuildError: plan.afterBuildError ?? null,
+        runId: ctx.runId,
+        productId: ctx.productId ?? null,
+        emit: plan.proposed.emit.map((e) => e.topic),
+      }),
+    });
+  }
+
   // ── MessageBus subscription helpers ────────────────────────────────────────
 
   /**

@@ -162,6 +162,8 @@ export class Agent1LifecycleEngine extends BaseAgent {
   protected readonly bus: MessageBus;
   private busSubscriptionsAttached = false;
   private readonly busHandles: Array<() => void> = [];
+  private alwaysOnAttached = false;
+  private alwaysOnUnsubscribe: (() => void) | null = null;
 
   constructor(deps: Agent1Deps) {
     super(deps as unknown as object);
@@ -545,6 +547,69 @@ export class Agent1LifecycleEngine extends BaseAgent {
     this.busSubscriptionsAttached = false;
   }
 
+  // ── Always-on supervisor (PA #2.7) ─────────────────────────────────────────
+
+  /**
+   * Attach Agent #1 as the always-on lifecycle supervisor. Subscribes to
+   * EVERY MessageBus event (broadcast) and writes a lineage row to ColdStore
+   * for each lifecycle-phase event (run.start, step.transition, run.complete,
+   * run.error). recommend_only — observe-only, never blocks.
+   *
+   * Returns an unsubscribe function for tests / graceful shutdowns. Idempotent
+   * — calling again before unsubscribe is a noop and returns the same handle.
+   */
+  attachAsAlwaysOnSupervisor(): () => void {
+    if (this.alwaysOnAttached) return this.alwaysOnUnsubscribe ?? (() => {});
+    const off = this.bus.subscribeAll(async (payload, meta) => {
+      // Treat any topic that names a lifecycle event as a phase transition.
+      // Topics this engine particularly cares about, in order of frequency:
+      //   1.product.lifecycle_event.v1, 1.product.gate_request.v1
+      //   2.build.completed.v1, 2.build.failed.v1
+      //   8.audit.completed.v1
+      //   system.clearance.decision.v1
+      // For supervisor purposes we record EVERY event so the audit trail is
+      // a complete lineage. The phase is inferred from the topic string when
+      // possible; otherwise we tag it as 'route.decision' (the generic
+      // observed-event phase).
+      const topic = meta.topic;
+      const runId =
+        (payload && typeof (payload as { runId?: string }).runId === 'string'
+          ? (payload as { runId: string }).runId
+          : null) ?? 'unknown';
+      const phase: AuditEntry['phase'] = inferPhaseFromTopic(topic);
+      try {
+        await this.recordLineage({
+          runId,
+          stepKey: stepKeyFromTopic(topic),
+          phase,
+          meta: {
+            kind: 'always-on-broadcast',
+            observedTopic: topic,
+            busSeq: meta.seq,
+            payload,
+          },
+        });
+      } catch {
+        /* swallow — supervisor must never throw inside a broadcast handler */
+      }
+    });
+    this.alwaysOnUnsubscribe = off;
+    this.alwaysOnAttached = true;
+    return () => {
+      try { off(); } catch { /* already-unsubscribed */ }
+      this.alwaysOnAttached = false;
+      this.alwaysOnUnsubscribe = null;
+    };
+  }
+
+  /**
+   * True iff attachAsAlwaysOnSupervisor has been called and not yet
+   * unsubscribed.
+   */
+  isAttachedAsAlwaysOn(): boolean {
+    return this.alwaysOnAttached;
+  }
+
   // ── Internals ──────────────────────────────────────────────────────────────
 
   private clockNow(): number {
@@ -625,3 +690,23 @@ const KNOWN_STEPS = new Set<string>([
   'gtm',
   'monitor',
 ]);
+
+// PA #2.7 — Topic → AuditEntry.phase inference for the always-on supervisor.
+// Lifecycle topics map to specific phases; everything else is recorded as
+// 'route.decision' (the generic observed-event phase).
+function inferPhaseFromTopic(topic: string): AuditEntry['phase'] {
+  if (topic.includes('.completed.')) return 'step.success';
+  if (topic.includes('.failed.')) return 'step.failure';
+  if (topic.endsWith('lifecycle_event.v1')) return 'route.decision';
+  if (topic.endsWith('gate_request.v1')) return 'route.decision';
+  return 'route.decision';
+}
+
+// Topic prefix (e.g. '2.build.completed.v1' → 'build') — best-effort. Used
+// only as the `stepKey` field in the lineage row.
+function stepKeyFromTopic(topic: string): string {
+  // Match leading digits + dot + word, then take the second segment.
+  const m = /^\d+\.([a-zA-Z_]+)\./.exec(topic);
+  if (m && m[1]) return m[1];
+  return 'broadcast';
+}

@@ -51,6 +51,24 @@ export interface AgentRecord {
   readonly escalationPolicy: string;
 }
 
+/**
+ * Runtime active-registration record. Distinct from the static AgentRecord
+ * (which is the charter). Active records track which agents are wired into
+ * the runtime AT THIS MOMENT, with a step number for step-owners. PA #2.7
+ * introduces this layer so OrchestratorHub can route step calls without
+ * lifting the static charter into mutable state.
+ *
+ * `step` is required for mode='step-owner' (the step number it owns) and
+ * null for all other modes.
+ */
+export interface ActiveAgentRecord {
+  readonly id: number;
+  readonly name: string;
+  readonly mode: AgentMode;
+  readonly authority: AuthorityLevel; // single granted level; charter may declare more
+  readonly step: number | null;
+}
+
 const AGENTS: AgentRecord[] = [
   {
     id: 1,
@@ -324,6 +342,144 @@ export function getAgent(id: number): AgentRecord | undefined {
 
 export function listAgentsByMode(mode: AgentMode): readonly AgentRecord[] {
   return Object.freeze(AGENT_REGISTRY.filter((a) => a.mode === mode));
+}
+
+// ── Active runtime registry (PA #2.7) ────────────────────────────────────────
+//
+// The static AGENT_REGISTRY above declares all 20 charters at module load.
+// The active registry tracks which agents are *currently wired into the
+// runtime* — i.e., have been instantiated and connected to MessageBus +
+// stores. registerAgent() is idempotent: re-registering the SAME shape is a
+// no-op; re-registering a CONFLICTING shape throws.
+//
+// Step-owner records carry a step number. Always-on / cross-step records
+// carry step=null.
+
+const ACTIVE: Map<number, ActiveAgentRecord> = new Map();
+
+function sameActive(a: ActiveAgentRecord, b: ActiveAgentRecord): boolean {
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    a.mode === b.mode &&
+    a.authority === b.authority &&
+    (a.step ?? null) === (b.step ?? null)
+  );
+}
+
+/**
+ * Register an agent into the active runtime registry. Idempotent: passing
+ * the SAME record twice is a noop. Conflicting record (same id, different
+ * shape) throws.
+ *
+ * Validations:
+ *   - id must match a charter in AGENT_REGISTRY
+ *   - mode must match the charter's mode
+ *   - authority must be one of the charter's declared levels
+ *   - step must be null for non-step-owner modes
+ *   - step must be a positive integer for step-owner mode
+ */
+export function registerAgent(record: ActiveAgentRecord): ActiveAgentRecord {
+  if (!record || typeof record.id !== 'number') {
+    throw new TypeError('registerAgent: record with numeric id required');
+  }
+  const charter = getAgent(record.id);
+  if (!charter) {
+    throw new Error(`registerAgent: unknown agent id ${record.id}`);
+  }
+  if (record.name !== charter.name) {
+    throw new Error(
+      `registerAgent: agent ${record.id} name "${record.name}" disagrees with charter "${charter.name}"`,
+    );
+  }
+  if (record.mode !== charter.mode) {
+    throw new Error(
+      `registerAgent: agent ${record.id} mode "${record.mode}" disagrees with charter "${charter.mode}"`,
+    );
+  }
+  if (!charter.authority.includes(record.authority)) {
+    throw new Error(
+      `registerAgent: agent ${record.id} authority "${record.authority}" not in charter [${charter.authority.join(', ')}]`,
+    );
+  }
+  if (record.mode === 'step-owner') {
+    if (typeof record.step !== 'number' || !Number.isInteger(record.step) || record.step < 1) {
+      throw new Error(`registerAgent: agent ${record.id} (step-owner) requires positive integer step`);
+    }
+  } else {
+    if (record.step !== null && record.step !== undefined) {
+      throw new Error(
+        `registerAgent: agent ${record.id} (mode=${record.mode}) must have step=null, got ${record.step}`,
+      );
+    }
+  }
+
+  const frozen: ActiveAgentRecord = Object.freeze({
+    id: record.id,
+    name: record.name,
+    mode: record.mode,
+    authority: record.authority,
+    step: record.step ?? null,
+  });
+
+  const prior = ACTIVE.get(record.id);
+  if (prior) {
+    if (sameActive(prior, frozen)) return prior; // idempotent
+    throw new Error(
+      `registerAgent: agent ${record.id} already registered with conflicting shape ` +
+      `(prior=${JSON.stringify(prior)}, new=${JSON.stringify(frozen)})`,
+    );
+  }
+
+  // PA #2.7 peer must-fix #1: enforce step-ownership uniqueness — at most
+  // one active agent per step number. Without this, getActiveStepOwner()
+  // would return the first match by Map iteration order (nondeterministic
+  // when two step-owners claim the same step).
+  if (frozen.step !== null) {
+    for (const existing of ACTIVE.values()) {
+      if (existing.step === frozen.step && existing.id !== frozen.id) {
+        throw new Error(
+          `registerAgent: step ${frozen.step} is already owned by agent ${existing.id} (${existing.name})`,
+        );
+      }
+    }
+  }
+
+  ACTIVE.set(record.id, frozen);
+  return frozen;
+}
+
+/**
+ * Look up the active record for an agent id. Returns undefined if not yet
+ * registered.
+ */
+export function getActiveAgent(id: number): ActiveAgentRecord | undefined {
+  return ACTIVE.get(id);
+}
+
+/**
+ * Look up the active step-owner for a given step number. Returns undefined
+ * if no agent owns that step at runtime.
+ */
+export function getActiveStepOwner(step: number): ActiveAgentRecord | undefined {
+  for (const r of ACTIVE.values()) {
+    if (r.step === step) return r;
+  }
+  return undefined;
+}
+
+/**
+ * List all currently-active agent records. Returned array is frozen.
+ */
+export function listActiveAgents(): readonly ActiveAgentRecord[] {
+  return Object.freeze([...ACTIVE.values()]);
+}
+
+/**
+ * Clear the active registry. Test-only — production code never calls this.
+ */
+export function _resetActiveRegistry(): void {
+  ACTIVE.clear();
 }
 
 // ── Roster invariants — runtime self-check at module load ────────────────────

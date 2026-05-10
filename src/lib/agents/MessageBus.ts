@@ -60,6 +60,15 @@ interface TopicState {
   nextSeq: number;
 }
 
+/**
+ * Broadcast handler signature — receives every published message regardless
+ * of topic. Used by Agent #1 (always-on lifecycle supervisor) per PA #2.7.
+ */
+export type BroadcastHandler = (
+  payload: unknown,
+  meta: MessageMeta,
+) => void | Promise<void>;
+
 const DEFAULT_MAX_QUEUE = 10_000;
 const DEFAULT_TTL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -69,6 +78,10 @@ export class MessageBus {
   private readonly clock: () => number;
   private readonly warn: (msg: string, ctx?: Record<string, unknown>) => void;
   private readonly topics: Map<string, TopicState> = new Map();
+  // Broadcast handlers fire on EVERY publish across all topics. Used for
+  // always-on supervisors (Agent #1). Isolated from per-topic handlers so
+  // subscribe-all and subscribe-to-topic semantics don't conflict.
+  private readonly broadcastHandlers: Set<BroadcastHandler> = new Set();
 
   constructor(opts: MessageBusOpts = {}) {
     this.maxQueueSize = opts.maxQueueSize ?? DEFAULT_MAX_QUEUE;
@@ -116,15 +129,21 @@ export class MessageBus {
     }
 
     const seq = state.nextSeq++;
-    const message: QueuedMessage = Object.freeze({ at: now, seq, payload });
+    // PA #2.7 peer must-fix #2: shallow-freeze the payload before fan-out so
+    // one handler can't mutate the value observed by others. Object.freeze
+    // is non-recursive — nested mutation is still possible — but it catches
+    // top-level field reassignment which is the common bug.
+    const safePayload = freezeIfObject(payload);
+    const message: QueuedMessage = Object.freeze({ at: now, seq, payload: safePayload });
     state.queue.push(message);
 
     // Snapshot handlers so unsubscribes during iteration don't break us.
     const handlers = [...state.handlers];
+    const broadcasts = [...this.broadcastHandlers];
     const meta: MessageMeta = Object.freeze({ topic, at: now, seq });
     for (const h of handlers) {
       try {
-        const r = h(payload, meta);
+        const r = h(safePayload, meta);
         if (r && typeof (r as Promise<void>).catch === 'function') {
           (r as Promise<void>).catch((e) => {
             this.warn('messagebus.handler_error_async', {
@@ -135,6 +154,26 @@ export class MessageBus {
         }
       } catch (e) {
         this.warn('messagebus.handler_error_sync', {
+          topic,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+    // PA #2.7 — broadcast handlers fire on every publish across all topics.
+    // Isolated from per-topic handlers; one bad broadcast never blocks others.
+    for (const bh of broadcasts) {
+      try {
+        const r = bh(safePayload, meta);
+        if (r && typeof (r as Promise<void>).catch === 'function') {
+          (r as Promise<void>).catch((e) => {
+            this.warn('messagebus.broadcast_error_async', {
+              topic,
+              error: e instanceof Error ? e.message : String(e),
+            });
+          });
+        }
+      } catch (e) {
+        this.warn('messagebus.broadcast_error_sync', {
           topic,
           error: e instanceof Error ? e.message : String(e),
         });
@@ -158,6 +197,30 @@ export class MessageBus {
     return () => {
       state.handlers.delete(handler);
     };
+  }
+
+  /**
+   * Broadcast subscribe — handler fires on EVERY publish across all topics.
+   * Returns an unsubscribe function. Handlers see only future publishes;
+   * the queue is not replayed. PA #2.7 — used by Agent #1 (always-on
+   * lifecycle supervisor).
+   */
+  subscribeAll(handler: BroadcastHandler): () => void {
+    if (typeof handler !== 'function') {
+      throw new TypeError('MessageBus.subscribeAll: handler must be a function');
+    }
+    this.broadcastHandlers.add(handler);
+    return () => {
+      this.broadcastHandlers.delete(handler);
+    };
+  }
+
+  /**
+   * Count of currently-attached broadcast handlers. Useful for tests and
+   * health probes.
+   */
+  broadcastHandlerCount(): number {
+    return this.broadcastHandlers.size;
   }
 
   // ── Introspection ─────────────────────────────────────────────────────────
@@ -213,6 +276,24 @@ export class MessageBus {
       state.queue.splice(0, i);
     }
   }
+}
+
+// PA #2.7 peer must-fix #2 — shallow-freeze any object payload before
+// fan-out. Primitive payloads (string / number / boolean / null / undefined)
+// are returned untouched. Already-frozen objects are returned as-is. Arrays
+// are frozen at the top level only (Object.freeze is shallow by design).
+function freezeIfObject<T>(value: T): T {
+  if (value === null || value === undefined) return value;
+  const t = typeof value;
+  if (t !== 'object') return value;
+  // value is non-null object.
+  if (Object.isFrozen(value)) return value;
+  try {
+    Object.freeze(value);
+  } catch {
+    // Some host objects refuse freeze; treat as best-effort.
+  }
+  return value;
 }
 
 function defaultWarn(msg: string, ctx?: Record<string, unknown>): void {
