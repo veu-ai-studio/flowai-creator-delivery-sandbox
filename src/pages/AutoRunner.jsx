@@ -14,6 +14,93 @@ import SessionResumePrompt from '@/components/operations/SessionResumePrompt';
 import { STEPS, buildStepPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi, invokeLlmViaApi } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
+import { OrchestratorHub, createMemoryHotStore, createMemoryColdStore } from '@/lib/agents/orchestrator/OrchestratorHub';
+import { MessageBus } from '@/lib/agents/MessageBus';
+
+// PA #2.7b — Lazy-instantiated orchestrator bundle. Hub + MessageBus +
+// in-memory HotStore + ColdStore are created on first call to
+// getOrchestratorBundle() and reused for the lifetime of the page.
+//
+// IMPORTANT — Agent #2 (CodeBuilder) is intentionally NOT bundled into the
+// browser. Agent #2 imports `node:crypto` for SHA-256 hashing of build
+// artifacts; bundling it would fail browser builds. Auto Runner registers
+// step-owners server-side (via a future /api/agent/* endpoint); the
+// browser-side hub returns null from invokeStepOwner when no agent is
+// registered, which runBuildStepRecommendation logs as "no step-owner
+// registered" without blocking the run. recommend_only invariant is
+// preserved end-to-end.
+//
+// Tests covering Agent #2's actual recommend() behavior live in
+// tests/agents/pa-2.7-wire-agents-1-2.test.js (PA #2.7) and run in
+// vitest's node env where node:crypto is available.
+//
+// Exported for tests: _resetOrchestratorBundle() clears the cached bundle
+// so each test gets a fresh hub. runBuildStepRecommendation() is the
+// pure-function call site Auto Runner uses inside the build step.
+let _orchestratorBundle = null;
+
+export function getOrchestratorBundle() {
+  if (_orchestratorBundle) return _orchestratorBundle;
+  const messageBus = new MessageBus();
+  const hot = createMemoryHotStore();
+  const cold = createMemoryColdStore();
+  const hub = new OrchestratorHub({ hot, cold });
+  // No client-side step-owner registration. Hub.invokeStepOwner('build', ...)
+  // will return null until the server-side agent endpoint is wired in.
+  _orchestratorBundle = Object.freeze({ hub, messageBus, hot, cold });
+  return _orchestratorBundle;
+}
+
+export function _resetOrchestratorBundle() {
+  _orchestratorBundle = null;
+}
+
+/**
+ * PA #2.7b — Build-step recommendation hook. Calls
+ * OrchestratorHub.invokeStepOwner('build', ctx), logs the result, and
+ * returns it. NEVER throws and NEVER blocks Auto Runner: any unexpected
+ * error from the hub is caught and logged. Low-confidence envelopes are
+ * logged with a `low-confidence` annotation but otherwise treated the same.
+ *
+ * Pass `hub` to override the lazy-bundle hub (tests use this to inject
+ * mocks). Pass `logger` to override `console`. All other fields are passed
+ * through to invokeStepOwner unchanged.
+ */
+export async function runBuildStepRecommendation(opts = {}) {
+  const { runId, productId, spec, sourceSpecRef, stepInputs, hub: hubOverride, logger = console } = opts;
+  let hub = hubOverride;
+  if (!hub) {
+    try {
+      hub = getOrchestratorBundle().hub;
+    } catch (e) {
+      // Bundle bootstrap should never fail in practice (memory stores are
+      // synchronous), but if it does, log and continue. recommend_only
+      // forbids blocking Auto Runner on observability glue.
+      const msg = e instanceof Error ? e.message : String(e);
+      (logger?.warn ?? console.warn)('[AutoRunner] orchestrator bootstrap failed', { error: msg });
+      return null;
+    }
+  }
+  let rec = null;
+  try {
+    rec = await hub.invokeStepOwner('build', { runId, productId, spec, sourceSpecRef, stepInputs });
+  } catch (e) {
+    // recommend_only invariant: orchestrator failure must not propagate.
+    const msg = e instanceof Error ? e.message : String(e);
+    (logger?.error ?? console.error)('[AutoRunner] invokeStepOwner threw (suppressed)', { error: msg });
+    return null;
+  }
+  if (rec) {
+    if (typeof rec.confidence === 'number' && rec.confidence < 0.5) {
+      (logger?.warn ?? console.warn)('[AutoRunner] Agent #2 recommendation (low-confidence):', rec);
+    } else {
+      (logger?.info ?? console.info)('[AutoRunner] Agent #2 recommendation:', rec);
+    }
+  } else {
+    (logger?.info ?? console.info)('[AutoRunner] Agent #2 recommendation: no step-owner registered');
+  }
+  return rec;
+}
 
 function StepCard({ step, index, status, result, elapsed, onExpand, isExpanded, inputName, isCompare, compareResults, sessionInput, sessionObjective, crawlStatus }) {
   const cfg = {
@@ -323,6 +410,25 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
           allInputResults[0][i] = stepResult;
         }
         statuses[i] = 'complete';
+      // PA #2.7b — non-blocking Agent #2 recommendation hook for the build
+      // step. invokeStepOwner returns a recommend_only envelope; the helper
+      // logs it and returns. The helper itself never throws — but per peer
+      // NTH #1 we wrap in an extra try/catch as belt-and-suspenders so a
+      // future regression cannot halt Auto Runner.
+      if (STEPS[i].key === 'build') {
+        try {
+          const buildInput = config.inputs?.[0];
+          await runBuildStepRecommendation({
+            runId: sessionDbIdRef.current ?? 'unknown',
+            productId: buildInput?.id ?? null,
+            spec: { name: buildInput?.name ?? 'unknown', version: '1' },
+            stepInputs: buildInput,
+          });
+        } catch (e) {
+          // recommend_only invariant: never block Auto Runner on the hook.
+          console.warn('[AutoRunner] build-step recommendation hook unexpectedly threw (suppressed)', e);
+        }
+      }
       // Persist step result to DB
       if (sessionDbIdRef.current) {
         base44.entities.AutoSession.update(sessionDbIdRef.current, {
