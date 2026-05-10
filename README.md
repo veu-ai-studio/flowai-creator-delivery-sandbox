@@ -1,39 +1,34 @@
-**Welcome to your Base44 project** 
+# FlowAI
 
-**About**
+Portfolio governance platform built by VEU AI Studio.
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+## Local development
 
-This project contains everything you need to run your app locally.
-
-**Edit the code in your local development environment**
-
-Any change pushed to the repo will also be reflected in the Base44 Builder.
-
-**Prerequisites:** 
-
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
-
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+```bash
+npm install
+npm run dev          # start the dev server
+npm run test         # run the test suite (vitest)
+npm run build        # production build
+npm run lint         # eslint
+npm run typecheck    # tsc against jsconfig.json
 ```
 
-Run the app: `npm run dev`
+Required environment variables for local runs are documented in internal
+team docs. Copy the documented values into a `.env.local` file in the repo
+root before starting the dev server.
 
-**Publish your changes**
+## Project structure
 
-Open [Base44.com](http://Base44.com) and click on Publish.
+- `src/` — React UI (pages, components, libs)
+- `api/` — serverless function handlers
+- `tests/` — vitest test suites
+- `docs/` — public documentation
 
-**Docs & Support**
+## Contributing
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+Contribution guidelines and onboarding details are maintained in internal
+team docs. Reach out to a current team member for access.
 
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+## License
+
+Proprietary — © VEU AI Studio. All rights reserved.
