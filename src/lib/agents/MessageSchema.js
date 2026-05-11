@@ -169,7 +169,7 @@ function validateEnvelope(env) {
   }
   if (!env.from || typeof env.from !== 'object') throw new Error('envelope.from must be object');
   _required(env.from, ['agentId', 'productScope']);
-  if (!Number.isInteger(env.from.agentId) || env.from.agentId < 1 || env.from.agentId > 20) {
+  if (!Number.isInteger(env.from.agentId) || env.from.agentId < 1 || env.from.agentId > 25) {
     if (env.from.agentId !== 'system' && env.from.agentId !== 'portfolio') {
       throw new Error(`envelope.from.agentId invalid: ${env.from.agentId}`);
     }

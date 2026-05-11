@@ -251,10 +251,10 @@ describe('OrchestratorHub — argument validation', () => {
 });
 
 describe('OrchestratorHub — inventory', () => {
-  it('reports 20 agents and 7 step-owners', () => {
+  it('reports 25 agents and 7 step-owners', () => {
     const { hub } = makeHub();
     const i = hub.inventory();
-    expect(i.agents).toBe(20);
+    expect(i.agents).toBe(25);
     expect(i.stepOwners).toBe(7);
     expect(i.orchestratorOnly).toBe(1); // deploy
   });

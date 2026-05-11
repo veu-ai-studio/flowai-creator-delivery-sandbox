@@ -6,13 +6,13 @@ import {
 } from '../src/lib/agents/_registry.ts';
 
 describe('AGENT_REGISTRY — completeness', () => {
-  it('contains exactly 20 agents', () => {
-    expect(AGENT_REGISTRY).toHaveLength(20);
+  it('contains exactly 25 agents', () => {
+    expect(AGENT_REGISTRY).toHaveLength(25);
   });
 
-  it('agent ids 1..20 are all present, exactly once each', () => {
+  it('agent ids 1..25 are all present, exactly once each', () => {
     const ids = AGENT_REGISTRY.map((a) => a.id).sort((a, b) => a - b);
-    expect(ids).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
+    expect(ids).toEqual(Array.from({ length: 25 }, (_, i) => i + 1));
   });
 
   it('every agent has a non-empty name', () => {
@@ -102,7 +102,7 @@ describe('AGENT_REGISTRY — getAgent', () => {
 
   it('returns undefined for an unknown id', () => {
     expect(getAgent(0)).toBeUndefined();
-    expect(getAgent(21)).toBeUndefined();
+    expect(getAgent(26)).toBeUndefined();
     expect(getAgent(-1)).toBeUndefined();
   });
 
@@ -130,11 +130,11 @@ describe('AGENT_REGISTRY — listAgentsByMode', () => {
     }
   });
 
-  it('the three modes partition the 20 agents', () => {
+  it('the three modes partition the 25 agents', () => {
     const a = listAgentsByMode('always-on').length;
     const s = listAgentsByMode('step-owner').length;
     const c = listAgentsByMode('cross-step').length;
-    expect(a + s + c).toBe(20);
+    expect(a + s + c).toBe(25);
   });
 
   it('returned lists are frozen', () => {

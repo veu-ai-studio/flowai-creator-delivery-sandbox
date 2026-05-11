@@ -59,7 +59,7 @@ export interface CredentialDescriptor {
   readonly key: string;
   /** Plain-English description of what this credential is for. */
   readonly purpose: string;
-  /** Optional/required by which agents (subset of 1..20). */
+  /** Optional/required by which agents (subset of 1..25). */
   readonly requiredForAgents: readonly number[];
   /** Where the W5 runtime adapter looks: 'doppler' first, 'env_fallback' as backup. */
   readonly source: 'doppler' | 'env_fallback';
@@ -260,8 +260,8 @@ export async function bindAgentCredentials(
   agentId: number,
   adapter: RuntimeCredentialResolver,
 ): Promise<AgentCredentialBinding> {
-  if (!Number.isInteger(agentId) || agentId < 1 || agentId > 20) {
-    throw new Error(`bindAgentCredentials: agentId must be an integer 1..20, got ${agentId}`);
+  if (!Number.isInteger(agentId) || agentId < 1 || agentId > 25) {
+    throw new Error(`bindAgentCredentials: agentId must be an integer 1..25, got ${agentId}`);
   }
   if (!adapter || typeof adapter.get !== 'function') {
     throw new Error('bindAgentCredentials: adapter must implement get(key)');
@@ -315,7 +315,7 @@ export async function bindAgentCredentials(
  *   1. Every credential key declared in any agent's `requiredCredentials`
  *      (after alias normalization) MUST exist in CREDENTIAL_CATALOG.
  *   2. Every catalog entry's `requiredForAgents` MUST reference valid agent
- *      ids in 1..20 and the corresponding agent MUST declare that credential
+ *      ids in 1..25 and the corresponding agent MUST declare that credential
  *      (after alias normalization).
  *   3. Every catalog descriptor's `key` field MUST match its catalog map key.
  *
@@ -349,10 +349,10 @@ export function validateCredentialSchema(): void {
   // Rule 2: catalog `requiredForAgents` is consistent with the registry
   for (const descriptor of Object.values(CREDENTIAL_CATALOG)) {
     for (const agentId of descriptor.requiredForAgents) {
-      if (!Number.isInteger(agentId) || agentId < 1 || agentId > 20) {
+      if (!Number.isInteger(agentId) || agentId < 1 || agentId > 25) {
         throw new Error(
           `validateCredentialSchema: catalog "${descriptor.key}" lists agent id ${agentId} ` +
-            `which is out of range 1..20.`,
+            `which is out of range 1..25.`,
         );
       }
       const agent = AGENT_REGISTRY.find((a) => a.id === agentId);

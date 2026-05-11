@@ -7,7 +7,7 @@
  *           be* once they are.
  *
  * Schema per agent:
- *   id                    — 1..20, matches AGENT_IDS in BaseAgent.js
+ *   id                    — 1..25, matches AGENT_IDS in BaseAgent.js
  *   name                  — short human-readable label
  *   mode                  — 'always-on' | 'step-owner' | 'cross-step'
  *   authority             — readonly tuple of authority levels (recommend_only
@@ -310,6 +310,61 @@ const AGENTS: AgentRecord[] = [
     produces: ['20.impact.assessment.v1'],
     escalationPolicy: 'Assessment-only — escalates to #14 if regulatory thresholds approached.',
   },
+  // ── Phase 1.0 expansion (W5b, 2026-05-11) ────────────────────────────────
+  // Ops Runner Alpha/Beta/Gamma/Delta/Epsilon. Step-Owner charters reserved
+  // for ops-side workstreams that own discrete pipeline steps once wired in
+  // by OrchestratorHub.registerStepOwner(). Until then, these are static
+  // charters only — no runtime side effects, no message bus traffic.
+  {
+    id: 21,
+    name: 'Ops Runner Alpha',
+    mode: 'step-owner',
+    authority: ['recommend_only'],
+    requiredCredentials: [],
+    consumes: [],
+    produces: [],
+    escalationPolicy: 'Reserved Step-Owner charter — escalate to #1 on any side effect attempt.',
+  },
+  {
+    id: 22,
+    name: 'Ops Runner Beta',
+    mode: 'step-owner',
+    authority: ['recommend_only'],
+    requiredCredentials: [],
+    consumes: [],
+    produces: [],
+    escalationPolicy: 'Reserved Step-Owner charter — escalate to #1 on any side effect attempt.',
+  },
+  {
+    id: 23,
+    name: 'Ops Runner Gamma',
+    mode: 'step-owner',
+    authority: ['recommend_only'],
+    requiredCredentials: [],
+    consumes: [],
+    produces: [],
+    escalationPolicy: 'Reserved Step-Owner charter — escalate to #1 on any side effect attempt.',
+  },
+  {
+    id: 24,
+    name: 'Ops Runner Delta',
+    mode: 'step-owner',
+    authority: ['recommend_only'],
+    requiredCredentials: [],
+    consumes: [],
+    produces: [],
+    escalationPolicy: 'Reserved Step-Owner charter — escalate to #1 on any side effect attempt.',
+  },
+  {
+    id: 25,
+    name: 'Ops Runner Epsilon',
+    mode: 'step-owner',
+    authority: ['recommend_only'],
+    requiredCredentials: [],
+    consumes: [],
+    produces: [],
+    escalationPolicy: 'Reserved Step-Owner charter — escalate to #1 on any side effect attempt.',
+  },
 ];
 
 // ── Deep-freeze helpers ──────────────────────────────────────────────────────
@@ -484,14 +539,14 @@ export function _resetActiveRegistry(): void {
 
 // ── Roster invariants — runtime self-check at module load ────────────────────
 (function validateRoster() {
-  if (AGENT_REGISTRY.length !== 20) {
+  if (AGENT_REGISTRY.length !== 25) {
     throw new Error(
-      `_registry: expected 20 agents, got ${AGENT_REGISTRY.length}`,
+      `_registry: expected 25 agents, got ${AGENT_REGISTRY.length}`,
     );
   }
   const ids = new Set<number>();
   for (const a of AGENT_REGISTRY) {
-    if (!Number.isInteger(a.id) || a.id < 1 || a.id > 20) {
+    if (!Number.isInteger(a.id) || a.id < 1 || a.id > 25) {
       throw new Error(`_registry: agent id out of range: ${a.id}`);
     }
     if (ids.has(a.id)) {
@@ -508,7 +563,7 @@ export function _resetActiveRegistry(): void {
       throw new Error(`_registry: agent ${a.id} authority must be non-empty`);
     }
   }
-  for (let i = 1; i <= 20; i++) {
+  for (let i = 1; i <= 25; i++) {
     if (!ids.has(i)) {
       throw new Error(`_registry: missing agent id ${i}`);
     }
