@@ -1,0 +1,108 @@
+{
+  "timestamp": "2026-05-11T16-24-04",
+  "panel_size": 10,
+  "live_count": 6,
+  "required_live": 5,
+  "aggregate_verdict": "ACCEPT_WITH_TWEAKS",
+  "models_used": 6,
+  "consensus_findings": [
+    "1. Add a test case for analyzeOnboarding with a hostile input causing adapter.probe to throw."
+  ],
+  "contradictions": [
+    "verdict_disagreement — MAJOR_REVISION: [openrouter:openai/gpt-5]  |  ACCEPT_WITH_TWEAKS: [openrouter:openai/gpt-4o, openrouter:google/gemini-2.5-pro, openrouter:openai/gpt-4o]  |  ACCEPT_AS_IS: [openrouter:anthropic/claude-opus-4]",
+    "agreement_pct_divergence — spread 24 pts (openrouter:openai/gpt-5=80, openrouter:openai/gpt-4o=95, openrouter:google/gemini-2.5-pro=90, openrouter:anthropic/claude-opus-4=95, vercel_v0:v0-1.5-md=71, openrouter:openai/gpt-4o=95)"
+  ],
+  "most_severe_gaps": [],
+  "reviewers": [
+    {
+      "provider": "openrouter",
+      "model": "openrouter:openai/gpt-5",
+      "latency_ms": 94904,
+      "degraded": false,
+      "verdict": "MAJOR_REVISION",
+      "agreement_pct": 80,
+      "error": null
+    },
+    {
+      "provider": "openrouter",
+      "model": "openrouter:openai/gpt-4o",
+      "latency_ms": 4897,
+      "degraded": false,
+      "verdict": "ACCEPT_WITH_TWEAKS",
+      "agreement_pct": 95,
+      "error": null
+    },
+    {
+      "provider": "openrouter",
+      "model": "openrouter:google/gemini-2.5-pro",
+      "latency_ms": 44338,
+      "degraded": false,
+      "verdict": "ACCEPT_WITH_TWEAKS",
+      "agreement_pct": 90,
+      "error": null
+    },
+    {
+      "provider": "openrouter",
+      "model": "openrouter:anthropic/claude-opus-4",
+      "latency_ms": 30888,
+      "degraded": false,
+      "verdict": "ACCEPT_AS_IS",
+      "agreement_pct": 95,
+      "error": null
+    },
+    {
+      "provider": "vercel_v0",
+      "model": "vercel_v0:v0-1.5-md",
+      "latency_ms": 84464,
+      "degraded": false,
+      "verdict": null,
+      "agreement_pct": 71,
+      "error": null
+    },
+    {
+      "provider": "github_models",
+      "model": "github_models:openai/gpt-4.1",
+      "latency_ms": 563,
+      "degraded": true,
+      "verdict": null,
+      "agreement_pct": null,
+      "error": "github_models 413: {\"error\":{\"code\":\"tokens_limit_reached\",\"message\":\"Request body too large for gpt-4.1 model. Max size: 8000 tokens.\",\"details\":\"Request body too large for gpt-4.1 model. Max size: 8000 tokens.\"}}"
+    },
+    {
+      "provider": "github_models",
+      "model": "github_models:openai/gpt-4o-mini",
+      "latency_ms": 550,
+      "degraded": true,
+      "verdict": null,
+      "agreement_pct": null,
+      "error": "github_models 413: {\"error\":{\"code\":\"tokens_limit_reached\",\"message\":\"Request body too large for gpt-4o-mini model. Max size: 8000 tokens.\",\"details\":\"Request body too large for gpt-4o-mini model. Max size: 8000 tokens."
+    },
+    {
+      "provider": "headless",
+      "model": "headless:base44_chat",
+      "latency_ms": 1,
+      "degraded": true,
+      "verdict": null,
+      "agreement_pct": null,
+      "error": "not_configured: headless adapter for \"base44_chat\" not yet wired (see scripts/lib/headless-reviewer.mjs)"
+    },
+    {
+      "provider": "headless",
+      "model": "headless:replit_agent",
+      "latency_ms": 1,
+      "degraded": true,
+      "verdict": null,
+      "agreement_pct": null,
+      "error": "not_configured: headless adapter for \"replit_agent\" not yet wired (see scripts/lib/headless-reviewer.mjs)"
+    },
+    {
+      "provider": "openrouter",
+      "model": "openrouter:openai/gpt-4o",
+      "latency_ms": 5049,
+      "degraded": false,
+      "verdict": "ACCEPT_WITH_TWEAKS",
+      "agreement_pct": 95,
+      "error": null
+    }
+  ]
+}
