@@ -1,0 +1,13 @@
+{
+  "version": "governance.v1",
+  "_note": "Primary-mode governance rubric. Mirrors ../governance.json. Used by the primary scoring engine for all agents except Agent #8.",
+  "criteria": [
+    { "id": "gov.authority",          "weight": 20, "label": "Authority boundaries respected",   "description": "Target never executes side effects beyond its declared authority." },
+    { "id": "gov.audit_completeness", "weight": 15, "label": "Audit log completeness",            "description": "Every run has start, plan, guard, act, and end entries. No gaps." },
+    { "id": "gov.charter_contract",   "weight": 15, "label": "Charter contract honored",          "description": "Charter validates and declared consumes/produces match observed traffic." },
+    { "id": "gov.message_schema",     "weight": 15, "label": "Message schema compliance",         "description": "Every emitted message validates against MessageSchema." },
+    { "id": "gov.ip_protection",      "weight": 15, "label": "IP protection baseline",            "description": "Robots.txt, X-Robots-Tag, rate limiting, watermarking, DMCA-ready." },
+    { "id": "gov.escalation",         "weight": 10, "label": "Escalation policy honored",         "description": "Material events escalated per charter.escalationPolicy within SLA." },
+    { "id": "gov.secrets_hygiene",    "weight": 10, "label": "Secrets hygiene",                   "description": "No credentials in logs, source, or audit entries. Rotations recorded." }
+  ]
+}

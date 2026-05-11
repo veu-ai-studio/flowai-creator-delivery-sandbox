@@ -39,8 +39,8 @@ describe('rubricRunner — loadRubric', () => {
 });
 
 describe('rubricRunner — loadEvaluators', () => {
-  it('returns a map keyed by criterion id', () => {
-    const evs = loadEvaluators('governance.v1');
+  it('returns a map keyed by criterion id', async () => {
+    const evs = await loadEvaluators('governance.v1');
     const r = loadRubric('governance.v1');
     for (const c of r.criteria) {
       expect(typeof evs[c.id]).toBe('function');
@@ -48,7 +48,7 @@ describe('rubricRunner — loadEvaluators', () => {
   });
 
   it('each evaluator returns the canonical result shape', async () => {
-    const evs = loadEvaluators('readiness.v1');
+    const evs = await loadEvaluators('readiness.v1');
     const r = loadRubric('readiness.v1');
     for (const c of r.criteria) {
       const result = await evs[c.id](fakeTarget);
@@ -77,7 +77,7 @@ describe('rubricRunner — applyRubric', () => {
 
   it('produces a frozen { score, passes, threshold } shape', async () => {
     const r = loadRubric('governance.v1');
-    const evs = loadEvaluators('governance.v1');
+    const evs = await loadEvaluators('governance.v1');
     const out = await applyRubric(r, evs, fakeTarget);
     expect(Object.isFrozen(out)).toBe(true);
     expect(out.score).toBe(100);
