@@ -524,17 +524,21 @@ OPERATING MODES — THREE MODES, ONE SHARED CONFIGURATION
 
 &#x20; Step 5: Deploy      — deployment checks and assessment
 
-&#x20; Step 6: Monitor     — health checks, performance, anomaly detection
+&#x20; Step 6: Self-Renewal — self-test, self-heal, optimize, upgrade cycle
 
-&#x20; Step 7: Self-Renewal — self-test, self-heal, optimize, upgrade cycle
+&#x20; Step 7: Go To Market — GTM readiness, conversion funnel, launch assets
 
-&#x20; Step 8: Go To Market — GTM readiness, conversion funnel, launch assets
+&#x20; Step 8: Monitor     — health checks, performance, anomaly detection
 
-&#x20; NOTE: Step order in sidebar shows GTM before Monitor (sidebar sequence)
+&#x20; NOTE: Code (src/lib/operationsEngine.js STEPS array) is canonical
 
-&#x20;       but locked pipeline order is as above (Monitor before Self-Renewal
+&#x20;       truth per Locked Rule 1. Step order updated 2026-05-11 (B5 /
 
-&#x20;       before GTM per locked architectural decision).
+&#x20;       W5c) to match code. Prior versions of this doc listed
+
+&#x20;       Monitor=6, Self-Renewal=7, GTM=8; that ordering was a
+
+&#x20;       documentation drift, not a real architectural decision.
 
 
 
