@@ -102,6 +102,61 @@ export async function runBuildStepRecommendation(opts = {}) {
   return rec;
 }
 
+/**
+ * PA (analogous to #2.7b) — Govern-step recommendation hook. Calls
+ * OrchestratorHub.invokeStepOwner('govern', ctx), logs the result, and
+ * returns it. NEVER throws and NEVER blocks Auto Runner: any unexpected
+ * error from the hub is caught and logged. Low-confidence envelopes are
+ * logged with a `low-confidence` annotation but otherwise treated the same.
+ *
+ * Mirror of runBuildStepRecommendation (PA #2.7b) — same recommend_only
+ * invariants, same logger semantics, same error handling. The wire target
+ * is Agent #3 Self-Renewal (commit 68a0c75); STEP_OWNERS at
+ * OrchestratorHub.ts:83 binds 'govern' → 3.
+ *
+ * As with the build hook, the browser-side bundle does NOT register
+ * Agent #3 (kept symmetric with PA #2.7b's bundle posture); on the
+ * client, hub.invokeStepOwner('govern', …) returns null until a
+ * server-side step-owner endpoint is wired up. Tests inject a mock hub
+ * to exercise the full recommendation flow.
+ *
+ * Pass `hub` to override the lazy-bundle hub (tests use this to inject
+ * mocks). Pass `logger` to override `console`. All other fields are passed
+ * through to invokeStepOwner unchanged.
+ */
+export async function runGovernStepRecommendation(opts = {}) {
+  const { runId, productId, run_summary, step_results, stepInputs, hub: hubOverride, logger = console } = opts;
+  let hub = hubOverride;
+  if (!hub) {
+    try {
+      hub = getOrchestratorBundle().hub;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      (logger?.warn ?? console.warn)('[AutoRunner] orchestrator bootstrap failed', { error: msg });
+      return null;
+    }
+  }
+  let rec = null;
+  try {
+    rec = await hub.invokeStepOwner('govern', { runId, productId, run_summary, step_results, stepInputs });
+  } catch (e) {
+    // recommend_only invariant: orchestrator failure must not propagate.
+    const msg = e instanceof Error ? e.message : String(e);
+    (logger?.error ?? console.error)('[AutoRunner] invokeStepOwner threw (suppressed)', { error: msg });
+    return null;
+  }
+  if (rec) {
+    if (typeof rec.confidence === 'number' && rec.confidence < 0.5) {
+      (logger?.warn ?? console.warn)('[AutoRunner] Agent #3 recommendation (low-confidence):', rec);
+    } else {
+      (logger?.info ?? console.info)('[AutoRunner] Agent #3 recommendation:', rec);
+    }
+  } else {
+    (logger?.info ?? console.info)('[AutoRunner] Agent #3 recommendation: no step-owner registered');
+  }
+  return rec;
+}
+
 function StepCard({ step, index, status, result, elapsed, onExpand, isExpanded, inputName, isCompare, compareResults, sessionInput, sessionObjective, crawlStatus }) {
   const cfg = {
     waiting: { icon: <Clock className="h-4 w-4 text-muted-foreground" />, badge: <span className="text-[10px] text-muted-foreground">Waiting — {step.estimate}</span>, border: 'border-border', bg: 'bg-card' },
@@ -427,6 +482,35 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
         } catch (e) {
           // recommend_only invariant: never block Auto Runner on the hook.
           console.warn('[AutoRunner] build-step recommendation hook unexpectedly threw (suppressed)', e);
+        }
+      }
+      // PA (analogous to #2.7b) — non-blocking Agent #3 recommendation hook
+      // for the govern step. invokeStepOwner returns a recommend_only
+      // envelope; the helper logs it and returns. Wrapped in its own
+      // try/catch (belt-and-suspenders) so a future regression cannot halt
+      // Auto Runner.
+      if (STEPS[i].key === 'govern') {
+        try {
+          const governInput = config.inputs?.[0];
+          await runGovernStepRecommendation({
+            runId: sessionDbIdRef.current ?? 'unknown',
+            productId: governInput?.id ?? null,
+            run_summary: {
+              failedSteps: STEPS
+                .map((s, si) => (statuses[si] === 'failed' ? s.key : null))
+                .filter(Boolean),
+            },
+            step_results: Object.fromEntries(
+              STEPS.map((s, si) => [
+                s.key,
+                results[si] ? { summary: results[si].summary } : null,
+              ]),
+            ),
+            stepInputs: governInput,
+          });
+        } catch (e) {
+          // recommend_only invariant: never block Auto Runner on the hook.
+          console.warn('[AutoRunner] govern-step recommendation hook unexpectedly threw (suppressed)', e);
         }
       }
       // Persist step result to DB

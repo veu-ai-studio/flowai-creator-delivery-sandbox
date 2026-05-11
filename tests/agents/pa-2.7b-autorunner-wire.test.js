@@ -315,14 +315,17 @@ describe('PA #2.7b — static assertion: AutoRunner.jsx contains the wire-in', (
     expect(src).toMatch(/await\s+runBuildStepRecommendation\s*\(/);
   });
 
-  it("invokeStepOwner is awaited exactly once (single canonical call site)", async () => {
+  it("invokeStepOwner is awaited exactly twice (canonical call sites: build + govern)", async () => {
     const src = await autoRunnerSource();
     // Match `await <ident>.invokeStepOwner(` — the actual awaited method
     // call. This excludes JSDoc / comment references and string literals.
-    // The single canonical call site is inside runBuildStepRecommendation
-    // (keeps logging / error-suppression in one place).
+    // Two canonical call sites — one inside runBuildStepRecommendation
+    // (PA #2.7b, build step) and one inside runGovernStepRecommendation
+    // (PA analogous to #2.7b, govern step → Agent #3). Each site keeps its
+    // own logging / error-suppression. A third site would indicate a
+    // regression and warrants review.
     const callOccurrences = src.match(/await\s+\w+\.invokeStepOwner\s*\(/g) ?? [];
-    expect(callOccurrences.length).toBe(1);
+    expect(callOccurrences.length).toBe(2);
   });
 
   it("the build step path is non-blocking — the call is awaited, not thenned", async () => {
