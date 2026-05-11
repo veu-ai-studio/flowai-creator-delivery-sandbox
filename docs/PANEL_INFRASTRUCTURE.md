@@ -25,7 +25,7 @@ Railway exposes no LLM inference endpoint and is **not a panel member**; reviewe
 | 4 | `openrouter:anthropic/claude-opus-4` | OpenRouter | `anthropic/claude-opus-4` | `OPENROUTER_API_KEY` | paid |
 | 5 | `vercel_v0:v0-1.5-md` | Direct API | `v0-1.5-md` (panel label); modelConfiguration.modelId from `v0-auto`/`v0-mini`/`v0-pro`/`v0-max`/`v0-max-fast`, else default | `VERCEL_V0_TOKEN` | paid (Premium req'd) |
 | 6 | `github_models:openai/gpt-4.1` | Direct API | `openai/gpt-4.1` | `GITHUB_MODELS_PAT` | free w/ Copilot subscription |
-| 7 | `github_models:microsoft/Phi-3.5-mini-instruct` | Direct API | `microsoft/Phi-3.5-mini-instruct` (low-tier) | `GITHUB_MODELS_PAT` | free w/ Copilot subscription |
+| 7 | `github_models:microsoft/phi-4-mini-instruct` | Direct API | `microsoft/phi-4-mini-instruct` (low-tier; Phi-3.5-mini removed from GH Models catalog, phi-4-mini is the current equivalent) | `GITHUB_MODELS_PAT` | free w/ Copilot subscription |
 | 8 | `base44_chat` | Headless (Playwright) | Base44 chat assistant | `BASE44_SESSION_PATH` + login | n/a (browser session) |
 | 9 | `replit_agent` | Headless (Playwright) | Replit Agent | `REPLIT_SESSION_PATH` + login | n/a (browser session) |
 | 10 | `openrouter:openai/gpt-4o` (web-grounded variant) | OpenRouter with explicit web-search prompting | `openai/gpt-4o` | `OPENROUTER_API_KEY` | paid |
@@ -49,6 +49,7 @@ Railway exposes no LLM inference endpoint and is **not a panel member**; reviewe
 ### 2.2 Vercel v0 (slot 5)
 
 - **Status:** **LIVE** (B1 / W5c, 2026-05-11) — smoke test passed (HTTP 200, ~9 s latency, valid summary returned).
+- **Scope constraint (small-artifact only, <10K tokens):** Slot 5 is excluded from full-canonical panel runs (SSOT + canonical + history bundles, ~125 KB combined, exceed v0 sync-mode limits at ~10K-token bundles). Use it for targeted single-question reviews, smoke tests, or focused UI/scaffolding critiques. `scripts/run-layer1-ssot-panel.mjs` and `scripts/run-layer2-impl-panel.mjs` mark Slot 5 as `status: 'SKIP'` so it neither times out nor blocks parallel execution of the other 9 slots.
 - **Endpoint (raw HTTP):** `POST https://api.v0.dev/v1/chats` — **NOT** OpenAI-compatible. The earlier `…/v1/chat/completions` reference in this doc was incorrect and has been corrected.
 - **Endpoint (SDK):** `v0-sdk` npm package — `v0.chats.create({ message, system })`
 - **Auth:** `Authorization: Bearer ${VERCEL_V0_TOKEN}`
@@ -80,7 +81,7 @@ Railway exposes no LLM inference endpoint and is **not a panel member**; reviewe
 - **Request shape:** Azure AI Inference / OpenAI-compatible — `{ model, messages, temperature, stream }`
 - **Model catalog (subset relevant to the panel):**
   - High-tier: `openai/gpt-4.1`, `openai/gpt-4o`, `microsoft/MAI-DS-R1`, `meta/Meta-Llama-3.1-405B-Instruct`, `mistral-ai/Mistral-Large-2411`
-  - Low-tier: `microsoft/Phi-3.5-mini-instruct`, `microsoft/Phi-3-small-8k-instruct`, `meta/Meta-Llama-3.1-8B-Instruct`
+  - Low-tier: `microsoft/phi-4-mini-instruct` (current; Phi-3.5-mini removed from catalog), `microsoft/Phi-3-small-8k-instruct`, `meta/Meta-Llama-3.1-8B-Instruct`
   - Embedding: `cohere/Cohere-embed-v3-english`, `openai/text-embedding-3-small`
 - **Rate limits (Copilot Free tier):**
   - **Low-tier models:** 15 req/min, 150 req/day
@@ -136,7 +137,7 @@ peerReview({
     { provider: 'openrouter', model: 'anthropic/claude-opus-4' },
     { provider: 'vercel_v0',     model: 'v0-1.5-md' },
     { provider: 'github_models', model: 'openai/gpt-4.1' },
-    { provider: 'github_models', model: 'microsoft/Phi-3.5-mini-instruct' },
+    { provider: 'github_models', model: 'microsoft/phi-4-mini-instruct' },
     { provider: 'headless',      model: 'base44_chat' },
     { provider: 'headless',      model: 'replit_agent' },
     { provider: 'openrouter',    model: 'openai/gpt-4o', system_override: 'WEB_GROUNDED_REVIEWER' },

@@ -185,9 +185,13 @@ const SLOTS = [
   { idx: 2,  provider: 'openrouter',    model: 'openai/gpt-5.5',                     status: 'LIVE' },
   { idx: 3,  provider: 'openrouter',    model: 'google/gemini-2.5-pro',              status: 'LIVE' },
   { idx: 4,  provider: 'openrouter',    model: 'perplexity/sonar-pro-search',        status: 'LIVE' },
-  { idx: 5,  provider: 'vercel_v0',     model: 'v0-1.5-md',                          status: 'DEFERRED', reason: 'adapter rewrite pending — v0 API uses /v1/chats not /v1/chat/completions' },
+  // Slot 5 is small-artifact only (<10K tokens). Full-canonical SSOT
+  // bundles (~125 KB) exceed v0 sync-mode limits, so it SKIPs here.
+  { idx: 5,  provider: 'vercel_v0',     model: 'v0-1.5-md',                          status: 'SKIP', reason: 'v0 sync-mode exceeds 10K-token limit on full-canonical bundles' },
   { idx: 6,  provider: 'github_models', model: 'openai/gpt-4.1',                     status: 'LIVE' },
-  { idx: 7,  provider: 'github_models', model: 'microsoft/Phi-3.5-mini-instruct',    status: 'LIVE' },
+  // Phi-3.5-mini removed from GH Models catalog;
+  // phi-4-mini-instruct is current catalog equivalent
+  { idx: 7,  provider: 'github_models', model: 'microsoft/phi-4-mini-instruct',      status: 'LIVE' },
   { idx: 8,  provider: 'headless',      model: 'base44_chat',                        status: 'DEFERRED', reason: 'Playwright codegen not done' },
   { idx: 9,  provider: 'headless',      model: 'replit_agent',                       status: 'DEFERRED', reason: 'Playwright codegen not done' },
   { idx: 10, provider: 'openrouter',    model: 'openai/gpt-4o-2024-11-20',           status: 'LIVE', mode: 'web_grounded' },
@@ -246,6 +250,64 @@ async function callOpenRouter({ apiKey, model, system, user, signal }) {
   };
 }
 
+async function callVercelV0({ token, model, system, user, signal }) {
+  // v0 API surface: POST /v1/chats with { message, system, responseMode,
+  // modelConfiguration.modelId? }. Response is { id, text, messages,
+  // latestVersion: { files }, ... } — NOT OpenAI-compatible.
+  // modelConfiguration.modelId accepts only v0-auto|v0-mini|v0-pro|v0-max|
+  // v0-max-fast. We omit the field when the panel entry uses a legacy
+  // marketing id (e.g. v0-1.5-md) so v0 picks its default.
+  const V0_NEW_ENUM = new Set(['v0-auto', 'v0-mini', 'v0-pro', 'v0-max', 'v0-max-fast']);
+  const body = {
+    message: user,
+    system,
+    responseMode: 'sync',
+  };
+  if (V0_NEW_ENUM.has(model)) {
+    body.modelConfiguration = { modelId: model };
+  }
+  const t0 = Date.now();
+  const res = await fetch('https://api.v0.dev/v1/chats', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+    signal,
+  });
+  const latency_ms = Date.now() - t0;
+  const text = await res.text();
+  let parsed = null;
+  try { parsed = JSON.parse(text); } catch {}
+  let content = '';
+  if (parsed) {
+    if (typeof parsed.text === 'string' && parsed.text) {
+      content = parsed.text;
+    } else if (Array.isArray(parsed.messages) && parsed.messages.length) {
+      // Take the last assistant message.
+      const lastAsst = [...parsed.messages].reverse().find((m) => m.role === 'assistant');
+      content = lastAsst?.content ?? lastAsst?.text ?? '';
+    } else if (Array.isArray(parsed.latestVersion?.files)) {
+      content = parsed.latestVersion.files
+        .map((f) => `--- ${f.name ?? f.path ?? 'file'} ---\n${f.content ?? ''}`)
+        .join('\n\n');
+    } else if (Array.isArray(parsed.files)) {
+      content = parsed.files
+        .map((f) => `--- ${f.name ?? f.path ?? 'file'} ---\n${f.content ?? ''}`)
+        .join('\n\n');
+    }
+  }
+  return {
+    ok: res.ok,
+    status: res.status,
+    latency_ms,
+    content,
+    error: res.ok ? null : (parsed?.error?.message ?? text.slice(0, 300)),
+    raw: text,
+  };
+}
+
 async function callGithubModels({ token, model, system, user, signal }) {
   const t0 = Date.now();
   const res = await fetch('https://models.github.ai/inference/chat/completions', {
@@ -293,6 +355,8 @@ async function runSlot({ slot, creds, system, user }) {
       result = await callOpenRouter({ apiKey: creds.OPENROUTER_API_KEY, model: slot.model, system, user, signal: ac.signal });
     } else if (slot.provider === 'github_models') {
       result = await callGithubModels({ token: creds.GITHUB_MODELS_PAT, model: slot.model, system, user, signal: ac.signal });
+    } else if (slot.provider === 'vercel_v0') {
+      result = await callVercelV0({ token: creds.VERCEL_V0_TOKEN, model: slot.model, system, user, signal: ac.signal });
     } else {
       // Should not reach here; deferred slots are filtered upstream.
       result = { ok: false, status: 0, latency_ms: 0, content: '', error: 'not implemented' };
@@ -364,19 +428,20 @@ async function main() {
     })),
   );
 
-  // Reattach deferred slots (with placeholders) so the report shows full 10-slot picture.
-  const deferred = SLOTS.filter((s) => s.status === 'DEFERRED').map((s) => ({
+  // Reattach non-LIVE slots (DEFERRED, SKIP) with placeholders so the report
+  // still shows the full 10-slot picture.
+  const nonLive = SLOTS.filter((s) => s.status !== 'LIVE').map((s) => ({
     idx: s.idx,
     provider: s.provider,
     model: s.model,
-    status: 'DEFERRED',
+    status: s.status,
     ok: false,
     http_status: null,
     latency_ms: 0,
     error: s.reason,
     content: '',
   }));
-  const all = [...results, ...deferred].sort((a, b) => a.idx - b.idx);
+  const all = [...results, ...nonLive].sort((a, b) => a.idx - b.idx);
 
   // PHASE E — write report
   if (!existsSync(OUT_DIR)) await mkdir(OUT_DIR, { recursive: true });
@@ -394,7 +459,10 @@ async function main() {
   lines.push('| Slot | Provider | Model | Status | HTTP | Latency (ms) | Error |');
   lines.push('|------|----------|-------|--------|------|--------------|-------|');
   for (const r of all) {
-    const status = r.status === 'DEFERRED' ? 'DEFERRED' : (r.ok ? 'LIVE-OK' : 'LIVE-FAIL');
+    let status;
+    if (r.status === 'DEFERRED') status = 'DEFERRED';
+    else if (r.status === 'SKIP') status = 'SKIP';
+    else status = r.ok ? 'LIVE-OK' : 'LIVE-FAIL';
     lines.push(`| ${r.idx} | ${r.provider} | \`${r.model}\` | ${status} | ${r.http_status ?? '—'} | ${r.latency_ms} | ${r.error ?? ''} |`);
   }
   lines.push('');
@@ -406,6 +474,11 @@ async function main() {
     lines.push('');
     if (r.status === 'DEFERRED') {
       lines.push(`> **DEFERRED.** ${r.error}`);
+      lines.push('');
+      continue;
+    }
+    if (r.status === 'SKIP') {
+      lines.push(`> **SKIP.** ${r.error}`);
       lines.push('');
       continue;
     }
@@ -427,9 +500,11 @@ async function main() {
   // Summary to stdout
   const okCount = results.filter((r) => r.ok).length;
   const failCount = results.length - okCount;
+  const deferredCount = nonLive.filter((r) => r.status === 'DEFERRED').length;
+  const skippedCount = nonLive.filter((r) => r.status === 'SKIP').length;
   process.stdout.write(
     `live_slots_attempted=${results.length} ok=${okCount} failed=${failCount} ` +
-    `deferred=${deferred.length} out=${path.relative(REPO, OUT_PATH)} ` +
+    `deferred=${deferredCount} skipped=${skippedCount} out=${path.relative(REPO, OUT_PATH)} ` +
     `duration_s=${Math.round((FINISHED - STARTED) / 1000)}\n`,
   );
   for (const r of results) {
