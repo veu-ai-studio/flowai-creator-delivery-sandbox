@@ -1,6 +1,6 @@
-# FlowAI Implementation Plan — Draft v1 (Layer 2)
+# FlowAI Implementation Plan — Layer 2 (CANONICAL)
 
-**Status:** DRAFT, pending CEO approval (same pattern as Layer 1 SSOT promotion flow).
+**Status:** **CANONICAL** as of 2026-05-11. CEO-approved; supersedes `docs/FLOWAI_IMPLEMENTATION_PLAN_DRAFT_v1.md` (deleted on promotion). All 4 prior CEO FLAGS resolved with the W5a recommendations adopted as canonical (see Synthesis Metadata at end of file).
 **Source:** Synthesis of 5-reviewer Layer 2 panel from `docs/implementation-review/layer2-impl-panel-review-2026-05-11.md`.
 **Reviewers:** Slot 1 = Claude Opus 4.7 · Slot 2 = GPT-5.5 · Slot 3 = Gemini 2.5 Pro · Slot 4 = Perplexity Sonar Pro Search · Slot 10 = GPT-4o (web-grounded).
 **Consensus rule:** ≥3 of 5 reviewers in agreement = consensus. Split decisions are surfaced verbatim for CEO disposition. Each question records: (a) consensus answer, (b) majority CONFIDENCE level, (c) most-cited KEY ASSUMPTION, (d) DISSENT (one-line per diverging reviewer), and (e) CEO FLAG if the panel split.
@@ -105,7 +105,7 @@ Elevation is **never automatic**; always a separate Panel decision with audit-lo
 **CONFIDENCE:** HIGH (4 of 5; Slot 2 MEDIUM on Ops-Runner placement).
 **KEY ASSUMPTION:** #8 Quality Audit can be built without itself failing the audit-self problem — relies on Panel review as external auditor of #8 (Layer 1 Missing-Q "self-test of self-tester").
 
-**CEO FLAG — #4 vs #8 first:** 4 reviewers favor #4 first (revenue model unlock); Slot 1 favors #8 first (95/95 enforcement substrate). Both are defensible. Recommendation: start **#4 and #8 in parallel** since their substrate dependencies (Doppler/RLS/Stripe for #4; ScoreEvaluator/test harness for #8) do not conflict. CEO disposition welcome.
+**AB1 CEO-RESOLVED (2026-05-11): build #4 and #8 in parallel.** Their substrate dependencies (Doppler/RLS/Stripe for #4; ScoreEvaluator/test harness for #8) do not conflict. Slot 1's #8-first preference is folded in via the parallel-start, preserving the 95/95 enforcement substrate while unblocking the revenue model on the same calendar. The 4-of-5 reviewer preference for #4-first and Slot 1's #8-first preference are both honored.
 
 ### AB2. Dependency map
 
@@ -145,22 +145,18 @@ Elevation is **never automatic**; always a separate Panel decision with audit-lo
 
 ### AB3. Ops Runner charters (#21–#25)
 
-**SPLIT — no clear 3-of-5 consensus on the exact responsibility split.** Two strongest proposals presented for CEO decision:
+**CANONICAL — Operational-responsibility scheme (CEO-RESOLVED 2026-05-11; Proposal A adopted).**
 
-**Proposal A — Operational responsibilities (Slot 1 + Slot 2 + Slot 3 + Slot 10 align on shape):**
 - **#21 Pipeline Conductor / Crawl Coordinator:** orchestrates 8-step run state, retries, dead-letter, manages Playwright crawl pool, sandbox account rotation. Authority: AUTO_WRITE_INTERNAL / AUTO_CONTAIN_KNOWN.
 - **#22 Audit Auditor / Crawl Probe Ops:** meta-self-audit; verifies log integrity, detects gaps, raises Panel review; also crawl-probe management. Authority: RECOMMEND_ONLY.
 - **#23 Cost Governor:** per-tenant token + compute budgets; kill-switches on overrun; consumes all `cost.*` events. Authority: AUTO_WRITE_INTERNAL (kill-switch is critical).
 - **#24 Release / Tenant-Credential Ops:** manages agent activation (dormant→active), deployment canaries, tenant provisioning, RLS verification, Doppler secret checks. Authority: AUTO_CONTAIN_KNOWN.
 - **#25 Panel Orchestrator / Incident-Recovery:** dispatches Panel reviews, manages quorum/substitution per MG5, records decisions per MG7; also incident escalation and kill-switch execution. Authority: REQUIRES_HUMAN_GATE until Panel handover gate (MG6) clears.
 
-**Proposal B — Pipeline-step ownership (Slot 4 alone):**
-- #21: Research/Design Runner (steps 1–2). #22: Build/QA (steps 3–4). #23: Deploy/Self-Renewal (steps 5–6). #24: GTM/Monitor (steps 7–8). #25: Cross-pipeline Orchestrator (escalations, deadlocks).
+**Slot 4 alternate (Proposal B — pipeline-step ownership #21=steps-1-2, #22=steps-3-4, etc.) — OVERRULED.** Rationale: aligns Ops Runners with the Layer 1 SSOT's distinction between agent ownership of pipeline steps (#6-#10) and operational orchestration glue (#21-#25); avoids responsibility overlap with existing step-owners.
 
-**CONFIDENCE:** MEDIUM (4 of 5).
+**CONFIDENCE:** MEDIUM (4 of 5 cluster on this scheme).
 **KEY ASSUMPTION:** Five Ops Runners is the right cardinality — could collapse to 3 (Conductor, Governor, Panel) if scope slips; Layer 1 SSOT lists #21–#25 as stubs already.
-
-**CEO FLAG:** Proposal A is the operational-responsibility model (4 reviewers cluster here). Proposal B is the pipeline-step-ownership model (Slot 4 alone). Recommend Proposal A — it aligns with the Layer 1 SSOT's distinction between agent ownership of pipeline steps (#6-#10) and operational orchestration glue (#21-#25).
 
 ### AB4. Wire-in sequencing
 
@@ -195,20 +191,15 @@ Elevation is **never automatic**; always a separate Panel decision with audit-lo
 
 ### PI1. Integration sequence
 
-**CONSENSUS — MyBirthSafe LAST (4 of 5); first-product split.**
+**CANONICAL (CEO-RESOLVED 2026-05-11): Option A adopted.**
 
-**Consensus on shape:** Risk-ascending order; MyBirthSafe (POPIA + maternal health + rebrand collision) is the highest-risk integration and goes last. 4 of 5 reviewers agree.
+**Sequence:** PressAI → ReachSMS → RelTwin → SAIGE → MyBirthSafe.
 
-**Dissent (Slot 10):** Risk-descending — MyBirthSafe first. Outlier; rejected by majority.
+Rationale: validates revenue plumbing first via PressAI's live Stripe integration, aligning with the multi-tenant unlock thesis of Phase 1. MyBirthSafe (POPIA + maternal health + rebrand collision) remains last as the highest-risk integration; 4-of-5 reviewer consensus on that placement is preserved.
 
-**CEO FLAG — first-product decision (split):**
-- **Option A — PressAI first** (Slot 1 + Slot 4): live Stripe revenue validates plumbing first; lowest integration risk; "begin with live revenue → existing third-party integrations → product maturity → regulatory complexity."
-- **Option B — SAIGE first** (Slot 2 + Slot 3): low PII risk, complex enough to exercise FlowAI's capabilities; best balance of risk/coverage; minimum blast radius if integration falters.
+**Option B alternate (Slot 2 + Slot 3 — SAIGE first) — OVERRULED.** Both options were defensible; PressAI-first adopted because (a) it validates the revenue rail that #4 just stood up in Phase 1, providing tight feedback on Stripe Connect plumbing before subsequent products; (b) live revenue is the higher-priority risk to de-risk early.
 
-**Synthesized sequence (using Option A):** PressAI → ReachSMS → RelTwin → SAIGE → MyBirthSafe.
-**Synthesized sequence (using Option B):** SAIGE → PressAI → RelTwin → ReachSMS → MyBirthSafe.
-
-Either is defensible. Recommend Option A — validates revenue plumbing first, aligning with the multi-tenant unlock thesis of Phase 1.
+**Slot 10 dissent (MyBirthSafe-first, risk-descending) — OVERRULED.** Reverse-order outlier; rejected by 4-of-5 majority.
 
 **CONFIDENCE:** MEDIUM (3 of 5 MEDIUM).
 **KEY ASSUMPTION:** PressAI's live Stripe state is integration-ready (not just billing-ready) — verify before sequencing locks.
@@ -240,7 +231,7 @@ Sandbox account provisioning, payment-rail sandboxing, no-destructive-action rul
 
 ### PI4. 12-agent embedding
 
-**CONSENSUS (4 of 5) — Per-product, sequential, never simultaneous.**
+**CANONICAL (CEO-RESOLVED 2026-05-11): Per-product, sequential, never simultaneous.**
 
 For each product (in PI1 order):
 1. Capability Transfer page generates per-product install sprint (already built).
@@ -248,9 +239,9 @@ For each product (in PI1 order):
 3. Wire-in one category at a time over ~4 weeks: lifecycle (#1, #2, #3) → research/design (#6, #7) → operate (#9, #10, #13) → intelligence (#15, #17, #19, #20).
 4. 95/95 audit on product after each category lit.
 
-Simultaneous embed across all 5 products is rejected — blast radius too large given current dormant-agent count.
+Simultaneous embed across all 5 products is rejected — blast radius too large given the current dormant-agent count and the open multi-tenant contamination risk (RR1 #1).
 
-**DISSENT (Slot 4):** simultaneous embed post-Phase 3 via Capability Transfer sprints. Outlier; rejected by majority.
+**Slot 4 dissent (simultaneous embed post-Phase 3) — OVERRULED** by 4-of-5 majority. Per-product sequential preserves debug time if embeds collide with product-specific code.
 
 **CONFIDENCE:** HIGH (3 of 5; Slot 2 MEDIUM, Slot 4 dissent).
 **KEY ASSUMPTION:** Capability Transfer system handles per-product config drift cleanly; if embeds collide with product-specific code, sequencing buys debug time.
@@ -481,10 +472,10 @@ Why this is the single highest-risk decision (3 reviewers converge — Slot 1, S
 
 - **Reviewers used:** 5 of 8 attempted LIVE slots (Slots 1, 2, 3, 4, 10); 3 failed (Slot 5 v0 timeout on 125 KB bundle; Slots 6/7 GitHub Models 413/404 due to free-tier 8K-token cap / model not in catalog); 2 deferred (Slots 8, 9 headless not wired).
 - **Consensus rate (20 questions):** strong-consensus (5/5 or 4/5) on 14 questions (70%); 3-of-5 consensus with synthesized dissent on 4 questions (20%); SPLIT requiring CEO disposition on 2 questions (10%).
-- **CEO FLAGS requiring disposition before promotion to `docs/FLOWAI_IMPLEMENTATION_PLAN.md`:**
-  - **AB1 / #4 vs #8 first** — 4 reviewers favor #4-first; Slot 1 favors #8-first. Recommendation: parallel build (substrate dependencies don't conflict).
-  - **AB3 / Ops Runner charter scheme** — 4 reviewers cluster on Proposal A (operational responsibilities); Slot 4 alone proposes Proposal B (pipeline-step ownership). Recommendation: Proposal A.
-  - **PI1 / first-product** — 2 reviewers favor PressAI (live revenue), 2 favor SAIGE (low PII, complex). Slot 10 is the reverse-order outlier (rejected). Recommendation: PressAI (Option A) — validates revenue plumbing early.
-  - **PI4 / embed simultaneity** — 4 reviewers per-product-sequential; Slot 4 simultaneous post-Phase 3. Recommendation: per-product-sequential (majority).
+- **CEO FLAGS — ALL FOUR RESOLVED BY CEO (2026-05-11) with W5a recommendations adopted:**
+  - **AB1 / #4 vs #8 first → PARALLEL.** Build #4 (Provider Onboarding) and #8 (Quality Audit) in parallel from Phase 1; substrate dependencies (Doppler/RLS/Stripe for #4; ScoreEvaluator/test harness for #8) do not conflict. Both the 4-of-5 #4-first majority and Slot 1's #8-first dissent honored.
+  - **AB3 / Ops Runner charter scheme → PROPOSAL A (operational responsibilities).** #21 Pipeline Conductor / Crawl Coordinator · #22 Audit Auditor / Crawl Probe · #23 Cost Governor · #24 Release / Tenant-Credential Ops · #25 Panel Orchestrator / Incident-Recovery. Slot 4 pipeline-step-ownership alternate OVERRULED.
+  - **PI1 / first-product → PRESSAI** (Option A). Sequence: PressAI → ReachSMS → RelTwin → SAIGE → MyBirthSafe. Option B (SAIGE-first, Slot 2 + Slot 3) OVERRULED; Slot 10 reverse-order dissent OVERRULED.
+  - **PI4 / embed simultaneity → PER-PRODUCT SEQUENTIAL.** 4-week per-product install sprints, category-by-category, with 95/95 audit after each category. Slot 4 simultaneous-embed dissent OVERRULED.
 - **Generated:** 2026-05-11, `layer2-impl-panel-review-2026-05-11.md` as input.
-- **Status:** DRAFT — awaiting CEO approval before promotion to `docs/FLOWAI_IMPLEMENTATION_PLAN.md`.
+- **Status:** **CANONICAL.** Promoted from `docs/FLOWAI_IMPLEMENTATION_PLAN_DRAFT_v1.md` to `docs/FLOWAI_IMPLEMENTATION_PLAN.md` after CEO disposition of the 4 flagged items.
