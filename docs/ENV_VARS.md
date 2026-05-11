@@ -144,6 +144,7 @@ Structured logs with multi-tenant fields for governance audit trail.
 | `BROWSERLESS_API_KEY` | already set | Primary headless browser |
 | `PLAYWRIGHT_ENDPOINT` | optional | Self-hosted Playwright fallback (`POST /render` returning `{ html }`) |
 | `REPLIT_PROXY_DISABLED` | optional | Set `true` to disable the legacy Replit proxy agent |
+| `CRAWLER_BASE_URL` / `VITE_CRAWLER_BASE_URL` | optional | Playwright crawler proxy base URL used by `src/lib/operationsEngine.js` (steps 3-4 page-fetch, crawl, interactive test). Defaults to `https://attached-assets-victor2081new.replit.app`. Re-point to the Vercel production URL when the production crawler is deployed. Use `VITE_*` for the browser bundle, `CRAWLER_BASE_URL` (no prefix) for Node / vitest runs. |
 
 ---
 

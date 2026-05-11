@@ -83,7 +83,22 @@ Every section must end with a LAUNCH GATE: GO / HOLD / BLOCKER.`,
 
 // ─── PAGE FETCH & CRAWL ───────────────────────────────────────────────────────
 
-const PROXY = 'https://attached-assets-victor2081new.replit.app';
+// Playwright crawler proxy base URL.
+// Override via env (Vite browser: VITE_CRAWLER_BASE_URL; Node/vitest:
+// CRAWLER_BASE_URL) when moving off the legacy Replit proxy.
+// See docs/ENV_VARS.md § 7.
+const CRAWLER_BASE_URL = (() => {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta && import.meta.env) {
+      const v = import.meta.env.VITE_CRAWLER_BASE_URL;
+      if (typeof v === 'string' && v.length > 0) return v;
+    }
+  } catch { /* import.meta unavailable in this runtime */ }
+  if (typeof process !== 'undefined' && process.env && process.env.CRAWLER_BASE_URL) {
+    return process.env.CRAWLER_BASE_URL;
+  }
+  return 'https://attached-assets-victor2081new.replit.app';
+})();
 
 export async function fetchPageContext(input, base44) {
   if (input.type !== 'url' || !input.value?.trim()) return null;
@@ -91,7 +106,7 @@ export async function fetchPageContext(input, base44) {
   const url = input.value.trim();
 
   try {
-    const response = await fetch(`${PROXY}/fetch`, {
+    const response = await fetch(`${CRAWLER_BASE_URL}/fetch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
@@ -113,7 +128,7 @@ export async function fetchPageContext(input, base44) {
 export async function runCrawl(url, options = {}) {
   const isSelf = url && url.includes('truthful-flow-logic-lab.base44.app');
   try {
-    const response = await fetch(`${PROXY}/crawl`, {
+    const response = await fetch(`${CRAWLER_BASE_URL}/crawl`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -136,7 +151,7 @@ export async function runCrawl(url, options = {}) {
 
 export async function runInteractiveTests(url, actions = []) {
   try {
-    const response = await fetch(`${PROXY}/test`, {
+    const response = await fetch(`${CRAWLER_BASE_URL}/test`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, actions }),

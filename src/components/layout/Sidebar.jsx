@@ -180,7 +180,7 @@ export default function Sidebar() {
     const handler = (e) => {
       if (e.metaKey || e.ctrlKey) {
         if (e.key === 'n') { e.preventDefault(); navigate('/auto-runner'); }
-        if (e.key === '/') { e.preventDefault(); navigate('/autonomous-engine'); }
+        if (e.key === '/') { e.preventDefault(); navigate('/auto-runner'); }
       }
     };
     window.addEventListener('keydown', handler);
@@ -189,7 +189,6 @@ export default function Sidebar() {
 
   const [openSections, setOpenSections] = useState({
     "PORTFOLIO": true,
-    "DASHBOARD": true,
     "CONFIGURATION": true,
     "AUTO OPERATIONS": false,
     "GUIDED OPERATIONS": false,
