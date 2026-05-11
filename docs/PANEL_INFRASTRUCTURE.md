@@ -206,7 +206,75 @@ Env vars are read by adapters at runtime; adapters that find their env var missi
 
 ---
 
-## 6. Sources consulted
+## 6. Parallel Commit Protocol
+
+**Status:** Added 2026-05-11 by W5b after the Phase 1.0 race incident.
+**Module:** `scripts/lib/wx-stage-lock.mjs`
+**Lock file:** `<repo_root>/.wx-staging.lock` (gitignored)
+
+### 6.1 Background
+
+In Phase 1.0, W5b and W5c ran concurrent commits. Between W5b's
+`git add` and `git commit`, W5c executed its own `git add` for a
+different file set, which replaced the index contents. W5b's commit
+then captured only the files W5c had staged plus W5b's earlier
+untracked-file adds, dropping the source/test edits that W5b had
+prepared. Both workers recovered with follow-up commits, but the
+race will recur whenever two Wx windows touch the working tree at
+the same time.
+
+### 6.2 Rule
+
+Every W5x window that runs `git add` / `git commit` against this
+repo **MUST** wrap the sequence with the advisory staging lock:
+
+```js
+import { acquireLock, releaseLock } from './scripts/lib/wx-stage-lock.mjs';
+
+await acquireLock('W5b');
+try {
+  // git add <files>
+  // git commit -m "..."
+  // git push origin <branch>
+} finally {
+  await releaseLock('W5b');
+}
+```
+
+- `acquireLock(wx_id)` is **blocking but bounded** — it polls every
+  3 seconds for up to 120 seconds. After 120 seconds of unbroken
+  contention it throws; the caller decides whether to retry.
+- If the held lock is older than 120 seconds it is treated as
+  **stale** (crashed worker) and the new caller takes it over.
+- `releaseLock(wx_id)` is idempotent and **only releases the lock
+  if we own it** — passing the wrong `wx_id` is a safe no-op that
+  prints a warning.
+- The lock is **advisory**. Enforcement is discipline, not kernel
+  semantics. A worker that bypasses the protocol can still clobber
+  the index. Code review and CI should call out commits that don't
+  obey the rule.
+
+### 6.3 Where to apply it
+
+| Context | Required? |
+|---|---|
+| Wx automation that drives `git add` + `git commit` in one shot | **Yes** |
+| Interactive human commits during an active multi-Wx run | **Yes** |
+| Read-only operations (`git status`, `git diff`, `git log`) | No |
+| Push-only operations (lock can be released before `git push`) | Recommended — keep the lock through the push so a parallel worker doesn't push between your local commit and your push |
+
+### 6.4 Diagnostics
+
+- `inspectLock()` returns `{ owner, ts, ageMs, stale, path }` or
+  `null`. Useful for "who's holding it right now?" checks without
+  acquiring.
+- If two workers report `LOCK HELD BY "W5x"` indefinitely, the
+  worker named in `owner` likely crashed without releasing — wait
+  120 seconds and the next caller will take it over automatically.
+
+---
+
+## 7. Sources consulted
 
 - v0 SDK + Platform API: [v0-sdk npm](https://www.npmjs.com/package/v0-sdk), [vercel/v0-sdk on GitHub](https://github.com/vercel/v0-sdk), [v0.app docs index](https://v0.app/docs/api), [apidog v0-1.0-md walk-through](https://apidog.com/blog/vercel-v0-1-0-md-api/)
 - GitHub Models: [docs.github.com index](https://docs.github.com/en/github-models), [REST endpoint walk-through (Microsoft community)](https://techcommunity.microsoft.com/blog/educatordeveloperblog/github-model-catalog---getting-started/4212711), [REST API reference](https://docs.github.com/en/rest/models/inference)

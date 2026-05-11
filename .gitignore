@@ -29,3 +29,8 @@ dist-ssr
 
 .env
 .vite
+.vercel
+
+# Advisory staging lock for parallel Wx workstreams
+# (see scripts/lib/wx-stage-lock.mjs + docs/PANEL_INFRASTRUCTURE.md §6)
+.wx-staging.lock
