@@ -1,7 +1,7 @@
-# FlowAI SSOT — Draft v1 (Layer 1 Philosophical Foundation)
+# FlowAI SSOT — Layer 1 Philosophical Foundation (CANONICAL)
 
-**Status:** DRAFT, pending CEO approval.
-**Source:** Synthesis of 5-reviewer panel from `docs/philosophy-review/layer1-ssot-panel-review-2026-05-11.md`.
+**Status:** **CANONICAL** as of 2026-05-11. CEO-approved; supersedes `docs/FLOWAI_SSOT_DRAFT_v1.md` (deleted on promotion). All 4 prior factual flags resolved (see Synthesis Metadata at end of file).
+**Source:** Synthesis of 5-reviewer Layer 1 panel from `docs/philosophy-review/layer1-ssot-panel-review-2026-05-11.md`, with CEO dispositions on the 4 flagged items.
 **Reviewers:** Slot 1 = Claude Opus 4.7 · Slot 2 = GPT-5.5 · Slot 3 = Gemini 2.5 Pro · Slot 4 = Perplexity Sonar Pro Search · Slot 10 = GPT-4o (web-grounded).
 **Consensus rule:** ≥3 of 5 reviewers in agreement = consensus. Split decisions are surfaced verbatim for CEO disposition.
 
@@ -94,10 +94,10 @@ Strict priority — anti-drift > governance gates > active Objective Lens > Five
 
 ### L2. Consensus across 25 agents with different authorities?
 
-**CONSENSUS — ACCEPT (3/5) — BUT WITH FACTUAL FLAG.**
-Role-based deference, not unanimous voting — orchestrator routes to agents with jurisdiction; in-jurisdiction disagreement escalates per authority level.
+**CANONICAL — ACCEPT (CEO-RESOLVED).**
+Role-based deference, not unanimous voting — orchestrator routes to agents with jurisdiction; in-jurisdiction disagreement escalates per authority level. The operating roster is **25 agents (G3-ratified; #21–#25 Ops Runner charters active)**.
 
-**Factual flag from Slot 4 (MODIFY):** *"Current roster is 20 agents (IDs 1–20), not 25. Canonical History states 'BaseAgent.js validator update to 25 is queued for Phase 1.0.' Current state: 20 agents, partition validated at compile-time."* CEO/W03 to confirm — the G3 ratification appears to be a charter-only decision; the code partition validator has not yet been updated. Until that update lands, the operating roster size is 20.
+**Slot 4 factual flag — OVERRULED BY CEO (2026-05-11).** The 20-agent reading reflected the lagging BaseAgent.js partition validator; the G3 ratification is canonical. The validator update from 20 → 25 is queued for Phase 1.0 as an implementation task and does not change the canonical roster count.
 
 ### L3. Multi-input mode aggregation?
 
@@ -183,10 +183,10 @@ Recommend folding the "≥2 independent sources OR Playwright" rule into the can
 
 ### E4. Revenue splits?
 
-**CONSENSUS — ACCEPT (4/5).**
-Default — VEU 15% platform fee via Stripe Connect (Agent #4), providers retain 85%; negotiable per contract; floor is platform sustainability.
+**CANONICAL (CEO-RESOLVED 2026-05-11).**
+VEU platform fee is a **ceiling of 15%** (not a fixed split); sustainability floor is defined separately per contract and is **non-negotiable**; providers retain **at minimum 85%** of end-customer revenue; the exact split is **negotiable between the ceiling and the floor** on a per-contract basis. Implementation rail: Stripe Connect via Agent #4.
 
-**Dissent (Slot 1 — MODIFY):** *"15% is the default **ceiling** for VEU-onboarded providers, not a floor; sustainability floor is a separate computed minimum that can adjust splits transparently."* This is a meaningful disambiguation — CEO to confirm whether 15% is a fixed split, a ceiling, or a default-with-floor.
+**Prior W02 draft + Slot 1 dissent UNIFIED under this resolution.** The original 4/5 consensus reading 15% as a fixed default + Slot 1's reading of 15% as a ceiling have been replaced by the CEO-canonical ceiling-with-separate-floor model.
 
 ### E5. Replace vs augment — disclosure obligation?
 
@@ -274,10 +274,10 @@ Always-on for telemetry / audit-log / crawl-stream monitoring; **scheduled** for
 
 ### MG2. Decision-making threshold?
 
-**CONSENSUS — WEIGHTED SUPERMAJORITY ≥7/10 (4/5).**
-≥7 of 10 with domain-expert weighting on the relevant dimension; ties broken by the affected-domain reviewer; **unanimity** required only for charter/governance amendments (MG4 triggers, MG6 self-amendments).
+**CANONICAL (CEO-RESOLVED 2026-05-11).**
+**Simple supermajority ≥7 of 10 reviewers for all Panel decisions, regardless of decision type or domain. No graduated veto structure.** The earlier domain-weighting and unanimity-for-charter-amendments refinements are not adopted — a single threshold governs Panel decisioning.
 
-**Dissent (Slot 4):** weighted by domain expertise + authority level with FLOWAI-ONLY agents holding domain veto over EMBEDDED agents — a more graduated rule. CEO to choose between simpler weighted-supermajority (consensus) and graduated authority-veto (Slot 4).
+**Slot 4 dissent (graduated FLOWAI-ONLY / EMBEDDED authority veto) — OVERRULED.**
 
 ### MG3. Dissent handling?
 
@@ -288,11 +288,11 @@ Approve-with-dissent-noted by default (recorded in audit log); **require resolut
 
 ### MG4. CEO escalation triggers?
 
-**CONSENSUS — non-exhaustive list (consolidated across 5 reviewers):**
+**CANONICAL (CEO-RESOLVED 2026-05-11) — the broad 12-item consensus list is retained:**
 1. Locked Rule amendments.
-2. Revenue split deviations >5pp from default (Slot 1) or any negotiation outside the 15% baseline (Slot 4).
-3. Authority-tier changes for any agent (Slot 1) or authority expansion (Slot 2).
-4. Cross-product breakage affecting >1 production tenant (Slot 1).
+2. Revenue split deviations >5pp from default, OR any negotiation outside the ceiling-and-floor range defined in E4.
+3. Authority-tier changes for any agent.
+4. Cross-product breakage affecting >1 production tenant.
 5. Legal / IP / regulatory exposure events.
 6. 95/95 exception requests OR sub-95 releases.
 7. Clearance gate override requests.
@@ -300,9 +300,9 @@ Approve-with-dissent-noted by default (recorded in audit log); **require resolut
 9. Major customer commitments OR product integrity SLA breaches.
 10. Unresolved blocking dissent on Locked Rules.
 11. Panel protocol changes (MG6 amendments).
-12. Marketplace intelligence cycle >30 days behind (Slot 4).
+12. Marketplace intelligence cycle >30 days behind.
 
-**Dissent (Slot 3):** narrower trigger set — *"only for Panel deadlocks on G3-level protocol changes or unbudgeted expenditures exceeding 7 figures."* This is a meaningful split — CEO to choose between **broad** trigger set (12-item consensus) and **narrow** trigger set (Slot 3).
+**Slot 3 narrow dissent — OVERRULED.** The narrow alternative (deadlock + 7-figure spend only) is not adopted; the broad 12-item trigger set is canonical.
 
 ### MG5. Failed / stale reviewer handling?
 
@@ -422,7 +422,7 @@ Questions raised by 1–2 reviewers (worth folding in):
 - **Panel-to-FlowAI handover protocol** with a verification gate, not just a roadmap. (Slot 1, Slot 2)
 - **Customer notification triggers** — when does product breakage become customer-facing? (Slot 2)
 - **Required CEO escalation triggers** as a numbered registry (see MG4 list above). (Slot 2)
-- **Roster-truth alignment:** canonical docs still describe 20 G2-ratified agents; the dispatch context describes 25 G3-ratified agents with #21–#25 charters active. *BaseAgent.js validator update from 20 → 25 is queued for Phase 1.0 — until it lands, the operating partition is 20.* (Slot 4, factual flag)
+- **Roster-truth alignment (CEO-RESOLVED 2026-05-11):** Canonical roster is **25 agents (G3-ratified; #21–#25 Ops Runner charters active)**. BaseAgent.js validator update from 20 → 25 is queued as a Phase 1.0 *implementation* task — the canonical count does not depend on the validator catching up.
 
 ---
 
@@ -436,10 +436,10 @@ FlowAI is the governance-grade operating system that takes any AI product from i
 
 - **Reviewers used:** 5 of 7 LIVE slots; 3 deferred (Vercel v0, Base44, Replit) and 2 failed (GitHub Models — free-tier 8K-token cap exceeded).
 - **Consensus rate (39 questions):** ACCEPT-as-W02-drafted = 27/32 (84%); MODIFY consensus = 2/32 (6%); ACCEPT-with-substantial-dissent worth folding in = 11/32 (per the dissent notes above); 7 META-GOVERNANCE questions synthesized fresh.
-- **Factual flags requiring CEO disposition before lock:**
-  - L2 / roster size: canonical docs say 20; dispatch context says 25 (G3-ratified, #21–#25 charters active, BaseAgent.js validator update QUEUED for Phase 1.0).
-  - E4 / revenue split: 15% as fixed split vs. ceiling vs. default-with-floor.
-  - MG2 / decision threshold: simpler weighted-supermajority vs. graduated authority-veto.
-  - MG4 / CEO triggers: broad 12-item list vs. narrow (deadlock + 7-figure spend) only.
+- **Factual flags — ALL FOUR RESOLVED BY CEO (2026-05-11):**
+  - **L2 / roster size:** Canonical roster is **25 agents (G3-ratified; #21–#25 Ops Runner charters active)**. BaseAgent.js validator update from 20 → 25 is queued as a Phase 1.0 implementation task; the canonical count does not depend on the validator catching up.
+  - **E4 / revenue split:** VEU platform fee is a **ceiling of 15%** (not a fixed split); a sustainability **floor** is defined separately per contract and is **non-negotiable**; providers retain **at minimum 85%** of end-customer revenue; the exact split is negotiable between the ceiling and the floor.
+  - **MG2 / decision threshold:** **Simple supermajority ≥7 of 10 reviewers for all Panel decisions**, regardless of decision type or domain; no graduated veto structure. Slot 4 dissent overruled.
+  - **MG4 / CEO triggers:** **Broad 12-item list retained as canonical.** Slot 3 narrow alternative (deadlock + 7-figure spend) overruled.
 - **Generated:** 2026-05-11, layer1-ssot-panel-review-2026-05-11.md as input.
-- **Status:** DRAFT — awaiting CEO approval before promotion to `docs/FLOWAI_SSOT.md`.
+- **Status:** **CANONICAL.** Promoted from `docs/FLOWAI_SSOT_DRAFT_v1.md` to `docs/FLOWAI_SSOT.md` after CEO disposition of the 4 flagged items.
