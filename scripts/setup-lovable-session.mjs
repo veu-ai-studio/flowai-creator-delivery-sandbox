@@ -1,0 +1,136 @@
+// scripts/setup-lovable-session.mjs
+//
+// ONE-TIME interactive setup for Slot 8 (Lovable.dev chat headless adapter).
+// Replaces the archived scripts/setup-base44-session.mjs (2026-05-13).
+//
+// What this does:
+//   1. Launches a visible (headless: false) Chromium window.
+//   2. Navigates to lovable.dev.
+//   3. Waits for you to sign in manually and land on the chat surface.
+//   4. On Enter in this terminal, saves the browser context's
+//      storageState JSON to
+//      %USERPROFILE%\.flowai\lovable-storage-state.json
+//      (creates ~/.flowai if missing).
+//   5. Closes the browser.
+//
+// Why path 8a (storage-state reuse):
+//   Lovable.dev has no public chat API. Slot 8 reuses your authenticated
+//   session by loading this storageState file. Future panel runs use
+//   the saved state without prompting until it expires.
+//
+// To re-run setup: just run this script again — it overwrites the file.
+//
+// Constraints:
+//   - This is the ONLY Lovable script that may use headless: false.
+//   - Never log credentials, cookies, or storageState contents.
+//   - On any failure, leave the existing storageState file (if any)
+//     untouched.
+
+import { existsSync } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
+import { createInterface } from 'node:readline';
+import {
+  DEFAULT_STORAGE_STATE_PATH,
+  ensureStorageStateParentDir,
+} from './lib/headless/lovable-chat.mjs';
+
+const SETUP_URL = 'https://lovable.dev';
+
+function printGoogleOAuthWarning() {
+  const banner =
+    '\n' +
+    '════════════════════════════════════════════════════════════════════\n' +
+    '  IF YOUR LOVABLE ACCOUNT USES GOOGLE SIGN-IN, this may fail due to\n' +
+    '  Google\'s automation block on Playwright-controlled browsers.\n' +
+    '  Use email/password login if Lovable offers it. Fallback paths\n' +
+    '  (GitHub sign-in, manual cookie-export) are available — contact W03\n' +
+    '  if needed.\n' +
+    '════════════════════════════════════════════════════════════════════\n';
+  process.stdout.write(banner);
+}
+
+function waitForEnter(promptText) {
+  return new Promise((resolve) => {
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: false,
+    });
+    process.stdout.write(promptText);
+    rl.once('line', () => {
+      rl.close();
+      resolve();
+    });
+  });
+}
+
+async function main() {
+  const target =
+    process.env.LOVABLE_STORAGE_STATE_PATH || DEFAULT_STORAGE_STATE_PATH;
+
+  printGoogleOAuthWarning();
+
+  process.stdout.write(
+    `setup-lovable-session: storageState will be saved to:\n  ${target}\n`,
+  );
+  if (existsSync(target)) {
+    process.stdout.write(
+      '  (an existing storageState file is present and will be overwritten ' +
+      'on success)\n',
+    );
+  }
+
+  let chromium;
+  try {
+    ({ chromium } = await import('playwright'));
+  } catch (e) {
+    process.stderr.write(
+      `setup-lovable-session: failed to import playwright — ${e?.message ?? e}\n`,
+    );
+    process.exit(1);
+  }
+
+  process.stdout.write(
+    '\nLaunching a visible Chromium window. Sign into Lovable.dev and ' +
+    'navigate to your chat surface.\n',
+  );
+
+  const browser = await chromium.launch({ headless: false });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+  });
+  const page = await context.newPage();
+  await page.goto(SETUP_URL, { waitUntil: 'domcontentloaded' });
+
+  await waitForEnter(
+    'Log into Lovable.dev in the browser window. Navigate to the chat ' +
+    'surface. Press Enter in this terminal when you\'re logged in and at ' +
+    'the chat screen: ',
+  );
+
+  try {
+    await ensureStorageStateParentDir(target);
+    const state = await context.storageState();
+    await writeFile(target, JSON.stringify(state, null, 2) + '\n', {
+      encoding: 'utf8',
+    });
+    process.stdout.write(
+      '\nStorage state saved. Slot 8 should now be able to authenticate.\n',
+    );
+  } catch (e) {
+    process.stderr.write(
+      `setup-lovable-session: failed to save storageState — ${e?.message ?? e}\n`,
+    );
+    process.exitCode = 1;
+  } finally {
+    await context.close().catch(() => { /* ignore */ });
+    await browser.close().catch(() => { /* ignore */ });
+  }
+}
+
+main().catch((e) => {
+  process.stderr.write(
+    `setup-lovable-session: unexpected error — ${e?.message ?? e}\n`,
+  );
+  process.exit(1);
+});

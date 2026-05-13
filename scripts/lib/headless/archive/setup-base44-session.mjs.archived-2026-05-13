@@ -1,3 +1,5 @@
+// ARCHIVED 2026-05-13: Base44 retired from Slot 8. Base44 remains FlowAI's editing/UI platform; conflicts with Panel-reviewer role. Replaced by Lovable.dev. Restore from git history if needed.
+//
 // scripts/setup-base44-session.mjs
 //
 // ONE-TIME interactive setup for Slot 8 (Base44 chat headless adapter).

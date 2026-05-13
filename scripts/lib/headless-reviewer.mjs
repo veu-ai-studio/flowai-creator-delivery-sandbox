@@ -16,7 +16,12 @@
 // Routing: this shell dispatches by `model` to a per-slot driver under
 // scripts/lib/headless/<driver>.mjs.
 //
-//   model='base44_chat'   → ./headless/base44-chat.mjs      (Slot 8)
+//   model='lovable_chat'  → ./headless/lovable-chat.mjs     (Slot 8;
+//                           replaced base44_chat on 2026-05-13 — Base44
+//                           retired from Slot 8 due to role conflict
+//                           with FlowAI's UI/editing platform. Archived
+//                           driver: ./headless/archive/base44-chat.mjs.
+//                           archived-2026-05-13)
 //   model='replit_agent'  → ./headless/replit-agent.mjs     (Slot 9, DEFERRED)
 //
 // If the driver file does not exist on disk OR cannot be imported, the
@@ -43,9 +48,9 @@ const DRIVER_DIR = path.join(
 // New drivers MUST register here. If a model is missing from this map the
 // shell short-circuits to not_configured without touching disk.
 const DRIVER_REGISTRY = Object.freeze({
-  base44_chat: {
-    file: 'base44-chat.mjs',
-    exportName: 'callBase44Chat',
+  lovable_chat: {
+    file: 'lovable-chat.mjs',
+    exportName: 'callLovableChat',
   },
   replit_agent: {
     file: 'replit-agent.mjs',     // not yet created — Slot 9 stays DEFERRED
