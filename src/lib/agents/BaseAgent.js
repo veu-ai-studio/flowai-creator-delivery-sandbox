@@ -7,8 +7,13 @@
  *
  * AMENDMENT NOTE (Packet 1.5)
  *   Added `environment` to required deps. Validated against productScope:
- *     - flowai:  accepts 'prod' | 'staging'
- *     - products: accepts 'prod' | 'staging' | 'demo' | 'live-demo' | 'sales-demo'
+ *     - flowai:  accepts 'prd' (canonical) | 'prod' (alias) | 'staging'
+ *     - products: accepts 'prd' | 'prod' | 'staging' | 'demo' | 'live-demo' | 'sales-demo'
+ *
+ * AMENDMENT NOTE (W1 vercel-bypass blocker fix, 2026-05-12)
+ *   Doppler workspace config is named `prd`, not `prod`. The whitelist now
+ *   accepts both (canonical `prd`, `prod` retained as backwards-compat
+ *   alias). See docs/operations/credential-adapter-naming.md.
  *
  * AMENDMENT NOTE (Phase 1.0 — W5b infrastructure lock-in, 2026-05-11)
  *   Roster expanded 20 → 25. Added Ops Runner Alpha/Beta/Gamma/Delta/Epsilon
@@ -74,15 +79,16 @@ export const PRODUCT_SCOPES = Object.freeze({
 });
 
 export const ENVIRONMENTS = Object.freeze({
-  PROD:        'prod',
+  PRD:         'prd',          // canonical — matches Doppler workspace config name
+  PROD:        'prod',         // backwards-compat alias for `prd`
   STAGING:     'staging',
   DEMO:        'demo',
   LIVE_DEMO:   'live-demo',
   SALES_DEMO:  'sales-demo',
 });
 
-const FLOWAI_VALID_ENVS  = Object.freeze(new Set(['prod', 'staging']));
-const PRODUCT_VALID_ENVS = Object.freeze(new Set(['prod', 'staging', 'demo', 'live-demo', 'sales-demo']));
+const FLOWAI_VALID_ENVS  = Object.freeze(new Set(['prd', 'prod', 'staging']));
+const PRODUCT_VALID_ENVS = Object.freeze(new Set(['prd', 'prod', 'staging', 'demo', 'live-demo', 'sales-demo']));
 
 export function isValidEnvironmentForScope(productScope, environment) {
   if (productScope === PRODUCT_SCOPES.FLOWAI) return FLOWAI_VALID_ENVS.has(environment);

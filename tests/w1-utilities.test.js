@@ -43,13 +43,15 @@ describe('CredentialAdapter — constructor argument validation', () => {
 });
 
 describe('CredentialAdapter — per-project environment allowlist', () => {
-  // Spec (per CredentialAdapter.js:32-33 + BaseAgent.js:74-75):
-  //   flowai:  ['prod', 'staging']
-  //   product: ['prod', 'staging', 'demo', 'live-demo', 'sales-demo']
+  // Spec (per CredentialAdapter.js:32-33 + BaseAgent.js:84-85):
+  //   flowai:  ['prd', 'prod', 'staging']           — 'prd' canonical, 'prod' alias
+  //   product: ['prd', 'prod', 'staging', 'demo', 'live-demo', 'sales-demo']
+  // The Doppler workspace config name is `prd`; `prod` is retained as a
+  // backwards-compat alias. See docs/operations/credential-adapter-naming.md.
   const productScopes = ['saige', 'reltwin', 'reachsms', 'pressai', 'mybirthsafe'];
-  const productEnvs = ['prod', 'staging', 'demo', 'live-demo', 'sales-demo'];
+  const productEnvs = ['prd', 'prod', 'staging', 'demo', 'live-demo', 'sales-demo'];
   const productOnlyEnvs = ['demo', 'live-demo', 'sales-demo'];
-  const flowaiEnvs = ['prod', 'staging'];
+  const flowaiEnvs = ['prd', 'prod', 'staging'];
 
   for (const env of flowaiEnvs) {
     it(`flowai accepts ${env}`, () => {

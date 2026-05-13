@@ -29,8 +29,13 @@ const FLOWAI_PROJECT = 'flowai';
 const ID_SLUG_RE = /^[a-zA-Z0-9-]+$/;
 const SUBKEY_RE  = /^[a-zA-Z0-9_-]+$/;
 
-const VALID_FLOWAI_ENVS  = new Set(['prod', 'staging']);
-const VALID_PRODUCT_ENVS = new Set(['prod', 'staging', 'demo', 'live-demo', 'sales-demo']);
+// Environment whitelist.
+// Canonical production name is `prd` — matches the actual Doppler workspace
+// config name. `prod` is retained as a backwards-compat alias so existing
+// callers (registry seed data, tests, server-side env injection) keep
+// working through the migration window. See docs/operations/credential-adapter-naming.md.
+const VALID_FLOWAI_ENVS  = new Set(['prd', 'prod', 'staging']);
+const VALID_PRODUCT_ENVS = new Set(['prd', 'prod', 'staging', 'demo', 'live-demo', 'sales-demo']);
 const VALID_PRODUCT_PROJECTS = new Set([
   'flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mybirthsafe',
 ]);
