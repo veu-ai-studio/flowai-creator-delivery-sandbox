@@ -1,11 +1,22 @@
 // Panel smoke test — exercises the full 10-slot multi-provider panel.
 //
-// Slot map (Phase 1.0 W5b verification, 2026-05-11):
+// Slot map (Phase 1.0 W5b verification, 2026-05-11; revised 2026-05-13):
 //   Slots 1–4 : OpenRouter (gpt-5, gpt-4o, gemini-2.5-pro, claude-opus-4)
 //   Slot  5   : Vercel v0      (LIVE — B1 / W5c, 2026-05-11; POST /v1/chats)
-//   Slots 6–7 : GitHub Models  (high-tier + low-tier rate-limit buckets)
+//   Slots 6–7 : OpenRouter     (mistral-large-2411, deepseek-r1)
+//                              [swapped from github_models on 2026-05-13]
 //   Slots 8–9 : Headless       (DEFERRED — surfaces 'not_configured')
 //   Slot  10  : OpenRouter web-grounded gpt-4o
+//
+// Slot 6/7 swap rationale (2026-05-13, per W03 dispatch):
+//   Slot 6/7 were previously bound to github_models (openai/gpt-4.1 +
+//   openai/gpt-4o-mini). The github_models free-tier 8K token cap
+//   blocked SSOT-bundled dispatches. Replacement models routed through
+//   OpenRouter accept bundles well over 8K (mistral-large 128K context,
+//   deepseek-r1 64K context) and remain reasoning-tier non-overlapping
+//   with the other slots per SSOT EP2 multi-AI triangulation rule.
+//   CEO acknowledged. GitHub Models credentials are intentionally left
+//   in place in Doppler in case we want to revisit later.
 //
 // Each provider is called once with a 3-line artifact + the criteria
 // "Summarize this paragraph in one sentence." Adapters whose required
@@ -53,10 +64,12 @@ const PANEL = [
   { provider: 'openrouter',   model: 'anthropic/claude-opus-4' },
   // Slot 5 — Vercel v0 (LIVE per B1 / W5c)
   { provider: 'vercel_v0',    model: 'v0-1.5-md' },
-  // Slot 6 — GitHub Models, high-tier
-  { provider: 'github_models', model: 'openai/gpt-4.1' },
-  // Slot 7 — GitHub Models, low-tier (different rate-limit bucket)
-  { provider: 'github_models', model: 'openai/gpt-4o-mini' },
+  // Slot 6 — OpenRouter / mistral-large-2411 (swapped 2026-05-13, W5b)
+  // Was: github_models / openai/gpt-4.1 (blocked by 8K token cap)
+  { provider: 'openrouter',   model: 'mistralai/mistral-large-2411' },
+  // Slot 7 — OpenRouter / deepseek-r1 (swapped 2026-05-13, W5b)
+  // Was: github_models / openai/gpt-4o-mini (blocked by 8K token cap)
+  { provider: 'openrouter',   model: 'deepseek/deepseek-r1' },
   // Slot 8 — Headless / base44 (DEFERRED)
   { provider: 'headless',     model: 'base44_chat' },
   // Slot 9 — Headless / replit (DEFERRED)

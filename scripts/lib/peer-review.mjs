@@ -95,6 +95,12 @@ const ALLOWED_MODELS = new Set([
   'anthropic/claude-opus-4',
   'anthropic/claude-sonnet-4',
   'meta-llama/llama-3.1-405b-instruct',
+  // Added 2026-05-13 (W5b): replacements for github_models Slots 6/7
+  // after the free-tier 8K token cap blocked SSOT-bundled dispatches.
+  // Both are reasoning-tier models with large context windows
+  // (mistral-large 128K, deepseek-r1 64K) — bundles >8K pass cleanly.
+  'mistralai/mistral-large-2411',
+  'deepseek/deepseek-r1',
 ]);
 
 /** Locate the repo root by walking up from this file until package.json is found. */
