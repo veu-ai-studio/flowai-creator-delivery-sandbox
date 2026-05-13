@@ -1,6 +1,6 @@
 # W3 Stub Replacement Plan — DRAFT v1
 
-**Status:** **DRAFT** — synthesis of the 8-reviewer panel consultation `docs/panel-consultations/w3-stub-replacement-2026-05-11.md`. Not canonical. Promotion to canonical requires CEO disposition on the flags in §5.
+**Status:** **DRAFT** — synthesis of the 8-reviewer panel consultation `docs/panel-consultations/w3-stub-replacement-2026-05-11.md`. **All 10 CEO flags resolved 2026-05-13** (dispositions: Flag 1→A, Flag 2→A, Flag 3→B, Flag 4→A, Flag 5→A, Flag 6→A, Flag 7→Hybrid, Flag 8→Layer-3-canonical, Flag 9→A, Flag 10→(b) accept 8/10 quorum). Promotion to canonical (`docs/W3_STUB_REPLACEMENT_PLAN.md`) deferred to a separate dispatch after build smoke. Implementation landed: 10 measurement evaluators + 3 deferred + `w3/deferred-evaluators.json` allowlist + CI guard + per-evaluator red/green fixtures. Full vitest suite 1198/1198 green post-build.
 
 **Authored:** 2026-05-12 by W3 (this dispatch).
 **Prior synthesis:** A W5b synthesis at this same path landed at commit `e66ddf7 feat: W3 stub replacement plan draft synthesis [W5b]` and remains in git history. This W3 version applies the COI rule per the dispatch brief (see Appendix C) and is **not a strict superset** of W5b's draft — on two splits (aggregate gate behavior; first-evaluator pick), the W3 synthesis surfaces the dissent as a CEO flag where W5b's draft picks the softer side. CEO should treat the two as alternative readings of the same panel.

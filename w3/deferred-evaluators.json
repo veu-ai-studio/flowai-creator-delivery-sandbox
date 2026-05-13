@@ -1,0 +1,27 @@
+{
+  "_comment": "W3 approved deferral allowlist (Flag 9 disposition: Position A). CI fails if any evaluator returns status='deferred' whose id is NOT in this file. Every entry must be removed when its blocker lands. See docs/W3_STUB_REPLACEMENT_PLAN_DRAFT_v1.md §5 Flag 9.",
+  "_authority": "CEO disposition 2026-05-13 on all 10 panel flags",
+  "approvedDeferrals": [
+    {
+      "evaluator": "gov.ip_protection",
+      "blockedBy": "IP-T1b / IP-T2",
+      "reason": "deferred-pending-IP-T1b-IP-T2",
+      "since": "2026-05-13",
+      "nextReview": "when-IP-T2-ships"
+    },
+    {
+      "evaluator": "rdy.performance",
+      "blockedBy": "Agent #10 Monitor",
+      "reason": "deferred-pending-agent-10-monitor",
+      "since": "2026-05-13",
+      "nextReview": "when-agent-10-monitor-ships"
+    },
+    {
+      "evaluator": "rdy.observability",
+      "blockedBy": "Agent #10 Monitor",
+      "reason": "deferred-pending-agent-10-monitor",
+      "since": "2026-05-13",
+      "nextReview": "when-agent-10-monitor-ships"
+    }
+  ]
+}

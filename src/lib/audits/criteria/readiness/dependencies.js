@@ -1,54 +1,117 @@
-// rdy.dependencies — Dependencies declared and healthy.
-// Structured stub per CEO answer on 2026-05-11.
-//
-// Per X-004 (W1 credentials not yet procured): this evaluator returns 70
-// when the target's charter declares requiredCredentials. The score
-// auto-rises to 100 when W1 wires the keys and a future probe sweep
-// converts the stub to a real CredentialAdapter.probe() call.
-//
-// When the charter declares no credentials (or no charter is attached),
-// the stub returns 100 because there is nothing to probe.
+/**
+ * rdy.dependencies — Dependencies declared and healthy.
+ *
+ * Composite (Slot 2):
+ *   score = round(40·topic_resolution + 40·declared_dependency_quality
+ *                + 20·observed_call_declaration)
+ *
+ * Undeclared observed call caps the agent at 50. Agent with no dependencies
+ * MUST declare `dependencies: []` explicitly; absence is incomplete metadata.
+ */
+
+'use strict';
+
+import { measuredResult, noEvidenceResult, missingCtx, ctxWindow } from '../_helpers.js';
 
 const ID = 'rdy.dependencies';
 
+const DEP_REQUIRED_FIELDS = Object.freeze(['name', 'type', 'owner', 'version_or_range', 'required', 'fallback']);
+
+function _depQuality(dep) {
+  let present = 0;
+  for (const f of DEP_REQUIRED_FIELDS) {
+    if (dep?.[f] !== undefined && dep?.[f] !== null && dep?.[f] !== '') present++;
+  }
+  return present / DEP_REQUIRED_FIELDS.length;
+}
+
 export default async function evaluate(target, ctx = {}) {
-  const requiredCredentials = Array.isArray(target?.charter?.requiredCredentials)
-    ? target.charter.requiredCredentials.slice()
-    : [];
-  const marketplaceTools = Array.isArray(target?.charter?.marketplaceTools)
-    ? target.charter.marketplaceTools.slice()
-    : [];
-  const hasDependencies = requiredCredentials.length > 0 || marketplaceTools.length > 0;
+  if (!ctx?.registry?.getCharter) return missingCtx(ID, 'registry');
 
-  const score = hasDependencies ? 70 : 100;
+  const { fromTs, toTs } = ctxWindow(ctx);
+  const agentId = target?.id;
+  const charter = await ctx.registry.getCharter(agentId);
+  if (!charter) {
+    return noEvidenceResult({
+      id: ID,
+      reasonCode: 'NO_CHARTER',
+      notes: `registry.getCharter(${agentId}) returned no charter.`,
+    });
+  }
 
-  const evidenceEntry = hasDependencies
-    ? {
-        kind: 'awaiting_w1',
-        criterion: ID,
-        credentials: requiredCredentials,
-        tools: marketplaceTools,
-        basis: 'CredentialAdapter.probe() sweep not yet executed; score auto-rises to 100 when W1 keys land',
+  const consumesTopics = Array.isArray(charter.consumes_topics ?? charter.consumes)
+    ? (charter.consumes_topics ?? charter.consumes)
+    : null;
+  const declaredDeps = Array.isArray(charter.dependencies) ? charter.dependencies : null;
+  const findings = [];
+
+  // 1. topic resolution
+  let topicResolution = 1.0;
+  if (consumesTopics && consumesTopics.length > 0 && ctx?.messageBus?.listTopics) {
+    const liveTopics = new Set(await ctx.messageBus.listTopics());
+    const externalSources = new Set((charter.external_sources ?? []).map(s => s.topic));
+    let resolved = 0;
+    for (const t of consumesTopics) {
+      if (liveTopics.has(t) || externalSources.has(t)) resolved++;
+      else findings.push({ code: 'UNRESOLVED_TOPIC_DEPENDENCY', topic: t });
+    }
+    topicResolution = consumesTopics.length === 0 ? 1.0 : resolved / consumesTopics.length;
+  }
+
+  // 2. declaration quality
+  let declarationQuality = 1.0;
+  if (declaredDeps === null) {
+    declarationQuality = 0;
+    findings.push({ code: 'DEPENDENCIES_NOT_DECLARED', detail: 'charter must explicitly declare dependencies: [] even if empty' });
+  } else if (declaredDeps.length === 0) {
+    declarationQuality = 1.0;
+  } else {
+    declarationQuality = declaredDeps.reduce((s, d) => s + _depQuality(d), 0) / declaredDeps.length;
+    for (const d of declaredDeps) {
+      const q = _depQuality(d);
+      if (q < 1) findings.push({ code: 'DEPENDENCY_INCOMPLETE', dependency: d.name ?? '<unnamed>', quality: q });
+    }
+  }
+
+  // 3. observed-call declaration
+  let observedCallDeclaration = 1.0;
+  let undeclaredCallObserved = false;
+  if (ctx?.auditLog?.query && declaredDeps) {
+    const observed = await ctx.auditLog.query({ agentId, fromTs, toTs, eventType: 'dependency.call' });
+    if (observed.length > 0) {
+      const declaredNames = new Set(declaredDeps.map(d => d.name).filter(Boolean));
+      let declared = 0;
+      for (const call of observed) {
+        const targetName = call.payload?.target ?? call.target ?? null;
+        if (targetName && declaredNames.has(targetName)) {
+          declared++;
+        } else {
+          undeclaredCallObserved = true;
+          findings.push({ code: 'UNDECLARED_DEPENDENCY_CALL', call: targetName ?? '<unknown>' });
+        }
       }
-    : {
-        kind: 'structured_stub',
-        criterion: ID,
-        basis: 'target declares no required credentials or marketplace tools',
-      };
+      observedCallDeclaration = declared / observed.length;
+    }
+  }
 
-  return {
+  let score = 40 * topicResolution + 40 * declarationQuality + 20 * observedCallDeclaration;
+  if (undeclaredCallObserved && score > 50) score = 50;
+
+  return measuredResult({
     id: ID,
     score,
     evidence: [{
-      ...evidenceEntry,
-      target: { type: target?.type ?? 'unknown', id: String(target?.id ?? '') },
-      windowStart: ctx?.windowStart ?? null,
-      windowEnd:   ctx?.windowEnd   ?? null,
+      kind: 'measured',
+      criterion: ID,
+      window: { fromTs, toTs },
+      ratios: { topicResolution, declarationQuality, observedCallDeclaration },
+      caps: { undeclaredCallObserved },
     }],
-    notes: hasDependencies
-      ? `Score is 70 pending W1 credential rollout. Will auto-rise to 100 when adapter.probe() returns "present" for all declared credentials. requiredCredentials=${requiredCredentials.length}, marketplaceTools=${marketplaceTools.length}.`
-      : 'No declared dependencies — nothing to probe.',
-  };
+    notes: undeclaredCallObserved
+      ? `Undeclared dependency call observed; subscore capped at 50.`
+      : `topicResolution=${topicResolution.toFixed(2)}, declarationQuality=${declarationQuality.toFixed(2)}, observedCallDeclaration=${observedCallDeclaration.toFixed(2)}.`,
+    findings,
+  });
 }
 
 export { ID };

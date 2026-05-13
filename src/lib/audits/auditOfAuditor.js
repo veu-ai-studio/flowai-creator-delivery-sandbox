@@ -1,35 +1,15 @@
 /**
  * auditOfAuditor — W3 independent meta-auditor for Agent #8.
- * ---------------------------------------------------------------------------
- * Owner:       /src/lib/audits/auditOfAuditor.js     (W3 territory)
- * Consumes:    /src/lib/governance/ScoreEvaluator.js (W2, read-only)
- *              /src/lib/audits/rubricRunner.js       (W3)
- *              /src/lib/audits/disagreementProtocol.js (W3)
  *
- * Per W0 ruling D-010 / X-002:
- *   - Agent #8 (Quality Audit) cannot be audited by the primary scoring
- *     engine. ScoreEvaluator refuses primary-mode evaluation of Agent #8
- *     at lines 173–182.
- *   - The auditor-of-auditor is W3 territory. It runs ScoreEvaluator with
- *     auditOfAuditorMode: true and uses the meta rubrics from
- *     src/lib/audits/rubrics/meta/.
- *
- * auditAgent8(deps)
- *   - Hardcoded target { type: 'agent', id: 8 }.
- *   - Loads governance.meta.v1 + readiness.meta.v1 rubrics via rubricRunner.
- *   - Constructs ScoreEvaluator with auditOfAuditorMode: true (bypasses the
- *     #8 self-audit guard).
- *   - Returns { governance, readiness } evaluations.
- *
- * auditAnyAgentInMetaMode(deps, agentId)
- *   - Explicit guard: throws if agentId !== 8. Exposed for tests so the
- *     "refuses non-#8" contract is verifiable from outside.
- * ---------------------------------------------------------------------------
+ * Routes through scoringEngine.run with auditOfAuditorMode=true, which in turn
+ * routes through rubricRunner.applyRubric so null/deferred handling is
+ * consistent with the primary path (CEO Flag 3 / 4 / 9 dispositions on
+ * 2026-05-13).
  */
 
 'use strict';
 
-import { ScoreEvaluator } from '../governance/ScoreEvaluator.js';
+import * as scoringEngine from './scoringEngine.js';
 import { loadRubric, loadEvaluators } from './rubricRunner.js';
 
 const AGENT_8_TARGET = Object.freeze({ type: 'agent', id: 8 });
@@ -45,13 +25,13 @@ function _defaultDeps() {
 async function _runMeta(rubricVersion, deps) {
   const rubric = loadRubric(rubricVersion);
   const criterionEvaluators = await loadEvaluators(rubricVersion);
-  const evaluator = new ScoreEvaluator({
+  return scoringEngine.run({
     rubric,
     criterionEvaluators,
+    target: AGENT_8_TARGET,
     deps,
     auditOfAuditorMode: true,
   });
-  return evaluator.evaluate(AGENT_8_TARGET);
 }
 
 export async function auditAgent8(deps = {}) {

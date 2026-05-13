@@ -1,23 +1,26 @@
-// gov.ip_protection — IP protection baseline.
-// Structured stub. Real implementation cross-checks Agent #13 surface
-// (robots.txt, X-Robots-Tag, rate limiting, watermarking, DMCA-ready).
+/**
+ * gov.ip_protection — DEFERRED per CEO Flag 9 disposition (allowlist entry).
+ *
+ * Blocked by: IP-T1b / IP-T2 (no IP boundary metadata in audit ledger yet).
+ * Return value follows the W3 canonical null envelope.
+ * Allowlist entry: w3/deferred-evaluators.json
+ */
+
+'use strict';
+
+import { deferredResult } from '../_helpers.js';
 
 const ID = 'gov.ip_protection';
 
-export default async function evaluate(target, ctx = {}) {
-  return {
+export default async function evaluate(/* target, ctx */) {
+  return deferredResult({
     id: ID,
-    score: 100,
-    evidence: [{
-      kind: 'structured_stub',
-      criterion: ID,
-      basis: 'Agent #13 cross-check surface (Wave 3 build per X-017) not yet implemented; interim W1/W4 headers + Cloudflare baseline assumed in place',
-      target: { type: target?.type ?? 'unknown', id: String(target?.id ?? '') },
-      windowStart: ctx?.windowStart ?? null,
-      windowEnd:   ctx?.windowEnd   ?? null,
-    }],
-    notes: 'Agent #13 Wave 3 build pending. This stub assumes the interim W1/W4 baseline (D-017 cross-workstream).',
-  };
+    blockedBy: 'IP-T1b / IP-T2',
+    reason: 'deferred-pending-IP-T1b-IP-T2',
+    since: '2026-05-13',
+    nextReview: 'when-IP-T2-ships',
+    notes: 'No IP boundary metadata in audit ledger yet. Evaluator returns null per Flag 9 allowlist; aggregator must NOT impute 100.',
+  });
 }
 
 export { ID };

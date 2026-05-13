@@ -8,23 +8,24 @@
  *   - governance.meta.v1, readiness.meta.v1  — meta rubrics (auditor-of-auditor)
  *
  * loadRubric(version)     -> rubric object
- *   Reads JSON from disk in this order:
- *     1. src/lib/audits/rubrics/<derived>.json
- *     2. src/lib/audits/rubrics/<subdir>/<derived>.json
- *   Falls back to the canonical W2 rubrics (GOVERNANCE_RUBRIC_V1 /
- *   READINESS_RUBRIC_V1 from ScoreEvaluator.js) for the primary versions.
- *   Validates that every criterion has id + positive weight and weights sum
+ *   Reads JSON from disk; falls back to the canonical W2 rubrics for primary
+ *   versions. Validates that every criterion has id + positive weight summing
  *   to 100.
  *
  * loadEvaluators(version) -> { [criterionId]: async (target, ctx) => result }
- *   Dynamically imports every file under src/lib/audits/criteria/<axis>/
- *   and keys them by the criterion id their module exports.
- *   Meta versions reuse the primary criterion evaluators — the difference
- *   between primary and meta lives in the rubric weighting, not the
- *   evaluator code.
+ *   Dynamically imports every file under src/lib/audits/criteria/<axis>/.
  *
- * applyRubric(rubric, evaluators, target, ctx) -> { score, passes, … }
- *   Pure helper; the production wire-up is in scoringEngine.js.
+ * applyRubric(rubric, evaluators, target, ctx) -> aggregate envelope
+ *   Handles three evaluator outcomes per the 2026-05-13 CEO dispositions on
+ *   the W3 stub replacement plan:
+ *     - measured:   numeric score in [0, 100] (status='measured' implicit)
+ *     - deferred:   score=null, status='deferred', reason='deferred-pending-*'
+ *     - no_evidence: score=null, status='no_evidence' (data sources reachable
+ *                    but window contained nothing to score; per Flag 4
+ *                    disposition this is NOT a 100, NOT a 0)
+ *   measured_score is the weighted average over `measured` only, normalised
+ *   to the measured-weight denominator (Slot 2 formula). measurement_coverage
+ *   reports the fraction of total rubric weight that was actually measured.
  * ---------------------------------------------------------------------------
  */
 
@@ -134,30 +135,84 @@ export async function loadEvaluators(version) {
   return map;
 }
 
+function _classify(result) {
+  if (!result || typeof result !== 'object') return 'invalid';
+  if (typeof result.score === 'number' && Number.isFinite(result.score)) {
+    if (result.score < 0 || result.score > 100) return 'invalid';
+    return 'measured';
+  }
+  if (result.score === null && result.status === 'deferred') return 'deferred';
+  if (result.score === null) return 'no_evidence';
+  return 'invalid';
+}
+
 export async function applyRubric(rubric, evaluators, target, ctx = {}) {
   _validateRubricShape(rubric, rubric?.version ?? '<unknown>');
   if (!evaluators || typeof evaluators !== 'object') {
     throw new Error('rubricRunner.applyRubric: evaluators map required');
   }
-  const criteriaResults = [];
+
+  const measured   = [];
+  const deferred   = [];
+  const noEvidence = [];
+  const invalid    = [];
+
+  let measuredWeight = 0;
+  const totalWeight  = 100; // validated above
+
   for (const c of rubric.criteria) {
     const fn = evaluators[c.id];
     if (typeof fn !== 'function') {
       throw new Error(`rubricRunner.applyRubric: missing evaluator for "${c.id}"`);
     }
-    criteriaResults.push(await fn(target, ctx));
+    const result = await fn(target, ctx);
+    const kind = _classify(result);
+    if (kind === 'measured') {
+      measured.push(result);
+      measuredWeight += c.weight;
+    } else if (kind === 'deferred') {
+      deferred.push(result);
+    } else if (kind === 'no_evidence') {
+      noEvidence.push(result);
+    } else {
+      invalid.push({ id: c.id, result });
+    }
   }
-  const score = criteriaResults.reduce((sum, r) => {
-    const weight = rubric.criteria.find(c => c.id === r.id).weight;
-    return sum + (r.score * weight) / 100;
-  }, 0);
-  const rounded = Math.round(score * 100) / 100;
+
+  if (invalid.length > 0) {
+    const ids = invalid.map(i => i.id).join(', ');
+    throw new Error(`rubricRunner.applyRubric: invalid evaluator results for: ${ids}`);
+  }
+
+  let measuredScore = 0;
+  if (measuredWeight > 0) {
+    const weighted = measured.reduce((sum, r) => {
+      const w = rubric.criteria.find(c => c.id === r.id).weight;
+      return sum + r.score * w;
+    }, 0);
+    measuredScore = weighted / measuredWeight;
+  }
+  const rounded = Math.round(measuredScore * 100) / 100;
+  const coverage = measuredWeight / totalWeight;
+  const coverageRounded = Math.round(coverage * 1000) / 1000;
+
+  // criteriaResults retains backwards-compat shape — measured first, then
+  // deferred, then no_evidence, in original criterion order grouping.
+  const criteriaResults = Object.freeze([...measured, ...deferred, ...noEvidence]);
+
   return Object.freeze({
     rubricVersion: rubric.version,
-    criteriaResults: Object.freeze(criteriaResults),
+    criteriaResults,
+    measured: Object.freeze(measured),
+    deferred: Object.freeze(deferred),
+    noEvidence: Object.freeze(noEvidence),
     score: rounded,
-    passes: rounded >= CLEARANCE_THRESHOLD,
+    measuredWeight,
+    totalWeight,
+    measurementCoverage: coverageRounded,
+    passes: measuredWeight > 0 && rounded >= CLEARANCE_THRESHOLD,
     threshold: CLEARANCE_THRESHOLD,
+    failures: Object.freeze(measured.filter(r => r.score < CLEARANCE_THRESHOLD)),
   });
 }
 

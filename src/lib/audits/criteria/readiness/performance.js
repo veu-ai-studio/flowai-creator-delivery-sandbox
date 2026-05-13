@@ -1,23 +1,25 @@
-// rdy.performance — Performance under realistic load.
-// Structured stub. Real implementation samples p50/p95 latency from
-// Agent #10 Monitor telemetry over an evaluation window.
+/**
+ * rdy.performance — DEFERRED per CEO Flag 9 disposition (allowlist entry).
+ *
+ * Blocked by: Agent #10 Monitor (no latency/throughput/error-rate time series).
+ * Allowlist entry: w3/deferred-evaluators.json
+ */
+
+'use strict';
+
+import { deferredResult } from '../_helpers.js';
 
 const ID = 'rdy.performance';
 
-export default async function evaluate(target, ctx = {}) {
-  return {
+export default async function evaluate(/* target, ctx */) {
+  return deferredResult({
     id: ID,
-    score: 100,
-    evidence: [{
-      kind: 'structured_stub',
-      criterion: ID,
-      basis: 'Agent #10 Monitor metric reader not yet built; baseline latency expectations declared in charter (when present)',
-      target: { type: target?.type ?? 'unknown', id: String(target?.id ?? '') },
-      windowStart: ctx?.windowStart ?? null,
-      windowEnd:   ctx?.windowEnd   ?? null,
-    }],
-    notes: 'Latency sampling depends on Agent #10. W3 follow-up consumes 10.metric.v1 envelopes.',
-  };
+    blockedBy: 'Agent #10 Monitor',
+    reason: 'deferred-pending-agent-10-monitor',
+    since: '2026-05-13',
+    nextReview: 'when-agent-10-monitor-ships',
+    notes: 'No durable latency/throughput time series. Evaluator returns null per Flag 9 allowlist; aggregator must NOT impute 100.',
+  });
 }
 
 export { ID };
