@@ -637,16 +637,53 @@ async function callGithubModelsAdapter({ entry, system, user, signal }) {
   return { ok: true, content, text };
 }
 
-async function callHeadlessAdapter({ entry }) {
-  // Stub. The headless adapter (base44_chat, replit_agent) lives in
-  // scripts/lib/headless-reviewer.mjs and is NOT yet wired through. Until
-  // that wiring lands + CEO supplies BASE44_SESSION_PATH / REPLIT_SESSION_PATH,
-  // the panel runner sees a 'not_configured' skip and the panel keeps going.
-  return {
-    ok: false,
-    error: `not_configured: headless adapter for "${entry.model}" not yet wired (see scripts/lib/headless-reviewer.mjs)`,
-    skipped: true,
-  };
+async function callHeadlessAdapter({ entry, system, user, signal }) {
+  // The headless adapter shell lives at scripts/lib/headless-reviewer.mjs
+  // and routes per `entry.model` to a driver under scripts/lib/headless/.
+  // Slot 8 (base44_chat) is wired; Slot 9 (replit_agent) still returns
+  // 'not_configured' because its driver file does not exist on disk —
+  // the shell preserves that DEFERRED state automatically.
+  //
+  // The web UIs don't distinguish system vs user, so we concatenate.
+  const prompt = `${system}\n\n${user}`;
+  // Per-call timeout: align with the panel's per-reviewer budget. We don't
+  // have direct access to it here, so use a sensible default that the
+  // panel runner's outer AbortController will still cap.
+  const timeoutMs = 90_000;
+  let module;
+  try {
+    module = await import('./headless-reviewer.mjs');
+  } catch (e) {
+    return {
+      ok: false,
+      error: `headless adapter load failed: ${e?.message ?? e}`,
+      skipped: true,
+    };
+  }
+  // Respect upstream cancellation (panel timeout): if signal is already
+  // aborted, return immediately without launching a browser.
+  if (signal?.aborted) {
+    return { ok: false, error: 'aborted before headless call', skipped: true };
+  }
+  const result = await module.callHeadlessReviewer({
+    slotId: undefined, // panel runner doesn't pass slot index; shell tolerates undefined
+    model: entry.model,
+    prompt,
+    timeoutMs,
+  });
+  if (!result.ok) {
+    // Surface not_configured / storage_state_missing as skipped so the
+    // panel synthesizer treats it like other "credential-missing" slots.
+    const skipped =
+      typeof result.error === 'string' &&
+      /^not_configured|^storage_state_missing/i.test(result.error);
+    return {
+      ok: false,
+      error: result.error ?? 'unknown',
+      skipped,
+    };
+  }
+  return { ok: true, content: result.response, text: result.response };
 }
 
 // ── Synthesis (deterministic, no LLM) ────────────────────────────────────

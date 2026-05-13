@@ -5,7 +5,11 @@
 //   Slot  5   : Vercel v0      (LIVE — B1 / W5c, 2026-05-11; POST /v1/chats)
 //   Slots 6–7 : OpenRouter     (mistral-large-2411, deepseek-r1)
 //                              [swapped from github_models on 2026-05-13]
-//   Slots 8–9 : Headless       (DEFERRED — surfaces 'not_configured')
+//   Slot  8   : Headless       (Base44 chat — LIVE after the CEO runs
+//                              scripts/setup-base44-session.mjs;
+//                              otherwise reports 'storage_state_missing')
+//   Slot  9   : Headless       (Replit agent — DEFERRED; driver file
+//                              not yet created)
 //   Slot  10  : OpenRouter web-grounded gpt-4o
 //
 // Slot 6/7 swap rationale (2026-05-13, per W03 dispatch):
@@ -70,9 +74,14 @@ const PANEL = [
   // Slot 7 — OpenRouter / deepseek-r1 (swapped 2026-05-13, W5b)
   // Was: github_models / openai/gpt-4o-mini (blocked by 8K token cap)
   { provider: 'openrouter',   model: 'deepseek/deepseek-r1' },
-  // Slot 8 — Headless / base44 (DEFERRED)
+  // Slot 8 — Headless / base44_chat (wired 2026-05-13 via Playwright
+  // storageState; routes through scripts/lib/headless-reviewer.mjs →
+  // scripts/lib/headless/base44-chat.mjs). LIVE once the CEO has run
+  // scripts/setup-base44-session.mjs; otherwise reports
+  // 'storage_state_missing' and stays DEFERRED for that panel run.
   { provider: 'headless',     model: 'base44_chat' },
-  // Slot 9 — Headless / replit (DEFERRED)
+  // Slot 9 — Headless / replit_agent (DEFERRED — driver file not yet
+  // created; shell returns 'not_configured').
   { provider: 'headless',     model: 'replit_agent' },
   // Slot 10 — OpenRouter web-grounded gpt-4o (same adapter, different model id)
   { provider: 'openrouter',   model: 'openai/gpt-4o' },
