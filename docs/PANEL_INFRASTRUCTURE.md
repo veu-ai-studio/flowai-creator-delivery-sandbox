@@ -207,13 +207,118 @@ Env vars are read by adapters at runtime; adapters that find their env var missi
 
 ---
 
-## 6. Parallel Commit Protocol
+## 6. Engagement Filter for Panel Consultations
+
+**Status:** Added 2026-05-13 by W5b. Operating rule, Phase 1 (manual classification).
+**Companion ops doc:** `docs/operations/panel-engagement-filter.md`
+**Roadmap:** Code-level engagement classifier is planned for Phase 3; until that ships, the manual rule below is normative.
+
+### 6.1 Why this filter exists
+
+Panel reviewers do not always engage the specific question being asked. They produce nearby text — a related principle, an adjacent concern, sometimes a wholesale topic shift — without picking among the options the dispatch put in front of them. When a naive "X of Y reviewers said this" tally rolls those non-engaged responses into the denominator, the synthesis produces a **false consensus signal**: the reported majority looks decisive but was actually computed against a pool half of which never answered the question.
+
+The fix is a per-question engagement classification before any votes are counted. Reviewers who didn't engage the question are reported separately, never folded into the majority denominator. This keeps the consensus number honest and makes "the panel did not actually have a position" visible as its own outcome instead of being hidden inside a manufactured tally.
+
+### 6.2 The four engagement states
+
+Every reviewer response, on every question, is classified into exactly one of these:
+
+| State | Definition | Counts toward "X of Y"? |
+|---|---|---|
+| **ENGAGED** | Directly addressed the question and picked a clear option / value / position. The pick is identifiable without inferring from adjacent text. | **Yes** — only this state contributes to majority/consensus counts. |
+| **TANGENTIAL** | Produced related content — an adjacent principle, a different question's answer, or commentary on the question — but did not pick among the options the question put forward. | No. Reported in the non-engaged tally with a one-line summary of what they said. |
+| **SILENT** | No engagement at all. Skipped, returned `not applicable`, or the response was non-responsive for that question. | No. Reported in the non-engaged tally. |
+| **EVASIVE** | Acknowledged the question and explicitly declined to pick — typically "more context needed," "depends on X," or "out of scope for me." | No. Reported in the non-engaged tally, flagged as a distinct *deliberate* non-pick rather than an accidental one. |
+
+### 6.3 Vote-counting rule
+
+Only **ENGAGED** responses count toward consensus tallies. Concretely:
+
+```text
+consensus_count   = count(ENGAGED who picked option X)
+engaged_total     = count(ENGAGED)
+non_engaged_total = count(TANGENTIAL) + count(SILENT) + count(EVASIVE)
+
+Report as:
+  "X of <engaged_total> ENGAGED reviewers picked option Y"
+  "non-engaged count: <non_engaged_total> (slots A, B, C — see matrix)"
+```
+
+A position needs ≥ ½ of `engaged_total` to be reported as "majority" (and the threshold for "consensus" remains whatever the dispatch specifies — typically ≥ 5 of 8 or ≥ 3 of 5). The denominator is `engaged_total`, **never** `total_reviewers`.
+
+When `engaged_total` is small (e.g. 2 of 8), the synthesis MUST surface this explicitly. The phrasing `"2 ENGAGED, 6 SILENT/TANGENTIAL → no Panel signal on the specific number"` is canonical for this case — it tells the reader the question went out and came back without a panel answer, rather than burying the gap inside a 1-of-2 "majority."
+
+### 6.4 Reporting requirement
+
+Every synthesis output (Layer-N spec drafts, panel-consultation summaries, decision memos) MUST include a per-question **engagement matrix** alongside the vote counts. The matrix is a small table — one row per reviewer slot, columns are the question IDs, cells contain `E` / `T` / `S` / `X` (for EVASIVE):
+
+```text
+| Slot | Q1 | Q2 | Q3 | ... |
+|------|----|----|----|-----|
+|  1   |  E |  E |  T |     |
+|  2   |  E |  S |  E |     |
+|  3   |  T |  E |  E |     |
+|  ... |    |    |    |     |
+```
+
+Below the matrix, each non-`E` cell gets a one-line gloss in a footnotes section:
+
+```text
+- Slot 1 / Q3 (TANGENTIAL): proposed a different question instead — "should we
+  measure adoption rather than satisfaction?"
+- Slot 2 / Q2 (SILENT): no engagement; produced unrelated commentary.
+- Slot 3 / Q1 (TANGENTIAL): cited the principle but did not pick among the
+  options.
+```
+
+This is the minimum reporting bar. Synthesis without an engagement matrix is incomplete and must be revised before promotion to a draft / canonical artifact.
+
+### 6.5 Worked example — W3 Stub Replacement Flag 7
+
+`docs/W3_STUB_REPLACEMENT_PLAN_DRAFT_v1.md` § 5 Flag 2 (originally Flag 7 in the dispatch numbering) asks the panel for the minimum-run window threshold for `rdy.functional`: the integer below which the evaluator should return `null` rather than score from too few samples.
+
+**Without the engagement filter** (a naive count of every reviewer who mentioned a number):
+
+> "2-way split: Slot 1 said 20, Slot 5 said 3."
+
+That phrasing makes it sound like the panel is divided between two positions. It isn't.
+
+**With the engagement filter** applied:
+
+```text
+| Slot | Engagement | Pick                          |
+|------|------------|-------------------------------|
+|  1   | ENGAGED    | 20 runs minimum               |
+|  2   | TANGENTIAL | discussed scoring, no number  |
+|  3   | SILENT     | did not address the threshold |
+|  4   | SILENT     | did not address the threshold |
+|  5   | ENGAGED    | 3 runs minimum                |
+|  6   | TANGENTIAL | discussed signal noise broadly |
+|  7   | SILENT     | did not address the threshold |
+| 10   | TANGENTIAL | mentioned "small samples bad"  |
+```
+
+`engaged_total = 2`, `non_engaged_total = 6 (T:3, S:3, X:0)`. Honest summary:
+
+> "2 ENGAGED reviewers picked numbers (Slot 1: 20; Slot 5: 3). 6 of 8 SILENT or TANGENTIAL. No Panel signal on the specific number — CEO must pick."
+
+That framing is materially different from "2-way split." It surfaces the actual state of the panel's input (overwhelmingly non-engaged on this specific axis) rather than amplifying a thin signal. The CEO call that follows has the right context to make — they aren't picking between two equally-weighted panel preferences; they are picking with no panel weight at all.
+
+This worked example is the operating template for every future synthesis dispatch.
+
+### 6.6 Integration with prior synthesis dispatches
+
+The Layer 1, Layer 2, Layer 3, and W3 Stub Replacement synthesis drafts predate this filter. They are NOT being retro-classified here; the next promotion-to-canonical pass on each is the natural moment to apply the filter and reissue the consensus numbers. Until then, treat their "X of Y" counts as upper bounds — the real engaged counts may be lower.
+
+---
+
+## 7. Parallel Commit Protocol
 
 **Status:** Added 2026-05-11 by W5b after the Phase 1.0 race incident.
 **Module:** `scripts/lib/wx-stage-lock.mjs`
 **Lock file:** `<repo_root>/.wx-staging.lock` (gitignored)
 
-### 6.1 Background
+### 7.1 Background
 
 In Phase 1.0, W5b and W5c ran concurrent commits. Between W5b's
 `git add` and `git commit`, W5c executed its own `git add` for a
@@ -224,7 +329,7 @@ prepared. Both workers recovered with follow-up commits, but the
 race will recur whenever two Wx windows touch the working tree at
 the same time.
 
-### 6.2 Rule
+### 7.2 Rule
 
 Every W5x window that runs `git add` / `git commit` against this
 repo **MUST** wrap the sequence with the advisory staging lock:
@@ -255,7 +360,7 @@ try {
   the index. Code review and CI should call out commits that don't
   obey the rule.
 
-### 6.3 Where to apply it
+### 7.3 Where to apply it
 
 | Context | Required? |
 |---|---|
@@ -264,7 +369,7 @@ try {
 | Read-only operations (`git status`, `git diff`, `git log`) | No |
 | Push-only operations (lock can be released before `git push`) | Recommended — keep the lock through the push so a parallel worker doesn't push between your local commit and your push |
 
-### 6.4 Diagnostics
+### 7.4 Diagnostics
 
 - `inspectLock()` returns `{ owner, ts, ageMs, stale, path }` or
   `null`. Useful for "who's holding it right now?" checks without
@@ -275,7 +380,7 @@ try {
 
 ---
 
-## 7. Sources consulted
+## 8. Sources consulted
 
 - v0 SDK + Platform API: [v0-sdk npm](https://www.npmjs.com/package/v0-sdk), [vercel/v0-sdk on GitHub](https://github.com/vercel/v0-sdk), [v0.app docs index](https://v0.app/docs/api), [apidog v0-1.0-md walk-through](https://apidog.com/blog/vercel-v0-1-0-md-api/)
 - GitHub Models: [docs.github.com index](https://docs.github.com/en/github-models), [REST endpoint walk-through (Microsoft community)](https://techcommunity.microsoft.com/blog/educatordeveloperblog/github-model-catalog---getting-started/4212711), [REST API reference](https://docs.github.com/en/rest/models/inference)

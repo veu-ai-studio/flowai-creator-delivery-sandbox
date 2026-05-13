@@ -32,5 +32,5 @@ dist-ssr
 .vercel
 
 # Advisory staging lock for parallel Wx workstreams
-# (see scripts/lib/wx-stage-lock.mjs + docs/PANEL_INFRASTRUCTURE.md §6)
+# (see scripts/lib/wx-stage-lock.mjs + docs/PANEL_INFRASTRUCTURE.md §7)
 .wx-staging.lock
