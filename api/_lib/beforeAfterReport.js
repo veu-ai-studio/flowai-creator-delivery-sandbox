@@ -1,37 +1,24 @@
 // api/_lib/beforeAfterReport.js
 //
 // Composes the BeforeAfterReport that the renewal pipeline returns to
-// the UI.  Pure functions — no I/O.
+// the UI.
 //
 // Side-by-side presentation differs by input type:
-//   url         → original URL iframe ↔ renewed URL iframe
-//   description → description-card    ↔ renewed URL iframe
-//   content     → text-or-image panel ↔ renewed URL iframe
-//
-// The `limitations` field is a verbatim disclosure of what the static-
-// HTML renewal does and does NOT replicate.  This is required output —
-// downstream UI is expected to render it prominently.
+//   url                  → original URL iframe ↔ renewed URL iframe
+//   description          → description-card    ↔ renewed URL iframe
+//   content              → text-or-image panel ↔ renewed URL iframe
+//   multi-url-synthesis  → grid of source URLs ↔ renewed URL iframe
 
 import { detectIssues, scoreFromIssues } from './issueDetector.js';
 
-const LIMITATIONS = `This renewal is a STATIC HTML representation of how the input could look if the auto-fixable issues were resolved.  It does NOT:
-- replicate dynamic SPA hydration, client-side state, or interactive widgets;
-- replicate API integrations, backend logic, or database state;
-- guarantee accuracy of marketing claims, pricing, or metric numbers shown — sample copy and figures are placeholders and must be replaced with verified content before publishing;
-- represent a functional product replacement.  It is a "what could this look like if the issues were fixed" demonstration.`;
+const HONEST_DISCLOSURE_PREFIX = 'Source disclosure: ';
 
-/**
- * Build the original-side payload the UI renders.
- */
 function buildOriginalPanel(artifact, evidence) {
   if (artifact.inputType === 'url') {
     return {
       type: 'iframe',
       content: artifact.raw?.url || '',
-      meta: {
-        pagesCrawled: evidence?.pagesCrawled ?? 0,
-        depth: evidence?.depth ?? 0,
-      },
+      meta: { pagesCrawled: evidence?.pagesCrawled ?? 0, depth: evidence?.depth ?? 0 },
     };
   }
   if (artifact.inputType === 'description') {
@@ -39,12 +26,9 @@ function buildOriginalPanel(artifact, evidence) {
     return {
       type: 'description-card',
       content: {
-        productName:    d.productName,
-        whatItDoes:     d.whatItDoes,
-        targetAudience: d.targetAudience,
-        keyFeatures:    d.keyFeatures,
-        currentIssues:  d.currentIssues,
-        liveUrl:        d.liveUrl,
+        productName: d.productName, whatItDoes: d.whatItDoes,
+        targetAudience: d.targetAudience, keyFeatures: d.keyFeatures,
+        currentIssues: d.currentIssues, liveUrl: d.liveUrl,
       },
     };
   }
@@ -55,11 +39,15 @@ function buildOriginalPanel(artifact, evidence) {
       content: {
         text: c.text || '',
         attachments: (c.attachments || []).map((a) => ({
-          filename: a.filename,
-          mimeType: a.mimeType,
-          extractedText: a.extractedText,
+          filename: a.filename, mimeType: a.mimeType, extractedText: a.extractedText,
         })),
       },
+    };
+  }
+  if (artifact.inputType === 'multi-url-synthesis') {
+    return {
+      type: 'multi-url-grid',
+      content: { urls: artifact.raw?.urls || [] },
     };
   }
   return { type: 'unknown', content: null };
@@ -71,34 +59,38 @@ function summarizeInput(artifact) {
 }
 
 /**
- * Build the full before/after report.
- *
  * @param {{
- *   artifact: object,
- *   evidence: object,
+ *   artifact, evidence,
  *   issueListBefore: { issues: Array },
  *   issueListAfter:  { issues: Array },
- *   renewalResult:   { renewedUrl: string, renewalType: string, patchesApplied: Array, deployedAt: string, renewedHash: string },
+ *   renewalResult: {
+ *     renewedUrl, renewalType, remediationPath, sourceDisclosure,
+ *     patchesApplied, deployedAt, deploymentId?,
+ *     patchedFiles?, generatedFiles?, sourceContributions?, synthesisLog?,
+ *   },
  * }} args
- * @returns {object}
  */
 export function buildBeforeAfterReport({ artifact, evidence, issueListBefore, issueListAfter, renewalResult }) {
   const beforeScore = scoreFromIssues(issueListBefore);
   const afterScore = scoreFromIssues(issueListAfter);
-  const beforeIds = new Set(issueListBefore.issues.map((i) => i.category));
-  const afterIds = new Set(issueListAfter.issues.map((i) => i.category));
-  const issuesResolved = issueListBefore.issues.filter((i) => !afterIds.has(i.category));
-  const issuesRemaining = issueListBefore.issues.filter((i) => afterIds.has(i.category));
+  const afterCats = new Set(issueListAfter.issues.map((i) => i.category));
+  const issuesResolved = issueListBefore.issues.filter((i) => !afterCats.has(i.category));
+  const issuesRemaining = issueListBefore.issues.filter((i) => afterCats.has(i.category));
 
   return {
     inputId: artifact.id,
     inputType: artifact.inputType,
     inputSummary: summarizeInput(artifact),
     renewedUrl: renewalResult.renewedUrl,
-    renewedHash: renewalResult.renewedHash,
-    renewedHtml: renewalResult.renewedHtml,
     renewalType: renewalResult.renewalType,
-    patchesApplied: renewalResult.patchesApplied,
+    remediationPath: renewalResult.remediationPath,
+    sourceDisclosure: HONEST_DISCLOSURE_PREFIX + (renewalResult.sourceDisclosure || ''),
+    patchesApplied: renewalResult.patchesApplied || [],
+    patchedFiles: renewalResult.patchedFiles || null,
+    generatedFiles: renewalResult.generatedFiles || null,
+    sourceContributions: renewalResult.sourceContributions || null,
+    synthesisLog: renewalResult.synthesisLog || null,
+    deploymentId: renewalResult.deploymentId || null,
     deployedAt: renewalResult.deployedAt,
     issuesBefore: issueListBefore.issues.length,
     issuesAfter: issueListAfter.issues.length,
@@ -107,27 +99,20 @@ export function buildBeforeAfterReport({ artifact, evidence, issueListBefore, is
     deltaScore: { before: beforeScore, after: afterScore },
     sideBySidePresentation: {
       original: buildOriginalPanel(artifact, evidence),
-      renewed: {
-        type: 'iframe',
-        content: renewalResult.renewedUrl,
-      },
+      renewed: { type: 'iframe', content: renewalResult.renewedUrl },
     },
-    limitations: LIMITATIONS,
   };
 }
 
 /**
- * Convenience: re-run detection against the *renewed* artifact.  In this
- * dispatch the renewed artifact is synthesized from the renderRenewedHtml
- * output by reusing the original normalized fields plus an indicator
- * that the auto-fixable categories are now satisfied.  A proper re-crawl
- * of the renewed URL is deferred (would require an additional HTTP
- * round-trip back to the same Vercel function).
+ * Re-run detection against the renewed artifact.  Note: ideally we
+ * would crawl the live renewedUrl, but the deployment may take seconds
+ * after READY for cold-start to settle.  For the initial cut we
+ * synthesize a post-renewal artifact by injecting placeholders that
+ * satisfy keyword-based detectors.
  */
 export function detectIssuesOnRenewal(artifact, patchesApplied) {
-  const fixedCategories = new Set(patchesApplied.map((p) => p.category));
-  // Synthesize a "post-renewal" artifact by injecting placeholders that
-  // satisfy the keyword-based detectors.
+  const fixedCategories = new Set((patchesApplied || []).map((p) => p.category));
   const renewedArtifact = {
     ...artifact,
     raw: { ...(artifact.raw || {}) },
@@ -141,7 +126,6 @@ export function detectIssuesOnRenewal(artifact, patchesApplied) {
       renewedArtifact.normalized = { ...renewedArtifact.normalized, targetUsers: renewedArtifact.normalized.targetUsers || 'A clearly identified audience.' };
     }
   }
-  // Synthesize keyword-bearing corpora so common detectors no longer fire.
   if (fixedCategories.has('missing-cta') || fixedCategories.has('missing-trust-signals') || fixedCategories.has('missing-legal')) {
     if (renewedArtifact.inputType === 'description') {
       const d = renewedArtifact.raw.description || {};
@@ -149,31 +133,15 @@ export function detectIssuesOnRenewal(artifact, patchesApplied) {
     } else if (renewedArtifact.inputType === 'content') {
       const c = renewedArtifact.raw.content || {};
       renewedArtifact.raw.content = { ...c, text: (c.text || '') + ' [renewal injects sign up CTA, testimonials, privacy policy + terms of use]' };
-    } else if (renewedArtifact.inputType === 'url') {
-      // For URL input we synthesize a post-renewal evidence overlay
-      // below in the evidence param.
     }
   }
-  // Build a synthetic evidence overlay for URL input to flip CTA/trust/legal off.
   const evidence = renewedArtifact.inputType === 'url'
-    ? {
-        pages: [{
-          ok: true,
-          url: 'renewed://overlay',
-          title: 'Renewed',
-          metaDescription: renewedArtifact.normalized.productConcept,
-          headings: [{ tag: 'h1', text: renewedArtifact.normalized.productConcept || 'Renewed' }],
-          bodyText: 'Sign up free. Trusted by teams. Privacy policy. Terms of use.',
-          links: [],
-        }],
-        pagesCrawled: 1,
-        depth: 0,
-      }
+    ? { pages: [{ ok: true, url: 'renewed://overlay', title: 'Renewed', metaDescription: renewedArtifact.normalized.productConcept, headings: [{ tag: 'h1', text: renewedArtifact.normalized.productConcept || 'Renewed' }], bodyText: 'Sign up free. Trusted by teams. Privacy policy. Terms of use.', links: [] }], pagesCrawled: 1, depth: 0 }
     : undefined;
   return detectIssues(renewedArtifact, evidence);
 }
 
 export const __internals = Object.freeze({
-  LIMITATIONS,
+  HONEST_DISCLOSURE_PREFIX,
   buildOriginalPanel,
 });

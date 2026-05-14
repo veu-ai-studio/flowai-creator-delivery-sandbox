@@ -9,7 +9,7 @@
 //
 // {
 //   id:           <string>  RFC-4122 UUID (v4)
-//   inputType:    'url' | 'description' | 'content'
+//   inputType:    'url' | 'description' | 'content' | 'multi-url-synthesis'
 //   submittedAt:  <string>  ISO-8601 timestamp
 //
 //   raw: {                            // verbatim what the user supplied
@@ -58,7 +58,7 @@
 //     raw.description.voiceNote.
 
 /**
- * @typedef {'url'|'description'|'content'} InputType
+ * @typedef {'url'|'description'|'content'|'multi-url-synthesis'} InputType
  */
 
 /**
@@ -76,7 +76,7 @@
  * }} normalized
  */
 
-const VALID_INPUT_TYPES = new Set(['url', 'description', 'content']);
+const VALID_INPUT_TYPES = new Set(['url', 'description', 'content', 'multi-url-synthesis']);
 const VALID_SURFACES = new Set(['crawl', 'ocr', 'vision', 'description-only', null]);
 
 /**
