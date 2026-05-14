@@ -131,8 +131,107 @@ export async function getInngestFunctions() {
     },
   ));
 
+  // Agent #3 Self-Renewal async path (Phase 1.3, CEO Q4 = (c) combined).
+  // Job logic is inlined below in runAgent3RenewalJob() rather than
+  // delegated to ./jobs/* — the W5a dispatch step 7 stages api/_lib/
+  // inngest.js but not a separate job file, so the executor lives inline.
+  // Step events (`step.run('phase', ...)`) surface progress to the
+  // AutoRunner UI subscribing to `agent.execution` audit-log topic.
+  fns.push(client.createFunction(
+    {
+      id: 'agent3-renewal-executor',
+      name: 'Agent #3 Self-Renewal executor',
+      retries: 1,
+      trigger: { event: 'flowai/agent3.renewal.requested' },
+    },
+    async ({ event, step }) => {
+      return await step.run('execute', () => runAgent3RenewalJob(event.data));
+    },
+  ));
+
   _functions = fns;
   return _functions;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agent #3 Self-Renewal async job (Phase 1.3 graduation).
+//
+// Invoked by:
+//   - Inngest function `agent3-renewal-executor` on
+//     `flowai/agent3.renewal.requested` event
+//   - api/agent/3/execute.js after sync timeout (>25s) hand-off
+//
+// Event payload:
+//   { jobId, productScope, issue, mode, runId?, sourceHints? }
+//
+// Constructs an Agent3SelfRenewalExecutor and calls executeRemediation().
+// Returns the executor envelope or an error marker.
+//
+// Exported for direct invocation by the sync endpoint's timeout hand-off
+// path AND for unit tests.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function runAgent3RenewalJob(data) {
+  if (!data || typeof data !== 'object') {
+    return { ok: false, error: 'invalid_event_payload' };
+  }
+  const { jobId, productScope, issue, mode, runId, sourceHints } = data;
+  if (typeof productScope !== 'string' || !productScope) {
+    return { ok: false, error: 'missing_productScope', jobId };
+  }
+  if (!issue || typeof issue !== 'object') {
+    return { ok: false, error: 'missing_issue', jobId };
+  }
+  if (mode !== 'recommend_only' && mode !== 'fork_and_fix') {
+    return { ok: false, error: 'invalid_mode', jobId };
+  }
+
+  let Agent3SelfRenewalExecutor;
+  try {
+    ({ Agent3SelfRenewalExecutor } = await import(
+      '../../src/lib/agents/agents/Agent3SelfRenewalExecutor.js'
+    ));
+  } catch (e) {
+    return { ok: false, error: 'executor_import_failed', detail: String(e?.message ?? e), jobId };
+  }
+
+  // Minimal deps — mirrors the sync endpoint's buildExecutor() pattern.
+  const clock = { now: () => Date.now() };
+  const _hotMap = new Map();
+  const hot = {
+    get: async (k) => _hotMap.get(k),
+    set: async (k, v) => { _hotMap.set(k, v); return v; },
+    delete: async (k) => { _hotMap.delete(k); },
+  };
+  const cold = { append: async () => {}, list: async () => [] };
+  const messageBus = { publish: async () => {}, subscribe: () => () => {} };
+  const auditLog = { write: async () => {} };
+  const logger = {
+    info: (...args) => console.log('[agent3-renewal-job]', jobId, ...args),
+    warn: (...args) => console.warn('[agent3-renewal-job]', jobId, ...args),
+    error: (...args) => console.error('[agent3-renewal-job]', jobId, ...args),
+  };
+
+  let executor;
+  try {
+    executor = new Agent3SelfRenewalExecutor({
+      logger, messageBus, auditLog, clock,
+      productScope,
+      environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
+      hot, cold,
+    });
+  } catch (e) {
+    return { ok: false, error: 'executor_construct_failed', detail: String(e?.message ?? e), jobId };
+  }
+
+  try {
+    const result = await executor.executeRemediation(issue, mode, {
+      productScope, runId, sourceHints,
+    });
+    return { ok: true, jobId, result };
+  } catch (e) {
+    return { ok: false, error: 'executor_threw', detail: String(e?.message ?? e), jobId };
+  }
 }
 
 // Lazy serve handler — used by /api/inngest. Tries the lambda adapter first

@@ -569,3 +569,130 @@ export function _resetActiveRegistry(): void {
     }
   }
 })();
+
+// ── Executor registry (Phase 1.3 — Agent #3 graduation, CEO disposition Q2 = (b)) ─
+//
+// SPLIT-CHARTER EXCEPTION: a small sibling registry that holds executor
+// charters whose authority is incompatible with the canonical
+// 25-agent partition (which is RECOMMEND_ONLY-dominant for shipped
+// agents). Executors share a charter id with a primary agent (e.g. #3)
+// but carry distinct authority + mode. The 25-ID partition + the
+// single-authority-per-charter invariant in BaseAgent.js are preserved
+// because executors are a *separate namespace* — they never enter
+// AGENT_REGISTRY, never collide with BY_ID, and never affect
+// validateRoster().
+//
+// See docs/specs/SELF_RENEWAL_AGENT_SPEC.md §4.3 Option B for the design
+// rationale. CEO dispositions locked 2026-05-14:
+//   - Q2 = (b) SPLIT charter (this registry is the split mechanism).
+//   - Each executor's charter is validated independently against
+//     BaseAgent._validateCharter() at class load time.
+
+export interface ExecutorRecord {
+  readonly key: string;                     // unique identifier within EXECUTOR_REGISTRY
+  readonly agentId: number;                 // the primary agent this executor extends (1..25)
+  readonly name: string;                    // human label, e.g. "Self-Renewal Executor"
+  readonly mode: AgentMode;                 // typically 'cross-step' for executors
+  readonly authority: readonly AuthorityLevel[];
+  readonly requiredCredentials: readonly string[];
+  readonly consumes: readonly string[];
+  readonly produces: readonly string[];
+  readonly escalationPolicy: string;
+}
+
+const EXECUTORS: ExecutorRecord[] = [
+  {
+    key: 'self-renewal-executor',
+    agentId: 3,
+    name: 'Self-Renewal Executor',
+    // 'cross-step' so it does NOT compete with the step-owner registration of
+    // Agent #3 at step 6. The executor is invoked out-of-band by /api/agent/3/
+    // execute.js + the Inngest job, not by the Auto Runner step machinery.
+    mode: 'cross-step',
+    authority: ['auto_write_internal', 'requires_human_gate'],
+    requiredCredentials: ['ANTHROPIC_API_KEY', 'VERCEL_TOKEN'],
+    consumes: ['3.renewal.candidate.v1'],
+    produces: [
+      '3.renewal.applied.v1',
+      '3.renewal.delta.v1',
+      '3.renewal.build_failed.v1',
+      '3.renewal.disabled.v1',
+    ],
+    escalationPolicy:
+      'severity-high-or-critical → emit candidate + remediation_plan, hold for human gate. ' +
+      'two consecutive build_failed within 24h → disable fork-and-fix, alert oncall. ' +
+      'remediation throws → escalate to Ops Runner Alpha #21.',
+  },
+];
+
+function deepFreezeExecutor(e: ExecutorRecord): ExecutorRecord {
+  return Object.freeze({
+    ...e,
+    authority: Object.freeze([...e.authority]) as readonly AuthorityLevel[],
+    requiredCredentials: Object.freeze([...e.requiredCredentials]) as readonly string[],
+    consumes: Object.freeze([...e.consumes]) as readonly string[],
+    produces: Object.freeze([...e.produces]) as readonly string[],
+  });
+}
+
+export const EXECUTOR_REGISTRY: readonly ExecutorRecord[] = Object.freeze(
+  EXECUTORS.map(deepFreezeExecutor),
+);
+
+const EXECUTORS_BY_KEY: Record<string, ExecutorRecord> = Object.freeze(
+  EXECUTOR_REGISTRY.reduce((acc, e) => {
+    acc[e.key] = e;
+    return acc;
+  }, {} as Record<string, ExecutorRecord>),
+);
+
+/**
+ * Look up an executor charter by its unique key. Returns undefined if no
+ * executor is registered under that key.
+ *
+ * Distinct from getAgent() — executors never appear in AGENT_REGISTRY.
+ */
+export function getExecutor(key: string): ExecutorRecord | undefined {
+  return EXECUTORS_BY_KEY[key];
+}
+
+/**
+ * List all registered executors.
+ */
+export function listExecutors(): readonly ExecutorRecord[] {
+  return EXECUTOR_REGISTRY;
+}
+
+// ── Executor invariants — independent self-check ─────────────────────────────
+(function validateExecutors() {
+  const keys = new Set<string>();
+  for (const e of EXECUTOR_REGISTRY) {
+    if (!e.key || typeof e.key !== 'string') {
+      throw new Error('_registry: executor key required');
+    }
+    if (keys.has(e.key)) {
+      throw new Error(`_registry: duplicate executor key "${e.key}"`);
+    }
+    keys.add(e.key);
+    if (!Number.isInteger(e.agentId) || e.agentId < 1 || e.agentId > 25) {
+      throw new Error(
+        `_registry: executor "${e.key}" agentId out of range: ${e.agentId}`,
+      );
+    }
+    if (!e.name || typeof e.name !== 'string') {
+      throw new Error(`_registry: executor "${e.key}" missing name`);
+    }
+    if (!['always-on', 'step-owner', 'cross-step'].includes(e.mode)) {
+      throw new Error(`_registry: executor "${e.key}" invalid mode "${e.mode}"`);
+    }
+    if (!e.authority || e.authority.length === 0) {
+      throw new Error(`_registry: executor "${e.key}" authority must be non-empty`);
+    }
+    // The primary agent must exist in AGENT_REGISTRY.
+    if (!BY_ID[e.agentId]) {
+      throw new Error(
+        `_registry: executor "${e.key}" references unknown agentId ${e.agentId}`,
+      );
+    }
+  }
+})();

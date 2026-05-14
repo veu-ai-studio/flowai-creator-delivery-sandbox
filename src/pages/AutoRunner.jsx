@@ -158,7 +158,7 @@ export async function runGovernStepRecommendation(opts = {}) {
   return rec;
 }
 
-function StepCard({ step, index, status, result, elapsed, onExpand, isExpanded, inputName, isCompare, compareResults, sessionInput, sessionObjective, crawlStatus }) {
+function StepCard({ step, index, status, result, elapsed, onExpand, isExpanded, inputName, isCompare, compareResults, sessionInput, sessionObjective, crawlStatus, selfRenewalAsync, setSelfRenewalAsync }) {
   // W2 Phase 1 — when a step is marked complete AND carries block:true,
   // visually surface it as "Blocked" rather than the usual emerald
   // "Done" so the operator can locate the failure point at a glance.
@@ -229,12 +229,34 @@ function StepCard({ step, index, status, result, elapsed, onExpand, isExpanded, 
             className="overflow-hidden border-t border-border/30">
             <div className="p-4">
               {step.key === 'govern' && sessionInput ? (
-                <SelfRenewalEngine
-                  input={sessionInput}
-                  pageContext={null}
-                  objective={sessionObjective}
-                  onComplete={null}
-                />
+                <>
+                  {/* Phase 1.3 — step-6 sync/async mode toggle (CEO Q4 = (c)).
+                      Default is sync (recommend-only path); async enqueues
+                      via Inngest for fork-and-fix deploys exceeding 25s. */}
+                  <div className="mb-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span>Self-Renewal:</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelfRenewalAsync(false)}
+                      className={`px-2 py-0.5 rounded ${!selfRenewalAsync ? 'bg-blue-500/20 text-blue-300' : 'bg-transparent hover:bg-muted/30'}`}
+                    >
+                      sync (fast)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelfRenewalAsync(true)}
+                      className={`px-2 py-0.5 rounded ${selfRenewalAsync ? 'bg-blue-500/20 text-blue-300' : 'bg-transparent hover:bg-muted/30'}`}
+                    >
+                      async (recommended for deploys)
+                    </button>
+                  </div>
+                  <SelfRenewalEngine
+                    input={sessionInput}
+                    pageContext={null}
+                    objective={sessionObjective}
+                    onComplete={null}
+                  />
+                </>
               ) : (
                 <StepResultPanel
                   stepLabel={step.label}
@@ -277,6 +299,14 @@ export default function AutoRunner() {
   // when no block.  Set by the gate; reset on session start / abort.  Used
   // to drive the PIPELINE BLOCKED banner and the per-step SKIPPED labels.
   const [blockedAtIdx, setBlockedAtIdx] = useState(null);
+  // Phase 1.3 Agent #3 graduation — step-6 async toggle.
+  // CEO Q4 = (c) combined: sync endpoint (default) PLUS Inngest async path.
+  // When true, the govern step fire-and-forgets a POST to
+  // /api/agent/3/execute?async=1 with the current run context. The
+  // existing recommend_only flow continues unchanged — async is purely
+  // additive instrumentation for the fork-and-fix pipeline once an
+  // upstream agent supplies an Issue payload.
+  const [selfRenewalAsync, setSelfRenewalAsync] = useState(false);
   const timerRef = useRef(null);
   const isPausedRef = useRef(false);
   const pausedAtStepRef = useRef(0);
@@ -565,6 +595,29 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
           // recommend_only invariant: never block Auto Runner on the hook.
           console.warn('[AutoRunner] govern-step recommendation hook unexpectedly threw (suppressed)', e);
         }
+
+        // Phase 1.3 (CEO Q4 = (c)) — when async toggle is on, fire-and-forget
+        // a POST to the Agent #3 executor endpoint. Lives outside the
+        // runGovernStepRecommendation try/catch (above) because fetch().catch()
+        // is self-contained — it never throws synchronously and its own
+        // promise rejection is handled inline.
+        try {
+          const asyncInput = config.inputs?.[0];
+          if (selfRenewalAsync && asyncInput?.id) {
+            fetch('/api/agent/3/execute?async=1', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-product-scope': asyncInput.id },
+              body: JSON.stringify({
+                productScope: asyncInput.id,
+                issue: { id: `RUN-${sessionDbIdRef.current ?? 'unknown'}`, severity: 'medium', category: 'auto_runner_govern', autoFixable: false },
+                mode: 'recommend_only',
+                runId: sessionDbIdRef.current ?? 'unknown',
+              }),
+            }).catch((e) => console.warn('[AutoRunner] agent3 async enqueue failed (suppressed)', e));
+          }
+        } catch (e) {
+          console.warn('[AutoRunner] agent3 async dispatch setup failed (suppressed)', e);
+        }
       }
       // Persist step result to DB
       if (sessionDbIdRef.current) {
@@ -848,6 +901,8 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
                 sessionInput={sessionConfig?.inputs?.[0] || null}
                 sessionObjective={sessionConfig?.objective || null}
                 crawlStatus={stepStatuses[i] === 'running' || stepStatuses[i] === 'complete' ? crawlStatus : null}
+                selfRenewalAsync={selfRenewalAsync}
+                setSelfRenewalAsync={setSelfRenewalAsync}
               />
             ))}
           </div>
