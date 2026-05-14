@@ -41,4 +41,26 @@ Each entry includes:
 
 ---
 
+### ENTRY 004 — 2026-05-14
+- **Source**: CEO 2026-05-14 (in response to Tool Marketplace reconstruction)
+- **Description**: FlowAI operates a 10-member AI Orchestra at each pipeline step: Claude Code, Base44, Lovable, v0, Cursor, OpenRouter, Browserless, Anthropic API direct, Replit, Playwright. Per Locked Rule 18, at every pipeline step user sees a ranked list (performance + cost) of relevant Orchestra members. In Auto mode FlowAI selects #1; in Guided mode user sees recommendation highlighted; in Manual mode user selects from full list. The 10-platform Orchestra is a DIFFERENT taxonomy from the existing 65-tool downstream Marketplace (per W5b reconstruction). Amendment cycle must decide: single extended Marketplace OR two parallel marketplaces.
+- **Disposition**: NEW
+
+---
+
+### ENTRY 005 — 2026-05-14
+- **Source**: CEO 2026-05-14 (clarifying FlowAI Orchestra remediation)
+- **Description**: FlowAI Orchestra source-acquisition contract: for any submitted product, FlowAI must (1) attempt to FIND/RETRIEVE the source code via Orchestra members (Git URL, Base44 API, Vercel project export, or other Orchestra retrieval methods); (2) if source available — patch via Claude Code, build, deploy upgraded version; (3) if source UNREACHABLE — generate a NEW program from scratch based on input + detected delta requirements. Result is always a fully functional working product, not static HTML cosmetic patches. Generate-from-scratch is canonical capability not fallback.
+- **Trajectory implications**: requires Claude Code as wired Orchestra member; requires Base44 API surface confirmation OR Base44 source export mechanism; requires Vercel deploy automation for generated products.
+- **Disposition**: NEW
+
+---
+
+### ENTRY 006 — 2026-05-14
+- **Source**: CEO 2026-05-14 (clarifying input model)
+- **Description**: FlowAI's Workspace has FOUR canonical input modes, not three. Per Workspace UI: (1) Clone & Improve — 1 URL, audit and upgrade; (2) Describe & Build — natural language description; (3) Paste/Upload — text or screenshots; (4) Synthesize & Build — 2-5 URLs, FlowAI extracts best features and synthesizes new product. Mode 4 differs architecturally from 1-3: produces NEW product from MULTIPLE sources, not renewal of single source. Requires parallel multi-URL crawl + cross-URL comparative scoring + best-feature extraction + synthesis composition.
+- **Disposition**: NEW
+
+---
+
 *File created 2026-05-14 by W5b per W03 dispatch. First entry logged at creation.*
