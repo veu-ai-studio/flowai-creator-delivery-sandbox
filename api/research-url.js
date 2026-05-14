@@ -18,12 +18,21 @@ export default async function handler(req, res) {
 
   const page = await crawl(url, { force });
   if (!page.ok) {
+    // W2 Phase 1 (2026-05-14, dispatch 4-of-4) — Agent #6 Research is
+    // the first agent to use the extended step-result contract.  When
+    // crawl returns ok:false we cannot produce a meaningful brief; we
+    // emit block:true so Auto Runner halts the pipeline rather than
+    // running Steps 2..8 on null content.  See
+    // src/lib/runner/blockGate.js for the contract.
     return res.status(200).json({
       ok: false,
       reachable: false,
       reason: page.reason,
       attempts: page.attempts,
       url: page.url,
+      block: true,
+      blockSeverity: 'critical',
+      blockReason: `Page content insufficient — ${page.reason || 'crawl returned no usable body'}.`,
     });
   }
 

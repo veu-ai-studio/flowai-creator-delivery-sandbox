@@ -16,6 +16,7 @@ import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
 import { OrchestratorHub, createMemoryHotStore, createMemoryColdStore } from '@/lib/agents/orchestrator/OrchestratorHub';
 import { MessageBus } from '@/lib/agents/MessageBus';
+import { shouldHaltOnBlock, applyBlockGate, serializeResultsForPersist } from '@/lib/runner/blockGate';
 
 // PA #2.7b — Lazy-instantiated orchestrator bundle. Hub + MessageBus +
 // in-memory HotStore + ColdStore are created on first call to
@@ -158,11 +159,21 @@ export async function runGovernStepRecommendation(opts = {}) {
 }
 
 function StepCard({ step, index, status, result, elapsed, onExpand, isExpanded, inputName, isCompare, compareResults, sessionInput, sessionObjective, crawlStatus }) {
+  // W2 Phase 1 — when a step is marked complete AND carries block:true,
+  // visually surface it as "Blocked" rather than the usual emerald
+  // "Done" so the operator can locate the failure point at a glance.
+  const isBlockedHere = status === 'complete' && result && result.block === true;
+  const skippedLabel = result && result._skippedReason ? result._skippedReason : 'upstream blocked';
   const cfg = {
     waiting: { icon: <Clock className="h-4 w-4 text-muted-foreground" />, badge: <span className="text-[10px] text-muted-foreground">Waiting — {step.estimate}</span>, border: 'border-border', bg: 'bg-card' },
     running: { icon: <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />, badge: <span className="text-[10px] text-blue-400 font-semibold animate-pulse">● Running — {elapsed}s</span>, border: 'border-blue-500/40', bg: 'bg-blue-500/5' },
-    complete: { icon: <CheckCircle2 className="h-4 w-4 text-emerald-400" />, badge: <span className="text-[10px] text-emerald-400 font-semibold">Done — {elapsed}s</span>, border: 'border-emerald-500/30', bg: 'bg-emerald-500/5' },
+    complete: isBlockedHere
+      ? { icon: <AlertCircle className="h-4 w-4 text-amber-400" />, badge: <span className="text-[10px] text-amber-400 font-semibold">⛔ Blocked — {elapsed}s</span>, border: 'border-amber-500/40', bg: 'bg-amber-500/5' }
+      : { icon: <CheckCircle2 className="h-4 w-4 text-emerald-400" />, badge: <span className="text-[10px] text-emerald-400 font-semibold">Done — {elapsed}s</span>, border: 'border-emerald-500/30', bg: 'bg-emerald-500/5' },
     failed: { icon: <AlertCircle className="h-4 w-4 text-red-400" />, badge: <span className="text-[10px] text-red-400 font-semibold">Failed</span>, border: 'border-red-500/30', bg: 'bg-red-500/5' },
+    // W2 Phase 1 — pipeline-blocked downstream steps render with a muted
+    // "SKIPPED — upstream blocked at step N" label.
+    skipped: { icon: <Clock className="h-4 w-4 text-muted-foreground/60" />, badge: <span className="text-[10px] text-muted-foreground font-semibold uppercase">SKIPPED — {skippedLabel}</span>, border: 'border-border/60 border-dashed', bg: 'bg-card/40' },
   }[status] || { icon: <Clock className="h-4 w-4 text-muted-foreground" />, badge: null, border: 'border-border', bg: 'bg-card' };
 
   return (
@@ -262,6 +273,10 @@ export default function AutoRunner() {
   const [showFinalReport, setShowFinalReport] = useState(false);
   const [fetchFailures, setFetchFailures] = useState([]); // FIX E
   const [crawlStatus, setCrawlStatus] = useState(null); // {state, url, pages, issues}
+  // W2 Phase 1 — index of the step that returned block:true critical.  null
+  // when no block.  Set by the gate; reset on session start / abort.  Used
+  // to drive the PIPELINE BLOCKED banner and the per-step SKIPPED labels.
+  const [blockedAtIdx, setBlockedAtIdx] = useState(null);
   const timerRef = useRef(null);
   const isPausedRef = useRef(false);
   const pausedAtStepRef = useRef(0);
@@ -391,6 +406,44 @@ export default function AutoRunner() {
           // to the existing InvokeLLM path so Base44 deployments keep working.
           if (STEPS[i].key === 'research' && inp.type === 'url') {
             const apiResult = await researchViaApi(inp.value, objective, sessionDbIdRef.current);
+
+            // W2 Phase 1 (2026-05-14) — block path: API signalled
+            // content-insufficient.  Emit a block:true step result so the
+            // gate (below) halts the pipeline.  Do NOT fall through to
+            // base44 InvokeLLM here — that would defeat the gate.
+            if (apiResult && apiResult.block === true) {
+              const blockReason = apiResult.blockReason || 'Page content insufficient.';
+              stepResult = {
+                full_output: `PIPELINE BLOCKED — ${blockReason}`,
+                summary: blockReason.slice(0, 120),
+                block: true,
+                blockReason,
+                blockSeverity: apiResult.blockSeverity === 'high' ? 'high' : 'critical',
+                _researchSource: 'api',
+              };
+              results[i] = stepResult;
+              allInputResults[0][i] = stepResult;
+              statuses[i] = 'complete';
+              clearInterval(stepTimer);
+              elapseds[i] = Math.floor((Date.now() - stepStart) / 1000);
+              setStepStatuses([...statuses]);
+              setStepResults([...results]);
+              setStepElapsed([...elapseds]);
+              logAction({ actionType: 'step_completed', stepName: STEPS[i].label, sessionId: sessionDbIdRef.current || '', productUrl: config.inputs[0]?.value || '', outcome: 'blocked', mode: 'auto' });
+              // Persist + apply gate immediately, then break out.
+              if (sessionDbIdRef.current) {
+                base44.entities.AutoSession.update(sessionDbIdRef.current, {
+                  current_step: i + 1,
+                  step_results: serializeResultsForPersist(results, STEPS),
+                  overall_status: 'blocked',
+                }).catch(() => {});
+              }
+              applyBlockGate({ statuses, results, blockedAtIdx: i });
+              setStepStatuses([...statuses]);
+              setStepResults([...results]);
+              break;
+            }
+
             if (apiResult && typeof apiResult.analysis === 'string' && apiResult.analysis.length > 0) {
               const output = apiResult.analysis;
               stepResult = {
@@ -536,15 +589,45 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
       setStepElapsed([...elapseds]);
 
       if (statuses[i] === 'failed') break;
+
+      // W2 Phase 1 (2026-05-14, dispatch 4-of-4) — generic block gate.
+      // Any agent may return block:true to halt the pipeline.  The
+      // research-step branch above already applied the gate inline and
+      // broke out, so this guard catches future agents (e.g. design,
+      // qa_audit) that surface a block AFTER reaching this point.
+      // shouldHaltOnBlock is a pure function from src/lib/runner/blockGate.js.
+      if (shouldHaltOnBlock(results[i])) {
+        setBlockedAtIdx(i);
+        applyBlockGate({ statuses, results, blockedAtIdx: i });
+        setStepStatuses([...statuses]);
+        setStepResults([...results]);
+        if (sessionDbIdRef.current) {
+          base44.entities.AutoSession.update(sessionDbIdRef.current, {
+            current_step: i + 1,
+            step_results: serializeResultsForPersist(results, STEPS),
+            overall_status: 'blocked',
+          }).catch(() => {});
+        }
+        break;
+      }
     }
 
     clearInterval(timerRef.current);
+    // Sync blocked state from results in case the inline (research) block
+    // path set the gate but did not yet update React state.
+    const inlineBlockIdx = results.findIndex((r) => r && r.block === true);
+    if (inlineBlockIdx !== -1) setBlockedAtIdx(inlineBlockIdx);
+    const blocked = inlineBlockIdx !== -1;
     const allComplete = statuses.every(s => s === 'complete');
-    setSessionState(allComplete ? 'complete' : 'paused');
-    if (allComplete) {
+    const pipelineDone = blocked || allComplete;
+    setSessionState(pipelineDone ? 'complete' : 'paused');
+    if (pipelineDone) {
       setShowFinalReport(true);
       if (sessionDbIdRef.current) {
-        base44.entities.AutoSession.update(sessionDbIdRef.current, { overall_status: 'completed', completed_at: new Date().toISOString() }).catch(() => {});
+        base44.entities.AutoSession.update(sessionDbIdRef.current, {
+          overall_status: blocked ? 'blocked' : 'completed',
+          completed_at: new Date().toISOString(),
+        }).catch(() => {});
       }
     }
     savedStateRef.current = null;
@@ -555,6 +638,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
     setSessionState('running');
     setTotalElapsed(0);
     setCurrentStep(0);
+    setBlockedAtIdx(null);
     isPausedRef.current = false;
     savedStateRef.current = null;
     const statuses = STEPS.map(() => 'waiting');
@@ -611,6 +695,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
     setShowClearancePrompt(false);
     setFetchFailures([]);
     setCrawlStatus(null);
+    setBlockedAtIdx(null);
     savedStateRef.current = null;
     sessionDbIdRef.current = null;
     // Clear sessionStorage so returning to Workspace starts fresh
@@ -664,6 +749,29 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
         <>
           {/* FIX D: Persistent session context banner */}
           <SessionContextBanner config={sessionConfig} />
+
+          {/* W2 Phase 1 — PIPELINE BLOCKED banner. Surfaces above all
+              step cards so the operator sees the block reason
+              prominently rather than buried inside one of 8 step
+              outputs. Renders only when a step returned block:true. */}
+          {blockedAtIdx !== null && stepResults[blockedAtIdx]?.block === true && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+              <p className="text-sm font-bold text-amber-400 uppercase tracking-wide mb-1">
+                ⛔ Pipeline blocked at step {blockedAtIdx + 1}: {STEPS[blockedAtIdx]?.label || ''}
+              </p>
+              <p className="text-sm text-foreground mb-2 whitespace-pre-wrap break-words">
+                {stepResults[blockedAtIdx]?.blockReason || 'Upstream agent signalled a critical block.'}
+              </p>
+              {stepResults[blockedAtIdx]?.blockSeverity && (
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Severity: {stepResults[blockedAtIdx].blockSeverity}
+                </p>
+              )}
+              <p className="text-[11px] text-muted-foreground mt-2">
+                Steps {blockedAtIdx + 2}–{STEPS.length} were skipped because they cannot produce meaningful output without the upstream result.
+              </p>
+            </div>
+          )}
 
           {/* FIX E: Fetch failure block */}
           {fetchFailures.length > 0 && (

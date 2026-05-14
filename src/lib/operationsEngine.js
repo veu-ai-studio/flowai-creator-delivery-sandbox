@@ -174,12 +174,20 @@ export async function runInteractiveTests(url, actions = []) {
 //
 // This helper returns:
 //   { analysis: <string>, page: {...} }   — on usable success
-//   null                                  — on any non-success (caller falls
-//                                           through to base44 InvokeLLM)
+//   { block: true, blockReason, blockSeverity }
+//                                         — on page-fail when the API
+//                                           returned block:true (W2 Phase 1
+//                                           dispatch 4-of-4, 2026-05-14).
+//                                           Caller MUST NOT fall through to
+//                                           InvokeLLM in this case — the
+//                                           gate halts the pipeline.
+//   null                                  — on any other non-success (caller
+//                                           falls through to base44 InvokeLLM)
 //
-// Returning null on failure keeps Base44 deployments untouched: the helper
-// fails fast, the caller falls through to the existing InvokeLLM path that
-// already works on Base44.
+// Returning null on non-block failures keeps Base44 deployments untouched:
+// the helper fails fast, the caller falls through to the existing InvokeLLM
+// path that already works on Base44.  The new block path is additive — only
+// triggered when the API explicitly returns block:true.
 export async function researchViaApi(url, objective, sessionId) {
   if (typeof url !== 'string' || !url.trim()) return null;
   try {
@@ -194,7 +202,24 @@ export async function researchViaApi(url, objective, sessionId) {
     });
     if (!response.ok) return null;
     const data = await response.json().catch(() => null);
-    if (!data || data.ok !== true) return null;
+    if (!data) return null;
+    // W2 Phase 1 — surface block:true even on ok:false so the AutoRunner
+    // gate can halt the pipeline.  This bypasses the InvokeLLM fallback.
+    if (data.ok !== true) {
+      if (data.block === true) {
+        return {
+          block: true,
+          blockReason: typeof data.blockReason === 'string' && data.blockReason.length > 0
+            ? data.blockReason
+            : (typeof data.reason === 'string' ? `Page content insufficient — ${data.reason}.` : 'Page content insufficient.'),
+          blockSeverity: data.blockSeverity === 'high' ? 'high' : 'critical',
+          reason: data.reason || null,
+          attempts: Array.isArray(data.attempts) ? data.attempts : [],
+          url: typeof data.url === 'string' ? data.url : null,
+        };
+      }
+      return null;
+    }
     if (typeof data.analysis !== 'string' || data.analysis.length === 0) return null;
     return {
       analysis: data.analysis,
