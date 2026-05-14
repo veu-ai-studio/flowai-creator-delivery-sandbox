@@ -4,12 +4,17 @@
 //
 // Every Panel consultation under W6 routes through this module's
 // runPanelConsultationWithBackups() function. Provides:
-//   - 10-slot LIVE Panel composition (commit 9143f82)
-//   - Slot 5 + Slot 7 backup-adapter retry logic (both slots previously
-//     DEGRADED in prior consultations — see Panel re-review at e2f094d
-//     and SSOT finalization at d476555)
+//   - 10-slot LIVE Panel composition (REBALANCED 2026-05-14 — see
+//     ./slot-config.mjs and docs/panel-consultations/PANEL_COMPOSITION_
+//     REBALANCE_2026-05-14.md). Composition imported from slot-config.mjs;
+//     single source of truth.
+//   - Per-slot backup-adapter retry logic. Every primary slot has a
+//     provider-different backup declared in slot-config.mjs. On primary
+//     degradation (timeout, error, null output), the backup fires and
+//     the slot returns ONE envelope marked slot_backup_applied=true.
+//     No double-counting.
 //   - Library function exported for use by per-consultation wrappers
-//     (e.g., scripts/panel/run-w6-structural-validation.mjs)
+//     (e.g., scripts/panel/run-w6-structural-validation.mjs).
 //
 // Authority: W6 Operating Brief (docs/W6_OPERATING_BRIEF.md). Per
 // brief standing rules: every consultation must attach full
@@ -26,36 +31,34 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { peerReview } from '../lib/peer-review.mjs';
+import { SLOT_CONFIG, PANEL as SLOT_CONFIG_PANEL } from './slot-config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..', '..');
 
 // ─────────────────────────────────────────────────────────────────
-// Canonical 10-slot Panel composition (per W6 brief: 10 slots,
-// quorum 7, supermajority 8).
+// Canonical 10-slot Panel composition (rebalanced 2026-05-14).
+// Sourced from slot-config.mjs SLOT_CONFIG. PANEL is the bare
+// {provider, model} list peer-review.mjs panel mode expects.
 // ─────────────────────────────────────────────────────────────────
 
-export const PANEL = Object.freeze([
-  { provider: 'openrouter',   model: 'openai/gpt-5' },                       // Slot 1
-  { provider: 'openrouter',   model: 'openai/gpt-4o' },                      // Slot 2
-  { provider: 'openrouter',   model: 'google/gemini-2.5-pro' },              // Slot 3
-  { provider: 'openrouter',   model: 'anthropic/claude-opus-4' },            // Slot 4
-  { provider: 'vercel_v0',    model: 'v0-1.5-md' },                          // Slot 5 (primary; backup below)
-  { provider: 'openrouter',   model: 'mistralai/mistral-large-2411' },       // Slot 6
-  { provider: 'openrouter',   model: 'deepseek/deepseek-r1' },               // Slot 7 (primary; backup below)
-  { provider: 'openrouter',   model: 'meta-llama/llama-3.3-70b-instruct' },  // Slot 8
-  { provider: 'openrouter',   model: 'qwen/qwen-2.5-72b-instruct' },         // Slot 9
-  { provider: 'openrouter',   model: 'openai/gpt-4o' },                      // Slot 10
-]);
+export const PANEL = SLOT_CONFIG_PANEL;
 
-// Backup adapters per W5a dispatch step 4. Slot 5 + Slot 7 have been
-// DEGRADED in multiple prior consultations; backups are openrouter-
-// only to maximize availability uniformity.
-export const BACKUP_ADAPTERS = Object.freeze({
-  5: { provider: 'openrouter', model: 'google/gemini-2.5-pro' },
-  7: { provider: 'openrouter', model: 'anthropic/claude-opus-4' },
-});
+// Backup adapters derived from SLOT_CONFIG[i].backup. Every primary
+// slot has a provider-different backup. Keys are 1-based slot numbers
+// (matches the pre-rebalance API for the runPanelConsultationWithBackups
+// caller contract — backupAdapters[slotKey] still resolves a {provider,
+// model} for the slot). Slots without a declared backup (none today,
+// but defensive against future config changes) are absent from the map.
+export const BACKUP_ADAPTERS = Object.freeze(
+  SLOT_CONFIG.reduce((acc, slot, idx) => {
+    if (slot.backup) {
+      acc[idx + 1] = Object.freeze({ provider: slot.backup.provider, model: slot.backup.model });
+    }
+    return acc;
+  }, {}),
+);
 
 // Default per-reviewer timeout. The W5a dispatch named 15s as the
 // trigger threshold for backup retry. peerReview() applies a single

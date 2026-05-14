@@ -108,6 +108,15 @@ const ALLOWED_MODELS = new Set([
   // qwen (Alibaba) — for genuine triangulation diversity.
   'meta-llama/llama-3.3-70b-instruct',
   'qwen/qwen-2.5-72b-instruct',
+  // Added 2026-05-14 (W5b): Panel composition rebalance per CEO
+  // directive — provider diversity (≤2 slots per family), European
+  // primary (Cohere), web-grounded research (Perplexity Sonar), and
+  // a developer/builder AI (Qwen Coder substituting for unavailable
+  // Codestral on OpenRouter). See docs/panel-consultations/
+  // PANEL_COMPOSITION_REBALANCE_2026-05-14.md for the rationale.
+  'cohere/command-r-plus-08-2024',
+  'perplexity/sonar',
+  'qwen/qwen-2.5-coder-32b-instruct',
 ]);
 
 /** Locate the repo root by walking up from this file until package.json is found. */
