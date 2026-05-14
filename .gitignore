@@ -34,3 +34,7 @@ dist-ssr
 # Advisory staging lock for parallel Wx workstreams
 # (see scripts/lib/wx-stage-lock.mjs + docs/PANEL_INFRASTRUCTURE.md §7)
 .wx-staging.lock
+
+# Local PEM dumps from scripts/setup-test-bypass-keys.mjs. Private PEMs
+# here are TRANSIENT — delete after uploading to Doppler. Never commit.
+.flowai-keys/
