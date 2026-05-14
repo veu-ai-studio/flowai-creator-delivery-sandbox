@@ -5,16 +5,14 @@
 //   Slot  5   : Vercel v0      (LIVE — B1 / W5c, 2026-05-11; POST /v1/chats)
 //   Slots 6–7 : OpenRouter     (mistral-large-2411, deepseek-r1)
 //                              [swapped from github_models on 2026-05-13]
-//   Slot  8   : Headless       (Lovable.dev chat — LIVE after the CEO
-//                              runs scripts/setup-lovable-session.mjs;
-//                              otherwise reports 'storage_state_missing'.
-//                              Replaced base44_chat on 2026-05-13 —
-//                              Base44 retired from Slot 8 due to role
-//                              conflict with FlowAI's UI/editing
-//                              platform; driver archived under
-//                              scripts/lib/headless/archive/.)
-//   Slot  9   : Headless       (Replit agent — DEFERRED; driver file
-//                              not yet created)
+//   Slot  8   : OpenRouter     (meta-llama/llama-3.3-70b-instruct;
+//                              swapped from headless Lovable on 2026-05-13
+//                              after surface-mismatch + Cloudflare WAF made
+//                              the headless path unworkable. Open-weight
+//                              family absent from the rest of the Panel.)
+//   Slot  9   : OpenRouter     (qwen/qwen-2.5-72b-instruct; swapped from
+//                              headless Replit on 2026-05-13 — same
+//                              reason as Slot 8. Open-weight family.)
 //   Slot  10  : OpenRouter web-grounded gpt-4o
 //
 // Slot 6/7 swap rationale (2026-05-13, per W03 dispatch):
@@ -79,18 +77,20 @@ const PANEL = [
   // Slot 7 — OpenRouter / deepseek-r1 (swapped 2026-05-13, W5b)
   // Was: github_models / openai/gpt-4o-mini (blocked by 8K token cap)
   { provider: 'openrouter',   model: 'deepseek/deepseek-r1' },
-  // Slot 8 — Headless / lovable_chat (Lovable.dev, wired 2026-05-13 via
-  // Playwright storageState; routes through scripts/lib/headless-
-  // reviewer.mjs → scripts/lib/headless/lovable-chat.mjs). LIVE once
-  // the CEO has run scripts/setup-lovable-session.mjs; otherwise
-  // reports 'storage_state_missing' and stays DEFERRED for that panel
-  // run. Replaced base44_chat (archived under
-  // scripts/lib/headless/archive/) — Base44 retired from Slot 8 due
-  // to role conflict with FlowAI's UI/editing platform.
-  { provider: 'headless',     model: 'lovable_chat' },
-  // Slot 9 — Headless / replit_agent (DEFERRED — driver file not yet
-  // created; shell returns 'not_configured').
-  { provider: 'headless',     model: 'replit_agent' },
+  // Slot 8 — OpenRouter / meta-llama/llama-3.3-70b-instruct
+  // (swapped 2026-05-13 from headless lovable_chat after empirical
+  // failure: Lovable's post-login surface is its project-builder
+  // dashboard, not a free-text chat. Llama family adds open-weight
+  // diversity to the Panel. Archived driver:
+  // scripts/lib/headless/archive/lovable-chat.mjs.archived-2026-05-13)
+  { provider: 'openrouter',   model: 'meta-llama/llama-3.3-70b-instruct' },
+  // Slot 9 — OpenRouter / qwen/qwen-2.5-72b-instruct
+  // (swapped 2026-05-13 from headless replit_agent after empirical
+  // failure: Replit's Cloudflare WAF blocks headless Chromium even
+  // with valid storageState cookies. Qwen family adds open-weight
+  // diversity to the Panel. Archived driver:
+  // scripts/lib/headless/archive/replit-agent.mjs.archived-2026-05-13)
+  { provider: 'openrouter',   model: 'qwen/qwen-2.5-72b-instruct' },
   // Slot 10 — OpenRouter web-grounded gpt-4o (same adapter, different model id)
   { provider: 'openrouter',   model: 'openai/gpt-4o' },
 ];

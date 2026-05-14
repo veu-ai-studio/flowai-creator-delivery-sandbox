@@ -101,6 +101,13 @@ const ALLOWED_MODELS = new Set([
   // (mistral-large 128K, deepseek-r1 64K) — bundles >8K pass cleanly.
   'mistralai/mistral-large-2411',
   'deepseek/deepseek-r1',
+  // Added 2026-05-13 (W5b): Slots 8/9 reassigned from headless to
+  // OpenRouter API after Lovable (surface mismatch) and Replit
+  // (Cloudflare WAF) headless paths failed empirically. Open-weight
+  // families absent from the rest of the Panel — llama (Meta) and
+  // qwen (Alibaba) — for genuine triangulation diversity.
+  'meta-llama/llama-3.3-70b-instruct',
+  'qwen/qwen-2.5-72b-instruct',
 ]);
 
 /** Locate the repo root by walking up from this file until package.json is found. */
@@ -640,9 +647,12 @@ async function callGithubModelsAdapter({ entry, system, user, signal }) {
 async function callHeadlessAdapter({ entry, system, user, signal }) {
   // The headless adapter shell lives at scripts/lib/headless-reviewer.mjs
   // and routes per `entry.model` to a driver under scripts/lib/headless/.
-  // Slot 8 (base44_chat) is wired; Slot 9 (replit_agent) still returns
-  // 'not_configured' because its driver file does not exist on disk —
-  // the shell preserves that DEFERRED state automatically.
+  // As of 2026-05-13 the registry is empty (all three headless drivers —
+  // base44_chat, lovable_chat, replit_agent — retired; see archive/).
+  // Any `{provider: 'headless'}` panel entry consequently surfaces as
+  // 'not_configured' / skipped=true. The shell + this adapter remain
+  // wired so a future headless reviewer can be plugged in by editing
+  // DRIVER_REGISTRY alone.
   //
   // The web UIs don't distinguish system vs user, so we concatenate.
   const prompt = `${system}\n\n${user}`;

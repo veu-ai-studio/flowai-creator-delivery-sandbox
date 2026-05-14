@@ -1,3 +1,5 @@
+// ARCHIVED 2026-05-13: Slot 8 reassigned to OpenRouter API-backed reviewer. Lovable surface mismatch (app-builder dashboard rather than free-text chat). Restore from git history if a stealth-plugin/different-tier path is ever pursued.
+//
 // scripts/lib/headless/lovable-chat.mjs
 //
 // Slot 8 driver — Lovable.dev chat via Playwright.

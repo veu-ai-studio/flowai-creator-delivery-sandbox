@@ -1,3 +1,8 @@
+// No headless drivers currently registered. Slots 8 and 9 reassigned
+// to OpenRouter API reviewers as of 2026-05-13. Headless adapter
+// shells preserved for potential future use; see scripts/lib/headless/
+// archive/.
+//
 // scripts/lib/headless-reviewer.mjs
 //
 // Adapter shell for headless (browser-driven) panel reviewers.
@@ -5,8 +10,8 @@
 // PUBLIC SHAPE (single export):
 //
 //   await callHeadlessReviewer({
-//     slotId,         // numeric panel slot, e.g. 8
-//     model,          // string driver key, e.g. 'base44_chat', 'replit_agent'
+//     slotId,         // numeric panel slot
+//     model,          // string driver key (none registered as of 2026-05-13)
 //     prompt,         // string — full system+user text to send
 //     timeoutMs,      // number — per-call wall-clock budget
 //   })
@@ -14,20 +19,21 @@
 //       error: string|null }
 //
 // Routing: this shell dispatches by `model` to a per-slot driver under
-// scripts/lib/headless/<driver>.mjs.
+// scripts/lib/headless/<driver>.mjs. With the empty registry below, every
+// model name resolves to 'not_configured'; the shell + dispatch wiring
+// stay in place so a future headless reviewer can be added without
+// re-introducing this file.
 //
-//   model='lovable_chat'  → ./headless/lovable-chat.mjs     (Slot 8;
-//                           replaced base44_chat on 2026-05-13 — Base44
-//                           retired from Slot 8 due to role conflict
-//                           with FlowAI's UI/editing platform. Archived
-//                           driver: ./headless/archive/base44-chat.mjs.
-//                           archived-2026-05-13)
-//   model='replit_agent'  → ./headless/replit-agent.mjs     (Slot 9, DEFERRED)
+// Retirement record (2026-05-13):
+//   - base44_chat   retired earlier (role conflict with FlowAI UI platform)
+//   - lovable_chat  retired (surface mismatch — app-builder dashboard, not chat)
+//   - replit_agent  retired (Cloudflare WAF blocks headless Chromium fingerprint)
+//   All four archived under scripts/lib/headless/archive/ with banners.
 //
-// If the driver file does not exist on disk OR cannot be imported, the
-// shell returns { ok: false, error: 'not_configured' } so the panel
-// runner keeps going on a partial-driver machine. This preserves Slot 9's
-// DEFERRED state until its driver is built.
+// If a future model is added to DRIVER_REGISTRY but its driver file is
+// missing on disk OR cannot be imported, the shell returns
+// { ok: false, error: 'not_configured' } so the panel runner keeps
+// going on a partial-driver machine.
 //
 // Constraints:
 //   - ESM only.
@@ -47,16 +53,9 @@ const DRIVER_DIR = path.join(
 // model → driver file (relative to DRIVER_DIR) + named export to call.
 // New drivers MUST register here. If a model is missing from this map the
 // shell short-circuits to not_configured without touching disk.
-const DRIVER_REGISTRY = Object.freeze({
-  lovable_chat: {
-    file: 'lovable-chat.mjs',
-    exportName: 'callLovableChat',
-  },
-  replit_agent: {
-    file: 'replit-agent.mjs',     // not yet created — Slot 9 stays DEFERRED
-    exportName: 'callReplitAgent',
-  },
-});
+//
+// Empty as of 2026-05-13 — see retirement record in the header above.
+const DRIVER_REGISTRY = Object.freeze({});
 
 /**
  * Route a headless call to the matching driver.
