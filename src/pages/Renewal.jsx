@@ -73,12 +73,21 @@ function BeforeAfterView({ report, onReset }) {
         <div className="space-y-2">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-bold">Renewed</p>
           <div className="rounded-lg border border-emerald-500/40 bg-card overflow-hidden">
-            <iframe
-              src={renewedUrl}
-              title="Renewed preview"
-              className="w-full h-[480px] border-0"
-              sandbox="allow-same-origin"
-            />
+            {report.renewedHtml ? (
+              <iframe
+                srcDoc={report.renewedHtml}
+                title="Renewed preview"
+                className="w-full h-[480px] border-0"
+                sandbox=""
+              />
+            ) : (
+              <iframe
+                src={renewedUrl}
+                title="Renewed preview"
+                className="w-full h-[480px] border-0"
+                sandbox="allow-same-origin"
+              />
+            )}
             <div className="p-2 border-t border-border text-[11px] text-muted-foreground flex items-center justify-between">
               <span className="font-mono truncate">{renewedUrl}</span>
               <a href={renewedUrl} target="_blank" rel="noreferrer" className="text-primary inline-flex items-center gap-1">

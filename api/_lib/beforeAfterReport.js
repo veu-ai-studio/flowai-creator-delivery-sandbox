@@ -96,6 +96,7 @@ export function buildBeforeAfterReport({ artifact, evidence, issueListBefore, is
     inputSummary: summarizeInput(artifact),
     renewedUrl: renewalResult.renewedUrl,
     renewedHash: renewalResult.renewedHash,
+    renewedHtml: renewalResult.renewedHtml,
     renewalType: renewalResult.renewalType,
     patchesApplied: renewalResult.patchesApplied,
     deployedAt: renewalResult.deployedAt,

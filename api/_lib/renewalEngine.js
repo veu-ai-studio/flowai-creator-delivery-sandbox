@@ -298,9 +298,16 @@ export async function renew({ artifact, issues, requestOrigin, renewalType }) {
   const storeRes = await storeRenewed(hash, html);
   const baseOrigin = requestOrigin || '';
   const renewedUrl = `${baseOrigin}/api/renewed/${hash}`;
+  // The renewed HTML is also returned INLINE so the UI can render it via
+  // <iframe srcdoc> immediately, without waiting on KV.  On deployments
+  // where Vercel KV is provisioned, /api/renewed/<hash> serves the same
+  // body cross-function — useful for sharing the URL.  Without KV, the
+  // URL works only for follow-up requests routed back to the same
+  // serverless container (best-effort).
   return {
     renewedUrl,
     renewedHash: hash,
+    renewedHtml: html,
     renewalType: type,
     patchesApplied,
     deployedAt: new Date().toISOString(),
