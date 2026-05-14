@@ -1460,9 +1460,16 @@ ENTRY 001 — 2026-05-14 — CA-1 + CA-2 promotion to canonical SSOT
                           CA-5 (E4 commercial generalization, 5/10
                           plurality) not promoted in this entry.
   Pre-promotion archive:
-                      docs/archive/FLOWAI_SSOT-pre-2026-05-14-promotion.md
+                      docs/archive/FLOWAI_SSOT-Layer1-pre-CA1-CA2-promotion-2026-05-14.md
                       (verbatim copy of canonical SSOT at commit fbaf881
                       before CA-1 + CA-2 edits applied).
+                      [Pointer updated 2026-05-14 during W04-Rev-2.1
+                      promotion: original filename `FLOWAI_SSOT-pre-
+                      2026-05-14-promotion.md` was reused by the Rev-2.1
+                      promotion archive at the dispatched path. The
+                      Layer 1 pre-CA1+CA2 snapshot was renamed (git mv)
+                      to disambiguate; content is byte-identical, only
+                      the path moved.]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1513,57 +1520,25 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
                       promotion (commit 1d65aba). The canonical SSOT
                       state is byte-identical before and after this
                       ratification; the pre-CA-1+CA-2 archive at
-                      docs/archive/FLOWAI_SSOT-pre-2026-05-14-
-                      promotion.md remains the authoritative
+                      docs/archive/FLOWAI_SSOT-Layer1-pre-CA1-CA2-
+                      promotion-2026-05-14.md remains the authoritative
                       pre-amendment baseline.
+                      [Pointer updated 2026-05-14 during W04-Rev-2.1
+                      promotion — see ENTRY 001 note.]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ENTRY 003 — 2026-05-14 — SSOT W04-Rev-2.1 promoted to canonical via CEO ratification
-
-  Date:               2026-05-14
-  Promoted by:        W2
-  Source commit:      46d94b1 (docs/SSOT_W04_REV2_1_DRAFT.md — 4 W6-Panel-
-                      cited minor amendments applied to Rev-2)
-  Panel signal:       9/10 PROMOTE_WITH_MINOR_AMENDMENTS (commit 9d7abd3) +
-                      4 amendments applied. Rebalanced Panel composition
-                      (commit 50a7928).
-  Target file:        docs/CANONICAL_REFERENCE.md — full replacement with
-                      Rev-2.1 content.
-  Pre-promotion archive:
-                      docs/archive/CANONICAL_REFERENCE-pre-2026-05-14-
-                      rev2.1-promotion.md (verbatim copy of canonical
-                      CANONICAL_REFERENCE.md immediately before this
-                      Rev-2.1 replacement). Filename disambiguated from
-                      the prior ENTRY 001 archive at
-                      docs/archive/FLOWAI_SSOT-pre-2026-05-14-
-                      promotion.md (which captures a different document
-                      family — FLOWAI_SSOT.md pre-CA-1/CA-2). Both
-                      archives coexist.
-  Amendments applied (Rev-2 → Rev-2.1, per W6 Panel review):
-                      (a) §17: footnote disambiguating UX-C sidebar
-                          labels (Guided Operations / Manual Operations)
-                          from canonical axis labels in §8 / §8a
-                          (Auto / Recommended / User-Choice;
-                          Hands-On / Reviewed / Hands-Off).
-                      (b) §25 Locked Rule 4: canonical Orchestra
-                          Selection axis label clarification —
-                          Auto / Recommended / User-Choice is canonical;
-                          Auto / Guided / Manual retained as historical
-                          aliases at the UX-C sidebar surface only.
-                      (c) §20: new §20.1 reconciliation with §15 Agent
-                          #13 — embedded code-level Self-Protection
-                          (Sprint PROTECT-1, always-on) is a different
-                          layer from Agent #13 Self-Protection Agent
-                          (orchestrating, dormant). Both co-canonical.
-                      (d) §3 productScope metadata table: VEU product
-                          name examples replaced with generic
-                          placeholders (tenantA / tenantB); §22
-                          Product-Agnostic Rule footnote added stating
-                          productScope values are runtime metadata-
-                          driven, never hardcoded.
-  Lineage:            Rev-1 (commit d68a1df) → Rev-2 (Panel-reviewed) →
-                      Rev-2.1 (commit 46d94b1) → CANONICAL (this entry).
+### ENTRY 003 — 2026-05-14
+- **Source commits:** Rev-2.1 draft at 46d94b1 (4 amendments) over Rev-2 at 10890b9
+- **Panel signal:** SUPERMAJORITY_PROMOTE_WITH_MINOR_AMENDMENTS (9/10 PROMOTE, 1/10 PROMOTE_AS_CANONICAL, 0 REWORK, 0 REJECT) per W6 commit 9d7abd3
+- **Panel composition note:** Initial Rev-2 verdict was produced by a Panel with 50% OpenAI dominance; CEO directed Panel composition rebalance shipped at commit 50a7928 (now 8 providers, ≤2 per provider, includes Asian + European + developer/builder AIs)
+- **Amendments applied:** §17 sidebar-label footnote, §25.4 Locked Rule 4 canonical labels, §20.1 Self-Protection reconciliation, §3 productScope generic placeholders
+- **CEO disposition:** Ratified for canonical promotion under MG2 (≥7/10 engaged) + Locked Rule 13 (CEO retains absolute veto)
+- **Sections affected:** §3, §17, §20.1, §25.4
+- **Lower-priority items deferred to CA-n cycle (§18):** OQ-3 (dead code archival), OQ-2 (Ops Runner #21-#25 step bindings), OQ-1 (tool count 65 vs 61), OQ-5 (Capability Transfer L4 completeness scope)
+- **Ratified-at commit:** (this commit — see git log for hash)
+- **Pre-promotion archive:** docs/archive/FLOWAI_SSOT-pre-2026-05-14-promotion.md (verbatim copy of canonical CANONICAL_REFERENCE.md immediately before the Rev-2.1 full-replacement + header-flip applied by this entry). The prior occupant of that filename — the CA-1+CA-2 pre-promotion snapshot of FLOWAI_SSOT.md (Layer 1 doc) referenced by ENTRY 001 and ENTRY 002 — was renamed via `git mv` to docs/archive/FLOWAI_SSOT-Layer1-pre-CA1-CA2-promotion-2026-05-14.md; ENTRY 001 + ENTRY 002 pointers updated accordingly. Both archives coexist; the secondary disambiguated archive at docs/archive/CANONICAL_REFERENCE-pre-2026-05-14-rev2.1-promotion.md (from the earlier W2 attempt at commit c2623c5) is retained as historical artifact.
+- **Lineage:** Rev-1 (commit d68a1df) → Rev-2 (commit 10890b9, Panel-reviewed at commit 9d7abd3) → Rev-2.1 (commit 46d94b1, 4 amendments applied) → canonical (this entry)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

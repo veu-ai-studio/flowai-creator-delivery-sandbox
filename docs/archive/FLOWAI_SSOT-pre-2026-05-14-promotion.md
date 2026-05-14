@@ -1,445 +1,680 @@
-# FlowAI SSOT — Layer 1 Philosophical Foundation (CANONICAL)
+# FlowAI SSOT — W04-Rev-2.1 (DRAFT — applies 4 W6-Panel-cited minor amendments to Rev-2)
 
-**Status:** **CANONICAL** as of 2026-05-11. CEO-approved; supersedes `docs/FLOWAI_SSOT_DRAFT_v1.md` (deleted on promotion). All 4 prior factual flags resolved (see Synthesis Metadata at end of file).
-**Source:** Synthesis of 5-reviewer Layer 1 panel from `docs/philosophy-review/layer1-ssot-panel-review-2026-05-11.md`, with CEO dispositions on the 4 flagged items.
-**Reviewers:** Slot 1 = Claude Opus 4.7 · Slot 2 = GPT-5.5 · Slot 3 = Gemini 2.5 Pro · Slot 4 = Perplexity Sonar Pro Search · Slot 10 = GPT-4o (web-grounded).
-**Consensus rule:** ≥3 of 5 reviewers in agreement = consensus. Split decisions are surfaced verbatim for CEO disposition.
+Version: **W04-Rev-2.1** | Date: 2026-05-14 | Status: **DRAFT — ready for canonical promotion pending CEO disposition**
+Supersedes: `docs/SSOT_W04_REV2_DRAFT.md`
+Rev-2 → Rev-2.1 changeset (4 W6-Panel-cited minor amendments):
+- (a) §17: footnote disambiguating UX-C sidebar labels from canonical axis labels in §8/§8a
+- (b) §25 Locked Rule 4: canonical Orchestra Selection axis label clarification; Auto/Guided/Manual retained as historical aliases at the UX-C sidebar surface only
+- (c) §20: reconciliation with §15 — embedded code-level Self-Protection vs Agent #13 orchestrating Self-Protection (different layers)
+- (d) §3 productScope metadata table: VEU product name examples replaced with generic placeholders (`tenantA` / `tenantB`); §22 Product-Agnostic Rule footnote added
 
-A **VERDICT** of `ACCEPT` against a W02-drafted answer means the panel converged on the W02 answer as canonical. `MODIFY` means consensus called for a refinement (the consensus refinement is recorded). `REJECT` would mean ≥3 reviewers proposed an outright replacement — no question reached this state in the v1 panel.
-
----
-
-## ONTOLOGY (O1–O10)
-
-### O1. Primary identity of FlowAI?
-
-**CONSENSUS — ACCEPT (5/5).**
-FlowAI is primarily an orchestration engine; agents, pipeline, and tools are its apparatus; the platform layer is what makes orchestration multi-tenant.
-
-**Dissent:** none.
-
-### O2. Ontological status of agents?
-
-**CONSENSUS — ACCEPT (3/5: Slot 3, 4, 10).**
-Agents are specialized faculties of FlowAI — domain-bounded reasoners that FlowAI invokes, supervises, and recombines per session.
-
-**Dissent (Slot 1, Slot 2 — MODIFY):** strengthen to "*Agents are bounded, contractually-governed faculties (BaseAgent.js authority + scope) that FlowAI orchestrates; specialized reasoners understates the contract layer.*" Worth folding into the canonical entry as a clarifying note.
-
-### O3. Are the 5 products consumers or instances?
-
-**CONSENSUS — ACCEPT (5/5).**
-The 5 products are real, production-grade consumers of FlowAI (separate sub-orgs, isolated state) — not instances of FlowAI itself.
-
-**Dissent:** none.
-
-### O4. Relationship FlowAI ↔ VEU ↔ Marketplace ↔ providers ↔ end-customers?
-
-**CONSENSUS — MODIFY (3/5: Slot 1, Slot 2, Slot 4).**
-Adopt the W02 answer **plus** the 4-way distinction: *VEU = legal/economic principal · FlowAI = governance principal · Provider = consumer · End-customer = end party.* Additionally, "Marketplace" is FlowAI's curated tool knowledge graph (65 tools, 13 categories, ranked by performance + cost + Africa availability per CANONICAL_HISTORY) — *not* a separate entity.
-
-**Dissent (Slot 3, Slot 10 — ACCEPT W02 as-drafted):** baseline answer is sufficient without the explicit 4-way distinction.
-
-### O5. Singular or plural?
-
-**CONSENSUS — ACCEPT (4/5).**
-Singular as code/canonical (one G3-ratified spec); plural at runtime (one isolated instance per provider org via Supabase RLS + Vercel project boundaries).
-
-**Dissent (Slot 2 — MODIFY):** add anti-fork clause — "*runtime pluralization must not imply uncontrolled forks.*"
-
-### O6. "First, not exclusive" — meaning?
-
-**CONSENSUS — ACCEPT (5/5).**
-VEU's 5 products are real production consumers that exercise FlowAI's full lifecycle; architecture is built to onboard arbitrary additional consumers without code changes once Agent #4 is live.
-
-**Dissent:** none.
-
-### O7. Boundary with non-FlowAI?
-
-**CONSENSUS — ACCEPT (3/5: Slot 3, Slot 4, Slot 10).**
-The set of resources subject to FlowAI's governance contract (BaseAgent.js validators, 95/95, 6-step Clearance, audit log) — anything inside is FlowAI; products at runtime, external services, end-user data are not.
-
-**Dissent (Slot 1, Slot 2 — MODIFY):** widen the boundary to include the *orchestration substrate* (MessageBus, ScoreEvaluator, CredentialAdapter) — without the substrate, the contract is unenforceable. Worth folding in.
-
-### O8. Ongoing role for products under management?
-
-**CONSENSUS — ACCEPT (4/5).**
-Continuous lifecycle + maintenance engine — crawls every product, detects breakage via Playwright execution, triggers Agent #3 Self-Renewal to fix at any time, no maintenance windows.
-
-**Dissent (Slot 3 — MODIFY):** strengthen mandate language — *"FlowAI is **mandated to** maintain continuous integrity for every managed product, autonomously dispatching Agent #3 …"*
-
-### O9. FlowAI as wiring + integration auditor?
-
-**CONSENSUS — ACCEPT (4/5).**
-FlowAI does not assume any product is "done" upon handoff — actively probes every navigation path, integration endpoint, auth flow, payment rail, third-party service, GTM tracker, marketplace listing for functional connectivity.
-
-**Dissent (Slot 3 — MODIFY):** add the escalation ladder — *"escalating from automated fix to human gate until every tracked element reports green."*
-
-### O10. FlowAI as marketplace intelligence engine?
-
-**CONSENSUS — ACCEPT (4/5).**
-Continuous marketplace intelligence; produces monthly Self-Renewal Alerts per product framing each opportunity in Auto/Guided/Manual execution paths.
-
-**Dissent (Slot 2 — MODIFY):** "*monthly-minimum and event-triggered when major vendor, regulatory, competitor, pricing, or integration changes occur.*" Worth folding in.
+Lineage: Rev-1 (`d68a1df`) → Rev-2 (Panel-reviewed) → Rev-2.1 (this document; applies 4 minor amendments from W6 review of Rev-2).
+Anchor canonical inputs: `docs/FLOWAI_SSOT.md` (canonical 2026-05-11 + CA-1/CA-2/CA-3 ratified), `docs/CANONICAL_REFERENCE.md` (sprint history), `docs/SSOT_PARKING_LOT.md` (ENTRY 001–006)
 
 ---
 
-## LOGIC (L1–L9)
+## 1. IDENTITY
 
-### L1. Composition of 5 decision frameworks under conflict?
+FlowAI is a **proprietary AI Operating System** built by VEU AI Studio. Not a SaaS product — an OS-layer infrastructure platform that:
 
-**CONSENSUS — ACCEPT (3/5).**
-Strict priority — anti-drift > governance gates > active Objective Lens > Five-Layer evidence tagging > Mode autonomy bounds; higher-priority frameworks veto lower-priority outputs.
+- Powers VEU's 5 flagship products internally (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe).
+- Is licensed commercially to external providers, individuals, and small businesses.
+- Enables users to create native apps, mobile apps, SaaS platforms, and Agentic AI systems.
+- Installs its own capabilities into other products as transferable packages (see §6 Capability Transfer).
 
-**Dissent (Slot 1, Slot 2 — MODIFY):** add deadlock handling — *"ties within a priority level resolve via highest-authority agent in jurisdiction; deadlocks escalate to human gate (no silent tiebreakers)"* and *"explicit safety/legal/security vetoes above optimization/Lens preferences."*
-
-### L2. Consensus across 25 agents with different authorities?
-
-**CANONICAL — ACCEPT (CEO-RESOLVED).**
-Role-based deference, not unanimous voting — orchestrator routes to agents with jurisdiction; in-jurisdiction disagreement escalates per authority level. The operating roster is **25 agents (G3-ratified; #21–#25 Ops Runner charters active)**.
-
-**Slot 4 factual flag — OVERRULED BY CEO (2026-05-11).** The 20-agent reading reflected the lagging BaseAgent.js partition validator; the G3 ratification is canonical. The validator update from 20 → 25 is queued for Phase 1.0 as an implementation task and does not change the canonical roster count.
-
-### L3. Multi-input mode aggregation?
-
-**CONSENSUS — ACCEPT (5/5).**
-Parallel execution per step (Promise.all); compare → head-to-head scorecard; combine → synthesized unified spec with provenance map; benchmark → gap analysis vs reference.
-
-**Dissent:** none.
-
-### L4. Anti-drift priority when canonical / memory / code disagree?
-
-**CONSENSUS — ACCEPT (5/5).**
-Code > canonical > user-curated memory > auto-memory; no exceptions; conflicts surfaced for resolution, never silently resolved.
-
-**Dissent:** none.
-
-### L5. 95/95 passes but 6-step Clearance fails (or inverse)?
-
-**CONSENSUS — ACCEPT (5/5).**
-All three governance mechanisms (95/95 + 6-step Clearance + Monitor 0-50) must pass independently — none subsumes another — any single failure halts deployment until remediated.
-
-**Dissent:** none.
-
-### L6. Decision flow when gates cascade?
-
-**CONSENSUS — ACCEPT (3/5).**
-Pipeline artifacts → 95/95 (quality) → 6-step Clearance (procedural) → Monitor 0-50 (operational); pass all → ship; fail any → return to relevant pipeline step with diagnosis.
-
-**Dissent (Slot 1, Slot 2 — MODIFY):**
-- Slot 1: *"add a pre-step: continuous-crawl/integration-probe must be green before 95/95 is even evaluated; otherwise quality scoring on broken wiring produces false-positives."*
-- Slot 2: *"add rollback/canary handling and human escalation when cascading gate failures affect production products, credentials, payments, legal status, or customer-facing availability."*
-
-Both refinements are operationally valuable — recommend folding both into a canonical L6 elaboration.
-
-### L7. Decision flow when continuous crawl detects breakage?
-
-**CONSENSUS — ACCEPT (5/5).**
-Crawl finding → root-cause diagnosis → Agent #3 Self-Renewal authors fix → 95/95 audit on fix → deploy → re-crawl confirm; if fix fails 95/95 or regresses, rollback + human gate.
-
-**Dissent:** none.
-
-### L8. Decision flow when wiring/integration is broken?
-
-**CONSENSUS — ACCEPT (4/5).**
-Crawl + integration probe identifies broken wiring → diagnosis → Agent #3 patches within authority, escalates otherwise → re-probe → product not cleared until all integrations + GTM stack + monitoring report green.
-
-**Dissent (Slot 3 — MODIFY):** strengthen — *"a product is considered broken if its full GTM stack is not live."* Worth folding in as elaboration.
-
-### L9. Marketplace research cycle?
-
-**CONSENSUS — MODIFY (3/5: Slot 1, Slot 2, Slot 3).**
-Adopt W02 baseline **plus** event-driven triggers in addition to monthly minimum: new regulation, competitor launch, integration deprecation, security CVE, vendor change, pricing shift, model release, integration incident. Slot 3 adds: "*default path is Auto* so inaction results in proactive evolution rather than stagnation."
-
-**Dissent (Slot 4, Slot 10 — ACCEPT W02):** monthly cadence is sufficient.
+**Tagline:** The AI Operating System that builds, tests, renews, and scales any digital product.
 
 ---
 
-## ETHICS (E1–E7)
+## 2. MISSION — DEMOCRATIZATION
 
-### E1. Self-Protection — what, from whom, lines?
+FlowAI democratizes AI-powered product creation for **underserved market segments globally** (per CA-1 + CA-2, canonical 2026-05-14):
 
-**CONSENSUS — ACCEPT (4/5).**
-Protects proprietary code, agent logic, accumulated data via robots.txt + noai headers + Cloudflare + rate limiting + watermarking + DMCA; does NOT block legitimate users, internal audit, regulators, contracted security research.
+- Underdeveloped economies (Sub-Saharan Africa, parts of Latin America, parts of South/Southeast Asia).
+- Rural communities in developed countries.
+- Low-income urban populations anywhere.
+- Neglected language / cultural groups.
+- Small businesses and individuals priced out of enterprise AI tools regardless of geography.
 
-**Dissent (Slot 2 — MODIFY):** explicit non-obstruction clause — *"without obstructing accessibility, legitimate users, regulators, contracted security research, interoperability, or required audit rights."* (largely redundant with W02 but explicit-affirmative phrasing worth folding in.)
+**Target users:** individuals and small business owners with no engineering background; solution providers building personalized apps for niche communities; organizations in underserved segments; VEU AI Studio (Year 1 primary internal user).
 
-### E2. 95/95 — quality bar or safety floor?
-
-**CONSENSUS — ACCEPT (5/5).**
-Both — quality bar AND safety floor; failure halts deployment; expresses VEU's commitment that "good enough" means 95%+.
-
-**Dissent:** none.
-
-### E3. Stance on hallucination / bias / transparency / edge cases?
-
-**CONSENSUS — ACCEPT (3/5).**
-Mandatory multi-AI triangulation (hallucination), Five-Layer evidence tagging (bias surfacing), every decision auditable (transparency), authority-based escalation (edge cases).
-
-**Dissent (Slot 1, Slot 2 — MODIFY):**
-- Slot 1: *"hallucination-mitigation requires ≥2 independent AI sources OR Playwright ground-truth for any L1/L2 claim; single-source claims are tagged 'unverified' and cannot pass 95/95."*
-- Slot 2: *"add Playwright/test ground truth, bias and safety evals, provenance tags, model disagreement capture, and human escalation for high-impact uncertainty."*
-
-Recommend folding the "≥2 independent sources OR Playwright" rule into the canonical answer — it's a concrete enforcement mechanism, not just a principle.
-
-### E4. Revenue splits?
-
-**CANONICAL (CEO-RESOLVED 2026-05-11).**
-VEU platform fee is a **ceiling of 15%** (not a fixed split); sustainability floor is defined separately per contract and is **non-negotiable**; providers retain **at minimum 85%** of end-customer revenue; the exact split is **negotiable between the ceiling and the floor** on a per-contract basis. Implementation rail: Stripe Connect via Agent #4.
-
-**Prior W02 draft + Slot 1 dissent UNIFIED under this resolution.** The original 4/5 consensus reading 15% as a fixed default + Slot 1's reading of 15% as a ceiling have been replaced by the CEO-canonical ceiling-with-separate-floor model.
-
-### E5. Replace vs augment — disclosure obligation?
-
-**CONSENSUS — ACCEPT (4/5).**
-Explicit AI-authorship disclosure on every FlowAI-produced artifact (audit log AND artifact); products built on FlowAI inherit same obligation to end-customers.
-
-**Dissent (Slot 2 — MODIFY):** *"calibrated to actual contribution and customer-facing obligations"* — i.e. proportional disclosure, not boilerplate. Worth folding in.
-
-### E6. Commitment to product integrity + uptime?
-
-**CONSENSUS — ACCEPT (3/5).**
-Continuous integrity for every product under management; 5 VEU products bound by same SLA as external provider products; any detected breakage triggers Self-Renewal at any hour.
-
-**Dissent (Slot 1, Slot 3 — MODIFY):**
-- Slot 1: **quantify** the SLA — *"MTTD < 15 min for crawl-detectable breakage, MTTR target by severity tier — 'continuous integrity' without numbers is unenforceable."*
-- Slot 3: contractual obligation language — *"FlowAI is contractually obligated to trigger Self-Renewal upon detecting critical breakage at any hour."*
-
-Strongly recommend folding in the quantitative SLA requirement.
-
-### E7. Currency commitment?
-
-**CONSENSUS — ACCEPT (5/5).**
-No product under management falls >30 days behind marketplace evolution without explicit user acknowledgment; default is alert, not silence.
-
-**Dissent:** none.
+**What FlowAI enables:** create native apps / mobile apps / SaaS / Agentic AI; audit, benchmark, improve any digital product; deploy working products with real URLs — no code required.
 
 ---
 
-## EPISTEMOLOGY (EP1–EP6)
+## 3. COMMERCIAL MODEL + METADATA-DRIVEN ARCHITECTURE
 
-### EP1. Source-of-truth hierarchy — locked or open?
+**Pricing surface:** licensed OS platform with per-seat, per-product, per-time, and combination packages. Providers are authenticated FlowAI users; end-customers are sub-orgs they manage. Revenue tracked per provider via Stripe Connect (Agent #4 Provider Onboarding; DORMANT today). Platform-fee ceiling is 15%; providers retain ≥85% of end-customer revenue; sustainability floor defined per contract.
 
-**CONSENSUS — ACCEPT (5/5).**
-Hierarchy locked in priority order (code > canonical > user-curated > auto-memory); content evolves; hierarchy itself invariant (Locked Rule 1).
+**Tension with the Product-Agnostic Rule (§14):** Panel Q5 flagged that per-product pricing + per-product revenue splits could appear to require product-specific code, violating §14. Rev-1 left this unresolved. Rev-2 resolves it via a **metadata-driven architecture pattern**:
 
-**Dissent:** none.
+| Layer | Product-specific? | Where it lives | Example |
+|---|---|---|---|
+| Core engine + 25 agents | **NEVER** — zero product names in code, tests, configs, env vars, URL patterns | `src/lib/agents/`, `src/lib/runner/`, agent registry | `Agent3SelfRenewal` analyzes ANY run; product is `ctx.productScope` parameter |
+| Commercial / metering layer | Metadata-keyed by `productId`, not code-keyed | Supabase `flowai_provider_billing`, `flowai_product_pricing`, `flowai_revenue_splits` | Per-product rate = `pricing.lookup(productId, planTier)` |
+| Per-product configuration | Metadata, never code | `flowai_product_config` rows + Doppler vault paths `flowai/<env>/PRODUCTS_<productId>_*` | Custom domain for a tenant lives in a config row, not a hardcoded constant |
+| Agent invocation scope | Parameter, not embedded | `productScope: 'flowai' \| 'tenantA' \| 'tenantB' \| ...` (illustrative; expands at runtime) [1] | `BaseAgent` accepts `productScope` as a runtime dep |
 
-### EP2. Authority — multi-AI triangulation vs Playwright ground-truth vs L1-L5 tagging?
+[1] **productScope values are runtime metadata-driven, never hardcoded** per §22 Product-Agnostic Rule. The illustrative `tenantA` / `tenantB` placeholders stand for whatever productScope strings the ProductRegistry contains at runtime. No VEU product names are checked into the SSOT, code, configs, env vars, or tests.
 
-**CONSENSUS — ACCEPT (5/5).**
-Playwright ground-truth wins when applicable; multi-AI triangulation overrides any single AI otherwise; L1-L5 tagging forces every finding to declare evidence layer.
-
-**Dissent:** none.
-
-### EP3. Confidence calibration?
-
-**CONSENSUS — ACCEPT (4/5).**
-Every output declares confidence (0-100) + evidence layer (L1-L5) + agent authority; consumers treat confidence as one input alongside authority, not sole determinant.
-
-**Dissent (Slot 1 — MODIFY):** add back-testing — *"confidence scores must be back-tested quarterly against outcomes; agents whose confidence is mis-calibrated >10% lose authority tier until re-validated."* Strongly recommend folding in.
-
-### EP4. Resolution when peer reviewers disagree?
-
-**CONSENSUS — ACCEPT (5/5).**
-Disagreement triggers synthesis review — factual disagreements re-run against canonical/code; interpretive disagreements escalate per authority levels.
-
-**Dissent:** none.
-
-### EP5. How does FlowAI know self-renewal works?
-
-**CONSENSUS — ACCEPT (4/5).**
-Agent #3 measures drift signal, score trajectory (rolling 95/95), regression count, continuous crawl pass-rate per product; works iff drift→0, scores≥95, regressions caught pre-deployment, crawl pass-rate→100%.
-
-**Dissent (Slot 2 — MODIFY):** add operational signals — *"canary deploy success, rollback success rate, mean time to detect/repair, business KPI non-regression, and user-impact measurements."* Worth folding in.
-
-### EP6. How does FlowAI know what is broken in a product?
-
-**CONSENSUS — ACCEPT (4/5).**
-Real Playwright crawl + agent execution status via flowai_audit_log + product-side telemetry via /api/health + failing tests via vitest CI; union of signals is the breakage map.
-
-**Dissent (Slot 1 — MODIFY):** add a fifth signal — *"end-customer/end-user feedback channels (support tickets, in-product error reports, NPS deltas) — telemetry alone misses semantic breakage (works but wrong)."* Strongly recommend folding in.
+**Rule:** if you can write a new product entry into Supabase + Doppler and FlowAI starts orchestrating it without a code change, the architecture is correct. If the 6th, 10th, or 100th tenant requires touching `src/`, the architecture is broken. This rule is canonical and binding.
 
 ---
 
-## META-GOVERNANCE (MG1–MG7) — Panel-authored consensus
+## 4. FOUR LEVELS OF ORCHESTRATION (was: Three Levels in Rev-1)
 
-(No W02 draft. Synthesized from the 5 fresh reviewer answers.)
+Rev-1 listed three levels. Panel Q2 found the levels "CORRECT_BUT_INCOMPLETE" — missing **Capability Transfer** (Sprint PROTECT-1). Rev-2 promotes Capability Transfer to a fourth level.
 
-### MG1. Panel operating mode?
+| # | Level | Scope | Status |
+|---|---|---|---|
+| L1 | **Building FlowAI** (current phase) | VEU constructs FlowAI itself — agents, governance, pipeline, Orchestra, OrchestratorHub. All 25 agents ship dormant at `recommend_only` before wire-in. | ACTIVE — Phase 1.0 substrate work in flight; Agents #1/#2/#3/#4/#5 SHIPPED-GREEN; 20 still DORMANT |
+| L2 | **FlowAI on Itself** | Once live, FlowAI self-monitors, self-renews, self-updates Orchestra rankings, runs the 8-step pipeline against its own repos. | PARTIAL — Self-Governance Layer (Sprint 5) live; full self-orchestration awaits Panel-handover gate |
+| L3 | **FlowAI on External Products** | Accepts via 4 input modes (§5), aggressively crawls everything, applies the 8-step pipeline, always delivers a new live URL. The fork-and-fix mode (§12) is the canonical externalized output path. | PARTIAL — W2 three-input renewal pipeline shipped on neutral test fixtures (commit `9b4e511`); fork-and-fix live; full crawl-fix-redeliver loop awaits Agent #3 graduation (see `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`) |
+| L4 | **FlowAI Capability Transfer into Other Products** (NEW — gap #4 from Panel Q2) | FlowAI installs its own capabilities into a target product as a Capability Package. Each package is generated as an install sprint and consumed by the target. | LIVE — Sprint PROTECT-1 shipped two packages: Self-Renewal (4 components: Self-Test, Self-Heal, Self-Monitor, Governance Hook) and Self-Protection (4 components). Install sprints exist for all 5 VEU products. Surface: `/capability-transfer`. |
 
-**CONSENSUS — HYBRID (5/5).**
-Always-on for telemetry / audit-log / crawl-stream monitoring; **scheduled** for periodic Panel review (monthly cadence is the consensus floor); **on-demand** for high-priority gates (security, Locked Rule amendments, 95/95 exceptions, Self-Renewal proposals at L3+ impact, human-gate escalations). Eventually native-FlowAI orchestrated post-bootstrap.
-
-**Dissent:** none on the hybrid shape; minor variance on whether scheduled cadence is weekly (Slot 3) vs monthly (Slot 1, Slot 4).
-
-### MG2. Decision-making threshold?
-
-**CANONICAL (CEO-RESOLVED 2026-05-11).**
-**Simple supermajority ≥7 of 10 reviewers for all Panel decisions, regardless of decision type or domain. No graduated veto structure.** The earlier domain-weighting and unanimity-for-charter-amendments refinements are not adopted — a single threshold governs Panel decisioning.
-
-**Slot 4 dissent (graduated FLOWAI-ONLY / EMBEDDED authority veto) — OVERRULED.**
-
-### MG3. Dissent handling?
-
-**CONSENSUS — SEVERITY-BASED (4/5).**
-Approve-with-dissent-noted by default (recorded in audit log); **require resolution** if dissent invokes a Locked Rule, safety, legal, IP, or 95/95-affecting concern; escalate to CEO only on unresolvable Locked-Rule dissent or material exposure.
-
-**Dissent (Slot 3):** simpler model — approve with dissent formally logged and routed to the relevant agent's feedback loop, no severity gating.
-
-### MG4. CEO escalation triggers?
-
-**CANONICAL (CEO-RESOLVED 2026-05-11) — the broad 12-item consensus list is retained:**
-1. Locked Rule amendments.
-2. Revenue split deviations >5pp from default, OR any negotiation outside the ceiling-and-floor range defined in E4.
-3. Authority-tier changes for any agent.
-4. Cross-product breakage affecting >1 production tenant.
-5. Legal / IP / regulatory exposure events.
-6. 95/95 exception requests OR sub-95 releases.
-7. Clearance gate override requests.
-8. Irreversible data/financial/legal/IP actions.
-9. Major customer commitments OR product integrity SLA breaches.
-10. Unresolved blocking dissent on Locked Rules.
-11. Panel protocol changes (MG6 amendments).
-12. Marketplace intelligence cycle >30 days behind.
-
-**Slot 3 narrow dissent — OVERRULED.** The narrow alternative (deadlock + 7-figure spend only) is not adopted; the broad 12-item trigger set is canonical.
-
-### MG5. Failed / stale reviewer handling?
-
-**CONSENSUS — SUBSTITUTE FROM ALTERNATES; ABORT IF QUORUM UNREACHABLE (3/5).**
-Retry once → substitute from a pre-designated alternate pool within 24h → proceed only if quorum (≥7) and domain coverage remain intact → otherwise abort + re-dispatch with explicit timeout flag in audit log. Never silent-proceed below quorum.
-
-**Dissent:**
-- Slot 3: simpler — *"proceed with available quorum (≥7) after a 48-hour response window; stale reviewer's vote is forfeit."*
-- Slot 4: gate-type-dependent — different rules for 95/95 audit vs Clearance vs continuous crawl.
-
-### MG6. Self-amendment process?
-
-**CONSENSUS — STRUCTURED RFC + SUPERMAJORITY + CEO COUNTERSIGN (3/5).**
-Versioned RFC → impact/risk analysis → ≥7/10 Panel vote → CEO countersign → audit-log entry tagged `panel_self_amendment` → canary application before full adoption. **Amendments to MG4 (CEO triggers) require unanimity.** Slot 1 adds a 7-day stakeholder comment window; Slot 4 adds a 30-day re-audit of prior decisions against the new rule.
-
-**Dissent (Slot 3):** unanimous (10/10) Panel vote required for any self-charter change, no CEO countersign step.
-
-### MG7. Approval scope?
-
-**CONSENSUS — QUORUM-MET VOTE LOGGED IN AUDIT WITH FULL EVIDENCE (4/5).**
-Panel approval = quorum-met vote recorded in `flowai_audit_log` with topic `panel_decision_{stepType}`, evidence pack hash, dissent record, model identities, prompts, and **explicit authorization scope** (which step, which product, which environment, expiry). Approval is **non-transferable** across steps/products/environments.
-
-**Dissent (Slot 4):** per-build-step granularity — different approval requirements for Research/Design/Build (≥2 domain experts), Quality Audit (Agent #8 + re-audit), Deploy (Monitor + zero active threats), Self-Renewal (Agent #3 + 95/95), Clearance (all 6 steps + CEO sign-off). This is complementary, not contradictory — recommend folding Slot 4's per-step elaboration into the canonical MG7 as the operational decomposition.
+L4 is operationally distinct from L3: L3 acts ON a product to produce a renewed URL; L4 installs a piece of FlowAI INTO a product so the product carries its own self-test / self-heal / self-monitor / governance after install.
 
 ---
 
-## MISSING QUESTIONS (Union of reviewer proposals, deduplicated, ranked by mention frequency)
+## 5. FOUR INPUT MODES (per parking-lot ENTRY 006)
 
-Questions raised by ≥3 reviewers (high-priority gaps):
+1. **Clone & Improve** — single URL, crawl, audit, enhance, redeploy.
+2. **Describe & Build** — natural language, generate from scratch.
+3. **Paste / Upload** — text + screenshots (Anthropic vision OCR), reconstruct and build.
+4. **Synthesize & Build** — 2–5 URLs, cross-URL comparative scoring + best-feature extraction + synthesis composition.
 
-1. **Multi-tenant isolation failure modes & cross-tenant contamination prevention.** (Slot 1, Slot 2, Slot 4) — RLS is referenced but failure modes are not specified; detection latency, blast radius, and remediation contract are missing.
-2. **Data governance: residency, sovereignty, retention, deletion, portability.** (Slot 1, Slot 2, Slot 4) — Especially under GDPR/POPIA (MyBirthSafe Africa-first), HIPAA-adjacent maternal health data, and provider offboarding.
-3. **Disaster recovery & RTO/RPO.** (Slot 1, Slot 2, Slot 4, Slot 10) — If FlowAI itself goes down, what is the recovery contract to the 5 products + external providers? Backup strategy for Supabase?
-4. **Cost governance & runaway protection / per-tenant token budget.** (Slot 1, Slot 2, Slot 3) — LLM spend is unbounded; kill-switch contract per agent / per tenant / per session is missing. Cost of governance (continuous crawl + Panel review + marketplace scan) needs ceilings.
-5. **Versioning & backward compatibility.** (Slot 1, Slot 4) — When BaseAgent.js evolves G2→G3→G4, what is the contract for in-flight agents, existing audit-log entries, and products mid-pipeline?
-6. **Adversarial robustness.** (Slot 1, Slot 2, Slot 4) — Prompt injection during crawl (hostile content on probed pages), model poisoning, supply-chain attacks on tool marketplace, malicious provider apps, rogue agents.
-7. **Self-test-of-self-tester / meta-self-audit / dead-man's switch.** (Slot 1, Slot 3) — Who audits Agent #8? How is meta-self-test bootstrapped without infinite regress? External kill-switch to halt all autonomous action and revert to last-known-good G3 state.
-8. **Self-modification boundary.** (Slot 1, Slot 2, Slot 4) — May FlowAI modify its own governance kernel (BaseAgent, ScoreEvaluator, audit log, clearance logic, Panel protocol)? Constitutional boundary needed.
-9. **Compliance regimes per product.** (Slot 1, Slot 2, Slot 4, Slot 10) — SOC 2, ISO 27001, GDPR, CCPA, HIPAA (MyBirthSafe maternal health), PCI (Stripe Connect), communications compliance (ReachSMS), IP/content rights (PressAI), ESG disclosure (SAIGE).
-10. **Conflict-of-interest / ranking neutrality.** (Slot 1, Slot 2) — VEU's 5 products compete with future Marketplace providers; how is ranking neutrality guaranteed AND proven?
-11. **Quantified SLAs (MTTD/MTTR/RTO/RPO).** (Slot 1, Slot 2) — "Continuous" without numbers is aspirational. Need severity-tiered targets.
-12. **Continuous crawl contract per product.** (Slot 1, Slot 2) — Crawl depth, frequency, side-effect prevention, synthetic accounts, payment sandboxing, no-destructive-action rules.
-13. **Human-in-the-loop SLA + on-call model.** (Slot 1, Slot 2) — Max-wait before auto-escalation; who is the human; what authority; after-hours coverage.
-
-Questions raised by 1–2 reviewers (worth folding in):
-
-14. End-user right of recourse when AI-authored output harms an end-customer. (Slot 1)
-15. Locked Rules Registry as canonical numbered artifact with amendment history. (Slot 1)
-16. Agent liveness / dormancy activation contract — 23/25 agents currently DORMANT. (Slot 1, Slot 3)
-17. Production responsibility & liability boundaries between FlowAI, VEU, providers, customers, third-party vendors, human approvers. (Slot 2)
-18. Emergency stop / kill-switch authority — pause crawls, freeze deployments, disable agents, isolate tenants. (Slot 2)
-19. Centralized LLM/provider routing engine — policy-based routing by task, risk, cost, latency, jurisdiction. (Slot 2)
-20. Agent #21–#25 explicit charters (names, scope, authority, interactions with #1–#20). (Slot 2)
-21. Agent performance measurement over time (accuracy, regression rate, repair success, false positives/negatives, cost, latency, human-override rate). (Slot 2)
-22. Panel jurisdiction vs FlowAI's own agents — anti-circularity safeguards when FlowAI eventually orchestrates the Panel. (Slot 2)
-23. Independence criteria for Panel (model diversity, prompt independence, evidence packets). (Slot 2)
-24. Threat model documentation. (Slot 2)
-25. Continuous-crawl false-positive rate tolerance. (Slot 4)
-26. 95/95 score-inflation prevention. (Slot 4)
-27. Credential rotation & expiry handling in CredentialAdapter. (Slot 4)
-28. Git race-condition resolution for multiple concurrent Claude Code sessions. (Slot 4)
-29. "Great Pivot" — what fundamental limitation in the flow-builder paradigm forced the 8-step pipeline pivot? (Slot 3)
-30. Agent phylogeny — how new agents/versions are trained, validated against 95/95, and promoted. (Slot 3)
-31. Observability/alerting stack for FlowAI itself (not just managed products). (Slot 4, Slot 10)
-32. Capacity planning — concurrent sessions, Playwright endpoint scaling, LLM token budget. (Slot 4)
-33. Vendor outage / model degradation fallback. (Slot 4)
-34. Scalability mechanism for multi-tenant growth. (Slot 10)
-35. Self-Renewal Alert evidence-package contract (source, confidence, impact, cost, risk, urgency, mode, rollback). (Slot 2)
-36. Who pays for marketplace-driven changes? Subscription? Usage? Approval gate? (Slot 2)
+INPUT modes are distinct from EXECUTION modes (§8) and SYSTEM OPERATION axes (§8a). All three axes can vary independently — a user can run "Clone & Improve" in "Auto" Orchestra selection under "Hands-Off" system operation, or any other combination.
 
 ---
 
-## DOABILITY ASSESSMENT
+## 6. AGGRESSIVE CRAWLING, TESTING & RESOLUTION CONTRACT
 
-### Doable as drafted (≥3 reviewer agreement)
+**Crawl scope (per parking-lot ENTRY 002):** all links, cards, modals, pages, engines, workspaces, embedded AI agents. No element skipped. Authenticated + unauthenticated paths. Mobile + desktop. Error states triggered. Depth-bounded multi-page traversal (default depth=2, max=8 pages per URL — implemented in `api/_lib/inputAdapters/url.js`).
 
-- The **orchestration spine** (BaseAgent + MessageBus + ScoreEvaluator + CredentialAdapter) is architecturally sufficient for Phase 1 — the contract files are coherent and the G2/G3 ratification model is sound. (Slot 1, Slot 2, Slot 4)
-- **8-step pipeline + 3-mode execution (Auto/Guided/Manual) + 6-step Clearance + 95/95 threshold** are well-specified and implementable; UI surface confirms most of this is built. (Slot 1, Slot 2, Slot 3, Slot 4)
-- **Capability Transfer (Self-Renewal + Self-Protection packages)** is a defensible mechanism for shipping FlowAI's faculties into consumer products. (Slot 1, Slot 4)
-- **The 5 VEU products as first consumers** provide dogfooding rigor that will surface gaps before external providers onboard. (Slot 1, Slot 4)
-- **Anti-drift hierarchy** (code > canonical > user-curated > auto-memory) is locked and implementable. (Slot 1, Slot 2, Slot 3, Slot 4)
-- **Tool & provider ranking** as a product-native intelligence function is doable. (Slot 2)
-- **GTM Demo Stack Tier 1–4** UI complete, mock data seeded. (Slot 4)
+**Credential handling for authenticated crawls (gap from Panel Q3):** session-only credentials per `src/lib/renewal/inputArtifact.js` `raw.description.loginEmail/loginPassword`. **Scrubbed before any persist / log / external send** via `scrubCredentials()`. Never written to the audit log. Never embedded in renewed output.
 
-### Missing capabilities (≥3 reviewer agreement)
+**Resolution contract (clarified — gap #3 from Panel Q3 + Slot 3/5/7 dissent):**
+Every issue surfaced by `api/_lib/issueDetector.js` MUST reach a **terminal decision** before output delivery. The terminal decisions are:
+- **Resolved** — the fork-and-fix path produced a renewed URL whose verification re-crawl shows the issue category absent. (Auto-deploy in fork-and-fix mode.)
+- **Human-gated** — severity `high` or `critical`, or category in the human-gated set (legal / trust signals / value-proposition claims). Human picks one of three actions per Sprint ARCH-1: **Approve** (deploy as-is), **Modify** (edit FlowAI's proposed fix before deploy), **Skip** (document why, defer to backlog). Skip is a terminal decision — it acknowledges the issue and records the reason, satisfying "every issue resolved" in the audit-trail sense.
+- **Documented limitation** — issue cannot be addressed within the input scope (e.g. mobile responsiveness flagged but only desktop assets supplied). Documented in the final delivery's LIMITATIONS section verbatim. Also terminal.
 
-- **Agent #4 (Provider Onboarding) is DORMANT** — the entire multi-tenant revenue model is paper-only until this ships. *This is the single largest gap to the "$5B OS" claim.* (Slot 1, Slot 3, Slot 4)
-- **23 of 25 agents are DORMANT** (Agents #3 + #4–#20 + #21–#25) — orchestration substrate exists but the orchestra is silent; current FlowAI is a governance shell, not yet a working OS. (Slot 1, Slot 2, Slot 3, Slot 4)
-- **Doppler integration is designed, not wired** — credential security is currently Base44 Secrets, which is insufficient for multi-tenant production. (Slot 1, Slot 3, Slot 4)
-- **Supabase RLS is designed, not provisioned** — tenant isolation is a contract without an enforcer. (Slot 1, Slot 3, Slot 4)
-- **Backend endpoints for Tier 3/4 demos are stubs** — GTM stack cannot convert without /api/leads, /api/configuration/clone, real /api/health, /api/cost-summary, /api/products, /api/admin/seed-demo. (Slot 1, Slot 4)
-- **Centralized LLM/provider routing engine** — per-call model selection is insufficient for production OS infrastructure. (Slot 2)
-- **Production crawl architecture at scale** — queueing, rate limits, auth-state management, sandbox accounts, side-effect prevention, screenshot/trace retention. *Massive unproven assumption.* (Slot 2, Slot 3)
-- **Integration verification adapters** — auth, payment rails, analytics, GTM, marketplaces, email/SMS, webhooks, deployment, monitoring each need explicit probe contracts. (Slot 2, Slot 4)
-- **Panel orchestration protocol** — eventual self-orchestration needs independence controls, quorum rules, model diversity, dissent handling, anti-circularity safeguards. (Slot 1, Slot 2)
-- **Evaluation harness** — regression suites for agent accuracy, crawl reliability, false positives/negatives, repair success, hallucination rate, latency, product impact. (Slot 2)
+The "every issue MUST be resolved before output delivered" wording in Rev-1 was absolutist and Panel Q3 marked it `NOT_ACHIEVABLE_AS_WRITTEN`. Rev-2 makes the resolution semantic explicit: **resolution = terminal decision**, not necessarily auto-fix. Human-in-the-loop is canonical, not optional.
 
-### Missing capacities
-
-- **Crawl capacity:** browser concurrency, crawl depth, retry budget, product coverage. (Slot 2)
-- **Repair capacity:** simultaneous fixes, rollback readiness, canary environments. (Slot 2)
-- **Panel capacity:** review turnaround, reviewer substitution, stale-review handling. (Slot 2)
-- **Agent capacity:** queue management, dead-letter handling, agent failure recovery. (Slot 2)
-- **Infrastructure capacity:** logging, traces, screenshots, artifacts, audit storage. (Slot 2)
-- **Cost capacity:** AI calls, browser sessions, external APIs, monitoring, alerts. (Slot 1, Slot 2, Slot 3)
-- **Human capacity:** on-call coverage, CEO escalation load, product-owner availability. (Slot 1, Slot 2)
-- **Vendor resilience:** model fallback, payment-provider outage, auth outage, crawl-provider failure. (Slot 2, Slot 4)
-- **Calibration capacity:** confidence scores emitted but not back-tested against outcomes. (Slot 1)
-- **Adversarial test capacity:** Self-Test runs the happy-path pipeline only; no red-team contract. (Slot 1, Slot 2)
-
-### Missing commitments
-
-- **Quantified SLAs** (MTTD < 15 min, MTTR by severity tier, RTO/RPO targets). (Slot 1, Slot 2)
-- **Locked Rules Registry** — referenced as authority; no canonical artifact cited. (Slot 1)
-- **Conflict-of-interest neutrality proof** for Marketplace ranking. (Slot 1)
-- **End-customer recourse path** for AI-caused harm. (Slot 1, Slot 4)
-- **Panel-to-FlowAI handover protocol** with a verification gate, not just a roadmap. (Slot 1, Slot 2)
-- **Customer notification triggers** — when does product breakage become customer-facing? (Slot 2)
-- **Required CEO escalation triggers** as a numbered registry (see MG4 list above). (Slot 2)
-- **Roster-truth alignment (CEO-RESOLVED 2026-05-11):** Canonical roster is **25 agents (G3-ratified; #21–#25 Ops Runner charters active)**. BaseAgent.js validator update from 20 → 25 is queued as a Phase 1.0 *implementation* task — the canonical count does not depend on the validator catching up.
+**Loop:** crawl → detect → propose fix or gate decision → execute (fork-and-fix or human action or document) → re-test (re-crawl + re-detect) → confirm clean OR record gated/documented terminal decision → deliver new live URL with full delta report.
 
 ---
 
-## ELEVATOR PITCH — synthesized (3 sentences)
+## 7. OUTPUT CONTRACT
 
-FlowAI is the governance-grade operating system that takes any AI product from idea to production and keeps it there — through a contract layer of 25 specialized agents, an 8-step pipeline gated by 95/95 quality scoring, a 6-step Clearance Protocol, and continuous Playwright-verified crawling that detects and self-heals breakage at any hour without maintenance windows. It treats VEU AI Studio's five flagship products (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe) as real production consumers and is architected to onboard arbitrary external providers via Stripe Connect at a 15% platform fee, with monthly marketplace intelligence ensuring no product falls more than thirty days behind competitive evolution. Singular as canonical code and plural at runtime via tenant-isolated instances, FlowAI is engineered to eventually orchestrate its own 10-AI governance Panel — making it the first AI infrastructure whose governance is as productized, auditable, and self-renewing as the products it ships.
+Every run produces:
+
+1. **A new live URL** — fully deployed, real working product (NOT static HTML). Static HTML is permanently rejected as a primary output (legacy `api/_lib/renewalEngine.js` static-HTML path remains as deprecated fallback only).
+2. **Before/After delta report** — `before_after_delta` from `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` §2.4: `{ issuesBefore, issuesAfter, resolved, unresolved, regressions }`, plus the terminal decision per issue (see §6).
+3. **Source disclosure** — `patch-existing-source` or `generate-from-scratch`, plus retrieval method (git-tarball / vercel-project / base44-stub / none).
+4. **LIMITATIONS section** — verbatim list of human-gated-skip and documented-limitation terminal decisions, per `api/_lib/beforeAfterReport.js`.
+
+**Source acquisition order** (per `api/_lib/sourceAcquisition.js`): git URL → Vercel project → Base44 project → fallback to generate-from-scratch. Generate-from-scratch is canonical capability per parking-lot ENTRY 005, not a fallback in the colloquial "second-best" sense — it produces a fully functional working product whenever source is unreachable.
 
 ---
 
-## SYNTHESIS METADATA
+## 8. THE ORCHESTRA — 10 MEMBERS (Orchestra Selection axis)
 
-- **Reviewers used:** 5 of 7 LIVE slots; 3 deferred (Vercel v0, Base44, Replit) and 2 failed (GitHub Models — free-tier 8K-token cap exceeded).
-- **Consensus rate (39 questions):** ACCEPT-as-W02-drafted = 27/32 (84%); MODIFY consensus = 2/32 (6%); ACCEPT-with-substantial-dissent worth folding in = 11/32 (per the dissent notes above); 7 META-GOVERNANCE questions synthesized fresh.
-- **Factual flags — ALL FOUR RESOLVED BY CEO (2026-05-11):**
-  - **L2 / roster size:** Canonical roster is **25 agents (G3-ratified; #21–#25 Ops Runner charters active)**. BaseAgent.js validator update from 20 → 25 is queued as a Phase 1.0 implementation task; the canonical count does not depend on the validator catching up.
-  - **E4 / revenue split:** VEU platform fee is a **ceiling of 15%** (not a fixed split); a sustainability **floor** is defined separately per contract and is **non-negotiable**; providers retain **at minimum 85%** of end-customer revenue; the exact split is negotiable between the ceiling and the floor.
-  - **MG2 / decision threshold:** **Simple supermajority ≥7 of 10 reviewers for all Panel decisions**, regardless of decision type or domain; no graduated veto structure. Slot 4 dissent overruled.
-  - **MG4 / CEO triggers:** **Broad 12-item list retained as canonical.** Slot 3 narrow alternative (deadlock + 7-figure spend) overruled.
-- **Generated:** 2026-05-11, layer1-ssot-panel-review-2026-05-11.md as input.
-- **Status:** **CANONICAL.** Promoted from `docs/FLOWAI_SSOT_DRAFT_v1.md` to `docs/FLOWAI_SSOT.md` after CEO disposition of the 4 flagged items.
+**Members (per parking-lot ENTRY 004):** Claude Code, Base44, Lovable, v0, Cursor, OpenRouter, Browserless, Anthropic API (direct), Replit, Playwright.
+
+Full per-step capability matrix + ranking formula + adapter health monitoring + per-call cost tracking + fallback chain in `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` (commit `38b1a23`). Locked Rule 18 ranking formula:
+
+```
+rank_score = (performance_score × 0.6) + (price_weight × 0.4)
+performance_score ∈ [0.0, 1.0]
+price_weight from price_tier: free=1.0, low=0.8, medium=0.6, high=0.3, enterprise=0.1
+Top 3 published per pipeline step as recommended_adapters[].
+```
+
+**Orchestra Selection axis** (renamed in Rev-2 — gap #12, Panel Q4 NAMING_AMBIGUITY):
+
+| Selection mode | Behaviour |
+|---|---|
+| **Auto** | FlowAI selects the #1-ranked adapter per step automatically |
+| **Recommended** (was "Guided" in Rev-1) | User sees ranked list with #1 highlighted; can accept or override |
+| **User-Choice** (was "Manual" in Rev-1) | User sees full eligible list; must pick before run |
+
+The rename removes the "Manual" collision with §8a (which kept the term for the orthogonal System Operation axis). Engineering may keep `'guided'`/`'manual'` enum strings in code if the migration cost is high, but the canonical user-facing labels are Auto / Recommended / User-Choice.
+
+---
+
+## 8a. SYSTEM OPERATION (was: System Operation Levels — separate axis from Orchestra Selection)
+
+Renamed per gap #12 to eliminate "Manual" collision with the Orchestra axis.
+
+| System Operation | Behaviour |
+|---|---|
+| **Hands-On** (was "Manual" in Rev-1 §8a) | Provider drives every decision; FlowAI proposes; provider approves/modifies/skips each step (per Sprint ARCH-1 Guided Operations approval flow) |
+| **Reviewed** (was "Supervised" in Rev-1) | FlowAI acts; provider reviews each step output before proceeding to the next |
+| **Hands-Off** (was "Autonomous" in Rev-1) | FlowAI operates end-to-end without intervention; pauses only on hard gates (severity `critical`, legal/safety flags, 95/95 failure) |
+
+**Independence:** Orchestra Selection and System Operation are independent axes. Any combination is valid — e.g. Hands-On system operation + Auto Orchestra selection means "provider drives every decision but each chosen step uses FlowAI's top-ranked adapter without re-asking."
+
+---
+
+## 9. THE 8-STEP PIPELINE (canonical from `src/lib/operationsEngine.js` STEPS)
+
+| # | Key | Label | Step description |
+|---|---|---|---|
+| 1 | `research` | Research | Market analysis, product brief, audience + competitive intelligence |
+| 2 | `design` | Design | Visual design, UX, layout, mobile responsiveness analysis |
+| 3 | `build` | Build | Route coverage, navigation, broken links, form functionality |
+| 4 | `qa_audit` | Quality Audit | **5-dimension scoring** (UI/UX, API, Logic, Business Value, Security Posture — per Sprint PROTECT-1 Phase 5). 95/95 threshold per dimension. |
+| 5 | `deploy` | Deploy | HTTPS, load time, domain config, robots.txt, public accessibility |
+| 6 | `govern` | Self-Renewal | Autonomous governance cycle — see §10 Self-Governance Layer. (Was "Govern & Heal" pre-ARCH-1; renamed.) |
+| 7 | `gtm` | Go To Market | Demo readiness score, GTM risks, top fix before any prospect demo. Tied to 6-step Clearance Protocol (§11) for official launch sign-off. |
+| 8 | `monitor` | Monitor | Final report — all findings compiled into clearance decision (0–50 scale per Locked Rule 3) |
+
+Rev-1 listed pipeline steps as "1-Research, 2-Design, 3-Build, 4-Quality Audit, 5-Deploy, 6-Monitor, 7-Self-Renewal, 8-GTM" — that ordering was stale. The code-canonical ordering (Self-Renewal=6, GTM=7, Monitor=8) is canonical per backlog B5 (commit `0574d0d`). Rev-2 reflects code-wins.
+
+---
+
+## 10. SELF-GOVERNANCE LAYER (NEW — gap #2 from Panel Q2, Sprint 5)
+
+The Self-Governance Layer is what makes Level 2 ("FlowAI on Itself") and the `govern` step (#6) executable. It is the **earliest canonical sprint on record** (Sprint 5, October 2025). Rev-1 omitted it entirely; Rev-2 surfaces it explicitly per Panel Q2 + Slot 7 dissent.
+
+### 10.1 Four governance components
+
+| Component | Function | Trigger | Effect |
+|---|---|---|---|
+| **Self-Test** | Automated end-to-end functional baseline testing | On every run, daily at 03:00 (`scheduledSelfTest` per Sprint PROTECT-1 Phase 2), and on demand | Proves the FlowAI substrate (proxy + 3 entities at minimum) is operational; pass-rate feeds Platform Health Widget |
+| **Self-Audit** | **Five-dimension scoring engine**: UI/UX, API, Logic, Business Value, Security Posture (Security Posture added Sprint PROTECT-1 Phase 5; originally 4 dimensions in Sprint 5) | Step 4 Quality Audit of any run | Each dimension scored 0–10 against 95/95 governance threshold; sub-6 Security Posture triggers Self-Protection sprint generation |
+| **Self-Protect** | Snapshot + rollback infrastructure before any change | Pre-flight on every Auto Runner step that mutates state | Allows revert if 95/95 fails or Human Gate rejects — distinct from the *later* Self-Protection (anti-crawl, IP protection from Sprint PROTECT-1 — see §15) |
+| **Self-Heal** | Automatic fix application for detected issues, gated by Human Gates per §11 | Step 6 Self-Renewal recommendation accepted (Approve/Modify) | Applies the fix; re-runs Self-Test to verify; emits before/after delta |
+
+Plus: **Self-Optimize** (performance improvement cycle, targets dims below 8/10) and **Self-Upgrade** (version locking + upgrade management) — both Sprint 5.
+
+### 10.2 Four Human Gates (Sprint 5, canonical per ARCH-1 Approve/Modify/Skip flow)
+
+| Gate | When | Decision space |
+|---|---|---|
+| **Review** | Before any agent action takes effect at a step boundary in Reviewed or Hands-On system operation | Approve, Modify, Skip |
+| **Approval** | At 95/95 evaluation outcome | Accept score, Re-run, Override (requires elevated role per §13) |
+| **Testing** | After Self-Heal applies a fix; "Re-run Self-Test to Verify Fixes" button per Sprint HARD-1 | Confirm fix verified, Re-fix, Escalate |
+| **Acceptance** | At end of pipeline, before clearance | Accept and Lock (triggers ClearanceProtocolPrompt automatically per Sprint HARD-1), Re-open step, Reject run |
+
+The Human Gates **reconcile with §6's "every issue MUST be resolved"**: an issue is *resolved* when it reaches a terminal decision (Resolved / Human-gated terminal / Documented limitation per §6). Human Gates are the canonical decision-rendering mechanism for issues that are not auto-fixable. Human-in-the-loop is canonical; no automated bypass.
+
+---
+
+## 11. SIX-STEP PRODUCT CLEARANCE PROTOCOL (NEW — gap #5 from Panel Q1+Q6, Sprint 9)
+
+The Clearance Protocol gates every product handed to FlowAI before declaring it "cleared." It is the authoritative clearance gate; not replaced in any later sprint. Surfaces:
+
+- **Wizard:** `/clearance` (6-step UI, status indicators per step, overall clearance badge)
+- **Entity:** `ClearanceRecord` (step-by-step progress tracking, AI-generated checklists per step)
+- **Prompt:** `ClearanceProtocolPrompt` automatically appears after "Accept and Lock" in Auto Runner (Sprint HARD-1)
+- **Inline tool:** added as fifth tool under Go To Market step (#7) in Guided + Manual modes (Sprint HARD-1)
+
+| # | Step | Wizard label | What it gates |
+|---|---|---|---|
+| 1 | Governance Audit | "Governance Audit" | All four Self-Governance components green; 95/95 threshold met on every dimension |
+| 2 | Launch Readiness | "Readiness" | Six readiness dimensions per Sprint 6 Phase 2 (see §16): infrastructure, dependencies, data model, env config, observability, rollback |
+| 3 | White-Label | "White-Label" | No Base44 / FlowAI / vendor branding leaks in renewed output; per Sprint 6 Phase 1 |
+| 4 | Data Export | "Data Export" | GDPR-compliant export sprint generated; data portability verified |
+| 5 | Demo Readiness | "Demo" | Synthetic-data demo microsite generates; guided tour script renders; per Sprint 7 Demo Builder |
+| 6 | Final Sign-Off | "Final Sign-Off" | All previous 5 steps cleared; human acceptance gate; clearance badge emitted |
+
+Each step's status, evidence, and timestamps are recorded in `ClearanceRecord`. Clearance is **per product, per environment** — clearing a product in `staging` does not clear it in `prd`.
+
+---
+
+## 12. REMEDIATION MODES — WIRED TO 8-STEP PIPELINE (gap #6 from Panel Q1)
+
+Rev-1 listed remediation modes generically without integration. Rev-2 wires each to specific pipeline steps and per-issue invocation per Panel Q1 + Slot 3/5 dissent.
+
+| Mode | Status | Active at pipeline step(s) | Invoked when |
+|---|---|---|---|
+| **(i) Recommend-only** | Active default | Steps 1 (research), 4 (qa_audit), 6 (govern), 8 (monitor) | Always — every issue starts here; produces `3.renewal.candidate.v1` |
+| **(ii) Code-generation as PR** | **Deferred** (Panel verdict Q3 PLURALITY_(c), Slots 3/4/6 ENGAGED, 2026-05-14) | (deferred) | (deferred) |
+| **(iii) Direct-write to user source** | **Deferred** (same verdict) | (deferred) | (deferred) |
+| **(iv) Fork-and-fix via Orchestra** | Active | Step 6 (govern) + invocable from /api/renew.js | Issue is autoFixable AND severity ∈ {`medium`, `low`} AND no human gate triggered |
+
+Issue → mode routing per `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` §4.4:
+- `critical` severity → never auto-deploy; emit candidate + plan; `requires_human_gate=true`
+- `high` severity → never auto-deploy; emit candidate + plan; `requires_human_gate=true` (human Approves/Modifies/Skips)
+- `medium` severity → fork-and-fix auto-deploy in fork-and-fix mode
+- `low` severity (not currently emitted by issueDetector) → fork-and-fix auto-deploy
+
+Build-failure backoff: 2 consecutive build_failed events on same productId within 24h disable fork-and-fix and revert to recommend-only. See §13 GovernanceAuditLog for emission topic.
+
+---
+
+## 13. AUTHENTICATION + ROLE MODEL (NEW — gap #10 from Panel Q6, Sprint 7.5a)
+
+| Role | Capabilities | Defined |
+|---|---|---|
+| **admin** | Full read/write; provisions providers; manages billing; overrides 95/95; rotates credentials; signs off on Final Sign-Off (Step 6 of Clearance) | Sprint 7.5a UserRole entity |
+| **operator** | Run pipelines, propose fixes, run Clearance steps 1–5; cannot override 95/95 or sign off on Step 6; cannot manage billing | Sprint 7.5a UserRole entity |
+| **client** | Read-only on their own product runs; cannot run pipelines; sees redacted audit log | Sprint 7.5a UserRole entity |
+
+**Authentication source:** Base44 auth enabled Sprint 7.5a (all pages require login). Public surface: `/` (Landing), `/terms-of-use`, `/privacy-policy`. Session security: XOR cipher for sessionStorage, 8-hour expiry (Sprint PROTECT-1 Phase 1). Bot detection on login per Sprint PROTECT-1 Phase 1.
+
+**URL Whitelist entity** (Sprint 7.5a): governance-session targeting — admins specify which URLs operators can run pipelines against. Enforced in Auto Runner before dispatch.
+
+**Role gates on Human Gates (§10.2):**
+- Review Gate: operator or admin
+- Approval Gate (95/95 score): admin only (operator can Re-run but not Override)
+- Testing Gate: operator or admin
+- Acceptance Gate (Accept and Lock): admin only
+
+---
+
+## 14. GOVERNANCEAUDITLOG (NEW — gap #11 from Panel Q6, Sprint HARD-1)
+
+A **tamper-evident** log of every action. Append-only, hash-chained. Surfaced at `/audit-trail` (read-only, reverse-chronological, filterable by product / action type / mode). Linked in Settings sidebar section.
+
+### 14.1 Topics logged (silent background logger)
+
+| Topic | Source | Fields |
+|---|---|---|
+| `session_started` | Auto / Guided / Manual session launch | sessionId, productId, mode, input, at, who |
+| `step_completed` | Each of 8 pipeline steps | sessionId, stepKey, outcome, at, agentId, scoreBreakdown |
+| `proposal_approved` | Guided/Manual Approve action | sessionId, stepKey, who, proposal, at |
+| `proposal_modified` | Guided/Manual Modify action | sessionId, stepKey, who, before, after, rationale, at |
+| `proposal_skipped` | Guided/Manual Skip action | sessionId, stepKey, who, reason, at |
+| `findings_approved` | Findings feedback loop accept | sessionId, stepKey, findings, who, at |
+| `fix_applied` | Self-Heal or fork-and-fix execution | sessionId, productId, issueId, mode, beforeHash, afterHash, deploymentId, at |
+| `fix_skipped` | Human Gate Skip with reason | sessionId, issueId, reason, who, at |
+| `clearance_*` | Clearance Protocol step events | clearanceRecordId, stepNumber, outcome, evidence, who, at |
+| `w03_self_audit_*` | Per-turn W03 compliance probe | turnId, agent3Verdict, panelLiteCount, at |
+| `panel_decision_*` | Panel consultation outcomes | consultationId, threshold, engagedCount, verdict, dissent, at |
+| `agent_rollback_*` | Agent de-registration / dormant flip | agentId, reason, who, at |
+| `phase_rollback_*` | Phase-level rollback (git revert + Vercel canary back) | phaseId, gitTag, vercelDeploymentId, who, at |
+| `tenant_isolation_*` | Per-product Supabase RLS deny-all toggle | productId, reason, restoreAt?, who, at |
+| `3.renewal.*` (candidate / applied / delta / build_failed / disabled) | Agent #3 events per §12 + spec §3.2 | varies per topic |
+| `panel_w03_compliance_review_*` | Panel-lite review of an AMBER/RED W03 turn | turnId, threshold, verdict, at |
+
+### 14.2 Tamper-evidence
+
+Hash chain: each row stores `prevHash` = `sha256(prevRow.serializedFields)`. The Audit Trail page surfaces broken-chain warnings if any row's recomputed hash diverges. Cold-store snapshot nightly to a separate Supabase project for off-system durability.
+
+### 14.3 Retention + RLS
+
+- Retention: 365 days hot in Supabase + 7 years cold snapshots (compliance-driven; aligns with E7 currency commitment + GDPR retention norms).
+- RLS: a row is visible to (a) the owning provider org for their own productIds, (b) the admin role within their org, (c) the FlowAI-internal audit role across all rows. Service-role-only writes.
+
+---
+
+## 15. THE 25-AGENT ROSTER (gap #15 — Slot 3/6/8 dissent on roles + Orchestra wiring)
+
+All 25 agents are proprietary VEU IP. All ship dormant at `recommend_only` per Sprint 5 governance pattern. OrchestratorHub wire-in **per-agent** as each ships; the original Rev-1 "wire-in only after all 25 built" was overly restrictive and Panel-flagged.
+
+### 15.1 Roster (canonical per `src/lib/agents/BaseAgent.js`)
+
+| # | Agent | Mode | Step (if step-owner) | Embedding | Status |
+|---|---|---|---|---|---|
+| 1 | Lifecycle Engine | step-owner | 1 research | embedded | SHIPPED-GREEN (commit `d712993`) |
+| 2 | Code Builder | step-owner | 3 build | embedded | SHIPPED-GREEN (commit `fdd3863`) — server-side only (node:crypto) |
+| 3 | Self-Renewal | step-owner | 6 govern | embedded | SHIPPED-GREEN (commit `68a0c75`); fork-and-fix graduation spec drafted at `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` |
+| 4 | Provider Onboarding | step-owner | (commercial layer) | flowai-only | SHIPPED-GREEN (commit `5006431`); wires Stripe Connect |
+| 5 | End-Customer Intake | step-owner | (commercial layer) | flowai-only | SHIPPED-GREEN (commit `2fff449`) |
+| 6 | Research | step-owner | 1 research (collab w/ #1) | embedded | DORMANT — block-semantic on content-insufficient already wired (commit `0fc8851`) |
+| 7 | Design | step-owner | 2 design | embedded | DORMANT |
+| 8 | Quality Audit | step-owner | 4 qa_audit | flowai-only | DORMANT — owns the 5-dimension scoring engine per §10 |
+| 9 | Go-to-Market | step-owner | 7 gtm | embedded | DORMANT |
+| 10 | Monitor | step-owner | 8 monitor | embedded | DORMANT |
+| 11 | Strategic Intelligence | cross-step | — | flowai-only | DORMANT — feeds continuous marketplace intelligence per Locked Rule 16 |
+| 12 | Portfolio Risk | cross-step | — | flowai-only | DORMANT |
+| 13 | Self-Protection (anti-crawl / IP) | always-on | — | embedded | DORMANT — distinct from Sprint 5's snapshot/rollback Self-Protect; covers DMCA, clone detection, edge defense, scraper blocking, Cloudflare Bot Management, watermarking per Sprint PROTECT-1 |
+| 14 | Public Policy | cross-step | — | flowai-only | DORMANT |
+| 15 | Benchmarking | cross-step | — | embedded | DORMANT — feeds Orchestra ranking updates per Locked Rule 16 |
+| 16 | Productivity / HR | cross-step | — | flowai-only | DORMANT |
+| 17 | Product Evolution | always-on | — | embedded | DORMANT — feeds Orchestra ranking + marketplace intelligence per Locked Rule 16 |
+| 18 | Business Planning | cross-step | — | flowai-only | DORMANT |
+| 19 | Technological Evolution | cross-step | — | embedded | DORMANT |
+| 20 | Environmental Impacts | cross-step | — | embedded | DORMANT |
+| 21 | Ops Runner Alpha | step-owner (proposed) | (TBD) | embedded | DORMANT — G3-ratified charter; validator updated 20→25 commit `d2bcbbd` |
+| 22 | Ops Runner Beta | step-owner (proposed) | (TBD) | embedded | DORMANT |
+| 23 | Ops Runner Gamma | step-owner (proposed) | (TBD — possibly Cost Governor per Layer 2 plan PG1) | embedded | DORMANT |
+| 24 | Ops Runner Delta | step-owner (proposed) | (TBD) | embedded | DORMANT |
+| 25 | Ops Runner Epsilon | step-owner (proposed) | (TBD) | embedded | DORMANT |
+
+Partition: **12 embedded** in every product (#1, #2, #3, #6, #7, #9, #10, #13, #15, #17, #19, #20) + **8 FlowAI-internal-only** (#4, #5, #8, #11, #12, #14, #16, #18) + **5 Ops Runners embedded** (#21–#25). Compile-time validator in `BaseAgent.js` enforces exactly 25 unique IDs.
+
+### 15.2 Interaction model (gap #15)
+
+Three contract layers connect agents:
+
+1. **`MessageBus`** (`src/lib/agents/MessageBus.ts`) — pub/sub for inter-agent topics. Each agent declares its `consumes[]` and `produces[]` topics in its charter. Topics conform to `MessageSchema.js` (40 topic constants today). Example: Agent #3 consumes `8.audit.completed.v1`, `10.anomaly.v1`, `17.evolution.proposal.v1`; produces `3.renewal.candidate.v1` plus (per §12) `3.renewal.applied.v1`, `3.renewal.delta.v1`, `3.renewal.build_failed.v1`, `3.renewal.disabled.v1`.
+
+2. **`OrchestratorHub`** (`src/lib/agents/orchestrator/OrchestratorHub.ts`) — registers step-owner agents and routes the `invokeStepOwner(stepKey, ctx)` call to the agent registered for that step. Used by `AutoRunner.jsx` at every step boundary. Returns the agent's canonical step-owner envelope. **OrchestratorHub is the agent-side controller; it is distinct from the Orchestra (§8) which is the tool-side adapter set.**
+
+3. **`AgentRegistry`** (`src/lib/agents/_registry.ts`) — single source of truth for agent metadata: id, name, mode, step, authority, requiredCredentials, consumes/produces, escalationPolicy. Loaded by `BaseAgent.charter()` via `getAgent(id)`.
+
+### 15.3 OrchestratorHub ↔ Orchestra relationship (gap #1 from Panel Q1+Q6)
+
+Two distinct concerns, both essential:
+
+| | OrchestratorHub | The Orchestra |
+|---|---|---|
+| Scope | **Agent dispatch** | **External tool dispatch** |
+| File | `src/lib/agents/orchestrator/OrchestratorHub.ts` | `src/lib/orchestra/index.js` + `member.js` + per-adapter files |
+| Boundary | Internal to FlowAI's contract layer | Wraps external SaaS / API providers (Claude Code, Vercel, Browserless, etc.) |
+| Returns | Step-owner envelope (`{ agent_id, mode, step, authority, recommendation, ... }`) | `MemberResult` (`{ ok, action, member, data?, error?, deferred? }`) |
+| Who calls it | `AutoRunner.jsx` step boundaries; cross-agent invocation | Agents (e.g. Agent #3 dispatches `code-patch` via Orchestra during fork-and-fix); user-facing pickers per `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` |
+| Ranked? | No — agents are step-owner-locked or cross-step by charter | Yes — Locked Rule 18 ranking; 10 members |
+
+Mental model: OrchestratorHub is the orchestra **conductor**; the Orchestra is the orchestra's **instruments**. An agent (musician) is given a step (movement) by the conductor; the agent then picks an instrument (Orchestra adapter) to execute its move.
+
+### 15.4 Agent → Orchestra wiring (concrete examples)
+
+| Agent | Orchestra dispatch usage |
+|---|---|
+| Agent #1 Lifecycle | none direct — emits envelope only |
+| Agent #2 Code Builder | `dispatch('code-patch', ...)` for inline build patches; `dispatch('generate-from-scratch', ...)` for greenfield |
+| Agent #3 Self-Renewal | (recommend-only path) — none; (fork-and-fix path, post-graduation) `dispatch('code-patch')` + `dispatch('generate-from-scratch')` + `dispatch('deploy')` + `dispatch('crawl')` for verification |
+| Agent #6 Research | `dispatch('crawl', { url })` + `dispatch('analyze', { ... })` |
+| Agent #7 Design | `dispatch('design', { spec })` → v0 / Lovable / Base44 |
+| Agent #8 Quality Audit | `dispatch('analyze', { rubric })` + `dispatch('score', ...)` + `dispatch('interact', { url })` |
+| Agent #10 Monitor | `dispatch('crawl')` + `dispatch('analyze')` |
+| Agent #13 Self-Protection | `dispatch('interact')` for surface probing; otherwise emits audit-log events |
+
+Orchestra dispatch is always wrapped by the BaseAgent guard layer; the agent owns the authority + audit-log discipline.
+
+---
+
+## 16. DEPLOYMENT INFRASTRUCTURE (NEW — gap #9 from Panel Q3+Q6, Sprint 6 Phases 2–3)
+
+### 16.1 Readiness Checker (Sprint 6 Phase 2)
+
+Scores a product across **six readiness dimensions** before deploy is permitted. Surfaces at `/architecture` per-product readiness visualization. Each dimension scored 0–10; sub-6 on any dimension blocks Step 5 Deploy until remediated.
+
+| # | Dimension | What it measures |
+|---|---|---|
+| 1 | Infrastructure | Vercel project provisioned; DNS configured; SSL valid |
+| 2 | Dependencies | Lockfile clean; no critical CVEs; no deprecated packages used |
+| 3 | Data model | Supabase schema migrated cleanly; RLS policies present where required |
+| 4 | Environment config | All required env vars present in Doppler; no hardcoded secrets in source |
+| 5 | Observability | Audit log writes verified; Platform Health Widget online |
+| 6 | Rollback | Snapshot taken pre-deploy; rollback path documented and tested |
+
+### 16.2 Scaffold Generator (Sprint 6 Phase 2)
+
+Generates per-product: SQL schemas, Vercel config, README, migration checklist. Stored in `DeploymentScaffold` entity. Consumed by Step 5 Deploy.
+
+### 16.3 Dual Deployment (Sprint 6 Phase 3)
+
+Every product has **two environments**: dev + prd. Tracked in `ProductEnvironment` entity (score history + sync reports). The Environments page at `/environments` shows both.
+
+**Drift detection:** automated diff of dev vs prd configs + schemas + dependency versions. Drift generates a remediation sprint flagged for human review. Cross-environment governance: a "Gate 1 review" required when one environment scores materially below the other.
+
+### 16.4 Live Monitor (Sprint 6 Phase 3)
+
+Real-time health checks for all deployed products. Surfaces at the Dashboard's Live Monitor card. Health probe cadence per Sprint PROTECT-1 Phase 2 (scheduled daily self-test 03:00 + anomaly detection on session-speed / score-jump / clearance-contradiction).
+
+---
+
+## 17. SIX-SECTION SIDEBAR + NAVIGATION HIERARCHY (NEW — gap #8 from Panel Q1+Q6, Sprint UX-C → ARCH-1)
+
+Sidebar canonical post-ARCH-1 (six sections; PORTFOLIO added to UX-C's original five):
+
+| # | Section | Contents |
+|---|---|---|
+| 1 | **PORTFOLIO** | Dashboard, Portfolio Dashboard, Product Registry, Runs History |
+| 2 | **CONFIGURATION** | Configuration page (unified 5-card session setup: Product, Input Method, Objective, Auto Parameters, Launch); Describe & Build, Clone & Improve, Synthesize & Build accessible directly |
+| 3 | **AUTO OPERATIONS** | Auto Runner (live execution stream for all 8 steps); reads from Configuration; no re-entry required |
+| 4 | **GUIDED OPERATIONS** | 8-step process bar with session persistence; per-step Approve / Modify / Skip flow (Sprint ARCH-1) + session context banner |
+| 5 | **MANUAL OPERATIONS** | 8-step tracker with time awareness, AI Help, user-proposal flow (user defines scope → FlowAI confirms → executes) |
+| 6 | **SETTINGS** | Audit Trail, Capability Transfer (`/capability-transfer`), Adapter Preferences (per `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` §5.4), Org Settings, Credentials, Roles |
+
+Universal tooltip coverage on all sidebar items, section headers, logo, New Session button (Sprint UX-A). Keyboard shortcuts: `Cmd+N` (new session), `Cmd+Enter` (launch), `Cmd+/` (AI assistant).
+
+> **Footnote (Rev-2.1 amendment a):** Sidebar section names (Guided Operations / Manual Operations) are UX-C historical labels and remain unchanged. They are DISTINCT from the canonical Orchestra Selection axis labels (Auto / Recommended / User-Choice) and System Operation axis labels (Hands-On / Reviewed / Hands-Off) defined in §8 / §8a. The sidebar surface preserves the UX-C names for shipping continuity; the canonical axis labels govern API contracts, documentation, and Panel discourse.
+
+---
+
+## 18. CA-n CANONICAL AMENDMENT CYCLE (NEW — gap #7 from Panel Q4+Q6)
+
+Rev-1 referenced "CA-n" without definition. Rev-2 defines the cycle canonically per `docs/SSOT_PARKING_LOT.md` workflow + ENTRY 001–002 in CANONICAL_REFERENCE §7.
+
+### 18.1 States
+
+| State | Meaning |
+|---|---|
+| `NEW` | Item logged in `docs/SSOT_PARKING_LOT.md` by W0x or CEO; awaiting next amendment cycle review |
+| `UNDER REVIEW` | Promoted to Panel consultation (write-authority granted per Locked Rule 17 + P11) |
+| `DRAFT` | Synthesis draft authored (e.g. `docs/FLOWAI_SSOT_AMENDMENT_DRAFT_<date>.md`); Panel re-review for engagement validation |
+| `ACCEPTED [commit hash]` | CEO disposition: promote. Promotion commit recorded; archive of pre-promotion SSOT created at `docs/archive/FLOWAI_SSOT-pre-<date>-promotion.md` |
+| `REJECTED [rationale]` | CEO disposition: reject. Rationale recorded inline in parking lot. |
+| `MERGED [into entry]` | Item folded into another CA-n. Original entry retained for audit history. |
+
+### 18.2 Threshold per Locked Rule 17 (MG2)
+
+≥7 of 10 reviewers ENGAGED on the question + ≥7 of 10 ENGAGED votes for promotion = supermajority cleared. Below 7/10 ENGAGED = below soft-signal floor; surface explicitly per engagement-filter §6 of `docs/PANEL_INFRASTRUCTURE.md`. CEO retains absolute veto (per Locked Rule 13).
+
+### 18.3 Archive discipline
+
+Every promotion creates a pre-promotion snapshot at `docs/archive/FLOWAI_SSOT-pre-<date>-promotion.md`. Promotion log lives in `docs/CANONICAL_HISTORY.md` SECTION 8 + pointer copy in `docs/CANONICAL_REFERENCE.md` §7. Nothing is deleted; reverts re-promote from archive.
+
+### 18.4 Ratified amendments to date (per CANONICAL_REFERENCE §7)
+
+| Entry | Date | Promotion commit | Amendments |
+|---|---|---|---|
+| ENTRY 001 | 2026-05-14 | `1d65aba` | CA-1 (geographic broadening, 9/10) + CA-2 (democratization reframe, 8/10). Sections O1, O6, ELEVATOR PITCH amended. |
+| ENTRY 002 | 2026-05-14 | (administrative) | CA-3 (replace O1 verbatim, 8/8 engaged). Text already incorporated during CA-1+CA-2. |
+
+CA-4 + CA-5 + CA-6 deferred per Panel consultation `ssot-finalization-and-agent-roadmap-priority-2026-05-14.md`.
+
+---
+
+## 19. GOVERNANCE (95/95 + Panel + SSOT Access)
+
+**95/95 threshold:** every Self-Audit dimension scored ≥95/100 with ≥95% confidence. Enforced by `src/lib/governance/ScoreEvaluator.js`. Sub-95 on any dimension halts Step 5 Deploy. Override requires admin role + audit-log entry.
+
+**Panel quorum + supermajority:** quorum ≥7/10 LIVE-OK; supermajority ≥8/10 ENGAGED. Engagement filter per `docs/PANEL_INFRASTRUCTURE.md` §6 — only ENGAGED responses count toward majority; TANGENTIAL/SILENT/EVASIVE reported separately in engagement matrix.
+
+**Panel SSOT Access Rules (CEO-ratified, canonical):**
+- W0x MUST prepend full `docs/CANONICAL_REFERENCE.md` + current canonical SSOT to every Panel consultation. No exceptions.
+- Panel consensus grants **write-authority** to propose SSOT amendments via CA-n.
+- Amendments enter CA-n cycle (§18) and require CEO ratification.
+- Sessions without SSOT attached are **invalid**; must be re-run.
+
+Three complementary governance mechanisms (per Locked Rule 3, do not conflate):
+
+| Mechanism | Owner | When |
+|---|---|---|
+| 95/95 score threshold | `ScoreEvaluator.js` | Step 4 Quality Audit + post-Self-Heal verification |
+| 6-step Product Clearance Protocol | `ClearanceRecord` entity, `/clearance` wizard | Pre-launch sign-off (§11) |
+| Monitor step 0–50 decision | Step 8 Monitor; clearance gate of last resort | End of pipeline |
+
+All three must pass independently; any single failure halts deployment (per Locked Rule 3 + Layer 1 SSOT L5).
+
+---
+
+## 20. REMEDIATION + IP PROTECTION (Sprint PROTECT-1, complements §10)
+
+Distinct from Sprint 5's Self-Protect (snapshot/rollback), the Sprint PROTECT-1 IP-protection layer covers:
+
+- **Right-click protection** on all FlowAI pages (polite notice)
+- **DevTools detection** → logged to GovernanceAuditLog
+- **Content protection:** `user-select: none` on reports and sprint instructions
+- **Legal footer** on all pages: copyright, patent pending, scraping prohibition
+- **`/terms-of-use`** + **`/privacy-policy`** pages canonical
+- **Session security:** XOR cipher for sessionStorage, 8-hour expiry
+- **Bot detection:** headless browser signatures, missing User-Agent, rapid-click detection
+- **Cloudflare Bot Management + watermarking** (per Agent #13 Self-Protection charter; embedded in every product)
+
+Self-Renewal Capability Package + Self-Protection Capability Package live at `/capability-packages/{self-renewal,self-protection}`. Install sprints for all 5 VEU products generated; new install sprints generated on demand for any other Base44 product via `/capability-transfer`.
+
+### 20.1 Reconciliation with §15 Agent #13 (Rev-2.1 amendment c)
+
+The Sprint PROTECT-1 surface above and Agent #13 (Self-Protection Agent, §15) are **different layers**, not duplicates:
+
+| Layer | What it is | Status today | Where it runs |
+|---|---|---|---|
+| **Embedded code-level Self-Protection** (Sprint PROTECT-1, this §20) | Always-on defensive code: edge defense, `robots.txt`, scraper blocking, session cipher, bot detection, content-protection CSS, DevTools detection, legal footer | LIVE — shipped in every product | Inside the product's own runtime; no agent invocation required |
+| **Agent #13 Self-Protection Agent** (orchestrating, §15 row 13) | Portfolio-level orchestration: DMCA workflows, clone detection across the catalog, Cloudflare Bot Management policy updates, watermarking strategy | DORMANT — awaits OrchestratorHub wire-in | Inside FlowAI as a step-owner / cross-step agent |
+
+**Rule of thumb:** the embedded code-level defenses are *always-on* and ship with every product (per §22 Product-Agnostic Rule via metadata); Agent #13 is *dormant* and will orchestrate portfolio-wide IP-protection decisions once it graduates. The two layers complement each other and are co-canonical.
+
+---
+
+## 21. TECHNOLOGY STACK
+
+| Concern | Choice |
+|---|---|
+| Deployment | Vercel |
+| State (hot) | Vercel KV |
+| State (cold + canonical) | Supabase |
+| Auth | Base44 auth + UserRole entity (Sprint 7.5a) |
+| Credentials vault | Doppler (`flowai/<env>/...`) per `CredentialAdapter` (commit `8e29e84`) |
+| Runtime | Node.js v24+ |
+| Module system | ESM only |
+| Build | Vite |
+| Testing | Vitest |
+| Linting | ESLint |
+| Repo | github.com/victor2081new-cloud/flowai |
+| Branch | flowai-v0.1 |
+| Browser automation | Browserless cloud (`api/_lib/crawler.js`) wrapped by Orchestra members `browserless` + `playwright` |
+
+---
+
+## 22. PRODUCT-AGNOSTIC RULE
+
+Zero product-specific code in the core engine + 25 agents + tests + configs + URL patterns + env vars. No VEU product names (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe) in agent code, BaseAgent dependencies, MessageSchema topic strings, ScoreEvaluator logic, OrchestratorHub registration, Orchestra adapters, or smoke-test fixtures. Smoke tests use **neutral fixtures only** (e.g. `flowai-renewed-<sanitised-stub>-<suffix>`).
+
+Per-product configuration lives entirely in **metadata** per §3:
+- `ProductRegistry` entity (Supabase, RLS-isolated)
+- `flowai_product_config` rows
+- Doppler vault paths `flowai/<env>/PRODUCTS_<productId>_*`
+- `BaseAgent` `productScope` constructor parameter
+
+The 6th, 10th, 100th product onboards via metadata writes alone. Zero code changes. This is the test of correctness.
+
+---
+
+## 23. WORKSTREAM ROUTING
+
+| Workstream | Role |
+|---|---|
+| W0x | Orchestrator, dispatch, lineage. |
+| W04 | Current-generation W0x (lineage W0 → W01 → W02 → W03 → W04). |
+| W1 | Credentials. |
+| W2 | Engineering + verification (built three-input renewal pipeline at commit `9b4e511`). |
+| W3 | Audit + spec drafting (this document; Self-Renewal spec at `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`; Orchestra spec at `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md`). |
+| W4 | Smoke testing + QA. |
+| W5a / W5b / W5c | Shared infrastructure, agent builds, parallel commits gated by `.wx-staging.lock` per `docs/PANEL_INFRASTRUCTURE.md` §7. |
+| W6 | Dedicated Panel workstream (runs 10-AI consultations end-to-end). |
+
+Pattern: **W5x builds. W2 verifies. W6 runs Panel. W0x dispatches. CEO pastes.**
+
+---
+
+## 24. CEO OPERATING RULES (CANONICAL W0x PROTOCOL)
+
+CEO role = **approve, click, copy, paste only — nothing else.**
+
+- W04 posts instructions in copy boxes labelled with target Claude Code window (`W5a` / `W5b` / `W5c` / `W2` / `W3` / `W4` / `W6`).
+- CEO pastes into named window. Window executes auto mode and reports back using the mandatory format below.
+- CEO pastes report back to W04. W04 summarizes and recommends action.
+
+**Mandatory report format** (canonical 2026-05-14, supersedes prior `═══════ REPORT-BACK ═══════` template):
+
+```
+════════════════════════════════════════
+[Wx] REPORT — [TASK NAME]
+════════════════════════════════════════
+[report content]
+════════════════════════════════════════
+Started:   [ISO-8601 timestamp]
+Completed: [ISO-8601 timestamp]
+Duration:  [mm:ss]
+════════════════════════════════════════
+```
+
+No exceptions. Even short acknowledgements use the banner if they are reports to W04.
+
+---
+
+## 25. LOCKED RULES (18, do not violate)
+
+Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 18 Locked Rules are canonical and binding:
+
+1. Source-of-truth hierarchy (code > canonical > user-curated memory > auto-memory) — anti-drift.
+2. Roster lock: BaseAgent.js compile-time validates EXACTLY 25 unique agent IDs.
+3. Three complementary governance mechanisms (95/95 + 6-step Clearance + Monitor 0–50) must all pass.
+4. **Orchestra Selection axis: Auto / Recommended / User-Choice (canonical).** Auto / Guided / Manual remain as historical aliases at the UX-C sidebar surface only (see §17 footnote + §8). System Operation axis labels are Hands-On / Reviewed / Hands-Off (§8a). The two axes are independent.
+5. Multi-AI peer review (10-AI Panel) mandatory for substantive outputs.
+6. Five-layer intelligence framework (L1 Functionality, L2 Operational, L3 Financial, L4 Business, L5 GTM) — mandatory tagging per `src/lib/operationsEngine.js` FIVE_LAYER_FRAMEWORK.
+7. Seven Objective Lenses (audit_demo / investor_review / full_governance / compare / combine / benchmark / launch_readiness) per `OBJECTIVE_LENSES`.
+8. LLM model standard: pipeline steps use claude_sonnet_4_6 by default; cost-aware budgeting required (§7 of Orchestra spec).
+9. Automation-first: CEO paste + approve only. No CEO-side GUI hunting or manual edits.
+10. Complete replacement files, never diffs in dispatches.
+11. Workstream routing per §23.
+12. Cadence: W0 does not impose timing; CEO sets cadence.
+13. Panel approval mandatory for every build step; CEO retains absolute veto.
+14. Real production products under continuous crawl + fix at any time; no maintenance windows.
+15. Aggressive URL + wiring verification per §6.
+16. Continuous marketplace intelligence + Self-Renewal Alerts ≥monthly.
+17. Every W0x→CEO message requiring CEO action must be Panel-reviewed (≥7/10) before delivery.
+18. Tool Intelligence Marketplace ranking formula canonical per §8 + `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md`.
+
+---
+
+## 26. CURRENT PHASE STATUS (2026-05-14, post-PROTECT-1)
+
+**Rev-1 §17 said "Phase 0 COMPLETE."** Panel Slot 7 flagged this as out of date — Sprint PROTECT-1 is the most recent canonical sprint. Rev-2 fixes per gap #14.
+
+| Subsystem | Status |
+|---|---|
+| Sprint history (CANONICAL_REFERENCE) | Sprint 5 → Sprint PROTECT-1 (most recent); plus POST-PROTECT-1 architecture + GTM Demo Stack + Agent Contract Layer (in codebase, not yet in ReleaseNotes.jsx) |
+| Branch | flowai-v0.1 |
+| Phase 0 (Foundation, commit `5dec08d`, 387 tests) | COMPLETE |
+| Agents shipped (G3-ratified roster of 25, 5 live) | #1 Lifecycle Engine, #2 Code Builder, #3 Self-Renewal, #4 Provider Onboarding, #5 End-Customer Intake — all SHIPPED-GREEN |
+| Agents dormant | 20 of 25 (per Layer 1 SSOT doability assessment) |
+| W2 three-input renewal pipeline | SHIPPED on neutral test fixtures (commit `9b4e511`); Orchestra direct-write available via fork-and-fix path |
+| Self-Governance Layer (Sprint 5) | LIVE — Self-Test, Self-Audit, Self-Protect, Self-Heal, Four Human Gates |
+| Self-Renewal + Self-Protection Capability Packages (Sprint PROTECT-1) | LIVE — install sprints for all 5 VEU products |
+| Tool Intelligence Marketplace (Sprint 8 — 65 tools / 12+1 categories) | LIVE per `src/lib/toolRegistry.js` (61 actual tools / 14 actual categories — see Open Questions §27) |
+| 6-step Clearance Protocol (Sprint 9) | LIVE at `/clearance` |
+| 6-section sidebar (post-ARCH-1) | LIVE per `src/components/layout/Sidebar.jsx` |
+| GovernanceAuditLog (Sprint HARD-1) | LIVE; `/audit-trail` read-only surface |
+| Doppler integration | LIVE (commit `8e29e84` + `ae0441c`) — 4 keys provisioned |
+| Vercel Deployment Protection bypass | LIVE (commit `c533e2d`) |
+| W03 Standing Operating Protocol | CANONICAL (commit `6e9660e`); maximum-oversight configuration |
+| CA ratifications | CA-1 (9/10), CA-2 (8/10), CA-3 (8/8 engaged) ratified. CA-4 split 4/4 — CEO disposition pending. CA-5 below engagement floor — needs re-Panel. CA-6 SPLIT — REVISE AND RE-REVIEW. |
+| Layer 1 SSOT | CANONICAL — `docs/FLOWAI_SSOT.md` (commit `fbaf881`), amended `1d65aba` |
+| Layer 2 Implementation Plan | CANONICAL — `docs/FLOWAI_IMPLEMENTATION_PLAN.md` (commit `6d0ccbb`) |
+| Layer 3 Engineering Spec | CANONICAL — `docs/FLOWAI_ENGINEERING_SPEC.md` (commit `c5720a5`) |
+| Layer 4 Building Guidance | NOT YET BUILT |
+| Self-Renewal Agent #3 graduation spec | DRAFT — `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` (commit `446ddb5`); 5 open questions for CEO disposition |
+| Orchestra Integration spec | DRAFT — `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` (commit `38b1a23`); 8 open questions for CEO disposition |
+| SSOT W04-Rev-1 | DRAFT — superseded by THIS document (Rev-2) per Panel verdict |
+| SSOT W04-Rev-2 | DRAFT (THIS document) — awaiting W6 re-Panel |
+| Next gate | (1) W6 re-Panel of Rev-2; (2) CEO dispositions on §27 Open Questions; (3) Production Hardening (RLS + observability + CI/CD) before remaining 20 agents — Panel Q4 verdict from 2026-05-14 consolidated consultation, plurality (b) Production Hardening; (4) Layer 4 Building Guidance |
+
+---
+
+## 27. OPEN QUESTIONS (areas where existing canonical sources are unclear)
+
+Items where canonical evidence is incomplete or contradictory — flagged for CEO disposition or W6 re-Panel rather than silently resolved.
+
+1. **Tool count: 65 vs 61.** CANONICAL_REFERENCE Sprint 8 says "65 tools pre-loaded across 12 categories"; current `src/lib/toolRegistry.js` shows **61 tools across 14 categories**. Either 4 tools were removed without a release note OR the Sprint 8 number was aspirational. Code wins per Locked Rule 1; Rev-2 reflects 61/14, but canonical history should reconcile.
+
+2. **Ops Runner #21–#25 step assignments.** BaseAgent.js declares the 5 Ops Runners as embedded step-owners but does not pin which step each owns. Layer 2 plan PG1 hints #23 = Cost Governor; others unspecified. Engineering dispatch needs to fix the step bindings before any Ops Runner can ship.
+
+3. **Pre-Sprint-5 era ("flow builder paradigm") archival status.** CANONICAL_REFERENCE §3 confirms the era existed (legacy routes redirected in Sprint HARD-1; entities SavedFlow / FlowVersion / FlowRun / FlowComment still defined; `components/designer/*` and `components/flows/*` still in tree as dead code). No record of when superseded. Rev-2 SSOT does not include the flow-builder paradigm because it is dead code in-place. Open: should the dead code be formally archived (deleted with a tombstone commit) or left as historical evidence? Panel Slot 5 raised "acknowledgement of the pre-Sprint 5 visual flow builder paradigm and its supersession" as a missing item — Rev-2 acknowledges via this Open Question rather than dedicating a canonical section.
+
+4. **Multi-LLM routing decision engine.** CANONICAL_REFERENCE Section 2 declares "NO RECORD FOUND" for centralised routing logic. Agent #4 Provider Onboarding charter references it but agent is DORMANT and Rev-2 does not include a canonical "multi-LLM routing engine" section. Open: build per Agent #4 graduation, or defer per Panel Q4 Production-Hardening-first verdict.
+
+5. **Capability Transfer as L4 — completeness check.** §4 elevates Capability Transfer to Level 4. Sprint PROTECT-1 shipped Self-Renewal + Self-Protection packages, but only 2 of an unbounded set. Open: is Capability Transfer canonically the L4 surface for ALL future capabilities (i.e. every new agent / governance feature ships as a transferable package), or is it specific to those two packages? Affects Agent #13 architecture + future Ops Runner shipping.
+
+6. **Orchestra Selection axis rename — code migration cost.** §8 renames "Guided" → "Recommended" and "Manual" → "User-Choice" for the Orchestra Selection axis. Code currently uses `'guided'` and `'manual'` enum strings. Rev-2 says engineering may retain enum strings if migration cost is high. Open: should the rename be source-of-truth (rename enums) or surface-of-truth (rename only labels)? Affects `AgenticModeContext.jsx` + `OrchestrationContext.jsx` + many components.
+
+7. **Per-mode role gates on Human Gates.** §13 + §10.2 assert that the Approval Gate (95/95 override) is admin-only. Sprint 7.5a UserRole entity defined admin / operator / client but didn't pin role-to-gate mapping explicitly. Open: confirm role-gate mapping is canonical as specified, or is operator allowed to Override 95/95?
+
+8. **CA-4 + CA-5 + CA-6 dispositions.** Deferred from `ssot-finalization-and-agent-roadmap-priority-2026-05-14.md` consultation. CA-4 = Year-1 → Year-6 user journey for O6; CA-5 = generalise E4 commercial rail beyond Stripe Connect; CA-6 = new MG9 commercial-architecture section. Open: dispose per `docs/FLOWAI_SSOT_AMENDMENT_DRAFT_2026-05-14.md`.
+
+9. **Pre-Rev-1 axis labels in shipped code.** UI shipped UX-C as "Auto Operations / Guided Operations / Manual Operations" (sidebar sections, page titles). Rev-2 renames to Orchestra-Selection-axis labels. Open: should shipped sidebar labels also rename to "Auto Ops / Recommended Ops / User-Choice Ops", or do the sidebar sections stay as Sprint UX-C named them (Auto / Guided / Manual) while only the Orchestra picker uses the new labels? This is the gap between "what axes exist" (Rev-2 canonical) and "what users see in the sidebar" (UX-C canonical).
+
+10. **Layer 4 Building Guidance status.** Layer 1, 2, 3 SSOT all canonical. Layer 4 (`docs/FLOWAI_BUILDING_GUIDANCE.md`) was never built. Rev-2 references the 4-layer SSOT plan but does not author Layer 4 contents. Open: when is Layer 4 produced + Panel-reviewed?
+
+---
+
+*End of W04-Rev-2 draft. 14 Panel-cited gaps from Rev-1 addressed (§3 metadata-driven, §4 L4 Capability Transfer, §6 resolution clarification, §8 / §8a axis rename, §10 Self-Governance Layer, §11 6-step Clearance, §12 mode-to-pipeline wiring, §13 auth + roles, §14 GovernanceAuditLog, §15 25-agent roles + OrchestratorHub-vs-Orchestra, §16 deployment infra, §17 6-section sidebar, §18 CA-n cycle, §26 phase status). 10 Open Questions remaining for CEO disposition or W6 re-Panel.*
