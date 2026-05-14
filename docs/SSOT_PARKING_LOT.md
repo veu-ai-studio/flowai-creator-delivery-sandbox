@@ -25,4 +25,12 @@ Each entry includes:
 
 ---
 
+### ENTRY 002 — 2026-05-14
+- **Source**: CEO 2026-05-14 (in response to W1 BROWSERLESS_API_KEY sync dispatch, after observing that FlowAI's current crawler stops at homepage-level content)
+- **Description**: FlowAI crawler must perform AGGRESSIVE EXHAUSTIVE traversal of every URL provided. Scope per URL includes: every link, every card, every modal, every page, every interactive engine, every AI agent surface. Partial crawls or homepage-only fetches are insufficient. This is the GTM-readiness test bar for VEU's 5 products (saigedemo, pressai, reltwin, smscommunities, mybirthsafe) AND for FlowAI itself dogfooding on its own URL. Required capabilities: full-site spider with depth control, modal/dialog state exploration, authenticated-session crawling, JS interaction simulation (clicks, scrolls, form interactions), AI agent surface probing (chat inputs, prompt boxes), per-route Quality Audit. Today's simple-fetch + Browserless setup is the minimum viable crawler, not the GTM-ready one.
+- **Trajectory implications**: Agent #21 Crawl Conductor (DORMANT) becomes critical path; Agent #6 Research scope must expand beyond homepage fetch; Playwright pool (v3 trajectory Step 6) required for interaction simulation.
+- **Disposition**: NEW (awaiting next SSOT amendment cycle review)
+
+---
+
 *File created 2026-05-14 by W5b per W03 dispatch. First entry logged at creation.*
