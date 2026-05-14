@@ -1,0 +1,379 @@
+{
+  "schema": "executor-registry-pattern-ratification.sidecar.v1",
+  "startedAt": "2026-05-14T23:08:37.542Z",
+  "finishedAt": "2026-05-14T23:11:17.773Z",
+  "panel_audit": {
+    "providerCounts": {
+      "openai": 1,
+      "anthropic": 1,
+      "google": 1,
+      "mistralai": 1,
+      "cohere": 1,
+      "qwen": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "moonshotai": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 1,
+    "slots": 10
+  },
+  "panel_size": 10,
+  "bundle_size": 69091,
+  "liveOk": 6,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": false,
+    "supermajority_achievable": false,
+    "final_live_ok": 6,
+    "backups_applied": 1,
+    "primary_timeout_ms": 120000,
+    "backup_retry_timeout_ms": 150000
+  },
+  "tally": {
+    "engagedTotal": 5,
+    "tangential": 1,
+    "silent": 4,
+    "evasive": 0,
+    "perQuestion": {
+      "Q1": {
+        "(a)": 5,
+        "(b)": 0,
+        "(c)": 0,
+        "(d)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      },
+      "Q2": {
+        "(a)": 5,
+        "(b)": 0,
+        "(c)": 0,
+        "(d)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      },
+      "Q3": {
+        "(a)": 1,
+        "(b)": 4,
+        "(c)": 0,
+        "(d)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      }
+    },
+    "totalInsuff": 0
+  },
+  "per_question_verdicts": {
+    "Q1": {
+      "verdict": "UNANIMOUS_(a)",
+      "detail": "5 of 5 ENGAGED on (a) (unanimous)",
+      "topOption": "(a)",
+      "topCount": 5
+    },
+    "Q2": {
+      "verdict": "UNANIMOUS_(a)",
+      "detail": "5 of 5 ENGAGED on (a) (unanimous)",
+      "topOption": "(a)",
+      "topCount": 5
+    },
+    "Q3": {
+      "verdict": "PLURALITY_(b)",
+      "detail": "4 of 5 ENGAGED on (b) (below 7/10 quorum)",
+      "topOption": "(b)",
+      "topCount": 4
+    }
+  },
+  "high_conviction": [
+    "Q1",
+    "Q2"
+  ],
+  "low_conviction": [
+    "Q3"
+  ],
+  "backup_fires": [
+    {
+      "slot": 6,
+      "fired": true,
+      "primary_provider": "openrouter",
+      "primary": "openrouter:qwen/qwen-2.5-72b-instruct",
+      "replacement_provider": "openrouter",
+      "replacement": "openrouter:deepseek/deepseek-r1",
+      "primary_error": "openrouter 400: {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\\"code\\\":400,\\\"reason\\\":\\\"INVALID_REQUEST_BODY\\\",\\\"message\\\":\\\"model: qwen/qwen-2.5-72b-instruct does not support endpoint:"
+    }
+  ],
+  "ssot_conflicts": [
+    {
+      "slot": 4,
+      "conflict": "Q3 conflicts with §14 GovernanceAuditLog, as the dual-registry pattern may introduce audit-trail bifurcation risks."
+    }
+  ],
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "Q1": {
+          "pick": "(a)",
+          "rationale": "EXECUTOR_REGISTRY cleanly preserves the 25-ID partition by living in a separate namespace with its own invariants (validateExecutors() checks key uniqueness, agentId 1..25, BY_ID link, and valid mode) and lookup via getExecutor(). Agent3SelfRenewalExecutor.charter() explicitly sources from getExecutor('self-renewal-executor'), satisfying Locked Rule 2 in SSOT §25 (EXACTLY 25 unique agent IDs) while enabling elevated authority.",
+          "amendment": "",
+          "risks": null
+        },
+        "Q2": {
+          "pick": "(a)",
+          "rationale": "SSOT §15 currently documents AgentRegistry as the SSOT for agent metadata, but not the sibling EXECUTOR_REGISTRY; W5a introduces it explicitly to support the Q2=(b) split-charter design. Amending §15 now to codify the dual-registry pattern (and that some BaseAgent.charter() calls source via getExecutor()) prevents drift and aligns with Locked Rule 1 (source-of-truth clarity).",
+          "amendment": null,
+          "risks": null
+        },
+        "Q3": {
+          "pick": "(b)",
+          "rationale": "There are manageable risks of drift and surface confusion between step-owner agents and executors, and potential audit-log taxonomy bifurcation. While validateExecutors() enforces linkage to a real agent (BY_ID[e.agentId]) and the registry comment sets mode='cross-step', formal safeguards will help as more executors are added and to keep GovernanceAuditLog (§14) consistent.",
+          "amendment": null,
+          "risks": [
+            "Enforce in validateExecutors(): executors must be mode='cross-step' and include 'requires_human_gate' in authority to avoid accidental step-owner competition.",
+            "Add a cross-link index (executorsByAgentId) and surface in admin UI; require an explicit registration ceremony that logs GovernanceAuditLog 'executor_registered' per §14.",
+            "Normalize audit events: emit agent.execution/agent.deploy with an executor=true flag or executor.* aliases so logs remain query-consistent across both namespaces.",
+            "Add unit tests ensuring BaseAgent.charter() for executors pulls only via getExecutor() and that AGENT_REGISTRY never contains executor entries (partition guard, SSOT §25).",
+            "Lint for topic collisions: assert produces[] topics from an executor do not duplicate step-owner semantics improperly (except the intended 3.renewal.* family)."
+          ]
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "Pattern aligns with CEO disposition Q2=(b) and preserves the §25 Locked Rule 2 roster invariant while enabling the Agent #3 graduation path.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-5"
+    },
+    {
+      "slot": 2,
+      "state": "SILENT",
+      "perQuestion": {},
+      "conflicts": [],
+      "degraded": true,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "Q1": {
+          "pick": "(a)",
+          "rationale": "The sibling-namespace pattern is a clean solution that respects the 25-agent roster invariant defined in Rev-2.1 Locked Rule 2. The W5a commit summary provides clear rationale, and the `EXECUTOR_REGISTRY` implementation includes its own independent validator which correctly checks that the associated primary agent exists, ensuring architectural integrity.",
+          "amendment": "",
+          "risks": null
+        },
+        "Q2": {
+          "pick": "(a)",
+          "rationale": "This is a significant architectural pattern governing agent authority that directly relates to the 25-agent roster in SSOT Rev-2.1 §15. To maintain the SSOT as the single source of truth, the existence of this dual-registry system must be documented via the CA-n cycle, making the rules of the system explicit rather than leaving them as an undocumented implementation detail.",
+          "amendment": null,
+          "risks": null
+        },
+        "Q3": {
+          "pick": "(b)",
+          "rationale": "The dual-registry model introduces risks of cognitive overhead for developers and potential fragmentation in the audit trail. While the `EXECUTOR_REGISTRY` validator provides some safety, the separation of concerns is not easily discoverable from the `AGENT_REGISTRY` alone, and audit queries could miss executor actions if not designed carefully.",
+          "amendment": null,
+          "risks": [
+            "Risk: Developer confusion/discoverability. Mitigation: Mandate cross-linking comments in AGENT_REGISTRY for any agent that has a corresponding executor.",
+            "Risk: Audit trail fragmentation. Mitigation: Ensure all audit UIs and queries filtering by agentId correctly union events from both the primary agent and its associated executor, leveraging the `agentId` field in `ExecutorRecord`.",
+            "Risk: Authority creep. Mitigation: Formally state that additions to EXECUTOR_REGISTRY require the same level of Panel review and scrutiny as changes to the primary agent roster."
+          ]
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "The EXECUTOR_REGISTRY is a sound engineering solution to a governance constraint. I ratify the pattern but strongly recommend it be formally documented in the SSOT and that mitigations for discoverability and audit trail complexity are implemented.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.5-pro"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "Q1": {
+          "pick": "(a)",
+          "rationale": "The EXECUTOR_REGISTRY pattern effectively maintains the 25-agent partition invariant while allowing for elevated-authority executors. This is crucial for agents like Agent #3 that need to operate in multiple modes without violating the single-authority-per-charter rule, as outlined in the W5a commit summary and the EXECUTOR_REGISTRY slice of src/lib/agents/_registry.ts.",
+          "amendment": "",
+          "risks": null
+        },
+        "Q2": {
+          "pick": "(a)",
+          "rationale": "Documenting the EXECUTOR_REGISTRY pattern in §15 of the SSOT ensures that future developments adhere to this canonical pattern, maintaining consistency and clarity across the system. This aligns with the Product-Agnostic Rule (§22) and the need for a metadata-driven architecture (§3).",
+          "amendment": null,
+          "risks": null
+        },
+        "Q3": {
+          "pick": "(b)",
+          "rationale": "While the dual-registry pattern is clean, there are potential risks such as drift, surface confusion, and audit-trail bifurcation. These risks can be mitigated by ensuring strict validation and clear documentation, as seen in the EXECUTOR_REGISTRY validator invariants and the charter header of Agent3SelfRenewalExecutor.js.",
+          "amendment": null,
+          "risks": [
+            "Drift: Mitigate by ensuring strict validation and clear documentation.",
+            "Surface confusion: Mitigate by maintaining clear and consistent documentation.",
+            "Audit-trail bifurcation: Mitigate by ensuring that all actions are logged in a unified audit trail."
+          ]
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [
+        "Q3 conflicts with §14 GovernanceAuditLog, as the dual-registry pattern may introduce audit-trail bifurcation risks."
+      ],
+      "overallNotes": "",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "TANGENTIAL",
+      "perQuestion": {
+        "Q1": {
+          "pick": "(a)",
+          "rationale": "The EXECUTOR_REGISTRY pattern is a clean and well-designed solution for managing split-charter agents. It maintains the integrity of the 25-agent partition and single-authority-per-charter invariant, while providing a separate namespace for executors with distinct authority and mode. The pattern is also self-contained, with its own validator and getExecutor lookup, ensuring that it can be used independently without affecting the AGENT_REGISTRY.",
+          "amendment": "",
+          "risks": null
+        },
+        "Q2": {
+          "pick": "(a)",
+          "rationale": "The dual-registry pattern is a significant architectural change and should be documented in the SSOT. By proposing a CA-N amendment in the same cycle, the pattern can be formally documented and ratified before further executors are added, ensuring that the SSOT remains up-to-date and accurate.",
+          "amendment": null,
+          "risks": null
+        },
+        "Q3": {
+          "pick": "(b)",
+          "rationale": "While the EXECUTOR_REGISTRY pattern is well-designed, there are potential risks associated with its use. These include drift, surface confusion, and audit-trail bifurcation. To mitigate these risks, the following safeguards should be implemented: (1) Regularly validate the integrity of the registry to ensure that it remains consistent and up-to-date; (2) Provide clear documentation and training to ensure that developers understand the purpose and usage of the registry; (3) Implement a robust logging and monitoring system to track changes and detect any issues or anomalies.",
+          "amendment": null,
+          "risks": [
+            "Regularly validate the registry to ensure integrity and consistency.",
+            "Provide clear documentation and training to developers.",
+            "Implement robust logging and monitoring for change tracking and anomaly detection."
+          ]
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "The EXECUTOR_REGISTRY pattern is a well-designed solution for managing split-charter agents, and the proposed amendments and mitigations will help ensure its successful implementation and ongoing maintenance.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:cohere/command-r-plus-08-2024"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "Q1": {
+          "pick": "(a)",
+          "rationale": "The EXECUTOR_REGISTRY pattern preserves the 25-agent partition invariant (Locked Rule 2) by creating a separate namespace. CEO disposition Q2=(b) explicitly approved the split-charter mechanism, and the validator ensures no agentId collisions while linking to AGENT_REGISTRY (§15.2).",
+          "amendment": "",
+          "risks": null
+        },
+        "Q2": {
+          "pick": "(a)",
+          "rationale": "§15 documents registry patterns including MessageBus/OrchestratorHub/AgentRegistry. EXECUTOR_REGISTRY is a core architectural extension preserving the 25-agent invariant (BaseAgent.js validator), warranting immediate CA-N documentation per §18 CA-n cycle to prevent pattern drift.",
+          "amendment": null,
+          "risks": null
+        },
+        "Q3": {
+          "pick": "(b)",
+          "rationale": "Risks include audit-trail bifurcation (GovernanceAuditLog topics emitted separately per §14) and confusion between step-owner vs executor authorities. Mitigations: enforce shared agentId in audit topics and document authority boundaries in Agent3SelfRenewalExecutor's charter header.",
+          "amendment": null,
+          "risks": [
+            "Audit bifurcation: Enforce agentId inclusion in GovernanceAuditLog topics",
+            "Authority confusion: Document mode differences in §15 (step-owner RECOMMEND_ONLY vs executor AUTO_WRITE_INTERNAL)",
+            "Validation drift: Maintain EXECUTOR_REGISTRY's independent validator checking agentId existence in AGENT_REGISTRY"
+          ]
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 7,
+      "state": "SILENT",
+      "perQuestion": {},
+      "conflicts": [],
+      "degraded": true,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "SILENT",
+      "perQuestion": {},
+      "conflicts": [],
+      "degraded": true,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "SILENT",
+      "perQuestion": {},
+      "conflicts": [],
+      "degraded": true,
+      "parseFailure": false,
+      "modelTag": "openrouter:moonshotai/kimi-k2.6"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "Q1": {
+          "pick": "(a)",
+          "rationale": "EXECUTOR_REGISTRY validator invariants + getExecutor() lookup in the _registry.ts slice preserve the Locked Rule 2 25-ID partition (BaseAgent.js compile-time validation) while allowing the split-charter authority array for Agent3SelfRenewalExecutor; W5a commit 176d870 and charter header explicitly state 'sourced from EXECUTOR_REGISTRY rather than AGENT_REGISTRY' and 'single-authority-per-charter invariant is preserved'.",
+          "amendment": "",
+          "risks": null
+        },
+        "Q2": {
+          "pick": "(a)",
+          "rationale": "Rev-2.1 §15 already documents AgentRegistry and OrchestratorHub wiring; adding the sibling EXECUTOR_REGISTRY namespace (with its own validator and getExecutor) is a direct extension of the same _registry.ts file introduced in commit 176d870 and should be recorded via CA-N in the same cycle to keep the 25-agent roster + executor split canonical.",
+          "amendment": null,
+          "risks": null
+        },
+        "Q3": {
+          "pick": "(a)",
+          "rationale": "The attached registry slice, W5a summary, and Agent3SelfRenewalExecutor charter header all confirm independent validators, no collision with BY_ID or validateRoster(), and explicit preservation of the 25-ID partition; no drift or audit bifurcation is introduced.",
+          "amendment": null,
+          "risks": []
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "topic": "Ratify EXECUTOR_REGISTRY as canonical pattern for future split-charter agents",
+      "a": "Ratify as canonical (sibling namespace + own validator + getExecutor lookup is the FlowAI pattern for elevated-authority executors)",
+      "b": "Ratify with amendment (specify amendment — e.g., require explicit registration ceremony, cross-link to AGENT_REGISTRY, etc.)",
+      "c": "Reject — propose alternative pattern (e.g., authority-tier promotion within AGENT_REGISTRY, or a single unified registry with authority partitioning)",
+      "d": "Defer until 2nd split-charter agent emerges (single-data-point ratification is premature; revisit when Agent #N second executor is needed)"
+    },
+    {
+      "id": "Q2",
+      "topic": "SSOT Rev-2.1 amendment to formally document EXECUTOR_REGISTRY in §15",
+      "a": "Yes — propose CA-N amendment in same cycle (document the dual-registry pattern in §15 before further executors land)",
+      "b": "Yes but defer to CA-N+1 cycle (commit pattern now; document in next amendment window so it lands canonically with its first user but doesn't block this dispatch)",
+      "c": "No — pattern is implementation detail, not SSOT-worthy (registry-level mechanics belong in `_registry.ts`; SSOT documents agents, not registry structure)",
+      "d": "No — keep EXECUTOR_REGISTRY out of SSOT for plausible-deniability optionality (so the pattern can be revised without an SSOT amendment cycle)"
+    },
+    {
+      "id": "Q3",
+      "topic": "Architectural risks with the dual-registry pattern",
+      "a": "No identified risks — proceed (the namespace separation is clean; validators are independent; partition invariant preserved)",
+      "b": "Yes — risks identified; specify mitigations (drift / surface confusion / audit-trail bifurcation are plausible; propose specific safeguards)",
+      "c": "Yes — risks identified; halt further executor additions until mitigated (do not add a 2nd executor before the risks are addressed)",
+      "d": "Insufficient information (need additional artifacts beyond what was attached to judge)"
+    }
+  ]
+}
