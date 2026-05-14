@@ -1,9 +1,10 @@
-# Orchestra Integration — Architectural Spec
+# Orchestra Integration — Architectural Spec (Rev-2 conformant)
 
-**Status:** DRAFT (read-only architectural spec). NOT canonical SSOT. NOT engineering-ready — Open Questions §11 require CEO disposition first.
+**Status:** DRAFT (read-only architectural spec). NOT canonical SSOT. NOT engineering-ready — Open Questions §12 require CEO disposition first.
 **Author:** W3, 2026-05-14.
+**Supersedes:** prior version at commit `38b1a23` (which predated SSOT W04-Rev-2 and used the old `Auto / Guided / Manual` Orchestra axis labels). This revision conforms to SSOT W04-Rev-2 §8 (Orchestra Selection axis renamed to `Auto / Recommended / User-Choice`) and §15.3 (OrchestratorHub vs Orchestra boundary).
 **Lineage:** Closes parking-lot ENTRY 004 (10-member AI Orchestra) at the engineering-spec level. Implements Locked Rule 18 (Tool Intelligence Marketplace ranking) for the per-pipeline-step Orchestra surface. Builds on `src/lib/orchestra/*` adapters shipped by W2 at commit `9b4e511`.
-**Inputs read:** `docs/FLOWAI_SSOT.md` (canonical 2026-05-11), `docs/SSOT_PARKING_LOT.md` ENTRY 004, W03 opening package Locked Rule 18, `src/lib/orchestra/{index,member,claudeCode,vercel,browserless,playwright,stubs}.js`, `src/lib/operationsEngine.js` (canonical 8-step `STEPS` array), `src/lib/toolRegistry.js` (61-tool downstream Marketplace), `src/pages/AutoRunner.jsx` (mode wiring), `api/_lib/{remediationEngine,sourceAcquisition,issueDetector}.js`.
+**Anchor canonical inputs read:** `docs/SSOT_W04_REV2_DRAFT.md` (commit `10890b9`), `docs/FLOWAI_SSOT.md` (canonical 2026-05-11 + CA-1/CA-2/CA-3 ratified), `docs/SSOT_PARKING_LOT.md` ENTRY 004, W03 opening package Locked Rule 18, `src/lib/orchestra/{index,member,claudeCode,vercel,browserless,playwright,stubs}.js`, `src/lib/operationsEngine.js` (canonical 8-step `STEPS` array), `src/lib/toolRegistry.js` (61-tool downstream Marketplace), `src/lib/agents/orchestrator/OrchestratorHub.ts`, `src/lib/agents/MessageBus.ts`, `src/pages/AutoRunner.jsx` (mode wiring), `api/_lib/{remediationEngine,sourceAcquisition,issueDetector}.js`.
 **Scope:** read-only research + doc writing. No code changes. No canonical SSOT changes. No adapter wiring.
 
 ---
@@ -21,6 +22,7 @@
 | `src/lib/orchestra/browserless.js` | WIRED — wraps `api/_lib/crawler.js` `crawl` + `screenshot` | 47 |
 | `src/lib/orchestra/playwright.js` | WIRED — wraps `api/_lib/crawler.js` `richCapture` | 32 |
 | `src/lib/orchestra/stubs.js` | 6 deferred stubs (base44, lovable, v0, cursor, replit, openrouter) | 32 |
+| `src/lib/agents/orchestrator/OrchestratorHub.ts` | WIRED — agent dispatcher (separate concern; see §6) | (existing) |
 
 ### 1.2 The `OrchestraMember` interface (canonical contract)
 
@@ -59,17 +61,19 @@ deploy · crawl · screenshot · interact
 
 ### 1.4 The gap (what this spec adds)
 
-The current dispatcher is **hard-coded preferences** with no ranking, no health, no cost, no mode awareness, no UI surface. Locked Rule 18 requires:
+The current dispatcher is **hard-coded preferences** with no ranking, no health, no cost, no mode awareness, no UI surface, and no formal handshake with the agent-side `OrchestratorHub`. Locked Rule 18 requires:
 
-> Top 3 tools attached to each step result as `recommended_tools[]`. Auto: FlowAI selects #1-ranked tool per step automatically. Guided: user sees ranked list with FlowAI's pick highlighted; user accepts/overrides. Manual: user sees full ranked list per step and selects independently. Continuous ranking update via Agents #11 + #15 + #17 per Locked Rule 16.
+> Top 3 tools attached to each step result as `recommended_tools[]`. Auto: FlowAI selects #1-ranked tool per step automatically. Recommended: user sees ranked list with FlowAI's pick highlighted; user accepts/overrides. User-Choice: user sees full ranked list per step and selects independently. Continuous ranking update via Agents #11 + #15 + #17 per Locked Rule 16.
 
-This spec is the architectural plan to graduate the dispatcher from a hard-coded lookup table into a ranked, mode-aware, health-monitored, cost-tracked, fallback-chained Orchestra surface.
+(Locked Rule 18 verbatim used `Guided` / `Manual`; SSOT W04-Rev-2 §8 renamed those surfaces to `Recommended` / `User-Choice` to eliminate the Manual collision with the System Operation axis §8a. The ranking semantics are unchanged.)
+
+This spec is the architectural plan to graduate the dispatcher from a hard-coded lookup table into a ranked, mode-aware, health-monitored, cost-tracked, fallback-chained Orchestra surface that integrates cleanly with the agent-side `OrchestratorHub`.
 
 ---
 
 ## 2. The 10-Member Orchestra (canonical roster)
 
-Per parking-lot ENTRY 004 (CEO 2026-05-14):
+Per SSOT W04-Rev-2 §8 + parking-lot ENTRY 004 (CEO 2026-05-14):
 
 > "FlowAI operates a 10-member AI Orchestra at each pipeline step: Claude Code, Base44, Lovable, v0, Cursor, OpenRouter, Browserless, Anthropic API direct, Replit, Playwright."
 
@@ -84,13 +88,13 @@ Per parking-lot ENTRY 004 (CEO 2026-05-14):
 | 5 | Cursor | `cursor` | `stubs.js` | NO (stub) |
 | 6 | OpenRouter | `openrouter` | `stubs.js` | NO (stub) |
 | 7 | Browserless | `browserless` | `browserless.js` | YES |
-| 8 | Anthropic API direct | **NEW** | (to be added) | N/A — see §11 Q2 |
+| 8 | Anthropic API direct | **NEW** | (to be added) | N/A — see §12 Q2 |
 | 9 | Replit | `replit` | `stubs.js` | NO (stub) |
 | 10 | Playwright | `playwright` | `playwright.js` | YES |
 
-**Note 1 — Vercel exclusion.** ENTRY 004's list omits Vercel, but `vercel.js` is already wired and powers the `deploy` + `source-retrieval` capabilities critical to fork-and-fix. This spec keeps Vercel as a wired 11th internal member (not surfaced in the user-facing per-step picker) until CEO resolves §11 Q1.
+**Note 1 — Vercel exclusion.** ENTRY 004's list omits Vercel, but `vercel.js` is already wired and powers the `deploy` + `source-retrieval` capabilities critical to fork-and-fix. This spec keeps Vercel as a wired 11th internal member (not surfaced in the user-facing per-step picker) until CEO resolves §12 Q1.
 
-**Note 2 — Claude Code vs Anthropic API direct.** Today `claudeCode.js` is the only Anthropic adapter and it specialises in two actions (`code-patch`, `generate-from-scratch`) with code-gen-specific prompting. ENTRY 004 lists Claude Code AND Anthropic API direct as separate members. This spec treats them as two members with different prompting profiles: **Claude Code** = code-gen specialist (current behaviour); **Anthropic API direct** = generic Messages API for `analyze`, `summarize`, `extract-structured` (new). See §11 Q2.
+**Note 2 — Claude Code vs Anthropic API direct.** Today `claudeCode.js` is the only Anthropic adapter and it specialises in two actions (`code-patch`, `generate-from-scratch`) with code-gen-specific prompting. ENTRY 004 lists Claude Code AND Anthropic API direct as separate members. This spec treats them as two members with different prompting profiles: **Claude Code** = code-gen specialist (current behaviour); **Anthropic API direct** = generic Messages API for `analyze`, `summarize`, `extract-structured` (new). See §12 Q2.
 
 ### 2.2 Capability declarations (target state)
 
@@ -113,7 +117,7 @@ Per parking-lot ENTRY 004 (CEO 2026-05-14):
 - `analyze` — produce a structured analysis envelope from an artifact (LLM reasoning step).
 - `summarize` — compress an artifact to a bounded-length summary.
 - `extract-structured` — extract a typed object from text (e.g. `{ productConcept, targetUsers, coreClaims[] }`).
-- `score` — produce a numeric quality score against a rubric (used by Step 4 QA Audit).
+- `score` — produce a numeric quality score against a rubric (used by Step 4 QA Audit; ties to the 5-dimension Self-Audit per Rev-2 §10.1).
 - `build` — adapter-native build path (Base44 / Replit project build).
 - `design` — adapter-native UI design generation (v0 / Lovable / Base44 specialise here).
 
@@ -123,7 +127,7 @@ Adding a capability string requires updating `member.js`'s "Known capability str
 
 ## 3. Per-Step Capability Matrix
 
-The canonical 8 pipeline steps from `src/lib/operationsEngine.js` `STEPS`:
+The canonical 8 pipeline steps from `src/lib/operationsEngine.js` `STEPS` (per Rev-2 §9, code-canonical order):
 
 | Step | Key | Required capabilities | Eligible adapters |
 |---|---|---|---|
@@ -136,7 +140,7 @@ The canonical 8 pipeline steps from `src/lib/operationsEngine.js` `STEPS`:
 | 7. Go To Market | `gtm` | `analyze`, `summarize`, `crawl` | anthropic-api, openrouter, browserless, playwright |
 | 8. Monitor | `monitor` | `analyze`, `interact`, `crawl` | anthropic-api, openrouter, playwright, browserless |
 
-**Eligibility rule:** an adapter is eligible for a step iff at least one of its declared `capabilities[]` matches a step-required capability AND the adapter is `wired === true` AND its health is not `red` (see §6).
+**Eligibility rule:** an adapter is eligible for a step iff at least one of its declared `capabilities[]` matches a step-required capability AND the adapter is `wired === true` AND its health is not `red` (see §7).
 
 **Multi-capability steps:** several steps need multiple capabilities (e.g. Research needs both `crawl` and `analyze`). The picker surfaces adapters per capability slot, not per step — the UI shows a sub-picker for each required capability, and the step run uses one adapter per slot. Engineering dispatch can simplify by collapsing to one picker per step (using the highest-ranked adapter for the **primary** capability of that step) as a v1 if multi-slot proves heavy.
 
@@ -177,7 +181,7 @@ Clamped to [0.0, 1.0].
 
 ### 4.3 Bootstrap baselines (canonical starting values)
 
-Set at engineering-dispatch time, ratified by Panel before the picker ships. Suggested starting values (CEO disposition expected — §11 Q3):
+Set at engineering-dispatch time, ratified by Panel before the picker ships. Suggested starting values (CEO disposition expected — §12 Q3):
 
 | Adapter | code-patch | generate-from-scratch | analyze | summarize | crawl | interact | deploy | design | source-retrieval |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -225,13 +229,17 @@ After `rank_score` sort:
 
 ---
 
-## 5. Auto / Guided / Manual Mode Contract
+## 5. Auto / Recommended / User-Choice Mode Contract (Orchestra Selection axis — Rev-2 §8)
 
-### 5.1 Mode definitions (from Locked Rule 18, verbatim)
+### 5.1 Mode definitions (per Rev-2 §8, supersedes Rev-1 Auto/Guided/Manual)
 
-> Auto: FlowAI selects #1-ranked tool per step automatically.
-> Guided: user sees ranked list with FlowAI's pick highlighted; user accepts/overrides.
-> Manual: user sees full ranked list per step and selects independently.
+> **Auto:** FlowAI selects the #1-ranked adapter per step automatically.
+> **Recommended:** user sees ranked list with #1 highlighted; can accept or override.
+> **User-Choice:** user sees full eligible list; must pick before run.
+
+Rev-2 §8 renamed "Guided" → "Recommended" and "Manual" → "User-Choice" to eliminate the **Manual collision** with the System Operation axis (Rev-2 §8a uses Hands-On / Reviewed / Hands-Off). The ranking semantics defined here are unchanged; only the user-facing labels and (optionally — see §12 Q6) the enum strings change.
+
+**Enum migration discipline (engineering decision per §12 Q6).** Option A — full rename: enum strings `'guided'` and `'manual'` migrate to `'recommended'` and `'user_choice'`; affects `AgenticModeContext.jsx`, `OrchestrationContext.jsx`, persisted `flowai_adapter_preferences.mode` rows, and the UI mode-selector. Option B — surface-only rename: enum strings unchanged; only user-facing labels (`<ModeSelector>` button text, picker headings) updated; a small mode-label map (`{ 'guided': 'Recommended', 'manual': 'User-Choice' }`) lives in one component. This spec is written assuming Option A is canonical, but the implementation can ship as Option B if migration cost on persisted rows is high.
 
 ### 5.2 Public API contract
 
@@ -264,11 +272,11 @@ export async function getRankedAdapters({
 }
 
 export async function selectAdapter({ stepKey, capability, mode, productId?, userPick? }) {
-  // Mode: 'auto' | 'guided' | 'manual'
-  //   auto    → returns ranked[0].memberId
-  //   guided  → if userPick provided AND userPick ∈ ranked, returns userPick;
-  //              otherwise returns ranked[0].memberId AND surfaces "highlighted" flag
-  //   manual  → requires userPick; throws if not provided
+  // Mode: 'auto' | 'recommended' | 'user_choice'   (engineering enums; user-facing labels per §5.1)
+  //   auto         → returns ranked[0].memberId
+  //   recommended  → if userPick provided AND userPick ∈ ranked, returns userPick (overrideAccepted=true);
+  //                   otherwise returns ranked[0].memberId AND surfaces "highlighted" flag
+  //   user_choice  → requires userPick; throws if not provided
   // Returns: { memberId, rank_score, mode, userOverride: <bool> }
 }
 ```
@@ -278,24 +286,121 @@ export async function selectAdapter({ stepKey, capability, mode, productId?, use
 | Mode | Pre-run UI | Post-run UI |
 |---|---|---|
 | **Auto** | Hidden picker; step runs immediately on entering the step | Footer "Adapter: claude-code (rank 0.832) — change in Settings → Adapter Preferences" |
-| **Guided** | 3-row ranked card list with #1 pre-selected and highlighted; "Accept & Run" CTA, "Override" expands the list to all eligible adapters | Footer "Adapter: claude-code (Guided pick accepted) — change for next step" |
-| **Manual** | Full eligible-adapter list (no pre-selection); user must pick before "Run Step" CTA enables | Footer "Adapter: claude-code (Manual pick by user)" |
+| **Recommended** | 3-row ranked card list with #1 pre-selected and highlighted; "Accept & Run" CTA, "Override" expands the list to all eligible adapters | Footer "Adapter: claude-code (Recommended pick accepted) — change for next step" |
+| **User-Choice** | Full eligible-adapter list (no pre-selection); user must pick before "Run Step" CTA enables | Footer "Adapter: claude-code (User-Choice pick by user)" |
 
-Component path: `src/components/orchestra/AdapterPicker.jsx` (NEW). Lives alongside the existing `src/components/orchestra/ModeSelector.jsx`.
+Component path: `src/components/orchestra/AdapterPicker.jsx` (NEW). Lives alongside the existing `src/components/orchestrator/ModeSelector.jsx`. The two components serve orthogonal axes — `ModeSelector` picks the **System Operation** (Hands-On / Reviewed / Hands-Off per Rev-2 §8a); `AdapterPicker` picks the **Orchestra Selection** (Auto / Recommended / User-Choice per Rev-2 §8) plus per-step adapter when the mode allows.
 
 ### 5.4 Persistence
 
-User picks persist per-product per-step in Supabase table `flowai_adapter_preferences` (productId, stepKey, capability, memberId, mode, setBy, setAt). Auto-run reads from this table; if no preference set, falls back to ranking[0].
+User picks persist per-product per-step in Supabase table `flowai_adapter_preferences` (productId, stepKey, capability, memberId, mode, setBy, setAt). Auto-run reads from this table; if no preference set, falls back to `ranking[0]`.
+
+If Option A migration (§5.1) is canonical, a one-shot migration step backfills existing `mode='guided'` rows to `mode='recommended'` and `mode='manual'` rows to `mode='user_choice'` before the picker ships. RLS policy unchanged.
 
 ### 5.5 Inheritance
 
-If a user sets `productId=SAIGE`, `stepKey=build`, `memberId=base44` once (Guided override), every subsequent build for SAIGE uses Base44 by default unless re-overridden. The Guided UI surfaces "(default for this product)" badge on the inherited pick.
+If a user sets `productId=SAIGE`, `stepKey=build`, `memberId=base44` once (Recommended override), every subsequent build for SAIGE uses Base44 by default unless re-overridden. The Recommended UI surfaces "(default for this product)" badge on the inherited pick.
 
 ---
 
-## 6. Adapter Health Monitoring
+## 6. Integration with OrchestratorHub (Rev-2 §15.3)
 
-### 6.1 Health record shape
+This is the new section added in this revision per Rev-2 §15.3, which made the OrchestratorHub-vs-Orchestra boundary explicit. The two layers must coordinate cleanly; this section specifies the handshake.
+
+### 6.1 Two distinct concerns
+
+| Concern | OrchestratorHub (agent-side) | The Orchestra (tool-side) |
+|---|---|---|
+| Scope | Agent dispatch (FlowAI's contract layer) | External tool dispatch (third-party adapters) |
+| File | `src/lib/agents/orchestrator/OrchestratorHub.ts` | `src/lib/orchestra/index.js` + `member.js` + per-adapter files |
+| What it routes | `invokeStepOwner(stepKey, ctx)` → the agent registered as step-owner of that step | `dispatch(action, payload, opts)` → the wired member (or fallback) for that action |
+| Return shape | Step-owner envelope: `{ agent_id, agent_name, mode, step, authority, recommendation, ..., metadata }` | `MemberResult`: `{ ok, action, member, data?, error?, deferred? }` |
+| Who calls it | `AutoRunner.jsx` at every step boundary; cross-agent invocation; W03 compliance probe | Agents inside `act()`; user-facing pickers (§5); the unified `remediate()` engine |
+| Ranking? | No — agents are step-owner-locked or cross-step by charter per `BaseAgent.js` | Yes — Locked Rule 18 ranking; 10 members + 1 internal Vercel |
+| Authority model | `BaseAgent.js` `AUTHORITY.*` enums; `RECOMMEND_ONLY` is the default | None at the Orchestra layer — authority is owned by the calling agent |
+
+### 6.2 The canonical handshake
+
+```
+AutoRunner step boundary fires
+        │
+        ▼
+hub.invokeStepOwner(stepKey, ctx)              ← OrchestratorHub
+        │
+        ▼
+Agent #N.recommend(ctx)                         ← BaseAgent contract
+        │
+        │  (agent may call zero, one, or many Orchestra dispatches
+        │   inside its act() phase, each with explicit per-action
+        │   intent and authority check)
+        │
+        ▼
+orchestra.dispatch(action, payload, opts)       ← The Orchestra
+        │
+        ▼
+ranked = getRankedAdapters({ stepKey, capability: action, productId, mode })   ← §5
+selected = selectAdapter({ ...ranked, mode, userPick })                          ← §5
+        │
+        ▼
+selected.invoke(action, payload)                ← per-adapter
+        │
+        ▼
+MemberResult bubbles back up through Agent envelope to AutoRunner
+```
+
+Concrete example — Agent #3 Self-Renewal in fork-and-fix mode (per `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` §3.2):
+
+1. AutoRunner step 6 calls `hub.invokeStepOwner('govern', { runId, productId, issueList, mode: 'fork_and_fix', sourceHints })`.
+2. OrchestratorHub routes to `Agent3SelfRenewal.recommend(ctx)`.
+3. Agent #3's `act()` invokes `remediate({ artifact, issues, sourceHints })` (from `api/_lib/remediationEngine.js`).
+4. `remediate()` calls `orchestra.dispatch('code-patch', { ... }, { productId, runId, stepKey: 'govern' })` per issue.
+5. Orchestra dispatch consults `getRankedAdapters({ stepKey: 'govern', capability: 'code-patch', productId })` if the user is in Recommended or User-Choice mode; in Auto mode it picks `ranked[0]` silently.
+6. Selected adapter (typically `claude-code`) invokes; returns `MemberResult`.
+7. Result bubbles back into Agent #3's envelope, which OrchestratorHub returns to AutoRunner.
+8. AutoRunner persists, audits, and advances to step 7.
+
+### 6.3 Who owns what
+
+| Responsibility | Owner |
+|---|---|
+| Authority enforcement (`RECOMMEND_ONLY` cannot dispatch with side effects) | Agent (`BaseAgent.guard()`) |
+| Audit-log writes for agent phases (`run.start` / `plan.ok` / `act.ok` / etc.) | Agent (`BaseAgent.run()`) |
+| Audit-log writes for adapter calls (`orchestra.dispatch.*` topics) | Orchestra (`dispatch()` wrapper per §8) |
+| Cost ledger writes (`flowai_adapter_cost` rows) | Orchestra (`logAdapterCall()` per §8) |
+| Health record updates (`orchestra:health:{memberId}:{capability}`) | Orchestra (`logAdapterCall()` per §7) |
+| Fallback chain execution | Orchestra (`dispatch()` per §9) |
+| Run-budget enforcement (`flowai_run_budgets` ceiling) | Orchestra (`dispatch()` checks ceiling before invoke) |
+| Per-product preference inheritance | Orchestra (`selectAdapter()` reads `flowai_adapter_preferences`) |
+| Step-owner registration / agent registry validation | OrchestratorHub + `_registry.ts` |
+| Cross-agent message routing (`MessageBus` topics) | `MessageBus` (separate from both layers) |
+
+### 6.4 The two contracts never call each other directly
+
+A subtle but important rule: `OrchestratorHub` does **not** call `orchestra.dispatch()`. The Orchestra is consumed inside an agent's `act()` phase, never by the hub. And the Orchestra does **not** call back into the hub. The boundary stays clean: hub talks to agents, agents talk to the Orchestra. Tests must enforce this — a future grep-based lint rule could fail any import of `orchestra/index.js` from `src/lib/agents/orchestrator/`.
+
+### 6.5 Cross-cutting: opts thread-through
+
+Every `orchestra.dispatch()` call must receive a context bundle:
+
+```js
+opts = {
+  productId,        // multi-tenant attribution + per-product preference lookup
+  runId,            // audit-log linkage to the originating AutoRunner run
+  stepKey,          // for ranking lookup (which step capability matrix to use)
+  callerAgentId,    // which agent owns this dispatch (for cost attribution + escalation)
+  mode,             // 'auto' | 'recommended' | 'user_choice' (per §5)
+  userPick?,        // explicit memberId when mode === 'user_choice'
+  budgetUsdRemaining?, // optional; defaults to the run's remaining budget from flowai_run_budgets
+}
+```
+
+The agent's `act()` is responsible for threading `opts` through. AutoRunner is responsible for seeding `opts` at the step boundary. Failure to thread `productId` is a contract violation — the cost ledger row will fail RLS and the dispatch will return `{ ok: false, error: 'productId required' }`.
+
+---
+
+## 7. Adapter Health Monitoring
+
+### 7.1 Health record shape
 
 Per-adapter, per-capability (because a single adapter may be healthy on `crawl` but degraded on `screenshot`):
 
@@ -317,7 +422,7 @@ Per-adapter, per-capability (because a single adapter may be healthy on `crawl` 
 }
 ```
 
-### 6.2 Status thresholds
+### 7.2 Status thresholds
 
 ```
 green:     rollingErrorRate24h < 0.02  AND  p50LatencyMs < 5000   AND consecutiveFailures < 3
@@ -327,25 +432,25 @@ red:       rollingErrorRate24h ≥ 0.15  OR  p50LatencyMs ≥ 30000   OR consecu
 
 Health re-evaluates on every `MemberResult` write to the audit log. Persisted to HotStore key `orchestra:health:{memberId}:{capability}` with TTL 7 days; nightly snapshot to ColdStore for trend analysis.
 
-### 6.3 Effect on ranking + dispatch
+### 7.3 Effect on ranking + dispatch
 
 - **green**: full rank, no penalty.
 - **degraded**: rank_score multiplied by 0.7 (still in the running but de-prioritised).
-- **red**: excluded from ranking entirely; Auto mode skips; Guided/Manual show with strikethrough + "degraded" badge but allow user override.
+- **red**: excluded from ranking entirely; Auto mode skips; Recommended/User-Choice show with strikethrough + "degraded" badge but allow user override.
 
-### 6.4 Health badges in UI
+### 7.4 Health badges in UI
 
 Each picker row renders a coloured status dot + tooltip with p50 latency + last successful invocation timestamp. Red rows include a "Why is this red?" link that opens the rolling 24h call log for that capability.
 
-### 6.5 Synthetic health probes
+### 7.5 Synthetic health probes
 
 A cron job runs every 15 minutes calling each wired adapter with a no-op probe payload (e.g. `claudeCode.invoke('code-patch', { filePath: '/tmp/probe.txt', sourceContent: 'hello', issueSpec: {category:'noop', fixSpec:{kind:'no-op'}} })`). Probe results update the health record without consuming end-user-attributed token budget. Probe cost is attributed to a system productId `_orchestra_probe`.
 
 ---
 
-## 7. Per-Call Cost Tracking
+## 8. Per-Call Cost Tracking
 
-### 7.1 Cost ledger schema (new Supabase table)
+### 8.1 Cost ledger schema (new Supabase table)
 
 ```sql
 CREATE TABLE flowai_adapter_cost (
@@ -361,17 +466,19 @@ CREATE TABLE flowai_adapter_cost (
   tokens_out      integer,
   latency_ms      integer NOT NULL,
   ok              boolean NOT NULL,
+  caller_agent_id integer,                       -- per §6.5 opts.callerAgentId
   at              timestamptz NOT NULL DEFAULT now(),
   meta            jsonb
 );
 
 CREATE INDEX flowai_adapter_cost_product_run ON flowai_adapter_cost(product_id, run_id);
 CREATE INDEX flowai_adapter_cost_at          ON flowai_adapter_cost(at DESC);
+CREATE INDEX flowai_adapter_cost_caller      ON flowai_adapter_cost(caller_agent_id);
 ```
 
-RLS: rows visible only to the owning provider org (multi-tenant invariant). Insert allowed only by `service_role` (server-only writes).
+RLS: rows visible only to the owning provider org (multi-tenant invariant per Rev-2 §22). Insert allowed only by `service_role` (server-only writes).
 
-### 7.2 Cost computation per adapter
+### 8.2 Cost computation per adapter
 
 Each adapter declares its pricing schedule in a new file `src/lib/orchestra/pricing.js`:
 
@@ -412,7 +519,7 @@ export function computeCost({ memberId, action, usage, latencyMs }) {
 }
 ```
 
-### 7.3 Logging integration
+### 8.3 Logging integration
 
 Wrap `dispatch()`:
 
@@ -423,9 +530,15 @@ export async function dispatch(action, payload, opts = {}) {
   const result = await /* existing dispatch logic */;
   const latencyMs = Date.now() - startedAt;
   await logAdapterCall({
-    memberId: result.member, action, ok: result.ok,
-    usage: result.data?.usage, latencyMs,
-    productId: opts.productId, runId: opts.runId, stepKey: opts.stepKey,
+    memberId:        result.member,
+    action,
+    ok:              result.ok,
+    usage:           result.data?.usage,
+    latencyMs,
+    productId:       opts.productId,
+    runId:           opts.runId,
+    stepKey:         opts.stepKey,
+    callerAgentId:   opts.callerAgentId,
   });
   return result;
 }
@@ -433,21 +546,21 @@ export async function dispatch(action, payload, opts = {}) {
 
 `logAdapterCall()` writes to the ledger (server-only) and updates the rolling health record. Browser-side dispatch (rare; only for recommend-only paths) skips the ledger write.
 
-### 7.4 Cost ceiling per run
+### 8.4 Cost ceiling per run
 
 A per-run budget ceiling lives in `flowai_run_budgets` (productId, runId, ceilingUsd, spentUsd, exceededAt?). Default ceiling: **$5.00 per run**. When `spentUsd ≥ ceilingUsd × 0.8`, dispatch warns; when exceeded, dispatch returns `{ ok: false, error: 'run_budget_exceeded' }` and emits `runner.budget.exceeded.v1` to the message bus. User-facing UI shows progress bar.
 
-Ceiling is configurable per product in Settings; default applies if unset.
+Ceiling is configurable per product in Settings; default applies if unset. See §12 Q6 for the default-value question.
 
-### 7.5 Cost dashboard
+### 8.5 Cost dashboard
 
-New page `src/pages/CostDashboard.jsx`: rollups per product / per run / per adapter / per step. Filterable by date range. Read-only Vitest tests cover the SQL aggregations.
+New page `src/pages/CostDashboard.jsx`: rollups per product / per run / per adapter / per step / per caller-agent. Filterable by date range. Read-only Vitest tests cover the SQL aggregations.
 
 ---
 
-## 8. Fallback Chain
+## 9. Fallback Chain
 
-### 8.1 Canonical per-action fallback ordering
+### 9.1 Canonical per-action fallback ordering
 
 When the dispatcher's preferred adapter fails or is degraded, try the next-best per this table (left-to-right):
 
@@ -467,7 +580,7 @@ When the dispatcher's preferred adapter fails or is degraded, try the next-best 
 | `design` | v0 → lovable → base44 → claude-code → **FAIL** |
 | `build` | claude-code (generate-from-scratch + Vercel deploy) → base44 → replit → **FAIL** |
 
-### 8.2 Fallback trigger conditions
+### 9.2 Fallback trigger conditions
 
 Move to the next adapter in the chain when ANY of:
 
@@ -479,14 +592,14 @@ Move to the next adapter in the chain when ANY of:
 
 Non-retryable failures (`401`/`403` auth, malformed payload, schema validation) terminate the chain with the original error — no fallback.
 
-### 8.3 Audit trail
+### 9.3 Audit trail
 
-Every fallback hop logs to ColdStore:
+Every fallback hop logs to the GovernanceAuditLog (Rev-2 §14) under topic `orchestra.fallback`:
 
 ```js
 {
+  topic: 'orchestra.fallback',
   runId, stepKey, action,
-  phase: 'orchestra.fallback',
   attempts: [
     { memberId: 'claude-code', ok: false, error: '429 rate_limited', latencyMs: 380 },
     { memberId: 'cursor',      ok: false, error: 'not yet wired',     latencyMs: 5 },
@@ -494,34 +607,35 @@ Every fallback hop logs to ColdStore:
   ],
   finalMember: 'openrouter',
   totalLatencyMs: 2615,
+  callerAgentId: 3,
   at: '...',
 }
 ```
 
-### 8.4 Auto-mode silent fallback vs Guided/Manual surfacing
+### 9.4 Auto-mode silent fallback vs Recommended/User-Choice surfacing
 
 - **Auto**: fallback happens silently; envelope footer shows `via openrouter (claude-code unavailable)`.
-- **Guided**: fallback prompts the user "Claude Code was rate-limited; OpenRouter accepted. Continue or retry primary?"
-- **Manual**: fallback always prompts. Manual users explicitly chose; surfacing the failure respects that.
+- **Recommended**: fallback prompts the user "Claude Code was rate-limited; OpenRouter accepted. Continue or retry primary?"
+- **User-Choice**: fallback always prompts. User-Choice users explicitly chose; surfacing the failure respects that.
 
-### 8.5 Maximum-fallback-hops guard
+### 9.5 Maximum-fallback-hops guard
 
 Cap fallback at **3 hops** per action invocation to prevent thundering-herd cascades. If all 3 fail, return the first non-retryable error (or the last `ok:false` if all were retryable). Engineering dispatch can tune.
 
 ---
 
-## 9. Detailed Adapter Interfaces
+## 10. Detailed Adapter Interfaces
 
 Each adapter's per-action payload and return-data shape. Code references existing files where wired; **NEW** marks shapes to be implemented.
 
-### 9.1 `claude-code` (WIRED)
+### 10.1 `claude-code` (WIRED)
 
 | Action | Payload | Return data |
 |---|---|---|
 | `code-patch` | `{ filePath, sourceContent, issueSpec, framework? }` | `{ filePath, patchedContent, rationale, model, usage }` |
 | `generate-from-scratch` | `{ spec, framework }` (framework='vite-react' only) | `{ files: [{path, content}], framework, rationale, model, usage }` |
 
-### 9.2 `anthropic-api` (NEW)
+### 10.2 `anthropic-api` (NEW)
 
 | Action | Payload | Return data |
 |---|---|---|
@@ -532,7 +646,7 @@ Each adapter's per-action payload and return-data shape. Code references existin
 
 Wraps `api/_lib/claude.js#callClaude` directly with task-specific prompts. Distinct from `claude-code` because the prompting profile is different (no JSON-only contract for code).
 
-### 9.3 `openrouter` (DEFERRED → wire)
+### 10.3 `openrouter` (DEFERRED → wire)
 
 | Action | Payload | Return data |
 |---|---|---|
@@ -540,7 +654,7 @@ Wraps `api/_lib/claude.js#callClaude` directly with task-specific prompts. Disti
 
 Reuses `scripts/lib/peer-review.mjs`'s OpenRouter adapter pattern (`callOnce`); ported into `src/lib/orchestra/openrouter.js`. Model selection passes through to the OpenRouter `/v1/chat/completions` body; price tier resolved dynamically per model.
 
-### 9.4 `v0` (DEFERRED → wire)
+### 10.4 `v0` (DEFERRED → wire)
 
 | Action | Payload | Return data |
 |---|---|---|
@@ -550,23 +664,23 @@ Reuses `scripts/lib/peer-review.mjs`'s OpenRouter adapter pattern (`callOnce`); 
 
 Per `PANEL_INFRASTRUCTURE.md` §2.2: endpoint is `POST https://api.v0.dev/v1/chats` (NOT OpenAI-compatible). Adapter shape: `{ message, system, responseMode: 'sync', modelConfiguration: { modelId: 'v0-auto' } }`. Response: `{ text, latestVersion: { files: [...] }, demo?, webUrl }`. Bundle-size constraint: skip when artifact >10K tokens.
 
-### 9.5 `lovable` (DEFERRED — headless empirically failed)
+### 10.5 `lovable` (DEFERRED — headless empirically failed)
 
 Per commit `9143f82` body, Lovable headless probe found Build-mode chat with no free-text-chat tier. Wiring requires either an API surface (not currently public) or a tier upgrade. **Recommend defer until Lovable ships a public API** — track in parking lot.
 
-### 9.6 `cursor` (DEFERRED — no batched API)
+### 10.6 `cursor` (DEFERRED — no batched API)
 
 Cursor's value is IDE-bound; the public surface today is the IDE itself + remote `cursor agent` CLI. No batched-invocation API for `code-patch`. Defer until Cursor ships a server API.
 
-### 9.7 `base44` (DEFERRED — headless empirically failed)
+### 10.7 `base44` (DEFERRED — headless empirically failed)
 
-Per commit `9143f82` body, post-login surface is the app-builder editor, not free-text chat. ENTRY 005 (CEO 2026-05-14) explicitly calls out Base44 source-export as required. **Need:** Base44 API surface confirmation OR Base44 source-export mechanism (parking-lot ENTRY 005 trajectory implication).
+Per commit `9143f82` body, post-login surface is the app-builder editor, not free-text chat. Parking-lot ENTRY 005 (CEO 2026-05-14) explicitly calls out Base44 source-export as required. **Need:** Base44 API surface confirmation OR Base44 source-export mechanism.
 
-### 9.8 `replit` (DEFERRED — Cloudflare WAF blocked)
+### 10.8 `replit` (DEFERRED — Cloudflare WAF blocked)
 
 Per commit `9143f82`, Replit's Cloudflare WAF rejects headless Chromium fingerprints regardless of valid storageState cookies. Replit's **External Access Tokens** (announced 2025) may provide an authenticated API path. Defer pending that wiring.
 
-### 9.9 `browserless` (WIRED)
+### 10.9 `browserless` (WIRED)
 
 | Action | Payload | Return data |
 |---|---|---|
@@ -575,14 +689,14 @@ Per commit `9143f82`, Replit's Cloudflare WAF rejects headless Chromium fingerpr
 
 Pay-per-minute. Wraps `api/_lib/crawler.js`.
 
-### 9.10 `playwright` (WIRED)
+### 10.10 `playwright` (WIRED)
 
 | Action | Payload | Return data |
 |---|---|---|
 | `interact` | `{ url, includeScreenshot?, fullPage? }` | `richCapture()` envelope |
 | `crawl` | (alias to `interact`) | same |
 
-### 9.11 `vercel` (WIRED — internal #11)
+### 10.11 `vercel` (WIRED — internal #11)
 
 | Action | Payload | Return data |
 |---|---|---|
@@ -591,7 +705,7 @@ Pay-per-minute. Wraps `api/_lib/crawler.js`.
 
 Surfaced ONLY for `deploy` and `source-retrieval`. Not user-pickable in the per-step Orchestra UI (auto-selected when needed).
 
-### 9.12 Environment variable inventory
+### 10.12 Environment variable inventory
 
 | Member | Required env var(s) | Source | Notes |
 |---|---|---|---|
@@ -609,11 +723,11 @@ Surfaced ONLY for `deploy` and `source-retrieval`. Not user-pickable in the per-
 
 ---
 
-## 10. Test Surface
+## 11. Test Surface
 
 Mirror the `src/lib/agents/*` test patterns. All tests use `MockOrchestra` (~120 LOC) + Vitest fixtures. No live external calls.
 
-### 10.1 Ranking tests
+### 11.1 Ranking tests
 
 | ID | Test |
 |---|---|
@@ -624,17 +738,29 @@ Mirror the `src/lib/agents/*` test patterns. All tests use `MockOrchestra` (~120
 | T-R5 | Cached ranking returns same order within 60s; recomputes after TTL |
 | T-R6 | `productId`-pinned preference appears as `default for this product` badge metadata |
 
-### 10.2 Mode tests
+### 11.2 Mode tests (Rev-2 §8 axis labels)
 
 | ID | Test |
 |---|---|
 | T-M1 | Auto mode `selectAdapter()` returns ranked[0].memberId |
-| T-M2 | Guided mode with no userPick returns ranked[0] + `highlighted=true` |
-| T-M3 | Guided mode with valid userPick returns userPick + `userOverride=true` |
-| T-M4 | Manual mode without userPick throws |
+| T-M2 | Recommended mode with no userPick returns ranked[0] + `highlighted=true` |
+| T-M3 | Recommended mode with valid userPick returns userPick + `userOverride=true` |
+| T-M4 | User-Choice mode without userPick throws |
 | T-M5 | Persisted preference inherited on subsequent same-product/same-step runs |
+| T-M6 | Legacy persisted `mode='guided'` rows backfill cleanly to `'recommended'` (if §5.1 Option A canonical) |
 
-### 10.3 Health tests
+### 11.3 OrchestratorHub integration tests (NEW per §6)
+
+| ID | Test |
+|---|---|
+| T-O1 | `AutoRunner` step boundary calls `hub.invokeStepOwner(stepKey, ctx)` exactly once per step |
+| T-O2 | Agent #3 `act()` calling `orchestra.dispatch('code-patch', ...)` threads `opts.productId`, `opts.runId`, `opts.stepKey`, `opts.callerAgentId=3` correctly |
+| T-O3 | Cost ledger row written for the dispatch has `caller_agent_id = 3` |
+| T-O4 | OrchestratorHub never imports `src/lib/orchestra/*` directly (grep-lint check) |
+| T-O5 | Orchestra never imports `src/lib/agents/*` directly (grep-lint check) |
+| T-O6 | Missing `opts.productId` → dispatch returns `{ ok: false, error: 'productId required' }` |
+
+### 11.4 Health tests
 
 | ID | Test |
 |---|---|
@@ -645,7 +771,7 @@ Mirror the `src/lib/agents/*` test patterns. All tests use `MockOrchestra` (~120
 | T-H5 | p50 latency >30s → status red |
 | T-H6 | Synthetic probe attributes cost to `_orchestra_probe` |
 
-### 10.4 Cost tests
+### 11.5 Cost tests
 
 | ID | Test |
 |---|---|
@@ -657,31 +783,32 @@ Mirror the `src/lib/agents/*` test patterns. All tests use `MockOrchestra` (~120
 | T-C6 | Cost ledger row written exactly once per `dispatch()` call |
 | T-C7 | RLS forbids cross-tenant ledger reads |
 
-### 10.5 Fallback tests
+### 11.6 Fallback tests
 
 | ID | Test |
 |---|---|
 | T-F1 | code-patch primary 429 → falls back to cursor; cursor stub-not-wired → openrouter; openrouter succeeds |
 | T-F2 | Non-retryable 401 terminates chain immediately |
 | T-F3 | After 3 hops without success, dispatch returns last error |
-| T-F4 | Fallback hop logged to ColdStore in attempts[] order |
-| T-F5 | Auto mode surfaces silent fallback in result footer; Guided prompts user |
+| T-F4 | Fallback hop logged to GovernanceAuditLog under `orchestra.fallback` topic with attempts[] in order |
+| T-F5 | Auto mode surfaces silent fallback in result footer; Recommended prompts user |
 
-### 10.6 UI tests
+### 11.7 UI tests
 
 | ID | Test |
 |---|---|
 | T-U1 | `AdapterPicker` Auto-mode renders nothing inline; shows footer post-run |
-| T-U2 | `AdapterPicker` Guided-mode renders 3-row card list with #1 highlighted |
-| T-U3 | `AdapterPicker` Manual-mode renders full eligible list; run CTA disabled until pick |
+| T-U2 | `AdapterPicker` Recommended-mode renders 3-row card list with #1 highlighted |
+| T-U3 | `AdapterPicker` User-Choice-mode renders full eligible list; run CTA disabled until pick |
 | T-U4 | Health badges render correctly (green dot / orange dot / red dot + tooltip) |
-| T-U5 | Cost estimate visible per row in Guided/Manual |
+| T-U5 | Cost estimate visible per row in Recommended/User-Choice |
+| T-U6 | `AdapterPicker` does NOT render or alter the `ModeSelector` (System Operation axis is orthogonal — Rev-2 §8a) |
 
-Total: ~30 tests. Estimated implementation: 1.5 days for the ranking + mode + fallback core; 1 day for cost tracking + SQL migration + RLS; 0.5 day for health probe cron; 1 day for UI + persistence.
+Total: ~32 tests. Estimated implementation: 1.5 days for the ranking + mode + fallback core; 1 day for cost tracking + SQL migration + RLS; 0.5 day for health probe cron; 1 day for UI + persistence; 0.5 day for OrchestratorHub integration tests.
 
 ---
 
-## 11. Open Questions (CEO disposition / Panel review required)
+## 12. Open Questions (CEO disposition / Panel review required)
 
 ### Q1. Vercel — 11th member surfaced or kept internal?
 
@@ -729,15 +856,24 @@ Recommendation: keep two parallel marketplaces. Engineering dispatch builds the 
 
 `base44`, `lovable`, `replit` headless probes empirically failed 2026-05-13 (commit `9143f82`). Three paths:
 
-- **(a) Defer indefinitely.** Stubs stay as stubs; rely on the 7 other adapters. Risk: ENTRY 005 (FlowAI source-acquisition contract) calls out Base44 source-export as required.
+- **(a) Defer indefinitely.** Stubs stay as stubs; rely on the 7 other adapters. Risk: parking-lot ENTRY 005 (FlowAI source-acquisition contract) calls out Base44 source-export as required.
 - **(b) Retry with new technique.** Wire Base44 via the documented Base44 API (if it exists at all per docs.base44.com); wire Replit via External Access Tokens; wire Lovable via direct API once they ship one. Risk: weeks of engineering against moving targets.
 - **(c) Drop from Orchestra.** Remove them from ENTRY 004's roster; Orchestra is officially 7-member (plus Anthropic-API-as-eleventh-distinct + Vercel internal = 9 total). Risk: ENTRY 004 is CEO-authored; dropping requires CEO sign-off.
 
 Recommendation: (a) for v1 (ship Orchestra picker with 7 wired members + 3 deferred); revisit per ENTRY 005 trajectory. CEO disposes.
 
-### Q6. Cost ceiling default per run — $5 reasonable?
+### Q6. Axis-rename enum migration discipline (Rev-2 §8)
 
-Spec defaults to **$5.00 per run** (per §7.4). Rationale: a typical 8-step run with claude-code + browserless + vercel costs ~$0.50–$1.50 today; $5 gives 3-5× headroom before warn-fire. A fork-and-fix execution adds another $0.30–$1.00.
+Rev-2 §8 renamed the Orchestra Selection axis from Auto/Guided/Manual to Auto/Recommended/User-Choice. Implementation options per §5.1:
+
+- **(a) Full rename (canonical):** enum strings `'guided'` → `'recommended'`, `'manual'` → `'user_choice'`. Affects `AgenticModeContext.jsx`, `OrchestrationContext.jsx`, all consumer components, persisted `flowai_adapter_preferences.mode` rows (one-shot migration), and the UI. Larger blast radius; cleaner long-term.
+- **(b) Surface-only rename:** enum strings retained at `'guided'` / `'manual'`; only user-facing labels updated via a small label map in `<ModeSelector>` and `<AdapterPicker>`. Lower blast radius; technical-debt note carried forward.
+
+This spec assumes (a) but is written in a way that works for either. CEO ratifies before engineering dispatch.
+
+### Q7. Cost ceiling default per run — $5 reasonable?
+
+Spec defaults to **$5.00 per run** (per §8.4). Rationale: a typical 8-step run with claude-code + browserless + vercel costs ~$0.50–$1.50 today; $5 gives 3-5× headroom before warn-fire. A fork-and-fix execution adds another $0.30–$1.00.
 
 Alternatives:
 - $2.50 — tighter, will catch runaway loops sooner.
@@ -746,7 +882,7 @@ Alternatives:
 
 Recommendation: $5 default, configurable per product. CEO ratifies.
 
-### Q7. Adapter health data source — Supabase vs audit log?
+### Q8. Adapter health data source — Supabase vs audit log?
 
 Spec uses HotStore key `orchestra:health:{memberId}:{capability}` (TTL 7 days) + nightly ColdStore snapshot. Alternative: a dedicated Supabase table `flowai_adapter_health` (single row per memberId+capability, upserted on every call).
 
@@ -754,7 +890,7 @@ Trade-off: HotStore is fast and ephemeral; Supabase is queryable and durable. Fo
 
 Recommendation: BOTH — HotStore for the picker's hot path; Supabase upsert for trend queries. Engineering dispatch sizes appropriately.
 
-### Q8. Per-step picker UI — separate panel, inline, or global selector?
+### Q9. Per-step picker UI — separate panel, inline, or global selector?
 
 Three UI placements:
 
@@ -762,13 +898,13 @@ Three UI placements:
 - **(b) Per-product Settings → Adapter Preferences.** Pre-configured once, applied across all runs for that product. Lowest interruption; lowest visibility.
 - **(c) Both.** Settings-pre-config + per-step override under a collapsible "Adapter" toggle.
 
-Recommendation: (c). Auto mode hides everything; Guided/Manual surface the per-step picker; Settings page lets power-users pre-configure. CEO ratifies.
+Recommendation: (c). Auto mode hides everything; Recommended/User-Choice surface the per-step picker; Settings page lets power-users pre-configure. CEO ratifies.
 
 ---
 
-## 12. Engineering-dispatch readiness checklist
+## 13. Engineering-dispatch readiness checklist
 
-Once CEO dispositions Q1–Q8, the engineering dispatch produces in this order:
+Once CEO dispositions Q1–Q9, the engineering dispatch produces in this order:
 
 1. `src/lib/orchestra/openrouter.js` — wire OpenRouter adapter (port from `scripts/lib/peer-review.mjs` patterns).
 2. `src/lib/orchestra/anthropic-api.js` — new generic Anthropic adapter (analyze/summarize/extract-structured/score).
@@ -778,41 +914,52 @@ Once CEO dispositions Q1–Q8, the engineering dispatch produces in this order:
 6. `src/lib/orchestra/cost.js` (new) — `computeCost()` helper + budget enforcement.
 7. `src/lib/orchestra/health.js` (new) — health record CRUD + status threshold logic + synthetic probe job.
 8. `src/lib/orchestra/ranking.js` (new) — `getRankedAdapters()` + `selectAdapter()` + 60s caching.
-9. `src/lib/orchestra/index.js` — amend `dispatch()` to thread productId/runId/stepKey, log cost, update health, implement fallback chain per §8.
-10. `supabase/migrations/00NN_orchestra_cost_ledger.sql` — `flowai_adapter_cost`, `flowai_run_budgets`, `flowai_adapter_preferences`, RLS policies.
-11. `src/components/orchestra/AdapterPicker.jsx` (new) + integration into AutoRunner per Q8 disposition.
-12. `src/pages/Settings/AdapterPreferences.jsx` (new) — per-product pre-configuration UI.
-13. `src/pages/CostDashboard.jsx` (new) — rollup queries + UI.
-14. Tests per §10 (~30 tests; `MockOrchestra` shared helper).
-15. Doc update: `docs/PANEL_INFRASTRUCTURE.md` to reference this spec; `docs/CANONICAL_REFERENCE.md` Orchestra section to reflect the picker surface.
-16. Promote canonical bootstrap performance + price matrices to `docs/FLOWAI_SSOT.md` Locked Rule 18 appendix after Panel ratification.
+9. `src/lib/orchestra/index.js` — amend `dispatch()` to thread `opts.productId/runId/stepKey/callerAgentId/mode/userPick`, log cost, update health, implement fallback chain per §9.
+10. Enum migration per §12 Q6 disposition: if (a) full rename, update `AgenticModeContext.jsx` + `OrchestrationContext.jsx` + `flowai_adapter_preferences` backfill migration; if (b) surface-only, update label map only.
+11. `supabase/migrations/00NN_orchestra_cost_ledger.sql` — `flowai_adapter_cost`, `flowai_run_budgets`, `flowai_adapter_preferences`, RLS policies.
+12. `src/components/orchestra/AdapterPicker.jsx` (new) + integration into AutoRunner per Q9 disposition.
+13. `src/pages/Settings/AdapterPreferences.jsx` (new) — per-product pre-configuration UI.
+14. `src/pages/CostDashboard.jsx` (new) — rollup queries + UI.
+15. Tests per §11 (~32 tests; `MockOrchestra` shared helper).
+16. Grep-lint rules (T-O4 + T-O5) — prevent imports across the OrchestratorHub-vs-Orchestra boundary.
+17. Doc updates: `docs/PANEL_INFRASTRUCTURE.md` reference; `docs/CANONICAL_REFERENCE.md` Orchestra section to reflect the picker surface; `docs/SSOT_W04_REV2_DRAFT.md` §8 cross-link once Rev-2 is canonical.
+18. Promote canonical bootstrap performance + price matrices to `docs/FLOWAI_SSOT.md` Locked Rule 18 appendix after Panel ratification.
 
-Estimated engineering effort: **5-7 days** for the wired-adapter expansion + ranking + cost + health + UI. Excludes adapter-by-adapter wiring of base44 / replit / lovable / cursor (those are deferred per Q5).
+Estimated engineering effort: **5–7 days** for the wired-adapter expansion + ranking + cost + health + UI + OrchestratorHub integration tests. Excludes adapter-by-adapter wiring of base44 / replit / lovable / cursor (those are deferred per Q5).
 
 ---
 
-## 13. Out of scope (intentional)
+## 14. Out of scope (intentional)
 
 - Headless adapters (base44, lovable, replit) — pending Q5 disposition; spec keeps them as stubs.
 - Cursor adapter — pending public API.
-- Replacing the existing `src/components/orchestrator/ModeSelector.jsx` — that component selects the **Auto / Guided / Manual operating mode globally**; the new `AdapterPicker.jsx` selects the adapter per-step within whichever mode is active. Two distinct concerns.
+- Replacing the existing `src/components/orchestrator/ModeSelector.jsx` — that component selects the **System Operation** axis per Rev-2 §8a (Hands-On / Reviewed / Hands-Off); the new `AdapterPicker.jsx` selects the **Orchestra Selection** axis per Rev-2 §8 plus per-step adapter. Two distinct concerns.
 - Continuous-marketplace-intelligence integration with Agents #11 / #15 / #17 — that work is per Locked Rule 16 and ships as a separate dispatch.
-- Multi-tenant RLS on the new tables beyond the basic policies in §7.1 — Production Hardening track.
+- Multi-tenant RLS on the new tables beyond the basic policies in §8.1 — Production Hardening track per Panel Q4 verdict.
 - Mobile-responsive picker UI — desktop-first v1; mobile adaptation as a follow-up.
 - Agents #11 / #15 / #17 actually feeding the rolling-outcome-score updates — they're DORMANT today. Spec assumes outcome scores will be empty until those agents wake up; ranking falls back to bootstrap baselines + 24h call-success rate from the cost ledger.
+- Refactoring `OrchestratorHub.ts` to call Orchestra directly — explicitly forbidden by §6.4. The hub-Orchestra separation is canonical.
 
 ---
 
-## 14. Relation to Self-Renewal Agent #3 spec
+## 15. Relation to other Rev-2-conformant specs
 
-The Self-Renewal Agent #3 spec (`docs/specs/SELF_RENEWAL_AGENT_SPEC.md`, commit `446ddb5`) consumes this Orchestra surface:
+This spec is one of three co-canonical engineering specs that operationalise SSOT W04-Rev-2:
 
-- Agent #3's fork-and-fix path dispatches via `dispatch('code-patch', ...)` and `dispatch('generate-from-scratch', ...)` — both will pick up the new ranking + health + cost + fallback machinery once this spec ships.
+| Spec | Path | Commit | Rev-2 sections operationalised |
+|---|---|---|---|
+| Self-Renewal Agent #3 graduation | `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` | `446ddb5` | §10 Self-Governance Layer, §12 Remediation Modes, §14 GovernanceAuditLog, §15 Agent #3 row |
+| Orchestra Integration (THIS doc) | `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` | (new commit) | §8 Orchestra Selection axis, §15.3 OrchestratorHub-vs-Orchestra boundary, Locked Rule 18 |
+| (Future) Production Hardening | `docs/specs/PRODUCTION_HARDENING_SPEC.md` | (not yet drafted) | §13 Auth+Roles, §14 GovernanceAuditLog hardening, §16 Deployment Infra, §22 Multi-tenant RLS enforcement |
+
+The Self-Renewal Agent #3 spec consumes this Orchestra surface heavily:
+
+- Agent #3's fork-and-fix path dispatches via `orchestra.dispatch('code-patch', ...)` and `orchestra.dispatch('generate-from-scratch', ...)` — both will pick up the new ranking + health + cost + fallback machinery once this spec ships.
 - Agent #3 §6 Q4 (execution surface) becomes simpler when Orchestra has health + fallback: a degraded primary adapter no longer blocks fork-and-fix; the chain finds a healthy member.
-- Cost ceilings in §7.4 apply equally to Agent #3 invocations.
+- Cost ceilings in §8.4 apply equally to Agent #3 invocations, with `caller_agent_id = 3` recorded.
 
 Engineering dispatches should sequence Orchestra picker BEFORE Agent #3 graduation, because the latter benefits from the former being in place.
 
 ---
 
-*End of spec. Pending CEO disposition on Open Questions §11 before engineering dispatch.*
+*End of spec. Pending CEO disposition on Open Questions §12 + W6 re-Panel of SSOT W04-Rev-2 (which this spec depends on) before engineering dispatch.*
