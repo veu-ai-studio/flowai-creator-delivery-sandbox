@@ -13,10 +13,8 @@ A **VERDICT** of `ACCEPT` against a W02-drafted answer means the panel converged
 
 ### O1. Primary identity of FlowAI?
 
-**CANONICAL — AMENDED (CEO-DISPOSED 2026-05-14; Panel CA-2 8/10 + CA-1 9/10 supermajority per MG2).**
-FlowAI is primarily a **URL-based AI democratization platform** for **underserved market segments globally** — any user may supply existing product URLs to **compare**, **contrast**, **strengthen** existing products, or **synthesize** new products. Its 25-agent orchestration engine, 8-step pipeline, 95/95 quality gates, and Playwright crawl are the *apparatus* that delivers that democratization at production grade; the multi-tenant platform layer is what makes any user a potential **vendor** of the resulting Native Apps, Mobile Apps, SaaS, or Agentic AI products. The "underserved market segments globally" scope is inclusive of: (a) underdeveloped economies, (b) rural communities in developed countries, (c) low-income urban populations anywhere, (d) neglected language / cultural groups, (e) small businesses and individuals priced out of enterprise AI tools regardless of geography.
-
-**Prior consensus (superseded):** 5/5 ACCEPT (2026-05-11) of the "orchestration engine" framing — replaced by CA-1 + CA-2 amendments per MG2 disposition 2026-05-14. See `docs/FLOWAI_SSOT_AMENDMENT_DRAFT_2026-05-14.md` and `docs/archive/FLOWAI_SSOT-pre-2026-05-14-promotion.md`.
+**CONSENSUS — ACCEPT (5/5).**
+FlowAI is primarily an orchestration engine; agents, pipeline, and tools are its apparatus; the platform layer is what makes orchestration multi-tenant.
 
 **Dissent:** none.
 
@@ -50,8 +48,8 @@ Singular as code/canonical (one G3-ratified spec); plural at runtime (one isolat
 
 ### O6. "First, not exclusive" — meaning?
 
-**CONSENSUS — ACCEPT (5/5). AMENDED (CEO-DISPOSED 2026-05-14; Panel CA-1 9/10 supermajority per MG2).**
-VEU's 5 products are real production consumers that exercise FlowAI's full lifecycle; architecture is built to onboard arbitrary additional consumers without code changes once Agent #4 is live. **Primary scope of "arbitrary additional consumers" is UNDERSERVED MARKET SEGMENTS GLOBALLY** — explicitly inclusive of (a) underdeveloped economies, (b) rural communities in developed countries, (c) low-income urban populations anywhere, (d) neglected language / cultural groups, and (e) small businesses and individuals priced out of enterprise AI tools regardless of geography. CA-1 generalization supersedes any prior "emerging economies only" framing.
+**CONSENSUS — ACCEPT (5/5).**
+VEU's 5 products are real production consumers that exercise FlowAI's full lifecycle; architecture is built to onboard arbitrary additional consumers without code changes once Agent #4 is live.
 
 **Dissent:** none.
 
@@ -428,11 +426,9 @@ Questions raised by 1–2 reviewers (worth folding in):
 
 ---
 
-## ELEVATOR PITCH — synthesized (CEO-DISPOSED 2026-05-14; Panel CA-2 8/10 + CA-1 9/10 supermajority per MG2)
+## ELEVATOR PITCH — synthesized (3 sentences)
 
-FlowAI is the **URL-based AI democratization platform** that enables any user — including small organizations, unemployed youth, individual builders, consultants, and small business owners in **underserved market segments globally** (underdeveloped economies, rural communities in developed countries, low-income urban populations anywhere, neglected language / cultural groups, and individuals and small businesses priced out of enterprise AI tools regardless of geography) — to supply existing product URLs and receive a production-grade compare / contrast / strengthen / synthesize output, delivered by a contract layer of 25 specialized agents through an 8-step pipeline gated by 95/95 quality scoring, a 6-step Clearance Protocol, and continuous Playwright-verified crawling that detects and self-heals breakage at any hour without maintenance windows. VEU AI Studio's five flagship products (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe) are the first vendor-tenants — real production consumers proving the model before mass-market onboarding — with FlowAI architected to onboard arbitrary additional vendors via Stripe Connect at a 15%-ceiling platform fee (providers retain ≥85% of end-customer revenue), and monthly marketplace intelligence ensuring no product falls more than thirty days behind competitive evolution. Singular as canonical code and plural at runtime via tenant-isolated instances, FlowAI is engineered to eventually orchestrate its own 10-AI governance Panel — making it the first AI infrastructure whose governance is as productized, auditable, and self-renewing as the products it ships.
-
-**Prior pitch (superseded):** archived at `docs/archive/FLOWAI_SSOT-pre-2026-05-14-promotion.md`. The prior synthesis led with "governance-grade operating system" framing; CA-2 reframe now leads with the URL-based AI democratization thesis per MG2 disposition.
+FlowAI is the governance-grade operating system that takes any AI product from idea to production and keeps it there — through a contract layer of 25 specialized agents, an 8-step pipeline gated by 95/95 quality scoring, a 6-step Clearance Protocol, and continuous Playwright-verified crawling that detects and self-heals breakage at any hour without maintenance windows. It treats VEU AI Studio's five flagship products (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe) as real production consumers and is architected to onboard arbitrary external providers via Stripe Connect at a 15% platform fee, with monthly marketplace intelligence ensuring no product falls more than thirty days behind competitive evolution. Singular as canonical code and plural at runtime via tenant-isolated instances, FlowAI is engineered to eventually orchestrate its own 10-AI governance Panel — making it the first AI infrastructure whose governance is as productized, auditable, and self-renewing as the products it ships.
 
 ---
 

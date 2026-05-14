@@ -1420,7 +1420,53 @@ COMPLETED AND STABLE
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-END OF INVENTORY — FlowAI v0.1 — 2026-05-10
+SECTION 8 — SSOT PROMOTION LOG
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ENTRY 001 — 2026-05-14 — CA-1 + CA-2 promotion to canonical SSOT
+
+  Date:               2026-05-14
+  Promoted by:        W5c
+  Source commit:      437767a (panel+synthesis: SSOT amendment draft per
+                      Panel re-eval (corrected framing 'underserved
+                      globally') + re-clustered Q1-5 + candidate list +
+                      unified draft [W5c])
+  Source dispatch:    docs/panel-consultations/ssot-amendment-synthesis-
+                      2026-05-14.md
+  Amendment draft:    docs/FLOWAI_SSOT_AMENDMENT_DRAFT_2026-05-14.md
+  CEO disposition:    CA-1 + CA-2 supermajority-cleared per MG2 (≥7/10).
+                      CA-3 through CA-6 deferred for separate Panel
+                      re-review dispatch; not promoted in this entry.
+  Panel signal:
+                      CA-1 (geographic broadening to "UNDERSERVED MARKET
+                          SEGMENTS GLOBALLY"): 9/10 unique reviewers
+                          (slots 1, 2, 3, 4, 5, 6, 7, 9, 10).
+                      CA-2 (reframe FlowAI as URL-based AI democratization
+                          platform): 8/10 unique reviewers (slots 1, 2,
+                          3, 4, 5, 6, 9, 10).
+  Sections updated in docs/FLOWAI_SSOT.md:
+                      O1 — Primary identity of FlowAI (CA-1 + CA-2)
+                      O6 — "First, not exclusive" — meaning (CA-1)
+                      ELEVATOR PITCH — synthesized (CA-1 + CA-2)
+  Sections NOT updated (out of scope for CA-1 + CA-2):
+                      O4 — incidental "Africa availability" wording in
+                          Marketplace tool-ranking criterion. Product-
+                          tool scope, not platform-market scope.
+                      MISSING QUESTIONS — incidental "MyBirthSafe
+                          Africa-first" wording. Product-roadmap scope,
+                          not platform-market scope.
+                      E4 — no geographic-scope wording present;
+                          CA-5 (E4 commercial generalization, 5/10
+                          plurality) not promoted in this entry.
+  Pre-promotion archive:
+                      docs/archive/FLOWAI_SSOT-pre-2026-05-14-promotion.md
+                      (verbatim copy of canonical SSOT at commit fbaf881
+                      before CA-1 + CA-2 edits applied).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-14)
 
 
 
