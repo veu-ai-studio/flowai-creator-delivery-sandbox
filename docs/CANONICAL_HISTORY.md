@@ -1519,6 +1519,54 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+ENTRY 003 — 2026-05-14 — SSOT W04-Rev-2.1 promoted to canonical via CEO ratification
+
+  Date:               2026-05-14
+  Promoted by:        W2
+  Source commit:      46d94b1 (docs/SSOT_W04_REV2_1_DRAFT.md — 4 W6-Panel-
+                      cited minor amendments applied to Rev-2)
+  Panel signal:       9/10 PROMOTE_WITH_MINOR_AMENDMENTS (commit 9d7abd3) +
+                      4 amendments applied. Rebalanced Panel composition
+                      (commit 50a7928).
+  Target file:        docs/CANONICAL_REFERENCE.md — full replacement with
+                      Rev-2.1 content.
+  Pre-promotion archive:
+                      docs/archive/CANONICAL_REFERENCE-pre-2026-05-14-
+                      rev2.1-promotion.md (verbatim copy of canonical
+                      CANONICAL_REFERENCE.md immediately before this
+                      Rev-2.1 replacement). Filename disambiguated from
+                      the prior ENTRY 001 archive at
+                      docs/archive/FLOWAI_SSOT-pre-2026-05-14-
+                      promotion.md (which captures a different document
+                      family — FLOWAI_SSOT.md pre-CA-1/CA-2). Both
+                      archives coexist.
+  Amendments applied (Rev-2 → Rev-2.1, per W6 Panel review):
+                      (a) §17: footnote disambiguating UX-C sidebar
+                          labels (Guided Operations / Manual Operations)
+                          from canonical axis labels in §8 / §8a
+                          (Auto / Recommended / User-Choice;
+                          Hands-On / Reviewed / Hands-Off).
+                      (b) §25 Locked Rule 4: canonical Orchestra
+                          Selection axis label clarification —
+                          Auto / Recommended / User-Choice is canonical;
+                          Auto / Guided / Manual retained as historical
+                          aliases at the UX-C sidebar surface only.
+                      (c) §20: new §20.1 reconciliation with §15 Agent
+                          #13 — embedded code-level Self-Protection
+                          (Sprint PROTECT-1, always-on) is a different
+                          layer from Agent #13 Self-Protection Agent
+                          (orchestrating, dormant). Both co-canonical.
+                      (d) §3 productScope metadata table: VEU product
+                          name examples replaced with generic
+                          placeholders (tenantA / tenantB); §22
+                          Product-Agnostic Rule footnote added stating
+                          productScope values are runtime metadata-
+                          driven, never hardcoded.
+  Lineage:            Rev-1 (commit d68a1df) → Rev-2 (Panel-reviewed) →
+                      Rev-2.1 (commit 46d94b1) → CANONICAL (this entry).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-14)
 
 
