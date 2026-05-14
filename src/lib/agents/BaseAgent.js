@@ -76,6 +76,11 @@ export const PRODUCT_SCOPES = Object.freeze({
   REACHSMS:     'reachsms',
   PRESSAI:      'pressai',
   MYBIRTHSAFE:  'mybirthsafe',
+  // System-only scope used by the FlowAI self-adversarial test suite
+  // (docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md §9 LD-2 + §11.8).
+  // Provisioned by migration 0012; cleaned up between runs by
+  // scripts/cleanup-test-tenant.mjs. Never bind to real customers.
+  TEST:         '_test',
 });
 
 export const ENVIRONMENTS = Object.freeze({

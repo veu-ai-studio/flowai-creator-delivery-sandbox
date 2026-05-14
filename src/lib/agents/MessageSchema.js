@@ -14,6 +14,11 @@ const ENVELOPE_VERSION = '1.0.0';
 
 const VALID_PRODUCT_SCOPES = new Set([
   'flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mybirthsafe',
+  // System-only scope reserved for the FlowAI self-adversarial test
+  // suite (docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md §11.8).
+  // Mirrors the BaseAgent PRODUCT_SCOPES.TEST entry. Test rows are
+  // cleaned up between runs by scripts/cleanup-test-tenant.mjs.
+  '_test',
 ]);
 
 const TOPICS = Object.freeze({
