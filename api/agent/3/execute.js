@@ -35,6 +35,8 @@
 // JWT/Supabase decoding is a Production Hardening track item — out of MVP scope.
 
 import { Agent3SelfRenewalExecutor } from '../../../src/lib/agents/agents/Agent3SelfRenewalExecutor.js';
+import * as remediationEngine from '../../_lib/remediationEngine.js';
+import verificationAdapters from '../../../src/lib/agents/verificationAdapters.js';
 
 const SYNC_TIMEOUT_MS = 25_000;
 const ALLOWED_MODES = new Set(['recommend_only', 'fork_and_fix']);
@@ -205,10 +207,16 @@ function buildExecutor({ productScope }) {
     environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
     hot,
     cold,
-    // remediationEngine + verificationAdapters wired lazily so the recommend_only
-    // path works without those imports being resolved. fork_and_fix that hits the
-    // wire-up gap returns ok:false outcome:'remediation_unavailable' rather than
-    // crashing.
+    // remediationEngine: production wiring via api/_lib/remediationEngine.js
+    // (Orchestra-powered fork-and-fix or generate-from-scratch → Vercel deploy).
+    // The Executor calls remediationEngine.remediate({ issues, productScope,
+    // sourceHints }); the module's namespace export satisfies that shape
+    // because it exports `remediate()` at the top level.
+    remediationEngine,
+    // verificationAdapters: production wiring via src/lib/agents/
+    // verificationAdapters.js. Provides { issueDetector, orchestraDispatch,
+    // claudeNormalize } per verification.js#runVerificationRecrawl contract.
+    verificationAdapters,
   });
 }
 

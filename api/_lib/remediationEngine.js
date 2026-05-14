@@ -37,16 +37,51 @@ import { acquireSource } from './sourceAcquisition.js';
 const MAX_PATCH_ISSUES = 5; // cap to keep Claude latency / cost bounded.
 
 /**
+ * Two supported call shapes:
+ *
+ * (A) Renewal-pipeline path (api/renew.js): caller provides a full InputArtifact.
+ *     {
+ *       artifact:      { inputType, raw, normalized },
+ *       issues:        Array,
+ *       sourceHints?:  { gitUrl?, vercelProject?, base44Project? },
+ *       requestOrigin?: string,
+ *     }
+ *
+ * (B) Agent #3 Executor path (api/agent/3/execute.js → Agent3SelfRenewalExecutor):
+ *     caller provides productScope + issues, NO artifact. The engine
+ *     synthesizes a minimal artifact from the productScope + the leading
+ *     issue's category/severity so the patch-existing-source path can run
+ *     under source hints AND the generate-from-scratch path can produce a
+ *     deployable Vite-React project from the issue spec alone.
+ *     {
+ *       productScope: string,
+ *       issues:       Array,        // typically a single issue: [issue]
+ *       sourceHints?: object,
+ *       requestOrigin?: string,
+ *     }
+ *
+ * Returns the SAME shape for both call paths — see header comment above.
+ *
  * @param {{
- *   artifact: { inputType, raw, normalized },
- *   issues:   Array,
- *   sourceHints?: { gitUrl?, vercelProject?, base44Project? },
+ *   artifact?:     { inputType, raw, normalized },
+ *   productScope?: string,
+ *   issues:        Array,
+ *   sourceHints?:  { gitUrl?, vercelProject?, base44Project? },
  *   requestOrigin?: string,
  * }} args
  */
 export async function remediate(args) {
-  const { artifact, issues = [], sourceHints, requestOrigin } = args;
-  if (!artifact || typeof artifact !== 'object') throw new TypeError('remediate: artifact required');
+  const { issues = [], sourceHints, requestOrigin } = args;
+  let { artifact } = args;
+  if (!artifact || typeof artifact !== 'object') {
+    // Executor call shape: no artifact provided. Synthesize a minimal
+    // InputArtifact from productScope + leading issue so downstream
+    // remediation paths have something to work with.
+    if (typeof args.productScope !== 'string' || !args.productScope) {
+      throw new TypeError('remediate: artifact or productScope required');
+    }
+    artifact = synthesizeArtifactFromExecutorCall(args.productScope, issues);
+  }
 
   const fixable = issues.filter((i) => i.autoFixable);
 
@@ -231,8 +266,44 @@ function nameFromArtifact(artifact, suffix) {
   return `flowai-renewed-${stub}-${suffix}`;
 }
 
+/**
+ * Synthesize a minimal InputArtifact for the Agent-#3-Executor call shape
+ * (no artifact supplied). Uses productScope + the leading issue's
+ * category/severity/evidence as the seed. This is sufficient for both
+ * remediation paths: patch-existing-source uses sourceHints (no artifact
+ * needed); generate-from-scratch needs only normalized fields to drive
+ * the Claude project-generation prompt.
+ */
+function synthesizeArtifactFromExecutorCall(productScope, issues) {
+  const lead = Array.isArray(issues) && issues[0] ? issues[0] : null;
+  const cats = Array.isArray(issues) ? issues.map((i) => i?.category).filter(Boolean) : [];
+  const productConcept = lead
+    ? `${productScope} renewal addressing ${cats.length} issue(s); leading: ${lead.category || 'unknown'} [${lead.severity || 'medium'}].`
+    : `${productScope} renewal`;
+  return {
+    id: `executor-synth-${Date.now()}`,
+    inputType: 'description',
+    submittedAt: new Date().toISOString(),
+    raw: {
+      description: {
+        productName: productScope,
+        whatItDoes: productConcept,
+        currentIssues: cats.join(', '),
+      },
+    },
+    normalized: {
+      productConcept,
+      targetUsers: `${productScope} end-users`,
+      coreClaims: [],
+      detectedFeatures: [],
+      observedSurfaces: 'description-only',
+    },
+  };
+}
+
 export const __internals = Object.freeze({
   pickPatchTarget,
   composeSpec,
   nameFromArtifact,
+  synthesizeArtifactFromExecutorCall,
 });
