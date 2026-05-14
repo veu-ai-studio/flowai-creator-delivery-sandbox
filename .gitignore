@@ -38,3 +38,10 @@ dist-ssr
 # Local PEM dumps from scripts/setup-test-bypass-keys.mjs. Private PEMs
 # here are TRANSIENT — delete after uploading to Doppler. Never commit.
 .flowai-keys/
+
+# Adversarial test harness ephemera (regenerated per run)
+tests/adversarial/.findings/
+tests/adversarial/.run-results.json
+tests/adversarial-api/.run-results.json
+test-results/
+playwright-report/
