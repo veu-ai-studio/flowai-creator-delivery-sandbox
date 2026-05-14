@@ -1362,6 +1362,46 @@ RISK FLAG:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+SECTION 7 — SSOT CANONICAL AMENDMENT LOG (2026-05-14 onward)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Authoritative detail for each entry below lives in
+docs/CANONICAL_HISTORY.md SECTION 8 (SSOT PROMOTION LOG). The
+records here are the pointer copy kept alongside the rest of the
+canonical historical inventory.
+
+ENTRY 001 — 2026-05-14 — CA-1 + CA-2 promotion to canonical SSOT
+  Source commit:      437767a (synthesis + amendment draft)
+  Promotion commit:   1d65aba
+  Panel signal:       CA-1 = 9/10 unique reviewers;
+                      CA-2 = 8/10 unique reviewers.
+  CEO disposition:    Both supermajority-cleared per MG2 (≥7/10).
+  Sections amended:   O1, O6, ELEVATOR PITCH in docs/FLOWAI_SSOT.md.
+  Pre-promotion archive:
+                      docs/archive/FLOWAI_SSOT-pre-2026-05-14-promotion.md
+
+ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
+  Source commits:     e2f094d (Panel re-review of CA-3/4/5/6),
+                      d476555 (consolidated MG2-interpretation
+                      consultation).
+  Panel signal:       CA-3 = 8 of 8 engaged reviewers
+                      (supermajority confirmed on re-review).
+  MG2 interpretation: (c) middle path — ≥7 of 10 engaged + 9+
+                      engagement floor. CA-3 cleared both gates.
+  CEO disposition:    CA-3 ACCEPTED for promotion. CA-4 + CA-5 +
+                      CA-6 deferred.
+  Sections affected:  O1 in docs/FLOWAI_SSOT.md. The CA-3
+                      verbatim replacement text was already
+                      incorporated during CA-1 + CA-2 promotion
+                      (commit 1d65aba). No additional text edit
+                      to the SSOT was required; ENTRY 002 records
+                      the canonical ratification administratively.
+  Pre-promotion archive:
+                      Not created (no SSOT text change applied).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 SUMMARY: EXPLICIT "NO RECORD FOUND" DECLARATIONS
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

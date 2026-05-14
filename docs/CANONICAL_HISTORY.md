@@ -1466,6 +1466,59 @@ ENTRY 001 — 2026-05-14 — CA-1 + CA-2 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
+
+  Date:               2026-05-14
+  Promoted by:        W5c
+  Source commits:     e2f094d (panel: re-review of CA-3/4/5/6 plus
+                      parking-lot ENTRY 002 + ENTRY 003 against updated
+                      canonical SSOT post-CA-1+CA-2 promotion [W5a])
+                      d476555 (panel: consolidated consultation on MG2
+                      interpretation + CA-3/4/5 promotion + 4-remediation-
+                      modes canonical + agent roadmap priority [W5a])
+  Source dispatch:    W04 → W5c CA-3 promotion dispatch (2026-05-14)
+  Amendment draft:    docs/FLOWAI_SSOT_AMENDMENT_DRAFT_2026-05-14.md,
+                      "Amendment 3 — Replace O1 verbatim text"
+                      (lines 166–200).
+  Panel signal:       CA-3 cleared 8 of 8 engaged reviewers
+                      (supermajority confirmed on re-review).
+  MG2 interpretation: (c) middle path — supermajority threshold = ≥7 of
+                      10 engaged reviewers AND engagement floor of 9+
+                      engaged on the question. CA-3 cleared both gates.
+  CEO disposition:    ACCEPTED for promotion (D2 from Q2 dispositions).
+                      CA-4 + CA-5 + CA-6 deferred per Panel split + the
+                      engagement caveats surfaced during re-review;
+                      not promoted in this entry.
+  Sections affected in docs/FLOWAI_SSOT.md:
+                      O1 — Primary identity of FlowAI.
+                          The CA-3 verbatim replacement text was already
+                          incorporated into the canonical O1 statement
+                          during the CA-1 + CA-2 promotion at commit
+                          1d65aba (ENTRY 001 above). The O1 text now
+                          satisfies CA-3's specified replacement
+                          (the "FlowAI is primarily a URL-based AI
+                          democratization platform for underserved
+                          market segments globally..." formulation).
+                          No additional text edit to docs/FLOWAI_SSOT.md
+                          is required to ratify CA-3; this entry records
+                          the canonical ratification administratively.
+  Sections NOT updated (out of scope for CA-3):
+                      CA-4 (Year-1→Year-6 user journey to O6) — deferred.
+                      CA-5 (E4 commercial rail generalization) — deferred.
+                      CA-6 (new MG9 section) — deferred.
+  Pre-promotion archive:
+                      Not created for this entry. CA-3's specified
+                      replacement text was already in place in
+                      docs/FLOWAI_SSOT.md from the CA-1 + CA-2
+                      promotion (commit 1d65aba). The canonical SSOT
+                      state is byte-identical before and after this
+                      ratification; the pre-CA-1+CA-2 archive at
+                      docs/archive/FLOWAI_SSOT-pre-2026-05-14-
+                      promotion.md remains the authoritative
+                      pre-amendment baseline.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-14)
 
 
