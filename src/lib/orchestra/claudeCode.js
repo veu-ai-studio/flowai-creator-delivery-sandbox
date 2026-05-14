@@ -108,21 +108,33 @@ async function generateFromScratch(payload) {
     return memberError(id, 'generate-from-scratch', e.message || String(e));
   }
   const parsed = safeJson(response.text);
-  if (!parsed || !Array.isArray(parsed.files)) {
-    return memberError(id, 'generate-from-scratch', 'Claude response did not include files[]', { rawText: (response.text || '').slice(0, 600) });
+  // Resilience: when Claude returns no parseable JSON or no files[],
+  // fall back to the hardcoded Vite-React skeleton seeded from the
+  // spec.  This guarantees generate-from-scratch ALWAYS produces a
+  // buildable project — silent generator misfires never block the
+  // pipeline.  The rationale string surfaces the fallback so the UI /
+  // smoke can detect it.
+  let rawFiles = [];
+  let usedFallback = false;
+  if (parsed && Array.isArray(parsed.files)) {
+    rawFiles = parsed.files
+      .filter((f) => f && typeof f.path === 'string' && typeof f.content === 'string')
+      .map((f) => ({ path: f.path.trim(), content: f.content }));
+  } else {
+    usedFallback = true;
   }
-  const files = parsed.files
-    .filter((f) => f && typeof f.path === 'string' && typeof f.content === 'string')
-    .map((f) => ({ path: f.path.trim(), content: f.content }));
-
-  // Apply hardening: ensure required files are present.  If Claude omits
-  // package.json or index.html, fall back to a known-good skeleton.
-  const finalFiles = ensureRequiredFiles(files, spec);
+  // Apply hardening: ensure required files are present.  When rawFiles is
+  // empty (Claude returned no files), ensureRequiredFiles seeds the
+  // entire skeleton from the spec.
+  const finalFiles = ensureRequiredFiles(rawFiles, spec);
 
   return memberOk(id, 'generate-from-scratch', {
     files: finalFiles,
     framework: fw,
-    rationale: typeof parsed.rationale === 'string' ? parsed.rationale : '',
+    rationale: usedFallback
+      ? 'Claude response was not parseable; falling back to hardcoded Vite-React skeleton seeded from spec.'
+      : (typeof parsed.rationale === 'string' ? parsed.rationale : ''),
+    fallbackUsed: usedFallback,
     model: response.model,
     usage: response.usage,
   });

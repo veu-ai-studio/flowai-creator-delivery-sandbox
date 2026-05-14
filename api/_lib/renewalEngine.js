@@ -57,6 +57,8 @@ export async function renew(args) {
       remediationPath: 'multi-url-synthesis',
       sourceDisclosure: `Synthesized from ${(urls || []).length} source URLs.`,
       patchesApplied: collectPatches(issues),
+      patchedFiles: r.remediation?.patchedFiles || null,
+      generatedFiles: r.remediation?.generatedFiles || null,
       sourceContributions: r.sourceContributions,
       synthesisLog: r.synthesisLog,
       reason: r.ok ? undefined : r.reason,
