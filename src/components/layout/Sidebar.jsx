@@ -44,6 +44,7 @@ const navSections = [
     tooltip: "FlowAI executes all 8 steps automatically without pausing. You review the final report only.",
     items: [
       { label: "Auto Runner", path: "/auto-runner", icon: Play, tooltip: "Watch FlowAI execute all eight process steps live — Research through Monitor — in one continuous automated session." },
+      { label: "Renewal Workspace", path: "/renewal", icon: RefreshCw, tooltip: "Three input methods — URL, description, paste / upload — pipe through one renewal engine that produces a renewed static preview + before/after report." },
     ],
   },
   {
