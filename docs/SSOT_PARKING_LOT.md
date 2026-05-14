@@ -33,4 +33,12 @@ Each entry includes:
 
 ---
 
+### ENTRY 003 — 2026-05-14
+- **Source**: CEO 2026-05-14 (in response to observing Auto Run on saigedemo.com run all 8 agents on a null-body crawl input)
+- **Description**: Three architectural gaps in FlowAI's current Auto Runner pipeline: (a) **No hard gates between steps** — when Step 1 Research identified "CRITICAL: page content insufficient, null body," the Auto Runner proceeded through all 7 downstream steps producing 7 redundant "couldn't assess" reports. Per FlowAI's own 6-step Product Clearance Protocol with 95/95 scoring threshold, agents should be able to return a `block` semantic that halts downstream execution OR re-routes to fix-first mode OR escalates. None of this exists in the current AutoRunner.jsx code. (b) **Self-Renewal Agent (#3) produces reports, not fixes** — the current Self-Renewal output is an ISSUE register with HEAL action DESCRIPTIONS, not executed fixes. For Self-Renewal to be real, it must: detect issue → generate fix code/config → apply fix to source → verify → loop until resolved or escalate. Current agent stops at "detect + describe." (c) **Remediation semantics undefined** — SSOT today says FlowAI is "remediation orchestration infrastructure" but the actual semantics of HOW remediation happens are unspecified. Possible models: (i) Recommendation-only mode (current state); (ii) Code-generation mode (produces patches/PRs); (iii) Direct-write mode (FlowAI has source credentials and pushes fixes); (iv) Fork-and-fix mode (produces a new URL that's a fixed version of the source). Each has different security, IP, and operational implications and the SSOT must specify which model(s) are canonical.
+- **Trajectory implications**: Gap (a) is smallest-scope fix — agent return contract change + AutoRunner gate logic, ~hours. Gap (b) requires new agent code, days-to-weeks. Gap (c) requires architectural decision affecting all 25 agents and the entire FlowAI security/IP model — likely weeks of design before any code.
+- **Disposition**: NEW (awaiting next SSOT amendment cycle review; overlaps directly with Panel review's "FlowAI category definition" gap surfaced in 4-part review commit b512293)
+
+---
+
 *File created 2026-05-14 by W5b per W03 dispatch. First entry logged at creation.*
