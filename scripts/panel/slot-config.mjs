@@ -1,36 +1,41 @@
 // scripts/panel/slot-config.mjs
 //
 // SINGLE SOURCE OF TRUTH for FlowAI's Panel slot composition.
-// Rebalanced 2026-05-14 per CEO directive: ≤2 slots per AI provider,
-// include OpenAI / Anthropic / Google / Mistral or Cohere (European) /
-// Qwen or Yi (Asian) / DeepSeek / Perplexity, plus developer/builder AI.
+// Rebalanced 2026-05-14 (rev-2) per CEO directive: 10 unique provider
+// names across 10 slots — Moonshot Kimi K2.6 and xAI Grok 4.3 replace
+// the OpenAI/Qwen duplicates (slots 9 + 10). See docs/panel-
+// consultations/PANEL_COMPOSITION_DUPLICATE_REMOVAL_2026-05-14.md.
 //
 // Every primary slot declares a provider-different backup so a single
-// vendor outage cannot blackbox the Panel. The Panel runner in
-// scripts/lib/peer-review.mjs reads the `backup` field on primary failure
-// and re-issues against the backup model — the slot's recorded result
-// reflects which model actually answered, with `backup_fired: true` set
-// on the reviewer envelope when the backup ran. No double-counting:
-// the slot returns ONE result, not two.
+// vendor outage cannot blackbox the Panel. The W6 runner in
+// scripts/panel/run-panel-consultation.mjs reads the backup on primary
+// degradation and re-issues against the backup model — the slot's
+// recorded envelope is the one that answered, marked
+// `slot_backup_applied: true` if the backup fired. No double-counting:
+// the slot returns ONE result.
 //
-// Provider diversity audit:
-//   OpenAI:     2 (slots 1 + 10)   at-limit
+// Provider diversity audit (10 UNIQUE providers across 10 slots):
+//   OpenAI:     1 (slot 1)
 //   Anthropic:  1 (slot 2)
 //   Google:     1 (slot 3)
 //   Mistral:    1 (slot 4)         European frontier
 //   Cohere:     1 (slot 5)         European/Canadian
-//   Qwen:       2 (slots 6 + 9)    at-limit; covers Asia generalist + Asia developer/builder
+//   Qwen:       1 (slot 6)         Asia generalist
 //   DeepSeek:   1 (slot 7)         Asia reasoning
 //   Perplexity: 1 (slot 8)         US web-grounded
+//   Moonshot:   1 (slot 9)         Asia frontier coding + agentic
+//   xAI:        1 (slot 10)        US real-time web-aware
 //
-// Regional coverage: 4 US + 1 US-web-grounded + 2 Europe + 3 Asia = 10/10.
+// Regional coverage: 3 US + 1 US-web-grounded + 1 US-web-aware
+//                  + 2 Europe + 3 Asia = 10/10.
 //
-// Developer/builder coverage: slot 9 (qwen/qwen-2.5-coder-32b-instruct).
-//   Codestral (CEO's first-choice) is unavailable on OpenRouter at probe
-//   time 2026-05-14 (mistralai/codestral-2501 → 404). Qwen Coder is the
-//   "or equivalent" substitute per dispatch wording. GitHub Copilot has
-//   no public LLM API equivalent — see PANEL_COMPOSITION_REBALANCE_
-//   2026-05-14.md for the Copilot blocker discussion.
+// Slots 9 + 10 backups are picked from OUTSIDE the 10-primary set
+// (no backup duplicates a primary in any other slot — the strict
+// rule introduced by this rebalance). Slots 1-8 backups are
+// carry-overs from the prior rebalance (2026-05-14 rev-1, commit
+// 50a7928) under the original "provider-different" rule; converting
+// those to the strict "outside-primary-set" rule is a follow-up
+// per the rebalance doc.
 //
 // To add a new slot: append to SLOT_CONFIG, then add the model to
 // scripts/lib/peer-review.mjs ALLOWED_MODELS, then run the smoke.
@@ -107,21 +112,31 @@ export const SLOT_CONFIG = Object.freeze([
     role: 'web-grounded research',
     backup: Object.freeze({ provider: 'openrouter', model: 'google/gemini-2.5-pro' }),
   }),
-  // Slot 9 — Developer/builder AI (Qwen Coder — Codestral substitute)
+  // Slot 9 — Moonshot Kimi K2.6 (Asia frontier coding + agentic).
+  // Replaces qwen/qwen-2.5-coder-32b-instruct (2026-05-14 rev-2) to
+  // remove the Qwen×2 provider duplicate. Backup llama-4-maverick is
+  // NOT a primary in any other slot — satisfies the strict
+  // no-backup-duplicates-primary rule.
   Object.freeze({
     provider: 'openrouter',
-    model: 'qwen/qwen-2.5-coder-32b-instruct',
-    region: 'Asia/dev',
-    role: 'developer/builder AI',
-    backup: Object.freeze({ provider: 'openrouter', model: 'mistralai/mistral-large-2411' }),
+    model: 'moonshotai/kimi-k2.6',
+    region: 'Asia (Beijing)',
+    role: 'frontier coding + agentic',
+    backup: Object.freeze({ provider: 'openrouter', model: 'meta-llama/llama-4-maverick' }),
   }),
-  // Slot 10 — US fast generalist (web-search-friendly default)
+  // Slot 10 — xAI Grok 4.3 (US real-time web-aware reasoning).
+  // Replaces openai/gpt-4o (2026-05-14 rev-2) to remove the OpenAI×2
+  // provider duplicate. Backup minimax-m2.7 is NOT a primary in any
+  // other slot — satisfies the strict no-backup-duplicates-primary
+  // rule. (Dispatch's nvidia/nemotron-3-super candidate returned
+  // "not a valid model ID" from OpenRouter on 2026-05-14; minimax
+  // was the dispatch's OR-option fallback.)
   Object.freeze({
     provider: 'openrouter',
-    model: 'openai/gpt-4o',
+    model: 'x-ai/grok-4.3',
     region: 'US',
-    role: 'fast generalist',
-    backup: Object.freeze({ provider: 'openrouter', model: 'anthropic/claude-opus-4' }),
+    role: 'real-time web-aware reasoning',
+    backup: Object.freeze({ provider: 'openrouter', model: 'minimax/minimax-m2.7' }),
   }),
 ]);
 

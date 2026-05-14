@@ -10,7 +10,7 @@ SCOPE:
 - Commit all outputs to flowai-v0.1
 - Report results to W0x for CEO review
 
-PANEL COMPOSITION (rebalanced 2026-05-14): 10 slots. Quorum: 7 of 10. Supermajority: 8 of 10. Every primary slot has a provider-different backup adapter declared in `scripts/panel/slot-config.mjs`; backups fire automatically when a primary returns DEGRADED. Composition rationale + per-slot model selection: `docs/panel-consultations/PANEL_COMPOSITION_REBALANCE_2026-05-14.md`.
+PANEL COMPOSITION (rebalanced 2026-05-14 rev-2): 10 slots, **10 unique providers**. Quorum: 7 of 10. Supermajority: 8 of 10. Every primary slot has a provider-different backup adapter declared in `scripts/panel/slot-config.mjs`; backups fire automatically when a primary returns DEGRADED. **Lineage:** prior rev-1 at commit `50a7928` had OpenAI×2 + Qwen×2 duplicates; rev-2 (this entry) replaces Slot 9 with Moonshot Kimi K2.6 and Slot 10 with xAI Grok 4.3 to achieve 10-unique-providers. Composition rationale: `docs/panel-consultations/PANEL_COMPOSITION_DUPLICATE_REMOVAL_2026-05-14.md`.
 
 | Slot | Provider | Model | Region | Role | Backup (provider-different) |
 |---|---|---|---|---|---|
@@ -22,10 +22,10 @@ PANEL COMPOSITION (rebalanced 2026-05-14): 10 slots. Quorum: 7 of 10. Supermajor
 | 6 | qwen | `qwen/qwen-2.5-72b-instruct` | Asia | Asia generalist | `deepseek/deepseek-r1` |
 | 7 | deepseek | `deepseek/deepseek-r1` | Asia | Asia reasoning | `qwen/qwen-2.5-72b-instruct` |
 | 8 | perplexity | `perplexity/sonar` | US (web-grounded) | web-grounded research | `google/gemini-2.5-pro` |
-| 9 | qwen | `qwen/qwen-2.5-coder-32b-instruct` | Asia (developer/builder) | developer/builder AI | `mistralai/mistral-large-2411` |
-| 10 | openai | `openai/gpt-4o` | US | fast generalist | `anthropic/claude-opus-4` |
+| 9 | moonshotai | `moonshotai/kimi-k2.6` | Asia (Beijing) | frontier coding + agentic | `meta-llama/llama-4-maverick` |
+| 10 | x-ai | `x-ai/grok-4.3` | US | real-time web-aware reasoning | `minimax/minimax-m2.7` |
 
-Provider counts (≤2 cap per CEO directive): OpenAI=2, Anthropic=1, Google=1, Mistral=1, Cohere=1, Qwen=2, DeepSeek=1, Perplexity=1. Eight distinct providers across ten slots. Geographic coverage: 4 US + 1 US-web-grounded + 2 Europe + 3 Asia.
+Provider audit (rev-2): OpenAI=1, Anthropic=1, Google=1, Mistral=1, Cohere=1, Qwen=1, DeepSeek=1, Perplexity=1, Moonshot=1, xAI=1. **Max per provider: 1**. **10 unique providers across 10 slots.** Geographic coverage: 3 US + 1 US-web-grounded + 1 US-web-aware + 2 Europe + 3 Asia (6 distinct regions).
 
 STANDING RULES:
 - Every consultation must receive full CANONICAL_REFERENCE.md as context

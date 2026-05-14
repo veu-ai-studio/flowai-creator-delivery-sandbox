@@ -111,12 +111,23 @@ const ALLOWED_MODELS = new Set([
   // Added 2026-05-14 (W5b): Panel composition rebalance per CEO
   // directive — provider diversity (≤2 slots per family), European
   // primary (Cohere), web-grounded research (Perplexity Sonar), and
-  // a developer/builder AI (Qwen Coder substituting for unavailable
-  // Codestral on OpenRouter). See docs/panel-consultations/
+  // a developer/builder AI. See docs/panel-consultations/
   // PANEL_COMPOSITION_REBALANCE_2026-05-14.md for the rationale.
   'cohere/command-r-plus-08-2024',
   'perplexity/sonar',
-  'qwen/qwen-2.5-coder-32b-instruct',
+  // Added 2026-05-14 (W5b, rev-2): 10-unique-providers rebalance per
+  // CEO directive — Moonshot Kimi K2.6 replaces Slot 9, xAI Grok 4.3
+  // replaces Slot 10, removing the OpenAI×2 and Qwen×2 duplicates.
+  // llama-4-maverick + minimax-m2.7 are the new outside-primary-set
+  // backups for slots 9 + 10 respectively. See PANEL_COMPOSITION_
+  // DUPLICATE_REMOVAL_2026-05-14.md. (qwen/qwen-2.5-coder-32b-instruct
+  // removed — no longer in panel; no other code references it. Older
+  // openai/gpt-4o retained on the allowlist because 22 historical
+  // consultation scripts still reference it inline.)
+  'moonshotai/kimi-k2.6',
+  'x-ai/grok-4.3',
+  'meta-llama/llama-4-maverick',
+  'minimax/minimax-m2.7',
 ]);
 
 /** Locate the repo root by walking up from this file until package.json is found. */
@@ -170,6 +181,14 @@ async function callOnce({ apiKey, model, system, user, signal }) {
         { role: 'user', content: user },
       ],
       temperature: 0,
+      // Cap at 4096 to bound OpenRouter credit cost — premium models
+      // (gpt-5, claude-opus-4, gemini-2.5-pro, mistral-large) default to
+      // 32K-65K which exceeds account affordance and yields HTTP 402
+      // "more credits or fewer max_tokens" rejections. Panel reviewer
+      // JSON envelopes are typically <2K tokens; 4096 is comfortable
+      // headroom. Added 2026-05-14 (W5b rev-2 rebalance) per the
+      // soft-blocker flagged in the rev-1 report-back.
+      max_tokens: 4096,
     }),
     signal,
   });
