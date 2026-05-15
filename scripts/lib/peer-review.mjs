@@ -493,6 +493,24 @@ async function runPanelReviewer({ entry, system, user, timeoutMs }) {
   const reviewJson = extractJson(content);
   const usable = reviewJson && !reviewJson._unparsed;
 
+  // Slot 9 envelope-fail telemetry — Moonshot Kimi K2.6 specifically
+  // (its reasoning-tier output occasionally emits JSON inside a
+  // chain-of-thought wrapper that the strengthened extractJson should
+  // now handle, but if it still fails we want the event in the log
+  // so future hardening can target real failures). Logged as a single
+  // stderr line so it surfaces in Vercel function logs + local runs
+  // without bloating stdout. The W6 wrapper (runPanelConsultation
+  // WithBackups) will fire the slot 9 backup (llama-4-maverick) when
+  // it sees degraded=true regardless of which model emitted the
+  // failure.
+  if (!usable && entry.model === 'moonshotai/kimi-k2.6') {
+    const preview = (content || '').slice(0, 160).replace(/\s+/g, ' ');
+    process.stderr.write(
+      `[peer-review] slot-9-envelope-fail model=moonshotai/kimi-k2.6 ` +
+      `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
+    );
+  }
+
   return {
     model: label,
     provider: entry.provider,
@@ -955,20 +973,139 @@ function detectContradictions(reviewers) {
   return out;
 }
 
-/** Best-effort JSON extraction from a model response. */
+/** Best-effort JSON extraction from a model response.
+ *
+ *  Strategy ladder (each step tried only if the previous failed):
+ *    1. Direct JSON.parse on the raw string.
+ *    2. Pull content from a ```json ... ``` fenced code block.
+ *    3. Strip "thinking" preambles (<think>...</think>, <reasoning>...,
+ *       "Let me think...", "Okay, the user asked..."). Models in the
+ *       reasoning-tier family (Moonshot Kimi K2.6, DeepSeek R1) often
+ *       emit a chain-of-thought before the final answer; the final JSON
+ *       is the part we actually want.
+ *    4. Try ALL balanced { ... } substrings in the cleaned text, from
+ *       longest to shortest. Single greedy slice fails when a thinking
+ *       preamble contains JSON-shaped reasoning that confuses the
+ *       first-{ / last-} pair.
+ *    5. Apply minor repairs to the best candidate: strip trailing commas
+ *       before } / ], replace smart quotes with straight quotes. Retry
+ *       JSON.parse.
+ *    6. Give up — return { _unparsed: <raw> } so the caller can mark the
+ *       reviewer degraded and fire the slot's backup.
+ *
+ *  Hardened 2026-05-15 (W5b) for Slot 9 Moonshot Kimi K2.6 envelope
+ *  parsing. Defensive code; never throws.
+ */
 function extractJson(s) {
   if (!s) return null;
+
+  // Strategy 1: direct parse.
   try { return JSON.parse(s); } catch { /* fall through */ }
+
+  // Strategy 2: fenced ```json``` block.
   const fenced = s.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenced) {
     try { return JSON.parse(fenced[1]); } catch { /* fall through */ }
+    // Also try the fenced content with repair pass.
+    const repaired = repairJson(fenced[1]);
+    if (repaired) {
+      try { return JSON.parse(repaired); } catch { /* fall through */ }
+    }
   }
-  const a = s.indexOf('{');
-  const b = s.lastIndexOf('}');
-  if (a !== -1 && b > a) {
-    try { return JSON.parse(s.slice(a, b + 1)); } catch { /* give up */ }
+
+  // Strategy 3: strip thinking preambles.
+  const cleaned = stripThinkingPreamble(s);
+
+  // Strategy 4: try all balanced { ... } substrings, longest first.
+  const candidates = collectBalancedJsonCandidates(cleaned);
+  for (const c of candidates) {
+    try { return JSON.parse(c); } catch { /* try next */ }
   }
+
+  // Strategy 5: apply minor repairs to each candidate.
+  for (const c of candidates) {
+    const repaired = repairJson(c);
+    if (!repaired) continue;
+    try { return JSON.parse(repaired); } catch { /* try next */ }
+  }
+
+  // Strategy 6: give up.
   return { _unparsed: s };
+}
+
+/** Strip common chain-of-thought / reasoning preambles that wrap the
+ *  real JSON answer. Returns the text after the preamble, or the
+ *  original input unchanged if no preamble is recognized. */
+function stripThinkingPreamble(s) {
+  if (typeof s !== 'string') return s;
+  // <think>...</think> blocks (Moonshot Kimi style).
+  let cleaned = s.replace(/<think>[\s\S]*?<\/think>/gi, '');
+  // <reasoning>...</reasoning> blocks (DeepSeek R1 style).
+  cleaned = cleaned.replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '');
+  // Leading prose paragraph before a JSON code-block or first { —
+  // collapse "Let me think... <newlines> {..." down to "{..." so the
+  // greedy slice doesn't pick up a JSON-shaped quote from the prose.
+  // Only strips when there's clearly prose before the first {.
+  const firstBrace = cleaned.indexOf('{');
+  if (firstBrace > 0) {
+    const before = cleaned.slice(0, firstBrace);
+    if (/^[\s\S]{0,2000}$/.test(before) && /(let me|okay|sure|thinking|the user|alright|first[, ])/i.test(before)) {
+      cleaned = cleaned.slice(firstBrace);
+    }
+  }
+  return cleaned;
+}
+
+/** Collect all balanced { ... } substrings, sorted by length desc.
+ *  Naive depth tracker; ignores braces inside strings (sufficient for
+ *  the JSON we get back from LLMs). */
+function collectBalancedJsonCandidates(s) {
+  const candidates = [];
+  let depth = 0;
+  let start = -1;
+  let inString = false;
+  let escape = false;
+  for (let i = 0; i < s.length; i += 1) {
+    const ch = s[i];
+    if (escape) { escape = false; continue; }
+    if (ch === '\\') { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{') {
+      if (depth === 0) start = i;
+      depth += 1;
+    } else if (ch === '}') {
+      depth -= 1;
+      if (depth === 0 && start !== -1) {
+        candidates.push(s.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+  // Fallback: if no balanced match, try the greedy first-{ / last-}
+  // slice as a last-ditch.
+  if (candidates.length === 0) {
+    const a = s.indexOf('{');
+    const b = s.lastIndexOf('}');
+    if (a !== -1 && b > a) candidates.push(s.slice(a, b + 1));
+  }
+  candidates.sort((x, y) => y.length - x.length);
+  return candidates;
+}
+
+/** Apply minor repairs to a candidate JSON string. Returns the
+ *  repaired string, or null if no repair changed anything (caller will
+ *  retry parse anyway). */
+function repairJson(s) {
+  if (typeof s !== 'string') return null;
+  let r = s;
+  // Smart quotes → straight quotes.
+  r = r.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+  // Trailing commas before } or ].
+  r = r.replace(/,(\s*[}\]])/g, '$1');
+  // Bare single-quoted keys/values → double-quoted. Skipped — risky
+  // because contractions inside JSON strings would break.
+  return r === s ? null : r;
 }
 
 function pickNumber(obj, key) {
