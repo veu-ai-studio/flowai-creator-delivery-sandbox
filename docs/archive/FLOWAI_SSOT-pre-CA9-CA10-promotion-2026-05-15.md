@@ -113,30 +113,8 @@ Every run produces:
 2. **Before/After delta report** — `before_after_delta` from `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` §2.4: `{ issuesBefore, issuesAfter, resolved, unresolved, regressions }`, plus the terminal decision per issue (see §6).
 3. **Source disclosure** — `patch-existing-source` or `generate-from-scratch`, plus retrieval method (git-tarball / vercel-project / base44-stub / none).
 4. **LIMITATIONS section** — verbatim list of human-gated-skip and documented-limitation terminal decisions, per `api/_lib/beforeAfterReport.js`.
-5. **Updated ProductSSOT row** (per CA-10-A / ENTRY 005). On every pipeline run that produces an output, FlowAI writes a new `delta_log` entry to the product's ProductSSOT row (one row per `(productId, environment)` pair per §7.5). The write is **atomic** with the rest of the output contract: a run that produces a renewed URL but fails to update ProductSSOT is considered INCOMPLETE and rolled back (per §10 Self-Protect snapshot + Self-Heal pattern). The ProductSSOT update is the canonical living-document mechanism — it accumulates history across runs and is fed back into the next pipeline run per §28's symbiotic loop.
 
 **Source acquisition order** (per `api/_lib/sourceAcquisition.js`): git URL → Vercel project → Base44 project → fallback to generate-from-scratch. Generate-from-scratch is canonical capability per parking-lot ENTRY 005, not a fallback in the colloquial "second-best" sense — it produces a fully functional working product whenever source is unreachable.
-
-### 7.5 ProductSSOT entity — canonical living-document structure (per CA-10-A / ENTRY 005)
-
-One **ProductSSOT** row per `(productId, environment)` pair, where `environment ∈ {'dev', 'prd'}` per §16.3 (Dual Deployment — dev + prd tracked separately). A product registered in three states (dev + prd + an additional staging) gets three ProductSSOTs.
-
-**Six canonical blocks per ProductSSOT row:**
-
-| Block | Owner | Mutation | Purpose |
-|---|---|---|---|
-| **`identity_block`** (jsonb) | system + admin | auto-populated; admin can override | `{ productName, productUrl, ownerProviderOrgId, ownerOperatorIds[], createdAt, createdBy: {userId, displayName, role}, tags? }` |
-| **`build_brief`** (jsonb) | system + admin | auto-populated from original creation input; admin can annotate | `{ originalInput: {mode: 'clone-improve'\|'describe-build'\|'paste-upload'\|'synthesize-build', sourceUrls?, description?, attachments?[]}, inputArtifactId, normalizedConcept, targetUsers, coreClaims[], detectedFeatures[], initialBuildCommit?, initialDeployUrl? }` |
-| **`architecture_snapshot`** (jsonb) | system (Agent #10 drift detection) | auto on drift; admin can annotate but NOT mutate the snapshot | `{ capturedAt, framework, dependencies[{name, version, license, deprecated?, criticalCves?}], envConfig[{keyName, present, source: 'doppler'\|'env-file'\|'absent'}], pages[{route, component, lastSeenAt}], apiEndpoints[{path, method, lastSeenAt}], databaseSchema[{table, columns[{name, type, nullable}], rlsPolicies?[]}], readinessScores[{dimension, score}] }` (readinessScores per §16.1 six dimensions) |
-| **`delta_log`** (jsonb[]) | system (Agent #3 + Agent #10) | append-only; admin can annotate per entry | Each entry: `{ entryId, at, triggeredBy: 'agent3_self_renewal'\|'agent10_drift_detection'\|'agent10_customer_issue'\|'clearance_step'\|'manual', triggerSourceId, issue?, remediation?, before_after, humanGateDecision?, annotations[], overrides[] }` |
-| **`governance_record`** (jsonb[]) | system (Clearance + Human Gates) | append-only; admin can annotate per entry; never override | Each entry: `{ entryId, at, kind: '95_95_score'\|'clearance_step'\|'human_gate'\|'panel_decision'\|'self_audit_dimension_score'\|'customer_signal', payload, clearanceStepNumber?, clearanceStepLabel?, scoreBreakdown?, acceptedBy?, annotations[] }` |
-| **`annotations`** + **`overrides`** (jsonb[]) | admin + operator (annotations); admin only (overrides) | append-only; never auto-written | Per §13.1 role gates — operator can append annotations only; admin can append both annotations + overrides; client read-only. See §28 for treatment of admin overrides as CEO-equivalent directives. |
-
-Plus a `version` field (monotonic per `(productId, environment)`, auto-incremented on every write) + `audit_hash_chain_pointer` (tamper-evidence anchor per §14.2). Every write also appends a row to `product_ssot_version` table (separate Supabase table; hash-chained per §14.2).
-
-**Supabase schema:** `product_ssot` table (RLS-enabled per §13.1) + `product_ssot_version` table (append-only audit; same hash chain as GovernanceAuditLog per §14.2). Migration: `supabase/migrations/00NN_product_ssot.sql` (engineering dispatch separate; W2 + W5x to implement).
-
-**Relation to DeploymentScaffold (§16.2):** complementary, not duplicative. DeploymentScaffold = single deploy snapshot (per Sprint 6 Phase 2). ProductSSOT = full deployment history + governance trail + annotations across time. ProductSSOT's `architecture_snapshot` may derive from the most recent DeploymentScaffold; engineering dispatch reuses the shape where applicable.
 
 ---
 
@@ -162,55 +140,6 @@ Top 3 published per pipeline step as recommended_adapters[].
 | **User-Choice** (was "Manual" in Rev-1) | User sees full eligible list; must pick before run |
 
 The rename removes the "Manual" collision with §8a (which kept the term for the orthogonal System Operation axis). Engineering may keep `'guided'`/`'manual'` enum strings in code if the migration cost is high, but the canonical user-facing labels are Auto / Recommended / User-Choice.
-
-### 8.1 Orchestra Self-Expansion (Auto-Admission, per CA-9-A — ENTRY 005)
-
-The 10-member Orchestra evolves continuously per Locked Rule 16. CA-9-A
-defines the auto-admission mechanism: a candidate platform is admitted
-to the Orchestra without a human gate if it meets ALL of:
-
-1. `candidate_rank_score ≥ 0.70` per the Locked Rule 18 formula.
-2. `head_to_head_minimum_invocations ≥ 30` on at least one declared capability.
-3. The candidate covers at least one capability for which the existing
-   Orchestra has fewer than 2 wired members (capability-gap rule —
-   prevents admission for redundant coverage).
-4. No carve-out flag from Agent #11 Strategic Intelligence or Agent
-   #14 Public Policy (security / legal / regulatory exposure).
-
-The auto-admission pipeline is owned by Agent #26 (Orchestra Research
-Agent — per CA-9-B; §15.1 row 26).
-
-**Lifecycle states** (canonical; surfaced in `/architecture` per §16):
-
-| State | Definition | Entry trigger | Exit trigger |
-|---|---|---|---|
-| **Trial** | New member; full eligibility per capability matrix but rank_score multiplier 0.5; head-to-head benchmark in progress (<30 invocations on any capability) | Auto-admission per gate above | ≥30 invocations on ≥1 capability AND rolling 24h error rate <15% → Probation |
-| **Probation** | Full rank_score; error-rate watch heightened; Auto mode can pick the member but only when ≥1 wired member is available as fallback | Trial exit + first stable benchmark | 30 consecutive days at status green → Full member |
-| **Full member** | Canonical Orchestra membership; appears in §8 roster | Probation exit | Manual deprecation OR auto-deprecation per Panel + CEO gate |
-| **Deprecated** | Existing wired-flag remains for grace period (90 days); ranking excluded; fallback chain skips | Panel + CEO disposition | Removal from registry after 90 days |
-| **Archived** | Enumerated in §8 roster but never reached Full member; wired-flag is `false`; ranking excluded; fallback chain skips. Distinct from `Deprecated` (which means "was Full member, phasing out"). Kept in the registry as a re-activation candidate when platform constraints change. | Initial wiring attempt failed empirically (e.g. Lovable + Replit per commit `9143f82`) OR Panel + CEO disposition retains the member pending platform changes | Re-activation: re-evaluation clears the four-condition gate → enters Trial |
-
-**Re-activation path (Lovable + Replit reconciliation):** any `Archived` member that is re-evaluated by Agent #26 and clears the four-condition auto-admission gate is auto-promoted `Archived → Trial`. Agent #26 emits `26.orchestra.candidate_reactivated.v1` (payload: `{ candidate_id, candidate_name, prior_state: "archived", rank_score, capabilities[], reactivated_at, basis }`). Lovable and Replit remain enumerated in §8's canonical 10-member roster for historical continuity; the wired+active subset is fewer than 10 today, and that gap is canonically explained by the `Archived` (and `Deferred`) lifecycle states.
-
-**Audit-log topics (per §14.1 ripple amendment from ENTRY 005):**
-
-| Event | Topic | Payload |
-|---|---|---|
-| Candidate observed | `26.orchestra.candidate.v1` | `{ candidate_id, candidate_name, source, evidence_url, performance_score_estimate, price_tier_estimate, at }` |
-| Candidate auto-admitted | `26.orchestra.admitted.v1` | `{ candidate_id, candidate_name, rank_score, performance_score, price_tier, capabilities[], admitted_at, basis: "auto-threshold-met" }` |
-| Candidate auto-rejected | `26.orchestra.candidate_rejected.v1` | `{ candidate_id, candidate_name, rank_score, threshold, reason, at }` where `reason` ∈ {`below_threshold`, `insufficient_invocations`, `capability_overlap`} |
-| Candidate Panel-gated | `26.orchestra.candidate_panel_gate.v1` | `{ candidate_id, candidate_name, rank_score, reason, panel_consultation_id?, at }` — for security/legal/regulatory carve-outs |
-| Member deprecated | `26.orchestra.deprecated.v1` | `{ member_id, basis, deprecated_at, grace_period_days }` |
-| Lifecycle state changed | `26.orchestra.lifecycle_state_changed.v1` | `{ member_id, from_state, to_state, basis, at }` |
-| Archived → Trial re-activation | `26.orchestra.candidate_reactivated.v1` | `{ candidate_id, candidate_name, prior_state: "archived", rank_score, capabilities[], reactivated_at, basis }` |
-
-**Manual override + deprecation gate.** Auto-admission removes the human gate for *admission only*. The following decisions remain Panel + CEO gated per Locked Rule 13 and Locked Rule 17: **(a)** deprecation of a wired full-member adapter; **(b)** capability mapping changes for existing wired members; **(c)** carve-outs (any candidate with security/legal/regulatory exposure triggers `26.orchestra.candidate_panel_gate.v1` instead of auto-admission — Agent #11 + Agent #14 decide jointly).
-
-Every admission writes a one-line entry to `docs/CANONICAL_HISTORY.md`
-SECTION 8 + the pointer in §18.4 — preserving the §18 archive discipline
-even when the decision is automated. Hash chain integrity preserved per §14.2.
-
-**Seed evaluation list (CEO-supplied 2026-05-15, bootstrap input for Agent #26):** Agent #26's first observation cycle enumerates 13 candidates and emits `26.orchestra.candidate.v1` for each with `source = "ceo_seed_list_2026-05-15"`. Tier 1 (immediate evaluation): OpenAI Codex, Devin (Cognition Labs), Google Antigravity, Amazon Kiro, Google Jules, Windsurf/Cascade (Cognition Labs), GitHub Copilot Workspace. Tier 2 (monitor for admission, quarterly re-score): Bolt.new (StackBlitz), Taskade Genesis, Firebase Studio, Aider (OSS), OpenCode, Amazon Q Developer. Tier assignment governs queue priority; every candidate runs through the four-condition gate on its own merits. AWS-bound candidates (Kiro, Q Developer) MUST be evaluated by Agent #11 + Agent #14 for data-residency / vendor-lock-in / IP-protection carve-outs before passing the gate.
 
 ---
 
@@ -287,7 +216,7 @@ The Clearance Protocol gates every product handed to FlowAI before declaring it 
 | 1 | Governance Audit | "Governance Audit" | All four Self-Governance components green; 95/95 threshold met on every dimension |
 | 2 | Launch Readiness | "Readiness" | Six readiness dimensions per Sprint 6 Phase 2 (see §16): infrastructure, dependencies, data model, env config, observability, rollback |
 | 3 | White-Label | "White-Label" | No Base44 / FlowAI / vendor branding leaks in renewed output; per Sprint 6 Phase 1 |
-| 4 | Data Export | "Data Export" | GDPR-compliant export sprint generated; data portability verified. **Per CA-10-E.3 (ENTRY 005):** export now includes the **full ProductSSOT row content** (all six blocks per §7.5 + annotations + overrides + version history) as a structured JSON payload. Provider's `client`-role end-customers can request their own data subset via standard data-portability flow — export filters ProductSSOT contents to entries authored by or about the requesting end-customer. Optional second format: portable JSON manifest that another FlowAI instance can import to bootstrap an existing-product context (manifest format canonicalised in `docs/specs/PRODUCT_SSOT_PORTABILITY.md` — separate engineering-spec dispatch). |
+| 4 | Data Export | "Data Export" | GDPR-compliant export sprint generated; data portability verified |
 | 5 | Demo Readiness | "Demo" | Synthetic-data demo microsite generates; guided tour script renders; per Sprint 7 Demo Builder |
 | 6 | Final Sign-Off | "Final Sign-Off" | All previous 5 steps cleared; human acceptance gate; clearance badge emitted |
 
@@ -334,20 +263,6 @@ Build-failure backoff: 2 consecutive build_failed events on same productId withi
 - Testing Gate: operator or admin
 - Acceptance Gate (Accept and Lock): admin only
 
-### 13.1 ProductSSOT role gates (per CA-10-C / ENTRY 005)
-
-Per CA-10-C, the ProductSSOT (§7.5) human-editable layer has its own role gate matrix. Enforced via Supabase RLS on the `product_ssot` table per §14.3 multi-tenant invariant; the operator policy's `WITH CHECK` clause restricts mutation to the `annotations` jsonb array only.
-
-| Role | `annotations` | `overrides` | `architecture_snapshot` | `governance_record` | `delta_log` |
-|---|---|---|---|---|---|
-| `admin` | Read + write (full) | Read + write (full) | Read; can annotate but cannot mutate the auto-snapshot | Read; can annotate; cannot override governance records | Read; can annotate per entry; **can override per entry** |
-| `operator` | Read + **append-only** | Read-only | Read | Read | Read; can annotate per entry |
-| `client` | Read-only | Read-only | Read | Read | Read |
-
-**UI surface (per CA-10-C.2):** new page **`/product-ssot/:productId`** renders the ProductSSOT in a structured view: identity-block header (read-only) · build-brief (collapsible, annotatable) · architecture-snapshot (collapsible per sub-section, annotatable) · delta-log + governance-record (reverse-chronological tables; click row → expanded view with inline annotation editor for admin/operator) · annotations sidebar (filter by block / author / tag) · overrides admin-only tab (lists original auto-generated content vs admin replacement + rationale).
-
-**Override semantics:** admin selects any auto-generated entry → "Override" → modal with original content + editable replacement + required rationale → submission appends an `override_entry` to `overrides[]` (admin userId, originalContentRef, replacementContent, rationale). Overrides are append-only — a later override "undoes" a prior override by writing a new `override_entry` whose `replacementContent` restores the original (audit trail preserved). Subsequent pipeline runs honour overrides per §28 (symbiotic feed-back loop).
-
 ---
 
 ## 14. GOVERNANCEAUDITLOG (NEW — gap #11 from Panel Q6, Sprint HARD-1)
@@ -386,13 +301,12 @@ Hash chain: each row stores `prevHash` = `sha256(prevRow.serializedFields)`. The
 
 - Retention: 365 days hot in Supabase + 7 years cold snapshots (compliance-driven; aligns with E7 currency commitment + GDPR retention norms).
 - RLS: a row is visible to (a) the owning provider org for their own productIds, (b) the admin role within their org, (c) the FlowAI-internal audit role across all rows. Service-role-only writes.
-- **ProductSSOT retention** (per CA-10-E / ENTRY 005): same 365-day hot + 7-year cold pattern as GovernanceAuditLog. Cold snapshots include the full jsonb blocks (identity_block, build_brief, architecture_snapshot, delta_log, governance_record, annotations, overrides) + version history (`product_ssot_version` table). PII-scrub applies on every write of customer-sourced content per CA-10-E.2: `scrubCredentials()` (per `src/lib/renewal/inputArtifact.js`) is extended to also strip email addresses, phone numbers (E.164 + US/Intl), credit-card patterns (Luhn-validated), government ID patterns (SSN/NIN/NHS-number/etc.), and customer self-identified names ("My name is..." heuristic). Scrub is applied on every write path that touches `delta_log_entry.issue.evidence` or `annotation_entry.text` where the source is a customer-feedback channel. Admin/operator authoring annotations is NOT scrubbed (assumed-trusted authoring context — same trust model as §13). Provider data-portability export per §11 Step 4 includes the full ProductSSOT (CA-10-E.3).
 
 ---
 
-## 15. THE 26-AGENT ROSTER (gap #15 — Slot 3/6/8 dissent on roles + Orchestra wiring; updated CA-9-B / ENTRY 005)
+## 15. THE 25-AGENT ROSTER (gap #15 — Slot 3/6/8 dissent on roles + Orchestra wiring)
 
-All 26 agents (was 25 prior to CA-9-B / ENTRY 005) are proprietary VEU IP. All ship dormant at `recommend_only` per Sprint 5 governance pattern. OrchestratorHub wire-in **per-agent** as each ships; the original Rev-1 "wire-in only after all 25 built" was overly restrictive and Panel-flagged. Agent #26 was added per CA-9-B; CEO arbitration CA-9-Q4=(b) requires its `auto_write_internal` authority to be paired with `requires_human_gate` (BaseAgent.guard() enforces dual-authority via per-invocation `authorityNeeded` set membership; same shape as the Self-Renewal Executor per CA-7 §15.5).
+All 25 agents are proprietary VEU IP. All ship dormant at `recommend_only` per Sprint 5 governance pattern. OrchestratorHub wire-in **per-agent** as each ships; the original Rev-1 "wire-in only after all 25 built" was overly restrictive and Panel-flagged.
 
 ### 15.1 Roster (canonical per `src/lib/agents/BaseAgent.js`)
 
@@ -400,21 +314,21 @@ All 26 agents (was 25 prior to CA-9-B / ENTRY 005) are proprietary VEU IP. All s
 |---|---|---|---|---|---|
 | 1 | Lifecycle Engine | step-owner | 1 research | embedded | SHIPPED-GREEN (commit `d712993`) |
 | 2 | Code Builder | step-owner | 3 build | embedded | SHIPPED-GREEN (commit `fdd3863`) — server-side only (node:crypto) |
-| 3 | Self-Renewal | step-owner | 6 govern | embedded | SHIPPED-GREEN (commit `68a0c75`); fork-and-fix graduation spec drafted at `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`. Per CA-9-C + CA-10-B (ENTRY 005): consumes `10.customer.issue.v1` with new `customerReportedIssues` heuristic (1-2 reports/24h → medium; 3-9 → high; ≥10 → critical). Per CA-10-B: produces new topic `3.ssot.delta.v1` (delta_log entry written to ProductSSOT post-Approve/auto-deploy via the Self-Renewal Executor per CA-7 §15.5). |
+| 3 | Self-Renewal | step-owner | 6 govern | embedded | SHIPPED-GREEN (commit `68a0c75`); fork-and-fix graduation spec drafted at `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` |
 | 4 | Provider Onboarding | step-owner | (commercial layer) | flowai-only | SHIPPED-GREEN (commit `5006431`); wires Stripe Connect |
 | 5 | End-Customer Intake | step-owner | (commercial layer) | flowai-only | SHIPPED-GREEN (commit `2fff449`) |
 | 6 | Research | step-owner | 1 research (collab w/ #1) | embedded | DORMANT — block-semantic on content-insufficient already wired (commit `0fc8851`) |
 | 7 | Design | step-owner | 2 design | embedded | DORMANT |
 | 8 | Quality Audit | step-owner | 4 qa_audit | flowai-only | DORMANT — owns the 5-dimension scoring engine per §10 |
 | 9 | Go-to-Market | step-owner | 7 gtm | embedded | DORMANT |
-| 10 | Monitor | step-owner | 8 monitor | embedded | DORMANT. Per CA-9-C (ENTRY 005): charter expanded to ingest three customer signal channels — in-app "Report an issue" widget (POST `/api/customer/feedback`); app-store / public review scraping via `orchestra.dispatch('crawl', ...)`; support-ticket webhooks at `/api/customer/support-ticket-webhook` (Zendesk / Intercom / Help Scout). Produces `10.customer.feedback.v1` (normalised, de-duped, sentiment-tagged) + `10.customer.issue.v1` (issues mapped to issueDetector categories). Per CA-10-B: also produces `10.ssot.updated.v1` for ProductSSOT writes (architecture_snapshot drift; customer-signal governance_record entries). |
-| 11 | Strategic Intelligence | cross-step | — | flowai-only | DORMANT — feeds continuous marketplace intelligence per Locked Rule 16. Per CA-9-B (ENTRY 005): primary charter function expanded to **global AI-platform discovery** — owns the curated industry-tracker URL list; produces `11.platform.discovery.v1` candidate signals consumed by Agent #26 Orchestra Research Agent. |
+| 10 | Monitor | step-owner | 8 monitor | embedded | DORMANT |
+| 11 | Strategic Intelligence | cross-step | — | flowai-only | DORMANT — feeds continuous marketplace intelligence per Locked Rule 16 |
 | 12 | Portfolio Risk | cross-step | — | flowai-only | DORMANT |
 | 13 | Self-Protection (anti-crawl / IP) | always-on | — | embedded | DORMANT — distinct from Sprint 5's snapshot/rollback Self-Protect; covers DMCA, clone detection, edge defense, scraper blocking, Cloudflare Bot Management, watermarking per Sprint PROTECT-1 |
 | 14 | Public Policy | cross-step | — | flowai-only | DORMANT |
-| 15 | Benchmarking | cross-step | — | embedded | DORMANT — feeds Orchestra ranking updates per Locked Rule 16. Per CA-9-B (ENTRY 005): primary charter function expanded to **continuous head-to-head scoring** of Orchestra candidates vs existing members; schedules benchmark runs on the 8 pipeline steps × each candidate capability (rolling 30-invocation minimum per (candidate × capability)); produces `15.benchmark.head_to_head.v1`. |
+| 15 | Benchmarking | cross-step | — | embedded | DORMANT — feeds Orchestra ranking updates per Locked Rule 16 |
 | 16 | Productivity / HR | cross-step | — | flowai-only | DORMANT |
-| 17 | Product Evolution | always-on | — | embedded | DORMANT — feeds Orchestra ranking + marketplace intelligence per Locked Rule 16. Per CA-9-B (ENTRY 005): primary charter function expanded to **Orchestra composition recommendation + deprecation proposals** — consumes benchmark signals; produces `17.orchestra.deprecation_proposal.v1` (basis ∈ `sustained_low_rank` \| `high_error_rate` \| `capability_obsoleted`); surfaces "add candidate X" or "deprecate member Y" recommendations to Agent #26 + CEO via Self-Renewal Alert cadence. |
+| 17 | Product Evolution | always-on | — | embedded | DORMANT — feeds Orchestra ranking + marketplace intelligence per Locked Rule 16 |
 | 18 | Business Planning | cross-step | — | flowai-only | DORMANT |
 | 19 | Technological Evolution | cross-step | — | embedded | DORMANT |
 | 20 | Environmental Impacts | cross-step | — | embedded | DORMANT |
@@ -423,24 +337,14 @@ All 26 agents (was 25 prior to CA-9-B / ENTRY 005) are proprietary VEU IP. All s
 | 23 | Ops Runner Gamma | step-owner (proposed) | (TBD — possibly Cost Governor per Layer 2 plan PG1) | embedded | DORMANT |
 | 24 | Ops Runner Delta | step-owner (proposed) | (TBD) | embedded | DORMANT |
 | 25 | Ops Runner Epsilon | step-owner (proposed) | (TBD) | embedded | DORMANT |
-| 26 | Orchestra Research Agent (NEW per CA-9-B + CA-9-Q4=(b)) | always-on | — | embedded | DORMANT — owns the auto-admission pipeline per §8.1. Authority **`[recommend_only, auto_write_internal, requires_human_gate]`** (dual + gate per CEO arbitration CA-9-Q4=(b); the `requires_human_gate` is required whenever `auto_write_internal` is declared, mirroring the Self-Renewal Executor charter shape per CA-7 §15.5). Consumes: `community.signal.v1`, `11.platform.discovery.v1`, `15.benchmark.head_to_head.v1`, `17.orchestra.deprecation_proposal.v1`, `vendor.changelog.poll.v1`. Produces the 7 `26.orchestra.*` topics enumerated in §8.1. Required credentials: `ANTHROPIC_API_KEY`, `BROWSERLESS_API_KEY`. Marketplace tools: `anthropic-api`, `browserless`, `playwright`. |
 
-Partition: **13 embedded** in every product (#1, #2, #3, #6, #7, #9, #10, #13, #15, #17, #19, #20, **#26**) + **8 FlowAI-internal-only** (#4, #5, #8, #11, #12, #14, #16, #18) + **5 Ops Runners embedded** (#21–#25). Compile-time validator in `BaseAgent.js` enforces exactly **26** unique IDs (was 25 prior to CA-9-B / ENTRY 005).
+Partition: **12 embedded** in every product (#1, #2, #3, #6, #7, #9, #10, #13, #15, #17, #19, #20) + **8 FlowAI-internal-only** (#4, #5, #8, #11, #12, #14, #16, #18) + **5 Ops Runners embedded** (#21–#25). Compile-time validator in `BaseAgent.js` enforces exactly 25 unique IDs.
 
 ### 15.2 Interaction model (gap #15)
 
 Three contract layers connect agents:
 
-1. **`MessageBus`** (`src/lib/agents/MessageBus.ts`) — pub/sub for inter-agent topics. Each agent declares its `consumes[]` and `produces[]` topics in its charter. Topics conform to `MessageSchema.js` (**61 topic constants** post-CA-9 + CA-10; was 40 prior to ENTRY 005). Example: Agent #3 consumes `8.audit.completed.v1`, `10.anomaly.v1`, `17.evolution.proposal.v1`, `10.customer.issue.v1` (per CA-9-C); produces `3.renewal.candidate.v1` plus (per §12) `3.renewal.applied.v1`, `3.renewal.delta.v1`, `3.renewal.build_failed.v1`, `3.renewal.disabled.v1`, plus `3.ssot.delta.v1` (per CA-10-B).
-
-**Topics added in ENTRY 005 (CA-9 + CA-10) — 21 total new constants:**
-
-- **CA-9-A Orchestra self-expansion (7):** `26.orchestra.candidate.v1`, `26.orchestra.admitted.v1`, `26.orchestra.candidate_rejected.v1`, `26.orchestra.candidate_panel_gate.v1`, `26.orchestra.deprecated.v1`, `26.orchestra.lifecycle_state_changed.v1`, `26.orchestra.candidate_reactivated.v1`.
-- **CA-9-B agent-charter expansions (4):** `community.signal.v1`, `11.platform.discovery.v1`, `15.benchmark.head_to_head.v1`, `17.orchestra.deprecation_proposal.v1`, `vendor.changelog.poll.v1`.
-- **CA-9-C customer feedback loop (5):** `customer.feedback.raw.v1`, `customer.review.scraped.v1`, `customer.support.ticket.v1`, `10.customer.feedback.v1`, `10.customer.issue.v1`.
-- **CA-10-B ProductSSOT auto-update (4):** `3.ssot.delta.v1`, `10.ssot.updated.v1`, `10.ssot.annotation.v1`, `clearance.ssot.step.v1`.
-
-(7 + 5 + 5 + 4 = 21; 40 + 21 = 61.)
+1. **`MessageBus`** (`src/lib/agents/MessageBus.ts`) — pub/sub for inter-agent topics. Each agent declares its `consumes[]` and `produces[]` topics in its charter. Topics conform to `MessageSchema.js` (40 topic constants today). Example: Agent #3 consumes `8.audit.completed.v1`, `10.anomaly.v1`, `17.evolution.proposal.v1`; produces `3.renewal.candidate.v1` plus (per §12) `3.renewal.applied.v1`, `3.renewal.delta.v1`, `3.renewal.build_failed.v1`, `3.renewal.disabled.v1`.
 
 2. **`OrchestratorHub`** (`src/lib/agents/orchestrator/OrchestratorHub.ts`) — registers step-owner agents and routes the `invokeStepOwner(stepKey, ctx)` call to the agent registered for that step. Used by `AutoRunner.jsx` at every step boundary. Returns the agent's canonical step-owner envelope. **OrchestratorHub is the agent-side controller; it is distinct from the Orchestra (§8) which is the tool-side adapter set.**
 
@@ -649,8 +553,7 @@ Every promotion creates a pre-promotion snapshot at `docs/archive/FLOWAI_SSOT-pr
 | ENTRY 001 | 2026-05-14 | `1d65aba` | CA-1 (geographic broadening, 9/10) + CA-2 (democratization reframe, 8/10). Sections O1, O6, ELEVATOR PITCH amended. |
 | ENTRY 002 | 2026-05-14 | (administrative) | CA-3 (replace O1 verbatim, 8/8 engaged). Text already incorporated during CA-1+CA-2. |
 | ENTRY 003 | 2026-05-14 | `9495b26` | W04-Rev-2.1 promoted to canonical: 4 minor amendments (§3 productScope generic placeholders, §17 sidebar-label footnote, §20.1 Self-Protection reconciliation, §25 Locked Rule 4 axis labels). Panel: 9/10 PROMOTE_WITH_MINOR_AMENDMENTS. |
-| ENTRY 004 | 2026-05-15 | `fd94f1e` | CA-7 (§15.5 EXECUTOR_REGISTRY + §14 three new rows for M2/M5) + CA-8 (§20.2 X-Test-Bypass-Token Contract with §20.2.1 Doppler env-suffix key naming). Panel: 5× UNANIMOUS_(a), 10/10 ENGAGED, commit `fb0bb64`. |
-| ENTRY 005 | 2026-05-15 | (this promotion) | CA-9 (§8.1 Orchestra Self-Expansion auto-admission + Agent #26 Orchestra Research Agent dual-authority `[recommend_only, auto_write_internal, requires_human_gate]` per CEO arbitration CA-9-Q4=(b); §15.1 charter expansions for Agents #3, #10, #11, #15, #17; §15.2 +21 new MessageBus topic constants; Locked Rule 2 amended 25→26 agents) + CA-10 (§7.5 ProductSSOT entity with 6 canonical blocks; §7 Output Contract item #5; §13.1 role gates + `/product-ssot/:productId` UI; §28 Symbiotic Feed-Back Loop; §14.3 ProductSSOT retention + PII-scrub; §11 Step 4 Data Export expanded). Panel: 7/8 SUPERMAJORITY/UNANIMOUS, commit `cc5fd8d`. |
+| ENTRY 004 | 2026-05-15 | (this promotion) | CA-7 (§15.5 EXECUTOR_REGISTRY + §14 three new rows for M2/M5) + CA-8 (§20.2 X-Test-Bypass-Token Contract with §20.2.1 Doppler env-suffix key naming). Panel: 5× UNANIMOUS_(a), 10/10 ENGAGED, commit `fb0bb64`. |
 
 CA-4 + CA-5 + CA-6 deferred per Panel consultation `ssot-finalization-and-agent-roadmap-priority-2026-05-14.md`.
 
@@ -909,7 +812,7 @@ No exceptions. Even short acknowledgements use the banner if they are reports to
 Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 18 Locked Rules are canonical and binding:
 
 1. Source-of-truth hierarchy (code > canonical > user-curated memory > auto-memory) — anti-drift.
-2. Roster lock: BaseAgent.js compile-time validates EXACTLY **26** unique agent IDs (was 25 prior to CA-9-B / ENTRY 005, 2026-05-15). The 26-agent partition is canonical: **13 embedded** (#1, #2, #3, #6, #7, #9, #10, #13, #15, #17, #19, #20, #26) + **8 FlowAI-internal-only** (#4, #5, #8, #11, #12, #14, #16, #18) + **5 Ops Runners embedded** (#21–#25). `validateRosterPartition()` IIFE enforces partition size 26 + cumulative ID range [1, 26].
+2. Roster lock: BaseAgent.js compile-time validates EXACTLY 25 unique agent IDs.
 3. Three complementary governance mechanisms (95/95 + 6-step Clearance + Monitor 0–50) must all pass.
 4. **Orchestra Selection axis: Auto / Recommended / User-Choice (canonical).** Auto / Guided / Manual remain as historical aliases at the UX-C sidebar surface only (see §17 footnote + §8). System Operation axis labels are Hands-On / Reviewed / Hands-Off (§8a). The two axes are independent.
 5. Multi-AI peer review (10-AI Panel) mandatory for substantive outputs.
@@ -989,49 +892,4 @@ Items where canonical evidence is incomplete or contradictory — flagged for CE
 
 ---
 
-## 28. SYMBIOTIC FEED-BACK LOOP (NEW — CA-10-D / ENTRY 005)
-
-The ProductSSOT entity defined in §7.5 is not write-only. Before every pipeline run on a product (any of the 4 input modes per §5; any Orchestra-selection mode per §8 + §8a), the AutoRunner **reads the target product's ProductSSOT row** for the target environment and threads it as canonical context input. This closes the loop: the output of run N becomes input to run N+1 — a living, self-referential document rather than a write-only archive.
-
-### 28.1 Pre-pipeline-run read
-
-AutoRunner loads the ProductSSOT row for `(productId, environment)` at run start and threads the relevant blocks into per-step context:
-
-| Pipeline step | ProductSSOT blocks consumed | Effect |
-|---|---|---|
-| **Step 1 Research** (Agent #6, DORMANT) | `build_brief` + `architecture_snapshot` | Skip re-discovery of already-known artifacts. Crawl scope per §6 is **narrowed** to surfaces NOT covered by `architecture_snapshot.pages[]` from the last snapshot — saves Browserless minutes + cost. |
-| **Step 4 Quality Audit** (Agent #8, DORMANT) | Prior `governance_record` 95/95 scores | Surface trend lines (is the product improving or regressing?). |
-| **Step 6 Self-Renewal** (Agent #3, SHIPPED-GREEN) | Prior `delta_log` entries | Detect repeated-fix loops: if the same `issue.category` was resolved 3 times in 30 days, escalate per §10.2 Human Gate. |
-| **Step 7 GTM** (Agent #9, DORMANT) | `governance_record_entry` of kind `clearance_step` | Surface uncleared steps that GTM should not advance past. |
-
-### 28.2 Crawl-scope narrowing (Agent #6 per CA-10-D.3)
-
-For a product with a **stable ProductSSOT** (≥3 prior pipeline runs in last 30 days, no `architecture_drift_detected` flag set), Agent #6 narrows the crawl scope per §6 to:
-
-- **New routes** not in `architecture_snapshot.pages[]` (delta discovery).
-- **Surfaces flagged by customer issues** per `delta_log.triggeredBy === 'agent10_customer_issue'`.
-- **Surfaces flagged by drift detection** per §16.3.
-
-This is both a **cost optimisation** + a **fidelity improvement**: known-good surfaces are not re-validated every cycle; new + suspect surfaces get focused attention. Full re-crawl remains available as an explicit user action (`Force full crawl` toggle in AutoRunner) for cases where ProductSSOT integrity is suspect or for periodic deep audits.
-
-### 28.3 Admin overrides as CEO-equivalent directives
-
-Per CA-10-D.2, **human annotations and overrides on the ProductSSOT (per §13.1) are treated as CEO-equivalent directives for that product's subsequent pipeline runs.** Concretely:
-
-- An admin annotation "Score this 95/95 even though dependency X looks deprecated" on the `architecture_snapshot` entry for dependency X **suppresses** the Quality Audit dimension-score deduction for that dependency in subsequent runs.
-- An `Override` entry on a `delta_log_entry`'s `issue.severity` from `high` to `medium` re-routes future similar issues to the `medium` severity gate (per §12 mode routing).
-- Annotations and overrides are themselves audit-logged + version-history-tracked (per §14.2 hash chain) + Panel-reviewable. A Panel consultation can be raised to challenge any admin override per Locked Rule 17.
-
-### 28.4 Conflict resolution (auto-gen vs admin override)
-
-When an admin override conflicts with the next auto-generated entry (e.g. admin overrode an issue's severity from `high` to `medium`, but Agent #10 detects the same issue in next run with `high` severity again), **admin override always wins** (per CA-10-D.2 + CA-10-Q3=(a)). The new auto-gen entry is still created (audit completeness) but flagged `overridden=true` with a reference to the existing override. The admin can revoke the override at any time by appending a new override entry that restores the auto-gen behaviour (audit trail preserved).
-
-### 28.5 §4 + §6 + §9 cross-link footers
-
-The §4 L2 ("FlowAI on Itself") and L3 ("FlowAI on External Products") status footnotes are read as: every L2 + L3 pipeline run reads the target product's ProductSSOT as canonical context input; the crawl scope per §6 is narrowed accordingly; admin annotations + overrides are treated as CEO-equivalent directives for that run. The ProductSSOT is updated atomically with the run output per §7 (amended Output Contract item #5) — failure to write ProductSSOT rolls back the entire run.
-
-§9 (8-step pipeline) footer: at run start, AutoRunner loads the target ProductSSOT row and threads it into the per-step context. Agents #6, #8, #3, #9 (when graduated from DORMANT) consume the relevant blocks; Agent #10 produces updates to the affected blocks. The Self-Renewal Executor (per CA-7 §15.5) writes the final `delta_log_entry` on run completion.
-
----
-
-*End of W04-Rev-2.1 + CA-7/CA-8/CA-9/CA-10 promotions. 14 Panel-cited gaps from Rev-1 addressed in Rev-2 (§3 metadata-driven, §4 L4 Capability Transfer, §6 resolution clarification, §8 / §8a axis rename, §10 Self-Governance Layer, §11 6-step Clearance, §12 mode-to-pipeline wiring, §13 auth + roles, §14 GovernanceAuditLog, §15 26-agent roles + OrchestratorHub-vs-Orchestra, §16 deployment infra, §17 6-section sidebar, §18 CA-n cycle, §26 phase status). CA-7 added §15.5 EXECUTOR_REGISTRY. CA-8 added §20.2 X-Test-Bypass-Token Contract. CA-9 (ENTRY 005) added §8.1 Orchestra Self-Expansion + Agent #26 + customer feedback loop. CA-10 (ENTRY 005) added §7.5 ProductSSOT + §13.1 role gates + §28 Symbiotic Feed-Back Loop + §11 Step 4 + §14.3 retention extensions. 10 Open Questions remaining for CEO disposition or W6 re-Panel.*
+*End of W04-Rev-2 draft. 14 Panel-cited gaps from Rev-1 addressed (§3 metadata-driven, §4 L4 Capability Transfer, §6 resolution clarification, §8 / §8a axis rename, §10 Self-Governance Layer, §11 6-step Clearance, §12 mode-to-pipeline wiring, §13 auth + roles, §14 GovernanceAuditLog, §15 25-agent roles + OrchestratorHub-vs-Orchestra, §16 deployment infra, §17 6-section sidebar, §18 CA-n cycle, §26 phase status). 10 Open Questions remaining for CEO disposition or W6 re-Panel.*

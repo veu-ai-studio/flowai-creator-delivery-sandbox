@@ -1568,6 +1568,40 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+### ENTRY 005 — 2026-05-15
+- **Promotion:** CA-9 (Orchestra Self-Expansion + Customer Feedback Loop + Agent #26) + CA-10 (ProductSSOT + Symbiotic Feed-Back Loop) combined SSOT amendment promoted to canonical
+- **Promoted by:** W2
+- **Source drafts:** `docs/specs/SSOT_AMENDMENT_CA9_DRAFT.md` + `docs/specs/SSOT_AMENDMENT_CA10_DRAFT.md` (W3, 2026-05-15)
+- **Panel signal:** 7/8 SUPERMAJORITY/UNANIMOUS on every question, W6 panel commit `cc5fd8d`
+- **CEO arbitration:** **CA-9-Q4 = (b)** — Agent #26's `auto_write_internal` authority MUST be paired with `requires_human_gate` (dual-authority shape mirroring CA-7's Self-Renewal Executor; `BaseAgent.guard()` enforces via per-invocation `authorityNeeded` set membership). Other CEO dispositions: Q1 0.70 floor adopted; Q2 capability-gap rule adopted; Q3 25→26 Locked Rule 2 amendment approved; Q5–Q8 adopted as drafted; CA-10-Q1 ProductSSOT mandatory per product; CA-10-Q2 atomic Output Contract item #5; CA-10-Q3 admin override always wins; CA-10-Q7 all five A/B/C/D/E sub-amendments promoted together.
+- **Sections affected in `docs/CANONICAL_REFERENCE.md`:**
+  - **§7 Output Contract** — item #5 added (atomic ProductSSOT update; failure rolls back run per §10 Self-Protect snapshot pattern)
+  - **§7.5 (NEW)** — ProductSSOT entity definition: 6 canonical blocks (identity_block, build_brief, architecture_snapshot, delta_log, governance_record, annotations + overrides), Supabase schema reference, DeploymentScaffold relationship
+  - **§8.1 (NEW)** — Orchestra Self-Expansion / Auto-Admission: 4-condition gate (rank_score ≥ 0.70, ≥30 invocations, capability-gap, no carve-out flag), 5-state lifecycle (Trial / Probation / Full member / Deprecated / **Archived**) with Lovable + Replit reconciliation, 7 audit-log topics, manual override + deprecation gate retained, 13-candidate CEO seed evaluation list (Tier 1 + Tier 2)
+  - **§11 Six-Step Clearance Protocol** — Step 4 Data Export expanded to include full ProductSSOT row content per CA-10-E.3 + optional portable JSON manifest
+  - **§13.1 (NEW)** — ProductSSOT role gates: admin (full edit + override) / operator (annotations only, append-only) / client (read-only); new `/product-ssot/:productId` UI surface specified; override semantics + audit trail
+  - **§14.1** — 3 new audit-log topics inherited from CA-7 (ENTRY 004); 21 new MessageBus topics for CA-9 + CA-10 added in §15.2 update
+  - **§14.3 Retention + RLS** — ProductSSOT retention bullet added: 365-day hot + 7-year cold; PII-scrub extension (email + phone + CC + government ID + customer self-identified names); §11 Step 4 export cross-link
+  - **§15** (header + intro) — "25-AGENT ROSTER" → "26-AGENT ROSTER"; intro paragraph updated with CEO arbitration CA-9-Q4=(b) dual-authority note
+  - **§15.1 Roster table** — Agent #3 row expanded (consumes `10.customer.issue.v1`, customerReportedIssues heuristic, produces `3.ssot.delta.v1`); Agent #10 row expanded (3 customer signal channels + 2 produced topics + `10.ssot.updated.v1`); Agent #11 row expanded (global AI-platform discovery primary function + `11.platform.discovery.v1`); Agent #15 row expanded (continuous head-to-head scoring + `15.benchmark.head_to_head.v1`); Agent #17 row expanded (composition recommendation + `17.orchestra.deprecation_proposal.v1`); **Agent #26 NEW** (Orchestra Research Agent, always-on, embedded, dual-authority + human-gate per CA-9-Q4=(b)); partition footer rewritten ("13 embedded + 8 FlowAI-internal-only + 5 Ops Runners embedded = 26 unique IDs")
+  - **§15.2 MessageBus** — topic count 40 → 61 (21 new constants: 7 CA-9-A Orchestra self-expansion, 5 CA-9-B agent-charter expansions [including `vendor.changelog.poll.v1`], 5 CA-9-C customer feedback loop, 4 CA-10-B ProductSSOT auto-update)
+  - **§18.4 Ratified amendments** — ENTRY 005 row added; ENTRY 004 commit hash filled in as `fd94f1e`
+  - **§25 Locked Rule 2** — "EXACTLY 25 unique agent IDs" → "EXACTLY 26 unique agent IDs"; partition rewritten with 13 embedded
+  - **§28 (NEW)** — Symbiotic Feed-Back Loop: pre-pipeline-run read of ProductSSOT per environment; crawl-scope narrowing (Agent #6) for stable products (≥3 prior runs / 30d, no drift flag); admin overrides as CEO-equivalent directives; conflict resolution (admin override always wins per CA-10-Q3=(a)); §4 L2/L3 + §6 + §9 cross-link footers
+- **Engineering impact (out of scope for this commit; landed in follow-up dispatches):**
+  - `src/lib/agents/BaseAgent.js` — `AGENT_IDS.ORCHESTRA_RESEARCH = 26`; `EMBEDDED_AGENTS` set adds 26; `validateRosterPartition()` size 26 + range [1, 26]; `_validateCharter(c)` agentId range [1, 26]; `BaseAgent.guard()` extended for dual-authority per-invocation set membership
+  - `src/lib/agents/_registry.ts` — `AGENT_REGISTRY` adds row #26 (Orchestra Research Agent charter; dual + human-gate authority)
+  - `src/lib/agents/MessageSchema.js` — +21 topic constants (40 → 61)
+  - `supabase/migrations/00NN_product_ssot.sql` — new tables `product_ssot` + `product_ssot_version`; RLS policies per §13.1 + §14.3
+  - `src/lib/renewal/inputArtifact.js` `scrubCredentials()` — extended to scrub email + phone + CC + government IDs + customer self-identified names
+  - `src/pages/ProductSSOT.jsx` (NEW UI) — `/product-ssot/:productId` per §13.1
+  - `src/components/operations/CustomerFeedbackWidget.jsx` (NEW) — Self-Renewal Capability Package addition per CA-9-C.5
+  - `api/customer/feedback.js` + `api/customer/support-ticket-webhook.js` (NEW) — Agent #10 ingestion endpoints
+- **Pre-promotion archive:** `docs/archive/FLOWAI_SSOT-pre-CA9-CA10-promotion-2026-05-15.md` (verbatim copy of canonical CANONICAL_REFERENCE.md immediately before this CA-9+CA-10 insertion; 895 lines, 68,432 bytes)
+- **Lineage:** Rev-2.1 canonical (commit `9495b26`) → ENTRY 003 → ENTRY 004 (CA-7+CA-8 promotion at commit `fd94f1e`) → CA-9 draft `SSOT_AMENDMENT_CA9_DRAFT.md` + CA-10 draft `SSOT_AMENDMENT_CA10_DRAFT.md` → W6 panel `cc5fd8d` (7/8 SUPERMAJORITY/UNANIMOUS) → CEO arbitration CA-9-Q4=(b) → CEO ratification → this entry
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-15)
 
 
