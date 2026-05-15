@@ -34,6 +34,41 @@ A continuous discovery loop, owned by the new Agent #26 (CA-9-B), produces a str
 
 Every candidate observation produces an audit-log entry under topic `26.orchestra.candidate.v1` with payload `{ candidate_id, candidate_name, source, evidence_url, performance_score_estimate, price_tier_estimate, at }`. Hash-chained per §14.2.
 
+### CA-9-A.2.1 Seed evaluation list (CEO-supplied 2026-05-15)
+
+To bootstrap the global research loop, Agent #26's first observation cycle MUST enumerate the following 13 candidates and emit `26.orchestra.candidate.v1` for each, with `source = "ceo_seed_list_2026-05-15"` and `evidence_url` populated from each candidate's official site. Tier assignment governs queue priority, not threshold — every candidate clears the §CA-9-A.4 gate on its own merits.
+
+**Tier 1 — Immediate evaluation (high relevance, priority queue head):**
+
+| Candidate | Vendor / surface | Capability hints |
+|---|---|---|
+| **OpenAI Codex** | OpenAI cloud agent | `code-patch`, `generate-from-scratch`, `deploy` (cloud sandbox + PR automation) |
+| **Devin** | Cognition Labs | `generate-from-scratch`, `code-patch`, `build`, `deploy` (fully autonomous cloud sandbox) |
+| **Google Antigravity** | Google | `code-patch`, `design`, `generate-from-scratch` (multi-agent IDE, Gemini-native) |
+| **Amazon Kiro** | AWS | `generate-from-scratch`, `build`, `deploy` (spec-driven, AWS-native) |
+| **Google Jules** | Google | `code-patch`, `generate-from-scratch` (autonomous cloud coding, Gemini-integrated) |
+| **Windsurf (Cascade)** | Cognition Labs (post-acquisition) | `code-patch`, `interact` (agentic IDE) |
+| **GitHub Copilot Workspace** | GitHub / Microsoft | `code-patch`, `generate-from-scratch`, `build` (agent mode, 15M+ developers) |
+
+**Tier 2 — Monitor for admission (quarterly score-refresh until graduated to Tier 1 or skipped):**
+
+| Candidate | Vendor / surface | Capability hints |
+|---|---|---|
+| **Bolt.new** | StackBlitz | `generate-from-scratch`, `build`, `deploy` (full-stack app builder, non-technical users) |
+| **Taskade Genesis** | Taskade | `generate-from-scratch`, `design` (living apps from prompt; 150K+ apps built) |
+| **Firebase Studio** | Google | `generate-from-scratch`, `build`, `deploy` (Google full-stack builder) |
+| **Aider** | OSS | `code-patch` (open-source git-native CLI agent) |
+| **OpenCode** | OSS / GitHub partnership | `code-patch`, `generate-from-scratch` (6.5M monthly devs) |
+| **Amazon Q Developer** | AWS | `code-patch`, `generate-from-scratch` (AWS-native agentic coding) |
+
+**Scoring rule (verbatim per Locked Rule 18):**
+
+Each seed candidate is scored via the canonical formula `rank_score = (performance_score × 0.6) + (price_weight × 0.4)` BEFORE the §CA-9-A.4 auto-admission gate is evaluated. The seed-list assignment does NOT bypass the gate — Tier 1 candidates that fail any of the four gate conditions (rank_score, head_to_head invocations, capability-gap, no carve-out flag) are routed to `26.orchestra.candidate_rejected.v1` or `26.orchestra.candidate_panel_gate.v1` exactly as any other discovered candidate.
+
+**Carve-out anticipation (per §CA-9-A.6):** Agent #11 Strategic Intelligence + Agent #14 Public Policy MUST evaluate AWS-bound seed candidates (Amazon Kiro, Amazon Q Developer) for data-residency / vendor-lock-in / IP-protection carve-outs before they pass the gate. Carve-outs flagged from these two agents route through `26.orchestra.candidate_panel_gate.v1` regardless of rank score.
+
+**Initial cycle cadence:** Agent #26's first execution cycle (on first deploy post-CA-9-B + CA-9-A promotion) processes all 13 seed candidates as a single batch; subsequent cycles fold seed candidates into the daily 03:00 UTC research loop. The seed list is treated as an additional input source row in §CA-9-A.2 alongside web research / benchmarking signals / community signals / vendor changelog poll.
+
 ### CA-9-A.3 Scoring pipeline + Locked Rule 18 invocation
 
 Every candidate runs through the canonical Locked Rule 18 ranking formula BEFORE the auto-admission gate is evaluated:
@@ -75,6 +110,30 @@ CA-9-A formalises the lifecycle of an Orchestra member:
 | **Probation** | Full rank_score (no multiplier); error-rate watch heightened; Auto mode CAN pick the member but only when ≥1 wired member is available as fallback | Trial exit + first stable benchmark | 30 consecutive days at status `green` (per Orchestra spec §6.2) → `full member` |
 | **Full member** | Canonical Orchestra membership; appears in §8 roster | Probation exit | Manual deprecation OR auto-deprecation per §CA-9-A.6 |
 | **Deprecated** | Existing wired-flag remains for grace period (90 days); ranking excluded; fallback chain skips; audit-log entry `26.orchestra.deprecated.v1` | Auto-deprecation criteria met OR Panel + CEO manual deprecation | Removal from registry after 90 days (next CA-n cycle) |
+| **Archived** (NEW per §CA-9-A.5.1) | Member is enumerated in §8's canonical 10-member roster but has never reached `Full member` status. Wired-flag is `false`; ranking excluded; fallback chain skips. **Distinct from `Deprecated`** (which means "was Full member, being phased out"). Kept in the registry as a re-activation candidate when its platform constraints change. | Initial wiring attempt failed empirically (e.g. Lovable + Replit per commit `9143f82`) OR Panel + CEO disposition retains the member with archived status pending platform changes. | Re-activation per §CA-9-A.5.1 below — passes auto-admission gate → enters `Trial`. |
+
+### CA-9-A.5.1 Re-activation path for archived members (Lovable + Replit reconciliation)
+
+**Background:** Rev-2.1 §8 enumerates the canonical 10-member Orchestra — Claude Code, Base44, Lovable, v0, Cursor, OpenRouter, Browserless, Anthropic API direct, Replit, Playwright — per parking-lot ENTRY 004. `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` §2.1 marks **Lovable** and **Replit** as DEFERRED (Lovable surface mismatch — no free-text-chat surface on the probed account tier; Replit Cloudflare WAF — rejects headless Chromium fingerprint; both empirically failed 2026-05-13 per commit `9143f82` body). CEO refers to this state colloquially as "archived". CA-9-A.5.1 reconciles the terminology by introducing the `Archived` lifecycle state (added to the §CA-9-A.5 table above) and specifying the re-activation path.
+
+**Why a distinct `Archived` state (vs. existing `Deprecated`):**
+- `Deprecated` means "was Full member, now phasing out" → 90-day grace period, fallback skip, removal from registry after grace.
+- `Archived` means "is enumerated in §8 but never reached Full member status" → no grace period needed (was never relied on); kept in registry as a re-activation candidate; fallback chain skips it identically to a deferred stub.
+
+**Re-activation criteria:** any `Archived` member that is re-evaluated by Agent #26 and clears the §CA-9-A.4 four-condition auto-admission gate (`rank_score ≥ 0.70` + `head_to_head_minimum_invocations ≥ 30` + capability-gap + no carve-out flag) is auto-promoted `Archived → Trial`. On promotion, Agent #26 emits a new audit-log topic **`26.orchestra.candidate_reactivated.v1`** (payload: `{ candidate_id, candidate_name, prior_state: "archived", rank_score, capabilities[], reactivated_at, basis }`). This topic is added to the CA-9-B §15.2 MessageBus topic list (revised count: §CA-9-B post-promotion **52 topic constants**; §CA-9-C post-promotion **57 topic constants** — see CA-9-B.8 + CA-9-C.4 amended counts below).
+
+**Specifically for the two currently-archived members:**
+
+| Member | Empirical failure (2026-05-13, commit `9143f82`) | Re-activation precondition | Re-evaluation cadence |
+|---|---|---|---|
+| **Lovable** | Post-login surface is Build-mode chat with no free-chat tier on the probed account; `[class*="prose"]` selector matched echoed user message rather than assistant reply. Outcome B (false-positive ok). | Lovable ships either (a) a documented public chat-API (not currently published) OR (b) a paid tier that exposes the free-chat surface their headless probe couldn't reach. | Quarterly re-evaluation by Agent #26; event-trigger on Lovable changelog / pricing-page change per `vendor.changelog.poll.v1`. |
+| **Replit** | Cloudflare WAF returned "Sorry, you have been blocked" on all three probe URLs (`/agent`, `/~`, `/`). Replit's WAF rejects headless Chromium fingerprint regardless of valid `storageState` cookies. Outcome C. | Replit's **External Access Tokens** (announced 2025) reach GA + provide a programmatic agent-invocation pathway that bypasses the Cloudflare WAF block. | Quarterly re-evaluation by Agent #26; event-trigger on `discourse.replit.com` API-status thread updates ingested via `community.signal.v1`. |
+
+**Implementation locus:** Lovable and Replit's existing entries in `src/lib/orchestra/stubs.js` gain a new `lifecycleState: 'archived'` field (alongside `wired: false`). The new ranking lookup `getRankedAdapters()` (per `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` §5.2) honours the field — `lifecycleState === 'archived'` excludes the adapter from ranking exactly as `wired === false` does today, but the field provides an additional discriminator so the UI can distinguish "stub not yet wired" (e.g. Cursor) from "wired attempt failed; awaiting platform change" (Lovable + Replit) from "previously full member; phasing out" (any future Deprecated member).
+
+**Continuity:** Lovable + Replit remain enumerated in Rev-2.1 §8's canonical 10-member roster for historical continuity and traceability. The §8 roster lists 10 members; the wired+active subset is fewer than 10 today, and that gap is canonically explained by the `Archived` (and `Deferred`) lifecycle states.
+
+**No-op on `validateRosterPartition()`:** this lifecycle classification operates entirely within the Orchestra registry (`src/lib/orchestra/`), not the agent registry (`src/lib/agents/`). `BaseAgent.js`'s 25-agent (post-CA-9-B: 26-agent) compile-time validator is unaffected.
 
 ### CA-9-A.6 Manual override + deprecation gate
 
@@ -250,7 +309,7 @@ The MessageSchema.js topic registry (referenced in §15.2 first sub-bullet) gain
 - `26.orchestra.lifecycle_state_changed.v1` (produced by #26)
 - `vendor.changelog.poll.v1` (produced by #26 internally, consumed by #26 dispatch)
 
-§15.2 first sub-bullet currently says "Topics conform to `MessageSchema.js` (40 topic constants today)." CA-9-B updates the count: **51 topic constants** after CA-9-B promotion.
+§15.2 first sub-bullet currently says "Topics conform to `MessageSchema.js` (40 topic constants today)." CA-9-B updates the count: **52 topic constants** after CA-9-B promotion (includes the `26.orchestra.candidate_reactivated.v1` topic introduced in §CA-9-A.5.1).
 
 ---
 
@@ -292,7 +351,7 @@ There is **no canonical path from customer-reported issues into Self-Renewal**. 
 
 ### CA-9-C.4 New MessageBus topics
 
-Add to MessageSchema.js (combined with CA-9-B count: **51 + 5 = 56 topic constants** after CA-9-B + CA-9-C):
+Add to MessageSchema.js (combined with CA-9-B count: **52 + 5 = 57 topic constants** after CA-9-B + CA-9-C, where the 52 already includes `26.orchestra.candidate_reactivated.v1` from §CA-9-A.5.1):
 
 - `customer.feedback.raw.v1` (consumed by #10) — raw payload from any of the three channels before normalisation.
 - `customer.review.scraped.v1` (consumed by #10) — review-scrape output from Orchestra `dispatch('crawl', ...)`.
