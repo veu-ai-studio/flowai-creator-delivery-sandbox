@@ -1542,7 +1542,33 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-14)
+### ENTRY 004 — 2026-05-15
+- **Promotion:** CA-7 + CA-8 combined SSOT amendment promoted to canonical
+- **Promoted by:** W2
+- **Source draft:** `docs/specs/SSOT_AMENDMENT_CA7_CA8_DRAFT.md` (W3, 2026-05-15)
+- **Panel signal:** 5× UNANIMOUS_(a), 10/10 ENGAGED on every question, W6 panel commit `fb0bb64`
+- **Panel questions covered:**
+  - CA-7-Q1: Adopt §15.5 verbatim per draft §CA-7.2 → UNANIMOUS_(a)
+  - CA-7-Q2: All 5 mitigations (M1 cross-link, M2 audit-log, M3 validator, M4 admin discoverability, M5 drift detection) binding → UNANIMOUS_(a)
+  - CA-7-Q3: §14 ripple amendments per draft §CA-7.4 → UNANIMOUS_(a)
+  - CA-8-Q1: Adopt §20.2 X-Test-Bypass-Token Contract verbatim per draft §CA-8.2 → UNANIMOUS_(a)
+  - CA-8-Q2: Authorise retroactive §9.1 update per draft §CA-8.3 → UNANIMOUS_(a)
+- **CEO disposition:** Ratified under MG2 (≥7/10 ENGAGED) + Locked Rule 13 (CEO retains absolute veto); no PLURALITY items required arbitration (all 5 questions cleared supermajority)
+- **Sections affected in docs/CANONICAL_REFERENCE.md:**
+  - §15.5 (NEW) — EXECUTOR_REGISTRY split-charter sibling namespace; canonical type contract, lookup API, validator invariants, current population (1 executor: `self-renewal-executor`), cross-links with §14 + §15.1, 5 binding mitigations (M1-M5)
+  - §14.1 (3 rows added) — `executor_registered.v1` topic (CA-7 M5), `agent.execution.reject_executor_via_hub.v1` topic (CA-7 M3), `executorKey` cross-cutting field annotation (CA-7 M2)
+  - §20.2 (NEW) — X-Test-Bypass-Token Contract; scope, RS256/HS256 algorithm, claim schema, 6 validation rules
+  - §20.2.1 (NEW sub-sub-section) — Doppler env-suffix key naming canonical (`TEST_BYPASS_PRIVATE_KEY_DEV` / `_PROD`, `TEST_BYPASS_PUBLIC_KEY_DEV` / `_PROD`); supersedes path-style naming in test-plan-text §9.1 per Locked Rule 1 (code wins)
+  - §18.4 — ENTRY 003 + ENTRY 004 rows added to ratified-amendments table
+- **Ripple amendments applied in this commit:**
+  - `docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md` §9.1 — path-style key names struck; replaced with pointer to canonical §20.2
+  - `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` §4.3 — Option B disposition resolved; cross-link to §15.5 EXECUTOR_REGISTRY + `executorKey` reference added
+- **Pre-promotion archive:** `docs/archive/FLOWAI_SSOT-pre-CA7-CA8-promotion-2026-05-15.md` (verbatim copy of canonical CANONICAL_REFERENCE.md immediately before this CA-7+CA-8 insertion)
+- **Lineage:** Rev-2.1 canonical (commit `9495b26`) → ENTRY 003 → CA-7+CA-8 draft `SSOT_AMENDMENT_CA7_CA8_DRAFT.md` → W6 panel `fb0bb64` (5× UNANIMOUS_(a)) → CEO ratification → this entry
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-15)
 
 
 

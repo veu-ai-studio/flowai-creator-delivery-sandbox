@@ -369,15 +369,22 @@ guard(plan) {
 }
 ```
 
-### 4.3 Proposed charter (Option B — split agents)
+### 4.3 Proposed charter (Option B — split agents) — RESOLVED via CA-7 (2026-05-15)
 
-- `Agent3SelfRenewal` (id `3`, EMBEDDED) — unchanged charter `[RECOMMEND_ONLY]`. Continues to be step-owner at step 6 'govern'. Emits `3.renewal.candidate.v1` only.
-- `Agent3SelfRenewalExecutor` (NEW class; one of):
-  - Sub-option B1 — share `id: 3` but register as a second class with topic-subscriber mode (not step-owner). Roster partition validator needs an exception: "id 3 may have two registered classes if their modes differ."
-  - Sub-option B2 — repurpose `Ops Runner Alpha` (id `21`, EMBEDDED) as the executor. Charter `[AUTO_WRITE_INTERNAL, REQUIRES_HUMAN_GATE]`. No roster-validator change needed; consistent with Ops-Runner-as-executor framing.
-- Executor subscribes to `3.renewal.candidate.v1`, looks up the IssueList in HotStore, dispatches `remediate()`, emits `3.renewal.applied.v1` + downstream events.
+**Disposition (canonical per SSOT Rev-2.1 §15.5 + CA-7 ENTRY 004, 2026-05-15):** Option B SPLIT charter was disposed via CEO Q2 = `(b)` 2026-05-14; the **EXECUTOR_REGISTRY** sibling-namespace pattern (W5a commit `176d870`) is the canonical implementation, not the sub-options below. W6 Run 2 ratified the pattern (5× UNANIMOUS_(a) on CA-7 + CA-8 panel `fb0bb64`); CA-7 promoted §15.5 to canonical SSOT.
 
-Trade-off: Option A is fewer files but requires `BaseAgent.guard()` change (affects all 25 agents). Option B preserves single-authority-per-charter invariant but introduces an extra agent class. **Recommend Option A unless Locked-Rule-2 partition invariant is judged inviolable** — but see Open Questions §6 Q2.
+**Canonical mapping** (replaces the sub-option text below):
+
+- `Agent3SelfRenewal` (`AGENT_REGISTRY` id `3`, EMBEDDED) — unchanged charter `[RECOMMEND_ONLY]`. Continues to be step-owner at step 6 'govern'. Emits `3.renewal.candidate.v1` only.
+- **`Agent3SelfRenewalExecutor`** — registered in **`EXECUTOR_REGISTRY`** under key `'self-renewal-executor'` per SSOT §15.5. `agentId: 3` (cross-link to primary; AGENT_REGISTRY entry's `executors[]` must include `'self-renewal-executor'` per CA-7 mitigation M1 bidirectional referential integrity). `mode: 'cross-step'`. `authority: ['auto_write_internal', 'requires_human_gate']`. Invocable only via `/api/agent/3/execute` + the Inngest job runner (NEVER via OrchestratorHub's `invokeStepOwner()` per CA-7 mitigation M3).
+- Executor subscribes to `3.renewal.candidate.v1`, dispatches `remediate()`, emits `3.renewal.applied.v1` + downstream events. Every audit-log row emitted by the executor MUST include an `executorKey: 'self-renewal-executor'` field per SSOT §14 + CA-7 mitigation M2 (disambiguates from primary-agent events).
+- Discoverability via `getExecutor('self-renewal-executor')` and `listExecutors()` per SSOT §15.5 Lookup API. Compile-time validation by `validateExecutors()` in `src/lib/agents/_registry.ts`.
+
+**Resolved sub-options (historical, for audit trail):**
+
+- ~~Sub-option B1 — share `id: 3` but register as a second class with topic-subscriber mode. Required exception to the roster partition validator: "id 3 may have two registered classes if their modes differ."~~ **REJECTED** — would violate Locked Rule 2 single-authority-per-charter invariant in AGENT_REGISTRY.
+- ~~Sub-option B2 — repurpose `Ops Runner Alpha` (id `21`, EMBEDDED) as the executor.~~ **REJECTED** — conflates step-owner roster with executor roster.
+- **Adopted:** sibling namespace EXECUTOR_REGISTRY (canonical per §15.5). Preserves the 25-ID partition AND the single-authority-per-charter invariant; executors never enter AGENT_REGISTRY, never collide with `BY_ID`, never affect `validateRoster()`.
 
 ### 4.4 Severity → action mapping
 

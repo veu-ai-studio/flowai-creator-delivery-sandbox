@@ -543,46 +543,20 @@ All 8 items from Rev-0 §9 (Open Questions) have been Panel-consulted (`docs/pan
 
 ---
 
-## 9.1 X-Test-Bypass-Token Contract (referenced by LD-1 + LD-4)
+## 9.1 X-Test-Bypass-Token Contract (referenced by LD-1 + LD-4) — POINTS TO CANONICAL §20.2
 
-> **SSOT-reconciliation note:** Rev-2.1 §20 Sprint PROTECT-1 Phase 1 documents bot detection but does NOT canonically define an X-Test-Bypass-Token. This sub-section defines the contract **for this test plan**; a follow-up CA-n SSOT amendment is required to canonicalise the contract in §20 itself (proposed amendment "CA-7: X-Test-Bypass-Token contract for adversarial audit allowlist"). Until the CA-n promotes, the contract below is authoritative for the adversarial suite only.
+> **CANONICAL SOURCE:** The X-Test-Bypass-Token contract is canonically defined in SSOT Rev-2.1 **§20.2** (ratified via CA-8, promotion ENTRY 004 in `docs/CANONICAL_HISTORY.md`, 2026-05-15). The test suite implements the verifier per §20.2 validation rules and the issuance helper per `scripts/setup-test-bypass-keys.mjs`.
+>
+> **Doppler key names** per §20.2.1 (env-suffix form — canonical, supersedes the path-style names previously specified in this section):
+>
+> | Env | Doppler config | Private-key secret name | Public-key secret name |
+> |---|---|---|---|
+> | dev | `flowai/dev` | `TEST_BYPASS_PRIVATE_KEY_DEV` | `TEST_BYPASS_PUBLIC_KEY_DEV` |
+> | prod | `flowai/prd` | `TEST_BYPASS_PRIVATE_KEY_PROD` | `TEST_BYPASS_PUBLIC_KEY_PROD` |
+>
+> The prior path-style names referenced in this section (`TEST_BYPASS_TOKEN_PRIVATE_KEY` / `TEST_BYPASS_TOKEN_PUBLIC_KEY`, environment distinguished only by Doppler config path) are **superseded**. Per Locked Rule 1 (code > canonical > user-curated memory > auto-memory), the shipped W5c form (commit `0bd26b9`) is canonical; SSOT §20.2 documents it.
 
-### Mechanism
-
-A signed JWT-style token (HS256 minimum, RS256 preferred) sent in the HTTP header `X-Test-Bypass-Token` on every request from the adversarial suite to the SUT. The Self-Protection layer (§20 embedded code-level + future Agent #13 orchestration per §20.1) MUST validate the token signature + claims before applying the bypass.
-
-### Claim schema
-
-```json
-{
-  "iss": "flowai-adversarial-suite",
-  "sub": "test-runner",
-  "testSuiteId": "flowai-adversarial",
-  "runId": "<uuid>",
-  "env": "prod | dev-SUT",
-  "iat": <unix-seconds>,
-  "exp": <unix-seconds, max iat + 3600>,
-  "scope": ["bot-detection-bypass", "agent13-allowlist"],
-  "fingerprint": "<sha256 of expected User-Agent + IP CIDR>"
-}
-```
-
-### Validation rules
-
-1. `iss` must equal `"flowai-adversarial-suite"`. Otherwise reject + log to GovernanceAuditLog topic `auth.test_bypass_token.reject` (reason: `iss_mismatch`).
-2. `exp` must be in the future and `≤ iat + 3600`. Reject expired or long-lived tokens.
-3. `env` MUST match the SUT environment. A prod-issued token MUST NOT validate against dev-SUT and vice versa.
-4. `runId` must be a valid UUID v4. Replay attack mitigation: each `runId` is single-use within the token TTL; a second request bearing the same `runId` after the first run completes is rejected.
-5. Signature verified against the per-environment public key stored in Doppler `flowai/<env>/TEST_BYPASS_TOKEN_PUBLIC_KEY`.
-6. Token bypasses ONLY: bot-detection rate limits, headless-fingerprint rejection, Cloudflare Bot Management challenge (when present). It does NOT bypass: authentication, RLS, role gates, or 95/95 governance.
-
-### Issuance
-
-Issuance is owned by the CI pipeline (or local dev `scripts/adversarial-issue-token.mjs`) using the per-environment private key. The private key is stored in Doppler `flowai/<env>/TEST_BYPASS_TOKEN_PRIVATE_KEY` and accessible only to the CI service-role identity.
-
-### Follow-up
-
-CA-7 SSOT amendment proposal will move this contract into Rev-2.1 §20 canonically, with the existing §20.1 reconciliation extended to cover the allowlist semantics. Until that amendment promotes, this sub-section is the source of truth for the test plan.
+The mechanism, claim schema, validation rules, issuance modes, key rotation cadence, and audit topics previously specified in this sub-section are now canonically maintained in §20.2 + §20.2.1 of `docs/CANONICAL_REFERENCE.md`. Refer to that section for the authoritative contract. Subsequent edits to the contract MUST flow through the CA-n cycle (§18 of the SSOT) and update §20.2 directly; this test-plan section is now a pointer only and does not duplicate canonical content.
 
 ---
 
