@@ -1,0 +1,605 @@
+# Panel Consultation — CA-7 + CA-8 Combined SSOT Amendment Review (2026-05-15)
+
+**Lineage:** W05 dispatch → W6 execution. Combined CA-n review of W3 draft `docs/specs/SSOT_AMENDMENT_CA7_CA8_DRAFT.md` (commit `ce96055`). Canonical anchor: Rev-2.1 `docs/CANONICAL_REFERENCE.md` (`9495b26`).
+
+**Mode:** read-only Panel consultation. 5 multiple-choice questions, 4 options each (option (d) = `INSUFFICIENT_INFORMATION`).
+
+**Started:** 2026-05-15T14:16:43.012Z
+**Finished:** 2026-05-15T14:18:33.846Z
+**Bundle size:** 86336 chars (full CANONICAL_REFERENCE.md + W3 CA-7+CA-8 draft attached per Rev-2.1 §11 / §19 Panel SSOT Access Rules).
+**Panel composition audit:** {"providerCounts":{"openai":1,"anthropic":1,"google":1,"mistralai":1,"cohere":1,"qwen":1,"deepseek":1,"perplexity":1,"moonshotai":1,"x-ai":1},"maxPerProvider":1,"slots":10} — strict 10-unique-provider roster per slot-config.mjs rev-2 (`9bafecf`).
+
+**W6 thresholds:** Quorum = 7 of 10 · Supermajority = 8 of 10 · Unanimous = all-ENGAGED on one option.
+
+---
+
+## Slot status
+
+| Slot | Provider | Model | Region/Role | Backup adapter | Status | Backup fired? | Latency (ms) | Error |
+|------|----------|-------|-------------|----------------|--------|---------------|--------------|-------|
+| 1 | openrouter | `openai/gpt-5` | US · frontier reasoning | `openrouter:anthropic/claude-opus-4` | LIVE-OK | — | 37666 |  |
+| 2 | openrouter | `anthropic/claude-opus-4` | US · reasoning | `openrouter:openai/gpt-5` | LIVE-OK | — | 67341 |  |
+| 3 | openrouter | `google/gemini-2.5-pro` | US · frontier multimodal | `openrouter:mistralai/mistral-large-2411` | LIVE-OK | — | 32837 |  |
+| 4 | openrouter | `mistralai/mistral-large-2411` | Europe · European frontier | `openrouter:cohere/command-r-plus-08-2024` | LIVE-OK | — | 14436 |  |
+| 5 | openrouter | `cohere/command-r-plus-08-2024` | Europe/CA · European RAG-tuned | `openrouter:mistralai/mistral-large-2411` | LIVE-OK | — | 25293 |  |
+| 6 | openrouter | `qwen/qwen-2.5-72b-instruct` | Asia · Asia generalist | `openrouter:deepseek/deepseek-r1` | LIVE-OK | — | 15560 |  |
+| 7 | openrouter | `deepseek/deepseek-r1` | Asia · Asia reasoning | `openrouter:qwen/qwen-2.5-72b-instruct` | LIVE-OK | — | 83919 |  |
+| 8 | openrouter | `perplexity/sonar` | US web-grounded · web-grounded research | `openrouter:google/gemini-2.5-pro` | LIVE-OK | — | 6259 |  |
+| 9 | openrouter | `meta-llama/llama-4-maverick` | Asia (Beijing) · frontier coding + agentic | `openrouter:meta-llama/llama-4-maverick` | LIVE-OK | YES (openrouter:openrouter:moonshotai/kimi-k2.6 → openrouter:openrouter:meta-llama/llama-4-maverick) | 25885 |  |
+| 10 | openrouter | `x-ai/grok-4.3` | US · real-time web-aware reasoning | `openrouter:minimax/minimax-m2.7` | LIVE-OK | — | 13636 |  |
+
+LIVE-OK: 10/10. Backups applied: 1. Quorum met (>=7 LIVE-OK): true. Supermajority achievable (>=8 LIVE-OK): true.
+
+Engagement: **ENGAGED=10** · TANGENTIAL=0 · SILENT=0 · EVASIVE=0 (of 10 slots). `INSUFFICIENT_INFORMATION` responses: **0**.
+
+---
+
+## Tally + verdicts (ENGAGED-only)
+
+| Q | Topic | (a) | (b) | (c) | (d) INSUFF | other | Top | Verdict |
+|---|---|---:|---:|---:|---:|---:|---|---|
+| **CA-7-Q1** | EXECUTOR_REGISTRY Q1 plurality (a) 6/7 — promote as-is or re… | 10 | 0 | 0 | 0 | 0 | `(a)` | `UNANIMOUS_(a)` |
+| **CA-7-Q2** | M3 (executor mode + authority constraints, validator-enforce… | 10 | 0 | 0 | 0 | 0 | `(a)` | `UNANIMOUS_(a)` |
+| **CA-7-Q3** | Five Panel-ratified mitigations (M1–M5) — promote together, … | 10 | 0 | 0 | 0 | 0 | `(a)` | `UNANIMOUS_(a)` |
+| **CA-8-Q1** | Locked Rule 1 (code wins) for path-style vs suffix-style Dop… | 10 | 0 | 0 | 0 | 0 | `(a)` | `UNANIMOUS_(a)` |
+| **CA-8-Q2** | Retroactive amendment of test plan §9.1 to match shipped suf… | 10 | 0 | 0 | 0 | 0 | `(a)` | `UNANIMOUS_(a)` |
+
+---
+
+## Highest-conviction (UNANIMOUS / SUPERMAJORITY)
+
+- **CA-7-Q1** — `UNANIMOUS_(a)` · winning option `(a)`: Promote as-is — 6/7 plurality sufficient (single (b) dissent already absorbed as Mitigation M1; Q1 PROMOTE-family is effectively 7/7 once (a)+(b) collapse onto canonical+amendment)
+- **CA-7-Q2** — `UNANIMOUS_(a)` · winning option `(a)`: Canonicalize as drafted (mode='cross-step' enforced + auto_write_internal⇒requires_human_gate paired + OrchestratorHub.invokeStepOwner() reject-executor guard, all compile-time validator-enforced)
+- **CA-7-Q3** — `UNANIMOUS_(a)` · winning option `(a)`: Promote all 5 together in one CA cycle (M1 cross-link + M2 audit-log executorKey + M3 validator constraints + M4 §15.5 docs/admin + M5 drift detection all ratified in this CA)
+- **CA-8-Q1** — `UNANIMOUS_(a)` · winning option `(a)`: Yes — suffix-style (shipped W5c form: TEST_BYPASS_PRIVATE_KEY_DEV / _PROD) is canonical (per Locked Rule 1: code > canonical > memory)
+- **CA-8-Q2** — `UNANIMOUS_(a)` · winning option `(a)`: Yes — retroactive amendment is correct (strike §9.1 path-style text, replace with pointer to new SSOT §20.2 + canonical env-suffix names)
+
+## Lower-conviction (SPLIT / PLURALITY / NO_QUORUM)
+
+_(none — every question cleared supermajority)_
+
+---
+
+## Per-question detail
+
+### CA-7-Q1 — EXECUTOR_REGISTRY Q1 plurality (a) 6/7 — promote as-is or re-run?
+
+- (a) Promote as-is — 6/7 plurality sufficient (single (b) dissent already absorbed as Mitigation M1; Q1 PROMOTE-family is effectively 7/7 once (a)+(b) collapse onto canonical+amendment)
+- (b) Re-run Q1 only before promoting (target supermajority strictly on Q1; CA-7-Q2/Q3 + CA-8 unaffected)
+- (c) Require full re-Panel on CA-7 (re-run ALL three Run-2 questions for tightened consensus)
+- (d) INSUFFICIENT_INFORMATION
+
+**Verdict:** `UNANIMOUS_(a)` — 10 of 10 ENGAGED on (a) (unanimous).
+
+### CA-7-Q2 — M3 (executor mode + authority constraints, validator-enforced) — canonicalize as drafted, or narrow?
+
+- (a) Canonicalize as drafted (mode='cross-step' enforced + auto_write_internal⇒requires_human_gate paired + OrchestratorHub.invokeStepOwner() reject-executor guard, all compile-time validator-enforced)
+- (b) Narrow — mode constraint only, defer authority pairing (validator rejects step-owner mode; defer the auto_write_internal⇒requires_human_gate pairing to a future CA)
+- (c) Narrow — authority constraint only, defer mode (validator enforces the authority pairing; mode rules stay convention-only, no validator gate)
+- (d) INSUFFICIENT_INFORMATION
+
+**Verdict:** `UNANIMOUS_(a)` — 10 of 10 ENGAGED on (a) (unanimous).
+
+### CA-7-Q3 — Five Panel-ratified mitigations (M1–M5) — promote together, sequenced, or split?
+
+- (a) Promote all 5 together in one CA cycle (M1 cross-link + M2 audit-log executorKey + M3 validator constraints + M4 §15.5 docs/admin + M5 drift detection all ratified in this CA)
+- (b) M1+M2+M4 now; M3+M5 next cycle (high-support mitigations + documentation now; validator-hardening (M3) + nightly drift cron (M5) deferred to the next CA)
+- (c) Each mitigation as separate CA-n (5 individual CA-n entries, each independently disposed)
+- (d) INSUFFICIENT_INFORMATION
+
+**Verdict:** `UNANIMOUS_(a)` — 10 of 10 ENGAGED on (a) (unanimous).
+
+### CA-8-Q1 — Locked Rule 1 (code wins) for path-style vs suffix-style Doppler key naming — correct reconciliation?
+
+- (a) Yes — suffix-style (shipped W5c form: TEST_BYPASS_PRIVATE_KEY_DEV / _PROD) is canonical (per Locked Rule 1: code > canonical > memory)
+- (b) No — revert to path-style (TEST_BYPASS_TOKEN_PRIVATE_KEY single-name + Doppler config path distinguishes env); modify shipped code to match the original spec
+- (c) Introduce both as aliases (shipped suffix-style names + path-style aliases both readable by the verifier; either can be the issuer-side write target)
+- (d) INSUFFICIENT_INFORMATION
+
+**Verdict:** `UNANIMOUS_(a)` — 10 of 10 ENGAGED on (a) (unanimous).
+
+### CA-8-Q2 — Retroactive amendment of test plan §9.1 to match shipped suffix-style naming
+
+- (a) Yes — retroactive amendment is correct (strike §9.1 path-style text, replace with pointer to new SSOT §20.2 + canonical env-suffix names)
+- (b) No — leave §9.1 as historical record (preserve original spec wording; §20.2 alone becomes canonical and §9.1 reads as the pre-canonical proposal)
+- (c) Add a footnote only, no amendment (§9.1 text unchanged; insert a footnote pointing to §20.2 for the shipped-canonical form)
+- (d) INSUFFICIENT_INFORMATION
+
+**Verdict:** `UNANIMOUS_(a)` — 10 of 10 ENGAGED on (a) (unanimous).
+
+
+---
+
+## Conflicts with canonical SSOT (flagged by reviewers)
+
+_(no reviewer flagged any conflict with canonical SSOT)_
+
+---
+
+## Per-reviewer picks + rationales
+
+**Slot 1** [ENGAGED] — openrouter:openai/gpt-5
+
+- **CA-7-Q1** = `(a)`
+  > Per §18.2, the bar is ≥7/10 ENGAGED; W6 Run 2 met 7 ENGAGED, and the single (b) dissent is explicitly absorbed via Mitigation M1 (§CA-7.3) while adopting the new §15.5 insertion (§CA-7.2). Treating (a)+(b) as the same promote-family yields an effective 7/7, so promoting as-is is justified without a re-run.
+- **CA-7-Q2** = `(a)`
+  > M3’s validator-enforced constraints align with §15.5 invariants: executors must be 'cross-step', auto_write_internal implies requires_human_gate, and OrchestratorHub.invokeStepOwner() must never resolve to an executor. Canonicalizing this now (validateExecutors(), OrchestratorHub guard with `agent.execution.reject_executor_via_hub.v1` per §CA-7.4) prevents authority drift.
+- **CA-7-Q3** = `(a)`
+  > Promoting M1–M5 together closes the loop across code, audit, and governance: M1 cross-links AGENT_REGISTRY↔EXECUTOR_REGISTRY (AgentRecord.executors[]), M2 adds the `executorKey` to §14 topics, and M5 introduces `executor_registered.v1` drift signals (§CA-7.4). This bundled approach best preserves Locked Rule 2’s 25-ID partition while hardening the split-charter pattern.
+- **CA-8-Q1** = `(a)`
+  > Locked Rule 1 (§25) states code > canonical > memory; W5c commit `0bd26b9` shipped the suffix-style Doppler names and §20.2.1 codifies them (`TEST_BYPASS_PRIVATE_KEY_DEV/_PROD`). Reconciling to the shipped suffix-style form is the correct application of the hierarchy.
+- **CA-8-Q2** = `(a)`
+  > Retroactively updating test plan §9.1 to point to SSOT §20.2 (CA-8) maintains single-source truth and removes the obsolete path-style naming; this matches the code per Locked Rule 1 (§25). §18.3 allows archival discipline while updating the live spec reference.
+
+Overall notes: CA-7’s split-charter design is coherently bounded by §15.5 and M1–M5; CA-8’s reconciliation cleanly applies Locked Rule 1 and clarifies `prd` vs `prod` in §20.2.1.
+
+---
+
+**Slot 2** [ENGAGED] — openrouter:anthropic/claude-opus-4
+
+- **CA-7-Q1** = `(a)`
+  > The single (b) dissent requesting the executors[] field amendment has already been incorporated as Mitigation M1 per §CA-7.3, making the Q1 PROMOTE-family effectively unanimous at 7/7. Since the substantive concern is addressed and W6 Run 2 achieved quorum with 7/10 ENGAGED, promoting as-is follows the CA-n cycle threshold in §18.2.
+- **CA-7-Q2** = `(a)`
+  > The full constraint set (mode='cross-step' + auto_write_internal⇒requires_human_gate pairing + OrchestratorHub rejection) is already implemented in the shipped code per commit 176d870 lines 591-625. Canonicalizing the complete validator-enforced constraints aligns with Locked Rule 1 (code wins) and prevents future executors from violating the established safety invariants.
+- **CA-7-Q3** = `(a)`
+  > All five mitigations received strong Panel support (M2 audit-log executorKey had 5/7 support, M4 documentation was unanimous 7/7) and form a coherent safety package. The EXECUTOR_REGISTRY pattern requires all mitigations working together - cross-links (M1), audit trail (M2), constraints (M3), documentation (M4), and drift detection (M5) are interdependent safety layers that should ship atomically.
+- **CA-8-Q1** = `(a)`
+  > W5c commit 0bd26b9 shipped the suffix-style naming (TEST_BYPASS_PRIVATE_KEY_DEV/_PROD) with 1077 LOC + 344 LOC tests, making it the canonical form per Locked Rule 1. The test plan's path-style naming in §9.1 was never implemented, so the shipped suffix-style form correctly wins as the source of truth.
+- **CA-8-Q2** = `(a)`
+  > Retroactive amendment maintains consistency between the test plan and canonical SSOT §20.2, preventing confusion from divergent documentation. Since the path-style naming was never shipped and the suffix-style is live in production per commit 0bd26b9, updating §9.1 to point to the canonical §20.2 follows proper documentation hygiene.
+
+Overall notes: Both amendments follow established patterns - CA-7 formalizes an already-shipped and Panel-reviewed pattern, while CA-8 reconciles documentation with shipped code per Locked Rule 1.
+
+---
+
+**Slot 3** [ENGAGED] — openrouter:google/gemini-2.5-pro
+
+- **CA-7-Q1** = `(a)`
+  > The draft's analysis in §CA-7.5 (CA-7-DI-1) correctly identifies that the single dissenting vote was substantively absorbed into Mitigation M1, making the effective consensus 7/7 for promotion. This meets the supermajority threshold defined in the canonical SSOT §18.2, making a re-run unnecessary and inefficient.
+- **CA-7-Q2** = `(a)`
+  > Mitigation M3, as described in §CA-7.3 of the draft, reflects the already-shipped implementation of the EXECUTOR_REGISTRY pattern. Locked Rule 1 ("code > canonical") dictates that the SSOT should align with the shipped code. Canonicalizing the full set of constraints as drafted is the correct action to prevent divergence between the SSOT and the implementation.
+- **CA-7-Q3** = `(a)`
+  > The five mitigations (M1-M5) detailed in §CA-7.3 form a comprehensive set of controls to manage the risks of the dual-registry pattern, as requested by the Panel in W6 Run 2 Q3. Promoting them together ensures the EXECUTOR_REGISTRY pattern is introduced with all its safety mechanisms simultaneously, rather than leaving it in a partially-mitigated state.
+- **CA-8-Q1** = `(a)`
+  > The draft's reconciliation in §CA-8.1 is a direct and correct application of Locked Rule 1 from the canonical SSOT (§25). The shipped code from commit `0bd26b9` used the suffix-style naming, which therefore supersedes the path-style naming from the older test plan spec, making the suffix-style form canonical.
+- **CA-8-Q2** = `(a)`
+  > The proposal in §CA-8.3 to retroactively amend the test plan is correct document hygiene and supports the goal of an SSOT. Leaving the incorrect path-style naming in `docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md` §9.1 would create a source of confusion, whereas replacing it with a pointer to the new canonical SSOT §20.2 ensures all documentation is consistent.
+
+Overall notes: The combined CA-7 and CA-8 draft is well-reasoned, correctly applies Locked Rule 1, and proposes sound, comprehensive mitigations for the new EXECUTOR_REGISTRY pattern. I recommend promotion of both amendments as drafted.
+
+---
+
+**Slot 4** [ENGAGED] — openrouter:mistralai/mistral-large-2411
+
+- **CA-7-Q1** = `(a)`
+  > The plurality of 6/7 is sufficient for promotion as the single (b) dissent is already absorbed as Mitigation M1. This effectively makes the promotion unanimous.
+- **CA-7-Q2** = `(a)`
+  > The drafted constraints ensure that executors are used correctly and safely, aligning with the canonical SSOT and the shipped form in §15.1 (commit `176d870`).
+- **CA-7-Q3** = `(a)`
+  > Promoting all 5 mitigations together ensures comprehensive risk management and aligns with the Panel's synthesized recommendations.
+- **CA-8-Q1** = `(a)`
+  > The suffix-style naming convention is canonical as per Locked Rule 1, which prioritizes the shipped code (commit `0bd26b9`).
+- **CA-8-Q2** = `(a)`
+  > Retroactive amendment aligns the test plan with the canonical SSOT, ensuring consistency and clarity (§20.2, commit `9495b26`).
+
+---
+
+**Slot 5** [ENGAGED] — openrouter:cohere/command-r-plus-08-2024
+
+- **CA-7-Q1** = `(a)`
+  > The plurality of 6/7 votes for option (a) is sufficient to promote the amendment as-is. The single (b) dissent has already been absorbed as Mitigation M1, so the (a)+(b) votes effectively collapse onto the canonical+amendment option, making it a 7/7 consensus. Promoting the amendment as-is is the most efficient path forward.
+- **CA-7-Q2** = `(a)`
+  > Option (a) is the most comprehensive and secure approach, enforcing both the mode and authority constraints at the compile-time validator level. This ensures that executors are only registered with the correct mode and authority profiles, reducing the risk of errors or security vulnerabilities. The other options defer some constraints to future CAs, which could lead to potential issues if not addressed promptly.
+- **CA-7-Q3** = `(a)`
+  > Promoting all five mitigations together in one CA cycle is the most efficient approach, as it ensures that all potential risks are addressed simultaneously. Mitigations M1 and M2 are high-support and provide important cross-link and audit-log enhancements, while M3, M4, and M5 add further security and documentation improvements. Sequencing or splitting the mitigations into separate CAs could delay their implementation and potentially introduce new risks.
+- **CA-8-Q1** = `(a)`
+  > The shipped form of the Doppler key naming, with the env-suffix style, is the correct canonical form according to Locked Rule 1 (code wins). The test plan §9.1 will be retroactively updated to match the shipped form, ensuring consistency and clarity in the documentation.
+- **CA-8-Q2** = `(a)`
+  > Retroactively amending the test plan §9.1 to match the shipped suffix-style naming is the most appropriate course of action. This ensures that the documentation accurately reflects the implemented code, providing a clear and up-to-date reference for future development and testing. Leaving §9.1 as a historical record or adding a footnote would not provide the same level of clarity and could potentially lead to confusion.
+
+Overall notes: The W3 draft and canonical SSOT provide sufficient information to make informed decisions on all five questions. The proposed amendments and mitigations are well-supported and address important aspects of the system's security, documentation, and operational efficiency.
+
+---
+
+**Slot 6** [ENGAGED] — openrouter:qwen/qwen-2.5-72b-instruct
+
+- **CA-7-Q1** = `(a)`
+  > The 6/7 plurality is sufficient, and the dissenting (b) is already absorbed as Mitigation M1. Promoting as-is aligns with the Panel's direction and maintains consistency.
+- **CA-7-Q2** = `(a)`
+  > Canonicalizing M3 as drafted ensures that the mode and authority constraints are validator-enforced, providing strong architectural integrity and reducing the risk of future issues.
+- **CA-7-Q3** = `(a)`
+  > Promoting all 5 mitigations together in one CA cycle ensures a comprehensive and cohesive implementation, aligning with the Panel's recommendations and maintaining the integrity of the system.
+- **CA-8-Q1** = `(a)`
+  > The suffix-style Doppler key naming is the shipped form and should be canonical per Locked Rule 1. Reverting to path-style would introduce unnecessary complexity and inconsistency.
+- **CA-8-Q2** = `(a)`
+  > Retroactively amending test plan §9.1 to match the shipped suffix-style naming ensures that the canonical documentation is consistent and up-to-date, aligning with the current implementation.
+
+Overall notes: All picks align with the canonical SSOT and the Panel's recommendations, ensuring a consistent and robust system architecture.
+
+---
+
+**Slot 7** [ENGAGED] — openrouter:deepseek/deepseek-r1
+
+- **CA-7-Q1** = `(a)`
+  > CA-7.5 (CA-7-DI-1) confirms the (b) amendment was absorbed into Mitigation M1, making support effectively 7/7. The draft recommends ratification as canonical with M1, satisfying the supermajority requirement implicitly. Cited: CA-7-DI-1.
+- **CA-7-Q2** = `(a)`
+  > M3 constraints are validator-enforced per shipped code in `src/lib/agents/_registry.ts` (lines 591-625) and are integral to the EXECUTOR_REGISTRY pattern. CA-7.3 lists M3 as a canonical mitigation, and the Panel's Q3 PLURALITY_(b) supports risk mitigation. Cited: CA-7.3 (M3).
+- **CA-7-Q3** = `(a)`
+  > CA-7.3 mandates all 5 mitigations (M1-M5) as binding, with M1+M2+M4 having strong reviewer support and M3+M5 implicit in the pattern. The draft specifies they must ship together per §CA-7.3 synthesis. Cited: CA-7.3 and Panel Q3 PLURALITY_(b).
+- **CA-8-Q1** = `(a)`
+  > Locked Rule 1 (§25) prioritizes code over spec, making the suffix-style Doppler keys from W5c commit `0bd26b9` canonical. CA-8.1 confirms the divergence and CA-8.2 reconciles §20.2 to match shipped form. Cited: Locked Rule 1 and CA-8.1.
+- **CA-8-Q2** = `(a)`
+  > CA-8.3 requires retroactive amendment of test plan §9.1 to align with canonical §20.2 and suffix-style naming. This ensures consistency with Locked Rule 1 and avoids spec/code drift. Cited: CA-8.3.
+
+---
+
+**Slot 8** [ENGAGED] — openrouter:perplexity/sonar
+
+- **CA-7-Q1** = `(a)`
+  > The draft explicitly states in §CA-7.2 that Q2 was UNANIMOUS_(a) and that Q1’s (b) amendment is already absorbed as Mitigation M1, making (a)+(b) converge on the same canonical pattern. CANONICAL_REFERENCE Rev-2.1 §15 and Locked Rule 2 are preserved because executors live in a sibling namespace, not the 25-agent roster.
+- **CA-7-Q2** = `(a)`
+  > The proposed §15.5 text in the W3 draft makes the mode and authority pairing part of the canonical validator contract: executors MUST be `cross-step`, and `auto_write_internal` MUST co-occur with `requires_human_gate`. This is reinforced by the shipped `getExecutor()` / `validateExecutors()` contract and the CA-7 background noting the shipped form in `src/lib/agents/_registry.ts`.
+- **CA-7-Q3** = `(a)`
+  > The draft’s §CA-7.3 states all five mitigations are normative and that the engineering dispatch SHALL implement all five, with M2 and M4 specifically already receiving broad or universal support. Because M1–M5 are presented as a coherent risk cluster tied to §14 and §15.5, splitting them would undercut the CA-7 synthesis rather than follow it.
+- **CA-8-Q1** = `(a)`
+  > CA-8.1 and §20.2.1 are explicit that the shipped W5c env-suffix form is canonical under Locked Rule 1 (“code wins”), even though the older test plan used path-style names. The W3 draft ties this to the actual implementation in `src/lib/security/testBypassToken.js` and `scripts/setup-test-bypass-keys.mjs`, so suffix-style is the SSOT reconciliation.
+- **CA-8-Q2** = `(a)`
+  > The draft’s §CA-8.3 says the test plan §9.1 MUST be updated to point at SSOT §20.2 and replace the old path-style language with the canonical env-suffix names. That is consistent with the CA-8 purpose in §20.2 and the provenance note that shipped code at commit `0bd26b9` is authoritative under Locked Rule 1.
+
+Overall notes: All five answers align with the draft’s own reconciliation language and the canonical SSOT references cited in the artifact. No conflicts with the SSOT were identified.
+
+---
+
+**Slot 9** [ENGAGED] — openrouter:meta-llama/llama-4-maverick
+
+- **CA-7-Q1** = `(a)`
+  > The 6/7 plurality is sufficient for promotion as the single (b) dissent is already absorbed as Mitigation M1 (§CA-7.3). The Q1 PROMOTE-family is effectively 7/7 once (a)+(b) collapse onto canonical+amendment (§CA-7.5).
+- **CA-7-Q2** = `(a)`
+  > Canonicalizing as drafted enforces the necessary constraints (mode='cross-step' and auto_write_internal⇒requires_human_gate) and provides a clear, validator-enforced rule (§CA-7.3 M3). This ensures consistency and security in the EXECUTOR_REGISTRY.
+- **CA-7-Q3** = `(a)`
+  > Promoting all 5 mitigations together ensures comprehensive security and consistency (§CA-7.3). The mitigations are interlinked and together provide a robust solution to the identified risks.
+- **CA-8-Q1** = `(a)`
+  > The suffix-style naming (TEST_BYPASS_PRIVATE_KEY_DEV / _PROD) is canonical as per Locked Rule 1, which states that code takes precedence over canonical documentation (§CA-8.1). The shipped W5c form is the canonical implementation.
+- **CA-8-Q2** = `(a)`
+  > Retroactive amendment of test plan §9.1 to match the shipped suffix-style naming is correct (§CA-8.3). It ensures that the documentation reflects the actual implementation and avoids confusion.
+
+---
+
+**Slot 10** [ENGAGED] — openrouter:x-ai/grok-4.3
+
+- **CA-7-Q1** = `(a)`
+  > The W6 Run 2 consultation (commit documented in executor-registry-pattern-ratification-2026-05-14.md) produced a 6/7 plurality for (a) that W3 explicitly absorbs into Mitigation M1 via the bidirectional executors[] cross-link on AgentRecord. This aligns with the §15.5 insertion and Locked Rule 2 roster invariant preserved by the sibling EXECUTOR_REGISTRY namespace in src/lib/agents/_registry.ts (commit 176d870).
+- **CA-7-Q2** = `(a)`
+  > §15.5 validator invariants (lines 591–625 of _registry.ts) already enforce mode='cross-step', the auto_write_internal⇒requires_human_gate pairing, and the OrchestratorHub reject path; canonicalizing these as drafted satisfies M3 and the compile-time validateExecutors() self-check without narrowing.
+- **CA-7-Q3** = `(a)`
+  > All five mitigations (M1–M5) were synthesized from the 7 ENGAGED reviewers in W6 Run 2 Q3 and are presented as a single normative package in §CA-7.3; promoting them together in one CA cycle matches the unanimous support for M4 documentation and the cross-cutting §14 ripple amendments.
+- **CA-8-Q1** = `(a)`
+  > Locked Rule 1 (code > canonical) plus the shipped W5c implementation (commit 0bd26b9) establish the env-suffix Doppler names TEST_BYPASS_PRIVATE_KEY_DEV/PROD as canonical; §20.2.1 explicitly reconciles the prior path-style contract from test-plan §9.1 (commit 8eaf44c).
+- **CA-8-Q2** = `(a)`
+  > §CA-8.3 requires the retroactive §9.1 pointer update once §20.2 is ratified, ensuring the test plan references the canonical env-suffix form and issuance helper scripts/setup-test-bypass-keys.mjs rather than the superseded path-style wording.
+
+
+---
+
+## Raw reviewer responses
+
+### Slot 1 — openrouter:openai/gpt-5
+
+- Provider: `openrouter`
+- Latency: 37666 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 6,
+  "engagement": "ENGAGED",
+  "answers": {
+    "CA-7-Q1": {
+      "pick": "(a)",
+      "rationale": "Per §18.2, the bar is ≥7/10 ENGAGED; W6 Run 2 met 7 ENGAGED, and the single (b) dissent is explicitly absorbed via Mitigation M1 (§CA-7.3) while adopting the new §15.5 insertion (§CA-7.2). Treating (a)+(b) as the same promote-family yields an effective 7/7, so promoting as-is is justified without a re-run."
+    },
+    "CA-7-Q2": {
+      "pick": "(a)",
+      "rationale": "M3’s validator-enforced constraints align with §15.5 invariants: executors must be 'cross-step', auto_write_internal implies requires_human_gate, and OrchestratorHub.invokeStepOwner() must never resolve to an executor. Canonicalizing this now (validateExecutors(), OrchestratorHub guard with `agent.execution.reject_executor_via_hub.v1` per §CA-7.4) prevents authority drift."
+    },
+    "CA-7-Q3": {
+      "pick": "(a)",
+      "rationale": "Promoting M1–M5 together closes the loop across code, audit, and governance: M1 cross-links AGENT_REGISTRY↔EXECUTOR_REGISTRY (AgentRecord.executors[]), M2 adds the `executorKey` to §14 topics, and M5 introduces `executor_registered.v1` drift signals (§CA-7.4). This bundled approach best preserves Locked Rule 2’s 25-ID partition while hardening the split-charter pattern."
+    },
+    "CA-8-Q1": {
+      "pick": "(a)",
+      "rationale": "Locked Rule 1 (§25) states code > canonical > memory; W5c commit `0bd26b9` shipped the suffix-style Doppler names and §20.2.1 codifies them (`TEST_BYPASS_PRIVATE_KEY_DEV/_PROD`). Reconciling to the shipped suffix-style form is the correct application of the hierarchy."
+    },
+    "CA-8-Q2": {
+      "pick": "(a)",
+      "rationale": "Retroactively updating test plan §9.1 to point to SSOT §20.2 (CA-8) maintains single-source truth and removes the obsolete path-style naming; this matches the code per Locked Rule 1 (§25). §18.3 allows archival discipline while updating the live spec reference."
+    }
+  },
+  "conflicts_with_ssot": [],
+  "overall_notes": "CA-7’s split-charter design is coherently bounded by §15.5 and M1–M5; CA-8’s reconciliation cleanly applies Locked Rule 1 and clarifies `prd` vs `prod` in §20.2.1."
+}
+```
+
+---
+
+### Slot 2 — openrouter:anthropic/claude-opus-4
+
+- Provider: `openrouter`
+- Latency: 67341 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 1,
+  "engagement": "ENGAGED",
+  "answers": {
+    "CA-7-Q1": {
+      "pick": "(a)",
+      "rationale": "The single (b) dissent requesting the executors[] field amendment has already been incorporated as Mitigation M1 per §CA-7.3, making the Q1 PROMOTE-family effectively unanimous at 7/7. Since the substantive concern is addressed and W6 Run 2 achieved quorum with 7/10 ENGAGED, promoting as-is follows the CA-n cycle threshold in §18.2."
+    },
+    "CA-7-Q2": {
+      "pick": "(a)",
+      "rationale": "The full constraint set (mode='cross-step' + auto_write_internal⇒requires_human_gate pairing + OrchestratorHub rejection) is already implemented in the shipped code per commit 176d870 lines 591-625. Canonicalizing the complete validator-enforced constraints aligns with Locked Rule 1 (code wins) and prevents future executors from violating the established safety invariants."
+    },
+    "CA-7-Q3": {
+      "pick": "(a)",
+      "rationale": "All five mitigations received strong Panel support (M2 audit-log executorKey had 5/7 support, M4 documentation was unanimous 7/7) and form a coherent safety package. The EXECUTOR_REGISTRY pattern requires all mitigations working together - cross-links (M1), audit trail (M2), constraints (M3), documentation (M4), and drift detection (M5) are interdependent safety layers that should ship atomically."
+    },
+    "CA-8-Q1": {
+      "pick": "(a)",
+      "rationale": "W5c commit 0bd26b9 shipped the suffix-style naming (TEST_BYPASS_PRIVATE_KEY_DEV/_PROD) with 1077 LOC + 344 LOC tests, making it the canonical form per Locked Rule 1. The test plan's path-style naming in §9.1 was never implemented, so the shipped suffix-style form correctly wins as the source of truth."
+    },
+    "CA-8-Q2": {
+      "pick": "(a)",
+      "rationale": "Retroactive amendment maintains consistency between the test plan and canonical SSOT §20.2, preventing confusion from divergent documentation. Since the path-style naming was never shipped and the suffix-style is live in production per commit 0bd26b9, updating §9.1 to point to the canonical §20.2 follows proper documentation hygiene."
+    }
+  },
+  "conflicts_with_ssot": [],
+  "overall_notes": "Both amendments follow established patterns - CA-7 formalizes an already-shipped and Panel-reviewed pattern, while CA-8 reconciles documentation with shipped code per Locked Rule 1."
+}
+```
+
+---
+
+### Slot 3 — openrouter:google/gemini-2.5-pro
+
+- Provider: `openrouter`
+- Latency: 32837 ms
+- HTTP status: OK
+
+```
+```json
+{
+  "reviewer_slot": 9,
+  "engagement": "ENGAGED",
+  "answers": {
+    "CA-7-Q1": {
+      "pick": "(a)",
+      "rationale": "The draft's analysis in §CA-7.5 (CA-7-DI-1) correctly identifies that the single dissenting vote was substantively absorbed into Mitigation M1, making the effective consensus 7/7 for promotion. This meets the supermajority threshold defined in the canonical SSOT §18.2, making a re-run unnecessary and inefficient."
+    },
+    "CA-7-Q2": {
+      "pick": "(a)",
+      "rationale": "Mitigation M3, as described in §CA-7.3 of the draft, reflects the already-shipped implementation of the EXECUTOR_REGISTRY pattern. Locked Rule 1 (\"code > canonical\") dictates that the SSOT should align with the shipped code. Canonicalizing the full set of constraints as drafted is the correct action to prevent divergence between the SSOT and the implementation."
+    },
+    "CA-7-Q3": {
+      "pick": "(a)",
+      "rationale": "The five mitigations (M1-M5) detailed in §CA-7.3 form a comprehensive set of controls to manage the risks of the dual-registry pattern, as requested by the Panel in W6 Run 2 Q3. Promoting them together ensures the EXECUTOR_REGISTRY pattern is introduced with all its safety mechanisms simultaneously, rather than leaving it in a partially-mitigated state."
+    },
+    "CA-8-Q1": {
+      "pick": "(a)",
+      "rationale": "The draft's reconciliation in §CA-8.1 is a direct and correct application of Locked Rule 1 from the canonical SSOT (§25). The shipped code from commit `0bd26b9` used the suffix-style naming, which therefore supersedes the path-style naming from the older test plan spec, making the suffix-style form canonical."
+    },
+    "CA-8-Q2": {
+      "pick": "(a)",
+      "rationale": "The proposal in §CA-8.3 to retroactively amend the test plan is correct document hygiene and supports the goal of an SSOT. Leaving the incorrect path-style naming in `docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md` §9.1 would create a source of confusion, whereas replacing it with a pointer to the new canonical SSOT §20.2 ensures all documentation is consistent."
+    }
+  },
+  "conflicts_with_ssot": [],
+  "overall_notes": "The combined CA-7 and CA-8 draft is well-reasoned, correctly applies Locked Rule 1, and proposes sound, comprehensive mitigations for the new EXECUTOR_REGISTRY pattern. I recommend promotion of both amendments as drafted."
+}
+```
+```
+
+---
+
+### Slot 4 — openrouter:mistralai/mistral-large-2411
+
+- Provider: `openrouter`
+- Latency: 14436 ms
+- HTTP status: OK
+
+```
+```json
+{
+  "reviewer_slot": 1,
+  "engagement": "ENGAGED",
+  "answers": {
+    "CA-7-Q1": {
+      "pick": "(a)",
+      "rationale": "The plurality of 6/7 is sufficient for promotion as the single (b) dissent is already absorbed as Mitigation M1. This effectively makes the promotion unanimous."
+    },
+    "CA-7-Q2": {
+      "pick": "(a)",
+      "rationale": "The drafted constraints ensure that executors are used correctly and safely, aligning with the canonical SSOT and the shipped form in §15.1 (commit `176d870`)."
+    },
+    "CA-7-Q3": {
+      "pick": "(a)",
+      "rationale": "Promoting all 5 mitigations together ensures comprehensive risk management and aligns with the Panel's synthesized recommendations."
+    },
+    "CA-8-Q1": {
+      "pick": "(a)",
+      "rationale": "The suffix-style naming convention is canonical as per Locked Rule 1, which prioritizes the shipped code (commit `0bd26b9`)."
+    },
+    "CA-8-Q2": {
+      "pick": "(a)",
+      "rationale": "Retroactive amendment aligns the test plan with the canonical SSOT, ensuring consistency and clarity (§20.2, commit `9495b26`)."
+    }
+  },
+  "conflicts_with_ssot": [],
+  "overall_notes": ""
+}
+```
+```
+
+---
+
+### Slot 5 — openrouter:cohere/command-r-plus-08-2024
+
+- Provider: `openrouter`
+- Latency: 25293 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 1,
+  "engagement": "ENGAGED",
+  "answers": {
+    "CA-7-Q1": {
+      "pick": "(a)",
+      "rationale": "The plurality of 6/7 votes for option (a) is sufficient to promote the amendment as-is. The single (b) dissent has already been absorbed as Mitigation M1, so the (a)+(b) votes effectively collapse onto the canonical+amendment option, making it a 7/7 consensus. Promoting the amendment as-is is the most efficient path forward."
+    },
+    "CA-7-Q2": {
+      "pick": "(a)",
+      "rationale": "Option (a) is the most comprehensive and secure approach, enforcing both the mode and authority constraints at the compile-time validator level. This ensures that executors are only registered with the correct mode and authority profiles, reducing the risk of errors or security vulnerabilities. The other options defer some constraints to future CAs, which could lead to potential issues if not addressed promptly."
+    },
+    "CA-7-Q3": {
+      "pick": "(a)",
+      "rationale": "Promoting all five mitigations together in one CA cycle is the most efficient approach, as it ensures that all potential risks are addressed simultaneously. Mitigations M1 and M2 are high-support and provide important cross-link and audit-log enhancements, while M3, M4, and M5 add further security and documentation improvements. Sequencing or splitting the mitigations into separate CAs could delay their implementation and potentially introduce new risks."
+    },
+    "CA-8-Q1": {
+      "pick": "(a)",
+      "rationale": "The shipped form of the Doppler key naming, with the env-suffix style, is the correct canonical form according to Locked Rule 1 (code wins). The test plan §9.1 will be retroactively updated to match the shipped form, ensuring consistency and clarity in the documentation."
+    },
+    "CA-8-Q2": {
+      "pick": "(a)",
+      "rationale": "Retroactively amending the test plan §9.1 to match the shipped suffix-style naming is the most appropriate course of action. This ensures that the documentation accurately reflects the implemented code, providing a clear and up-to-date reference for future development and testing. Leaving §9.1 as a historical record or adding a footnote would not provide the same level of clarity and could potentially lead to confusion."
+    }
+  },
+  "conflicts_with_ssot": [],
+  "overall_notes": "The W3 draft and canonical SSOT provide sufficient information to make informed decisions on all five questions. The proposed amendments and mitigations are well-supported and address important aspects of the system's security, documentation, and operational efficiency."
+}
+```
+
+---
+
+### Slot 6 — openrouter:qwen/qwen-2.5-72b-instruct
+
+- Provider: `openrouter`
+- Latency: 15560 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 1,
+  "engagement": "ENGAGED",
+  "answers": {
+    "CA-7-Q1": { "pick": "(a)", "rationale": "The 6/7 plurality is sufficient, and the dissenting (b) is already absorbed as Mitigation M1. Promoting as-is aligns with the Panel's direction and maintains consistency." },
+    "CA-7-Q2": { "pick": "(a)", "rationale": "Canonicalizing M3 as drafted ensures that the mode and authority constraints are validator-enforced, providing strong architectural integrity and reducing the risk of future issues." },
+    "CA-7-Q3": { "pick": "(a)", "rationale": "Promoting all 5 mitigations together in one CA cycle ensures a comprehensive and cohesive implementation, aligning with the Panel's recommendations and maintaining the integrity of the system." },
+    "CA-8-Q1": { "pick": "(a)", "rationale": "The suffix-style Doppler key naming is the shipped form and should be canonical per Locked Rule 1. Reverting to path-style would introduce unnecessary complexity and inconsistency." },
+    "CA-8-Q2": { "pick": "(a)", "rationale": "Retroactively amending test plan §9.1 to match the shipped suffix-style naming ensures that the canonical documentation is consistent and up-to-date, aligning with the current implementation." }
+  },
+  "conflicts_with_ssot": [],
+  "overall_notes": "All picks align with the canonical SSOT and the Panel's recommendations, ensuring a consistent and robust system architecture."
+}
+```
+
+---
+
+### Slot 7 — openrouter:deepseek/deepseek-r1
+
+- Provider: `openrouter`
+- Latency: 83919 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 1,
+  "engagement": "ENGAGED",
+  "answers": {
+    "CA-7-Q1": {
+      "pick": "(a)",
+      "rationale": "CA-7.5 (CA-7-DI-1) confirms the (b) amendment was absorbed into Mitigation M1, making support effectively 7/7. The draft recommends ratification as canonical with M1, satisfying the supermajority requirement implicitly. Cited: CA-7-DI-1."
+    },
+    "CA-7-Q2": {
+      "pick": "(a)",
+      "rationale": "M3 constraints are validator-enforced per shipped code in `src/lib/agents/_registry.ts` (lines 591-625) and are integral to the EXECUTOR_REGISTRY pattern. CA-7.3 lists M3 as a canonical mitigation, and the Panel's Q3 PLURALITY_(b) supports risk mitigation. Cited: CA-7.3 (M3)."
+    },
+    "CA-7-Q3": {
+      "pick": "(a)",
+      "rationale": "CA-7.3 mandates all 5 mitigations (M1-M5) as binding, with M1+M2+M4 having strong reviewer support and M3+M5 implicit in the pattern. The draft specifies they must ship together per §CA-7.3 synthesis. Cited: CA-7.3 and Panel Q3 PLURALITY_(b)."
+    },
+    "CA-8-Q1": {
+      "pick": "(a)",
+      "rationale": "Locked Rule 1 (§25) prioritizes code over spec, making the suffix-style Doppler keys from W5c commit `0bd26b9` canonical. CA-8.1 confirms the divergence and CA-8.2 reconciles §20.2 to match shipped form. Cited: Locked Rule 1 and CA-8.1."
+    },
+    "CA-8-Q2": {
+      "pick": "(a)",
+      "rationale": "CA-8.3 requires retroactive amendment of test plan §9.1 to align with canonical §20.2 and suffix-style naming. This ensures consistency with Locked Rule 1 and avoids spec/code drift. Cited: CA-8.3."
+    }
+  },
+  "conflicts_with_ssot": [],
+  "overall_notes": ""
+}
+```
+
+---
+
+### Slot 8 — openrouter:perplexity/sonar
+
+- Provider: `openrouter`
+- Latency: 6259 ms
+- HTTP status: OK
+
+```
+{"reviewer_slot":0,"engagement":"ENGAGED","answers":{"CA-7-Q1":{"pick":"(a)","rationale":"The draft explicitly states in §CA-7.2 that Q2 was UNANIMOUS_(a) and that Q1’s (b) amendment is already absorbed as Mitigation M1, making (a)+(b) converge on the same canonical pattern. CANONICAL_REFERENCE Rev-2.1 §15 and Locked Rule 2 are preserved because executors live in a sibling namespace, not the 25-agent roster."},"CA-7-Q2":{"pick":"(a)","rationale":"The proposed §15.5 text in the W3 draft makes the mode and authority pairing part of the canonical validator contract: executors MUST be `cross-step`, and `auto_write_internal` MUST co-occur with `requires_human_gate`. This is reinforced by the shipped `getExecutor()` / `validateExecutors()` contract and the CA-7 background noting the shipped form in `src/lib/agents/_registry.ts`."},"CA-7-Q3":{"pick":"(a)","rationale":"The draft’s §CA-7.3 states all five mitigations are normative and that the engineering dispatch SHALL implement all five, with M2 and M4 specifically already receiving broad or universal support. Because M1–M5 are presented as a coherent risk cluster tied to §14 and §15.5, splitting them would undercut the CA-7 synthesis rather than follow it."},"CA-8-Q1":{"pick":"(a)","rationale":"CA-8.1 and §20.2.1 are explicit that the shipped W5c env-suffix form is canonical under Locked Rule 1 (“code wins”), even though the older test plan used path-style names. The W3 draft ties this to the actual implementation in `src/lib/security/testBypassToken.js` and `scripts/setup-test-bypass-keys.mjs`, so suffix-style is the SSOT reconciliation."},"CA-8-Q2":{"pick":"(a)","rationale":"The draft’s §CA-8.3 says the test plan §9.1 MUST be updated to point at SSOT §20.2 and replace the old path-style language with the canonical env-suffix names. That is consistent with the CA-8 purpose in §20.2 and the provenance note that shipped code at commit `0bd26b9` is authoritative under Locked Rule 1."}},"conflicts_with_ssot":[],"overall_notes":"All five answers align with the draft’s own reconciliation language and the canonical SSOT references cited in the artifact. No conflicts with the SSOT were identified."}
+```
+
+---
+
+### Slot 9 [BACKUP FIRED] — openrouter:meta-llama/llama-4-maverick
+
+- Provider: `openrouter`
+- Latency: 25885 ms
+- HTTP status: OK
+- Primary that failed: `openrouter:openrouter:moonshotai/kimi-k2.6` (error: unparseable JSON envelope)
+
+```
+{
+  "reviewer_slot": 4,
+  "engagement": "ENGAGED",
+  "answers": {
+    "CA-7-Q1": { "pick": "(a)", "rationale": "The 6/7 plurality is sufficient for promotion as the single (b) dissent is already absorbed as Mitigation M1 (§CA-7.3). The Q1 PROMOTE-family is effectively 7/7 once (a)+(b) collapse onto canonical+amendment (§CA-7.5).", "conflicts_with_ssot": false },
+    "CA-7-Q2": { "pick": "(a)", "rationale": "Canonicalizing as drafted enforces the necessary constraints (mode='cross-step' and auto_write_internal⇒requires_human_gate) and provides a clear, validator-enforced rule (§CA-7.3 M3). This ensures consistency and security in the EXECUTOR_REGISTRY.", "conflicts_with_ssot": false },
+    "CA-7-Q3": { "pick": "(a)", "rationale": "Promoting all 5 mitigations together ensures comprehensive security and consistency (§CA-7.3). The mitigations are interlinked and together provide a robust solution to the identified risks.", "conflicts_with_ssot": false },
+    "CA-8-Q1": { "pick": "(a)", "rationale": "The suffix-style naming (TEST_BYPASS_PRIVATE_KEY_DEV / _PROD) is canonical as per Locked Rule 1, which states that code takes precedence over canonical documentation (§CA-8.1). The shipped W5c form is the canonical implementation.", "conflicts_with_ssot": false },
+    "CA-8-Q2": { "pick": "(a)", "rationale": "Retroactive amendment of test plan §9.1 to match the shipped suffix-style naming is correct (§CA-8.3). It ensures that the documentation reflects the actual implementation and avoids confusion.", "conflicts_with_ssot": false }
+  },
+  "conflicts_with_ssot": [],
+  "overall_notes": ""
+}
+```
+
+---
+
+### Slot 10 — openrouter:x-ai/grok-4.3
+
+- Provider: `openrouter`
+- Latency: 13636 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 1,
+  "engagement": "ENGAGED",
+  "answers": {
+    "CA-7-Q1": { "pick": "(a)", "rationale": "The W6 Run 2 consultation (commit documented in executor-registry-pattern-ratification-2026-05-14.md) produced a 6/7 plurality for (a) that W3 explicitly absorbs into Mitigation M1 via the bidirectional executors[] cross-link on AgentRecord. This aligns with the §15.5 insertion and Locked Rule 2 roster invariant preserved by the sibling EXECUTOR_REGISTRY namespace in src/lib/agents/_registry.ts (commit 176d870)." },
+    "CA-7-Q2": { "pick": "(a)", "rationale": "§15.5 validator invariants (lines 591–625 of _registry.ts) already enforce mode='cross-step', the auto_write_internal⇒requires_human_gate pairing, and the OrchestratorHub reject path; canonicalizing these as drafted satisfies M3 and the compile-time validateExecutors() self-check without narrowing." },
+    "CA-7-Q3": { "pick": "(a)", "rationale": "All five mitigations (M1–M5) were synthesized from the 7 ENGAGED reviewers in W6 Run 2 Q3 and are presented as a single normative package in §CA-7.3; promoting them together in one CA cycle matches the unanimous support for M4 documentation and the cross-cutting §14 ripple amendments." },
+    "CA-8-Q1": { "pick": "(a)", "rationale": "Locked Rule 1 (code > canonical) plus the shipped W5c implementation (commit 0bd26b9) establish the env-suffix Doppler names TEST_BYPASS_PRIVATE_KEY_DEV/PROD as canonical; §20.2.1 explicitly reconciles the prior path-style contract from test-plan §9.1 (commit 8eaf44c)." },
+    "CA-8-Q2": { "pick": "(a)", "rationale": "§CA-8.3 requires the retroactive §9.1 pointer update once §20.2 is ratified, ensuring the test plan references the canonical env-suffix form and issuance helper scripts/setup-test-bypass-keys.mjs rather than the superseded path-style wording." }
+  },
+  "conflicts_with_ssot": [],
+  "overall_notes": ""
+}
+```
