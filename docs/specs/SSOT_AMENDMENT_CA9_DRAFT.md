@@ -34,7 +34,7 @@ A continuous discovery loop, owned by the new Agent #26 (CA-9-B), produces a str
 
 Every candidate observation produces an audit-log entry under topic `26.orchestra.candidate.v1` with payload `{ candidate_id, candidate_name, source, evidence_url, performance_score_estimate, price_tier_estimate, at }`. Hash-chained per §14.2.
 
-### CA-9-A.2.1 Seed evaluation list (CEO-supplied 2026-05-15)
+### CA-9-A.2.1 Seed Evaluation List — Agent #26 Initial Global Scan (CEO-supplied 2026-05-15)
 
 To bootstrap the global research loop, Agent #26's first observation cycle MUST enumerate the following 13 candidates and emit `26.orchestra.candidate.v1` for each, with `source = "ceo_seed_list_2026-05-15"` and `evidence_url` populated from each candidate's official site. Tier assignment governs queue priority, not threshold — every candidate clears the §CA-9-A.4 gate on its own merits.
 
