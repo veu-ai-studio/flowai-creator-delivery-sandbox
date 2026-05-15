@@ -27,51 +27,56 @@ describe('GET /api/health', () => {
     process.env = savedEnv;
   });
 
-  it('returns 200 with ok:true for a GET', () => {
+  it('returns 200 with ok:true for a GET', async () => {
     const req = { method: 'GET', headers: { origin: 'https://x.example' } };
     const res = makeRes();
-    handler(req, res);
+    await handler(req, res);
     const out = res._get();
     expect(out.statusCode).toBe(200);
     expect(out.body).toMatchObject({
       ok: true,
-      status: 'ready',
       service: 'flowai',
     });
+    // status is 'ready' on PASS and 'degraded' on DEGRADED — both
+    // map to ok:true per the handler's PASS|DEGRADED gate. The exact
+    // string depends on which downstream credentials are wired in
+    // the test env; assert membership in the valid set rather than
+    // pinning a specific value.
+    expect(['ready', 'degraded']).toContain(out.body.status);
     expect(typeof out.body.timestamp).toBe('string');
     expect(typeof out.body.version).toBe('string');
   });
 
-  it('echoes VERCEL_ENV in the env field', () => {
+  it('echoes VERCEL_ENV in the env field', async () => {
     process.env.VERCEL_ENV = 'preview';
     const req = { method: 'GET', headers: {} };
     const res = makeRes();
-    handler(req, res);
+    await handler(req, res);
     expect(res._get().body.env).toBe('preview');
   });
 
-  it('falls back to NODE_ENV when VERCEL_ENV unset', () => {
+  it('falls back to NODE_ENV when VERCEL_ENV unset', async () => {
     delete process.env.VERCEL_ENV;
     process.env.NODE_ENV = 'production';
     const req = { method: 'GET', headers: {} };
     const res = makeRes();
-    handler(req, res);
+    await handler(req, res);
     expect(res._get().body.env).toBe('production');
   });
 
-  it('reports VERCEL_REGION when present', () => {
+  it('reports VERCEL_REGION when present', async () => {
     process.env.VERCEL_REGION = 'iad1';
     const req = { method: 'GET', headers: {} };
     const res = makeRes();
-    handler(req, res);
+    await handler(req, res);
     expect(res._get().body.region).toBe('iad1');
   });
 
-  it('reports VERCEL_GIT_COMMIT_SHA when present', () => {
+  it('reports VERCEL_GIT_COMMIT_SHA when present', async () => {
     process.env.VERCEL_GIT_COMMIT_SHA = 'abc123';
     const req = { method: 'GET', headers: {} };
     const res = makeRes();
-    handler(req, res);
+    await handler(req, res);
     expect(res._get().body.commit).toBe('abc123');
   });
 
