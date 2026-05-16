@@ -1,13 +1,22 @@
 # Authenticated Crawl Traversal — Security Spec
 
-**Status:** DRAFT v4 (Phase 2 of Master Phased Build, Panel ruling `30e5edb`). NOT canonical SSOT. NOT yet engineering-ready — requires W6 adversarial Panel **re-ratification** before Phase 3 implementation. v1 was `NOT_RATIFIED` at commit `556a751` with 5 conditions; v2 (commit `b782e2f`) addressed 5 conditions per CEO disposition; v3 (commit `be594e3`) addressed 4 targeted concerns from the v2 Panel re-ratification per CEO-locked decisions on Q3/Q4/Q6/Q7; the v3 Panel re-ratification carried Q3-v3 (Option B screenshots) at supermajority but surfaced 3 sub-quorum positions on Q4 / Q6 / Q7. v4 (this commit) applies 3 condition-closer edits identified by the v3 Panel to push those 3 questions to supermajority.
-**Author:** W5a, 2026-05-16 (v4 revision).
-**v3 → v4 changelog (3 surgical condition-closers — no redesign, no new sections):**
-- Cond 1 (Q4 storageState — memory-pressure monitor): converts 3 MONITOR votes from the v3 Panel into MUST votes. §13 Engineering Scope and §11 acceptance criteria now require Phase 3 to ship a memory-pressure monitor as a non-negotiable deliverable. Monitor tracks `process.memoryUsage()` heap consumption during storageState operations; when usage exceeds a configurable threshold (default 80% of available heap) the crawl run FAILS LOUDLY (`ok:false, reason: 'memory_pressure_abort'`) and NEVER spills storageState to disk. Hard-fail semantic is explicit: memory pressure aborts the run, it does not trigger a filesystem fallback. Reinforces Invariant 2 MUST without weakening it.
-- Cond 2 (Q6 i18n denylist — language-expansion process): converts 2 MORE-LANGUAGES votes from the v3 Panel into 9-FLOOR votes. Invariant 5 and §11 acceptance criteria now codify an explicit expansion path: additional language families (hi, ru, vi, tr, th, and others) are added via a per-product opt-in to the FlowAI denylist registry with native-speaker review attestation; W5a reviews and merges; no Panel re-ratification is required for floor expansions beyond 9 — the process itself is the control.
-- Cond 3 (Q7 retention — rationale): converts 3 DIFFERENT-RETENTION votes from the v3 Panel into 90-1yr votes (target 9/9 alignment). §5 audit-log surface gains a rationale paragraph explaining why 90 hot + 1yr cold is the correct point — naming the 30/0 compliance dead-zone the Panel rejected, the 365/7yr over-retention liability, the quarterly enterprise security review cycle the 90-day hot window covers, and the annual compliance review the 1-year cold window covers. No new retention values; only the why.
+## PHASE 3 BASELINE — FROZEN AT v3
 
-**v3 positions UNCHANGED in v4 (carried forward as RATIFIED):** Q3-v3 (Option B — screenshots deferred to Phase 4) was ratified by the v3 Panel; v4 does not re-open it. G-Q1 (cross-origin refuse), G-Q2-v2 (MFA fail-loud), and G-Q5 (strict same-origin subdomains) remain SUPERMAJORITY-ratified from earlier rounds.
+This spec is frozen at v3 (commit `be594e3`) as the Phase 3 implementation baseline per CEO decision 2026-05-16. The three sub-quorum questions (Q4 memory-pressure, Q6 language governance, Q7 retention rationale) are deferred to Phase 3 implementation evidence and re-Panel after Phase 3 is proven in production. v4 additions (memory-pressure monitor, language-expansion path, retention rationale) are withdrawn — they introduced more attack surface than they closed.
+
+Phase 3 builds against the 4 supermajority-ratified positions: cross-origin REFUSE, strict same-origin, MFA fail-loud, no screenshots (Phase 4).
+
+---
+
+**Status:** DRAFT v3 (Phase 2 of Master Phased Build, Panel ruling `30e5edb`). NOT canonical SSOT. NOT yet engineering-ready — requires W6 adversarial Panel **re-ratification** before Phase 3 implementation. v1 was `NOT_RATIFIED` at commit `556a751` with 5 conditions; v2 (commit `b782e2f`) addressed 5 conditions per CEO disposition but the v2 Panel re-ratification surfaced 4 remaining targeted concerns; v3 (this commit) addresses all 4 per locked CEO decisions on Q3 / Q4 / Q6 / Q7.
+**Author:** W5a, 2026-05-16 (v3 revision).
+**v2 → v3 changelog (4 targeted edits only — minimal surgical changes):**
+- Cond 1 (Q3 screenshots): build PII scrub pipeline (§6a, 9 stages) → **Option B: DROP screenshots from Phase 3 entirely.** §6a is removed in full. Phase 3 authenticated crawl captures text/DOM content only. Screenshot capture is deferred to Phase 4 (separate dispatch, reviewed against real test fixtures).
+- Cond 2 (Q4 storageState): "memory-only with `should` and optional encrypted-fs fallback hedge" → **MUST, no fallback codified.** All hedge language ("if memory pressure becomes a concern", "Phase 3+ may add encrypted fs as an opt-in") is removed. Memory-only is the only conformant implementation per this spec.
+- Cond 3 (Q6 i18n denylist): 6-language floor (en/es/fr/pt/de/zh-CN) → **9-language floor (en/es/fr/pt/de/zh-CN, +ja, +ko, +ar).** Test coverage commitment is for all 9.
+- Cond 4 (Q7 retention): 30 hot + 0 cold → **90 days hot + 1 year cold.** Preserves "shorter than standard" intent while keeping a cold-store audit trail.
+
+**v2 conditions UNCHANGED in v3 (carried forward):** Cond 1 (G-Q2 MFA fail-loud) is unchanged from v2; the v2 Panel ratified this position 8/9. Cond 4 hybrid `data-crawl-safe="true"` allowlist mechanism is unchanged; only the i18n language floor expands. G-Q1 (cross-origin refuse) and G-Q5 (strict same-origin subdomains) remain SUPERMAJORITY-ratified from v1 and unchanged.
 **Lineage:** Closes Panel ruling `30e5edb` Q5 (auth-traversal security is the dominant risk in moving from single-page to multi-page authenticated crawl). Operationalises CANONICAL_REFERENCE.md §6 line 110 credential handling. Builds on Aggressive Crawl Engine spec (`docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md`) §A.5 authenticated-vs-unauthenticated paths.
 **Anchor canonical:** CANONICAL_REFERENCE.md §6 + §13 (Auth + Role Model) + §14 (GovernanceAuditLog credential-handling rules).
 **Phase 1 dependency (already shipped, commit `83fb20a`):** Agent #21 Aggressive Crawl Conductor routes the assessment path through `aggressiveCrawl()`. Phase 1 marks auth-gated pages with `authGated: true` and CONTINUES the crawl WITHOUT attempting login. This spec is the contract for the Phase 3 implementation that brings actual authentication online.
@@ -186,8 +195,6 @@ The hybrid gate's safety story is **defence in depth**, not perfection:
 - `<button>Continue</button>` (benign text; no class; no data-* markers) → click ALLOWED, and the false-negative caveat is documented per §10 acknowledged-residual.
 
 Each of the 9 language families MUST have ≥1 passing test in the Phase 3 implementation; partial coverage is non-conformant.
-
-**Language expansion process (v4 — Panel Q6-v4 condition-closer):** the 9-language floor is the Phase 3 minimum. Additional language families (hi, ru, vi, tr, th, and others) are added via a per-product opt-in mechanism: operator submits a pull request to the FlowAI denylist registry adding the language's destructive-action terms with native-speaker review attestation. W5a reviews + merges. No Panel re-ratification is required for floor expansions beyond 9 — the process itself is the control. This codifies the path the v2 § (`productConfig.destructiveTermsExtra`) gestured at without committing to a review surface; v4 names the surface (denylist registry pull-request + W5a merge gate + native-speaker attestation) so the expansion path is unambiguous and auditable.
 
 ### Invariant 6 — Evidence artifact scrubbing.
 
@@ -400,17 +407,6 @@ Per Invariant 4, the recommended implementation is "refuse cross-origin" — dis
 
 The audit-log entry per credentialed run gets the standard GovernanceAuditLog hash-chain treatment (§14.2 of CANONICAL_REFERENCE.md) — same chain, same tamper-evidence, no special-casing. The chain demonstrates that the credentialed-run record was written at the claimed time and hasn't been altered.
 
-### 5.4 Retention rationale (v4 — Panel Q7-v4 condition-closer)
-
-Why 90 days hot + 1 year cold is the correct point for `retentionClass: 'auth_short'`:
-
-- **30-day hot + 0-cold (v2) was rejected by Panel as creating a compliance dead-zone for post-incident investigation.** A security event surfaced 45 or 90 days after the credentialed run would have no audit trail to reconstruct what was accessed — the metadata necessary to scope the incident would already be gone.
-- **365-day hot + 7-year cold (the CA-10-E standard) was rejected as over-retaining sensitive credential-context records.** Even though credentials themselves are never logged, the CONTEXT of a credentialed run (URLs visited, timing, product structure, response shapes) is sensitive metadata. Retaining it for 7 years extends the liability window for breach-disclosure, subpoena, and discovery scope past what the operational value justifies.
-- **90-day hot provides a full incident-response window covering one calendar quarter — the standard enterprise security review cycle.** Most security incidents surface within 90 days of the underlying event; the hot window covers that interval at the latency / queryability level operational investigation needs.
-- **1-year cold provides an audit trail for annual compliance reviews without the 7-year liability window of standard retention.** External auditors, SOC 2 reviewers, and internal annual security reviews can pull the cold-store records during their once-a-year cadence; after one calendar year, the records are purged.
-
-**This is the minimum retention that satisfies both incident-response and annual-audit requirements while respecting the sensitivity of credentialed-run records.** The exact transition behaviour is unchanged from Invariant 9: tag entries `retentionClass: 'auth_short'`; cron migrates to cold after 90 days hot; purges from cold after 1 year. Total record lifetime ≈ 365 days.
-
 ---
 
 ## 6. Data exfiltration controls — concrete contract
@@ -553,95 +549,94 @@ This spec's invariants map 1:1 to that line:
 11. **W2 boundary respected**: zero W2-locked files staged (computeMonitorClearance, formatMonitorClearanceFooter, monitor-clearance tests, per-layer scoring prompt, crawler truncation fix).
 12. **Capability boundary documented**: the §8 capability boundary block in `docs/specs/agent-blueprints/AGENT_21_AggressiveCrawlConductor.md` (Phase 3 will add this blueprint, mirroring AGENT_03_SelfRenewal.md) names what Phase 3 CAN and CANNOT do — no overclaim. The blueprint MUST explicitly disclaim screenshot capture (deferred to Phase 4) so operators cannot mistakenly believe authenticated screenshots are available.
 13. **Phase 3 dispatch gate**: HARD GATE 3 in the Master Phased Build sequence — Phase 4 (validate scoring on multi-page input) cannot start until CEO confirms Phase 3 passed.
-14. **Memory-pressure monitor present + hard-fail on threshold breach** (NEW per Q4-v4 condition-closer): Phase 3 ships a memory-pressure monitor that tracks `process.memoryUsage()` heap consumption during storageState operations. Threshold breach (default 80% of available heap) MUST fail the run loudly with `ok:false, reason: 'memory_pressure_abort'` and MUST NOT spill storageState to disk. Verified by test: mock heap exhaustion → assert `ok:false` + `reason: 'memory_pressure_abort'` + zero filesystem writes during the abort path. The hard-fail-not-fallback semantic is a Phase 3 acceptance gate, not an implementation choice.
-15. **Language-expansion process documented and exercised** (NEW per Q6-v4 condition-closer): the FlowAI denylist registry expansion path described in Invariant 5 ("v4 — Panel Q6-v4 condition-closer") is documented and at least one non-floor language (e.g. Hindi) can be added via the process without a spec amendment. A test or a one-shot script demonstrates the path end-to-end: new language entry → native-speaker attestation field → W5a merge → denylist regex picks it up at runtime. The expansion path itself is the control surface; new language additions are operational, not spec-amendment work.
 
 ---
 
-## 12. Open Questions for W6 adversarial Panel (Phase 2 v4 → HARD GATE 2 re-ratification)
+## 12. Open Questions for W6 adversarial Panel (Phase 2 v3 → HARD GATE 2 re-ratification)
 
-**v4 question set (3 re-votes only):** the v3 Panel re-ratification carried G-Q3-v3 (Option B — screenshots deferred to Phase 4) at supermajority. G-Q1, G-Q2-v2, and G-Q5 also remain SUPERMAJORITY-ratified from earlier rounds. The remaining v3 questions — G-Q4-v3 (storageState MUST), G-Q6-v3 (9-language floor), G-Q7-v3 (90 hot + 1yr cold retention) — landed sub-quorum with specific condition-closer signals from the Panel: 3 MONITOR votes on Q4 (asked for a memory-pressure monitor with hard-fail semantics), 2 MORE-LANGUAGES votes on Q6 (asked for an explicit expansion-path mechanism), 3 DIFFERENT-RETENTION votes on Q7 (asked for a rationale paragraph anchoring the 90/1yr choice). v4 applies those 3 condition-closers and asks the Panel to ratify the refined v4 positions. **No re-vote needed on G-Q1, G-Q2-v2, G-Q3-v3, G-Q5** — those are RATIFIED and carried.
+**v3 question set:** the v2 Panel re-ratification carried G-Q2-v2 (MFA fail-loud) at 8/9 supermajority. G-Q1 and G-Q5 remain SUPERMAJORITY-ratified from v1 and unchanged. The remaining v2 questions — G-Q3-v2 (screenshots), G-Q4-v2 (storageState), G-Q6-v2 (i18n denylist), G-Q7-v2 (retention) — surfaced 4 targeted concerns; v3 takes a CEO-locked position on each. The questions below ask the Panel to re-ratify the v3 positions. **No re-vote needed on G-Q1, G-Q2-v2, G-Q5** — those are RATIFIED and carried.
 
-### G-Q1 — Cross-origin handling (RATIFIED IN V1; CARRIED THROUGH V2/V3/V4)
+### G-Q1 — Cross-origin handling (RATIFIED IN V1; CARRIED THROUGH V2 AND V3)
 
-v1 Panel verdict: `SUPERMAJORITY_GQ1-REFUSE` (8 of 9). v4 keeps this position verbatim — refuse cross-origin entirely. **No re-vote needed.**
+v1 Panel verdict: `SUPERMAJORITY_GQ1-REFUSE` (8 of 9). v3 keeps this position verbatim — refuse cross-origin entirely. **No re-vote needed.**
 
-### G-Q2-v2 — MFA handling (RATIFIED IN V2; CARRIED THROUGH V3/V4)
+### G-Q2-v2 — MFA handling (RATIFIED IN V2; CARRIED THROUGH V3)
 
-v2 Panel verdict: `SUPERMAJORITY_GQ2-LOUD` (8 of 9). v4 keeps this position verbatim — MFA challenge → return `ok:false, authFailureReason: 'mfa_required'`, STOP, do NOT continue unauthenticated. **No re-vote needed.**
+v2 Panel verdict: `SUPERMAJORITY_GQ2-LOUD` (8 of 9). v3 keeps this position verbatim — MFA challenge → return `ok:false, authFailureReason: 'mfa_required'`, STOP, do NOT continue unauthenticated. **No re-vote needed.**
 
-### G-Q3-v3 — Screenshot capture in Phase 3 (RATIFIED IN V3; CARRIED THROUGH V4)
+### G-Q3-v3 — Screenshot capture in Phase 3 (revised; Option B CEO-locked)
 
-v3 Panel verdict: SUPERMAJORITY on Option B (screenshots deferred to Phase 4). v4 keeps this position verbatim — Phase 3 ships with NO screenshot capture, NO scrub pipeline, NO operator residual-risk-ack UI; Phase 4 re-introduces screenshots with its own scrub design and ratification gate. **No re-vote needed.**
+v2 position: build a 9-stage PII/credential scrub pipeline (§6a) + default-OFF retention + explicit residual-risk operator acknowledgment + DISCARD-on-scrub-failure. v2 Panel re-ratification surfaced concern about pipeline complexity vs. default-OFF posture (carrying meaningful surface area — OCR engine, image library, re-OCR verification, operator residual-risk-ack UI, audit log subtype — for a feature whose default posture means most operators never trigger it).
 
-### G-Q4-v4 — storageState memory-only MUST + memory-pressure monitor (refined)
+**v3 CEO-locked position (Option B):** DROP screenshots from Phase 3 entirely. Remove §6a in full. Phase 3 captures text/DOM content only. Screenshot capture is deferred to Phase 4 — a dedicated dispatch reviewed against real test fixtures and Panel-ratified separately.
 
-v3 position: memory-only is MUST; no encrypted-fs fallback codified. v3 Panel surfaced 3 MONITOR votes asking for an explicit memory-pressure monitor with hard-fail semantics — operators wanted assurance that memory pressure under load would not silently degrade the MUST into a SHOULD via an undocumented filesystem fallback.
+Panel re-ratification question — is the v3 Option B (defer screenshots to Phase 4) acceptable?
 
-**v4 condition-closer position:** memory-only MUST is preserved verbatim from v3. v4 adds an explicit Phase-3 deliverable: a memory-pressure monitor that tracks `process.memoryUsage()` heap consumption during storageState operations. Threshold breach (default 80% of available heap) MUST fail the run loudly with `ok:false, reason: 'memory_pressure_abort'` and MUST NOT spill storageState to disk. §13 lists the monitor as a required Phase-3 surface; §11 #14 makes the hard-fail-not-fallback semantic a Phase 3 acceptance gate. The honest heap-dump residual (a hostile process memory dump could in principle observe the storageState object) is retained as a documented hosting-environment trust assumption.
+- (a) Ratify v3 Option B as proposed — Phase 3 ships with NO screenshot capture, NO scrub pipeline, NO operator residual-risk-ack UI; Phase 4 re-introduces screenshots with its own scrub design and ratification gate
+- (b) Reject v3; reinstate v2 §6a 9-stage scrub pipeline + default-OFF retention + operator residual-risk acknowledgment
+- (c) Different — specify (e.g. screenshots permitted in dev/staging only, no scrub required, no retention; or a third option)
+- (INSUFFICIENT_INFORMATION)
 
-Panel re-ratification question — is the v4 memory-only-MUST + memory-pressure-monitor with hard-fail position acceptable?
+### G-Q4-v3 — storageState memory-only as MUST (revised)
 
-- (a) Ratify v4 as proposed (memory-only MUST + memory-pressure monitor with hard-fail + no filesystem fallback under any condition)
-- (b) Reject v4; restore v3 memory-only MUST without the explicit monitor (operators trust runtime defaults rather than codify a monitor as a Phase 3 must-ship)
-- (c) Ratify the MUST + monitor but raise/lower the default threshold from 80% — specify
+v2 position: storageState is memory-only (Invariant 2) with an option (c) in the Panel question allowing an opt-in encrypted-fs fallback "if memory pressure becomes a Phase 3 concern." v2 Panel re-ratification surfaced concern that the hedge language ("should be memory-only", "may add encrypted fs as an opt-in") left a non-conformant escape path.
+
+**v3 CEO-locked position:** memory-only is **MUST**, not SHOULD. No encrypted-fs fallback is codified in this spec. No "if memory pressure becomes a concern" carve-out. A Phase 3 implementation that ships a filesystem-fallback path is non-conformant with this spec regardless of operational pressure. The honest heap-dump residual (a hostile process memory dump could in principle observe the storageState object) is retained as a documented hosting-environment trust assumption — but it is a limitation, not a fallback hedge.
+
+Panel re-ratification question — is the v3 memory-only-as-MUST position acceptable?
+
+- (a) Ratify v3 MUST as proposed (no fallback codified in spec; non-conformant to ship encrypted-fs fallback)
+- (b) Reject v3 MUST; restore v2 hedge language ("memory-only with optional encrypted-fs fallback if memory pressure becomes a concern")
+- (c) Ratify MUST but require Phase 3 to ship a memory-pressure monitor with hard failure semantics (run fails loud rather than silently spilling to disk)
 - (d) Different — specify
 - (INSUFFICIENT_INFORMATION)
 
-### G-Q5 — Same-eTLD+1 subdomains (RATIFIED IN V1; CARRIED THROUGH V2/V3/V4)
+### G-Q5 — Same-eTLD+1 subdomains (RATIFIED IN V1; CARRIED THROUGH V2 AND V3)
 
-v1 Panel verdict: `SUPERMAJORITY_GQ5-STRICT` (8 of 9). v4 keeps this position verbatim — strict same-origin by default; admin-role flag to opt in to same-eTLD-1. **No re-vote needed.**
+v1 Panel verdict: `SUPERMAJORITY_GQ5-STRICT` (8 of 9). v3 keeps this position verbatim — strict same-origin by default; admin-role flag to opt in to same-eTLD-1. **No re-vote needed.**
 
-### G-Q6-v4 — i18n denylist 9-language floor + explicit expansion process (refined)
+### G-Q6-v3 — Destructive-action gate: i18n denylist floor 6 → 9 languages (revised)
 
-v3 position: 9-language floor (en/es/fr/pt/de/zh-CN/ja/ko/ar) with per-test coverage commitment. v3 Panel surfaced 2 MORE-LANGUAGES votes asking how the floor would expand beyond 9 — operators wanted assurance that adding Hindi, Russian, Vietnamese, Turkish, Thai, etc. would not require another full Panel re-ratification cycle, while also wanting confidence that arbitrary additions could not bypass review.
+v2 position: hybrid allowlist + i18n denylist with 6 named language families (en/es/fr/pt/de/zh-CN). v2 Panel re-ratification surfaced concern that the 6-language floor was incomplete coverage for a globally-deployed crawl agent — the largest non-Latin language populations (Japanese, Korean, Arabic) were not in the floor.
 
-**v4 condition-closer position:** the 9-language floor is preserved verbatim from v3. v4 codifies the expansion path: additional language families are added via per-product opt-in to the FlowAI denylist registry — operator submits a pull request adding the language's destructive-action terms with native-speaker review attestation; W5a reviews + merges; no Panel re-ratification is required for floor expansions beyond 9. The process itself is the control: native-speaker attestation + W5a merge gate replaces spec-amendment friction for legitimate locale additions, while preventing unattested additions. §11 #15 requires the expansion path to be documented + exercised end-to-end (e.g. Hindi added through the path without a spec amendment).
+**v3 CEO-locked position:** extend the i18n destructive-regex floor from 6 to 9 language families. The new floor: en, es, fr, pt, de, zh-CN, **+ja, +ko, +ar**. Each of the 9 families MUST have ≥1 passing test in Phase 3; partial coverage is non-conformant. The hybrid mechanism (explicit `data-crawl-safe="true"` allowlist + form-submit denylist + i18n destructive denylist) is unchanged from v2 — only the language floor expands.
 
-Panel re-ratification question — is the v4 9-language floor + denylist-registry expansion process acceptable?
+Panel re-ratification question — is the v3 9-language floor acceptable?
 
-- (a) Ratify v4 as proposed (9-language floor + denylist-registry PR path + W5a merge gate + native-speaker attestation + no Panel re-ratification for additions beyond 9)
-- (b) Ratify floor but require Panel re-ratification for each language addition beyond 9 (heavier review, slower expansion)
-- (c) Ratify floor but require a broader-than-W5a review surface for each addition (e.g. Panel sub-quorum sign-off, or product-owner sign-off in addition to W5a)
+- (a) Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment
+- (b) Reject v3; restore v2's 6-language floor (per-product opt-in handles ja/ko/ar)
+- (c) Require additional languages in v3 floor before Phase 3 ships — specify (e.g. hi, ru, vi must also be in floor)
 - (d) Different — specify
 - (INSUFFICIENT_INFORMATION)
 
-### G-Q7-v4 — Audit retention 90 hot + 1yr cold + rationale (refined)
+### G-Q7-v3 — Audit retention: 90 days hot + 1 year cold (revised)
 
-v3 position: 90 days hot + 1 year cold for `retentionClass: 'auth_short'`. v3 Panel surfaced 3 DIFFERENT-RETENTION votes — slots were not opposed to the 90/1yr split per se but wanted the spec to anchor *why* 90/1yr (rather than 30/0, 365/7yr, or some intermediate hybrid). Without that anchor, the choice read as arbitrary.
+v2 position: 30 days hot + 0 days cold for credentialed-run audit entries (`retentionClass: 'auth_short'`). v2 Panel re-ratification (carried Slot 10's option (c) from v2): the 30/0 split sacrificed audit-trail availability for marginal metadata-minimisation gain — particularly the cold-store audit trail needed for post-incident investigation and compliance review.
 
-**v4 condition-closer position:** the 90 hot + 1 year cold retention values are preserved verbatim from v3. v4 adds §5.4 — a rationale paragraph naming: (i) the v2 30/0 was rejected as a compliance dead-zone for post-incident investigation; (ii) the CA-10-E 365/7yr standard was rejected as over-retaining sensitive credentialed-run context; (iii) 90-day hot covers the quarterly enterprise security review cycle most incidents surface within; (iv) 1-year cold covers annual external/internal compliance reviews without extending the 7-year liability window. This is the minimum retention that satisfies both incident-response and annual-audit requirements while respecting the sensitivity of credentialed-run metadata.
+**v3 CEO-locked position:** 90 days hot + 1 year cold. Triples the hot window (30 → 90 days) and restores a non-zero cold-store audit trail (1 year). Still materially shorter than the CA-10-E standard (365 hot + 7yr cold) — preserving the "shorter than standard for credentialed-run metadata" intent — but with enough cold-store retention to support post-incident investigation. The retention class tag `retentionClass: 'auth_short'` is unchanged; the cron behaviour is updated (migrate to cold after 90 days; purge from cold after 1 year).
 
-Panel re-ratification question — is the v4 90-hot + 1-yr-cold retention + rationale acceptable?
+Panel re-ratification question — is the v3 90-day-hot + 1-year-cold retention acceptable?
 
-- (a) Ratify v4 as proposed (90 hot + 1yr cold + the §5.4 rationale anchoring quarterly-review + annual-audit + minimised-liability triangulation)
-- (b) Reject v4; restore v2 short retention (30 hot + 0 cold) — the rationale doesn't justify the cold-store liability window
-- (c) Reject v4; restore CA-10-E canonical retention (365 hot + 7yr cold) for credentialed-run entries — the rationale's "shorter than standard" intent isn't compelling enough to diverge
-- (d) Different — specify (e.g. 90 hot + 6-month cold; or 180 hot + 1yr cold; or other hybrid)
+- (a) Ratify v3 retention as proposed (90 hot + 1yr cold)
+- (b) Reject v3; restore v2 short retention (30 hot + 0 cold)
+- (c) Reject v3; restore CA-10-E canonical retention (365 hot + 7yr cold) for credentialed-run entries too
+- (d) Different — specify (e.g. 90 hot + shorter cold than 1yr; or 365 hot + 1yr cold; or other hybrid)
 - (INSUFFICIENT_INFORMATION)
 
 ---
 
-## 13. Engineering scope estimate (Phase 3, post-ratification — v4)
+## 13. Engineering scope estimate (Phase 3, post-ratification — v3)
 
 | Surface | Effort (W-days) |
 |---|---:|
 | Conductor extension: login pass + memory-only storageState handling + same-origin gate | 2 |
-| **Memory-pressure monitor (REQUIRED v4 deliverable — Q4-v4 condition-closer)**: `process.memoryUsage()` heap-consumption sampler invoked at every storageState read/write boundary; configurable threshold (default 80% of `heapTotal`); breach raises `MemoryPressureAbort` which the Conductor catches and surfaces as `ok:false, reason: 'memory_pressure_abort'`. NEVER triggers a filesystem fallback. Hard-fail semantic is non-negotiable: memory pressure aborts the run, it does not spill storageState to disk under any condition. | 0.5 |
 | `scrubCredentials` extension for evidence artifacts (DOM dumps, network logs, ProductSSOT delta entries) | 1 |
 | Audit-log integration for credentialed runs (§5.1 entry shape) + retention class wire-in (90 hot + 1yr cold cron behaviour) | 0.75 |
-| All 10 invariants → test surface (canary-credential negative test, memory-only verification, same-origin enforcement, 9-language destructive-denylist coverage, no-screenshot-capture regression test, memory-pressure hard-fail verification, etc.) | 2.25 |
-| Language-expansion-process documentation + one non-floor language exercise (e.g. Hindi added via the registry path) | 0.25 |
+| All 10 invariants → test surface (canary-credential negative test, memory-only verification, same-origin enforcement, 9-language destructive-denylist coverage, no-screenshot-capture regression test, etc.) | 2 |
 | Documentation: AGENT_21_AggressiveCrawlConductor blueprint + capability boundary §8 (explicit screenshot-deferred-to-Phase-4 disclaimer) | 0.5 |
-| **TOTAL** | **~7.25 W-days** |
+| **TOTAL** | **~6.25 W-days** |
 
-**Memory-pressure monitor — Phase 3 MUST-SHIP contract (v4 detail):** Phase 3 ships a memory-pressure monitor as a required deliverable alongside the auth-traversal implementation. The monitor MUST:
-
-- Track Node.js `process.memoryUsage()` heap consumption during storageState operations (sample at minimum at every `await context.storageState()` read and at every `browser.newContext({ storageState: ... })` apply).
-- If heap usage exceeds a configurable threshold (default: 80% of available heap — `heapUsed / heapTotal > 0.8`), the crawl run FAILS LOUDLY — returns `ok:false` with `reason: 'memory_pressure_abort'` — NEVER silently spills storageState to disk.
-- The hard-fail semantic is non-negotiable: memory pressure aborts the run, it does not trigger a filesystem fallback. There is no `tmp/playwright-state-*` escape valve on memory pressure (consistent with Invariant 2 MUST).
-
-**v4 scope delta vs. v3 estimate:** the v4 condition-closers add ~1.0 W-day of scope: ~0.5 for the memory-pressure monitor implementation, ~0.25 for its test surface, ~0.25 for the language-expansion-process documentation + non-floor exercise. The retention rationale (Q7-v4) is documentation-only and adds zero engineering effort. Net: Phase 3 v4 ≈ 7.25 W-days, up from v3's 6.25.
+**v3 scope delta vs. v2 estimate:** the v2 screenshot scrub pipeline (OCR engine integration, image library, re-OCR verification harness, operator residual-risk-ack UI, audit log subtype) is removed → ~2 W-days saved. The cleanup-sweep helper row from earlier estimates was already removed in v2 (memory-only storageState). The 9-language denylist coverage adds modest test surface (~0.25 W-day vs. 6-language). Net: Phase 3 v3 is the smallest Phase 3 estimate to date.
 
 **Phase 4 (deferred, separate dispatch):** screenshot capture + scrub pipeline. Estimate: ~3 W-days for the engine work + ~1 W-day for operator residual-risk-ack UI + ~1 W-day for the test fixture suite. Total Phase 4 ~5 W-days, fully scoped in its own dispatch with its own Panel ratification gate.
 
@@ -665,4 +660,4 @@ Depends on: Phase 2 v3 ratification by W6 (this spec); Phase 1 Agent #21 already
 
 ---
 
-*End of Authenticated Crawl Traversal Security Spec v4. PENDING W6 adversarial Panel **re-ratification** per HARD GATE 2 of the Master Phased Build (Panel ruling `30e5edb`). v1 NOT_RATIFIED at commit `556a751` with 5 conditions; v2 (commit `b782e2f`) addressed all 5 per CEO disposition + Slot-7 hybrid rationale; v3 (commit `be594e3`) addressed 4 targeted v2 Panel concerns per CEO-locked decisions on Q3/Q4/Q6/Q7; v4 (this commit) applies 3 surgical condition-closers identified by the v3 Panel on Q4 (memory-pressure monitor with hard-fail), Q6 (denylist-registry expansion process), and Q7 (retention rationale). G-Q1, G-Q2-v2, G-Q3-v3, and G-Q5 carry forward RATIFIED — no re-vote required on those four.*
+*End of Authenticated Crawl Traversal Security Spec v3. PENDING W6 adversarial Panel **re-ratification** per HARD GATE 2 of the Master Phased Build (Panel ruling `30e5edb`). v1 NOT_RATIFIED at commit `556a751` with 5 conditions; v2 (commit `b782e2f`) addressed all 5 per CEO disposition + Slot-7 hybrid rationale; v3 (this commit) addresses the 4 targeted concerns from the v2 Panel re-ratification per CEO-locked decisions on Q3 / Q4 / Q6 / Q7. G-Q1, G-Q2-v2, and G-Q5 carry forward RATIFIED — no re-vote required on those three.*
