@@ -1,13 +1,14 @@
 # Authenticated Crawl Traversal — Security Spec
 
-**Status:** DRAFT v2 (Phase 2 of Master Phased Build, Panel ruling `30e5edb`). NOT canonical SSOT. NOT yet engineering-ready — requires W6 adversarial Panel **re-ratification** before Phase 3 implementation. v1 was `NOT_RATIFIED` at commit `556a751` with 5 conditions. v2 addresses all 5 per CEO disposition + the Slot-7 hybrid recommendation for the denylist question.
-**Author:** W5a, 2026-05-16 (v2 revision).
-**v1 → v2 changelog:**
-- Cond 1 (G-Q2 MFA): fail silently → continue unauth → **fail loud**, return `ok:false`, stop auth attempt.
-- Cond 2 (G-Q3 screenshots): operator-review-only → **build real PII scrub pipeline (new §6a)** per CEO Decision 1 (Option B); scrub-then-redact-then-persist; default-OFF for auth screenshot retention; explicit residual-risk acknowledgment.
-- Cond 3 (G-Q4 storageState): on-disk `tmp/playwright-state-<runId>/` with cleanup verification → **memory-only** Playwright `storageState` object; filesystem path eliminated entirely; race condition removed by removing the race.
-- Cond 4 (G-Q6 destructive denylist): pure denylist (English-only) → **hybrid: denylist + explicit `data-crawl-safe="true"` allowlist + i18n (en/es/fr/pt/de/zh-CN)** per Slot-7 hybrid recommendation.
-- Cond 5 (G-Q7 retention): standard 365 hot + 7yr cold → **30 days hot, NO cold** for credentialed-run records.
+**Status:** DRAFT v3 (Phase 2 of Master Phased Build, Panel ruling `30e5edb`). NOT canonical SSOT. NOT yet engineering-ready — requires W6 adversarial Panel **re-ratification** before Phase 3 implementation. v1 was `NOT_RATIFIED` at commit `556a751` with 5 conditions; v2 (commit `b782e2f`) addressed 5 conditions per CEO disposition but the v2 Panel re-ratification surfaced 4 remaining targeted concerns; v3 (this commit) addresses all 4 per locked CEO decisions on Q3 / Q4 / Q6 / Q7.
+**Author:** W5a, 2026-05-16 (v3 revision).
+**v2 → v3 changelog (4 targeted edits only — minimal surgical changes):**
+- Cond 1 (Q3 screenshots): build PII scrub pipeline (§6a, 9 stages) → **Option B: DROP screenshots from Phase 3 entirely.** §6a is removed in full. Phase 3 authenticated crawl captures text/DOM content only. Screenshot capture is deferred to Phase 4 (separate dispatch, reviewed against real test fixtures).
+- Cond 2 (Q4 storageState): "memory-only with `should` and optional encrypted-fs fallback hedge" → **MUST, no fallback codified.** All hedge language ("if memory pressure becomes a concern", "Phase 3+ may add encrypted fs as an opt-in") is removed. Memory-only is the only conformant implementation per this spec.
+- Cond 3 (Q6 i18n denylist): 6-language floor (en/es/fr/pt/de/zh-CN) → **9-language floor (en/es/fr/pt/de/zh-CN, +ja, +ko, +ar).** Test coverage commitment is for all 9.
+- Cond 4 (Q7 retention): 30 hot + 0 cold → **90 days hot + 1 year cold.** Preserves "shorter than standard" intent while keeping a cold-store audit trail.
+
+**v2 conditions UNCHANGED in v3 (carried forward):** Cond 1 (G-Q2 MFA fail-loud) is unchanged from v2; the v2 Panel ratified this position 8/9. Cond 4 hybrid `data-crawl-safe="true"` allowlist mechanism is unchanged; only the i18n language floor expands. G-Q1 (cross-origin refuse) and G-Q5 (strict same-origin subdomains) remain SUPERMAJORITY-ratified from v1 and unchanged.
 **Lineage:** Closes Panel ruling `30e5edb` Q5 (auth-traversal security is the dominant risk in moving from single-page to multi-page authenticated crawl). Operationalises CANONICAL_REFERENCE.md §6 line 110 credential handling. Builds on Aggressive Crawl Engine spec (`docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md`) §A.5 authenticated-vs-unauthenticated paths.
 **Anchor canonical:** CANONICAL_REFERENCE.md §6 + §13 (Auth + Role Model) + §14 (GovernanceAuditLog credential-handling rules).
 **Phase 1 dependency (already shipped, commit `83fb20a`):** Agent #21 Aggressive Crawl Conductor routes the assessment path through `aggressiveCrawl()`. Phase 1 marks auth-gated pages with `authGated: true` and CONTINUES the crawl WITHOUT attempting login. This spec is the contract for the Phase 3 implementation that brings actual authentication online.
@@ -48,7 +49,9 @@ For every log sink in the system (`console.log`, structured logger, Sentry, Verc
 - Greps every persistent artifact (Supabase rows, log files, Sentry sample, ProductSSOT JSON, audit-chain entries, screenshots' EXIF + alt-text, network log dumps, Claude prompt history) for the canary strings.
 - Asserts zero hits.
 
-### Invariant 2 — `storageState` is memory-only; NO filesystem persistence.
+### Invariant 2 — `storageState` is memory-only; NO filesystem persistence (MUST).
+
+**v3 revision** (Panel Q4-v3): memory-only is **MUST**, not SHOULD. No encrypted-fs fallback is codified in this spec. No "if memory pressure becomes a concern" carve-out. The Phase 3 implementation MUST hold storageState in process memory only and MUST NOT write it to disk under any condition; a Phase 3 implementation that ships a filesystem-fallback path is non-conformant with this spec regardless of operational pressure.
 
 **v2 revision** (Panel condition 3, G-Q4=GQ4-MEMORY): the on-disk `tmp/playwright-state-<runId>/` path used by v1 is eliminated entirely. Playwright's `BrowserContext.storageState()` returns a JSON object; the Conductor holds that object in process memory only and passes it back as `browserContext({ storageState: <object> })` for subsequent context construction within the same run. The cleanup-verification race condition that motivated 4 Panel slots' GQ4-MEMORY vote is eliminated by eliminating the filesystem step.
 
@@ -130,7 +133,7 @@ While authenticated, the Conductor executes ONLY these DOM events on the target 
    - Any element inside a `<form method="post|put|patch|delete">`.
 4. **Otherwise → allow click.**
 
-**i18n destructive regex (Panel condition 4 — 6 named language families):**
+**i18n destructive regex (Panel condition 4 — v3: 9 named language families):**
 
 ```
 /\b(
@@ -146,16 +149,22 @@ While authenticated, the Conductor executes ONLY these DOM events on the target 
   | löschen|entfernen|abbrechen|abmelden|beenden|zerstören|zurücksetzen|deaktivieren
   // Chinese (Simplified)
   | 删除|移除|取消|退出|登出|终止|重置|禁用|注销
+  // Japanese (v3 — Panel Q6-v3 expansion)
+  | 削除|消去|キャンセル|サインアウト|ログアウト|終了|無効化|解除
+  // Korean (v3 — Panel Q6-v3 expansion)
+  | 삭제|제거|취소|로그아웃|사인아웃|종료|비활성화|해지
+  // Arabic (v3 — Panel Q6-v3 expansion)
+  | حذف|إزالة|إلغاء|تسجيل\s*الخروج|إنهاء|تعطيل|إلغاء\s*الاشتراك
 )\b/iu
 ```
 
-The regex matches the Unicode `u` flag so non-Latin scripts (Chinese ideographs) match correctly. The 6 language families per dispatch are the floor; per-product i18n configuration can extend with additional locales at product registration (Phase 3 implementation may expose a `productConfig.destructiveTermsExtra: string[]` knob).
+The regex matches the Unicode `u` flag so non-Latin scripts (Chinese ideographs, Japanese kanji/kana, Korean Hangul, Arabic) match correctly. **v3 expansion (Panel Q6-v3):** the floor is now 9 language families (en/es/fr/pt/de/zh-CN, +ja, +ko, +ar). Per-product i18n configuration may still extend with additional locales at product registration (Phase 3 implementation may expose a `productConfig.destructiveTermsExtra: string[]` knob).
 
 **Honest false-negative acknowledgment.** This list does NOT cover:
 - Custom CSS class names that don't match the convention (e.g. `bg-red-500` styling a delete button via Tailwind without any class-name signal).
 - Obfuscated text content (e.g. button text "Continue" with `onclick='deleteAccount()'`).
 - JavaScript-only event handlers attached programmatically.
-- Languages outside the 6-family floor (Japanese, Korean, Arabic, Hindi, Russian, etc. — Phase 3 dispatch may extend; per-product opt-in for additional languages).
+- Languages outside the 9-family floor (Hindi, Russian, Turkish, Vietnamese, Thai, etc. — Phase 3 dispatch may extend; per-product opt-in for additional languages).
 - Glyph-style buttons (e.g. trash-can icon with no aria-label).
 
 The hybrid gate's safety story is **defence in depth**, not perfection:
@@ -163,23 +172,34 @@ The hybrid gate's safety story is **defence in depth**, not perfection:
 - Invariant 8 (one-shot credentials) prevents the credential context from persisting beyond a single run.
 - The explicit allowlist (`data-crawl-safe="true"`) lets product authors mark known-safe buttons for unambiguous crawler interaction.
 
-**Test surface:**
+**Test surface (v3 — 9-language commitment):**
 - `<button class="btn-danger">Delete Account</button>` (English denylist match) → click BLOCKED.
+- `<button>Eliminar</button>` (Spanish denylist match) → click BLOCKED.
+- `<button>Supprimer</button>` (French denylist match) → click BLOCKED.
+- `<button>Excluir</button>` (Portuguese denylist match) → click BLOCKED.
 - `<button>Löschen</button>` (German denylist match, no class) → click BLOCKED.
-- `<button>删除</button>` (Chinese ideograph denylist match) → click BLOCKED.
+- `<button>删除</button>` (Chinese Simplified ideograph denylist match) → click BLOCKED.
+- `<button>削除</button>` (Japanese kanji denylist match, v3 expansion) → click BLOCKED.
+- `<button>삭제</button>` (Korean Hangul denylist match, v3 expansion) → click BLOCKED.
+- `<button>حذف</button>` (Arabic denylist match, v3 expansion) → click BLOCKED.
 - `<button data-crawl-safe="true" class="btn-danger">Delete</button>` (allowlist overrides denylist) → click ALLOWED.
 - `<form method="post"><button>Save</button></form>` (form-submit method gate) → click BLOCKED.
 - `<button>Continue</button>` (benign text; no class; no data-* markers) → click ALLOWED, and the false-negative caveat is documented per §10 acknowledged-residual.
 
+Each of the 9 language families MUST have ≥1 passing test in the Phase 3 implementation; partial coverage is non-conformant.
+
 ### Invariant 6 — Evidence artifact scrubbing.
 
-Before any screenshot / DOM dump / network-log artifact is persisted, the Conductor applies a content-scrubber that:
+**v3 revision (Q3-v3 Option B):** Phase 3 does NOT capture screenshots, so the screenshot-scrub clause that v2 added is no longer in scope. Phase 3 evidence artifacts are DOM dumps and network logs only.
+
+Before any DOM dump / network-log artifact is persisted, the Conductor applies a content-scrubber that:
 
 - Replaces any string matching the operator's submitted email or password with the `[REDACTED]` marker (literal string comparison + word-boundary regex).
 - Replaces common credential-leak patterns: `Welcome,? .+@.+\.(com|net|org|io|...)` → `Welcome, [REDACTED-EMAIL]`; password fields' `value` attribute in HTML dumps → `value="[REDACTED]"`.
-- For screenshots: skips the scrub (it's a PNG, not text) BUT the post-screenshot DOM dump is scrubbed. The screenshot itself is reviewed by the operator before sharing; this is a documented caveat (Phase 3 may add OCR-based scrubbing later).
 
-**Test surface:** screenshot a page that displays the canary email; assert the DOM dump alongside has `[REDACTED-EMAIL]`; document that the PNG itself is NOT scrubbed (operator review required).
+Screenshot capture is deferred to Phase 4 (separate dispatch, separate ratification gate, real test fixtures). Phase 3 ships with NO PNG retention, NO scrub pipeline, NO operator residual-risk-ack UI.
+
+**Test surface:** capture a DOM dump from a page that displays the canary email; assert it contains `[REDACTED-EMAIL]`. Assert that the Conductor does NOT call any screenshot API (`page.screenshot`, Browserless screenshot endpoint) during a Phase 3 authenticated run — a regression guard against accidentally reintroducing PNG retention before Phase 4.
 
 ### Invariant 7 — One-shot credential lifetime.
 
@@ -202,7 +222,7 @@ Credentials do NOT exist in:
 - Any Claude / OpenRouter API request payload.
 - Any AI prompt / response (the Claude prompt that produces the research brief sees ONLY the page content AFTER scrubbing, never the credentials).
 - Any git-committed file.
-- Any screenshot or DOM dump (per §6.2 + new §6a Screenshot Scrub Pipeline).
+- Any DOM dump or network log (per §6.2). **v3:** screenshots are not captured at all in Phase 3 (Option B), so they cannot leak credentials.
 
 **Test surface:** static grep on the entire src/ and api/ trees for the canary credential pattern post-run. Static grep on the audit-chain DB rows. Static grep on a sampled day's worth of Sentry events. **v2 addition:** assert no file at any path matching `tmp/playwright-state-*` exists at any point during or after the run.
 
@@ -242,9 +262,11 @@ NEVER logged: `loginEmail` value, `loginPassword` value, `storageStateContent`, 
 
 The audit-log entry uses GovernanceAuditLog's existing hash-chain (§14.2) so post-hoc tampering of the credentialed-run record is detectable.
 
-**Retention (v2 revision — Panel condition 5, G-Q7=GQ7-SHORT):** credentialed-run audit records get **30 days hot storage, NO cold storage** — divergent from the CA-10-E standard `365 days hot + 7 years cold` for ordinary GovernanceAuditLog entries. Rationale per Panel rationale + Slot 10 objection 30: even though credentials themselves are NEVER logged (Invariant 1 / T1), the CONTEXT of a credentialed run (URLs visited, timing, product structure, response shapes) is itself sensitive metadata that warrants minimised retention. The shorter window reduces the surface for an old credentialed-run record to surface in a future investigation, breach disclosure, or subpoena scope.
+**Retention (v3 revision — Panel Q7-v3):** credentialed-run audit records get **90 days hot storage + 1 year cold storage** — still divergent from (and shorter than) the CA-10-E standard `365 days hot + 7 years cold` for ordinary GovernanceAuditLog entries, but with a non-zero cold-store audit trail. Rationale: even though credentials themselves are NEVER logged (Invariant 1 / T1), the CONTEXT of a credentialed run (URLs visited, timing, product structure, response shapes) is itself sensitive metadata that warrants minimised retention. The 90+1yr window preserves the "shorter than standard" intent (one quarter on hot + one year on cold vs. one year on hot + seven years on cold) while keeping enough cold-store audit trail to support post-incident investigation and compliance review.
 
-The retention divergence is implemented by tagging credentialed-run audit entries with `retentionClass: 'auth_short'`; the GovernanceAuditLog cold-archival cron MUST exclude entries with this tag from cold migration and MUST purge them from hot storage after 30 days. Other audit categories (95/95 scores, clearance steps, panel decisions, customer signals, governance records) retain the canonical CA-10-E retention.
+**v2 → v3 retention delta:** v2 specified `30 days hot, 0 cold`. The v2 Panel surfaced concern that zero cold retention sacrificed audit-trail availability for marginal metadata-minimisation gain. v3 restores a cold-store audit trail (1 year) and triples the hot window (30 → 90 days) — both still materially below the CA-10-E standard.
+
+The retention divergence is implemented by tagging credentialed-run audit entries with `retentionClass: 'auth_short'`; the GovernanceAuditLog cold-archival cron MUST migrate entries with this tag to cold storage after 90 days (not exclude them from cold migration as v2 had it) and MUST purge them from cold storage after 1 year (i.e. 90 days hot + ~275 days cold = ~365 days total). Other audit categories (95/95 scores, clearance steps, panel decisions, customer signals, governance records) retain the canonical CA-10-E retention.
 
 ### Invariant 10 — Crash / abort safety.
 
@@ -392,173 +414,21 @@ The research-brief prompt (`api/research-url.js` lines 50-74) takes the multi-pa
 
 The prompt is sent over TLS to Anthropic / OpenRouter. The third-party provider's data retention policy (Anthropic: 30 days for abuse review by default) is a known limitation — credentials never reach the prompt, so this is acceptable per Invariant 1.
 
-### 6.2 Screenshot handling — see §6a
+### 6.2 Screenshot handling — DEFERRED TO PHASE 4
 
-**v2 revision** (Panel condition 2, G-Q3=REJECT-v1 + CEO Decision 1 Option B): v1's "operator-review-only, screenshots not scrubbed" approach is rejected. v2 builds a real PII/credential scrub pipeline before screenshots persist anywhere. See **§6a Screenshot Scrub Pipeline** below for the full contract.
+**v3 revision (Q3-v3 Option B, CEO-locked):** Screenshot capture is deferred to Phase 4. Phase 3 authenticated crawl captures text/DOM content only — NO screenshot capture, NO PNG retention, NO scrub pipeline in Phase 3. Phase 4 will be a dedicated dispatch reviewed against real test fixtures.
 
-Key v2 changes from v1:
-- Default for authenticated-session screenshot retention is **OFF**. The operator must explicitly enable it AND acknowledge residual risk before any authenticated screenshot is retained.
-- When enabled, EVERY authenticated-session screenshot passes the §6a scrub pipeline before ANY persistence (memory beyond the immediate scrub buffer, disk, log, prompt, external send).
-- Scrub failure → screenshot is DISCARDED entirely. Never persisted in unscrubbable state.
-- Scope is auth-screenshots only; unauthenticated public-page screenshots are not subject to scrub (no credential context to leak).
+The v2 9-stage scrub pipeline (formerly §6a) is removed in full. The v2 operator residual-risk acknowledgment surface, default-OFF retention flag, and Stage-7 re-OCR verification are all out of scope for Phase 3.
+
+**Phase 3 implementation MUST:**
+- NOT call `page.screenshot()`, Browserless `/screenshot` endpoint, or any equivalent PNG-capture API during an authenticated run.
+- A regression test asserts the screenshot API surface is untouched in Phase 3 authenticated-crawl code paths.
+
+**Why Option B over Option A (build the scrub pipeline):** the v2 9-stage pipeline added meaningful surface area (OCR engine, image library, re-OCR verification harness, operator residual-risk-ack UI, audit log subtype for scrub failures) for a feature whose default posture is OFF. Phase 3 ships faster and smaller without it; Phase 4 can add screenshot capture as a separate, fully-scoped dispatch with its own test fixtures and Panel ratification.
 
 ### 6.3 ProductSSOT writes
 
 Per CANONICAL §7.5, `delta_log_entry.issue.evidence` may contain customer-facing strings. PII-scrub per CA-10-E.2 already applies. This spec extends the scrub to also cover the operator's submitted credentials (Invariant 7) — `scrubCredentials` is applied to every `delta_log_entry` before write.
-
----
-
----
-
-## 6a. Screenshot Scrub Pipeline — concrete contract
-
-**v2 NEW SECTION** addressing Panel condition 2 per CEO Decision 1 Option B (build real PII scrub, not drop screenshots). Replaces v1's "operator-review-only" mitigation — that approach was Panel-rejected (G-Q3 = `PLURALITY_REJECT`, 4 of 9 Panel slots).
-
-### 6a.1 Scope of this pipeline
-
-Applies to **authenticated-session screenshots only.** Unauthenticated public-page screenshots bypass the scrub (no credential context to leak; standard image artefact handling per ACE spec §A).
-
-A screenshot is "authenticated-session" iff it is captured AFTER the Invariant 3 single-attempt login has succeeded AND BEFORE the Conductor's run end. Screenshots captured during the login form interaction (pre-submit) are also authenticated-session-eligible since the form may already contain credential values.
-
-### 6a.2 Default posture: retention OFF
-
-The default for authenticated-session screenshot retention is **OFF**. The Conductor MUST NOT persist any authenticated-session screenshot beyond the immediate scrub-pipeline buffer unless ALL of the following hold:
-
-1. The operator has explicitly enabled authenticated-screenshot retention via a per-run flag (e.g. `runOpts.retainAuthScreenshots: true` — Phase 3 dispatch defines the exact flag surface).
-2. The operator has acknowledged residual risk in writing — an acknowledgment record stored alongside the run that the operator has read and accepted §6a.7 below (the residual-risk disclosure).
-3. The target product is in a `dev` or `staging` environment per §13.1 environment role-gate. Authenticated-screenshot retention in `prd` requires admin role + explicit per-product override (the gate is admin-only; operator role cannot enable it for prd).
-
-If ANY of these three preconditions fails, the screenshot is discarded after the scrub pipeline produces its analytical signal (e.g. visible-element counts, layout dimensions) — but the redacted image itself is NOT persisted.
-
-### 6a.3 Pipeline stages
-
-For every authenticated-session screenshot, the pipeline runs in this order (each stage gates the next; failure at any stage discards the screenshot):
-
-```
-Stage 1 — Capture
-  Browserless / Playwright returns the PNG buffer in memory.
-  Buffer never written to disk in this stage.
-
-Stage 2 — DOM-state snapshot
-  Concurrent with screenshot capture, the Conductor reads:
-    a. The full HTML innerText of the page (for OCR cross-reference).
-    b. All input[type="password"] field values (always treated as
-       credential candidates regardless of OCR signal).
-    c. The operator's submitted loginEmail + loginPassword strings.
-    d. The current storageState cookies + localStorage keys (token-
-       shaped values).
-
-Stage 3 — OCR pass
-  Run an OCR engine (Tesseract.js or equivalent — engineering dispatch
-  picks) on the PNG buffer to extract recognised text + bounding boxes
-  per recognised token. Output: { text, bbox: {x,y,w,h} } pairs.
-
-Stage 4 — Pattern matching
-  For each OCR-extracted token AND each DOM-state credential candidate
-  from Stage 2, apply the patterns in §6a.4 below. Any token matching
-  any pattern is marked for redaction with its bounding box.
-
-Stage 5 — Cross-reference: operator's exact credentials
-  Literal-string-match the operator's loginEmail + loginPassword
-  strings against the OCR-extracted text. Any exact match (case-
-  insensitive, whitespace-trimmed) is marked for redaction even if it
-  does not also match a structural pattern.
-
-Stage 6 — Redaction
-  For every bounding box marked in stages 4-5, draw a solid black
-  rectangle on the PNG using a server-side image library (sharp /
-  jimp / equivalent). The redacted PNG retains all structural
-  evidence (layout, non-sensitive text, surface shapes) but the
-  sensitive regions are visually obliterated.
-
-Stage 7 — Verification
-  Re-OCR the redacted PNG. If any of the original sensitive tokens
-  (passwords, the operator's exact email, the operator's exact
-  password, recognisable token patterns from §6a.4) appear in the
-  re-OCR output, the redaction has FAILED. Discard the screenshot
-  entirely (Stage 8 short-circuit to DISCARD).
-
-Stage 8 — Persistence decision
-  If verification passes (no sensitive tokens detected post-redaction),
-  the redacted PNG is persisted per the §6.2 / per-run flag policy.
-  Otherwise the PNG is DISCARDED and an audit-log entry
-  `{ kind: 'screenshot_scrub_failed', runId, reason }` is written
-  (subject to §5 retention class 'auth_short').
-
-Stage 9 — Scrub pipeline failure handling
-  If any stage 1-7 throws an exception (OCR engine crash, image
-  library failure, OOM during processing), the screenshot is
-  DISCARDED. NEVER persisted in unscrubbable state. Audit-log
-  entry `{ kind: 'screenshot_scrub_pipeline_error', runId,
-  stage, error }` is written.
-```
-
-### 6a.4 Patterns matched in Stage 4
-
-The scrub pattern set is **conservative**: false-positives (extra-redacted regions) are acceptable; false-negatives (un-redacted sensitive tokens) are the failure mode the pipeline minimises.
-
-| Category | Pattern | Bounding-box behaviour |
-|---|---|---|
-| Password DOM values | Always treated as credential candidates — all `input[type="password"]` fields' `value` attributes are marked for redaction at their rendered bounding box | DOM-derived; bypass OCR uncertainty |
-| Operator's exact email | Literal-string-match against `loginEmail` from `InputArtifact.raw.description` | Redacted even if email is also non-sensitive elsewhere — false-positive accepted |
-| Operator's exact password | Literal-string-match against `loginPassword` | Same — false-positive accepted |
-| Email-address pattern (generic) | `/[^\s@]+@[^\s@]+\.[a-z]{2,}/i` | Catches user emails in "Welcome, alice@example.com" banners |
-| API key — OpenAI-style | `/\bsk-[A-Za-z0-9]{20,}\b/` | sk-abc123... format |
-| API key — Anthropic-style | `/\bsk-ant-[A-Za-z0-9-_]{20,}\b/` | |
-| API key — Stripe-style | `/\b(sk\|pk)_(live\|test)_[A-Za-z0-9]{16,}\b/` | |
-| API key — GitHub | `/\b(ghp\|gho\|ghu\|ghs\|ghr)_[A-Za-z0-9]{36,}\b/` | |
-| Generic bearer token | `/\b(Bearer\s+)?[A-Za-z0-9_-]{32,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{16,}\b/` | JWT-like 3-segment pattern |
-| Credit-card-shape (Luhn-validated) | `/\b(?:\d{4}[\s-]?){3}\d{4}\b/` plus Luhn checksum | False-positives acceptable; we redact even non-CC 16-digit strings |
-| Session cookie value visible in DOM | Cross-reference token-shaped values from storageState cookies against OCR output | Catches a cookie value leaked into page text |
-| US SSN pattern | `/\b\d{3}-\d{2}-\d{4}\b/` | |
-| Phone — E.164 | `/\+\d{7,15}\b/` | |
-| QR code / barcode regions | Detected via image-processing edge analysis | Whole QR region redacted (MFA QR codes leak TOTP seed) |
-
-Engineering dispatch may extend with additional patterns; the floor list above is the minimum for v2.
-
-### 6a.5 Redaction visual contract
-
-- Redaction rectangles are **solid black** (`#000000`), no transparency, drawn over the bounding box plus a 4px padding on each side.
-- The redacted PNG retains its original dimensions + EXIF orientation. No metadata-stripping is required at this stage (PNGs typically have no sensitive EXIF) but Phase 3 dispatch may add a defensive strip pass.
-- A small "REDACTED" badge is overlaid in the top-left corner of any image where ≥1 redaction occurred — operator-visible signal that the image has been scrubbed (not original).
-
-### 6a.6 What this pipeline does NOT catch (honest residual risk)
-
-Per CEO Decision 1: this pipeline is REAL but not PERFECT. Documented residuals:
-
-- **Custom CSS-styled credential displays.** A target product that renders a password using `letter-spacing: -100px` to overlap glyphs OR uses background-image to display a password string would defeat OCR. The DOM-state cross-reference (Stage 2b — reading `input[type="password"]` values) catches the canonical password-input case but not these exotic renderings.
-- **Obfuscated tokens.** A token displayed as `sk -• • • • • • -live-1234567890` with intentional spacing / unicode dots would not match the regex patterns. The literal-string-match against the operator's submitted credentials would still catch their specific value.
-- **OCR engine errors.** Tesseract.js misreads characters (`O` vs `0`, `l` vs `1`); a misread sensitive token might be both unmatched at scrub time AND illegible to a human reviewer. Stage 7 (re-OCR verification) catches the case where the original-OCR succeeded but the redaction failed; it does NOT catch the case where original-OCR misread the sensitive token and so didn't mark it for redaction in the first place.
-- **Tokens introduced via JS after screenshot.** If the page contains JavaScript that injects token-shaped content into the DOM AFTER the screenshot was captured but BEFORE Stage 2 reads the DOM state, the DOM-state snapshot has the token but the screenshot does not. Inverse case (screenshot has it; DOM doesn't yet) — the OCR pass catches it; the DOM-cross-reference doesn't.
-- **Non-text credentials.** A QR code embedding a TOTP secret IS detected by the QR-region redaction. A photograph of a sticky-note password is NOT detected (no OCR-text match, no DOM cross-reference). Phase 3+ may add CV-model-based content classification; v2 does not.
-- **Hosting-environment exposure.** Once a redacted PNG is persisted to Vercel Blob with a signed URL, the host's logs / CDN cache / network operator have observability of the request. The pipeline cannot defend against compromise of the hosting infrastructure itself.
-
-### 6a.7 Operator residual-risk acknowledgment
-
-Before authenticated-screenshot retention can be enabled on any run, the operator MUST be presented with this disclosure verbatim and acknowledge it in writing (the acknowledgment is stored alongside the run record with `kind: 'auth_screenshot_residual_risk_ack'`):
-
-> **AUTHENTICATED CRAWL SCREENSHOT RETENTION — RESIDUAL RISK NOTICE (v2)**
->
-> When you enable retention of screenshots captured during an authenticated crawl, FlowAI runs an automated scrub pipeline (§6a.3) over every screenshot before it persists anywhere. The scrub pipeline:
->
-> - Detects and redacts: password fields' DOM values, your exact submitted credentials, common API-key patterns (OpenAI/Anthropic/Stripe/GitHub), JWT-shaped tokens, credit-card-shaped 16-digit strings, US SSN patterns, phone numbers (E.164), QR/barcode regions, generic email-address patterns. Verifies redaction by re-OCRing the redacted image.
-> - Does NOT detect: tokens rendered with exotic CSS that defeats OCR; obfuscated tokens (e.g. `sk -• • • -• • •`); custom credential displays not matching the canonical password-input element; non-text credentials embedded in raster images (photo of a sticky note).
-> - DISCARDS the screenshot entirely if any stage of the scrub pipeline fails, rather than persisting in unscrubbable state.
->
-> By enabling authenticated-screenshot retention you accept that:
->
-> 1. The scrub pipeline reduces but does not eliminate the risk that a sensitive token visible in your authenticated session could appear in a retained screenshot.
-> 2. You are responsible for visually reviewing retained screenshots before sharing them outside your organisation. The "REDACTED" badge indicates the scrub ran, not that the screenshot is guaranteed free of all sensitive content.
-> 3. The retention window for authenticated-crawl artefacts is 30 days hot, no cold storage (per §5 retention class `auth_short`).
-> 4. By default this feature is OFF. You are explicitly opting in for this run.
->
-> Acknowledged by: `<operator userId>` at `<ISO-8601 timestamp>`. Run id: `<runId>`. Product: `<productId>`. Environment: `<dev|staging|prd>`.
-
-Phase 3 implementation MUST present this disclosure verbatim and gate the per-run flag on an explicit user action (e.g. a checkbox + "Acknowledge and enable" button). No silent default enable; no "remember my choice" override.
-
-### 6a.8 Honest panel-ratification question for the screenshot pipeline
-
-The scrub-then-redact + residual-risk-disclosure + default-OFF approach is the W5a / CEO-Decision-1 proposal. The alternative the Panel originally voted on (G-Q3=`PLURALITY_REJECT`, 4 of 9 slots) was "reject screenshots entirely until OCR scrub lands; ship Phase 3 without screenshots." The Panel's re-ratification question (now §12 G-Q3-v2) is whether the v2 scrub-then-redact pipeline + residual-risk-disclosure + default-OFF is acceptable, OR whether the residual-risk-disclosure requirement makes it operationally impractical and the Panel still prefers "no auth screenshots at all" in Phase 3.
 
 ---
 
@@ -649,119 +519,120 @@ This spec's invariants map 1:1 to that line:
 - **Credential vault integration.** No Doppler-stored arbitrary-third-party credentials, no 1Password integration, no AWS Secrets Manager. Operator-supplied per-run only.
 - **Long-lived session reuse.** Sessions are one-run-only by design. A future "remember this session for 1 hour to save Browserless costs" feature would require a separate spec + dispatch + Panel ratification.
 - **Authenticated POST / form-submit traversal.** Per Invariant 5 — Phase 3 authenticated crawl is READ-ONLY (clicks on links + safe buttons per hybrid gate, no form submissions except per the dev/staging XSS opt-in already in §6 line 104). Authenticated form-submit assessment is a future capability behind a separate dispatch + Panel ratification + per-product opt-in.
-- **CV-model-based screenshot content classification.** Per §6a.6, the v2 OCR + pattern-matching pipeline catches the canonical categories but not all exotic CSS-defeating renderings or photograph-of-credentials cases. A future enhancement could add a CV model trained on credential-display patterns; v2 ships with OCR + pattern matching only.
-- **i18n denylist coverage beyond 6 named language families.** v2 covers en/es/fr/pt/de/zh-CN per Panel condition 4. Additional locales (ja, ko, ar, hi, ru, etc.) are deferred to per-product opt-in via `productConfig.destructiveTermsExtra` (Phase 3 may wire the knob; the locale dictionaries are out of scope for v2).
+- **Screenshot capture during authenticated runs (v3 — Q3-v3 Option B).** Phase 3 ships with NO screenshot capture, NO PNG retention, NO scrub pipeline. The full screenshot-capture + scrub feature is deferred to Phase 4, a dedicated dispatch with its own real test fixtures, OCR engine integration, and Panel ratification gate.
+- **i18n denylist coverage beyond 9 named language families.** v3 covers en/es/fr/pt/de/zh-CN/ja/ko/ar (the floor; expansion from v2's 6 per Panel Q6-v3). Additional locales (hi, ru, tr, vi, th, etc.) are deferred to per-product opt-in via `productConfig.destructiveTermsExtra` (Phase 3 may wire the knob; the locale dictionaries beyond the 9-language floor are out of scope for v3).
 
 ---
 
 ## 11. Phase 3 acceptance criteria
 
-**v2 revision:** 8 v1 criteria retained (with the cleanup-sweep helper criterion removed — no orphan class to sweep per Invariant 2 v2) + 3 NEW criteria addressing the v2 Panel conditions. The Phase 3 implementation dispatch is acceptance-ready only when ALL of:
+**v3 revision:** removed v2's screenshot-scrub test suite criterion (former #5) and v2's operator residual-risk acknowledgment UI criterion (former #13) per Q3-v3 Option B (screenshots deferred to Phase 4). Updated destructive-denylist coverage to 9 languages (former #6) and retention class enforcement to 90 days hot + 1 year cold (former #7). The Phase 3 implementation dispatch is acceptance-ready only when ALL of:
 
 1. **All 10 invariants in §2 have a passing test in `tests/agents/agent-21-auth-traversal.test.js` (or split files).** Each invariant maps to ≥1 named test.
 2. **Canary-credential negative test** (Invariant 1 test surface) executes end-to-end against a stub login page; greps every persistent artifact for the canary; passes.
-3. **storageState memory-only verification** (NEW per Cond 3): a test asserts that `await context.storageState({ path })` is NEVER called with a `path` argument during the run; a filesystem watcher asserts no file matching `tmp/playwright-state-*` is created at any point.
-4. **MFA fail-loud verification** (NEW per Cond 1): a test mocks an MFA-challenge post-login response; asserts the CrawlReport returns `ok:false, authFailureReason: 'mfa_required'` AND that NO subsequent page fetch occurred after the MFA wall.
-5. **Screenshot scrub pipeline test suite** (NEW per Cond 2): tests cover (a) password-DOM redaction, (b) operator-credential literal-match redaction, (c) API-key pattern (OpenAI/Anthropic/Stripe/GitHub) redaction, (d) JWT-shape token redaction, (e) Luhn-validated CC redaction, (f) QR region redaction, (g) Stage-7 re-OCR verification failure → DISCARD, (h) Stage-9 pipeline exception → DISCARD with audit log entry. Each test uses synthetic PNG fixtures + a stubbed OCR engine.
-6. **Destructive-action denylist i18n coverage** (NEW per Cond 4): tests assert blocking on (a) English `btn-danger`, (b) Spanish `Eliminar`, (c) French `Supprimer`, (d) Portuguese `Excluir`, (e) German `Löschen`, (f) Chinese `删除`. Plus a test asserts the `data-crawl-safe="true"` allowlist overrides a denylist match.
-7. **Retention class enforcement** (NEW per Cond 5): a test asserts that audit entries tagged `retentionClass: 'auth_short'` are excluded from cold-archival cron AND purged from hot storage after 30 days. (Phase 3 dispatch wires the cron; this test may be a deferred integration test if Supabase cron is wired separately.)
-8. **Audit log conformance**: a smoke test asserts the credentialed-run audit-log entry shape matches §5.1 exactly and contains none of §5.2's NEVER-recorded fields. v2 addition: the entry MUST carry `retentionClass: 'auth_short'`.
-9. **Cross-origin refusal verification** (per supermajority-ratified G-Q1): a test asserts that a same-origin BFS frontier with one cross-origin link present does NOT navigate to the cross-origin target with the storageState attached. (G-Q1 supermajority-ratified by Panel; reaffirmed in v2.)
+3. **storageState memory-only verification** (Cond Q4-v3 MUST): a test asserts that `await context.storageState({ path })` is NEVER called with a `path` argument during the run; a filesystem watcher asserts no file matching `tmp/playwright-state-*` is created at any point. No encrypted-fs-fallback test is required since no such path is conformant per Invariant 2 MUST.
+4. **MFA fail-loud verification** (Cond Q2-v2 carried forward): a test mocks an MFA-challenge post-login response; asserts the CrawlReport returns `ok:false, authFailureReason: 'mfa_required'` AND that NO subsequent page fetch occurred after the MFA wall.
+5. **No-screenshot-capture verification** (NEW per Q3-v3 Option B): a regression test asserts that the Phase 3 authenticated-crawl code path does NOT call `page.screenshot()`, Browserless `/screenshot` endpoint, or any equivalent PNG-capture API at any point during an authenticated run. Reintroduction of screenshot capture in Phase 3 is non-conformant; Phase 4 will re-enable it under its own dispatch.
+6. **Destructive-action denylist i18n coverage — 9 languages** (Cond Q6-v3): tests assert blocking on each of the 9 floor language families: (a) English `btn-danger`, (b) Spanish `Eliminar`, (c) French `Supprimer`, (d) Portuguese `Excluir`, (e) German `Löschen`, (f) Chinese Simplified `删除`, (g) Japanese `削除`, (h) Korean `삭제`, (i) Arabic `حذف`. Plus a test asserts the `data-crawl-safe="true"` allowlist overrides a denylist match. Partial coverage (less than 9) is non-conformant.
+7. **Retention class enforcement — 90 days hot + 1 year cold** (Cond Q7-v3): a test asserts that audit entries tagged `retentionClass: 'auth_short'` are MIGRATED to cold storage after 90 days hot AND PURGED from cold storage after 1 year. (Phase 3 dispatch wires the cron; this test may be a deferred integration test if Supabase cron is wired separately.)
+8. **Audit log conformance**: a smoke test asserts the credentialed-run audit-log entry shape matches §5.1 exactly and contains none of §5.2's NEVER-recorded fields. The entry MUST carry `retentionClass: 'auth_short'`.
+9. **Cross-origin refusal verification** (per supermajority-ratified G-Q1): a test asserts that a same-origin BFS frontier with one cross-origin link present does NOT navigate to the cross-origin target with the storageState attached. (G-Q1 supermajority-ratified by Panel; carried forward unchanged through v2 and v3.)
 10. **No regressions** in the full vitest suite.
 11. **W2 boundary respected**: zero W2-locked files staged (computeMonitorClearance, formatMonitorClearanceFooter, monitor-clearance tests, per-layer scoring prompt, crawler truncation fix).
-12. **Capability boundary documented**: the §8 capability boundary block in `docs/specs/agent-blueprints/AGENT_21_AggressiveCrawlConductor.md` (Phase 3 will add this blueprint, mirroring AGENT_03_SelfRenewal.md) names what Phase 3 CAN and CANNOT do — no overclaim.
-13. **Operator residual-risk acknowledgment UI present** (NEW per Cond 2): the UI for enabling authenticated-screenshot retention presents the §6a.7 disclosure verbatim and gates the per-run flag on explicit checkbox + button action. No silent default-enable; no "remember my choice".
-14. **Phase 3 dispatch gate**: HARD GATE 3 in the Master Phased Build sequence — Phase 4 (validate scoring on multi-page input) cannot start until CEO confirms Phase 3 passed.
+12. **Capability boundary documented**: the §8 capability boundary block in `docs/specs/agent-blueprints/AGENT_21_AggressiveCrawlConductor.md` (Phase 3 will add this blueprint, mirroring AGENT_03_SelfRenewal.md) names what Phase 3 CAN and CANNOT do — no overclaim. The blueprint MUST explicitly disclaim screenshot capture (deferred to Phase 4) so operators cannot mistakenly believe authenticated screenshots are available.
+13. **Phase 3 dispatch gate**: HARD GATE 3 in the Master Phased Build sequence — Phase 4 (validate scoring on multi-page input) cannot start until CEO confirms Phase 3 passed.
 
 ---
 
-## 12. Open Questions for W6 adversarial Panel (Phase 2 v2 → HARD GATE 2 re-ratification)
+## 12. Open Questions for W6 adversarial Panel (Phase 2 v3 → HARD GATE 2 re-ratification)
 
-**v2 question set:** G-Q1 and G-Q5 were SUPERMAJORITY-ratified in the v1 Panel (commit `556a751`); the v2 spec position on those two is unchanged from v1 and the questions are retained verbatim for record-keeping. G-Q2, G-Q3, G-Q4, G-Q6, G-Q7 were the 5 NOT_RATIFIED questions; v2 has changed positions on all five per CEO disposition + Slot-7 hybrid rationale. The questions below ask the Panel to re-ratify the v2 positions.
+**v3 question set:** the v2 Panel re-ratification carried G-Q2-v2 (MFA fail-loud) at 8/9 supermajority. G-Q1 and G-Q5 remain SUPERMAJORITY-ratified from v1 and unchanged. The remaining v2 questions — G-Q3-v2 (screenshots), G-Q4-v2 (storageState), G-Q6-v2 (i18n denylist), G-Q7-v2 (retention) — surfaced 4 targeted concerns; v3 takes a CEO-locked position on each. The questions below ask the Panel to re-ratify the v3 positions. **No re-vote needed on G-Q1, G-Q2-v2, G-Q5** — those are RATIFIED and carried.
 
-### G-Q1 — Cross-origin handling (RATIFIED IN V1; UNCHANGED IN V2)
+### G-Q1 — Cross-origin handling (RATIFIED IN V1; CARRIED THROUGH V2 AND V3)
 
-v1 Panel verdict: `SUPERMAJORITY_GQ1-REFUSE` (8 of 9). v2 keeps this position verbatim — refuse cross-origin entirely. No re-vote needed; included here for completeness.
+v1 Panel verdict: `SUPERMAJORITY_GQ1-REFUSE` (8 of 9). v3 keeps this position verbatim — refuse cross-origin entirely. **No re-vote needed.**
 
-### G-Q2-v2 — MFA handling (revised)
+### G-Q2-v2 — MFA handling (RATIFIED IN V2; CARRIED THROUGH V3)
 
-v1 Panel verdict: `PLURALITY_GQ2-LOUD` (5 of 9, below 7/10 quorum). CEO disposition: **adopt fail-loud per the plurality**. v2 Invariant 3 + §8.1 implement fail-loud: MFA challenge → return `ok:false, authFailureReason: 'mfa_required'`, STOP, do NOT continue unauthenticated. The "continue unauthenticated" v1 path is removed.
+v2 Panel verdict: `SUPERMAJORITY_GQ2-LOUD` (8 of 9). v3 keeps this position verbatim — MFA challenge → return `ok:false, authFailureReason: 'mfa_required'`, STOP, do NOT continue unauthenticated. **No re-vote needed.**
 
-Panel re-ratification question — is the v2 fail-loud position acceptable?
+### G-Q3-v3 — Screenshot capture in Phase 3 (revised; Option B CEO-locked)
 
-- (a) Ratify v2 fail-loud (W5a position per CEO disposition + plurality intent)
-- (b) Reject v2 fail-loud; revert to v1 continue-unauthenticated (the previously rejected position)
-- (c) Configurable per run — operator picks fail-loud vs continue-unauth at launch
+v2 position: build a 9-stage PII/credential scrub pipeline (§6a) + default-OFF retention + explicit residual-risk operator acknowledgment + DISCARD-on-scrub-failure. v2 Panel re-ratification surfaced concern about pipeline complexity vs. default-OFF posture (carrying meaningful surface area — OCR engine, image library, re-OCR verification, operator residual-risk-ack UI, audit log subtype — for a feature whose default posture means most operators never trigger it).
+
+**v3 CEO-locked position (Option B):** DROP screenshots from Phase 3 entirely. Remove §6a in full. Phase 3 captures text/DOM content only. Screenshot capture is deferred to Phase 4 — a dedicated dispatch reviewed against real test fixtures and Panel-ratified separately.
+
+Panel re-ratification question — is the v3 Option B (defer screenshots to Phase 4) acceptable?
+
+- (a) Ratify v3 Option B as proposed — Phase 3 ships with NO screenshot capture, NO scrub pipeline, NO operator residual-risk-ack UI; Phase 4 re-introduces screenshots with its own scrub design and ratification gate
+- (b) Reject v3; reinstate v2 §6a 9-stage scrub pipeline + default-OFF retention + operator residual-risk acknowledgment
+- (c) Different — specify (e.g. screenshots permitted in dev/staging only, no scrub required, no retention; or a third option)
+- (INSUFFICIENT_INFORMATION)
+
+### G-Q4-v3 — storageState memory-only as MUST (revised)
+
+v2 position: storageState is memory-only (Invariant 2) with an option (c) in the Panel question allowing an opt-in encrypted-fs fallback "if memory pressure becomes a Phase 3 concern." v2 Panel re-ratification surfaced concern that the hedge language ("should be memory-only", "may add encrypted fs as an opt-in") left a non-conformant escape path.
+
+**v3 CEO-locked position:** memory-only is **MUST**, not SHOULD. No encrypted-fs fallback is codified in this spec. No "if memory pressure becomes a concern" carve-out. A Phase 3 implementation that ships a filesystem-fallback path is non-conformant with this spec regardless of operational pressure. The honest heap-dump residual (a hostile process memory dump could in principle observe the storageState object) is retained as a documented hosting-environment trust assumption — but it is a limitation, not a fallback hedge.
+
+Panel re-ratification question — is the v3 memory-only-as-MUST position acceptable?
+
+- (a) Ratify v3 MUST as proposed (no fallback codified in spec; non-conformant to ship encrypted-fs fallback)
+- (b) Reject v3 MUST; restore v2 hedge language ("memory-only with optional encrypted-fs fallback if memory pressure becomes a concern")
+- (c) Ratify MUST but require Phase 3 to ship a memory-pressure monitor with hard failure semantics (run fails loud rather than silently spilling to disk)
 - (d) Different — specify
 - (INSUFFICIENT_INFORMATION)
 
-### G-Q3-v2 — Screenshot scrub pipeline (revised + new §6a)
+### G-Q5 — Same-eTLD+1 subdomains (RATIFIED IN V1; CARRIED THROUGH V2 AND V3)
 
-v1 Panel verdict: `PLURALITY_REJECT` (4 of 9). CEO Decision 1: **build real PII scrub pipeline (Option B), not drop**. v2 §6a writes a 9-stage scrub-then-redact-then-verify pipeline with default-OFF retention, explicit residual-risk operator acknowledgment, and DISCARD-on-scrub-failure semantics. Detection patterns cover: password DOM values, operator's exact submitted credentials (literal match), API-key patterns (OpenAI/Anthropic/Stripe/GitHub), JWT-shape tokens, Luhn-validated CC, US SSN, phone E.164, QR/barcode regions, generic email addresses.
+v1 Panel verdict: `SUPERMAJORITY_GQ5-STRICT` (8 of 9). v3 keeps this position verbatim — strict same-origin by default; admin-role flag to opt in to same-eTLD-1. **No re-vote needed.**
 
-Panel re-ratification question — is the v2 scrub-then-redact + residual-risk-disclosure + default-OFF approach acceptable, or does the residual-risk-disclosure requirement make it operationally impractical?
+### G-Q6-v3 — Destructive-action gate: i18n denylist floor 6 → 9 languages (revised)
 
-- (a) Ratify v2 §6a as proposed (scrub-then-redact, default-OFF, operator acks residual risk per §6a.7)
-- (b) Reject v2; revert to v1 GQ3-NO-PNG ship-without-screenshots position (Phase 3 has no screenshot retention at all)
-- (c) Ratify scrub pipeline but harden the default — default-OFF + admin-role-only enable (operator cannot self-enable even in dev/staging)
-- (d) Different — specify (e.g. additional patterns required; specific residual-risk language change)
-- (INSUFFICIENT_INFORMATION)
+v2 position: hybrid allowlist + i18n denylist with 6 named language families (en/es/fr/pt/de/zh-CN). v2 Panel re-ratification surfaced concern that the 6-language floor was incomplete coverage for a globally-deployed crawl agent — the largest non-Latin language populations (Japanese, Korean, Arabic) were not in the floor.
 
-### G-Q4-v2 — storageState memory-only (revised)
+**v3 CEO-locked position:** extend the i18n destructive-regex floor from 6 to 9 language families. The new floor: en, es, fr, pt, de, zh-CN, **+ja, +ko, +ar**. Each of the 9 families MUST have ≥1 passing test in Phase 3; partial coverage is non-conformant. The hybrid mechanism (explicit `data-crawl-safe="true"` allowlist + form-submit denylist + i18n destructive denylist) is unchanged from v2 — only the language floor expands.
 
-v1 Panel verdict: `PLURALITY_GQ4-MEMORY` (4 of 9, below 7/10 quorum). v2 Invariant 2: storageState is memory-only; the v1 `tmp/playwright-state-<runId>/` filesystem path is eliminated entirely. The cleanup-verification race condition that 4 Panel slots flagged is eliminated by elimination. Playwright API supports `await context.storageState()` (in-memory return) which v2 mandates exclusively over `await context.storageState({ path })`.
+Panel re-ratification question — is the v3 9-language floor acceptable?
 
-Panel re-ratification question — is the v2 memory-only position acceptable?
-
-- (a) Ratify v2 memory-only (eliminates race; eliminates fs surface; W5a position per CEO disposition + plurality intent)
-- (b) Reject v2 memory-only; reinstate v1 fs path with cleanup-verification fix
-- (c) Accept memory-only as primary but allow opt-in encrypted fs fallback if memory pressure becomes a Phase 3 concern (separate per-run flag, admin-role-only)
+- (a) Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment
+- (b) Reject v3; restore v2's 6-language floor (per-product opt-in handles ja/ko/ar)
+- (c) Require additional languages in v3 floor before Phase 3 ships — specify (e.g. hi, ru, vi must also be in floor)
 - (d) Different — specify
 - (INSUFFICIENT_INFORMATION)
 
-### G-Q5 — Same-eTLD+1 subdomains (RATIFIED IN V1; UNCHANGED IN V2)
+### G-Q7-v3 — Audit retention: 90 days hot + 1 year cold (revised)
 
-v1 Panel verdict: `SUPERMAJORITY_GQ5-STRICT` (8 of 9). v2 keeps this position verbatim — strict same-origin by default; admin-role flag to opt in to same-eTLD-1. No re-vote needed; included for completeness.
+v2 position: 30 days hot + 0 days cold for credentialed-run audit entries (`retentionClass: 'auth_short'`). v2 Panel re-ratification (carried Slot 10's option (c) from v2): the 30/0 split sacrificed audit-trail availability for marginal metadata-minimisation gain — particularly the cold-store audit trail needed for post-incident investigation and compliance review.
 
-### G-Q6-v2 — Destructive-action gate: hybrid allowlist + i18n denylist (revised)
+**v3 CEO-locked position:** 90 days hot + 1 year cold. Triples the hot window (30 → 90 days) and restores a non-zero cold-store audit trail (1 year). Still materially shorter than the CA-10-E standard (365 hot + 7yr cold) — preserving the "shorter than standard for credentialed-run metadata" intent — but with enough cold-store retention to support post-incident investigation. The retention class tag `retentionClass: 'auth_short'` is unchanged; the cron behaviour is updated (migrate to cold after 90 days; purge from cold after 1 year).
 
-v1 Panel verdict: `PLURALITY_REJECT` (4 of 9). Slot 7's rationale: "All options have critical flaws... A hybrid approach with both safe-action attributes AND comprehensive denylists is needed." v2 Invariant 5 adopts the Slot-7 hybrid: explicit `data-crawl-safe="true"` allowlist (highest priority) + form-submit denylist (always-on guard) + i18n-aware destructive denylist (English, Spanish, French, Portuguese, German, Chinese Simplified). False-negative risk acknowledged explicitly with Invariant 4 (same-origin) + Invariant 8 (one-shot credentials) as backstops.
+Panel re-ratification question — is the v3 90-day-hot + 1-year-cold retention acceptable?
 
-Panel re-ratification question — is the v2 hybrid + 6-language i18n position acceptable?
-
-- (a) Ratify v2 hybrid + 6 languages as proposed (W5a position per Slot-7 rationale)
-- (b) Ratify hybrid but require additional language families in v2 floor — specify which (e.g. ja, ko, ar must also be in floor before Phase 3 ships)
-- (c) Ratify hybrid but require allowlist-only path (no denylist; only `data-crawl-safe="true"` is clickable — accepts dramatic loss of click-everything coverage in exchange for zero false negatives)
-- (d) Different — specify
-- (INSUFFICIENT_INFORMATION)
-
-### G-Q7-v2 — Audit retention for credentialed runs (revised)
-
-v1 Panel verdict: `PLURALITY_GQ7-SHORT` (5 of 9, below 7/10 quorum). CEO disposition: **adopt short retention per the plurality**. v2 §5 (audit-log surface) implements `retentionClass: 'auth_short'` → 30 days hot, NO cold storage. Rationale per Slot-10 objection 30: even though credentials themselves are never logged, the CONTEXT of a credentialed run (URLs visited, timing, product structure) is sensitive metadata that warrants shorter retention.
-
-Panel re-ratification question — is the v2 short-retention position acceptable?
-
-- (a) Ratify v2 short-retention as proposed (30 hot, 0 cold)
-- (b) Reject v2 short-retention; revert to v1 standard retention (365 hot + 7yr cold)
-- (c) Compromise — shorter cold (e.g. 90 days hot + 1yr cold) rather than no cold at all
-- (d) Different — specify
+- (a) Ratify v3 retention as proposed (90 hot + 1yr cold)
+- (b) Reject v3; restore v2 short retention (30 hot + 0 cold)
+- (c) Reject v3; restore CA-10-E canonical retention (365 hot + 7yr cold) for credentialed-run entries too
+- (d) Different — specify (e.g. 90 hot + shorter cold than 1yr; or 365 hot + 1yr cold; or other hybrid)
 - (INSUFFICIENT_INFORMATION)
 
 ---
 
-## 13. Engineering scope estimate (Phase 3, post-ratification)
+## 13. Engineering scope estimate (Phase 3, post-ratification — v3)
 
 | Surface | Effort (W-days) |
 |---|---:|
-| Conductor extension: login pass + storageState handling + same-origin gate | 2 |
-| Cleanup sweep helper (`scripts/cleanup-orphaned-storage-state.mjs`) + scheduled trigger | 1 |
+| Conductor extension: login pass + memory-only storageState handling + same-origin gate | 2 |
 | `scrubCredentials` extension for evidence artifacts (DOM dumps, network logs, ProductSSOT delta entries) | 1 |
-| Audit-log integration for credentialed runs (§5.1 entry shape) | 0.5 |
-| All 10 invariants → test surface (canary-credential negative test, cleanup verification, same-origin enforcement, destructive-denylist coverage, etc.) | 2 |
-| Documentation: AGENT_21_AggressiveCrawlConductor blueprint + capability boundary §8 | 0.5 |
-| **TOTAL** | **~7 W-days** |
+| Audit-log integration for credentialed runs (§5.1 entry shape) + retention class wire-in (90 hot + 1yr cold cron behaviour) | 0.75 |
+| All 10 invariants → test surface (canary-credential negative test, memory-only verification, same-origin enforcement, 9-language destructive-denylist coverage, no-screenshot-capture regression test, etc.) | 2 |
+| Documentation: AGENT_21_AggressiveCrawlConductor blueprint + capability boundary §8 (explicit screenshot-deferred-to-Phase-4 disclaimer) | 0.5 |
+| **TOTAL** | **~6.25 W-days** |
 
-Depends on: Phase 2 ratification by W6 (this spec); Phase 1 Agent #21 already shipped at commit `83fb20a`; W2 boundary respected throughout.
+**v3 scope delta vs. v2 estimate:** the v2 screenshot scrub pipeline (OCR engine integration, image library, re-OCR verification harness, operator residual-risk-ack UI, audit log subtype) is removed → ~2 W-days saved. The cleanup-sweep helper row from earlier estimates was already removed in v2 (memory-only storageState). The 9-language denylist coverage adds modest test surface (~0.25 W-day vs. 6-language). Net: Phase 3 v3 is the smallest Phase 3 estimate to date.
+
+**Phase 4 (deferred, separate dispatch):** screenshot capture + scrub pipeline. Estimate: ~3 W-days for the engine work + ~1 W-day for operator residual-risk-ack UI + ~1 W-day for the test fixture suite. Total Phase 4 ~5 W-days, fully scoped in its own dispatch with its own Panel ratification gate.
+
+Depends on: Phase 2 v3 ratification by W6 (this spec); Phase 1 Agent #21 already shipped at commit `83fb20a`; W2 boundary respected throughout.
 
 ---
 
@@ -781,4 +652,4 @@ Depends on: Phase 2 ratification by W6 (this spec); Phase 1 Agent #21 already sh
 
 ---
 
-*End of Authenticated Crawl Traversal Security Spec v2. PENDING W6 adversarial Panel **re-ratification** per HARD GATE 2 of the Master Phased Build (Panel ruling `30e5edb`). v1 NOT_RATIFIED at commit `556a751` with 5 conditions; v2 addresses all 5 per CEO disposition + Slot-7 hybrid rationale.*
+*End of Authenticated Crawl Traversal Security Spec v3. PENDING W6 adversarial Panel **re-ratification** per HARD GATE 2 of the Master Phased Build (Panel ruling `30e5edb`). v1 NOT_RATIFIED at commit `556a751` with 5 conditions; v2 (commit `b782e2f`) addressed all 5 per CEO disposition + Slot-7 hybrid rationale; v3 (this commit) addresses the 4 targeted concerns from the v2 Panel re-ratification per CEO-locked decisions on Q3 / Q4 / Q6 / Q7. G-Q1, G-Q2-v2, and G-Q5 carry forward RATIFIED — no re-vote required on those three.*
