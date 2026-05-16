@@ -546,6 +546,26 @@ async function runPanelReviewer({ entry, system, user, timeoutMs }) {
       `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
     );
   }
+  // Slot 1 envelope-fail telemetry — OpenAI GPT-5. Added 2026-05-16
+  // (W5b dispatch #3, GPT-5 Demote). gpt-5 logged its 7th consecutive
+  // JSON-envelope-flake failure on the W6 CA-12 v2 ratification
+  // consultation (triggering report: commit 01bed9d). Past the 6-flake
+  // demotion threshold established by Gemini + Kimi K2.6, so gpt-5
+  // has been DEMOTED from Slot 1 primary to Slot 1 backup (see
+  // scripts/panel/slot-config.mjs Slot 1 block — note also the flagged
+  // structural Slot 1 == Slot 2 mirror that this swap creates). This
+  // telemetry line fires when gpt-5 is invoked as a backup and flakes
+  // again; same pattern as the slot-3-gemini-flake + slot-9-envelope-fail
+  // lines above so failure shape stays identifiable in future runs.
+  if (!usable && entry.model === 'openai/gpt-5') {
+    const preview = (content || '').slice(0, 160).replace(/\s+/g, ' ');
+    process.stderr.write(
+      `[peer-review] slot-1-gpt5-flake model=openai/gpt-5 ` +
+      `(demoted-to-backup 2026-05-16 after 7 envelope flakes; ` +
+      `triggering report commit 01bed9d; Kimi/gemini treatment applied) ` +
+      `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
+    );
+  }
 
   return {
     model: label,

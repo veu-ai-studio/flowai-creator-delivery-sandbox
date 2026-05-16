@@ -48,13 +48,57 @@
 
 /** @type {ReadonlyArray<SlotEntry>} */
 export const SLOT_CONFIG = Object.freeze([
-  // Slot 1 — US frontier reasoning
+  // Slot 1 — frontier reasoning (Anthropic, post-GPT-5-demote).
+  // PROMOTION 2026-05-16 (W5b dispatch #3, GPT-5 Demote):
+  // openai/gpt-5 DEMOTED from primary to backup after 7 consecutive
+  // JSON-envelope-flake failures (triggering report: CA-12 v2
+  // ratification, commit 01bed9d). Same treatment Gemini received on
+  // 2026-05-16 (commit 8de0d2f) and Kimi K2.6 received on 2026-05-15
+  // (commit 25e11c2). claude-opus-4 PROMOTED to primary — already proven
+  // on this panel as Slot 1's prior backup AND Slot 2's primary AND
+  // Slot 6's backup (multiple successful rescues on record).
+  //
+  // ⚠ STRUCTURAL ISSUE FLAGGED FOR FOLLOW-UP DISPATCH ⚠
+  //   This swap mirrors Slot 2 — both Slot 1 and Slot 2 now have:
+  //     primary: anthropic/claude-opus-4
+  //     backup:  openai/gpt-5
+  //   That is a SAME-MODEL duplicate at the primary level (not just
+  //   same-family). The two slots will produce literally correlated
+  //   responses on every consultation — a transient claude-opus-4 issue
+  //   (rate-limit, timeout, envelope-flake, account credit cap) will
+  //   take BOTH slots out simultaneously, costing 2 of the 7-needed-
+  //   for-quorum reviewers in one event. This is structurally worse than
+  //   the meta-llama family duplicate from dispatch #2 (where the two
+  //   Meta models are different generations + serving paths).
+  //
+  //   The dispatch explicitly named claude-opus-4 as the promotion
+  //   target, anticipated a family duplicate ("Document the family
+  //   duplicate if any"), and is recorded as executed literally. The
+  //   honest reasoning for accepting this is the same as dispatch #2:
+  //   no non-Anthropic allowlist alternative preserves both ≥64K
+  //   context AND reliability — moonshotai/kimi-k2.6 (chronic flake,
+  //   just demoted from Slot 9), qwen-2.5-72b-instruct (32K context
+  //   cap, just demoted from Slot 6), and google/gemini-2.5-pro (just
+  //   demoted from Slot 3 in this same session) are all empirically
+  //   worse than accepting the duplicate.
+  //
+  //   RECOMMEND follow-up dispatch to break the Slot 1 == Slot 2 mirror
+  //   by changing Slot 2 to a non-claude-opus-4 primary. See README
+  //   note in auditDiversity() output `modelPrimaryDuplicates` field —
+  //   this field exists specifically so future-W5b cannot lose track
+  //   of this issue.
+  //
+  // KNOWN AUDIT EXCEPTION — anthropic duplicate:
+  //   Slot 2 primary is anthropic/claude-opus-4; Slot 1 primary is now
+  //   also anthropic/claude-opus-4. The anthropic family is added to
+  //   DOCUMENTED_FAMILY_DUPLICATES with the rationale above. auditPass
+  //   remains true under the post-2026-05-16 contract.
   Object.freeze({
     provider: 'openrouter',
-    model: 'openai/gpt-5',
+    model: 'anthropic/claude-opus-4',
     region: 'US',
-    role: 'frontier reasoning',
-    backup: Object.freeze({ provider: 'openrouter', model: 'anthropic/claude-opus-4' }),
+    role: 'frontier reasoning (post-GPT-5-demote 2026-05-16)',
+    backup: Object.freeze({ provider: 'openrouter', model: 'openai/gpt-5' }),
   }),
   // Slot 2 — US reasoning (different family from slot 1)
   Object.freeze({
@@ -228,40 +272,96 @@ export const DOCUMENTED_FAMILY_DUPLICATES = Object.freeze({
     'Slot 9 (llama-4-maverick). Different generations, different serving ' +
     'paths on OpenRouter, independent in practice. Documented per W5b ' +
     'dispatch #2 (2026-05-16, commit 556a751 triggering evidence).',
+  'anthropic':
+    'Slot 1 (claude-opus-4, post-GPT-5-demote 2026-05-16) + Slot 2 ' +
+    '(claude-opus-4). SAME-MODEL duplicate — both slots run the identical ' +
+    'model, NOT just same family. Structurally worse than the meta-llama ' +
+    'duplicate (those are different models in the same family). Surfaced ' +
+    'in modelPrimaryDuplicates below for visibility. Documented per W5b ' +
+    'dispatch #3 (2026-05-16, commit 01bed9d triggering evidence). ' +
+    'RECOMMEND follow-up dispatch to change Slot 2 primary to a different ' +
+    'model and break the Slot 1 == Slot 2 mirror.',
+});
+
+/** Specific MODEL ids allowed to appear more than once in the primary
+ *  roster, with rationale. Stricter than family duplicates: every entry
+ *  here means TWO+ slots run the LITERAL SAME MODEL and will produce
+ *  fully correlated responses. Use only when reliability evidence
+ *  outweighs the fault-diversity loss AND the dispatch explicitly
+ *  authorizes / anticipates the duplicate. */
+export const DOCUMENTED_MODEL_DUPLICATES = Object.freeze({
+  'anthropic/claude-opus-4':
+    'Slot 1 + Slot 2 both primary post-GPT-5-demote 2026-05-16. The ' +
+    'dispatch named claude-opus-4 as the explicit promotion target and ' +
+    'anticipated the duplicate ("Document the family duplicate if any"). ' +
+    'The honest tradeoff is reliability of a proven rescue model over ' +
+    'fault diversity (no non-Anthropic allowlist alternative meets the ' +
+    'reliability + context bar after the Kimi/Gemini/Qwen demotions). ' +
+    'FLAGGED FOR FOLLOW-UP: Slot 2 should be re-pointed to a different ' +
+    'primary to break the mirror — see Slot 1 block comment.',
 });
 
 /** Provider-count audit. Useful for self-tests + the W6 brief.
  *  Returns {
- *    providerCounts: { openai: 1, anthropic: 1, 'meta-llama': 2, ... },
+ *    providerCounts: { openai: 1, anthropic: 2, 'meta-llama': 2, ... },
  *    maxPerProvider: 2,                  // raw maximum across families
  *    slots: 10,
- *    documentedDuplicates: { 'meta-llama': '<rationale>' },  // see export above
- *    undocumentedDuplicates: [],         // families with count >1 NOT in DOCUMENTED_FAMILY_DUPLICATES
- *    auditPass: true,                    // true iff every family count >1 is documented
+ *    documentedDuplicates: { 'meta-llama': '<rationale>', ... },
+ *    undocumentedDuplicates: [],         // families with count >1 NOT documented
+ *    modelPrimaryDuplicates: [           // specific MODEL ids appearing >1× as primary
+ *      { model: 'anthropic/claude-opus-4', slots: [1, 2], documented: true },
+ *      ...
+ *    ],
+ *    undocumentedModelDuplicates: [],    // model-level duplicates NOT documented
+ *    auditPass: true,                    // true iff every duplicate (family + model) is documented
  *  }
  *  Callers that previously relied on `maxPerProvider <= 1` should switch
  *  to `auditPass === true` (the post-2026-05-16 contract).
+ *
+ *  Note: modelPrimaryDuplicates is STRICTLY STRONGER than family duplicates.
+ *  When two slots run the literal same model, they fail in 100% correlation
+ *  (rate limits, quota caps, account credit, model-specific timeouts). Even
+ *  if documented, every entry here is a fault-diversity loss worth periodic
+ *  review.
  */
 export function auditDiversity() {
-  const counts = {};
-  for (const s of SLOT_CONFIG) {
+  const familyCounts = {};
+  const modelToSlots = {};
+  for (const [i, s] of SLOT_CONFIG.entries()) {
     const family = s.model.split('/')[0];
-    counts[family] = (counts[family] || 0) + 1;
+    familyCounts[family] = (familyCounts[family] || 0) + 1;
+    if (!modelToSlots[s.model]) modelToSlots[s.model] = [];
+    modelToSlots[s.model].push(i + 1);
   }
-  const maxPerProvider = Math.max(...Object.values(counts));
+  const maxPerProvider = Math.max(...Object.values(familyCounts));
   const undocumentedDuplicates = [];
-  for (const [family, count] of Object.entries(counts)) {
+  for (const [family, count] of Object.entries(familyCounts)) {
     if (count > 1 && !DOCUMENTED_FAMILY_DUPLICATES[family]) {
       undocumentedDuplicates.push({ family, count });
     }
   }
+  const modelPrimaryDuplicates = [];
+  const undocumentedModelDuplicates = [];
+  for (const [model, slots] of Object.entries(modelToSlots)) {
+    if (slots.length > 1) {
+      const documented = Boolean(DOCUMENTED_MODEL_DUPLICATES[model]);
+      modelPrimaryDuplicates.push({ model, slots, documented });
+      if (!documented) undocumentedModelDuplicates.push({ model, slots });
+    }
+  }
+  const auditPass =
+    undocumentedDuplicates.length === 0 &&
+    undocumentedModelDuplicates.length === 0 &&
+    SLOT_CONFIG.length === 10;
   return {
-    providerCounts: counts,
+    providerCounts: familyCounts,
     maxPerProvider,
     slots: SLOT_CONFIG.length,
     documentedDuplicates: { ...DOCUMENTED_FAMILY_DUPLICATES },
     undocumentedDuplicates,
-    auditPass: undocumentedDuplicates.length === 0 && SLOT_CONFIG.length === 10,
+    modelPrimaryDuplicates,
+    undocumentedModelDuplicates,
+    auditPass,
   };
 }
 
