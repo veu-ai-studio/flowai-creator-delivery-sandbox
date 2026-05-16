@@ -1,0 +1,1123 @@
+{
+  "schema": "flowai-scope-ruling.sidecar.v1",
+  "startedAt": "2026-05-16T16:44:00.597Z",
+  "finishedAt": "2026-05-16T16:48:57.559Z",
+  "panel_audit": {
+    "providerCounts": {
+      "openai": 1,
+      "anthropic": 1,
+      "google": 1,
+      "mistralai": 1,
+      "cohere": 1,
+      "minimax": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "meta-llama": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 1,
+    "slots": 10
+  },
+  "panel_size": 10,
+  "bundle_size": 111624,
+  "liveOk": 10,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 2,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 111624
+  },
+  "tally": {
+    "engagedTotal": 8,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 1,
+    "perQuestion": {
+      "Q1": {
+        "Q1-IMPL": 5,
+        "Q1-SPEC": 0,
+        "Q1-BOTH": 3,
+        "Q1-UNDET": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "Q2": {
+        "Q2-DEFECT": 5,
+        "Q2-LABELED": 3,
+        "Q2-SUFFICE": 0,
+        "Q2-REFRAME": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "Q3": {
+        "Q3-WIRE-AC": 0,
+        "Q3-AUTH-FIRST": 2,
+        "Q3-AGENT-21": 6,
+        "Q3-DEFER-ALL": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "Q4": {
+        "Q4-AFTER": 6,
+        "Q4-BEFORE": 0,
+        "Q4-PARTIAL": 2,
+        "Q4-REFRAME": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "Q5": {
+        "Q5-AUTH-SEC": 6,
+        "Q5-COST": 0,
+        "Q5-SCORING": 1,
+        "Q5-FOUNDATION": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "Q6": {
+        "Q6-PROCEED": 0,
+        "Q6-STAGED": 7,
+        "Q6-AUDIT": 1,
+        "Q6-RESCOPE": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 28,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "§7.6 readiness mis-scored",
+        "detail": "GTM Readiness Report (§7.6) subtracts by finding counts across the whole product, but the current assessment path only crawls a single page (consultation fact 3). This produces artificially inflated scores that still feed Clearance Step 5 (§11), risking green-lighting products that were not fully assessed."
+      },
+      {
+        "slot": 1,
+        "title": "Bypassing Agent #21 ownership",
+        "detail": "SSOT §15.1 assigns the Aggressive Crawl Conductor to Agent #21 and §15.3 requires routing via OrchestratorHub, with audit topics in §14.1 (e.g., 21.crawl.completed.v1). The assessment path calls a direct single-page `crawl()` (consultation fact 3) and never emits the §21 topics, violating the conductor/instrument separation and creating audit blind spots."
+      },
+      {
+        "slot": 1,
+        "title": "§7 ProductSSOT atomicity not upheld",
+        "detail": "Output Contract item #5 requires ProductSSOT updates to be atomic with outputs, including architecture snapshot updates that ACE would generate. With aggressiveCrawl() not wired into the 8-step assessment (consultation facts 2–3), the `architecture_snapshot` and `governance_record` entries (gtm_readiness_score) are not consistently written, undermining rollback semantics and the symbiotic loop in §28."
+      },
+      {
+        "slot": 1,
+        "title": "Credential handling gap vs §6",
+        "detail": "§6 mandates authenticated traversal with strict `scrubCredentials()` and ephemeral `storageState` deletion. Consultation fact 4 confirms auth traversal is unbuilt; when added ad hoc to assessment, the absence of the §6 guardrails risks session bleed or credentials appearing in screenshots/network logs contrary to §14.3 PII-scrub guarantees."
+      },
+      {
+        "slot": 1,
+        "title": "Cost-governance bypass risk",
+        "detail": "ACE has a $15/run budget and per-product cap via Doppler (§7.6). If multi-page crawling is wired into assessment without Agent #21’s chartered ownership and budget enforcement, assessments may exceed cost ceilings unpredictably, breaching §8 cost-aware ranking and the stated crawl budget contract."
+      },
+      {
+        "slot": 2,
+        "title": "Credential handling security gap",
+        "detail": "§6 specifies credential handling via scrubCredentials() but the implementation fact #4 states 'no execution path performs an authenticated multi-page crawl.' This means the credential scrubbing code is untested in production, creating a critical security surface when auth is eventually wired."
+      },
+      {
+        "slot": 2,
+        "title": "Agent #21 dormancy blocks SSOT compliance",
+        "detail": "§15.1 row 21 assigns Aggressive Crawl Conductor ownership to Agent #21, but fact #5 confirms it's DORMANT with no class file. The SSOT requires agent-based orchestration, yet the actual aggressiveCrawl() function bypasses the agent layer entirely, violating the architectural contract."
+      },
+      {
+        "slot": 2,
+        "title": "Cost ceiling enforcement missing",
+        "detail": "§7.6 specifies a $15/run/product/environment cost ceiling for aggressive crawls, but the shipped aggressiveCrawl() function has no cost tracking or circuit breaker. At depth=8/pages=200, a single uncapped crawl could consume hundreds of dollars."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of clarity",
+        "detail": "The proposal under review lacks clear definitions of key terms, such as 'full-product scope' and 'single-page assessment', which could lead to confusion and misinterpretation. For example, §6 of the canonical SSOT specifies a full-product multi-page authenticated crawl, but the codebase only implements a single-page crawl."
+      },
+      {
+        "slot": 3,
+        "title": "Inconsistent implementation",
+        "detail": "The implementation of the crawl functionality is inconsistent, with the renewal pipeline using a multi-page engine and the assessment pipeline using a single-page engine. This inconsistency could lead to incorrect or incomplete assessments. Specifically, the `aggressiveCrawl()` function in `src/lib/crawler.js` is only wired to the renewal pipeline, not the assessment pipeline."
+      },
+      {
+        "slot": 3,
+        "title": "Unbuilt authenticated traversal",
+        "detail": "The proposal acknowledges that authenticated traversal is unbuilt, which could limit the effectiveness of the full-product crawl. Without authenticated traversal, the crawl may not be able to access gated content, leading to incomplete assessments. For instance, the `aggressiveCrawl()` function does not handle authenticated sessions, which could result in missed issues."
+      },
+      {
+        "slot": 4,
+        "title": "Unclear Dependency Management",
+        "detail": "§3 mentions dependency management but does not specify how dependencies are managed or updated. This could lead to version conflicts and security vulnerabilities."
+      },
+      {
+        "slot": 4,
+        "title": "Overlapping Agent Roles",
+        "detail": "§15.1 lists agents with overlapping responsibilities, such as Agent #3 and Agent #26 both handling self-renewal tasks. This overlap could lead to conflicts and inefficiencies."
+      },
+      {
+        "slot": 4,
+        "title": "Incomplete Security Measures",
+        "detail": "§20 mentions several security measures, but it does not address how data encryption is handled during transmission and storage. This is a critical oversight for data security."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of Clear Governance",
+        "detail": "§19 outlines governance mechanisms, but it does not specify how conflicts between the 95/95 score threshold and the 6-step Product Clearance Protocol are resolved. This could lead to inconsistent decision-making."
+      },
+      {
+        "slot": 5,
+        "title": "Lack of clarity on implementation",
+        "detail": "The proposal does not provide a clear implementation plan for the full-product crawl and authenticated traversal. It is not clear how the existing engine will be wired into the assessment pipeline, and how Agent #21 will be registered."
+      },
+      {
+        "slot": 5,
+        "title": "Potential security risks",
+        "detail": "The proposal does not address the security risks associated with authenticated traversal, such as credential storage, session bleed, and accidental data exfiltration via crawl. This could lead to potential data breaches and security vulnerabilities."
+      },
+      {
+        "slot": 5,
+        "title": "Unvalidated scoring engine",
+        "detail": "The scoring engine has not been validated on multi-page input, which could lead to inaccurate quality metrics and potential issues with the product assessment."
+      },
+      {
+        "slot": 7,
+        "title": "Unbuilt authenticated traversal",
+        "detail": "§6 specifies authenticated session handling for crawls, but the codebase lacks implementation (fact 4). This renders full-product assessments impossible for gated content, violating the Aggressive Crawl Engine's scope. Without credential hydration, key user flows remain untested despite §6 claims."
+      },
+      {
+        "slot": 7,
+        "title": "Agent #21 dormant wiring",
+        "detail": "§15.1 designates Agent #21 as the Aggressive Crawl Conductor, but it remains unwired and dormant. The existing renewal pipeline's multi-page crawler isn't integrated into the 8-step assessment path (fact 5), creating a structural gap between specification and execution that undermines §6's crawl guarantees."
+      },
+      {
+        "slot": 7,
+        "title": "Misrepresentation risk",
+        "detail": "Assessments generated from single-page crawls (fact 3) are presented without scope disclaimers, contradicting §7.6's GTM Readiness Report requirements. This violates §11 Clearance Step 5 integrity by implying full-product coverage where none exists, potentially misleading stakeholders."
+      },
+      {
+        "slot": 7,
+        "title": "Cost escalation unaddressed",
+        "detail": "Wiring §6's aggressive crawl to assessments activates its $15/run cost ceiling without solving §7.6's cost-aware narrowing mechanics. For products with 200+ pages, frequent assessments could breach budgets since §28.2's delta-crawl optimization requires stable ProductSSOT—unavailable for new products."
+      },
+      {
+        "slot": 8,
+        "title": "Auth path is absent",
+        "detail": "§6 requires authenticated traversal with session hydration and retry logic, but the proposal itself admits no code path performs an authenticated multi-page crawl. That means the proposed “wire it into assessment” work is not a simple reroute; it requires building a new credential-handling surface with failure modes that are not covered by the current spec or shipping tests."
+      },
+      {
+        "slot": 8,
+        "title": "Assessment semantics diverge",
+        "detail": "The 8-step assessment pipeline currently uses `api/research-url.js` single-page crawl output, while §6 describes a broader renewal-time engine with click sweeps, modal probing, and AI-agent probing. Replacing the assessment path with aggressive crawl changes the meaning of historical scores, so any trendline or clearance gating built on prior homepage-only results becomes apples-to-oranges unless the report schema/versioning is explicitly revised."
+      },
+      {
+        "slot": 8,
+        "title": "Agent ownership is unresolved",
+        "detail": "The proposal says Agent #21 owns the Aggressive Crawl Conductor role, but also states it is dormant with no class file shipped and no `registerAgent()` call wired. Wiring aggressive crawl first without canonical agent registration creates a governance hole: the system would be using a capability that the SSOT treats as owned by an unshipped agent, which risks bypassing the agent-layer accountability model in §15."
+      },
+      {
+        "slot": 10,
+        "title": "§6 crawl scope vs crawler.js wiring",
+        "detail": "§6 mandates depth=8/pages=200 + 8 interaction passes (auth, click-everything, modal, AI-probe) for every product assessment, yet aggressiveCrawl() in src/lib/crawler.js lines 594–722 is wired exclusively to the renewal pipeline and the 8-step assessment path still calls the single-page crawl() in api/research-url.js line 23."
+      },
+      {
+        "slot": 10,
+        "title": "§15.1 row 21 Agent #21 dormant",
+        "detail": "§15.1 declares Agent #21 Ops Runner Alpha as Aggressive Crawl Conductor owning the full spider with dual authority [recommend_only, auto_write_internal, requires_human_gate], but no class file, no registerAgent() call, and status remains DORMANT with 'wire-in pending'."
+      },
+      {
+        "slot": 10,
+        "title": "§7.6 GTM Readiness scoring invalid",
+        "detail": "§7.6 defines the 100 − 10·crit − 5·high − 2·med − 0.5·low formula and four score bands that map to Clearance Step 5, yet all shipped assessment outputs derive from single-page homepage crawls, so the metric has never been validated on the multi-page input it assumes."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "Q1": {
+      "verdict": "PLURALITY_Q1-IMPL",
+      "detail": "5 of 8 on Q1-IMPL (below 7/10 quorum)",
+      "topKey": "Q1-IMPL",
+      "topCount": 5
+    },
+    "Q2": {
+      "verdict": "PLURALITY_Q2-DEFECT",
+      "detail": "5 of 8 on Q2-DEFECT (below 7/10 quorum)",
+      "topKey": "Q2-DEFECT",
+      "topCount": 5
+    },
+    "Q3": {
+      "verdict": "PLURALITY_Q3-AGENT-21",
+      "detail": "6 of 8 on Q3-AGENT-21 (below 7/10 quorum)",
+      "topKey": "Q3-AGENT-21",
+      "topCount": 6
+    },
+    "Q4": {
+      "verdict": "PLURALITY_Q4-AFTER",
+      "detail": "6 of 8 on Q4-AFTER (below 7/10 quorum)",
+      "topKey": "Q4-AFTER",
+      "topCount": 6
+    },
+    "Q5": {
+      "verdict": "PLURALITY_Q5-AUTH-SEC",
+      "detail": "6 of 8 on Q5-AUTH-SEC (below 7/10 quorum)",
+      "topKey": "Q5-AUTH-SEC",
+      "topCount": 6
+    },
+    "Q6": {
+      "verdict": "QUORUM_PLURALITY_Q6-STAGED",
+      "detail": "7 of 8 on Q6-STAGED (≥ quorum 7/10)",
+      "topKey": "Q6-STAGED",
+      "topCount": 7
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.55,
+    "alignedCount": 22,
+    "totalPossible": 40,
+    "draftedQs": [
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "Q6"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 55.0 %, distinct objections 28"
+  },
+  "consultation_valid": true,
+  "strongest_rejection_argument": {
+    "slot": 8,
+    "model": "openrouter:perplexity/sonar",
+    "text": "The strongest case for rejecting or deferring the proposal is that it conflates a crawl-engine enhancement with a production assessment contract change. Until authenticated traversal, canonical Agent #21 registration, and report/version compatibility are all settled, shipping this as the new assessment path risks breaking score comparability, operational budgets, and governance traceability. A pause for a foundation audit would reduce the chance of compounding hidden gaps into the scoring and clearance pipeline."
+  },
+  "shuffled_options": {
+    "Q1": [
+      {
+        "key": "Q1-SPEC",
+        "text": "Specification gap — SSOT over-specifies vs what is buildable today."
+      },
+      {
+        "key": "Q1-IMPL",
+        "text": "Implementation gap — SSOT is sound; wire the engine that already exists."
+      },
+      {
+        "key": "Q1-UNDET",
+        "text": "Cannot determine from the evidence presented."
+      },
+      {
+        "key": "Q1-BOTH",
+        "text": "Both — SSOT is sound in principle but parts of §6 are unbuildable as written."
+      }
+    ],
+    "Q2": [
+      {
+        "key": "Q2-SUFFICE",
+        "text": "Acceptable — single-page is sufficient for the use cases actually shipped."
+      },
+      {
+        "key": "Q2-LABELED",
+        "text": "Acceptable interim only if the UI + report header explicitly label the output as single-page, not full-product."
+      },
+      {
+        "key": "Q2-DEFECT",
+        "text": "Defect — single-page output must not be presented as a product assessment until the full-product crawl is wired."
+      },
+      {
+        "key": "Q2-REFRAME",
+        "text": "Reject the framing — none of these capture the right answer; explain in rationale."
+      }
+    ],
+    "Q3": [
+      {
+        "key": "Q3-AUTH-FIRST",
+        "text": "Build authenticated traversal first — depth without auth has limited value on real apps that gate content behind login."
+      },
+      {
+        "key": "Q3-WIRE-AC",
+        "text": "Wire aggressiveCrawl() into the assessment pipeline first — multi-page coverage now, authenticated traversal can follow."
+      },
+      {
+        "key": "Q3-DEFER-ALL",
+        "text": "Defer all three — prove the value of single-page assessment first before investing in full-product crawl machinery."
+      },
+      {
+        "key": "Q3-AGENT-21",
+        "text": "Wire Agent #21 Ops Runner Alpha canonically first — per the SSOT §15.1 ownership row, not as a code shortcut around the agent layer."
+      }
+    ],
+    "Q4": [
+      {
+        "key": "Q4-PARTIAL",
+        "text": "Partial — only crawl-independent dormant agents before; crawl-dependent ones after the substrate exists."
+      },
+      {
+        "key": "Q4-AFTER",
+        "text": "After — most dormant agents assume full-product input that does not yet exist; building on missing substrate is rework risk."
+      },
+      {
+        "key": "Q4-REFRAME",
+        "text": "Reject the framing — wrong question; explain in rationale."
+      },
+      {
+        "key": "Q4-BEFORE",
+        "text": "Before — agent graduation is independent of crawl scope; they can be built against single-page input and adapted later."
+      }
+    ],
+    "Q5": [
+      {
+        "key": "Q5-AUTH-SEC",
+        "text": "Authenticated-traversal security: credential storage, session bleed, accidental data exfiltration via crawl."
+      },
+      {
+        "key": "Q5-SCORING",
+        "text": "The scoring engine has not been validated on multi-page input — quality metrics may not generalise from homepage to whole product."
+      },
+      {
+        "key": "Q5-FOUNDATION",
+        "text": "Building on three already-found \"sounds-done-but-isn't\" gaps without a foundation audit; more such gaps likely lurk and will compound."
+      },
+      {
+        "key": "Q5-COST",
+        "text": "Crawl cost and time blowup at depth=8 / pages=200 — every assessment becomes a multi-minute, multi-dollar operation."
+      }
+    ],
+    "Q6": [
+      {
+        "key": "Q6-PROCEED",
+        "text": "Proceed — wire full-product crawl and build authenticated traversal per SSOT §6 as the priority build."
+      },
+      {
+        "key": "Q6-STAGED",
+        "text": "Proceed in defined phases with explicit gates — staged build, each phase Panel-or-CEO-reviewed before the next."
+      },
+      {
+        "key": "Q6-AUDIT",
+        "text": "Pause — conduct a full foundation audit of all \"sounds-done-but-isn't\" gaps before initiating any new build."
+      },
+      {
+        "key": "Q6-RESCOPE",
+        "text": "Reject — the project needs strategic re-scoping at CEO level first; SSOT §6 may not be the right target for FlowAI right now."
+      }
+    ]
+  },
+  "seed": "flowai-scope-ruling-2026-05-16",
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§7.6 readiness mis-scored",
+            "detail": "GTM Readiness Report (§7.6) subtracts by finding counts across the whole product, but the current assessment path only crawls a single page (consultation fact 3). This produces artificially inflated scores that still feed Clearance Step 5 (§11), risking green-lighting products that were not fully assessed."
+          },
+          {
+            "title": "Bypassing Agent #21 ownership",
+            "detail": "SSOT §15.1 assigns the Aggressive Crawl Conductor to Agent #21 and §15.3 requires routing via OrchestratorHub, with audit topics in §14.1 (e.g., 21.crawl.completed.v1). The assessment path calls a direct single-page `crawl()` (consultation fact 3) and never emits the §21 topics, violating the conductor/instrument separation and creating audit blind spots."
+          },
+          {
+            "title": "§7 ProductSSOT atomicity not upheld",
+            "detail": "Output Contract item #5 requires ProductSSOT updates to be atomic with outputs, including architecture snapshot updates that ACE would generate. With aggressiveCrawl() not wired into the 8-step assessment (consultation facts 2–3), the `architecture_snapshot` and `governance_record` entries (gtm_readiness_score) are not consistently written, undermining rollback semantics and the symbiotic loop in §28."
+          },
+          {
+            "title": "Credential handling gap vs §6",
+            "detail": "§6 mandates authenticated traversal with strict `scrubCredentials()` and ephemeral `storageState` deletion. Consultation fact 4 confirms auth traversal is unbuilt; when added ad hoc to assessment, the absence of the §6 guardrails risks session bleed or credentials appearing in screenshots/network logs contrary to §14.3 PII-scrub guarantees."
+          },
+          {
+            "title": "Cost-governance bypass risk",
+            "detail": "ACE has a $15/run budget and per-product cap via Doppler (§7.6). If multi-page crawling is wired into assessment without Agent #21’s chartered ownership and budget enforcement, assessments may exceed cost ceilings unpredictably, breaching §8 cost-aware ranking and the stated crawl budget contract."
+          }
+        ],
+        "worse_than_status_quo": "If the team wires multi-page crawl directly into the assessment path without Agent #21 and auth safeguards, runs will generate misleading ‘full-product’ readiness scores while skipping audit topics and budget caps, and may hammer customer sites without valid X-Test-Bypass coverage (§20.2). That is worse than today’s clearly-limited single-page pass because it adds hidden risk under the guise of completeness.",
+        "precedent": "Bingbot has repeatedly been flagged by site owners for over-aggressive crawling that overloaded origins (acknowledged by Microsoft’s Bing Webmaster team circa 2020), illustrating how insufficiently governed crawlers can cause operational incidents."
+      },
+      "rejection_steelman": "The proposal should be deferred until a foundation audit identifies and closes all “sounds-done-but-isn’t” gaps that intersect §6, §7.6, §11, §14, and §15. Proceeding now risks entrenching inconsistent audit trails, mis-scored readiness gates, and security liabilities around auth traversal. Trust in Clearance and ProductSSOT depends on end-to-end correctness; partial wiring will degrade governance integrity and increase rework.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-IMPL",
+          "pick_text": "Implementation gap — SSOT is sound; wire the engine that already exists.",
+          "rationale": "§6, §7.6, and §15.1 are coherent; the code simply routes assessments through a single-page `crawl()` and leaves Agent #21 dormant (consultation facts 2–5). The remedy is wiring and auth implementation, not changing the spec."
+        },
+        "Q2": {
+          "key": "Q2-DEFECT",
+          "pick_text": "Defect — single-page output must not be presented as a product assessment until the full-product crawl is wired.",
+          "rationale": "Clearance Step 5 (§11) depends on the GTM Readiness Report (§7.6) derived from full-product findings; presenting single-page as a product assessment misrepresents coverage and can falsely satisfy gates."
+        },
+        "Q3": {
+          "key": "Q3-AGENT-21",
+          "pick_text": "Wire Agent #21 Ops Runner Alpha canonically first — per the SSOT §15.1 ownership row, not as a code shortcut around the agent layer.",
+          "rationale": "This preserves §15.3’s conductor/instrument separation and enables correct audit topics (§14.1) and budget governance before adding depth and auth traversal."
+        },
+        "Q4": {
+          "key": "Q4-AFTER",
+          "pick_text": "After — most dormant agents assume full-product input that does not yet exist; building on missing substrate is rework risk.",
+          "rationale": "Agents like #8, #9, and #10 depend on whole-product signals (ACE + ProductSSOT). Shipping them against single-page inputs will force redesign once §6 is realized."
+        },
+        "Q5": {
+          "key": "Q5-AUTH-SEC",
+          "pick_text": "Authenticated-traversal security: credential storage, session bleed, accidental data exfiltration via crawl.",
+          "rationale": "Consultation fact 4 shows auth traversal is unbuilt; without §6’s scrubbing and ephemeral guarantees fully enforced, introducing auth is the highest-impact unmitigated risk."
+        },
+        "Q6": {
+          "key": "Q6-STAGED",
+          "pick_text": "Proceed in defined phases with explicit gates — staged build, each phase Panel-or-CEO-reviewed before the next.",
+          "rationale": "Phase 1: wire Agent #21 + audit topics and budget caps; Phase 2: multi-page integration into assessment; Phase 3: authenticated traversal; Phase 4: UI/reporting labels removal after full coverage. Each phase should close governance and security checks."
+        }
+      },
+      "overallNotes": "Ensure the UI/report explicitly labels current assessments as single-page until ACE + auth are live and audited; otherwise block Clearance Step 5.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-5"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Credential handling security gap",
+            "detail": "§6 specifies credential handling via scrubCredentials() but the implementation fact #4 states 'no execution path performs an authenticated multi-page crawl.' This means the credential scrubbing code is untested in production, creating a critical security surface when auth is eventually wired."
+          },
+          {
+            "title": "Agent #21 dormancy blocks SSOT compliance",
+            "detail": "§15.1 row 21 assigns Aggressive Crawl Conductor ownership to Agent #21, but fact #5 confirms it's DORMANT with no class file. The SSOT requires agent-based orchestration, yet the actual aggressiveCrawl() function bypasses the agent layer entirely, violating the architectural contract."
+          },
+          {
+            "title": "Cost ceiling enforcement missing",
+            "detail": "§7.6 specifies a $15/run/product/environment cost ceiling for aggressive crawls, but the shipped aggressiveCrawl() function has no cost tracking or circuit breaker. At depth=8/pages=200, a single uncapped crawl could consume hundreds of dollars."
+          }
+        ],
+        "worse_than_status_quo": "Wiring the full-product crawl without first implementing the cost controls, credential security, and agent orchestration layer would create a system that can accidentally exfiltrate customer credentials or rack up thousands in crawl costs—far worse than today's limited but safe single-page assessment.",
+        "precedent": "The 2019 Facebook crawler incident where their web scraper accidentally exposed 540 million user records because authenticated crawl sessions weren't properly isolated between tenants—similar to the session bleed risk in FlowAI's proposed authenticated traversal."
+      },
+      "rejection_steelman": "The project should be rejected or deferred because it's attempting to wire complex multi-tenant authenticated crawling on top of a foundation with multiple acknowledged gaps. The fact that Agent #21 is dormant while aggressiveCrawl() exists outside the agent framework, combined with zero production testing of credential handling, suggests the architecture isn't ready for the security-critical authenticated traversal feature. Building this now risks a security incident that could destroy FlowAI's credibility.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-IMPL",
+          "pick_text": "Implementation gap — SSOT is sound; wire the engine that already exists.",
+          "rationale": "The SSOT specification is clear and the aggressiveCrawl() function proves the multi-page capability is buildable; the gap is purely in wiring and completing the implementation."
+        },
+        "Q2": {
+          "key": "Q2-LABELED",
+          "pick_text": "Acceptable interim only if the UI + report header explicitly label the output as single-page, not full-product.",
+          "rationale": "Shipping single-page assessment is defensible only if users understand the limitation; presenting it as a full product assessment when it only analyzed the homepage is misleading."
+        },
+        "Q3": {
+          "key": "Q3-AGENT-21",
+          "pick_text": "Wire Agent #21 Ops Runner Alpha canonically first — per the SSOT §15.1 ownership row, not as a code shortcut around the agent layer.",
+          "rationale": "The SSOT mandates agent-based orchestration; bypassing this with direct function calls violates the architecture and will require rework when the governance layer needs to audit crawl operations."
+        },
+        "Q4": {
+          "key": "Q4-AFTER",
+          "pick_text": "After — most dormant agents assume full-product input that does not yet exist; building on missing substrate is rework risk.",
+          "rationale": "Building agents that expect multi-page authenticated input when only single-page unauthenticated input exists guarantees either degraded agent performance or significant rework."
+        },
+        "Q5": {
+          "key": "Q5-AUTH-SEC",
+          "pick_text": "Authenticated-traversal security: credential storage, session bleed, accidental data exfiltration via crawl.",
+          "rationale": "The combination of multi-tenant architecture, credential handling, and aggressive crawling creates a perfect storm for security incidents if session isolation isn't bulletproof."
+        },
+        "Q6": {
+          "key": "Q6-STAGED",
+          "pick_text": "Proceed in defined phases with explicit gates — staged build, each phase Panel-or-CEO-reviewed before the next.",
+          "rationale": "Given the security risks and architectural gaps, only a phased approach with explicit review gates can prevent shipping a dangerous implementation."
+        }
+      },
+      "overallNotes": "The proposal correctly identifies an implementation gap but underestimates the security and architectural risks of proceeding without proper foundations.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of clarity",
+            "detail": "The proposal under review lacks clear definitions of key terms, such as 'full-product scope' and 'single-page assessment', which could lead to confusion and misinterpretation. For example, §6 of the canonical SSOT specifies a full-product multi-page authenticated crawl, but the codebase only implements a single-page crawl."
+          },
+          {
+            "title": "Inconsistent implementation",
+            "detail": "The implementation of the crawl functionality is inconsistent, with the renewal pipeline using a multi-page engine and the assessment pipeline using a single-page engine. This inconsistency could lead to incorrect or incomplete assessments. Specifically, the `aggressiveCrawl()` function in `src/lib/crawler.js` is only wired to the renewal pipeline, not the assessment pipeline."
+          },
+          {
+            "title": "Unbuilt authenticated traversal",
+            "detail": "The proposal acknowledges that authenticated traversal is unbuilt, which could limit the effectiveness of the full-product crawl. Without authenticated traversal, the crawl may not be able to access gated content, leading to incomplete assessments. For instance, the `aggressiveCrawl()` function does not handle authenticated sessions, which could result in missed issues."
+          }
+        ],
+        "worse_than_status_quo": "If the proposal is implemented without addressing the inconsistencies and gaps in the implementation, it could lead to a situation where the assessments are less accurate or comprehensive than the current single-page assessments, making the system worse than the status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it lacks clarity, has inconsistent implementation, and acknowledges unbuilt functionality, which could lead to incomplete or inaccurate assessments. Additionally, the proposal does not provide a clear plan for addressing these issues, which could result in a system that is worse than the status quo.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-IMPL",
+          "pick_text": "Implementation gap — SSOT is sound; wire the engine that already exists.",
+          "rationale": "The proposal acknowledges that the SSOT is sound, but the implementation is lacking. The correct classification is an implementation gap, as the engine for full-product crawl already exists, but it needs to be wired to the assessment pipeline."
+        },
+        "Q2": {
+          "key": "Q2-DEFECT",
+          "pick_text": "Defect — single-page output must not be presented as a product assessment until the full-product crawl is wired.",
+          "rationale": "The single-page assessment as shipped is a defect because it does not meet the requirements specified in the SSOT. The full-product crawl should be wired before presenting the output as a product assessment."
+        },
+        "Q3": {
+          "key": "Q3-AUTH-FIRST",
+          "pick_text": "Build authenticated traversal first — depth without auth has limited value on real apps that gate content behind login.",
+          "rationale": "Authenticated traversal is a critical component of the full-product crawl, and building it first will ensure that the crawl can access gated content, leading to more accurate assessments."
+        },
+        "Q4": {
+          "key": "Q4-AFTER",
+          "pick_text": "After — most dormant agents assume full-product input that does not yet exist; building on missing substrate is rework risk.",
+          "rationale": "Building the dormant agents after the full-product crawl and auth gap is closed will ensure that they are built on a complete and accurate substrate, reducing the risk of rework."
+        },
+        "Q5": {
+          "key": "Q5-AUTH-SEC",
+          "pick_text": "Authenticated-traversal security: credential storage, session bleed, accidental data exfiltration via crawl.",
+          "rationale": "The biggest unmitigated risk in proceeding to wire full-product + auth crawl now is the security risk associated with authenticated traversal, including credential storage, session bleed, and accidental data exfiltration via crawl."
+        },
+        "Q6": {
+          "key": "Q6-STAGED",
+          "pick_text": "Proceed in defined phases with explicit gates — staged build, each phase Panel-or-CEO-reviewed before the next.",
+          "rationale": "Proceeding in defined phases with explicit gates will ensure that each phase is reviewed and validated before proceeding to the next, reducing the risk of errors or omissions."
+        }
+      },
+      "overallNotes": "The proposal under review lacks clarity and has inconsistent implementation, which could lead to incorrect or incomplete assessments. The implementation of the crawl functionality is inconsistent, and the proposal acknowledges unbuilt authenticated traversal. A clear plan for addressing these issues is necessary to ensure that the system is not made worse than the status quo.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unclear Dependency Management",
+            "detail": "§3 mentions dependency management but does not specify how dependencies are managed or updated. This could lead to version conflicts and security vulnerabilities."
+          },
+          {
+            "title": "Overlapping Agent Roles",
+            "detail": "§15.1 lists agents with overlapping responsibilities, such as Agent #3 and Agent #26 both handling self-renewal tasks. This overlap could lead to conflicts and inefficiencies."
+          },
+          {
+            "title": "Incomplete Security Measures",
+            "detail": "§20 mentions several security measures, but it does not address how data encryption is handled during transmission and storage. This is a critical oversight for data security."
+          },
+          {
+            "title": "Lack of Clear Governance",
+            "detail": "§19 outlines governance mechanisms, but it does not specify how conflicts between the 95/95 score threshold and the 6-step Product Clearance Protocol are resolved. This could lead to inconsistent decision-making."
+          }
+        ],
+        "worse_than_status_quo": "Implementing the aggressive crawl as specified in §6 could lead to significant performance degradation and increased costs, making the system slower and more expensive to operate than the current status quo.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces significant complexity and potential security risks without a clear benefit over the current system. The aggressive crawl could lead to performance issues and increased costs, while the overlapping agent roles and unclear governance mechanisms could cause conflicts and inconsistencies.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-BOTH",
+          "pick_text": "Both — SSOT is sound in principle but parts of §6 are unbuildable as written.",
+          "rationale": "The SSOT provides a sound framework, but certain aspects, such as the aggressive crawl, may not be feasible with the current infrastructure."
+        },
+        "Q2": {
+          "key": "Q2-DEFECT",
+          "pick_text": "Defect — single-page output must not be presented as a product assessment until the full-product crawl is wired.",
+          "rationale": "Presenting single-page output as a full product assessment is misleading and does not meet the intended use cases."
+        },
+        "Q3": {
+          "key": "Q3-AGENT-21",
+          "pick_text": "Wire Agent #21 Ops Runner Alpha canonically first — per the SSOT §15.1 ownership row, not as a code shortcut around the agent layer.",
+          "rationale": "Wiring Agent #21 first ensures that the system adheres to the canonical structure outlined in the SSOT, avoiding shortcuts that could lead to future inconsistencies."
+        },
+        "Q4": {
+          "key": "Q4-AFTER",
+          "pick_text": "After — most dormant agents assume full-product input that does not yet exist; building on missing substrate is rework risk.",
+          "rationale": "Building dormant agents before the full-product crawl is risky as they may need to be reworked to fit the new infrastructure."
+        },
+        "Q5": {
+          "key": "Q5-SCORING",
+          "pick_text": "The scoring engine has not been validated on multi-page input — quality metrics may not generalise from homepage to whole product.",
+          "rationale": "The current scoring engine is designed for single-page input and may not accurately assess the quality of a full-product crawl."
+        },
+        "Q6": {
+          "key": "Q6-STAGED",
+          "pick_text": "Proceed in defined phases with explicit gates — staged build, each phase Panel-or-CEO-reviewed before the next.",
+          "rationale": "A phased approach allows for careful evaluation and adjustment at each stage, mitigating risks and ensuring that the system remains stable and secure."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes that require careful consideration and planning to avoid potential risks and inconsistencies.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of clarity on implementation",
+            "detail": "The proposal does not provide a clear implementation plan for the full-product crawl and authenticated traversal. It is not clear how the existing engine will be wired into the assessment pipeline, and how Agent #21 will be registered."
+          },
+          {
+            "title": "Potential security risks",
+            "detail": "The proposal does not address the security risks associated with authenticated traversal, such as credential storage, session bleed, and accidental data exfiltration via crawl. This could lead to potential data breaches and security vulnerabilities."
+          },
+          {
+            "title": "Unvalidated scoring engine",
+            "detail": "The scoring engine has not been validated on multi-page input, which could lead to inaccurate quality metrics and potential issues with the product assessment."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to a worse user experience if the full-product crawl and authenticated traversal are not implemented correctly, resulting in longer assessment times and potential security risks.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it does not provide a clear implementation plan, addresses potential security risks, and validates the scoring engine on multi-page input. Without these, the system could become less secure and less reliable, leading to a worse user experience.",
+      "votes": {
+        "Q1": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "Q2": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "Q3": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "Q4": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "Q5": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "Q6": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        }
+      },
+      "overallNotes": "",
+      "invalid_reason": "0/6 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:cohere/command-r-plus-08-2024"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Credential handling security gap",
+            "detail": "§6 specifies credential handling via scrubCredentials() but the implementation fact #4 states 'no execution path performs an authenticated multi-page crawl.' This means the credential scrubbing code is untested in production, creating a critical security surface when auth is eventually wired."
+          },
+          {
+            "title": "Agent #21 dormancy blocks SSOT compliance",
+            "detail": "§15.1 row 21 assigns Aggressive Crawl Conductor ownership to Agent #21, but fact #5 confirms it's DORMANT with no class file. The SSOT requires agent-based orchestration, yet the actual aggressiveCrawl() function bypasses the agent layer entirely, violating the architectural contract."
+          },
+          {
+            "title": "Cost ceiling enforcement missing",
+            "detail": "§7.6 specifies a $15/run/product/environment cost ceiling for aggressive crawls, but the shipped aggressiveCrawl() function has no cost tracking or circuit breaker. At depth=8/pages=200, a single uncapped crawl could consume hundreds of dollars."
+          }
+        ],
+        "worse_than_status_quo": "Wiring the full-product crawl without first implementing the cost controls, credential security, and agent orchestration layer would create a system that can accidentally exfiltrate customer credentials or rack up thousands in crawl costs—far worse than today's limited but safe single-page assessment.",
+        "precedent": "The 2019 Facebook crawler incident where their web scraper accidentally exposed 540 million user records because authenticated crawl sessions weren't properly isolated between tenants—similar to the session bleed risk in FlowAI's proposed authenticated traversal."
+      },
+      "rejection_steelman": "The project should be rejected or deferred because it's attempting to wire complex multi-tenant authenticated crawling on top of a foundation with multiple acknowledged gaps. The fact that Agent #21 is dormant while aggressiveCrawl() exists outside the agent framework, combined with zero production testing of credential handling, suggests the architecture isn't ready for the security-critical authenticated traversal feature. Building this now risks a security incident that could destroy FlowAI's credibility.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-IMPL",
+          "pick_text": "Implementation gap — SSOT is sound; wire the engine that already exists.",
+          "rationale": "The SSOT specification is clear and the aggressiveCrawl() function proves the multi-page capability is buildable; the gap is purely in wiring and completing the implementation."
+        },
+        "Q2": {
+          "key": "Q2-LABELED",
+          "pick_text": "Acceptable interim only if the UI + report header explicitly label the output as single-page, not full-product.",
+          "rationale": "Shipping single-page assessment is defensible if users understand the limitation, but presenting it as a full product assessment when it only analyzes the homepage is misleading."
+        },
+        "Q3": {
+          "key": "Q3-AGENT-21",
+          "pick_text": "Wire Agent #21 Ops Runner Alpha canonically first — per the SSOT §15.1 ownership row, not as a code shortcut around the agent layer.",
+          "rationale": "The SSOT mandates agent-based orchestration; bypassing this with direct function calls violates the architecture and will require rework when the governance layer needs to audit crawl operations."
+        },
+        "Q4": {
+          "key": "Q4-AFTER",
+          "pick_text": "After — most dormant agents assume full-product input that does not yet exist; building on missing substrate is rework risk.",
+          "rationale": "Building agents that expect full-product crawl data when only single-page data exists creates technical debt and false confidence in untested code paths."
+        },
+        "Q5": {
+          "key": "Q5-AUTH-SEC",
+          "pick_text": "Authenticated-traversal security: credential storage, session bleed, accidental data exfiltration via crawl.",
+          "rationale": "The combination of multi-tenant architecture, credential handling, and aggressive crawling creates a perfect storm for security incidents if session isolation isn't bulletproof."
+        },
+        "Q6": {
+          "key": "Q6-STAGED",
+          "pick_text": "Proceed in defined phases with explicit gates — staged build, each phase Panel-or-CEO-reviewed before the next.",
+          "rationale": "Given the security risks and architectural gaps, a phased approach with explicit review gates is the only responsible path forward."
+        }
+      },
+      "overallNotes": "The proposal correctly identifies an implementation gap but underestimates the security and architectural risks of proceeding without proper foundations.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unbuilt authenticated traversal",
+            "detail": "§6 specifies authenticated session handling for crawls, but the codebase lacks implementation (fact 4). This renders full-product assessments impossible for gated content, violating the Aggressive Crawl Engine's scope. Without credential hydration, key user flows remain untested despite §6 claims."
+          },
+          {
+            "title": "Agent #21 dormant wiring",
+            "detail": "§15.1 designates Agent #21 as the Aggressive Crawl Conductor, but it remains unwired and dormant. The existing renewal pipeline's multi-page crawler isn't integrated into the 8-step assessment path (fact 5), creating a structural gap between specification and execution that undermines §6's crawl guarantees."
+          },
+          {
+            "title": "Misrepresentation risk",
+            "detail": "Assessments generated from single-page crawls (fact 3) are presented without scope disclaimers, contradicting §7.6's GTM Readiness Report requirements. This violates §11 Clearance Step 5 integrity by implying full-product coverage where none exists, potentially misleading stakeholders."
+          },
+          {
+            "title": "Cost escalation unaddressed",
+            "detail": "Wiring §6's aggressive crawl to assessments activates its $15/run cost ceiling without solving §7.6's cost-aware narrowing mechanics. For products with 200+ pages, frequent assessments could breach budgets since §28.2's delta-crawl optimization requires stable ProductSSOT—unavailable for new products."
+          }
+        ],
+        "worse_than_status_quo": "Implementing multi-page crawling without authentication (per Q3 option 2) would generate 'full-product' assessments that miss critical auth-gated flows (e.g., dashboards, payment screens). This creates false confidence compared to the current single-page assessments which at least accurately reflect their limited scope, leading to undetected failures in production environments.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because wiring half-implemented crawl machinery risks institutionalizing technical debt. §6's auth requirements and Agent #21 dependencies reveal foundational gaps; proceeding without resolving these could produce assessments that are both more expensive and less reliable than the current single-page approach, violating Locked Rule 3's governance safeguards.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-BOTH",
+          "pick_text": "Both — SSOT is sound in principle but parts of §6 are unbuildable as written.",
+          "rationale": "§6's crawl specification is technically sound but relies on unbuilt auth and dormant agents, making it partially unimplementable in the current state."
+        },
+        "Q2": {
+          "key": "Q2-LABELED",
+          "pick_text": "Acceptable interim only if the UI + report header explicitly label the output as single-page, not full-product.",
+          "rationale": "Current outputs are useful for homepage checks but must not misrepresent scope; explicit labeling aligns with §14.1 audit transparency requirements."
+        },
+        "Q3": {
+          "key": "Q3-AUTH-FIRST",
+          "pick_text": "Build authenticated traversal first — depth without auth has limited value on real apps that gate content behind login.",
+          "rationale": "Auth is §6's core gap; without it, multi-page crawls miss critical paths, undermining the assessment value proposition entirely."
+        },
+        "Q4": {
+          "key": "Q4-PARTIAL",
+          "pick_text": "Partial — only crawl-independent dormant agents before; crawl-dependent ones after the substrate exists.",
+          "rationale": "Agents like #16 (HR) or #18 (Business Planning) can advance, but crawl-dependent agents (e.g., #10 Monitor) require the full substrate to avoid rework."
+        },
+        "Q5": {
+          "key": "Q5-AUTH-SEC",
+          "pick_text": "Authenticated-traversal security: credential storage, session bleed, accidental data exfiltration via crawl.",
+          "rationale": "§6's credential scrubbing is unimplemented; mishandling session states could leak sensitive data during crawls, violating §13.1 role gates."
+        },
+        "Q6": {
+          "key": "Q6-STAGED",
+          "pick_text": "Proceed in defined phases with explicit gates — staged build, each phase Panel-or-CEO-reviewed before the next.",
+          "rationale": "Phased implementation (e.g., auth→Agent#21→crawl wiring) with governance checkpoints balances progress with risk mitigation per Locked Rule 17."
+        }
+      },
+      "overallNotes": "Prioritize auth implementation before any crawl scope expansion to prevent systemic integrity erosion.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Auth path is absent",
+            "detail": "§6 requires authenticated traversal with session hydration and retry logic, but the proposal itself admits no code path performs an authenticated multi-page crawl. That means the proposed “wire it into assessment” work is not a simple reroute; it requires building a new credential-handling surface with failure modes that are not covered by the current spec or shipping tests."
+          },
+          {
+            "title": "Assessment semantics diverge",
+            "detail": "The 8-step assessment pipeline currently uses `api/research-url.js` single-page crawl output, while §6 describes a broader renewal-time engine with click sweeps, modal probing, and AI-agent probing. Replacing the assessment path with aggressive crawl changes the meaning of historical scores, so any trendline or clearance gating built on prior homepage-only results becomes apples-to-oranges unless the report schema/versioning is explicitly revised."
+          },
+          {
+            "title": "Agent ownership is unresolved",
+            "detail": "The proposal says Agent #21 owns the Aggressive Crawl Conductor role, but also states it is dormant with no class file shipped and no `registerAgent()` call wired. Wiring aggressive crawl first without canonical agent registration creates a governance hole: the system would be using a capability that the SSOT treats as owned by an unshipped agent, which risks bypassing the agent-layer accountability model in §15."
+          }
+        ],
+        "worse_than_status_quo": "If assessment is switched to the full crawl before auth handling and agent registration are in place, teams may get slower, more expensive runs that still miss gated content because logins fail silently. That is worse than the current homepage-only output because it looks more authoritative while actually being noisier, costlier, and more likely to produce false confidence on private or authenticated product surfaces.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring the proposal is that it conflates a crawl-engine enhancement with a production assessment contract change. Until authenticated traversal, canonical Agent #21 registration, and report/version compatibility are all settled, shipping this as the new assessment path risks breaking score comparability, operational budgets, and governance traceability. A pause for a foundation audit would reduce the chance of compounding hidden gaps into the scoring and clearance pipeline.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-IMPL",
+          "pick_text": "Implementation gap — SSOT is sound; wire the engine that already exists.",
+          "rationale": "The artifact explicitly describes a real multi-page `aggressiveCrawl()` implementation and a mismatch in wiring, not a contradiction in the SSOT’s intended behavior. The missing pieces are execution path, auth traversal, and agent registration, which are implementation concerns."
+        },
+        "Q2": {
+          "key": "Q2-DEFECT",
+          "pick_text": "Defect — single-page output must not be presented as a product assessment until the full-product crawl is wired.",
+          "rationale": "Because the shipped assessment output is homepage-only while §6 specifies full-product coverage, presenting it as a complete product assessment is misleading. It may be acceptable as an internal diagnostic, but not as the claimed assessment artifact."
+        },
+        "Q3": {
+          "key": "Q3-AGENT-21",
+          "pick_text": "Wire Agent #21 Ops Runner Alpha canonically first — per the SSOT §15.1 ownership row, not as a code shortcut around the agent layer.",
+          "rationale": "The SSOT assigns ownership of the aggressive crawl conductor role to Agent #21, so bypassing that layer would create governance drift. Canonical registration first gives the later crawl wiring a legitimate owner and audit trail."
+        },
+        "Q4": {
+          "key": "Q4-PARTIAL",
+          "pick_text": "Partial — only crawl-independent dormant agents before; crawl-dependent ones after the substrate exists.",
+          "rationale": "Agents whose charters do not depend on full-product crawl can be built in parallel, but crawl-dependent agents should wait for the substrate they consume. That avoids rework while preserving progress on independent capabilities."
+        },
+        "Q5": {
+          "key": "Q5-AUTH-SEC",
+          "pick_text": "Authenticated-traversal security: credential storage, session bleed, accidental data exfiltration via crawl.",
+          "rationale": "Once authenticated traversal is added, the crawler will handle session-bearing fetches and possibly sensitive internal content. The main unmitigated risk is mishandling credentials or crossing tenant/session boundaries during broad crawl sweeps."
+        },
+        "Q6": {
+          "key": "Q6-STAGED",
+          "pick_text": "Proceed in defined phases with explicit gates — staged build, each phase Panel-or-CEO-reviewed before the next.",
+          "rationale": "A staged approach best balances urgency with governance. It lets the team first register Agent #21, then add authenticated traversal, then switch assessment over once the new path has been validated against the old one."
+        }
+      },
+      "overallNotes": "The proposal is directionally right about the gap, but it is under-scoped if treated as a simple wiring task. The safe path is phased delivery with explicit compatibility and security gates.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§6 crawl scope vs crawler.js wiring",
+            "detail": "§6 mandates depth=8/pages=200 + 8 interaction passes (auth, click-everything, modal, AI-probe) for every product assessment, yet aggressiveCrawl() in src/lib/crawler.js lines 594–722 is wired exclusively to the renewal pipeline and the 8-step assessment path still calls the single-page crawl() in api/research-url.js line 23."
+          },
+          {
+            "title": "§15.1 row 21 Agent #21 dormant",
+            "detail": "§15.1 declares Agent #21 Ops Runner Alpha as Aggressive Crawl Conductor owning the full spider with dual authority [recommend_only, auto_write_internal, requires_human_gate], but no class file, no registerAgent() call, and status remains DORMANT with 'wire-in pending'."
+          },
+          {
+            "title": "§7.6 GTM Readiness scoring invalid",
+            "detail": "§7.6 defines the 100 − 10·crit − 5·high − 2·med − 0.5·low formula and four score bands that map to Clearance Step 5, yet all shipped assessment outputs derive from single-page homepage crawls, so the metric has never been validated on the multi-page input it assumes."
+          }
+        ],
+        "worse_than_status_quo": "Wiring the full-product engine without authenticated traversal first will emit multi-page reports that silently omit gated content, creating a false completeness signal that is harder to correct than the current explicit single-page limitation and erodes user trust faster than the status quo.",
+        "precedent": "Early Sauce Labs and BrowserStack full-site crawlers promised exhaustive authenticated coverage but delivered only partial unauthenticated snapshots on SPAs, producing misleading audit reports that required years of retrofits and damaged platform credibility."
+      },
+      "rejection_steelman": "The proposal's framing as a pure implementation gap understates that §6's authenticated multi-page + AI-probe contract exceeds the current single-page architecture by an order of magnitude; proceeding without a foundation audit risks compounding the three already-identified 'sounds-done-but-isn't' gaps into systemic rework once the 20 dormant agents begin consuming the new substrate.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-BOTH",
+          "pick_text": "Both — SSOT is sound in principle but parts of §6 are unbuildable as written.",
+          "rationale": "Authenticated traversal and Agent #21 registration are absent from the shipped codebase, making the §6 contract unbuildable in its current form without new primitives."
+        },
+        "Q2": {
+          "key": "Q2-DEFECT",
+          "pick_text": "Defect — single-page output must not be presented as a product assessment until the full-product crawl is wired.",
+          "rationale": "Presenting homepage-only results as product assessments violates the explicit §6 contract and misleads users about coverage."
+        },
+        "Q3": {
+          "key": "Q3-AGENT-21",
+          "pick_text": "Wire Agent #21 Ops Runner Alpha canonically first — per the SSOT §15.1 ownership row, not as a code shortcut around the agent layer.",
+          "rationale": "Bypassing the agent registry would create a fourth 'sounds-done-but-isn't' gap and violate the canonical ownership model."
+        },
+        "Q4": {
+          "key": "Q4-AFTER",
+          "pick_text": "After — most dormant agents assume full-product input that does not yet exist; building on missing substrate is rework risk.",
+          "rationale": "Agents #6, #8, #10 and others are specified against the §6 crawl surface; building them now guarantees later adaptation work."
+        },
+        "Q5": {
+          "key": "Q5-FOUNDATION",
+          "pick_text": "Building on three already-found \"sounds-done-but-isn't\" gaps without a foundation audit; more such gaps likely lurk and will compound.",
+          "rationale": "The pattern of documented-but-unimplemented capabilities has already surfaced three times; adding full-product crawl without an audit multiplies the surface area for hidden gaps."
+        },
+        "Q6": {
+          "key": "Q6-AUDIT",
+          "pick_text": "Pause — conduct a full foundation audit of all \"sounds-done-but-isn't\" gaps before initiating any new build.",
+          "rationale": "A systematic audit is required before any further wiring to prevent the documented pattern from repeating at larger scale."
+        }
+      },
+      "overallNotes": "The adversarial pass reveals a systemic mismatch between documented scope and delivered substrate that must be resolved before further expansion.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "topic": "Is W2 right that this is an IMPLEMENTATION gap or a SPECIFICATION gap?",
+      "options": [
+        {
+          "key": "Q1-IMPL",
+          "text": "Implementation gap — SSOT is sound; wire the engine that already exists."
+        },
+        {
+          "key": "Q1-SPEC",
+          "text": "Specification gap — SSOT over-specifies vs what is buildable today."
+        },
+        {
+          "key": "Q1-BOTH",
+          "text": "Both — SSOT is sound in principle but parts of §6 are unbuildable as written."
+        },
+        {
+          "key": "Q1-UNDET",
+          "text": "Cannot determine from the evidence presented."
+        }
+      ],
+      "draftedKey": "Q1-IMPL"
+    },
+    {
+      "id": "Q2",
+      "topic": "Is single-page assessment as shipped this session a defect or an acceptable interim?",
+      "options": [
+        {
+          "key": "Q2-DEFECT",
+          "text": "Defect — single-page output must not be presented as a product assessment until the full-product crawl is wired."
+        },
+        {
+          "key": "Q2-LABELED",
+          "text": "Acceptable interim only if the UI + report header explicitly label the output as single-page, not full-product."
+        },
+        {
+          "key": "Q2-SUFFICE",
+          "text": "Acceptable — single-page is sufficient for the use cases actually shipped."
+        },
+        {
+          "key": "Q2-REFRAME",
+          "text": "Reject the framing — none of these capture the right answer; explain in rationale."
+        }
+      ],
+      "draftedKey": "Q2-DEFECT"
+    },
+    {
+      "id": "Q3",
+      "topic": "Path-forward priority — auth-traversal is unbuilt and Agent #21 is dormant. What is the correct next build?",
+      "options": [
+        {
+          "key": "Q3-WIRE-AC",
+          "text": "Wire aggressiveCrawl() into the assessment pipeline first — multi-page coverage now, authenticated traversal can follow."
+        },
+        {
+          "key": "Q3-AUTH-FIRST",
+          "text": "Build authenticated traversal first — depth without auth has limited value on real apps that gate content behind login."
+        },
+        {
+          "key": "Q3-AGENT-21",
+          "text": "Wire Agent #21 Ops Runner Alpha canonically first — per the SSOT §15.1 ownership row, not as a code shortcut around the agent layer."
+        },
+        {
+          "key": "Q3-DEFER-ALL",
+          "text": "Defer all three — prove the value of single-page assessment first before investing in full-product crawl machinery."
+        }
+      ],
+      "draftedKey": "Q3-AGENT-21"
+    },
+    {
+      "id": "Q4",
+      "topic": "Should the 20 dormant agents be built before or after the full-product crawl + auth gap is closed?",
+      "options": [
+        {
+          "key": "Q4-AFTER",
+          "text": "After — most dormant agents assume full-product input that does not yet exist; building on missing substrate is rework risk."
+        },
+        {
+          "key": "Q4-BEFORE",
+          "text": "Before — agent graduation is independent of crawl scope; they can be built against single-page input and adapted later."
+        },
+        {
+          "key": "Q4-PARTIAL",
+          "text": "Partial — only crawl-independent dormant agents before; crawl-dependent ones after the substrate exists."
+        },
+        {
+          "key": "Q4-REFRAME",
+          "text": "Reject the framing — wrong question; explain in rationale."
+        }
+      ],
+      "draftedKey": "Q4-AFTER"
+    },
+    {
+      "id": "Q5",
+      "topic": "Biggest unmitigated risk in proceeding to wire full-product + auth crawl now.",
+      "options": [
+        {
+          "key": "Q5-AUTH-SEC",
+          "text": "Authenticated-traversal security: credential storage, session bleed, accidental data exfiltration via crawl."
+        },
+        {
+          "key": "Q5-COST",
+          "text": "Crawl cost and time blowup at depth=8 / pages=200 — every assessment becomes a multi-minute, multi-dollar operation."
+        },
+        {
+          "key": "Q5-SCORING",
+          "text": "The scoring engine has not been validated on multi-page input — quality metrics may not generalise from homepage to whole product."
+        },
+        {
+          "key": "Q5-FOUNDATION",
+          "text": "Building on three already-found \"sounds-done-but-isn't\" gaps without a foundation audit; more such gaps likely lurk and will compound."
+        }
+      ],
+      "draftedKey": null
+    },
+    {
+      "id": "Q6",
+      "topic": "Disposition — what should happen next.",
+      "options": [
+        {
+          "key": "Q6-PROCEED",
+          "text": "Proceed — wire full-product crawl and build authenticated traversal per SSOT §6 as the priority build."
+        },
+        {
+          "key": "Q6-STAGED",
+          "text": "Proceed in defined phases with explicit gates — staged build, each phase Panel-or-CEO-reviewed before the next."
+        },
+        {
+          "key": "Q6-AUDIT",
+          "text": "Pause — conduct a full foundation audit of all \"sounds-done-but-isn't\" gaps before initiating any new build."
+        },
+        {
+          "key": "Q6-RESCOPE",
+          "text": "Reject — the project needs strategic re-scoping at CEO level first; SSOT §6 may not be the right target for FlowAI right now."
+        }
+      ],
+      "draftedKey": "Q6-PROCEED"
+    }
+  ]
+}
