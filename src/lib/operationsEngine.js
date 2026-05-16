@@ -326,7 +326,7 @@ export async function invokeLlmViaApi(prompt, opts = {}) {
 
 // ─── STEP PROMPT BUILDER ──────────────────────────────────────────────────────
 
-export function buildStepPrompt(stepKey, input, multiMode = null, allInputs = null, pageContext = null, objective = null, crawlContext = null) {
+export function buildStepPrompt(stepKey, input, multiMode = null, allInputs = null, pageContext = null, objective = null, crawlContext = null, priorStepResults = null) {
   const { name, value, type } = input;
 
   // ── Input context block ──
@@ -595,7 +595,32 @@ ${inputContext}${multiContext}${objectiveLens}
 
 ${FIVE_LAYER_FRAMEWORK}
 
-Compile a comprehensive final assessment for this specific product across all five intelligence layers:
+${(() => {
+  // Defect C 2026-05-16: thread prior step findings into the Monitor
+  // prompt so it CONSOLIDATES instead of RE-DERIVING. Previously each of
+  // the 8 step prompts only saw the page content + the FIVE_LAYER
+  // framework; Monitor had no access to the outputs of Research, Design,
+  // Build, QA, Deploy, Govern, GTM and could only produce a fresh
+  // analysis from page content (hence "MONITOR ≈ verbatim final report;
+  // steps echo not work" on the FlowAI-on-FlowAI run). With the prior
+  // results threaded in, the Monitor step is forced to summarise what
+  // the pipeline actually produced rather than re-doing it.
+  if (!priorStepResults || typeof priorStepResults !== 'object') return '';
+  const PRIOR_STEP_ORDER = ['research', 'design', 'build', 'qa_audit', 'deploy', 'govern', 'gtm'];
+  const labels = { research: 'Step 1 Research', design: 'Step 2 Design', build: 'Step 3 Build', qa_audit: 'Step 4 Quality Audit', deploy: 'Step 5 Deploy', govern: 'Step 6 Self-Renewal', gtm: 'Step 7 GTM' };
+  const blocks = PRIOR_STEP_ORDER
+    .map((key, idx) => {
+      const r = priorStepResults[idx] || priorStepResults[key];
+      const text = typeof r?.full_output === 'string' ? r.full_output : '';
+      if (!text) return null;
+      return `━━━ ${labels[key]} OUTPUT ━━━\n${text.slice(0, 4000)}`;
+    })
+    .filter(Boolean);
+  if (blocks.length === 0) return '';
+  return `\n━━━ PRIOR STEP FINDINGS (these are the actual outputs from this pipeline run; consolidate them — do not re-derive) ━━━\n\n${blocks.join('\n\n')}\n\n━━━ END OF PRIOR STEP FINDINGS ━━━\n`;
+})()}
+
+Compile a comprehensive final assessment for this specific product across all five intelligence layers. Where PRIOR STEP FINDINGS are provided above, SUMMARISE and CONSOLIDATE them — do not run a fresh analysis that ignores or duplicates prior step work:
 
 1. EXECUTIVE SUMMARY — 3-4 sentences about THIS product's state, referencing specific findings
 

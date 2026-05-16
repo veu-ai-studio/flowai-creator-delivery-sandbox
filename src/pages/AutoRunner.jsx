@@ -534,7 +534,12 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
             }
           }
 
-          const prompt = buildStepPrompt(STEPS[i].key, inp, null, null, pageContexts[0], objective, crawlCtx);
+          // Defect C 2026-05-16: thread prior step results into the Monitor
+          // prompt so it consolidates rather than re-derives. Other steps
+          // continue to receive null priorStepResults (no change to their
+          // distinct per-step task scope).
+          const priorForStep = STEPS[i].key === 'monitor' ? results : null;
+          const prompt = buildStepPrompt(STEPS[i].key, inp, null, null, pageContexts[0], objective, crawlCtx, priorForStep);
           // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
           let output = await invokeLlmViaApi(prompt, { sessionId: sessionDbIdRef.current, endpoint: `/api/llm-step:${STEPS[i].key}` });
           if (!output) {
