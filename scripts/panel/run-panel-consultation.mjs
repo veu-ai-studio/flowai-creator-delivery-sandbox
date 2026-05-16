@@ -32,6 +32,15 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { peerReview } from '../lib/peer-review.mjs';
 import { SLOT_CONFIG, PANEL as SLOT_CONFIG_PANEL } from './slot-config.mjs';
+import {
+  buildAdversarialQuestionBody,
+  buildAdversarialCriteria,
+  classifyAdversarialReviewer,
+  safeParseReviewerResponse,
+  tallyAdversarial,
+  evaluateDissentFloor,
+  computeVerdict,
+} from './adversarial-format.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,6 +100,18 @@ export const MAX_SAFE_BUNDLE_CHARS = 120_000;
 
 const QUORUM_BAR = 7;
 const SUPERMAJORITY_BAR = 8;
+
+// Anchor-phrase regex — the Panel runner REJECTS by default any artifact
+// or criteria text containing labels that anchor reviewers to the spec-
+// author's preferred option ("(as drafted)", "(recommended)", "(W3
+// recommends)", etc. — the root cause of the all-(a) rubber-stamp pattern
+// in CA-1 through CA-10). Callers must present options neutrally via
+// buildAdversarialQuestionBody() from ./adversarial-format.mjs, or
+// explicitly opt out by passing allowAnchorPhrases:true (logged as a
+// warning, intended for edge cases like quoting historical artifacts
+// verbatim). Added 2026-05-15 (W5b Adversarial Format Lock).
+const ANCHOR_PHRASE_RE =
+  /\((?:as\s+drafted|recommended|spec[\s-]?author\s+(?:recommends?|prefers?|preferred)|W[\s\-_]?\d+\s+(?:recommends?|prefers?|preferred)|author[\s-]?preferred|author[\s-]?recommends?|drafted)\)/i;
 
 // ─────────────────────────────────────────────────────────────────
 // CANONICAL_REFERENCE.md attachment (per W6 brief standing rule)
@@ -171,6 +192,7 @@ export async function runPanelConsultationWithBackups(opts) {
     backupRetryTimeoutMs = BACKUP_RETRY_TIMEOUT_MS,
     staggerMs = DEFAULT_STAGGER_MS,
     maxBundleChars = MAX_SAFE_BUNDLE_CHARS,
+    allowAnchorPhrases = false,
     log = (m) => process.stdout.write(`${m}\n`),
   } = opts;
 
@@ -192,6 +214,28 @@ export async function runPanelConsultationWithBackups(opts) {
       `Use runPanelConsultationWithBackupsBatched({ batches: [{ artifact, label }, ...] }) to ` +
       `split into multiple in-budget batches, or shrink the bundle.`,
     );
+  }
+
+  // Anchor-phrase guard (Adversarial Format Lock control 2A, 2026-05-15
+  // W5b). The Panel runner rejects rubber-stamp framing by default — the
+  // root cause of the all-(a) verdicts in CA-1 through CA-10. Callers
+  // must use buildAdversarialQuestionBody() from ./adversarial-format.mjs
+  // to present options neutrally, or explicitly pass allowAnchorPhrases:
+  // true to override (warning logged).
+  if (!allowAnchorPhrases) {
+    const haystack = `${artifact}\n${criteria}`;
+    const m = haystack.match(ANCHOR_PHRASE_RE);
+    if (m) {
+      throw new Error(
+        `runPanelConsultationWithBackups: anchor phrase "${m[0]}" detected in artifact/criteria. ` +
+        `The Panel runner rejects rubber-stamp framing by default (this was the root cause of ` +
+        `the all-(a) verdicts in CA-1 through CA-10). Use buildAdversarialQuestionBody() and ` +
+        `buildAdversarialCriteria() from ./adversarial-format.mjs to present options without ` +
+        `anchors, or pass allowAnchorPhrases:true to override (logged).`,
+      );
+    }
+  } else {
+    log(`[panel-consultation] ⚠ allowAnchorPhrases=true — anchor phrases NOT rejected (rubber-stamp risk)`);
   }
 
   log(`[panel-consultation] primary run starting · panel=${panel.length} slots · timeout=${perReviewerTimeoutMs}ms · stagger=${staggerMs}ms · bundle=${artifact.length} chars`);
@@ -295,6 +339,7 @@ export async function runPanelConsultationWithBackupsBatched(opts) {
     backupRetryTimeoutMs = BACKUP_RETRY_TIMEOUT_MS,
     staggerMs = DEFAULT_STAGGER_MS,
     maxBundleChars = MAX_SAFE_BUNDLE_CHARS,
+    allowAnchorPhrases = false,
     log = (m) => process.stdout.write(`${m}\n`),
   } = opts;
 
@@ -317,7 +362,7 @@ export async function runPanelConsultationWithBackupsBatched(opts) {
     const result = await runPanelConsultationWithBackups({
       artifact: b.artifact, criteria, panel,
       perReviewerTimeoutMs, backupAdapters, backupRetryTimeoutMs,
-      staggerMs, maxBundleChars, log,
+      staggerMs, maxBundleChars, allowAnchorPhrases, log,
     });
     results.push({ label: b.label, result });
   }
@@ -332,6 +377,150 @@ export async function runPanelConsultationWithBackupsBatched(opts) {
   );
 
   return { batches: results, totalReviewers, totalSlots, quorum_met_per_batch };
+}
+
+// ─────────────────────────────────────────────────────────────────
+// High-level adversarial wrapper — DEFAULT entrypoint for every future
+// W6 consultation per W05 dispatch 2026-05-15 (Adversarial Format Lock).
+//
+// Combines into a single call:
+//   1. buildAdversarialQuestionBody (Control 2A — no anchoring, shuffled)
+//   2. buildAdversarialCriteria      (Controls 2B + 2C — adversarial pass
+//                                     + rejection steelman REQUIRED)
+//   3. runPanelConsultationWithBackups (transport — enforces anchor guard,
+//                                       bundle-size pre-check, stagger)
+//   4. classifyAdversarialReviewer    (controls 2B + 2C enforcement —
+//                                       invalid votes DISCARDED)
+//   5. tallyAdversarial               (ENGAGED-only vote tally)
+//   6. evaluateDissentFloor           (Control 2D — re-run flagging)
+//
+// Returns consultation_valid=false when the dissent floor triggers (high
+// alignment with the spec-author position + low objection diversity) —
+// the consultation should be re-run with sharper framing rather than
+// trusted as a verdict. Per Control 2E, this is the locked default; the
+// only opt-out is the runtime allowAnchorPhrases:true panic switch on
+// runPanelConsultationWithBackups (which logs a warning).
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * Run an adversarial Panel consultation end-to-end.
+ *
+ * @param {object} opts
+ * @param {string} opts.topic — short consultation title (appears in the
+ *   bundle banner).
+ * @param {string} opts.draftText — the proposal/spec text under review
+ *   (verbatim; NOT the canonical reference — the wrapper attaches that).
+ * @param {Array}  opts.questions — see adversarial-format.mjs schema
+ *   (id, topic, options[{key,text}], draftedKey). Option text MUST NOT
+ *   contain anchor labels — the runtime guard rejects them.
+ * @param {string} [opts.seed] — option-shuffle seed; defaults to topic+ids.
+ * @param {string} [opts.schemaIntro] — optional caller-supplied preamble
+ *   to the criteria text.
+ * @param {string} [opts.canonical] — optional pre-loaded canonical text;
+ *   if omitted, loadCanonicalReference() is called.
+ * @param {number} [opts.perReviewerTimeoutMs] — defaults to 180s
+ *   (adversarial protocol asks for substantial free-form output).
+ * @param {number} [opts.backupRetryTimeoutMs] — defaults to 210s.
+ * @param {number} [opts.alignmentBar] — dissent-floor alignment trigger,
+ *   default 0.80.
+ * @param {number} [opts.objectionFloor] — dissent-floor objection floor,
+ *   default 5.
+ * @param {string[]} [opts.draftedQs] — explicit list of question ids
+ *   counted for dissent-floor alignment; defaults to every question with
+ *   a non-null draftedKey.
+ * @param {object[]} [opts.panel] — override the panel composition.
+ * @returns {Promise<object>} — {
+ *   tally, perReviewer, perVerdicts, dissentFloor, consultation_valid,
+ *   bundle_chars, w6_metadata, shuffledOptions, seed, artifact, criteria,
+ *   reviewers // raw reviewer envelopes from the transport layer
+ * }
+ */
+export async function runAdversarialPanelConsultation(opts) {
+  const {
+    topic,
+    draftText,
+    questions,
+    seed,
+    schemaIntro,
+    canonical,
+    panel = PANEL,
+    perReviewerTimeoutMs = 180_000,
+    backupRetryTimeoutMs = 210_000,
+    staggerMs = DEFAULT_STAGGER_MS,
+    maxBundleChars = MAX_SAFE_BUNDLE_CHARS,
+    alignmentBar = 0.80,
+    objectionFloor = 5,
+    draftedQs = null,
+    log = (m) => process.stdout.write(`${m}\n`),
+  } = opts;
+
+  if (typeof topic !== 'string' || topic.length === 0) {
+    throw new TypeError('runAdversarialPanelConsultation: topic required');
+  }
+  if (typeof draftText !== 'string' || draftText.length === 0) {
+    throw new TypeError('runAdversarialPanelConsultation: draftText required');
+  }
+
+  // Build prompt body + criteria via the locked-format helpers.
+  const built = buildAdversarialQuestionBody({ topic, draftText, questions, seed });
+  const criteria = buildAdversarialCriteria({ questions, schemaIntro });
+
+  // Attach canonical reference per W6 standing rule.
+  const canonicalText = canonical ?? await loadCanonicalReference();
+  const artifact = buildArtifactWithCanonical(canonicalText, built.body);
+
+  log(
+    `[adversarial-consultation] "${topic}" — ${questions.length} questions, ${panel.length} slots, ` +
+    `bundle=${artifact.length} chars, seed=${built.seed}`,
+  );
+
+  // Transport — the inner runner enforces the anchor-phrase guard, bundle
+  // size pre-check, and cascade stagger.
+  const transport = await runPanelConsultationWithBackups({
+    artifact, criteria, panel,
+    perReviewerTimeoutMs, backupRetryTimeoutMs,
+    staggerMs, maxBundleChars,
+    log,
+  });
+
+  // Reviewer classification + tally (controls 2B + 2C).
+  const perReviewer = transport.reviewers.map((r, idx) => {
+    const modelTag = `${r.provider}:${(r.model || '').split(':').slice(1).join(':') || (r.model || '')}`;
+    if (r.degraded) return classifyAdversarialReviewer(null, idx, true, false, modelTag, questions);
+    const parsed = safeParseReviewerResponse(r.raw_output);
+    if (!parsed.ok) return classifyAdversarialReviewer(null, idx, false, true, modelTag, questions);
+    return classifyAdversarialReviewer(parsed.parsed, idx, false, false, modelTag, questions);
+  });
+
+  const tally = tallyAdversarial(perReviewer, questions);
+  const perVerdicts = {};
+  for (const q of questions) {
+    perVerdicts[q.id] = computeVerdict(tally.perQuestion[q.id], tally.engagedTotal, q.options);
+  }
+  const dissentFloor = evaluateDissentFloor({
+    tally, questions, draftedQs, alignmentBar, objectionFloor,
+  });
+
+  log(
+    `[adversarial-consultation] tally — engaged=${tally.engagedTotal}/${panel.length} ` +
+    `invalid=${tally.invalid} silent=${tally.silent} tangential=${tally.tangential} ` +
+    `distinct-objections=${tally.distinctObjections}`,
+  );
+  log(
+    `[adversarial-consultation] dissent floor — alignment=${(dissentFloor.alignedPct * 100).toFixed(1)}% ` +
+    `triggered=${dissentFloor.triggered} (${dissentFloor.reason})`,
+  );
+
+  return {
+    tally, perReviewer, perVerdicts, dissentFloor,
+    consultation_valid: !dissentFloor.triggered,
+    bundle_chars: artifact.length,
+    w6_metadata: transport.w6_metadata,
+    shuffledOptions: built.shuffledOptions,
+    seed: built.seed,
+    artifact, criteria,
+    reviewers: transport.reviewers,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────
