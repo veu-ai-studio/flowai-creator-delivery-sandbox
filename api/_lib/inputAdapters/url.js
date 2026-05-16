@@ -2,23 +2,19 @@
 //
 // URL input adapter for the FlowAI renewal pipeline.
 //
-// Walks the target URL up to a depth-bounded traversal (default depth=2,
-// max pages=8) using the existing crawler.js stack (Browserless preferred,
-// simple-fetch fallback).  Extracts evidence and produces the unified
-// InputArtifact.normalized shape consumed by the issue detector.
+// Walks the target URL via the canonical Aggressive Crawl Engine Phase 1
+// (api/_lib/crawler.js → aggressiveCrawl). The prior in-file
+// depth=2/maxPages=8 BFS spider was superseded by the ACE Phase 1
+// promotion (CANONICAL_REFERENCE §6, ENTRY 006) — default depth=8 /
+// hard cap 12 + default pages=200 / hard cap 2000. Hard caps are
+// overridable via Doppler env (`CRAWL_DEPTH_HARD_CAP`,
+// `CRAWL_MAX_PAGES_HARD_CAP`).
 //
 // ─── SCOPE ─────────────────────────────────────────────────────────────
-// This adapter EXTENDS the existing api/_lib/crawler.js — it does NOT
-// modify or replace its exports.  The single-page crawl() is called once
-// per URL discovered.
-//
-// The dispatch asks for depth=3 / max=50 / click-everything Playwright.
-// What ships in this dispatch is a depth-bounded multi-page traversal
-// (default depth=2, max=8 pages).  Click-everything Playwright + modal
-// probing + AI-agent surface probing are NOT implemented in this dispatch
-// (see renewal-pipeline limitations in the report-back) — they remain
-// pending sub-tasks.  Internal-link discovery uses the link list returned
-// by the per-page crawl.
+// This adapter wraps the ACE crawl with the InputArtifact normalisation
+// layer. Per-page rendering is delegated to ACE; this file owns only the
+// Claude-normalisation of the crawl evidence into the
+// InputArtifact.normalized shape consumed by the issue detector.
 //
 // ─── OUTPUT ────────────────────────────────────────────────────────────
 // Returns an object the renewal orchestrator wraps into an InputArtifact:
@@ -26,122 +22,17 @@
 //     raw:        { url },
 //     normalized: { productConcept, targetUsers, coreClaims,
 //                   observedSurfaces: 'crawl', detectedFeatures },
-//     evidence:   { pages: [{ url, title, headings, bodyText, links, ok, reason }],
-//                   pagesCrawled, depth, attempts }
+//     evidence:   { pages, pagesCrawled, depth, origin, durationMs,
+//                   warnings, errors }
 //   }
 // `evidence` is not part of the public InputArtifact shape but is passed
 // alongside so the issue detector can run URL-specific detectors against
-// the actual crawl output.
+// the actual crawl output. `pages` carries the rich ACE PageRecord shape
+// (title, metaDescription, bodyText, headings, surfaces, accessibility,
+// timing, consoleErrors, networkErrors).
 
-import { crawl } from '../crawler.js';
+import { aggressiveCrawl } from '../crawler.js';
 import { callClaude } from '../claude.js';
-
-const DEFAULT_DEPTH = 2;
-const DEFAULT_MAX_PAGES = 8;
-
-function normalizeUrlForCompare(href) {
-  try {
-    const u = new URL(href);
-    // Drop fragment + trailing slash for de-dup.
-    return (u.origin + u.pathname.replace(/\/$/, '')).toLowerCase();
-  } catch {
-    return null;
-  }
-}
-
-function isSameOrigin(href, origin) {
-  try {
-    return new URL(href).origin === origin;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Crawl the URL and a depth-bounded slice of its internal links.
- *
- * @param {string} startUrl
- * @param {{ depth?: number, maxPages?: number, credentials?: object|null, force?: string }} [opts]
- * @returns {Promise<{ ok: boolean, reason?: string, pages: Array, pagesCrawled: number, depth: number, origin: string }>}
- */
-export async function aggressiveCrawl(startUrl, opts = {}) {
-  const depth = Math.max(0, Math.min(3, opts.depth ?? DEFAULT_DEPTH));
-  const maxPages = Math.max(1, Math.min(50, opts.maxPages ?? DEFAULT_MAX_PAGES));
-  const force = opts.force;
-
-  const root = await crawl(startUrl, { force });
-  if (!root.ok) {
-    return {
-      ok: false,
-      reason: root.reason || 'root crawl failed',
-      pages: [],
-      pagesCrawled: 0,
-      depth,
-      origin: '',
-    };
-  }
-  let origin;
-  try { origin = new URL(root.url).origin; }
-  catch { origin = ''; }
-
-  const pages = [{
-    url: root.url,
-    title: root.title,
-    metaDescription: root.metaDescription,
-    headings: root.headings || [],
-    bodyText: root.bodyText || '',
-    links: root.links || [],
-    method: root.method,
-    jsRendered: !!root.jsRendered,
-    warnings: root.warnings || [],
-    ok: true,
-  }];
-  const seen = new Set([normalizeUrlForCompare(root.url)]);
-
-  // BFS the internal-link graph.
-  let frontier = (root.links || [])
-    .map((l) => (typeof l === 'string' ? l : l?.href))
-    .filter((href) => typeof href === 'string' && href.length > 0)
-    .filter((href) => origin && isSameOrigin(href, origin))
-    .map(normalizeUrlForCompare)
-    .filter((u) => u && !seen.has(u))
-    .slice(0, maxPages * 2);
-
-  for (let d = 1; d <= depth && pages.length < maxPages && frontier.length > 0; d++) {
-    const nextFrontier = [];
-    for (const candidate of frontier) {
-      if (pages.length >= maxPages) break;
-      if (seen.has(candidate)) continue;
-      seen.add(candidate);
-      const childResult = await crawl(candidate, { force });
-      if (!childResult.ok) {
-        pages.push({ url: candidate, ok: false, reason: childResult.reason || 'child crawl failed' });
-        continue;
-      }
-      pages.push({
-        url: childResult.url,
-        title: childResult.title,
-        metaDescription: childResult.metaDescription,
-        headings: childResult.headings || [],
-        bodyText: (childResult.bodyText || '').slice(0, 4000),
-        links: childResult.links || [],
-        method: childResult.method,
-        jsRendered: !!childResult.jsRendered,
-        ok: true,
-      });
-      // Feed depth+1 frontier from this child's same-origin links.
-      const childLinks = (childResult.links || [])
-        .map((l) => (typeof l === 'string' ? l : l?.href))
-        .filter((href) => typeof href === 'string' && isSameOrigin(href, origin))
-        .map(normalizeUrlForCompare)
-        .filter((u) => u && !seen.has(u));
-      nextFrontier.push(...childLinks);
-    }
-    frontier = nextFrontier.slice(0, maxPages * 2);
-  }
-
-  return { ok: true, pages, pagesCrawled: pages.filter((p) => p.ok).length, depth, origin };
-}
 
 /**
  * Build a Claude prompt that normalizes crawl evidence into the
@@ -188,13 +79,28 @@ export async function adaptUrl(url, opts = {}) {
     return { ok: false, reason: 'URL is empty', raw: { url: '' }, normalized: emptyNormalized('crawl'), evidence: { pages: [] } };
   }
   const crawled = await aggressiveCrawl(url, opts);
-  if (!crawled.ok) {
+  // ACE Phase 1 surfaces input failures via ok:false (e.g. empty/invalid
+  // URL) and per-page render failures via errors[] (the crawl can still
+  // be useful even with some failed pages). Treat "ok:false from
+  // aggressiveCrawl OR zero pages rendered" as adapter failure.
+  if (!crawled.ok || crawled.pagesCrawled === 0) {
+    const firstError = (crawled.errors && crawled.errors[0]) || null;
+    const reason = firstError
+      ? `${firstError.phase}: ${firstError.reason}`
+      : (crawled.warnings?.[0] ?? 'no pages rendered');
     return {
       ok: false,
-      reason: crawled.reason,
+      reason,
       raw: { url },
       normalized: emptyNormalized('crawl'),
-      evidence: { pages: crawled.pages, pagesCrawled: 0, depth: crawled.depth, origin: crawled.origin },
+      evidence: {
+        pages: crawled.pages ?? [],
+        pagesCrawled: 0,
+        depth: crawled.depth ?? 0,
+        origin: crawled.origin ?? '',
+        errors: crawled.errors ?? [],
+        warnings: crawled.warnings ?? [],
+      },
     };
   }
 
@@ -227,7 +133,11 @@ export async function adaptUrl(url, opts = {}) {
       pages: crawled.pages,
       pagesCrawled: crawled.pagesCrawled,
       depth: crawled.depth,
+      pageCap: crawled.pageCap,
       origin: crawled.origin,
+      durationMs: crawled.durationMs,
+      warnings: crawled.warnings ?? [],
+      errors: crawled.errors ?? [],
     },
   };
 }
