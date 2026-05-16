@@ -64,13 +64,40 @@ export const SLOT_CONFIG = Object.freeze([
     role: 'reasoning',
     backup: Object.freeze({ provider: 'openrouter', model: 'openai/gpt-5' }),
   }),
-  // Slot 3 — US frontier (Google family)
+  // Slot 3 — US frontier (Google family). Backup rebalanced 2026-05-15:
+  // meta-llama/llama-3.3-70b-instruct (Meta, 128K context) replaces
+  // mistralai/mistral-large-2411 as backup. Rationale (W5b Panel Infra
+  // Repair, dispatch 2026-05-15):
+  //   - gemini-2.5-pro logged 4 consecutive JSON-envelope-flake failures
+  //     in recent consultations (e.g. ca11-consultation-2026-05-16 sidecar
+  //     slot 3 TANGENTIAL → ENGAGED only after multiple runs).
+  //   - The "Kimi-treatment" literal-swap of primary + backup (i.e. promote
+  //     mistral-large to Slot 3 primary, demote gemini-2.5-pro to backup)
+  //     is STRUCTURALLY BLOCKED — mistral-large IS Slot 4 primary, and
+  //     the 10-unique-provider audit hard-throws if any family appears
+  //     twice in primaries. No other allowlist model preserves both
+  //     "≥64K context" AND "unique provider family not already a primary"
+  //     except moonshotai/kimi-k2.6 (worse envelope-flake than gemini —
+  //     already demoted from Slot 9 for the same reason) and
+  //     qwen-2.5-72b-instruct (32K context cap — the failure mode we are
+  //     trying to fix in Slot 6).
+  //   - Best honest mitigation: keep gemini-2.5-pro as Slot 3 primary,
+  //     swap its backup to a model that (a) is structurally OUTSIDE the
+  //     primary set (llama-3.3-70b-instruct is not a primary in any slot;
+  //     the meta-llama family IS Slot 9 primary llama-4-maverick, so the
+  //     family is repeated but the MODEL is distinct), (b) handles JSON
+  //     envelopes cleanly, and (c) has a large context. llama-3.3-70b-
+  //     instruct satisfies all three.
+  //   - In parallel, the JSON extractor in scripts/lib/peer-review.mjs
+  //     emits slot-3-envelope-fail telemetry on Gemini parse failures
+  //     (parallel to the existing slot-9-envelope-fail Kimi line), so
+  //     future hardening can target real failure modes.
   Object.freeze({
     provider: 'openrouter',
     model: 'google/gemini-2.5-pro',
     region: 'US',
     role: 'frontier multimodal',
-    backup: Object.freeze({ provider: 'openrouter', model: 'mistralai/mistral-large-2411' }),
+    backup: Object.freeze({ provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct' }),
   }),
   // Slot 4 — European frontier (Mistral, France)
   Object.freeze({
@@ -88,22 +115,33 @@ export const SLOT_CONFIG = Object.freeze([
     role: 'European RAG-tuned',
     backup: Object.freeze({ provider: 'openrouter', model: 'mistralai/mistral-large-2411' }),
   }),
-  // Slot 6 — Asia generalist. Rebalanced 2026-05-15: minimax/minimax-m2.7
-  // (Hailuo, 128K context) replaces qwen/qwen-2.5-72b-instruct as primary
-  // after 2 consecutive 32K-context-cap failures on large bundles. Qwen
-  // demoted to backup. The "obvious" promotion (deepseek/deepseek-r1,
-  // Slot 6's prior backup) would have duplicated Slot 7's primary —
-  // violating the 10-unique-providers rule — so the dispatch's "next
-  // best option with ≥64K context that is NOT already a primary in any
-  // slot" clause picked minimax-m2.7. Verified on OpenRouter at commit
-  // 9bafecf probe time. Provider-different from Qwen (different family),
-  // preserves "Asia generalist" role.
+  // Slot 6 — Asia generalist. Primary minimax/minimax-m2.7 (Hailuo, 128K)
+  // unchanged from the 2026-05-15 rebalance. BACKUP RE-POINTED 2026-05-15
+  // (W5b Panel Infra Repair, dispatch 2026-05-15):
+  //   - Previous backup qwen/qwen-2.5-72b-instruct has a 32K context cap.
+  //     On the CA-11 adversarial bundle (146,754 chars / ~36K tokens) the
+  //     Slot 6 primary went SILENT, the backup ALSO failed (the bundle
+  //     exceeds Qwen's input window), and the slot dropped out entirely.
+  //     The same will happen on the 20-agent review bundle (far larger).
+  //     Qwen is therefore an USELESS backup on any consultation that
+  //     exceeds 32K input tokens — which now describes every meaningful
+  //     consultation.
+  //   - Re-pointed to anthropic/claude-opus-4 (200K context, proven on
+  //     this panel as Slot 2 primary + Slot 1 backup; "provider-different
+  //     from minimax" check ✓). The dispatch's named candidates were
+  //     deepseek-r1, claude-opus-4, or "another high-context model already
+  //     proven in the roster" — claude-opus-4 is the strictly-most-reliable
+  //     of those three and has the largest context. Backup-duplicating an
+  //     existing primary is permitted under the Slot 1-8 looser rule (see
+  //     header note); the strict outside-primary-set rule only applies to
+  //     Slots 9 + 10. Qwen kept on allowlist (still in peer-review.mjs)
+  //     for future contingency.
   Object.freeze({
     provider: 'openrouter',
     model: 'minimax/minimax-m2.7',
     region: 'Asia',
     role: 'Asia generalist',
-    backup: Object.freeze({ provider: 'openrouter', model: 'qwen/qwen-2.5-72b-instruct' }),
+    backup: Object.freeze({ provider: 'openrouter', model: 'anthropic/claude-opus-4' }),
   }),
   // Slot 7 — Asia reasoning (DeepSeek)
   Object.freeze({

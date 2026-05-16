@@ -224,6 +224,7 @@ export async function peerReview({
   models,
   panel,
   perReviewerTimeoutMs = DEFAULT_MULTI_TIMEOUT_MS,
+  staggerMs = 0,
 }) {
   if (typeof artifact !== 'string' || artifact.trim().length === 0) {
     throw new Error('peerReview: artifact required');
@@ -237,7 +238,7 @@ export async function peerReview({
   }
 
   if (Array.isArray(panel)) {
-    return runPanel({ artifact, criteria, panel, perReviewerTimeoutMs });
+    return runPanel({ artifact, criteria, panel, perReviewerTimeoutMs, staggerMs });
   }
   if (Array.isArray(models)) {
     return runMulti({ artifact, criteria, models, perReviewerTimeoutMs });
@@ -408,7 +409,7 @@ const PROVIDER_HANDLERS = Object.freeze({
   headless: callHeadlessAdapter, // stub; surfaces as 'not_configured' until wired
 });
 
-async function runPanel({ artifact, criteria, panel, perReviewerTimeoutMs }) {
+async function runPanel({ artifact, criteria, panel, perReviewerTimeoutMs, staggerMs = 0 }) {
   if (panel.length < 2) {
     throw new Error('peerReview: panel mode requires at least 2 reviewers');
   }
@@ -426,13 +427,28 @@ async function runPanel({ artifact, criteria, panel, perReviewerTimeoutMs }) {
   if (typeof perReviewerTimeoutMs !== 'number' || perReviewerTimeoutMs < 1000) {
     throw new Error('peerReview: perReviewerTimeoutMs must be >= 1000');
   }
+  if (typeof staggerMs !== 'number' || staggerMs < 0) {
+    throw new Error('peerReview: staggerMs must be a non-negative number');
+  }
 
   const system = criteria.trim();
   const user = buildUserMessage(artifact);
 
-  const reviewerPromises = panel.map((entry) =>
-    runPanelReviewer({ entry, system, user, timeoutMs: perReviewerTimeoutMs }),
-  );
+  // Stagger reviewer kick-offs by (idx * staggerMs) + small per-slot jitter
+  // so a transient provider-side blip doesn't cascade across all 10 slots
+  // simultaneously. Default staggerMs=0 preserves the prior parallel-fire
+  // behaviour for back-compat with the multi-AI path; the W6 panel runner
+  // passes staggerMs=200 (≈2 s total spread across 10 slots — invisible
+  // next to the per-reviewer 60s+ budget).
+  const reviewerPromises = panel.map((entry, idx) => {
+    if (staggerMs <= 0) {
+      return runPanelReviewer({ entry, system, user, timeoutMs: perReviewerTimeoutMs });
+    }
+    const jitter = Math.floor(Math.random() * Math.min(staggerMs, 50));
+    const delay = idx * staggerMs + jitter;
+    return new Promise((resolve) => setTimeout(resolve, delay))
+      .then(() => runPanelReviewer({ entry, system, user, timeoutMs: perReviewerTimeoutMs }));
+  });
   const reviewers = await Promise.all(reviewerPromises);
 
   const synthesis = synthesizeReviewers(reviewers);
@@ -507,6 +523,20 @@ async function runPanelReviewer({ entry, system, user, timeoutMs }) {
     const preview = (content || '').slice(0, 160).replace(/\s+/g, ' ');
     process.stderr.write(
       `[peer-review] slot-9-envelope-fail model=moonshotai/kimi-k2.6 ` +
+      `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
+    );
+  }
+  // Slot 3 envelope-fail telemetry — Google Gemini 2.5 Pro. Added
+  // 2026-05-15 (W5b Panel Infra Repair) parallel to the Kimi line above
+  // after 4 consecutive Gemini envelope-flake events on CA-11 + earlier
+  // consultations. Same logging pattern; the backup adapter swap (Slot 3
+  // backup is now meta-llama/llama-3.3-70b-instruct, see slot-config.mjs)
+  // handles the rescue, this line gives future hardening visibility into
+  // the residual failure shape.
+  if (!usable && entry.model === 'google/gemini-2.5-pro') {
+    const preview = (content || '').slice(0, 160).replace(/\s+/g, ' ');
+    process.stderr.write(
+      `[peer-review] slot-3-envelope-fail model=google/gemini-2.5-pro ` +
       `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
     );
   }
