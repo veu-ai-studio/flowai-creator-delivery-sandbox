@@ -175,33 +175,67 @@ export const SLOT_CONFIG = Object.freeze([
     role: 'European RAG-tuned',
     backup: Object.freeze({ provider: 'openrouter', model: 'mistralai/mistral-large-2411' }),
   }),
-  // Slot 6 — Asia generalist. Primary minimax/minimax-m2.7 (Hailuo, 128K)
-  // unchanged from the 2026-05-15 rebalance. BACKUP RE-POINTED 2026-05-15
-  // (W5b Panel Infra Repair, dispatch 2026-05-15):
-  //   - Previous backup qwen/qwen-2.5-72b-instruct has a 32K context cap.
-  //     On the CA-11 adversarial bundle (146,754 chars / ~36K tokens) the
-  //     Slot 6 primary went SILENT, the backup ALSO failed (the bundle
-  //     exceeds Qwen's input window), and the slot dropped out entirely.
-  //     The same will happen on the 20-agent review bundle (far larger).
-  //     Qwen is therefore an USELESS backup on any consultation that
-  //     exceeds 32K input tokens — which now describes every meaningful
-  //     consultation.
-  //   - Re-pointed to anthropic/claude-opus-4 (200K context, proven on
-  //     this panel as Slot 2 primary + Slot 1 backup; "provider-different
-  //     from minimax" check ✓). The dispatch's named candidates were
-  //     deepseek-r1, claude-opus-4, or "another high-context model already
-  //     proven in the roster" — claude-opus-4 is the strictly-most-reliable
-  //     of those three and has the largest context. Backup-duplicating an
-  //     existing primary is permitted under the Slot 1-8 looser rule (see
-  //     header note); the strict outside-primary-set rule only applies to
-  //     Slots 9 + 10. Qwen kept on allowlist (still in peer-review.mjs)
-  //     for future contingency.
+  // Slot 6 — US large-context multimodal (post-minimax-demote).
+  // PROACTIVE DEMOTE 2026-05-16 (W5b dispatch #5, MiniMax Demote):
+  // minimax/minimax-m2.7 DEMOTED from primary to backup after 5
+  // consecutive JSON-envelope-flake failures (triggering report: W6
+  // CA-12 v3 ratification, commit dedd075). Threshold-driven proactive
+  // demote: 5 = "one away from the 6-flake threshold that triggered
+  // gemini (2026-05-16, commit 8de0d2f) and gpt-5 (2026-05-16, commit
+  // 1eb2733) demotions"; demoting now prevents a 6th flake from
+  // disrupting a live Panel consultation. Same fault-pattern as the
+  // four prior demotions (kimi-k2.6 2026-05-15; qwen-2.5-72b 2026-05-15;
+  // gemini-2.5-pro 2026-05-16; gpt-5 2026-05-16).
+  //
+  // STRUCTURAL FLAG — literal dispatch promotion REJECTED:
+  //   Dispatch #5 STEP 1 said "promote current backup to primary".
+  //   The current backup was anthropic/claude-opus-4. Promoting it
+  //   would put claude-opus-4 in BOTH Slot 1 primary AND Slot 6
+  //   primary — re-creating the EXACT same-model mirror that dispatch
+  //   #3 caused and dispatch #4 (commit c0037bd) just fixed.
+  //
+  //   Per the dispatch's "report what it is before changing" hedge,
+  //   the conflict was reported pre-change and a different model
+  //   chosen. Candidates evaluated:
+  //     - anthropic/claude-opus-4 (literal dispatch pick) — REJECTED:
+  //       Slot 1 == Slot 6 mirror
+  //     - Any other existing primary — REJECTED: would create a
+  //       mirror with that slot
+  //     - openai/gpt-4-turbo — openai family duplicate with Slot 2
+  //     - anthropic/claude-sonnet-4 — anthropic family duplicate w/ Slot 1
+  //     - meta-llama/llama-3.1-405b-instruct — would be 3rd meta-llama
+  //       primary, beyond the 2-slot documented exception
+  //     - google/gemini-2.0-flash (1M context, unique family) ← PICKED
+  //
+  //   google/gemini-2.0-flash wins on: unique provider family (re-
+  //   introduces Google as a primary — zero google primaries currently
+  //   since the gemini-2.5-pro demote dispatch #2), massive 1M-token
+  //   context (helps the 20-agent review bundle), no model-level or
+  //   family-level duplicate created. Sibling-flake risk acknowledged
+  //   (gemini-2.5-pro just demoted for envelope flakes), but Flash is
+  //   a structurally different architecture from Pro — smaller,
+  //   distilled, faster — and Google's Flash series has had different
+  //   JSON envelope behavior than Pro in production reports.
+  //
+  // Backup change: backup re-pointed to the demoted minimax/minimax-m2.7
+  // (standard Kimi/Gemini/GPT-5 treatment — keep the demoted model on
+  // the panel for backup rescue rotation). Provider-different from new
+  // google primary ✓. claude-opus-4 dropped from Slot 6 backup — still
+  // runs as Slot 1 primary so still on the panel; this also reduces
+  // claude-opus-4's panel-wide load (was Slot 1 primary + Slot 6
+  // backup; now only Slot 1 primary).
+  //
+  // Role label updated from "Asia generalist" → "US large-context
+  // multimodal" because the Asia geographic identity was tied to the
+  // minimax model. No Asia alternative on the allowlist (deepseek-r1
+  // already Slot 7 primary, llama-4-maverick already Slot 9 primary,
+  // and Kimi/Qwen are demoted).
   Object.freeze({
     provider: 'openrouter',
-    model: 'minimax/minimax-m2.7',
-    region: 'Asia',
-    role: 'Asia generalist',
-    backup: Object.freeze({ provider: 'openrouter', model: 'anthropic/claude-opus-4' }),
+    model: 'google/gemini-2.0-flash',
+    region: 'US',
+    role: 'US large-context multimodal (post-minimax-demote 2026-05-16)',
+    backup: Object.freeze({ provider: 'openrouter', model: 'minimax/minimax-m2.7' }),
   }),
   // Slot 7 — Asia reasoning (DeepSeek)
   Object.freeze({

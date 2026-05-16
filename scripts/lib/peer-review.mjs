@@ -566,6 +566,26 @@ async function runPanelReviewer({ entry, system, user, timeoutMs }) {
       `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
     );
   }
+  // Slot 6 envelope-fail telemetry — MiniMax M2.7. Added 2026-05-16
+  // (W5b dispatch #5, MiniMax Demote). minimax-m2.7 logged its 5th
+  // consecutive JSON-envelope-flake failure on the W6 CA-12 v3
+  // ratification consultation (triggering report: commit dedd075).
+  // PROACTIVE DEMOTE: 5 = one away from the 6-flake threshold that
+  // triggered gemini-2.5-pro + gpt-5 demotions; demoting at 5 prevents
+  // a 6th flake from disrupting a live consultation. minimax/minimax-m2.7
+  // DEMOTED from Slot 6 primary to Slot 6 backup; google/gemini-2.0-
+  // flash promoted to Slot 6 primary (see slot-config.mjs Slot 6 block
+  // for the structural-mirror reasoning that ruled out the dispatch's
+  // literal "promote current backup" pick).
+  if (!usable && entry.model === 'minimax/minimax-m2.7') {
+    const preview = (content || '').slice(0, 160).replace(/\s+/g, ' ');
+    process.stderr.write(
+      `[peer-review] slot-6-minimax-flake model=minimax/minimax-m2.7 ` +
+      `(demoted-to-backup 2026-05-16 after 5 envelope flakes — pre-threshold; ` +
+      `triggering report commit dedd075; Kimi/gemini/gpt-5 treatment applied) ` +
+      `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
+    );
+  }
 
   return {
     model: label,
