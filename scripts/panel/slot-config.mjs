@@ -55,44 +55,15 @@ export const SLOT_CONFIG = Object.freeze([
   // ratification, commit 01bed9d). Same treatment Gemini received on
   // 2026-05-16 (commit 8de0d2f) and Kimi K2.6 received on 2026-05-15
   // (commit 25e11c2). claude-opus-4 PROMOTED to primary — already proven
-  // on this panel as Slot 1's prior backup AND Slot 2's primary AND
-  // Slot 6's backup (multiple successful rescues on record).
+  // on this panel as Slot 1's prior backup AND Slot 6's backup
+  // (multiple successful rescues on record).
   //
-  // ⚠ STRUCTURAL ISSUE FLAGGED FOR FOLLOW-UP DISPATCH ⚠
-  //   This swap mirrors Slot 2 — both Slot 1 and Slot 2 now have:
-  //     primary: anthropic/claude-opus-4
-  //     backup:  openai/gpt-5
-  //   That is a SAME-MODEL duplicate at the primary level (not just
-  //   same-family). The two slots will produce literally correlated
-  //   responses on every consultation — a transient claude-opus-4 issue
-  //   (rate-limit, timeout, envelope-flake, account credit cap) will
-  //   take BOTH slots out simultaneously, costing 2 of the 7-needed-
-  //   for-quorum reviewers in one event. This is structurally worse than
-  //   the meta-llama family duplicate from dispatch #2 (where the two
-  //   Meta models are different generations + serving paths).
-  //
-  //   The dispatch explicitly named claude-opus-4 as the promotion
-  //   target, anticipated a family duplicate ("Document the family
-  //   duplicate if any"), and is recorded as executed literally. The
-  //   honest reasoning for accepting this is the same as dispatch #2:
-  //   no non-Anthropic allowlist alternative preserves both ≥64K
-  //   context AND reliability — moonshotai/kimi-k2.6 (chronic flake,
-  //   just demoted from Slot 9), qwen-2.5-72b-instruct (32K context
-  //   cap, just demoted from Slot 6), and google/gemini-2.5-pro (just
-  //   demoted from Slot 3 in this same session) are all empirically
-  //   worse than accepting the duplicate.
-  //
-  //   RECOMMEND follow-up dispatch to break the Slot 1 == Slot 2 mirror
-  //   by changing Slot 2 to a non-claude-opus-4 primary. See README
-  //   note in auditDiversity() output `modelPrimaryDuplicates` field —
-  //   this field exists specifically so future-W5b cannot lose track
-  //   of this issue.
-  //
-  // KNOWN AUDIT EXCEPTION — anthropic duplicate:
-  //   Slot 2 primary is anthropic/claude-opus-4; Slot 1 primary is now
-  //   also anthropic/claude-opus-4. The anthropic family is added to
-  //   DOCUMENTED_FAMILY_DUPLICATES with the rationale above. auditPass
-  //   remains true under the post-2026-05-16 contract.
+  // Slot 1 == Slot 2 mirror — RESOLVED 2026-05-16 (dispatch #4, commit
+  // pending). Dispatch #3 created a same-model primary duplicate by
+  // promoting claude-opus-4 to Slot 1 while Slot 2 was also
+  // claude-opus-4. Dispatch #4 (Slot 2 Mirror Fix) re-pointed Slot 2
+  // primary to openai/gpt-4o, eliminating the duplicate. claude-opus-4
+  // now runs only at Slot 1 primary + Slot 6 backup.
   Object.freeze({
     provider: 'openrouter',
     model: 'anthropic/claude-opus-4',
@@ -100,13 +71,46 @@ export const SLOT_CONFIG = Object.freeze([
     role: 'frontier reasoning (post-GPT-5-demote 2026-05-16)',
     backup: Object.freeze({ provider: 'openrouter', model: 'openai/gpt-5' }),
   }),
-  // Slot 2 — US reasoning (different family from slot 1)
+  // Slot 2 — US reasoning (OpenAI, post-mirror-fix).
+  // RE-POINT 2026-05-16 (W5b dispatch #4, Slot 2 Mirror Fix):
+  // openai/gpt-4o PROMOTED to primary; anthropic/claude-opus-4 REMOVED
+  // from Slot 2 primary entirely (still runs as Slot 1 primary + Slot
+  // 6 backup, so the panel keeps a proven claude-opus-4 path). This
+  // BREAKS the Slot 1 == Slot 2 same-model duplicate that dispatch #3
+  // flagged for follow-up (commit 1eb2733 left both slots running
+  // anthropic/claude-opus-4 as primary).
+  //
+  // Choice rationale (recorded for future-W5b):
+  //   Dispatch #4 criteria — NOT claude-opus-4, NOT demoted this session
+  //   (NOT gpt-5/gemini-2.5-pro/kimi-k2.6/qwen), ≥64K context, clean
+  //   flake record this session.
+  //   Candidates evaluated:
+  //     - openai/gpt-4o (128K, mature, reliable) ← PICKED
+  //     - google/gemini-2.0-flash (1M context, but sibling gemini-2.5-pro
+  //       just demoted for envelope flakes)
+  //     - anthropic/claude-sonnet-4 (would still leave anthropic family
+  //       duplicate with Slot 1)
+  //     - meta-llama/llama-3.1-405b-instruct (would be 3rd meta-llama
+  //       primary, beyond current 2-slot documented exception)
+  //     - openai/gpt-4-turbo (gpt-4o is strictly better from same family)
+  //   gpt-4o wins on: unique provider family (re-introduces OpenAI as a
+  //   primary — zero openai primaries currently after the gpt-5 demote),
+  //   different specific model from the demoted gpt-5 (longer track
+  //   record, established serving path), no model-level OR family-level
+  //   duplicate created.
+  //
+  // Backup change (consequential): backup was openai/gpt-5 — same
+  // family as the new primary → violates the slot's "provider-different
+  // backup" rule. Re-pointed to meta-llama/llama-3.3-70b-instruct
+  // (proven rescue in W5b smoke 3f9dede; 128K context; provider-different
+  // from openai; doesn't pile load on claude-opus-4 which already
+  // serves Slot 1 primary + Slot 6 backup).
   Object.freeze({
     provider: 'openrouter',
-    model: 'anthropic/claude-opus-4',
+    model: 'openai/gpt-4o',
     region: 'US',
-    role: 'reasoning',
-    backup: Object.freeze({ provider: 'openrouter', model: 'openai/gpt-5' }),
+    role: 'reasoning (post-mirror-fix 2026-05-16)',
+    backup: Object.freeze({ provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct' }),
   }),
   // Slot 3 — frontier reasoning (Meta family, post-Gemini-demote).
   // PROMOTION 2026-05-16 (W5b dispatch #2, Gemini Demote):
@@ -272,15 +276,11 @@ export const DOCUMENTED_FAMILY_DUPLICATES = Object.freeze({
     'Slot 9 (llama-4-maverick). Different generations, different serving ' +
     'paths on OpenRouter, independent in practice. Documented per W5b ' +
     'dispatch #2 (2026-05-16, commit 556a751 triggering evidence).',
-  'anthropic':
-    'Slot 1 (claude-opus-4, post-GPT-5-demote 2026-05-16) + Slot 2 ' +
-    '(claude-opus-4). SAME-MODEL duplicate — both slots run the identical ' +
-    'model, NOT just same family. Structurally worse than the meta-llama ' +
-    'duplicate (those are different models in the same family). Surfaced ' +
-    'in modelPrimaryDuplicates below for visibility. Documented per W5b ' +
-    'dispatch #3 (2026-05-16, commit 01bed9d triggering evidence). ' +
-    'RECOMMEND follow-up dispatch to change Slot 2 primary to a different ' +
-    'model and break the Slot 1 == Slot 2 mirror.',
+  // anthropic was here transiently (W5b dispatch #3, commit 1eb2733)
+  // when Slot 1 and Slot 2 both ran claude-opus-4. W5b dispatch #4
+  // (Slot 2 Mirror Fix, 2026-05-16) re-pointed Slot 2 primary to
+  // openai/gpt-4o, eliminating the duplicate. Entry removed; git log
+  // preserves the historical record.
 });
 
 /** Specific MODEL ids allowed to appear more than once in the primary
@@ -288,18 +288,14 @@ export const DOCUMENTED_FAMILY_DUPLICATES = Object.freeze({
  *  here means TWO+ slots run the LITERAL SAME MODEL and will produce
  *  fully correlated responses. Use only when reliability evidence
  *  outweighs the fault-diversity loss AND the dispatch explicitly
- *  authorizes / anticipates the duplicate. */
-export const DOCUMENTED_MODEL_DUPLICATES = Object.freeze({
-  'anthropic/claude-opus-4':
-    'Slot 1 + Slot 2 both primary post-GPT-5-demote 2026-05-16. The ' +
-    'dispatch named claude-opus-4 as the explicit promotion target and ' +
-    'anticipated the duplicate ("Document the family duplicate if any"). ' +
-    'The honest tradeoff is reliability of a proven rescue model over ' +
-    'fault diversity (no non-Anthropic allowlist alternative meets the ' +
-    'reliability + context bar after the Kimi/Gemini/Qwen demotions). ' +
-    'FLAGGED FOR FOLLOW-UP: Slot 2 should be re-pointed to a different ' +
-    'primary to break the mirror — see Slot 1 block comment.',
-});
+ *  authorizes / anticipates the duplicate.
+ *
+ *  Currently empty — anthropic/claude-opus-4 was the sole entry from
+ *  W5b dispatch #3 (2026-05-16, commit 1eb2733) and was removed by
+ *  W5b dispatch #4 (Slot 2 Mirror Fix, 2026-05-16) when Slot 2 was
+ *  re-pointed to openai/gpt-4o. The export is retained so future
+ *  swaps that create a model-level duplicate have a place to document. */
+export const DOCUMENTED_MODEL_DUPLICATES = Object.freeze({});
 
 /** Provider-count audit. Useful for self-tests + the W6 brief.
  *  Returns {
