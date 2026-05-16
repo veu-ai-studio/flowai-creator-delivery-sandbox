@@ -84,6 +84,61 @@ Until ALL six conditions are demonstrably true, Mode 2 SUB-2B remains in this do
 
 ---
 
+## Entry 2 — Mode 3B (Cross-Product Synthesis from Operator-Owned Inputs)
+
+**Date entered:** 2026-05-16 (per CA-12 v3 dispatch, deferred from CA-12 v2 SSOT per CEO Decision D1 + Panel `PLURALITY_GQ5v2-3PV` verdict 6/8 — Panel preferred third-party verification mechanism over operator self-attestation; CEO opted to defer entirely rather than ship a self-attestation mechanism Panel did not endorse).
+
+**Definition (for reference; NOT a contract):**
+
+Mode 3B SYNTHESIZE would be a capability where the operator submits 2 or more URLs that they own or have explicit license to use, FlowAI assesses each, extracts the best elements across the set, and produces a synthesized product specification (or, in a future variant, a deployed synthesized product). The capability addresses use cases like "combine the best UX of my old marketing site + the best information architecture of my new product page + the best CTA structure of my landing page into a unified new product spec."
+
+Input: 2 or more operator-owned URLs + ownership/license attestation per URL.
+Output: synthesized product specification (in canonical CA-12 v2 framing) OR — in a deeper-roadmap variant — a deployed new product at a new URL.
+
+Pipeline behaviour (if it were built):
+- Steps 1–5: per-URL Mode 1 SUB-1A behavior (Agent #21 × N parallel crawls + Agent #6/#7/#8 analyses on each).
+- Step 6: synthesis logic — extract best elements from all attested-owned inputs → produce synthesized spec (the Mode 2 SUB-2A output shape).
+- Steps 7–8: GTM + Monitor on the synthesized spec.
+
+**Status:**
+- **NOT BUILT** — synthesis engine does not exist; cross-URL "best element extraction" classifier does not exist; operator ownership-verification mechanism does not exist.
+- **NO PROTOTYPE** — no working partial path. v2 attempted operator self-attestation; Panel rejected (preferred third-party verification).
+- **NOT CANONICAL SSOT** — explicitly removed from `docs/specs/SSOT_AMENDMENT_CA12_DRAFT.md` v3 per CEO Decision D1.
+- **TARGET FUTURE CAPABILITY** — the team considers this desirable eventually. No commitment.
+
+**Why deferred (from CA-12 v2 SSOT):**
+
+Per W6 Panel ratification of v2 (2026-05-16, `ca12-ratification-v2-2026-05-16.md`):
+- Panel verdict on G-Q5-v2: `PLURALITY_GQ5v2-3PV` (6 of 8 ENGAGED) — Panel preferred third-party verification (e.g., DNS-TXT proof of ownership) over the v2 operator self-attestation mechanism.
+- Panel rationale: operator self-attestation provides no protection against false attestation (the operator can simply tick the "I own this" box for any URL). For a capability that produces a deployable artifact from third-party-influenced inputs, the ownership-verification mechanism must be cryptographically sound, not honor-system.
+- CEO Decision D1 (2026-05-16): defer Mode 3B entirely; relocate to FUTURE_CAPABILITIES.md alongside SUB-2B; do not ship the self-attestation mechanism Panel did not endorse; do not redesign the verification mechanism inline in CA-12 (designing it properly is a separate project).
+
+**Conditions for re-consideration (would re-open a CA-n cycle):**
+
+Mode 3B may re-open for SSOT canonical consideration only when ALL of the following are demonstrably true:
+
+1. A cryptographic URL ownership-verification mechanism is designed (typical candidates: DNS-TXT record verification per RFC pattern, signed attestation chain rooted in a trusted certificate authority, or an equivalent cryptographic proof).
+2. The mechanism is implemented end-to-end (issuer flow + verifier flow + revocation handling).
+3. The mechanism is Panel-ratified separately (W6 adversarial Panel review specifically on the verification mechanism + threat model).
+4. At least one operator-owned synthesis prototype runs end-to-end with verified ownership across all input URLs (proving the synthesis engine itself is implementable; not just the verification layer).
+5. The synthesis engine handles the "best element extraction" step with auditable provenance (every element in the synthesized output traces back to a specific verified-ownership source URL).
+
+Until ALL five conditions are demonstrably true, Mode 3B remains in this document and OUT of canonical SSOT.
+
+**Shared-future-CA pathway with Entry 1 (per CA-12 v3 §A.1.2 cross-reference):**
+
+Per CA-12 v3 §A.1.2, Mode 3B (this entry) and Mode 2 SUB-2B (Entry 1) are catalogued together with the commitment that they return to canonical SSOT via a **single future CA amendment** when their respective blockers resolve — not via separate CA cycles. The pairing reflects shared architectural dependency on autonomous-build infrastructure: both items require the Build-Authority Autonomous configuration + autonomous deploy pipeline + synthesis (3B) or generation (2B) engines that are absent today. Re-opening one without the other would create the same Authority-axis instability that drove CA-12 v1 + v2 toward rework.
+
+**Cross-references:**
+- CA-12 v1 (`f9a62a0`) §A.1.4 — original Mode 3B definition with SUB-3B-SPEC + SUB-3B-BUILD sub-modes (removed in v2 per Panel C1 overlap fix).
+- CA-12 v2 (`ce13629`) §A.1.4 — restricted-to-operator-owned Mode 3B with operator self-attestation (rejected by Panel v2 per `PLURALITY_GQ5v2-3PV`).
+- CA-12 v3 (current) — Mode 3B removed from SSOT entirely per CEO D1.
+- `docs/specs/agent-blueprints/AGENT_03_*` (Self-Renewal) — Step 6 cross-URL synthesis logic dependency.
+- `docs/specs/agent-blueprints/AGENT_14_PublicPolicy.md` — Agent #14 must independently classify ownership-attestation legitimacy in any future Mode 3B design.
+- This document Entry 1 — paired-deferral relationship.
+
+---
+
 ## Document maintenance
 
 - **Adding entries:** when a capability is intentionally removed from canonical SSOT, the removing CA-n cycle MUST add an entry here describing what was removed, when, why, and re-consideration conditions. Without this discipline, the canonical SSOT erodes silently.
