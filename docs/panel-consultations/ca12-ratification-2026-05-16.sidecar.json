@@ -1,0 +1,1333 @@
+{
+  "schema": "ca12-ratification.sidecar.v1",
+  "startedAt": "2026-05-16T20:18:40.639Z",
+  "finishedAt": "2026-05-16T20:23:29.426Z",
+  "panel_audit": {
+    "providerCounts": {
+      "openai": 1,
+      "anthropic": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "cohere": 1,
+      "minimax": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "auditPass": true
+  },
+  "panel_size": 10,
+  "bundle_size": 77170,
+  "liveOk": 10,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 3,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 77170
+  },
+  "tally": {
+    "engagedTotal": 9,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 0,
+    "perQuestion": {
+      "G-Q1": {
+        "GQ1-OK": 2,
+        "GQ1-MISSING": 0,
+        "GQ1-OVERLAP": 7,
+        "GQ1-REFRAME": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "G-Q2": {
+        "GQ2-TWO": 2,
+        "GQ2-ONE": 2,
+        "GQ2-THREEPLUS": 5,
+        "GQ2-DIFF": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "G-Q3": {
+        "GQ3-CEILING": 3,
+        "GQ3-REAUTH": 1,
+        "GQ3-ADVISORY": 0,
+        "GQ3-PER-MODE": 5,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "G-Q4": {
+        "GQ4-NOW": 2,
+        "GQ4-DEFER": 7,
+        "GQ4-PREVIEW": 0,
+        "GQ4-PARTIAL": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "G-Q5": {
+        "GQ5-FAIRUSE": 0,
+        "GQ5-LICENSE": 2,
+        "GQ5-OWNER": 2,
+        "GQ5-RESTRICT": 5,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "G-Q6": {
+        "GQ6-36": 1,
+        "GQ6-COLLAPSE": 8,
+        "GQ6-UNDER": 0,
+        "GQ6-AGENT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "G-Q7": {
+        "GQ7-PROMOTE-ALL": 0,
+        "GQ7-PROMOTE-SUB": 3,
+        "GQ7-DEFER": 1,
+        "GQ7-SPLIT": 0,
+        "REJECT": 5,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 26,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Degenerate matrix cells undermine architecture",
+        "detail": "§B catalogues 8 degenerate configurations out of 36 total, meaning 22% of the proposed architecture is self-contradictory. SUB-1B BUILD + RECOMMEND-ONLY is logically impossible since RECOMMEND-ONLY blocks deployment, yet the spec presents this as a valid user-selectable combination rather than preventing it at the UI layer."
+      },
+      {
+        "slot": 1,
+        "title": "Mode 3B synthesis lacks IP safeguards",
+        "detail": "§A.1.4 MODE 3B proposes extracting 'best elements' from multiple third-party URLs to create new products, but provides no mechanism for IP verification, license checking, or copyright compliance. The spec acknowledges this in Conflict 6 but still includes Mode 3B as canonical without resolution."
+      },
+      {
+        "slot": 1,
+        "title": "Authority ceiling enforcement creates security theater",
+        "detail": "§A.2.4 Authority Ceiling Rule allows operators to set AUTONOMOUS as the ceiling, enabling fully automated deployment to production systems. The 'hard gates' in §A.2.1 only trigger on XSS/auth-leaks after damage may already be done, not preventatively."
+      },
+      {
+        "slot": 1,
+        "title": "Roadmap features presented as canonical",
+        "detail": "§E Honest Capability Boundary shows 12 of 36 configurations as ROADMAP (unbuilt), yet §B presents them as selectable options. Mode 2 SUB-2B BUILD is entirely unimplemented but appears in the canonical 36-cell matrix without clear user-facing warnings."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of IP handling",
+        "detail": "The proposal does not provide clear guidance on how to handle intellectual property concerns when synthesizing new products from third-party URLs in Mode 3B. This could lead to potential copyright infringement issues."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient testing",
+        "detail": "The proposal does not provide sufficient information on how the new pipeline modes and authority levels will be tested to ensure they are functioning as intended. This could lead to errors or unintended consequences."
+      },
+      {
+        "slot": 3,
+        "title": "Complexity of 36-configuration matrix",
+        "detail": "The 36-configuration matrix may be overly complex and difficult to manage, potentially leading to errors or inconsistencies in the pipeline. A more simplified approach may be necessary."
+      },
+      {
+        "slot": 4,
+        "title": "Pipeline Mode Overlap",
+        "detail": "Mode 3B SUB-3B-BUILD overlaps with Mode 2 SUB-2B BUILD. Both modes involve creating a new product, which can lead to confusion and redundancy."
+      },
+      {
+        "slot": 4,
+        "title": "Authority Ceiling Complexity",
+        "detail": "The Authority Ceiling Rule adds unnecessary complexity. Operators should be able to exceed the ceiling for specific runs with explicit re-authorization to handle exceptional cases."
+      },
+      {
+        "slot": 4,
+        "title": "IP/Copyright Concerns in Mode 3B",
+        "detail": "Mode 3B's 'extract best elements' feature raises significant IP/copyright concerns. Implementing this without explicit licenses from source product owners could lead to legal issues."
+      },
+      {
+        "slot": 5,
+        "title": "Pipeline Mode classification",
+        "detail": "The proposal defines four Pipeline Modes, but it is unclear if these modes are mutually exclusive and collectively exhaustive. For example, it is not clear if a product can be both assessed and built, or if there are other modes that are not covered by the four defined modes."
+      },
+      {
+        "slot": 5,
+        "title": "Authority Level and Execution Mode",
+        "detail": "The proposal defines two dimensions, Authority Level and Execution Mode, but it is not clear how these dimensions interact. For example, it is not clear if a user can select a high Authority Level and a low Execution Mode, or if the Authority Level is always determined by the Execution Mode."
+      },
+      {
+        "slot": 5,
+        "title": "Authority Ceiling Rule",
+        "detail": "The proposal defines a rule that users cannot exceed the Authority Ceiling set by the operator, but it is not clear how this rule is enforced. For example, it is not clear if the system will prevent users from selecting a higher Authority Level, or if it will simply log the decision and allow it to proceed."
+      },
+      {
+        "slot": 7,
+        "title": "Unbuilt dependencies roadmap risk",
+        "detail": "§E Honest Capability Boundary Table shows critical configurations like Mode 1 SUB-1B DEPLOY and Mode 2 SUB-2B BUILD as ROADMAP with unbuilt infrastructure. The proposal assumes future delivery of complex systems like source-acquisition layers and code-generation pipelines without concrete timelines or resource commitments."
+      },
+      {
+        "slot": 7,
+        "title": "Overly complex matrix",
+        "detail": "§B 36-configuration matrix includes 8 degenerate cells that offer no user value. Maintaining this combinatorial explosion increases testing surface and failure risk. Degenerate combinations like SUB-1B PREVIEW with RECOMMEND-ONLY authority shouldn't be cataloged as valid configurations."
+      },
+      {
+        "slot": 7,
+        "title": "Ambiguous authority enforcement",
+        "detail": "§A.2.4 Authority Ceiling Rule lacks implementation specifics for validation mechanics in AutoRunner. The 403 error mechanism references §13 but doesn't address how credential-bound runs validate against dynamic ProductRegistry changes during execution, creating security gaps."
+      },
+      {
+        "slot": 7,
+        "title": "Inadequate IP safeguards",
+        "detail": "Mode 3B synthesis lacks canonical IP handling per Conflict 6. Extracting 'best elements' from third-party URLs risks copyright violations, yet §G-Q5 options don't mandate proactive measures like Agent #14 copyright checks or output watermarking."
+      },
+      {
+        "slot": 8,
+        "title": "Architecture Built on Non-Existent Components",
+        "detail": "The proposal defines a vast 36-configuration architecture where the vast majority of cells are marked ROADMAP or PARTIAL, per §B and §E. For example, §D's agent ownership matrix shows that nearly every critical step in every new mode relies on a DORMANT agent. Ratifying a complex, system-wide architecture before its foundational components (e.g., Mode 2 code-gen, Mode 3 synthesis) are even prototyped is premature and locks the project into a speculative design that may prove unworkable."
+      },
+      {
+        "slot": 8,
+        "title": "Unresolved Critical IP/Copyright Risk in Mode 3B",
+        "detail": "The proposal introduces Mode 3B to 'extract best elements' from multiple source URLs but explicitly punts on the severe IP and copyright risks, merely surfacing it as a question (G-Q5) and a conflict (Conflict 6). A core architectural proposal should not include a feature with a fundamental, unresolved legal and ethical flaw. Approving this would be irresponsible, as it canonizes a mode of operation that could expose the operator to significant legal liability."
+      },
+      {
+        "slot": 8,
+        "title": "Excessive Complexity via 'Axis Explosion'",
+        "detail": "The proposal amends Locked Rule 4 to codify four orthogonal axes (§F.7), creating a complex interplay between Pipeline Mode, Authority Level, Execution Pacing, and Orchestra Selection. While the proposal attempts to reconcile and deprecate old terms, the net result is a significant increase in cognitive load for both operators and users. This complexity, exemplified by the 36-cell matrix in §B, increases the risk of misconfiguration, unexpected behavior, and security vulnerabilities arising from misunderstood interactions between the axes."
+      },
+      {
+        "slot": 9,
+        "title": "Overly Complex Matrix",
+        "detail": "The 36-configuration matrix (§B) is overly complex and may lead to implementation and maintenance challenges. Some configurations are marked as degenerate, indicating potential inconsistencies in the design."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of Clear IP Handling",
+        "detail": "Mode 3B (§A.1.4) involves synthesizing new products from third-party URLs, raising significant IP and copyright concerns. The proposal does not provide a clear mechanism for handling these issues."
+      },
+      {
+        "slot": 9,
+        "title": "Unclear Authority Ceiling Enforcement",
+        "detail": "The Authority Ceiling Rule (§A.2.4) is not clearly defined in terms of its enforcement mechanism. It is unclear how the system will prevent users from exceeding the set ceiling."
+      },
+      {
+        "slot": 10,
+        "title": "§A.2.4 ceiling enforcement gap",
+        "detail": "AutoRunner per-run validation references ProductRegistry.authorityCeiling but §E marks the schema migration as NEW/ROADMAP; no guard() implementation in BaseAgent.js or EXECUTOR_REGISTRY exists today, allowing potential bypass."
+      },
+      {
+        "slot": 10,
+        "title": "§E SUB-1B PREVIEW vs §D ownership",
+        "detail": "Table claims PARTIAL status for SUB-1B PREVIEW relying on Agent #3 Self-Renewal Executor, yet §D shows source-acquisition layer still ROADMAP and Agent #2 only SHIPPED-GREEN for audit, not patch application."
+      },
+      {
+        "slot": 10,
+        "title": "§B degenerate cells lack spec",
+        "detail": "36-cell matrix lists 8 degenerate combinations but §A.3 Execution Mode and §A.2.4 provide no runtime error contract or AutoRunner 403 path for contradictory selections such as SUB-1B + RECOMMEND-ONLY."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "G-Q1": {
+      "verdict": "QUORUM_PLURALITY_GQ1-OVERLAP",
+      "detail": "7 of 9 on GQ1-OVERLAP (≥ quorum 7/10)",
+      "topKey": "GQ1-OVERLAP",
+      "topCount": 7
+    },
+    "G-Q2": {
+      "verdict": "PLURALITY_GQ2-THREEPLUS",
+      "detail": "5 of 9 on GQ2-THREEPLUS (below 7/10 quorum)",
+      "topKey": "GQ2-THREEPLUS",
+      "topCount": 5
+    },
+    "G-Q3": {
+      "verdict": "PLURALITY_GQ3-PER-MODE",
+      "detail": "5 of 9 on GQ3-PER-MODE (below 7/10 quorum)",
+      "topKey": "GQ3-PER-MODE",
+      "topCount": 5
+    },
+    "G-Q4": {
+      "verdict": "QUORUM_PLURALITY_GQ4-DEFER",
+      "detail": "7 of 9 on GQ4-DEFER (≥ quorum 7/10)",
+      "topKey": "GQ4-DEFER",
+      "topCount": 7
+    },
+    "G-Q5": {
+      "verdict": "PLURALITY_GQ5-RESTRICT",
+      "detail": "5 of 9 on GQ5-RESTRICT (below 7/10 quorum)",
+      "topKey": "GQ5-RESTRICT",
+      "topCount": 5
+    },
+    "G-Q6": {
+      "verdict": "SUPERMAJORITY_GQ6-COLLAPSE",
+      "detail": "8 of 9 on GQ6-COLLAPSE (≥ 8/10)",
+      "topKey": "GQ6-COLLAPSE",
+      "topCount": 8
+    },
+    "G-Q7": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "5 of 9 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.19047619047619047,
+    "alignedCount": 12,
+    "totalPossible": 63,
+    "draftedQs": [
+      "G-Q1",
+      "G-Q2",
+      "G-Q3",
+      "G-Q4",
+      "G-Q5",
+      "G-Q6",
+      "G-Q7"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 19.0 %, distinct objections 26"
+  },
+  "consultation_valid": true,
+  "ratification": {
+    "status": "NOT_RATIFIED",
+    "headline": "Spec NOT ratified — 4 question(s) returned no clear Panel majority. W3 must address each before promotion.",
+    "conditions": [
+      {
+        "qId": "G-Q2",
+        "topic": "Two-dimension governance separation (Authority vs Execution)",
+        "verdict": "PLURALITY_GQ2-THREEPLUS",
+        "draftedKey": "GQ2-TWO",
+        "draftedText": "Two dimensions as stated (Authority Level operator-set ceiling + Execution Mode per-run pacing).",
+        "detail": "5 of 9 on GQ2-THREEPLUS (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q3",
+        "topic": "Authority Ceiling Rule",
+        "verdict": "PLURALITY_GQ3-PER-MODE",
+        "draftedKey": "GQ3-CEILING",
+        "draftedText": "Ceiling rule correct as stated — operator sets persistent ceiling; users select at or below; never exceed.",
+        "detail": "5 of 9 on GQ3-PER-MODE (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q5",
+        "topic": "Mode 3B synthesis IP/copyright feasibility",
+        "verdict": "PLURALITY_GQ5-RESTRICT",
+        "draftedKey": "GQ5-OWNER",
+        "draftedText": "Implementable only when the operator owns every source URL (first-party / operator-owned synthesis only).",
+        "detail": "5 of 9 on GQ5-RESTRICT (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q7",
+        "topic": "Overall CA-12 disposition",
+        "verdict": "PLURALITY_REJECT",
+        "draftedKey": "GQ7-PROMOTE-ALL",
+        "draftedText": "Promote all sections (§A–§G) as canonical with no carve-outs.",
+        "detail": "5 of 9 on REJECT (below 7/10 quorum)"
+      }
+    ],
+    "alternativeWins": [
+      {
+        "qId": "G-Q1",
+        "topic": "Pipeline Mode classification completeness + non-overlap",
+        "newPosition": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD).",
+        "verdict": "QUORUM_PLURALITY_GQ1-OVERLAP"
+      },
+      {
+        "qId": "G-Q4",
+        "topic": "Mode 2 SUB-2B (full build + deploy) in SSOT now or defer",
+        "newPosition": "Defer from SSOT entirely until at least one prototype implementation lands.",
+        "verdict": "QUORUM_PLURALITY_GQ4-DEFER"
+      },
+      {
+        "qId": "G-Q6",
+        "topic": "36-configuration matrix granularity",
+        "newPosition": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells).",
+        "verdict": "SUPERMAJORITY_GQ6-COLLAPSE"
+      }
+    ]
+  },
+  "strongest_rejection_argument": {
+    "slot": 8,
+    "model": "openrouter:google/gemini-2.5-pro",
+    "text": "While CA-12 commendably provides a comprehensive and honest vision for the system's future capabilities, its monolithic nature makes it too large and speculative to ratify at once. It defines an entire operating model based on components that are explicitly marked as 'ROADMAP' or 'DORMANT', effectively asking the Panel to approve a detailed blueprint for a house whose foundational materials have not yet been invented. A more prudent approach would be to defer this grand unification and instead review smaller, incremental amendments that introduce and ratify these capabilities as they are prototyped and proven, allowing the architecture to evolve organically based on empirical evidence rather than being locked into a speculative framework."
+  },
+  "shuffled_options": {
+    "G-Q1": [
+      {
+        "key": "GQ1-MISSING",
+        "text": "A Mode is missing — name it in rationale (e.g., a \"Maintain existing\" mode distinct from \"Assess existing\")."
+      },
+      {
+        "key": "GQ1-OVERLAP",
+        "text": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD)."
+      },
+      {
+        "key": "GQ1-OK",
+        "text": "Complete and non-overlapping as stated (4 modes: Mode 1 Assess, Mode 2 Build, Mode 3A Benchmark, Mode 3B Synthesize)."
+      },
+      {
+        "key": "GQ1-REFRAME",
+        "text": "The 4-mode framing is the wrong abstraction — propose alternative classification."
+      }
+    ],
+    "G-Q2": [
+      {
+        "key": "GQ2-TWO",
+        "text": "Two dimensions as stated (Authority Level operator-set ceiling + Execution Mode per-run pacing)."
+      },
+      {
+        "key": "GQ2-DIFF",
+        "text": "The two-dimension model is right but the specific 3×3 grid is wrong — propose alternative cardinality."
+      },
+      {
+        "key": "GQ2-ONE",
+        "text": "Collapsed into a single dimension — name the canonical labels in rationale."
+      },
+      {
+        "key": "GQ2-THREEPLUS",
+        "text": "Further subdivided into three or more dimensions (e.g., split Authority into Build-authority + Deploy-authority)."
+      }
+    ],
+    "G-Q3": [
+      {
+        "key": "GQ3-PER-MODE",
+        "text": "Ceiling should be per-product per-mode (e.g., Mode 1 ceiling AUTONOMOUS but Mode 2 ceiling SUPERVISED) not single global."
+      },
+      {
+        "key": "GQ3-ADVISORY",
+        "text": "Ceiling should be advisory not enforced — users can choose any authority level; audit-log captures decision."
+      },
+      {
+        "key": "GQ3-CEILING",
+        "text": "Ceiling rule correct as stated — operator sets persistent ceiling; users select at or below; never exceed."
+      },
+      {
+        "key": "GQ3-REAUTH",
+        "text": "Users should be able to exceed the ceiling for a specific run with explicit re-authorisation (per-run admin approval)."
+      }
+    ],
+    "G-Q4": [
+      {
+        "key": "GQ4-DEFER",
+        "text": "Defer from SSOT entirely until at least one prototype implementation lands."
+      },
+      {
+        "key": "GQ4-PARTIAL",
+        "text": "Codify as canonical SSOT only when it reaches PARTIAL status (skeleton exists end-to-end)."
+      },
+      {
+        "key": "GQ4-PREVIEW",
+        "text": "Codify only the SUB-2B-PREVIEW path (FlowAI-owned preview URL) now; defer the SUB-2B-DEPLOY path (push to user-owned host)."
+      },
+      {
+        "key": "GQ4-NOW",
+        "text": "Codify in SSOT now as roadmap with explicit ROADMAP tag (per §E pattern)."
+      }
+    ],
+    "G-Q5": [
+      {
+        "key": "GQ5-LICENSE",
+        "text": "Implementable only with explicit license / authorisation from each source product owner."
+      },
+      {
+        "key": "GQ5-FAIRUSE",
+        "text": "Implementable for all third-party products — best-elements extraction is fair-use as research / inspiration."
+      },
+      {
+        "key": "GQ5-RESTRICT",
+        "text": "Not implementable in any general form — Mode 3B should be removed from SSOT or restricted to research-only output (no deploy, no new URL)."
+      },
+      {
+        "key": "GQ5-OWNER",
+        "text": "Implementable only when the operator owns every source URL (first-party / operator-owned synthesis only)."
+      }
+    ],
+    "G-Q6": [
+      {
+        "key": "GQ6-36",
+        "text": "36-cell matrix is correct — every cell needs explicit catalogue (some marked degenerate)."
+      },
+      {
+        "key": "GQ6-AGENT",
+        "text": "Matrix concept right but cells should be agent-rooted (one row per agent × mode) rather than mode × authority × execution."
+      },
+      {
+        "key": "GQ6-UNDER",
+        "text": "Under-specified — the 36-cell matrix omits relevant variations (e.g., per-step authority overrides should add a fourth dimension)."
+      },
+      {
+        "key": "GQ6-COLLAPSE",
+        "text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells)."
+      }
+    ],
+    "G-Q7": [
+      {
+        "key": "GQ7-DEFER",
+        "text": "Defer all of CA-12 pending a separate disposition on one or more of Q1–Q6 above."
+      },
+      {
+        "key": "GQ7-PROMOTE-ALL",
+        "text": "Promote all sections (§A–§G) as canonical with no carve-outs."
+      },
+      {
+        "key": "GQ7-PROMOTE-SUB",
+        "text": "Promote a subset — name the carve-outs in rationale (e.g., promote §A + §B + §E + §F now; defer §C UI mapping + §D agent ownership until corresponding engineering specs land)."
+      },
+      {
+        "key": "GQ7-SPLIT",
+        "text": "Reject as over-scoped — break CA-12 into multiple smaller amendments (e.g., CA-12-A Pipeline Modes, CA-12-B Authority Levels, CA-12-C Execution Modes) and re-Panel each."
+      }
+    ]
+  },
+  "seed": "ca12-ratification-2026-05-16",
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Degenerate matrix cells undermine architecture",
+            "detail": "§B catalogues 8 degenerate configurations out of 36 total, meaning 22% of the proposed architecture is self-contradictory. SUB-1B BUILD + RECOMMEND-ONLY is logically impossible since RECOMMEND-ONLY blocks deployment, yet the spec presents this as a valid user-selectable combination rather than preventing it at the UI layer."
+          },
+          {
+            "title": "Mode 3B synthesis lacks IP safeguards",
+            "detail": "§A.1.4 MODE 3B proposes extracting 'best elements' from multiple third-party URLs to create new products, but provides no mechanism for IP verification, license checking, or copyright compliance. The spec acknowledges this in Conflict 6 but still includes Mode 3B as canonical without resolution."
+          },
+          {
+            "title": "Authority ceiling enforcement creates security theater",
+            "detail": "§A.2.4 Authority Ceiling Rule allows operators to set AUTONOMOUS as the ceiling, enabling fully automated deployment to production systems. The 'hard gates' in §A.2.1 only trigger on XSS/auth-leaks after damage may already be done, not preventatively."
+          },
+          {
+            "title": "Roadmap features presented as canonical",
+            "detail": "§E Honest Capability Boundary shows 12 of 36 configurations as ROADMAP (unbuilt), yet §B presents them as selectable options. Mode 2 SUB-2B BUILD is entirely unimplemented but appears in the canonical 36-cell matrix without clear user-facing warnings."
+          }
+        ],
+        "worse_than_status_quo": "The current system has clear RECOMMEND-ONLY defaults across all agents, providing a safe baseline. CA-12 introduces AUTONOMOUS authority that can deploy directly to production systems with only post-hoc XSS detection, creating attack surface where none exists today.",
+        "precedent": "Jenkins CI/CD pipelines with unrestricted deployment permissions have repeatedly led to supply chain attacks when compromised, as seen in the 2021 Codecov breach where auto-deployment credentials enabled attackers to modify production systems across hundreds of companies."
+      },
+      "rejection_steelman": "CA-12 attempts to codify 36 distinct operational modes when only 9 are built today, creating a specification that is 75% aspirational. The amendment should be split into CA-12-A covering only the built Mode 1 SUB-1A capabilities, deferring the complex multi-dimensional authority model until the underlying agent infrastructure graduates from DORMANT status. The IP concerns in Mode 3B alone warrant separate legal review before canonicalization.",
+      "votes": {
+        "G-Q1": {
+          "key": "GQ1-OVERLAP",
+          "pick_text": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD).",
+          "rationale": "Mode 3B SUB-3B-BUILD (synthesize from multiple URLs into new product) and Mode 2 SUB-2B BUILD (build new from description) both output a new deployed product, differing only in input type. The synthesis step could be a pre-processor to Mode 2 rather than a separate mode."
+        },
+        "G-Q2": {
+          "key": "GQ2-THREEPLUS",
+          "pick_text": "Further subdivided into three or more dimensions (e.g., split Authority into Build-authority + Deploy-authority).",
+          "rationale": "Authority Level conflates assessment authority (can FlowAI analyze) with deployment authority (can FlowAI modify production). These should be separate dimensions since many organizations would allow autonomous analysis but require human approval for any deployment."
+        },
+        "G-Q3": {
+          "key": "GQ3-PER-MODE",
+          "pick_text": "Ceiling should be per-product per-mode (e.g., Mode 1 ceiling AUTONOMOUS but Mode 2 ceiling SUPERVISED) not single global.",
+          "rationale": "Different pipeline modes have vastly different risk profiles — assessing existing products (Mode 1) is lower risk than building new products from scratch (Mode 2), so operators need mode-specific authority ceilings."
+        },
+        "G-Q4": {
+          "key": "GQ4-DEFER",
+          "pick_text": "Defer from SSOT entirely until at least one prototype implementation lands.",
+          "rationale": "Including unbuilt capabilities in canonical documentation creates false expectations and complicates the architecture with speculative features that may prove infeasible when implementation is attempted."
+        },
+        "G-Q5": {
+          "key": "GQ5-RESTRICT",
+          "pick_text": "Not implementable in any general form — Mode 3B should be removed from SSOT or restricted to research-only output (no deploy, no new URL).",
+          "rationale": "Automated extraction and recombination of features from third-party products into new deployable products creates unmanageable IP liability regardless of fair use claims, as it produces derivative works without human review of provenance."
+        },
+        "G-Q6": {
+          "key": "GQ6-COLLAPSE",
+          "pick_text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells).",
+          "rationale": "Cataloguing degenerate combinations as valid cells confuses the architecture; these should be compile-time or UI-time prevention, not runtime errors that users can mistakenly select."
+        },
+        "G-Q7": {
+          "key": "REJECT",
+          "pick_text": "Reject as over-scoped — break CA-12 into multiple smaller amendments (e.g., CA-12-A Pipeline Modes, CA-12-B Authority Levels, CA-12-C Execution Modes) and re-Panel each.",
+          "rationale": "The monolithic amendment combines three independent architectural changes (pipeline modes, authority levels, execution modes) making it impossible to accept the valuable parts while rejecting the problematic Mode 3B synthesis and AUTONOMOUS deployment risks."
+        }
+      },
+      "overallNotes": "CA-12 significantly expands attack surface by introducing AUTONOMOUS authority for production deployment while 17 of 26 agents remain DORMANT.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Degenerate matrix cells undermine architecture",
+            "detail": "§B catalogues 8 degenerate configurations out of 36 total, meaning 22% of the proposed architecture is self-contradictory. SUB-1B BUILD + RECOMMEND-ONLY is logically impossible since RECOMMEND-ONLY blocks deployment, yet the spec presents this as a valid user-selectable combination rather than preventing it at the UI layer."
+          },
+          {
+            "title": "Mode 3B synthesis lacks IP safeguards",
+            "detail": "§A.1.4 MODE 3B proposes extracting 'best elements' from multiple third-party URLs to create new products, but provides no mechanism for IP verification, license checking, or copyright compliance. The spec acknowledges this in Conflict 6 but still includes Mode 3B as canonical without resolution."
+          },
+          {
+            "title": "Authority ceiling enforcement creates security theater",
+            "detail": "§A.2.4 Authority Ceiling Rule allows operators to set AUTONOMOUS as the ceiling, enabling fully automated deployment to production systems. The 'hard gates' in §A.2.1 only trigger on XSS/auth-leaks after damage may already be done, not preventatively."
+          },
+          {
+            "title": "Roadmap features presented as canonical",
+            "detail": "§E Honest Capability Boundary shows 12 of 36 configurations as ROADMAP (unbuilt), yet §B presents them as selectable options. Mode 2 SUB-2B BUILD is entirely unimplemented but appears in the canonical 36-cell matrix without clear user-facing warnings."
+          }
+        ],
+        "worse_than_status_quo": "The current system has clear RECOMMEND-ONLY defaults across all agents, providing a safe baseline. CA-12 introduces AUTONOMOUS authority that can deploy directly to production systems with only post-hoc XSS detection, creating attack surface where none exists today.",
+        "precedent": "Jenkins CI/CD pipelines with unrestricted deployment permissions have repeatedly led to supply chain attacks when compromised, as seen in the 2021 Codecov breach where auto-deployment credentials enabled attackers to modify production systems across hundreds of companies."
+      },
+      "rejection_steelman": "CA-12 attempts to codify 36 distinct operational modes when only 9 are built today, creating a specification that is 75% aspirational. The amendment should be split into CA-12-A covering only the built Mode 1 SUB-1A capabilities, deferring the complex multi-dimensional authority model until the underlying agent infrastructure graduates from DORMANT status. The IP concerns in Mode 3B alone warrant separate legal review before canonicalization.",
+      "votes": {
+        "G-Q1": {
+          "key": "GQ1-OVERLAP",
+          "pick_text": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD).",
+          "rationale": "Mode 3B SUB-3B-BUILD (synthesize from multiple URLs into new product) and Mode 2 SUB-2B BUILD (build new from description) both output a new deployed product, differing only in input type. The synthesis step could be a pre-processor to Mode 2 rather than a separate mode."
+        },
+        "G-Q2": {
+          "key": "GQ2-THREEPLUS",
+          "pick_text": "Further subdivided into three or more dimensions (e.g., split Authority into Build-authority + Deploy-authority).",
+          "rationale": "Authority Level conflates assessment authority (can FlowAI analyze) with deployment authority (can FlowAI modify production). These should be separate dimensions since many organizations would allow autonomous analysis but require human approval for any deployment."
+        },
+        "G-Q3": {
+          "key": "GQ3-PER-MODE",
+          "pick_text": "Ceiling should be per-product per-mode (e.g., Mode 1 ceiling AUTONOMOUS but Mode 2 ceiling SUPERVISED) not single global.",
+          "rationale": "Different pipeline modes have vastly different risk profiles — assessing existing products (Mode 1) is lower risk than building new products from scratch (Mode 2), so operators need mode-specific authority ceilings."
+        },
+        "G-Q4": {
+          "key": "GQ4-DEFER",
+          "pick_text": "Defer from SSOT entirely until at least one prototype implementation lands.",
+          "rationale": "Including unbuilt capabilities in canonical documentation creates false expectations and complicates the architecture with speculative features that may prove infeasible when implementation is attempted."
+        },
+        "G-Q5": {
+          "key": "GQ5-RESTRICT",
+          "pick_text": "Not implementable in any general form — Mode 3B should be removed from SSOT or restricted to research-only output (no deploy, no new URL).",
+          "rationale": "Automated extraction and recombination of features from third-party products into new deployable products creates unmanageable IP liability regardless of fair use claims, as it produces derivative works without human review of provenance."
+        },
+        "G-Q6": {
+          "key": "GQ6-COLLAPSE",
+          "pick_text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells).",
+          "rationale": "Cataloguing degenerate combinations as valid cells confuses the architecture; these should be compile-time or UI-time prevention, not runtime errors that users can mistakenly select."
+        },
+        "G-Q7": {
+          "key": "REJECT",
+          "pick_text": "Reject as over-scoped — break CA-12 into multiple smaller amendments (e.g., CA-12-A Pipeline Modes, CA-12-B Authority Levels, CA-12-C Execution Modes) and re-Panel each.",
+          "rationale": "The monolithic amendment combines three independent architectural changes (pipeline modes, authority levels, execution modes) making it impossible to accept the valuable parts while rejecting the problematic Mode 3B synthesis and AUTONOMOUS deployment risks."
+        }
+      },
+      "overallNotes": "CA-12 significantly expands attack surface by introducing AUTONOMOUS authority for production deployment while 17 of 26 agents remain DORMANT.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of IP handling",
+            "detail": "The proposal does not provide clear guidance on how to handle intellectual property concerns when synthesizing new products from third-party URLs in Mode 3B. This could lead to potential copyright infringement issues."
+          },
+          {
+            "title": "Insufficient testing",
+            "detail": "The proposal does not provide sufficient information on how the new pipeline modes and authority levels will be tested to ensure they are functioning as intended. This could lead to errors or unintended consequences."
+          },
+          {
+            "title": "Complexity of 36-configuration matrix",
+            "detail": "The 36-configuration matrix may be overly complex and difficult to manage, potentially leading to errors or inconsistencies in the pipeline. A more simplified approach may be necessary."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's introduction of new pipeline modes and authority levels could potentially lead to more complexity and errors in the system, making it worse than the status quo if not properly implemented and tested.",
+        "precedent": "No precedent known for a similar system with such a complex configuration matrix and IP handling concerns."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred due to the lack of clear guidance on IP handling, insufficient testing, and the potential complexity of the 36-configuration matrix. These issues could lead to significant problems if not properly addressed, and it may be better to revisit and revise the proposal before implementation.",
+      "votes": {
+        "G-Q1": {
+          "key": "GQ1-OK",
+          "pick_text": "Complete and non-overlapping as stated (4 modes: Mode 1 Assess, Mode 2 Build, Mode 3A Benchmark, Mode 3B Synthesize)",
+          "rationale": "The four pipeline modes seem to cover the main use cases, but it's essential to ensure they are non-overlapping and comprehensive."
+        },
+        "G-Q2": {
+          "key": "GQ2-TWO",
+          "pick_text": "Two dimensions as stated (Authority Level operator-set ceiling + Execution Mode per-run pacing)",
+          "rationale": "The two-dimension governance separation appears to be a good approach, but it's crucial to ensure that the authority level and execution mode are properly aligned and do not introduce unnecessary complexity."
+        },
+        "G-Q3": {
+          "key": "GQ3-CEILING",
+          "pick_text": "Ceiling rule correct as stated — operator sets persistent ceiling; users select at or below; never exceed",
+          "rationale": "The authority ceiling rule seems to be a good way to ensure that users do not exceed the intended authority level, but it's essential to ensure that the rule is properly enforced and communicated to users."
+        },
+        "G-Q4": {
+          "key": "GQ4-NOW",
+          "pick_text": "Codify in SSOT now as roadmap with explicit ROADMAP tag (per §E pattern)",
+          "rationale": "It's essential to have a clear plan for Mode 2 SUB-2B, and codifying it as a roadmap with a clear tag seems to be a good approach."
+        },
+        "G-Q5": {
+          "key": "GQ5-LICENSE",
+          "pick_text": "Implementable only with explicit license / authorisation from each source product owner",
+          "rationale": "To avoid potential copyright infringement issues, it's crucial to ensure that Mode 3B synthesis is only implemented with explicit licenses or authorizations from the source product owners."
+        },
+        "G-Q6": {
+          "key": "GQ6-36",
+          "pick_text": "36-cell matrix is correct — every cell needs explicit catalogue (some marked degenerate)",
+          "rationale": "The 36-configuration matrix seems to be a comprehensive approach, but it's essential to ensure that each cell is properly defined and that the matrix is manageable."
+        },
+        "G-Q7": {
+          "key": "GQ7-PROMOTE-SUB",
+          "pick_text": "Promote a subset — name the carve-outs in rationale (e.g., promote §A + §B + §E + §F now; defer §C UI mapping + §D agent ownership until corresponding engineering specs land)",
+          "rationale": "Given the complexity of the proposal, it may be better to promote a subset of the sections and defer others until further clarification and testing can be done."
+        }
+      },
+      "overallNotes": "The proposal has some promising aspects, but it requires further clarification and testing to ensure that it does not introduce unnecessary complexity or errors. It's essential to address the concerns around IP handling, testing, and the 36-configuration matrix before implementation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Pipeline Mode Overlap",
+            "detail": "Mode 3B SUB-3B-BUILD overlaps with Mode 2 SUB-2B BUILD. Both modes involve creating a new product, which can lead to confusion and redundancy."
+          },
+          {
+            "title": "Authority Ceiling Complexity",
+            "detail": "The Authority Ceiling Rule adds unnecessary complexity. Operators should be able to exceed the ceiling for specific runs with explicit re-authorization to handle exceptional cases."
+          },
+          {
+            "title": "IP/Copyright Concerns in Mode 3B",
+            "detail": "Mode 3B's 'extract best elements' feature raises significant IP/copyright concerns. Implementing this without explicit licenses from source product owners could lead to legal issues."
+          }
+        ],
+        "worse_than_status_quo": "The proposal introduces a complex Authority Ceiling Rule that adds unnecessary bureaucracy and limits flexibility, making the system less adaptable to exceptional cases compared to the current status quo.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces overlapping pipeline modes and a complex authority ceiling rule that limits flexibility. Additionally, the IP/copyright concerns in Mode 3B could lead to legal issues, making the system riskier than the status quo.",
+      "votes": {
+        "G-Q1": {
+          "key": "GQ1-OVERLAP",
+          "pick_text": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD).",
+          "rationale": "Mode 3B SUB-3B-BUILD and Mode 2 SUB-2B BUILD both involve creating a new product, leading to potential confusion and redundancy."
+        },
+        "G-Q2": {
+          "key": "GQ2-ONE",
+          "pick_text": "Collapsed into a single dimension — name the canonical labels in rationale.",
+          "rationale": "The Authority and Execution dimensions could be collapsed into a single dimension with labels such as 'Fully Automated', 'Partially Automated', and 'Manual' to simplify the governance model."
+        },
+        "G-Q3": {
+          "key": "GQ3-REAUTH",
+          "pick_text": "Users should be able to exceed the ceiling for a specific run with explicit re-authorisation (per-run admin approval).",
+          "rationale": "This provides the necessary flexibility to handle exceptional cases without adding unnecessary bureaucracy."
+        },
+        "G-Q4": {
+          "key": "GQ4-DEFER",
+          "pick_text": "Defer from SSOT entirely until at least one prototype implementation lands.",
+          "rationale": "Codifying Mode 2 SUB-2B as roadmap without a prototype implementation could lead to unrealistic expectations and potential failures."
+        },
+        "G-Q5": {
+          "key": "GQ5-LICENSE",
+          "pick_text": "Implementable only with explicit license / authorisation from each source product owner.",
+          "rationale": "Without explicit licenses, implementing Mode 3B's 'extract best elements' feature could lead to legal issues and potential copyright violations."
+        },
+        "G-Q6": {
+          "key": "GQ6-COLLAPSE",
+          "pick_text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells).",
+          "rationale": "The 36-cell matrix includes many degenerate combinations that are not useful in practice, adding unnecessary complexity."
+        },
+        "G-Q7": {
+          "key": "GQ7-DEFER",
+          "pick_text": "Defer all of CA-12 pending a separate disposition on one or more of Q1–Q6 above.",
+          "rationale": "The proposal has several significant issues that need to be addressed before it can be promoted as canonical."
+        }
+      },
+      "overallNotes": "The proposal introduces complex and overlapping pipeline modes, a restrictive authority ceiling rule, and significant IP/copyright concerns that need to be addressed.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Pipeline Mode classification",
+            "detail": "The proposal defines four Pipeline Modes, but it is unclear if these modes are mutually exclusive and collectively exhaustive. For example, it is not clear if a product can be both assessed and built, or if there are other modes that are not covered by the four defined modes."
+          },
+          {
+            "title": "Authority Level and Execution Mode",
+            "detail": "The proposal defines two dimensions, Authority Level and Execution Mode, but it is not clear how these dimensions interact. For example, it is not clear if a user can select a high Authority Level and a low Execution Mode, or if the Authority Level is always determined by the Execution Mode."
+          },
+          {
+            "title": "Authority Ceiling Rule",
+            "detail": "The proposal defines a rule that users cannot exceed the Authority Ceiling set by the operator, but it is not clear how this rule is enforced. For example, it is not clear if the system will prevent users from selecting a higher Authority Level, or if it will simply log the decision and allow it to proceed."
+          }
+        ],
+        "worse_than_status_quo": "The proposal introduces a new orthogonal axis, Pipeline Mode, which adds complexity to the system without providing a clear benefit. This could lead to confusion and errors in selecting the correct mode for a given task.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces a new orthogonal axis, Pipeline Mode, which adds complexity to the system without providing a clear benefit. This could lead to confusion and errors in selecting the correct mode for a given task. The proposal also does not clearly define how the Authority Level and Execution Mode dimensions interact, which could lead to inconsistencies and security risks. The Authority Ceiling Rule is not well-defined and could be difficult to enforce in practice.",
+      "votes": {
+        "G-Q1": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "G-Q2": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "G-Q3": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "G-Q4": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "G-Q5": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "G-Q6": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "G-Q7": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        }
+      },
+      "overallNotes": "",
+      "invalid_reason": "0/7 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:cohere/command-r-plus-08-2024"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Degenerate matrix cells undermine architecture",
+            "detail": "§B catalogues 8 degenerate configurations out of 36 total, meaning 22% of the proposed architecture is self-contradictory. SUB-1B BUILD + RECOMMEND-ONLY is logically impossible since RECOMMEND-ONLY blocks deployment, yet the spec presents this as a valid user-selectable combination rather than preventing it at the UI layer."
+          },
+          {
+            "title": "Mode 3B synthesis lacks IP safeguards",
+            "detail": "§A.1.4 MODE 3B proposes extracting 'best elements' from multiple third-party URLs to create new products, but provides no mechanism for IP verification, license checking, or copyright compliance. The spec acknowledges this in Conflict 6 but still includes Mode 3B as canonical without resolution."
+          },
+          {
+            "title": "Authority ceiling enforcement creates security theater",
+            "detail": "§A.2.4 Authority Ceiling Rule allows operators to set AUTONOMOUS as the ceiling, enabling fully automated deployment to production systems. The 'hard gates' in §A.2.1 only trigger on XSS/auth-leaks after damage may already be done, not preventatively."
+          },
+          {
+            "title": "Roadmap features presented as canonical",
+            "detail": "§E Honest Capability Boundary shows 12 of 36 configurations as ROADMAP (unbuilt), yet §B presents them as selectable options. Mode 2 SUB-2B BUILD is entirely unimplemented but appears in the canonical 36-cell matrix without clear user-facing warnings."
+          }
+        ],
+        "worse_than_status_quo": "The current system has clear RECOMMEND-ONLY defaults across all agents, providing a safe baseline. CA-12 introduces AUTONOMOUS authority that can deploy directly to production systems with only post-hoc XSS detection, creating attack surface where none exists today.",
+        "precedent": "Jenkins CI/CD pipelines with unrestricted deployment permissions have repeatedly led to supply chain attacks when compromised, as seen in the 2021 Codecov breach where auto-deployment credentials enabled attackers to modify production systems across hundreds of companies."
+      },
+      "rejection_steelman": "CA-12 attempts to codify 36 distinct operational modes when only 9 are built today, creating a specification that is 75% aspirational. The amendment should be split into CA-12-A covering only the built Mode 1 SUB-1A capabilities, deferring the complex multi-dimensional authority model until the underlying agent infrastructure graduates from DORMANT status. The IP concerns in Mode 3B alone warrant separate legal review before canonicalization.",
+      "votes": {
+        "G-Q1": {
+          "key": "GQ1-OVERLAP",
+          "pick_text": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD).",
+          "rationale": "Mode 3B SUB-3B-BUILD (synthesize from multiple URLs into new product) and Mode 2 SUB-2B BUILD (build new from description) both output a new deployed product, differing only in input type. The synthesis step could be a pre-processor to Mode 2 rather than a separate mode."
+        },
+        "G-Q2": {
+          "key": "GQ2-THREEPLUS",
+          "pick_text": "Further subdivided into three or more dimensions (e.g., split Authority into Build-authority + Deploy-authority).",
+          "rationale": "Authority Level conflates assessment authority (can FlowAI analyze) with deployment authority (can FlowAI modify production). These should be separate dimensions since many organizations would allow autonomous analysis but require human approval for any deployment."
+        },
+        "G-Q3": {
+          "key": "GQ3-PER-MODE",
+          "pick_text": "Ceiling should be per-product per-mode (e.g., Mode 1 ceiling AUTONOMOUS but Mode 2 ceiling SUPERVISED) not single global.",
+          "rationale": "Different pipeline modes have vastly different risk profiles — assessing existing products (Mode 1) is lower risk than building new products from scratch (Mode 2), so operators need mode-specific authority ceilings."
+        },
+        "G-Q4": {
+          "key": "GQ4-DEFER",
+          "pick_text": "Defer from SSOT entirely until at least one prototype implementation lands.",
+          "rationale": "Including unbuilt capabilities in canonical documentation creates false expectations and complicates the architecture with speculative features that may prove infeasible when implementation is attempted."
+        },
+        "G-Q5": {
+          "key": "GQ5-RESTRICT",
+          "pick_text": "Not implementable in any general form — Mode 3B should be removed from SSOT or restricted to research-only output (no deploy, no new URL).",
+          "rationale": "Automated extraction and recombination of features from third-party products into new deployable products creates unmanageable IP liability regardless of fair use claims, as it produces derivative works without human review of provenance."
+        },
+        "G-Q6": {
+          "key": "GQ6-COLLAPSE",
+          "pick_text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells).",
+          "rationale": "Cataloguing degenerate combinations as valid cells confuses the architecture; these should be compile-time or UI-time prevention, not runtime errors that users can mistakenly select."
+        },
+        "G-Q7": {
+          "key": "REJECT",
+          "pick_text": "Reject as over-scoped — break CA-12 into multiple smaller amendments (e.g., CA-12-A Pipeline Modes, CA-12-B Authority Levels, CA-12-C Execution Modes) and re-Panel each.",
+          "rationale": "The monolithic amendment combines three independent architectural changes (pipeline modes, authority levels, execution modes) making it impossible to accept the valuable parts while rejecting the problematic Mode 3B synthesis and AUTONOMOUS deployment risks."
+        }
+      },
+      "overallNotes": "CA-12 significantly expands attack surface by introducing AUTONOMOUS authority for production deployment while 17 of 26 agents remain DORMANT.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unbuilt dependencies roadmap risk",
+            "detail": "§E Honest Capability Boundary Table shows critical configurations like Mode 1 SUB-1B DEPLOY and Mode 2 SUB-2B BUILD as ROADMAP with unbuilt infrastructure. The proposal assumes future delivery of complex systems like source-acquisition layers and code-generation pipelines without concrete timelines or resource commitments."
+          },
+          {
+            "title": "Overly complex matrix",
+            "detail": "§B 36-configuration matrix includes 8 degenerate cells that offer no user value. Maintaining this combinatorial explosion increases testing surface and failure risk. Degenerate combinations like SUB-1B PREVIEW with RECOMMEND-ONLY authority shouldn't be cataloged as valid configurations."
+          },
+          {
+            "title": "Ambiguous authority enforcement",
+            "detail": "§A.2.4 Authority Ceiling Rule lacks implementation specifics for validation mechanics in AutoRunner. The 403 error mechanism references §13 but doesn't address how credential-bound runs validate against dynamic ProductRegistry changes during execution, creating security gaps."
+          },
+          {
+            "title": "Inadequate IP safeguards",
+            "detail": "Mode 3B synthesis lacks canonical IP handling per Conflict 6. Extracting 'best elements' from third-party URLs risks copyright violations, yet §G-Q5 options don't mandate proactive measures like Agent #14 copyright checks or output watermarking."
+          }
+        ],
+        "worse_than_status_quo": "In AUTONOMOUS mode, an operator sets high authority ceilings for efficiency. When Mode 3B synthesis extracts proprietary elements from competitor URLs without detection, it triggers IP lawsuits that wouldn't occur in today's manual-only benchmarking, damaging reputation beyond status quo risks.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity through its 36-configuration matrix and three new dimensions while depending heavily on unbuilt components like the synthesis engine and deploy credential systems. This creates architectural fragility without proven benefits. Deferring ratification until core components like Agent #21 and ProductSSOT reach SHIPPED status would reduce risk and allow validation of foundational capabilities first.",
+      "votes": {
+        "G-Q1": {
+          "key": "GQ1-OK",
+          "pick_text": "Complete and non-overlapping as stated (4 modes: Mode 1 Assess, Mode 2 Build, Mode 3A Benchmark, Mode 3B Synthesize).",
+          "rationale": "The four modes cover mutually exclusive operational scopes: single-product assessment, net-new creation, multi-product comparison, and multi-product synthesis without functional overlap."
+        },
+        "G-Q2": {
+          "key": "GQ2-TWO",
+          "pick_text": "Two dimensions as stated (Authority Level operator-set ceiling + Execution Mode per-run pacing).",
+          "rationale": "Separating persistent authority ceilings from runtime pacing maintains clear responsibility boundaries between operators (security) and users (convenience), avoiding governance entanglement."
+        },
+        "G-Q3": {
+          "key": "GQ3-CEILING",
+          "pick_text": "Ceiling rule correct as stated — operator sets persistent ceiling; users select at or below; never exceed.",
+          "rationale": "Strict enforcement prevents privilege escalation and aligns with §13 role-gating principles, ensuring operators retain ultimate control over risk exposure."
+        },
+        "G-Q4": {
+          "key": "GQ4-NOW",
+          "pick_text": "Codify in SSOT now as roadmap with explicit ROADMAP tag (per §E pattern).",
+          "rationale": "Explicit roadmap tagging maintains architectural integrity while honestly signaling unbuilt status, preventing scope creep during implementation."
+        },
+        "G-Q5": {
+          "key": "GQ5-OWNER",
+          "pick_text": "Implementable only when the operator owns every source URL (first-party / operator-owned synthesis only).",
+          "rationale": "Restricting synthesis to owned content avoids third-party IP risks while still delivering value for internal product consolidation use cases."
+        },
+        "G-Q6": {
+          "key": "GQ6-COLLAPSE",
+          "pick_text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells).",
+          "rationale": "Cataloging degenerate configurations adds unnecessary specification burden; runtime validation of valid combinations is sufficient and reduces maintenance overhead."
+        },
+        "G-Q7": {
+          "key": "GQ7-PROMOTE-SUB",
+          "pick_text": "Promote a subset — name the carve-outs in rationale (e.g., promote §A + §B + §E + §F now; defer §C UI mapping + §D agent ownership until corresponding engineering specs land).",
+          "rationale": "Core architectural definitions (§A,§B) and capability transparency (§E) provide immediate value, while UI/agent specifics (§C,§D) should await engineering specs to avoid binding to unimplemented details."
+        }
+      },
+      "overallNotes": "The proposal's ambition is commendable but requires phased validation given dependency risks. Prioritize shipping Mode 1 SUB-1B PREVIEW before ratifying higher-risk modes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Architecture Built on Non-Existent Components",
+            "detail": "The proposal defines a vast 36-configuration architecture where the vast majority of cells are marked ROADMAP or PARTIAL, per §B and §E. For example, §D's agent ownership matrix shows that nearly every critical step in every new mode relies on a DORMANT agent. Ratifying a complex, system-wide architecture before its foundational components (e.g., Mode 2 code-gen, Mode 3 synthesis) are even prototyped is premature and locks the project into a speculative design that may prove unworkable."
+          },
+          {
+            "title": "Unresolved Critical IP/Copyright Risk in Mode 3B",
+            "detail": "The proposal introduces Mode 3B to 'extract best elements' from multiple source URLs but explicitly punts on the severe IP and copyright risks, merely surfacing it as a question (G-Q5) and a conflict (Conflict 6). A core architectural proposal should not include a feature with a fundamental, unresolved legal and ethical flaw. Approving this would be irresponsible, as it canonizes a mode of operation that could expose the operator to significant legal liability."
+          },
+          {
+            "title": "Excessive Complexity via 'Axis Explosion'",
+            "detail": "The proposal amends Locked Rule 4 to codify four orthogonal axes (§F.7), creating a complex interplay between Pipeline Mode, Authority Level, Execution Pacing, and Orchestra Selection. While the proposal attempts to reconcile and deprecate old terms, the net result is a significant increase in cognitive load for both operators and users. This complexity, exemplified by the 36-cell matrix in §B, increases the risk of misconfiguration, unexpected behavior, and security vulnerabilities arising from misunderstood interactions between the axes."
+          }
+        ],
+        "worse_than_status_quo": "An operator sets the Authority Level to AUTONOMOUS, believing it applies to the well-understood Mode 1 (Assess & Renew). A user then initiates a Mode 3B (Synthesize) run, which the system automatically executes against competitor websites, generates a derivative product with potential IP violations, and deploys it to a new URL. This creates a massive, immediate legal liability for the operator, a failure mode that is impossible in the current, more constrained system.",
+        "precedent": "The 2012 Knight Capital Group trading loss, where a software deployment bug involving the incorrect reuse of deprecated functionality within a new automated system caused catastrophic financial loss ($440 million in 45 minutes). This precedent highlights the danger of combining new, complex automation (like CA-12's AUTONOMOUS modes) with improperly managed or incompletely tested legacy/dormant code paths, leading to high-speed, high-impact failures."
+      },
+      "rejection_steelman": "While CA-12 commendably provides a comprehensive and honest vision for the system's future capabilities, its monolithic nature makes it too large and speculative to ratify at once. It defines an entire operating model based on components that are explicitly marked as 'ROADMAP' or 'DORMANT', effectively asking the Panel to approve a detailed blueprint for a house whose foundational materials have not yet been invented. A more prudent approach would be to defer this grand unification and instead review smaller, incremental amendments that introduce and ratify these capabilities as they are prototyped and proven, allowing the architecture to evolve organically based on empirical evidence rather than being locked into a speculative framework.",
+      "votes": {
+        "G-Q1": {
+          "key": "GQ1-OVERLAP",
+          "pick_text": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD).",
+          "rationale": "As described in §A.1.4, Mode 3B's build behavior is defined as 'Mode 2 behavior from combined inputs,' indicating that Mode 3B is a composition of Mode 1 and Mode 2, not a fundamentally distinct mode."
+        },
+        "G-Q2": {
+          "key": "GQ2-THREEPLUS",
+          "pick_text": "Further subdivided into three or more dimensions (e.g., split Authority into Build-authority + Deploy-authority).",
+          "rationale": "The risks associated with building code (e.g., introducing bugs) are different from deploying code (e.g., overwriting production). A more granular authority model that separates these concerns would provide a safer and more flexible governance framework."
+        },
+        "G-Q3": {
+          "key": "GQ3-PER-MODE",
+          "pick_text": "Ceiling should be per-product per-mode (e.g., Mode 1 ceiling AUTONOMOUS but Mode 2 ceiling SUPERVISED) not single global.",
+          "rationale": "A single authority ceiling per product is too coarse; an operator may trust the system to autonomously renew an existing site (Mode 1) but require supervision for building a new one from scratch (Mode 2). Per-mode ceilings provide necessary granular control."
+        },
+        "G-Q4": {
+          "key": "GQ4-DEFER",
+          "pick_text": "Defer from SSOT entirely until at least one prototype implementation lands.",
+          "rationale": "Canonizing a feature that is 'entirely unbuilt' (§E) is premature, as it creates architectural lock-in and sets expectations based on pure speculation. The design should be informed by the realities discovered during prototyping."
+        },
+        "G-Q5": {
+          "key": "GQ5-OWNER",
+          "pick_text": "Implementable only when the operator owns every source URL (first-party / operator-owned synthesis only).",
+          "rationale": "This is the only option that provides a clear, enforceable, and legally sound guardrail against IP/copyright infringement without requiring complex external license verification. Any other approach invites unacceptable legal risk."
+        },
+        "G-Q6": {
+          "key": "GQ6-COLLAPSE",
+          "pick_text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells).",
+          "rationale": "The canonical specification should define valid operational states. Degenerate, self-contradictory combinations are implementation-level validation errors, and including them in the 36-cell matrix adds noise and unnecessary complexity to the core architectural document."
+        },
+        "G-Q7": {
+          "key": "REJECT",
+          "pick_text": "Reject as over-scoped — break CA-12 into multiple smaller amendments (e.g., CA-12-A Pipeline Modes, CA-12-B Authority Levels, CA-12-C Execution Modes) and re-Panel each.",
+          "rationale": "The proposal is monolithic, bundling a new operating model, authority framework, and multiple roadmap features. This scope is too large for effective review; breaking it into smaller, logically distinct amendments would allow for more focused and rigorous scrutiny of each component."
+        }
+      },
+      "overallNotes": "The proposal is ambitious and well-documented, particularly its honesty about capability gaps. However, its monolithic scope and reliance on non-existent technology make it too speculative to ratify as a single unit.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.5-pro"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly Complex Matrix",
+            "detail": "The 36-configuration matrix (§B) is overly complex and may lead to implementation and maintenance challenges. Some configurations are marked as degenerate, indicating potential inconsistencies in the design."
+          },
+          {
+            "title": "Lack of Clear IP Handling",
+            "detail": "Mode 3B (§A.1.4) involves synthesizing new products from third-party URLs, raising significant IP and copyright concerns. The proposal does not provide a clear mechanism for handling these issues."
+          },
+          {
+            "title": "Unclear Authority Ceiling Enforcement",
+            "detail": "The Authority Ceiling Rule (§A.2.4) is not clearly defined in terms of its enforcement mechanism. It is unclear how the system will prevent users from exceeding the set ceiling."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of multiple pipeline modes and authority levels without clear guidelines on their usage and enforcement could lead to confusion and misuse, potentially making the system worse than the status quo by introducing unnecessary complexity and risk.",
+        "precedent": "The introduction of multiple operating modes and authority levels without clear governance and enforcement mechanisms is reminiscent of the challenges faced by the Docker containerization platform when it introduced a complex permission system, leading to user confusion and security issues."
+      },
+      "rejection_steelman": "Rejecting CA-12 is justified due to its complexity, potential for misuse, and lack of clear mechanisms for handling critical issues such as IP concerns and authority ceiling enforcement. The proposal's broad scope and interdependence of its dimensions make it risky to implement as a single amendment.",
+      "votes": {
+        "G-Q1": {
+          "key": "GQ1-OVERLAP",
+          "pick_text": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD).",
+          "rationale": "Mode 3B SUB-3B-BUILD and Mode 2 SUB-2B BUILD overlap as both involve building and deploying new products, potentially leading to redundancy or confusion in the pipeline mode classification."
+        },
+        "G-Q2": {
+          "key": "GQ2-ONE",
+          "pick_text": "Collapsed into a single dimension — name the canonical labels in rationale.",
+          "rationale": "Collapsing Authority Level and Execution Mode into a single dimension could simplify the governance structure. Canonical labels could be 'Fully Autonomous', 'Supervised Auto', 'Supervised Manual', 'Recommend-only Auto', 'Recommend-only Manual'."
+        },
+        "G-Q3": {
+          "key": "GQ3-PER-MODE",
+          "pick_text": "Ceiling should be per-product per-mode (e.g., Mode 1 ceiling AUTONOMOUS but Mode 2 ceiling SUPERVISED) not single global.",
+          "rationale": "Having a per-product per-mode ceiling allows for more granular control over the authority levels, enabling operators to tailor the autonomy based on the specific requirements of each product and mode."
+        },
+        "G-Q4": {
+          "key": "GQ4-DEFER",
+          "pick_text": "Defer from SSOT entirely until at least one prototype implementation lands.",
+          "rationale": "Mode 2 SUB-2B involves significant unbuilt infrastructure. Deferring its inclusion in SSOT until a prototype is available would ensure that only proven capabilities are canonized."
+        },
+        "G-Q5": {
+          "key": "GQ5-RESTRICT",
+          "pick_text": "Not implementable in any general form — Mode 3B should be removed from SSOT or restricted to research-only output (no deploy, no new URL).",
+          "rationale": "Given the significant IP and copyright concerns associated with Mode 3B, it is prudent to either remove it or restrict its output to research purposes only, avoiding potential legal and ethical issues."
+        },
+        "G-Q6": {
+          "key": "GQ6-COLLAPSE",
+          "pick_text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells).",
+          "rationale": "The 36-configuration matrix is overly detailed and includes degenerate cases. Simplifying it by removing or not cataloging these degenerate configurations would make the system more manageable and less prone to errors."
+        },
+        "G-Q7": {
+          "key": "GQ7-PROMOTE-SUB",
+          "pick_text": "Promote a subset — name the carve-outs in rationale (e.g., promote §A + §B + §E + §F now; defer §C UI mapping + §D agent ownership until corresponding engineering specs land).",
+          "rationale": "Promoting a subset of CA-12, specifically the foundational elements like §A, §B, §E, and §F, while deferring UI mapping and agent ownership details until more concrete engineering specifications are available, strikes a balance between advancing the governance architecture and ensuring implementability."
+        }
+      },
+      "overallNotes": "The proposal is ambitious but requires significant refinement to address complexity, IP concerns, and governance enforcement.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§A.2.4 ceiling enforcement gap",
+            "detail": "AutoRunner per-run validation references ProductRegistry.authorityCeiling but §E marks the schema migration as NEW/ROADMAP; no guard() implementation in BaseAgent.js or EXECUTOR_REGISTRY exists today, allowing potential bypass."
+          },
+          {
+            "title": "§E SUB-1B PREVIEW vs §D ownership",
+            "detail": "Table claims PARTIAL status for SUB-1B PREVIEW relying on Agent #3 Self-Renewal Executor, yet §D shows source-acquisition layer still ROADMAP and Agent #2 only SHIPPED-GREEN for audit, not patch application."
+          },
+          {
+            "title": "§B degenerate cells lack spec",
+            "detail": "36-cell matrix lists 8 degenerate combinations but §A.3 Execution Mode and §A.2.4 provide no runtime error contract or AutoRunner 403 path for contradictory selections such as SUB-1B + RECOMMEND-ONLY."
+          }
+        ],
+        "worse_than_status_quo": "The 36-cell matrix plus explicit ROADMAP cells for core build/deploy paths will surface unfulfilled promises in the UI (LandingPage Step 3 + AutoRunner), increasing user confusion and support load beyond the current simpler 8-step pipeline that only exposes proven RECOMMEND-ONLY flows.",
+        "precedent": "Early Kubernetes CRD operator matrices (e.g., 2018–2020 Knative and Istio operator configs) produced similar combinatorial explosion of modes/authority/execution states that caused configuration drift and unmaintainable upgrade paths."
+      },
+      "rejection_steelman": "CA-12 is monolithic and codifies 12+ ROADMAP cells plus a new schema field and four-axis Locked Rule change before any end-to-end prototype exists for the highest-risk configurations; this risks locking the SSOT into an architecture whose only proven cells are the pre-existing RECOMMEND-ONLY audit paths, making incremental CA-n evolution impossible and violating the product-agnostic rule once mode-specific agent behavior is introduced.",
+      "votes": {
+        "G-Q1": {
+          "key": "GQ1-OVERLAP",
+          "pick_text": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD).",
+          "rationale": "SUB-3B-BUILD and SUB-2B BUILD both claim full code-gen + deploy to new URL with identical Agent #2/#7/#3 ownership."
+        },
+        "G-Q2": {
+          "key": "GQ2-THREEPLUS",
+          "pick_text": "Further subdivided into three or more dimensions (e.g., split Authority into Build-authority + Deploy-authority).",
+          "rationale": "Authority ceiling conflates build-time and deploy-time gates; separate dimensions would surface the distinct credential and Acceptance Gate requirements in §A.2.1."
+        },
+        "G-Q3": {
+          "key": "GQ3-CEILING",
+          "pick_text": "Ceiling rule correct as stated — operator sets persistent ceiling; users select at or below; never exceed.",
+          "rationale": "Matches existing §13 role-gate pattern and dormant-safe default; enforcement gap is implementation debt, not a flaw in the rule itself."
+        },
+        "G-Q4": {
+          "key": "GQ4-DEFER",
+          "pick_text": "Defer from SSOT entirely until at least one prototype implementation lands.",
+          "rationale": "§E explicitly states the entire code-generation pipeline is unbuilt; codifying it now violates the 'Be precise — do not mark anything BUILT that isn't proven' directive."
+        },
+        "G-Q5": {
+          "key": "GQ5-RESTRICT",
+          "pick_text": "Not implementable in any general form — Mode 3B should be removed from SSOT or restricted to research-only output (no deploy, no new URL).",
+          "rationale": "No IP-handling contract exists in §G or §14; synthesis of third-party features directly conflicts with Locked Rule 1 source-of-truth hierarchy."
+        },
+        "G-Q6": {
+          "key": "GQ6-COLLAPSE",
+          "pick_text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells).",
+          "rationale": "Cataloguing 8 contradictory cells adds no operational value and bloats the SSOT without corresponding error-handling specs."
+        },
+        "G-Q7": {
+          "key": "REJECT",
+          "pick_text": "Reject as over-scoped — break CA-12 into multiple smaller amendments (e.g., CA-12-A Pipeline Modes, CA-12-B Authority Levels, CA-12-C Execution Modes) and re-Panel each.",
+          "rationale": "Monolithic ratification of interdependent dimensions before prototypes exist prevents targeted Panel review of the highest-risk cells."
+        }
+      },
+      "overallNotes": "Strongest objections center on unbuilt enforcement paths and over-cataloguing of degenerate states.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "G-Q1",
+      "topic": "Pipeline Mode classification completeness + non-overlap",
+      "options": [
+        {
+          "key": "GQ1-OK",
+          "text": "Complete and non-overlapping as stated (4 modes: Mode 1 Assess, Mode 2 Build, Mode 3A Benchmark, Mode 3B Synthesize)."
+        },
+        {
+          "key": "GQ1-MISSING",
+          "text": "A Mode is missing — name it in rationale (e.g., a \"Maintain existing\" mode distinct from \"Assess existing\")."
+        },
+        {
+          "key": "GQ1-OVERLAP",
+          "text": "Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD)."
+        },
+        {
+          "key": "GQ1-REFRAME",
+          "text": "The 4-mode framing is the wrong abstraction — propose alternative classification."
+        }
+      ],
+      "draftedKey": "GQ1-OK"
+    },
+    {
+      "id": "G-Q2",
+      "topic": "Two-dimension governance separation (Authority vs Execution)",
+      "options": [
+        {
+          "key": "GQ2-TWO",
+          "text": "Two dimensions as stated (Authority Level operator-set ceiling + Execution Mode per-run pacing)."
+        },
+        {
+          "key": "GQ2-ONE",
+          "text": "Collapsed into a single dimension — name the canonical labels in rationale."
+        },
+        {
+          "key": "GQ2-THREEPLUS",
+          "text": "Further subdivided into three or more dimensions (e.g., split Authority into Build-authority + Deploy-authority)."
+        },
+        {
+          "key": "GQ2-DIFF",
+          "text": "The two-dimension model is right but the specific 3×3 grid is wrong — propose alternative cardinality."
+        }
+      ],
+      "draftedKey": "GQ2-TWO"
+    },
+    {
+      "id": "G-Q3",
+      "topic": "Authority Ceiling Rule",
+      "options": [
+        {
+          "key": "GQ3-CEILING",
+          "text": "Ceiling rule correct as stated — operator sets persistent ceiling; users select at or below; never exceed."
+        },
+        {
+          "key": "GQ3-REAUTH",
+          "text": "Users should be able to exceed the ceiling for a specific run with explicit re-authorisation (per-run admin approval)."
+        },
+        {
+          "key": "GQ3-ADVISORY",
+          "text": "Ceiling should be advisory not enforced — users can choose any authority level; audit-log captures decision."
+        },
+        {
+          "key": "GQ3-PER-MODE",
+          "text": "Ceiling should be per-product per-mode (e.g., Mode 1 ceiling AUTONOMOUS but Mode 2 ceiling SUPERVISED) not single global."
+        }
+      ],
+      "draftedKey": "GQ3-CEILING"
+    },
+    {
+      "id": "G-Q4",
+      "topic": "Mode 2 SUB-2B (full build + deploy) in SSOT now or defer",
+      "options": [
+        {
+          "key": "GQ4-NOW",
+          "text": "Codify in SSOT now as roadmap with explicit ROADMAP tag (per §E pattern)."
+        },
+        {
+          "key": "GQ4-DEFER",
+          "text": "Defer from SSOT entirely until at least one prototype implementation lands."
+        },
+        {
+          "key": "GQ4-PREVIEW",
+          "text": "Codify only the SUB-2B-PREVIEW path (FlowAI-owned preview URL) now; defer the SUB-2B-DEPLOY path (push to user-owned host)."
+        },
+        {
+          "key": "GQ4-PARTIAL",
+          "text": "Codify as canonical SSOT only when it reaches PARTIAL status (skeleton exists end-to-end)."
+        }
+      ],
+      "draftedKey": "GQ4-NOW"
+    },
+    {
+      "id": "G-Q5",
+      "topic": "Mode 3B synthesis IP/copyright feasibility",
+      "options": [
+        {
+          "key": "GQ5-FAIRUSE",
+          "text": "Implementable for all third-party products — best-elements extraction is fair-use as research / inspiration."
+        },
+        {
+          "key": "GQ5-LICENSE",
+          "text": "Implementable only with explicit license / authorisation from each source product owner."
+        },
+        {
+          "key": "GQ5-OWNER",
+          "text": "Implementable only when the operator owns every source URL (first-party / operator-owned synthesis only)."
+        },
+        {
+          "key": "GQ5-RESTRICT",
+          "text": "Not implementable in any general form — Mode 3B should be removed from SSOT or restricted to research-only output (no deploy, no new URL)."
+        }
+      ],
+      "draftedKey": "GQ5-OWNER"
+    },
+    {
+      "id": "G-Q6",
+      "topic": "36-configuration matrix granularity",
+      "options": [
+        {
+          "key": "GQ6-36",
+          "text": "36-cell matrix is correct — every cell needs explicit catalogue (some marked degenerate)."
+        },
+        {
+          "key": "GQ6-COLLAPSE",
+          "text": "Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates; degenerate combinations are runtime errors, not catalogued cells)."
+        },
+        {
+          "key": "GQ6-UNDER",
+          "text": "Under-specified — the 36-cell matrix omits relevant variations (e.g., per-step authority overrides should add a fourth dimension)."
+        },
+        {
+          "key": "GQ6-AGENT",
+          "text": "Matrix concept right but cells should be agent-rooted (one row per agent × mode) rather than mode × authority × execution."
+        }
+      ],
+      "draftedKey": "GQ6-36"
+    },
+    {
+      "id": "G-Q7",
+      "topic": "Overall CA-12 disposition",
+      "options": [
+        {
+          "key": "GQ7-PROMOTE-ALL",
+          "text": "Promote all sections (§A–§G) as canonical with no carve-outs."
+        },
+        {
+          "key": "GQ7-PROMOTE-SUB",
+          "text": "Promote a subset — name the carve-outs in rationale (e.g., promote §A + §B + §E + §F now; defer §C UI mapping + §D agent ownership until corresponding engineering specs land)."
+        },
+        {
+          "key": "GQ7-DEFER",
+          "text": "Defer all of CA-12 pending a separate disposition on one or more of Q1–Q6 above."
+        },
+        {
+          "key": "GQ7-SPLIT",
+          "text": "Reject as over-scoped — break CA-12 into multiple smaller amendments (e.g., CA-12-A Pipeline Modes, CA-12-B Authority Levels, CA-12-C Execution Modes) and re-Panel each."
+        }
+      ],
+      "draftedKey": "GQ7-PROMOTE-ALL"
+    }
+  ]
+}
