@@ -6,11 +6,15 @@
 
 import { setCorsHeaders, callClaude } from './_lib/claude.js';
 import { recordCost } from './_lib/cost.js';
+import { requireAuthHard } from './_lib/auth.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  // S-3 fix (W4 adversarial bd2f923): auth gate BEFORE body validation.
+  if (!(await requireAuthHard(req, res))) return;
 
   const { prompt, complexity = 'routine', maxTokens = 1500, sessionId, endpoint = '/api/llm-step' } = req.body || {};
   if (typeof prompt !== 'string' || !prompt.trim()) {

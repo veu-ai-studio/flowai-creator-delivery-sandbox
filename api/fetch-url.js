@@ -4,11 +4,15 @@
 
 import { setCorsHeaders } from './_lib/claude.js';
 import { crawl } from './_lib/crawler.js';
+import { requireAuthHard } from './_lib/auth.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  // S-3 fix (W4 adversarial bd2f923): auth gate BEFORE body validation.
+  if (!(await requireAuthHard(req, res))) return;
 
   const { url, force } = req.body || {};
   if (typeof url !== 'string' || !url.trim()) {

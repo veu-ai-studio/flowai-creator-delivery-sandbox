@@ -24,6 +24,7 @@ import { detectIssues } from './_lib/issueDetector.js';
 import { renew } from './_lib/renewalEngine.js';
 import { buildBeforeAfterReport, detectIssuesOnRenewal } from './_lib/beforeAfterReport.js';
 import { buildInputArtifact, scrubCredentials } from '../src/lib/renewal/inputArtifact.js';
+import { requireAuthHard } from './_lib/auth.js';
 
 function originFrom(req) {
   const xfProto = req.headers['x-forwarded-proto'] || 'https';
@@ -36,6 +37,9 @@ export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  // S-3 fix (W4 adversarial bd2f923): auth gate BEFORE body validation.
+  if (!(await requireAuthHard(req, res))) return;
 
   const body = req.body || {};
   const inputType = body.inputType;

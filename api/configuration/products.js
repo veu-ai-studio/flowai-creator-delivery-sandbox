@@ -13,6 +13,7 @@ import {
   listProducts, createProduct, productsStats,
 } from '../_lib/configRegistry.js';
 import { resolveOrgId } from '../_lib/tenant.js';
+import { requireAuthHard } from '../_lib/auth.js';
 import { logger } from '../_lib/logger.js';
 import { withRequestLog } from '../_lib/requestLog.js';
 
@@ -22,7 +23,15 @@ async function productsHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  // S-1 fix (W4 adversarial bd2f923): hard-gate BEFORE any DB query.
+  // Previously, anon callers received the DEFAULT_ORG fallback and the
+  // /api/configuration/products GET silently returned the FlowAI portfolio.
+  // requireAuthHard returns 401 unconditionally when no Clerk session or
+  // service-key is present, regardless of the AUTH_REQUIRED feature flag.
+  const authCtx = await requireAuthHard(req, res);
+  if (!authCtx) return; // 401 already written
+
+  const orgId = resolveOrgId(req) || authCtx.orgId || DEFAULT_ORG;
 
   try {
     if (req.method === 'GET') {

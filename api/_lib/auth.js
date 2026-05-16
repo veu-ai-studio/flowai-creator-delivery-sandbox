@@ -143,6 +143,23 @@ export async function requireAuth(req, res) {
   return ctx;
 }
 
+// Hard-gate variant: always 401 for unauthenticated callers, regardless of
+// the AUTH_REQUIRED feature flag. Used by endpoints that touch tenant data or
+// mutate state — those MUST never be reachable anonymously.
+//
+// Per W4 adversarial run bd2f923 showstoppers S-1 (anon data exposure on
+// /api/configuration/products) and S-3 (auth-after-validation on 11 POST
+// endpoints leaked schema-error oracles to anon callers). Wired into the
+// affected endpoints in commit (this commit).
+export async function requireAuthHard(req, res) {
+  const ctx = await getRequestContext(req);
+  if (!ctx.authenticated) {
+    res.status(401).json({ error: 'Authentication required', authMode: ctx.authMode });
+    return null;
+  }
+  return ctx;
+}
+
 // Helper for endpoints that want a short-circuit version.
 export async function withContext(req, res, handler) {
   const ctx = await requireAuth(req, res);

@@ -9,11 +9,15 @@ import { recordCost } from '../_lib/cost.js';
 import { appendAuditEntry, appendCostEvent } from '../_lib/db.js';
 import { resolveOrgId, resolveProductId } from '../_lib/tenant.js';
 import { buildStepPrompt, buildJsonEnvelopePrompt, parseJsonEnvelope, stripJsonEnvelope } from '../_lib/stepPrompts.js';
+import { requireAuthHard } from '../_lib/auth.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  // S-3 fix (W4 adversarial bd2f923): auth gate BEFORE body validation.
+  if (!(await requireAuthHard(req, res))) return;
 
   const { url, description, pageContent, sessionId, force, objective } = req.body || {};
   const orgId = resolveOrgId(req);
