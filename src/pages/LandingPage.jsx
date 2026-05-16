@@ -361,42 +361,41 @@ export default function LandingPage() {
   const [depth, setDepth] = useState('Standard');
 
   // ── Test Fetch (Card A) ──
-  const PROXY = 'https://attached-assets-victor2081new.replit.app';
-
+  // Routes through FlowAI's own /api/research-url (Browserless-backed, full
+  // JS rendering). Previously called a dead Replit proxy that returned null
+  // `bodyText` for any SPA, baking the literal string "Body: null" into
+  // sessionStorage's pageContext and propagating it through every pipeline
+  // step prompt downstream.
   const testFetch = async () => {
     if (!urlInput.trim()) return;
     setTesting(true);
     setFetchStatus(null);
     try {
-      const response = await fetch(`${PROXY}/fetch`, {
+      const response = await fetch('/api/research-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: urlInput.trim() }),
       });
-      const data = await response.json();
-      if (data.title || data.bodyText) {
-        const pageContext = `Title: ${data.title}\nMeta: ${data.metaDescription}\nHeadings: ${data.headings?.map(h => h.text).join(' | ')}\nBody: ${data.bodyText}`;
+      if (!response.ok) {
+        setFetchStatus('fail');
+        setCrawlerQuality(null);
+        setTesting(false);
+        return;
+      }
+      const data = await response.json().catch(() => null);
+      const page = data?.page || {};
+      const hasContent = data?.ok === true && (page.title || page.bodyTextSnippet);
+      if (hasContent) {
+        const headings = Array.isArray(page.headings)
+          ? page.headings.map((h) => (typeof h === 'string' ? h : (h?.text || ''))).filter(Boolean).join(' | ')
+          : '';
+        const pageContext = `Title: ${page.title || ''}\nMeta: ${page.metaDescription || ''}\nHeadings: ${headings}\nBody: ${page.bodyTextSnippet || ''}`;
         try {
           const existing = JSON.parse(sessionStorage.getItem('flowai_session_config') || '{}');
           sessionStorage.setItem('flowai_session_config', JSON.stringify({ ...existing, pageContext }));
         } catch {}
         setFetchStatus('ok');
-        // Read crawler_quality from /api/research-url if available
-        try {
-          const rRes = await fetch('/api/research-url', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: urlInput.trim() }),
-          });
-          if (rRes.ok) {
-            const rData = await rRes.json();
-            setCrawlerQuality(rData.crawler_quality || 'basic');
-          } else {
-            setCrawlerQuality('basic');
-          }
-        } catch {
-          setCrawlerQuality('basic');
-        }
+        setCrawlerQuality(data.crawler_quality || (data.method === 'browserless' || data.jsRendered ? 'rich' : 'basic'));
       } else {
         setFetchStatus('fail');
         setCrawlerQuality(null);

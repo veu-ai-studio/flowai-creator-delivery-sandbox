@@ -84,9 +84,15 @@ Every section must end with a LAUNCH GATE: GO / HOLD / BLOCKER.`,
 // ─── PAGE FETCH & CRAWL ───────────────────────────────────────────────────────
 
 // Playwright crawler proxy base URL.
+// LEGACY: used to point at https://attached-assets-victor2081new.replit.app
+// (a static-HTML fetcher that could not render JavaScript SPAs — returned
+// null `bodyText` for any client-rendered app including FlowAI itself). It
+// remains the default for runCrawl / runInteractiveTests below, which are
+// not on the AutoRunner research path and can be migrated separately. For
+// fetchPageContext (which IS on the research path), the implementation now
+// calls FlowAI's own /api/research-url endpoint — see below.
 // Override via env (Vite browser: VITE_CRAWLER_BASE_URL; Node/vitest:
-// CRAWLER_BASE_URL) when moving off the legacy Replit proxy.
-// See docs/ENV_VARS.md § 7.
+// CRAWLER_BASE_URL).  See docs/ENV_VARS.md § 7.
 const CRAWLER_BASE_URL = (() => {
   try {
     if (typeof import.meta !== 'undefined' && import.meta && import.meta.env) {
@@ -100,26 +106,64 @@ const CRAWLER_BASE_URL = (() => {
   return 'https://attached-assets-victor2081new.replit.app';
 })();
 
-export async function fetchPageContext(input, base44) {
+// fetchPageContext now routes through FlowAI's own /api/research-url which
+// is backed by Browserless (full JS rendering). The legacy Replit proxy
+// returned null `bodyText` for any SPA (because it could only fetch raw
+// HTML, not execute the client-side render that produces the visible page
+// content). That null then propagated into every step prompt as the
+// literal string "Body: null" and the AutoRunner pipeline showed empty
+// step bodies even though all 8 steps "completed".
+//
+// Return contract is unchanged: { content } on success, { fetchFailed,
+// reason } on failure, { authWall } when applicable. Callers in
+// buildStepPrompt + buildProposalPrompt continue to work without changes.
+export async function fetchPageContext(input, _base44) {
   if (input.type !== 'url' || !input.value?.trim()) return null;
 
   const url = input.value.trim();
 
   try {
-    const response = await fetch(`${CRAWLER_BASE_URL}/fetch`, {
+    const response = await fetch('/api/research-url', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
-    const data = await response.json();
-    if (!data.title && !data.bodyText) {
-      return { fetchFailed: true, reason: 'No content returned from proxy' };
+    if (!response.ok) {
+      return { fetchFailed: true, reason: `Research API returned HTTP ${response.status}` };
+    }
+    const data = await response.json().catch(() => null);
+    if (!data) {
+      return { fetchFailed: true, reason: 'Research API returned non-JSON body' };
+    }
+    if (data.ok !== true) {
+      // /api/research-url returns ok:false with reason on crawl failure.
+      // It also surfaces block:true for content-insufficient (W2 Phase 1).
+      return {
+        fetchFailed: true,
+        reason: typeof data.reason === 'string' ? data.reason : 'Research API returned ok:false',
+        ...(data.block === true
+          ? { block: true, blockReason: data.blockReason, blockSeverity: data.blockSeverity }
+          : {}),
+      };
+    }
+    const page = data.page || {};
+    const title = typeof page.title === 'string' ? page.title : '';
+    const meta = typeof page.metaDescription === 'string' ? page.metaDescription : '';
+    const headings = Array.isArray(page.headings)
+      ? page.headings.map((h) => (typeof h === 'string' ? h : (h?.text || ''))).filter(Boolean).join(' | ')
+      : '';
+    const body = typeof page.bodyTextSnippet === 'string' ? page.bodyTextSnippet : '';
+    if (!title && !body) {
+      return { fetchFailed: true, reason: 'Research API returned empty page content' };
     }
     return {
-      content: `Title: ${data.title}\nMeta: ${data.metaDescription}\nHeadings: ${data.headings?.map(h => h.text).join(' | ')}\nBody: ${data.bodyText}`,
+      content: `Title: ${title}\nMeta: ${meta}\nHeadings: ${headings}\nBody: ${body}`,
+      ...(typeof data.analysis === 'string' && data.analysis.length > 0
+        ? { analysis: data.analysis }
+        : {}),
     };
   } catch (err) {
-    return { fetchFailed: true, reason: err.message || 'Proxy fetch failed' };
+    return { fetchFailed: true, reason: err.message || 'Research API call failed' };
   }
 }
 
