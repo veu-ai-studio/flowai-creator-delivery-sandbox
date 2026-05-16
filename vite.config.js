@@ -1,6 +1,10 @@
 import base44 from "@base44/vite-plugin"
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // PA #2.5a — Inline `process.env.VERCEL_ENV` into the client bundle so the
 // anti-tamper-gate helper can distinguish Vercel preview from production at
@@ -13,6 +17,18 @@ const vercelEnvDefine = JSON.stringify(process.env.VERCEL_ENV ?? '');
 // https://vite.dev/config/
 export default defineConfig({
   logLevel: 'error', // Suppress warnings, only show errors
+  // Explicit `@` → absolute `./src` alias takes precedence over the base44
+  // plugin's fragile `{ '@/': '/src/' }` config. The plugin's leading-slash
+  // value gets interpreted as a project-relative path on Windows but as an
+  // absolute filesystem path on Linux/Vercel — the latter explodes the build
+  // with `[vite:load-fallback] Could not load /src/components/ui/Tooltip`.
+  // Using `path.resolve(__dirname, './src')` produces a real absolute path
+  // that resolves identically on every OS.
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   define: {
     'process.env.VERCEL_ENV': vercelEnvDefine,
   },
