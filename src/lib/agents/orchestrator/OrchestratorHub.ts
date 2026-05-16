@@ -85,6 +85,25 @@ const STEP_OWNERS: Readonly<Record<string, number>> = Object.freeze({
   monitor: 10,
 });
 
+// Cross-step capability owners — agents whose responsibilities span the
+// 8-step pipeline rather than mapping 1:1 to a single step key. Surfaced
+// here so callers can look up agent ids by capability (e.g. 'crawl' →
+// 21 = Agent #21 Aggressive Crawl Conductor) without overloading
+// STEP_OWNERS, which is keyed by linear pipeline step.
+//
+// Per SSOT §15.1 row 21 (Aggressive Crawl Conductor, Panel ruling
+// 30e5edb Phase 1): Agent #21 conducts crawls within step 1 (research)
+// AND step 8 (monitor) phases. The same agent id owns both crawl-source
+// surfaces. Step-1 Research (agent #6) and Step-8 Monitor (agent #10)
+// remain the step-owners; Agent #21 is the crawl-capability conductor
+// they dispatch to.
+//
+// Phase 1 (this dispatch) registers the mapping; Phase 2-3 will add
+// auth-traversal + ProductSSOT-write capabilities (gated).
+export const CROSS_STEP_OWNERS: Readonly<Record<string, number>> = Object.freeze({
+  crawl: 21,                   // Aggressive Crawl Conductor
+});
+
 // ── Hub ──────────────────────────────────────────────────────────────────────
 
 export interface OrchestratorOpts {

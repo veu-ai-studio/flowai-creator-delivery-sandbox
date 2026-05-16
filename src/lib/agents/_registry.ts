@@ -317,13 +317,21 @@ const AGENTS: AgentRecord[] = [
   // charters only — no runtime side effects, no message bus traffic.
   {
     id: 21,
-    name: 'Ops Runner Alpha',
+    name: 'Ops Runner Alpha — Aggressive Crawl Conductor',
     mode: 'step-owner',
-    authority: ['recommend_only'],
-    requiredCredentials: [],
-    consumes: [],
-    produces: [],
-    escalationPolicy: 'Reserved Step-Owner charter — escalate to #1 on any side effect attempt.',
+    // Per SSOT §15.1 row 21 (Rev-2.1 + CA-7 §15.5 + ENTRY 006): dual + gate
+    // authority. Phase 1 graduation (Panel ruling 30e5edb) exercises only
+    // the recommend_only path; auto_write_internal + requires_human_gate
+    // sit in the charter as the canonical surface for Phase 2-3 auth-
+    // traversal + ProductSSOT writes.
+    authority: ['recommend_only', 'auto_write_internal', 'requires_human_gate'],
+    requiredCredentials: ['BROWSERLESS_API_KEY', 'ANTHROPIC_API_KEY'],
+    consumes: ['1.crawl.request.v1', '10.ssot.updated.v1'],
+    produces: ['21.crawl.completed.v1', '21.issues.detected.v1', '21.gtm.readiness.v1'],
+    escalationPolicy:
+      'xss-in-form-echo or auth-gate-leak detected → IMMEDIATE admin gate (security-critical); ' +
+      'crawl budget exceeded → emit candidate + escalate to Ops Runner Beta; ' +
+      '3 consecutive crawl failures on same product → disable crawl for that product 24h.',
   },
   {
     id: 22,

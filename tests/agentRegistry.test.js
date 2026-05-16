@@ -29,12 +29,42 @@ describe('AGENT_REGISTRY — completeness', () => {
     }
   });
 
-  it('every agent declares non-empty authority and recommend_only is the only level granted today', () => {
+  it('every agent declares non-empty authority drawn from the canonical level set', () => {
+    // Per CANONICAL_REFERENCE §15.1: most agents ship at recommend_only,
+    // but Agent #21 (Aggressive Crawl Conductor, ENTRY 006 promotion
+    // 2026-05-16) and Agent #26 (Orchestra Research Agent, CA-9-Q4=(b))
+    // are canonically granted the dual+gate triple
+    // [recommend_only, auto_write_internal, requires_human_gate] — the
+    // first agents with elevated charter authority. The 5 levels below
+    // are the canonical BaseAgent set.
+    const VALID_LEVELS = new Set([
+      'recommend_only',
+      'draft_only',
+      'auto_contain_known',
+      'auto_write_internal',
+      'requires_human_gate',
+    ]);
     for (const a of AGENT_REGISTRY) {
       expect(Array.isArray(a.authority)).toBe(true);
       expect(a.authority.length).toBeGreaterThan(0);
       for (const lvl of a.authority) {
-        expect(lvl).toBe('recommend_only');
+        expect(VALID_LEVELS.has(lvl)).toBe(true);
+      }
+    }
+  });
+
+  it('every elevated-authority agent also declares recommend_only as the default-safe level', () => {
+    // Defense-in-depth: any agent whose charter grants
+    // auto_write_internal or requires_human_gate must ALSO declare
+    // recommend_only so the dormant-safe default path remains. This
+    // mirrors the Phase 1 graduation rule from Panel ruling 30e5edb
+    // (Agent #21) and CA-9-Q4=(b) (Agent #26).
+    for (const a of AGENT_REGISTRY) {
+      const hasElevated =
+        a.authority.includes('auto_write_internal') ||
+        a.authority.includes('requires_human_gate');
+      if (hasElevated) {
+        expect(a.authority).toContain('recommend_only');
       }
     }
   });
