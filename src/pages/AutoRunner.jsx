@@ -11,7 +11,7 @@ import SessionContextBanner from '@/components/operations/SessionContextBanner';
 import FetchFailurePrompt from '@/components/operations/FetchFailurePrompt';
 import ClearanceProtocolPrompt from '@/components/operations/ClearanceProtocolPrompt';
 import SessionResumePrompt from '@/components/operations/SessionResumePrompt';
-import { STEPS, buildStepPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi, invokeLlmViaApi } from '@/lib/operationsEngine';
+import { STEPS, buildStepPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi, invokeLlmViaApi, computeMonitorClearance, formatMonitorClearanceFooter } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
 import { OrchestratorHub, createMemoryHotStore, createMemoryColdStore } from '@/lib/agents/orchestrator/OrchestratorHub';
@@ -540,6 +540,17 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
           if (!output) {
             const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
             output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+          }
+          // Defect B 2026-05-16: for the monitor (final report) step, append
+          // a code-computed deterministic clearance footer. Per-layer scores
+          // come from the LLM; sum + verdict are pure code functions of
+          // those scores against SSOT §7.6 bands. This removes the LLM's
+          // ability to issue a "scoring note" override that crosses
+          // threshold. Any verdict text elsewhere in `output` is
+          // non-authoritative — the footer is the answer.
+          if (STEPS[i].key === 'monitor') {
+            const clearance = computeMonitorClearance(output);
+            output = `${output}${formatMonitorClearanceFooter(clearance)}`;
           }
           stepResult = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
           // Carry screenshots forward for QA display

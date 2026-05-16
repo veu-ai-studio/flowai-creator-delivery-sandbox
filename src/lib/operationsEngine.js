@@ -599,13 +599,12 @@ Compile a comprehensive final assessment for this specific product across all fi
 
 1. EXECUTIVE SUMMARY — 3-4 sentences about THIS product's state, referencing specific findings
 
-2. FIVE-LAYER SCORES SUMMARY:
+2. FIVE-LAYER SCORES SUMMARY (output EXACTLY this block, one score per line, integers only):
    [L1] Functionality Score: X/10
    [L2] Operational Score: X/10
    [L3] Financial Score: X/10
    [L4] Business Score: X/10
    [L5] GTM Score: X/10
-   TOTAL: X/50
 
 3. PRE-RENEWAL vs POST-RENEWAL COMPARISON (if renewal data available):
    Show delta per layer — what improved after Self-Renewal fixes were applied.
@@ -614,15 +613,15 @@ Compile a comprehensive final assessment for this specific product across all fi
 
 5. HIGH PRIORITY ISSUES — All HIGH severity issues
 
-6. DEMO READINESS SCORE — Final score out of 50
+6. RECOMMENDED NEXT ACTIONS — Top 5 ordered actions specific to this product, one per intelligence layer
 
-7. CLEARANCE DECISION — CLEARED (45-50) / CONDITIONAL (30-44) / NOT CLEARED (below 30)
-
-8. CONDITIONS (if CONDITIONAL or NOT CLEARED) — Exact list of what must be fixed, specific to this product
-
-9. RECOMMENDED NEXT ACTIONS — Top 5 ordered actions specific to this product, one per intelligence layer
-
-Display the CLEARANCE DECISION prominently at the top and bottom of the report.`,
+STRICT OUTPUT RULES — these are not suggestions:
+- Do NOT output a "TOTAL" line. Code sums the per-layer scores deterministically.
+- Do NOT output a "DEMO READINESS SCORE" or any aggregate /50 number. Code computes it.
+- Do NOT output a "CLEARANCE DECISION" or verdict (CLEARED/CONDITIONAL/NOT CLEARED). Code computes it from the sum.
+- Do NOT output a "scoring note" or any text that reconciles, adjusts, or grants discretionary aggregate credit on top of the per-layer scores.
+- Do NOT include band/threshold text (e.g. "45-50", "above 30"). You are evaluating, not adjudicating.
+- The per-layer scores you output are the ONLY scoring authority. Code will sum and decide. Your aggregate opinion is not part of the report.`,
   };
 
   return basePrompts[stepKey] || basePrompts.research;
@@ -681,6 +680,97 @@ CRITICAL RULES:
 - Questions must be specific to this product and objective
 - Do not execute or produce any findings in this proposal — only propose what you will do
 - Keep the entire proposal under 400 words`;
+}
+
+// ─── DETERMINISTIC CLEARANCE COMPUTATION (Defect B 2026-05-16) ───────────────
+// FINAL TOTAL is summed in CODE. VERDICT is a pure function of that sum
+// against SSOT-aligned bands (CANONICAL_REFERENCE §7.6 GTM Readiness:
+// 90-100 Showcase-ready / 75-89 Demo-ready / 60-74 Internal-only / 0-59
+// Not demo-ready, mapped onto our /50 Monitor scale by doubling).
+//
+// LLM authority is restricted to the per-layer scores it outputs. Any
+// "scoring note", aggregate adjustment, or verbal verdict in the LLM
+// output is ignored — only the parsed per-layer integers count. This
+// closes the self-inflation path observed on the FlowAI-on-FlowAI run
+// where the LLM table summed to 25/50 (NOT CLEARED) but a "scoring
+// note" raised it to 31/50 (CONDITIONAL) to cross threshold.
+//
+// Bands (canonical, code-enforced):
+//   CLEARED       sum 45-50 (/100: 90-100 Showcase-ready)
+//   CONDITIONAL   sum 30-44 (/100: 60-89 Demo-ready or Internal-only)
+//   NOT_CLEARED   sum  0-29 (/100: 0-59  Not demo-ready)
+//
+// Returns { layers: { L1..L5 }, sum, sumOutOf100, band, verdict, notes }
+// or { error: <string> } when the LLM output is unparseable.
+const LAYER_KEYS = ['L1', 'L2', 'L3', 'L4', 'L5'];
+
+export function computeMonitorClearance(monitorText) {
+  if (typeof monitorText !== 'string' || !monitorText.trim()) {
+    return { error: 'empty monitor output' };
+  }
+  const layers = {};
+  const missing = [];
+  for (const key of LAYER_KEYS) {
+    // Tolerate spaces, label variations ("Functionality Score" / "Score"),
+    // and decimal points. Capture only the score part of "X/10".
+    const re = new RegExp(`\\[${key}\\][^\\n]*?(\\d+(?:\\.\\d+)?)\\s*\\/\\s*10`, 'i');
+    const m = monitorText.match(re);
+    if (m) {
+      const v = Math.max(0, Math.min(10, parseFloat(m[1])));
+      layers[key] = Number.isFinite(v) ? v : null;
+    } else {
+      layers[key] = null;
+      missing.push(key);
+    }
+  }
+  if (missing.length > 0) {
+    return {
+      error: `missing layer scores: ${missing.join(', ')}`,
+      layers,
+      sum: null,
+      sumOutOf100: null,
+      band: null,
+      verdict: 'NOT CLEARED',
+      reason: 'incomplete scoring data — defaults to NOT CLEARED per SSOT §11 Step 5 (blocks on incomplete report)',
+    };
+  }
+  // Deterministic sum — no LLM input beyond the 5 parsed integers.
+  const sum = LAYER_KEYS.reduce((acc, k) => acc + (layers[k] || 0), 0);
+  const sumOutOf100 = Math.round(sum * 2);
+  let band, verdict;
+  if (sum >= 45) { band = 'showcase-ready';   verdict = 'CLEARED';     }
+  else if (sum >= 30) { band = sum >= 38 ? 'demo-ready' : 'internal-only'; verdict = 'CONDITIONAL'; }
+  else                { band = 'not-demo-ready'; verdict = 'NOT CLEARED'; }
+  return { layers, sum, sumOutOf100, band, verdict };
+}
+
+// Format the deterministic clearance result as an appendable footer block
+// that the AutoRunner adds to the LLM's monitor output. This is the
+// AUTHORITATIVE verdict displayed to the user — replaces any verdict the
+// LLM may have tried to slip in despite the strict output rules.
+export function formatMonitorClearanceFooter(result) {
+  if (!result || result.error) {
+    return [
+      '',
+      '━━━ CLEARANCE DECISION (code-computed) ━━━',
+      `VERDICT: NOT CLEARED`,
+      `REASON: ${result?.error || 'no monitor output to score'} — defaults to NOT CLEARED per SSOT §11 Step 5.`,
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    ].join('\n');
+  }
+  const { layers, sum, sumOutOf100, band, verdict } = result;
+  const layerLine = LAYER_KEYS.map((k) => `${k}=${layers[k]}`).join(' · ');
+  return [
+    '',
+    '━━━ CLEARANCE DECISION (code-computed, deterministic) ━━━',
+    `LAYERS:  ${layerLine}`,
+    `SUM:     ${sum} / 50   (= ${sumOutOf100} / 100)`,
+    `BAND:    ${band}   (SSOT §7.6 GTM Readiness)`,
+    `VERDICT: ${verdict}`,
+    'Authority: per-layer scores from the LLM; sum + verdict from code.',
+    'Any "scoring note", aggregate adjustment, or LLM-issued verdict elsewhere in this report is non-authoritative and ignored.',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+  ].join('\n');
 }
 
 // ─── MULTI-INPUT FINAL REPORT ─────────────────────────────────────────────────
