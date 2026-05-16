@@ -39,11 +39,15 @@ Login password (optional — for authenticated testing): `;
 
 // Crawler quality dot indicator
 function CrawlerQualityDot({ quality }) {
-  const cfg = {
+  const MAP = {
     full:  { color: 'bg-emerald-400', label: 'Full browser crawl' },
     basic: { color: 'bg-amber-400',   label: 'Basic crawl' },
     none:  { color: 'bg-muted-foreground/40', label: 'No crawl data' },
-  }[quality || 'none'];
+  };
+  // Defense-in-depth: any unknown quality value (e.g. a backend that
+  // emits a fresh tier name we don't yet render) falls back to the
+  // 'none' tile instead of crashing the page with "undefined.label".
+  const cfg = MAP[quality || 'none'] || MAP.none;
   return (
     <span title={`Crawler quality: ${cfg.label}`}
       className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
@@ -395,7 +399,13 @@ export default function LandingPage() {
           sessionStorage.setItem('flowai_session_config', JSON.stringify({ ...existing, pageContext }));
         } catch {}
         setFetchStatus('ok');
-        setCrawlerQuality(data.crawler_quality || (data.method === 'browserless' || data.jsRendered ? 'rich' : 'basic'));
+        // crawlerQuality values are constrained to { 'full' | 'basic' | 'none' | null } —
+        // the CrawlerQualityDot lookup table only knows those keys. Browserless
+        // (jsRendered:true) → 'full'. Static fetch (simple-fetch) → 'basic'.
+        setCrawlerQuality(
+          data.crawler_quality
+          || (data.method === 'browserless' || data.jsRendered ? 'full' : 'basic')
+        );
       } else {
         setFetchStatus('fail');
         setCrawlerQuality(null);
