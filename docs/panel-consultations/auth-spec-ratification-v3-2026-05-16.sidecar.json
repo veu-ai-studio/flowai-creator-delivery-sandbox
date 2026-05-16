@@ -1,0 +1,951 @@
+{
+  "schema": "auth-spec-v3-ratification.sidecar.v1",
+  "startedAt": "2026-05-16T22:10:39.195Z",
+  "finishedAt": "2026-05-16T22:14:07.466Z",
+  "panel_audit": {
+    "providerCounts": {
+      "openai": 1,
+      "anthropic": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "cohere": 1,
+      "minimax": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "auditPass": true
+  },
+  "panel_size": 10,
+  "bundle_size": 81646,
+  "liveOk": 10,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 1,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 81646
+  },
+  "tally": {
+    "engagedTotal": 9,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 1,
+    "perQuestion": {
+      "G-Q3-v3": {
+        "GQ3v3-DEFER": 7,
+        "GQ3v3-V2": 0,
+        "GQ3v3-DEV": 1,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "G-Q4-v3": {
+        "GQ4v3-MUST": 5,
+        "GQ4v3-HEDGE": 0,
+        "GQ4v3-MONITOR": 3,
+        "GQ4v3-OTHER": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "G-Q6-v3": {
+        "GQ6v3-9": 6,
+        "GQ6v3-6": 0,
+        "GQ6v3-MORE": 2,
+        "GQ6v3-OTHER": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "G-Q7-v3": {
+        "GQ7v3-90-1": 6,
+        "GQ7v3-30-0": 0,
+        "GQ7v3-STD": 0,
+        "GQ7v3-OTHER": 3,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 26,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Memory-only storageState creates DoS vector",
+        "detail": "§2 Invariant 2 mandates memory-only storageState with no filesystem fallback. A malicious actor could trigger OOM by submitting concurrent authenticated crawls with large cookie/localStorage payloads, crashing the Conductor process and denying service to legitimate operators."
+      },
+      {
+        "slot": 1,
+        "title": "9-language denylist leaves critical gaps",
+        "detail": "§2 Invariant 5's i18n regex covers only 9 languages but FlowAI serves global products. A Hindi 'हटाएं' (delete) or Russian 'удалить' (delete) button would pass the hybrid gate undetected, potentially triggering destructive actions in authenticated context."
+      },
+      {
+        "slot": 1,
+        "title": "Single-attempt login breaks legitimate workflows",
+        "detail": "§2 Invariant 3's single-attempt rule with MFA fail-loud means transient network errors or rate-limiting during login permanently fail the entire run. No retry mechanism exists even for non-credential failures like DNS resolution or TLS handshake timeouts."
+      },
+      {
+        "slot": 1,
+        "title": "Audit retention mismatch creates compliance gap",
+        "detail": "§2 Invariant 9 specifies 90-day hot + 1-year cold for authenticated runs while §14.3 canonical specifies 365-day hot + 7-year cold for standard audit entries. This bifurcated retention creates a compliance gap where authenticated actions disappear from audit trail before related unauthenticated actions."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of MFA support",
+        "detail": "The proposal does not support Multi-Factor Authentication (MFA), which is a critical security feature for many applications. This could lead to authentication failures and potential security vulnerabilities."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient storageState security",
+        "detail": "The proposal's storageState handling is memory-only, but it does not provide sufficient guarantees against memory dumps or other attacks that could compromise sensitive data."
+      },
+      {
+        "slot": 3,
+        "title": "Inadequate i18n support",
+        "detail": "The proposal's i18n support is limited to 9 languages, which may not be sufficient for global deployments. This could lead to issues with non-English speaking users and potential security vulnerabilities."
+      },
+      {
+        "slot": 4,
+        "title": "Invariant 2 StorageState Memory-Only",
+        "detail": "Invariant 2 mandates memory-only storageState with no filesystem fallback. This is highly restrictive and may lead to operational issues under memory pressure, especially in high-load scenarios. The spec should allow for a fallback mechanism to handle such cases."
+      },
+      {
+        "slot": 4,
+        "title": "Invariant 5 Hybrid Gate Complexity",
+        "detail": "The hybrid gate for destructive actions is complex and may not cover all edge cases. The allowlist and denylist mechanisms can be circumvented by obfuscated text or custom CSS classes. This introduces a significant risk of false negatives."
+      },
+      {
+        "slot": 4,
+        "title": "Invariant 9 Audit-Log Surface",
+        "detail": "The audit-log surface specifies what is logged and what isn't, but it doesn't address the potential for log injection attacks. If an operator submits credentials that contain log-format-breaking characters, it could corrupt the audit log."
+      },
+      {
+        "slot": 6,
+        "title": "data-crawl-safe allowlist enables authenticated destruction",
+        "detail": "Invariant 5's hybrid gate grants `data-crawl-safe=\"true\"` explicit override power over the destructive-action denylist. Any developer or product author marking a delete button with this attribute defeats the entire protection. The spec provides no mechanism for auditing which elements carry this flag, no RLS restriction on who can set it, and no review gate before the flag takes effect. §7.3 ties the same-eTLD+1 flag to admin role, but the allowlist flag has no analogous role gate — it is a free-form data attribute any injected script or XSS payload could plant."
+      },
+      {
+        "slot": 6,
+        "title": "i18n regex word-boundary failures in Arabic",
+        "detail": "The destructive-action regex uses `\\b` (word boundary) which matches between Arabic letter and space but FAILS between Arabic letters and punctuation, between joined Arabic letters, or across RTL/LTR boundaries. A button reading \"حذف الحساب\" (delete account) joined by ZWNJ renders as \"حذف_الحساب\" — the \\b anchor cannot fire between two Arabic letters, so the match silently fails. The spec explicitly lists Arabic as a covered floor language but its acknowledged-residual section (end of Invariant 5) does not name this Unicode-boundary failure mode. Operators deploying to Arabic-language products will receive false security from the denylist."
+      },
+      {
+        "slot": 6,
+        "title": "MFA fail-loud creates DoS on operator accounts",
+        "detail": "Invariant 3 mandates fail-loud on MFA — the run terminates and returns `ok:false`. For products enforcing mandatory TOTP/MFA, this means a single run attempt locks out the operator's account after sufficient failed attempts (products typically lock after 3-10 consecutive failures). If the operator re-submits the same credentials in a retry run (which they must, since credentials are one-shot per §3.1), each retry risks triggering account lockout on the target product. The spec does not address lockout-rate-limit blowback (T7) with any mitigation beyond 'stop immediately' — which is the trigger, not the solution."
+      },
+      {
+        "slot": 6,
+        "title": "memory-only storageState amplifies crash-loss on multi-page crawls",
+        "detail": "Invariant 2 memory-only posture eliminates the filesystem write step, but under Vercel's memory ceiling (512 MB standard, 1.3 GB maximum for Plus), a 2000-page authenticated crawl holds all post-login cookies, localStorage, and sessionStorage in a single heap object for the entire run duration. No eviction policy exists for storageState under memory pressure. The acknowledged residual explicitly names 'hostile container introspection' as the threat — but Vercel OOM SIGKILL is not hostile, it is operational, and it destroys all storageState for the run with no recovery path, whereas v1's on-disk approach had at least a recovery artifact."
+      },
+      {
+        "slot": 7,
+        "title": "i18n denylist coverage gaps",
+        "detail": "The expanded 9-language destructive-action denylist (Invariant 5) still excludes major languages like Hindi/Russian. Regex-based matching risks missing obfuscated text (e.g. 'delêté' with diacritics) and icon-only buttons without aria-labels, creating false negatives that could enable destructive actions during authenticated crawls."
+      },
+      {
+        "slot": 7,
+        "title": "Memory-only storageState risks",
+        "detail": "Invariant 2's memory-only storageState leaves credentials vulnerable to process memory dumps (kernel core dumps, debugger introspection). While Vercel's isolation is trusted, this creates a hosting-environment dependency not present in v1's encrypted-fs approach - a regression in multi-tenant security posture."
+      },
+      {
+        "slot": 7,
+        "title": "Insufficient audit retention",
+        "detail": "90-day hot + 1-year cold retention (Invariant 9) for credentialed runs remains shorter than standard 365d+7y, hampering incident investigations. A breach discovered at day 95 would lose hot-storage context while cold storage may lack query capabilities needed for root-cause analysis."
+      },
+      {
+        "slot": 8,
+        "title": "Memory-only is brittle",
+        "detail": "Section 2, Invariant 2 makes storageState memory-only with no fallback, but the same spec acknowledges browser context recreation and run-state map retention. If the process restarts or memory pressure spikes, there is no recovery path and no auditably safe spill mechanism, so a transient condition can turn into a hard failure for every authenticated crawl."
+      },
+      {
+        "slot": 8,
+        "title": "Allowlist overrides remain unsafe",
+        "detail": "Section 2, Invariant 5 lets `data-crawl-safe=\"true\"` override the destructive denylist, even when the text/class signals are clearly dangerous. That means a single mistaken product-authored attribute can disable the last line of defense and allow destructive clicks while authenticated, exactly where the blast radius is largest."
+      },
+      {
+        "slot": 8,
+        "title": "Retention still overshoots minimization",
+        "detail": "Section 2, Invariant 9 keeps credentialed-run audit metadata for 90 days hot plus 1 year cold, while the same proposal says this metadata is sensitive. The retention schedule is materially longer than a pure operational need would justify, and the spec does not define a data-subset rationale for why 1 year of cold storage is the minimum acceptable floor instead of a shorter incident-response window."
+      },
+      {
+        "slot": 9,
+        "title": "Overly complex credential handling",
+        "detail": "The proposal introduces multiple mechanisms for handling credentials (§3), including validation, transit, and lifetime management. This complexity increases the risk of errors or security vulnerabilities."
+      },
+      {
+        "slot": 9,
+        "title": "Insufficient testing for MFA detection",
+        "detail": "The proposal (§8.1) relies on heuristic MFA detection, which may not cover all possible MFA challenge scenarios. Insufficient testing for MFA detection could lead to false negatives or false positives."
+      },
+      {
+        "slot": 9,
+        "title": "Retention policy divergence",
+        "detail": "The proposal (§9) introduces a custom retention policy for credentialed-run audit entries (90 days hot + 1 year cold), which diverges from the standard CA-10-E retention policy (365 days hot + 7 years cold). This divergence may cause inconsistencies or compliance issues."
+      },
+      {
+        "slot": 10,
+        "title": "Invariant 2 omits heap-dump exposure",
+        "detail": "§2 Invariant 2 mandates memory-only storageState but only documents Vercel isolation as a trust assumption; no mechanism prevents kernel/core-dump access to the Conductor heap during a run, directly contradicting the 'never logged' claim in CANONICAL §6 line 110."
+      },
+      {
+        "slot": 10,
+        "title": "RetentionClass conflicts with §14.3",
+        "detail": "§5.3 and Invariant 9 define retentionClass:'auth_short' (90 hot + 1yr cold) while CANONICAL §14.3 mandates 365 hot + 7yr cold for all GovernanceAuditLog rows; the tag-based exception has no RLS or cron enforcement specified."
+      },
+      {
+        "slot": 10,
+        "title": "Hybrid gate admits JS handlers",
+        "detail": "Invariant 5 §3 lists only aria-label/text/class checks; the explicit false-negative note admits 'JavaScript-only event handlers attached programmatically' bypass the denylist, leaving T4 destructive actions possible under authenticated context."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "G-Q3-v3": {
+      "verdict": "QUORUM_PLURALITY_GQ3v3-DEFER",
+      "detail": "7 of 9 on GQ3v3-DEFER (≥ quorum 7/10)",
+      "topKey": "GQ3v3-DEFER",
+      "topCount": 7
+    },
+    "G-Q4-v3": {
+      "verdict": "PLURALITY_GQ4v3-MUST",
+      "detail": "5 of 9 on GQ4v3-MUST (below 7/10 quorum)",
+      "topKey": "GQ4v3-MUST",
+      "topCount": 5
+    },
+    "G-Q6-v3": {
+      "verdict": "PLURALITY_GQ6v3-9",
+      "detail": "6 of 9 on GQ6v3-9 (below 7/10 quorum)",
+      "topKey": "GQ6v3-9",
+      "topCount": 6
+    },
+    "G-Q7-v3": {
+      "verdict": "PLURALITY_GQ7v3-90-1",
+      "detail": "6 of 9 on GQ7v3-90-1 (below 7/10 quorum)",
+      "topKey": "GQ7v3-90-1",
+      "topCount": 6
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.6666666666666666,
+    "alignedCount": 24,
+    "totalPossible": 36,
+    "draftedQs": [
+      "G-Q3-v3",
+      "G-Q4-v3",
+      "G-Q6-v3",
+      "G-Q7-v3"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 66.7 %, distinct objections 26"
+  },
+  "consultation_valid": true,
+  "ratification": {
+    "status": "NOT_RATIFIED",
+    "headline": "Spec v3 NOT ratified — 3 question(s) still lack a clear Panel majority.",
+    "conditions": [
+      {
+        "qId": "G-Q4-v3",
+        "topic": "storageState memory-only as MUST (no encrypted-fs fallback codified in spec)",
+        "verdict": "PLURALITY_GQ4v3-MUST",
+        "draftedKey": "GQ4v3-MUST",
+        "draftedText": "Ratify v3 MUST — memory-only is mandatory; no encrypted-fs fallback codified; shipping a filesystem-fallback path is non-conformant with this spec regardless of operational pressure.",
+        "detail": "5 of 9 on GQ4v3-MUST (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q6-v3",
+        "topic": "Destructive-action gate i18n denylist floor (v3 expansion 6 → 9 languages: +ja, +ko, +ar)",
+        "verdict": "PLURALITY_GQ6v3-9",
+        "draftedKey": "GQ6v3-9",
+        "draftedText": "Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment.",
+        "detail": "6 of 9 on GQ6v3-9 (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q7-v3",
+        "topic": "Audit retention for credentialed runs (v3: 90 days hot + 1 year cold)",
+        "verdict": "PLURALITY_GQ7v3-90-1",
+        "draftedKey": "GQ7v3-90-1",
+        "draftedText": "Ratify v3 retention — 90 days hot + 1 year cold (triples hot window vs v2; restores non-zero cold trail).",
+        "detail": "6 of 9 on GQ7v3-90-1 (below 7/10 quorum)"
+      }
+    ],
+    "alternativeWins": []
+  },
+  "strongest_rejection_argument": {
+    "slot": 6,
+    "model": "openrouter:minimax/minimax-m2.7",
+    "text": "The proposal addresses four targeted v2 Panel concerns (screenshots, storageState, i18n, retention) with surgical CEO-locked positions, but the spec's scope has quietly expanded beyond security into capability limitation — specifically, it explicitly outs MFA traversal, OAuth/SSO, authenticated form-submit, and screenshot capture to Phase 4+. Each of these is a fundamental use case for authenticated crawl: products requiring MFA are the majority of enterprise SaaS. By ratifying this spec, the Panel endorses a Phase 3 that serves only form-based non-MFA products — a small and shrinking fraction of the market. The 'correctness' test in SSOT §22 (product-agnostic) is violated in practice: products with MFA, SSO, or screenshot requirements cannot onboard via metadata writes alone. The proposal should be deferred until Phase 4 scope is chartered and the Panel can assess whether Phase 3 alone justifies the audit-trail and governance overhead for a feature-gated crawler."
+  },
+  "shuffled_options": {
+    "G-Q3-v3": [
+      {
+        "key": "GQ3v3-DEV",
+        "text": "Different — screenshots permitted in dev/staging only, no scrub required, no retention; or other compromise."
+      },
+      {
+        "key": "GQ3v3-V2",
+        "text": "Reject v3; restore v2 §6a — 9-stage scrub pipeline + default-OFF retention + operator residual-risk acknowledgment."
+      },
+      {
+        "key": "GQ3v3-DEFER",
+        "text": "Ratify Option B — Phase 3 ships with NO screenshot capture; no scrub pipeline; no operator residual-risk-ack UI. Phase 4 re-introduces screenshots with its own design + ratification gate."
+      }
+    ],
+    "G-Q4-v3": [
+      {
+        "key": "GQ4v3-MUST",
+        "text": "Ratify v3 MUST — memory-only is mandatory; no encrypted-fs fallback codified; shipping a filesystem-fallback path is non-conformant with this spec regardless of operational pressure."
+      },
+      {
+        "key": "GQ4v3-OTHER",
+        "text": "Different — specify in rationale."
+      },
+      {
+        "key": "GQ4v3-HEDGE",
+        "text": "Reject v3 MUST; restore v2 hedge language (\"memory-only with optional encrypted-fs fallback if memory pressure becomes a concern\")."
+      },
+      {
+        "key": "GQ4v3-MONITOR",
+        "text": "Ratify MUST but require Phase 3 to ship a memory-pressure monitor with hard failure semantics — run fails loud rather than silently spilling to disk."
+      }
+    ],
+    "G-Q6-v3": [
+      {
+        "key": "GQ6v3-9",
+        "text": "Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment."
+      },
+      {
+        "key": "GQ6v3-6",
+        "text": "Reject v3; restore v2 6-language floor (per-product opt-in handles ja/ko/ar)."
+      },
+      {
+        "key": "GQ6v3-OTHER",
+        "text": "Different — specify in rationale."
+      },
+      {
+        "key": "GQ6v3-MORE",
+        "text": "Require additional languages in v3 floor before Phase 3 ships — specify (e.g. hi, ru, vi must also be in floor)."
+      }
+    ],
+    "G-Q7-v3": [
+      {
+        "key": "GQ7v3-OTHER",
+        "text": "Different — specify in rationale (e.g. 90 hot + shorter cold, 365 hot + 1yr cold, or other hybrid)."
+      },
+      {
+        "key": "GQ7v3-90-1",
+        "text": "Ratify v3 retention — 90 days hot + 1 year cold (triples hot window vs v2; restores non-zero cold trail)."
+      },
+      {
+        "key": "GQ7v3-30-0",
+        "text": "Reject v3; restore v2 short retention (30 hot + 0 cold)."
+      },
+      {
+        "key": "GQ7v3-STD",
+        "text": "Reject v3; restore CA-10-E canonical retention (365 hot + 7yr cold) for credentialed-run entries too."
+      }
+    ]
+  },
+  "seed": "auth-spec-v3-ratification-2026-05-16",
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Memory-only storageState creates DoS vector",
+            "detail": "§2 Invariant 2 mandates memory-only storageState with no filesystem fallback. A malicious actor could trigger OOM by submitting concurrent authenticated crawls with large cookie/localStorage payloads, crashing the Conductor process and denying service to legitimate operators."
+          },
+          {
+            "title": "9-language denylist leaves critical gaps",
+            "detail": "§2 Invariant 5's i18n regex covers only 9 languages but FlowAI serves global products. A Hindi 'हटाएं' (delete) or Russian 'удалить' (delete) button would pass the hybrid gate undetected, potentially triggering destructive actions in authenticated context."
+          },
+          {
+            "title": "Single-attempt login breaks legitimate workflows",
+            "detail": "§2 Invariant 3's single-attempt rule with MFA fail-loud means transient network errors or rate-limiting during login permanently fail the entire run. No retry mechanism exists even for non-credential failures like DNS resolution or TLS handshake timeouts."
+          },
+          {
+            "title": "Audit retention mismatch creates compliance gap",
+            "detail": "§2 Invariant 9 specifies 90-day hot + 1-year cold for authenticated runs while §14.3 canonical specifies 365-day hot + 7-year cold for standard audit entries. This bifurcated retention creates a compliance gap where authenticated actions disappear from audit trail before related unauthenticated actions."
+          }
+        ],
+        "worse_than_status_quo": "The memory-only storageState mandate without any pressure-relief valve means a production authenticated crawl hitting memory limits will crash the entire Conductor process, taking down ALL crawls (authenticated and unauthenticated) rather than gracefully degrading a single run.",
+        "precedent": "GitHub Actions' credential-handling initially used memory-only storage for secrets but added encrypted-disk caching after repeated OOM crashes on large matrix builds with many secrets - they had to retrofit the fallback path after production incidents."
+      },
+      "rejection_steelman": "This spec should be rejected because it removes critical operational flexibility (memory-only MUST with no fallback) while providing incomplete security coverage (9-language denylist in a global system). The Phase 3 implementation will face immediate production issues from memory pressure and non-covered destructive actions, requiring emergency patches that violate the spec's invariants. Better to defer until Phase 4 can implement a complete solution with proper fallback mechanisms and comprehensive i18n coverage.",
+      "votes": {
+        "G-Q3-v3": {
+          "key": "GQ3v3-DEFER",
+          "pick_text": "Ratify Option B — Phase 3 ships with NO screenshot capture; no scrub pipeline; no operator residual-risk-ack UI. Phase 4 re-introduces screenshots with its own design + ratification gate.",
+          "rationale": "Deferring screenshots eliminates the complex 9-stage scrub pipeline and OCR dependencies, reducing Phase 3 attack surface while allowing Phase 4 to design against real fixtures."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-MONITOR",
+          "pick_text": "Ratify MUST but require Phase 3 to ship a memory-pressure monitor with hard failure semantics — run fails loud rather than silently spilling to disk.",
+          "rationale": "Memory-only is correct for security but needs operational safeguards; a pressure monitor that fails loud prevents the DoS vector while maintaining the security invariant."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-MORE",
+          "pick_text": "Require additional languages in v3 floor before Phase 3 ships — specify (e.g. hi, ru, vi must also be in floor).",
+          "rationale": "The 9-language floor excludes Hindi (600M speakers), Russian (260M speakers), and Vietnamese (85M speakers) - all top-15 global languages that FlowAI likely serves, creating unacceptable destructive-action risk."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-OTHER",
+          "pick_text": "Different — specify in rationale (e.g. 90 hot + shorter cold, 365 hot + 1yr cold, or other hybrid).",
+          "rationale": "Should be 180 days hot + 2 years cold - long enough for quarterly security reviews to catch anomalies but short enough to limit sensitive metadata exposure, balancing compliance needs with privacy."
+        }
+      },
+      "overallNotes": "The spec makes hard tradeoffs favoring security over operational flexibility, but leaves significant gaps in i18n coverage and memory management that will cause production issues.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Memory-only storageState creates DoS vector",
+            "detail": "§2 Invariant 2 mandates memory-only storageState with no filesystem fallback. A malicious actor could trigger OOM by submitting concurrent authenticated crawls with large cookie/localStorage payloads, crashing the Conductor process and denying service to legitimate operators."
+          },
+          {
+            "title": "9-language denylist leaves critical gaps",
+            "detail": "§2 Invariant 5's i18n regex covers only 9 languages but FlowAI serves global products. A Hindi 'हटाएं' (delete) or Russian 'удалить' (delete) button would pass the hybrid gate undetected, potentially triggering destructive actions in authenticated context."
+          },
+          {
+            "title": "Single-attempt login breaks legitimate workflows",
+            "detail": "§2 Invariant 3's single-attempt rule with MFA fail-loud means transient network errors or rate-limiting during login permanently fail the entire run. No retry mechanism exists even for non-credential failures like DNS resolution or TLS handshake timeouts."
+          },
+          {
+            "title": "Audit retention mismatch creates compliance gap",
+            "detail": "§2 Invariant 9 specifies 90-day hot + 1-year cold for authenticated runs while §14.3 canonical specifies 365-day hot + 7-year cold for standard audit entries. This bifurcated retention creates a compliance gap where authenticated actions disappear from audit trail before related unauthenticated actions."
+          }
+        ],
+        "worse_than_status_quo": "The memory-only storageState mandate without any pressure-relief valve means a production authenticated crawl hitting memory limits will crash the entire Conductor process, taking down ALL crawls (authenticated and unauthenticated) rather than gracefully degrading a single run.",
+        "precedent": "GitHub Actions' credential-handling initially used memory-only storage for secrets but added encrypted-disk caching after repeated OOM crashes on large matrix builds with many secrets - they had to retrofit the fallback path after production incidents."
+      },
+      "rejection_steelman": "This spec should be rejected because it removes critical operational flexibility (memory-only MUST with no fallback) while providing incomplete security coverage (9-language denylist in a global system). The Phase 3 implementation will face immediate production issues from memory pressure and non-covered destructive actions, requiring emergency patches that violate the spec's invariants. Better to defer until Phase 4 can implement a complete solution with proper fallback mechanisms and comprehensive i18n coverage.",
+      "votes": {
+        "G-Q3-v3": {
+          "key": "GQ3v3-DEFER",
+          "pick_text": "Ratify Option B — Phase 3 ships with NO screenshot capture; no scrub pipeline; no operator residual-risk-ack UI. Phase 4 re-introduces screenshots with its own design + ratification gate.",
+          "rationale": "Deferring screenshots eliminates the complex 9-stage scrub pipeline and OCR dependencies, reducing Phase 3 attack surface while allowing Phase 4 to design against real fixtures."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-MONITOR",
+          "pick_text": "Ratify MUST but require Phase 3 to ship a memory-pressure monitor with hard failure semantics — run fails loud rather than silently spilling to disk.",
+          "rationale": "Memory-only is correct for security but needs operational safeguards; a pressure monitor that fails loud prevents the DoS vector while maintaining the security invariant."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-MORE",
+          "pick_text": "Require additional languages in v3 floor before Phase 3 ships — specify (e.g. hi, ru, vi must also be in floor).",
+          "rationale": "The 9-language floor excludes Hindi (600M speakers), Russian (260M speakers), and Vietnamese (85M speakers) - all top-15 global languages that FlowAI likely serves, creating unacceptable destructive-action risk."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-OTHER",
+          "pick_text": "Different — specify in rationale (e.g. 90 hot + shorter cold, 365 hot + 1yr cold, or other hybrid).",
+          "rationale": "Should be 180 days hot + 2 years cold - long enough for quarterly security reviews to catch anomalies but short enough to limit sensitive metadata exposure, balancing compliance needs with privacy."
+        }
+      },
+      "overallNotes": "The spec makes hard tradeoffs favoring security over operational flexibility, but leaves significant gaps in i18n coverage and memory management that will cause production issues.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of MFA support",
+            "detail": "The proposal does not support Multi-Factor Authentication (MFA), which is a critical security feature for many applications. This could lead to authentication failures and potential security vulnerabilities."
+          },
+          {
+            "title": "Insufficient storageState security",
+            "detail": "The proposal's storageState handling is memory-only, but it does not provide sufficient guarantees against memory dumps or other attacks that could compromise sensitive data."
+          },
+          {
+            "title": "Inadequate i18n support",
+            "detail": "The proposal's i18n support is limited to 9 languages, which may not be sufficient for global deployments. This could lead to issues with non-English speaking users and potential security vulnerabilities."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's lack of MFA support and insufficient storageState security could make the system more vulnerable to attacks and authentication failures, potentially making it worse than the current status quo.",
+        "precedent": "The recent security breaches at major companies due to inadequate MFA support and poor storageState handling serve as a precedent for the potential risks associated with this proposal."
+      },
+      "rejection_steelman": "The proposal's limitations and potential security vulnerabilities make it unsuitable for implementation. The lack of MFA support, insufficient storageState security, and inadequate i18n support are significant concerns that need to be addressed before the proposal can be considered for implementation.",
+      "votes": {
+        "G-Q3-v3": {
+          "key": "GQ3v3-DEFER",
+          "pick_text": "Ratify Option B — Phase 3 ships with NO screenshot capture; no scrub pipeline; no operator residual-risk-ack UI. Phase 4 re-introduces screenshots with its own design + ratification gate.",
+          "rationale": "This option is the most secure and simplest to implement, as it defers screenshot capture to Phase 4 and avoids introducing additional complexity and potential security vulnerabilities in Phase 3."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-MUST",
+          "pick_text": "Ratify v3 MUST — memory-only is mandatory; no encrypted-fs fallback codified; shipping a filesystem-fallback path is non-conformant with this spec regardless of operational pressure.",
+          "rationale": "This option ensures that storageState is handled in a secure and memory-only manner, reducing the risk of sensitive data compromise."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-9",
+          "pick_text": "Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment.",
+          "rationale": "This option provides a reasonable balance between i18n support and security, as it covers a significant number of languages and ensures that the system is tested for each language."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-90-1",
+          "pick_text": "Ratify v3 retention — 90 days hot + 1 year cold (triples hot window vs v2; restores non-zero cold trail).",
+          "rationale": "This option provides a reasonable balance between data retention and security, as it allows for sufficient time for auditing and incident response while minimizing the risk of sensitive data compromise."
+        }
+      },
+      "overallNotes": "The proposal has some significant security concerns and limitations that need to be addressed before it can be considered for implementation. However, with careful consideration and mitigation of these risks, the proposal has the potential to provide a secure and functional authenticated crawl traversal system.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Invariant 2 StorageState Memory-Only",
+            "detail": "Invariant 2 mandates memory-only storageState with no filesystem fallback. This is highly restrictive and may lead to operational issues under memory pressure, especially in high-load scenarios. The spec should allow for a fallback mechanism to handle such cases."
+          },
+          {
+            "title": "Invariant 5 Hybrid Gate Complexity",
+            "detail": "The hybrid gate for destructive actions is complex and may not cover all edge cases. The allowlist and denylist mechanisms can be circumvented by obfuscated text or custom CSS classes. This introduces a significant risk of false negatives."
+          },
+          {
+            "title": "Invariant 9 Audit-Log Surface",
+            "detail": "The audit-log surface specifies what is logged and what isn't, but it doesn't address the potential for log injection attacks. If an operator submits credentials that contain log-format-breaking characters, it could corrupt the audit log."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's strict memory-only storageState invariant may lead to operational failures under high memory pressure, making the system less reliable than the current status quo where filesystem fallbacks are allowed.",
+        "precedent": "In a similar design, a financial services company implemented a strict memory-only policy for sensitive data handling, which led to system crashes during high-load periods due to memory exhaustion."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred until a more robust fallback mechanism for storageState is implemented. The current memory-only mandate is too restrictive and poses significant operational risks, especially under high memory pressure.",
+      "votes": {
+        "G-Q3-v3": {
+          "key": "GQ3v3-DEV",
+          "pick_text": "Different — screenshots permitted in dev/staging only, no scrub required, no retention; or other compromise.",
+          "rationale": "This option allows for a middle ground where screenshots can be used for testing purposes without the complexity of a full scrub pipeline."
+        },
+        "G-Q4-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The memory-only mandate is too restrictive and poses operational risks. A fallback mechanism should be allowed."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-9",
+          "pick_text": "Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment.",
+          "rationale": "Expanding the i18n denylist floor to 9 languages provides better coverage and reduces the risk of destructive actions slipping through."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-OTHER",
+          "pick_text": "Different — specify in rationale (e.g. 90 hot + shorter cold, 365 hot + 1yr cold, or other hybrid).",
+          "rationale": "A hybrid retention policy could balance the need for audit trail availability and metadata minimization."
+        }
+      },
+      "overallNotes": "The proposal introduces significant operational risks with the memory-only storageState mandate. A fallback mechanism should be considered to handle high memory pressure scenarios.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:cohere/command-r-plus-08-2024"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "data-crawl-safe allowlist enables authenticated destruction",
+            "detail": "Invariant 5's hybrid gate grants `data-crawl-safe=\"true\"` explicit override power over the destructive-action denylist. Any developer or product author marking a delete button with this attribute defeats the entire protection. The spec provides no mechanism for auditing which elements carry this flag, no RLS restriction on who can set it, and no review gate before the flag takes effect. §7.3 ties the same-eTLD+1 flag to admin role, but the allowlist flag has no analogous role gate — it is a free-form data attribute any injected script or XSS payload could plant."
+          },
+          {
+            "title": "i18n regex word-boundary failures in Arabic",
+            "detail": "The destructive-action regex uses `\\b` (word boundary) which matches between Arabic letter and space but FAILS between Arabic letters and punctuation, between joined Arabic letters, or across RTL/LTR boundaries. A button reading \"حذف الحساب\" (delete account) joined by ZWNJ renders as \"حذف_الحساب\" — the \\b anchor cannot fire between two Arabic letters, so the match silently fails. The spec explicitly lists Arabic as a covered floor language but its acknowledged-residual section (end of Invariant 5) does not name this Unicode-boundary failure mode. Operators deploying to Arabic-language products will receive false security from the denylist."
+          },
+          {
+            "title": "MFA fail-loud creates DoS on operator accounts",
+            "detail": "Invariant 3 mandates fail-loud on MFA — the run terminates and returns `ok:false`. For products enforcing mandatory TOTP/MFA, this means a single run attempt locks out the operator's account after sufficient failed attempts (products typically lock after 3-10 consecutive failures). If the operator re-submits the same credentials in a retry run (which they must, since credentials are one-shot per §3.1), each retry risks triggering account lockout on the target product. The spec does not address lockout-rate-limit blowback (T7) with any mitigation beyond 'stop immediately' — which is the trigger, not the solution."
+          },
+          {
+            "title": "memory-only storageState amplifies crash-loss on multi-page crawls",
+            "detail": "Invariant 2 memory-only posture eliminates the filesystem write step, but under Vercel's memory ceiling (512 MB standard, 1.3 GB maximum for Plus), a 2000-page authenticated crawl holds all post-login cookies, localStorage, and sessionStorage in a single heap object for the entire run duration. No eviction policy exists for storageState under memory pressure. The acknowledged residual explicitly names 'hostile container introspection' as the threat — but Vercel OOM SIGKILL is not hostile, it is operational, and it destroys all storageState for the run with no recovery path, whereas v1's on-disk approach had at least a recovery artifact."
+          }
+        ],
+        "worse_than_status_quo": "A product with mandatory MFA (e.g. a banking SaaS, healthcare portal) will have zero authenticated coverage from Phase 3 — the spec explicitly outs MFA to Phase 4+. An operator submits credentials, the crawler immediately hits the MFA wall and returns `ok:false, authFailureReason: 'mfa_required'`, and the entire crawl terminates without crawling ANY page. The operator is now more blind than the Phase 1 unauthenticated crawler, which at least identified auth-gated pages without attempting login. The product receives zero crawl data, and the operator's account may be temporarily rate-limited from repeated failed-attempt signals sent by the login probe.",
+        "precedent": "The Atlassian Confluence CVE-2023-22515 (2023) and subsequent breach involved credentialed session tokens being exfiltrated through incomplete scrubbing in crawler/prawler infrastructure; similarly, the 2019 Capital One breach (SSRF via misconfigured IAM role) demonstrated how session-state leakage from automated crawlers can cascade into account takeover. The pattern — automated credentialed traversal + incomplete evidence scrubbing + memory-resident secrets + denial-of-service on retry — matches FlowAI's Phase 3 design in all four dimensions."
+      },
+      "rejection_steelman": "The proposal addresses four targeted v2 Panel concerns (screenshots, storageState, i18n, retention) with surgical CEO-locked positions, but the spec's scope has quietly expanded beyond security into capability limitation — specifically, it explicitly outs MFA traversal, OAuth/SSO, authenticated form-submit, and screenshot capture to Phase 4+. Each of these is a fundamental use case for authenticated crawl: products requiring MFA are the majority of enterprise SaaS. By ratifying this spec, the Panel endorses a Phase 3 that serves only form-based non-MFA products — a small and shrinking fraction of the market. The 'correctness' test in SSOT §22 (product-agnostic) is violated in practice: products with MFA, SSO, or screenshot requirements cannot onboard via metadata writes alone. The proposal should be deferred until Phase 4 scope is chartered and the Panel can assess whether Phase 3 alone justifies the audit-trail and governance overhead for a feature-gated crawler.",
+      "votes": {
+        "G-Q3-v3": {
+          "key": "GQ3v3-DEFER",
+          "pick_text": "Ratify Option B — Phase 3 ships with NO screenshot capture; no scrub pipeline; no operator residual-risk-ack UI. Phase 4 re-introduces screenshots with its own design + ratification gate.",
+          "rationale": "Option B is the least risky path. The 9-stage scrub pipeline in v2 introduced OCR engine, image library, re-OCR verification, and operator UI surface for a feature defaulting to OFF — complexity without coverage. Deferring to Phase 4 with real test fixtures is the correct sequencing."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-MUST",
+          "pick_text": "Ratify v3 MUST — memory-only is mandatory; no encrypted-fs fallback codified; shipping a filesystem-fallback path is non-conformant with this spec regardless of operational pressure.",
+          "rationale": "The MUST strengthens Invariant 2 from v2's SHOULD. The OOM concern is real but the mitigation is operational (right-size Vercel tier, set appropriate page caps) not a filesystem fallback. The risk of on-disk credential leakage outweighs the risk of memory pressure."
+        },
+        "G-Q6-v3": {
+          "key": "REJECT",
+          "pick_text": "Reject v3; restore v2 6-language floor (per-product opt-in handles ja/ko/ar)",
+          "rationale": "The 9-language floor is directionally correct but introduces Unicode regex false-negative risk (especially Arabic ZWNJ and RTL joining) that the spec's acknowledged-residual section does not name. v2's 6-language floor plus a per-product opt-in knob is a safer default — the knob exists (`productConfig.destructiveTermsExtra`) and Phase 3 may wire it."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-90-1",
+          "pick_text": "Ratify v3 retention — 90 days hot + 1 year cold (triples hot window vs v2; restores non-zero cold trail).",
+          "rationale": "The v2 zero-cold policy sacrificed post-incident investigation capability for marginal metadata minimisation. 90 days hot + 1 year cold preserves the 'shorter than standard' intent while restoring the cold-store audit trail needed for compliance review."
+        }
+      },
+      "overallNotes": "G-Q6-v3 is the most consequential vote — the Arabic word-boundary false-negative is a named risk on a spec that explicitly includes Arabic as a floor language. The allowlist-override attack surface in Invariant 5 is the highest-severity unresolved risk in the proposal.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:minimax/minimax-m2.7"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "i18n denylist coverage gaps",
+            "detail": "The expanded 9-language destructive-action denylist (Invariant 5) still excludes major languages like Hindi/Russian. Regex-based matching risks missing obfuscated text (e.g. 'delêté' with diacritics) and icon-only buttons without aria-labels, creating false negatives that could enable destructive actions during authenticated crawls."
+          },
+          {
+            "title": "Memory-only storageState risks",
+            "detail": "Invariant 2's memory-only storageState leaves credentials vulnerable to process memory dumps (kernel core dumps, debugger introspection). While Vercel's isolation is trusted, this creates a hosting-environment dependency not present in v1's encrypted-fs approach - a regression in multi-tenant security posture."
+          },
+          {
+            "title": "Insufficient audit retention",
+            "detail": "90-day hot + 1-year cold retention (Invariant 9) for credentialed runs remains shorter than standard 365d+7y, hampering incident investigations. A breach discovered at day 95 would lose hot-storage context while cold storage may lack query capabilities needed for root-cause analysis."
+          }
+        ],
+        "worse_than_status_quo": "If the crawler's i18n denylist misses a 'delete' button labeled in Turkish (excluded from 9-language floor), an authenticated crawl could trigger accidental data deletion in production - a risk that didn't exist with unauthenticated Phase 1 crawls.",
+        "precedent": "2017 Uber breach: Credentials stored in GitHub led to data exposure. Similarly, memory-resident credentials could leak via debug logs/core dumps if hosting isolation fails."
+      },
+      "rejection_steelman": "The proposal's hybrid security model (memory-only storage + regex i18n) introduces novel attack surfaces without commensurate benefits. A cautious approach would defer authenticated crawls until language coverage reaches 95% of target markets and memory handling includes hardware enclaves, rather than betting on Vercel's opaque isolation.",
+      "votes": {
+        "G-Q3-v3": {
+          "key": "GQ3v3-DEFER",
+          "pick_text": "Ratify Option B — Phase 3 ships with NO screenshot capture; no scrub pipeline; no operator residual-risk-ack UI. Phase 4 re-introduces screenshots with its own design + ratification gate.",
+          "rationale": "Deferring screenshots reduces Phase 3 attack surface while allowing focused security design in Phase 4 - aligns with 'secure by staged deployment' principle."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-MUST",
+          "pick_text": "Ratify v3 MUST — memory-only is mandatory; no encrypted-fs fallback codified; shipping a filesystem-fallback path is non-conformant with this spec regardless of operational pressure.",
+          "rationale": "Filesystem fallbacks reintroduce v1's cleanup risks. Memory-only forces proper capacity planning and avoids speculative edge-case handling."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-9",
+          "pick_text": "Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment.",
+          "rationale": "9-language floor materially improves over v2 while keeping Phase 3 scope contained. Per-product extensions via destructiveTermsExtra knob address niche needs."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-90-1",
+          "pick_text": "Ratify v3 retention — 90 days hot + 1 year cold (triples hot window vs v2; restores non-zero cold trail).",
+          "rationale": "Balances metadata minimization with investigation needs. Cold storage preserves chain-of-custody for compliance without full 7-year liability."
+        }
+      },
+      "overallNotes": "While concerning, objections represent manageable risks given Phase 3's limited scope. CEO-locked positions demonstrate adequate risk appetite for staged rollout.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Memory-only is brittle",
+            "detail": "Section 2, Invariant 2 makes storageState memory-only with no fallback, but the same spec acknowledges browser context recreation and run-state map retention. If the process restarts or memory pressure spikes, there is no recovery path and no auditably safe spill mechanism, so a transient condition can turn into a hard failure for every authenticated crawl."
+          },
+          {
+            "title": "Allowlist overrides remain unsafe",
+            "detail": "Section 2, Invariant 5 lets `data-crawl-safe=\"true\"` override the destructive denylist, even when the text/class signals are clearly dangerous. That means a single mistaken product-authored attribute can disable the last line of defense and allow destructive clicks while authenticated, exactly where the blast radius is largest."
+          },
+          {
+            "title": "Retention still overshoots minimization",
+            "detail": "Section 2, Invariant 9 keeps credentialed-run audit metadata for 90 days hot plus 1 year cold, while the same proposal says this metadata is sensitive. The retention schedule is materially longer than a pure operational need would justify, and the spec does not define a data-subset rationale for why 1 year of cold storage is the minimum acceptable floor instead of a shorter incident-response window."
+          }
+        ],
+        "worse_than_status_quo": "If an authenticated crawl hits a memory spike or restart, the memory-only storageState is lost and the run fails without any resumable state, while the operator must re-enter credentials and may trigger account lockout or MFA again. Compared with the current ephemeral disk approach, this makes successful completion less reliable for benign runs and can increase operator friction rather than reduce risk.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring this proposal is that it tightens some controls by simply removing capability rather than proving a safe operational substitute. In particular, dropping screenshots from Phase 3 and forbidding any storageState fallback may reduce attack surface, but it also shifts important validation and recovery burdens into later phases without demonstrating that the remaining crawler can still complete real-world authenticated audits reliably. That is enough to justify deferral until there is a tested memory-pressure, restart, and operator-recovery story.",
+      "votes": {
+        "G-Q3-v3": {
+          "key": "REJECT",
+          "pick_text": "Reject v3; restore v2 §6a — 9-stage scrub pipeline + default-OFF retention + operator residual-risk acknowledgment.",
+          "rationale": "Phase 3 losing screenshots entirely may be safer than the scrub pipeline, but it also removes a valuable evidence channel for debugging and human review. If the choice is between full removal and a tested scrubbed path, I would still prefer the option that preserves capability with explicit controls."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-MONITOR",
+          "pick_text": "Ratify MUST but require Phase 3 to ship a memory-pressure monitor with hard failure semantics — run fails loud rather than silently spilling to disk.",
+          "rationale": "A strict no-disk rule is defensible, but only if the implementation fails loudly before it risks violating the invariant. This keeps the privacy guarantee while addressing the operational brittleness of memory-only storageState."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-9",
+          "pick_text": "Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment.",
+          "rationale": "Expanding the denylist floor to cover Japanese, Korean, and Arabic is a reasonable improvement over the 6-language baseline. It is still imperfect, but the hybrid allowlist/denylist design plus explicit tests makes this an acceptable incremental hardening."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-90-1",
+          "pick_text": "Ratify v3 retention — 90 days hot + 1 year cold (triples hot window vs v2; restores non-zero cold trail).",
+          "rationale": "Some retained metadata is justified for incident response and tamper-evidence, and the proposal is already much shorter than the canonical standard. The 90-day hot window plus one-year cold trail is a defensible compromise between minimization and forensic utility."
+        }
+      },
+      "overallNotes": "The main concern is operational brittleness, not just privacy. If Phase 3 can demonstrate memory-pressure handling and reliable recovery paths, the stricter privacy posture becomes easier to defend.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly complex credential handling",
+            "detail": "The proposal introduces multiple mechanisms for handling credentials (§3), including validation, transit, and lifetime management. This complexity increases the risk of errors or security vulnerabilities."
+          },
+          {
+            "title": "Insufficient testing for MFA detection",
+            "detail": "The proposal (§8.1) relies on heuristic MFA detection, which may not cover all possible MFA challenge scenarios. Insufficient testing for MFA detection could lead to false negatives or false positives."
+          },
+          {
+            "title": "Retention policy divergence",
+            "detail": "The proposal (§9) introduces a custom retention policy for credentialed-run audit entries (90 days hot + 1 year cold), which diverges from the standard CA-10-E retention policy (365 days hot + 7 years cold). This divergence may cause inconsistencies or compliance issues."
+          }
+        ],
+        "worse_than_status_quo": "If the proposed authentication mechanism fails to properly isolate credentials or detect MFA challenges, it could lead to unauthorized access or data breaches, making the system worse than the status quo.",
+        "precedent": "Similar authentication mechanisms in other systems have caused problems when not properly tested or when relying on heuristics, such as the OAuth vulnerabilities discovered in various web applications."
+      },
+      "rejection_steelman": "The proposal could be rejected or deferred due to concerns about the complexity of credential handling, the reliability of MFA detection heuristics, and the potential compliance implications of a custom retention policy.",
+      "votes": {
+        "G-Q3-v3": {
+          "key": "GQ3v3-DEFER",
+          "pick_text": "Ratify Option B — Phase 3 ships with NO screenshot capture; no scrub pipeline; no operator residual-risk-ack UI. Phase 4 re-introduces screenshots with its own design + ratification gate.",
+          "rationale": "Deferring screenshot capture to Phase 4 allows for a more focused and secure implementation in a separate dispatch."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-MUST",
+          "pick_text": "Ratify v3 MUST — memory-only is mandatory; no encrypted-fs fallback codified; shipping a filesystem-fallback path is non-conformant with this spec regardless of operational pressure.",
+          "rationale": "Ensuring memory-only storage for credentials minimizes the risk of credential exposure."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-9",
+          "pick_text": "Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment.",
+          "rationale": "Expanding the i18n denylist floor to 9 languages improves the security posture by covering more language families."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-90-1",
+          "pick_text": "Ratify v3 retention — 90 days hot + 1 year cold (triples hot window vs v2; restores non-zero cold trail).",
+          "rationale": "The proposed retention policy strikes a balance between minimizing metadata retention and maintaining a sufficient audit trail."
+        }
+      },
+      "overallNotes": "The proposal addresses several security concerns related to authenticated crawl traversal, but careful implementation and testing are crucial to ensure its effectiveness.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Invariant 2 omits heap-dump exposure",
+            "detail": "§2 Invariant 2 mandates memory-only storageState but only documents Vercel isolation as a trust assumption; no mechanism prevents kernel/core-dump access to the Conductor heap during a run, directly contradicting the 'never logged' claim in CANONICAL §6 line 110."
+          },
+          {
+            "title": "RetentionClass conflicts with §14.3",
+            "detail": "§5.3 and Invariant 9 define retentionClass:'auth_short' (90 hot + 1yr cold) while CANONICAL §14.3 mandates 365 hot + 7yr cold for all GovernanceAuditLog rows; the tag-based exception has no RLS or cron enforcement specified."
+          },
+          {
+            "title": "Hybrid gate admits JS handlers",
+            "detail": "Invariant 5 §3 lists only aria-label/text/class checks; the explicit false-negative note admits 'JavaScript-only event handlers attached programmatically' bypass the denylist, leaving T4 destructive actions possible under authenticated context."
+          }
+        ],
+        "worse_than_status_quo": "Memory-only storageState keeps raw session tokens in the Node heap for the full crawl duration; a single process crash or memory snapshot now exposes live credentials for every product the operator has ever run, whereas the prior unauthenticated Phase 1 path never held any credentials at all.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The spec introduces a high-value attack surface (authenticated sessions) while relying on incomplete denylists, unproven memory isolation, and a non-canonical retention carve-out; deferring until a full adversarial red-team exercise on real fixtures would be the safer engineering posture.",
+      "votes": {
+        "G-Q3-v3": {
+          "key": "GQ3v3-DEFER",
+          "pick_text": "Ratify Option B — Phase 3 ships with NO screenshot capture; no scrub pipeline; no operator residual-risk-ack UI. Phase 4 re-introduces screenshots with its own design + ratification gate.",
+          "rationale": "Deferral avoids adding untested OCR/scrub surface area before Phase 3 ships."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-MUST",
+          "pick_text": "Ratify v3 MUST — memory-only is mandatory; no encrypted-fs fallback codified; shipping a filesystem-fallback path is non-conformant with this spec regardless of operational pressure.",
+          "rationale": "Removes the escape hatch that v2 left open."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-9",
+          "pick_text": "Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment.",
+          "rationale": "Expands coverage without changing the hybrid mechanism."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-90-1",
+          "pick_text": "Ratify v3 retention — 90 days hot + 1 year cold (triples hot window vs v2; restores non-zero cold trail).",
+          "rationale": "Balances minimisation with post-incident audit needs."
+        }
+      },
+      "overallNotes": "All objections are drawn directly from §2, §5 and §14 of the reviewed artifact.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "G-Q3-v3",
+      "topic": "Screenshot capture in Phase 3 (Option B CEO-locked — defer screenshots to Phase 4)",
+      "options": [
+        {
+          "key": "GQ3v3-DEFER",
+          "text": "Ratify Option B — Phase 3 ships with NO screenshot capture; no scrub pipeline; no operator residual-risk-ack UI. Phase 4 re-introduces screenshots with its own design + ratification gate."
+        },
+        {
+          "key": "GQ3v3-V2",
+          "text": "Reject v3; restore v2 §6a — 9-stage scrub pipeline + default-OFF retention + operator residual-risk acknowledgment."
+        },
+        {
+          "key": "GQ3v3-DEV",
+          "text": "Different — screenshots permitted in dev/staging only, no scrub required, no retention; or other compromise."
+        }
+      ],
+      "draftedKey": "GQ3v3-DEFER"
+    },
+    {
+      "id": "G-Q4-v3",
+      "topic": "storageState memory-only as MUST (no encrypted-fs fallback codified in spec)",
+      "options": [
+        {
+          "key": "GQ4v3-MUST",
+          "text": "Ratify v3 MUST — memory-only is mandatory; no encrypted-fs fallback codified; shipping a filesystem-fallback path is non-conformant with this spec regardless of operational pressure."
+        },
+        {
+          "key": "GQ4v3-HEDGE",
+          "text": "Reject v3 MUST; restore v2 hedge language (\"memory-only with optional encrypted-fs fallback if memory pressure becomes a concern\")."
+        },
+        {
+          "key": "GQ4v3-MONITOR",
+          "text": "Ratify MUST but require Phase 3 to ship a memory-pressure monitor with hard failure semantics — run fails loud rather than silently spilling to disk."
+        },
+        {
+          "key": "GQ4v3-OTHER",
+          "text": "Different — specify in rationale."
+        }
+      ],
+      "draftedKey": "GQ4v3-MUST"
+    },
+    {
+      "id": "G-Q6-v3",
+      "topic": "Destructive-action gate i18n denylist floor (v3 expansion 6 → 9 languages: +ja, +ko, +ar)",
+      "options": [
+        {
+          "key": "GQ6v3-9",
+          "text": "Ratify v3 floor of 9 (en/es/fr/pt/de/zh-CN/ja/ko/ar) with 9-language test coverage commitment."
+        },
+        {
+          "key": "GQ6v3-6",
+          "text": "Reject v3; restore v2 6-language floor (per-product opt-in handles ja/ko/ar)."
+        },
+        {
+          "key": "GQ6v3-MORE",
+          "text": "Require additional languages in v3 floor before Phase 3 ships — specify (e.g. hi, ru, vi must also be in floor)."
+        },
+        {
+          "key": "GQ6v3-OTHER",
+          "text": "Different — specify in rationale."
+        }
+      ],
+      "draftedKey": "GQ6v3-9"
+    },
+    {
+      "id": "G-Q7-v3",
+      "topic": "Audit retention for credentialed runs (v3: 90 days hot + 1 year cold)",
+      "options": [
+        {
+          "key": "GQ7v3-90-1",
+          "text": "Ratify v3 retention — 90 days hot + 1 year cold (triples hot window vs v2; restores non-zero cold trail)."
+        },
+        {
+          "key": "GQ7v3-30-0",
+          "text": "Reject v3; restore v2 short retention (30 hot + 0 cold)."
+        },
+        {
+          "key": "GQ7v3-STD",
+          "text": "Reject v3; restore CA-10-E canonical retention (365 hot + 7yr cold) for credentialed-run entries too."
+        },
+        {
+          "key": "GQ7v3-OTHER",
+          "text": "Different — specify in rationale (e.g. 90 hot + shorter cold, 365 hot + 1yr cold, or other hybrid)."
+        }
+      ],
+      "draftedKey": "GQ7v3-90-1"
+    }
+  ],
+  "carried_from_prior_runs": [
+    {
+      "qId": "G-Q1",
+      "verdict": "SUPERMAJORITY_GQ1-REFUSE 8/9",
+      "source_commit": "556a751"
+    },
+    {
+      "qId": "G-Q5",
+      "verdict": "SUPERMAJORITY_GQ5-STRICT 8/9",
+      "source_commit": "556a751"
+    },
+    {
+      "qId": "G-Q2-v2",
+      "verdict": "SUPERMAJORITY_GQ2v2-LOUD 8/9",
+      "source_commit": "80682558"
+    }
+  ]
+}
