@@ -207,7 +207,7 @@ export const SLOT_CONFIG = Object.freeze([
   //       primary, beyond the 2-slot documented exception
   //     - google/gemini-2.0-flash (1M context, unique family) ← PICKED
   //
-  //   google/gemini-2.0-flash wins on: unique provider family (re-
+  //   google/gemini-2.0-flash-001 wins on: unique provider family (re-
   //   introduces Google as a primary — zero google primaries currently
   //   since the gemini-2.5-pro demote dispatch #2), massive 1M-token
   //   context (helps the 20-agent review bundle), no model-level or
@@ -216,6 +216,14 @@ export const SLOT_CONFIG = Object.freeze([
   //   a structurally different architecture from Pro — smaller,
   //   distilled, faster — and Google's Flash series has had different
   //   JSON envelope behavior than Pro in production reports.
+  //
+  //   Model-ID fix 2026-05-16 (W5b dispatch #6): dispatch #5 used
+  //   bare alias 'google/gemini-2.0-flash' (also on the peer-review
+  //   allowlist). OpenRouter does NOT expose that alias — calls
+  //   returned HTTP 400 "not a valid model ID". Live probe against
+  //   /api/v1/models at fix time returned the GA alias
+  //   'google/gemini-2.0-flash-001' (1M ctx) as the correct ID. Same
+  //   model, same context, same provider — just the correct alias.
   //
   // Backup change: backup re-pointed to the demoted minimax/minimax-m2.7
   // (standard Kimi/Gemini/GPT-5 treatment — keep the demoted model on
@@ -232,7 +240,7 @@ export const SLOT_CONFIG = Object.freeze([
   // and Kimi/Qwen are demoted).
   Object.freeze({
     provider: 'openrouter',
-    model: 'google/gemini-2.0-flash',
+    model: 'google/gemini-2.0-flash-001',
     region: 'US',
     role: 'US large-context multimodal (post-minimax-demote 2026-05-16)',
     backup: Object.freeze({ provider: 'openrouter', model: 'minimax/minimax-m2.7' }),

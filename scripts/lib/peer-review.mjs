@@ -91,7 +91,14 @@ const ALLOWED_MODELS = new Set([
   'openai/gpt-4o',
   'openai/gpt-4-turbo',
   'google/gemini-2.5-pro',
-  'google/gemini-2.0-flash',
+  // 'google/gemini-2.0-flash' was an INVALID OpenRouter model ID
+  // (returned HTTP 400 "not a valid model ID" on every call). Replaced
+  // 2026-05-16 (W5b dispatch #6, Slot 6 Model Fix) with the actual GA
+  // alias 'google/gemini-2.0-flash-001'. Verified live against the
+  // OpenRouter /api/v1/models endpoint at probe time — 1M-token
+  // context, the same Gemini 2.0 Flash model dispatch #5 intended to
+  // promote to Slot 6 primary.
+  'google/gemini-2.0-flash-001',
   'anthropic/claude-opus-4',
   'anthropic/claude-sonnet-4',
   'meta-llama/llama-3.1-405b-instruct',
