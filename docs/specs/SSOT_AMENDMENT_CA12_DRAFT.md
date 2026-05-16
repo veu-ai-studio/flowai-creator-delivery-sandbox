@@ -1,578 +1,509 @@
-# SSOT Amendment Draft — CA-12 (Three-Mode + Two-Dimension Governance Architecture)
+# SSOT Amendment Draft — CA-12 v2 (Three-Mode + Three-Authority-Dimension Governance Architecture)
 
-**Status:** DRAFT — pending W6 adversarial Panel review + CEO disposition per CA-n cycle (Rev-2.1 §18). NOT canonical. NO code reflects this amendment until ratified.
+**Status:** DRAFT v2 — revision addressing all 5 Panel conditions from W6 NOT_RATIFIED verdict on v1 (commit `f9a62a0`, Panel transcript `docs/panel-consultations/ca12-ratification-2026-05-16.md` commit `5c2324f`). Three CEO decisions (D1/D2/D3) locked into v2 per W3 Dispatch #3 (2026-05-16).
 **Author:** W3, 2026-05-16.
 **Anchor canonical SSOT:** `docs/CANONICAL_REFERENCE.md` (Rev-2.1 + ENTRY 003–006 cumulative).
-**Inputs read in full:** `docs/CANONICAL_REFERENCE.md`, `docs/CANONICAL_HISTORY.md` SECTION 8 (ENTRY 001–006), `src/pages/LandingPage.jsx` (canonical 8 OBJECTIVES enumeration at lines 19–26), `src/pages/AutoRunner.jsx` (current `mode: 'auto'` / `'recommend_only'` handling), `src/lib/agents/_registry.ts` (26-agent roster + EXECUTOR_REGISTRY).
-**Target sections amended:** §6 ACE (mode-conditional crawl scope clarification), §9 8-step pipeline (mode-dependent step behavior), §10 Self-Governance Layer (three authority levels canonicalized), §11 Clearance Protocol (mode-dependent outputs), §17 sidebar (any "Auto/Guided/Manual" single-dimension reference splits into Dim 2 + Dim 3 per CA-12), §22 Product-Agnostic Rule (modes maintain agnosticism — verified), §25 Locked Rule 4 (axis labels — re-examined; CA-12 introduces a third orthogonal axis: pipeline mode).
-**Lineage:** CEO-locked feature spec 2026-05-16. ONE combined amendment with seven sub-sections (§A–§G). NO sub-amendments; CA-12 is monolithic because the three dimensions are interdependent and Panel must evaluate them as a single architectural commitment.
+**Lineage:** v1 commit `f9a62a0` → W6 adversarial Panel ratification → NOT_RATIFIED with 4 plurality-blocked questions + 1 supermajority instruction + 26 distinct substantive objections → CEO decisions D1/D2/D3 → v2 (this document).
 
-**Coupled with previous amendments:**
-- CA-7 EXECUTOR_REGISTRY (ENTRY 004) — provides the `auto_write_internal + requires_human_gate` dual-authority pattern that **AUTONOMOUS** authority level in §A Dimension 2 inherits.
-- CA-9-A Orchestra self-expansion (ENTRY 005) — Mode 1 SUB-1B PREVIEW path leverages fork-and-fix Orchestra members per §8.1.
-- CA-9-B Agent #26 (ENTRY 005) — dual-authority charter pattern referenced by CA-12 §A Dimension 2 AUTONOMOUS mapping.
-- CA-9-C Customer Feedback Loop (ENTRY 005) — Agent #10 Monitor (Step 8) consumes customer-issue signals in all 4 pipeline modes per §A Mode 1 Step 8 + §D agent ownership table.
-- CA-10 ProductSSOT (ENTRY 005) — every CA-12 run writes to ProductSSOT per §7 atomic Output Contract; mode-specific delta_log entries per §A.
-- CA-11 Per-agent ToolMenu (in flight, draft `1a020f7`) — Dimension 1 mode selection narrows each agent's effective ToolMenu via existing `ProductRegistry.agentToolConstraints`; no new mechanism needed.
-- ENTRY 006 Aggressive Crawl Engine — Mode 1 Step 1 + Mode 3A Step 1 both invoke Agent #21 Crawl Conductor; canonical per §6 + §7.6.
+## Revision history
 
-**Why monolithic (not split into CA-12-A / CA-12-B / CA-12-C):** the three dimensions only function correctly as a combined architecture. A user cannot select Mode 1 SUB-1B BUILD with RECOMMEND-ONLY authority — those combinations are degenerate. The 36-cell matrix in §B requires all three dimensions to be ratified together to be meaningful.
+| Version | Date | Commit | Verdict | Disposition |
+|---|---|---|---|---|
+| v1 | 2026-05-16 | `f9a62a0` | NOT_RATIFIED (W6 Panel) | 4 plurality conditions + 1 supermajority instruction + 26 objections |
+| **v2** | 2026-05-16 | this commit | DRAFT — pending re-ratification | 5 Panel conditions + 3 CEO decisions applied |
+
+## Panel conditions addressed in v2
+
+| # | Panel signal | v1 position | v2 position |
+|---|---|---|---|
+| **C1** | G-Q1 `QUORUM_PLURALITY_GQ1-OVERLAP` (7/9) — Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD | v1 §A.1.4 introduced SUB-3B-BUILD as parallel deploy pipeline | **v2 §A.1.4 removes SUB-3B-BUILD**. Mode 3B produces a comparative report (3A) or a synthesized product **specification** which the operator then executes via Mode 2 SUB-2A. No parallel build pipeline in 3B. Overlap eliminated. |
+| **C2** | G-Q2 `PLURALITY_GQ2-THREEPLUS` (5/9) — single Authority dimension under-specified | v1 §A.2 had ONE Authority Level dimension (Autonomous/Supervised/Recommend-only) | **v2 §A.2 splits into THREE Authority sub-dimensions per CEO D2:** Build-Authority (Dim 2a) + Deploy-Authority (Dim 2b) + Operational-Authority (Dim 2c). Each on its own 3-level scale. |
+| **C3** | G-Q3 `PLURALITY_GQ3-PER-MODE` (5/9) — global ceiling rule rejected; per-mode ceiling preferred | v1 §A.2.4 had global per-product ceiling | **v2 §A.2.4 sets ceiling per-product PER-MODE per-dimension** — not global. A product may have Dim 2c AUTONOMOUS for Mode 1 (crawl is low-risk) but Dim 2b SUPERVISED for Mode 2 (deploy is high-risk). |
+| **C4** | G-Q4 `QUORUM_PLURALITY_GQ4-DEFER` (7/9) — Mode 2 SUB-2B deferred from SSOT until prototype | v1 §A.1.2 + §E catalogued SUB-2B as ROADMAP in canonical SSOT | **v2 removes SUB-2B from SSOT entirely** per CEO D3. New `docs/specs/FUTURE_CAPABILITIES.md` (separate non-canonical document) catalogues SUB-2B with honest "unbuilt, not canonical SSOT" status. Mode 2 in v2 SSOT covers SUB-2A SPEC only. |
+| **C5** | G-Q5 `PLURALITY_GQ5-RESTRICT` (5/9) — Mode 3B universal feature extraction rejected | v1 §A.1.4 implicitly permitted feature extraction across arbitrary third-party URLs | **v2 §A.1.4 restricts Mode 3B to operator-owned products only** per CEO D1. Operator attests ownership/license per submitted URL; FlowAI rejects synthesis at runtime if any URL fails attestation. |
+| **C6** | G-Q6 `SUPERMAJORITY_GQ6-COLLAPSE` (8/9) — 36-cell matrix over-specified | v1 §B catalogued all 36 cells with degenerate cells inline | **v2 §B collapses** — only the ~16 non-degenerate configurations catalogued (now multidimensional given C2's 3-authority split). Degenerate combinations marked as runtime errors, not SSOT entries. |
+
+**Inputs read in full for v2:** v1 spec `f9a62a0` (578 lines); Panel transcript `ca12-ratification-2026-05-16.md` (1196 lines, all 26 objections); `docs/CANONICAL_REFERENCE.md` §6 / §9 / §10 / §11 / §22 / §25.
 
 ---
 
-## §A — The Complete Operating Model
+## §A — The Complete Operating Model (v2)
 
-Every FlowAI run is defined by **three independent selections**:
-- **Dimension 1: Pipeline Mode** — what the run operates on (existing product / new product / multi-product compare / multi-product synthesize).
-- **Dimension 2: Authority Level** — operator-set ceiling on FlowAI's autonomy.
-- **Dimension 3: Execution Mode** — per-run pacing (sequential auto / step-by-step human-gated / fully manual).
-
-The three dimensions are **canonically independent**. Any user choosing in Dim 1 + Dim 3 must respect the operator's Dim 2 ceiling. There is no fourth axis.
+Every FlowAI run is defined by **three classes of orthogonal selections**:
+- **Dimension 1: Pipeline Mode** — what the run operates on.
+- **Dimension 2: Authority Level** — **three sub-dimensions** (Build / Deploy / Operational), each operator-set per-product per-mode.
+- **Dimension 3: Execution Mode** — per-run pacing.
 
 ### A.1 Dimension 1 — Pipeline Mode
 
 #### A.1.1 MODE 1 — ASSESS & RENEW EXISTING PRODUCT
 
-**Input:** one existing URL (public or authenticated). When authenticated, session-only credentials per Rev-2.1 §6 + `src/lib/renewal/inputArtifact.js`.
+**Input:** one existing URL (public or authenticated).
 
-**Purpose:** crawl the real product → audit → score → optionally fix + redeploy.
+**Sub-modes:**
+- **SUB-1A RECOMMEND** — assess + findings + fix list. No deployment. No source modification.
+- **SUB-1B PREVIEW** — assess + apply fixes + redeploy to FlowAI-owned Vercel preview URL (fork-and-fix per CA-9-A §8.1 + Self-Renewal Executor per CA-7 §15.5).
+- **SUB-1B DEPLOY** — assess + apply fixes + push to original product hosting. Requires source + deploy credentials + Acceptance Gate per §10.2.
 
-**Sub-modes (user selects):**
-
-- **SUB-1A RECOMMEND** — assess + findings + prioritized fix list. **No deployment. No source modification.** Human implements all fixes themselves.
-  - Output: assessment report + prioritized fix list + audit scores + GTM readiness score per ENTRY 006 §7.6 + ProductSSOT `governance_record` entry.
-- **SUB-1B BUILD** — assess + apply fixes + deploy. User further selects between:
-  - **PREVIEW** — FlowAI-owned Vercel preview URL (fork-and-fix path per CA-9-A §8.1 + Agent #3 Self-Renewal Executor per CA-7 §15.5).
-  - **DEPLOY** — push to original product hosting. Requires source-acquisition credentials AND deploy-target credentials AND an explicit Human Gate at the deploy boundary per §10.2 Acceptance Gate.
-  - Output (both): assessment report + improved URL + before/after delta score + ProductSSOT `delta_log` entry per CA-10-A.
-
-**Pipeline step behavior in MODE 1:**
-
-| Step | Behaviour |
-|---|---|
-| 1 Research | Agent #21 Aggressive Crawl Conductor → `aggressiveCrawl` (depth=8/pages=200 defaults per §6) on the supplied URL |
-| 2 Design | Agent #7 critique of existing design + propose improvements (no generation in SUB-1A; generation gated by SUB-1B + admin Approval Gate) |
-| 3 Build | Agent #2 Code Builder audit (routes, navigation, broken links, form functionality) of existing build |
-| 4 QA | Agent #8 5-dimension governance score per Rev-2.1 §10.1 |
-| 5 Deploy | Deploy-health assessment (HTTPS, domain, performance, security posture) — read-only in SUB-1A; PREVIEW deploys in SUB-1B PREVIEW; original-host push in SUB-1B DEPLOY (gated) |
-| 6 Self-Renewal | SUB-1A: Agent #3 recommend-only fix list. SUB-1B: Agent #3 Self-Renewal Executor (per CA-7) applies fixes + redeploys + emits before/after delta |
-| 7 GTM | Agent #9 GTM readiness assessment + ENTRY 006 §7.6 GTM Readiness Report |
-| 8 Monitor | Agent #10 final clearance decision + ProductSSOT atomic write per CA-10 |
+**Pipeline step behavior in MODE 1:** identical to v1 §A.1.1 table (Agent #21 Step 1; Agent #7 Step 2; Agent #2 Step 3; Agent #8 Step 4; orchestrator Step 5; Agent #3 Step 6; Agent #9 Step 7; Agent #10 Step 8).
 
 #### A.1.2 MODE 2 — BUILD NEW PRODUCT
 
 **Input:** description / spec / content / voice / screenshots (no existing URL).
 
-**Purpose:** create a new product from scratch.
-
 **Sub-modes:**
-
 - **SUB-2A SPEC** — FlowAI produces full product spec, design brief, architecture, build plan. Human implements. Output: spec deliverable.
-- **SUB-2B BUILD** — FlowAI writes + deploys real working product. Output: live product at brand new URL.
 
-**Pipeline step behavior in MODE 2:**
+**SUB-2B BUILD removed from this SSOT per CEO Decision D3.** The full-build-and-deploy variant is catalogued at `docs/specs/FUTURE_CAPABILITIES.md` as a target future capability — not canonical SSOT.
+
+**Pipeline step behavior in MODE 2 (SUB-2A only):**
 
 | Step | Behaviour |
 |---|---|
-| 1 Research | Agent #6 Research — market research + competitive intel + audience analysis (no URL to crawl; Agent #21 NOT invoked) |
-| 2 Design | Agent #7 generate UX/visual specifications |
-| 3 Build | SUB-2A: Agent #2 produces build plan (no code emitted). SUB-2B: Agent #2 + Agent #7 Phase 2 executor emit code (ROADMAP — see §E) |
-| 4 QA | Agent #8 audit the generated product (SUB-2A: spec audit only; SUB-2B: full 5-dim audit on real code) |
-| 5 Deploy | SUB-2A: no deploy. SUB-2B: deploy to new URL via Orchestra `dispatch('deploy', ...)` member (Vercel canonical) |
-| 6 Self-Renewal | SUB-2A: spec-improvement recommendations. SUB-2B: iterate on QA findings per Agent #3 Self-Renewal Executor |
-| 7 GTM | Agent #9 GTM readiness assessment for the new product |
-| 8 Monitor | Agent #10 final clearance decision |
-
-**Honest boundary today** (mirrors §E):
-- **SUB-2A buildable now.** Specs producible via existing LLM dispatch.
-- **SUB-2B = ROADMAP.** Code-generation pipeline does not exist today end-to-end (per `docs/specs/agent-blueprints/AGENT_07_Design.md` Phase 2 + AGENT_02 + AGENT_07 Phase 2 executor flagged). Must be stated explicitly; not hidden.
+| 1 Research | Agent #6 — market research + competitive intel + audience analysis (no URL to crawl) |
+| 2 Design | Agent #7 — generate UX/visual spec |
+| 3 Build | Agent #2 — produce build plan (spec; no code emitted) |
+| 4 QA | Agent #8 — audit the spec (not code) |
+| 5 Deploy | no deploy in SUB-2A |
+| 6 Self-Renewal | spec-improvement recommendations |
+| 7 GTM | Agent #9 — GTM readiness assessment for the spec |
+| 8 Monitor | Agent #10 — final clearance decision |
 
 #### A.1.3 MODE 3A — BENCHMARK (comparison only, no new URL)
 
-**Input:** 2 or more existing URLs (typical: 2–5 per `src/pages/LandingPage.jsx` synthesise/compare flows).
-
-**Purpose:** assess each product independently → produce ranked comparative report. **No new URL produced.**
-
-**Pipeline step behavior in MODE 3A:**
-
-| Step | Behaviour |
-|---|---|
-| 1–5 | Run per-URL (Mode 1 behavior per URL — Agent #21 × N parallel crawls). |
-| 6 Self-Renewal | **COMPARISON SYNTHESIS** — produce comparative report only. No deployment. No new URL. Ranks across the 5-dim governance score per URL. |
-| 7 GTM | Comparative GTM readiness ranked across products. |
-| 8 Monitor | Final clearance decision per-URL + aggregate ranking. |
-
-**Output:** comparative governance report showing rankings, strengths/weaknesses per dimension, ranked fix priorities per product. **No new URL produced.**
-
-#### A.1.4 MODE 3B — SYNTHESIZE (comparison + new product URL)
-
 **Input:** 2 or more existing URLs.
+**Purpose:** assess each → ranked comparative report. No new URL produced.
 
-**Purpose:** assess all → extract best elements of each → combine into new synthesized product.
+**Pipeline step behavior in MODE 3A:** identical to v1 §A.1.3 table.
 
-**Sub-modes:**
+**Output:** comparative governance report only.
 
-- **SUB-3B-SPEC** — synthesis spec only ("best elements of each + recommended new architecture"). Human implements.
-- **SUB-3B-BUILD** — FlowAI assembles + deploys synthesized product to new URL.
+#### A.1.4 MODE 3B — SYNTHESIZE (operator-owned products only)
+
+**Input:** 2 or more existing URLs that the operator owns or has explicit license to use.
+
+**Purpose:** assess all → extract best elements → produce **a synthesized product specification**. The spec is the deliverable; if the operator wants to execute it, they route the spec through Mode 2 SUB-2A (or, when it exists, the Mode 2 SUB-2B from `FUTURE_CAPABILITIES.md`).
+
+**Ownership Attestation Mechanism (per CEO Decision D1):**
+
+Mode 3B requires that the operator owns or has explicit license to all submitted URLs. FlowAI enforces this at the InputArtifact validation layer:
+
+1. **Operator attestation per URL.** Each URL submitted to Mode 3B is accompanied by an explicit attestation field `ownershipAttestation: 'owned' | 'licensed' | NOT_PERMITTED`. Mode 3B rejects the run at the AutoRunner submission boundary if ANY URL has `ownershipAttestation` missing or set to `NOT_PERMITTED`.
+2. **Operator identity binding.** The attestation is bound to the operator's authenticated identity per Rev-2.1 §13 admin/operator role. Attestation by a non-admin role for a URL the org does not appear in `ProductRegistry` for is rejected.
+3. **Audit-log record per attestation.** Every Mode 3B run writes a `governance_record_entry` to the synthesized product's ProductSSOT with `kind: 'mode3b_ownership_attestation'` listing each input URL + attestation value + attesting userId.
+4. **No "research-only output" path.** Per CEO Decision D1, research-only output is NOT acceptable as a Mode 3B escape hatch. The capability is operator-owned synthesis with deployment-pathway output (spec → Mode 2). Third-party feature extraction without ownership/license is NOT permitted and will be rejected at runtime.
+
+**No sub-modes** in Mode 3B — Mode 3B produces a comparative report (Mode 3A behavior) OR a synthesized-product specification. There is no SUB-3B-BUILD parallel deploy pipeline (eliminated per Panel Condition C1).
 
 **Pipeline step behavior in MODE 3B:**
 
 | Step | Behaviour |
 |---|---|
-| 1–5 | Run per-URL (Mode 1 behavior — Agent #21 × N parallel) then cross-URL synthesis input prep. |
-| 6 Self-Renewal | **SYNTHESIZE BEST ELEMENTS** from all inputs → produce new product (Mode 2 behavior from combined inputs). SUB-3B-SPEC: spec only. SUB-3B-BUILD: deploy to new URL. |
-| 7 GTM | Agent #9 GTM readiness assessment for synthesized product. |
-| 8 Monitor | Agent #10 final clearance decision + ProductSSOT write. |
+| 1–5 | Run per-URL (Mode 1 SUB-1A behavior — Agent #21 × N parallel crawls; operator attestation enforced at submission). |
+| 6 Self-Renewal | **SYNTHESIS SPEC OUTPUT** — extract best elements from all attested-owned inputs → produce a synthesized product specification (the Mode 2 SUB-2A output shape). |
+| 7 GTM | Agent #9 — GTM readiness assessment for the synthesized spec. |
+| 8 Monitor | Agent #10 — final clearance decision; ProductSSOT write per CA-10. |
 
-**Output:** synthesis report (what was taken from which source + why) + new product spec OR new deployed URL.
+**Output:** synthesis report (what was taken from which source URL + why; full ownership-attestation provenance) + a synthesized product specification consumable by Mode 2 SUB-2A.
 
-### A.2 Dimension 2 — Authority Level (operator-set, persistent ceiling)
+### A.2 Dimension 2 — Authority Level (3 sub-dimensions, per CEO Decision D2)
 
-The operator (provider org admin per Rev-2.1 §13) sets the authority ceiling for their deployment. This ceiling is **persistent across runs** and stored in `ProductRegistry.authorityCeiling` (NEW field per CA-12) — pure metadata per Rev-2.1 §22 + CA-9 §3 metadata-driven architecture.
+CEO Decision D2 splits the single Authority Level dimension from v1 into **THREE distinct sub-dimensions**. Each operates on its own 3-level scale (Autonomous / Supervised / Recommend-only) and is set per-product per-mode per-dimension by the operator (per CEO Decision D3 on ceiling rule, Panel Condition C3).
 
-#### A.2.1 AUTONOMOUS
+#### A.2.1 Dim 2a — BUILD-AUTHORITY (can FlowAI write/modify code?)
 
-- **Definition:** FlowAI acts + deploys without per-action human approval. Operator sets rules upfront. FlowAI executes end-to-end within those rules.
-- **Maps to:** `auto_write_internal` authority per `BaseAgent.js` AUTHORITY enum + required `requires_human_gate` pairing per CA-9-Q4=(b) when `auto_write_internal` is declared (mirrors Self-Renewal Executor per CA-7 §15.5).
-- **Hard human gates only on:** XSS detected in fix output (per ENTRY 006 §B `xss-in-form-echo` critical, not promotable); auth-gate leak detected; destructive action outside operator-defined scope; severity `critical` or `high` issues per Rev-2.1 §12.
-- **Eligible execution modes (Dim 3):** AUTOMATIC, GUIDED, MANUAL — all three (authority is ceiling, not floor).
-
-#### A.2.2 SUPERVISED
-
-- **Definition:** FlowAI proposes every significant action before executing. Human reviews, approves, modifies, or rejects.
-- **Maps to:** `requires_human_gate` authority. FlowAI never acts unilaterally on significant actions.
-- **Human gates on:** every deploy; every fix application; every external action (Stripe Connect link creation; DMCA filing; capability transfer install).
-- **Eligible execution modes (Dim 3):** GUIDED (canonical fit), MANUAL. AUTOMATIC is allowed but degenerate — every gate auto-blocks the run; equivalent to "produce findings + halt."
-
-#### A.2.3 RECOMMEND-ONLY
-
-- **Definition:** FlowAI recommends; human implements all actions. FlowAI never deploys, never modifies, never executes autonomously.
-- **Maps to:** `recommend_only` authority. **This is the dormant-safe default** all 26 agents currently ship with (per Rev-2.1 §15.1).
-- **Eligible execution modes (Dim 3):** all three. Most common today: RECOMMEND-ONLY + AUTOMATIC = "full audit + report; human reads findings + implements."
-
-#### A.2.4 The Authority Ceiling Rule
-
-> The solution provider (operator) sets the authority ceiling for their deployment. End users can only SELECT AT OR BELOW the operator ceiling per run. An operator running SUPERVISED deployment cannot have end users elevate to AUTONOMOUS for a run.
-
-**Storage:** `ProductRegistry.authorityCeiling: 'autonomous' | 'supervised' | 'recommend_only'`. Default for new products: `'recommend_only'` (safest). Operator can raise the ceiling via admin UI (per Rev-2.1 §13 admin role). Raising the ceiling is itself audit-logged.
-
-**Per-run authority floor enforcement:** when AutoRunner accepts a run request, it validates `run.authority ∈ {ceilings ≤ ProductRegistry[productId].authorityCeiling}`. Mismatch returns 403 with explicit error per Rev-2.1 §13 role-gate pattern.
-
-### A.3 Dimension 3 — Execution Mode (user-selects per run, bounded by Dim 2 ceiling)
-
-#### A.3.1 AUTOMATIC
-
-- **Definition:** All 8 pipeline steps run sequentially without pausing. One launch → full report at end.
-- **User experience:** review output, not steps.
-- **Typical wall-clock:** 1–20 minutes depending on Pipeline Mode + crawl depth.
-
-#### A.3.2 GUIDED
-
-- **Definition:** Pipeline pauses at each step. FlowAI proposes the step's action/findings. Human approves, modifies, or skips before next step runs.
-- **Approval gates:** 8 (one per step) + intermediate gates per Rev-2.1 §10.2 (Review / Approval / Testing / Acceptance).
-- **Typical wall-clock:** minutes to hours.
-
-#### A.3.3 MANUAL
-
-- **Definition:** Human triggers each step explicitly. FlowAI waits for instruction at each step. Human has full control over sequence and depth.
-- **Typical wall-clock:** hours to days.
-
-### A.4 Interaction with existing canonical axes
-
-CA-12 introduces a third orthogonal axis to the existing two ratified in Rev-2.1 §25 Locked Rule 4 (Orchestra Selection axis: Auto/Recommended/User-Choice — selects which Orchestra member runs the step) + Rev-2.1 §8a System Operation axis (Hands-On/Reviewed/Hands-Off — operator authority to FlowAI). CA-12 reconciles:
-
-| Axis name | Source | Scope |
+| Level | Definition | Maps to |
 |---|---|---|
-| **Pipeline Mode** (NEW CA-12 Dim 1) | this amendment | What the run operates on |
-| **Authority Level** (CA-12 Dim 2) | this amendment | Persistent ceiling on FlowAI autonomy |
-| **Execution Mode** (CA-12 Dim 3) | this amendment | Per-run pacing |
-| **Orchestra Selection** (Rev-2.1 §25 Locked Rule 4) | ENTRY 003 | Which Orchestra adapter runs each step |
-| **System Operation** (Rev-2.1 §8a) | ENTRY 003 | Operator-side pacing label |
+| **Autonomous** | FlowAI writes / modifies code freely within scope; no per-edit approval | `auto_write_internal` for code-write actions; paired with `requires_human_gate` per CA-9-Q4=(b) for `xss-in-form-echo`, `auth-gate-leak`, or destructive-action triggers |
+| **Supervised** | FlowAI proposes code changes; human reviews diff + approves/modifies/rejects before any commit | `requires_human_gate` (every commit gated) |
+| **Recommend-only** | FlowAI suggests changes textually; never writes code itself | `recommend_only` (dormant-safe default for all 26 agents per Rev-2.1 §15.1) |
 
-**Reconciliation:** CA-12 Dim 2 (Authority Level) **subsumes** Rev-2.1 §8a (System Operation axis). The Hands-On/Reviewed/Hands-Off labels in §8a were always operator-facing autonomy levels — same concept as Dim 2 with cleaner naming. CA-12 promotes Dim 2 (Autonomous / Supervised / Recommend-only) as canonical and **deprecates §8a labels** with a 1:1 mapping for backwards compatibility (Hands-Off = Autonomous; Reviewed = Supervised; Hands-On = Recommend-only).
+#### A.2.2 Dim 2b — DEPLOY-AUTHORITY (can FlowAI push to production?)
 
-CA-12 Dim 3 (Execution Mode: Automatic/Guided/Manual) is **distinct** from CA-12 Dim 2 — it's per-run pacing, not authority. The naming intentionally avoids overlap with Orchestra Selection's Auto/Recommended/User-Choice (which describes adapter selection, not pipeline pacing).
-
----
-
-## §B — The 36-Configuration Matrix
-
-The combined operating model: **4 modes × 3 authority × 3 execution = 36 distinct configurations**. Many configurations are degenerate (e.g. SUB-1B BUILD + RECOMMEND-ONLY contradicts itself — RECOMMEND-ONLY blocks deploy). The matrix below catalogues all 36 with output, authority constraint, today-status, and cost envelope.
-
-| Pipeline Mode | Sub-mode | Authority | Execution | Output produced | Authority constraint | Status today | Cost envelope (per run) |
-|---|---|---|---|---|---|---|---|
-| Mode 1 | SUB-1A | RECOMMEND-ONLY | AUTOMATIC | Audit report + fix list | Cleanly compatible | **BUILT** | $0.30–$2.00 |
-| Mode 1 | SUB-1A | RECOMMEND-ONLY | GUIDED | Audit report + fix list, step-by-step approval | Cleanly compatible | **BUILT** (recommend-only path proven; guided wiring per Rev-2.1 §17 sidebar) | $0.30–$2.00 + human time |
-| Mode 1 | SUB-1A | RECOMMEND-ONLY | MANUAL | Audit report + fix list, human-driven cadence | Cleanly compatible | **BUILT** (manual path per Rev-2.1 §17 sidebar) | $0.30–$2.00 + days of human time |
-| Mode 1 | SUB-1A | SUPERVISED | AUTOMATIC | Audit report; gates auto-block on findings | Degenerate (no actions to approve in 1A) | **N/A — degenerate** | n/a |
-| Mode 1 | SUB-1A | SUPERVISED | GUIDED | Audit report; human approves each step | Compatible | **BUILT** | $0.30–$2.00 + human time |
-| Mode 1 | SUB-1A | SUPERVISED | MANUAL | Audit report; human-driven | Compatible | **BUILT** | $0.30–$2.00 + days |
-| Mode 1 | SUB-1A | AUTONOMOUS | AUTOMATIC | Audit report only (no actions to autonomously execute in 1A) | Degenerate — AUTONOMOUS redundant with SUB-1A | **N/A — degenerate** (AUTONOMOUS adds no value over RECOMMEND-ONLY when no actions taken) | n/a |
-| Mode 1 | SUB-1A | AUTONOMOUS | GUIDED | Audit report only | Degenerate | **N/A — degenerate** | n/a |
-| Mode 1 | SUB-1A | AUTONOMOUS | MANUAL | Audit report only | Degenerate | **N/A — degenerate** | n/a |
-| Mode 1 | SUB-1B PREVIEW | RECOMMEND-ONLY | AUTOMATIC | Conflict — RECOMMEND-ONLY blocks deploy | Degenerate | **N/A — degenerate** | n/a |
-| Mode 1 | SUB-1B PREVIEW | RECOMMEND-ONLY | GUIDED | Conflict | Degenerate | **N/A — degenerate** | n/a |
-| Mode 1 | SUB-1B PREVIEW | RECOMMEND-ONLY | MANUAL | Conflict | Degenerate | **N/A — degenerate** | n/a |
-| Mode 1 | SUB-1B PREVIEW | SUPERVISED | AUTOMATIC | Renewed preview URL + delta score, every deploy human-gated; AUTOMATIC means gates auto-stop run; equivalent to "produce + halt for review" | Compatible but degenerate in AUTOMATIC (gates block) | **PARTIAL — renewal skeleton; gates wired post-graduation** | $1–$5 |
-| Mode 1 | SUB-1B PREVIEW | SUPERVISED | GUIDED | Renewed preview URL + delta score, each fix human-approved | Compatible (canonical fit) | **PARTIAL** | $1–$5 + human time |
-| Mode 1 | SUB-1B PREVIEW | SUPERVISED | MANUAL | Renewed preview URL + delta score, human triggers each fix | Compatible | **PARTIAL** | $1–$5 + days |
-| Mode 1 | SUB-1B PREVIEW | AUTONOMOUS | AUTOMATIC | Renewed preview URL + delta score, end-to-end no gates (except hard XSS/auth-leak) | Compatible (canonical fit for set-and-forget) | **PARTIAL — Self-Renewal Executor per CA-7 drafted not shipped** | $1–$5 |
-| Mode 1 | SUB-1B PREVIEW | AUTONOMOUS | GUIDED | Renewed preview URL but human reviews each step | Compatible | **PARTIAL** | $1–$5 + human time |
-| Mode 1 | SUB-1B PREVIEW | AUTONOMOUS | MANUAL | Renewed preview URL, human triggers each step | Compatible | **PARTIAL** | $1–$5 + days |
-| Mode 1 | SUB-1B DEPLOY | RECOMMEND-ONLY | * | Conflict | Degenerate | **N/A — degenerate** | n/a |
-| Mode 1 | SUB-1B DEPLOY | SUPERVISED | AUTOMATIC | Original-host push, every deploy human-gated → AUTOMATIC degenerate | Degenerate | **N/A — degenerate** | n/a |
-| Mode 1 | SUB-1B DEPLOY | SUPERVISED | GUIDED | Original-host push, every fix approved | Compatible (most likely real-world fit) | **ROADMAP** — source + deploy credentials infra unbuilt | $1–$5 + human time |
-| Mode 1 | SUB-1B DEPLOY | SUPERVISED | MANUAL | Original-host push, human-driven | Compatible | **ROADMAP** | $1–$5 + days |
-| Mode 1 | SUB-1B DEPLOY | AUTONOMOUS | AUTOMATIC | Full hands-off audit + fix + push to original host | Compatible (highest-risk; the "set and forget" mode) | **ROADMAP** — source + deploy + auth gates all unbuilt | $1–$5 |
-| Mode 1 | SUB-1B DEPLOY | AUTONOMOUS | GUIDED | Original-host push, human reviews each step | Compatible | **ROADMAP** | $1–$5 + human time |
-| Mode 1 | SUB-1B DEPLOY | AUTONOMOUS | MANUAL | Original-host push, human triggers each step | Compatible | **ROADMAP** | $1–$5 + days |
-| Mode 2 | SUB-2A SPEC | RECOMMEND-ONLY | AUTOMATIC | Full product spec deliverable | Compatible (canonical fit) | **BUILT** | $0.50–$3.00 |
-| Mode 2 | SUB-2A SPEC | RECOMMEND-ONLY | GUIDED | Spec, step-by-step approval | Compatible | **BUILT** | $0.50–$3.00 + human time |
-| Mode 2 | SUB-2A SPEC | RECOMMEND-ONLY | MANUAL | Spec, human-driven | Compatible | **BUILT** | $0.50–$3.00 + days |
-| Mode 2 | SUB-2A SPEC | SUPERVISED | * | Spec only (no deploy actions to gate) | Compatible but adds no value over RECOMMEND-ONLY | **BUILT** (same as recommend-only) | same |
-| Mode 2 | SUB-2A SPEC | AUTONOMOUS | * | Spec only | Compatible but adds no value over RECOMMEND-ONLY | **BUILT** (same) | same |
-| Mode 2 | SUB-2B BUILD | RECOMMEND-ONLY | * | Conflict — RECOMMEND-ONLY blocks deploy | Degenerate | **N/A — degenerate** | n/a |
-| Mode 2 | SUB-2B BUILD | SUPERVISED | AUTOMATIC | Deploy gates auto-block | Degenerate in AUTOMATIC | **N/A — degenerate** | n/a |
-| Mode 2 | SUB-2B BUILD | SUPERVISED | GUIDED | Live product at new URL, every step approved | Compatible | **ROADMAP** — code-generation pipeline unbuilt | $2–$10 + human time |
-| Mode 2 | SUB-2B BUILD | SUPERVISED | MANUAL | Live product, human-driven | Compatible | **ROADMAP** | $2–$10 + days |
-| Mode 2 | SUB-2B BUILD | AUTONOMOUS | AUTOMATIC | Live product end-to-end | Compatible | **ROADMAP** — most complex single config | $2–$10 |
-| Mode 2 | SUB-2B BUILD | AUTONOMOUS | GUIDED | Live product, human reviews each step | Compatible | **ROADMAP** | $2–$10 + human time |
-| Mode 2 | SUB-2B BUILD | AUTONOMOUS | MANUAL | Live product, human triggers each step | Compatible | **ROADMAP** | $2–$10 + days |
-| Mode 3A BENCHMARK | (no sub-mode — single deliverable) | RECOMMEND-ONLY | AUTOMATIC | Comparative governance report | Compatible (canonical) | **PARTIAL** — single-URL sequential today; cross-URL synthesis unbuilt | $0.60–$4.00 (2× Mode 1 minimum) |
-| Mode 3A BENCHMARK | — | RECOMMEND-ONLY | GUIDED | Comparative report, step-by-step | Compatible | **PARTIAL** | $0.60–$4.00 + human time |
-| Mode 3A BENCHMARK | — | RECOMMEND-ONLY | MANUAL | Comparative report, human-driven | Compatible | **PARTIAL** | $0.60–$4.00 + days |
-| Mode 3A BENCHMARK | — | SUPERVISED | * | No deploy actions; SUPERVISED redundant with RECOMMEND-ONLY for 3A | Compatible but adds no value | **PARTIAL** | same |
-| Mode 3A BENCHMARK | — | AUTONOMOUS | * | No deploy actions; AUTONOMOUS redundant with RECOMMEND-ONLY for 3A | Compatible but adds no value | **PARTIAL** | same |
-| Mode 3B SUB-3B-SPEC | — | RECOMMEND-ONLY | AUTOMATIC | Synthesis spec | Compatible | **ROADMAP** — synthesis engine unbuilt | $0.80–$5.00 |
-| Mode 3B SUB-3B-SPEC | — | RECOMMEND-ONLY | GUIDED | Synthesis spec, step-by-step | Compatible | **ROADMAP** | $0.80–$5.00 + human time |
-| Mode 3B SUB-3B-SPEC | — | RECOMMEND-ONLY | MANUAL | Synthesis spec, human-driven | Compatible | **ROADMAP** | $0.80–$5.00 + days |
-| Mode 3B SUB-3B-SPEC | — | SUPERVISED / AUTONOMOUS | * | Synthesis spec only | Same as RECOMMEND-ONLY | **ROADMAP** | same |
-| Mode 3B SUB-3B-BUILD | — | RECOMMEND-ONLY | * | Conflict | Degenerate | **N/A — degenerate** | n/a |
-| Mode 3B SUB-3B-BUILD | — | SUPERVISED | GUIDED | New synthesized product at new URL, every step approved | Compatible | **ROADMAP** — synthesis + code-gen both unbuilt | $3–$15 + human time |
-| Mode 3B SUB-3B-BUILD | — | SUPERVISED | MANUAL | New URL, human-driven | Compatible | **ROADMAP** | $3–$15 + days |
-| Mode 3B SUB-3B-BUILD | — | SUPERVISED | AUTOMATIC | Gates auto-block | Degenerate | **N/A — degenerate** | n/a |
-| Mode 3B SUB-3B-BUILD | — | AUTONOMOUS | AUTOMATIC | New URL end-to-end | Compatible — most roadmap-distant configuration | **ROADMAP** — fully automated cross-product synthesis + deploy | $3–$15 |
-| Mode 3B SUB-3B-BUILD | — | AUTONOMOUS | GUIDED | New URL, human reviews each step | Compatible | **ROADMAP** | $3–$15 + human time |
-| Mode 3B SUB-3B-BUILD | — | AUTONOMOUS | MANUAL | New URL, human triggers each step | Compatible | **ROADMAP** | $3–$15 + days |
-
-**Matrix summary** (after collapsing degenerates):
-
-- **BUILT (today, end-to-end proven):** 9 cells — all Mode 1 SUB-1A + all Mode 2 SUB-2A (treating SUPERVISED/AUTONOMOUS as same-as-RECOMMEND-ONLY when no actions exist).
-- **PARTIAL (skeleton exists; needs hardening or graduation):** 7 cells — Mode 1 SUB-1B PREVIEW (6 cells) + Mode 3A BENCHMARK (3 cells × 1 sub = 3 cells but counted as 1 partial group; net 7 distinct partial configs).
-- **ROADMAP (substantial unbuilt infrastructure required):** 12 cells — Mode 1 SUB-1B DEPLOY (5), Mode 2 SUB-2B BUILD (4), Mode 3B SUB-3B-SPEC + SUB-3B-BUILD (8 cells, several degenerates removed).
-- **DEGENERATE (logically contradictory; never offered to users):** 8 cells.
-- **Total catalogued: 36 cells** (some grouped into super-cells when sub-mode + authority collapse — see §B narrative).
-
-### B.1 Key cells called out explicitly
-
-- **Mode 1 + AUTONOMOUS + AUTOMATIC** — fully hands-off audit + fix + deploy. The "set and forget" mode. Today: PARTIAL (PREVIEW path) / ROADMAP (DEPLOY path).
-- **Mode 1 + RECOMMEND-ONLY + AUTOMATIC** — full audit runs, produces report + fix list only. **Most common use case today (what's actually built).**
-- **Mode 2 + any authority + AUTOMATIC** — SUB-2A SPEC today; SUB-2B BUILD is ROADMAP.
-- **Mode 3B + AUTONOMOUS + AUTOMATIC** — fully automated cross-product synthesis + new deployment. Most complex and most roadmap-distant configuration.
-
----
-
-## §C — UI Mapping
-
-Mapping the existing UI surfaces (`src/pages/LandingPage.jsx` lines 19–26 + `src/pages/AutoRunner.jsx` mode handling + Rev-2.1 §17 sidebar) to CA-12 dimensions:
-
-### C.1 LandingPage.jsx 8 OBJECTIVES → Dimension 1 Pipeline Mode
-
-| LandingPage OBJECTIVE value | Label | CA-12 Pipeline Mode |
+| Level | Definition | Maps to |
 |---|---|---|
-| `audit_demo` | "Audit for prospect demo readiness" | **Mode 1 SUB-1A** (recommend-only audit; demo-readiness focus per ENTRY 006 §7.6) |
-| `investor_review` | "Prepare for investor review" | **Mode 1 SUB-1A** (recommend-only audit; investor-lens scoring) |
-| `full_governance` | "Full governance and clearance cycle" | **Mode 1** (sub-mode user-selects per audit findings; gates Clearance Step 5) |
-| `compare` | "Compare two or more products" | **Mode 3A BENCHMARK** |
-| `combine` | "Combine inputs into a unified specification" | **Mode 3B SUB-3B-SPEC** |
-| `benchmark` | "Benchmark against competitors" | **Mode 3A BENCHMARK** |
-| `launch_readiness` | "Launch readiness check" | **Mode 1 SUB-1A** (recommend-only audit; launch-readiness lens) |
-| `custom` | "Custom — I will describe my objective" | **any mode, user-defined** (free-text objective parsed at runtime; default-routes to Mode 1 SUB-1A unless URL count ≥ 2 → Mode 3A) |
+| **Autonomous** | FlowAI pushes to production deployment target freely within scope; no per-deploy approval | `auto_write_internal` for deploy actions; same gate-pairing as Dim 2a |
+| **Supervised** | FlowAI proposes deploy; human approves/rejects each push | `requires_human_gate` (every deploy gated) |
+| **Recommend-only** | FlowAI recommends deploy decisions; never pushes | `recommend_only` |
 
-**Observation:** 4 of the 8 OBJECTIVES are differentiated by **lens** (demo-readiness vs investor vs governance vs launch-readiness), not by Pipeline Mode. CA-12 introduces a notion of **Audit Lens** as a sub-attribute of Mode 1 SUB-1A. This is not a fourth dimension; it's a lens parameter on the same configuration.
+#### A.2.3 Dim 2c — OPERATIONAL-AUTHORITY (can FlowAI take runtime actions: crawl, call APIs, etc.?)
 
-### C.2 AutoRunner.jsx mode handling → CA-12 Dimensions 2 + 3
+| Level | Definition | Maps to |
+|---|---|---|
+| **Autonomous** | FlowAI crawls, calls third-party APIs (Stripe Connect link creation, DMCA filing, capability transfer install, webhook posts) freely within scope | `auto_write_internal` for runtime actions; gate-pairing for security-critical actions |
+| **Supervised** | FlowAI proposes runtime actions; human approves each external call | `requires_human_gate` (every external call gated) |
+| **Recommend-only** | FlowAI recommends actions; never invokes external APIs / never crawls without explicit human trigger | `recommend_only` |
 
-| AutoRunner.jsx surface | CA-12 dimension |
-|---|---|
-| `mode: 'auto'` literal (AutoRunner step logging) | Dimension 3 AUTOMATIC label |
-| `mode: 'recommend_only'` (Agent #3 step-6 dispatch envelope) | Dimension 2 RECOMMEND-ONLY label |
-| Per-Rev-2.1 §17 sidebar "Auto Operations" / "Guided Operations" / "Manual Operations" sections | Dimension 3 (AUTOMATIC/GUIDED/MANUAL) — these labels remain at the UX-C sidebar surface per Rev-2.1 §17 footnote |
-| Rev-2.1 §8a "System Operation: Hands-On / Reviewed / Hands-Off" labels (deprecated by CA-12 §A.4 reconciliation) | Maps 1:1 to Dimension 2 AUTONOMOUS/SUPERVISED/RECOMMEND-ONLY |
+#### A.2.4 The Authority Ceiling Rule (per-product per-mode per-dimension)
 
-### C.3 "Mode: Supervised" UI header indicator
+> The operator sets the ceiling for each `(productId, pipelineMode, authorityDimension)` triple. End users can only select at or below the operator's ceiling for that triple per run. Ceilings are independent across the three sub-dimensions and across the four modes.
 
-Maps to **Dimension 2 (Authority Level, operator-set)**. The UI displays the current operator's authority ceiling. Read-only for non-admin users; admin sees an "Edit ceiling" affordance routed to `ProductRegistry.authorityCeiling` update flow.
+**Storage** (per CA-12 v2): `ProductRegistry.authorityCeilings` is a structured field, not a single value:
 
-### C.4 "Auto / Guided / Manual" Step 3 selector
+```json
+{
+  "authorityCeilings": {
+    "mode_1": { "build": "autonomous",   "deploy": "supervised",      "operational": "autonomous" },
+    "mode_2": { "build": "supervised",   "deploy": "recommend_only",  "operational": "supervised" },
+    "mode_3a":{ "build": "recommend_only","deploy": "recommend_only", "operational": "autonomous" },
+    "mode_3b":{ "build": "recommend_only","deploy": "recommend_only", "operational": "supervised" }
+  }
+}
+```
 
-Maps to **Dimension 3 (Execution Mode, per-run)**. The Step 3 of the LandingPage launch flow is the per-run pacing choice; bounded by the operator's Dim 2 ceiling.
+**Defaults for new products** (most conservative): every triple defaults to `recommend_only`. Operator raises ceilings explicitly via admin UI; raising a ceiling is itself audit-logged.
 
-### C.5 Net UI changes implied by CA-12 (NOT in this amendment — engineering follow-up)
+**Per-run enforcement:** when AutoRunner accepts a run request with `{pipelineMode, buildAuth, deployAuth, operationalAuth}`, it validates each of the three requested authority levels ≤ the operator's ceiling for that `(productId, pipelineMode, dimension)`. Mismatch returns 403 with explicit error.
 
-- LandingPage Step 1 (URL count): determines Mode 1 vs Mode 3A vs Mode 3B routing.
-- LandingPage Step 2 (objective): selects Audit Lens within Mode 1, or selects Mode 3 sub-mode for compare/combine/benchmark.
-- LandingPage Step 3 (execution): renamed from "Mode: …" to **"Execution: Automatic / Guided / Manual"** to disambiguate from Authority.
-- Sidebar adds a **"Authority Ceiling"** badge in the top-right header (admin-clickable).
+**Why per-mode + per-dimension matters:** the per-mode ceiling resolves Panel Condition C3 — Mode 1 (crawl) has different risk profile from Mode 2 (build) which has different risk from Mode 3B (synthesize from owned products). The 3-dimension split (D2) lets an operator say "FlowAI may crawl freely (Op-Authority Autonomous in Mode 1) but every code write requires my approval (Build-Authority Supervised everywhere)".
+
+### A.3 Dimension 3 — Execution Mode (per-run pacing; unchanged from v1)
+
+- **AUTOMATIC** — all 8 steps run sequentially, one launch → full report.
+- **GUIDED** — pipeline pauses at each step; human approves/modifies/skips before next runs.
+- **MANUAL** — human triggers each step explicitly.
+
+**Bounded by authority ceilings:** GUIDED + MANUAL accommodate any authority level (the user-in-the-loop pacing naturally satisfies Supervised gates). AUTOMATIC with any Authority sub-dimension at Supervised level is degenerate (every gate auto-blocks); see §B matrix for explicit handling.
+
+### A.4 Axis reconciliation with prior canonical (Rev-2.1)
+
+CA-12 v2 promotes **four canonical orthogonal axes** (Locked Rule 4 amendment):
+1. **Orchestra Selection axis** (Auto / Recommended / User-Choice; unchanged from Rev-2.1 §25 Locked Rule 4).
+2. **Pipeline Mode axis** (Mode 1 / Mode 2 / Mode 3A / Mode 3B; NEW per v2 Dim 1).
+3. **Authority axis with 3 sub-dimensions** (Build / Deploy / Operational, each 3-level; NEW per v2 Dim 2). **Deprecates** §8a single-axis System Operation labels with the following backwards-compat mapping (the §8a label maps to Operational-Authority by default):
+   - Hands-Off (§8a) → Operational-Authority Autonomous
+   - Reviewed (§8a) → Operational-Authority Supervised
+   - Hands-On (§8a) → Operational-Authority Recommend-only
+   - Build-Authority + Deploy-Authority are NEW; no §8a precursor.
+4. **Execution Pacing axis** (Automatic / Guided / Manual; per-run; supersedes any "single-dim Auto/Guided/Manual" reference).
 
 ---
 
-## §D — Pipeline Step Agent Ownership per Mode
+## §B — The Collapsed Configuration Matrix (per Panel SUPERMAJORITY C6)
 
-For each pipeline step, the responsible agent depends on the Pipeline Mode. Below is the mode × step ownership matrix. **Consistent with Rev-2.1 §15.1 26-agent roster + ENTRY 006 Agent #21 pinning + CA-9-B Agent #26 + EXECUTOR_REGISTRY per CA-7.**
+The full Cartesian product is now `4 modes × 3 execution × 3^3 authority combos = 324 raw cells`. Most are degenerate. v2 catalogues **only the non-degenerate canonical configurations**; degenerate combinations are **runtime configuration errors**, NOT SSOT entries.
 
-| Step | Mode 1 (Assess + Renew) | Mode 2 (New Build) | Mode 3A (Benchmark) | Mode 3B (Synthesize) |
+### B.1 Non-degenerate canonical configurations (~16 cells)
+
+The configuration grammar: `{mode}-{sub-mode}-{build-auth}-{deploy-auth}-{operational-auth}-{execution}`. Build-Auth and Deploy-Auth are linked by validity rules (B.2 below); Operational-Auth is independent.
+
+| # | Configuration | Output | Today status | Notes |
 |---|---|---|---|---|
-| 1 Research | **Agent #21** Aggressive Crawl Conductor (ENTRY 006 canonical; engineering dispatch pending — DORMANT today) | **Agent #6** Research (no crawl; market research) — DORMANT today | **Agent #21 × N** parallel (one per URL) — DORMANT | **Agent #21 × N** parallel — DORMANT |
-| 2 Design | **Agent #7** Design (critique existing) — DORMANT | **Agent #7** Design (generate new) — DORMANT | n/a (per-URL Mode 1 step 2) | n/a (per-URL Mode 1) + synthesis at step 6 |
-| 3 Build | **Agent #2** Code Builder (audit only in 1A; apply in 1B) — **SHIPPED-GREEN** | **Agent #2** (plan in 2A; code in 2B — Phase 2 ROADMAP) | per-URL Mode 1 step 3 | per-URL Mode 1 step 3 |
-| 4 QA | **Agent #8** Quality Audit (5-dim scoring) — DORMANT | **Agent #8** (audit generated product) — DORMANT | per-URL Mode 1 step 4 | per-URL Mode 1 step 4 |
-| 5 Deploy | Orchestrator path (Vercel adapter via Self-Renewal Executor per CA-7) | Orchestrator path (Vercel adapter) | n/a (no deployment in 3A) | Orchestrator (3B-BUILD only); n/a (3B-SPEC) |
-| 6 Self-Renewal | **Agent #3** (SHIPPED-GREEN; Self-Renewal Executor per CA-7 draft for SUB-1B side effects) | **Agent #3** (iterate on QA findings) — SHIPPED-GREEN | **Agent #3** comparison synthesis (ROADMAP — Mode 3A synthesis step) | **Agent #3** + Mode 2 pipeline from synthesized input (ROADMAP) |
-| 7 GTM | **Agent #9** Go-to-Market — DORMANT | **Agent #9** — DORMANT | **Agent #9** comparative GTM ranking — DORMANT | **Agent #9** for synthesized product — DORMANT |
-| 8 Monitor | **Agent #10** Monitor — DORMANT | **Agent #10** — DORMANT | **Agent #10** per-URL + aggregate — DORMANT | **Agent #10** — DORMANT |
+| 1 | Mode 1 / SUB-1A / Build=RecOnly / Deploy=RecOnly / Op=RecOnly / Automatic | Audit report + fix list | **BUILT** | Most common; current production path |
+| 2 | Mode 1 / SUB-1A / Build=RecOnly / Deploy=RecOnly / Op=RecOnly / Guided | Audit report + fix list, step-approval | **BUILT** | UX-C Guided sidebar surface |
+| 3 | Mode 1 / SUB-1A / Build=RecOnly / Deploy=RecOnly / Op=RecOnly / Manual | Audit report + fix list, human-cadence | **BUILT** | UX-C Manual sidebar surface |
+| 4 | Mode 1 / SUB-1A / Build=RecOnly / Deploy=RecOnly / Op=Supervised / Automatic | Audit report; per-crawl approval; rest auto | **PARTIAL** | Gate UX wired for some steps; consistent rollout pending |
+| 5 | Mode 1 / SUB-1A / Build=RecOnly / Deploy=RecOnly / Op=Autonomous / Automatic | Audit report; full autonomous operational (crawl + analyse) | **BUILT** | Per W2 PHASE-1-PROOF 2026-05-16 (Mode 1 SUB-1A crawl proven against `saigedemo.com` with `pagesCrawled: 6, depth: 8, fallbackUsed: false`) |
+| 6 | Mode 1 / SUB-1B PREVIEW / Build=Supervised / Deploy=Autonomous / Op=Autonomous / Guided | Renewed preview URL + delta; code-edits human-gated; deploy + operational auto | **PARTIAL** | Self-Renewal Executor draft (CA-7); per-step build-approval UI pending |
+| 7 | Mode 1 / SUB-1B PREVIEW / Build=Autonomous / Deploy=Autonomous / Op=Autonomous / Automatic | Hands-off renewed preview URL + delta | **PARTIAL** | "Set and forget" preview; Self-Renewal Executor graduation pending |
+| 8 | Mode 1 / SUB-1B DEPLOY / Build=Supervised / Deploy=Supervised / Op=Supervised / Guided | Original-host push with every action human-approved | **ROADMAP** | Source acquisition + deploy credentials + Acceptance Gate unbuilt |
+| 9 | Mode 1 / SUB-1B DEPLOY / Build=Autonomous / Deploy=Autonomous / Op=Autonomous / Automatic | Hands-off audit + fix + push to original host | **ROADMAP** | Most-autonomous Mode 1 path; full infra unbuilt |
+| 10 | Mode 2 / SUB-2A SPEC / Build=RecOnly / Deploy=RecOnly / Op=RecOnly / Automatic | Spec deliverable | **BUILT** | LLM-dispatch spec producible today |
+| 11 | Mode 2 / SUB-2A SPEC / Build=RecOnly / Deploy=RecOnly / Op=RecOnly / Guided | Spec, step-approval | **BUILT** | Same content, Guided pacing |
+| 12 | Mode 2 / SUB-2A SPEC / Build=RecOnly / Deploy=RecOnly / Op=RecOnly / Manual | Spec, human-cadence | **BUILT** | Same content, Manual pacing |
+| 13 | Mode 3A BENCHMARK / Build=RecOnly / Deploy=RecOnly / Op=Autonomous / Automatic | Comparative report (2+ URLs) | **PARTIAL** | Sequential single-URL today; parallel + cross-URL synthesis unbuilt |
+| 14 | Mode 3A BENCHMARK / Build=RecOnly / Deploy=RecOnly / Op=Supervised / Guided | Comparative report, per-crawl human-approved | **PARTIAL** | Same; gates partial |
+| 15 | Mode 3B SYNTHESIZE (owner-attested) / Build=RecOnly / Deploy=RecOnly / Op=Autonomous / Automatic | Synthesis report + synthesized spec (consumable by Mode 2 SUB-2A) | **ROADMAP** | Synthesis engine unbuilt; operator attestation layer unbuilt |
+| 16 | Mode 3B SYNTHESIZE (owner-attested) / Build=RecOnly / Deploy=RecOnly / Op=Supervised / Guided | Synthesis spec, per-crawl human-approved | **ROADMAP** | Same |
 
-**Cross-cutting agents (always-on / cross-step across all modes):** #1 Lifecycle (SHIPPED), #11 Strategic Intelligence (DORMANT), #12 Portfolio Risk (DORMANT), #13 Self-Protection (DORMANT), #14 Public Policy (DORMANT), #15 Benchmarking (DORMANT), #16 Productivity/HR (DORMANT), #17 Product Evolution (DORMANT), #18 Business Planning (DORMANT), #19 Technological Evolution (DORMANT), #20 Environmental Impacts (DORMANT), #26 Orchestra Research (DORMANT). All 12 cross-step/always-on agents intervene opportunistically — independent of Pipeline Mode.
+**~16 canonical configurations.** The catalogue intentionally excludes intermediate combinations (e.g., Mode 1 / SUB-1A / Build=Autonomous / Deploy=RecOnly is degenerate because SUB-1A has no build path; the Build-Auth selection is irrelevant for that sub-mode). See B.2 validity rules.
 
-**Mode/step combinations where the required agent is DORMANT or unbuilt:** essentially every step except step 3 Build (Agent #2 SHIPPED) and step 6 Self-Renewal (Agent #3 SHIPPED) require a DORMANT agent to graduate before that Mode/Step combination is fully operational. The build blueprints in `docs/specs/agent-blueprints/00_BUILD_INDEX.md` (commit `883470a`) provide the canonical roadmap.
+### B.2 Configuration validity rules (the ~16 are derived from these)
+
+The following rules determine whether a `{mode, sub-mode, build-auth, deploy-auth, op-auth, execution}` tuple is valid (canonical) or a runtime configuration error:
+
+1. **SUB-1A path** (Mode 1 SUB-1A): Build-Auth and Deploy-Auth MUST be `Recommend-only`. SUB-1A by definition does not modify code or deploy. Any other value is a configuration error.
+2. **SUB-1B PREVIEW / SUB-1B DEPLOY path** (Mode 1 SUB-1B): Build-Auth ≥ Supervised AND Deploy-Auth ≥ Supervised (both must be at least Supervised; Autonomous is fine; Recommend-only is a contradiction). SUB-1B PREVIEW deploys to FlowAI-owned URL — Deploy-Auth still applies. SUB-1B DEPLOY pushes to original host — Deploy-Auth applies more strictly (admin role required per §13).
+3. **Mode 2 SUB-2A** (spec deliverable, no code, no deploy): Build-Auth and Deploy-Auth MUST be `Recommend-only`. SUB-2A produces a spec, not code or a deploy.
+4. **Mode 3A BENCHMARK** (no new URL): Build-Auth and Deploy-Auth MUST be `Recommend-only`. Mode 3A produces a report, not a deployable artifact.
+5. **Mode 3B SYNTHESIZE** (owner-attested spec output): Build-Auth and Deploy-Auth MUST be `Recommend-only`. Mode 3B produces a spec consumable by Mode 2 SUB-2A; the deploy decision is downstream and Mode 3B itself does not deploy.
+6. **Operational-Auth applies in all modes** as the crawl/API-call governance dimension, independent of Build/Deploy ceilings.
+7. **AUTOMATIC + any Authority=Supervised** is degenerate (every gate auto-blocks the run). The user instead picks GUIDED or MANUAL for Supervised authority. The system rejects with explicit error at run-acceptance time.
+8. **Execution=AUTOMATIC requires** Build-Auth, Deploy-Auth, Op-Auth all at Autonomous OR all at Recommend-only (no Supervised in any sub-dimension when Execution is Automatic).
+
+**Runtime configuration errors** (the 300+ degenerate cells from the raw 324) are rejected at AutoRunner's run-acceptance boundary with an error envelope citing the violated rule above. They are NOT catalogued in this SSOT.
+
+### B.3 Operator ceiling interaction with the matrix
+
+The ceiling per `ProductRegistry.authorityCeilings[mode][dimension]` further constrains which of the ~16 canonical cells are reachable by users on that product. If the operator sets Mode 1 ceiling for Build-Auth to `Supervised`, configurations #6 and #7 above are reachable only at SUB-1B PREVIEW with Build=Supervised (config #6 only). Configuration #7 (Build=Autonomous) is rejected at run-acceptance with explicit ceiling-violation error.
 
 ---
 
-## §E — Honest Capability Boundary Table
+## §C — UI Mapping (updated for 3-authority-dimension model)
 
-**Most critical section of CA-12.** Each entry below is verified against canonical artifacts; no inflation. The "Built today" column claims only what is end-to-end provable on commits referenced.
+### C.1 LandingPage.jsx 8 OBJECTIVES → Pipeline Modes (unchanged from v1 §C.1)
+
+Same mapping as v1: audit_demo / investor_review / launch_readiness → Mode 1 SUB-1A; compare / benchmark → Mode 3A; combine → Mode 3B (now operator-attested per CEO D1); full_governance → Mode 1; custom → any mode.
+
+### C.2 "Mode: Supervised" UI header → 3-dimension grid
+
+The single "Mode: Supervised" label v1 mapped to single Dim 2 must now expand to a 3-sub-dimension grid in the UI header:
+
+```
+Authority:
+  Build:        [Auto / Supervised / Rec-only]   ← current operator ceiling
+  Deploy:       [Auto / Supervised / Rec-only]
+  Operational:  [Auto / Supervised / Rec-only]
+```
+
+Read-only for non-admin. Admin sees an "Edit ceilings" affordance.
+
+### C.3 "Auto / Guided / Manual" Step 3 selector → Dim 3 unchanged
+
+Same as v1 §C.4 — Step 3 selector maps to Execution Mode.
+
+### C.4 New per-run authority selector (added in v2)
+
+When a user submits a run, the LandingPage flow adds an "Authority for this run" sub-step with three pickers (Build / Deploy / Operational), each bounded by the operator's per-mode ceiling per §A.2.4. Defaults to operator's ceiling. User can lower (more restrictive); cannot raise above ceiling.
+
+### C.5 Net UI changes implied by CA-12 v2 (engineering follow-up — NOT this amendment)
+
+- LandingPage adds per-mode + per-dimension authority pickers (3 dropdowns × 4 modes = 12 affordances at the operator admin UI; bounded per-run at end-user UI).
+- Sidebar "Mode: Supervised" indicator becomes 3-row indicator (Build / Deploy / Operational status badges).
+- ProductRegistry schema gains `authorityCeilings` JSONB column per §A.2.4 storage shape.
+
+### C.6 Mode 3B ownership-attestation UI (per CEO D1)
+
+When user selects Mode 3B in the LandingPage flow, an explicit attestation checkbox appears for each submitted URL:
+- ☐ I own this URL OR I have explicit license to use it for synthesis
+- ☐ (NOT_PERMITTED option exists implicitly — checking nothing rejects submission)
+
+Submission validates attestation per §A.1.4 mechanism; rejects at validation layer if any URL lacks attestation.
+
+---
+
+## §D — Pipeline Step Agent Ownership per Mode (updated for v2)
+
+Identical to v1 §D table for Modes 1 / 2 SUB-2A / 3A — agent ownership did not change. Mode 3B change:
+
+| Step | Mode 3B v2 (owner-attested synthesis) |
+|---|---|
+| 1 Research | Agent #21 × N parallel crawls (per attested URL only; rejection at attestation layer if URL fails) |
+| 2 Design | per-URL Mode 1 step 2 (Agent #7 critique each) |
+| 3 Build | per-URL Mode 1 step 3 (Agent #2 audit each) |
+| 4 QA | per-URL Mode 1 step 4 (Agent #8 score each) |
+| 5 Deploy | n/a (Mode 3B does NOT deploy; output is spec) |
+| 6 Self-Renewal | Agent #3 produces synthesis spec (extract best elements from attested-owned inputs); spec is the deliverable |
+| 7 GTM | Agent #9 GTM readiness for synthesized spec |
+| 8 Monitor | Agent #10 final clearance + ProductSSOT write |
+
+**No Mode 3B SUB-3B-BUILD pipeline.** The synthesized spec is consumed downstream by Mode 2 SUB-2A.
+
+---
+
+## §E — Honest Capability Boundary Table (v2 — Mode 2 SUB-2B removed)
 
 | Configuration | Built today | Partial | Roadmap | Blocked by |
 |---|---|---|---|---|
-| **Mode 1 SUB-1A + RECOMMEND-ONLY + any execution** | **BUILT** — multi-page public crawl via Agent #21 spec at ENTRY 006 (canonical); Phase 1 wired end-to-end in production per W2 PHASE-1-PROOF Dispatch #12 on 2026-05-16 (`crawlSummary` returned with `pagesCrawled: 6`, `depth: 8`, `fallbackUsed: false`, `method: browserless-function` against `saigedemo.com`) | — | — | — |
-| **Mode 1 SUB-1A + auth-gated products** | — | Credential plumbing scaffolded in `src/lib/renewal/inputArtifact.js` `raw.description.login*` per Rev-2.1 §6 | Phase 3 spec for auth-gated crawl + Panel ratification |
-| **Mode 1 SUB-1B PREVIEW** | — | **PARTIAL** — renewal pipeline endpoint exists (`api/renew.js` per W2 commit `9b4e511`); fork-and-fix path drafted in Self-Renewal Executor (CA-7 §15.5) | Real source-level patch application + redeploy proven end-to-end | Source acquisition layer + Self-Renewal Executor graduation from DORMANT |
-| **Mode 1 SUB-1B DEPLOY** | — | — | **ROADMAP** — push to original product hosting | Source acquisition credentials + deploy-target credentials + Acceptance Gate workflow + admin-role-gated authorisation per Rev-2.1 §13 |
-| **Mode 2 SUB-2A SPEC** | **BUILT** — spec deliverables producible via existing LLM dispatch in AutoRunner pipeline | — | — | — |
-| **Mode 2 SUB-2B BUILD** | — | — | **ROADMAP** — code-generation pipeline entirely unbuilt end-to-end | Agent #7 Phase 2 executor (per blueprint) + code-gen Orchestra dispatch chain (v0/Lovable/Bolt + Vercel deploy) + Agent #2 graduation to BUILD authority via EXECUTOR_REGISTRY pattern |
-| **Mode 3A BENCHMARK** | — | **PARTIAL** — single-URL sequential assessment runs today (Mode 1 SUB-1A on each URL one at a time); user can manually compare results | Parallel multi-URL crawl + cross-URL synthesis step | Synthesis step 6 implementation; Agent #21 × N parallel orchestration; Agent #3 cross-URL comparison logic |
-| **Mode 3B SUB-3B-SPEC** | — | — | **ROADMAP** — synthesis engine unbuilt | Cross-URL synthesis at step 6; "best elements extraction" classifier (IP-aware — see §G G-Q5) |
-| **Mode 3B SUB-3B-BUILD** | — | — | **ROADMAP** — synthesis + code-gen pipelines both unbuilt | Same as SUB-3B-SPEC + Mode 2 SUB-2B BUILD dependencies |
-| **Dim 2 — AUTONOMOUS authority** | — | **PARTIAL** — `recommend_only` wired across all 26 agents per Rev-2.1 §15.1 (dormant-safe default); `auto_write_internal` charter pattern proven by Self-Renewal Executor draft (CA-7) and Agent #26 dual-authority (CA-9-B) | Full autonomous deploy across all 8 pipeline steps | Phase 3 gates: per-agent BaseAgent.guard() amendment per CA-11 + ProductRegistry.authorityCeiling field per CA-12 + per-run authority validation in AutoRunner |
-| **Dim 2 — SUPERVISED authority** | — | **PARTIAL** — Human Gates (Review/Approval/Testing/Acceptance) wired in operationsEngine.js for some steps per Rev-2.1 §10.2 | Consistent gate UX across all 8 steps for every action | UX work to surface gates uniformly + per-step gate-policy declarations in each agent's charter |
-| **Dim 2 — RECOMMEND-ONLY authority** | **BUILT** — every agent ships with this default per Rev-2.1 §15.1; AutoRunner enforces via `recommend_only` mode envelope on each step-owner invocation | — | — | — |
-| **Dim 3 — AUTOMATIC execution** | **BUILT** — AutoRunner end-to-end runs all 8 steps sequentially today (per `src/pages/AutoRunner.jsx`) | — | — | — |
-| **Dim 3 — GUIDED execution** | — | **PARTIAL** — guided step-by-step wireframe per Rev-2.1 §17 sidebar "Guided Operations" section; approval-gate UI exists for select steps | Consistent 8-step gate UX | UX work + step-result review components |
-| **Dim 3 — MANUAL execution** | — | **PARTIAL** — manual step trigger UI per Rev-2.1 §17 sidebar "Manual Operations" section | All 8 steps independently triggerable; full pause-resume semantics | UX work + per-step trigger API endpoints |
-| **Auth-gated crawl (Mode 1 input precondition)** | — | — | **ROADMAP** — Phase 3 spec pending Panel ratification | Credential vaulting (per `inputArtifact.js`) + storage-state Playwright dispatch + audit-log scrubbing pattern per §14.3 PII-scrub |
-| **§7.6 GTM Readiness Report (all modes)** | **BUILT (spec canonical per ENTRY 006)** | Implementation wired in Aggressive Crawl Engine output | — | Engineering dispatch graduating Agent #21 from spec to live |
-| **ProductSSOT atomic Output Contract item #5 (all modes)** | **BUILT (spec canonical per ENTRY 005 / CA-10-A)** | Implementation wired in AutoRunner step 8 + Self-Renewal Executor write paths | — | Engineering dispatch graduating ProductSSOT writes from CA-10 spec to live |
-| **CEO-set authority ceiling (`ProductRegistry.authorityCeiling`)** | — | — | **NEW per CA-12** — does not exist today | Schema migration adding `authorityCeiling` column to ProductRegistry + admin UI + per-run validation in AutoRunner |
+| Mode 1 SUB-1A + Op-Auth Autonomous + Automatic | **BUILT** — multi-page public crawl per W2 PHASE-1-PROOF 2026-05-16 (`pagesCrawled: 6, depth: 8, fallbackUsed: false`) | — | — | — |
+| Mode 1 SUB-1A + Op-Auth Supervised + Guided/Manual | **BUILT** — UX-C Guided/Manual sidebar surfaces | — | — | — |
+| Mode 1 SUB-1A + auth-gated crawl | — | Credential plumbing scaffolded in `inputArtifact.js` | Phase 3 spec for auth-gated crawl + Panel ratification |
+| Mode 1 SUB-1B PREVIEW + Build/Deploy Supervised/Autonomous | — | **PARTIAL** — `api/renew.js` (commit `9b4e511`); Self-Renewal Executor drafted (CA-7) | Real source-level patch + redeploy end-to-end | Source acquisition + Self-Renewal Executor graduation |
+| Mode 1 SUB-1B DEPLOY (push to original host) | — | — | **ROADMAP** | Source + deploy credentials + Acceptance Gate + admin-role gates per §13 |
+| Mode 2 SUB-2A SPEC + RecOnly authority across all dims | **BUILT** — spec deliverables via LLM dispatch | — | — | — |
+| ~~Mode 2 SUB-2B BUILD~~ | **DEFERRED FROM SSOT** per CEO D3; see `docs/specs/FUTURE_CAPABILITIES.md` | — | — | — |
+| Mode 3A BENCHMARK + RecOnly Build/Deploy + Op variable | — | **PARTIAL** — single-URL sequential today; manual user comparison | Parallel multi-URL + cross-URL synthesis | Synthesis step + Agent #21 × N parallel + Agent #3 cross-URL logic |
+| Mode 3B SYNTHESIZE (owner-attested spec output) | — | — | **ROADMAP** — synthesis engine + attestation validation layer both unbuilt | Synthesis spec step 6 implementation + InputArtifact attestation validator + admin-role gate on attestation submission per §A.1.4 + per CEO D1 |
+| Dim 2a Build-Authority Autonomous | — | **PARTIAL** — `recommend_only` wired across all 26 agents; `auto_write_internal` charter pattern proven by Self-Renewal Executor (CA-7) + Agent #26 dual-authority (CA-9-B); full code-write autonomy unbuilt | Full Build-Authority Autonomous across all 8 steps | Per-agent `BaseAgent.guard()` amendment per CA-11 + `ProductRegistry.authorityCeilings` per §A.2.4 + per-run AutoRunner validation |
+| Dim 2b Deploy-Authority Autonomous | — | **PARTIAL** — Vercel adapter deploys today via orchestrator path; per-run Deploy-Auth gating unbuilt | Full Deploy-Authority gating per-run | Same `ProductRegistry.authorityCeilings` + AutoRunner validation |
+| Dim 2c Operational-Authority Autonomous | **BUILT (Mode 1)** — Agent #21 crawl runs autonomously today per W2 PHASE-1-PROOF | **PARTIAL (Mode 2, 3A, 3B)** | Full Op-Auth across all modes | Per-mode gate UX work |
+| Dim 2 — any sub-dimension Supervised | — | **PARTIAL** — Human Gates wired in operationsEngine.js for some steps per Rev-2.1 §10.2 | Consistent gate UX across all 8 steps × all 3 sub-dimensions | UX work + per-step gate-policy declarations |
+| Dim 2 — any sub-dimension Recommend-only | **BUILT** | — | — | — |
+| Dim 3 — AUTOMATIC execution | **BUILT** | — | — | — |
+| Dim 3 — GUIDED execution | — | **PARTIAL** — UX-C wireframe; approval-gate UI for select steps | Consistent 8-step gate UX | UX work |
+| Dim 3 — MANUAL execution | — | **PARTIAL** — UX-C manual trigger UI | All 8 steps independently triggerable; pause-resume | UX work + per-step trigger API endpoints |
+| `ProductRegistry.authorityCeilings` per-mode-per-dim field | — | — | **NEW per CA-12 v2** — does not exist today | Schema migration adding `authorityCeilings` JSONB column + admin UI + per-run AutoRunner validation |
+| Mode 3B ownership-attestation validator | — | — | **NEW per CA-12 v2 + CEO D1** — does not exist today | InputArtifact attestation field + per-URL validator + admin-role binding + audit-log topic `mode3b_ownership_attestation` |
 
-**Be precise — do not mark anything BUILT that isn't proven end-to-end.** The 2026-05-16 W2 Phase 1 production proof (commit context: `02:02 PM ET 2026-05-16` Dispatch #12 fetch result) is the live evidence anchoring Mode 1 SUB-1A as BUILT. All other BUILT claims are anchored to existing canonical commits referenced inline.
-
----
-
-## §F — SSOT Sections Requiring Update
-
-Once CA-12 is ratified by Panel + CEO, the following sections in `docs/CANONICAL_REFERENCE.md` require corresponding edits (engineering dispatches following the promotion commit pattern of ENTRY 003–006):
-
-### F.1 §9 8-Step Pipeline — mode-dependent step behavior
-
-Each row of the 8-step pipeline table requires a "mode-dependent behavior" column or sub-table referencing §D's matrix. Specifically:
-- Step 1 Research footnote: Mode 1 uses Agent #21; Mode 2 uses Agent #6; Mode 3A/3B run Agent #21 × N parallel.
-- Step 6 Self-Renewal footnote: SUB-1A recommend-only; SUB-1B applies; Mode 3A synthesises comparison; Mode 3B synthesises new product.
-- Step 5 Deploy footnote: orchestrator-only path; in SUB-1B DEPLOY requires source-acquisition + admin-gated Acceptance Gate.
-
-### F.2 §10 Self-Governance Layer — three authority levels canonicalized
-
-Today §10 enumerates the four governance components (Self-Test, Self-Audit, Self-Protect, Self-Heal) + Four Human Gates. CA-12 adds a new sub-section **§10.3 Authority Level (CA-12 Dim 2)** with the three-level definition + the ceiling rule + `ProductRegistry.authorityCeiling` storage mechanism.
-
-### F.3 §11 Clearance Protocol — mode-dependent outputs
-
-§11 six clearance steps remain unchanged, but the **outputs gated** by Step 5 (Demo Readiness) vary by Pipeline Mode:
-- Mode 1: existing-product demo readiness (per ENTRY 006 §7.6).
-- Mode 2: new-product demo readiness (different rubric — generated content vs assessed content).
-- Mode 3A: per-URL demo readiness + comparative ranking.
-- Mode 3B: synthesized-product demo readiness.
-
-### F.4 §6 ACE (Aggressive Crawl Engine) — valid across all modes (no edit required)
-
-The ACE crawl scope per §6 is mode-agnostic — every Mode 1 + Mode 3A/3B uses Agent #21 the same way. Mode 2 does not use crawl. **No §6 edit required**; the mode-conditional invocation is documented in §9 + §D instead.
-
-### F.5 §22 Product-Agnostic Rule — modes maintain agnosticism (verified, no edit required)
-
-All four Pipeline Modes treat `productScope` as a runtime parameter. No mode introduces product-name hardcoding. **§22 verified compatible; no edit required.**
-
-### F.6 §17 / §8a "Auto/Guided/Manual" as a single dimension — must split
-
-Rev-2.1 §17 footnote (a) explicitly noted that UX-C sidebar labels (Guided Operations / Manual Operations) are historical and DISTINCT from the canonical Orchestra Selection axis labels. CA-12 makes the same disambiguation for the System Operation axis: **§8a "Hands-On / Reviewed / Hands-Off" deprecate in favor of CA-12 Dim 2 (Autonomous / Supervised / Recommend-only).** The §17 sidebar section names ("Auto Operations / Guided Operations / Manual Operations") remain at the UX-C surface per existing footnote — they now canonically map to CA-12 Dim 3, not the deprecated §8a.
-
-### F.7 §25 Locked Rule 4 — third axis added
-
-Rev-2.1 §25 Locked Rule 4 currently codifies two orthogonal axes (Orchestra Selection + System Operation). CA-12 amends Locked Rule 4 to canonicalize **three** orthogonal axes:
-- **Orchestra Selection axis** (Auto/Recommended/User-Choice — per-step adapter selection, unchanged from Rev-2.1).
-- **Pipeline Mode axis** (Mode 1/2/3A/3B — NEW per CA-12 Dim 1).
-- **Operating Authority axis** (Autonomous/Supervised/Recommend-only — NEW canonicalization per CA-12 Dim 2; deprecates §8a labels).
-- **Execution Pacing axis** (Automatic/Guided/Manual — per-run pacing, supersedes §17's "single dimension" UX-C labels).
-
-That's **four axes total**, all canonically independent (subject to Dim 2 ceiling constraint on Dim 3).
-
-### F.8 §15.1 Roster — no agent charter changes required by CA-12
-
-The 26-agent roster is unchanged. CA-12 references existing charters; no new agent, no charter amendment. Engineering dispatches per `docs/specs/agent-blueprints/` still apply unchanged.
+**Be precise.** No fabricated capability. The 2026-05-16 W2 Phase 1 production proof is the anchor for Mode 1 SUB-1A + Op-Authority Autonomous BUILT claim.
 
 ---
 
-## §G — Seven Panel Questions (adversarial, neutral, no anchoring)
+## §F — SSOT Sections Requiring Update (v2)
 
-Standard 4-option format + `INSUFFICIENT_INFORMATION` valid abstention per `docs/PANEL_INFRASTRUCTURE.md` engagement-filter conventions. No "(W3 recommendation)" tags. No "(as drafted)" anchoring.
+Once CA-12 v2 is ratified by Panel + CEO, the following sections in `docs/CANONICAL_REFERENCE.md` require corresponding edits (engineering dispatches following ENTRY 003–006 promotion-commit pattern):
 
-### G-Q1 — Pipeline Mode classification completeness + non-overlap
+### F.1 §9 8-Step Pipeline — mode-dependent step behavior (unchanged from v1)
 
-CA-12 §A defines four Pipeline Modes: Mode 1 (Assess existing), Mode 2 (Build new), Mode 3A (Benchmark multiple), Mode 3B (Synthesize from multiple). Is this classification complete and non-overlapping?
+Each row gains a mode-conditional behavior footnote referencing §D. Mode 3B Step 6 now produces a spec (not a deploy).
 
-- (a) Complete and non-overlapping as stated.
-- (b) A Mode is missing — name it in rationale (e.g., a "Maintain existing" mode distinct from "Assess existing").
-- (c) Two or more modes overlap — name the overlap in rationale (e.g., Mode 3B SUB-3B-BUILD overlaps Mode 2 SUB-2B BUILD).
-- (d) The 4-mode framing is the wrong abstraction — propose alternative classification.
+### F.2 §10 Self-Governance Layer — three-sub-dimension authority canonicalized
 
-### G-Q2 — Two-dimension governance separation (Authority vs Execution)
+New sub-section **§10.3 Authority Sub-Dimensions (CA-12 v2 Dim 2)** with the Build / Deploy / Operational definitions + per-product per-mode per-dimension ceiling storage in `ProductRegistry.authorityCeilings` per §A.2.4 JSONB shape.
 
-CA-12 separates governance into two dimensions: Authority Level (operator-set persistent ceiling) and Execution Mode (per-run pacing). Should they be:
+### F.3 §11 Clearance Protocol — mode-dependent outputs (unchanged from v1)
 
-- (a) Two dimensions as stated.
-- (b) Collapsed into a single dimension — name the canonical labels in rationale.
-- (c) Further subdivided into three or more dimensions (e.g., split Authority into Build-authority + Deploy-authority).
-- (d) The two-dimension model is right but the specific 3×3 grid is wrong — propose alternative cardinality.
+§11 six clearance steps remain; outputs gated by Step 5 (Demo Readiness) vary by Pipeline Mode per v1 §F.3.
 
-### G-Q3 — Authority Ceiling Rule
+### F.4 §6 ACE (verified compatible; no edit)
 
-CA-12 §A.2.4 specifies: operator sets a persistent ceiling; end users can only select at or below the operator ceiling per run; users cannot exceed the ceiling under any circumstance. Is this the correct rule?
+Agent #21 invocation in Mode 1 + Mode 3A + Mode 3B (per-URL) is mode-agnostic at the §6 contract layer.
 
-- (a) Ceiling rule correct as stated.
-- (b) Users should be able to exceed the ceiling for a specific run with explicit re-authorisation (e.g., per-run admin approval for an elevated authority).
-- (c) The ceiling should be advisory, not enforced — users can choose any authority level regardless of operator setting, but audit-log captures the decision.
-- (d) The ceiling should be per-product per-mode (e.g., Mode 1 ceiling AUTONOMOUS but Mode 2 ceiling SUPERVISED) rather than a single global ceiling per product.
+### F.5 §22 Product-Agnostic Rule (verified compatible; no edit)
 
-### G-Q4 — Mode 2 SUB-2B (full build + deploy) in SSOT now
+All four Pipeline Modes treat `productScope` as runtime parameter. Mode 3B's ownership-attestation field is a per-input metadata extension, not product-specific code.
 
-Mode 2 SUB-2B (FlowAI writes + deploys a real working product from a description) is documented as ROADMAP in §E (code-generation pipeline entirely unbuilt). Should it be canonical in SSOT now?
+### F.6 §17 / §8a "Auto/Guided/Manual" labels deprecated (revised from v1)
 
-- (a) Codify in SSOT now as roadmap with explicit `ROADMAP` tag (per §E pattern).
-- (b) Defer from SSOT entirely until at least one prototype implementation lands.
-- (c) Codify only the SUB-2B-PREVIEW path (FlowAI-owned preview URL) now; defer the SUB-2B-DEPLOY path (push to user-owned host).
-- (d) Codify as canonical SSOT only when it reaches PARTIAL status (skeleton exists end-to-end).
+Per v1: §8a labels deprecate in favor of CA-12 Dim 2. v2 modifies: §8a labels deprecate in favor of CA-12 Dim 2c (Operational-Authority) specifically, with 1:1 mapping (Hands-Off → Op-Autonomous; Reviewed → Op-Supervised; Hands-On → Op-RecommendOnly). Dim 2a (Build) and Dim 2b (Deploy) are NEW — no §8a precursor. The shipped sidebar labels at §17 remain at the UX surface per existing §17 footnote (a).
 
-### G-Q5 — Mode 3B synthesis IP/copyright concerns
+### F.7 §25 Locked Rule 4 — four orthogonal axes (revised from v1)
 
-Mode 3B "extract best elements" assembles a new product from features observed across 2+ third-party URLs. Is this implementable without IP/copyright concerns for arbitrary third-party products?
+Locked Rule 4 amended to canonicalize **four orthogonal axes**:
+1. Orchestra Selection axis (unchanged from Rev-2.1).
+2. Pipeline Mode axis (NEW per CA-12 v2 Dim 1).
+3. Authority axis with 3 sub-dimensions (Build / Deploy / Operational, each 3-level; NEW per v2 Dim 2).
+4. Execution Pacing axis (Automatic / Guided / Manual; per-run).
 
-- (a) Implementable for all third-party products (best-elements extraction is fair-use as research / inspiration).
-- (b) Implementable only with explicit license / authorisation from each source product's owner.
-- (c) Implementable only when the operator is the owner of every source URL (limits Mode 3B to first-party + operator-owned synthesis).
-- (d) Not implementable in any general form — Mode 3B should be removed from SSOT or restricted to a research-only output (no deploy, no new URL).
+### F.8 §15.1 Roster — no agent charter changes (unchanged from v1)
 
-### G-Q6 — 36-configuration matrix granularity
+CA-12 v2 references existing charters; no new agent.
 
-The §B matrix catalogues 36 combinations (4 modes × 3 authority × 3 execution). Is this the right granularity?
+### F.9 NEW — pointer to `docs/specs/FUTURE_CAPABILITIES.md`
 
-- (a) 36-cell matrix is correct — every cell needs explicit catalogue (some marked degenerate).
-- (b) Over-specified — collapse to a smaller matrix (e.g., 12 cells by dropping degenerates from the spec entirely; degenerate combinations are runtime errors, not catalogued cells).
-- (c) Under-specified — the 36-cell matrix omits relevant variations (e.g., per-step authority overrides should add a fourth dimension to the matrix).
-- (d) The matrix concept is right but the cells should be agent-rooted (one row per agent × mode) rather than mode × authority × execution.
-
-### G-Q7 — Overall CA-12 disposition
-
-After reading the full draft, the appropriate Panel disposition is:
-
-- (a) Promote all sections (§A–§G) as canonical with no carve-outs.
-- (b) Promote a subset — name the carve-outs in rationale (e.g., promote §A + §B + §E + §F now; defer §C UI mapping + §D agent ownership until corresponding engineering specs land).
-- (c) Defer all of CA-12 pending a separate disposition on one or more of Q1–Q6 above.
-- (d) Reject as over-scoped — break CA-12 into multiple smaller amendments (e.g., CA-12-A Pipeline Modes, CA-12-B Authority Levels, CA-12-C Execution Modes) and re-Panel each.
+§9 + §F.1 footnote: Mode 2 SUB-2B (full build + deploy) catalogued at `docs/specs/FUTURE_CAPABILITIES.md` as a target future capability — NOT canonical SSOT per CEO D3.
 
 ---
 
-## SSOT Conflicts Surfaced While Drafting
+## §G — Seven Panel Questions (v2 — per Panel transcript verdict + CEO decisions)
 
-The drafting process surfaced the following conflicts/ambiguities between CA-12 and prior canonical (Rev-2.1 + ENTRY 003–006). Each is annotated with the proposed resolution; **Panel + CEO disposition required** before promotion.
+Each v2 question states the v1 Panel verdict, the v2 position change applied, and asks Panel to ratify the v2 position. Neutral options + INSUFFICIENT_INFORMATION. No anchoring.
 
-### Conflict 1 — Rev-2.1 §8a (System Operation axis) vs CA-12 Dim 2 (Authority Level)
+### G-Q1 — Pipeline Mode classification (v2 mode-overlap fix)
 
-**The conflict:** §8a defines three System Operation labels (Hands-On / Reviewed / Hands-Off) as a per-product operator pacing axis. CA-12 Dim 2 defines three Authority Level labels (Recommend-only / Supervised / Autonomous) as the operator-set authority ceiling. The two are semantically equivalent — same concept, different labels.
+**v1 Panel verdict:** `QUORUM_PLURALITY_GQ1-OVERLAP` (7/9) — Panel identified Mode 3B SUB-3B-BUILD overlapping Mode 2 SUB-2B BUILD.
 
-**Proposed resolution:** CA-12 deprecates §8a labels with explicit 1:1 mapping (Hands-Off = Autonomous; Reviewed = Supervised; Hands-On = Recommend-only). The Rev-2.1 §8a section header remains but the labels reference CA-12 Dim 2 as canonical.
+**v2 change applied (per Panel C1):** Mode 3B SUB-3B-BUILD removed; Mode 3B now produces only comparative reports OR synthesized specs (consumed by Mode 2 SUB-2A). No parallel build pipeline in Mode 3B.
 
-**Risk:** UX-C surfaces "Hands-On" labelling in shipped sidebar — those labels persist at the surface but canonically refer to CA-12 labels per §C.
+**v2 ratification options:**
+- (a) v2 fix resolves the overlap; ratify v2 Mode 3B definition as canonical.
+- (b) v2 still overlaps — name the remaining overlap.
+- (c) v2 over-corrected — Mode 3B should retain a build pipeline distinct from Mode 2.
+- (d) The 4-mode framing is still wrong — propose alternative.
+- (e) INSUFFICIENT_INFORMATION.
 
-### Conflict 2 — Rev-2.1 §25 Locked Rule 4 axes
+### G-Q2 — Authority dimensions (v2 three-sub-dimension model)
 
-**The conflict:** Locked Rule 4 currently codifies two orthogonal axes (Orchestra Selection + System Operation). CA-12 promotes Pipeline Mode + Operating Authority + Execution Pacing as canonical, displacing System Operation's labels.
+**v1 Panel verdict:** `PLURALITY_GQ2-THREEPLUS` (5/9 — below quorum) — Panel preferred 3+ authority dimensions over v1's single dimension.
 
-**Proposed resolution:** §F.7 above — Locked Rule 4 amended to canonicalize four orthogonal axes (Orchestra Selection unchanged + Pipeline Mode NEW + Operating Authority NEW (deprecating §8a) + Execution Pacing NEW (supersedes §17's single dim)).
+**v2 change applied (per Panel C2 + CEO D2):** single Authority dimension replaced by three sub-dimensions — Build-Authority, Deploy-Authority, Operational-Authority. Each on its own 3-level scale.
 
-### Conflict 3 — Rev-2.1 §17 sidebar "Auto/Guided/Manual" section labels
+**v2 ratification options:**
+- (a) Three sub-dimensions (Build / Deploy / Operational) as v2 defines — ratify.
+- (b) Three sub-dimensions is right but the specific naming/scope is wrong — propose adjustment.
+- (c) Two sub-dimensions is enough (e.g., collapse Deploy into Build or Operational).
+- (d) Four or more sub-dimensions needed — name the missing dimension(s).
+- (e) INSUFFICIENT_INFORMATION.
 
-**The conflict:** The shipped sidebar uses "Auto Operations / Guided Operations / Manual Operations" as section names. These were historical UX-C labels (per §17 footnote a). CA-12 canonicalizes these labels as Dim 3 (Execution Mode) — but they also overlap with the deprecated §8a labels for the previous System Operation axis.
+### G-Q3 — Authority ceiling per-product per-mode per-dimension (v2)
 
-**Proposed resolution:** Per §17 footnote (a) precedent — the sidebar labels remain at the UX surface for shipping continuity. They now canonically map to **Dim 3 Execution Mode** per CA-12. The shipped sidebar text does NOT change in this amendment.
+**v1 Panel verdict:** `PLURALITY_GQ3-PER-MODE` (5/9 — below quorum) — Panel preferred per-mode ceiling over v1's global per-product ceiling.
 
-### Conflict 4 — ProductRegistry schema lacks `authorityCeiling` field
+**v2 change applied (per Panel C3 + CEO D3):** ceiling is set per-product per-mode per-dimension per `ProductRegistry.authorityCeilings` JSONB shape in §A.2.4. Independent ceilings across the 4 modes × 3 sub-dimensions.
 
-**The conflict:** CA-12 Dim 2 requires a `ProductRegistry.authorityCeiling` field. ProductRegistry schema today (per Rev-2.1 §22 + CA-9 §3) does not declare it.
+**v2 ratification options:**
+- (a) Per-product per-mode per-dimension ceiling as v2 defines — ratify.
+- (b) Per-product per-mode (single ceiling per mode, not split by sub-dimension) — coarser.
+- (c) Per-product per-dimension (split by sub-dim but not by mode) — coarser the other way.
+- (d) Different ceiling granularity — specify.
+- (e) INSUFFICIENT_INFORMATION.
 
-**Proposed resolution:** Schema migration to add the column (engineering dispatch follow-on to CA-12 promotion). Default value: `'recommend_only'` (safest; matches dormant-safe default of all 26 agents). Migration is additive and backwards-compatible; existing products with no explicit ceiling inherit the safe default.
+### G-Q4 — Mode 2 SUB-2B deferral (v2)
 
-### Conflict 5 — CA-11 Per-agent ToolMenu does NOT define `effectiveToolMenu(mode)`
+**v1 Panel verdict:** `QUORUM_PLURALITY_GQ4-DEFER` (7/9) — Panel preferred defer until prototype lands.
 
-**The conflict:** CA-11 (drafted, not yet promoted) introduces `AgentRecord.toolMenu` with CEO-override via `ProductRegistry.agentToolConstraints`. CA-12 Pipeline Mode selection may narrow the effective ToolMenu for some agents (e.g., Agent #6 Research's ToolMenu varies by Mode 1 vs Mode 2 — crawl-heavy vs market-research-heavy).
+**v2 change applied (per Panel C4 + CEO D3):** Mode 2 SUB-2B removed from SSOT entirely. Catalogued at `docs/specs/FUTURE_CAPABILITIES.md` as a target future capability — NOT canonical.
 
-**Proposed resolution:** CA-12 does NOT mandate a mode-specific ToolMenu mechanism. Mode-conditional ToolMenu narrowing happens at the agent's `recommend(ctx)` layer (each agent reads `ctx.mode` and narrows its own dispatch choices accordingly). No new `effectiveToolMenu(mode)` API needed; existing `ProductRegistry.agentToolConstraints` per CA-11 covers operator-side overrides; mode-conditional narrowing is per-agent implementation detail. **Panel may disagree** — surface for Q6 consideration.
+**v2 ratification options:**
+- (a) v2 defer is correct — ratify.
+- (b) v2 should also defer Mode 1 SUB-1B DEPLOY (currently in SSOT as ROADMAP).
+- (c) v2 should also defer Mode 3B (currently in SSOT as ROADMAP).
+- (d) v2 over-defers — promote SUB-2B back into SSOT as ROADMAP.
+- (e) INSUFFICIENT_INFORMATION.
 
-### Conflict 6 — Mode 3B "extract best elements" lacks canonical IP-handling
+### G-Q5 — Mode 3B ownership attestation (v2)
 
-**The conflict:** Mode 3B SUB-3B-SPEC + SUB-3B-BUILD synthesize new products by extracting features observed across third-party URLs. No canonical guidance today on whether this constitutes copyright violation (depends on jurisdiction, fair-use doctrine, observed-feature granularity, etc.).
+**v1 Panel verdict:** `PLURALITY_GQ5-RESTRICT` (5/9 — below quorum) — Panel preferred restricting Mode 3B to operator-owned products.
 
-**Proposed resolution:** Surface as Panel Question G-Q5. **No CA-12-side resolution attempted**; defer to Panel + CEO + legal counsel per Rev-2.1 §14 Public Policy + Agent #14 carve-out evaluation per §8.1 §CA-9-A.6.
+**v2 change applied (per Panel C5 + CEO D1):** Mode 3B restricted to operator-owned (or explicitly licensed) products only. Operator attestation per URL enforced at InputArtifact validation layer per §A.1.4. Third-party feature extraction without ownership is rejected at runtime.
+
+**v2 ratification options:**
+- (a) v2 attestation mechanism is correct — ratify.
+- (b) Attestation is right but the mechanism should require third-party verification (e.g., DNS-TXT proof of ownership), not operator self-attestation.
+- (c) Attestation is too restrictive — research-only output should be allowed for non-owned URLs.
+- (d) Attestation alone insufficient — Agent #14 Public Policy must independently classify before synthesis.
+- (e) INSUFFICIENT_INFORMATION.
+
+### G-Q6 — Collapsed matrix (v2)
+
+**v1 Panel verdict:** `SUPERMAJORITY_GQ6-COLLAPSE` (8/9) — Panel directed collapse to non-degenerate cells only.
+
+**v2 change applied (per Panel C6):** matrix collapsed to ~16 non-degenerate canonical configurations. Degenerate combinations are runtime configuration errors per §B.2 validity rules.
+
+**v2 ratification options:**
+- (a) v2 collapse is correct — ~16 canonical cells with §B.2 validity rules — ratify.
+- (b) Too many cells still — collapse further (e.g., ≤8 cells).
+- (c) Too few cells — some valid configurations omitted; identify in rationale.
+- (d) §B.2 validity rules are wrong — propose alternative.
+- (e) INSUFFICIENT_INFORMATION.
+
+### G-Q7 — Overall CA-12 v2 disposition
+
+**v1 Panel verdict:** `PLURALITY_REJECT` (5/9 — below quorum) — v1 rejected; v2 created to address conditions.
+
+**v2 change applied:** all 5 Panel conditions (C1–C5) addressed; CEO D1/D2/D3 applied; matrix collapsed per C6.
+
+**v2 ratification options:**
+- (a) v2 addresses all conditions sufficiently — promote.
+- (b) v2 addresses conditions in form but not in substance — re-Panel with deeper analysis.
+- (c) v2 introduces new concerns not in v1 — name them.
+- (d) Defer to a v3 with explicit prototype implementation of the 3-sub-dimension ceiling + Mode 3B attestation before promotion.
+- (e) INSUFFICIENT_INFORMATION.
 
 ---
 
-## Provenance
+## SSOT Conflicts Newly Surfaced in v2 Revision
+
+The v1 revision-pass surfaced 6 conflicts (recorded in v1 §SSOT Conflicts). v2 introduces / clarifies the following additional or refined conflicts:
+
+### Conflict 7 (NEW v2) — `ProductRegistry.authorityCeilings` JSONB structure is novel
+
+CA-12 v1's `authorityCeiling: string` field becomes a structured JSONB in v2 (per §A.2.4 shape). Today's ProductRegistry schema has no JSONB columns for per-mode-per-dimension configuration. Schema migration must be additive + backwards-compatible.
+
+**Proposed resolution:** Engineering follow-on dispatch adds `authority_ceilings JSONB NOT NULL DEFAULT '{...all-recommend_only...}'` column. Default value is the most conservative shape (Recommend-only across all 12 cells: 4 modes × 3 sub-dimensions).
+
+### Conflict 8 (NEW v2) — Mode 3B attestation requires `InputArtifact` schema extension
+
+Per §A.1.4, Mode 3B requires `ownershipAttestation` field on each URL in the `InputArtifact.raw` shape. Today's `src/lib/renewal/inputArtifact.js` has no such field.
+
+**Proposed resolution:** Engineering follow-on extends InputArtifact shape with `raw.urls[].ownershipAttestation: 'owned' | 'licensed' | NOT_PERMITTED` + a validator at the AutoRunner submission boundary + new audit-log topic `mode3b_ownership_attestation`. Spec-only mention here; engineering dispatch follows promotion.
+
+### Conflict 9 (REVISED from v1 Conflict 1) — Rev-2.1 §8a deprecation now applies to Op-Authority sub-dimension only
+
+v1 deprecated §8a labels in favor of the single Authority Level dimension. v2's three-sub-dimension model means §8a labels map specifically to **Operational-Authority** only (Hands-Off/Reviewed/Hands-On → Op-Autonomous/Supervised/Recommend-only). Build-Authority and Deploy-Authority have NO §8a precursor. v2 amends F.6 accordingly.
+
+### Conflict 10 (NEW v2) — Configuration validity rules (§B.2) are not yet enforced anywhere
+
+The 8 validity rules in §B.2 (SUB-1A path, SUB-1B path, etc.) are spec-only. AutoRunner today does not enforce them. Engineering follow-on adds run-acceptance validator that rejects degenerate configurations at AutoRunner's `POST /api/orchestrator/run` boundary with explicit error envelope citing the violated rule.
+
+### Conflict 11 (NEW v2) — Future-capabilities document precedent
+
+`docs/specs/FUTURE_CAPABILITIES.md` is the first non-canonical capability catalogue. It establishes a precedent: items marked NOT canonical SSOT but tracked for future consideration. This is distinct from CA-n parking-lot (which feeds SSOT amendments) and from spec docs (which are intended-to-be-canonical drafts). v2 introduces this category by necessity per CEO D3; future CA-n may need to canonicalize the category itself.
+
+**Conflicts from v1 retained:** Conflicts 1 (revised per Conflict 9 above), 2, 3, 4, 5, 6 from v1 remain applicable. Conflict 4 (`authorityCeiling` field) is superseded by Conflict 7 above.
+
+---
+
+## Provenance (v2)
 
 | Source | Used for |
 |---|---|
-| CEO-locked feature spec 2026-05-16 (W3 dispatch) | All §A definitions; §G adversarial question framing |
-| Rev-2.1 §6 + ENTRY 006 (Aggressive Crawl Engine) | §D Mode 1 + 3A Step 1 ownership; §E auth-gated crawl roadmap |
-| Rev-2.1 §7 + ENTRY 005 / CA-10 (ProductSSOT) | §E ProductSSOT atomic Output Contract; §F.1 step 8 ownership |
-| Rev-2.1 §8 + ENTRY 005 (Orchestra) | §D step 1 + step 5 wiring |
-| Rev-2.1 §8a (System Operation axis — deprecating) | §A.4 reconciliation; §F.7 conflict resolution |
-| Rev-2.1 §9 (8-step pipeline) | §A pipeline step tables per mode; §F.1 amendment |
-| Rev-2.1 §10 + ENTRY 005 (Self-Governance Layer) | §A.2 authority enum; §F.2 amendment |
-| Rev-2.1 §11 (Clearance Protocol) | §F.3 amendment |
-| Rev-2.1 §13 (Auth + roles) | §A.2.4 admin-role gate; §F authority ceiling enforcement |
-| Rev-2.1 §15.1 (26-agent roster) + EXECUTOR_REGISTRY (CA-7) | §D agent ownership matrix |
-| Rev-2.1 §17 (6-section sidebar) | §C UI mapping |
-| Rev-2.1 §22 (Product-Agnostic Rule) | §F.5 verification; §A.2.4 metadata storage |
-| Rev-2.1 §25 Locked Rule 4 | §A.4 axis reconciliation; §F.7 amendment |
-| CA-7 EXECUTOR_REGISTRY (ENTRY 004) | §A.2.1 dual-authority pattern reference |
-| CA-9-A Orchestra self-expansion (ENTRY 005) | §A.1.1 SUB-1B fork-and-fix reference |
-| CA-9-B Agent #26 dual-authority (ENTRY 005, CEO-Q4=(b) arbitration) | §A.2.1 mapping |
-| CA-9-C Customer Feedback Loop (ENTRY 005) | §D step 8 cross-cutting consumer |
-| CA-10 ProductSSOT (ENTRY 005) | §E atomic Output Contract |
-| CA-11 Per-agent ToolMenu (in flight, draft `1a020f7`) | §E AUTONOMOUS authority graduation path; Conflict 5 |
-| ENTRY 006 Aggressive Crawl Engine | §A.1.1 Mode 1 Step 1; §D agent #21 ownership; §F.4 verification |
-| `src/pages/LandingPage.jsx` lines 19–26 | §C UI OBJECTIVES mapping |
-| `src/pages/AutoRunner.jsx` `mode:` literal usage | §C UI mode mapping |
-| `docs/specs/agent-blueprints/00_BUILD_INDEX.md` (commit `883470a`) | §D agent dormancy status |
-| 2026-05-16 Phase 1 production proof (W2 Dispatch #12, 02:02 PM ET) | §E "BUILT" anchor for Mode 1 SUB-1A multi-page public crawl |
+| v1 CA-12 spec commit `f9a62a0` | Baseline for v2 revisions |
+| Panel transcript `docs/panel-consultations/ca12-ratification-2026-05-16.md` commit `5c2324f` | All 5 Panel conditions + 26 distinct objections informing v2 changes |
+| CEO Decision D1 (Mode 3B operator-owned restriction) | §A.1.4 attestation mechanism |
+| CEO Decision D2 (3-sub-dimension authority split) | §A.2 entire dimension restructure |
+| CEO Decision D3 (Mode 2 SUB-2B deferral + per-mode ceiling) | §A.1.2 SUB-2B removal + §A.2.4 per-mode-per-dim ceiling shape; `FUTURE_CAPABILITIES.md` creation |
+| (all v1 provenance retained) | unchanged |
+| 2026-05-16 W2 Phase 1 production proof | §E "BUILT" anchor for Mode 1 SUB-1A + Op-Autonomous Automatic configuration |
 
----
-
-## Versioning + Promotion Workflow
-
-CA-12 follows the standard CA-n cycle per Rev-2.1 §18:
-
-1. **Draft** (this document) — committed to `docs/specs/SSOT_AMENDMENT_CA12_DRAFT.md`.
-2. **W6 adversarial Panel review** — 7 questions per §G; standard 4-option + INSUFFICIENT_INFORMATION; bias-management rules apply (Q.1 open-ended before Q.2 MC; adversarial reframing on every question; W03 priors EXCLUDED from context bundle; engagement <8/10 surfaces as soft signal).
-3. **CEO disposition** — adopts Panel signals; resolves PLURALITY items via CEO arbitration; applies carve-outs per §G Q7.
-4. **Promotion commit** by W2 / W5x — adds ENTRY 007 to `docs/CANONICAL_HISTORY.md` SECTION 8; applies §F edits to `docs/CANONICAL_REFERENCE.md`; creates pre-promotion archive at `docs/archive/FLOWAI_SSOT-pre-CA12-promotion-<date>.md`.
-5. **Engineering follow-on dispatches** (post-promotion) — schema migration for `ProductRegistry.authorityCeiling`; UI relabeling per §C.5; Locked Rule 4 axis text amendment per §F.7.
-
-CA-12 is the **largest cumulative amendment** since the Rev-2.1 baseline promotion at commit `9495b26` — it introduces a new orthogonal axis (Pipeline Mode), canonicalizes a deprecation (§8a → Dim 2), and reframes the entire operating model around the 36-configuration matrix. Panel adversarial review per §G is the canonical gate.
-
-*End of CA-12 draft. Pending W6 Panel review per Locked Rule 17 + CEO ratification per §18.*
+*End of CA-12 v2 draft. Pending W6 re-ratification per Locked Rule 17 + CEO ratification per §18.*
