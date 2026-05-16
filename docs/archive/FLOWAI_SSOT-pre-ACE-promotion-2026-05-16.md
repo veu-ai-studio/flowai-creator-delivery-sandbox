@@ -89,25 +89,9 @@ INPUT modes are distinct from EXECUTION modes (§8) and SYSTEM OPERATION axes (�
 
 ## 6. AGGRESSIVE CRAWLING, TESTING & RESOLUTION CONTRACT
 
-**Crawl scope (per parking-lot ENTRY 002 + ENTRY 006 / Aggressive Crawl Engine promotion 2026-05-16, Panel `05ac6f4` 7×UNANIMOUS + CEO arbitration Q6=(c)):** all links, cards, modals, pages, engines, workspaces, embedded AI agents. No element skipped. Authenticated + unauthenticated paths. Mobile (375×667) + desktop (1920×1080) viewports. Error states triggered deliberately (see deliberate-trigger sub-list below). Depth-bounded full-site spider with **default depth=8 / hard cap depth=12** and **default pages=200 / hard cap pages=2000** per product per environment (engineering may raise hard caps via Doppler `flowai/<env>/CRAWL_DEPTH_HARD_CAP` + `flowai/<env>/CRAWL_MAX_PAGES_HARD_CAP`). Each page rendered + interacted via Browserless `/function` (`richCapture`) — far richer than single-page `/content` rendering used in earlier `api/_lib/inputAdapters/url.js` (which shipped at default depth=2, max=8 pages — superseded by Aggressive Crawl Engine ENTRY 006).
+**Crawl scope (per parking-lot ENTRY 002):** all links, cards, modals, pages, engines, workspaces, embedded AI agents. No element skipped. Authenticated + unauthenticated paths. Mobile + desktop. Error states triggered. Depth-bounded multi-page traversal (default depth=2, max=8 pages per URL — implemented in `api/_lib/inputAdapters/url.js`).
 
-**Interaction passes per page per viewport (sequential, per ENTRY 006):**
-1. **Initial render** via `richCapture(url, { fullPage: true, includeScreenshot: true })`. Captures HTML + screenshot + console errors + network errors + surfaces `{ links, buttons, forms, images, headings }`.
-2. **Auth handling** — if `sessionStorageState` is set (per `InputArtifact.raw.description.login*`), hydrate page; if redirected to login, attempt one credentialed login, save updated `storageState`, retry render; otherwise mark `authGated: true`.
-3. **Click-everything pass** — every same-origin internal `surfaces.links[]` + `surfaces.buttons[]` clicked once per viewport (navigation enqueued to frontier; DOM mutation inspected for newly-visible modal/content).
-4. **Modal probing pass** — every `[role="dialog"]`, `.modal`, `[aria-modal="true"]` opened + state captured + closed cleanly (Esc / close-button / backdrop click); broken modals reported.
-5. **AI-agent probing pass** — selectors `[data-ai-input]`, `.chat-input`, `.prompt-input`, `textarea[placeholder*="ask" i]`, `textarea[placeholder*="prompt" i]`, `textarea[name*="message" i]`, `[contenteditable="true"][role="textbox"]`, third-party chat iframes (`iframe[src*="intercom" i]`, etc.) — send benign probe prompt **`"Reply with the single word: ACK"`** + capture response within 30s; classify reachability + responsiveness.
-6. **Form catalog pass** — every form's fields enumerated (name, type, required). **No submit unless XSS opt-in flag set, per CEO arbitration Q6=(c) below.**
-7. **Network log capture** + **external script catalog**.
-8. **Deliberate error-state triggers (per CEO arbitration Q6=(c) — non-destructive by default; XSS is explicit opt-in only):**
-   - **Always on (`'safe'` mode default):** 404 page probe (navigate `<origin>/__flowai-probe-nonexistent-${runId}`), 500 page probe (`Accept: invalid/garbage`), network offline mid-load, slow-network sub-resource throttle. None of these mutate SUT state.
-   - **Opt-in only (`'full'` mode):** form submit with empty required field (validation probe) + form submit with `<script>alert(1)</script>` payload (XSS echo probe). Both require operator confirmation that SUT is in dev/staging environment, never prd, per §13 role-gate. **Never default-enabled.**
-
-**Card / interactive tile coverage** (per ENTRY 006): cards detected by class/role heuristics (`.card`, `[role="article"]`, `[data-card]`, visual heuristic of a `div` containing both heading + button/link descendants in flex/grid layout). Each card's primary CTA (last `button` or `a` descendant) clicked once per viewport.
-
-**Orchestra wiring (per §15.4 + Aggressive Crawl Engine spec §E.2 / ENTRY 006):** Agent #21 Ops Runner Alpha (Aggressive Crawl Conductor — see §15.1 row 21) dispatches via Orchestra members `playwright` (preferred for full interaction: click + modal + form probing), `browserless` (fallback for crawl + screenshot capture per finding), `anthropic-api` (CA-9-B generic adapter, used for surface classification + Issue Detection LLM-assist on novel categories). Per-run cost ceiling: **$15/run/product/env** (3× nominal pipeline; configurable per product via Doppler).
-
-**Credential handling for authenticated crawls (gap from Panel Q3):** session-only credentials per `src/lib/renewal/inputArtifact.js` `raw.description.loginEmail/loginPassword`. **Scrubbed before any persist / log / external send** via `scrubCredentials()`. Never written to the audit log. Never embedded in renewed output. Playwright `storageState` JSON persisted only in ephemeral `tmp/playwright-state-<runId>/`; auto-deleted at run end.
+**Credential handling for authenticated crawls (gap from Panel Q3):** session-only credentials per `src/lib/renewal/inputArtifact.js` `raw.description.loginEmail/loginPassword`. **Scrubbed before any persist / log / external send** via `scrubCredentials()`. Never written to the audit log. Never embedded in renewed output.
 
 **Resolution contract (clarified — gap #3 from Panel Q3 + Slot 3/5/7 dissent):**
 Every issue surfaced by `api/_lib/issueDetector.js` MUST reach a **terminal decision** before output delivery. The terminal decisions are:
@@ -153,48 +137,6 @@ Plus a `version` field (monotonic per `(productId, environment)`, auto-increment
 **Supabase schema:** `product_ssot` table (RLS-enabled per §13.1) + `product_ssot_version` table (append-only audit; same hash chain as GovernanceAuditLog per §14.2). Migration: `supabase/migrations/00NN_product_ssot.sql` (engineering dispatch separate; W2 + W5x to implement).
 
 **Relation to DeploymentScaffold (§16.2):** complementary, not duplicative. DeploymentScaffold = single deploy snapshot (per Sprint 6 Phase 2). ProductSSOT = full deployment history + governance trail + annotations across time. ProductSSOT's `architecture_snapshot` may derive from the most recent DeploymentScaffold; engineering dispatch reuses the shape where applicable.
-
-### 7.6 GTM Readiness Report (per Aggressive Crawl Engine / ENTRY 006)
-
-Every Aggressive Crawl Engine run on a product produces — atomically with the §7 Output Contract items 1–5 — a **GTM Readiness Report**: a per-`(productId, environment)` score in `[0, 100]` measuring demo-readiness for the prospect-facing channel. The report is owned by Agent #21 Ops Runner Alpha (Aggressive Crawl Conductor, §15.1 row 21); it is written into the affected ProductSSOT's `governance_record` block (kind: `gtm_readiness_score`) AND surfaced at `/architecture` per product per §16.
-
-**Scoring formula (canonical):**
-
-```
-score = 100
-     − (10  × count_critical)
-     − (5   × count_high)
-     − (2   × count_medium)
-     − (0.5 × count_low)
-     clamped to [0, 100]
-```
-
-Findings counted are those produced by the Aggressive Crawl Engine's issue-detection pass (per ENTRY 006 detector set: `ai-agent-unreachable`, `ai-agent-no-response`, `broken-modal`, `dead-card`, `engine-error`, `auth-gate-leak`, `console-error`, `network-failure`, `slow-route`, `missing-404-handler`, `missing-500-handler`, `no-offline-indicator`, `no-loading-indicator-on-slow-net`, `no-form-validation`, `xss-in-form-echo` [hard-classified critical, not promotable via override per CA-10-Q3], `external-script-leak`, `accessibility-headings`, `accessibility-alt-text`).
-
-**Score bands (canonical):**
-
-| Score band | Label | Demo guidance |
-|---|---|---|
-| 90–100 | **Showcase-ready** | Safe to send to any prospect demo; passes §11 Clearance Step 5 cleanly |
-| 75–89 | **Demo-ready** | Safe with named caveats; LIMITATIONS section MUST be shown |
-| 60–74 | **Internal-only** | Not for external demo; surfaces to §11 Step 5 as "conditional" |
-| 0–59 | **Not demo-ready** | Blocks §11 Clearance Step 5 until Self-Renewal closes `critical` + `high` |
-
-**Cost ceiling (canonical per ENTRY 006):** **$15 per run per product per environment** (3× the nominal pipeline ceiling per `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` §7.4 — aggressive crawls are 5–10× heavier). Configurable per product via Doppler `flowai/<env>/PRODUCTS_<productId>_AGGRESSIVE_CRAWL_BUDGET_USD`.
-
-**Maps to §11 Clearance Step 5 (Demo Readiness)** — ENTRY 006 extends §11 Step 5 to require **ALL** of:
-- GTM Readiness Report exists for the product in the current environment.
-- Report score **≥75** (Demo-ready band) AND **zero `critical` findings open**.
-- Self-Renewal cycle on all findings ≥`high` has reached a terminal decision (Resolved / Human-gated / Documented per §6).
-- LIMITATIONS section published verbatim in delivery.
-
-Failure of any of the four prerequisites blocks §11 Clearance Step 5 with explicit error. Score-band labels surface in the `/clearance` wizard's Step 5 UI alongside the synthetic-data demo-microsite check from Sprint 7.
-
-**Top fixes ranking** (surfaced at report top): the top 5 highest-severity findings ranked by `impact_score = severity_weight + 0.5 × visibility_weight + 0.2 × effort_to_fix_weight` (severity_weight: critical=10 / high=5 / medium=2 / low=0.5; visibility_weight: surface frequency × 0.1, weighting landing-page findings above deep-route findings; effort_to_fix_weight: 1.0 if `autoFixable` else 0.3, preferring auto-fixable findings for immediate fork-and-fix per §12).
-
-**Per-surface grouping (6 sections in the rendered report):** Links · Cards · Modals · Pages · Engines · AI agents. Within each surface section: severity-grouped tabular view (Showstopper / Critical / High / Medium / Low; one finding per row with reproducer + evidence path).
-
-**Audit-log integration (per §14.1 ripple amendment from ENTRY 006):** every report emission writes a `governance_record_entry` to the affected ProductSSOT with `kind: 'gtm_readiness_score'` + the topic `21.gtm.readiness.v1` is emitted on the bus. Re-crawl after fix produces a new `governance_record_entry` (separate entry, not an update) so the score trajectory is auditable across the product's lifetime.
 
 ---
 
@@ -476,7 +418,7 @@ All 26 agents (was 25 prior to CA-9-B / ENTRY 005) are proprietary VEU IP. All s
 | 18 | Business Planning | cross-step | — | flowai-only | DORMANT |
 | 19 | Technological Evolution | cross-step | — | embedded | DORMANT |
 | 20 | Environmental Impacts | cross-step | — | embedded | DORMANT |
-| 21 | Ops Runner Alpha — **Aggressive Crawl Conductor** (per ENTRY 006, Panel `05ac6f4` 7×UNANIMOUS + CEO arbitration Q6=(c)) | step-owner | (cross-step within step 1 research + step 8 monitor — Aggressive Crawl Engine phase) | embedded | DORMANT (charter ratified; engineering wire-in pending). Authority **`[recommend_only, auto_write_internal, requires_human_gate]`** (dual + gate mirroring Agent #26 per CA-9-Q4=(b)). Owns the full-site spider with click + modal + AI-probe + viewport + auth + error-trigger passes per §6 + Aggressive Crawl Engine spec `docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md` (commit `5b30dce`). Consumes: `1.crawl.request.v1`, `10.ssot.updated.v1`. Produces: `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1` + writes to ProductSSOT `architecture_snapshot` + `governance_record` (kind `gtm_readiness_score`). Required credentials: `BROWSERLESS_API_KEY`, `ANTHROPIC_API_KEY`. Marketplace tools: `playwright`, `browserless`, `anthropic-api`. Escalation: `xss-in-form-echo` or `auth-gate-leak` detected → IMMEDIATE admin gate (security-critical); crawl budget exceeded → emit candidate + escalate to Ops Runner Beta; 3 consecutive crawl failures on same product → disable crawl for that product 24h. |
+| 21 | Ops Runner Alpha | step-owner (proposed) | (TBD) | embedded | DORMANT — G3-ratified charter; validator updated 20→25 commit `d2bcbbd` |
 | 22 | Ops Runner Beta | step-owner (proposed) | (TBD) | embedded | DORMANT |
 | 23 | Ops Runner Gamma | step-owner (proposed) | (TBD — possibly Cost Governor per Layer 2 plan PG1) | embedded | DORMANT |
 | 24 | Ops Runner Delta | step-owner (proposed) | (TBD) | embedded | DORMANT |
@@ -489,7 +431,7 @@ Partition: **13 embedded** in every product (#1, #2, #3, #6, #7, #9, #10, #13, #
 
 Three contract layers connect agents:
 
-1. **`MessageBus`** (`src/lib/agents/MessageBus.ts`) — pub/sub for inter-agent topics. Each agent declares its `consumes[]` and `produces[]` topics in its charter. Topics conform to `MessageSchema.js` (**65 topic constants** post-ENTRY 006 — was 61 prior to ENTRY 006; was 40 prior to ENTRY 005). Example: Agent #3 consumes `8.audit.completed.v1`, `10.anomaly.v1`, `17.evolution.proposal.v1`, `10.customer.issue.v1` (per CA-9-C); produces `3.renewal.candidate.v1` plus (per §12) `3.renewal.applied.v1`, `3.renewal.delta.v1`, `3.renewal.build_failed.v1`, `3.renewal.disabled.v1`, plus `3.ssot.delta.v1` (per CA-10-B).
+1. **`MessageBus`** (`src/lib/agents/MessageBus.ts`) — pub/sub for inter-agent topics. Each agent declares its `consumes[]` and `produces[]` topics in its charter. Topics conform to `MessageSchema.js` (**61 topic constants** post-CA-9 + CA-10; was 40 prior to ENTRY 005). Example: Agent #3 consumes `8.audit.completed.v1`, `10.anomaly.v1`, `17.evolution.proposal.v1`, `10.customer.issue.v1` (per CA-9-C); produces `3.renewal.candidate.v1` plus (per §12) `3.renewal.applied.v1`, `3.renewal.delta.v1`, `3.renewal.build_failed.v1`, `3.renewal.disabled.v1`, plus `3.ssot.delta.v1` (per CA-10-B).
 
 **Topics added in ENTRY 005 (CA-9 + CA-10) — 21 total new constants:**
 
@@ -499,12 +441,6 @@ Three contract layers connect agents:
 - **CA-10-B ProductSSOT auto-update (4):** `3.ssot.delta.v1`, `10.ssot.updated.v1`, `10.ssot.annotation.v1`, `clearance.ssot.step.v1`.
 
 (7 + 5 + 5 + 4 = 21; 40 + 21 = 61.)
-
-**Topics added in ENTRY 006 (Aggressive Crawl Engine) — 4 new constants:**
-
-- **ENTRY 006 Aggressive Crawl (4):** `1.crawl.request.v1` (consumed by Agent #21; emitted by AutoRunner / Agent #6 / `/api/agent/21/run-aggressive-crawl`), `21.crawl.completed.v1` (produced by Agent #21 on run completion), `21.issues.detected.v1` (produced by Agent #21 with the full issue list per §6 detector set), `21.gtm.readiness.v1` (produced by Agent #21 with the §7.6 GTM Readiness Report score + bands).
-
-(21 + 4 = 25 net new since ENTRY 005 cohort; 40 + 21 + 4 = **65** total.)
 
 2. **`OrchestratorHub`** (`src/lib/agents/orchestrator/OrchestratorHub.ts`) — registers step-owner agents and routes the `invokeStepOwner(stepKey, ctx)` call to the agent registered for that step. Used by `AutoRunner.jsx` at every step boundary. Returns the agent's canonical step-owner envelope. **OrchestratorHub is the agent-side controller; it is distinct from the Orchestra (§8) which is the tool-side adapter set.**
 
@@ -715,7 +651,6 @@ Every promotion creates a pre-promotion snapshot at `docs/archive/FLOWAI_SSOT-pr
 | ENTRY 003 | 2026-05-14 | `9495b26` | W04-Rev-2.1 promoted to canonical: 4 minor amendments (§3 productScope generic placeholders, §17 sidebar-label footnote, §20.1 Self-Protection reconciliation, §25 Locked Rule 4 axis labels). Panel: 9/10 PROMOTE_WITH_MINOR_AMENDMENTS. |
 | ENTRY 004 | 2026-05-15 | `fd94f1e` | CA-7 (§15.5 EXECUTOR_REGISTRY + §14 three new rows for M2/M5) + CA-8 (§20.2 X-Test-Bypass-Token Contract with §20.2.1 Doppler env-suffix key naming). Panel: 5× UNANIMOUS_(a), 10/10 ENGAGED, commit `fb0bb64`. |
 | ENTRY 005 | 2026-05-15 | (this promotion) | CA-9 (§8.1 Orchestra Self-Expansion auto-admission + Agent #26 Orchestra Research Agent dual-authority `[recommend_only, auto_write_internal, requires_human_gate]` per CEO arbitration CA-9-Q4=(b); §15.1 charter expansions for Agents #3, #10, #11, #15, #17; §15.2 +21 new MessageBus topic constants; Locked Rule 2 amended 25→26 agents) + CA-10 (§7.5 ProductSSOT entity with 6 canonical blocks; §7 Output Contract item #5; §13.1 role gates + `/product-ssot/:productId` UI; §28 Symbiotic Feed-Back Loop; §14.3 ProductSSOT retention + PII-scrub; §11 Step 4 Data Export expanded). Panel: 7/8 SUPERMAJORITY/UNANIMOUS, commit `cc5fd8d`. |
-| ENTRY 006 | 2026-05-16 | (this promotion) | **Aggressive Crawl Engine (ACE)** promotion. Sections amended: §6 (crawl scope expanded — default depth=8 / hard cap depth=12; default pages=200 / hard cap pages=2000; click-everything pass + modal probing + AI-agent benign-probe + mobile-desktop viewports + non-destructive error-state triggers; XSS opt-in only per CEO arbitration Q6=(c); Orchestra wiring per §15.4 — Agent #21 dispatches via `playwright` + `browserless` + `anthropic-api`); §7.6 (NEW — GTM Readiness Report: 100-point scoring formula `100 − 10·crit − 5·high − 2·med − 0.5·low` clamped to [0,100]; 4 bands Showcase-ready / Demo-ready / Internal-only / Not demo-ready; $15/run cost ceiling; maps to §11 Clearance Step 5 with 4-prerequisite gate); §15.1 row 21 (Ops Runner Alpha pinned as **Aggressive Crawl Conductor** — step-owner, dual-authority `[recommend_only, auto_write_internal, requires_human_gate]`, consumes `1.crawl.request.v1`, produces 3 topics); §15.2 (+4 MessageBus topics: `1.crawl.request.v1`, `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1`; topic count 61 → **65**). Source spec: `docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md` (commit `5b30dce`). Panel consultation: `05ac6f4` — 7×UNANIMOUS (Q1 depth caps, Q2 agent-ownership Option B, Q3 AI-agent probe safety, Q4 parallelization scope, Q5 fix-loop autonomy on medium, Q7 readiness score formula, Q8 cost ceiling) + Q6 (error-state defaults) decided by CEO arbitration `(c)` non-destructive triggers always-on, XSS form-submit triggers opt-in only with operator confirmation + dev/staging-environment-only gate. Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-ACE-promotion-2026-05-16.md`. Closes parking-lot ENTRY 002 (CEO 2026-05-14 — "aggressive exhaustive crawler GTM-readiness bar"). |
 
 CA-4 + CA-5 + CA-6 deferred per Panel consultation `ssot-finalization-and-agent-roadmap-priority-2026-05-14.md`.
 

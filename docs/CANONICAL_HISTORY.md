@@ -1602,7 +1602,57 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-15)
+### ENTRY 006 — 2026-05-16
+- **Promotion:** Aggressive Crawl Engine (ACE) promotion to canonical SSOT — closes parking-lot ENTRY 002 (CEO 2026-05-14, "aggressive exhaustive crawler GTM-readiness bar")
+- **Promoted by:** W3
+- **Source spec:** `docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md` (commit `5b30dce`, drafted by W3 2026-05-15)
+- **Panel signal:** **7× UNANIMOUS** on Q1, Q2, Q3, Q4, Q5, Q7, Q8 (W6 panel commit `05ac6f4`) + **CEO arbitration on Q6** (`(c)` non-destructive triggers always-on; XSS form-submit triggers opt-in only with operator confirmation + dev/staging-environment-only gate)
+- **Panel questions covered (all 8 ACE Open Questions §G):**
+  - **G-Q1** — Depth + page-count hard caps: **UNANIMOUS_(a)** default depth=8 / cap 12; default pages=200 / cap 2000
+  - **G-Q2** — Agent ownership: **UNANIMOUS_(a)** Option B — Agent #21 Ops Runner Alpha pinned as Aggressive Crawl Conductor (resolves Rev-2.1 §27 OQ-2 partially)
+  - **G-Q3** — AI-agent probe safety: **UNANIMOUS_(a)** benign probe `"Reply with the single word: ACK"` as proposed
+  - **G-Q4** — Parallelization scope: **UNANIMOUS_(a)** 5 concurrent pages per product, 1 product at a time
+  - **G-Q5** — Fix-loop autonomy on `medium`: **UNANIMOUS_(a)** auto-fix `low` + `medium`; `high` + `critical` human-gated
+  - **G-Q6** — Error-state trigger defaults: **CEO arbitration `(c)`** — non-destructive triggers (404 probe, 500 probe, network offline, slow-network) always-on by default; form-submit triggers (empty-required + XSS echo) opt-in only requiring operator confirmation that SUT is in dev/staging environment, never prd; never default-enabled
+  - **G-Q7** — GTM Readiness score formula: **UNANIMOUS_(a)** 10/5/2/0.5 deductions per crit/high/med/low; 4 bands as proposed
+  - **G-Q8** — Per-run cost ceiling: **UNANIMOUS_(a)** $15/run/product/env (3× nominal pipeline) with per-product Doppler override
+- **CEO disposition:** Ratified under MG2 (≥7/10 ENGAGED) + Locked Rule 13 (CEO retains absolute veto); 7 questions cleared supermajority unanimously; Q6 arbitrated to `(c)` (non-destructive default + XSS opt-in only)
+- **Sections affected in `docs/CANONICAL_REFERENCE.md`:**
+  - **§6 AGGRESSIVE CRAWLING, TESTING & RESOLUTION CONTRACT** — crawl scope substantively expanded:
+    - Default depth 2 → 8; hard cap depth 3 → 12 (Doppler-overridable)
+    - Default pages 8 → 200; hard cap pages 50 → 2000 (Doppler-overridable)
+    - Per-page rendering: Browserless `/content` → Browserless `/function` (`richCapture`) for every page
+    - 6-pass interaction model added (initial render, auth handling, click-everything, modal probing, AI-agent benign-probe, form catalog + network log + external script catalog)
+    - Mobile (375×667) + desktop (1920×1080) viewports both crawled
+    - Deliberate error-state triggers: 404 / 500 / offline / slow-network always-on; XSS form-submit opt-in only per CEO arbitration Q6=(c)
+    - Card / interactive-tile coverage formalised
+    - Orchestra wiring documented inline (Agent #21 dispatches `playwright` + `browserless` + `anthropic-api`; $15/run cost ceiling)
+    - Credential handling: Playwright `storageState` ephemeral path `tmp/playwright-state-<runId>/` auto-deleted at run end
+  - **§7.6 (NEW)** — GTM Readiness Report: per-product per-environment 100-point score (`100 − 10·crit − 5·high − 2·med − 0.5·low`, clamped [0, 100]); 4 score bands (Showcase-ready 90-100 / Demo-ready 75-89 / Internal-only 60-74 / Not demo-ready 0-59); maps to §11 Clearance Step 5 with 4-prerequisite gate (report exists + score ≥75 + zero critical + Self-Renewal terminal decisions on `high`+); 6-section per-surface grouping (Links / Cards / Modals / Pages / Engines / AI agents); top-5 ranked "Top fixes before any prospect demo"; ProductSSOT `governance_record` integration (kind `gtm_readiness_score`); audit-log topic `21.gtm.readiness.v1`
+  - **§15.1 row 21 Ops Runner Alpha** — pinned as **Aggressive Crawl Conductor**: step-owner mode; cross-step within step 1 research + step 8 monitor; authority `[recommend_only, auto_write_internal, requires_human_gate]` (dual + gate mirroring Agent #26 per CA-9-Q4=(b)); consumes `1.crawl.request.v1`, `10.ssot.updated.v1`; produces `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1`; writes to ProductSSOT `architecture_snapshot` + `governance_record`; required credentials `BROWSERLESS_API_KEY` + `ANTHROPIC_API_KEY`; marketplace tools `playwright` + `browserless` + `anthropic-api`; escalation: `xss-in-form-echo` or `auth-gate-leak` → IMMEDIATE admin gate; budget exceeded → escalate Ops Runner Beta; 3 consecutive failures on same product → 24h crawl disable
+  - **§15.2 MessageBus** — topic count **61 → 65** (4 new constants: `1.crawl.request.v1`, `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1`); ENTRY 005 cohort retained; running total 40 → 61 → 65 across ENTRY 005 + ENTRY 006 promotions
+  - **§18.4 Ratified amendments** — ENTRY 006 row added with full provenance + CEO Q6 arbitration documented inline
+- **Issue detection coverage (Aggressive Crawl Engine canonical detector set; informs §6 + §7.6 score computation):** 12 new categories + 2 tightenings on existing — `ai-agent-unreachable` (tighten to require benign probe), `ai-agent-no-response`, `broken-modal`, `dead-card`, `engine-error`, `auth-gate-leak`, `console-error`, `network-failure`, `slow-route`, `missing-404-handler`, `missing-500-handler`, `no-offline-indicator`, `no-loading-indicator-on-slow-net`, `no-form-validation`, `xss-in-form-echo` (hard-classified critical, not promotable via override per CA-10-Q3), `external-script-leak`, `accessibility-headings` (tighten), `accessibility-alt-text`. Engineering dispatch implements in `api/_lib/issueDetector.js` per spec §B.1.
+- **Engineering impact (out of scope for this commit; landed in follow-up dispatches per spec §H — ~18 W-days):**
+  - `api/_lib/aggressiveCrawlEngine.js` (NEW) — full-site spider with click + modal + AI-probe + viewport + auth + error-trigger passes (~5 W-days)
+  - `api/_lib/inputAdapters/url.js` — graduation: replace current `aggressiveCrawl()` with engine call; preserve function signature for backwards compat (~1 W-day)
+  - `api/_lib/issueDetector.js` — 12 new categories + 2 tightenings + severity routing per spec §B (~2 W-days)
+  - `api/_lib/gtmReadinessReport.js` (NEW) — score computation + 6-section grouping + top-5 ranking + Markdown/JSON renderer + per-finding screenshot evidence (~2 W-days)
+  - `api/agent/21/run-aggressive-crawl.js` (NEW endpoint, Inngest-backed long-running job per Orchestra spec §6.2 Path Y) — ~1 W-day
+  - `src/lib/agents/_registry.ts` AGENT_REGISTRY row #21 — full charter wiring per §15.1 (assumes CA-9-B dual-authority `BaseAgent.guard()` amendment landed in ENTRY 005) — ~1 W-day
+  - `src/lib/agents/MessageSchema.js` — +4 topic constants (61 → 65) + audit-log integration — ~0.5 W-day
+  - ProductSSOT integration: writes to `architecture_snapshot` + `governance_record` (`kind='gtm_readiness_score'`) per spec §C.3 + CA-10-A.4 atomic-write — ~1 W-day
+  - §11 Clearance Step 5 gating: 4-prerequisite check per §7.6 — ~0.5 W-day
+  - Test plan execution against 5 VEU products (neutral fixtures per §22; productScope `tenant_*` strings in `ProductRegistry` only) — ~2 W-days
+  - `MockBrowserless` + `MockPlaywright` fixtures for Vitest — ~1 W-day
+  - Documentation: `/architecture` UI update per §16 + spec cross-links — ~1 W-day
+  - Rollout to prd (canary 1 product → 3 products → all 5; per Rev-2.1 §16.3 dual-deployment) — ~1 W-day
+- **Pre-promotion archive:** `docs/archive/FLOWAI_SSOT-pre-ACE-promotion-2026-05-16.md` (verbatim copy of canonical `docs/CANONICAL_REFERENCE.md` immediately before the §6 + §7.6 + §15.1 + §15.2 + §18.4 ACE edits applied; 1037 lines, 92,561 bytes)
+- **Lineage:** Rev-2.1 canonical (commit `9495b26`) → ENTRY 003 (Rev-2.1 promotion) → ENTRY 004 (CA-7+CA-8 promotion, commit `fd94f1e`) → ENTRY 005 (CA-9+CA-10 promotion, commit `5dcd865`) → ACE spec draft `AGGRESSIVE_CRAWL_ENGINE_SPEC.md` (commit `5b30dce`) → W6 panel `05ac6f4` (7× UNANIMOUS + Q6 arbitration) → CEO ratification → this entry
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-16)
 
 
 
