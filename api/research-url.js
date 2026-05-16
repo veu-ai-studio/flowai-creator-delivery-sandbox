@@ -86,8 +86,14 @@ If the page content is insufficient, say so explicitly and stop. Do not speculat
       page: {
         title: page.title,
         metaDescription: page.metaDescription,
-        headings: (page.headings || []).slice(0, 10),
-        bodyTextSnippet: (page.bodyText || '').slice(0, 1500),
+        // Defect A 2026-05-16: caps raised so callers (UI display +
+        // fetchPageContext baked into every step prompt) see the full
+        // rendered DOM instead of a 1500-char prefix that was making the
+        // pipeline score on partial content. Field still named
+        // bodyTextSnippet for backwards compatibility with the UI/test
+        // contract — the only change is the cap.
+        headings: (page.headings || []).slice(0, 60),
+        bodyTextSnippet: (page.bodyText || '').slice(0, 50000),
       },
       analysis: claude.text,
       model: claude.model,

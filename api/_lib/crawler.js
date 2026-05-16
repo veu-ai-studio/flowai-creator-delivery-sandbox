@@ -188,7 +188,7 @@ export default async function ({ page, context }) {
     return {
       title: trim(document.title, 200),
       metaDescription: trim(document.querySelector('meta[name="description"]')?.content || '', 400),
-      bodyText: trim(document.body?.innerText || '', 12000),
+      bodyText: trim(document.body?.innerText || '', 50000),
       links, buttons, forms, images: imgs.map((i) => ({ src: (i.src||'').slice(0,200), alt: i.alt, broken: i.broken })),
       headings, imagesMissingAlt,
       headingHierarchyOk,
@@ -728,6 +728,11 @@ export function summarisePageForPrompt(page) {
   const headings = (page.headings || []).map((h) => `${h.tag}: ${h.text}`).join(' | ');
   const warnings = (page.warnings || []).join(' ');
   const meta = `Method: ${page.method}${page.jsRendered ? ' (JS-rendered)' : ''}${warnings ? ' — ' + warnings : ''}`;
+  // Defect A 2026-05-16: body cap raised from 8k → 50k. At 8k the
+  // research/scoring prompts were scoring on a partial DOM and marking
+  // products "incomplete content" when the real SPA had finished rendering.
+  // 50k covers every observed real SPA's visible text; Claude's context
+  // window handles it comfortably.
   return [
     meta,
     `URL: ${page.url}`,
@@ -735,7 +740,7 @@ export function summarisePageForPrompt(page) {
     `Meta: ${page.metaDescription || ''}`,
     `Headings: ${headings}`,
     '',
-    'Body (truncated to 8000 chars):',
-    (page.bodyText || '').slice(0, 8000),
+    'Body:',
+    (page.bodyText || '').slice(0, 50000),
   ].join('\n');
 }
