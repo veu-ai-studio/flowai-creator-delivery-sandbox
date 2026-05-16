@@ -88,13 +88,22 @@ export const SLOT_CONFIG = Object.freeze([
     role: 'European RAG-tuned',
     backup: Object.freeze({ provider: 'openrouter', model: 'mistralai/mistral-large-2411' }),
   }),
-  // Slot 6 — Asia generalist (Alibaba Qwen)
+  // Slot 6 — Asia generalist. Rebalanced 2026-05-15: minimax/minimax-m2.7
+  // (Hailuo, 128K context) replaces qwen/qwen-2.5-72b-instruct as primary
+  // after 2 consecutive 32K-context-cap failures on large bundles. Qwen
+  // demoted to backup. The "obvious" promotion (deepseek/deepseek-r1,
+  // Slot 6's prior backup) would have duplicated Slot 7's primary —
+  // violating the 10-unique-providers rule — so the dispatch's "next
+  // best option with ≥64K context that is NOT already a primary in any
+  // slot" clause picked minimax-m2.7. Verified on OpenRouter at commit
+  // 9bafecf probe time. Provider-different from Qwen (different family),
+  // preserves "Asia generalist" role.
   Object.freeze({
     provider: 'openrouter',
-    model: 'qwen/qwen-2.5-72b-instruct',
+    model: 'minimax/minimax-m2.7',
     region: 'Asia',
     role: 'Asia generalist',
-    backup: Object.freeze({ provider: 'openrouter', model: 'deepseek/deepseek-r1' }),
+    backup: Object.freeze({ provider: 'openrouter', model: 'qwen/qwen-2.5-72b-instruct' }),
   }),
   // Slot 7 — Asia reasoning (DeepSeek)
   Object.freeze({
@@ -112,17 +121,19 @@ export const SLOT_CONFIG = Object.freeze([
     role: 'web-grounded research',
     backup: Object.freeze({ provider: 'openrouter', model: 'google/gemini-2.5-pro' }),
   }),
-  // Slot 9 — Moonshot Kimi K2.6 (Asia frontier coding + agentic).
-  // Replaces qwen/qwen-2.5-coder-32b-instruct (2026-05-14 rev-2) to
-  // remove the Qwen×2 provider duplicate. Backup llama-4-maverick is
-  // NOT a primary in any other slot — satisfies the strict
-  // no-backup-duplicates-primary rule.
+  // Slot 9 — Meta Llama 4 Maverick (Asia/dev — frontier coding + agentic).
+  // Rebalanced 2026-05-15: llama-4-maverick promoted to primary after
+  // 5 consecutive rescues of the prior moonshotai/kimi-k2.6 primary
+  // (Kimi returned chronic envelope-parse failures + intermittent
+  // empty-content responses). Moonshot demoted to backup — kept on
+  // panel for fault diversity since llama-4-maverick is US/Meta while
+  // Kimi is Beijing/Moonshot.
   Object.freeze({
     provider: 'openrouter',
-    model: 'moonshotai/kimi-k2.6',
-    region: 'Asia (Beijing)',
+    model: 'meta-llama/llama-4-maverick',
+    region: 'Asia (Beijing → US/Meta after swap)',
     role: 'frontier coding + agentic',
-    backup: Object.freeze({ provider: 'openrouter', model: 'meta-llama/llama-4-maverick' }),
+    backup: Object.freeze({ provider: 'openrouter', model: 'moonshotai/kimi-k2.6' }),
   }),
   // Slot 10 — xAI Grok 4.3 (US real-time web-aware reasoning).
   // Replaces openai/gpt-4o (2026-05-14 rev-2) to remove the OpenAI×2
