@@ -8,7 +8,7 @@ import { loadFindings, summarize } from './lib/load-findings.mjs';
 const argDate = process.argv[2];
 const argEnv  = process.argv[3] || process.env.FLOWAI_DEV_SUT_URL ? 'dev-SUT' : 'dev-SUT';
 
-const DATE = argDate || new Date().toISOString().slice(0, 10);
+const DATE = argDate || process.env.FLOWAI_REPORT_DATE || new Date().toISOString().slice(0, 10);
 const RUN_ID = process.env.FLOWAI_RUN_ID || crypto.randomUUID();
 const SUITE_COMMIT = process.env.FLOWAI_SUITE_COMMIT || '';
 

@@ -4,7 +4,7 @@ import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { loadFindings } from './lib/load-findings.mjs';
 
-const DATE = process.argv[2] || new Date().toISOString().slice(0, 10);
+const DATE = process.argv[2] || process.env.FLOWAI_REPORT_DATE || new Date().toISOString().slice(0, 10);
 const findings = loadFindings();
 const out = path.resolve(`docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_${DATE}.csv`);
 

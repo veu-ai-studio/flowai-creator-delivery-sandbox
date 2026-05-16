@@ -49,6 +49,17 @@ async function main() {
   writeFileSync(path.join(FINDINGS_DIR, 'findings.ndjson'), '');
   writeFileSync(path.join(FINDINGS_DIR, 'counters.json'), '{}');
 
+  // Env normalisation — accept either ADVERSARIAL_TARGET or FLOWAI_DEV_SUT_URL.
+  if (process.env.ADVERSARIAL_TARGET && !process.env.FLOWAI_DEV_SUT_URL) {
+    process.env.FLOWAI_DEV_SUT_URL = process.env.ADVERSARIAL_TARGET;
+  }
+  // Stripe key alias — Doppler dev stores STRIPE_SECRET_KEY_TEST per spec.
+  if (process.env.STRIPE_SECRET_KEY_TEST && !process.env.STRIPE_SANDBOX_SECRET_KEY) {
+    process.env.STRIPE_SANDBOX_SECRET_KEY = process.env.STRIPE_SECRET_KEY_TEST;
+  }
+  log(`SUT URL: ${process.env.FLOWAI_DEV_SUT_URL || '(unset)'}`);
+  log(`Bypass token: ${process.env.X_TEST_BYPASS_TOKEN ? 'present' : 'absent'}`);
+
   const startedAt = new Date().toISOString();
   const t0 = Date.now();
 
@@ -70,9 +81,11 @@ async function main() {
   let pwCode = 0;
   if (browsersInstalled && !process.env.SKIP_PLAYWRIGHT) {
     log('PLAYWRIGHT adversarial UI suite...');
-    const project = process.env.W4_PLAYWRIGHT_PROJECT || 'desktop';
+    const projectsArg = process.env.W4_PLAYWRIGHT_PROJECT
+      ? [`--project=${process.env.W4_PLAYWRIGHT_PROJECT}`]
+      : ['--project=desktop', '--project=tablet', '--project=mobile'];
     const workers = process.env.W4_PLAYWRIGHT_WORKERS || '4';
-    const pwRes = await run('npx', ['playwright', 'test', '--config', 'playwright.config.js', `--project=${project}`, `--workers=${workers}`, '--reporter=list']);
+    const pwRes = await run('npx', ['playwright', 'test', '--config', 'playwright.config.js', ...projectsArg, `--workers=${workers}`, '--reporter=list']);
     pwCode = pwRes.code;
     log(`playwright exited ${pwRes.code}`);
   } else {

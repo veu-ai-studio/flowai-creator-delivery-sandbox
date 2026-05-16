@@ -4,7 +4,7 @@ import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { loadFindings, summarize } from './lib/load-findings.mjs';
 
-const DATE = process.argv[2] || new Date().toISOString().slice(0, 10);
+const DATE = process.argv[2] || process.env.FLOWAI_REPORT_DATE || new Date().toISOString().slice(0, 10);
 const findings = loadFindings();
 const { sev, status, total } = summarize(findings);
 const RUN_ID = process.env.FLOWAI_RUN_ID || crypto.randomUUID();
