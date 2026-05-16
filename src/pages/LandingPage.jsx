@@ -533,9 +533,49 @@ export default function LandingPage() {
 
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
 
+        {/* ── SECTION 0: HONEST VALUE PROPOSITION + RELEASE-STATE DISCLOSURE ── */}
+        {/* Plain, accurate description of what this tool actually does.
+            No marketing inflation, no fabricated certifications. The
+            release-state badge sets visitor expectations immediately
+            because the public URL otherwise looks like a SaaS landing
+            page. */}
+        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">
+                Pre-release · Internal use only
+              </span>
+              <span className="text-[10px] text-muted-foreground">v0.1 · VEU AI Studio personnel + licensed pilots</span>
+            </div>
+            <p className="text-sm text-foreground leading-relaxed">
+              <span className="font-semibold text-foreground">FlowAI</span> is VEU AI Studio's internal
+              governance assessment engine. Point it at a product (a live URL, a written description,
+              or pasted content/screenshots) and it runs an 8-step execution pipeline — Research,
+              Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — producing
+              per-step findings and a final Clearance verdict scored against a 50-point governance
+              threshold.
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              <span className="font-semibold text-foreground">What you get:</span> a per-step report
+              (one section per pipeline step) plus a Monitor summary with the numerical Clearance
+              score, the verdict band (Showcase-ready 45–50 · Demo-ready 30–44 · Internal-only
+              15–29 · Not-ready 0–14), and the specific findings driving the score.
+              <span className="font-semibold text-foreground"> What this is not:</span> a customer-
+              facing SaaS, a certified compliance product, or a tool with external case studies.
+              It is an internal engine in active development; outputs are honest assessments, not
+              marketing-grade demos.
+            </p>
+          </div>
+        </motion.section>
+
         {/* ── SECTION 2: THREE INPUT CARDS ── */}
         <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Step 1 — Select Your Input</p>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">
+            Setup 1 of 3 — Select your input
+            <span className="ml-2 font-normal normal-case tracking-normal text-muted-foreground/70">
+              (one of three setup steps; the 8-step pipeline runs after launch)
+            </span>
+          </p>
           <div className="grid grid-cols-1 gap-4">
             <CardA
               active={activeCard === 'A'}
@@ -571,7 +611,7 @@ export default function LandingPage() {
 
         {/* ── SECTION 3: OBJECTIVE ── */}
         <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Step 2 — What do you want to accomplish?</p>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Setup 2 of 3 — What do you want to accomplish?</p>
           <div className="rounded-xl border border-border bg-card p-4 space-y-3">
             <select
               value={objective}
@@ -608,7 +648,7 @@ export default function LandingPage() {
 
         {/* ── SECTION 4: OPERATION MODE ── */}
         <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Step 3 — Select Operation Mode</p>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Setup 3 of 3 — Select operation mode</p>
           <div className="grid grid-cols-1 gap-4">
 
             {/* Auto */}
@@ -624,7 +664,11 @@ export default function LandingPage() {
                 <span className={`text-sm font-bold ${mode === 'auto' ? 'text-primary' : 'text-foreground'}`}>Auto</span>
                 {mode === 'auto' && <span className="ml-auto text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">SELECTED</span>}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">FlowAI executes all 8 steps automatically. You review the final report.</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                FlowAI executes all 8 pipeline steps automatically — Research → Design → Build →
+                Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the
+                final report with the Clearance score and per-step findings.
+              </p>
               <div className="space-y-1.5" onClick={e => e.stopPropagation()}>
                 <p className="text-[10px] font-semibold text-muted-foreground">Analysis Depth</p>
                 <div className="flex gap-1.5">
@@ -654,8 +698,11 @@ export default function LandingPage() {
                 <span className={`text-sm font-bold ${mode === 'guided' ? 'text-amber-400' : 'text-foreground'}`}>Guided</span>
                 {mode === 'guided' && <span className="ml-auto text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">FlowAI proposes each step. You approve, modify, or skip before execution.</p>
-              <p className="text-[10px] text-muted-foreground">Minutes to hours · 8 approval gates</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                FlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or
+                skip each one before it executes.
+              </p>
+              <p className="text-[10px] text-muted-foreground">Minutes to hours · 8 approval gates across the execution pipeline</p>
             </div>
 
             {/* Manual */}
@@ -724,12 +771,37 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t border-border py-6 px-6 mt-8">
-        <div className="max-w-6xl mx-auto text-center text-[11px] text-muted-foreground space-y-1">
-          <div>FlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio</div>
-          <div>
-            <button onClick={() => navigate('/landing')} className="text-[11px] text-primary hover:text-primary/80 transition-colors">
+        <div className="max-w-6xl mx-auto text-center text-[11px] text-muted-foreground space-y-2">
+          <div>FlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio · Patent pending</div>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate('/privacy-policy')}
+              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+            >
+              Privacy Policy
+            </button>
+            <span className="text-muted-foreground/40">·</span>
+            <button
+              onClick={() => navigate('/terms-of-use')}
+              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+            >
+              Terms of Use
+            </button>
+            <span className="text-muted-foreground/40">·</span>
+            <button
+              onClick={() => navigate('/landing')}
+              className="text-[11px] text-primary hover:text-primary/80 transition-colors"
+            >
               About FlowAI →
             </button>
+          </div>
+          {/* Honest release-state disclosure — no fabricated certifications,
+              no customer testimonials, no compliance claims FlowAI doesn't hold. */}
+          <div className="text-[10px] text-muted-foreground/70 leading-relaxed pt-2">
+            FlowAI is a pre-release internal engine. It does <span className="font-semibold">not</span>{' '}
+            hold SOC 2, ISO 27001, or any third-party compliance certification at this time, and
+            there are no external customer case studies published. Use is limited to VEU AI Studio
+            personnel and licensed pilots until those gates are cleared.
           </div>
         </div>
       </footer>
