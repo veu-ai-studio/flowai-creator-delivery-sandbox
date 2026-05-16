@@ -527,16 +527,22 @@ async function runPanelReviewer({ entry, system, user, timeoutMs }) {
     );
   }
   // Slot 3 envelope-fail telemetry — Google Gemini 2.5 Pro. Added
-  // 2026-05-15 (W5b Panel Infra Repair) parallel to the Kimi line above
-  // after 4 consecutive Gemini envelope-flake events on CA-11 + earlier
-  // consultations. Same logging pattern; the backup adapter swap (Slot 3
-  // backup is now meta-llama/llama-3.3-70b-instruct, see slot-config.mjs)
-  // handles the rescue, this line gives future hardening visibility into
-  // the residual failure shape.
+  // 2026-05-15 (W5b Panel Infra Repair) parallel to the Kimi line above.
+  // Updated 2026-05-16 (W5b dispatch #2, Gemini Demote): gemini-2.5-pro
+  // logged its 6th consecutive JSON-envelope-flake failure on the W6
+  // auth-spec ratification consultation (triggering report: commit
+  // 556a751). The 6-flake pattern matches Kimi K2.6's pre-demotion
+  // record, so gemini-2.5-pro has been DEMOTED from Slot 3 primary
+  // to Slot 3 backup (see scripts/panel/slot-config.mjs Slot 3 block).
+  // This telemetry line still fires when Gemini is invoked as a backup
+  // and flakes again; it surfaces residual failure shape so future
+  // hardening can target real failure modes without speculation.
   if (!usable && entry.model === 'google/gemini-2.5-pro') {
     const preview = (content || '').slice(0, 160).replace(/\s+/g, ' ');
     process.stderr.write(
-      `[peer-review] slot-3-envelope-fail model=google/gemini-2.5-pro ` +
+      `[peer-review] slot-3-gemini-flake model=google/gemini-2.5-pro ` +
+      `(demoted-to-backup 2026-05-16 after 6 envelope flakes; ` +
+      `triggering report commit 556a751) ` +
       `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
     );
   }

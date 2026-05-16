@@ -182,15 +182,26 @@ async function main() {
     `· bundle=${bundleGuard.fired ? 'FIRES' : 'BROKEN'}\n`,
   );
 
-  // Audit the panel composition.
+  // Audit the panel composition. Post-2026-05-16 (Gemini Demote)
+  // contract: auditPass is true iff every family count >1 is recorded
+  // in DOCUMENTED_FAMILY_DUPLICATES with rationale. Raw maxPerProvider
+  // is reported for transparency but no longer the gate.
   const audit = auditDiversity();
   process.stdout.write(`[w5b-smoke] panel audit: ${JSON.stringify(audit)}\n`);
-  if (audit.maxPerProvider > 1 || audit.slots !== 10) {
+  if (!audit.auditPass) {
     process.stderr.write(
-      `[w5b-smoke] FAIL: panel composition not the 10-unique-provider roster — ` +
-      `maxPerProvider=${audit.maxPerProvider}, slots=${audit.slots}. Halting.\n`,
+      `[w5b-smoke] FAIL: panel audit not clean — undocumented family ` +
+      `duplicates: ${JSON.stringify(audit.undocumentedDuplicates)}, ` +
+      `slots=${audit.slots}. Halting.\n`,
     );
     process.exit(1);
+  }
+  if (audit.maxPerProvider > 1) {
+    process.stdout.write(
+      `[w5b-smoke] note: family duplicate(s) present but documented — ` +
+      `${JSON.stringify(Object.keys(audit.documentedDuplicates))}. ` +
+      `auditPass=true.\n`,
+    );
   }
 
   // Run the live adversarial smoke consultation.

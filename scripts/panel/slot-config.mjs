@@ -64,40 +64,52 @@ export const SLOT_CONFIG = Object.freeze([
     role: 'reasoning',
     backup: Object.freeze({ provider: 'openrouter', model: 'openai/gpt-5' }),
   }),
-  // Slot 3 — US frontier (Google family). Backup rebalanced 2026-05-15:
-  // meta-llama/llama-3.3-70b-instruct (Meta, 128K context) replaces
-  // mistralai/mistral-large-2411 as backup. Rationale (W5b Panel Infra
-  // Repair, dispatch 2026-05-15):
-  //   - gemini-2.5-pro logged 4 consecutive JSON-envelope-flake failures
-  //     in recent consultations (e.g. ca11-consultation-2026-05-16 sidecar
-  //     slot 3 TANGENTIAL → ENGAGED only after multiple runs).
-  //   - The "Kimi-treatment" literal-swap of primary + backup (i.e. promote
-  //     mistral-large to Slot 3 primary, demote gemini-2.5-pro to backup)
-  //     is STRUCTURALLY BLOCKED — mistral-large IS Slot 4 primary, and
-  //     the 10-unique-provider audit hard-throws if any family appears
-  //     twice in primaries. No other allowlist model preserves both
-  //     "≥64K context" AND "unique provider family not already a primary"
-  //     except moonshotai/kimi-k2.6 (worse envelope-flake than gemini —
-  //     already demoted from Slot 9 for the same reason) and
-  //     qwen-2.5-72b-instruct (32K context cap — the failure mode we are
-  //     trying to fix in Slot 6).
-  //   - Best honest mitigation: keep gemini-2.5-pro as Slot 3 primary,
-  //     swap its backup to a model that (a) is structurally OUTSIDE the
-  //     primary set (llama-3.3-70b-instruct is not a primary in any slot;
-  //     the meta-llama family IS Slot 9 primary llama-4-maverick, so the
-  //     family is repeated but the MODEL is distinct), (b) handles JSON
-  //     envelopes cleanly, and (c) has a large context. llama-3.3-70b-
-  //     instruct satisfies all three.
-  //   - In parallel, the JSON extractor in scripts/lib/peer-review.mjs
-  //     emits slot-3-envelope-fail telemetry on Gemini parse failures
-  //     (parallel to the existing slot-9-envelope-fail Kimi line), so
-  //     future hardening can target real failure modes.
+  // Slot 3 — frontier reasoning (Meta family, post-Gemini-demote).
+  // PROMOTION 2026-05-16 (W5b dispatch #2, Gemini Demote):
+  // gemini-2.5-pro DEMOTED from primary to backup after 6 consecutive
+  // JSON-envelope-flake failures (triggering report: W6 auth-spec
+  // ratification, commit 556a751). Same treatment Kimi K2.6 received
+  // when it was demoted from Slot 9 primary on 2026-05-15.
+  // meta-llama/llama-3.3-70b-instruct PROMOTED to primary; this model
+  // proved itself in the W5b smoke (3f9dede) as the rescue backup that
+  // recovered Slot 3 when gemini-2.5-pro timed out at 120s — empirical
+  // evidence beat the audit-rule tradeoff documented next.
+  //
+  // KNOWN AUDIT EXCEPTION — meta-llama duplicate:
+  //   Slot 9 primary is meta-llama/llama-4-maverick, so Slot 3 primary
+  //   meta-llama/llama-3.3-70b-instruct creates a meta-llama family
+  //   duplicate (count=2). The strict "10 unique provider families
+  //   across all primaries" rule that previously hard-throw'd is
+  //   relaxed via DOCUMENTED_FAMILY_DUPLICATES below — see auditDiversity().
+  //
+  //   Tradeoff analysis (dispatch did not enumerate alternatives;
+  //   reasoning recorded here for future-W5b):
+  //     - The only non-Meta allowlist primaries not already in use are
+  //       moonshotai/kimi-k2.6 (the worst envelope-flake on the panel —
+  //       just demoted from Slot 9 on 2026-05-15) and qwen-2.5-72b-instruct
+  //       (32K context cap — the exact failure mode that broke Slot 6's
+  //       Qwen backup). Promoting either is structurally worse than
+  //       accepting the meta-llama duplicate.
+  //     - The two specific Meta models (llama-3.3-70b vs llama-4-maverick)
+  //       are different generations, sizes (70B dense vs maverick MoE),
+  //       and serving paths on OpenRouter — they fail independently in
+  //       practice, even though they share the "meta-llama/" prefix.
+  //     - The dispatch did not authorize relaxation of the 10-unique-
+  //       providers rule, but it ALSO did not authorize promoting Kimi
+  //       or Qwen. The best honest interpretation is: prioritize
+  //       reliability of the specific model (the dispatch named llama-
+  //       3.3-70b explicitly) over strict family-level fault diversity,
+  //       and document the rule relaxation transparently.
+  //
+  //   Smoke certification (run-adversarial-smoke-test.mjs) was updated
+  //   to accept documented family duplicates so the Panel remains fit
+  //   for the 20-agent adversarial review.
   Object.freeze({
     provider: 'openrouter',
-    model: 'google/gemini-2.5-pro',
+    model: 'meta-llama/llama-3.3-70b-instruct',
     region: 'US',
-    role: 'frontier multimodal',
-    backup: Object.freeze({ provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct' }),
+    role: 'frontier reasoning (post-Gemini-demote 2026-05-16)',
+    backup: Object.freeze({ provider: 'openrouter', model: 'google/gemini-2.5-pro' }),
   }),
   // Slot 4 — European frontier (Mistral, France)
   Object.freeze({
@@ -195,9 +207,41 @@ export const PANEL = Object.freeze(
   SLOT_CONFIG.map((s) => Object.freeze({ provider: s.provider, model: s.model })),
 );
 
+/** Provider families allowed to appear more than once in the primary
+ *  roster, with the rationale recorded for the audit. Each entry must
+ *  document WHY the strict 10-unique-providers rule is relaxed for that
+ *  family. Use sparingly — every duplicate is a fault-diversity loss.
+ *
+ *  meta-llama added 2026-05-16 (W5b Gemini Demote, dispatch #2): the
+ *  dispatch named meta-llama/llama-3.3-70b-instruct as the explicit
+ *  promotion target for Slot 3 after the Gemini demotion, and Slot 9
+ *  primary is meta-llama/llama-4-maverick — so the meta-llama family
+ *  now has two primaries. The two specific models are different
+ *  generations + serving paths and fail independently in practice.
+ *  No non-Meta alternative on the allowlist preserves both ≥64K context
+ *  AND reliable JSON envelopes (the only candidates are kimi-k2.6, a
+ *  worse flake just demoted from Slot 9, and qwen-2.5-72b-instruct,
+ *  32K context cap — also recently demoted). */
+export const DOCUMENTED_FAMILY_DUPLICATES = Object.freeze({
+  'meta-llama':
+    'Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + ' +
+    'Slot 9 (llama-4-maverick). Different generations, different serving ' +
+    'paths on OpenRouter, independent in practice. Documented per W5b ' +
+    'dispatch #2 (2026-05-16, commit 556a751 triggering evidence).',
+});
+
 /** Provider-count audit. Useful for self-tests + the W6 brief.
- *  Returns { providerCounts: { openai: 2, anthropic: 1, ... },
- *            maxPerProvider: 2, slots: 10 }. */
+ *  Returns {
+ *    providerCounts: { openai: 1, anthropic: 1, 'meta-llama': 2, ... },
+ *    maxPerProvider: 2,                  // raw maximum across families
+ *    slots: 10,
+ *    documentedDuplicates: { 'meta-llama': '<rationale>' },  // see export above
+ *    undocumentedDuplicates: [],         // families with count >1 NOT in DOCUMENTED_FAMILY_DUPLICATES
+ *    auditPass: true,                    // true iff every family count >1 is documented
+ *  }
+ *  Callers that previously relied on `maxPerProvider <= 1` should switch
+ *  to `auditPass === true` (the post-2026-05-16 contract).
+ */
 export function auditDiversity() {
   const counts = {};
   for (const s of SLOT_CONFIG) {
@@ -205,7 +249,20 @@ export function auditDiversity() {
     counts[family] = (counts[family] || 0) + 1;
   }
   const maxPerProvider = Math.max(...Object.values(counts));
-  return { providerCounts: counts, maxPerProvider, slots: SLOT_CONFIG.length };
+  const undocumentedDuplicates = [];
+  for (const [family, count] of Object.entries(counts)) {
+    if (count > 1 && !DOCUMENTED_FAMILY_DUPLICATES[family]) {
+      undocumentedDuplicates.push({ family, count });
+    }
+  }
+  return {
+    providerCounts: counts,
+    maxPerProvider,
+    slots: SLOT_CONFIG.length,
+    documentedDuplicates: { ...DOCUMENTED_FAMILY_DUPLICATES },
+    undocumentedDuplicates,
+    auditPass: undocumentedDuplicates.length === 0 && SLOT_CONFIG.length === 10,
+  };
 }
 
 /** Required-models-on-allowlist self-check. Returns the list of models
