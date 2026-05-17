@@ -177,6 +177,58 @@ Mode-agnostic — Orchestra management runs regardless of operator mode. Per-pro
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+Emits `agent.cost.signal.v1` before each LLM call (daily 03:00 UTC research
+loop + per-candidate fit assessment). Agent #23 is the sole canonical
+enforcement owner. Call order per Cluster A §2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_26_orchestra_research.eventCountMin`
+OR per-agent default: `eventCountMin: 1` (clamped to [1, 1000]).
+- Mode 1 + Mode 2 SUB-2A: empty candidate stream → no envelope; log
+  trace-level "no-candidates" (silence-is-normal). On first cycle, the
+  CEO-supplied 13-candidate seed list ALWAYS satisfies threshold.
+- Mode 3A: degrade per Cluster B §2.7 v2 R1 if dataQualityScore ≥ 0.3.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `degrade-on-any`
+(candidate streams from #11, #15, #17, community webhooks are independent
+inputs; partial coverage still produces useful discovery).
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3); Orchestra composition is portfolio-
+wide and mode-agnostic. `pipelineMode` field omitted per Cluster C §2.4
+v2 R2. Default Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits the 7 canonical `26.orchestra.*` topics per ENTRY 005
+(candidate / admitted / candidate_rejected / candidate_panel_gate /
+deprecated / lifecycle_state_changed / candidate_reactivated). All already
+in §14.1 per ENTRY 005 — verify presence at engineering dispatch (per
+spec §9 AC-26.11). Cross-cluster topics ship in P0 patch.
+
+**Cluster E — Authority-ceiling integration** (PER CLUSTER E v2 R3 REVISION):
+**Per Cluster E v2 R3, Agent #26's primary charter REVERTS to `[recommend_only]`.**
+Elevated authority (the auto-admission write path) lives in a NEW
+EXECUTOR_REGISTRY sibling `orchestra-research-executor` with
+`[auto_write_internal, requires_human_gate]`. This Agent #26 primary spec
+no longer carries dual-authority directly. CEO re-disposition of
+CA-9-Q4=(b) required to ratify the supersession; pending CEO decision the
+NEW sibling Executor handles all admission writes. Cluster E §3.1 block
+(advisory cache + BaseAgent.guard authoritative check + mid-request
+checkpoint handling) is added to the SIBLING spec, not this primary spec.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2.
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Selection re-read per dispatch. Tier-downgrade per Cluster F §2.5 v2 R2.
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
