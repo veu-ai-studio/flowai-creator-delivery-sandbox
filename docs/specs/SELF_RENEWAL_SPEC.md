@@ -743,12 +743,12 @@ This question is carried unchanged from v1 (`GQ5-PREFIRST` ratified 7/8 quorum-p
 
 ### G-Q6 — Configurable `selfRenewalSubstantialThreshold` integer (v4 R1)
 
-§6.4 v4 restores configurability by adding `ProductRegistry.selfRenewalSubstantialThreshold` (integer, default `+5`, operator-configurable per product). v3's hardcoded `+5` is removed; the threshold becomes a per-product knob that controls when a delta is labelled "substantial improvement" in the PR body and audit-log entries. Cross-field validation requires `selfRenewalSubstantialThreshold > selfRenewalMinimumDelta`. Is configurable `+5`-default the right shape?
+§6.4 v4 restores configurability by adding `ProductRegistry.selfRenewalSubstantialThreshold` (integer, default `+5`, operator-configurable per product). v3's hardcoded `+5` is removed; the threshold becomes a per-product knob that controls when a delta is labelled "substantial improvement" in the PR body and audit-log entries. Cross-field validation requires `selfRenewalSubstantialThreshold >= selfRenewalMinimumDelta`. Is configurable `+5`-default the right shape?
 
 - (a) Configurable integer with `+5` default is correct — operators tune "substantial" to their product's value model (e.g. raise to `+10` for products where each Five-Layer point is a major win, lower to `+3` for high-finding-density products); `+5` default preserves a sensible out-of-box meaning.
 - (b) Insufficient — Phase A should also expose `selfRenewalModestThreshold` (integer, default `+1`) so PR-body labels can distinguish "no improvement / modest / substantial" with three bands instead of just "substantial vs not"; operators need finer-grained delta labelling for review-queue triage.
 - (c) Over-engineered — the substantial-vs-modest label is cosmetic; collapse `selfRenewalSubstantialThreshold` into `selfRenewalMinimumDelta` (one field, one knob) and let operators who want a "substantial" label render it client-side in their own dashboards.
-- (d) Wrong validation — requiring `selfRenewalSubstantialThreshold > selfRenewalMinimumDelta` is too strict; operators may legitimately want `selfRenewalMinimumDelta = 5` (open only substantial-or-better PRs) AND `selfRenewalSubstantialThreshold = 5` (every PR that opens is by definition substantial). The validation should be `>=`, not `>`.
+- (d) Wrong validation — requiring `selfRenewalSubstantialThreshold >= selfRenewalMinimumDelta` is too strict; operators may legitimately want `selfRenewalMinimumDelta = 5` (open only substantial-or-better PRs) AND `selfRenewalSubstantialThreshold = 5` (every PR that opens is by definition substantial). The validation should be `>=`, not `>`.
 - (e) INSUFFICIENT_INFORMATION.
 
 ### G-Q7 — Disposition: is v4 ready for promotion?
