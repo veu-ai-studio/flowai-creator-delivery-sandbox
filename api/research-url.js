@@ -21,13 +21,14 @@ import { crawl, summarisePageForPrompt } from './_lib/crawler.js';
 import { recordCost } from './_lib/cost.js';
 import { requireAuthHard } from './_lib/auth.js';
 import { Agent21AggressiveCrawlConductor } from '../src/lib/agents/agents/Agent21AggressiveCrawlConductor.js';
+import { getServerMessageBus } from './_lib/messageBus.js';
 
 // Build a minimal Agent #21 Conductor instance for the handler. Memory-
 // only stores are sufficient — Phase 1 emits a pub/sub signal but does
 // NOT persist crawl state (Phase 2-3 will when ProductSSOT writes graduate).
 function buildAgent21Conductor() {
   const clock = { now: () => Date.now() };
-  const messageBus = { publish: async () => {}, subscribe: () => () => {} };
+  const messageBus = getServerMessageBus();
   const auditLog = { write: async () => {} };
   const logger = {
     info: (...a) => console.log('[agent21-conductor]', ...a),
