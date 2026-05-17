@@ -6,6 +6,8 @@ This spec is frozen at v3 (commit `be594e3`) as the Phase 3 implementation basel
 
 Phase 3 builds against the 4 supermajority-ratified positions: cross-origin REFUSE, strict same-origin, MFA fail-loud, no screenshots (Phase 4).
 
+**Phase 3 implementation: COMPLETE 2026-05-16.** All 5 chunks committed. 1656/1656 tests pass. All 10 invariants tested. All 9 i18n language families tested. See commits `7727f8d` (CHUNK 1 — blueprint), `fcb4de8` (CHUNK 2 — Executor + 3 auth helpers + REGISTRY), `fdad6b7` (CHUNK 3 — scrubArtifacts), `8daec3f` (CHUNK 4 — endpoint + Browserless + auditEntry; commit mis-labeled "W3" due to a coordination defect — the W5a CHUNK 4 files are present and correct), `076a35b` (CHUNK 5 — test surface + 2 production fixes; commit mis-labeled "W6" for the same reason).
+
 ---
 
 **Status:** DRAFT v3 (Phase 2 of Master Phased Build, Panel ruling `30e5edb`). NOT canonical SSOT. NOT yet engineering-ready — requires W6 adversarial Panel **re-ratification** before Phase 3 implementation. v1 was `NOT_RATIFIED` at commit `556a751` with 5 conditions; v2 (commit `b782e2f`) addressed 5 conditions per CEO disposition but the v2 Panel re-ratification surfaced 4 remaining targeted concerns; v3 (this commit) addresses all 4 per locked CEO decisions on Q3 / Q4 / Q6 / Q7.
@@ -144,7 +146,7 @@ While authenticated, the Conductor executes ONLY these DOM events on the target 
 **i18n destructive regex (Panel condition 4 — v3: 9 named language families):**
 
 ```
-/\b(
+/(
   // English
   delete|remove|cancel|sign\s*out|log\s*out|terminate|destroy|wipe|reset|purge|deactivate|disable|unsubscribe
   // Spanish
@@ -163,10 +165,12 @@ While authenticated, the Conductor executes ONLY these DOM events on the target 
   | 삭제|제거|취소|로그아웃|사인아웃|종료|비활성화|해지
   // Arabic (v3 — Panel Q6-v3 expansion)
   | حذف|إزالة|إلغاء|تسجيل\s*الخروج|إنهاء|تعطيل|إلغاء\s*الاشتراك
-)\b/iu
+)/iu
 ```
 
-The regex matches the Unicode `u` flag so non-Latin scripts (Chinese ideographs, Japanese kanji/kana, Korean Hangul, Arabic) match correctly. **v3 expansion (Panel Q6-v3):** the floor is now 9 language families (en/es/fr/pt/de/zh-CN, +ja, +ko, +ar). Per-product i18n configuration may still extend with additional locales at product registration (Phase 3 implementation may expose a `productConfig.destructiveTermsExtra: string[]` knob).
+> **Implementation note (post-CHUNK-5 spec cleanup, 2026-05-16):** outer `\b` word-boundary anchors are omitted because JavaScript's `\b` is ASCII-only even with the `u` flag — non-Latin scripts (Arabic, Japanese, Korean, Chinese) do not match `\b` boundaries. Implementation uses boundaryless matching; false-positive risk is accepted per spec §6a.4 "false-positives accepted" stance (carried forward from v2). Earlier versions of this spec showed `/\b(...)\b/iu` literally; CHUNK 5 i18n tests surfaced the bug and the implementation diverged from spec-verbatim to satisfy the §11 #6 "partial coverage is non-conformant" acceptance criterion. The implementation source of truth is `src/lib/agents/auth/destructiveDenylist.js` `DESTRUCTIVE_TERM_RE` (boundaryless form above).
+
+The regex uses the Unicode `u` flag so non-Latin scripts (Chinese ideographs, Japanese kanji/kana, Korean Hangul, Arabic) match correctly. **v3 expansion (Panel Q6-v3):** the floor is now 9 language families (en/es/fr/pt/de/zh-CN, +ja, +ko, +ar). Per-product i18n configuration may still extend with additional locales at product registration (Phase 3 implementation may expose a `productConfig.destructiveTermsExtra: string[]` knob).
 
 **Honest false-negative acknowledgment.** This list does NOT cover:
 - Custom CSS class names that don't match the convention (e.g. `bg-red-500` styling a delete button via Tailwind without any class-name signal).
