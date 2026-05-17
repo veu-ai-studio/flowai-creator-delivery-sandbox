@@ -49,6 +49,8 @@ import {
   shouldVerify,
   runVerificationRecrawl,
 } from '../verification.js';
+import { runOptionC } from '../renewal/optionCPipeline.js';
+import { randomUUID } from 'node:crypto';
 
 const EXECUTOR_KEY = 'self-renewal-executor';
 const HOT_TTL_SECONDS = 24 * 60 * 60;
@@ -462,6 +464,48 @@ export class Agent3SelfRenewalExecutor extends BaseAgent {
       }),
       verification,
     });
+  }
+
+  /**
+   * Self-Renewal Phase A — Option C end-to-end pipeline entry point.
+   *
+   * Delegates to runOptionC() which wires Modules 1-9 into one call:
+   * rate-cap → App token → preScore → fix gen → branch+commit →
+   * Vercel preview → postScore → delta policy → PR open (when warranted)
+   * → governance audit write.
+   *
+   * Emits an audit envelope on completion or failure. The Executor's
+   * own audit-log sink receives the runOptionC return shape verbatim
+   * (no credential bytes in the shape — guaranteed by Modules 2/3/4/5
+   * which never surface tokens / API keys in their return objects).
+   *
+   * @param {object} args
+   * @param {string} args.githubRepoUrl
+   * @param {object} args.issue
+   * @param {string} args.productScope
+   * @param {string} [args.runId]
+   * @param {object} [args.sourceHints] — reserved for future use; currently ignored
+   *
+   * @returns {Promise<object>} runOptionC envelope (see optionCPipeline.js)
+   */
+  async executeOptionC({ githubRepoUrl, issue, productScope, runId, sourceHints }) {
+    const { getSupabase } = await import('../../../../api/_lib/supabase.js');
+    const supabase = (() => {
+      try { return getSupabase(); } catch { return null; }
+    })();
+    const result = await runOptionC({
+      productId: productScope,
+      githubRepoUrl,
+      issue,
+      runId: runId || randomUUID(),
+      supabase,
+      environment: this.deps.environment || 'prd',
+    });
+    await this._emitAuditLog(
+      result.ok ? 'agent.option_c.deployed' : 'agent.option_c.failed',
+      result,
+    );
+    return result;
   }
 
   /**
