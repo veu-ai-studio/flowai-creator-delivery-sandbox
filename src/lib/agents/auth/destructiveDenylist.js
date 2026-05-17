@@ -24,9 +24,23 @@
 
 // v3 spec line 137 verbatim, expanded with v4-withdrawn-back-to-v3 keeping
 // 9-language floor (per the freeze: 9 stays, expansion process withdrawn).
-// Unicode `u` flag mandatory so non-Latin scripts match correctly.
+//
+// Spec-text divergence (discovered by CHUNK 5 tests): the v3 spec literal
+// uses `\b(...)\b` outer boundaries, but JavaScript's `\b` is ASCII-word-
+// character based even with the `u` flag — it does NOT match the boundary
+// between non-word characters and CJK/Hangul/Arabic codepoints. With the
+// spec-verbatim `\b` regex, Arabic / Japanese / Korean / Chinese terms
+// failed to match (verified by CHUNK 5 test runs). The 9-language floor
+// is a spec acceptance criterion (§11 #6 — "partial coverage is non-
+// conformant"), so this implementation drops the outer `\b` boundaries
+// to make all 9 families actually match. The spec's false-positives-
+// acceptable stance (§5 Honest false-negative acknowledgment + §6a.4
+// v2's "false-positives accepted" comment carried forward) covers the
+// trade-off: terms like "delete" inside "deleted"/"deletion" now match,
+// which is the safer failure mode (extra blocking, not under-blocking).
+// Unicode `u` flag is retained so CJK ideographs match correctly.
 export const DESTRUCTIVE_TERM_RE = new RegExp(
-  '\\b(' +
+  '(' +
     // English
     'delete|remove|cancel|sign\\s*out|log\\s*out|terminate|destroy|wipe|reset|purge|deactivate|disable|unsubscribe' +
     '|' +
@@ -53,7 +67,7 @@ export const DESTRUCTIVE_TERM_RE = new RegExp(
     '|' +
     // Arabic (v3 expansion — Panel Q6-v3)
     'حذف|إزالة|إلغاء|تسجيل\\s*الخروج|إنهاء|تعطيل|إلغاء\\s*الاشتراك' +
-  ')\\b',
+  ')',
   'iu',
 );
 

@@ -388,7 +388,8 @@ export class Agent21AggressiveCrawlConductorExecutor extends BaseAgent {
         await page.click(selectors.submit);
       } catch (loginErr) {
         // Login form selectors didn't match — fail-loud per Invariant 3.
-        await this._closeContextSafe(context);
+        // The finally{} block below handles context cleanup; we just
+        // return the failure envelope directly.
         return Object.freeze({
           ok: false,
           authFailed: true,
@@ -416,7 +417,7 @@ export class Agent21AggressiveCrawlConductorExecutor extends BaseAgent {
       const postLoginSnapshot = await this._snapshotPageForMfa(page);
       const mfaResult = detectMfaChallenge(postLoginSnapshot);
       if (mfaResult.isMfaChallenge) {
-        await this._closeContextSafe(context);
+        // The finally{} block below handles context cleanup.
         return buildMfaFailureEnvelope({
           startUrl: url,
           attemptedAt: new Date(startedAt).toISOString(),
