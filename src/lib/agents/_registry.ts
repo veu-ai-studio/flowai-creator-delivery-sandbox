@@ -631,6 +631,33 @@ const EXECUTORS: ExecutorRecord[] = [
       'two consecutive build_failed within 24h → disable fork-and-fix, alert oncall. ' +
       'remediation throws → escalate to Ops Runner Alpha #21.',
   },
+  {
+    key: 'aggressive-crawl-conductor-executor',
+    agentId: 21,
+    name: 'Aggressive Crawl Conductor Executor',
+    // 'cross-step' so it does NOT compete with the cross-step registration of
+    // the Agent #21 recommend-only primary (Phase 1, commit 83fb20a). The
+    // executor is invoked out-of-band by /api/agent/21/execute.js (CHUNK 4),
+    // not by Auto Runner step machinery directly. Phase 3 graduation per
+    // AUTH_TRAVERSAL_SECURITY_SPEC v3 (frozen baseline at commit be594e3,
+    // freeze notice at b534d34) — implements the auth wall + memory-only
+    // storageState per Invariants 2, 3, 4, 5.
+    mode: 'cross-step',
+    authority: ['auto_write_internal', 'requires_human_gate'],
+    requiredCredentials: ['BROWSERLESS_API_KEY', 'ANTHROPIC_API_KEY'],
+    consumes: ['21.crawl.completed.v1'],
+    produces: [
+      '21.credentialed.crawl.started.v1',
+      '21.credentialed.crawl.completed.v1',
+      '21.credentialed.crawl.failed.v1',
+    ],
+    escalationPolicy:
+      'MFA / CAPTCHA / 401 / 403 → fail-loud per Invariant 3, return ok:false with ' +
+      "authFailureReason: 'mfa_required'|'invalid_credentials'|'captcha_required'|'login_form_not_found'. " +
+      'No retry, no MFA bypass attempt, no continue-unauth downgrade. ' +
+      'Memory-only storageState — under memory pressure the run fails loud ' +
+      '(Invariant 2 MUST; non-conformant to spill to disk under any condition).',
+  },
 ];
 
 function deepFreezeExecutor(e: ExecutorRecord): ExecutorRecord {
