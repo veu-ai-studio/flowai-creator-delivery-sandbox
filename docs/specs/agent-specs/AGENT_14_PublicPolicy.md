@@ -129,6 +129,47 @@ Mode-agnostic — Public Policy runs on schedule regardless of operator mode.
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+Emits `agent.cost.signal.v1` before each LLM call (monthly regulatory tracker
+analysis + per-candidate compliance check). Agent #23 is the sole canonical
+enforcement owner. Call order per Cluster A §2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_14_public_policy.bodyContentCharsMin`
+OR per-agent default: `bodyContentCharsMin: 500` (clamped to [100, 100_000];
+regulatory documents have substantive content; very short fetches indicate
+broken trackers).
+- Mode 1 + Mode 2 SUB-2A: below threshold → emit
+  `agent.data_quality.insufficient.v1` and halt; populate provenance with
+  `tracker-empty` reason.
+- Mode 3A: degrade per Cluster B §2.7 v2 R1 if dataQualityScore ≥ 0.3.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `degrade-on-any`
+(partial tracker set still produces useful compliance signal).
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted per
+Cluster C §2.4 v2 R2. Default Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits per §4 — `14.regulation.new.v1`, `14.regulation.update.v1`,
+`14.compliance.brief.weekly.v1`, plus charter-expansion topics
+`14.policy_assessment.v1`, `14.carveout_flag.v1`. Cross-cluster topics ship
+in P0 patch.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2
+(regulatory text is dense; medium tier needed for quality).
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Selection re-read per dispatch. Tier-downgrade per Cluster F §2.5 v2 R2.
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
