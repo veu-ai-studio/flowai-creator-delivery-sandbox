@@ -155,6 +155,57 @@ Step 8 — `monitor`. Wired via `OrchestratorHub.registerStepOwner('monitor', ct
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+This agent emits `agent.cost.signal.v1` before each LLM call (per-feedback
+sentiment classification + composite final-report). It does NOT self-enforce
+`monitorBudgetCap`. Agent #23 is the sole canonical enforcement owner. Call
+order per Cluster A §2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_10_monitor.eventCountMin`
+OR per-agent default: `eventCountMin: 5` (clamped to [1, 1000]). Multi-stream
+agent (per Cluster B §2.4.1 v2 R3): customer-feedback stream weight 0.5;
+anomaly stream weight 0.3; drift-detection stream weight 0.2.
+- Mode 1 + Mode 2 SUB-2A: below threshold → emit
+  `agent.data_quality.insufficient.v1` and halt.
+- Mode 3A (per Cluster B §2.7 v2 R1): if `dataQualityScore ≥ 0.3`, may emit
+  final report with `outputQuality: 'degraded'` — operator sees partial
+  signal; below 0.3 → halt.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `degrade-on-any` for most
+upstreams (final report is useful with partial pipeline signal);
+`hard-halt-on-any` for missing `8.audit.completed.v1` (cannot produce
+clearance decision without audit score).
+
+**Cluster C — Mode behavior:** Phase 1 agent output is identical across all
+pipeline modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted
+from emitted envelopes per Cluster C §2.4 v2 R2. Phase 2 Executor (separate
+EXECUTOR_REGISTRY sibling) is Pattern P3 (active only in Mode 2 SUB-2A /
+Mode 3A for ProductSSOT writes). Default behavior on missing `pipelineMode`
+is Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `10.metric.v1`, `10.health.v1`, `10.anomaly.v1`,
+`10.customer.feedback.v1`, `10.customer.issue.v1`, `10.ssot.updated.v1`
+plus the final clearance-decision envelope. Cross-cluster topics ship in
+P0 patch. Agent #10's emit topics ship in Deferred set with first runtime
+commit. Topic names comply with Cluster D §2.2 regex.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `low`; tier-policy `strict` per Cluster F §2.1.2 (sentiment
+classification runs at high feedback volume; cost-controlled tier mandatory).
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].low`.
+2. `FLOWAI_MODEL_TIER_LOW` from Doppler.
+3. `FLOWAI_MODEL_TIER_LOW_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.low` (canonical low-tier model).
+Selection re-read per dispatch. Strict policy means no tier-downgrade-on-
+budget-denial (halt immediately on `reserve()` denial — sentiment volume
+makes downgrade un-economical).
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
