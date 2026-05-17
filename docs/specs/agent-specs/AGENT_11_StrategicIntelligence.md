@@ -128,6 +128,50 @@ Mode-agnostic — Strategic Intelligence runs on schedule regardless of operator
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+Emits `agent.cost.signal.v1` before each LLM call (per-candidate classification +
+monthly digest). Agent #23 is the sole canonical enforcement owner. Call order
+per Cluster A §2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_11_strategic_intelligence.eventCountMin`
+OR per-agent default: `eventCountMin: 1` (clamped to [1, 1000]).
+- Mode 1 + Mode 2 SUB-2A: below threshold → emit
+  `agent.data_quality.insufficient.v1` and halt; populate provenance with
+  `tracker-empty` reason for empty curated trackers.
+- Mode 3A (per Cluster B §2.7 v2 R1): if `dataQualityScore ≥ 0.3`, may
+  emit `11.platform.discovery.v1` with `outputQuality: 'degraded'`.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `degrade-on-any` (cross-
+step agent; partial tracker coverage still produces useful discovery).
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted from
+emitted envelopes per Cluster C §2.4 v2 R2. Default behavior on missing
+`pipelineMode` is Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits per §4 — `11.brief.weekly.v1`, `11.alert.material.v1`,
+`11.trajectory.report.v1` (per `_registry.ts`) plus charter-expansion topics
+`11.platform.discovery.v1`, `11.carveout_flag.v1`,
+`11.marketplace_intelligence_report.v1`. Cross-cluster topics ship in P0
+patch. Agent #11's emit topics ship in Deferred set with first runtime
+commit. G11-Q4 from the original spec is resolved by Cluster D — update
+`_registry.ts` to include all 6 topics at engineering dispatch.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2.
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Selection re-read per dispatch. Tier-downgrade per Cluster F §2.5 v2 R2
+(medium → low → free; max 3 attempts).
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
