@@ -151,6 +151,59 @@ Agent #6's behavior **does not differ by mode**. The mode-aware divergence happe
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+This agent emits `agent.cost.signal.v1` before any LLM call. It does NOT
+self-enforce budget caps. Agent #23 Cost Governor is the sole canonical
+budget enforcement owner. Mandatory call order per Cluster A §2.6 v2 R4:
+`getCeiling()` → `BaseAgent.guard()` → `costGovernor.reserve()` → Orchestra
+dispatch → `costGovernor.settle()`. Heartbeat every 30s for dispatches that
+may run >60s wall-clock (e.g. multi-page crawl analysis). G6-Q4 from the
+original spec is resolved by Cluster A.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_6_research.bodyContentCharsMin`
+OR per-agent default: `bodyContentCharsMin: 1000` (clamped to [100, 100_000]
+per Cluster B §2.1 v2 R2). Alternate metric for ACE re-use: `pageCountMin: 3`
+(clamped to [1, 50]).
+- Mode 1 + Mode 2 SUB-2A: below threshold → emit
+  `agent.data_quality.insufficient.v1` and halt per Cluster B §2.5; populate
+  `provenance.omissionReasons[]` (auth-gated / crawl-cap-reached / etc).
+- Mode 3A (per Cluster B §2.7 v2 R1): if `dataQualityScore ≥ 0.3`, may
+  emit `6.research.brief.v1` with `outputQuality: 'degraded'` + full
+  provenance; below 0.3 → halt even in Mode 3A.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `hard-halt-on-any`
+(Agent #21 ACE Conductor) — Research cannot meaningfully operate without
+crawl input. G6-Q3 from the original spec is resolved by Cluster B v2.
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted from
+emitted envelopes per Cluster C §2.4 v2 R2; downstream tracing uses `runId`
+lineage to AutoRunner context. Default behavior on missing `pipelineMode`
+is Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `6.research.brief.v1` per §4. Cross-cluster topics
+(`agent.cost.signal.v1`, `agent.data_quality.insufficient.v1`, etc.) ship
+in the Cluster D §2.1.0 P0 patch commit. Agent #6's own emit topic ships
+in the Deferred set per §2.1.0-Def with this agent's first runtime commit
+(per-agent micro-amendment to §14.1). Topic name complies with Cluster D
+§2.2 regex.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2.
+LLM dispatches use canonical tier-keyed selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium` (highest precedence).
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6` (final fallback).
+Selection re-read per dispatch. Never hardcode a model name in agent code.
+Tier-downgrade on `reserve()` denial per Cluster F §2.5 v2 R2 (medium →
+low → free; max 3 attempts).
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
