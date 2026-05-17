@@ -44,6 +44,7 @@ import {
   buildAuthCrawlAuditEntry,
   buildAuthCrawlFailureAuditEntry,
 } from '../../../src/lib/agents/auth/auditEntry.js';
+import { getServerMessageBus } from '../../_lib/messageBus.js';
 
 const SYNC_TIMEOUT_MS = 25_000;
 
@@ -279,10 +280,7 @@ function buildExecutor({ productScope, browser, options }) {
   // recommend-only primary at Phase 1 used the same minimal-stub
   // pattern; productionising the deps is a separate dispatch).
   const clock = { now: () => Date.now() };
-  const messageBus = {
-    publish: async () => {},
-    subscribe: () => () => {},
-  };
+  const messageBus = getServerMessageBus();
   const auditLog = {
     write: async (entry) => {
       // Backstop: log entries through stdout so they're captured by
