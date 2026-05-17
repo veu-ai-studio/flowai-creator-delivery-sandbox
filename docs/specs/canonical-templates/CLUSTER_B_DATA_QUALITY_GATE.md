@@ -1,16 +1,22 @@
-# Cluster B — Minimum Data Quality Gate (Canonical Template, v2)
+# Cluster B — Minimum Data Quality Gate (Canonical Template, v3)
 
-**Status:** DRAFT v2 — Panel conditions applied; pending W6 re-ratification.
-**Version history:** v1 (commit `a5f295d`, 2026-05-16) → v2 (this commit, 2026-05-17 — Panel `PLURALITY_CLB-REVISE` 4/9 conditions R1–R4 applied per W3 Dispatch #10).
+**Status:** DRAFT v3 — Panel conditions B1–B4 applied; pending W6 re-ratification.
+**Version history:** v1 (commit `a5f295d`, 2026-05-16) → v2 (commit `87b4659`, 2026-05-17, Panel `PLURALITY_CLB-REVISE` 4/9 R1–R4) → v3 (this commit, 2026-05-17, Panel v2 ratification conditions B1–B4 applied per W3 Dispatch #12).
 **Author:** W3.
-**Anchor canonical:** Rev-2.1 §6 (Aggressive Crawling + Resolution Contract — partial-coverage handling), §15.1 row 6 (Agent #6 Research block semantic per commit `0fc8851`), CA-10-A.2 ProductSSOT `governance_record_entry` schema, ENTRY 006 §7.6 (GTM Readiness 4-prerequisite gate), CA-12 v3 §A.1 (Mode 3A operator-attested source path).
-**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Top-3 Finding #2 + Batch 1 objection #13. **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` (W6 Dispatch #16, commit `10b13f9`) — `PLURALITY_CLB-REVISE` 4/9.
+**Anchor canonical:** Rev-2.1 §6 (Aggressive Crawling + Resolution Contract — partial-coverage handling), §14.1 (canonical topic catalogue + canonical weight registry per v3 B1), §15.1 row 6 (Agent #6 Research block semantic per commit `0fc8851`), CA-10-A.2 ProductSSOT `governance_record_entry` schema, ENTRY 006 §7.6 (GTM Readiness 4-prerequisite gate), CA-12 v3 §A.1 (Mode 3A operator-attested source path).
+**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Top-3 Finding #2 + Batch 1 objection #13. **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` `PLURALITY_CLB-REVISE` 4/9. **v3 conditions:** `docs/panel-consultations/cluster-templates-v2-ratification-2026-05-17.md` B1–B4.
 
-**v2 revisions applied (per W3 Dispatch #10):**
-- **R1** — streaming escape valve: Mode 3A agents (operator-attested source path) MAY produce **degraded output** instead of MUST halt, marked `outputQuality: 'degraded'` with full provenance. Mode 1 + Mode 2 SUB-2A retain halt-not-produce. §2.5 + §2.7 added; halt semantics refined.
-- **R2** — operator-override guardrails: each canonical metric carries explicit **min / max bounds** that `ProductRegistry.minimumDataQuality` overrides cannot cross. §2.3 extended; AC-CB-6 tightened.
-- **R3** — cross-metric normalization: when an agent declares multiple input streams using different metrics (e.g. crawl pages + customer events), the canonical normalization rule converts to a unified `dataQualityScore` ∈ [0, 1] for halt-or-degrade decision. §2.4.1 added.
-- **R4** — halt-cascade circuit-breaker: every downstream agent declares its **`upstreamHaltTolerance`** (`hard-halt-on-any` / `degrade-on-any` / `wait-with-timeout-<seconds>`) preventing cascading halts that bring down the whole pipeline. §2.8 added; new envelope topic `agent.data_quality.cascade.v1`.
+**v3 revisions applied (per W3 Dispatch #12 — REPLACES v2 §2.4.1 aggregation):**
+- **B1** — **Canonical weight registry in §14.1.** Per-agent inline weight floats (v2 §2.4.1) are REPLACED by a canonical `(agentId, streamId) → weight` registry in §14.1. Each pair has exactly one canonical entry; missing entries at registry-write time are REJECTED with `MISSING_STREAM_WEIGHT`. No implicit `weight = 1.0` defaults. §2.4.1 rewritten; new §2.4.2 added.
+- **B2** — **MIN-of-streams aggregation replaces weighted-average.** `dataQualityScore = min(normalizedScore_i)` across REQUIRED streams. Optional streams excluded from the `min()` calculation but included in `provenance.coverage[]` for downstream visibility. Rationale: a chain is only as strong as its weakest link — weighted average can mask catastrophic gaps in one stream by smoothing across others. §2.4.1 rewritten.
+- **B3** — **`provenance.coverage[]` per stream.** Every data-quality envelope (insufficient, degraded normal-output, cascade, override-clamped) MUST carry per-stream `coverage[]` array: `{streamId, samplesObserved, samplesExpected, samplesOmitted}`. Downstream consumers inspect per-stream coverage BEFORE trusting output. §2.2 payload shape extended; §2.4.3 added.
+- **B4** — **Runtime weight schema validation.** BEFORE computing `dataQualityScore`, the agent's `BaseAgent.guard()` verifies every required stream's `(agentId, streamId)` entry is present in §14.1 canonical weight registry. Missing entries → emit `agent.data_quality.insufficient.v1` `reason: 'missing_stream_weight'` and halt. No score is ever computed with undefined weights. §2.4.4 added.
+
+**v2 revisions retained (per W3 Dispatch #10) but evolved in v3:**
+- **R1 (v2 — Mode 3A degrade escape valve)** — RETAINED; semantics unchanged. The degrade decision now keys on the v3 `min(streams)` score rather than the v2 weighted average.
+- **R2 (v2 — Override min/max guardrails)** — RETAINED; clamping unchanged.
+- **R3 (v2 — Cross-metric normalization)** — **SUPERSEDED by v3 B2 MIN-of-streams.** v2's weighted-average formula `dataQualityScore = (Σ perStreamRatio_i × weight_i) / Σ weight_i` is REPLACED. v3 keeps the per-stream-ratio computation but aggregates via `min()` not weighted average.
+- **R4 (v2 — Halt-cascade circuit-breaker)** — RETAINED. `agent.data_quality.cascade.v1` envelope unchanged; semantics unchanged.
 
 ---
 
@@ -62,32 +68,51 @@ Per-agent threshold defaults are declared in the agent's spec; **operator overri
 
 Rationale (v2 R2): unbounded operator override allowed an operator to set `bodyContentCharsMin: 1` (effectively disabling the gate) or `bodyContentCharsMin: 10_000_000` (effectively blocking every assessment). The min/max bounds keep operators within the legitimate tuning range that Panel + W3 reviewed; out-of-range overrides are clamped (logged + admin notification).
 
-### §2.2 — Canonical fail-loud envelope topic
+### §2.2 — Canonical fail-loud envelope topic (v3 — provenance.coverage added per B3)
 
 **Topic:** `agent.data_quality.insufficient.v1`
 
-**Payload shape:**
+**Payload shape (v3):**
 ```ts
 {
   runId: string,
   productId: string,
   agentId: number,
-  thresholdMetric: 'pageCountMin' | 'bodyContentCharsMin' | 'eventCountMin',
-  thresholdConfigured: number,            // the agent's effective threshold for this product
-  observed: number,                        // what was actually measured
-  provenance: {                            // per Top-3 Finding #2 "provenance model"
+  thresholdMetric: 'pageCountMin' | 'bodyContentCharsMin' | 'eventCountMin'
+                 | 'min_of_streams',           // v3 — when multi-stream MIN aggregation triggered halt
+  thresholdConfigured: number,                 // effective threshold (single-metric) OR 0.5 (multi-stream MIN floor)
+  observed: number,                             // single-metric value OR min(streams) value
+  reason: 'below_threshold'
+        | 'missing_stream_weight'              // v3 B4 — weight registry validation failed
+        | 'min_below_floor'                    // v3 B2 — MIN-of-streams below 0.5 floor
+        | 'min_below_degrade_floor'            // v3 B2 — MIN-of-streams below 0.3 (halts even Mode 3A)
+        | 'all_streams_zero',                  // v3 — no signal at all
+  dataQualityScore?: number,                   // present for multi-stream agents per §2.4.1 v3
+  provenance: {                                // per Top-3 Finding #2 "provenance model"
     consumedSources: Array<{ topic, atRange: [ISO, ISO], count }>,
-    omissionReasons: Array<{               // why pages/artifacts/events were missing
+    omissionReasons: Array<{                   // why pages/artifacts/events were missing
       reason: 'auth-gated' | 'crawl-cap-reached' | 'budget-cap' |
               'rate-limit' | 'stale-cache' | 'upstream-block' | 'other',
       detail: string,
     }>,
+    coverage: Array<{                          // v3 B3 — per-stream coverage breakdown (REQUIRED + optional streams BOTH listed)
+      streamId: string,                        // e.g. 'crawl-pages', 'customer-feedback', 'cve-feed'
+      required: boolean,                       // v3 — true if stream is part of MIN-of-streams aggregation
+      weight: number | null,                   // v3 B1 — looked up from §14.1 registry; null if missing (triggers B4 halt)
+      samplesObserved: number,                 // actual count this run
+      samplesExpected: number,                 // threshold for this stream
+      samplesOmitted: number,                  // observed gap (samplesExpected - samplesObserved; never negative)
+      normalizedScore: number,                 // min(1.0, samplesObserved / samplesExpected)
+    }>,
   },
   recommendedAction: 'await-additional-upstream' | 'lower-threshold-via-override' |
-                     'enable-auth-traversal' | 'increase-crawl-cap' | 'manual-review',
+                     'enable-auth-traversal' | 'increase-crawl-cap' | 'manual-review' |
+                     'add-stream-weight-to-registry',   // v3 B4 — when reason is missing_stream_weight
   at: ISO8601,
 }
 ```
+
+Downstream consumers MUST inspect `provenance.coverage[]` before trusting envelope output. Per-stream `normalizedScore` reveals whether the halt was driven by one weak stream (all others healthy) vs uniform sparseness across all streams — operationally different remediation paths.
 
 ### §2.3 — Per-product configurable override (v2 R2 — bounded)
 
@@ -118,23 +143,101 @@ When an agent halts (or degrades per §2.7 v2 R1) on threshold, it MUST include 
 
 This prevents downstream consumers from "misreading low-confidence output as complete coverage" — instead, downstream consumers see explicit absence and can route to remediation (e.g. enable Phase 3 auth-traversal if `omissionReasons` includes `auth-gated`).
 
-### §2.4.1 — Cross-metric normalization (v2 R3)
+### §2.4.1 — Cross-metric normalization (v3 B2 — MIN-of-streams, supersedes v2 weighted-average)
 
-Agents that consume multiple input streams measured in different metrics (e.g. Monitor consumes both `pageCountMin` from crawl artifacts AND `eventCountMin` from customer-signal stream) compute a unified **`dataQualityScore`** ∈ [0, 1] from the per-stream coverage ratios:
+Agents that consume multiple input streams measured in different metrics (e.g. Monitor consumes `pageCountMin` from crawl + `eventCountMin` from customer-signal) compute a unified **`dataQualityScore`** ∈ [0, 1] using **MIN-of-streams aggregation** (v3 B2):
 
 ```
+// Per-stream coverage ratio (unchanged from v2)
 perStreamRatio_i = min(1.0, observed_i / threshold_i)
-dataQualityScore = (Σ perStreamRatio_i × weight_i) / Σ weight_i
+
+// v3 B2 MIN aggregation — REQUIRED streams only
+requiredStreams = streams.filter(s => s.required === true)
+dataQualityScore = min(perStreamRatio_i for i ∈ requiredStreams)
+
+// Optional streams: excluded from min() but included in provenance.coverage[]
+optionalStreams = streams.filter(s => s.required === false)
+// provenance.coverage will list both required + optional with normalizedScore each
 ```
 
-Where `weight_i` is declared per-agent in the spec (defaults to 1.0 if unspecified — equal weight).
+**Rationale (v3 B2):** the v2 weighted-average formula could silently mask catastrophic gaps. Example: an agent with 3 streams weighted 1.0 / 1.0 / 1.0, where two streams hit 100% coverage and one stream hits 0% coverage. v2 score = (1.0 + 1.0 + 0.0)/3 = 0.667 → above 0.5 threshold → no halt → agent operates on partial data with one missing dimension hidden. v3 MIN: `min(1.0, 1.0, 0.0) = 0.0` → halt. Operationally: "you cannot benchmark candidates whose head-to-head invocations are zero, regardless of how complete the cost-ledger stream is."
 
-**Halt decision (cross-metric):**
-- `dataQualityScore < 0.5` → halt per §2.5 (or degrade per §2.7 in Mode 3A).
-- `dataQualityScore ≥ 0.5 < 1.0` → emit `outputQuality: 'partial'` in normal envelope; envelope payload mode-dependent.
-- `dataQualityScore == 1.0` → emit `outputQuality: 'complete'` (all streams at-or-above threshold).
+**Halt decision (v3 cross-metric MIN):**
+- `dataQualityScore < 0.3` → halt in ALL modes (v2 §2.7 R1 Mode 3A escape valve also halts below 0.3).
+- `0.3 ≤ dataQualityScore < 0.5` → halt in Mode 1 + Mode 2 SUB-2A; DEGRADE in Mode 3A per §2.7 v2 R1.
+- `0.5 ≤ dataQualityScore < 1.0` → emit `outputQuality: 'partial'` in normal envelope; downstream consumers see the partial flag.
+- `dataQualityScore == 1.0` → emit `outputQuality: 'complete'` (all required streams at-or-above threshold).
 
-Single-metric agents skip §2.4.1 (their `dataQualityScore` reduces to the single ratio); multi-metric agents MUST publish their per-stream weights in §3.X of the agent spec.
+Single-stream agents reduce trivially: their `dataQualityScore = perStreamRatio_0`.
+
+Multi-stream agents MUST publish (1) the canonical `(agentId, streamId, required)` triples for ALL streams the agent consumes, AND (2) all required-stream weights live in §14.1 weight registry per §2.4.2 v3 B1. Optional streams may be declared with or without weight (weights only used by §2.4.1's `min()` over required streams; optional weights are informational).
+
+### §2.4.2 — Canonical weight registry in §14.1 (v3 B1)
+
+Per-agent inline weight floats are REMOVED. The canonical source of truth for stream weights lives in **`§14.1` canonical weight registry** alongside the topic catalogue. Each `(agentId, streamId)` pair has exactly ONE entry:
+
+```json
+// docs/CANONICAL_REFERENCE.md §14.1 (added in v3 alongside topic registry)
+"dataQualityStreamWeights": [
+  { "agentId": 6,  "streamId": "crawl-pages",       "required": true,  "weight": 1.0, "thresholdMetric": "bodyContentCharsMin", "thresholdDefault": 1000 },
+  { "agentId": 6,  "streamId": "ace-readiness",     "required": false, "weight": 0.5, "thresholdMetric": "pageCountMin",         "thresholdDefault": 3 },
+  { "agentId": 10, "streamId": "customer-feedback", "required": true,  "weight": 1.0, "thresholdMetric": "eventCountMin",        "thresholdDefault": 5 },
+  { "agentId": 10, "streamId": "anomaly",           "required": true,  "weight": 1.0, "thresholdMetric": "eventCountMin",        "thresholdDefault": 3 },
+  { "agentId": 10, "streamId": "drift-detection",   "required": false, "weight": 0.5, "thresholdMetric": "eventCountMin",        "thresholdDefault": 1 },
+  // ... one entry per (agentId, streamId) pair across all multi-stream agents
+]
+```
+
+**Registry-write rejection (v3 B1):** at canonical-amendment time (e.g. a new agent's spec adds a stream), the registry validator checks:
+1. Every `(agentId, streamId)` is unique — duplicates rejected with `DUPLICATE_STREAM_WEIGHT[<agentId>, <streamId>]`.
+2. Every stream declared in any agent spec has an entry — missing entries rejected with `MISSING_STREAM_WEIGHT[<agentId>, <streamId>]`. (This catches "spec mentions a stream but registry doesn't" gaps at canonical-amendment time, not runtime.)
+3. `weight` is a number in `[0.0, 1.0]`; `required` is boolean; `thresholdMetric` is one of the 3 canonical metrics per §2.1.
+
+**No implicit defaults:** v2's `weight = 1.0` fallback for unspecified weights is REMOVED. Every stream MUST have a canonical weight entry. The registry is the single source of truth; agents read weights from §14.1, never define them locally.
+
+### §2.4.3 — `provenance.coverage[]` per stream (v3 B3)
+
+Every data-quality envelope (insufficient, normal-with-degraded, cascade, override-clamped) MUST include `provenance.coverage[]` per §2.2 v3. Required + optional streams BOTH listed; downstream consumers determine actionability per-stream:
+
+- **Required stream with `normalizedScore: 0.0`** → fix this stream's source FIRST (it gates the MIN aggregation).
+- **Optional stream with `normalizedScore: 0.0`** → informational; agent can operate but downstream may want to consider remediation.
+- **All streams at `normalizedScore: 1.0`** → upstream healthy; halt cause is elsewhere (cost cap, ceiling, missing weight).
+
+### §2.4.4 — Runtime weight schema validation (v3 B4)
+
+BEFORE computing `dataQualityScore`, `BaseAgent.guard()` performs canonical weight validation:
+
+```pseudocode
+async function validateStreamWeights(agentId, declaredStreams) {
+  const registry = await readCanonicalWeightRegistry();  // reads §14.1 dataQualityStreamWeights
+  for (const stream of declaredStreams) {
+    if (stream.required) {
+      const entry = registry.find(e => e.agentId === agentId && e.streamId === stream.streamId);
+      if (!entry) {
+        // Halt the dispatch — never compute a score with undefined weights
+        emit('agent.data_quality.insufficient.v1', {
+          ..., reason: 'missing_stream_weight',
+          recommendedAction: 'add-stream-weight-to-registry',
+          provenance: {
+            coverage: declaredStreams.map(s => ({
+              streamId: s.streamId, required: s.required,
+              weight: null,                                  // signal: registry-miss
+              samplesObserved: 0, samplesExpected: 0, samplesOmitted: 0,
+              normalizedScore: 0,
+            })),
+          },
+        });
+        throw new MissingStreamWeightError({agentId, streamId: stream.streamId});
+      }
+    }
+  }
+  return registry;
+}
+```
+
+**This validation runs at `BaseAgent.guard()`** — same chokepoint Cluster E v2 R2 uses for authority-ceiling checks. Adding weight-registry validation here means a missing weight is caught at dispatch boundary, not deep in the agent's compute path. Failure is fail-loud + halt-with-explicit-envelope; never silently compute a wrong score.
+
+**Optional streams:** missing weight entries for OPTIONAL streams do NOT halt — they're informational. The validator logs WARN-level `optional_stream_weight_missing` and substitutes `weight: 0.0` (effectively excluding from any future aggregation). Operator/admin notified via observability.
 
 ### §2.5 — Halt semantics (Mode 1 + Mode 2 SUB-2A)
 
@@ -200,32 +303,43 @@ This gives operators + admins full visibility into cascade behaviour: a single u
 
 Every affected agent spec MUST add this canonical block to §3 Input Contract (preconditions) AND §4 Output Contract (block variant).
 
-### §3.1 — Block to paste into §3.3 Preconditions (v2)
+### §3.1 — Block to paste into §3.3 Preconditions (v3)
 
 ````markdown
-### §3.X — Minimum data quality (canonical per CLUSTER_B_DATA_QUALITY_GATE.md v2)
+### §3.X — Minimum data quality (canonical per CLUSTER_B_DATA_QUALITY_GATE.md v3)
 
 Effective threshold = `ProductRegistry.minimumDataQuality[<agent-key>][<metric>]`
 (clamped to per-metric bounds per Cluster B §2.1 v2 R2)
-OR per-agent canonical default below if absent.
+OR per-agent canonical default per §14.1 dataQualityStreamWeights registry
+per Cluster B §2.4.2 v3 B1.
 
-| Metric | Per-agent default | Override range (per Cluster B §2.1) |
-|---|---:|---|
-| `<metric>` | `<value>` | `[<min>, <max>]` |
+**Stream declarations** (per Cluster B §2.4.1 v3 B2):
 
-For multi-stream agents (per Cluster B §2.4.1 v2 R3): list each input stream
-+ its weight in the cross-metric `dataQualityScore` computation.
+| streamId | required | metric | default-threshold | weight (§14.1 registry) |
+|---|:-:|---|---:|---:|
+| `<stream-id-1>` | yes | `<metric>` | `<value>` | `<weight-from-registry>` |
+| `<stream-id-2>` | optional | `<metric>` | `<value>` | `<weight-from-registry>` |
 
-**Behaviour below threshold:**
-- In Mode 1 AND Mode 2 SUB-2A: this agent MUST NOT produce its normal
-  output envelope. Instead, emit `agent.data_quality.insufficient.v1`
-  with full provenance per Cluster B §2.4, and halt. AutoRunner pipeline
-  step blocks; operator is notified with `recommendedAction`.
-- In Mode 3A (per Cluster B §2.7 v2 R1): this agent MAY produce
-  DEGRADED output with `outputQuality: 'degraded'` + `dataQualityScore`
-  + provenance, AND emit `agent.data_quality.insufficient.v1` with
-  `degradedNotHalted: true`. Applies only when `dataQualityScore ≥ 0.3`;
-  below 0.3 → halt even in Mode 3A.
+Weights are READ from §14.1 canonical registry — never declared locally.
+Missing weight entries for REQUIRED streams → halt at `BaseAgent.guard()`
+per Cluster B §2.4.4 v3 B4 (reason `missing_stream_weight`).
+
+**Aggregation (v3 B2):** `dataQualityScore = min(normalizedScore_i)` across
+REQUIRED streams only. Optional streams included in `provenance.coverage[]`
+but excluded from the `min()` calculation. Per-stream `normalizedScore =
+min(1.0, samplesObserved / samplesExpected)`.
+
+**Behaviour by `dataQualityScore`:**
+- `< 0.3` → halt in ALL modes per Cluster B §2.4.1 v3.
+- `0.3 ≤ score < 0.5` → halt in Mode 1 + Mode 2 SUB-2A; DEGRADE in Mode 3A
+  (per Cluster B §2.7 v2 R1; emit envelope with `outputQuality: 'degraded'`).
+- `0.5 ≤ score < 1.0` → emit normal envelope with `outputQuality: 'partial'`.
+- `== 1.0` → emit normal envelope with `outputQuality: 'complete'`.
+
+**Halt envelope (per §2.2 v3):** `agent.data_quality.insufficient.v1` with
+`provenance.coverage[]` populated for ALL declared streams (required +
+optional). Downstream consumers inspect per-stream `normalizedScore` to
+target remediation.
 
 **Upstream-halt tolerance (per Cluster B §2.8 v2 R4):**
 This agent declares per-upstream tolerance:
@@ -302,6 +416,14 @@ How W2 verifies the Cluster B fix is correctly implemented across agent spec rev
 
 11. **AC-CB-11 (v2 R4 — Cascade circuit-breaker):** Upstream halt + downstream `degrade-on-any` tolerance → downstream emits with `outputQuality: 'degraded'` + emits `agent.data_quality.cascade.v1` with `outcomeForThisAgent: 'degraded'`. Same upstream halt + `hard-halt-on-any` tolerance → downstream halts + emits cascade envelope `outcomeForThisAgent: 'halted'`. Verify by per-agent tolerance integration test.
 
+12. **AC-CB-12 (v3 B1 — Canonical weight registry):** §14.1 contains `dataQualityStreamWeights` array; every `(agentId, streamId)` pair has exactly one entry. Registry-write rejects duplicates with `DUPLICATE_STREAM_WEIGHT` AND declared-but-not-in-registry stream references in agent specs with `MISSING_STREAM_WEIGHT`. No agent spec declares a weight inline; weights only read from registry. Spec-level grep across all agent specs returns zero matches for `weight:\s*[0-9]` outside the registry source file.
+
+13. **AC-CB-13 (v3 B2 — MIN-of-streams aggregation):** Implementation test — agent with 3 required streams scoring 1.0 / 1.0 / 0.0 yields `dataQualityScore = 0.0` (not 0.667 as v2 weighted-average would). Optional stream with score 0.0 + required streams 1.0 / 1.0 yields `dataQualityScore = 1.0` (optional excluded from min). Aggregation function is verified against v2's weighted-average formula on a battery of test cases; v2 formula must NEVER produce the v3 score and vice versa for any input.
+
+14. **AC-CB-14 (v3 B3 — `provenance.coverage[]` per stream):** Every emitted `agent.data_quality.insufficient.v1` / `agent.data_quality.cascade.v1` / `agent.data_quality.override_clamped.v1` envelope includes `provenance.coverage[]` with one entry per declared stream (required + optional). Each entry has `streamId`, `required`, `weight`, `samplesObserved`, `samplesExpected`, `samplesOmitted`, `normalizedScore`. Schema validation rejects emissions with empty `coverage[]` array.
+
+15. **AC-CB-15 (v3 B4 — Runtime weight schema validation):** Implementation test — register a multi-stream agent with a required stream missing its `(agentId, streamId)` entry in §14.1 registry. Invoke the agent. `BaseAgent.guard()` throws `MissingStreamWeightError`; emit `agent.data_quality.insufficient.v1` with `reason: 'missing_stream_weight'` + `recommendedAction: 'add-stream-weight-to-registry'`. Agent's normal output envelope is NOT emitted. No `dataQualityScore` ever computed with undefined weights — implementation grep: every weight access reads from registry; no inline weight literals in agent code.
+
 ---
 
 ## §5 — Affected Agents
@@ -331,14 +453,14 @@ How W2 verifies the Cluster B fix is correctly implemented across agent spec rev
 
 ---
 
-## §6 — Cross-cluster integration notes (v2)
+## §6 — Cross-cluster integration notes (v3)
 
-- **Cluster A** (Cost Governor): cost-cap halt and data-quality halt are distinct topics + distinct reasons; both halt AutoRunner but never alongside each other for same cause.
-- **Cluster C** (Mode-Conditional Behavior): v2 R1 degrade-not-halt is Mode-3A-exclusive — Cluster C provides the `pipelineMode` value Cluster B reads to decide halt-vs-degrade.
-- **Cluster D** (Audit-Log Topic Schema, **v2 R2**): Cluster B v2 emits 3 new envelope topics — `agent.data_quality.insufficient.v1` (P0 set), `agent.data_quality.cascade.v1` (P0 set per Cluster D v2 R1), `agent.data_quality.override_clamped.v1` (P0 set). Per Cluster D v2 R2 (B↔D ordering), all three MUST ship in Cluster D §14.1 extension BEFORE Cluster B enforcement is activated in any agent.
-- **Cluster E** (Authority-Ceiling Integration): a halt does NOT consume authority quota — Operational-authority is not exhausted by a data-quality block.
-- **Cluster F** (Model-Budget Fallback): when data-quality is insufficient, agents halt BEFORE invoking the LLM dispatch chain — Cluster F fallbacks never fire for data-quality halts.
+- **Cluster A** (Cost Governor): cost-cap halt and data-quality halt are distinct topics + distinct reasons; both halt AutoRunner but never alongside each other for same cause. v3 B4's `BaseAgent.guard()` weight-validation runs AT THE SAME canonical chokepoint as Cluster A v3 A5's ceiling check — both fail-loud before any side effect, with distinct error codes.
+- **Cluster C** (Mode-Conditional Behavior): v2 R1 degrade-not-halt is Mode-3A-exclusive — Cluster C provides the `pipelineMode` value Cluster B reads to decide halt-vs-degrade. v3 MIN-of-streams aggregation applies uniformly across modes; only the halt-vs-degrade decision is mode-aware.
+- **Cluster D** (Audit-Log Topic Schema, v2 R2 + v3 B1): Cluster B v3 introduces ZERO new envelope types beyond v2 (insufficient, cascade, override_clamped — all in P0 set). **v3 B1 ADDS a new §14.1 canonical structure: `dataQualityStreamWeights` array** (the canonical weight registry). This ships alongside the §14.1 P0 topic patch + ENTRY 008. Per Cluster D v3 D2 (5-topic-per-ship cap), the weight registry is NOT topics; it lives in §14.1 as a separate registry-section. Cluster D v3 governance also applies to weight-registry additions: any new agent ship that requires new `(agentId, streamId)` entries adds them at the agent's first-ship commit alongside its topic additions.
+- **Cluster E** (Authority-Ceiling Integration): a halt does NOT consume authority quota — Operational-authority is not exhausted by a data-quality block. v3 B4 weight-validation runs in `BaseAgent.guard()`, the SAME chokepoint as Cluster E v2 R2 authority-ceiling check. Order of evaluation within `guard()`: (1) charter authority check, (2) ceiling check (Cluster E), (3) data-quality weight schema validation (Cluster B v3 B4), (4) data-quality compute + halt-or-proceed decision (Cluster B §2.4.1 v3 B2). All steps fail-loud with distinct error codes.
+- **Cluster F** (Model-Budget Fallback): when data-quality is insufficient, agents halt BEFORE invoking the LLM dispatch chain — Cluster F fallbacks never fire for data-quality halts. v3 B4 weight-validation also fails before any LLM dispatch; Cluster F's latency SLA (200ms p99 per F1) is not affected by Cluster B halts because the halt happens at `guard()` not at dispatch time.
 
 ---
 
-*End of CLUSTER_B_DATA_QUALITY_GATE.md canonical template v2. Panel `PLURALITY_CLB-REVISE` 4/9 conditions R1–R4 applied. Pending W6 re-ratification.*
+*End of CLUSTER_B_DATA_QUALITY_GATE.md canonical template v3. Panel v2-ratification conditions B1–B4 applied per W3 Dispatch #12. Pending W6 re-ratification.*
