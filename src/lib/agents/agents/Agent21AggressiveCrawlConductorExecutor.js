@@ -68,6 +68,7 @@ import { getExecutor } from '../_registry.js';
 import { detectMfaChallenge, buildMfaFailureEnvelope } from '../auth/mfaDetect.js';
 import { isInScopeForAuthenticatedNav, parseUrlSafe } from '../auth/sameOriginGate.js';
 import { applyHybridGate } from '../auth/destructiveDenylist.js';
+import { scrubDomDump } from '../auth/scrubArtifacts.js';
 
 const EXECUTOR_KEY = 'aggressive-crawl-conductor-executor';
 
@@ -437,7 +438,18 @@ export class Agent21AggressiveCrawlConductorExecutor extends BaseAgent {
       // extension — a follow-up Phase 3 chunk (NOT this one). The Executor
       // is structured so the multi-page extension can be added without
       // changing the surface contract.
-      const postLoginPageRecord = await this._readPagePostLogin(page, url);
+      //
+      // Phase 3 chunk 3 wire-in: the page record's text content is
+      // scrubbed via scrubDomDump() before it leaves this method. Defense
+      // in depth: the caller (api/agent/21/execute.js — CHUNK 4) does not
+      // need to remember to scrub. Operator's submitted email/password
+      // (literal substring match) + Welcome-banner emails + password
+      // <input value> attrs + Authorization/Cookie/Set-Cookie log lines
+      // are all redacted to [REDACTED] / [REDACTED-EMAIL] markers before
+      // the report is consumed by any downstream sink (Claude prompt,
+      // audit log, UI, ProductSSOT delta).
+      const rawPageRecord = await this._readPagePostLogin(page, url);
+      const postLoginPageRecord = scrubDomDump(rawPageRecord, opts.credentials);
 
       return Object.freeze({
         ok: true,

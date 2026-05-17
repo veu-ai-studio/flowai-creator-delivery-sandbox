@@ -153,7 +153,7 @@ tests/api/urlAdapter.test.js                              # asserts api/research
 docs/specs/agent-blueprints/AGENT_21_AggressiveCrawlConductor.md   # this file — CHUNK 1
 src/lib/agents/agents/Agent21AggressiveCrawlConductorExecutor.js   # CHUNK 2 — credentialed crawl Executor
 src/lib/agents/_registry.ts (EXECUTOR_REGISTRY section)            # CHUNK 2 — 'aggressive-crawl-conductor-executor' entry
-src/lib/renewal/inputArtifact.js (scrubCredentials extension)      # CHUNK 3 — DOM/network-log scrubbing
+src/lib/agents/auth/scrubArtifacts.js                              # CHUNK 3 — DOM-dump + network-log + ProductSSOT-delta scrubbers (composes with src/lib/renewal/inputArtifact.js scrubCredentials)
 src/lib/agents/auth/sameOriginGate.js                              # CHUNK 2 — Invariant 4 same-origin enforcement helper
 src/lib/agents/auth/mfaDetect.js                                   # CHUNK 2 — Invariant 3 MFA challenge heuristic
 src/lib/agents/auth/destructiveDenylist.js                         # CHUNK 2 — Invariant 5 9-language hybrid gate
