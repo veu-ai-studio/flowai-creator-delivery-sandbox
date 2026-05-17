@@ -134,6 +134,55 @@ Mode-agnostic — Self-Protection runs always-on regardless of operator mode. Ph
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+Emits `agent.cost.signal.v1` before each LLM call (5-min always-on threat
+classification + Phase 2 DMCA letter generation). Agent #23 is the sole
+canonical enforcement owner. Call order per Cluster A §2.6 v2 R4 applies
+per dispatch. Continuous 5-min cadence implies frequent reserve/settle
+cycles; cost-ledger volume should be sized accordingly.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_13_self_protection.eventCountMin`
+OR per-agent default: `eventCountMin: 1` (clamped to [1, 1000]).
+- Mode 1 + Mode 2 SUB-2A: empty 5-min edge-log batch is the COMMON case
+  (silence is the normal state of a healthy system); do NOT halt — emit
+  no envelope and log trace-level "no-threats". This is a documented
+  exception to the canonical halt semantic; it is per Cluster B §2.5 the
+  "no data is acceptable" boundary case for always-on monitoring.
+- If batch present but classification fails on data quality → emit
+  `agent.data_quality.insufficient.v1` and halt.
+- Mode 3A (per Cluster B §2.7 v2 R1): if `dataQualityScore ≥ 0.3`, may
+  emit threat envelope with `outputQuality: 'degraded'`.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `degrade-on-any` (edge-
+log stream + ACE crawl probe + carve-out signals are independent inputs).
+
+**Cluster C — Mode behavior:** Phase 1 agent output is identical across all
+pipeline modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted
+from emitted envelopes per Cluster C §2.4 v2 R2. Phase 2 Executor (separate
+EXECUTOR_REGISTRY sibling) is Pattern P3 (active only in Mode 2 SUB-2A /
+Mode 3A for DMCA + Cloudflare + watermark actions). Default Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `13.threat.detected.v1`, `13.signature.update.v1`,
+`13.dmca.filed.v1` (Phase 2), plus charter-expansion topics
+`13.bot_policy_update.v1` (Phase 2), `13.watermark_rotation.v1` (Phase 2).
+Cross-cluster topics ship in P0 patch.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `low`; tier-policy `strict` per Cluster F §2.1.2 (5-min
+always-on cadence; cost-controlled tier mandatory). Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].low`.
+2. `FLOWAI_MODEL_TIER_LOW` from Doppler.
+3. `FLOWAI_MODEL_TIER_LOW_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.low` (canonical low-tier model).
+Selection re-read per dispatch. Strict policy → no tier-downgrade on
+budget denial; halt immediately. Phase 2 DMCA letter generation uses tier
+`medium` (one-shot per filing, lower volume justifies higher quality).
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
