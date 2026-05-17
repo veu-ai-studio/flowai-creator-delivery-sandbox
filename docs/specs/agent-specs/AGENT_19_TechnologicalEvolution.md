@@ -128,6 +128,45 @@ Mode-agnostic — emits regardless of operator mode. Downstream Self-Renewal Exe
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+Emits `agent.cost.signal.v1` before each LLM call (daily CVE classification +
+weekly vendor release tracking). Agent #23 is the sole canonical enforcement
+owner. Call order per Cluster A §2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_19_technological_evolution.eventCountMin`
+OR per-agent default: `eventCountMin: 1` (clamped to [1, 1000]).
+- Mode 1 + Mode 2 SUB-2A: empty CVE feed is the COMMON case (silence is
+  the normal state); do NOT halt — emit no envelope and log trace-level
+  "no-cves". Documented exception same as Agent #13.
+- If feed present but classification fails on data quality → emit
+  `agent.data_quality.insufficient.v1` and halt.
+- Mode 3A: degrade per Cluster B §2.7 v2 R1 if dataQualityScore ≥ 0.3.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `degrade-on-any` (CVE
+feed + vendor release feed are independent streams).
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted per
+Cluster C §2.4 v2 R2. Default Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `19.tech.signal.v1` (per `_registry.ts`) plus
+`19.cve_alert.v1`, `19.tech_upgrade_proposal.v1`. Cross-cluster topics
+ship in P0 patch.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `low`; tier-policy `strict` per Cluster F §2.1.2 (daily
+CVE classification at scale; cost-controlled tier mandatory). Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].low`.
+2. `FLOWAI_MODEL_TIER_LOW` from Doppler.
+3. `FLOWAI_MODEL_TIER_LOW_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.low` (canonical low-tier model).
+Selection re-read per dispatch. Strict policy → halt on budget denial.
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
