@@ -145,6 +145,52 @@ Step 2 — `design`. Wired via `OrchestratorHub.registerStepOwner('design', ctx 
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+This agent emits `agent.cost.signal.v1` before each LLM call (Phase 1 design
+spec generation; Phase 2 v0/Lovable/Bolt.new generation dispatches). It does
+NOT self-enforce budget caps. Agent #23 is the sole canonical enforcement
+owner. Call order per Cluster A §2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_7_design.pageCountMin`
+OR per-agent default: `pageCountMin: 1` (clamped to [1, 50]).
+- Mode 1 + Mode 2 SUB-2A: missing research brief → emit
+  `agent.data_quality.insufficient.v1` and halt; populate provenance with
+  `upstream-block` reason referencing Agent #6 Research.
+- Mode 3A (per Cluster B §2.7 v2 R1): if `dataQualityScore ≥ 0.3`, may emit
+  `7.design.spec.v1` with `outputQuality: 'degraded'`; below 0.3 → halt.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `hard-halt-on-any` (Agent
+#6 Research brief is hard precondition).
+
+**Cluster C — Mode behavior:** Phase 1 agent output is identical across all
+pipeline modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted
+from emitted envelopes per Cluster C §2.4 v2 R2. Phase 2 Executor (separate
+EXECUTOR_REGISTRY sibling, not this primary spec) is Pattern P3 (active only
+in Mode 2 SUB-2A / Mode 3A). Default behavior on missing `pipelineMode` is
+Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `7.design.spec.v1` (Phase 1) + `7.design.generated.v1`
+(Phase 2 via Executor sibling). Cross-cluster topics ship in P0 patch.
+Agent #7's emit topics ship in Deferred set with first runtime commit per
+phase. Topic names comply with Cluster D §2.2 regex.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2.
+Phase 1 LLM dispatches (design spec generation) use canonical tier-keyed
+selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Phase 2 non-LLM adapters (v0 / Lovable / Bolt.new) are routed via
+`dispatchWithFallback` (CA-11-A.4) per agent ToolMenu CA-11-B.3 — not
+through Cluster F tier-keyed selection (these are not LLMs).
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
