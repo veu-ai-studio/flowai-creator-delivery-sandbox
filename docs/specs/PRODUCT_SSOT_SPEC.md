@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| **Status** | DRAFT for Panel ratification (W5c, 2026-05-16) |
+| **Status** | RATIFIED v2 (W5c, 2026-05-17) — Panel ruled Q1+Q2+Q3+Q5 per `docs/panel-consultations/product-ssot-spec-ratification-2026-05-16.md`; Q4 remains open |
 | **Authors** | W5c (drafted), W2 + W5x (implementers — separate dispatch) |
 | **Canonical anchors** | `docs/CANONICAL_REFERENCE.md` §7 item #5, §7.5, §11 Step 5, §13.1, §14.2, §14.3, §28 |
 | **Backlog gap** | `docs/specs/FOUNDATION_AUDIT_BACKLOG.md` **P0-2** (ProductSSOT entity UNBUILT) + **P0-5** (atomic write UNBUILT) |
@@ -38,6 +38,8 @@ Today (as of this spec): **ZERO ProductSSOT code exists.** Every pipeline run si
 ### 2.1 Primary table — `product_ssot`
 
 Supabase schema. Mirrors §7.5 verbatim. All blocks are `jsonb` so they remain Panel-amendable without further migrations.
+
+**Rationale: six-block schema vs flat per-run rows (Panel-ratified, Q1).** ProductSSOT models a product's *lifetime* across runs, not individual runs. A flat per-run row schema (one row per pipeline run, with top-level columns like `runId` / `timestamp` / `pipelineVersion` / `clearanceVerdict`) would mirror `workspace_runs` and be friendlier to ad-hoc SQL analytics — but it would require a five-way join to reconstruct the per-product `(identity_block, build_brief, architecture_snapshot, delta_log, governance_record, annotations+overrides)` state that §28's Symbiotic Loop and §13.1's `/product-ssot/:productId` UI both treat as a single coherent object. The six-block model keeps the canonical living-document semantics (§7.5 lines 136–156) addressable as one row per `(productId, environment)`, append-only inside the `jsonb[]` blocks. Run-level analytics remain trivial via `jsonb_array_elements(delta_log)` and `jsonb_array_elements(governance_record)`; lifetime queries (per-product trend, override audit, drift history) get the canonical one-row read that §28 expects without any join. Picking flat-row would have required a stealth re-amendment of §7.5; Panel ratified the canonical six-block model on 2026-05-16 (Q1=Y).
 
 ```sql
 create table product_ssot (
@@ -161,15 +163,25 @@ Concretely: a run that successfully deploys a renewed URL but whose `product_sso
 3. Surface the failure to AutoRunner step 8 (Monitor) with the explicit error code `SSOT_WRITE_FAILED`.
 4. If a deployment artifact (Vercel URL) was produced, mark the deployment as `unverified` in the DeploymentScaffold per §16.2 — but do NOT auto-undeploy (out of scope for this spec; CEO disposition required if undeploy-on-rollback is desired).
 
-### 3.2 "Atomic with the rest of the output contract"
+### 3.2 "Atomic with the rest of the output contract" — saga pattern, not 2-phase commit
 
-§7 line 132 says the ProductSSOT write is atomic with the rest of the output contract (items 1–4). In practice, items 1–4 (live URL, delta report, source disclosure, LIMITATIONS section) are produced by code that runs BEFORE the database transaction commits. The atomic guarantee is:
+**Panel-ratified definition (Q2=Y, 2026-05-16):** the §7 line 132 atomicity guarantee is **run-completion-state atomicity — not a single database transaction**. Items 1–4 of the §7 Output Contract (live URL, before/after delta report, source disclosure, LIMITATIONS section) are external to Postgres — the Vercel deploy uses the Vercel API, the delta report is a file write, and so on. None of these can be enrolled in a Postgres transaction.
 
-- **Items 1–4 are computed** → if any computation fails, transaction never opens, no write occurs, no rollback needed.
-- **Items 1–4 succeed AND transaction commits** → ProductSSOT write is durable, run is COMPLETE.
-- **Items 1–4 succeed AND transaction fails** → run is rolled back to INCOMPLETE per §3.1 above; items 1–4 are discarded by the rollback handler (Vercel deploy is marked `unverified`; delta report is NOT emitted to the operator; LIMITATIONS is not surfaced).
+The atomic guarantee is instead:
 
-The contract is **not** "items 1–4 and the ProductSSOT write share a Postgres transaction" — items 1–4 are external (Vercel API, file I/O, etc.) and cannot be wrapped in a Postgres transaction. The contract is instead "the run is only COMPLETE when both items 1–4 AND the ProductSSOT write succeed; either failure rolls back the whole run."
+> **Either all six ProductSSOT blocks are written (transaction committed) AND items 1–4 succeeded, OR the run transitions to INCOMPLETE.**
+>
+> **This is a saga pattern, not 2-phase commit.**
+
+Concretely, the saga has three commit points and per-step compensating actions:
+
+| Stage | Action | If it fails, compensating action |
+|---|---|---|
+| **A.** Items 1–4 computed (Vercel deploy, delta report, source disclosure, LIMITATIONS) | external work | no Postgres txn was ever opened; no compensating action needed; run is INCOMPLETE |
+| **B.** Postgres transaction §3.1 steps 1–5 (lock row → lazy-insert → UPDATE all 6 blocks → INSERT version-history → INSERT GovernanceAuditLog) | atomic via `BEGIN`/`COMMIT` | transaction rolls back automatically; compensating action marks Vercel deploy `unverified` per §16.2 and the run transitions to INCOMPLETE per §3.1 list above |
+| **C.** Post-commit side effects (operator-visible delta report emission, LIMITATIONS surfacing in UI) | external work | if any side effect fails, log to GovernanceAuditLog with topic `ssot.post_commit_partial.v1` but do NOT roll back the committed transaction — the canonical record is durable and the side-effect failure is operator-visible, not data-integrity-relevant |
+
+This saga interpretation preserves §7 line 132's contract literally ("a run that produces a renewed URL but fails to update ProductSSOT is considered INCOMPLETE and rolled back") while remaining implementable with the actual technology stack (Vercel, Postgres, no XA coordinator). The literal-2PC reading is unimplementable: Vercel has no Postgres-XA hook and no compensating-deploy API.
 
 ### 3.3 Write-once-per-run
 
@@ -218,10 +230,10 @@ Per §28.3, admin annotations + overrides on the ProductSSOT (via §13.1 role ga
 
 ### 4.6 RLS read policies
 
-Per §13.1 role gate matrix, enforced via Supabase RLS on `product_ssot`:
+Per §13.1 role gate matrix, enforced via Supabase RLS on `product_ssot`. **Panel CEO disposition 2026-05-16 (Q3=split)** ruled to split the prior single combined policy into three explicit per-role policies for direct alignment with §13.1's three-row reader matrix (admin / operator / client). Each policy carries the exact `role` literal it gates so policy purpose is obvious from the policy name alone. A fourth policy covers the cross-org `flowai_audit` read per §14.3.
 
 ```sql
--- admin: full read on rows whose owning provider org matches the JWT org_id
+-- ─── admin reads: org-scoped (CA-10-C role matrix row 1) ─────────────
 create policy "product_ssot_admin_read"
   on product_ssot for select
   to authenticated
@@ -233,7 +245,8 @@ create policy "product_ssot_admin_read"
     )
     and (auth.jwt() ->> 'role') = 'admin'
   );
--- operator: same as admin for read (CA-10-C role matrix line 402)
+
+-- ─── operator reads: org-scoped (CA-10-C role matrix row 2) ──────────
 create policy "product_ssot_operator_read"
   on product_ssot for select
   to authenticated
@@ -243,15 +256,32 @@ create policy "product_ssot_operator_read"
        where p.id = product_ssot.product_id
          and p.org_id = (auth.jwt() ->> 'org_id')::uuid
     )
-    and (auth.jwt() ->> 'role') in ('admin', 'operator', 'client')
+    and (auth.jwt() ->> 'role') = 'operator'
   );
--- FlowAI-internal audit role: cross-org read (per §14.3 multi-tenant invariant)
+
+-- ─── client reads: org-scoped (CA-10-C role matrix row 3) ────────────
+create policy "product_ssot_client_read"
+  on product_ssot for select
+  to authenticated
+  using (
+    exists (
+      select 1 from products p
+       where p.id = product_ssot.product_id
+         and p.org_id = (auth.jwt() ->> 'org_id')::uuid
+    )
+    and (auth.jwt() ->> 'role') = 'client'
+  );
+
+-- ─── FlowAI-internal audit role: cross-org read (per §14.3) ──────────
 create policy "product_ssot_flowai_audit_read"
   on product_ssot for select
   to authenticated
   using ((auth.jwt() ->> 'role') = 'flowai_audit');
+
 -- service-role bypasses RLS (default Supabase behaviour); used by writes only
 ```
+
+The three org-scoped policies share an identical `using` shape modulo the `role` literal. PostgreSQL OR-combines policies of the same `command` on the same table, so the effective read predicate for any authenticated user is "row's product is in my org AND my JWT role is one of admin/operator/client" — identical to the prior single combined policy semantically but transparent on inspection. A user with no matching role gets the empty set; service-role bypasses RLS for writes per §3.4.
 
 Operator-side annotation writes (`annotations[]` append) are gated by a `WITH CHECK` policy on a separate `product_ssot_annotate_for_operator` function — implementation detail of the server-side annotation endpoint, NOT a direct table UPDATE (per §3.4).
 
@@ -297,6 +327,7 @@ The migration is reversible by:
 ```sql
 drop policy if exists "product_ssot_admin_read"        on product_ssot;
 drop policy if exists "product_ssot_operator_read"     on product_ssot;
+drop policy if exists "product_ssot_client_read"       on product_ssot;
 drop policy if exists "product_ssot_flowai_audit_read" on product_ssot;
 drop function if exists product_ssot_write;
 drop table if exists product_ssot_version;
@@ -343,6 +374,34 @@ Because the table is net-new and lazily populated, a rollback is non-destructive
 
 **Today (verbatim, no spin):** ZERO ProductSSOT code. Every pipeline run silently bypasses §7 Output Contract item #5. The §11 Clearance Step 5 four-prerequisite gate is unenforced. §28 Symbiotic Loop's pre-run reads have no data source. The dispatch's UNANIMOUS P0 ranking is correct: nothing else in the agent waves can land cleanly until this spec ratifies + a follow-on W2 build dispatch ships the code.
 
+### 7.1 Cost-per-run delta (post-implementation)
+
+Implementing this spec adds measurable cost to every Self-Renewal cycle, because §28 closes the loop with a re-assessment pass that did not previously exist. Estimated per-cycle cost delta:
+
+| Cost component | Per Self-Renewal cycle | Notes |
+|---|---|---|
+| Postgres atomic write (§3.1 transaction) | ~$0.0001 | warm Supabase; <50 ms wall-clock |
+| `product_ssot_version` row + hash chain compute | ~$0.0001 | one INSERT + SHA-256 |
+| GovernanceAuditLog `ssot.write.v1` emit | ~$0.0001 | one INSERT |
+| **Re-assessment crawl** (Aggressive Crawl Engine pass to verify §28 deltas) | **~$0.30 – $2.00** | dominated by Browserless minutes + Anthropic tokens for issue-detection; bounded by §7.6 per-run ceiling ($15/run/product/env) |
+| **Total per Self-Renewal cycle** | **~$0.30 – $2.00** | re-assessment crawl is the operative cost driver; the Postgres / hash / audit-log layer is in the noise |
+
+This cost is consumed PER product+environment PER Self-Renewal cycle. For VEU's 5 flagship products across `dev`+`prd` (10 product+env pairs) at the spec's design cadence (one Self-Renewal cycle per product per 24h), the steady-state annualised cost is ~$1,100 – $7,300 — well within the §7.6 budget envelope. CEO direction (CA-10-D) explicitly accepted this cost as the price of closing the §6 crawl→detect→fix→re-test loop.
+
+### 7.2 Post-implementation visibility shift
+
+**Once ProductSSOT is built, previously silent `SSOT_WRITE_FAILED` errors become visible to operators. Operator-facing failure rate will appear to increase (it was always failing silently).**
+
+Today, every pipeline run "succeeds" from the operator's perspective because there is no ProductSSOT write to fail. Once the spec is implemented, the §3.1 atomic-write transaction can fail (Postgres connectivity blip, RLS misconfiguration, hash-chain divergence, etc.) and those failures will surface as operator-visible `SSOT_WRITE_FAILED` errors with `clearance_verdict = ERROR`.
+
+This is not a regression — it is the spec doing exactly what §7 line 132 requires (treating SSOT-write failure as a run-incomplete signal). But the operator-perceived failure rate WILL go up in the week following the W2 build dispatch. Communications expectations:
+
+- **Pre-merge readiness report** (owned by the W2 build dispatch) must include a 7-day error-rate baseline against a shadow-mode rollout (writes attempted but failures don't surface to operators), so the post-merge operator-visible delta is bounded and explainable.
+- **Operator-facing release notes** must explicitly call out the visibility shift so newly-surfaced failures aren't misread as a regression introduced by the build.
+- **The W2 dispatch's merge gate** should require the shadow-mode SSOT_WRITE_FAILED rate to be < 0.5 % of pipeline runs over 7 days — anything higher indicates a real-world reliability issue that must be addressed BEFORE flipping to live mode.
+
+Production pipeline runs that fail TODAY at items 1–4 of §7 (Vercel deploy errors, delta report generator crashes, etc.) would NOT have been rolled back by this spec even after implementation — those failures already short-circuit before the §3.1 transaction opens. The visibility shift is purely additive: pre-existing item-1-through-4 failures remain operator-visible exactly as today; net-new item-5 failures become operator-visible for the first time.
+
 ---
 
 ## §8 — ACCEPTANCE CRITERIA
@@ -367,34 +426,26 @@ W2-verifiable. Each is a single concrete test that either passes or fails — no
 
 ---
 
-## §9 — PANEL QUESTIONS (adversarial format)
+## §9 — PANEL QUESTIONS — RULINGS (v2 update)
 
-For W6 / Panel consultation. Each question presents the strawman ("Y" position) and the adversarial counter ("N" position). Adversarial split intent: Panel must decide which framing reflects canonical SSOT, not which framing the implementer prefers.
+The §9 questions from v1 (commit `4b8a3c3`) were Panel-reviewed in `docs/panel-consultations/product-ssot-spec-ratification-2026-05-16.md`. CEO disposition 2026-05-16 ruled Q1, Q2, Q3, and Q5; Q4 remains the sole open question deferred to a follow-on Panel cycle.
 
-**Q1 — Schema design: six jsonb blocks vs flat per-run rows.**
-- **Y (this spec's choice):** Six jsonb blocks per `(productId, environment)` pair, accumulating across runs. Faithful to §7.5. One row per product+environment lifetime; entries within `delta_log[]` / `governance_record[]` represent individual runs.
-- **N (dispatch's strawman §2):** Flat per-run row schema with top-level columns `runId`, `timestamp`, `pipelineVersion`, `clearanceVerdict`, `findings`, etc. — one row per pipeline run.
-- **Tension:** the flat shape would be friendlier to SQL analytics and would mirror how `workspace_runs` is modeled; the six-block shape preserves §7.5 verbatim and is what §28's pre-run-read code expects. Picking the flat shape requires re-amending §7.5 by stealth.
+### Q1 — Schema design: six jsonb blocks vs flat per-run rows — **RATIFIED Y (six-block)**
+Panel ratified the six-block model per §7.5 canonical. Flat per-run rows would have required a stealth amendment of §7.5 and broken §28's one-row-per-product-lifetime read pattern. Rationale paragraph inlined into §2.1 of this v2.
 
-**Q2 — Atomicity: "atomic with the rest of the output contract" interpretation.**
-- **Y (this spec, §3.2):** "Atomic" means the run is COMPLETE only when both items 1–4 (live URL, delta report, source disclosure, LIMITATIONS) AND the ProductSSOT write succeed. Items 1–4 cannot share a Postgres transaction with the SSOT write (Vercel API, file I/O are external). The atomic guarantee is at the run-completion-state level, not the DB-transaction level.
-- **N (literal reading of §7 line 132):** "Atomic" means a single transaction encompassing items 1–5. The Vercel deploy, the delta report file write, etc. all happen inside the Postgres txn via 2-phase commit or compensating actions.
-- **Tension:** the literal reading is unimplementable in practice (Vercel has no Postgres-XA hook). The spec's interpretation matches what §7 line 132's rollback semantics actually require ("considered INCOMPLETE and rolled back") — a state-level rollback, not a true 2PC. If Panel rules N, the spec needs a compensating-actions section (out of scope for this revision).
+### Q2 — Atomicity interpretation — **RATIFIED Y (saga pattern)**
+Panel ratified the run-completion-state atomicity reading. §3.2 v2 now declares the saga pattern explicitly with a three-stage table (items 1–4 external work → §3.1 Postgres txn → post-commit side effects) and explicit compensating-action semantics. Literal 2PC is unimplementable on the actual Vercel-plus-Postgres stack.
 
-**Q3 — RLS policy for operator reads vs cross-tenant audit.**
-- **Y (this spec, §4.6):** Operator reads are scoped to their own provider org (same as admin reads); the `flowai_audit` role reads across all orgs.
-- **N (CA-10-C role matrix line 402 strict reading):** "client" role is listed alongside admin and operator as a reader role. The strict matrix has THREE org-scoped reader roles (admin, operator, client), not two. The spec's policy elides `client` from `admin` + `operator` even though the matrix lists it. (Looking at the policy block in §4.6, `client` IS listed in `operator_read`'s in-list — but the policy is named "operator_read", which is misleading.)
-- **Tension:** the policy is functionally correct but the naming is sloppy. Panel should rule whether to (a) rename the policy `product_ssot_org_member_read` for accuracy or (b) split into three policies, one per role, for explicit alignment with §13.1.
+### Q3 — RLS policy naming + structure — **RATIFIED: split into 3 explicit per-role policies**
+CEO disposition 2026-05-16 ruled to split the prior single combined operator-read policy into three explicit per-role policies (`product_ssot_admin_read`, `product_ssot_operator_read`, `product_ssot_client_read`), each gating exactly one `role` literal. The cross-org `product_ssot_flowai_audit_read` policy is retained as the fourth. §4.6 v2 now carries the four-policy block; §5.5 v2 rollback drops all four. PostgreSQL OR-combination semantics keep the effective predicate identical to the prior single-policy form, but every policy's name now matches exactly what it does.
 
-**Q4 — Override semantics: append-only audit vs UPDATE-with-revision.**
+### Q4 — Override semantics: append-only vs UPDATE-with-revision — **OPEN (deferred to follow-on Panel cycle)**
 - **Y (this spec, §3 + §13.1):** All mutations are append-only. An admin "revoke" of an override is implemented as a NEW override entry whose `replacementContent` restores the original. The full history is preserved.
 - **N (UPDATE-with-revision alternative):** Each override is a top-level entry with a `revisions[]` sub-array; "revoking" updates the entry in place by appending to its `revisions[]`. The current state is the LAST revision; history is on the revisions array.
-- **Tension:** Y is simpler to audit (every change is a new row in `product_ssot_version`) and matches §28.3's "audit trail preserved" requirement literally. N is friendlier for UI (single entry with revision history) but requires UPDATE on `overrides[]` jsonb arrays which complicates RLS WITH CHECK clauses. Panel ruling on Y or N affects the UI design + the policy implementation; this spec defers the decision and proceeds with Y per §13.1's "append-only" language.
+- **Tension:** Y is simpler to audit (every change is a new row in `product_ssot_version`) and matches §28.3's "audit trail preserved" requirement literally. N is friendlier for UI (single entry with revision history) but requires UPDATE on `overrides[]` jsonb arrays which complicates RLS WITH CHECK clauses. Panel ruling on Y or N affects the UI design (single revision-history pane vs append-only audit log) + the policy implementation; this spec v2 continues to proceed with Y per §13.1's "append-only" language, pending the next Panel cycle. The W2 build dispatch should NOT implement override-revoke UI semantics until Q4 lands.
 
-**Q5 — Honesty / capability boundary completeness.**
-- **Y (this spec, §7):** ZERO ProductSSOT code today; every pipeline run silently bypasses §7 item #5; build dispatch is separate. The capability boundary section lists 10 specific UNBUILT items by file path.
-- **N (adversarial counter):** The capability boundary should also enumerate (a) which pipeline runs in production right now would NOT have been rolled back even with this spec implemented, since their failures occurred at items 1–4 (Vercel deploy failures) before any ProductSSOT-write attempt, (b) the cost-per-run delta from adding the atomic-write transaction (estimate: <50 ms per run on warm Supabase), (c) the operator-visible failure rate when SSOT_WRITE_FAILED begins firing on previously-silent failures.
-- **Tension:** N is a fair critique — the spec is honest about what's UNBUILT but silent on what becomes newly visible after implementation. A Panel may rule that §7 needs a "post-implementation visibility shift" subsection. This spec defers that disclosure to the W2 build dispatch's pre-merge readiness report.
+### Q5 — Honesty / capability boundary completeness — **RATIFIED: expand §7**
+CEO disposition 2026-05-16 ruled to expand §7 with cost-per-run delta and post-implementation visibility-shift disclosure. §7.1 v2 now lists the ~$0.30 – $2.00 per Self-Renewal cycle cost (dominated by the re-assessment crawl, NOT the Postgres write); §7.2 v2 carries the visibility-shift paragraph verbatim per CEO wording ("Once ProductSSOT is built, previously silent `SSOT_WRITE_FAILED` errors become visible to operators…"). The W2 build dispatch's pre-merge readiness report must include a 7-day shadow-mode error-rate baseline so the visibility shift is bounded and explainable.
 
 ---
 
@@ -403,6 +454,6 @@ For W6 / Panel consultation. Each question presents the strawman ("Y" position) 
 1. **W2 build dispatch.** Implements §2–§6 as code. Scope: migration `0013_product_ssot.sql` + four `api/product-ssot-*.js` endpoints + AutoRunner read/write wire-in.
 2. **W5x UI dispatch.** Implements `/product-ssot/:productId` per §13.1 + §4.1.
 3. **W5x nightly hash-chain verifier.** Implements §8 acceptance criterion #6.
-4. **W6 Panel consultation.** Reviews §9 Q1–Q5; ratifies schema + atomicity interpretation; produces a CA-n promotion if any §9 ruling materially diverges from canonical §7.5 / §7 / §13.1.
+4. **W6 follow-on Panel cycle.** Resolves the sole remaining open question §9 Q4 (override semantics: append-only vs UPDATE-with-revision). Q1, Q2, Q3, Q5 were ratified on 2026-05-16 and are no longer open. A CA-n promotion is only required if Q4 rules N (UPDATE-with-revision), which would amend §13.1's "append-only" language.
 5. **W2 Agent #10 dispatch.** Implements `architecture_snapshot` drift writes per §6 integration row 5.
 6. **W2 §11 Clearance Step 5 gate dispatch.** Wires the four-prerequisite gate to read from `governance_record[]` per §6 integration row 8.
