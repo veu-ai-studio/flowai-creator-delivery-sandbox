@@ -1675,7 +1675,56 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-16)
+### ENTRY 008 — 2026-05-17
+- **Session:** 2026-05-16 / 2026-05-17 overnight. Major canonical decisions, dispatched across W2, W3, W3a, W5a, W5c, W6, with CEO arbitrations.
+- **Canonical product rename — MyBirthSafe → MyPregLife (commit `be4f991`):**
+  - Applied 7 case patterns (PascalCase, lowercase, kebab-case, snake_case, UPPER, `.app` domain variants).
+  - 318 textual replacements across 82 tracked files spanning `src/`, `api/`, `docs/`, `scripts/`, `tests/`, `specs/` (including historical archives and panel-consultation transcripts so all future searches find every reference).
+  - Preserved per dispatch: `safe-path.base44.app` (the actual Base44-hosting dev URL) — verified intact at 9 surviving call sites.
+  - Three product-validation scope arrays (`BaseAgent.PRODUCT_ORG`, `MessageSchema` topic-scope validator list, `CredentialAdapter` cross-product isolator) updated consistently; Locked Rule 7 invariant preserved.
+  - 1656 / 1656 tests passed post-rename — textual swap only, zero logic / schema / field renames beyond the literal product-name string.
+- **5 VEU products cloned to Vercel under `veu-ai-studio` GitHub org:** SAIGE, PressAI (OurPublishingAI), ReachSMS (OurCommunitiesAI), RelTwin, MyPregLife — now consolidated under one org for unified deployment, CI, and FlowAI assessment-target reachability. Per-product `.base44.app` and custom-domain mappings preserved.
+- **Agent #4 Provider Onboarding reclassified SHIPPED-GREEN → PARTIAL (commit `88113f2`, Panel ruling FA-Q1 unanimous):**
+  - §15.1 row 4 updated. Rationale: executor code exists in `src/lib/agents/agents/Agent4ProviderOnboarding.js` but Stripe Connect SDK wiring, webhook receiver, and Connect Express flow are not live in the deployed Vercel env — corroborated by §3 line 47 ("DORMANT today") and the 2026-05-13 agent-wiring panel ("deployed app shows onboarding is incomplete").
+  - PARTIAL captures the truth: code shipped, deployment incomplete. Original landing commit reference `5006431` preserved for git provenance.
+  - **Open consistency follow-up:** three other SSOT call sites still describe Agent #4 as SHIPPED-GREEN (§4 L1 line 70, §26 status line 1006) or DORMANT (§3 line 47). Whole-file reconciliation deferred to a follow-up dispatch; §15.1 row 4 is the canonical roster row and is correct.
+- **MessageBus P0 wiring gap formally identified — 4 production stub sites:**
+  - `api/research-url.js:30` (Agent #21 Conductor on the live AutoRunner research path)
+  - `api/agent/21/execute.js:283` (Agent #21 Conductor Executor sync endpoint)
+  - `api/agent/3/execute.js:189` (Agent #3 Self-Renewal Executor sync endpoint)
+  - `api/_lib/inngest.js:207` (Inngest cron / async-event executor harness)
+  - All four instantiate the agent with `{ publish: async () => {} }` — the canonical `src/lib/agents/MessageBus.ts` (real implementation, ~210 lines, topic validation) is bypassed entirely. Zero `21.crawl.completed.v1` / `21.issues.detected.v1` / `21.gtm.readiness.v1` / `3.ssot.delta.v1` topics fire in production. Inventory landed in `docs/specs/FOUNDATION_AUDIT_BACKLOG.md` (commit `b48c856`) as P1-4; recorded here for canonical visibility. Remediation plan: shared `api/_lib/messageBus.js` exporting `getServerMessageBus()` singleton, injected at all four sites; per-fix regression test asserting topic landed.
+- **ProductSSOT P0 — entity unbuilt, every pipeline run silently bypasses §7 Output Contract item #5:**
+  - `ls src/lib/productSSOT` / `ls src/pages/ProductSSOT*` / `ls api/product-ssot` → all return "no such directory". The `ProductSSOT` string appears in agent comments only.
+  - §7 line 132 mandates atomic write-or-rollback with each output; today every run silently completes without the write. §11 Step 5 four-prerequisite gate is unenforceable. §28 (Agent #6 pre-run read, narrowing crawl scope) is blocked.
+  - **CEO Q4 disposition (this session):** HYBRID approach locked — append-only DB rows for the canonical `delta_log` / `governance_record` blocks + UI-synthesis view that composes the current state from append-history. Per-block conflict resolution per §28.4. Resolves the spec's prior ambiguity between "rolling document" and "append-only ledger" by treating the ledger as canonical and the document as a synthesised view.
+- **6 systemic cluster-fix canonical templates drafted then revised to v2:**
+  - v1 drafts (commits `4b0bbc0`..`9859b98`): CLUSTER_A through CLUSTER_F. Each addresses a recurring failure mode the Panel surfaced across multiple agent specs.
+    - CLUSTER_A — Boundary-class membership template (CredentialAdapter scope correctness)
+    - CLUSTER_B — Test-bypass-token RS256 issuance + verification
+    - CLUSTER_C — MessageBus topic registration + schema-validator
+    - CLUSTER_D — Audit-log topic schema + envelope
+    - CLUSTER_E — Authority-ceiling integration (recommend_only / auto_write_internal / requires_human_gate per CA-7 + CA-9-Q4=(b))
+    - CLUSTER_F — Model-budget fallback (per-call retry-with-cheaper-model when budget pressure detected)
+  - W6 adversarial Panel ratification (`10b13f9`) found 6 conditions across the cluster set; v2 revisions (commits `5c5d3d1`, `87b4659`, `4caaa29`, `8486be8`, `664942d`, `16bc262`) addressed each Panel condition surgically.
+- **20 agent engineering specs drafted (commits `61b13c9`..`9ca0a2c`):** complete blueprint set for Agents #6 through #26 (excluding the 5 SHIPPED-GREEN). Each spec includes capability boundary, MessageBus topic contracts, authority shape, escalation rules, charter-stable invariants, test-plan. Per §15.1 + cluster-template alignment. Indexed at `docs/specs/agent-blueprints/00_BUILD_INDEX.md`. Enables P2 (agent wave engineering) without spec-stage rework.
+- **CA-9-Q4=(b) re-disposition: dual-authority agents route through EXECUTOR_REGISTRY sibling, not primary layer:**
+  - Agents #21 (Aggressive Crawl Conductor) and #26 (Orchestra Research Agent) carry the dual-authority `[recommend_only, auto_write_internal, requires_human_gate]` shape per CA-7 §15.5 and CEO arbitration CA-9-Q4=(b).
+  - Re-disposition this session: the `auto_write_internal` capability surface is provided via the EXECUTOR_REGISTRY sibling-namespace pattern (CA-7 §15.5), NOT via the primary `BaseAgent` authority layer. This keeps the canonical `BaseAgent.guard()` strict (per-invocation `authorityNeeded` set membership) while permitting split-charter agents to invoke their internal-write capability through the registry adapter.
+  - Reflected in the Agent #21 Executor sync endpoint (`api/agent/21/execute.js`) and Agent #3 Self-Renewal Executor (`api/agent/3/execute.js`) — both consume the EXECUTOR_REGISTRY shape.
+- **Self-Renewal v4 in progress (v1–v3 NOT_RATIFIED across multiple Panel passes):**
+  - v3 (commit `79e4499`) tightened scope: App-only, single-file delivery, 3-state enum. W6 v3 + ProductSSOT v2 ratification (`1abfa37`, basis `79e4499` + `c59326a`) found 8 remaining conditions across the two specs.
+  - v4 (in-flight) addresses those 8 conditions and will land as a separate commit. Holds the canonical Self-Renewal contract until ratified; until then, the Self-Renewal Executor uses the live commit `68a0c75` implementation (SHIPPED-GREEN per §15.1 row 3, fork-and-fix loop still PARTIAL per §4 L3 status footnote).
+- **Phase 3 auth-traversal COMPLETE (commits `7727f8d`..`5202ede`):**
+  - 5 chunks delivered (CHUNK 1–5). 1656/1656 tests passing. All 10 invariants from `AUTH_TRAVERSAL_SECURITY_SPEC.md` v3 §1 tested green. All 9 i18n language families tested with localized login forms. No-screenshot regression guard active (Option B canonical per v3 §1).
+  - **Capability unlocked:** FlowAI can now perform authenticated multi-page crawls of operator-owned products with real credentials, full credential scrubbing, MFA fail-loud, and audit-log retention per `auth_short` class (90 days hot + 1 year cold).
+  - Detail per ENTRY 007 above (separate entry to preserve chunk-by-chunk + commit mis-attribution audit trail). ENTRY 008 records the milestone here for session-summary completeness.
+- **W2 surgical fixes this session (Defect A/B/C plus rewiring, all commits ancestral to `be4f991`):** crawler body-truncation cap raised 1500→50000 (Defect A, `4b6293e`); Monitor verdict deterministic + 11 regression tests (Defect B, `1880333`); Monitor consolidates prior step findings (Defect C, `79b0053`); UI→crawler routed through `/api/research-url` (`c770c71`); CrawlerQualityDot crash fix (`9b96a4d`); env-gated auth bypass `FLOWAI_AUTH_BYPASS` (`bac8649`); vite alias absolute path (`86c161f`); Tooltip case-collision (`ef83dc3`, `2f438fc`); Foundation Audit Backlog doc (`b48c856`).
+- **Lineage:** ENTRY 007 (Phase 3 COMPLETE, commits `7727f8d`..`076a35b`) → W2 Defects A/B/C + UI rewire (commits `c770c71`..`79b0053`) → Foundation Audit Backlog `b48c856` → Agent #4 reclassify `88113f2` → cluster-fix v1 cohort (`4b0bbc0`..`9859b98`) → W6 cluster ratification (`10b13f9`) → cluster v2 cohort (`5c5d3d1`..`16bc262`) → Self-Renewal/ProductSSOT v3/v2 cohort (`79e4499`, `c59326a`, `1abfa37`) → MyBirthSafe→MyPregLife rename (`be4f991`) → this entry.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-17)
 
 
 
