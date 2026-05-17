@@ -69,6 +69,7 @@ import { detectMfaChallenge, buildMfaFailureEnvelope } from '../auth/mfaDetect.j
 import { isInScopeForAuthenticatedNav, parseUrlSafe } from '../auth/sameOriginGate.js';
 import { applyHybridGate } from '../auth/destructiveDenylist.js';
 import { scrubDomDump } from '../auth/scrubArtifacts.js';
+import { STORAGE_STATE_PATH_LITERAL, RETENTION_CLASS } from '../auth/auditEntry.js';
 
 const EXECUTOR_KEY = 'aggressive-crawl-conductor-executor';
 
@@ -300,9 +301,9 @@ export class Agent21AggressiveCrawlConductorExecutor extends BaseAgent {
         loginSucceeded: report.ok && !report.authFailed,
         pagesCrawled: report.pagesCrawled ?? 0,
         authGatedPagesEncountered: report.authGatedPagesEncountered ?? 0,
-        storageStatePath: '[EPHEMERAL — memory-only per Invariant 2 MUST]',
+        storageStatePath: STORAGE_STATE_PATH_LITERAL,
         storageStateDeletionVerified: true,
-        retentionClass: 'auth_short',
+        retentionClass: RETENTION_CLASS,
         at: this.deps.clock.now(),
         durationMs: report.durationMs ?? 0,
       });
@@ -320,7 +321,7 @@ export class Agent21AggressiveCrawlConductorExecutor extends BaseAgent {
         productScope: this.deps.productScope,
         targetOrigin: this._safeOriginOf(plan.url),
         reason: err?.message ?? String(err),
-        retentionClass: 'auth_short',
+        retentionClass: RETENTION_CLASS,
         at: this.deps.clock.now(),
       });
       // Defensive: dereference any run-state we accumulated.
