@@ -1,16 +1,23 @@
-# Cluster A — Cost Governor Integration (Canonical Template, v2)
+# Cluster A — Cost Governor Integration (Canonical Template, v3)
 
-**Status:** DRAFT v2 — Panel conditions applied; pending W6 re-ratification.
-**Version history:** v1 (commit `4b0bbc0`, 2026-05-16) → v2 (this commit, 2026-05-17 — Panel `PLURALITY_CLA-REVISE` 7/9 conditions R1–R4 applied per W3 Dispatch #10).
+**Status:** DRAFT v3 — Panel conditions A1–A5 applied; pending W6 re-ratification.
+**Version history:** v1 (commit `4b0bbc0`, 2026-05-16) → v2 (commit `5c5d3d1`, 2026-05-17, Panel `QUORUM_PLURALITY_CLA-REVISE` 7/9 R1–R4) → v3 (this commit, 2026-05-17, Panel v2 ratification conditions A1–A5 applied per W3 Dispatch #12).
 **Author:** W3.
 **Anchor canonical:** Rev-2.1 §15.1 row 23 (Cost Governor charter), Orchestra Integration Spec §7.1 (`flowai_adapter_cost` ledger) + §8.4 (`flowai_run_budgets` ceiling table), `docs/specs/agent-specs/AGENT_23_OpsRunnerGamma.md` (commit `e1752f1`).
-**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` (W6 commit `076a35b`) — Top-3 Highest-Risk Finding #3 + Batch 1 objections #04 + #07 + #12. **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` (W6 Dispatch #16, commit `10b13f9`) — `QUORUM_PLURALITY_CLA-REVISE` 7/9.
+**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` (W6 commit `076a35b`) + `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` (W6 Dispatch #16, commit `10b13f9`, v2 conditions). **v3 conditions:** `docs/panel-consultations/cluster-templates-v2-ratification-2026-05-17.md` (W6 v2-ratification dispatch).
 
-**v2 revisions applied (per W3 Dispatch #10):**
-- **R1** — atomic `UPDATE … WHERE … RETURNING` pattern (fixes TOCTOU race between Phase 1 step 2 read and step 3 increment). §2.3 rewritten.
-- **R2** — reaper window shortened **10 min → 60–90 s** (orphan reservations reclaimed within one heartbeat-style window rather than blocking budget for 10 minutes). §2.3 + §3.1 + AC-CA-3 updated.
-- **R3** — explicit deadlock detection + `statement_timeout` on the reservation UPDATE (PostgreSQL `lock_timeout` + `statement_timeout` per-statement). §2.3 §2.3.1 added.
-- **R4** — Cluster E ↔ Cluster A interaction order: `getCeiling()` runs **before** `costGovernor.reserve()`. §2.6 added; §3.1 block updated; §6 cross-cluster note updated.
+**v3 revisions applied (per W3 Dispatch #12 — REPLACES v2 §2.3 contract):**
+- **A1** — REPLACE `UPDATE … WHERE … RETURNING` with **PostgreSQL advisory lock** per `(productId, costPool)`. `pg_try_advisory_xact_lock(hashtext(productId || ':' || costPool))` short-circuits the lock-timeout race entirely; serialised critical section follows. Failure on 3 retries → `BUDGET_LOCK_CONTENTION`. §2.3 rewritten.
+- **A2** — `statement_timeout` `1000ms → 5000ms` (covers Supabase cold-start). Heartbeat-extension path canonical: `costGovernor.heartbeat(reservationId, leaseToken, sequence)` extends the reservation window by 60s per call; maximum 10 heartbeats = 10 minutes total wall-clock. §2.3.1 + §2.3.2 added.
+- **A3** — Lease token (UUID v4) + monotonic `leaseSequence` counter on every reservation. `heartbeat()` MUST supply both — stale workers with wrong token are rejected with `STALE_LEASE`; replay attacks with old sequence rejected with `STALE_SEQUENCE`. §2.3.2 added.
+- **A4** — Phase 2 settlement runs at PostgreSQL `SERIALIZABLE` isolation level. Settlement is idempotent on `reservationId` — second `settle()` call with same `reservationId` returns `{ok: true, already_settled: true}` without error. §2.3 Phase 2 rewritten; §2.3.3 added.
+- **A5** — Explicit reconciliation paragraph for Cluster E ↔ Cluster A authoritative ordering, error semantics, and advisory-vs-authoritative divergence handling. §2.6 expanded.
+
+**v2 revisions retained (per W3 Dispatch #10) but evolved in v3:**
+- **R1 (v2)** — atomic `UPDATE … WHERE … RETURNING` — **SUPERSEDED by v3 A1 advisory-lock pattern**. Rationale: advisory locks eliminate the lock-timeout race entirely (no need to fight Postgres lock manager when we can acquire a per-cost-pool semaphore deterministically). v3 keeps the TOCTOU-free guarantee but via a different mechanism.
+- **R2 (v2)** — 60–90s reaper window — RETAINED but heartbeat-extension semantics formalised per v3 A2.
+- **R3 (v2)** — lock_timeout + statement_timeout — `lock_timeout` REMOVED (no longer needed with advisory locks); `statement_timeout` retained but raised to 5000ms per v3 A2.
+- **R4 (v2)** — `getCeiling()` BEFORE `reserve()` ordering — RETAINED + expanded with v3 A5 reconciliation paragraph + explicit error-code mapping.
 
 ---
 
@@ -78,77 +85,160 @@ Every agent that incurs cost (LLM dispatch, crawl invocation, deployment) MUST e
 }
 ```
 
-### §2.3 — Atomic pre-dispatch reservation contract (v2 — R1 + R2 + R3)
+### §2.3 — Two-phase reservation contract (v3 — A1 advisory-lock + A4 SERIALIZABLE settlement)
 
-Per Top-3 Finding #3 ("reserved atomically before dispatch") and v2 Panel R1 (TOCTOU fix): Agent #23 implements **two-phase commit** for cost reservation. Phase 1 is a SINGLE atomic `UPDATE … WHERE … RETURNING` — the v1 read-then-increment pattern was TOCTOU-prone and is REPLACED.
+Per v3 A1: Agent #23 implements **two-phase commit** for cost reservation using PostgreSQL transaction-scoped advisory locks instead of `UPDATE … WHERE` lock-fighting. The v2 `UPDATE … WHERE … RETURNING` pattern is **SUPERSEDED**.
 
-**Phase 1 — Reservation (single atomic UPDATE, before dispatch):**
+**costPool definition (v3):** the lock key is `(productId, costPool)`. `costPool` is one of `'global' | 'agent_<N>'` declared in `flowai_run_budgets.costPool` column. Default `'global'`; agent-scoped pools allow per-agent ceiling enforcement without serialising the entire product's cost activity onto a single lock.
 
-1. Emitting agent calls `costGovernor.reserve({runId, productId, estimatedCostUsd, ...})`.
-2. Agent #23 executes a single atomic statement:
+**Phase 1 — Reservation (advisory-lock-protected, before dispatch):**
+
+1. Emitting agent calls `costGovernor.reserve({runId, productId, costPool, estimatedCostUsd, ...})`.
+2. Agent #23 opens a transaction at default isolation; advisory-lock + critical section:
    ```sql
-   -- Per-statement timeouts mandatory per v2 R3
-   SET LOCAL lock_timeout = '500ms';
-   SET LOCAL statement_timeout = '1000ms';
+   BEGIN;
+   SET LOCAL statement_timeout = '5000ms';   -- v3 A2 — was 1000ms; covers Supabase cold-start
+
+   -- v3 A1: per-(productId, costPool) advisory lock; auto-released at COMMIT/ROLLBACK.
+   -- hashtext(productId || ':' || costPool) gives a stable bigint key.
+   SELECT pg_try_advisory_xact_lock(
+     hashtext($productId || ':' || $costPool)
+   ) AS got_lock;
+
+   -- If got_lock = false → ROLLBACK; caller retries.
+   -- If got_lock = true → proceed to read+increment inside the protected critical section.
+
+   SELECT ceilingUsd, spentUsd, reservedUsd, exceededAt
+     FROM flowai_run_budgets
+    WHERE runId = $runId AND productId = $productId AND costPool = $costPool
+    FOR UPDATE;
+   -- (FOR UPDATE is redundant under the advisory lock but defensive against
+   --  rows being read by sessions that bypass costGovernor — never expected.)
+
+   -- Decision: if exceededAt IS NOT NULL → ROLLBACK; return run_halted.
+   -- If ceilingUsd - spentUsd - reservedUsd < estimatedCostUsd → ROLLBACK; return ceiling_would_be_exceeded.
+   -- Else:
+   INSERT INTO flowai_run_reservations (
+     id, runId, productId, costPool,
+     reservedAmount, reservedAt, leaseToken, leaseSequence,
+     agentId, executorKey, adapter, capability
+   ) VALUES (
+     gen_random_uuid(), $runId, $productId, $costPool,
+     $estimatedCostUsd, now(), gen_random_uuid(), 0,
+     $agentId, $executorKey, $adapter, $capability
+   )
+   RETURNING id AS reservationId, leaseToken, leaseSequence;
 
    UPDATE flowai_run_budgets
       SET reservedUsd = reservedUsd + $estimatedCostUsd,
           updatedAt   = now()
-    WHERE runId   = $runId
-      AND productId = $productId
-      AND exceededAt IS NULL
-      AND ceilingUsd - spentUsd - reservedUsd >= $estimatedCostUsd
-   RETURNING id AS reservationId,
-             ceilingUsd, spentUsd, reservedUsd;
+    WHERE runId = $runId AND productId = $productId AND costPool = $costPool;
+
+   COMMIT;
    ```
-3. If `UPDATE` returns **0 rows** → ceiling would be exceeded OR run already halted. Return `{ok: false, reason: 'ceiling_would_be_exceeded' | 'run_halted'}` (distinguish via post-fact `SELECT exceededAt`). Emitting agent emits `agent.cost.signal.v1` with `costEvent: 'pre-dispatch-rejected'` and aborts dispatch.
-4. If `UPDATE` returns **1 row** → reservation succeeded atomically. Return `{ok: true, reservationId}`. Emitting agent emits `agent.cost.signal.v1` with `costEvent: 'pre-dispatch'`.
+3. Caller behaviour on `got_lock = false`: retry with exponential backoff (50ms / 100ms / 200ms — up to 3 attempts total). After 3 attempts → return `{ok: false, reason: 'BUDGET_LOCK_CONTENTION'}`. Emitting agent emits `agent.cost.signal.v1` `costEvent: 'pre-dispatch-rejected'`; aborts dispatch.
+4. If reservation succeeded → return `{ok: true, reservationId, leaseToken, leaseSequence: 0}`. Emitting agent emits `agent.cost.signal.v1` `costEvent: 'pre-dispatch'`.
+5. If `ceiling_would_be_exceeded` OR `run_halted` → return `{ok: false, reason: <reason>}`. Emitting agent emits `agent.cost.signal.v1` `costEvent: 'pre-dispatch-rejected'`; aborts dispatch.
 
-Rationale (v2 R1): the v1 spec's "read `ceilingUsd - spentUsd - reservedUsd`; if sufficient, then increment" is a textbook TOCTOU race — two concurrent reservations could both pass the read check then both increment, overspending the ceiling. The atomic `UPDATE … WHERE` with the budget predicate in the `WHERE` clause makes the check + increment indivisible at the row-lock level.
+Rationale (v3 A1): the v2 `UPDATE … WHERE … RETURNING` pattern was TOCTOU-free but still fought the PostgreSQL row-lock manager — high concurrency produced `lock_timeout` storms that masqueraded as legitimate contention. The advisory-lock pattern serializes per-(productId, costPool) at the application semaphore layer; concurrent reserves on DIFFERENT cost-pools don't contend at all. Net: fewer false-negative lock-contention errors; better throughput under high concurrency.
 
-**Phase 2 — Settlement (post-dispatch):**
+**Phase 2 — Settlement (SERIALIZABLE + idempotent, post-dispatch):**
 
-5. Emitting agent dispatches via Orchestra.
-6. On settlement, emitting agent calls `costGovernor.settle({reservationId, observedCostUsd})`.
-7. Agent #23 executes a single atomic statement (no TOCTOU risk because the delta is deterministic per `reservationId`):
+6. Emitting agent dispatches via Orchestra.
+7. On settlement, emitting agent calls `costGovernor.settle({reservationId, leaseToken, observedCostUsd})`.
+8. Agent #23 opens a transaction at **`SERIALIZABLE` isolation level** (v3 A4) and runs:
    ```sql
-   SET LOCAL lock_timeout = '500ms';
-   SET LOCAL statement_timeout = '1000ms';
+   BEGIN ISOLATION LEVEL SERIALIZABLE;     -- v3 A4
+   SET LOCAL statement_timeout = '5000ms';
 
+   -- v3 A4 idempotency check: read first
+   SELECT id, leaseToken, reservedAmount, settledAt, observedCostUsd
+     FROM flowai_run_reservations
+    WHERE id = $reservationId
+    FOR UPDATE;
+
+   -- v3 A3 lease-token validation
+   -- If leaseToken column ≠ $leaseToken → ROLLBACK; return STALE_LEASE.
+
+   -- v3 A4 idempotent retry path
+   -- If settledAt IS NOT NULL → COMMIT; return {ok: true, already_settled: true, observedCostUsd: <stored>}.
+   --   (Same reservationId + same lease → repeated settle() is a no-op.)
+
+   -- Else apply settlement
    UPDATE flowai_run_budgets b
       SET spentUsd    = b.spentUsd + $observedCostUsd,
-          reservedUsd = b.reservedUsd - r.reservedAmount,
+          reservedUsd = b.reservedUsd - $reservedAmount,    -- variable from SELECT above
           updatedAt   = now()
-     FROM flowai_run_reservations r
-    WHERE b.runId   = r.runId
-      AND r.id      = $reservationId
-      AND r.settledAt IS NULL
-   RETURNING b.spentUsd, b.reservedUsd;
-   -- And in the same transaction:
+    WHERE b.runId = (SELECT runId FROM flowai_run_reservations WHERE id = $reservationId)
+      AND b.productId = (SELECT productId FROM flowai_run_reservations WHERE id = $reservationId)
+      AND b.costPool = (SELECT costPool FROM flowai_run_reservations WHERE id = $reservationId);
+
    UPDATE flowai_run_reservations
       SET settledAt = now(),
           observedCostUsd = $observedCostUsd
-    WHERE id = $reservationId
-      AND settledAt IS NULL;
+    WHERE id = $reservationId;
+
+   COMMIT;
    ```
-   Emitting agent emits `agent.cost.signal.v1` with `costEvent: 'post-dispatch'`.
+   Emitting agent emits `agent.cost.signal.v1` `costEvent: 'post-dispatch'`.
 
-**On dispatch failure** (Orchestra returns 5xx / 429 / timeout): emitting agent MUST still call `costGovernor.settle({reservationId, observedCostUsd: 0})` to release the reservation. The reservation lifecycle is mandatory.
+**On dispatch failure** (Orchestra returns 5xx / 429 / timeout): emitting agent MUST still call `costGovernor.settle({reservationId, leaseToken, observedCostUsd: 0})` to release the reservation. The reservation lifecycle is mandatory.
 
-**Orphan reaper (v2 R2 — shortened window 10 min → 60–90 s):** Agent #23 runs a reaper job every **60 seconds**; it reclaims reservations where `reservedAt < now() - interval '90 seconds'` AND `settledAt IS NULL`. The 90-second window is the maximum reasonable wall-clock for a single Orchestra dispatch round-trip (LLM 60s + buffer); longer-running operations MUST extend by calling `costGovernor.heartbeat(reservationId)` which sets `reservedAt = now()`.
+**Orphan reaper (retained from v2 R2):** Agent #23 runs a reaper job every **60 seconds**; it reclaims reservations where `reservedAt < now() - interval '90 seconds'` AND `settledAt IS NULL` AND `heartbeatExtensionCount < 10`. Reaper-reclaimed reservations invalidate the lease token (further `settle()` or `heartbeat()` calls with that lease return `STALE_LEASE`). Long-running operations MUST extend via `heartbeat()` per §2.3.2.
 
-Rationale (v2 R2): the v1 10-minute reaper blocked budget for orphan reservations far longer than necessary, allowing legitimate concurrent runs to false-fail on a stale `reservedUsd`. The 60–90s window matches realistic dispatch latency; long-running operations have an explicit heartbeat path.
+### §2.3.1 — Statement timeout + advisory lock (v3 — A1 + A2)
 
-### §2.3.1 — Deadlock detection + statement_timeout (v2 R3)
+Every reservation / settlement / heartbeat statement runs with explicit PostgreSQL guards:
 
-Every reservation / settlement statement runs with explicit PostgreSQL guards:
+- **Advisory lock (v3 A1)** — `pg_try_advisory_xact_lock(hashtext(productId || ':' || costPool))`. Returns `true` on lock acquisition; `false` if another transaction holds it. Auto-released at `COMMIT` or `ROLLBACK`. No timeout needed because the lock is non-blocking; caller decides retry policy.
+- **statement_timeout (v3 A2)** — `SET LOCAL statement_timeout = '5000ms'`. Was `'1000ms'` in v2; raised to `5000ms` because Supabase serverless instances exhibit cold-start latency in the 1–3s range. Statement timeout still fires on truly stuck queries (e.g. database migration in progress); caller treats as `{ok: false, reason: 'statement_timeout'}`.
 
-- `SET LOCAL lock_timeout = '500ms'` — if a row lock cannot be acquired within 500ms, the statement fails with `40P01` (deadlock_detected) / `55P03` (lock_not_available). Caller treats as `{ok: false, reason: 'lock_contention'}`; emitting agent retries up to 3 times with exponential backoff (50ms / 100ms / 200ms); on persistent failure → `{ok: false, reason: 'lock_contention_persistent'}` and aborts dispatch.
-- `SET LOCAL statement_timeout = '1000ms'` — if the statement itself runs longer than 1s, it aborts. Caller treats as `{ok: false, reason: 'statement_timeout'}`; emitting agent surfaces as soft failure (not retried — implies database health issue, not contention).
+**REMOVED in v3:** `SET LOCAL lock_timeout = '500ms'` (v2 R3) — the advisory-lock pattern eliminates the underlying lock-timeout race. Implementation MUST NOT set `lock_timeout` on reservation transactions (it would interact unpredictably with the advisory lock).
 
-PostgreSQL deadlock detection is automatic at the engine level; the `lock_timeout` ensures the deadlock detector fires within bounded time even when one party of the deadlock is using a long-held lock outside Agent #23 (e.g. concurrent migration). On deadlock detection, the victim transaction rolls back with `40P01`; caller treats identically to `lock_contention`.
+PostgreSQL deadlock detection remains automatic at the engine level. Under the advisory-lock pattern, deadlocks are structurally impossible (single lock per transaction, hash-key-ordered acquisition).
 
-These timeouts are MANDATORY per v2 R3 — implementation must `SET LOCAL` at the start of every reservation / settlement / reaper statement; missing timeouts are non-conformant.
+### §2.3.2 — Heartbeat extension with lease token + monotonic sequence (v3 — A2 + A3)
+
+Long-running dispatches (Orchestra wall-clock > 60s) MUST extend their reservation window via `costGovernor.heartbeat(reservationId, leaseToken, sequence)`. The heartbeat contract:
+
+**API:** `heartbeat({reservationId, leaseToken, sequence})` — extends `reservedAt = now()` AND increments `heartbeatExtensionCount` AND increments `leaseSequence`.
+
+**Lease token validation (v3 A3):**
+- Reservation was created with `leaseToken = gen_random_uuid()` at `reserve()` time.
+- `heartbeat()` caller MUST supply the same `leaseToken` it received from `reserve()`.
+- If `heartbeat()`'s `leaseToken` ≠ stored `leaseToken` → return `{ok: false, reason: 'STALE_LEASE'}`. Stale worker (e.g. process restarted between `reserve()` and `heartbeat()`) cannot extend a reservation it doesn't own.
+
+**Monotonic sequence (v3 A3 — replay protection):**
+- Caller supplies `sequence` = expected current `leaseSequence` value. First heartbeat: `sequence = 0` (matches initial state from `reserve()`).
+- Agent #23 atomically increments `leaseSequence` (compare-and-swap):
+  ```sql
+  UPDATE flowai_run_reservations
+     SET reservedAt = now(),
+         leaseSequence = leaseSequence + 1,
+         heartbeatExtensionCount = heartbeatExtensionCount + 1
+   WHERE id = $reservationId
+     AND leaseToken = $leaseToken
+     AND leaseSequence = $sequence                    -- v3 A3 CAS check
+     AND heartbeatExtensionCount < 10                 -- v3 A2 cap
+     AND settledAt IS NULL
+  RETURNING leaseSequence AS newSequence, heartbeatExtensionCount;
+  ```
+- If `UPDATE` returns 0 rows → either lease-token mismatch (`STALE_LEASE`), stale sequence (`STALE_SEQUENCE` — caller's sequence is out of date), heartbeat-cap exceeded (`HEARTBEAT_CAP_EXCEEDED`), or already settled (`ALREADY_SETTLED`). Distinguish via post-fact `SELECT`.
+- If `UPDATE` returns 1 row → return `{ok: true, newSequence, heartbeatExtensionCount}`. Caller updates its local `sequence` to `newSequence` for the next heartbeat call.
+
+**Heartbeat cap (v3 A2):** `heartbeatExtensionCount < 10` — maximum 10 heartbeats per reservation = 10 × 60s = 10 minutes total wall-clock. After cap reached: caller MUST either settle or let reaper reclaim. Hard cap prevents indefinite reservation hold by a stuck long-running dispatch.
+
+**Heartbeat cadence:** caller calls `heartbeat()` every ~50s (within the 60s reservation window). If dispatch completes before cap, caller calls `settle()` normally with whatever sequence value it last received.
+
+### §2.3.3 — SERIALIZABLE settlement + idempotency (v3 A4)
+
+Phase 2 settlement runs at `SERIALIZABLE` isolation level (PostgreSQL's strongest). Combined with v3 A3's lease-token guard, this gives:
+
+1. **Idempotent retry safety:** caller can safely retry `settle()` on network failure. If first `settle()` succeeded but response was lost, second `settle()` reads `settledAt IS NOT NULL` and returns `{ok: true, already_settled: true, observedCostUsd: <stored>}` without re-applying the spentUsd delta.
+2. **Concurrent-settle anomaly prevention:** if two concurrent `settle()` calls fire on the same `reservationId` (unlikely but possible during retry storm), `SERIALIZABLE` ensures one wins outright; the other reads `settledAt IS NOT NULL` and returns the already-settled response.
+3. **Lease-mismatch protection:** if a stale worker calls `settle()` with a wrong `leaseToken` (e.g. process restart after the legitimate owner already settled), Agent #23 returns `{ok: false, reason: 'STALE_LEASE'}`. The stored `spentUsd` is NOT modified.
+
+**On serialization-failure (PostgreSQL `40001`):** PostgreSQL may abort a `SERIALIZABLE` transaction with `40001 serialization_failure` if concurrent activity creates a true serial-order conflict. Caller MUST retry with exponential backoff (50ms / 100ms / 200ms; up to 3 retries). On persistent failure → return `{ok: false, reason: 'serialization_failure'}`; emitting agent treats as soft failure.
 
 ### §2.4 — Removed responsibilities (every other agent)
 
@@ -165,7 +255,7 @@ The per-product `<agent>BudgetCap` fields previously declared in agent specs (e.
 
 `agent.cost.signal.v1` is canonical per §14.1 — added to the 65-topic catalogue in the Cluster D extension (`CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`).
 
-### §2.6 — Interaction order with Cluster E (v2 R4)
+### §2.6 — Interaction order with Cluster E (v3 — A5 reconciliation)
 
 For every Executor / dual-authority primary agent dispatch, the call order is **MANDATORY**:
 
@@ -173,9 +263,9 @@ For every Executor / dual-authority primary agent dispatch, the call order is **
 1. getCeiling(productId, mode, dimension)   ← Cluster E §2.1 ceiling lookup
 2. BaseAgent.guard(authorityNeeded)         ← Cluster E §2.6 charter check
 3. requires_human_gate request (if needed)  ← Cluster E §2.6 human-gate
-4. costGovernor.reserve({...})              ← Cluster A §2.3 atomic UPDATE
+4. costGovernor.reserve({...})              ← Cluster A §2.3 v3 advisory-lock reservation
 5. Orchestra dispatch                       ← Cluster F §2.3 model selection
-6. costGovernor.settle({...})               ← Cluster A §2.3 settlement
+6. costGovernor.settle({...})               ← Cluster A §2.3.3 v3 SERIALIZABLE settlement
 ```
 
 **Why this order:** ceiling check is FREE (no DB write, just a JSONB lookup); a ceiling violation is the cheapest possible rejection and MUST short-circuit before any budget reservation. Reserving budget for a request that would be ceiling-rejected wastes a reservation slot for the ~90s reaper window and creates needless contention.
@@ -185,6 +275,30 @@ For every Executor / dual-authority primary agent dispatch, the call order is **
 - `reserve()` BEFORE `requires_human_gate` resolution — reservation held for the full human-gate latency (potentially minutes), blocking other dispatches.
 - `getCeiling()` AFTER any side-effect — defeats the purpose of pre-flight gating.
 
+#### §2.6.1 — Authoritative ordering reconciliation (v3 A5)
+
+When both `getCeiling()` (Cluster E) and `costGovernor.reserve()` (Cluster A) apply, the authoritative execution order is:
+
+1. **`getCeiling()`** — orchestrator authoritative (per Cluster E v2 R1 + R2). Returns the canonical ceiling for `(productId, mode, dimension)` keyed against `ProductRegistry.authorityCeilings`.
+2. **`costGovernor.reserve()`** — only invoked if step 1's ceiling permits the requested authority.
+
+The **advisory-cache layer** (agent-side `getCeiling()` cache per Cluster E v2 R1 §2.1) is informational only — it enables fast-path rejection of obviously-violating requests without an Orchestrator round-trip. If the advisory cache and the authoritative `BaseAgent.guard()` check disagree (e.g. operator just lowered ceiling but agent cache is still warm with old value), the **authoritative guard wins**: `BaseAgent.guard()` re-validates against the Orchestrator per Cluster E v2 R2 and throws `CeilingViolationError` even if the advisory cache previously cleared the request.
+
+**Error semantics (v3 A5 — canonical error-code mapping):**
+
+| Failure mode | Error code | HTTP status | Retryable |
+|---|---|---:|---|
+| Ceiling exceeds operator's `authorityCeilings` cell | `CEILING_EXCEEDED` | 403 | **NO** — operator must raise ceiling (admin role) |
+| Budget reservation would exceed `flowai_run_budgets.ceilingUsd` | `BUDGET_EXCEEDED` | 402 | **NO** — operator must raise ceiling (admin role) |
+| Advisory-lock contention after 3 retries | `BUDGET_LOCK_CONTENTION` | 503 | Yes — caller may retry after backoff |
+| Stale lease token on heartbeat / settle | `STALE_LEASE` | 409 | **NO** — process must re-reserve |
+| Stale monotonic sequence on heartbeat | `STALE_SEQUENCE` | 409 | Yes — caller updates local sequence + retries |
+| Heartbeat cap (10) exceeded | `HEARTBEAT_CAP_EXCEEDED` | 409 | **NO** — caller must settle or accept reaper-reclaim |
+| PostgreSQL `40001` serialization failure on settle | `serialization_failure` | 503 | Yes — caller retries with backoff |
+| `statement_timeout` (5s) fired | `statement_timeout` | 503 | Yes — implies database health issue; caller retries with backoff |
+
+**`CEILING_EXCEEDED` and `BUDGET_EXCEEDED` are non-retryable without operator intervention** — caller MUST surface to operator/admin rather than retry-loop on the same request. Other failure modes are transient and can retry under defined backoff schedules.
+
 Cluster E §2.6 documents the mirror requirement (ceiling lookup before any side-effect including `reserve()`).
 
 ---
@@ -193,72 +307,91 @@ Cluster E §2.6 documents the mirror requirement (ceiling lookup before any side
 
 Every affected agent spec MUST replace its current "budget enforcement" text with this canonical block. Customise only the `<agent-specific-fields>`.
 
-### §3.1 — Block to paste into §7 Security Controls of each affected agent spec (v2)
+### §3.1 — Block to paste into §7 Security Controls of each affected agent spec (v3)
 
 ````markdown
-### §7.X — Budget enforcement (canonical per CLUSTER_A_COST_GOVERNOR_INTEGRATION.md v2)
+### §7.X — Budget enforcement (canonical per CLUSTER_A_COST_GOVERNOR_INTEGRATION.md v3)
 
 This agent DOES NOT enforce budget caps directly. Per Cluster A canonical
 resolution, Agent #23 Ops Runner Gamma (Cost Governor) is the sole budget
 enforcement owner.
 
-**Mandatory call order per dispatch (per Cluster A §2.6 v2 R4 + Cluster E §2.6):**
+**Mandatory call order per dispatch (per Cluster A §2.6 v3 A5 + Cluster E §2.6):**
 
 ```
-1. getCeiling(productId, mode, dimension)   ← Cluster E §2.1
-2. BaseAgent.guard(authorityNeeded)         ← Cluster E §2.6
+1. getCeiling(productId, mode, dimension)   ← Cluster E §2.1 (authoritative)
+2. BaseAgent.guard(authorityNeeded)         ← Cluster E §2.6 charter check
 3. requires_human_gate request (if needed)
-4. costGovernor.reserve({...})              ← THIS BLOCK
+4. costGovernor.reserve({...})              ← Cluster A §2.3 v3 advisory-lock
 5. Orchestra dispatch                       ← Cluster F §2.3
-6. costGovernor.settle({...})               ← THIS BLOCK
+6. costGovernor.settle({...})               ← Cluster A §2.3.3 v3 SERIALIZABLE
 ```
 
 `getCeiling()` short-circuits the cheapest rejection FIRST. `reserve()` runs
-ONLY after ceiling clears.
+ONLY after ceiling clears. See Cluster A §2.6.1 v3 A5 for error semantics
+(`CEILING_EXCEEDED` vs `BUDGET_EXCEEDED` — both non-retryable without
+operator intervention).
 
 **Pre-dispatch contract (after Cluster E ceiling clears):**
 1. Call `costGovernor.reserve({
-     runId, productId, agentId: <agent-id>,
+     runId, productId, costPool: <pool>,
+     agentId: <agent-id>,
      adapter: <adapter-name>,
      capability: <capability-name>,
      estimatedCostUsd: <estimate>,
      costTier: <tier>,
-   })` — Agent #23 executes a SINGLE atomic UPDATE … WHERE … RETURNING
-   per Cluster A §2.3 v2 R1 (no read-then-increment TOCTOU).
-2. If `{ok: false, reason}` returned → emit `agent.cost.signal.v1` with
-   `costEvent: 'pre-dispatch-rejected'`; abort dispatch; emit
-   agent's own block envelope with reason `'budget-cap-reached'`
-   (or `'lock_contention'` / `'lock_contention_persistent'` /
-   `'statement_timeout'` per Cluster A §2.3.1 v2 R3).
-3. On `lock_contention`: retry up to 3 times with exponential backoff
-   (50ms / 100ms / 200ms). Persistent failure → treat as
-   `'lock_contention_persistent'` and abort dispatch.
-4. If `{ok: true, reservationId}` returned → emit
-   `agent.cost.signal.v1` with `costEvent: 'pre-dispatch'`; proceed.
+   })` — Agent #23 uses PostgreSQL advisory-lock per Cluster A §2.3 v3 A1.
+2. If `{ok: false, reason}` returned:
+   - `CEILING_EXCEEDED` / `BUDGET_EXCEEDED` → surface to operator; do NOT
+     retry. Emit `agent.cost.signal.v1` `costEvent: 'pre-dispatch-rejected'`;
+     emit agent's own block envelope with the same reason code.
+   - `BUDGET_LOCK_CONTENTION` → caller already exhausted 3 retries inside
+     Agent #23; treat as transient infra issue, abort current dispatch,
+     surface to admin observability.
+   - `statement_timeout` → soft failure (database health issue); retry
+     with exponential backoff (50ms / 100ms / 200ms; max 3 attempts).
+3. If `{ok: true, reservationId, leaseToken, leaseSequence}` returned →
+   record ALL THREE values (reservationId, leaseToken, current
+   leaseSequence). Emit `agent.cost.signal.v1` `costEvent: 'pre-dispatch'`.
+   Proceed to dispatch.
 
-**Heartbeat (for dispatches > 60s):**
-- For known long-running dispatches (e.g. ACE crawl), call
-  `costGovernor.heartbeat(reservationId)` every 30s; updates
-  `reservedAt = now()` so the 60–90s reaper does not reclaim it.
+**Heartbeat (for dispatches > 60s wall-clock — per Cluster A §2.3.2 v3 A2 + A3):**
+- Call `costGovernor.heartbeat({reservationId, leaseToken, sequence})`
+  every ~50s while dispatch is in-flight. Caller supplies the CURRENT
+  leaseSequence; Agent #23 increments + returns the new value.
+- Maximum 10 heartbeats per reservation (10 × 60s = 10 minute wall-clock
+  cap per v3 A2). After cap reached → caller MUST settle or accept reaper.
+- Failure modes: `STALE_LEASE` (token mismatch — caller's process is not
+  the legitimate owner), `STALE_SEQUENCE` (caller's local sequence is out
+  of date — caller should resync from prior heartbeat response),
+  `HEARTBEAT_CAP_EXCEEDED` (over 10 extensions), `ALREADY_SETTLED`.
 
 **Post-dispatch contract (mandatory ALWAYS, success or failure):**
-5. On dispatch settlement (success): call `costGovernor.settle({
-     reservationId, observedCostUsd: <observed>,
-   })`; emit `agent.cost.signal.v1` with `costEvent: 'post-dispatch'`.
-6. On dispatch failure: call `costGovernor.settle({
-     reservationId, observedCostUsd: 0,
-   })` to release the reservation; emit
-   `agent.cost.signal.v1` with `costEvent: 'post-dispatch'` and
-   `observedCostUsd: 0`.
+4. On dispatch settlement (success): call `costGovernor.settle({
+     reservationId, leaseToken, observedCostUsd: <observed>,
+   })` — Agent #23 runs at SERIALIZABLE isolation per v3 A4. Idempotent
+   on retry (second call returns `{ok: true, already_settled: true,
+   observedCostUsd: <stored>}` without re-applying delta).
+   Emit `agent.cost.signal.v1` `costEvent: 'post-dispatch'`.
+5. On dispatch failure: call `costGovernor.settle({
+     reservationId, leaseToken, observedCostUsd: 0,
+   })` to release the reservation. Emit `agent.cost.signal.v1`
+   `costEvent: 'post-dispatch'` with `observedCostUsd: 0`.
+6. On `STALE_LEASE` from `settle()`: the reservation has been reaper-
+   reclaimed OR overwritten by another process. Treat as soft failure;
+   re-reserve for the next dispatch attempt rather than retry settle.
+7. On PostgreSQL `40001` (`serialization_failure`): retry with exponential
+   backoff (50ms / 100ms / 200ms; max 3 attempts).
 
 This agent's previous per-product cap field (`<agent>BudgetCap`) is
 retained in `ProductRegistry` but is read ONLY by Agent #23 — this agent
 does NOT read it directly.
 
 Orphaned reservations: Agent #23 reaper job (60s cadence) releases
-reservations older than 90 seconds per Cluster A §2.3 v2 R2; this agent
-does NOT implement its own cleanup. For dispatches that legitimately need
->90s wall-clock, use `heartbeat()` above.
+reservations older than 90 seconds per Cluster A §2.3 v3 (retained from
+v2 R2); this agent does NOT implement its own cleanup. For dispatches
+that legitimately need >90s wall-clock, use `heartbeat()` above (up to
+10 extensions = 10 min total).
 ````
 
 ### §3.2 — Block to paste into §3 Input Contract / §4 Output Contract
@@ -303,7 +436,17 @@ How W2 verifies the Cluster A fix is correctly implemented in each agent spec re
 
 9. **AC-CA-9 (Cluster E ordering, v2 R4):** Spec-level grep across all agent / Executor specs that paste the §3.1 block — the block contains the mandatory call order (Cluster E `getCeiling()` BEFORE `costGovernor.reserve()`). Implementation integration test (deferred) — a Cluster-E-rejected request never reaches the Cost Governor reserve call site.
 
-10. **AC-CA-10 (Heartbeat path, v2 R2):** Long-running dispatch (>60s) integration test — agent calls `costGovernor.heartbeat()` at 30s intervals; reservation is NOT reclaimed even when wall-clock exceeds 90s (because heartbeats keep `reservedAt` fresh).
+10. **AC-CA-10 (Heartbeat path, v3 A2 + A3):** Long-running dispatch (>60s) integration test — agent calls `costGovernor.heartbeat({reservationId, leaseToken, sequence})` every ~50s with monotonically-increasing sequence; reservation NOT reclaimed even when wall-clock exceeds 90s. After 10 heartbeats (10-min cap per v3 A2), 11th call returns `HEARTBEAT_CAP_EXCEEDED`. Verify by instrumented soak test.
+
+11. **AC-CA-11 (v3 A1 — Advisory lock):** 200 concurrent reservation requests against a $5 ceiling × `costPool='global'` with $1 estimates each result in exactly 5 successful reservations + 195 rejections; lock-contention retries handled internally (≤3 attempts each). Total `reservedUsd + spentUsd` never exceeds ceiling at any observed snapshot. Concurrent reservations on DIFFERENT `costPool` values for the same `productId` do NOT serialize against each other (advisory lock is per-cost-pool). The v2 `UPDATE … WHERE … RETURNING` pattern is removed from the implementation.
+
+12. **AC-CA-12 (v3 A2 — statement_timeout + heartbeat extension):** Every reservation / settlement / heartbeat statement issues `SET LOCAL statement_timeout = '5000ms'`. NO `SET LOCAL lock_timeout` set on reservation transactions (removed in v3). Long-dispatch heartbeat path tested: 11 heartbeats fail on the 11th with `HEARTBEAT_CAP_EXCEEDED`; 10 succeed in sequence.
+
+13. **AC-CA-13 (v3 A3 — Lease token + monotonic sequence):** Implementation test — `reserve()` returns `{leaseToken: UUID, leaseSequence: 0}`. `heartbeat()` with correct leaseToken + correct sequence succeeds, increments sequence, returns new sequence. `heartbeat()` with wrong leaseToken returns `STALE_LEASE`. `heartbeat()` with stale sequence (e.g. sequence value 3 when current is 5) returns `STALE_SEQUENCE`. Concurrent heartbeat replay (same sequence, same token) — second attempt fails with `STALE_SEQUENCE` (CAS protection).
+
+14. **AC-CA-14 (v3 A4 — SERIALIZABLE + idempotent settle):** Settlement runs at `BEGIN ISOLATION LEVEL SERIALIZABLE`. Idempotent retry: calling `settle({reservationId, leaseToken, observedCostUsd: 1.50})` twice in succession results in: first call returns `{ok: true, observedCostUsd: 1.50}`; second call returns `{ok: true, already_settled: true, observedCostUsd: 1.50}`. `flowai_run_budgets.spentUsd` increased by 1.50 (NOT 3.00). Verified by deliberate retry injection.
+
+15. **AC-CA-15 (v3 A5 — Cluster E reconciliation):** Spec-level grep — every paste of §3.1 block includes the explicit mandatory call order (steps 1–6) AND references §2.6.1 error-code table. Implementation test: when operator's ceiling is at recommend_only AND requested authority is auto_write_internal: `CEILING_EXCEEDED` returned BEFORE any DB write; `costGovernor.reserve()` is never invoked. When ceiling permits but budget is exhausted: `BUDGET_EXCEEDED` returned from `reserve()`; emitting agent surfaces to operator. Both error codes are non-retryable; integration test asserts caller does NOT retry-loop on either.
 
 ---
 
@@ -336,12 +479,12 @@ Every agent spec MUST be revised to reference this template before re-spec for P
 
 ---
 
-## §6 — Cross-cluster integration notes (v2)
+## §6 — Cross-cluster integration notes (v3)
 
-- **Cluster D** (Audit-Log Topic Schema): `agent.cost.signal.v1` is added to the §14.1 canonical catalogue extension per Cluster D. **v2:** part of the P0 topic set per Cluster D v2 R1 staged-rollout (ships with Agent #23 — required by AC-CA-4).
-- **Cluster E** (Authority-Ceiling Integration, **v2 R4 ordering**): `getCeiling()` runs BEFORE `costGovernor.reserve()` — mandatory call order per Cluster A §2.6 + Cluster E §2.6. Ceiling rejection is the cheapest rejection and short-circuits before any DB write. Cluster E §2.6 is the mirror canonical statement.
-- **Cluster F** (Model-Budget Fallback): `agent.cost.signal.v1.adapter` field records which Orchestra adapter was used; Cluster F's fallback chain interacts with Cluster A by emitting per-fallback `agent.cost.signal.v1` events. Cluster F's tier-change handling (v2 R2) re-invokes `reserve()` with the new tier's estimated cost — the previous reservation is released via `settle(0)` first.
+- **Cluster D** (Audit-Log Topic Schema): `agent.cost.signal.v1` is canonical in the §14.1 P0 set per Cluster D v3 §2.1.0 (ships in §14.1 P0 patch + ENTRY 008 pre-Agent-#23-build). New v3 envelope types implied (engineering dispatch will register at first Cost Governor ship): `agent.budget.lock_contention.v1` for `BUDGET_LOCK_CONTENTION` observability; reserved in the Cluster D Deferred set.
+- **Cluster E** (Authority-Ceiling Integration, **v3 A5 reconciliation**): Cluster E v3 §2.8 + Cluster A v3 §2.6.1 jointly define the authoritative ordering rule + error semantics. `CEILING_EXCEEDED` (Cluster E authoritative reject; non-retryable) and `BUDGET_EXCEEDED` (Cluster A reserve reject; non-retryable) are surfaced to operator; `CEILING_ADVISORY_REJECT` (Cluster E E2 advisory-cache reject; retryable after cache TTL) and `BUDGET_LOCK_CONTENTION` (Cluster A A1 advisory-lock contention; retryable after backoff) are transient. The advisory cache + advisory lock are operationally distinct mechanisms but share the same overall philosophy: fast-path cheap rejection while the authoritative check (in `BaseAgent.guard()` + the SERIALIZABLE settlement transaction) remains the final source of truth.
+- **Cluster F** (Model-Budget Fallback): `agent.cost.signal.v1.adapter` field records which Orchestra adapter was used. Cluster F v2 R2 tier-downgrade interacts with Cluster A v3 A1 advisory-lock: each tier-downgrade attempt is a fresh `reserve()` call (gets its own leaseToken). Previous reservation MUST be released via `settle({observedCostUsd: 0})` before the new reserve. Tier-downgrade loop cap (3 attempts) holds across the combined reserve + dispatch chain.
 
 ---
 
-*End of CLUSTER_A_COST_GOVERNOR_INTEGRATION.md canonical template v2. Panel `QUORUM_PLURALITY_CLA-REVISE` 7/9 conditions R1–R4 applied. Pending W6 re-ratification.*
+*End of CLUSTER_A_COST_GOVERNOR_INTEGRATION.md canonical template v3. Panel v2-ratification conditions A1–A5 applied per W3 Dispatch #12. Pending W6 re-ratification.*
