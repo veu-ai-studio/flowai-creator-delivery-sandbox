@@ -62,6 +62,14 @@ export default async function handler(req, res) {
   const mode = typeof body.mode === 'string' ? body.mode : 'recommend_only';
   const runId = typeof body.runId === 'string' ? body.runId : null;
   const sourceHints = body.sourceHints && typeof body.sourceHints === 'object' ? body.sourceHints : null;
+  // Extension A — Self-Renewal Phase A Option C entry point. When the
+  // body carries a githubRepoUrl, the handler routes to executeOptionC()
+  // (the Phase A end-to-end pipeline) instead of executeRemediation()
+  // (the v3 Mode 2 fork-and-fix path).
+  const githubRepoUrl =
+    typeof body.githubRepoUrl === 'string' && body.githubRepoUrl
+      ? body.githubRepoUrl
+      : null;
 
   if (!productScope) {
     return res.status(400).json({ ok: false, error: 'missing_field', field: 'productScope' });
@@ -95,7 +103,7 @@ export default async function handler(req, res) {
   // Async hand-off requested explicitly?
   const wantAsync = req.query?.async === '1' || req.query?.async === 1;
   if (wantAsync) {
-    const enqueued = await tryEnqueueInngest({ productScope, issue, mode, runId, sourceHints });
+    const enqueued = await tryEnqueueInngest({ productScope, issue, mode, runId, sourceHints, githubRepoUrl });
     if (enqueued.ok) {
       return res.status(202).json({
         ok: true, async: true, jobId: enqueued.jobId, hint: 'poll status via /api/agent/3/status?jobId=<id>',
@@ -122,10 +130,19 @@ export default async function handler(req, res) {
     timer = setTimeout(() => resolve({ __timeout: true }), SYNC_TIMEOUT_MS);
   });
 
+  // Extension B — route to executeOptionC (Phase A pipeline) when
+  // githubRepoUrl is present; otherwise fall through to the existing
+  // executeRemediation (v3 Mode 2) path. The two paths return shapes
+  // that look the same at the envelope level (`ok` field on top), so
+  // downstream timeout / error handling is unchanged.
+  const remediationCall = githubRepoUrl
+    ? executor.executeOptionC({ githubRepoUrl, issue, productScope, runId, sourceHints })
+    : executor.executeRemediation(issue, mode, { productScope, runId, sourceHints });
+
   let result;
   try {
     result = await Promise.race([
-      executor.executeRemediation(issue, mode, { productScope, runId, sourceHints }),
+      remediationCall,
       timeout,
     ]);
   } catch (e) {
@@ -136,7 +153,7 @@ export default async function handler(req, res) {
 
   if (result?.__timeout) {
     // Hand off to Inngest if available; otherwise tell the client to retry async.
-    const enqueued = await tryEnqueueInngest({ productScope, issue, mode, runId, sourceHints });
+    const enqueued = await tryEnqueueInngest({ productScope, issue, mode, runId, sourceHints, githubRepoUrl });
     if (enqueued.ok) {
       return res.status(202).json({
         ok: true, async: true, timedOutSync: true, jobId: enqueued.jobId,
@@ -218,7 +235,7 @@ function buildExecutor({ productScope }) {
   });
 }
 
-async function tryEnqueueInngest({ productScope, issue, mode, runId, sourceHints }) {
+async function tryEnqueueInngest({ productScope, issue, mode, runId, sourceHints, githubRepoUrl }) {
   try {
     const { sendEvent, isInngestEnabled } = await import('../../_lib/inngest.js');
     if (!isInngestEnabled()) {
@@ -226,7 +243,7 @@ async function tryEnqueueInngest({ productScope, issue, mode, runId, sourceHints
     }
     const jobId = `agent3_${productScope}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const result = await sendEvent('flowai/agent3.renewal.requested', {
-      jobId, productScope, issue, mode, runId, sourceHints,
+      jobId, productScope, issue, mode, runId, sourceHints, githubRepoUrl,
     });
     if (!result?.ok) {
       return { ok: false, reason: result?.reason ?? 'send_failed' };
