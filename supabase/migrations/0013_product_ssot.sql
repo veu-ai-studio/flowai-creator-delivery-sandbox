@@ -95,8 +95,8 @@ create policy product_ssot_operator_read
     auth.jwt() ->> 'role' = 'operator'
     and exists (
       select 1 from public.products p
-      where p.id = product_ssot.product_id
-      and p.org_id = auth.jwt() ->> 'org_id'
+      where p.id::text = product_ssot.product_id
+      and p.org_id::text = auth.jwt() ->> 'org_id'
     )
   );
 
@@ -108,8 +108,8 @@ create policy product_ssot_client_read
     auth.jwt() ->> 'role' = 'client'
     and exists (
       select 1 from public.products p
-      where p.id = product_ssot.product_id
-      and p.org_id = auth.jwt() ->> 'org_id'
+      where p.id::text = product_ssot.product_id
+      and p.org_id::text = auth.jwt() ->> 'org_id'
     )
   );
 
