@@ -136,6 +136,46 @@ Mode-agnostic — Portfolio Risk is `flowai-only` scope; per-product mode doesn'
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+Emits `agent.cost.signal.v1` before each LLM call (weekly cross-product risk
+analysis). Agent #23 is the sole canonical enforcement owner. Call order per
+Cluster A §2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_12_portfolio_risk.pageCountMin`
+OR per-agent default: `pageCountMin: 1` (clamped to [1, 50]; portfolio-level
+signals require ≥3 products declared in spec).
+- Mode 1 + Mode 2 SUB-2A: below threshold → emit
+  `agent.data_quality.insufficient.v1` and halt with `insufficient-signal`
+  reason.
+- Mode 3A (per Cluster B §2.7 v2 R1): if `dataQualityScore ≥ 0.3`, may
+  emit `portfolio.fire.v1` with `outputQuality: 'degraded'`.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `degrade-on-any` (per-
+product signal partial → digest aggregates available subset).
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted from
+emitted envelopes per Cluster C §2.4 v2 R2. Default Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits per §4 — `12.fire.p0.v1`, `12.fire.p1.v1`,
+`12.fire.p2.v1`, `12.health.daily.v1`, `portfolio.fire.v1` plus
+`12.product_alert.v1` charter expansion. G12-Q5 from the original spec is
+resolved by Cluster D — update `_registry.ts` at engineering dispatch.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2.
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Selection re-read per dispatch. Tier-downgrade per Cluster F §2.5 v2 R2.
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
