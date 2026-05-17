@@ -1,15 +1,20 @@
 # Self-Renewal Spec — Option C: PR + Preview + Delta Score
 
-**Status:** DRAFT v2 — addresses 5 conditions from W6 NOT_RATIFIED verdict (commit `ab398b9`, 2026-05-16). Pending W6 re-Panel ratification before any build begins. Spec only; **zero code** in this dispatch. **NOT canonical SSOT.**
-**Author:** W3 (v1), W3a revision (v2), 2026-05-16.
+**Status:** DRAFT v3 — addresses 3 conditions from W6 v2 NOT_RATIFIED verdict (`GQ7v2-REV` plurality 5/7, 2026-05-16). Pending W6 re-Panel ratification before any build begins. Spec only; **zero code** in this dispatch. **NOT canonical SSOT.**
+**Author:** W3 (v1), W3a revision (v2 + v3), 2026-05-16/17.
 
-**v2 change log (5 surgical edits — Panel conditions only, no other restructuring):**
-- §4.3: MAX_FILES raised from 1 → 3, with diff-parse-time enforcement so 4+-file outputs never reach PR creation (addresses Panel `GQ1-2-3` plurality, CEO-locked Q1).
-- §4.4: typecheck gate (b) + preview smoke gate (c) added beyond `npm test` (addresses Panel `GQ2` split between `GQ2-TYPECHECK` and `GQ2-SMOKE`, CEO-locked Q2 takes both).
-- §3.2: GitHub App promoted to PRIMARY credential target; fine-grained PAT scoped to `flowai/*` branches only retained as documented INTERIM fallback when App installation is not ready for a specific product (addresses Panel `GQ3-NARROW` + `GQ3-APP` divided plurality, CEO-locked Q3).
-- §6.4: `ProductRegistry.selfRenewalNegativeDeltaPolicy` (`ALWAYS_OPEN` default | `DISCARD_ON_NEGATIVE`) added — operator decides per product (addresses Panel `GQ4-ALWAYS` plurality with `GQ4-NEVER` dissent, CEO-locked Q4).
-- §6.4: `ProductRegistry.selfRenewalMinimumDelta` (integer, default 0) added — runs below threshold close as `below_threshold` without opening PR (addresses Panel `GQ6-PERPROD` plurality, CEO-locked Q6).
-- §10: G-Q1/G-Q2/G-Q3/G-Q4/G-Q6 rewritten to reflect v2 positions; G-Q5 carried as RATIFIED (`GQ5-PREFIRST` quorum-plurality); G-Q7 rewritten to ask whether v2 is ready for promotion now that the 5 conditions are addressed.
+**v3 change log (3 surgical fixes — CEO-locked Panel conditions, no other restructuring):**
+- §3.2: PAT fallback path REMOVED entirely. GitHub App is the only credential model from Phase A day one. Products without a GitHub App installation cannot use Self-Renewal until installed; the operator is directed to the install flow. The "PAT fallback is INTERIM" graduation contract is also removed — no longer needed because the App is already the only path (addresses Panel `GQ3v2-APPONLY` plurality 5/7, CEO-locked Q3).
+- §4.3: MAX_FILES reverted from 3 → 1. Single-file scope restored for Phase A. Phase B (per §7.3) raises to 3 files after ≥30 days proven in production (addresses Panel `GQ1v2-1FILE` plurality 4/7, CEO-locked Q1).
+- §6.4: `ProductRegistry.selfRenewalNegativeDeltaPolicy` AND `ProductRegistry.selfRenewalMinimumDelta` collapsed into a single field `ProductRegistry.selfRenewalOpenPolicy` with three values: `ALL` (default — always open PR), `IMPROVEMENTS_ONLY` (open only if `delta_total > 0`), `SUBSTANTIAL_ONLY` (open only if `delta_total >= 5`). Decision sequence rewritten to use the single enum (addresses Panel `GQ4v2-HARD` + `GQ6v2` SPLIT including `GQ6v2-COLL` collapse vote, CEO-locked Q4+Q6 collapse).
+- §10: G-Q1, G-Q3, G-Q4, G-Q6, G-Q7 rewritten to reflect v3 positions. G-Q2 carried unchanged (no v3 edit). G-Q5 carried as RATIFIED.
+
+**v2 change log (5 surgical edits — superseded in part by v3 above):**
+- §4.3: MAX_FILES raised from 1 → 3 (REVERTED by v3 — see §4.3 for current value).
+- §4.4: typecheck gate (b) + preview smoke gate (c) added beyond `npm test` (carried unchanged in v3).
+- §3.2: GitHub App promoted to PRIMARY credential target; fine-grained PAT scoped to `flowai/*` branches retained as INTERIM fallback (FALLBACK REMOVED by v3 — App is now the only path).
+- §6.4: `selfRenewalNegativeDeltaPolicy` + `selfRenewalMinimumDelta` introduced (BOTH FIELDS REMOVED by v3 — collapsed into single `selfRenewalOpenPolicy` enum).
+- §10: v2 Panel questions rewritten (further updated for v3 per the v3 change log above).
 **Mission scope:** define how FlowAI takes assessment findings from the 8-step pipeline, acquires source from operator-owned GitHub repos, generates real fix diffs, opens a GitHub PR on a `flowai/renewal-<runId>` branch, triggers a Vercel preview deploy of that branch, re-assesses the preview, and produces a before/after governance delta score — all without merging anything autonomously.
 
 **Anchor canonical:** `docs/CANONICAL_REFERENCE.md` §6 (Aggressive Crawling + Resolution Contract) + §10 (Self-Governance Layer / Self-Heal) + §11 (Clearance Protocol) + §15.1 Agent #3 row + §15.5 EXECUTOR_REGISTRY pattern. CA-12 v3 §A.2 Build-Authority Supervised maps to the Option C posture (FlowAI proposes code changes + deploys preview; human approves merge).
@@ -81,9 +86,9 @@ The following are **out of scope** for Option C and MUST NOT be silently attempt
 
 Each operator-owned product registered in `ProductRegistry` has a `githubRepoUrl` field (string, e.g. `https://github.com/<org>/<repo>`). The operator sets this via admin UI (admin role per Rev-2.1 §13). If `githubRepoUrl` is absent, Self-Renewal aborts the run with explicit error `SELF_RENEWAL_NO_SOURCE { reason: 'no_repo_configured' }`.
 
-### §3.2 — GitHub credential: App primary, fine-grained PAT as documented INTERIM fallback
+### §3.2 — GitHub credential: GitHub App only (no PAT fallback)
 
-**Primary target: GitHub App.** Phase A's canonical credential model is a single FlowAI GitHub App (one App registration shared across the FlowAI fleet, multi-installation per operator org) installed into each operator-owned GitHub organisation or user account that wishes to enable Self-Renewal. The App provides:
+**Phase A's canonical credential model is a single FlowAI GitHub App, and only the App** — one App registration shared across the FlowAI fleet, multi-installation per operator org, installed into each operator-owned GitHub organisation or user account that wishes to enable Self-Renewal. There is no fine-grained PAT fallback. The App provides:
 
 - **Installation-time consent** — the operator visibly authorises FlowAI to act on a finite set of repositories at installation time. No after-the-fact scope drift.
 - **Fine-grained webhook subscription** — Phase A subscribes to `pull_request`, `pull_request_review`, `installation`, `installation_repositories`, and `meta` events ONLY. No `push`, no `issues`, no `repository_dispatch`, no `workflow_run`. The narrow subscription is verifiable by anyone reading the App manifest.
@@ -99,20 +104,13 @@ App permissions MUST NOT include: `actions: write`, `administration: *`, `secret
 
 **App-credential storage:** the App's private signing key (PEM) is stored in Doppler at `flowai/<env>/SELF_RENEWAL_APP_PRIVATE_KEY`; the numeric App ID at `flowai/<env>/SELF_RENEWAL_APP_ID`. The per-operator-installation ID is stored on `ProductRegistry.selfRenewalGithubInstallationId` (recorded at install-time via the App's setup callback URL). Per-run installation tokens are minted from those three values in memory, used for the run, and discarded at run end (same memory-only pattern as the existing AUTH_TRAVERSAL_SECURITY_SPEC v3 Invariant 2). The App private key and App ID are NOT product-scoped (single FlowAI App, multi-tenant via installations); the installation ID is the per-product binding.
 
-**Fallback target (documented INTERIM): fine-grained PAT scoped to `flowai/*` branches.** When the GitHub App is not yet installed for a specific product — typically because the operator has not yet clicked through the installation flow, OR because the App registration has not yet been provisioned in `<env>` — Self-Renewal MAY fall back to a fine-grained personal access token, as INTERIM only:
-
-- **Branch-scoped contents write.** The PAT MUST have `contents: write` scoped to branches matching `flowai/*` ONLY. The PAT MUST NOT have `contents: write` on the default branch (`main` / `master` / etc.) or on any non-`flowai/*` branch. This rules out accidental or malicious force-pushes to the default branch via the Self-Renewal credential. Where the GitHub fine-grained PAT permission model does not support branch-pattern scoping natively, the equivalent posture is achieved by repository-level GitHub branch protection rules requiring all writes to non-`flowai/*` branches to come from a non-Self-Renewal author — Self-Renewal's fallback PAT is bound to a dedicated `flowai-self-renewal` machine user whose write attempts to protected branches are rejected at the GitHub API layer.
-- **Permissions:** `contents: write` (branch-scoped per above) + `pull-requests: write`.
-- **MUST NOT have:** `actions: write`, `administration: *`, `secrets: *`, `workflows: write` (same denial list as the App).
-- **Repository-selection scope:** as in v1 — `selected` with operator's repos enumerated, OR `all` only when bound to an operator-owned GitHub organisation. NEVER `all` on a personal user account the operator does not own.
-- **Storage:** stored in Doppler at path `flowai/<env>/PRODUCT_<productId>_GITHUB_PAT`. Read via `CredentialAdapter`. Memory-only lifetime per §3.3.
-
 **Selection logic per renewal run:**
 1. If `ProductRegistry.selfRenewalGithubInstallationId` is set → use the GitHub App path (mint installation token).
-2. Else if `Doppler[flowai/<env>/PRODUCT_<productId>_GITHUB_PAT]` is set → use the PAT fallback path AND emit a `governance_record_entry kind: 'self_renewal.using_pat_fallback', reason: 'no_app_installation'` on every run (so the operator and the Panel can see fallback usage frequency).
-3. Else → abort with `SELF_RENEWAL_NO_SOURCE { reason: 'no_credential' }` per §3.6.
+2. Else → abort with `SELF_RENEWAL_NO_SOURCE { reason: 'no_app_installation' }` per §3.6.
 
-**The PAT fallback is INTERIM, not permanent.** Phase B (§7.3) REMOVES the PAT fallback path entirely. The graduation contract: once the GitHub App is provisioned in production AND ≥3 of the 5 operator products have completed installation, Phase B's first dispatch deletes the PAT fallback selection branch (step 2 above), the Doppler `PRODUCT_<productId>_GITHUB_PAT` paths, and the `flowai-self-renewal` machine user. From Phase B forward, App-only — products without an App installation get `SELF_RENEWAL_NO_SOURCE { reason: 'no_app_installation' }` and the operator is directed to the install flow. The fallback's existence in Phase A is a pragmatic migration affordance for products whose install flow lags, not an endorsement of long-lived PATs.
+**Products without a GitHub App installation cannot use Self-Renewal until the App is installed for that product.** When the abort in step 2 fires, the operator-facing notification surfaces with an actionable message directing the operator to the GitHub App install flow (deep-link to `https://github.com/apps/<flowai-app-slug>/installations/new`, prefilled with the product's repo as the install target where possible). The renewal run is reported as `failed` (not degraded) in the Monitor step's clearance decision; subsequent runs succeed automatically once installation is recorded on `ProductRegistry.selfRenewalGithubInstallationId`.
+
+**No INTERIM PAT path. No graduation contract.** Earlier v2 drafts of this spec retained a fine-grained PAT as a documented INTERIM fallback, with a Phase B "remove the PAT path" graduation contract. v3 drops both: the App is the only path from Phase A day one, so no graduation step is necessary. The Doppler `PRODUCT_<productId>_GITHUB_PAT` path is not consumed by Self-Renewal in any phase; the `flowai-self-renewal` machine user is not provisioned.
 
 ### §3.3 — Token lifetime: per-renewal-run only
 
@@ -199,13 +197,15 @@ Diff format:
 
 The diff is validated for parseability before any GitHub API call. Unparseable diffs are discarded per §4.4.
 
-### §4.3 — Fix scope: MAX 3 files per finding in Phase A
+### §4.3 — Fix scope: single-file changes only in Phase A
 
-Phase A (this spec, ratified-and-built scope) restricts fix generation to changes touching at most **3 files per finding** (`MAX_FILES = 3`). The Claude prompt receives up to 3 related source files as context (the primary file plus optional companion files identified by Agent #6 Research's file-context output — e.g. a component + its test, or a route + the layout that links to it), and the output diff MUST touch only files from that context set.
+Phase A (this spec, ratified-and-built scope) restricts fix generation to changes within a **single file per finding** (`MAX_FILES = 1`). The Claude prompt receives one source file as context, and the output diff MUST touch only that file.
 
-**Diff-parse-time enforcement:** the unified diff returned by Claude is parsed BEFORE any GitHub API call. The parser counts distinct file headers (`--- a/<path>` / `+++ b/<path>` pairs). If the parsed count exceeds `MAX_FILES = 3`, the entire fix is discarded immediately and the finding is logged as `auto_fix_attempted_failed { gate: 'scope_exceeded', files_touched: <count> }`. **4+-file fixes are discarded at diff-parse time — never a PR with excessive scope.** No branch is created, no Contents API write occurs, no preview is triggered.
+**Diff-parse-time enforcement:** the unified diff returned by Claude is parsed BEFORE any GitHub API call. The parser counts distinct file headers (`--- a/<path>` / `+++ b/<path>` pairs). If the parsed count exceeds `MAX_FILES = 1`, the entire fix is discarded immediately and the finding is logged as `auto_fix_attempted_failed { gate: 'scope_exceeded', files_touched: <count> }`. **2+-file fixes are discarded at diff-parse time — never a PR with excessive scope.** No branch is created, no Contents API write occurs, no preview is triggered.
 
-Fixes requiring more than 3 files are deferred to Phase B (§7 graduation plan). Findings that require >3-file changes are excluded from Phase A's fix-generation pass (logged as `out-of-scope: >3 files required`).
+**Phase B raises `MAX_FILES` to 3 after Phase A has run in production for ≥30 days against ≥3 of the 5 operator products without a material incident** (per §7.3 + §7.6 phase-ordering rationale). Until Phase B ratifies the expansion, Phase A is strictly single-file. The diff-parse-time enforcement gate (per §4.4) is the structural guarantee that the change-log here cannot drift from runtime behaviour.
+
+Multi-file fixes are deferred to Phase B. Findings that require multi-file changes are excluded from Phase A's fix-generation pass (logged as `out-of-scope: multi-file required`).
 
 ### §4.4 — Fix-discard gates
 
@@ -214,7 +214,7 @@ A fix is DISCARDED (and the finding logged as `auto_fix_attempted_failed { gate:
 | Gate | Check | Discard reason |
 |---|---|---|
 | **Diff parseability** | Output is a valid unified diff parseable by `parse-diff` or equivalent | `gate: 'diff_unparseable'` |
-| **Scope check** | Parsed diff touches ≤ `MAX_FILES = 3` distinct files (per §4.3) | `gate: 'scope_exceeded'` |
+| **Scope check** | Parsed diff touches ≤ `MAX_FILES = 1` distinct file in Phase A (per §4.3; Phase B raises to 3) | `gate: 'scope_exceeded'` |
 | **Syntax check** | Resulting patched file passes language-specific syntax check (e.g., `node --check` for JS/TS, `python -m py_compile` for Python, etc.) | `gate: 'syntax_invalid'` |
 | **(a) Test suite — MUST** | `npm test` (or equivalent for the framework — `yarn test`, `pnpm test`, `vitest run`) passes against the patched file tree | `gate: 'test_failure'` |
 | **(b) Typecheck — MUST** | `npm run typecheck` (or `tsc --noEmit`) passes against the patched file tree, where a `tsconfig.json` is present at the repo root or in a workspace package. Projects without `tsconfig.json` skip this gate (logged as `gate_skipped: typecheck { reason: 'no_tsconfig' }`) — the gate is MUST-when-applicable, not MUST-universal, because non-TypeScript projects legitimately have no typecheck surface. Zero NEW type errors required (pre-existing typecheck debt is ignored — same precedent as the lint gate). | `gate: 'typecheck_failure'` |
@@ -380,40 +380,42 @@ delta_total = post_score_total - pre_score_total
 
 All deltas are signed integers (positive = improvement, negative = regression, zero = no change).
 
-### §6.4 — Honest reporting, configurable per-product policies
+### §6.4 — Honest reporting, single per-product open-policy enum
 
 Reporting honesty is invariant: if the delta is **negative** (the fix made things worse), it is reported as a negative number in the `governance_record_entry` (§6.5) and — when a PR is opened — in the PR body table. No score manipulation, no rounding-toward-zero, no hiding regressions, regardless of whether the PR ends up opened.
 
-**Two per-product `ProductRegistry` fields govern PR-opening behaviour as a function of the computed delta:**
+**A single per-product `ProductRegistry` field governs PR-opening behaviour as a function of the computed delta** (v3 collapses the prior v2 two-field design — `selfRenewalNegativeDeltaPolicy` + `selfRenewalMinimumDelta` — into one enum):
 
 | Field | Type | Default | Semantics |
 |---|---|---|---|
-| `selfRenewalMinimumDelta` | integer | `0` | Minimum `delta_total` required to open a PR. If `delta_total < selfRenewalMinimumDelta`, the run closes as `below_threshold` (see below) WITHOUT opening a PR. Operator may raise the bar (e.g. `5` for "only substantial improvements") or leave at `0` ("open if anything was preserved-or-improved"). Negative values are accepted only when the negative-delta policy is `ALWAYS_OPEN` and the operator explicitly wants to surface regressions for review — otherwise the discard happens first per the policy below. |
-| `selfRenewalNegativeDeltaPolicy` | enum | `ALWAYS_OPEN` | One of `ALWAYS_OPEN` or `DISCARD_ON_NEGATIVE`. Controls behaviour when `delta_total < 0`. |
+| `selfRenewalOpenPolicy` | enum | `ALL` | One of three values controlling whether the PR opens after the delta is computed:<br>• `ALL` — always open the PR, regardless of delta sign. Negative/zero deltas surface with the regression banner (see below).<br>• `IMPROVEMENTS_ONLY` — open the PR only when `delta_total > 0`. Runs with `delta_total ≤ 0` close as `below_threshold` without opening a PR.<br>• `SUBSTANTIAL_ONLY` — open the PR only when `delta_total >= 5`. Runs with `delta_total < 5` close as `below_threshold` without opening a PR. |
 
 **Decision sequence (executed in order after the post-renewal score is computed in §6.2):**
 
 1. **Compute delta** per §6.3. `delta_total` is an integer (positive, zero, or negative).
-2. **Apply negative-delta policy.** If `delta_total < 0`:
-   - `ALWAYS_OPEN` (default) — proceed to step 3 (PR will still be opened; banner per below).
-   - `DISCARD_ON_NEGATIVE` — close the renewal run as `discarded_on_negative_delta` WITHOUT opening a PR. Delete the renewal branch (via `DELETE /repos/.../git/refs/heads/flowai/renewal-<runId>`) to avoid orphan branches accumulating. Write `governance_record_entry kind: 'self_renewal.discarded_negative_delta'` with the full pre/post/delta payload. Stop here.
-3. **Apply minimum-delta threshold.** If `delta_total < selfRenewalMinimumDelta`:
-   - Close the renewal run as `below_threshold` WITHOUT opening a PR. Delete the renewal branch. Write `governance_record_entry kind: 'self_renewal.below_threshold'` with `{ deltaTotal: <delta>, minimumDelta: <threshold>, preScore, postScore }`. Stop here.
-4. **Open PR.** `delta_total ≥ selfRenewalMinimumDelta`. Open the PR per §5 contract, with the banner below included when `delta_total ≤ 0` (i.e. zero or "barely above threshold but still non-positive") regardless of policy.
+2. **Apply open-policy enum.** Read `ProductRegistry.selfRenewalOpenPolicy` for the product (default `ALL` if unset).
+   - `ALL` → proceed to step 3 (PR will be opened; regression banner included if `delta_total ≤ 0`).
+   - `IMPROVEMENTS_ONLY` AND `delta_total > 0` → proceed to step 3.
+   - `IMPROVEMENTS_ONLY` AND `delta_total ≤ 0` → close as `below_threshold` (see step 2b below).
+   - `SUBSTANTIAL_ONLY` AND `delta_total >= 5` → proceed to step 3.
+   - `SUBSTANTIAL_ONLY` AND `delta_total < 5` → close as `below_threshold` (see step 2b below).
+2b. **`below_threshold` close path** (used by `IMPROVEMENTS_ONLY` and `SUBSTANTIAL_ONLY` when their condition is not met):
+   - Close the renewal run as `below_threshold` WITHOUT opening a PR. Delete the renewal branch (via `DELETE /repos/.../git/refs/heads/flowai/renewal-<runId>`) to avoid orphan branches accumulating. Write `governance_record_entry kind: 'self_renewal.below_threshold'` with `{ deltaTotal: <delta>, openPolicy: <ALL|IMPROVEMENTS_ONLY|SUBSTANTIAL_ONLY>, requiredDelta: <0 for IMPROVEMENTS_ONLY | 5 for SUBSTANTIAL_ONLY | null for ALL>, preScore, postScore }`. Stop here.
+3. **Open PR.** Open the PR per §5 contract. Include the regression banner below when `delta_total ≤ 0` (only reachable under `ALL` policy, since `IMPROVEMENTS_ONLY` and `SUBSTANTIAL_ONLY` already filtered non-positive deltas at step 2).
 
-**Banner inserted into the PR body when `delta_total ≤ 0` and the PR is being opened (i.e. `ALWAYS_OPEN` chose to surface a zero/negative delta):**
+**Regression banner inserted into the PR body when `delta_total ≤ 0` and the PR is being opened (only under `selfRenewalOpenPolicy = ALL`):**
 
 ```
 ⚠️ **No improvement detected** — post-renewal score is not higher than pre-renewal.
-This PR is still opened (operator policy: ALWAYS_OPEN) so you can review the
-proposed changes, but the delta score suggests the fix did not improve the
-assessment. Recommend reviewing each fix individually and deciding whether to
-discard the PR (close without merge).
+This PR is still opened (operator policy: ALL — surface every run) so you can
+review the proposed changes, but the delta score suggests the fix did not
+improve the assessment. Recommend reviewing each fix individually and deciding
+whether to discard the PR (close without merge).
 ```
 
-This decision sequence is **per-product configurable end-to-end**. The Option C philosophy — "surface the data, let the human judge" — is the `ALWAYS_OPEN + selfRenewalMinimumDelta=0` default (every result surfaces). Operators who prefer "don't waste my review cycles on regressions" set `DISCARD_ON_NEGATIVE`. Operators who only care about substantial wins raise `selfRenewalMinimumDelta`. Both policies preserve the audit trail — every run writes a `governance_record_entry` regardless of whether a PR is opened — so suppression at the PR layer never becomes suppression at the audit layer.
+The Option C philosophy — "surface the data, let the human judge" — is preserved by the `ALL` default: every result surfaces. Operators who do not want regression PRs in their review queue set `IMPROVEMENTS_ONLY`. Operators who only want PRs with substantial improvement set `SUBSTANTIAL_ONLY` (Panel-ratified threshold of `+5`). Audit-trail honesty is preserved across all three policies — every run writes a `governance_record_entry` regardless of whether a PR is opened — so suppression at the PR layer never becomes suppression at the audit layer.
 
-The operator-facing admin UI exposes these two fields per product (admin role per Rev-2.1 §13). Changes to either field take effect on the next renewal run; in-flight runs use the values they read at run start.
+The operator-facing admin UI exposes this single field per product (admin role per Rev-2.1 §13). Changes take effect on the next renewal run; in-flight runs use the value they read at run start. The two v2 fields (`selfRenewalNegativeDeltaPolicy`, `selfRenewalMinimumDelta`) are NOT shipped — `selfRenewalOpenPolicy` is the only knob.
 
 ### §6.5 — Delta-score audit trail
 
@@ -561,18 +563,18 @@ The Phase A implementation MUST satisfy ALL of the following security invariants
 
 ---
 
-## §10 — Panel Questions (7, adversarial format — v2)
+## §10 — Panel Questions (7, adversarial format — v3)
 
-Standard 4-option + INSUFFICIENT_INFORMATION format per `docs/PANEL_INFRASTRUCTURE.md` engagement-filter conventions. No anchoring. No author-preference tags. Q1/Q2/Q3/Q4/Q6/Q7 have been rewritten for v2; Q5 is carried unchanged as RATIFIED (`GQ5-PREFIRST` quorum-plurality 7/8 in the prior round).
+Standard 4-option + INSUFFICIENT_INFORMATION format per `docs/PANEL_INFRASTRUCTURE.md` engagement-filter conventions. No anchoring. No author-preference tags. Q1/Q3/Q4/Q6/Q7 have been rewritten for v3 to reflect the three CEO-locked surgical fixes. Q2 is carried unchanged from v2 (no v3 edit to §4.4). Q5 is carried as RATIFIED (`GQ5-PREFIRST` quorum-plurality 7/8 in v1).
 
-### G-Q1 — 3-file-max fix scope with diff-parse-time enforcement
+### G-Q1 — Single-file fix scope with diff-parse-time enforcement (v3 revert)
 
-§4.3 sets `MAX_FILES = 3` per finding (raised from v1's single-file restriction). Multi-file fixes up to 3 files are permitted; 4+-file diffs are discarded at diff-parse time before any GitHub API call. Is this the right scope boundary for Phase A?
+§4.3 v3 reverts `MAX_FILES` from 3 → 1 per v2 Panel plurality `GQ1v2-1FILE` (4/7). Phase A is single-file; Phase B raises to 3 files after ≥30 days proven in production against ≥3 of 5 operator products. The diff-parse-time discard gate enforces the cap before any GitHub API call. Is this the right scope boundary for Phase A?
 
-- (a) 3-file cap with diff-parse-time enforcement is correct — covers common multi-file patterns (component + test + parent route) while preventing LLM scope sprawl; the parse-time discard is a structural guarantee.
-- (b) 3-file cap is too permissive — Phase A should keep single-file scope until Phase A has run in production for ≥30 days; raise to 3 only in Phase B.
-- (c) 3-file cap is too restrictive — Phase A should allow up to 5 files for findings tagged by Agent #6 Research as "small refactor"; the parse-time gate is the safety net.
-- (d) The file-count framing misses the real risk — Phase A should cap by total diff hunk count or LOC changed (e.g. ≤ 50 LOC across all files), not file count.
+- (a) Single-file scope with diff-parse-time enforcement and a defined Phase B graduation trigger is correct — minimum production risk, structural guarantee, clear path to expansion once Phase A is proven.
+- (b) Single-file is now too restrictive given the typecheck + preview-smoke MUST gates already catch most multi-file regressions — Phase A should re-raise to 2 files (component + companion test only) to avoid leaving the "trivially-paired-test" pattern on the table.
+- (c) Single-file is correct for Phase A but the 30-day / 3-product graduation trigger is too quick — Phase B should require ≥90 days against ≥4 of 5 products, since multi-file fixes are categorically higher-risk.
+- (d) The Phase A → Phase B transition should not be time-gated at all — Phase B should require a separate Panel ratification of a new spec (not just a count-based trigger), preserving adversarial review at each authority expansion.
 - (e) INSUFFICIENT_INFORMATION.
 
 ### G-Q2 — Three MUST gates: tests + typecheck + preview-smoke
@@ -585,24 +587,24 @@ Standard 4-option + INSUFFICIENT_INFORMATION format per `docs/PANEL_INFRASTRUCTU
 - (d) The MUST framing is wrong — Phase A should treat all gates as advisory with a single "operator confidence threshold" parameter; let operators tune strictness.
 - (e) INSUFFICIENT_INFORMATION.
 
-### G-Q3 — GitHub App primary, fine-grained PAT (branch-scoped) as INTERIM fallback
+### G-Q3 — GitHub App only, no PAT fallback (v3)
 
-§3.2 v2 makes the GitHub App the PRIMARY credential, with a branch-scoped fine-grained PAT (`contents:write` on `flowai/*` only, dedicated machine user, default-branch writes blocked by branch protection) retained as a documented INTERIM fallback that Phase B removes. Is this the right credential model for Phase A?
+§3.2 v3 drops the fine-grained PAT fallback per v2 Panel plurality `GQ3v2-APPONLY` (5/7). Phase A is App-only from day one: products without a GitHub App installation cannot use Self-Renewal and are directed to the install flow on their first failed run. No Doppler `PRODUCT_<productId>_GITHUB_PAT` path is consumed; no `flowai-self-renewal` machine user is provisioned; no Phase B graduation step is needed. Is this the right credential model for Phase A?
 
-- (a) App-primary + INTERIM PAT-fallback is correct — App is the long-term right answer; the fallback is a pragmatic migration affordance that Phase B retires on a defined trigger (App provisioned + ≥3 of 5 products installed).
-- (b) Drop the PAT fallback entirely from Phase A — Phase A should be App-only from day one; products without an App installation simply cannot use Self-Renewal until they install. The fallback adds attack surface that Phase B then has to remove anyway.
-- (c) Keep PAT as primary in Phase A — the App adds installation friction (operator click-through) that will block adoption; defer the App to Phase B once Self-Renewal has proven its value via the PAT path.
-- (d) Two credential paths (App + PAT) is the wrong shape — Phase A should use a single OAuth-on-behalf-of-operator flow with the operator's own user token, scoped per-session.
+- (a) App-only from day one is correct — the install-flow friction is acceptable because the App is the long-term safe path and a temporary fallback would only require a removal dispatch later.
+- (b) Insufficient — Phase A should additionally pin the App's manifest in-repo (e.g. `.github/flowai-app-manifest.yml`) so any change to the App's permission set produces an auditable diff visible to the operator before they accept the next installation update.
+- (c) Too restrictive — Phase A should at least retain the branch-scoped PAT path behind a per-product feature flag, so an operator stuck mid-install can still get an emergency renewal run; the App should still be the default selection.
+- (d) Wrong shape — drop the GitHub App entirely and use a per-renewal-run device-flow OAuth that asks the operator to authorise each run individually; this strictly minimises standing authority but materially increases friction.
 - (e) INSUFFICIENT_INFORMATION.
 
-### G-Q4 — Per-product configurable negative-delta policy
+### G-Q4 — Single 3-state open-policy enum (v3 collapse — Q4 axis)
 
-§6.4 v2 adds `ProductRegistry.selfRenewalNegativeDeltaPolicy` (`ALWAYS_OPEN` default | `DISCARD_ON_NEGATIVE`) — operator chooses per product whether negative-delta runs surface as PRs (with regression banner) or close as `discarded_on_negative_delta` (branch deleted, audit-trail preserved). Is this the right shape for this decision?
+§6.4 v3 collapses v2's two-field design (`selfRenewalNegativeDeltaPolicy` + `selfRenewalMinimumDelta`) into one per-product enum: `ProductRegistry.selfRenewalOpenPolicy ∈ { ALL (default), IMPROVEMENTS_ONLY, SUBSTANTIAL_ONLY }`. Per v2 Panel `GQ4v2-HARD` (3/7) + `GQ6v2-COLL` (one of three tied 2/7 votes in a SPLIT). Is the 3-state enum the right shape for the negative-delta dimension of this decision?
 
-- (a) Per-product enum (`ALWAYS_OPEN` | `DISCARD_ON_NEGATIVE`) is correct — different products have different reviewer-bandwidth profiles; operator choice with `ALWAYS_OPEN` default is the right balance.
-- (b) Insufficient — Phase A also needs a third option: `OPEN_AS_CLOSED_PR` (open the PR but immediately close it, so the operator gets the record without an inbox notification or merge-button temptation).
-- (c) Over-engineered — Phase A should hard-code `ALWAYS_OPEN` (transparency-first) until usage data justifies a per-product knob; one configurable flag per minor design choice is config-creep.
-- (d) Wrong axis — the policy should not be operator-configurable at all; it should be tied to `Authority` posture (Supervised → `ALWAYS_OPEN`, Autonomous → `DISCARD_ON_NEGATIVE`) per CA-12 v3 §A.2.
+- (a) Single 3-state enum is correct — replaces two coupled fields with one, eliminates illegal combinations (e.g. `MinimumDelta=-5` + `DISCARD_ON_NEGATIVE`), keeps the `ALL` transparency-first default, and exposes only the three states operators actually want.
+- (b) Insufficient — Phase A still needs a fourth state `IMPROVEMENTS_ONLY_NO_BANNER` (silent suppression of regression banners on zero-delta runs that just barely cleared the bar) so operators reviewing borderline PRs aren't visually pulled toward "this might be a regression" framing on neutral runs.
+- (c) Too coarse — three states cannot capture the per-product reviewer-bandwidth nuance that the v2 two-field design supported (e.g. "open everything but only beep me if delta_total ≥ +3"); restore the two-field model and accept the cross-field validation cost.
+- (d) Wrong default — `IMPROVEMENTS_ONLY` should be the default, not `ALL`; defaulting to "surface every run" trains operator review queues to ignore renewal PRs, which erodes the merge-gate over time.
 - (e) INSUFFICIENT_INFORMATION.
 
 ### G-Q5 — Preview-before-PR ordering (carried RATIFIED from v1)
@@ -615,24 +617,24 @@ This question is carried unchanged from v1 (`GQ5-PREFIRST` ratified 7/8 quorum-p
 - (d) Preview-before-PR is the wrong gate entirely — for non-Vercel-hosted operators, there is no preview; Phase A should support a "no preview" path with explicit operator opt-in (limits Option C to PR-only without preview for those operators).
 - (e) INSUFFICIENT_INFORMATION.
 
-### G-Q6 — Per-product configurable minimum-delta threshold
+### G-Q6 — `SUBSTANTIAL_ONLY` threshold value (v3 collapse — Q6 axis)
 
-§6.4 v2 adds `ProductRegistry.selfRenewalMinimumDelta` (integer, default `0`). When `delta_total < selfRenewalMinimumDelta`, the run closes as `below_threshold` with the audit-trail preserved and no PR opened. Is this the right shape for the threshold control?
+§6.4 v3 collapses v2's free-integer `selfRenewalMinimumDelta` into the discrete `SUBSTANTIAL_ONLY` state of `selfRenewalOpenPolicy`, with a Panel-fixed threshold of `delta_total >= 5`. Per v2 SPLIT verdict on Q6 + v2 Q4's `GQ4v2-HARD` plurality. Is `+5` the right threshold value for "substantial improvement"?
 
-- (a) Per-product integer with default `0` is correct — operator decides "what counts as worth my review time"; default of `0` preserves the surface-everything posture for operators who don't tune.
-- (b) Default should be `+1`, not `0` — "open PR only if there is measurable improvement" is a safer default than "open PR for break-even runs that just preserved the baseline".
-- (c) Threshold should be per-layer, not just `delta_total` — operators may care about L1 Functionality regressions even when `delta_total` is positive; expose `selfRenewalMinimumDelta` as a per-Five-Layer map.
-- (d) Threshold mechanism is redundant with G-Q4's `DISCARD_ON_NEGATIVE` — drop the per-product integer; collapse into a single 3-state enum (`ALL` / `IMPROVEMENTS_ONLY` / `SUBSTANTIAL_ONLY`).
+- (a) `+5` is correct — matches the v1 G-Q4 option (d) framing ("Panel-ratified threshold for what 'substantial' means"); large enough that LLM-noise-floor runs don't qualify, small enough that real wins do.
+- (b) `+5` is too high — a real fix that improves one Five-Layer L by ~3 points (a common pattern when one finding category is addressed cleanly) would close as `below_threshold`; `+3` is the better fixed threshold.
+- (c) `+5` is too low — given the cost envelope of ~$0.65–$5.00 per run (Note 3), `SUBSTANTIAL_ONLY` should mean delta covers at least one run's worth of value-per-point; `+10` is the better fixed threshold.
+- (d) Any fixed integer is wrong — `SUBSTANTIAL_ONLY` should require a configurable per-product `selfRenewalSubstantialThreshold` integer (defaulting to `+5`) so operators tune to their own value model; collapse loses information that Q6's free integer carried.
 - (e) INSUFFICIENT_INFORMATION.
 
-### G-Q7 — Disposition: is v2 ready for promotion now that the 5 conditions are addressed?
+### G-Q7 — Disposition: is v3 ready for promotion?
 
-v2 applies 5 surgical edits to address the conditions from the v1 NOT_RATIFIED verdict: 3-file scope (Q1), typecheck + preview-smoke MUST gates (Q2), GitHub App primary with INTERIM PAT fallback (Q3), per-product negative-delta policy (Q4), per-product minimum-delta threshold (Q6). G-Q5 is carried as RATIFIED. Given these 5 changes, the appropriate Panel disposition for v2 is:
+v3 applies 3 surgical fixes to address the conditions from the v2 NOT_RATIFIED verdict (`GQ7v2-REV` plurality 5/7): App-only credential model with the PAT fallback dropped (Q3), single-file fix scope restored with a documented Phase B graduation trigger (Q1), and the v2 two-field delta-policy design collapsed into a single 3-state enum `selfRenewalOpenPolicy ∈ { ALL, IMPROVEMENTS_ONLY, SUBSTANTIAL_ONLY }` with `SUBSTANTIAL_ONLY` fixed at `delta_total >= 5` (Q4 + Q6 collapse). G-Q2 (three MUST gates) and G-Q5 (preview-before-PR) are carried unchanged. Given these 3 changes, the appropriate Panel disposition for v3 is:
 
-- (a) Promote — the 5 conditions are addressed cleanly and Option C v2 is ready for Phase A engineering dispatch.
-- (b) Promote-with-Reservations — the 5 conditions are addressed but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).
-- (c) Revise — one or more of the 5 edits is incomplete, inconsistent, or introduces a new defect that must be fixed before promotion (specify which condition and the defect).
-- (d) Reject — the 5 edits expose a deeper architectural problem with Option C that the surgical revisions cannot fix; the spec needs ground-up rework or replacement (specify the architectural concern).
+- (a) Promote — the 3 conditions are addressed cleanly and Option C v3 is ready for Phase A engineering dispatch.
+- (b) Promote-with-Reservations — the 3 conditions are addressed but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).
+- (c) Revise — one or more of the 3 surgical fixes is incomplete, inconsistent, or introduces a new defect that must be fixed before promotion (specify which condition and the defect).
+- (d) Reject — the 3 fixes expose a deeper architectural problem with Option C that surgical revisions cannot fix; the spec needs ground-up rework or replacement (specify the architectural concern).
 - (e) INSUFFICIENT_INFORMATION.
 
 ---
