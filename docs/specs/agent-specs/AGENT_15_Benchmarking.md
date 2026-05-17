@@ -137,6 +137,51 @@ Mode-agnostic — Benchmarking runs on schedule regardless of operator mode.
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+Emits `agent.cost.signal.v1` before each benchmark invocation (per candidate ×
+member × capability). Daily benchmark cycle = ~30 invocations × 5 capabilities
+× 5 candidates = ~$37.50/cycle = ~$1,125/month baseline; Cluster A reserve()
+enforced per dispatch. Agent #23 is the sole canonical enforcement owner.
+G15-Q2 from the original spec is resolved by Cluster A.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_15_benchmarking.eventCountMin`
+OR per-agent default: `eventCountMin: 30` (clamped to [1, 1000]; CA-9-B
+canonical rolling minimum).
+- Mode 1 + Mode 2 SUB-2A: below threshold (e.g. candidate at 29 invocations)
+  → emit `agent.data_quality.insufficient.v1` and halt; do NOT emit
+  `15.benchmark.head_to_head.v1` with low-sample-size data. This preserves
+  CA-9-B statistical-significance contract.
+- Mode 3A: same as Mode 1 (benchmarking with degraded confidence misleads
+  Orchestra auto-admission; halt is correct in Mode 3A too — strict policy).
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `hard-halt-on-any`
+(insufficient invocations means no valid benchmark).
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted per
+Cluster C §2.4 v2 R2. Default Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits per §4 — `15.benchmark.report.v1` (per `_registry.ts`)
+plus charter-expansion topics `15.benchmark.head_to_head.v1`,
+`15.benchmark.cycle_completed.v1`. Cross-cluster topics ship in P0 patch.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `strict` per Cluster F §2.1.2
+(rubric scoring consistency; downgrading mid-cycle would invalidate
+cross-candidate comparison).
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Selection re-read per dispatch. Strict policy → no tier-downgrade on budget
+denial; cycle halts instead.
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
