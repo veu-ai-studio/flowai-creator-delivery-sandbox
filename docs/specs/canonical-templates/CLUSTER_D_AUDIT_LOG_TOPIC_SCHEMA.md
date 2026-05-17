@@ -1,9 +1,16 @@
-# Cluster D — Audit-Log Topic Schema Extension (Canonical Template)
+# Cluster D — Audit-Log Topic Schema Extension (Canonical Template, v2)
 
-**Status:** DRAFT — pending W6 Panel ratification.
-**Author:** W3, 2026-05-16.
-**Anchor canonical:** Rev-2.1 §14.1 GovernanceAuditLog canonical topic catalogue (65 topics as of ENTRY 006); §15.2 MessageBus (61 → 65 expansion at ENTRY 006); CA-9-B charter expansion (additional topics not yet propagated to §14.1).
-**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 1 objection #02 + Batch 2 objections #21, #27 + Batch 3 objections #23, #28.
+**Status:** DRAFT v2 — Panel conditions applied; pending W6 re-ratification.
+**Version history:** v1 (commit `cc6fb70`, 2026-05-16) → v2 (this commit, 2026-05-17 — Panel `PLURALITY_CLD-REVISE` 5/9 conditions R1–R4 applied per W3 Dispatch #10).
+**Author:** W3.
+**Anchor canonical:** Rev-2.1 §14.1 GovernanceAuditLog canonical topic catalogue (65 topics as of ENTRY 006); §14.3 GovernanceAuditLog retention + RLS; §15.2 MessageBus (61 → 65 expansion at ENTRY 006); CA-9-B charter expansion (additional topics not yet propagated to §14.1).
+**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 1 objection #02 + Batch 2 objections #21, #27 + Batch 3 objections #23, #28. **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` (W6 Dispatch #16, commit `10b13f9`) — `PLURALITY_CLD-REVISE` 5/9.
+
+**v2 revisions applied (per W3 Dispatch #10):**
+- **R1** — staged topic additions: **P0 set** (~10 topics required for Agent #23 Cost Governor + Cluster B halt envelopes) ships in a single §14.1 patch commit ASAP; **Deferred set** (~20+ per-agent topics) ships incrementally alongside each agent's first shipping commit (not pre-declared en masse). §2.1 reorganised into §2.1.0 P0 / §2.1.0-Def Deferred subsections.
+- **R2** — MessageSchema.js migration test harness **MUST exist + pass** before any topic addition lands. The harness exercises: (a) duplicate-shape rejection, (b) unknown-topic rejection, (c) dual-emit window correctness, (d) RLS allow-list enforcement. §2.3.1 added.
+- **R3** — §14.3 RLS fix: replace provider-org wildcard with **productId allow-list per provider**. Topics carrying tenant data require explicit `{providerId, productId}` tuple in the allow-list, not blanket `providerId === xxx → all productIds in that provider's org`. §2.6 added.
+- **R4** — explicit dual-emit window contract for renames + aliases: emitters publish both OLD + NEW for the migration window; consumers see both for the window; deprecation removal requires zero observed emissions of OLD for `windowEndOffsetDays` consecutive days. §2.4 rewritten with precise contract.
 
 ---
 
@@ -38,15 +45,43 @@ Without canonical §14.1 extension: `MessageSchema.js` validation rejects emit a
 
 ---
 
-## §2 — Canonical Resolution
+## §2 — Canonical Resolution (v2 — staged additions)
 
-**Extend §14.1 canonical catalogue with all new topics introduced by the 18 agent specs + the 3 cross-cluster topics from this Cluster D + Clusters A, B, C, F.**
+**Extend §14.1 in TWO stages per v2 R1:**
 
-After Cluster D ratification, W3 issues a targeted `CANONICAL_REFERENCE.md` §14.1 update commit adding all topics below. This is a single SSOT amendment landed as one commit; downstream `MessageSchema.js` migration follows in engineering dispatch.
+- **§14.1 P0 PATCH (ships immediately after Cluster D ratification):** the ~10 P0 topics required to unblock Agent #23 Cost Governor + Cluster B halt envelopes + Cluster B v2 R1/R4 envelopes + Cluster E + Cluster F cross-cluster topics. Single SSOT amendment landed as one commit + ENTRY 008.
+- **§14.1 DEFERRED ADDITIONS (incremental):** the ~20+ per-agent topics land **alongside each agent's first shipping commit** (not pre-declared en masse). Each per-agent ship dispatch issues its own micro-amendment to §14.1 adding only its agent's emit topics. This avoids the "30 topics declared before any agent is built" anti-pattern Panel objection #21 raised.
 
-### §2.1 — New topic catalogue (full list)
+Both stages share the §2.2 naming convention + §2.3 schema-validation contract + §2.3.1 migration-harness requirement.
 
-#### §2.1.1 — Cross-cluster topics (from Clusters A, B, C)
+### §2.1 — New topic catalogue (staged: P0 vs Deferred)
+
+#### §2.1.0 — P0 SET (ships in §14.1 patch commit immediately after Cluster D v2 ratification)
+
+These topics are required by canonical templates A, B, E, F + Agent #23 Cost Governor. They are NOT per-agent emit topics; they are cross-cutting infrastructure that EVERY agent uses.
+
+| # | Topic | Emitted by | Consumed by | Cluster source |
+|---:|---|---|---|---|
+| P0-1 | `agent.cost.signal.v1` | Every cost-incurring agent | Agent #23 Cost Governor + admin cost dashboard | A |
+| P0-2 | `agent.data_quality.insufficient.v1` | Every agent halting on insufficient input | AutoRunner step-block + admin notification | B |
+| P0-3 | `agent.data_quality.cascade.v1` (v2 R4) | Every downstream agent applying upstream-halt tolerance | Observability + admin | B v2 R4 |
+| P0-4 | `agent.data_quality.override_clamped.v1` (v2 R2) | Validation layer on `ProductRegistry.minimumDataQuality` write | Admin notification | B v2 R2 |
+| P0-5 | `agent.model.fallback.v1` | Every agent that experienced LLM fallback | Cost dashboard + observability | F |
+| P0-6 | `agent.ceiling.violation.v1` | Every Executor / dual-authority primary that rejected on ceiling | Admin dashboard + GovernanceAuditLog | E |
+| P0-7 | `23.cost_anomaly.v1` | Agent #23 Cost Governor | Admin dashboard, #3 Self-Renewal | Agent #23 spec |
+| P0-8 | `23.budget_halt.v1` (Phase 2 Executor) | Agent #23 Executor | AutoRunner halt path | Agent #23 Phase 2 |
+| P0-9 | `runner.budget.exceeded.v1` (per Orchestra §8.4) | Agent #23 Executor | AutoRunner | Orchestra §8.4 |
+| P0-10 | `23.cost_digest.v1` (monthly) | Agent #23 Cost Governor | Admin dashboard | Agent #23 spec |
+
+**P0 commit:** `CANONICAL_REFERENCE.md` §14.1 patch + `CANONICAL_HISTORY.md` ENTRY 008. Single commit, ships pre-Agent-#23-build.
+
+#### §2.1.0-Def — DEFERRED SET (ships incrementally with each agent's first ship commit)
+
+Per-agent emit topics ship in the same commit as the agent's runtime implementation. This couples spec declaration to working code — preventing the "topic declared but no emitter exists" gap Panel objection #21 raised.
+
+The deferred topics list below is reference-only; each agent's actual deferred-set commit lands per-agent at engineering dispatch time. The list is the same per-agent topic catalogue documented in v1 §2.1.2 (rows 5–61) but each is gated on the agent's first ship commit landing.
+
+#### §2.1.1 — Cross-cluster topics (from Clusters A, B, C) — moved to P0 set above
 
 | # | Topic | Emitted by | Consumed by | Payload reference | Cluster source |
 |---:|---|---|---|---|---|
@@ -136,21 +171,77 @@ To prevent ad-hoc proliferation per Batch 2 #21 + Batch 3 #23 objections, every 
 3. Reject emit attempts with payload that fails schema validation per topic with `PAYLOAD_SCHEMA_FAILURE[<topicName>]`.
 4. Reject duplicate-topic registrations (same name, different shape) at validator init.
 
-### §2.4 — Migration mechanism (per Batch 2 #27)
+### §2.3.1 — MessageSchema.js migration test harness (v2 R2)
 
-For renames (e.g. `9.gtm.asset.v1` → `9.gtm.assessment.v1`, `18.plan.update.v1` → `18.business_plan.v1`, `20.impact.assessment.v1` → `20.sustainability_report.v1`):
+**Before any topic addition lands in §14.1 (P0 OR Deferred), a migration test harness MUST exist + pass.** The harness lives at `src/lib/messages/__tests__/MessageSchemaMigration.test.js` (or equivalent) and exercises four canonical invariants:
 
-- **Phase 1**: register both old + new topics in §14.1; emitters publish to NEW only; consumers subscribe to BOTH old + new for one minor-version cycle.
-- **Phase 2** (after 30 days of zero old-topic emissions): deregister old topics in §14.1; consumers stop subscribing to old.
+1. **Duplicate-shape rejection:** registering the same topic name with two different payload shapes at validator init throws `DUPLICATE_TOPIC_SHAPE[<topicName>]`. Test asserts a contrived duplicate triggers the error.
+2. **Unknown-topic rejection:** emit attempt with a topic name not in the registry throws `UNKNOWN_TOPIC[<topicName>]` and does NOT write to ColdStore / MessageBus. Test asserts both behaviors via spy.
+3. **Dual-emit window correctness:** during a rename's migration window (per §2.4 v2 R4), BOTH old + new topics validate; emitter publishing OLD-only OR NEW-only does not break consumers. Test asserts subscriber receives both shapes during window + only NEW after window closes.
+4. **RLS allow-list enforcement:** topic carrying tenant data + emit context outside the topic's `{providerId, productId}` allow-list throws `RLS_VIOLATION[<topicName>, <providerId>, <productId>]`. Test asserts both directions (allowed emit succeeds, disallowed emit throws).
 
-No emitter is left "stranded" mid-migration; no consumer misses events.
+**This harness is a HARD PRECONDITION for any topic add.** PR-merge CI gate rejects §14.1 modifications that don't have a corresponding green run of `MessageSchemaMigration.test.js`. Operator override is admin-only and audit-logged.
 
-### §2.5 — §14.1 patch commit
+### §2.4 — Dual-emit migration contract (v2 R4 — precise window semantics)
 
-After Cluster D ratification, W3 issues:
-- `docs/CANONICAL_REFERENCE.md` §14.1 update adding ~30 net new topics with payload references.
-- `docs/CANONICAL_HISTORY.md` ENTRY 008 recording the §14.1 extension promotion.
-- One commit; one push; one canonical event.
+For renames + aliases (e.g. `9.gtm.asset.v1` → `9.gtm.assessment.v1`, `18.plan.update.v1` → `18.business_plan.v1`, `20.impact.assessment.v1` → `20.sustainability_report.v1`):
+
+**Phase 1 (Window open — duration `windowDurationDays`, default 30 days):**
+- Both OLD + NEW topics registered in §14.1; both pass schema validation.
+- **Emitters publish to BOTH OLD + NEW simultaneously** for the full window (the v1 spec said NEW-only; v2 R4 changes to dual-emit so consumers reading legacy code paths don't lose events).
+- Consumers subscribe to BOTH OLD + NEW; dedup on `runId + invocationId + topicName` (same logical event published under both topic names).
+- ColdStore retains both emissions (audit trail of migration).
+
+**Phase 2 (Window closes — automatic transition when criteria met):**
+- All of the following MUST be true for the closure:
+  - `windowEndOffsetDays`: minimum days since Phase 1 started (default 30; configurable per-migration).
+  - `consecutiveZeroOldEmissionDays`: at least 7 consecutive days with ZERO emissions of OLD topic detected via `MessageSchema.js` audit hook.
+  - Admin manual ratification (admin-only UI button confirming consumer migration is complete).
+- On closure: emitters publish to NEW only; consumers may unsubscribe OLD; OLD topic deregistered from §14.1 (next CANONICAL_HISTORY entry records).
+
+**Phase 3 (OLD topic deletion — admin-initiated, audit-logged):**
+- After 90 days from Phase 2 closure with zero stragglers: OLD topic permanently deleted from registry.
+- Any subsequent emit attempt with OLD name throws `UNKNOWN_TOPIC[<old-name>]`.
+- ColdStore archival retains historical OLD emissions per §14.3 retention.
+
+**No emitter is left "stranded" mid-migration; no consumer misses events.** The dual-emit window (v2 R4 change from NEW-only) is the migration safety net.
+
+### §2.5 — §14.1 patch commit (v2 — staged)
+
+After Cluster D v2 ratification, W3 issues:
+- **P0 patch (immediate):** `docs/CANONICAL_REFERENCE.md` §14.1 update adding the 10 P0 topics from §2.1.0 + `docs/CANONICAL_HISTORY.md` ENTRY 008 recording the P0 extension. Single commit; one push.
+- **Deferred patches (per-agent):** each agent's first ship commit additionally amends §14.1 with that agent's emit topics (per-agent micro-amendment); no batched pre-declaration.
+
+### §2.6 — §14.3 RLS — productId allow-list per provider (v2 R3)
+
+**v1 weakness:** §14.3 v1 RLS used `providerId === xxx → all topics carrying providerId tenant data accessible`. This allowed cross-product read within a provider's org (e.g. provider Acme reading product A's `agent.cost.signal.v1` from their dashboard could also see product B's signal if both are in Acme's org).
+
+**v2 fix:** topic-level allow-list per `{providerId, productId}` tuple. The §14.1 catalogue entry for every tenant-data-carrying topic declares:
+
+```json
+{
+  "topic": "agent.cost.signal.v1",
+  "rls": {
+    "allowList": [
+      // populated per-product by admin; not a wildcard
+      { "providerId": "acme", "productId": "tenant_acme_001" },
+      { "providerId": "acme", "productId": "tenant_acme_002" },
+      // no automatic inclusion of other tenant_acme_* productIds
+    ],
+    "wildcardAllowed": false   // per v2 R3 — wildcard explicitly forbidden
+  }
+}
+```
+
+**RLS enforcement at MessageBus + ColdStore boundary:**
+1. Emit attempt: `MessageSchema.js` checks that `payload.productId ∈ allowList` for the calling context's `providerId`. Mismatch → throw `RLS_VIOLATION[<topicName>, <providerId>, <productId>]`.
+2. Read attempt: ColdStore RLS policy reads `allowList` from topic registry; only allows reads where calling `(providerId, productId)` tuple is in the allow-list.
+
+**Admin workflow:** when a new product is provisioned, admin explicitly adds the `{providerId, productId}` tuple to the topic's allow-list (per `/products/<productId>` UI). No automatic promotion of new products into existing providers' allow-lists.
+
+**Topics that DO NOT carry tenant data** (e.g. `system.startup.v1`, `executor_registered.v1`): `rls: { allowList: '*', wildcardAllowed: true }` is acceptable; documented per-topic in §14.1.
+
+Per CA-12 v3 §A.2.4 + Cluster E §2.6 compatibility: `authorityCeilings` per-product also keys on `{productId}` — the same canonical productId identifier RLS uses.
 
 ---
 
@@ -197,19 +288,23 @@ Specs with topic-rename per G9-Q3 / G18-Q1 / G20-Q4 / G11-Q4 / G12-Q5 / G16-Q5 /
 
 ---
 
-## §4 — Acceptance Criteria
+## §4 — Acceptance Criteria (v2)
 
-1. **AC-CD-1 (Canonical catalogue extension committed):** `docs/CANONICAL_REFERENCE.md` §14.1 contains ALL ~30 net new topics with payload references; `docs/CANONICAL_HISTORY.md` ENTRY 008 records the extension.
+1. **AC-CD-1 (v2 R1 — P0 patch committed first):** `docs/CANONICAL_REFERENCE.md` §14.1 contains the 10 P0 topics from §2.1.0; `docs/CANONICAL_HISTORY.md` ENTRY 008 records the P0 extension. Deferred per-agent topics NOT pre-declared.
 
 2. **AC-CD-2 (Naming convention compliance):** Every new topic name matches Cluster D §2.2 regex (`^(\d+|agent|customer|community|vendor|executor|runner|portfolio|system)\.[a-z_]+(\.[a-z_]+)*\.v\d+$`). Spec-level grep verifies.
 
-3. **AC-CD-3 (Schema validation runtime):** `MessageSchema.js` rejects emit attempts on unregistered topics; rejection error code is `UNKNOWN_TOPIC[<topicName>]`. Implementation test (deferred).
+3. **AC-CD-3 (v2 R2 — Migration harness gates topic adds):** `src/lib/messages/__tests__/MessageSchemaMigration.test.js` exists, exercises all 4 invariants per §2.3.1, AND passes green in CI BEFORE any §14.1 modification PR can merge. CI gate is mandatory; admin override audit-logged.
 
-4. **AC-CD-4 (Duplicate registration prevention):** `MessageSchema.js` init throws on duplicate-shape topic registrations.
+4. **AC-CD-4 (Duplicate registration prevention):** `MessageSchema.js` init throws on duplicate-shape topic registrations. Harness invariant #1.
 
-5. **AC-CD-5 (Migration parallel-register works):** For each rename, both old + new topics are registered for ≥30 days; emitters publish NEW only; consumers can subscribe to BOTH.
+5. **AC-CD-5 (v2 R4 — Dual-emit window correctness):** For each rename, both OLD + NEW topics validated AND emitted simultaneously for `windowDurationDays` (default 30). Closure requires: ≥30 days since window start AND ≥7 consecutive days of zero OLD emissions AND admin manual ratification. Harness invariant #3.
 
 6. **AC-CD-6 (No topic-emit code paths reference unregistered topics):** Grep across agent code paths confirms every emit call site references a §14.1-registered topic name. CI guard.
+
+7. **AC-CD-7 (v2 R3 — RLS productId allow-list enforced):** Tenant-data-carrying topics declare per-`{providerId, productId}` allow-list with `wildcardAllowed: false` per §2.6; emit OR read attempts outside the allow-list throw `RLS_VIOLATION[<topicName>, <providerId>, <productId>]`. Harness invariant #4. Cross-product read attempt within same provider's org (without explicit allow-list entry) MUST be rejected.
+
+8. **AC-CD-8 (v2 R4 — Phase 3 OLD topic deletion):** After 90 days from Phase 2 closure + zero stragglers, OLD topic is removable from registry via admin-initiated + audit-logged deletion. Subsequent emit attempts with OLD name throw `UNKNOWN_TOPIC`.
 
 ---
 
@@ -252,4 +347,4 @@ Every agent that emits ANY MessageBus topic is affected by Cluster D — that is
 
 ---
 
-*End of CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md canonical template. Pending W6 Panel ratification. Following ratification, W3 issues §14.1 patch + ENTRY 008 commit.*
+*End of CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md canonical template v2. Panel `PLURALITY_CLD-REVISE` 5/9 conditions R1–R4 applied. Pending W6 re-ratification. Following ratification, W3 issues §14.1 P0 patch + ENTRY 008 commit; deferred per-agent topic additions ship incrementally with each agent's first ship commit.*
