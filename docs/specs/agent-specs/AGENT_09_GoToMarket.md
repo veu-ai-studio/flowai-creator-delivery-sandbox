@@ -152,6 +152,61 @@ Agent #9 is mode-agnostic; recommendations differ only in whether downstream Sel
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+This agent emits `agent.cost.signal.v1` before each LLM call (GTM readiness
+analysis + competitive-intel crawl analyze). It does NOT self-enforce budget
+caps. Agent #23 is the sole canonical enforcement owner. Call order per
+Cluster A §2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_9_go_to_market.pageCountMin`
+OR per-agent default: `pageCountMin: 1` (clamped to [1, 50]).
+- Mode 1 + Mode 2 SUB-2A: missing `8.audit.completed.v1` → emit
+  `agent.data_quality.insufficient.v1` and halt; populate provenance with
+  `upstream-block` reason referencing Agent #8 Quality Audit.
+- Mode 3A (per Cluster B §2.7 v2 R1): if `dataQualityScore ≥ 0.3`, may
+  emit `9.gtm.assessment.v1` with `outputQuality: 'degraded'`; below 0.3
+  → halt.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `degrade-on-any` (Agent
+#21 ACE readiness is enrichment; missing → emit low-confidence assessment
+flagging absence).
+
+**Cluster C — Mode behavior** (Pattern P2 per Cluster C §2.3):
+- **In Mode 1 (Assess):** emit `9.gtm.assessment.v1` with GTM readiness
+  scorecard per §4.2; `topFixes[]` contains ranked recommendations but
+  `autoFixable: false` on all entries (Mode 1 is read-only).
+- **In Mode 2 SUB-2A (Build):** same envelope + `topFixes[]` entries with
+  `autoFixable: true` flag where the fix is mechanical (consumed by Agent
+  #3 Self-Renewal Executor for queueing fix-generation).
+- **In Mode 3A (Benchmark):** same envelope as Mode 2 but evaluated against
+  the Vercel preview URL produced by Self-Renewal Executor; clearance
+  Step-5 eligibility computed against preview rather than prd surface.
+- **Default:** Mode 1 when `pipelineMode` is unspecified.
+Every emitted envelope carries `pipelineMode` field per Cluster C §2.4 v2 R2
+(mandatory for P2). All emissions still carry `draft: true` per escalation
+policy.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `9.gtm.assessment.v1` (renamed from `9.gtm.asset.v1`
+per G9-Q3 disposition (a) — Cluster D dual-emit window applies during
+migration per §2.4 v2 R4) plus `9.gtm.demo_assets.v1` (Phase 2). Cross-
+cluster topics ship in P0 patch. Topic rename uses Phase-1/Phase-2/Phase-3
+dual-emit migration contract.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2.
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Selection re-read per dispatch. Tier-downgrade per Cluster F §2.5 v2 R2
+(medium → low → free; max 3 attempts).
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
