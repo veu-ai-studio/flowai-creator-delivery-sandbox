@@ -167,13 +167,65 @@ export const SLOT_CONFIG = Object.freeze([
     role: 'European frontier',
     backup: Object.freeze({ provider: 'openrouter', model: 'cohere/command-r-plus-08-2024' }),
   }),
-  // Slot 5 — European/Canadian RAG-tuned (Cohere)
+  // Slot 5 — Amazon enterprise reasoning (post-cohere-demote).
+  // PROACTIVE DEMOTE 2026-05-16 (W5b dispatch #7, Cohere Demote):
+  // cohere/command-r-plus-08-2024 DEMOTED from primary to backup after
+  // 4 consecutive JSON-envelope-flake failures (triggering report:
+  // foundation-audit-surprises commit 708e59d). Pre-threshold demote
+  // (4 = same pattern as minimax dispatch #5 demoted at 5) to prevent
+  // disruption during the upcoming 18-agent consolidated Panel run.
+  // Same fault-pattern as the five prior demotions: kimi-k2.6
+  // (2026-05-15), qwen-2.5-72b (2026-05-15), gemini-2.5-pro
+  // (2026-05-16), gpt-5 (2026-05-16), minimax-m2.7 (2026-05-16).
+  //
+  // STRUCTURAL FLAG — literal dispatch promotion REJECTED:
+  //   Dispatch #7 STEP 1 said "promote current backup to primary
+  //   (verify it is NOT claude-opus-4, NOT gpt-4o, NOT any model
+  //   already primary in another slot)". Current Slot 5 backup was
+  //   mistralai/mistral-large-2411 — which IS Slot 4 primary.
+  //   Promoting it would create the EXACT Slot 4 == Slot 5 same-model
+  //   mirror that dispatch #3, #5, and #6 patterns warned against.
+  //
+  //   Surveyed OpenRouter for fresh-family alternatives (every current
+  //   allowlist family is already a primary or demoted: anthropic,
+  //   openai, meta-llama×2, mistralai, cohere being-demoted, google,
+  //   deepseek, perplexity, x-ai, minimax/moonshotai/qwen demoted).
+  //   33 fresh families with ≥64K context found on OpenRouter — top
+  //   candidates evaluated:
+  //     - amazon/nova-pro-v1     (AWS flagship, 300K ctx, ~ $0.80/M) ← PICKED
+  //     - amazon/nova-premier-v1 (AWS top tier, 1M ctx, ~ $2.50/M)
+  //     - amazon/nova-2-lite-v1  (AWS Nova 2 gen, 1M ctx, ~ $0.30/M; "lite" tier)
+  //     - ai21/jamba-large-1.7   (Jamba hybrid-mamba, 256K, ~ $2/M)
+  //     - writer/palmyra-x5      (enterprise, 1M ctx, ~ $0.60/M)
+  //
+  //   amazon/nova-pro-v1 wins on: Tier-1 cloud provider (AWS) with
+  //   strong reliability infrastructure, Pro tier = flagship general-
+  //   purpose model (not the "lite" or "micro" tier), 300K context far
+  //   above the 64K bar, brand-new family on the panel — genuine fault
+  //   diversity (not a "yet another Claude/GPT/Gemini" pick), reasonable
+  //   enterprise pricing, no envelope-flake history this session.
+  //
+  // Live-probe verification at fix time:
+  //   POST /api/v1/chat/completions { model: amazon/nova-pro-v1, ... }
+  //   → HTTP 200, content: "{\"ok\":true,\"slot\":5}", cost $0.0000536.
+  //   Clean JSON envelope, no preamble — the failure mode we just
+  //   demoted three other models for does not appear on first probe.
+  //
+  // Backup re-pointed to demoted cohere/command-r-plus-08-2024
+  // (standard Kimi/Gemini/GPT-5/minimax treatment — keep demoted model
+  // on panel for backup rescue rotation). Provider-different from new
+  // amazon primary ✓. mistral-large dropped from Slot 5 backup (still
+  // Slot 4 primary + Slot 4 backup chain so still on panel).
+  //
+  // Role label updated from "European RAG-tuned" → "Amazon enterprise
+  // reasoning" — the European/RAG identity was tied to Cohere; Amazon
+  // Nova Pro is US-based general-purpose.
   Object.freeze({
     provider: 'openrouter',
-    model: 'cohere/command-r-plus-08-2024',
-    region: 'Europe/CA',
-    role: 'European RAG-tuned',
-    backup: Object.freeze({ provider: 'openrouter', model: 'mistralai/mistral-large-2411' }),
+    model: 'amazon/nova-pro-v1',
+    region: 'US',
+    role: 'Amazon enterprise reasoning (post-cohere-demote 2026-05-16)',
+    backup: Object.freeze({ provider: 'openrouter', model: 'cohere/command-r-plus-08-2024' }),
   }),
   // Slot 6 — US large-context multimodal (post-minimax-demote).
   // PROACTIVE DEMOTE 2026-05-16 (W5b dispatch #5, MiniMax Demote):

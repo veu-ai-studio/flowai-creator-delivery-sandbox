@@ -99,6 +99,13 @@ const ALLOWED_MODELS = new Set([
   // context, the same Gemini 2.0 Flash model dispatch #5 intended to
   // promote to Slot 6 primary.
   'google/gemini-2.0-flash-001',
+  // Added 2026-05-16 (W5b dispatch #7, Cohere Demote): AWS Nova Pro
+  // promoted to Slot 5 primary after cohere/command-r-plus demote.
+  // 300K context, Tier-1 cloud provider, brand-new family on the
+  // panel (Amazon — genuine fault diversity beyond the existing
+  // 9 families). Live-probed against OpenRouter at promotion time
+  // → HTTP 200 + clean JSON envelope.
+  'amazon/nova-pro-v1',
   'anthropic/claude-opus-4',
   'anthropic/claude-sonnet-4',
   'meta-llama/llama-3.1-405b-instruct',
@@ -590,6 +597,27 @@ async function runPanelReviewer({ entry, system, user, timeoutMs }) {
       `[peer-review] slot-6-minimax-flake model=minimax/minimax-m2.7 ` +
       `(demoted-to-backup 2026-05-16 after 5 envelope flakes — pre-threshold; ` +
       `triggering report commit dedd075; Kimi/gemini/gpt-5 treatment applied) ` +
+      `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
+    );
+  }
+  // Slot 5 envelope-fail telemetry — Cohere Command R+. Added
+  // 2026-05-16 (W5b dispatch #7, Cohere Demote). cohere/command-r-plus
+  // logged its 4th consecutive JSON-envelope-flake failure on the W6
+  // foundation-audit-surprises consultation (triggering report: commit
+  // 708e59d). PROACTIVE DEMOTE: 4 = same pre-threshold pattern as
+  // minimax demote at 5 (dispatch #5); demoting now prevents disruption
+  // during the upcoming 18-agent consolidated Panel run. cohere DEMOTED
+  // from Slot 5 primary to Slot 5 backup; amazon/nova-pro-v1 promoted
+  // to Slot 5 primary (see slot-config.mjs Slot 5 block — the
+  // structural-mirror reasoning that ruled out the dispatch's literal
+  // "promote current backup" pick, since mistral-large was the backup
+  // and is already Slot 4 primary).
+  if (!usable && entry.model === 'cohere/command-r-plus-08-2024') {
+    const preview = (content || '').slice(0, 160).replace(/\s+/g, ' ');
+    process.stderr.write(
+      `[peer-review] slot-5-cohere-flake model=cohere/command-r-plus-08-2024 ` +
+      `(demoted-to-backup 2026-05-16 after 4 envelope flakes — pre-threshold; ` +
+      `triggering report commit 708e59d; Kimi/gemini/gpt-5/minimax treatment applied) ` +
       `latency_ms=${latency_ms} preview=${JSON.stringify(preview)}\n`,
     );
   }
