@@ -1,10 +1,13 @@
-# Cluster F — Model-Budget Fallback (Canonical Template, v2)
+# Cluster F — Model-Budget Fallback (Canonical Template, v3)
 
-**Status:** DRAFT v2 — Panel conditions applied; pending W6 re-ratification.
-**Version history:** v1 (commit `9859b98`, 2026-05-16) → v2 (this commit, 2026-05-17 — Panel `PLURALITY_CLF-REVISE` 6/9 conditions R1–R3 applied per W3 Dispatch #10).
-**Author:** W3.
+**Status:** DRAFT v3 — Panel v2 conditions applied; pending W6 re-ratification.
+**Version history:** v1 (commit `9859b98`, 2026-05-16) → v2 (commit applied 2026-05-17 — Panel `PLURALITY_CLF-REVISE` 6/9 conditions R1–R3) → **v3 (this commit, 2026-05-17 — Panel v2 condition F1 applied per W3a Dispatch #4)**.
+**Author:** W3 (v1, v2), W3a (v3).
 **Anchor canonical:** Rev-2.1 Locked Rule 8 (LLM model standard: "pipeline steps use claude_sonnet_4_6 by default; cost-aware budgeting required (§7 of Orchestra spec)"); Rev-2.1 Locked Rule 18 (rank_score cost-tier weighting); CA-11-A.4 `dispatchWithFallback` (canonical fallback mechanism); Orchestra Integration Spec §4.2 rolling-outcome-score machinery + §7.1 cost-ledger.
-**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 1 objection #10 (third-party overreliance) + Batch 2 objection #10 (LLM overreliance). **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` (W6 Dispatch #16, commit `10b13f9`) — `PLURALITY_CLF-REVISE` 6/9.
+**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 1 objection #10 (third-party overreliance) + Batch 2 objection #10 (LLM overreliance). **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` `PLURALITY_CLF-REVISE` 6/9. **v3 conditions:** `docs/panel-consultations/cluster-templates-v2-ratification-2026-05-17.md` F1.
+
+**v3 revisions applied (per W3a Dispatch #4):**
+- **F1** — Latency SLA acceptance criterion added. Cumulative tier-downgrade time MUST NOT exceed **200 ms p99** for any agent running 5 parallel dispatches. REQUIRED acceptance criterion for the Cluster F engineering dispatch. If the 3-attempt synchronous downgrade loop (per §2.5) cannot meet this SLA under parallel load, implementation MUST use **async downgrade**: attempt downgrade in background while continuing the in-flight dispatch at current tier, then apply the downgrade to the next dispatch. §2.5.1 added; AC-CF-11 added.
 
 **v2 revisions applied (per W3 Dispatch #10):**
 - **R1** — Cost-tier definitions: explicit numeric + named tier table (`free`, `low`, `medium`, `high`, `enterprise`) with USD-per-1K-token bands AND Locked Rule 18 price-weight values. §2.1.1 added.
@@ -259,6 +262,61 @@ The interaction with Cluster A is canonical:
 
 **Per Cluster A §2.6 v2 R4 ordering:** the downgrade loop runs AFTER `getCeiling()` clears + BEFORE Orchestra dispatch — operator's ceiling check is independent of cost-tier; both must clear for dispatch to proceed.
 
+### §2.5.1 — Tier-downgrade latency SLA + async fallback path (v3 F1)
+
+The §2.5 synchronous 3-attempt downgrade loop adds latency to every dispatch that hits the budget ceiling. Under parallel load (e.g. Agent #8 Quality Audit's 5 concurrent rubric calls per finding), the cumulative downgrade time can become a meaningful share of dispatch wall-clock. v3 F1 makes the latency budget a load-bearing acceptance criterion and defines the async fallback path for implementations that cannot meet it synchronously.
+
+**Latency SLA (REQUIRED acceptance criterion):**
+
+> Cumulative tier-downgrade time MUST NOT exceed **200 ms p99** for any agent running **5 parallel dispatches** (the canonical Agent #8 Quality Audit pattern).
+
+Cumulative tier-downgrade time is measured as the wall-clock from the first `reserve()` denial through the final successful `reserve()` (or terminal halt), INCLUSIVE of all intermediate `reserve()` calls + tier-selection + emit overhead. The p99 measurement is taken across a representative load run (canonical: 1,000 dispatches × 5 parallel × 3-tier-downgrade-worst-case = 15,000 downgrade-loop samples).
+
+The SLA applies to the COMPONENT that lives in agent code (model-selection + `reserve()` loop), not to the Orchestra LLM call itself. Provider latency (Anthropic / OpenAI / OpenRouter) is out of scope; only the FlowAI-internal downgrade-loop wall-clock counts toward the 200 ms p99 budget.
+
+**Async-downgrade fallback path (REQUIRED when SLA cannot be met synchronously):**
+
+If the 3-attempt synchronous downgrade loop CANNOT meet the 200 ms p99 SLA under 5-parallel load, the implementation MUST use the async-downgrade path:
+
+```pseudocode
+// Async-downgrade fallback path (used when sync 3-attempt loop exceeds 200ms p99)
+
+async function dispatchWithAsyncDowngrade({ requestedTier, payload, ...opts }) {
+  // 1. Use the CURRENT (last-known-good) tier for THIS dispatch — no waiting for downgrade.
+  const currentTier = lastKnownGoodTier[agentId] ?? requestedTier;
+  const model = await selectModel({ requestedTier: currentTier, ... });
+
+  // 2. Fire-and-forget the downgrade probe in the background; does NOT block this dispatch.
+  //    The probe runs reserve() at each lower tier and updates lastKnownGoodTier on the
+  //    first tier where reserve() succeeds. On completion, the NEXT dispatch picks up
+  //    the downgraded tier; this dispatch is already in-flight.
+  void runBackgroundDowngradeProbe({
+    agentId, requestedTier: currentTier, productId, runId,
+    onTierResolved: (resolvedTier) => {
+      lastKnownGoodTier[agentId] = resolvedTier;
+      emit('agent.model.tier_downgraded.v1', {
+        ..., requestedTier: currentTier, deliveredTier: resolvedTier,
+        downgradeReason: 'budget', downgradeMode: 'async-background',
+      });
+    },
+  });
+
+  // 3. Proceed with dispatch at currentTier (the in-flight dispatch does NOT wait).
+  return await dispatchAt(model, payload, opts);
+}
+```
+
+**Async-mode invariants:**
+- The FIRST dispatch under async-mode for a given `(agentId, productId)` pair uses `requestedTier` directly (no `lastKnownGoodTier` yet) and may exceed budget for that single dispatch. Cluster A's standard budget-check handles this case — if `reserve()` for the in-flight dispatch denies AND no `lastKnownGoodTier` is known, the dispatch halts with `'budget-cap-reached'` (same terminal state as sync-mode).
+- Subsequent dispatches consume the cached `lastKnownGoodTier` until the next provider re-price or operator-config change invalidates it. Cache invalidation event: any `agent.model.tier_changed.v1` emission (per §2.5 v2 R2 scenario (a)) clears the per-(agentId, productId) cache.
+- The async probe's runtime is bounded: 3 attempts max (same cap as the sync loop). If all attempts deny, the cache is set to `'halt'` and the next dispatch for the pair halts immediately.
+- Async-mode is opt-in PER AGENT, not fleet-wide. Each agent's spec §6 declares either `downgradeMode: 'sync'` (default — required when the agent meets the SLA synchronously) or `downgradeMode: 'async'` (required when the agent cannot meet the SLA synchronously — typically high-parallelism agents like #8 Quality Audit).
+- The `agent.model.tier_downgraded.v1` envelope carries `downgradeMode: 'sync' | 'async-background'` so dashboards can attribute "tier the dispatch ran at" vs "tier the next dispatch will run at" correctly.
+
+**Sequencing with operator changes:** if the operator raises the budget or changes the per-product `modelSelectionOverride` between an async probe firing and its `onTierResolved` callback, the resolved tier may be a downgraded value reflecting now-stale budget. The next `agent.model.tier_changed.v1` (or budget-headroom-restored event from Cluster A) invalidates the cache; the dispatch after that returns to the operator's intended tier.
+
+**Why this matters:** Cluster A's `reserve()` is a synchronous-by-construction operation (it must read + decrement the budget ledger atomically). The downgrade loop wraps `reserve()` in a 3-deep retry, which under 5-parallel load can stack up to 15 sequential `reserve()` calls if every parallel dispatch hits the same tier ceiling at the same time. Async-mode amortises this cost across dispatches rather than paying it per-dispatch.
+
 ### §2.6 — Operator override per product
 
 Operators can override per-product per-tier via `ProductRegistry.modelSelectionOverride` JSONB:
@@ -378,7 +436,7 @@ Cluster F §2.4. Cost dashboards aggregate by `requestedModel` vs
 
 ---
 
-## §4 — Acceptance Criteria (v2)
+## §4 — Acceptance Criteria (v3)
 
 How W2 verifies the Cluster F fix is correctly implemented across agent specs.
 
@@ -401,6 +459,11 @@ How W2 verifies the Cluster F fix is correctly implemented across agent specs.
 9. **AC-CF-9 (v2 R2 — Provider re-pricing):** When `src/lib/orchestra/modelTiers.js` is updated (e.g. provider re-prices), `agent.model.tier_changed.v1` is emitted for any in-flight dispatch using the re-classified model. Agent #19 Tech Evolution monitors provider pricing pages; tier update lands within 24h of provider announcement.
 
 10. **AC-CF-10 (v2 R3 — Hierarchical Doppler):** All tier-keyed Doppler keys (`FLOWAI_MODEL_TIER_FREE` through `FLOWAI_MODEL_TIER_ENTERPRISE` + corresponding `_FALLBACK_CHAIN`) are provisioned in Doppler before any agent ships. Empty keys are valid (Cluster F final-fallback kicks in); missing keys (key not declared at all) fail Doppler key inventory validator. Per-tier override JSONB `ProductRegistry.modelSelectionOverride[productId][<tier>]` reads correctly.
+
+11. **AC-CF-11 (v3 F1 — Tier-downgrade latency SLA):** The engineering dispatch implementing Cluster F MUST produce a load-test artifact proving cumulative tier-downgrade time ≤ **200 ms p99** for an agent running **5 parallel dispatches** through the canonical 3-tier-downgrade-worst-case scenario. Sample size: ≥1,000 dispatches × 5 parallel = ≥15,000 downgrade-loop measurements. Artifact format: `flowai.cluster_f.downgrade_latency.v1` JSON committed under `artifacts/load-tests/cluster-f-downgrade-latency/`.
+    - **Pass path:** if the synchronous 3-attempt downgrade loop meets the 200ms p99 SLA, the agent spec declares `downgradeMode: 'sync'` (default).
+    - **Async fallback path:** if the synchronous loop CANNOT meet the SLA, the implementation MUST use the §2.5.1 async-downgrade path. Affected agent specs declare `downgradeMode: 'async'`; the agent re-runs the load test under async-mode and the artifact MUST then show ≤200ms p99 (async-mode amortises the cost, so the SLA is achievable across the load run even if any single dispatch's sync-mode timing exceeds it).
+    - **Verification under both modes:** the artifact records measured p50 / p95 / p99 / max for sync-mode AND (when applicable) async-mode; the `downgradeMode` field declared in each affected agent's spec must match the mode under which the artifact was produced.
 
 ---
 
@@ -446,4 +509,4 @@ EXECUTOR_REGISTRY siblings (Self-Renewal Executor, ACE Conductor Executor, etc.)
 
 ---
 
-*End of CLUSTER_F_MODEL_BUDGET_FALLBACK.md canonical template v2. Panel `PLURALITY_CLF-REVISE` 6/9 conditions R1–R3 applied. Pending W6 re-ratification.*
+*End of CLUSTER_F_MODEL_BUDGET_FALLBACK.md canonical template v3. v2 Panel conditions R1–R3 + v3 Panel v2 condition F1 (tier-downgrade latency SLA + async-downgrade fallback path) applied. Pending W6 re-ratification. Following ratification, the Cluster F engineering dispatch produces the `flowai.cluster_f.downgrade_latency.v1` artifact per AC-CF-11; agents that cannot meet the 200ms p99 SLA synchronously declare `downgradeMode: 'async'` in their spec §6.*
