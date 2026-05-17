@@ -1,10 +1,15 @@
-# Cluster D — Audit-Log Topic Schema Extension (Canonical Template, v2)
+# Cluster D — Audit-Log Topic Schema Extension (Canonical Template, v3)
 
-**Status:** DRAFT v2 — Panel conditions applied; pending W6 re-ratification.
-**Version history:** v1 (commit `cc6fb70`, 2026-05-16) → v2 (this commit, 2026-05-17 — Panel `PLURALITY_CLD-REVISE` 5/9 conditions R1–R4 applied per W3 Dispatch #10).
-**Author:** W3.
+**Status:** DRAFT v3 — Panel v2 conditions applied; pending W6 re-ratification.
+**Version history:** v1 (commit `cc6fb70`, 2026-05-16) → v2 (commit applied 2026-05-17 — Panel `PLURALITY_CLD-REVISE` 5/9 conditions R1–R4) → **v3 (this commit, 2026-05-17 — Panel v2 conditions D1–D3 applied per W3a Dispatch #4)**.
+**Author:** W3 (v1, v2), W3a (v3).
 **Anchor canonical:** Rev-2.1 §14.1 GovernanceAuditLog canonical topic catalogue (65 topics as of ENTRY 006); §14.3 GovernanceAuditLog retention + RLS; §15.2 MessageBus (61 → 65 expansion at ENTRY 006); CA-9-B charter expansion (additional topics not yet propagated to §14.1).
-**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 1 objection #02 + Batch 2 objections #21, #27 + Batch 3 objections #23, #28. **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` (W6 Dispatch #16, commit `10b13f9`) — `PLURALITY_CLD-REVISE` 5/9.
+**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 1 objection #02 + Batch 2 objections #21, #27 + Batch 3 objections #23, #28. **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` `PLURALITY_CLD-REVISE` 5/9. **v3 conditions:** `docs/panel-consultations/cluster-templates-v2-ratification-2026-05-17.md` D1–D3.
+
+**v3 revisions applied (per W3a Dispatch #4):**
+- **D1** — Hash-chain mirroring requirement added. Every nightly cold-store snapshot MUST post a tamper-evidence digest (snapshot timestamp, row count, hash of last 10 entries) to a durable external channel (dedicated Slack webhook OR append-only log outside Supabase). Provides continuous tamper-evidence beyond the cold-store snapshot alone. §2.7 added; AC-CD-9 added.
+- **D2** — Hard ceiling on topics-per-staged-ship defined: **maximum 5 new topics per agent ship commit**. Agents requiring more than 5 new topics MUST split into multiple ship commits. Bounds coordination overhead and migration burden. §2.1.0-Def updated; AC-CD-10 added.
+- **D3** — Load-test artifact added to acceptance criteria. Before the full 95+ topic catalogue is active in production, a load-test artifact MUST prove: 500-TPS audit-log ingestion with all registered topics active, p99 latency ≤ 50ms, zero `UNKNOWN_TOPIC` errors. Required merge gate for the §14.1 P0 patch. §2.8 added; AC-CD-11 added.
 
 **v2 revisions applied (per W3 Dispatch #10):**
 - **R1** — staged topic additions: **P0 set** (~10 topics required for Agent #23 Cost Governor + Cluster B halt envelopes) ships in a single §14.1 patch commit ASAP; **Deferred set** (~20+ per-agent topics) ships incrementally alongside each agent's first shipping commit (not pre-declared en masse). §2.1 reorganised into §2.1.0 P0 / §2.1.0-Def Deferred subsections.
@@ -80,6 +85,18 @@ These topics are required by canonical templates A, B, E, F + Agent #23 Cost Gov
 Per-agent emit topics ship in the same commit as the agent's runtime implementation. This couples spec declaration to working code — preventing the "topic declared but no emitter exists" gap Panel objection #21 raised.
 
 The deferred topics list below is reference-only; each agent's actual deferred-set commit lands per-agent at engineering dispatch time. The list is the same per-agent topic catalogue documented in v1 §2.1.2 (rows 5–61) but each is gated on the agent's first ship commit landing.
+
+**v3 D2 — Hard ceiling: maximum 5 new topics per agent ship commit.**
+
+An agent ship commit (the commit that lands the agent's first runtime implementation + its §14.1 micro-amendment) MUST introduce **at most 5 new topics** in its §14.1 patch. Agents whose Cluster D inventory (per §2.1.2) requires more than 5 new topics MUST split their ship into multiple commits, each adding ≤5 new topics. Rationale: bounds the per-commit coordination overhead, keeps migration-harness runs reviewable, and prevents a single misnamed or mis-RLS-configured ship from invalidating a large topic batch.
+
+**Enforcement:**
+- The CI gate that protects §14.1 modifications (per AC-CD-3) additionally counts net-new topic rows added in the same patch. A patch adding ≥6 new topics is rejected with `TOPIC_CEILING_EXCEEDED { ceiling: 5, attempted: <N>, suggestion: 'split into N/5 (rounded up) ship commits, each ≤5 topics' }`.
+- "New topics" is defined as topics not present in the §14.1 catalogue prior to this patch. Renames (per §2.4 dual-emit migration) count as 1 net-new topic per rename (the NEW name); the OLD name continues to exist during the window and does not count as net-new.
+- The ceiling applies to the AGENT'S ship commit, not the Cluster D P0 patch. The P0 patch (§2.5 — 10 topics) is exempted because it is a coordinated infrastructure ship covering cross-cluster envelopes (A/B/E/F), not a single-agent's deferred-set ship.
+- Where an agent legitimately needs >5 topics (e.g. Agent #11 SI carries 6 across CA-9-B expansion), the operator/W3 splits the ship across two commits: commit 1 lands the agent skeleton + 5 topics; commit 2 lands the remaining ≤5 topics + the consuming code paths.
+
+**Why 5 and not a larger number:** the migration harness (per §2.3.1) reviewer load grows roughly linearly with new topic count; 5 has been chosen so a single PR-review session can validate naming + payload shape + RLS allow-list + dual-emit configuration for every topic in the patch. Larger batches push toward shallow review; smaller batches frustrate agent-by-agent ship cadence. The ceiling is per-commit, not per-week — an agent that legitimately ships 10 topics within a week does so across two commits, not one.
 
 #### §2.1.1 — Cross-cluster topics (from Clusters A, B, C) — moved to P0 set above
 
@@ -243,6 +260,100 @@ After Cluster D v2 ratification, W3 issues:
 
 Per CA-12 v3 §A.2.4 + Cluster E §2.6 compatibility: `authorityCeilings` per-product also keys on `{productId}` — the same canonical productId identifier RLS uses.
 
+### §2.7 — Hash-chain mirroring (v3 D1)
+
+The §14 GovernanceAuditLog hash-chain is already canonically maintained in Supabase (per Rev-2.1 §14 + §14.2). v3 D1 adds a **continuous external tamper-evidence mirror** beyond the cold-store snapshot alone: every nightly cold-store snapshot MUST also post a tamper-evidence digest to a durable external channel.
+
+**Mirror requirement (MUST):**
+
+Every nightly cold-store snapshot job (the job that writes the per-night cold-store archive of the rolling audit log) MUST, AFTER successfully completing the cold-store write, post a tamper-evidence digest to BOTH of the following targets:
+
+1. **Dedicated Slack webhook** — `flowai/<env>/AUDIT_HASH_MIRROR_SLACK_WEBHOOK` Doppler key, pointing at a Slack channel restricted to the security audit team. The webhook receives a JSON payload (see digest shape below); Slack's append-only message log provides off-Supabase tamper evidence.
+2. **Append-only external log** — either an S3 bucket with object-lock + retention configured to "compliance mode" + write-once retention (canonical option), OR an equivalent append-only log that exists outside the Supabase tenant. Bucket name + path stored in `flowai/<env>/AUDIT_HASH_MIRROR_S3_BUCKET` + `flowai/<env>/AUDIT_HASH_MIRROR_S3_PREFIX` Doppler keys.
+
+Both targets receive the same digest; the dual-target mirror means a compromise of either Slack or S3 alone cannot silently erase tamper evidence.
+
+**Digest shape:**
+
+```json
+{
+  "kind": "flowai.audit.hash_mirror.v1",
+  "snapshotTimestamp": "<ISO8601>",
+  "snapshotWindowStart": "<ISO8601>",
+  "snapshotWindowEnd": "<ISO8601>",
+  "rowCount": <integer — total rows in the snapshot>,
+  "lastTenHashes": [
+    // SHA-256 hex digests of the LAST 10 hash-chain entries in this snapshot,
+    // in chronological order (oldest first → newest last)
+    "<64-char hex>",
+    "<64-char hex>",
+    ...
+  ],
+  "rootHash": "<64-char hex — SHA-256 of the concatenated lastTenHashes>",
+  "coldStoreLocation": {
+    "bucket": "<canonical-cold-store-bucket>",
+    "key": "<path/to/snapshot-yyyy-mm-dd.jsonl.gz>"
+  },
+  "snapshotJobRunId": "<UUID v4>",
+  "schemaVersion": "v1"
+}
+```
+
+The `lastTenHashes` array is the load-bearing tamper-evidence — any later attempt to backdate / mutate / delete any of the last 10 entries of the snapshot's hash-chain will produce a digest mismatch when re-validated against the externally-stored copies in Slack + S3. `rootHash` is included for fast diff detection without re-hashing the 10 entries.
+
+**Operational behaviour:**
+- The mirror posts MUST succeed before the snapshot job is reported as `completed`. A snapshot whose cold-store write succeeded but mirror posts failed is reported as `mirror_failed` and re-tried on the next nightly run. Persistent failures (≥3 consecutive nights) page the security team.
+- The digest is post-only — there is no canonical read API for the mirrored digests; they exist for forensic re-validation when tamper is suspected.
+- Replay-attack defence: each digest carries a `snapshotJobRunId` (UUID v4) — duplicate digests with the same `snapshotJobRunId` are treated as a replay attempt and flagged in the security channel.
+- Storage retention: Slack channel retention is unlimited (Slack Enterprise Grid retention policy); S3 object-lock retention is set to **7 years** to match GovernanceAuditLog retention per §14.3.
+
+This mechanism is orthogonal to (and additive on top of) the existing in-Supabase hash-chain. The hash-chain inside Supabase remains the canonical audit ordering; the mirror is the external tamper-evidence stream.
+
+### §2.8 — Load-test artifact required before §14.1 P0 patch merges (v3 D3)
+
+Before the §14.1 P0 patch (per §2.5) merges to `main`, an automated load-test MUST run and produce a passing artifact. The artifact is a required merge gate for any commit that ships the P0 10-topic set, AND for any subsequent micro-amendment that pushes the catalogue beyond ~70 topics.
+
+**Load-test requirements (all 3 MUST pass):**
+
+1. **Sustained 500-TPS audit-log ingestion.** A load-generation harness writes 500 audit-log entries per second for ≥10 consecutive minutes, distributed across all registered topics (each topic receives at least one emission during the run). Ingestion includes the full canonical path: `MessageBus.emit()` → schema validation → RLS check → Supabase write → hash-chain append.
+2. **p99 ingestion latency ≤ 50 ms.** The 99th-percentile end-to-end latency from `emit()` call site to "row persisted in `governance_audit_log` table with hash-chain entry committed" MUST be ≤ 50 ms across the 10-minute window. Higher percentiles (p99.9, max) are recorded but not gated; only p99 is the hard ceiling.
+3. **Zero `UNKNOWN_TOPIC` errors during the load run.** All emit attempts must reference topics registered in the catalogue under test. The harness pre-loads the full registered topic set; any `UNKNOWN_TOPIC` error during the run indicates a registration-vs-runtime drift and fails the load test.
+
+**Load-test artifact format:**
+
+```json
+{
+  "kind": "flowai.audit.load_test.v1",
+  "artifactRunId": "<UUID v4>",
+  "ranAt": "<ISO8601>",
+  "durationSeconds": 600,
+  "topicCatalogueSnapshot": {
+    "totalTopics": <integer>,
+    "topicNames": ["<topic1>", "<topic2>", ...]
+  },
+  "results": {
+    "totalEmissions": <integer>,
+    "achievedTps": <number — emissions ÷ durationSeconds>,
+    "p50LatencyMs": <number>,
+    "p95LatencyMs": <number>,
+    "p99LatencyMs": <number — MUST be ≤ 50>,
+    "p999LatencyMs": <number>,
+    "maxLatencyMs": <number>,
+    "unknownTopicErrors": <integer — MUST be 0>,
+    "rlsViolationErrors": <integer>,
+    "payloadSchemaErrors": <integer>
+  },
+  "passed": <boolean — true iff achievedTps >= 500 AND p99LatencyMs <= 50 AND unknownTopicErrors == 0>,
+  "schemaVersion": "v1"
+}
+```
+
+The artifact is committed to `artifacts/load-tests/cluster-d-p0-patch/<artifactRunId>.json` in the FlowAI repo and referenced from the P0-patch PR description. CI gate rejects the P0-patch merge if no artifact file exists OR `passed` is `false`.
+
+**Re-run trigger:** the load test is re-run before merging any subsequent §14.1 amendment that pushes the catalogue beyond the 70-topic mark (current 65 + 10 P0 - any deprecations). At each re-run threshold, a fresh `flowai.audit.load_test.v1` artifact is produced and gated on the same three thresholds. Re-runs that fail block the amendment merge until the underlying performance regression is fixed.
+
+This gate intentionally precedes any per-agent deferred-set ship: agents whose deferred topics would push the catalogue beyond 70 cannot ship until the load-test re-run has been produced and is `passed: true`.
+
 ---
 
 ## §3 — Agent Spec Integration Instructions
@@ -288,7 +399,7 @@ Specs with topic-rename per G9-Q3 / G18-Q1 / G20-Q4 / G11-Q4 / G12-Q5 / G16-Q5 /
 
 ---
 
-## §4 — Acceptance Criteria (v2)
+## §4 — Acceptance Criteria (v3)
 
 1. **AC-CD-1 (v2 R1 — P0 patch committed first):** `docs/CANONICAL_REFERENCE.md` §14.1 contains the 10 P0 topics from §2.1.0; `docs/CANONICAL_HISTORY.md` ENTRY 008 records the P0 extension. Deferred per-agent topics NOT pre-declared.
 
@@ -305,6 +416,12 @@ Specs with topic-rename per G9-Q3 / G18-Q1 / G20-Q4 / G11-Q4 / G12-Q5 / G16-Q5 /
 7. **AC-CD-7 (v2 R3 — RLS productId allow-list enforced):** Tenant-data-carrying topics declare per-`{providerId, productId}` allow-list with `wildcardAllowed: false` per §2.6; emit OR read attempts outside the allow-list throw `RLS_VIOLATION[<topicName>, <providerId>, <productId>]`. Harness invariant #4. Cross-product read attempt within same provider's org (without explicit allow-list entry) MUST be rejected.
 
 8. **AC-CD-8 (v2 R4 — Phase 3 OLD topic deletion):** After 90 days from Phase 2 closure + zero stragglers, OLD topic is removable from registry via admin-initiated + audit-logged deletion. Subsequent emit attempts with OLD name throw `UNKNOWN_TOPIC`.
+
+9. **AC-CD-9 (v3 D1 — Hash-chain mirroring):** Every nightly cold-store snapshot job posts a `flowai.audit.hash_mirror.v1` digest (per §2.7) to BOTH the dedicated Slack webhook (`AUDIT_HASH_MIRROR_SLACK_WEBHOOK`) AND the append-only S3 object-lock bucket (`AUDIT_HASH_MIRROR_S3_BUCKET`/`_S3_PREFIX`). Digest includes `snapshotTimestamp`, `rowCount`, `lastTenHashes` (10 SHA-256 hex digests in chronological order), `rootHash`, `coldStoreLocation`, and `snapshotJobRunId`. Snapshot job is reported `completed` only when BOTH mirror posts succeed; `mirror_failed` triggers retry on next nightly run; ≥3 consecutive nights of mirror failure pages the security team.
+
+10. **AC-CD-10 (v3 D2 — Per-ship topic ceiling):** Any §14.1 patch commit that introduces ≥6 net-new topics is rejected by the CI gate with `TOPIC_CEILING_EXCEEDED { ceiling: 5, attempted: <N>, suggestion: 'split into N/5 (rounded up) ship commits, each ≤5 topics' }`. The P0 patch from §2.5 is exempted from this ceiling (it ships ~10 cross-cluster infrastructure topics as a single coordinated commit). Renames during the dual-emit window count as 1 net-new topic per rename (the NEW name only).
+
+11. **AC-CD-11 (v3 D3 — Load-test artifact gate):** The §14.1 P0 patch PR cannot merge unless `artifacts/load-tests/cluster-d-p0-patch/<artifactRunId>.json` exists, is referenced in the PR description, and contains `passed: true` per §2.8. Pass criteria: achieved TPS ≥ 500 across ≥10 consecutive minutes, p99 end-to-end ingestion latency ≤ 50ms, AND zero `UNKNOWN_TOPIC` errors during the run. The same artifact gate re-runs before any subsequent §14.1 amendment that would push the registered-topic count beyond 70.
 
 ---
 
@@ -347,4 +464,4 @@ Every agent that emits ANY MessageBus topic is affected by Cluster D — that is
 
 ---
 
-*End of CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md canonical template v2. Panel `PLURALITY_CLD-REVISE` 5/9 conditions R1–R4 applied. Pending W6 re-ratification. Following ratification, W3 issues §14.1 P0 patch + ENTRY 008 commit; deferred per-agent topic additions ship incrementally with each agent's first ship commit.*
+*End of CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md canonical template v3. v2 Panel conditions R1–R4 + v3 Panel v2 conditions D1–D3 applied. Pending W6 re-ratification. Following ratification, W3 issues §14.1 P0 patch + ENTRY 008 commit (gated on §2.8 load-test artifact per AC-CD-11); deferred per-agent topic additions ship incrementally with each agent's first ship commit (per AC-CD-10 ≤5 topics per commit); nightly cold-store snapshots mirror tamper-evidence digests per §2.7.*
