@@ -193,13 +193,13 @@ Elevation is **never automatic**; always a separate Panel decision with audit-lo
 
 **CANONICAL (CEO-RESOLVED 2026-05-11): Option A adopted.**
 
-**Sequence:** PressAI → ReachSMS → RelTwin → SAIGE → MyBirthSafe.
+**Sequence:** PressAI → ReachSMS → RelTwin → SAIGE → MyPregLife.
 
-Rationale: validates revenue plumbing first via PressAI's live Stripe integration, aligning with the multi-tenant unlock thesis of Phase 1. MyBirthSafe (POPIA + maternal health + rebrand collision) remains last as the highest-risk integration; 4-of-5 reviewer consensus on that placement is preserved.
+Rationale: validates revenue plumbing first via PressAI's live Stripe integration, aligning with the multi-tenant unlock thesis of Phase 1. MyPregLife (POPIA + maternal health + rebrand collision) remains last as the highest-risk integration; 4-of-5 reviewer consensus on that placement is preserved.
 
 **Option B alternate (Slot 2 + Slot 3 — SAIGE first) — OVERRULED.** Both options were defensible; PressAI-first adopted because (a) it validates the revenue rail that #4 just stood up in Phase 1, providing tight feedback on Stripe Connect plumbing before subsequent products; (b) live revenue is the higher-priority risk to de-risk early.
 
-**Slot 10 dissent (MyBirthSafe-first, risk-descending) — OVERRULED.** Reverse-order outlier; rejected by 4-of-5 majority.
+**Slot 10 dissent (MyPregLife-first, risk-descending) — OVERRULED.** Reverse-order outlier; rejected by 4-of-5 majority.
 
 **CONFIDENCE:** MEDIUM (3 of 5 MEDIUM).
 **KEY ASSUMPTION:** PressAI's live Stripe state is integration-ready (not just billing-ready) — verify before sequencing locks.
@@ -262,10 +262,10 @@ multi-tenant load test passed → Phase 1/2 exit gate → #13 Self-Protection
 + capability package validated → first product (PressAI or SAIGE)
 integration gate (PI2) → continuous crawl shadow → diagnose → live →
 first product live in production under FlowAI governance → remaining
-4 products integrated → MyBirthSafe (terminating compliance-heavy node).
+4 products integrated → MyPregLife (terminating compliance-heavy node).
 ```
 
-**Bottleneck:** **Agent #4 Provider Onboarding.** It blocks the revenue model, depends on Doppler + Stripe Connect + RLS (three external dependencies), and Layer 1 SSOT explicitly calls it out as "the single largest gap to the '$5B OS' claim." Slot 3 adds: MyBirthSafe integration is the critical-path terminator due to HIPAA/POPIA compliance validation time.
+**Bottleneck:** **Agent #4 Provider Onboarding.** It blocks the revenue model, depends on Doppler + Stripe Connect + RLS (three external dependencies), and Layer 1 SSOT explicitly calls it out as "the single largest gap to the '$5B OS' claim." Slot 3 adds: MyPregLife integration is the critical-path terminator due to HIPAA/POPIA compliance validation time.
 
 **CONFIDENCE:** HIGH (5 of 5).
 **KEY ASSUMPTION:** External dependencies (Doppler/Stripe/Supabase) can resolve in parallel with #6/#7/#10 builds — if serialized, critical path extends to ~22 weeks.
@@ -475,7 +475,7 @@ Why this is the single highest-risk decision (3 reviewers converge — Slot 1, S
 - **CEO FLAGS — ALL FOUR RESOLVED BY CEO (2026-05-11) with W5a recommendations adopted:**
   - **AB1 / #4 vs #8 first → PARALLEL.** Build #4 (Provider Onboarding) and #8 (Quality Audit) in parallel from Phase 1; substrate dependencies (Doppler/RLS/Stripe for #4; ScoreEvaluator/test harness for #8) do not conflict. Both the 4-of-5 #4-first majority and Slot 1's #8-first dissent honored.
   - **AB3 / Ops Runner charter scheme → PROPOSAL A (operational responsibilities).** #21 Pipeline Conductor / Crawl Coordinator · #22 Audit Auditor / Crawl Probe · #23 Cost Governor · #24 Release / Tenant-Credential Ops · #25 Panel Orchestrator / Incident-Recovery. Slot 4 pipeline-step-ownership alternate OVERRULED.
-  - **PI1 / first-product → PRESSAI** (Option A). Sequence: PressAI → ReachSMS → RelTwin → SAIGE → MyBirthSafe. Option B (SAIGE-first, Slot 2 + Slot 3) OVERRULED; Slot 10 reverse-order dissent OVERRULED.
+  - **PI1 / first-product → PRESSAI** (Option A). Sequence: PressAI → ReachSMS → RelTwin → SAIGE → MyPregLife. Option B (SAIGE-first, Slot 2 + Slot 3) OVERRULED; Slot 10 reverse-order dissent OVERRULED.
   - **PI4 / embed simultaneity → PER-PRODUCT SEQUENTIAL.** 4-week per-product install sprints, category-by-category, with 95/95 audit after each category. Slot 4 simultaneous-embed dissent OVERRULED.
 - **Generated:** 2026-05-11, `layer2-impl-panel-review-2026-05-11.md` as input.
 - **Status:** **CANONICAL.** Promoted from `docs/FLOWAI_IMPLEMENTATION_PLAN_DRAFT_v1.md` to `docs/FLOWAI_IMPLEMENTATION_PLAN.md` after CEO disposition of the 4 flagged items.

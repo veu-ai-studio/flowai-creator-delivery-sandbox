@@ -33,7 +33,7 @@
 
 ### §A.0 — GTM Context (added per CEO Dispatch #4 critical context, verbatim)
 
-> The five operator products FlowAI governs (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe) are real GTM-ready products — not prototypes, not MVPs. FlowAI is production governance infrastructure for live products, not a research tool against hypothetical targets. This context is relevant to all authority, ceiling, and attestation design decisions in this spec.
+> The five operator products FlowAI governs (SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife) are real GTM-ready products — not prototypes, not MVPs. FlowAI is production governance infrastructure for live products, not a research tool against hypothetical targets. This context is relevant to all authority, ceiling, and attestation design decisions in this spec.
 
 This GTM context is **prose preamble only**. Per §22 Product-Agnostic Rule, product names appear nowhere in spec code, schemas, identifiers, or canonical configuration shapes. The five names appear in this §A.0 paragraph (and references to it) as architectural context — to explain why design decisions are calibrated for production-grade governance rather than research-tool laxity.
 

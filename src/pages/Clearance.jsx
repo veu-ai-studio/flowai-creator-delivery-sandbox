@@ -18,7 +18,7 @@ const VEU_PRODUCTS = [
   { product_name: 'PressAI',     base44_url: 'https://pressai.base44.app',     custom_domain: 'ourpublishingai.com',     target_audience: 'Authors and publishers', category: 'Publishing' },
   { product_name: 'ReachSMS',    base44_url: 'https://reachsms.base44.app',    custom_domain: 'ourcommunitiesai.com',    target_audience: 'Nonprofit community organizations', category: 'Community' },
   { product_name: 'RelTwin',     base44_url: 'https://reltwin.com',            custom_domain: 'reltwin.com',             target_audience: 'Coaches and HR professionals', category: 'Relationships' },
-  { product_name: 'MyBirthSafe', base44_url: 'https://mybirthsafe.base44.app', custom_domain: 'preglife.com',            target_audience: 'Pregnant women in Nigeria and Africa', category: 'Health' },
+  { product_name: 'MyPregLife', base44_url: 'https://mypreglife.base44.app', custom_domain: 'preglife.com',            target_audience: 'Pregnant women in Nigeria and Africa', category: 'Health' },
 ];
 
 const STATUS_STYLE = {

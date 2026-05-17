@@ -7,7 +7,7 @@
 //
 // Objectives flow into describe / clone / synthesize prompts as system
 // context so each product can carry its own audit lens (e.g. SAIGE always
-// gets investor_review, MyBirthSafe always gets compliance constraints).
+// gets investor_review, MyPregLife always gets compliance constraints).
 
 import { setCorsHeaders } from '../_lib/claude.js';
 import { resolveOrgId } from '../_lib/tenant.js';

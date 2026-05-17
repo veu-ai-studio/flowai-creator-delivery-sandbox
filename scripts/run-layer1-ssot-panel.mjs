@@ -21,7 +21,7 @@ const CRITICAL_CONTEXT = `
 CRITICAL CONTEXT — apply rigor appropriate to this scale:
 
 - FlowAI is a $5 BILLION operating system infrastructure for an AI products company (VEU AI Studio).
-- The 5 flagship products (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe) are REAL, production-grade — NOT experimental.
+- The 5 flagship products (SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife) are REAL, production-grade — NOT experimental.
 - FlowAI has 25 agents (G3-ratified; #21–#25 Ops Runner charters active). BaseAgent.js validator update to 25 is queued for Phase 1.0.
 - FlowAI continuously crawls every product (every link, card, modal, page, engine, agent) AND aggressively verifies all wiring (auth flows, payment rails, third-party integrations, GTM trackers, marketplace listings, live monitoring) — fixes broken elements at any time.
 - FlowAI runs its own self-tests through the same 8-step pipeline it governs.

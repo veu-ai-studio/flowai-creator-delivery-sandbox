@@ -108,8 +108,8 @@ export const VEU_PRODUCTS = [
     ],
   },
   {
-    slug: 'mybirthsafe',
-    name: 'MyBirthSafe',
+    slug: 'mypreglife',
+    name: 'MyPregLife',
     description: 'Maternal health platform for Africa',
     type: 'web',
     status: 'active',

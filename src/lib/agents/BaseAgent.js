@@ -75,7 +75,7 @@ export const PRODUCT_SCOPES = Object.freeze({
   RELTWIN:      'reltwin',
   REACHSMS:     'reachsms',
   PRESSAI:      'pressai',
-  MYBIRTHSAFE:  'mybirthsafe',
+  MYPREGLIFE:  'mypreglife',
   // System-only scope used by the FlowAI self-adversarial test suite
   // (docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md §9 LD-2 + §11.8).
   // Provisioned by migration 0012; cleaned up between runs by

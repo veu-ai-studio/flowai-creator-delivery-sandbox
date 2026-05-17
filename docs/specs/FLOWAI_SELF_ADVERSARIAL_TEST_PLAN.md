@@ -750,7 +750,7 @@ Every finding emitted into the JSON file MUST also be written as a row to Govern
 ## 12. Out of scope (intentional)
 
 - Adversarial testing of the 20 DORMANT agents (#6–#25) — they have no implementing code yet.
-- Adversarial testing of live VEU products (SAIGE / RelTwin / ReachSMS / PressAI / MyBirthSafe) — covered by per-product clearance protocol (§11 of Rev-2.1), not by this suite.
+- Adversarial testing of live VEU products (SAIGE / RelTwin / ReachSMS / PressAI / MyPregLife) — covered by per-product clearance protocol (§11 of Rev-2.1), not by this suite.
 - Multi-tenant RLS exhaustive matrix (every table × every role × every operation) — Production Hardening track.
 - Vercel infrastructure pen-test (TLS, DDoS, BGP) — provider-level, out of scope.
 - Anthropic / OpenRouter / Browserless / v0 API surface pen-test — third-party providers' responsibility.

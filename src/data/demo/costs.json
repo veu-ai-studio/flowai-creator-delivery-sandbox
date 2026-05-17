@@ -9,7 +9,7 @@
     { "name": "PressAI", "cost": 51.30, "runs": 13 },
     { "name": "ReachSMS", "cost": 38.60, "runs": 9 },
     { "name": "RelTwin", "cost": 44.20, "runs": 11 },
-    { "name": "MyBirthSafe", "cost": 12.20, "runs": 4 }
+    { "name": "MyPregLife", "cost": 12.20, "runs": 4 }
   ],
   "daily": [
     { "date": "Apr 6",  "cost": 6.2 },

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const VEU_PRODUCTS = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyBirthSafe'];
+const VEU_PRODUCTS = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyPregLife'];
 const PROVIDERS = ['Anthropic', 'OpenAI', 'Voyage AI', 'Vercel', 'Replit'];
 
 function StatCard({ label, value, sub, icon: Icon, color = 'text-primary', bg = 'bg-primary/10' }) {

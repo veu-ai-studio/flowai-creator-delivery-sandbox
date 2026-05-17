@@ -241,7 +241,7 @@ Legend: E=ENGAGED · T=TANGENTIAL · S=SILENT · X=EVASIVE.
 ```
 Amend O6 ("First, not exclusive") to add an explicit Year-1→Year-6 user journey:
 
-- Year 1: VEU Studio is the only paying FlowAI customer. FlowAI is dogfooded internally; the five non-FlowAI products (SAIGE, PressAI, RelTwin, ReachSMS, MyBirthSafe) are FlowAI's first proof-of-capability vendor-tenants.
+- Year 1: VEU Studio is the only paying FlowAI customer. FlowAI is dogfooded internally; the five non-FlowAI products (SAIGE, PressAI, RelTwin, ReachSMS, MyPregLife) are FlowAI's first proof-of-capability vendor-tenants.
 - Year 2+: Mass-market adoption across underserved global segments — individuals, small businesses, consultants, small business owners, unemployed youth, and small organizations become vendors of Native Apps / Mobile Apps / SaaS / Agentic AI built on FlowAI.
 - Year 6: Same mix retained plus enterprise, mass-consumer, and professional-services layers added.
 ```
@@ -296,7 +296,7 @@ Legend: E=ENGAGED · T=TANGENTIAL · S=SILENT · X=EVASIVE.
 
 **Slot 1** [ENGAGED] — openrouter:openai/gpt-5
 
-> CA-4 adds an explicit Year-1→Year-6 arc to O6, naming "VEU Studio is the only paying FlowAI customer" in Year 1 and the five tenants (SAIGE, PressAI, RelTwin, ReachSMS, MyBirthSafe), then Year 2+ mass adoption across CA-1’s underserved, and Year 6 adding enterprise. It’s consistent with the CA-2 democratization platform identity. I’d prefer framing it as a target trajectory to avoid over-constraining early customer mix or exact timing.
+> CA-4 adds an explicit Year-1→Year-6 arc to O6, naming "VEU Studio is the only paying FlowAI customer" in Year 1 and the five tenants (SAIGE, PressAI, RelTwin, ReachSMS, MyPregLife), then Year 2+ mass adoption across CA-1’s underserved, and Year 6 adding enterprise. It’s consistent with the CA-2 democratization platform identity. I’d prefer framing it as a target trajectory to avoid over-constraining early customer mix or exact timing.
 
 **Slot 2** [ENGAGED] — openrouter:openai/gpt-4o
 
@@ -339,7 +339,7 @@ Legend: E=ENGAGED · T=TANGENTIAL · S=SILENT · X=EVASIVE.
 
 **Slot 1** [ENGAGED] — openrouter:openai/gpt-5 — answer = `(c)`
 
-> PARTIAL — Adopt the Year-1→Year-6 journey but mark it as a "target trajectory (illustrative)" rather than an absolute. Modify "VEU Studio is the only paying FlowAI customer" to "primary/initial paying" to avoid blocking opportunistic outside customers in Year 1. Keep explicit vendor-tenant examples (SAIGE, PressAI, RelTwin, ReachSMS, MyBirthSafe) as exemplars and tie Year 2+ to CA-1’s underserved segments. This keeps O6 coherent with CA-2 while preserving execution flexibility.
+> PARTIAL — Adopt the Year-1→Year-6 journey but mark it as a "target trajectory (illustrative)" rather than an absolute. Modify "VEU Studio is the only paying FlowAI customer" to "primary/initial paying" to avoid blocking opportunistic outside customers in Year 1. Keep explicit vendor-tenant examples (SAIGE, PressAI, RelTwin, ReachSMS, MyPregLife) as exemplars and tie Year 2+ to CA-1’s underserved segments. This keeps O6 coherent with CA-2 while preserving execution flexibility.
 
 **Slot 2** [ENGAGED] — openrouter:openai/gpt-4o — answer = `(c)`
 
@@ -620,12 +620,12 @@ Add new SSOT section MG9 "Commercial Architecture and $5B Year-6 ARR Thesis" (Pa
 (a) Year-6 geographic / segment revenue mix proposal — proportions across the five underserved-globally segments, allowing both emerging-market and developed-country-rural / low-income-urban contributions to the $5B.
 (b) Benchmark set — hybrid emerging-market plays (Paystack, Flutterwave, M-Pesa, Mercado Libre, Grab) AND developer-tool plays (Vercel, Replit, Lovable, Bubble).
 (c) Revenue-weighting split — FlowAI ARR as X% of the $5B Year-6 ARR target vs. the five non-FlowAI products' combined ARR as (100−X)%. Panel-proposed split.
-(d) Per-product Year-6 ARR floors — each of the six P&L units (FlowAI + SAIGE + PressAI + RelTwin + ReachSMS + MyBirthSafe) evaluated against its respective TAM with NO artificial revenue caps (per framing #5: "niche ≠ small").
+(d) Per-product Year-6 ARR floors — each of the six P&L units (FlowAI + SAIGE + PressAI + RelTwin + ReachSMS + MyPregLife) evaluated against its respective TAM with NO artificial revenue caps (per framing #5: "niche ≠ small").
 (e) Per-product pricing model:
     - FlowAI: per-app / per-deployment usage-based
     - RelTwin: subscription tiers
     - SAIGE: per-seat enterprise
-    - PressAI / ReachSMS / MyBirthSafe: Panel-proposed
+    - PressAI / ReachSMS / MyPregLife: Panel-proposed
     - Hybrid models allowed
 (f) $5B = Year-6 ARR, NOT cumulative.
 ```
@@ -813,7 +813,7 @@ Legend: E=ENGAGED · T=TANGENTIAL · S=SILENT · X=EVASIVE.
 **Proposal text (verbatim):**
 
 ```
-FlowAI crawler must perform AGGRESSIVE EXHAUSTIVE traversal of every URL provided. Scope per URL includes: every link, every card, every modal, every page, every interactive engine, every AI agent surface. Partial crawls or homepage-only fetches are insufficient. This is the GTM-readiness test bar for VEU's 5 products (saigedemo, pressai, reltwin, smscommunities, mybirthsafe) AND for FlowAI itself dogfooding on its own URL. Required capabilities: full-site spider with depth control, modal/dialog state exploration, authenticated-session crawling, JS interaction simulation (clicks, scrolls, form interactions), AI agent surface probing (chat inputs, prompt boxes), per-route Quality Audit. Today's simple-fetch + Browserless setup is the minimum viable crawler, not the GTM-ready one.
+FlowAI crawler must perform AGGRESSIVE EXHAUSTIVE traversal of every URL provided. Scope per URL includes: every link, every card, every modal, every page, every interactive engine, every AI agent surface. Partial crawls or homepage-only fetches are insufficient. This is the GTM-readiness test bar for VEU's 5 products (saigedemo, pressai, reltwin, smscommunities, mypreglife) AND for FlowAI itself dogfooding on its own URL. Required capabilities: full-site spider with depth control, modal/dialog state exploration, authenticated-session crawling, JS interaction simulation (clicks, scrolls, form interactions), AI agent surface probing (chat inputs, prompt boxes), per-route Quality Audit. Today's simple-fetch + Browserless setup is the minimum viable crawler, not the GTM-ready one.
 
 Trajectory implications: Agent #21 Crawl Conductor (DORMANT) becomes critical path; Agent #6 Research scope must expand beyond homepage fetch; Playwright pool (v3 trajectory Step 6) required for interaction simulation.
 ```
@@ -911,7 +911,7 @@ Legend: E=ENGAGED · T=TANGENTIAL · S=SILENT · X=EVASIVE.
 
 **Slot 1** [ENGAGED] — openrouter:openai/gpt-5 — answer = `(b)`
 
-> NO — Do not promote to canonical. While comprehensive crawling may be needed for some products (saigedemo, pressai, reltwin, smscommunities, mybirthsafe), codifying "AGGRESSIVE EXHAUSTIVE" for every URL imposes heavy complexity (modal/dialog exploration, auth flows, JS interactions) the item itself lists, and risks vendor lock (“Playwright pool (v3 trajectory Step 6)”). Keep as parking-lot/roadmap until GTM shows which deep-crawl facets are binding.
+> NO — Do not promote to canonical. While comprehensive crawling may be needed for some products (saigedemo, pressai, reltwin, smscommunities, mypreglife), codifying "AGGRESSIVE EXHAUSTIVE" for every URL imposes heavy complexity (modal/dialog exploration, auth flows, JS interactions) the item itself lists, and risks vendor lock (“Playwright pool (v3 trajectory Step 6)”). Keep as parking-lot/roadmap until GTM shows which deep-crawl facets are binding.
 
 **Slot 2** [ENGAGED] — openrouter:openai/gpt-4o — answer = `(b)`
 
@@ -1322,8 +1322,8 @@ Three bullets on ambiguity, methodology limits, and items needing CEO direction 
     "q_adv": { "engagement": "ENGAGED", "answer": "(b)", "rationale": "UNCHANGED relative to my PARTIAL stance — The counter argues sub-7/10 (6/10 here) should stay draft. However, CA-3 is a necessary edit to keep O1 consistent with already accepted CA-2 (URL-based democratization) and CA-1 (underserved globally). My partial edits narrow risk by avoiding hard commitments (step count, Playwright). Therefore I maintain PARTIAL; I am not moving to full promote given the 6/10 prior, but I also do not reject." }
   },
   "ca_4": {
-    "q0": { "engagement": "ENGAGED", "free_text": "CA-4 adds an explicit Year-1→Year-6 arc to O6, naming \"VEU Studio is the only paying FlowAI customer\" in Year 1 and the five tenants (SAIGE, PressAI, RelTwin, ReachSMS, MyBirthSafe), then Year 2+ mass adoption across CA-1’s underserved, and Year 6 adding enterprise. It’s consistent with the CA-2 democratization platform identity. I’d prefer framing it as a target trajectory to avoid over-constraining early customer mix or exact timing." },
-    "q_mc": { "engagement": "ENGAGED", "answer": "(c)", "rationale": "PARTIAL — Adopt the Year-1→Year-6 journey but mark it as a \"target trajectory (illustrative)\" rather than an absolute. Modify \"VEU Studio is the only paying FlowAI customer\" to \"primary/initial paying\" to avoid blocking opportunistic outside customers in Year 1. Keep explicit vendor-tenant examples (SAIGE, PressAI, RelTwin, ReachSMS, MyBirthSafe) as exemplars and tie Year 2+ to CA-1’s underserved segments. This keeps O6 coherent with CA-2 while preserving execution flexibility." },
+    "q0": { "engagement": "ENGAGED", "free_text": "CA-4 adds an explicit Year-1→Year-6 arc to O6, naming \"VEU Studio is the only paying FlowAI customer\" in Year 1 and the five tenants (SAIGE, PressAI, RelTwin, ReachSMS, MyPregLife), then Year 2+ mass adoption across CA-1’s underserved, and Year 6 adding enterprise. It’s consistent with the CA-2 democratization platform identity. I’d prefer framing it as a target trajectory to avoid over-constraining early customer mix or exact timing." },
+    "q_mc": { "engagement": "ENGAGED", "answer": "(c)", "rationale": "PARTIAL — Adopt the Year-1→Year-6 journey but mark it as a \"target trajectory (illustrative)\" rather than an absolute. Modify \"VEU Studio is the only paying FlowAI customer\" to \"primary/initial paying\" to avoid blocking opportunistic outside customers in Year 1. Keep explicit vendor-tenant examples (SAIGE, PressAI, RelTwin, ReachSMS, MyPregLife) as exemplars and tie Year 2+ to CA-1’s underserved segments. This keeps O6 coherent with CA-2 while preserving execution flexibility." },
     "q_adv": { "engagement": "ENGAGED", "answer": "(b)", "rationale": "UNCHANGED — Although prior support was 6/10 and the counter urges holding sub-7/10 items, the modification to \"illustrative target\" eliminates the main risk of ossifying timelines. The journey clarifies intent across CA-1 underserved segments without hard constraints. Thus my PARTIAL endorsement remains appropriate rather than full promote or rejection." }
   },
   "ca_5": {
@@ -1338,7 +1338,7 @@ Three bullets on ambiguity, methodology limits, and items needing CEO direction 
   },
   "entry_002": {
     "q0": { "engagement": "ENGAGED", "free_text": "ENTRY 002 mandates \"AGGRESSIVE EXHAUSTIVE\" crawling (every link/card/modal/page/agent surface), with Playwright pool, depth control, authenticated sessions, and AI-surface probing. It promotes Agent #21 (Crawl Conductor) from DORMANT to critical and expands Agent #6 Research beyond homepage, noting today’s \"simple-fetch + Browserless\" is only minimum viable. This seems GTM-ambitious but potentially premature as canonical." },
-    "q_mc": { "engagement": "ENGAGED", "answer": "(b)", "rationale": "NO — Do not promote to canonical. While comprehensive crawling may be needed for some products (saigedemo, pressai, reltwin, smscommunities, mybirthsafe), codifying \"AGGRESSIVE EXHAUSTIVE\" for every URL imposes heavy complexity (modal/dialog exploration, auth flows, JS interactions) the item itself lists, and risks vendor lock (“Playwright pool (v3 trajectory Step 6)”). Keep as parking-lot/roadmap until GTM shows which deep-crawl facets are binding." },
+    "q_mc": { "engagement": "ENGAGED", "answer": "(b)", "rationale": "NO — Do not promote to canonical. While comprehensive crawling may be needed for some products (saigedemo, pressai, reltwin, smscommunities, mypreglife), codifying \"AGGRESSIVE EXHAUSTIVE\" for every URL imposes heavy complexity (modal/dialog exploration, auth flows, JS interactions) the item itself lists, and risks vendor lock (“Playwright pool (v3 trajectory Step 6)”). Keep as parking-lot/roadmap until GTM shows which deep-crawl facets are binding." },
     "q_adv": { "engagement": "ENGAGED", "answer": "(b)", "rationale": "UNCHANGED — The counter emphasizes \"enormous engineering complexity\" (depth control, modal state, authentication, JS interaction) with ambiguous incremental value vs. today’s simple-fetch. That is precisely why I recommend not elevating to SSOT now. We can iterate capabilities and only canonize once GTM validates necessity per segment." }
   },
   "entry_003": {

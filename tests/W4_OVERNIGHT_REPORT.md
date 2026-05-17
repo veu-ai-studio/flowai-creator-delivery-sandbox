@@ -111,7 +111,7 @@ Outbound HTTP is guarded by stubbing `globalThis.fetch` to throw.
 → Full report: [`specs/w4-overnight/05-five-product-backend.md`](../specs/w4-overnight/05-five-product-backend.md)
 
 The backend is **product-id-pivoted** — all five products (SAIGE, PressAI,
-ReachSMS, RelTwin, MyBirthSafe) share the same generic endpoints
+ReachSMS, RelTwin, MyPregLife) share the same generic endpoints
 (`/api/auth/*`, `/api/leads/capture`, `/api/audits/super-customer/*`,
 `/api/configuration/*`, `/api/compliance/rights-request`). There are no
 per-product route folders, and no `api/demo/` or `api/<slug>/` routes.
@@ -127,7 +127,7 @@ specs 05 and 12.
 | `pressai` | active | `ourpublishingai.com` | `pressai1.base44.app` | **drift** |
 | `reachsms` | draft | (empty) | `reachsms.base44.app` | **drift** |
 | `reltwin` | draft | (empty) | `reltwin.com` | **drift** |
-| `mybirthsafe` | active | `safe-path.base44.app` | `mybirthsafe.base44.app` | **drift** |
+| `mypreglife` | active | `safe-path.base44.app` | `mypreglife.base44.app` | **drift** |
 
 ---
 
@@ -281,7 +281,7 @@ Five concrete actions to close the gap are listed in the spec.
 
 ---
 
-## Job 12 — RelTwin / ReachSMS / MyBirthSafe backlog
+## Job 12 — RelTwin / ReachSMS / MyPregLife backlog
 
 → Full report: [`specs/w4-overnight/12-other-products.md`](../specs/w4-overnight/12-other-products.md)
 
@@ -292,7 +292,7 @@ No per-product audit folders for these three. Cross-portfolio audit is in
 |---|---|---|
 | RelTwin | 3 | 0 (fix is in RelTwin's separate Base44 deployment) |
 | ReachSMS | 2 | 2 (registry already demoted to `draft`, URL cleared in productDomains.js) |
-| MyBirthSafe | 3 | 0 (registry still points at the broken `safe-path.base44.app`; HIPAA-equivalent constraint declared but unenforced) |
+| MyPregLife | 3 | 0 (registry still points at the broken `safe-path.base44.app`; HIPAA-equivalent constraint declared but unenforced) |
 
 Every product has **drift between** `api/_lib/productDomains.js` and
 `src/lib/veuProducts.js`. Reconciliation is the single highest-leverage
@@ -332,7 +332,7 @@ unrelated to W4.
 | Tier 2 sandbox | ⚠️ shipped + wrong lead path | Tightly coupled to lead-path fix |
 | Tier 3 live demo | ⚠️ shipped + missing seed cron, RL, quarantine | Yes for buyer-facing trial |
 | Five-product registry parity | ⚠️ drift between server and client sources | Soft — maintenance hazard |
-| MyBirthSafe live-URL accuracy | ❌ registry points at broken host | Yes — every audit re-flags |
+| MyPregLife live-URL accuracy | ❌ registry points at broken host | Yes — every audit re-flags |
 | Test coverage | ✅ 74/74 W4 tests passing | No |
 | `vercel.json` | ✅ minimal but correct | No |
 
@@ -343,7 +343,7 @@ unrelated to W4.
    `EnterpriseDemo.jsx:104`.
 2. **Add `resolveEnv(req)`** to `api/_lib/tenant.js` covering the W0 three
    patterns, and propagate the resolved env through `getRequestContext`.
-3. **Demote MyBirthSafe** in `productDomains.js:115` (or update its
+3. **Demote MyPregLife** in `productDomains.js:115` (or update its
    `live_url`) — the audit re-flags this every cycle.
 4. **Reconcile** `productDomains.js` ↔ `veuProducts.js` URLs — single
    source of truth.

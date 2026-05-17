@@ -13,7 +13,7 @@ const PILOT_PRODUCTS = [
   { product_name: 'PressAI',     dev_url: 'https://pressai1.base44.app', prod_url: '' },
   { product_name: 'ReachSMS',    dev_url: 'https://reachsms.base44.app', prod_url: '' },
   { product_name: 'RelTwin',     dev_url: 'https://reltwin.com',         prod_url: '' },
-  { product_name: 'MyBirthSafe', dev_url: 'https://mybirthsafe.base44.app', prod_url: '' },
+  { product_name: 'MyPregLife', dev_url: 'https://mypreglife.base44.app', prod_url: '' },
 ];
 
 const SYNC_COLORS = {

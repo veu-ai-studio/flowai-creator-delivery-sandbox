@@ -11,7 +11,7 @@ Anchor canonical inputs: `docs/FLOWAI_SSOT.md` (canonical 2026-05-11 + CA-1/CA-2
 
 FlowAI is a **proprietary AI Operating System** built by VEU AI Studio. Not a SaaS product — an OS-layer infrastructure platform that:
 
-- Powers VEU's 5 flagship products internally (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe).
+- Powers VEU's 5 flagship products internally (SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife).
 - Is licensed commercially to external providers, individuals, and small businesses.
 - Enables users to create native apps, mobile apps, SaaS platforms, and Agentic AI systems.
 - Installs its own capabilities into other products as transferable packages (see §6 Capability Transfer).
@@ -47,7 +47,7 @@ FlowAI democratizes AI-powered product creation for **underserved market segment
 | Core engine + 25 agents | **NEVER** — zero product names in code, tests, configs, env vars, URL patterns | `src/lib/agents/`, `src/lib/runner/`, agent registry | `Agent3SelfRenewal` analyzes ANY run; product is `ctx.productScope` parameter |
 | Commercial / metering layer | Metadata-keyed by `productId`, not code-keyed | Supabase `flowai_provider_billing`, `flowai_product_pricing`, `flowai_revenue_splits` | Per-product rate = `pricing.lookup(productId, planTier)` |
 | Per-product configuration | Metadata, never code | `flowai_product_config` rows + Doppler vault paths `flowai/<env>/PRODUCTS_<productId>_*` | Custom domain for a tenant lives in a config row, not a hardcoded constant |
-| Agent invocation scope | Parameter, not embedded | `productScope: 'flowai' \| 'saige' \| 'reltwin' \| 'reachsms' \| 'pressai' \| 'mybirthsafe'` | `BaseAgent` accepts `productScope` as a runtime dep |
+| Agent invocation scope | Parameter, not embedded | `productScope: 'flowai' \| 'saige' \| 'reltwin' \| 'reachsms' \| 'pressai' \| 'mypreglife'` | `BaseAgent` accepts `productScope` as a runtime dep |
 
 **Rule:** if you can write a new product entry into Supabase + Doppler and FlowAI starts orchestrating it without a code change, the architecture is correct. If the 6th, 10th, or 100th tenant requires touching `src/`, the architecture is broken. This rule is canonical and binding.
 
@@ -516,7 +516,7 @@ Self-Renewal Capability Package + Self-Protection Capability Package live at `/c
 
 ## 22. PRODUCT-AGNOSTIC RULE
 
-Zero product-specific code in the core engine + 25 agents + tests + configs + URL patterns + env vars. No VEU product names (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe) in agent code, BaseAgent dependencies, MessageSchema topic strings, ScoreEvaluator logic, OrchestratorHub registration, Orchestra adapters, or smoke-test fixtures. Smoke tests use **neutral fixtures only** (e.g. `flowai-renewed-<sanitised-stub>-<suffix>`).
+Zero product-specific code in the core engine + 25 agents + tests + configs + URL patterns + env vars. No VEU product names (SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife) in agent code, BaseAgent dependencies, MessageSchema topic strings, ScoreEvaluator logic, OrchestratorHub registration, Orchestra adapters, or smoke-test fixtures. Smoke tests use **neutral fixtures only** (e.g. `flowai-renewed-<sanitised-stub>-<suffix>`).
 
 Per-product configuration lives entirely in **metadata** per §3:
 - `ProductRegistry` entity (Supabase, RLS-isolated)

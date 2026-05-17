@@ -46,9 +46,9 @@ const PRODUCTS = [
     color: 'border-amber-500/30 bg-amber-500/5',
   },
   {
-    name: 'MyBirthSafe',
+    name: 'MyPregLife',
     url: 'safe-path.base44.app',
-    email: 'mybirthsafe@veuaistudio.com',
+    email: 'mypreglife@veuaistudio.com',
     entities: ['BirthPlan', 'UserProfile', 'SafetyAlert'],
     color: 'border-red-500/30 bg-red-500/5',
   },

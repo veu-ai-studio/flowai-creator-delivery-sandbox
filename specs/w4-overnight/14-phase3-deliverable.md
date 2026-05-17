@@ -137,7 +137,7 @@ Anti-attack pinning (covered by `tests/leads-resolveenv.test.js`):
    ],
 ```
 
-**No other lines in `productDomains.js` were touched.** The rest of the SAIGE entry (slug, name, status, tags, live_url, target_url, objectives) is unchanged. The other four product entries (PressAI, ReachSMS, RelTwin, MyBirthSafe) are unchanged.
+**No other lines in `productDomains.js` were touched.** The rest of the SAIGE entry (slug, name, status, tags, live_url, target_url, objectives) is unchanged. The other four product entries (PressAI, ReachSMS, RelTwin, MyPregLife) are unchanged.
 
 **Note on registry consistency:** the SAIGE entry's `live_url` is still `https://saigedemo.com`. Now that the legacy_domains status is `redirected`, the live_url could be flipped to `target_url` value (`https://saigeplatform.com`) — but that's a registry semantics decision (`live_url` = "currently reachable" vs "canonical product URL post-cutover") and is out of scope for this single-field edit. Flagging for W01 review.
 
@@ -151,7 +151,7 @@ For `api/leads/route.js` to upsert real HubSpot contacts, the following must be 
 
    | Property name | Type | Field type | Notes |
    |---|---|---|---|
-   | `veu_product_interest` | Single-line text | dropdown or text | Allowed values: `saige`, `pressai`, `reachsms`, `reltwin`, `mybirthsafe` |
+   | `veu_product_interest` | Single-line text | dropdown or text | Allowed values: `saige`, `pressai`, `reachsms`, `reltwin`, `mypreglife` |
    | `veu_lead_source` | Single-line text | text | e.g. `home_hero`, `pricing_inline`, `enterprise_demo` |
    | `veu_demo_requested` | Boolean | radio | true / false |
    | `veu_demo_scheduled_at` | Date picker | date | ISO-8601 |

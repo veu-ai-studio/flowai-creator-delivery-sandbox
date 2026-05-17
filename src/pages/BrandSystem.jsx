@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Loader2, Palette, Copy, Check, AlertCircle, Zap } from 'lucide-react';
 
-const PRODUCTS = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyBirthSafe'];
+const PRODUCTS = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyPregLife'];
 
 function ColorSwatch({ color, label }) {
   const [copied, setCopied] = useState(false);
@@ -56,7 +56,7 @@ export default function BrandSystem() {
 VEU AI Studio context:
 - Founded by Victor Udo, FNSE, PhD — Nigerian-American engineer, sustainability executive, AI platform builder
 - 35+ years experience spanning US and Nigerian power sectors, sustainability leadership, academic publishing
-- Five products: SAIGE (sustainability), PressAI (publishing), ReachSMS (community SMS), RelTwin (relationships), MyBirthSafe (maternal health)
+- Five products: SAIGE (sustainability), PressAI (publishing), ReachSMS (community SMS), RelTwin (relationships), MyPregLife (maternal health)
 - Target markets: universities, utilities, government agencies, nonprofits, publishers, African healthcare
 - Brand positioning: expert, trustworthy, innovative, purpose-driven, globally minded
 
@@ -72,7 +72,7 @@ body_font: Google Fonts font name for body text
 brand_voice: array of 5 adjectives describing communication style
 tagline_options: array of 3 tagline options for VEU AI Studio
 
-product_variants: object with keys SAIGE, PressAI, ReachSMS, RelTwin, MyBirthSafe — each with:
+product_variants: object with keys SAIGE, PressAI, ReachSMS, RelTwin, MyPregLife — each with:
   accent_color (hex), tagline (string), value_proposition (one sentence)
 
 css_variables: complete CSS custom properties string implementing the brand system, ready to paste into any Base44 product index.css — include --background, --foreground, --primary, --secondary, --accent, --card, --border, --muted and all their -foreground variants

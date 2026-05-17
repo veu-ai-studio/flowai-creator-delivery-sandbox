@@ -42,7 +42,7 @@ Patterns checked:
 | `DOPPLER_TOKEN` set as a CI/Vercel env var (service token) | NO | Provision via Doppler dashboard; add to Vercel env |
 | `dopplerClient` implementation in `src/lib/shared/` (HTTP-API or CLI-shell) | NO | Author concrete client implementing `fetchSecret({project, config, name})` returning a string |
 | Bootstrap module that builds the client and calls `setDefaultCredentialAdapter()` per `(project, environment)` | NO | Author e.g. `src/lib/shared/credentials.bootstrap.js` |
-| Vault provisioning: 6 Doppler projects (`flowai`, `saige`, `reltwin`, `reachsms`, `pressai`, `mybirthsafe`) × per-env configs × ~30 inventoried + ~9 uninventoried secrets | NO | Out-of-repo provisioning; depends on inventory completeness from Job 1 §2 |
+| Vault provisioning: 6 Doppler projects (`flowai`, `saige`, `reltwin`, `reachsms`, `pressai`, `mypreglife`) × per-env configs × ~30 inventoried + ~9 uninventoried secrets | NO | Out-of-repo provisioning; depends on inventory completeness from Job 1 §2 |
 | `doppler_compat` field on every `TOOL_REGISTRY` entry | NO | Per `specs/w3-overnight/11-doppler-compat.md` — 61/61 tools fail this check |
 
 **Mode A status:** **NOT READY.** Six independent blockers. None are blocked on Doppler itself; all are repo-side or provisioning-side.

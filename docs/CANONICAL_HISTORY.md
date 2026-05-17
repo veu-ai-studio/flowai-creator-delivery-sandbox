@@ -326,7 +326,7 @@ SPRINT: Agent Contract Layer (BaseAgent + Packet 1.5)
 
 &#x20;     · AUTHORITY enum (5 levels)
 
-&#x20;     · PRODUCT\_SCOPES (flowai, saige, reltwin, reachsms, pressai, mybirthsafe)
+&#x20;     · PRODUCT\_SCOPES (flowai, saige, reltwin, reachsms, pressai, mypreglife)
 
 &#x20;     · ENVIRONMENTS (prod, staging, demo, live-demo, sales-demo)
 
@@ -738,7 +738,7 @@ TOOL INTELLIGENCE MARKETPLACE
 
 &#x20; Products tracked: 5 VEU flagship products (SAIGE, PressAI, ReachSMS,
 
-&#x20;                   RelTwin, MyBirthSafe) + any custom products added
+&#x20;                   RelTwin, MyPregLife) + any custom products added
 
 &#x20; Entity: ClearanceRecord (step1–6 status, overall\_status, current\_step,
 
@@ -1132,7 +1132,7 @@ EXTERNAL DATA SOURCES (locked vendor picks, not yet integrated)
 
 &#x20; Twilio                  — ReachSMS product
 
-&#x20; Paystack                — MyBirthSafe (Africa-first)
+&#x20; Paystack                — MyPregLife (Africa-first)
 
 
 
@@ -1252,7 +1252,7 @@ VEU AI STUDIO — FIRST CONSUMER (INTERNAL)
 
 &#x20;                Stripe live and active routes. Provisional patent filed.
 
-&#x20;   MyBirthSafe  preglife.com
+&#x20;   MyPregLife  preglife.com
 
 &#x20;                Maternal health platform for Africa
 
@@ -1453,7 +1453,7 @@ ENTRY 001 — 2026-05-14 — CA-1 + CA-2 promotion to canonical SSOT
                       O4 — incidental "Africa availability" wording in
                           Marketplace tool-ranking criterion. Product-
                           tool scope, not platform-market scope.
-                      MISSING QUESTIONS — incidental "MyBirthSafe
+                      MISSING QUESTIONS — incidental "MyPregLife
                           Africa-first" wording. Product-roadmap scope,
                           not platform-market scope.
                       E4 — no geographic-scope wording present;

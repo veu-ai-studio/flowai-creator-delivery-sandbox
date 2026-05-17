@@ -60,9 +60,9 @@
     "tags": ["HR", "coaching", "B2B"]
   },
   {
-    "id": "demo-mybirthsafe",
-    "name": "MyBirthSafe",
-    "slug": "mybirthsafe",
+    "id": "demo-mypreglife",
+    "name": "MyPregLife",
+    "slug": "mypreglife",
     "live_url": "https://preglife.com",
     "description": "Maternal health AI platform for pregnant women across Africa. Risk monitoring, provider connection, and personalized care pathways.",
     "org": "VEU AI Studio",

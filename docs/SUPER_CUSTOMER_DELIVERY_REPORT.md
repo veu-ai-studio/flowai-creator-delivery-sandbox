@@ -136,7 +136,7 @@ curl -X POST https://flowai-dun.vercel.app/api/audits/super-customer/run \
   }'
 ```
 
-After SAIGE: **MyBirthSafe** is the highest-priority third audit because the morning capture flagged it as **NOT CLEARED** with a 2/100 score (the host returned a JSON error). The Super Customer Agent's V2 test-account creation pass would surface what actually exists at the canonical URL once that's live.
+After SAIGE: **MyPregLife** is the highest-priority third audit because the morning capture flagged it as **NOT CLEARED** with a 2/100 score (the host returned a JSON error). The Super Customer Agent's V2 test-account creation pass would surface what actually exists at the canonical URL once that's live.
 
 ---
 

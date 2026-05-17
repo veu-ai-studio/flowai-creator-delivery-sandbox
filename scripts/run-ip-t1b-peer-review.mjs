@@ -44,11 +44,11 @@ Background:
 - PA #IP-T1 (the prior commit) scrubbed \`.base44.app\` URLs from
   \`src/lib/veuProducts.js\` and \`/docs/*\`, and explicitly deferred the
   matching leak in \`api/_lib/productDomains.js\` to "Tier 1.b".
-- This commit (Tier 1.b) is supposed to flip the MyBirthSafe entry's
+- This commit (Tier 1.b) is supposed to flip the MyPregLife entry's
   \`live_url\` from \`'https://safe-path.base44.app'\` to an empty string
   \`''\` — matching the existing pattern for ReachSMS / RelTwin which
   already have empty \`live_url\` fields.
-- MyBirthSafe has no confirmed canonical .com domain yet; the dispatcher
+- MyPregLife has no confirmed canonical .com domain yet; the dispatcher
   said do NOT invent one — use empty string when no canonical exists.
 
 Review for:

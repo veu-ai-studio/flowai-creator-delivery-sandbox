@@ -125,7 +125,7 @@ Re-read `tests/W1_OVERNIGHT_REPORT.md` (Part 1 summary). For each Part 1 finding
 | Markify pricing unknown — quote needed | `08-vendor-readiness.md §5` | Cost-of-DMCA workstream uncertain |
 | Stripe Tax recommended for North America / Europe; Africa-tier deferred to per-country | `13-tax-readiness.md §3.6, §3.7` | Tax engine choice has regional split |
 | `LEGAL_EIN` should be an env var, not a literal | `13-tax-readiness.md §3.1` | Surfaced on receipts but not browser-safe to commit |
-| Africa-first products (MyBirthSafe + Paystack/Flutterwave/Termii) shape the tax stance | `13-tax-readiness.md §3.7` | Per-country VAT registration triggers |
+| Africa-first products (MyPregLife + Paystack/Flutterwave/Termii) shape the tax stance | `13-tax-readiness.md §3.7` | Per-country VAT registration triggers |
 
 ## 5. Findings UNRESOLVED after Part 2
 

@@ -68,7 +68,7 @@ Incremental: (ii) Code-gen / (iii) Direct-write
 Deployment: Vercel. State: Vercel KV + Supabase. Runtime: Node.js v24+. Testing: Vitest. Linting: ESLint. Build: Vite. Module system: ESM. Repo: github.com/victor2081new-cloud/flowai.git. Branch: flowai-v0.1.
 
 ## 14. PRODUCT-AGNOSTIC RULE
-Zero product-specific code. No VEU product names (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe) in agent code, tests, configs, URL patterns, or env vars. Smoke tests use neutral fixtures only. Must support 6th, 10th, 100th product without code changes.
+Zero product-specific code. No VEU product names (SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife) in agent code, tests, configs, URL patterns, or env vars. Smoke tests use neutral fixtures only. Must support 6th, 10th, 100th product without code changes.
 
 ## 15. WORKSTREAM ROUTING
 W0x: orchestrator, dispatch, lineage. W1: credentials. W2: engineering + verification. W3: audit + spec drafting. W4: smoke testing + QA. W5a/W5b/W5c: shared infrastructure, agent builds. W6: dedicated Panel workstream.

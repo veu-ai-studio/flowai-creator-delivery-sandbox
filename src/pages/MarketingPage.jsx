@@ -143,7 +143,7 @@ export default function MarketingPage() {
             </div>
             <h2 className="text-2xl font-bold text-foreground">Built for the VEU AI Studio Portfolio</h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              FlowAI governs SAIGE, PressAI, RelTwin, ReachSMS, and MyBirthSafe — from creation through clearance. 
+              FlowAI governs SAIGE, PressAI, RelTwin, ReachSMS, and MyPregLife — from creation through clearance. 
               Capability packages transfer governance infrastructure to each product with a single Base44 sprint.
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">

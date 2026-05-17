@@ -9,7 +9,7 @@ const PRESET_PRODUCTS = [
   { id: 'pressai',     label: 'PressAI',     url: 'https://pressai1.base44.app',                   is_spa: true,  last_score: null },
   { id: 'reachsms',    label: 'ReachSMS',    url: 'https://reachsms.base44.app',                   is_spa: true,  last_score: null },
   { id: 'reltwin',     label: 'RelTwin',     url: 'https://reltwin.com',                           is_spa: false, last_score: null },
-  { id: 'mybirthsafe', label: 'MyBirthSafe', url: 'https://mybirthsafe.base44.app',                is_spa: true,  last_score: null },
+  { id: 'mypreglife', label: 'MyPregLife', url: 'https://mypreglife.base44.app',                is_spa: true,  last_score: null },
   { id: 'victorudo',   label: 'Victor Udo Hub', url: 'https://victorudo.com',                      is_spa: false, last_score: null },
   { id: 'flowai',      label: 'FlowAI Internal', url: 'https://truthful-flow-logic-lab.base44.app', is_spa: true, last_score: null },
 ];
@@ -19,7 +19,7 @@ const EVAL_GOAL_MAP = {
   pressai:     'Publishing Professional evaluating PressAI for automated book editing and publishing workflows',
   reachsms:    'SMS Community Manager evaluating ReachSMS for nonprofit outreach campaigns',
   reltwin:     'Relationship Coach evaluating RelTwin for client relationship intelligence',
-  mybirthsafe: 'Maternal Health Patient evaluating MyBirthSafe for pregnancy tracking in Nigeria',
+  mypreglife: 'Maternal Health Patient evaluating MyPregLife for pregnancy tracking in Nigeria',
   victorudo:   'General Visitor exploring Victor Udo\'s professional portfolio and services',
   flowai:      'Platform Operator evaluating FlowAI Internal for governance session performance',
 };

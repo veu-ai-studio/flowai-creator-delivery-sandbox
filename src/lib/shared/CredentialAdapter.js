@@ -37,7 +37,7 @@ const SUBKEY_RE  = /^[a-zA-Z0-9_-]+$/;
 const VALID_FLOWAI_ENVS  = new Set(['prd', 'prod', 'staging']);
 const VALID_PRODUCT_ENVS = new Set(['prd', 'prod', 'staging', 'demo', 'live-demo', 'sales-demo']);
 const VALID_PRODUCT_PROJECTS = new Set([
-  'flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mybirthsafe',
+  'flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mypreglife',
 ]);
 
 export class CredentialAdapter {

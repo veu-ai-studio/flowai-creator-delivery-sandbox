@@ -50,7 +50,7 @@ Plus the shared primitives module:
 
 Each endpoint is:
 - **Multi-tenant** — accepts `product_id` + `org_id`, scopes everything by that tuple
-- **Multi-product** — same code path serves PressAI, SAIGE, MyBirthSafe, RelTwin, ReachSMS
+- **Multi-product** — same code path serves PressAI, SAIGE, MyPregLife, RelTwin, ReachSMS
 - **Rate-limited** — sign-up 5/min · sign-in 10/min · lead capture 8/min · rights request 5/hour
 - **Audit-logged** — every call writes a `request.received` + `request.completed` line through `withRequestLog`, plus a domain-specific `audit_log` entry (`auth.sign_up`, `auth.sign_in`, `auth.sign_in.failed`, `lead.captured`, `compliance.rights_request`)
 

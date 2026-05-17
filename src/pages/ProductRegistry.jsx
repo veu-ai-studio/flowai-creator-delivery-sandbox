@@ -15,7 +15,7 @@ const VEU_SEED = [
   { name: 'PressAI',     slug: 'pressai',     live_url: 'https://ourpublishingai.com',     description: 'AI publishing for authors and publishers', org: 'VEU AI Studio', status: 'active' },
   { name: 'ReachSMS',    slug: 'reachsms',    live_url: 'https://ourcommunitiesai.com',    description: 'SMS community engagement for nonprofits', org: 'VEU AI Studio', status: 'active' },
   { name: 'RelTwin',     slug: 'reltwin',     live_url: 'https://reltwin.com',             description: 'Relationship intelligence for coaches and HR', org: 'VEU AI Studio', status: 'active' },
-  { name: 'MyBirthSafe', slug: 'mybirthsafe', live_url: 'https://preglife.com',            description: 'Maternal health platform for Africa', org: 'VEU AI Studio', status: 'active' },
+  { name: 'MyPregLife', slug: 'mypreglife', live_url: 'https://preglife.com',            description: 'Maternal health platform for Africa', org: 'VEU AI Studio', status: 'active' },
 ];
 
 const STATUS_STYLES = {

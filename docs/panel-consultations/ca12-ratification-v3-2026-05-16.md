@@ -288,7 +288,7 @@ Total distinct: **30**
 
 **30. [Slot 10] §A.0 names breach §22 agnostic rule**
 
-> The GTM context preamble lists SAIGE, RelTwin, ReachSMS, PressAI and MyBirthSafe by name, directly violating the Product-Agnostic Rule in §22 that prohibits product names in canonical documents, schemas, or identifiers.
+> The GTM context preamble lists SAIGE, RelTwin, ReachSMS, PressAI and MyPregLife by name, directly violating the Product-Agnostic Rule in §22 that prohibits product names in canonical documents, schemas, or identifiers.
 
 
 ---
@@ -740,7 +740,7 @@ Overall: The proposal has made significant strides in addressing previous concer
 
 **Objection 3 — §A.0 names breach §22 agnostic rule**
 
-> The GTM context preamble lists SAIGE, RelTwin, ReachSMS, PressAI and MyBirthSafe by name, directly violating the Product-Agnostic Rule in §22 that prohibits product names in canonical documents, schemas, or identifiers.
+> The GTM context preamble lists SAIGE, RelTwin, ReachSMS, PressAI and MyPregLife by name, directly violating the Product-Agnostic Rule in §22 that prohibits product names in canonical documents, schemas, or identifiers.
 
 **Worse-than-status-quo scenario:** The stricter §B.2 validity rules plus collapsed authority dimensions could reject currently-working supervised-renewal runs that operators rely on today, forcing every Mode 1 SUB-1B cycle into GUIDED pacing and increasing manual overhead beyond the status-quo v2 matrix.
 
@@ -1248,7 +1248,7 @@ Overall: The adversarial objections focus on migration risk, rule rigidity, and 
       },
       {
         "title": "§A.0 names breach §22 agnostic rule",
-        "detail": "The GTM context preamble lists SAIGE, RelTwin, ReachSMS, PressAI and MyBirthSafe by name, directly violating the Product-Agnostic Rule in §22 that prohibits product names in canonical documents, schemas, or identifiers."
+        "detail": "The GTM context preamble lists SAIGE, RelTwin, ReachSMS, PressAI and MyPregLife by name, directly violating the Product-Agnostic Rule in §22 that prohibits product names in canonical documents, schemas, or identifiers."
       }
     ],
     "worse_than_status_quo": "The stricter §B.2 validity rules plus collapsed authority dimensions could reject currently-working supervised-renewal runs that operators rely on today, forcing every Mode 1 SUB-1B cycle into GUIDED pacing and increasing manual overhead beyond the status-quo v2 matrix.",

@@ -34,8 +34,8 @@ const PRODUCTS = [
     primaryColor: '#8b5cf6',
   },
   {
-    name: 'MyBirthSafe',
-    url: 'https://mybirthsafe.base44.app',
+    name: 'MyPregLife',
+    url: 'https://mypreglife.base44.app',
     audience: 'pregnant women in Nigeria and Africa',
     purpose: 'Personalized maternal health tracking application',
     primaryColor: '#ec4899',

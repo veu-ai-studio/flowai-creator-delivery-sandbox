@@ -20,7 +20,7 @@ Because the canonical W1 vault spec is not on disk, this report compares the **e
 
 Spec source: `BaseAgent.js:57–64` `PRODUCT_SCOPES` and CredentialAdapter docblock L8–13.
 
-Six declared projects: `flowai`, `saige`, `reltwin`, `reachsms`, `pressai`, `mybirthsafe`.
+Six declared projects: `flowai`, `saige`, `reltwin`, `reachsms`, `pressai`, `mypreglife`.
 
 | Project | In `BaseAgent.PRODUCT_SCOPES` | In `CredentialAdapter.VALID_PRODUCT_PROJECTS` | Match |
 |---|---|---|---|
@@ -29,7 +29,7 @@ Six declared projects: `flowai`, `saige`, `reltwin`, `reachsms`, `pressai`, `myb
 | reltwin | YES (L60) | YES (L35) | ✓ |
 | reachsms | YES (L61) | YES (L35) | ✓ |
 | pressai | YES (L62) | YES (L35) | ✓ |
-| mybirthsafe | YES (L63) | YES (L35) | ✓ |
+| mypreglife | YES (L63) | YES (L35) | ✓ |
 
 Both modules carry the identical 6-project allowlist. **No drift.**
 

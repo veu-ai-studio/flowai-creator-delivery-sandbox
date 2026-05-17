@@ -139,7 +139,7 @@ Anchor canonical inputs: `docs/FLOWAI_SSOT.md` (canonical 2026-05-11 + CA-1/CA-2
 
 FlowAI is a **proprietary AI Operating System** built by VEU AI Studio. Not a SaaS product — an OS-layer infrastructure platform that:
 
-- Powers VEU's 5 flagship products internally (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe).
+- Powers VEU's 5 flagship products internally (SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife).
 - Is licensed commercially to external providers, individuals, and small businesses.
 - Enables users to create native apps, mobile apps, SaaS platforms, and Agentic AI systems.
 - Installs its own capabilities into other products as transferable packages (see §6 Capability Transfer).

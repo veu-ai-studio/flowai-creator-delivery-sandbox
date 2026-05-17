@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const VEU_PRODUCT_LIST = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyBirthSafe'];
+const VEU_PRODUCT_LIST = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyPregLife'];
 
 function getToolData(name) {
   return TOOL_REGISTRY.find(t => t.name === name);

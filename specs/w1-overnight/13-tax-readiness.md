@@ -103,11 +103,11 @@ When Stripe Connect lands, enable **Stripe Tax** as the sales-tax engine:
 - Stripe handles US sales-tax nexus thresholds
 - Cost: 0.5% per transaction on top of standard Stripe fees
 
-Alternative: TaxJar / Avalara if Stripe Tax doesn't cover Africa-tier requirements (Nigeria VAT, South Africa VAT). Per `09-cloudflare-checklist.md` and Africa-first products (`MyBirthSafe`), confirm Stripe Tax coverage of those jurisdictions before committing.
+Alternative: TaxJar / Avalara if Stripe Tax doesn't cover Africa-tier requirements (Nigeria VAT, South Africa VAT). Per `09-cloudflare-checklist.md` and Africa-first products (`MyPregLife`), confirm Stripe Tax coverage of those jurisdictions before committing.
 
 ### 3.7 Africa-tier tax considerations
 
-Per `api/_lib/productDomains.js:111` (MyBirthSafe live in Africa), and `src/lib/toolRegistry.js:47, 48, 57` (Africa-tier payment vendors Paystack / Flutterwave / Termii):
+Per `api/_lib/productDomains.js:111` (MyPregLife live in Africa), and `src/lib/toolRegistry.js:47, 48, 57` (Africa-tier payment vendors Paystack / Flutterwave / Termii):
 
 - **Nigeria VAT (7.5%)** — Paystack handles invoice-side VAT for Nigerian customers, but VEU as the platform must still register if revenue threshold is crossed.
 - **South Africa VAT (15%)** — registration required at ZAR 1M revenue threshold.

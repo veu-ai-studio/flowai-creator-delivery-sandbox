@@ -10,7 +10,7 @@
 
 ## Context
 
-FlowAI is locked as **standalone, product-agnostic OS infrastructure**. Any product wires into FlowAI through registration; FlowAI does not ship with a built-in product list. The current 5 VEU products (SAIGE, PressAI, ReachSMS, RelTwin, MyBirthSafe) are example consumers, not hardcoded integrations.
+FlowAI is locked as **standalone, product-agnostic OS infrastructure**. Any product wires into FlowAI through registration; FlowAI does not ship with a built-in product list. The current 5 VEU products (SAIGE, PressAI, ReachSMS, RelTwin, MyPregLife) are example consumers, not hardcoded integrations.
 
 Despite this, the codebase shipped 14 surfaces (PortfolioDashboard, Architecture, BrandSystem, Clearance, CostUsage, DataExport, DemoGenerator, DomainManager, Environments, GTMAssets, CapabilityInstall*, plus `src/lib/veuProducts.js`) with inline `VEU_PRODUCTS` arrays containing the 5 specific products. The Portfolio Dashboard merged the inline array into its rendered list unconditionally — a brand-new tenant signing in would see VEU's 5 products as if they were their own.
 

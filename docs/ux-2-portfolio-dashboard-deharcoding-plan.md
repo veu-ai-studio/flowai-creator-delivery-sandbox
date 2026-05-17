@@ -20,7 +20,7 @@ const VEU_PRODUCTS = [
   { name: 'PressAI',     slug: 'pressai',     live_url: 'https://ourpublishingai.com',   description: '...', org: 'VEU AI Studio', status: 'active' },
   { name: 'ReachSMS',    slug: 'reachsms',    live_url: 'https://ourcommunitiesai.com',  description: '...', org: 'VEU AI Studio', status: 'active' },
   { name: 'RelTwin',     slug: 'reltwin',     live_url: 'https://reltwin.com',           description: '...', org: 'VEU AI Studio', status: 'active' },
-  { name: 'MyBirthSafe', slug: 'mybirthsafe', live_url: 'https://preglife.com',          description: '...', org: 'VEU AI Studio', status: 'active' },
+  { name: 'MyPregLife', slug: 'mypreglife', live_url: 'https://preglife.com',          description: '...', org: 'VEU AI Studio', status: 'active' },
 ];
 
 // :125-128
@@ -286,7 +286,7 @@ Practical onboarding for VEU after this ships:
 2. Lands on Portfolio Dashboard → empty state.
 3. Clicks "Register First Product" → modal opens.
 4. Fills in SAIGE (name=SAIGE, url=https://saigeplatform.com, description=…), submit.
-5. Repeat for PressAI, ReachSMS, RelTwin, MyBirthSafe.
+5. Repeat for PressAI, ReachSMS, RelTwin, MyPregLife.
 
 Five 30-second registrations replace the hardcoded const. CEO has the audit-trail benefit: each registration is a real `products` row with `created_at`, attributable to the operator.
 

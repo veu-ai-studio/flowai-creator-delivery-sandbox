@@ -20,7 +20,7 @@ describe('syntheticPromptEnvKey', () => {
   it('uppercases and strips non-alphanumerics', () => {
     expect(syntheticPromptEnvKey('saige')).toBe('VITE_SYNTHETIC_PROMPT_SAIGE');
     expect(syntheticPromptEnvKey('PressAI')).toBe('VITE_SYNTHETIC_PROMPT_PRESSAI');
-    expect(syntheticPromptEnvKey('MyBirthSafe')).toBe('VITE_SYNTHETIC_PROMPT_MYBIRTHSAFE');
+    expect(syntheticPromptEnvKey('MyPregLife')).toBe('VITE_SYNTHETIC_PROMPT_MYPREGLIFE');
     expect(syntheticPromptEnvKey('rel-twin')).toBe('VITE_SYNTHETIC_PROMPT_RELTWIN');
     expect(syntheticPromptEnvKey('reach_sms')).toBe('VITE_SYNTHETIC_PROMPT_REACHSMS');
   });

@@ -30,7 +30,7 @@ CRITICAL CONTEXT:
 - Agents shipped so far: #1 (Lifecycle Engine), #2 (Code Builder), #3 (Self-Renewal) — all SHIPPED-GREEN on flowai-v0.1.
 - OrchestratorHub, AgentRegistry, MessageBus are BUILT.
 - 8-step pipeline (code-canonical order): Research(1) → Design(2) → Build(3) → Quality Audit(4) → Deploy(5) → Self-Renewal(6) → GTM(7) → Monitor(8).
-- All 5 flagship products (SAIGE, RelTwin, ReachSMS, PressAI, MyBirthSafe) are REAL production consumers — not experimental.
+- All 5 flagship products (SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife) are REAL production consumers — not experimental.
 - FlowAI self-tests through its own pipeline.
 - FlowAI will natively orchestrate the 10-AI Panel once built.
 `.trim();

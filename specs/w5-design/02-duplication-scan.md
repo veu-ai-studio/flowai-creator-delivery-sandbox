@@ -26,7 +26,7 @@
 | --- | --- | --- | --- | --- |
 | 1 | Set of valid FlowAI envs (`{prod, staging}`) | line 32 (`VALID_FLOWAI_ENVS`) | `BaseAgent.js:74` (`FLOWAI_VALID_ENVS`) | Identical content. Promote. |
 | 2 | Set of valid product envs (`{prod, staging, demo, live-demo, sales-demo}`) | line 33 (`VALID_PRODUCT_ENVS`) | `BaseAgent.js:75` (`PRODUCT_VALID_ENVS`) | Identical content. Promote. |
-| 3 | Set of valid product scopes (`{flowai, saige, reltwin, reachsms, pressai, mybirthsafe}`) | line 34-36 (`VALID_PRODUCT_PROJECTS`) | `BaseAgent.js:57-64` (`PRODUCT_SCOPES`, object form) and `MessageSchema.js:15-17` (`VALID_PRODUCT_SCOPES`, set form) | Same six names declared three times. Promote. |
+| 3 | Set of valid product scopes (`{flowai, saige, reltwin, reachsms, pressai, mypreglife}`) | line 34-36 (`VALID_PRODUCT_PROJECTS`) | `BaseAgent.js:57-64` (`PRODUCT_SCOPES`, object form) and `MessageSchema.js:15-17` (`VALID_PRODUCT_SCOPES`, set form) | Same six names declared three times. Promote. |
 | 4 | `clock.now()` injection contract | line 61 (`opts.clock ?? { now: () => Date.now() }`) | `BaseAgent.js:84` (required dep, no default), `ScoreEvaluator.js:157-159` (required dep) | Same shape, different default policy. Promote shared `defaultClock`. |
 | 5 | Slug-safe ID regex `/^[a-zA-Z0-9-]+$/` | line 29 (`ID_SLUG_RE`) | not present in W2 yet, but charter validation in `BaseAgent._validateCharter` will need it | Promote in anticipation. |
 | 6 | Optional logger pattern (`logger?.warn?.(...)`) | line 158 | `MessageSchema.js`, `ScoreEvaluator.js`, `BaseAgent.js` all rely on `deps.logger` but never *call* it. | Idiom only; not a candidate. |

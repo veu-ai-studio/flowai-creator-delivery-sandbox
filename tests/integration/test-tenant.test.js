@@ -36,7 +36,7 @@ describe('_test productScope — whitelist coverage', () => {
     expect(PRODUCT_SCOPES.RELTWIN).toBe('reltwin');
     expect(PRODUCT_SCOPES.REACHSMS).toBe('reachsms');
     expect(PRODUCT_SCOPES.PRESSAI).toBe('pressai');
-    expect(PRODUCT_SCOPES.MYBIRTHSAFE).toBe('mybirthsafe');
+    expect(PRODUCT_SCOPES.MYPREGLIFE).toBe('mypreglife');
   });
 
   it('MessageSchema validateEnvelope accepts productScope="_test"', () => {
@@ -45,7 +45,7 @@ describe('_test productScope — whitelist coverage', () => {
   });
 
   it('MessageSchema validateEnvelope still accepts production scopes', () => {
-    for (const scope of ['flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mybirthsafe']) {
+    for (const scope of ['flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mypreglife']) {
       const env = makeMinimalEnv({ productScope: scope });
       expect(() => validateEnvelope(env), `scope=${scope}`).not.toThrow();
     }

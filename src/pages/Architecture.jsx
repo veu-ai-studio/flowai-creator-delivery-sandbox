@@ -12,7 +12,7 @@ const PRODUCTS = [
   { name: 'PressAI',     url: 'https://pressai.base44.app',     recommended_stack: 'Railway + Supabase',  audience: 'authors, publishers, content creators' },
   { name: 'ReachSMS',    url: 'https://reachsms.base44.app',    recommended_stack: 'Vercel + Supabase',   audience: 'nonprofits, community organizations' },
   { name: 'RelTwin',     url: 'https://reltwin.com',            recommended_stack: 'Vercel + Supabase',   audience: 'coaches, HR professionals' },
-  { name: 'MyBirthSafe', url: 'https://mybirthsafe.base44.app', recommended_stack: 'Railway + Supabase',  audience: 'pregnant women in Nigeria and Africa' },
+  { name: 'MyPregLife', url: 'https://mypreglife.base44.app', recommended_stack: 'Railway + Supabase',  audience: 'pregnant women in Nigeria and Africa' },
 ];
 
 const SCAFFOLD_TABS = [

@@ -68,7 +68,7 @@ CEO STRATEGIC VISION (CORRECTED 2026-05-13):
        - PressAI: knowledge sharing
        - RelTwin: relationships management + comms
        - ReachSMS: communities leadership + development
-       - MyBirthSafe: pregnancy / maternal health tracking
+       - MyPregLife: pregnancy / maternal health tracking
 
   5. NICHE ≠ SMALL. The 5 non-FlowAI products target their respective
      TAMs without artificial revenue caps. Panel research proposes
@@ -85,7 +85,7 @@ CEO STRATEGIC VISION (CORRECTED 2026-05-13):
      - FlowAI: per-app / per-deployment usage-based
      - RelTwin: subscription tiers
      - SAIGE: per-seat enterprise
-     - PressAI / ReachSMS / MyBirthSafe: Panel-proposed
+     - PressAI / ReachSMS / MyPregLife: Panel-proposed
      - Hybrid models allowed
 
   8. $5B = ANNUAL RECURRING REVENUE AT YEAR 6. NOT cumulative.
@@ -216,7 +216,7 @@ only scope)
 >
 > - **Year 1:** VEU Studio is the only paying FlowAI customer.
 >   FlowAI is dogfooded internally; the five non-FlowAI products
->   (SAIGE, PressAI, RelTwin, ReachSMS, MyBirthSafe) are FlowAI's
+>   (SAIGE, PressAI, RelTwin, ReachSMS, MyPregLife) are FlowAI's
 >   first proof-of-capability vendor-tenants.
 > - **Year 2+:** Mass-market adoption across underserved global
 >   segments — individuals, small businesses, consultants, small
@@ -299,13 +299,13 @@ globally scope when authored)
 >       combined ARR as (100−X)%. Panel-proposed split.
 >   (d) **Per-product Year-6 ARR floors** — each of the six P&L
 >       units (FlowAI + SAIGE + PressAI + RelTwin + ReachSMS +
->       MyBirthSafe) evaluated against its respective TAM with NO
+>       MyPregLife) evaluated against its respective TAM with NO
 >       artificial revenue caps (per framing #5: "niche ≠ small").
 >   (e) **Per-product pricing model**:
 >         - FlowAI: per-app / per-deployment usage-based
 >         - RelTwin: subscription tiers
 >         - SAIGE: per-seat enterprise
->         - PressAI / ReachSMS / MyBirthSafe: Panel-proposed
+>         - PressAI / ReachSMS / MyPregLife: Panel-proposed
 >         - Hybrid models allowed
 >   (f) **$5B = Year-6 ARR, NOT cumulative** (framing #8 explicit).
 

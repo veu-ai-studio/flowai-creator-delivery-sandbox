@@ -9,7 +9,7 @@
 // product name uppercased and stripped of non-alphanumerics. Examples:
 //   SAIGE      → VITE_SYNTHETIC_PROMPT_SAIGE
 //   PressAI    → VITE_SYNTHETIC_PROMPT_PRESSAI
-//   MyBirthSafe → VITE_SYNTHETIC_PROMPT_MYBIRTHSAFE
+//   MyPregLife → VITE_SYNTHETIC_PROMPT_MYPREGLIFE
 //
 // API:
 //   loadSyntheticPrompt(slug, opts?) → string | null
