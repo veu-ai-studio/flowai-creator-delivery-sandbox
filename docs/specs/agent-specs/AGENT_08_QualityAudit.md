@@ -161,6 +161,63 @@ Agent #8's behavior **does not differ by mode** — auditing is mode-agnostic. T
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+This agent emits `agent.cost.signal.v1` before each of the 5 parallel dimension
+scoring LLM calls. It does NOT self-enforce `auditBudgetCap` (G8-Q5 from the
+original spec is resolved by Cluster A). Agent #23 Cost Governor is the sole
+canonical budget enforcement owner. Call order per Cluster A §2.6 v2 R4 applies
+per dimension dispatch. Heartbeat every 30s for the composite audit run if it
+exceeds 60s wall-clock.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_8_quality_audit.pageCountMin`
+OR per-agent default: `pageCountMin: 1` (clamped to [1, 50]).
+- Mode 1 + Mode 2 SUB-2A: below threshold (missing build artifact) → emit
+  `agent.data_quality.insufficient.v1` and halt; populate
+  `provenance.omissionReasons[]` with `upstream-block` reason referencing
+  Agent #2 Code Builder.
+- Mode 3A (per Cluster B §2.7 v2 R1): if `dataQualityScore ≥ 0.3`, may
+  emit `8.audit.completed.v1` with `outputQuality: 'degraded'`; below 0.3
+  → halt.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `hard-halt-on-any` (Agent
+#2 Code Builder + Agent #7 Design are hard preconditions; Agent #6 Research
++ Agent #21 ACE are enrichment — `degrade-on-any` for those).
+
+**Cluster C — Mode behavior** (Pattern P2 per Cluster C §2.3):
+- **In Mode 1 (Assess):** emit `8.audit.completed.v1` with full 5-dimension
+  scoring envelope per §4.2; `recommendations[]` empty.
+- **In Mode 2 SUB-2A (Build):** same envelope + `recommendations[]` populated
+  with `autoFixable: true` flags consumed by Agent #3 Self-Renewal Executor.
+- **In Mode 3A (Benchmark):** same envelope as Mode 2 but evaluated against
+  the preview URL produced by Self-Renewal Executor (not the operator's prd
+  surface). `recommendations[]` still populated.
+- **Default:** Mode 1 when `pipelineMode` is unspecified.
+Every emitted envelope carries `pipelineMode` field per Cluster C §2.4 v2 R2
+(mandatory for P2).
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `8.audit.requested.v1` + `8.audit.completed.v1` +
+`8.audit.block.v1` (twin emission per §4.1) per §4 Output Contract.
+Cross-cluster topics ship in the Cluster D §2.1.0 P0 patch commit. Agent
+#8's own topics ship in the Deferred set with this agent's first runtime
+commit. Topic names comply with Cluster D §2.2 regex.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2.
+The 5 parallel dimension dispatches EACH go through the canonical tier-keyed
+selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Selection re-read per dispatch. Tier-downgrade per Cluster F §2.5 v2 R2 if
+`reserve()` denies (medium → low → free); each downgrade applies to that
+single dimension dispatch independently.
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
