@@ -135,6 +135,56 @@ Mode-agnostic — cost monitoring runs regardless of operator mode. Phase 2 halt
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+**Agent #23 IS the canonical Cost Governor — it OWNS this template.** The
+template's §3.1 paste block does NOT apply to Agent #23 itself. Agent #23
+implements the `costGovernor.reserve()` + `costGovernor.settle()` +
+`costGovernor.heartbeat()` API + the reaper job + the atomic UPDATE…WHERE
+…RETURNING pattern (v2 R1) + the 60-90s reaper window (v2 R2) + deadlock
+detection (v2 R3) per Cluster A §2.3 v2. Agent #23's own anomaly-
+classification LLM dispatches DO emit `agent.cost.signal.v1` like every
+other agent (self-instrumentation; cost-ledger feedback loop).
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_23_cost_governor.eventCountMin`
+OR per-agent default: `eventCountMin: 1` (clamped to [1, 1000]; even a
+single cost-ledger entry can surface an anomaly).
+- Mode 1 + Mode 2 SUB-2A: cost-ledger empty → no false-positive anomalies;
+  emit no envelope and log trace-level "no-cost-activity". Documented
+  exception (silence is normal for an idle product).
+- Mode 3A: degrade per Cluster B §2.7 v2 R1 if dataQualityScore ≥ 0.3.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `hard-halt-on-any`
+(cost-ledger access is mandatory — without it, Agent #23 cannot perform
+its function).
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3); cost monitoring is mode-agnostic.
+`pipelineMode` field omitted per Cluster C §2.4 v2 R2. Default Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `23.cost_anomaly.v1`, `23.cost_digest.v1`,
+`23.budget_halt.v1` (Phase 2), `runner.budget.exceeded.v1` (Phase 2). ALL
+of these are in the Cluster D P0 set per §2.1.0 (they ship in the §14.1
+P0 patch commit pre-Agent-#23-build). Cross-cluster topics also in P0
+patch. Topic names comply with Cluster D §2.2 regex.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `low`; tier-policy `strict` per Cluster F §2.1.2 (60s
+continuous anomaly classification at portfolio scale; cost-controlled
+tier mandatory; ironic if Cost Governor itself blows budget).
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].low`.
+2. `FLOWAI_MODEL_TIER_LOW` from Doppler.
+3. `FLOWAI_MODEL_TIER_LOW_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.low` (canonical low-tier model).
+Selection re-read per dispatch. Strict policy → halt on budget denial (NOT
+downgrade — Agent #23's anomaly classification must be deterministic
+across the portfolio).
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
