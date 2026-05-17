@@ -127,6 +127,45 @@ Mode-agnostic — `flowai-only` scope; introspects FlowAI's operating model rega
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+Emits `agent.cost.signal.v1` before each LLM call (weekly bottleneck analysis).
+Agent #23 is the sole canonical enforcement owner. Call order per Cluster A
+§2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_16_productivity_hr.eventCountMin`
+OR per-agent default: `eventCountMin: 7` (clamped to [1, 1000]; 7-day audit-log
+slice is canonical window).
+- Mode 1 + Mode 2 SUB-2A: below threshold → emit
+  `agent.data_quality.insufficient.v1` and halt.
+- Mode 3A: degrade per Cluster B §2.7 v2 R1 if dataQualityScore ≥ 0.3.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `wait-with-timeout-300s`
+(audit-log entries may arrive in burst; brief wait avoids false halt).
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3); FlowAI-internal operating model is
+mode-agnostic. `pipelineMode` field omitted per Cluster C §2.4 v2 R2.
+Default Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `16.productivity.report.v1` (per `_registry.ts`) plus
+`16.workflow_bottleneck.v1`. Cross-cluster topics ship in P0 patch. G16-Q5
+from original spec is resolved by Cluster D — update `_registry.ts` to
+include both topics at engineering dispatch.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2.
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Selection re-read per dispatch. Tier-downgrade per Cluster F §2.5 v2 R2.
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
