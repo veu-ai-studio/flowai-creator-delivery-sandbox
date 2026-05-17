@@ -187,10 +187,12 @@ export async function runAgent3RenewalJob(data) {
   }
 
   let Agent3SelfRenewalExecutor;
+  let getServerMessageBus;
   try {
     ({ Agent3SelfRenewalExecutor } = await import(
       '../../src/lib/agents/agents/Agent3SelfRenewalExecutor.js'
     ));
+    ({ getServerMessageBus } = await import('./messageBus.js'));
   } catch (e) {
     return { ok: false, error: 'executor_import_failed', detail: String(e?.message ?? e), jobId };
   }
@@ -204,7 +206,7 @@ export async function runAgent3RenewalJob(data) {
     delete: async (k) => { _hotMap.delete(k); },
   };
   const cold = { append: async () => {}, list: async () => [] };
-  const messageBus = { publish: async () => {}, subscribe: () => () => {} };
+  const messageBus = getServerMessageBus();
   const auditLog = { write: async () => {} };
   const logger = {
     info: (...args) => console.log('[agent3-renewal-job]', jobId, ...args),
