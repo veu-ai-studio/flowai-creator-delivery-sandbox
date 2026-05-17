@@ -44,7 +44,7 @@ FlowAI democratizes AI-powered product creation for **underserved market segment
 
 ## 3. COMMERCIAL MODEL + METADATA-DRIVEN ARCHITECTURE
 
-**Pricing surface:** licensed OS platform with per-seat, per-product, per-time, and combination packages. Providers are authenticated FlowAI users; end-customers are sub-orgs they manage. Revenue tracked per provider via Stripe Connect (Agent #4 Provider Onboarding; DORMANT today). Platform-fee ceiling is 15%; providers retain ≥85% of end-customer revenue; sustainability floor defined per contract.
+**Pricing surface:** licensed OS platform with per-seat, per-product, per-time, and combination packages. Providers are authenticated FlowAI users; end-customers are sub-orgs they manage. Revenue tracked per provider via Stripe Connect (Agent #4 Provider Onboarding; PARTIAL today — executor exists, Stripe Connect deployment pending). Platform-fee ceiling is 15%; providers retain ≥85% of end-customer revenue; sustainability floor defined per contract.
 
 **Tension with the Product-Agnostic Rule (§14):** Panel Q5 flagged that per-product pricing + per-product revenue splits could appear to require product-specific code, violating §14. Rev-1 left this unresolved. Rev-2 resolves it via a **metadata-driven architecture pattern**:
 
@@ -67,7 +67,7 @@ Rev-1 listed three levels. Panel Q2 found the levels "CORRECT_BUT_INCOMPLETE" �
 
 | # | Level | Scope | Status |
 |---|---|---|---|
-| L1 | **Building FlowAI** (current phase) | VEU constructs FlowAI itself — agents, governance, pipeline, Orchestra, OrchestratorHub. All 25 agents ship dormant at `recommend_only` before wire-in. | ACTIVE — Phase 1.0 substrate work in flight; Agents #1/#2/#3/#4/#5 SHIPPED-GREEN; 20 still DORMANT |
+| L1 | **Building FlowAI** (current phase) | VEU constructs FlowAI itself — agents, governance, pipeline, Orchestra, OrchestratorHub. All 25 agents ship dormant at `recommend_only` before wire-in. | ACTIVE — Phase 1.0 substrate work in flight; Agents #1/#2/#3/#5 SHIPPED-GREEN; #4 PARTIAL; 20 still DORMANT |
 | L2 | **FlowAI on Itself** | Once live, FlowAI self-monitors, self-renews, self-updates Orchestra rankings, runs the 8-step pipeline against its own repos. | PARTIAL — Self-Governance Layer (Sprint 5) live; full self-orchestration awaits Panel-handover gate |
 | L3 | **FlowAI on External Products** | Accepts via 4 input modes (§5), aggressively crawls everything, applies the 8-step pipeline, always delivers a new live URL. The fork-and-fix mode (§12) is the canonical externalized output path. | PARTIAL — W2 three-input renewal pipeline shipped on neutral test fixtures (commit `9b4e511`); fork-and-fix live; full crawl-fix-redeliver loop awaits Agent #3 graduation (see `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`) |
 | L4 | **FlowAI Capability Transfer into Other Products** (NEW — gap #4 from Panel Q2) | FlowAI installs its own capabilities into a target product as a Capability Package. Each package is generated as an install sprint and consumed by the target. | LIVE — Sprint PROTECT-1 shipped two packages: Self-Renewal (4 components: Self-Test, Self-Heal, Self-Monitor, Governance Hook) and Self-Protection (4 components). Install sprints exist for all 5 VEU products. Surface: `/capability-transfer`. |
@@ -1003,7 +1003,7 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 | Sprint history (CANONICAL_REFERENCE) | Sprint 5 → Sprint PROTECT-1 (most recent); plus POST-PROTECT-1 architecture + GTM Demo Stack + Agent Contract Layer (in codebase, not yet in ReleaseNotes.jsx) |
 | Branch | flowai-v0.1 |
 | Phase 0 (Foundation, commit `5dec08d`, 387 tests) | COMPLETE |
-| Agents shipped (G3-ratified roster of 25, 5 live) | #1 Lifecycle Engine, #2 Code Builder, #3 Self-Renewal, #4 Provider Onboarding, #5 End-Customer Intake — all SHIPPED-GREEN |
+| Agents shipped (G3-ratified roster of 25, 5 live) | #1 Lifecycle Engine, #2 Code Builder, #3 Self-Renewal, #4 Provider Onboarding (PARTIAL), #5 End-Customer Intake — all SHIPPED-GREEN |
 | Agents dormant | 20 of 25 (per Layer 1 SSOT doability assessment) |
 | W2 three-input renewal pipeline | SHIPPED on neutral test fixtures (commit `9b4e511`); Orchestra direct-write available via fork-and-fix path |
 | Self-Governance Layer (Sprint 5) | LIVE — Self-Test, Self-Audit, Self-Protect, Self-Heal, Four Human Gates |
