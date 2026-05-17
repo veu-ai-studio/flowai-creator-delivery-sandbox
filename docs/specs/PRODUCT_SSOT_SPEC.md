@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| **Status** | RATIFIED v2 (W5c, 2026-05-17) — Panel ruled Q1+Q2+Q3+Q5 per `docs/panel-consultations/product-ssot-spec-ratification-2026-05-16.md`; Q4 remains open |
+| **Status** | RATIFIED v3 (W5c, 2026-05-17) — Q4 hybrid + cross-cutting R1/R2/R3 per `docs/panel-consultations/product-ssot-v2-q4-ratification-2026-05-17.md`. All 5 §9 questions now ratified; no open Panel items. |
 | **Authors** | W5c (drafted), W2 + W5x (implementers — separate dispatch) |
 | **Canonical anchors** | `docs/CANONICAL_REFERENCE.md` §7 item #5, §7.5, §11 Step 5, §13.1, §14.2, §14.3, §28 |
 | **Backlog gap** | `docs/specs/FOUNDATION_AUDIT_BACKLOG.md` **P0-2** (ProductSSOT entity UNBUILT) + **P0-5** (atomic write UNBUILT) |
@@ -127,6 +127,21 @@ Hash chain semantics mirror GovernanceAuditLog §14.2: `this_hash = sha256(seria
 - `version` monotonicity is enforced by the write contract (§3), not by SQL — DB-level enforcement is impractical with concurrent writers and we want the write contract to surface conflicts loudly rather than silently coerce.
 - All `jsonb` blocks default to `{}` (object) or `[]` (array) so the row is always queryable even immediately after the bare insert in §3.1.
 
+### 2.4 Retention + archival policy (R2 — ratified 2026-05-17)
+
+**`delta_log[]` and `governance_record[]` entries older than 365 days are archived to cold storage (Supabase cold tier or equivalent) and removed from the hot `jsonb` columns.** Archival runs nightly via a scheduled job. Queries against archived data route to the cold store via a read-through API.
+
+Implementation contract:
+
+- **Hot retention window:** 365 days. An entry's age is `now() - (entry.at)` where `entry.at` is the per-entry timestamp.
+- **Archival target:** a separate Supabase project (the same `flowai-cold` project used by GovernanceAuditLog cold snapshots per §14.3) so the cold-tier hash chain remains compatible with the hot-tier chain. Per-entry archive rows mirror the `product_ssot_version` shape with one additional field: `archived_from = sha256(<original entry json>)`.
+- **Nightly job:** `scripts/archive-product-ssot.mjs` (separate W5x dispatch; outside this spec). Each run reads every `product_ssot` row, identifies `delta_log[]` and `governance_record[]` entries with `at < now() - interval '365 days'`, copies them into the cold-store table, then UPDATEs the hot row to remove the archived entries from the arrays. The whole archival cycle for a single row is itself a Postgres transaction; failure aborts the cycle without partial removal.
+- **Read-through API:** `api/product-ssot-get.js` accepts an optional `?include_archived=true` query parameter. When true, the endpoint merges the hot row's `delta_log[]` / `governance_record[]` with the cold-store rows for the same `(product_id, environment)` and returns a single chronologically-sorted view. The hot-row `updated_at` and `version` fields are NOT affected by archival — those continue to advance on live writes only.
+- **What is NOT archived:** `identity_block`, `build_brief`, `architecture_snapshot`, `annotations[]`, `overrides[]`, and the top-level `version` / `audit_hash_chain_pointer` / `created_at` / `updated_at` fields all stay in the hot row indefinitely. Only the append-only event streams (`delta_log[]` + `governance_record[]`) participate in archival.
+- **PII-scrub at archival:** the same `scrubCredentials()` extension per §14.3 applies on the archival read path. Hot rows already carry scrubbed content (scrub happens at write time); the archival job re-applies the scrub as a defense-in-depth check and writes a `governance_record` entry of kind `customer_signal` if any unscrubbed PII is detected (indicates a regression in the write-time scrub).
+
+This policy aligns ProductSSOT retention with the §14.3 retention extension (365-day hot + 7-year cold) and prevents `delta_log[]` / `governance_record[]` from growing unboundedly on long-lived products.
+
 ---
 
 ## §3 — WRITE CONTRACT (atomic per §7 item #5)
@@ -156,6 +171,8 @@ COMMIT;
 
 If ANY of steps 1–5 fails, the transaction rolls back and the entire pipeline run is marked INCOMPLETE per §7 item #5. The Self-Renewal Executor's existing rollback path (per CA-7 §15.5 + `docs/specs/SELF_RENEWAL_SPEC.md`) is the canonical handler — this spec does not introduce a parallel rollback mechanism.
 
+**Concurrent-write retry (R3 — ratified 2026-05-17).** If the Postgres transaction fails with `serialization_failure` (SQLSTATE `40001` — the canonical Postgres signal that the row was modified by a concurrent writer between the `SELECT … FOR UPDATE` and the `UPDATE`), Self-Renewal retries the entire §3.1 transaction up to **3 times with exponential backoff (100 ms, 200 ms, 400 ms)**. Each retry re-reads the row state under a fresh `FOR UPDATE` lock and re-computes the serialized post-state, so the retry composes correctly with whatever the concurrent writer committed. If all 3 retries fail, the run transitions to INCOMPLETE per §7 item #5 and the rollback sequence in the numbered list below fires. The retry budget applies ONLY to `serialization_failure`; other Postgres errors (constraint violations, RLS rejections, etc.) abort immediately without retry. GovernanceAuditLog topic `ssot.write.retry.v1` is emitted once per retry attempt with `{attempt: 1|2|3, prev_error, backoff_ms}` so retry behaviour is observable.
+
 Concretely: a run that successfully deploys a renewed URL but whose `product_ssot` UPDATE fails MUST:
 
 1. Mark the GovernanceAuditLog `step_completed` topic with `outcome: 'rolled_back_ssot_write_failed'`.
@@ -182,6 +199,8 @@ Concretely, the saga has three commit points and per-step compensating actions:
 | **C.** Post-commit side effects (operator-visible delta report emission, LIMITATIONS surfacing in UI) | external work | if any side effect fails, log to GovernanceAuditLog with topic `ssot.post_commit_partial.v1` but do NOT roll back the committed transaction — the canonical record is durable and the side-effect failure is operator-visible, not data-integrity-relevant |
 
 This saga interpretation preserves §7 line 132's contract literally ("a run that produces a renewed URL but fails to update ProductSSOT is considered INCOMPLETE and rolled back") while remaining implementable with the actual technology stack (Vercel, Postgres, no XA coordinator). The literal-2PC reading is unimplementable: Vercel has no Postgres-XA hook and no compensating-deploy API.
+
+**Stage C edge case — Vercel succeeds, Postgres commits, post-commit side effects fail (R1 — ratified 2026-05-17).** If Stage C post-commit side effects fail after Stage B Postgres transaction commits, the system logs `ssot.post_commit_partial.v1` and marks the deployment as **`unverified`** in the operator dashboard. The operator is notified with a reconciliation prompt (offering "mark verified" / "re-emit side effects" / "tear down deployment" actions, with the latter two routed through the existing Self-Renewal Executor surface). **The ProductSSOT write is NOT rolled back — the Postgres commit is authoritative.** Rationale: the canonical living-document state has been durably committed under the audit-hash chain; reversing it would create a divergence between the hash-chain anchor and the operator-visible state, which a future audit pass would correctly flag as tamper. The honest answer is "the data is durable; the side effects partially fired; here is the unfinished work" rather than "we silently rolled back data the audit chain already records as committed." This is the standard saga forward-recovery (vs. backward-recovery) choice for Stage C — chosen because Stage C side effects are operator-visible niceties (UI surfacing, notification dispatch), not data-integrity-relevant operations.
 
 ### 3.3 Write-once-per-run
 
@@ -284,6 +303,25 @@ create policy "product_ssot_flowai_audit_read"
 The three org-scoped policies share an identical `using` shape modulo the `role` literal. PostgreSQL OR-combines policies of the same `command` on the same table, so the effective read predicate for any authenticated user is "row's product is in my org AND my JWT role is one of admin/operator/client" — identical to the prior single combined policy semantically but transparent on inspection. A user with no matching role gets the empty set; service-role bypasses RLS for writes per §3.4.
 
 Operator-side annotation writes (`annotations[]` append) are gated by a `WITH CHECK` policy on a separate `product_ssot_annotate_for_operator` function — implementation detail of the server-side annotation endpoint, NOT a direct table UPDATE (per §3.4).
+
+### 4.7 UI-synthesis contract (Q4 hybrid; canonical at CANONICAL_REFERENCE §13.1)
+
+**Panel CEO disposition 2026-05-17 (Q4=hybrid):** the database write semantics remain append-only per §3 (unchanged); the UI surface is permitted to synthesize an UPDATE-with-revision view from the underlying append-only data.
+
+Verbatim contract addition to CANONICAL_REFERENCE §13.1:
+
+> **`/product-ssot/:productId` MAY synthesize an UPDATE-with-revision view by grouping append-only override entries by `replacementTarget`, displaying the latest as current and prior entries as revision history. The DB write semantics remain append-only and the audit trail is the authoritative truth.**
+
+**UI synthesis rules:**
+
+1. **Grouping key:** override entries in `overrides[]` are grouped by `replacementTarget` (the deterministic anchor that identifies which auto-generated entry the override replaces — e.g., the `delta_log[].entryId` whose severity is being overridden, or the `architecture_snapshot.dependencies[].name` whose deprecation warning is being suppressed). The same `replacementTarget` appearing in multiple override entries forms one "logical override chain" in the UI.
+2. **Current state:** within a chain, the latest entry by `at` timestamp is the **current** state surfaced as the live override on the `/product-ssot/:productId` view.
+3. **Revision history:** prior entries in the chain are surfaced under a "Revision history" disclosure inside the same UI row, in reverse-chronological order. Each prior revision is read-only and tagged with its author + timestamp + rationale (per the existing override entry shape).
+4. **Revocation chains — termination semantics (Q4 hybrid addendum):** a "revoke" override is an entry whose `replacementContent` is the restoration target (typically the original auto-generated content). When a chain contains a revoke that points at the entry immediately preceding it, the UI collapses both entries into a single row labelled **`restored`**. A revoke-of-revoke (chain pattern: original → override-A → revoke-of-A → revoke-of-revoke-A) **collapses to a no-op in the UI view**, shown as `restored` with the full collapsed chain visible under the Revision history disclosure. The DB still carries every entry as a distinct append-only row; only the rendered UI collapses them.
+5. **Authoritative truth:** when the UI's synthesized view disagrees with the DB-resident order of `overrides[]` entries (e.g., a UI bug groups two unrelated entries because their `replacementTarget` clashes due to a stale cache), the DB's append-only order + `product_ssot_version` hash chain are the canonical record. The UI surfaces a `data-rendering-divergence` warning if its synthesis pass produces a chain that fails the termination semantics in (4) above.
+6. **No DB UPDATE.** Critically, this contract does NOT introduce any UPDATE-with-revision semantics at the DB layer. `overrides[]` remains append-only per §3 (write contract unchanged), `product_ssot_version` remains the per-write audit log, and `audit_hash_chain_pointer` continues to anchor every append. Q4 hybrid is **purely a UI-layer affordance** — implementers in `src/pages/ProductSSOT.jsx` derive the rendered view from the append-only DB rows at render time.
+
+This hybrid resolves the Q4 tension: operators get the friendlier UI experience (single entry with revision history) without sacrificing the audit-chain simplicity, RLS-WITH-CHECK simplicity, or §28.3's "audit trail preserved" requirement. The §28.3 conflict-resolution rule ("admin override always wins; new auto-gen entries are flagged `overridden=true`") is unchanged.
 
 ---
 
@@ -439,10 +477,8 @@ Panel ratified the run-completion-state atomicity reading. §3.2 v2 now declares
 ### Q3 — RLS policy naming + structure — **RATIFIED: split into 3 explicit per-role policies**
 CEO disposition 2026-05-16 ruled to split the prior single combined operator-read policy into three explicit per-role policies (`product_ssot_admin_read`, `product_ssot_operator_read`, `product_ssot_client_read`), each gating exactly one `role` literal. The cross-org `product_ssot_flowai_audit_read` policy is retained as the fourth. §4.6 v2 now carries the four-policy block; §5.5 v2 rollback drops all four. PostgreSQL OR-combination semantics keep the effective predicate identical to the prior single-policy form, but every policy's name now matches exactly what it does.
 
-### Q4 — Override semantics: append-only vs UPDATE-with-revision — **OPEN (deferred to follow-on Panel cycle)**
-- **Y (this spec, §3 + §13.1):** All mutations are append-only. An admin "revoke" of an override is implemented as a NEW override entry whose `replacementContent` restores the original. The full history is preserved.
-- **N (UPDATE-with-revision alternative):** Each override is a top-level entry with a `revisions[]` sub-array; "revoking" updates the entry in place by appending to its `revisions[]`. The current state is the LAST revision; history is on the revisions array.
-- **Tension:** Y is simpler to audit (every change is a new row in `product_ssot_version`) and matches §28.3's "audit trail preserved" requirement literally. N is friendlier for UI (single entry with revision history) but requires UPDATE on `overrides[]` jsonb arrays which complicates RLS WITH CHECK clauses. Panel ruling on Y or N affects the UI design (single revision-history pane vs append-only audit log) + the policy implementation; this spec v2 continues to proceed with Y per §13.1's "append-only" language, pending the next Panel cycle. The W2 build dispatch should NOT implement override-revoke UI semantics until Q4 lands.
+### Q4 — Override semantics: append-only vs UPDATE-with-revision — **RATIFIED HYBRID (2026-05-17)**
+CEO disposition 2026-05-17 ruled the **hybrid** path: DB stays append-only per §3 (option Y unchanged at the storage layer); the UI synthesizes an UPDATE-with-revision view from the append-only data at render time (option N affordance at the UI layer). §4.7 v3 inlines the verbatim UI synthesis contract: grouping by `replacementTarget`, latest-by-timestamp as current, prior entries as revision history, with explicit termination semantics for revocation chains (`revoke-of-revoke` collapses to a no-op UI view labelled `restored`, with the full chain still durable in the DB). The W2 build dispatch is now unblocked on override-revoke UI semantics (§4.7 is the contract). The §13.1 canonical text receives a one-paragraph addition mirroring §4.7's verbatim contract block — that promotion lives in a follow-on CA-n dispatch to CANONICAL_REFERENCE.md (out of scope for this spec, listed in §10).
 
 ### Q5 — Honesty / capability boundary completeness — **RATIFIED: expand §7**
 CEO disposition 2026-05-16 ruled to expand §7 with cost-per-run delta and post-implementation visibility-shift disclosure. §7.1 v2 now lists the ~$0.30 – $2.00 per Self-Renewal cycle cost (dominated by the re-assessment crawl, NOT the Postgres write); §7.2 v2 carries the visibility-shift paragraph verbatim per CEO wording ("Once ProductSSOT is built, previously silent `SSOT_WRITE_FAILED` errors become visible to operators…"). The W2 build dispatch's pre-merge readiness report must include a 7-day shadow-mode error-rate baseline so the visibility shift is bounded and explainable.
@@ -454,6 +490,7 @@ CEO disposition 2026-05-16 ruled to expand §7 with cost-per-run delta and post-
 1. **W2 build dispatch.** Implements §2–§6 as code. Scope: migration `0013_product_ssot.sql` + four `api/product-ssot-*.js` endpoints + AutoRunner read/write wire-in.
 2. **W5x UI dispatch.** Implements `/product-ssot/:productId` per §13.1 + §4.1.
 3. **W5x nightly hash-chain verifier.** Implements §8 acceptance criterion #6.
-4. **W6 follow-on Panel cycle.** Resolves the sole remaining open question §9 Q4 (override semantics: append-only vs UPDATE-with-revision). Q1, Q2, Q3, Q5 were ratified on 2026-05-16 and are no longer open. A CA-n promotion is only required if Q4 rules N (UPDATE-with-revision), which would amend §13.1's "append-only" language.
+4. **CA-n promotion to CANONICAL_REFERENCE.md §13.1.** All five §9 questions (Q1, Q2, Q3, Q4 hybrid, Q5) ratified by CEO on 2026-05-16 + 2026-05-17 — no remaining open Panel items. A follow-on CA-n promotion adds the §4.7 UI-synthesis contract verbatim into CANONICAL_REFERENCE.md §13.1 so the canonical doc carries the hybrid contract directly rather than only by reference to this spec. Separate dispatch (W2 or W5x); spec-only.
+5. **W5x retention/archival nightly job (R2).** Implements `scripts/archive-product-ssot.mjs` per §2.4: nightly archival of `delta_log[]` + `governance_record[]` entries older than 365 days to the `flowai-cold` Supabase project; defense-in-depth `scrubCredentials()` re-pass; read-through merge in `api/product-ssot-get.js?include_archived=true`.
 5. **W2 Agent #10 dispatch.** Implements `architecture_snapshot` drift writes per §6 integration row 5.
 6. **W2 §11 Clearance Step 5 gate dispatch.** Wires the four-prerequisite gate to read from `governance_record[]` per §6 integration row 8.
