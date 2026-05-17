@@ -1,9 +1,15 @@
-# Cluster C — Mode-Conditional Behavior (Canonical Template)
+# Cluster C — Mode-Conditional Behavior (Canonical Template, v2)
 
-**Status:** DRAFT — pending W6 Panel ratification.
-**Author:** W3, 2026-05-16.
+**Status:** DRAFT v2 — Panel conditions applied; pending W6 re-ratification.
+**Version history:** v1 (commit `18ece2a`, 2026-05-16) → v2 (this commit, 2026-05-17 — Panel `PLURALITY_CLC-REVISE` 5/9 conditions R1–R3 applied per W3 Dispatch #10).
+**Author:** W3.
 **Anchor canonical:** CA-12 v3 §A.1 (3 canonical pipeline modes: 1, 2 SUB-2A, 3A); CA-12 v3 §A.2 (Build-authority + Operational-authority sub-dimensions); §A.0 GTM context preamble; §B.2 enforcement contract.
-**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 2 objection #12 + Batch 3 objections #03, #22, #31.
+**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 2 objection #12 + Batch 3 objections #03, #22, #31. **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` (W6 Dispatch #16, commit `10b13f9`) — `PLURALITY_CLC-REVISE` 5/9.
+
+**v2 revisions applied (per W3 Dispatch #10):**
+- **R1** — §5.4 Mode behavior block is **OPTIONAL for Pattern P1** (mode-agnostic) agents; MANDATORY only for Pattern P2 + P3. P1 agents may omit §5.4 entirely; if absent, P1 + Mode-1-default are assumed. §2.2 + §2.5 updated.
+- **R2** — `pipelineMode` envelope field is mandatory ONLY when agent behavior differs across modes (Pattern P2 + P3) — NOT every envelope. Mode-agnostic envelopes (Pattern P1) MAY omit the field; downstream tracing for P1 envelopes uses `runId` lineage instead. §2.4 updated.
+- **R3** — Explicit enforcement mechanism: hybrid **schema-validator** (CI gate at spec-merge time) + **runtime guard** (BaseAgent.emit boundary check). §2.5 expanded with concrete enforcement contract.
 
 ---
 
@@ -43,9 +49,9 @@ Per CA-12 v3 §B.2 enforcement contract, AutoRunner submission validation runs p
 
 ---
 
-## §2 — Canonical Resolution
+## §2 — Canonical Resolution (v2)
 
-**Every agent spec MUST declare a §5.4 Mode behavior block** with the canonical 3-mode template below. Defaults to Mode 1 when pipeline mode is unspecified.
+**Agent specs declare a §5.4 Mode behavior block when behavior differs across modes (Patterns P2 + P3).** Pattern P1 (mode-agnostic) agents MAY omit §5.4 entirely — they are assumed mode-agnostic + Mode-1-default. Per-pattern requirements are §2.3 below. Defaults to Mode 1 when pipeline mode is unspecified.
 
 ### §2.1 — The 3 canonical pipeline modes (per CA-12 v3 §A.1)
 
@@ -57,12 +63,14 @@ Per CA-12 v3 §B.2 enforcement contract, AutoRunner submission validation runs p
 
 Note: Mode 2 SUB-2B (full-build-from-description) and Mode 3B (cross-product synthesis) are **DEFERRED** per CA-12 v3 — see `docs/specs/FUTURE_CAPABILITIES.md`. Cluster C does NOT address those modes.
 
-### §2.2 — Canonical mode-behavior template
+### §2.2 — Canonical mode-behavior template (v2 — optional for P1)
 
-Every agent spec MUST contain the following block in §5 Pipeline Integration §5.4 (or equivalent location):
+Agent specs whose pattern is **P2 or P3** MUST contain the following block in §5 Pipeline Integration §5.4 (or equivalent location). Agent specs whose pattern is **P1** (mode-agnostic) MAY omit §5.4 entirely — their behavior is identical across all 3 modes and Mode-1-default is assumed.
 
 ```
-### §5.4 — Mode behavior (canonical per CLUSTER_C_MODE_CONDITIONAL_BEHAVIOR.md)
+### §5.4 — Mode behavior (canonical per CLUSTER_C_MODE_CONDITIONAL_BEHAVIOR.md v2)
+
+**Pattern declaration:** P1 / P2 / P3 (pick one; see Cluster C §2.3)
 
 In Mode 1 (Assess):
   [exactly what this agent produces — output topic + payload-shape summary]
@@ -78,6 +86,12 @@ In Mode 3A (Benchmark — operator-attested source path):
 If pipeline mode is not specified, default to Mode 1.
 ```
 
+Agents that omit §5.4 are interpreted by the validator as `Pattern: P1, defaultMode: 1, behavior: identical-across-modes`. To make P1 status explicit (recommended for clarity but not mandatory per v2 R1), specs may include a one-line declaration:
+
+```
+### §5.4 — Mode behavior: Pattern P1 (mode-agnostic; canonical per Cluster C §2.3)
+```
+
 ### §2.3 — Three permissible mode-relation patterns
 
 Most agents fall into one of three patterns; agent specs MUST name which pattern applies:
@@ -88,39 +102,85 @@ Most agents fall into one of three patterns; agent specs MUST name which pattern
 
 **Pattern P3: Mode-restricted execution** — agent ONLY runs in certain modes; in other modes, agent is dormant. Phase 2 Executors (Self-Renewal Executor, Design Executor) fall here — they only activate in Mode 2 / Mode 3A.
 
-### §2.4 — Mode propagation in MessageBus envelopes
+### §2.4 — Mode propagation in MessageBus envelopes (v2 — conditional)
 
-Every envelope a mode-aware agent emits MUST carry a `pipelineMode` field:
+`pipelineMode` field is **MANDATORY only when agent behavior differs across modes** (Pattern P2 + P3). Pattern P1 envelopes MAY omit the field — downstream tracing relies on `runId` lineage instead (the per-run AutoRunner context already records the mode for the entire run, so re-emitting it on every P1 envelope is redundant).
 
+**Pattern P2 + P3 envelope (mandatory `pipelineMode`):**
 ```ts
 {
   ... existing payload ...,
-  pipelineMode: 1 | 2 | '3A',         // canonical per CA-12 v3 §A.1
+  pipelineMode: 1 | 2 | '3A',         // canonical per CA-12 v3 §A.1; MANDATORY for P2 + P3
   pipelineModeSubVariant: '1A' | '1B' | '2A',   // optional; per §A.1 sub-variants
   at: ISO8601,
 }
 ```
 
-This unblocks downstream consumers — they can route on `pipelineMode` deterministically. Mode-agnostic agents (Pattern P1) still emit `pipelineMode` for downstream tracing; they just produce identical payload otherwise.
+**Pattern P1 envelope (`pipelineMode` optional; omission canonical):**
+```ts
+{
+  ... existing payload ...,
+  // pipelineMode omitted — downstream consumers read mode from runId context
+  at: ISO8601,
+}
+```
 
-### §2.5 — Validator integration
+This unblocks downstream consumers for P2/P3 routing while removing a per-envelope field for the majority of agents (P1). Cost-signal envelopes (Cluster A) + data-quality envelopes (Cluster B) inherit P1 by default unless an agent's `<agent.cost.signal.v1>` emission needs per-mode routing (typically no).
 
-CA-12 v3 §B.2 enforcement contract is extended: AutoRunner submission validation checks every emitting agent's spec for §5.4 Mode behavior block presence. Specs without §5.4 → CI fails with `MISSING_MODE_BEHAVIOR_BLOCK[<agentId>]`.
+Rationale (v2 R2): mandating `pipelineMode` on every P1 envelope created field bloat on ~80% of MessageBus traffic. Conditional emission scopes the field to where it changes behavior; downstream tracing for P1 envelopes uses `runId` → AutoRunner-context lookup (already canonical).
+
+### §2.5 — Enforcement contract (v2 R3 — hybrid validator + runtime guard)
+
+**Schema validator (CI gate at spec-merge time):**
+A `cluster-c-validator.mjs` script (engineering dispatch) checks every agent spec at PR-merge time:
+1. **Pattern declared:** spec contains `Pattern P1`, `Pattern P2`, or `Pattern P3` declaration in §5.4 (P1 may use the one-line form per §2.2).
+2. **§5.4 block presence:** required for P2 + P3; optional for P1.
+3. **Per-mode coverage:** P2 + P3 specs cover all 3 canonical modes (Mode 1, Mode 2 SUB-2A, Mode 3A) explicitly.
+4. **Pattern-output consistency:** P2 spec must declare `recommendations[]` field appears in Mode 2/3A envelope; P3 spec must declare `WRONG_MODE_FOR_EXECUTOR` error path for Mode 1.
+
+Validator failures emit CI errors:
+- `MISSING_PATTERN_DECLARATION[<agentId>]` — no P1/P2/P3 declaration found.
+- `MISSING_MODE_BEHAVIOR_BLOCK[<agentId>]` — P2/P3 spec missing §5.4 entirely.
+- `INCOMPLETE_MODE_COVERAGE[<agentId>]` — P2/P3 spec lacks coverage for one of 3 modes.
+
+**Runtime guard (BaseAgent emit boundary):**
+`BaseAgent.emit(topic, payload)` checks at every emission:
+1. If charter declares `Pattern: P2 | P3` → payload MUST contain `pipelineMode ∈ {1, 2, '3A'}`. Missing → throw `MissingPipelineModeError[<agentId>]`.
+2. If charter declares `Pattern: P1` → `pipelineMode` is optional; if present, value MUST still be canonical. Invalid → throw `InvalidPipelineModeValue[<agentId>]`.
+3. If charter declares `Pattern: P3` and agent is invoked under Mode 1 → throw `WRONG_MODE_FOR_EXECUTOR[<executorKey>]` synchronously per CA-7 §15.5.
+
+Both layers run independently: schema validator catches spec-level non-conformance at PR time; runtime guard catches code-level non-conformance at emit time. Either failure blocks the offending agent from shipping.
 
 ---
 
 ## §3 — Agent Spec Integration Instructions
 
-### §3.1 — Block to paste into §5 Pipeline Integration of each affected agent spec
+### §3.1 — Block to paste into §5 Pipeline Integration of each affected agent spec (v2)
+
+**For Pattern P1 (mode-agnostic) agents — minimal form (recommended):**
 
 ````markdown
-### §5.4 — Mode behavior (canonical per CLUSTER_C_MODE_CONDITIONAL_BEHAVIOR.md)
+### §5.4 — Mode behavior: Pattern P1 (mode-agnostic; canonical per Cluster C §2.3)
 
-**Pattern:** P1 / P2 / P3 (pick one; see Cluster C §2.3)
+This agent's behavior is identical across Mode 1, Mode 2 SUB-2A, and Mode 3A.
+`pipelineMode` field omitted from emitted envelopes per Cluster C §2.4 v2 R2.
+Defaults to Mode 1 when pipeline mode is unspecified.
+````
+
+P1 agents MAY omit §5.4 entirely; the validator interprets absence as P1 + Mode-1-default.
+
+**For Pattern P2 (mode-aware recommendations) + P3 (mode-restricted execution) agents — full form:**
+
+````markdown
+### §5.4 — Mode behavior (canonical per CLUSTER_C_MODE_CONDITIONAL_BEHAVIOR.md v2)
+
+**Pattern:** P2 / P3 (pick one; see Cluster C §2.3)
 
 **In Mode 1 (Assess):**
 This agent produces `<agent's output topic>` with payload per §4.2;
 downstream consumers: <list>.
+(For P3 Executors: `WRONG_MODE_FOR_EXECUTOR[<executorKey>]` thrown synchronously
+on Mode 1 invocation per CA-7 §15.5.)
 
 **In Mode 2 SUB-2A (Build — assess + recommendations):**
 Same envelope as Mode 1 + `recommendations[]` array with `autoFixable: true`
@@ -135,16 +195,28 @@ this agent defaults to Mode 1.
 
 **Mode propagation:** every emitted envelope carries `pipelineMode: <value>`
 + optional `pipelineModeSubVariant: <value>` per Cluster C §2.4. Downstream
-consumers route on these fields deterministically.
+consumers route on these fields deterministically. Runtime guard per
+Cluster C §2.5 v2 R3 throws `MissingPipelineModeError` on emission missing
+the field.
 ````
 
-### §3.2 — Block to paste into §4.2 envelope shape definitions
+### §3.2 — Block to paste into §4.2 envelope shape definitions (v2 — conditional)
+
+For **Pattern P2 + P3** agents (mandatory):
 
 ````markdown
-**Mode-propagation fields (canonical per Cluster C §2.4):**
-- `pipelineMode: 1 | 2 | '3A'` (mandatory)
+**Mode-propagation fields (canonical per Cluster C §2.4 v2):**
+- `pipelineMode: 1 | 2 | '3A'` (mandatory for P2 + P3)
 - `pipelineModeSubVariant: '1A' | '1B' | '2A'` (optional; only when sub-variant
   is operationally meaningful for downstream routing)
+````
+
+For **Pattern P1** agents (optional; omission canonical):
+
+````markdown
+**Mode-propagation fields:** none required per Cluster C §2.4 v2 R2 (Pattern P1
+mode-agnostic). `runId` lineage to AutoRunner context provides mode-of-run
+for downstream tracing.
 ````
 
 ### §3.3 — Block to paste into §9 Acceptance Criteria
@@ -162,15 +234,15 @@ consumers route on these fields deterministically.
 
 ---
 
-## §4 — Acceptance Criteria
+## §4 — Acceptance Criteria (v2)
 
 How W2 verifies the Cluster C fix is correctly implemented across agent specs.
 
-1. **AC-CC-1 (Spec-level coverage):** Every affected agent spec contains §5.4 Mode behavior block. Specs without it fail CI per `MISSING_MODE_BEHAVIOR_BLOCK[<agentId>]`.
+1. **AC-CC-1 (v2 R1 — Pattern-aware spec coverage):** Every agent spec contains EITHER a §5.4 Mode behavior block OR an implicit-P1 absence (validator interprets absence as Pattern P1 + Mode-1-default). Pattern P2 + P3 specs MUST contain §5.4; P1 specs MAY omit. Schema validator (`cluster-c-validator.mjs`) enforces.
 
-2. **AC-CC-2 (Pattern declared):** Every §5.4 block names ONE of P1 / P2 / P3 (mode-agnostic / mode-aware recommendations / mode-restricted execution). Specs that omit pattern declaration are non-conformant.
+2. **AC-CC-2 (Pattern declared explicitly OR implicitly):** Every §5.4 block (when present) names ONE of P1 / P2 / P3. Absent §5.4 = implicit P1. Schema validator emits `MISSING_PATTERN_DECLARATION[<agentId>]` when §5.4 is present but pattern is unclear.
 
-3. **AC-CC-3 (`pipelineMode` mandatory):** Every emitted envelope carries `pipelineMode` field with one of the 3 canonical values (1, 2, '3A'). Schema validation rejects emissions missing this field.
+3. **AC-CC-3 (v2 R2 — `pipelineMode` conditional):** Pattern P2 + P3 envelopes MUST carry `pipelineMode` field with one of the 3 canonical values (1, 2, '3A'). Pattern P1 envelopes MAY omit the field; if present, value MUST still be canonical. Runtime guard throws `MissingPipelineModeError` (P2/P3 missing) or `InvalidPipelineModeValue` (any pattern, invalid value) at emit boundary.
 
 4. **AC-CC-4 (Default-to-Mode-1):** When invocation context lacks `pipelineMode`, agent treats as Mode 1. Canary integration test.
 
@@ -179,6 +251,13 @@ How W2 verifies the Cluster C fix is correctly implemented across agent specs.
 6. **AC-CC-6 (Pattern-P3 dormancy):** Pattern P3 agents (Phase 2 Executors) do NOT emit envelopes in Mode 1; if invoked in Mode 1, they fast-fail with `WRONG_MODE_FOR_EXECUTOR[<executorKey>]` per CA-7 §15.5 + Cluster C extension.
 
 7. **AC-CC-7 (Downstream-consumer routing determinism):** A given downstream agent consuming `pipelineMode: 1` envelope produces deterministically the same output as consuming the equivalent `pipelineMode: 2 SUB-2A` envelope with same upstream input (modulo the Pattern P2 `recommendations[]` addition).
+
+8. **AC-CC-8 (v2 R3 — Hybrid enforcement):** Both layers active in production:
+   - Schema validator runs at PR-merge time; rejects merges with non-conformant specs.
+   - Runtime guard runs at `BaseAgent.emit()` boundary; rejects non-conformant emissions.
+   Both layers tested independently — disabling either layer is non-conformant. CI invariant.
+
+9. **AC-CC-9 (v2 R2 — P1 envelope omission canonical):** Pattern P1 agents emit envelopes WITHOUT `pipelineMode` field by default; downstream tracing for P1 envelopes uses `runId` lineage to AutoRunner context. Verified by per-pattern emission audit + downstream-consumer integration test.
 
 ---
 
@@ -230,4 +309,4 @@ Cluster C only addresses pipeline-mode (Mode 1 / 2 / 3A) behavior specification.
 
 ---
 
-*End of CLUSTER_C_MODE_CONDITIONAL_BEHAVIOR.md canonical template. Pending W6 Panel ratification.*
+*End of CLUSTER_C_MODE_CONDITIONAL_BEHAVIOR.md canonical template v2. Panel `PLURALITY_CLC-REVISE` 5/9 conditions R1–R3 applied. Pending W6 re-ratification.*
