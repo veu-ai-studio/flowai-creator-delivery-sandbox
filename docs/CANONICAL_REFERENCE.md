@@ -459,7 +459,7 @@ All 26 agents (was 25 prior to CA-9-B / ENTRY 005) are proprietary VEU IP. All s
 | 1 | Lifecycle Engine | step-owner | 1 research | embedded | SHIPPED-GREEN (commit `d712993`) |
 | 2 | Code Builder | step-owner | 3 build | embedded | SHIPPED-GREEN (commit `fdd3863`) — server-side only (node:crypto) |
 | 3 | Self-Renewal | step-owner | 6 govern | embedded | SHIPPED-GREEN (commit `68a0c75`); fork-and-fix graduation spec drafted at `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`. Per CA-9-C + CA-10-B (ENTRY 005): consumes `10.customer.issue.v1` with new `customerReportedIssues` heuristic (1-2 reports/24h → medium; 3-9 → high; ≥10 → critical). Per CA-10-B: produces new topic `3.ssot.delta.v1` (delta_log entry written to ProductSSOT post-Approve/auto-deploy via the Self-Renewal Executor per CA-7 §15.5). |
-| 4 | Provider Onboarding | step-owner | (commercial layer) | flowai-only | SHIPPED-GREEN (commit `5006431`); wires Stripe Connect |
+| 4 | Provider Onboarding | step-owner | (commercial layer) | flowai-only | PARTIAL — executor code exists; Stripe Connect deployment incomplete per §3 + Panel ruling FA-Q1 (commit `708e59d`) 2026-05-16. Original landing commit `5006431`. |
 | 5 | End-Customer Intake | step-owner | (commercial layer) | flowai-only | SHIPPED-GREEN (commit `2fff449`) |
 | 6 | Research | step-owner | 1 research (collab w/ #1) | embedded | DORMANT — block-semantic on content-insufficient already wired (commit `0fc8851`) |
 | 7 | Design | step-owner | 2 design | embedded | DORMANT |
