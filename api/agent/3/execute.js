@@ -37,6 +37,7 @@
 import { Agent3SelfRenewalExecutor } from '../../../src/lib/agents/agents/Agent3SelfRenewalExecutor.js';
 import * as remediationEngine from '../../_lib/remediationEngine.js';
 import verificationAdapters from '../../../src/lib/agents/verificationAdapters.js';
+import { getServerMessageBus } from '../../_lib/messageBus.js';
 
 const SYNC_TIMEOUT_MS = 25_000;
 const ALLOWED_MODES = new Set(['recommend_only', 'fork_and_fix']);
@@ -185,10 +186,7 @@ function buildExecutor({ productScope }) {
     append: async () => {},
     list: async () => [],
   };
-  const messageBus = {
-    publish: async () => {},
-    subscribe: () => () => {},
-  };
+  const messageBus = getServerMessageBus();
   const auditLog = {
     write: async () => {},
   };
