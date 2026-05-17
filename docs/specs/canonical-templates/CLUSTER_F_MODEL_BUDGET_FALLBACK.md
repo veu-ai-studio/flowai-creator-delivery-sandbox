@@ -1,9 +1,15 @@
-# Cluster F — Model-Budget Fallback (Canonical Template)
+# Cluster F — Model-Budget Fallback (Canonical Template, v2)
 
-**Status:** DRAFT — pending W6 Panel ratification.
-**Author:** W3, 2026-05-16.
-**Anchor canonical:** Rev-2.1 Locked Rule 8 (LLM model standard: "pipeline steps use claude_sonnet_4_6 by default; cost-aware budgeting required (§7 of Orchestra spec)"); CA-11-A.4 `dispatchWithFallback` (canonical fallback mechanism); Orchestra Integration Spec §4.2 rolling-outcome-score machinery + §7.1 cost-ledger.
-**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 1 objection #10 (third-party overreliance) + Batch 2 objection #10 (LLM overreliance).
+**Status:** DRAFT v2 — Panel conditions applied; pending W6 re-ratification.
+**Version history:** v1 (commit `9859b98`, 2026-05-16) → v2 (this commit, 2026-05-17 — Panel `PLURALITY_CLF-REVISE` 6/9 conditions R1–R3 applied per W3 Dispatch #10).
+**Author:** W3.
+**Anchor canonical:** Rev-2.1 Locked Rule 8 (LLM model standard: "pipeline steps use claude_sonnet_4_6 by default; cost-aware budgeting required (§7 of Orchestra spec)"); Rev-2.1 Locked Rule 18 (rank_score cost-tier weighting); CA-11-A.4 `dispatchWithFallback` (canonical fallback mechanism); Orchestra Integration Spec §4.2 rolling-outcome-score machinery + §7.1 cost-ledger.
+**Panel source:** `docs/panel-consultations/18-agent-consolidated-panel-2026-05-16.md` Batch 1 objection #10 (third-party overreliance) + Batch 2 objection #10 (LLM overreliance). **v2 conditions:** `docs/panel-consultations/cluster-templates-ratification-2026-05-17.md` (W6 Dispatch #16, commit `10b13f9`) — `PLURALITY_CLF-REVISE` 6/9.
+
+**v2 revisions applied (per W3 Dispatch #10):**
+- **R1** — Cost-tier definitions: explicit numeric + named tier table (`free`, `low`, `medium`, `high`, `enterprise`) with USD-per-1K-token bands AND Locked Rule 18 price-weight values. §2.1.1 added.
+- **R2** — Cost-tier-change handling: explicit behavior when a model's tier changes (provider re-prices) OR when the selected model's tier exceeds the per-product budget headroom mid-run. §2.5 added; interaction with Cluster A `reserve()` documented.
+- **R3** — Hierarchical Doppler key structure: keys organised by tier rather than per-model — `FLOWAI_MODEL_TIER_LOW`, `FLOWAI_MODEL_TIER_MEDIUM`, etc. Allows operator to swap "which model maps to tier X" without touching every per-model key. §2.1 rewritten.
 
 ---
 
@@ -36,23 +42,114 @@ Without canonical fallback chain: deprecation of any LLM model (Anthropic sunset
 
 ---
 
-## §2 — Canonical Resolution
+## §2 — Canonical Resolution (v2 — tier-keyed Doppler)
 
-**A canonical 3-tier model selection chain (primary → fallback → final fallback) read from Doppler at every LLM dispatch.** Every agent that calls an LLM MUST use this pattern — NEVER hardcode a model name in agent code.
+**Models are organised by cost-tier; Doppler keys map tier → model.** Agents select tier first (based on task budget / quality needs), then read the tier-mapped model from Doppler. Every agent that calls an LLM MUST use this pattern — NEVER hardcode a model name in agent code; never read per-model Doppler keys (only per-tier).
 
-### §2.1 — Canonical 3-tier selection order
+### §2.1 — Canonical tier-keyed model selection (v2 R3 — hierarchical)
 
-Per every LLM dispatch:
+**Doppler keys (per-tier, not per-model):**
 
-1. **Primary:** `FLOWAI_PRIMARY_MODEL` from Doppler at path `flowai/<env>/FLOWAI_PRIMARY_MODEL`.
-2. **Fallback:** `FLOWAI_FALLBACK_MODEL` from Doppler at path `flowai/<env>/FLOWAI_FALLBACK_MODEL`.
-3. **Final fallback (hardcoded canonical):** `claude-sonnet-4-6` (per Locked Rule 8).
+```
+flowai/<env>/FLOWAI_MODEL_TIER_FREE         # e.g. 'openrouter/meta-llama/llama-3.3-70b-instruct'
+flowai/<env>/FLOWAI_MODEL_TIER_LOW          # e.g. 'openrouter/google/gemini-2.0-flash-001'
+flowai/<env>/FLOWAI_MODEL_TIER_MEDIUM       # e.g. 'claude-sonnet-4-6'
+flowai/<env>/FLOWAI_MODEL_TIER_HIGH         # e.g. 'claude-opus-4-7'
+flowai/<env>/FLOWAI_MODEL_TIER_ENTERPRISE   # e.g. 'openai/gpt-5-pro-32k'
 
-Selection logic:
-- Read `FLOWAI_PRIMARY_MODEL` at dispatch time (NOT at agent construction; the value may change between runs).
-- If empty / missing → fall back to `FLOWAI_FALLBACK_MODEL`.
-- If `FLOWAI_FALLBACK_MODEL` also empty / missing → fall back to hardcoded `claude-sonnet-4-6`.
-- The hardcoded canonical anchors the system to Locked Rule 8's default; even if operator misconfigures Doppler, behavior is well-defined.
+# Fallback chain (per-tier, ordered):
+flowai/<env>/FLOWAI_MODEL_TIER_LOW_FALLBACK_CHAIN
+  # comma-separated: 'openrouter/anthropic/claude-haiku-4-5,openrouter/google/gemini-2.0-flash-001'
+flowai/<env>/FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN
+  # 'openrouter/openai/gpt-4o,claude-sonnet-4-6'
+# etc per tier
+```
+
+**Why tier-keyed not per-model (v2 R3):** v1's `FLOWAI_PRIMARY_MODEL` + `FLOWAI_FALLBACK_MODEL` keys conflated tier semantics with model identity — when Anthropic releases `claude-sonnet-4-7`, the operator had to manually update both the primary AND fallback if the upgrade implied tier changes. Tier-keyed structure lets operators swap "which model fulfils tier X" cleanly without disturbing per-agent code.
+
+**Selection algorithm (per dispatch):**
+
+```pseudocode
+async function selectModel({ requestedTier, runId, productId }) {
+  // 1. Per-product operator override (highest precedence)
+  const override = await productRegistry.modelSelectionOverride[productId]?.[requestedTier];
+  if (override) return override;
+
+  // 2. Tier-keyed Doppler primary
+  const tierKey = `FLOWAI_MODEL_TIER_${requestedTier.toUpperCase()}`;
+  const primary = await readDoppler(tierKey);
+  if (primary) return primary;
+
+  // 3. Fallback chain (comma-separated Doppler value)
+  const chainKey = `${tierKey}_FALLBACK_CHAIN`;
+  const chain = (await readDoppler(chainKey) || '').split(',').filter(Boolean);
+  for (const candidate of chain) {
+    if (await modelAvailable(candidate)) return candidate;
+  }
+
+  // 4. Hardcoded final fallback (Locked Rule 8 + Cluster F §2.1.2 default-mapping table)
+  return CLUSTER_F_DEFAULTS[requestedTier] || 'claude-sonnet-4-6';
+}
+```
+
+**`requestedTier` selection (per-agent):**
+
+Each agent declares its **default tier** in §6.X of its spec (typically `medium` for canonical analysis tasks). For Cluster A budget-driven downgrade (per §2.5 v2 R2), the requested tier may be lowered mid-run.
+
+**Hardcoded canonical anchors** (Locked Rule 8 + Cluster F final fallback):
+
+```
+CLUSTER_F_DEFAULTS = {
+  free:       'openrouter/meta-llama/llama-3.3-70b-instruct',
+  low:        'openrouter/google/gemini-2.0-flash-001',
+  medium:     'claude-sonnet-4-6',
+  high:       'claude-opus-4-7',
+  enterprise: 'openai/gpt-5',   // updated per Locked Rule 8 fallback ladder
+};
+```
+
+These are the LAST-RESORT fallbacks when Doppler is misconfigured. The system always has a well-defined model selection even with zero Doppler keys set.
+
+### §2.1.1 — Cost-tier definitions (v2 R1 — numeric + named)
+
+Tiers are both NAMED (operator-facing UX) and NUMERIC (Locked Rule 18 rank_score weight). Canonical table:
+
+| Tier name | USD per 1K input tokens (band) | USD per 1K output tokens (band) | Locked Rule 18 `price_weight` |
+|---|---:|---:|---:|
+| `free` | $0.0000 | $0.0000 | 1.0 |
+| `low` | $0.0001 – $0.0010 | $0.0003 – $0.0030 | 0.8 |
+| `medium` | $0.0011 – $0.0050 | $0.0031 – $0.0150 | 0.6 |
+| `high` | $0.0051 – $0.0200 | $0.0151 – $0.0600 | 0.3 |
+| `enterprise` | $0.0201+ | $0.0601+ | 0.1 |
+
+Tier assignment per model is recorded in `src/lib/orchestra/modelTiers.js` (canonical lookup; updated when providers re-price). Re-pricing handling per §2.5 v2 R2.
+
+`price_weight` feeds the Locked Rule 18 rank_score formula:
+```
+rank_score = performance × 0.6 + price_weight × 0.4
+```
+Lower-tier models get higher `price_weight`, biasing toward cheaper choices when performance is comparable.
+
+### §2.1.2 — Per-agent tier defaults
+
+Each agent declares its default tier (and tier-policy: `strict` = use exact tier always; `budget-flex` = downgrade per §2.5 if budget tight):
+
+| Agent | Default tier | Policy |
+|---|---|---|
+| #6 Research | `medium` | budget-flex |
+| #8 Quality Audit | `medium` | budget-flex (5 parallel; cost-sensitive) |
+| #9 GTM | `medium` | budget-flex |
+| #10 Monitor (sentiment) | `low` | strict (high volume) |
+| #11 Strategic Intelligence | `medium` | budget-flex |
+| #13 Self-Protection (threat classification) | `low` | strict |
+| #14 Public Policy | `medium` | budget-flex |
+| #15 Benchmarking (LLM judge) | `medium` | strict (rubric consistency) |
+| #17 Product Evolution | `medium` | budget-flex |
+| #19 Tech Evolution (CVE classification) | `low` | strict |
+| #20 Environmental Impacts | `low` | budget-flex |
+| #23 Cost Governor (anomaly classification) | `low` | strict |
+| #26 Orchestra Research (candidate fit) | `medium` | budget-flex |
+| (others) | per-agent spec | per-agent spec |
 
 ### §2.2 — Per-dispatch failure fallback (orthogonal to §2.1)
 
@@ -128,28 +225,57 @@ emit('agent.model.fallback.v1', {
 
 Emitted on EVERY dispatch (not just when fallback occurred) — provides full observability of model selection. Cost dashboards aggregate by `requestedModel` vs `actualModel` to detect operator-misconfigured Doppler or systemic outage patterns.
 
-### §2.5 — Operator override per product
+### §2.5 — Cost-tier-change handling (v2 R2)
 
-Operators can override per-product via `ProductRegistry.modelSelectionOverride` JSONB:
+**Two distinct change scenarios:**
+
+**(a) Provider re-prices an already-selected model (e.g. Anthropic raises `claude-opus-4-7` from `high` to `enterprise` tier):**
+
+- Updated tier reflected in `src/lib/orchestra/modelTiers.js` (canonical lookup) within 24h of provider announcement (Agent #19 Tech Evolution monitors vendor pricing pages per CVE-feed pattern).
+- Per-product `ProductRegistry.modelSelectionOverride[productId][requestedTier]` references the model by NAME, not tier — so override is unaffected by re-pricing.
+- Tier-keyed Doppler reference (`FLOWAI_MODEL_TIER_HIGH`) is unaffected — Doppler maps tier-name to model-name; if `claude-opus-4-7` re-prices to enterprise, operator should update `FLOWAI_MODEL_TIER_HIGH` to point at a new high-tier model.
+- Agents currently using the re-priced model emit `agent.model.tier_changed.v1` (added to Cluster D P0 set) for observability.
+
+**(b) Selected model's tier exceeds per-product budget headroom mid-run (Cluster A `reserve()` denied due to tier × token-estimate cost > available budget):**
+
+The interaction with Cluster A is canonical:
+
+```
+1. Agent selects model per §2.1 → returns 'claude-opus-4-7' (high tier).
+2. Agent calls costGovernor.reserve({...estimatedCostUsd based on high-tier pricing}).
+3. costGovernor.reserve() returns {ok: false, reason: 'ceiling_would_be_exceeded'}.
+4. If agent's tier-policy is 'strict' → agent halts; emit normal block envelope reason 'budget-cap-reached'.
+5. If agent's tier-policy is 'budget-flex' → agent downgrades tier:
+   a. Agent re-selects: requestedTier = 'medium' (one tier lower than 'high').
+   b. Agent re-estimates cost at medium-tier pricing.
+   c. Agent re-calls costGovernor.reserve() with new estimate.
+   d. Cycle repeats up to 3 downgrade attempts (high → medium → low → free).
+   e. If 'free' tier also denied → halt.
+6. Agent emits agent.model.tier_downgraded.v1 (added to Cluster D P0 set) recording
+   {requestedTier, deliveredTier, downgradeReason: 'budget'}.
+```
+
+**Tier-downgrade cap:** 3 downgrade attempts per dispatch (high → free max). Cycle is bounded to prevent infinite downgrade loops; agent halts after exhaustion.
+
+**Per Cluster A §2.6 v2 R4 ordering:** the downgrade loop runs AFTER `getCeiling()` clears + BEFORE Orchestra dispatch — operator's ceiling check is independent of cost-tier; both must clear for dispatch to proceed.
+
+### §2.6 — Operator override per product
+
+Operators can override per-product per-tier via `ProductRegistry.modelSelectionOverride` JSONB:
 
 ```json
 {
   "modelSelectionOverride": {
-    "primary": "anthropic/claude-opus-4-7",
-    "fallback": "openrouter/google/gemini-2.5-pro",
-    "final": "claude-sonnet-4-6"
+    "free":       "openrouter/meta-llama/llama-3.3-70b-instruct",
+    "low":        "openrouter/google/gemini-2.0-flash-001",
+    "medium":     "openrouter/anthropic/claude-sonnet-4-6",
+    "high":       "claude-opus-4-7",
+    "enterprise": "openai/gpt-5"
   }
 }
 ```
 
-When operator override is present, it takes precedence over Doppler values for that product's invocations. Override is admin-editable per §13; edits are audit-logged per §14.
-
-### §2.6 — Interaction with cost ceiling (Cluster A)
-
-Each model in the selection chain has a cost-tier per Locked Rule 18:
-- `free` (e.g. some local models) / `low` / `medium` / `high` / `enterprise`
-
-Before dispatch, Agent #23 Cost Governor's `reserve()` call (Cluster A §2.3) checks budget for the SELECTED model. If primary is `enterprise`-tier and over budget → `reserve()` returns `{ok: false}` → agent re-selects with fallback model (which should be lower cost-tier) → re-attempts `reserve()`. This loop is bounded (3 attempts max; final fallback always succeeds if any budget remains).
+When operator override is present for a tier, it takes precedence over Doppler values for that product's invocations. Override is admin-editable per §13; edits are audit-logged per §14.
 
 ### §2.7 — Forbidden patterns
 
@@ -157,42 +283,57 @@ The following patterns are EXPLICITLY forbidden in agent code:
 
 - `const modelId = 'claude-sonnet-4-6'` (hardcoded model name in agent logic — violates §2.1)
 - `if (anthropicAvailable) modelId = 'claude-...' else modelId = 'gpt-...'` (per-agent fallback logic — violates §2.2 single-mechanism principle)
-- Reading `FLOWAI_PRIMARY_MODEL` at agent construction time only (must be re-read per dispatch per §2.1)
+- Reading `FLOWAI_MODEL_TIER_*` at agent construction time only (must be re-read per dispatch per §2.1)
+- Reading per-model Doppler keys directly (e.g. `FLOWAI_PRIMARY_MODEL` v1 — REMOVED in v2; only tier-keyed reads allowed)
 
 ---
 
 ## §3 — Agent Spec Integration Instructions
 
-### §3.1 — Block to paste into §6 Implementation Plan / §7 Security Controls of every LLM-calling agent spec
+### §3.1 — Block to paste into §6 Implementation Plan / §7 Security Controls of every LLM-calling agent spec (v2)
 
 ````markdown
-### §7.X — Model selection + fallback (canonical per CLUSTER_F_MODEL_BUDGET_FALLBACK.md)
+### §7.X — Model selection + fallback (canonical per CLUSTER_F_MODEL_BUDGET_FALLBACK.md v2)
 
-This agent's LLM dispatches MUST use the canonical 3-tier selection chain:
+This agent's default tier is `<medium|low|...>` per Cluster F §2.1.2 with
+tier-policy `<strict|budget-flex>`.
 
-1. `FLOWAI_PRIMARY_MODEL` from Doppler `flowai/<env>/FLOWAI_PRIMARY_MODEL`.
-2. `FLOWAI_FALLBACK_MODEL` from Doppler `flowai/<env>/FLOWAI_FALLBACK_MODEL`.
-3. Hardcoded final fallback: `claude-sonnet-4-6` (per Locked Rule 8).
+LLM dispatches MUST use the canonical tier-keyed selection chain (v2 R3):
+
+1. **Operator override** (highest precedence):
+   `ProductRegistry.modelSelectionOverride[productId][<requestedTier>]`.
+2. **Tier-keyed Doppler primary:**
+   `flowai/<env>/FLOWAI_MODEL_TIER_<TIER>`.
+3. **Tier-keyed Doppler fallback chain:**
+   `flowai/<env>/FLOWAI_MODEL_TIER_<TIER>_FALLBACK_CHAIN`
+   (comma-separated; tried in order until one is reachable).
+4. **Hardcoded final-fallback** per Cluster F §2.1 `CLUSTER_F_DEFAULTS`.
 
 Selection is re-read PER DISPATCH (not cached at agent construction).
 
-Operator per-product override per `ProductRegistry.modelSelectionOverride`
-takes precedence when present.
+**Cost-tier-change handling per Cluster F §2.5 v2 R2:**
+- If `costGovernor.reserve()` denies due to budget, AND this agent's
+  tier-policy is `budget-flex`, this agent re-selects one tier lower
+  and re-attempts `reserve()`. Up to 3 downgrade attempts (high → free).
+- If policy is `strict` OR all downgrades exhausted, agent halts with
+  block reason `'budget-cap-reached'`.
+- Each downgrade emits `agent.model.tier_downgraded.v1` for audit.
 
 Dispatch then goes through `dispatchWithFallback` (CA-11-A.4) using this
-agent's ToolMenu per CA-11-B.<n>. The combined sequence is the Cluster F §2.3
-pattern.
+agent's ToolMenu per CA-11-B.<n>.
 
-Forbidden in this agent's implementation:
-- Hardcoded model name in agent logic (e.g. `'claude-sonnet-4-6'` literal
-  in agent code outside the final-fallback constant)
-- Per-agent fallback logic (`if anthropic else openai`) — use Cluster F
-  selection chain + CA-11-A.4 only.
-- Caching `FLOWAI_PRIMARY_MODEL` at agent construction (must re-read per
-  dispatch).
+Forbidden in this agent's implementation (v2):
+- Hardcoded model name in agent logic
+- Per-agent fallback logic (`if anthropic else openai`)
+- Reading per-model Doppler keys directly (v1 `FLOWAI_PRIMARY_MODEL` is
+  REMOVED in v2; tier-keyed reads only)
+- Caching tier-keyed Doppler value at agent construction (must re-read
+  per dispatch)
 
 This agent emits `agent.model.fallback.v1` per Cluster F §2.4 on every
-dispatch (not just fallback events) for full observability.
+dispatch + `agent.model.tier_downgraded.v1` when downgrade occurs +
+`agent.model.tier_changed.v1` when underlying tier-mapping changes (per
+Cluster F §2.5 v2 R2 scenario (a)).
 ````
 
 ### §3.2 — Block to paste into §4 Output Contract (cross-cluster envelope)
@@ -204,39 +345,48 @@ Cluster F §2.4. Cost dashboards aggregate by `requestedModel` vs
 `actualModel` for operator + admin observability.
 ````
 
-### §3.3 — Block to paste into §9 Acceptance Criteria
+### §3.3 — Block to paste into §9 Acceptance Criteria (v2)
 
 ````markdown
-- **AC-MF-N** — Given `FLOWAI_PRIMARY_MODEL` Doppler value is set to
-  `gpt-5`, this agent's dispatch attempts `gpt-5` FIRST; on `gpt-5`
-  failure (mocked 429), falls back per CA-11-A.4 ToolMenu chain.
-- **AC-MF-N+1** — Given `FLOWAI_PRIMARY_MODEL` AND `FLOWAI_FALLBACK_MODEL`
-  Doppler values are both empty: agent uses hardcoded `claude-sonnet-4-6`
-  as the final fallback per Locked Rule 8.
-- **AC-MF-N+2** — `ProductRegistry.modelSelectionOverride.primary` takes
-  precedence over Doppler `FLOWAI_PRIMARY_MODEL` per Cluster F §2.5.
-  Verify by per-product override integration test.
+- **AC-MF-N** — Given `FLOWAI_MODEL_TIER_MEDIUM` Doppler value is set to
+  `claude-sonnet-4-6`, this agent's medium-tier dispatch attempts
+  `claude-sonnet-4-6` FIRST; on failure (mocked 429), falls back per
+  `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` then CA-11-A.4 ToolMenu chain.
+- **AC-MF-N+1** — Given tier-keyed Doppler value AND fallback chain
+  Doppler value are both empty: agent uses Cluster F §2.1 hardcoded
+  default for the requested tier (e.g. `claude-sonnet-4-6` for medium).
+- **AC-MF-N+2** — `ProductRegistry.modelSelectionOverride[productId]
+  [<requestedTier>]` takes precedence over tier-keyed Doppler. Verify
+  by per-product override integration test.
 - **AC-MF-N+3** — `agent.model.fallback.v1` emitted on EVERY dispatch
   (success or failure); `attemptChain` records every adapter/model
   attempt with outcome + duration.
 - **AC-MF-N+4** — No hardcoded model name appears in agent code outside
-  the final-fallback constant. CI grep guard:
-  `grep -E "['\"](claude|gpt|gemini|sonar|opus)-?\\d" src/lib/agents/agents/`
-  must return zero hits except for the canonical final-fallback constant
-  location.
+  the canonical Cluster F §2.1 `CLUSTER_F_DEFAULTS` constant location.
+  CI grep guard:
+  `grep -E "['\"](claude|gpt|gemini|sonar|opus|llama)-?\\d" src/lib/agents/agents/`
+  must return zero hits except for the CLUSTER_F_DEFAULTS source.
+- **AC-MF-N+5 (v2 R2)** — Given Cluster A reserve() denies due to budget
+  AND this agent's policy is budget-flex: agent downgrades tier (up to
+  3 attempts); `agent.model.tier_downgraded.v1` emitted per downgrade.
+  Given policy is strict: agent halts with `'budget-cap-reached'`.
+- **AC-MF-N+6 (v2 R3)** — Reading non-tier-keyed Doppler keys
+  (`FLOWAI_PRIMARY_MODEL`, `FLOWAI_FALLBACK_MODEL` from v1) returns null
+  and triggers `MODEL_KEY_DEPRECATED[<keyName>]` CI warning. v1 keys are
+  removed in v2; tier-keyed keys only.
 ````
 
 ---
 
-## §4 — Acceptance Criteria
+## §4 — Acceptance Criteria (v2)
 
 How W2 verifies the Cluster F fix is correctly implemented across agent specs.
 
-1. **AC-CF-1 (Spec-level coverage):** Every LLM-calling agent spec contains the Cluster F §3.1 block in §7. Specs without it are non-conformant.
+1. **AC-CF-1 (Spec-level coverage v2):** Every LLM-calling agent spec contains the Cluster F §3.1 v2 block in §7. Specs without it are non-conformant. Spec MUST declare default tier per §2.1.2 + tier-policy.
 
-2. **AC-CF-2 (Doppler-first ordering):** Implementation test (deferred) — when `FLOWAI_PRIMARY_MODEL` is set, dispatch uses that model FIRST; the Doppler read happens PER DISPATCH (not cached).
+2. **AC-CF-2 (Doppler tier-keyed ordering v2 R3):** Implementation test (deferred) — when `FLOWAI_MODEL_TIER_MEDIUM` is set to `'claude-sonnet-4-6'`, medium-tier dispatch uses `claude-sonnet-4-6` FIRST; Doppler read happens PER DISPATCH (not cached). Reading `FLOWAI_PRIMARY_MODEL` (v1 key) returns null + warning.
 
-3. **AC-CF-3 (Final-fallback canonical):** When both Doppler values empty AND no operator override, dispatch uses `claude-sonnet-4-6` (per Locked Rule 8); this is the only allowed hardcoded model name in the canonical code path.
+3. **AC-CF-3 (Hardcoded final-fallback per-tier v2):** When tier-keyed Doppler value AND fallback chain are empty, dispatch uses Cluster F §2.1 `CLUSTER_F_DEFAULTS[<requestedTier>]`. These are the only allowed hardcoded model names in the canonical code path.
 
 4. **AC-CF-4 (Operator override precedence):** `ProductRegistry.modelSelectionOverride` takes precedence over Doppler for that product's invocations.
 
@@ -244,7 +394,13 @@ How W2 verifies the Cluster F fix is correctly implemented across agent specs.
 
 6. **AC-CF-6 (No hardcoded model names):** CI grep guard rejects PRs that introduce hardcoded model names outside the canonical final-fallback constant.
 
-7. **AC-CF-7 (Cluster A interaction):** When primary model fails Cluster A `reserve()` due to enterprise-tier cost > budget, agent re-selects with fallback model (lower cost-tier) and re-attempts; max 3 reservation attempts before giving up.
+7. **AC-CF-7 (Cluster A interaction v2 R2):** When `costGovernor.reserve()` denies due to budget AND agent's tier-policy is `budget-flex`: agent downgrades tier (one level at a time; up to 3 attempts: high → medium → low → free) and re-attempts `reserve()`. Each downgrade emits `agent.model.tier_downgraded.v1`. Policy `strict` halts immediately.
+
+8. **AC-CF-8 (v2 R1 — Cost-tier table canonical):** `src/lib/orchestra/modelTiers.js` declares per-model tier assignment matching §2.1.1 USD bands. Mismatch (model classified as `medium` but priced in `high` band) fails CI guard.
+
+9. **AC-CF-9 (v2 R2 — Provider re-pricing):** When `src/lib/orchestra/modelTiers.js` is updated (e.g. provider re-prices), `agent.model.tier_changed.v1` is emitted for any in-flight dispatch using the re-classified model. Agent #19 Tech Evolution monitors provider pricing pages; tier update lands within 24h of provider announcement.
+
+10. **AC-CF-10 (v2 R3 — Hierarchical Doppler):** All tier-keyed Doppler keys (`FLOWAI_MODEL_TIER_FREE` through `FLOWAI_MODEL_TIER_ENTERPRISE` + corresponding `_FALLBACK_CHAIN`) are provisioned in Doppler before any agent ships. Empty keys are valid (Cluster F final-fallback kicks in); missing keys (key not declared at all) fail Doppler key inventory validator. Per-tier override JSONB `ProductRegistry.modelSelectionOverride[productId][<tier>]` reads correctly.
 
 ---
 
@@ -290,4 +446,4 @@ EXECUTOR_REGISTRY siblings (Self-Renewal Executor, ACE Conductor Executor, etc.)
 
 ---
 
-*End of CLUSTER_F_MODEL_BUDGET_FALLBACK.md canonical template. Pending W6 Panel ratification.*
+*End of CLUSTER_F_MODEL_BUDGET_FALLBACK.md canonical template v2. Panel `PLURALITY_CLF-REVISE` 6/9 conditions R1–R3 applied. Pending W6 re-ratification.*
