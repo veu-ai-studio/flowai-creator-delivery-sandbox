@@ -1652,6 +1652,29 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+### ENTRY 007 — 2026-05-16
+- **Completion:** Phase 3 — Auth Traversal **COMPLETE** (all 5 chunks delivered)
+- **Spec baseline:** `docs/specs/AUTH_TRAVERSAL_SECURITY_SPEC.md` v3 (frozen at commit `be594e3` — "Option B screenshots deferred, memory-MUST, 9-lang i18n, 90d+1yr retention")
+- **Commits (5 chunks, in order):**
+  - **CHUNK 1** — `7727f8d` (W5a): AGENT_21 capability boundary blueprint
+  - **CHUNK 2** — `fcb4de8` (W5a): Agent #21 Executor + 3 auth helpers + EXECUTOR_REGISTRY entry
+  - **CHUNK 3** — `fdad6b7` (W5a): `scrubArtifacts.js` — DOM / network-log / delta scrubbers
+  - **CHUNK 4** — landed inside `8daec3f` (commit message reads "W3: Agent #13 Self-Protection engineering spec"; auth-traversal code files bundled in via concurrent `git add -A` by another workstream — see § Note below)
+  - **CHUNK 5** — landed inside `076a35b` (commit message reads "W6: 18-agent consolidated adversarial Panel"; auth-traversal code files bundled in similarly — see § Note below)
+- **Status:** COMPLETE
+  - 1656 / 1656 tests pass
+  - All 10 invariants from AUTH_TRAVERSAL_SECURITY_SPEC v3 §1 tested (I1 credentials never logged; I2 storageState memory-only MUST; I3 MFA / CAPTCHA / 401 / 403 fail-loud; I4 cross-origin REFUSE; I5 strict same-origin; I6 scrubCredentials at every external-send boundary; I7 one-shot credentials per runId; I8 session-only credentials; I9 audit-log injection guards; I10 memory-resident credential lifetime)
+  - All 9 i18n language families (en / es / fr / pt / de / zh-CN / ja / ko / ar) tested with localized login forms
+  - No-screenshot regression guard active (Option B canonical per v3 §1)
+- **Capability unlocked:** FlowAI can now perform authenticated multi-page crawls of operator-owned products using real credentials, with full credential scrubbing, MFA fail-loud, and audit-log retention per `auth_short` class (90 days hot + 1 year cold per v3 baseline).
+- **§ Note on commit mis-attribution (CHUNK 4 + CHUNK 5):**
+  - **What happened:** During the dispatch window 2026-05-16 21:00–21:30 ET, two W3 commits (`8daec3f` Agent #13 spec, `076a35b` 18-agent Panel artifacts) bundled additional `api/agent/21/execute.js` + `src/lib/agents/auth/*` files that belonged to W5a's Phase 3 chunks 4 + 5. Bundling occurred because a parallel workstream had staged Phase 3 chunk work via `git add -A` (or equivalent broad-staging operation) that landed in the index just before the W3 / W6 commits ran their `git add <specific-file>` + `git commit` pair, sweeping the staged Phase 3 files into the wrong commits.
+  - **Code state:** **CORRECT.** All Phase 3 chunk files are present on `flowai-v0.1`, tests pass, no functional defects — only the commit-message attribution is misleading.
+  - **Future fix (binding for all workstreams W0..W6):** ALWAYS use `git add <specific-file>` (or `git restore --staged . && git add <specific-file>`) before `git commit`; NEVER use `git add -A` / `git add .` / `git add -u` in any workstream commit path. W3 adopted the `git restore --staged . && git add <specific-file>` pattern at Agent #14 spec (commit `469e07c`) onwards in Dispatch #6; recommendation: codify as a Locked Rule at the next CANONICAL_REFERENCE.md amendment cycle.
+- **Lineage:** AUTH_TRAVERSAL_SECURITY_SPEC v3 freeze (commit `be594e3`) → CHUNK 1 (`7727f8d`) → CHUNK 2 (`fcb4de8`) → CHUNK 3 (`fdad6b7`) → CHUNK 4 (in `8daec3f`) → CHUNK 5 (in `076a35b`) → 1656/1656 tests green → this entry
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-16)
 
 
