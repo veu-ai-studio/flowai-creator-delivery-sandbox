@@ -132,6 +132,43 @@ Mode-agnostic for proposal generation; mode-aware for downstream action (Self-Re
 
 ---
 
+### §5.5 — Cluster Template Integration Blocks (v2 — per W3 Dispatch #11)
+
+**Cluster A — Cost signaling** (per `CLUSTER_A_COST_GOVERNOR_INTEGRATION.md` v2):
+Emits `agent.cost.signal.v1` before each LLM call (daily benchmark consumption +
+monthly Self-Renewal Alert generation). Agent #23 is the sole canonical
+enforcement owner. Call order per Cluster A §2.6 v2 R4 applies per dispatch.
+
+**Cluster B — Data quality gate** (per `CLUSTER_B_DATA_QUALITY_GATE.md` v2):
+Effective threshold = `ProductRegistry.minimumDataQuality.agent_17_product_evolution.eventCountMin`
+OR per-agent default: `eventCountMin: 1` (clamped to [1, 1000]).
+- Mode 1 + Mode 2 SUB-2A: below threshold → emit
+  `agent.data_quality.insufficient.v1` with `insufficient-signal` reason
+  and halt (no benchmark stream means no defensible evolution proposal).
+- Mode 3A: degrade per Cluster B §2.7 v2 R1 if dataQualityScore ≥ 0.3.
+Upstream-halt tolerance per Cluster B §2.8 v2 R4: `degrade-on-any` (partial
+benchmark or audit history → proposals with explicit confidence flag).
+
+**Cluster C — Mode behavior:** agent output is identical across all pipeline
+modes (Pattern P1 per Cluster C §2.3). `pipelineMode` field omitted per
+Cluster C §2.4 v2 R2. Default Mode 1.
+
+**Cluster D — MessageBus topics** (per `CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md`
+v2): This agent emits `17.evolution.proposal.v1` (per `_registry.ts`) plus
+charter-expansion topics `17.orchestra.deprecation_proposal.v1`,
+`17.self_renewal_alert.v1`. Cross-cluster topics ship in P0 patch.
+
+**Cluster F — Model selection** (per `CLUSTER_F_MODEL_BUDGET_FALLBACK.md`
+v2): Default tier `medium`; tier-policy `budget-flex` per Cluster F §2.1.2.
+Selection:
+1. `ProductRegistry.modelSelectionOverride[productId].medium`.
+2. `FLOWAI_MODEL_TIER_MEDIUM` from Doppler.
+3. `FLOWAI_MODEL_TIER_MEDIUM_FALLBACK_CHAIN` from Doppler.
+4. `CLUSTER_F_DEFAULTS.medium` → `claude-sonnet-4-6`.
+Selection re-read per dispatch. Tier-downgrade per Cluster F §2.5 v2 R2.
+
+---
+
 ## §6 — Implementation Plan
 
 ### §6.1 Files to create (new)
