@@ -979,6 +979,9 @@ export async function runOrchestration(args = {}) {
             token,
           });
         }
+        // DISPATCH 30 — record the per-file commit order on iterLog so
+        // the per-fix attribution block (after STEP 11) can reference it.
+        iterLog.fileFixes = fileChanges.map((f) => f.filePath);
         const log = makeStepLog({
           iteration: iterationNumber, step: 9, status: 'complete',
           tool: 'githubBranchWriter.js (createRenewalBranch + commitFileToBranch)',
@@ -1232,6 +1235,48 @@ export async function runOrchestration(args = {}) {
         error: e?.message ?? String(e), code: e?.code ?? 'SCORING_FAILED' });
     }
     await state.checkpoint(onCheckpoint, { lastStep: 11, iteration: iterationNumber });
+
+    // DISPATCH 30 — Per-fix attribution.
+    // The branch deploy's pre-fix score (preGtm) is the no-fixes
+    // baseline for this iteration — produced from the same crawl that
+    // STEP 5 scored against the source URL (which is `main` on iter 1
+    // and the prior iteration's preview URL on subsequent iters). The
+    // bundle of files committed in this iteration is the delta agent.
+    // We attach a per-file attribution record so the operator can see
+    // which files participated in the bundle delta in commit order.
+    // Honest scope: this records the BUNDLE delta + the file list +
+    // commit order. It does NOT claim per-file isolated deltas — that
+    // would require N+1 deploys per iteration (a future enhancement).
+    {
+      const committedFiles = Array.isArray(iterLog.fileFixes)
+        ? iterLog.fileFixes
+        : []; // populated after STEP 9 below — fallback to [] if missing
+      const _preGtm  = iterLog.preGtm  ?? { score: 0 };
+      const _postGtm = iterLog.postGtm ?? { score: 0 };
+      const bundleDelta = (_postGtm.score ?? 0) - (_preGtm.score ?? 0);
+      iterLog.perFixAttribution = committedFiles.map((filePath, idx) => ({
+        filePath,
+        commitOrder: idx,
+        bundleDelta,
+        baselineScore: _preGtm.score ?? 0,
+        postBundleScore: _postGtm.score ?? 0,
+        isolatedDelta: null,  // honest: not measured per-file in Phase A
+        attributionMethod: 'bundle',
+      }));
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 11, status: 'complete',
+        tool: 'per-fix attribution (D30)',
+        why: 'attach per-file commit-order trace to the iteration\'s bundle delta for regression isolation',
+        result: {
+          bundleDelta,
+          baselineScore: _preGtm.score ?? 0,
+          postBundleScore: _postGtm.score ?? 0,
+          filesInBundle: committedFiles.length,
+          attribution: iterLog.perFixAttribution,
+        },
+        durationMs: 0, mode: state.mode,
+      }));
+    }
 
     // DISPATCH 30 — Post-deploy regression guard.
     // Compare canonical §7.6 post-fix against pre-fix. A fix is REJECTED

@@ -1164,3 +1164,90 @@ describe('orchestrator — post-deploy regression guard (DISPATCH 30)', () => {
     } finally { clearVercelEnv(); }
   });
 });
+
+// ── DISPATCH 30 — per-fix attribution ──────────────────────────────────
+
+describe('orchestrator — per-fix attribution (DISPATCH 30)', () => {
+  function attributionDeps({ filePaths = ['src/a.js', 'src/b.js'], preGtm, postGtm } = {}) {
+    const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [50] });
+    // Build a stub commitFileToBranch + createRenewalBranch that just
+    // records the order; orchestrator's STEP 7 calls generateFix per
+    // prioritized issue → we use suppliedIssue + commit deps.
+    const seq = [preGtm, postGtm];
+    let i = 0;
+    return {
+      ...base,
+      scoreCrawlOutput: vi.fn(() => seq[i++] ?? seq[seq.length - 1]),
+      // We bypass Claude prioritizer by supplying an issue at top-level —
+      // it produces ONE file path. To get multiple files, we have to
+      // route through a deps.generateFix that returns content for
+      // multiple prioritized issues. Cleanest: stub prioritizeIssuesWith
+      // by injecting Anthropic fetch that returns multiple issues, but
+      // simpler — the happyDeps already handle one issue; we'll just
+      // verify per-fix-attribution shape on a single-file iteration.
+    };
+  }
+
+  it('attaches perFixAttribution with commit-order + bundle delta', async () => {
+    withVercelEnv();
+    try {
+      const preGtm  = { score: 80, counts: { critical: 0, high: 0, medium: 5, low: 0 }, band: 'demo-ready', label: 'x', penalty: 10, formula: 'x', issues: [] };
+      const postGtm = { score: 95, counts: { critical: 0, high: 0, medium: 0, low: 0 }, band: 'showcase-ready', label: 'x', penalty: 5, formula: 'x', issues: [] };
+      const deps = attributionDeps({ preGtm, postGtm });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd30-pfa-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        issue: { filePath: 'src/Hero.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 'demo' },
+      });
+      const iter1 = result.iterations[0];
+      expect(Array.isArray(iter1.perFixAttribution)).toBe(true);
+      expect(iter1.perFixAttribution).toHaveLength(1);
+      const entry = iter1.perFixAttribution[0];
+      expect(entry.filePath).toBe('src/Hero.jsx');
+      expect(entry.commitOrder).toBe(0);
+      expect(entry.bundleDelta).toBe(15);                        // 95 - 80
+      expect(entry.baselineScore).toBe(80);
+      expect(entry.postBundleScore).toBe(95);
+      expect(entry.isolatedDelta).toBeNull();                    // honest: not measured per-file
+      expect(entry.attributionMethod).toBe('bundle');
+    } finally { clearVercelEnv(); }
+  });
+
+  it('emits a per-fix attribution log entry with the bundle delta verbatim', async () => {
+    withVercelEnv();
+    try {
+      const preGtm  = { score: 70, counts: { critical: 0, high: 0, medium: 10, low: 0 }, band: 'internal-only', label: 'x', penalty: 20, formula: 'x', issues: [] };
+      const postGtm = { score: 65, counts: { critical: 0, high: 1, medium: 5, low: 0 }, band: 'internal-only', label: 'x', penalty: 15, formula: 'x', issues: [] };
+      const deps = attributionDeps({ preGtm, postGtm });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd30-pfa-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        issue: { filePath: 'src/Bad.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 'demo' },
+      });
+      const attrLogs = result.orchestrationLog.filter((l) =>
+        l.tool === 'per-fix attribution (D30)',
+      );
+      expect(attrLogs).toHaveLength(1);
+      expect(attrLogs[0].result.bundleDelta).toBe(-5);
+      expect(attrLogs[0].result.baselineScore).toBe(70);
+      expect(attrLogs[0].result.postBundleScore).toBe(65);
+      expect(attrLogs[0].result.filesInBundle).toBe(1);
+      expect(attrLogs[0].result.attribution[0].filePath).toBe('src/Bad.jsx');
+    } finally { clearVercelEnv(); }
+  });
+
+  it('iterLog.fileFixes carries the committed file list in commit order', async () => {
+    withVercelEnv();
+    try {
+      const preGtm  = { score: 80, counts: { critical: 0, high: 0, medium: 5, low: 0 }, band: 'demo-ready', label: 'x', penalty: 10, formula: 'x', issues: [] };
+      const postGtm = { score: 95, counts: { critical: 0, high: 0, medium: 0, low: 0 }, band: 'showcase-ready', label: 'x', penalty: 5, formula: 'x', issues: [] };
+      const deps = attributionDeps({ preGtm, postGtm });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd30-pfa-3', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        issue: { filePath: 'src/Footer.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 'demo' },
+      });
+      expect(result.iterations[0].fileFixes).toEqual(['src/Footer.jsx']);
+    } finally { clearVercelEnv(); }
+  });
+});
