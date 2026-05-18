@@ -932,6 +932,46 @@ describe('resolveVercelBypassSecret (DISPATCH 27)', () => {
       VERCEL_BYPASS_SECRET_SAIGE: 's-saige',
     })).toBeNull();
   });
+
+  // ── DISPATCH 31 — VERCEL_AUTOMATION_BYPASS_SECRET fallback ─────────────
+  it('falls back to VERCEL_AUTOMATION_BYPASS_SECRET when no productId is given (self-test path)', () => {
+    expect(resolveVercelBypassSecret(null, {
+      VERCEL_AUTOMATION_BYPASS_SECRET: 'auto-secret-32-chars',
+    })).toBe('auto-secret-32-chars');
+    expect(resolveVercelBypassSecret(undefined, {
+      VERCEL_AUTOMATION_BYPASS_SECRET: 'auto-secret-32-chars',
+    })).toBe('auto-secret-32-chars');
+    expect(resolveVercelBypassSecret('', {
+      VERCEL_AUTOMATION_BYPASS_SECRET: 'auto-secret-32-chars',
+    })).toBe('auto-secret-32-chars');
+  });
+
+  it('falls back to VERCEL_AUTOMATION_BYPASS_SECRET when per-product secret missing', () => {
+    // Product is 'flowai' but only the automation secret is in env — the
+    // resolver should still return a value so the self-crawl can read
+    // the FlowAI production preview without 401.
+    expect(resolveVercelBypassSecret('flowai', {
+      VERCEL_AUTOMATION_BYPASS_SECRET: 'auto-secret-32-chars',
+    })).toBe('auto-secret-32-chars');
+  });
+
+  it('per-product secret still takes precedence over the AUTOMATION fallback', () => {
+    expect(resolveVercelBypassSecret('mypreglife', {
+      VERCEL_BYPASS_SECRET_MYPREGLIFE: 's-mpl',
+      VERCEL_AUTOMATION_BYPASS_SECRET: 'auto-fallback',
+    })).toBe('s-mpl');
+  });
+
+  it('returns null when neither per-product NOR automation secret set', () => {
+    expect(resolveVercelBypassSecret('flowai', {})).toBeNull();
+    expect(resolveVercelBypassSecret(null, {})).toBeNull();
+  });
+
+  it('AUTOMATION fallback ignores empty string', () => {
+    expect(resolveVercelBypassSecret('flowai', {
+      VERCEL_AUTOMATION_BYPASS_SECRET: '',
+    })).toBeNull();
+  });
 });
 
 describe('isVercelDeploymentUrl (DISPATCH 27)', () => {

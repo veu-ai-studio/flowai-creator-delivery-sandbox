@@ -170,10 +170,27 @@ export function extractPageTitle(html) {
  * @returns {string|null}
  */
 export function resolveVercelBypassSecret(productId, env = process.env) {
-  if (typeof productId !== 'string' || productId.length === 0) return null;
+  if (typeof productId !== 'string' || productId.length === 0) {
+    // DISPATCH 31: no productId — fall back to the Vercel-canonical
+    // VERCEL_AUTOMATION_BYPASS_SECRET so the FlowAI self-test (and any
+    // other unscoped self-crawl) can read its OWN protected preview
+    // URLs without 401. Returns null if the canonical secret is also
+    // absent — caller proceeds without the header and the fetch will
+    // see whatever Deployment Protection returns.
+    const fallback = env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    return typeof fallback === 'string' && fallback.length > 0 ? fallback : null;
+  }
   const key = `VERCEL_BYPASS_SECRET_${productId.toUpperCase()}`;
   const secret = env[key];
-  return typeof secret === 'string' && secret.length > 0 ? secret : null;
+  if (typeof secret === 'string' && secret.length > 0) return secret;
+  // DISPATCH 31: per-product secret missing → fall through to the
+  // Vercel-canonical VERCEL_AUTOMATION_BYPASS_SECRET. Same rationale as
+  // the no-productId path: lets the FlowAI self-test (productId =
+  // 'flowai' for telemetry but no dedicated per-product secret seeded
+  // in Doppler) read its own protected previews. Per-product secrets
+  // still take precedence when set.
+  const fallback = env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  return typeof fallback === 'string' && fallback.length > 0 ? fallback : null;
 }
 
 /**
