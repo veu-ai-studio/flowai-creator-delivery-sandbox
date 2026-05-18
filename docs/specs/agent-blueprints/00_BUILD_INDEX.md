@@ -2,8 +2,35 @@
 
 **Status:** Index of build blueprints for the 20 remaining DORMANT agents (out of canonical 26-agent roster per Rev-2.1 §15.1 + ENTRY 005). 5 agents already SHIPPED-GREEN: #1 Lifecycle, #2 Code Builder, #3 Self-Renewal, #4 Provider Onboarding, #5 End-Customer Intake. Agent #21 (Ops Runner Alpha — Aggressive Crawl Conductor) is canonical per ENTRY 006 but DORMANT in implementation (engineering dispatch outstanding); not in this 20-blueprint set since its charter shipped via ENTRY 006 not a separate blueprint.
 
-**Author:** W3, 2026-05-16.
-**Anchor canonical:** Rev-2.1 §15.1 + ENTRY 003–006 cumulative SSOT.
+**Author:** W3, 2026-05-16; v2 banner additions by W3a, 2026-05-18.
+**Anchor canonical:** Rev-2.1 §15.1 + ENTRY 003–006 cumulative SSOT + ENTRY 009 cluster-template promotions + ENTRY 010 VEU §1.1 PERMANENT market definitions.
+
+---
+
+## 0. v2 Wave-1 Re-Ratification Status (2026-05-18 — W3a)
+
+All 14 Wave-1-blocked specs (Wave 1 cohort A-26, A-23, A-6, A-8, A-9, A-10, A-11, A-12, A-13, A-14, A-16, A-17, A-18, A-20) shipped at v2 per the Panel 17-agent v2 ratification consultation (`docs/panel-consultations/17-agent-v2-ratification-2026-05-17.md`). v2 specs address all distinct Panel objections + apply the canonical cluster paste blocks (A-P1, C, D, E) per ENTRY 009 + VEU §1.1 PERMANENT market definitions per CEO 2026-05-18.
+
+| Wave 1 spec | v2 status | Panel verdict (v1) | v2 commit |
+|---|---|---|---|
+| #26 Orchestra Research Agent | **v2 SHIPPED** | `PLURALITY_A26-REVISE` 5/10 | `2149f53` |
+| #23 Ops Runner Gamma (Cost Governor) | **v2 SHIPPED** | `PLURALITY_A23-REVISE` 6/10 | `9d6d186` |
+| #6 Research | **v2 SHIPPED** | `PLURALITY_A6-REVISE` 5/9 | `9675991` |
+| #8 Quality Audit | **v2 SHIPPED** | `QUORUM_PLURALITY_A8-REVISE` 7/9 | `603e244` |
+| #9 Go-to-Market | **v2 SHIPPED** | `PLURALITY_A9-REVISE` 5/9 | `1189314` |
+| #10 Monitor | **v2 SHIPPED** | `PLURALITY_A10-REVISE` 5/9 | `2fdf60d` |
+| #11 Strategic Intelligence | **v2 SHIPPED** | `PLURALITY_A11-REVISE` 6/9 | `151a53b` |
+| #12 Portfolio Risk | **v2 SHIPPED** | `PLURALITY_A12-REVISE` 5/10 | `a5bf638` |
+| #13 Self-Protection | **v2 SHIPPED** | `PLURALITY_A13-REVISE` 5/10 | `d432363` |
+| #14 Public Policy | **v2 SHIPPED** | `QUORUM_PLURALITY_A14-REVISE` 7/10 | `2e221dd` |
+| #16 Productivity / HR | **v2 SHIPPED** | `PLURALITY_A16-REVISE` 5/10 | `c3090e7` |
+| #17 Product Evolution | **v2 SHIPPED** | `QUORUM_PLURALITY_A17-REVISE` 7/10 | `2ff3d76` |
+| #18 Business Planning | **v2 SHIPPED** | `QUORUM_PLURALITY_A18-REVISE` 7/10 | `fa2ae4c` |
+| #20 Environmental Impacts | **v2 SHIPPED** | `PLURALITY_A20-REVISE` 6/10 | `2ab1214` |
+
+**Pending W6 re-ratification:** all 14 v2 specs await Panel re-ratification before engineering dispatch unlocks. Wave 1 stays blocked until W6 confirms; v2 specs are the basis for that re-ratification.
+
+**Specs NOT in this Wave-1 v2 cohort:** #7 Design (`PLURALITY_A7-CONDITIONS` — v1 ships with conditions, no v2 needed), #15 Benchmarking (`PLURALITY_A15-CONDITIONS`), #19 Technological Evolution (`PLURALITY_A19-CONDITIONS`). These three remained at v1 per Panel `*-CONDITIONS` verdicts.
 
 ---
 
