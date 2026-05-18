@@ -1746,7 +1746,53 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-17)
+### ENTRY 010 — 2026-05-18
+- **Session:** W05 continued — FlowAI Phase A build and live verification. End-to-end Self-Renewal cycle reached production (real GitHub branch pushed + real Vercel preview URL deployed against a real VEU product).
+- **GitHub App `flowai-self-renewal` provisioned + installed on `veu-ai-studio` org:**
+  - App ID `3748219`, Installation ID `133220298`. Live credentials managed via Doppler. Replaces personal-access-token (PAT) flow with installation-token issuance per `SELF_RENEWAL_SPEC` v4 §6.1 credential-mode `'app'`.
+- **All credentials staged in Doppler `prd` + `dev` configs:**
+  - `GITHUB_APP_ID`, `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_INSTALLATION_ID`.
+  - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_*` (one per VEU product — 5 entries: SAIGE, PressAI, ReachSMS, RelTwin, MyPregLife).
+- **Migrations 0013 + 0014 + 0015 APPLIED to live Supabase (`prd`):**
+  - `0013_product_ssot.sql` → `product_ssot` + `product_ssot_version` tables + 4 read-only RLS policies (admin / operator / client / flowai_audit) + indexes. ENTRY 008 substrate now live. Closes FOUNDATION_AUDIT_BACKLOG P0-2.
+  - `0014_product_registry.sql` → `product_registry` table + 13 `self_renewal_*` columns + `product_registry_negative_delta_cross_check` constraint + `product_registry_set_updated_at` trigger. 5 seed rows present (mypreglife / pressai / reachsms / reltwin / saige); `mypreglife.self_renewal_enabled = true` confirmed.
+  - `0015_product_market_definitions.sql` → `market_definition` text column added; all 5 product rows seeded with the canonical §1.1 market definitions. Mirrors the SSOT §1.1 verbatim.
+- **Self-Renewal Phase A — 10 modules built:**
+  1. `githubApp` — GitHub App installation-token issuance, branch HEAD fetch, repo metadata.
+  2. `branchWriter` — Git tree assembly + branch creation via Contents API.
+  3. `prWriter` — Pull-Request open / metadata / status hooks.
+  4. `fixGenerator` — issueDetector → patch proposal pipeline producing Conventional-Commits-style change sets.
+  5. `vercelBranchDeploy` — REST `/v13/deployments` with `gitSource` ref pointing at the renewal branch; polls `readyState`.
+  6. `preScoreAdapter` — pre-fix GTM Readiness baseline so deltas are measurable.
+  7. `deltaPolicy` — Spec §6.4 R2 invariant enforcement: discard-on-negative vs always-open paths; minimum-delta threshold checks.
+  8. `rateCap` — per-product max-per-day runaway protection + spec §6.5 cost ceiling.
+  9. `optionCPipeline` — the canonical Option-C build per Spec §5: full crawl → detect → fix → branch → deploy → re-score → terminal decision.
+  10. `orchestrator` — top-level controller orchestrating the 14-step repeat-until-GTM pipeline.
+- **Orchestrator contract:** 14-step repeat-until-GTM pipeline with **auto / guided / manual** mode dispatch + **stop / resume / switchMode** controls (per SELF_RENEWAL_SPEC v4 + cluster-E authority-ceiling alignment). Branches pruned per `self_renewal_branch_retention_days` policy in `product_registry`.
+- **Real scoring graduated (proof of measurement integrity):**
+  - Title-only baseline: 18 / 100 (insufficient context — confirms the scorer rejects shallow input).
+  - With GitHub-source enrichment (build_brief from README/code structure): 42 / 100. The 24-point delta is the proof FlowAI can drive substantive scoring with real DOM + source signals, not synthetic priors.
+- **Product-agnostic PATH A/B URL handling:** the orchestrator's path resolver supports both PATH A (canonical custom domain — e.g. `preglife.com`) and PATH B (Base44 dev URL — e.g. `safe-path.base44.app`) inputs without per-product code branches. Resolution is registry-driven (`product_registry.github_repo_url` + `vercel_project_id`); no hard-coded product names in the resolver.
+- **Crawl output wired to scorer:** Agent #21 Conductor's multi-page rich-capture output (post-ENTRY 007 Phase 3 + ENTRY 008 multi-page wiring) feeds the §7.6 GTM Readiness scoring pipeline. Replaces the prior single-page fallback path. Closes the Defect-A 50k-char body-truncation lineage.
+- **Product market definitions PERMANENTLY captured (CEO instruction 2026-05-18 — see ENTRY 008 + 009 lineage):**
+  - SSOT §1.1 (commit `c49f074`) — canonical table for all 5 products with the canonical full-market definitions + the "PERMANENT, must not be overwritten" rule.
+  - Live DB mirror (commit `91f0c71`, migration 0015 applied) — `product_registry.market_definition` populated on all 5 rows.
+  - These definitions are the authoritative scope inputs for Agent #21 issue-detection + §7.6 GTM Readiness scoring. **A narrow interpretation here produces wrong scoring criteria** — the SSOT §7.6 "Market-definition scope" clause enforces full-market evaluation.
+- **First real Self-Renewal cycle executed end-to-end:**
+  - Real branch pushed to GitHub: `flowai/renewal-b2ee1335-iter1` on `veu-ai-studio/my-preg-life`. Branch created via the installation-token flow; commit signed by the GitHub App.
+  - Real Vercel preview URL produced: `mypreglife-platform-pjiyhvlyy-veu-ai-studio.vercel.app`. Deployment triggered via `gitSource` ref → the renewal branch; deploy reached `readyState: READY`. This is the first FlowAI fork-and-fix output that exists as a real working URL on a real VEU product. Closes §4 L3 status footnote's "full crawl-fix-redeliver loop awaits Agent #3 graduation."
+- **Tests:** 2012+ passing, zero regressions across the 10-module Phase A build. No prior tests broken; every new module ships with its own regression suite + integration test against the orchestrator.
+- **Remaining for full Phase A close:**
+  - FlowAI Dashboard UI for live run observation (per `/architecture` + `/clearance` integration).
+  - SSE streaming for run-progress telemetry from the orchestrator to the UI.
+  - Crawl adapter polish — registry-driven crawl hints from `architecture_snapshot.pages[]` (per §28 narrow-the-scope optimisation).
+  - Branch cleanup scheduler — cron-driven retention enforcement per `self_renewal_branch_retention_days`.
+  - Full GTM-ready loop verified end-to-end (the current 42/100 is a single-pass demonstration; the canonical GTM-ready target is ≥75/100 sustained across the repeat-until-GTM loop until terminal decision).
+- **Lineage:** ENTRY 008 (session 2026-05-16/17 — substrate, migrations, MessageBus wiring, foundation audit) → ENTRY 009 (W05 closing decisions — cluster ratifications, Self-Renewal v4, agent specs, ProductSSOT migration committed) → migration 0013 + 0014 + 0015 applied to live Supabase → GitHub App + Doppler credential rollout → 10-module Phase A build (`flowai/renewal-b2ee1335-iter1` evidence trail) → live `mypreglife-platform-pjiyhvlyy-veu-ai-studio.vercel.app` proof → SSOT §1.1 market-definition canon (commit `c49f074`) + DB mirror (commit `91f0c71`) → this entry.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-18)
 
 
 
