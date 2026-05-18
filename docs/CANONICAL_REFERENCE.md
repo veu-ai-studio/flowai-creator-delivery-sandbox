@@ -24,6 +24,20 @@ FlowAI is a **proprietary AI Operating System** built by VEU AI Studio. Not a Sa
 
 **Tagline:** The AI Operating System that builds, tests, renews, and scales any digital product.
 
+### 1.1 Product market definitions (canonical, 5 VEU products)
+
+These are the canonical market definitions per CEO instruction 2026-05-18 (W2 dispatch #24). They govern how FlowAI tests, audits, scores GTM readiness, and monitors each product. **A narrow interpretation of any market here will produce wrong scoring criteria.** A product is GTM-ready when it serves its **full defined market**, not a subset of it. The mirroring `market_definition` column in `public.product_registry` is seeded by migration `0015_product_market_definitions.sql`.
+
+| Product | Market definition (canonical) |
+|---|---|
+| **SAIGE** | **EHS** (Environmental Health & Safety), **ESG** (Environmental Social Governance), **CSR** (Corporate Social Responsibility), **Sustainability**, and **SDGs** (Sustainable Development Goals) practitioners and organizations **globally**. NOT limited to ESG teams only. |
+| **RelTwin** | Any person or organization that manages personal and professional relationships — individuals, executives, community leaders, sales professionals, diplomats, anyone for whom relationship intelligence drives outcomes. **Globally.** NOT limited to relationship managers only. |
+| **ReachSMS** | Anyone building online communities and exchanging values anytime, anywhere **globally** — community organizers, faith organizations, nonprofits, political movements, businesses, diaspora groups. NOT limited to community leaders only. |
+| **PressAI** | Writers, publishers, and online content creators of all kinds — bloggers, journalists, authors, academics, social media creators, content marketers. **Globally.** NOT limited to publishers only. |
+| **MyPregLife** | Any person and/or family navigating pregnancy — expectant mothers, fathers, families, healthcare providers, doulas, midwives. **Globally**, not Africa-limited. Africa-first as a launch market only. NOT limited to pregnant women in Africa. |
+
+These definitions are **PERMANENT** and must not be overwritten by any future dispatch without explicit CEO instruction. They drive the §7.6 GTM Readiness Report scoring criteria + audit scope for each product.
+
 ---
 
 ## 2. MISSION — DEMOCRATIZATION
@@ -195,6 +209,8 @@ Failure of any of the four prerequisites blocks §11 Clearance Step 5 with expli
 **Per-surface grouping (6 sections in the rendered report):** Links · Cards · Modals · Pages · Engines · AI agents. Within each surface section: severity-grouped tabular view (Showstopper / Critical / High / Medium / Low; one finding per row with reproducer + evidence path).
 
 **Audit-log integration (per §14.1 ripple amendment from ENTRY 006):** every report emission writes a `governance_record_entry` to the affected ProductSSOT with `kind: 'gtm_readiness_score'` + the topic `21.gtm.readiness.v1` is emitted on the bus. Re-crawl after fix produces a new `governance_record_entry` (separate entry, not an update) so the score trajectory is auditable across the product's lifetime.
+
+**Market-definition scope (canonical, per §1.1 and CEO instruction 2026-05-18):** FlowAI GTM readiness scoring for each product MUST be evaluated against the product's actual market definition, not a narrow interpretation. A product is GTM-ready when it serves its full defined market, not just a subset of it. The §1.1 product market definitions are the authoritative scope inputs for Agent #21's issue-detection pass + the 100-point demo-readiness score; the matching `product_registry.market_definition` row is the runtime mirror.
 
 ---
 
