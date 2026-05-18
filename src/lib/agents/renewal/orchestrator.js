@@ -564,7 +564,7 @@ export async function runOrchestration(args = {}) {
         url: currentUrl, productId, runId,
         githubRepoUrl: githubRepoUrl || undefined,
         token: token || undefined,
-        crawlReport,
+        crawlReport: crawlOutput,
       });
       preScoreEnvelope = await _computeScore({
         productId, url: currentUrl, runId, monitorText: monitor.monitorText,
@@ -858,7 +858,7 @@ export async function runOrchestration(args = {}) {
         url: previewUrl, productId, runId,
         githubRepoUrl: githubRepoUrl || undefined,
         token: token || undefined,
-        crawlReport,
+        crawlReport: crawlOutput,
       });
       postScoreEnvelope = await _computeScore({
         productId, url: previewUrl, runId, monitorText: postMonitor.monitorText,
