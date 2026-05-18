@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { X, CheckCircle2, AlertCircle, Loader2, Copy, Check, ExternalLink, ShieldCheck } from 'lucide-react';
+import {
+  checkClearanceStep5FromSsot,
+  blockedByToHumanReasons,
+} from '@/lib/governance/clearanceStep5Gate.js';
 
 const STEPS = [
   { num: 1, label: 'Governance Session',   key: 'step1' },
@@ -431,6 +435,33 @@ function Step5({ product, record, onUpdate }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [approved, setApproved] = useState(record.step5_demo_approved || false);
 
+  // DISPATCH 28 P1-3: §7.6 / §11 Step 5 four-prerequisite gate.
+  // Reads the product's ProductSSOT row (when available) and computes
+  // the verdict locally — pure JS, no IO beyond the SSOT fetch. If the
+  // SSOT row is unavailable, the gate falls back to "blocked: no
+  // report" so clearance cannot be granted blindly.
+  const [gateLoading, setGateLoading] = useState(true);
+  const [gateVerdict, setGateVerdict] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      let ssotRow = null;
+      try {
+        if (base44?.entities?.ProductSSOT?.filter) {
+          const rows = await base44.entities.ProductSSOT.filter({
+            product_id: product?.product_id ?? product?.id ?? product?.product_name,
+          });
+          ssotRow = (rows && rows[0]) || null;
+        }
+      } catch { /* swallow — gate defaults to blocked on read failure */ }
+      if (cancelled) return;
+      const verdict = checkClearanceStep5FromSsot(ssotRow);
+      setGateVerdict(verdict);
+      setGateLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [product?.product_id, product?.id, product?.product_name]);
+
   const checkDemo = async () => {
     setChecking(true);
     const demos = await base44.entities.DemoEnvironment.filter({ product_name: product.product_name });
@@ -440,6 +471,11 @@ function Step5({ product, record, onUpdate }) {
   };
 
   const approveDemo = async () => {
+    // Hard gate: refuse to approve if the four-prereq verdict is not allowed.
+    if (gateVerdict && !gateVerdict.allowed) {
+      setShowConfirm(false);
+      return;
+    }
     setApproved(true);
     setShowConfirm(false);
     const updatedRecord = await base44.entities.ClearanceRecord.update(record.id, {
@@ -453,12 +489,35 @@ function Step5({ product, record, onUpdate }) {
   };
 
   const status = record.step5_status;
+  const gateBlocked = !!gateVerdict && !gateVerdict.allowed;
+  const blockerReasons = gateBlocked ? blockedByToHumanReasons(gateVerdict) : [];
 
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-border bg-secondary/20 p-4">
         <p className="text-xs text-muted-foreground">Generate the user-facing demo environment with synthetic data. The public domain will point to the demo version first.</p>
       </div>
+
+      {/* DISPATCH 28 P1-3: §11 Step 5 four-prerequisite gate status. */}
+      {gateLoading ? (
+        <div className="rounded-lg border border-border bg-secondary/10 p-3 text-xs text-muted-foreground flex items-center gap-2">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Checking §7.6 GTM Readiness prerequisites…
+        </div>
+      ) : gateBlocked ? (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 space-y-2">
+          <p className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+            <AlertCircle className="h-3.5 w-3.5" /> Clearance blocked — §11 Step 5 prerequisites not met
+          </p>
+          <ul className="text-xs text-amber-300/90 leading-relaxed space-y-1 list-disc list-inside">
+            {blockerReasons.map((r, i) => (<li key={i}>{r}</li>))}
+          </ul>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+          <p className="text-xs text-emerald-400">✅ §11 Step 5 prerequisites satisfied (score ≥ {gateVerdict?.details?.minScore ?? 95}, 0 critical, all high+ resolved, LIMITATIONS published)</p>
+        </div>
+      )}
 
       {!checkedDemo && (
         <Button size="sm" onClick={checkDemo} disabled={checking} className="gap-1.5 text-xs">
@@ -484,7 +543,9 @@ function Step5({ product, record, onUpdate }) {
       )}
 
       {demoRecord?.demo_status === 'ready' && !approved && (
-        <Button size="sm" onClick={() => setShowConfirm(true)} disabled={status === 'passed'} className="gap-1.5 text-xs">
+        <Button size="sm" onClick={() => setShowConfirm(true)}
+          disabled={status === 'passed' || gateLoading || gateBlocked}
+          className="gap-1.5 text-xs">
           <CheckCircle2 className="h-3.5 w-3.5" /> Approve Demo
         </Button>
       )}
