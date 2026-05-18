@@ -80,6 +80,8 @@ function makeStepLog({ iteration, step, status, tool, why, result, durationMs, s
 
 function computeProgress({ originalScore, currentScore, target }) {
   if (!Number.isFinite(currentScore) || !Number.isFinite(originalScore)) return 0;
+  // If already at or above target, progress is complete.
+  if (currentScore >= target) return 100;
   const span = Math.max(1, target - originalScore);
   const moved = Math.max(0, currentScore - originalScore);
   return Math.min(100, Math.round((moved / span) * 100));
