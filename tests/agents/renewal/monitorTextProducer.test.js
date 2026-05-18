@@ -17,6 +17,7 @@ import {
   extractVisibleText,
   extractPageTitle,
   buildMonitorPrompt,
+  buildCrawlReportBlock,
   parseGithubRepoUrl,
   fetchGithubSourceBundle,
   __internals,
@@ -683,5 +684,199 @@ describe('produceMonitorText — GitHub enrichment integration', () => {
     const serialised = JSON.stringify(r);
     expect(serialised).not.toContain(GH_TOKEN);
     expect(r.monitorText).not.toContain(GH_TOKEN);
+  });
+});
+
+// ── DISPATCH 24 — buildCrawlReportBlock + crawlReport plumbing ──────────────
+
+describe('buildCrawlReportBlock (DISPATCH 24)', () => {
+  const sampleCrawlReport = {
+    ok: true,
+    pagesCrawled: 3,
+    depth: 2,
+    pages: [
+      {
+        url: 'https://example.com/',
+        title: 'Demo Home',
+        bodyText: 'Welcome to the demo product. We help teams ship faster.',
+        headings: ['Welcome', 'Features', 'Pricing'],
+        surfaces: {
+          links: ['https://example.com/features', 'https://example.com/pricing'],
+          buttons: [{ label: 'Get started' }, { label: 'Sign in' }],
+          forms: [],
+        },
+      },
+      {
+        url: 'https://example.com/pricing',
+        title: 'Pricing — Demo',
+        bodyText: 'Free tier 10 users; Pro $99/mo; Enterprise contact sales.',
+        headings: ['Pricing', 'Free', 'Pro', 'Enterprise'],
+        surfaces: {
+          links: ['https://example.com/contact'],
+          buttons: [{ label: 'Start free' }],
+          forms: [{ action: '/checkout', method: 'POST', fields: [{ name: 'email' }, { name: 'plan' }], submitLabel: 'Subscribe' }],
+        },
+      },
+      {
+        url: 'https://example.com/contact',
+        title: 'Contact us',
+        bodyText: 'Drop us a line at hello@example.com.',
+        headings: ['Contact'],
+        surfaces: { links: [], buttons: [], forms: [] },
+      },
+    ],
+    errors: [],
+    warnings: [],
+  };
+
+  it('returns "" for null / non-object / empty pages', () => {
+    expect(buildCrawlReportBlock(null)).toBe('');
+    expect(buildCrawlReportBlock(undefined)).toBe('');
+    expect(buildCrawlReportBlock('not an object')).toBe('');
+    expect(buildCrawlReportBlock({ pages: [] })).toBe('');
+  });
+
+  it('includes pages-crawled count + depth header', () => {
+    const out = buildCrawlReportBlock(sampleCrawlReport);
+    expect(out).toMatch(/MULTI-PAGE CRAWL REPORT/);
+    expect(out).toContain('Pages crawled: 3');
+    expect(out).toContain('Depth: 2');
+  });
+
+  it('includes per-page title + headings + body excerpt', () => {
+    const out = buildCrawlReportBlock(sampleCrawlReport);
+    expect(out).toContain('Demo Home');
+    expect(out).toContain('Pricing — Demo');
+    expect(out).toContain('Welcome | Features | Pricing');
+    expect(out).toContain('Free tier 10 users');
+  });
+
+  it('lists union of links across pages', () => {
+    const out = buildCrawlReportBlock(sampleCrawlReport);
+    expect(out).toMatch(/Discovered links/);
+    expect(out).toContain('https://example.com/features');
+    expect(out).toContain('https://example.com/pricing');
+    expect(out).toContain('https://example.com/contact');
+  });
+
+  it('counts buttons across pages and lists forms with fields', () => {
+    const out = buildCrawlReportBlock(sampleCrawlReport);
+    expect(out).toContain('Interactive button count');
+    expect(out).toMatch(/action=\/checkout/);
+    expect(out).toContain('fields=email, plan');
+    expect(out).toContain('Subscribe');
+  });
+
+  it('surfaces errors + warnings when present', () => {
+    const withErrors = {
+      ...sampleCrawlReport,
+      errors: [{ url: 'https://example.com/broken', reason: 'http_404' }],
+      warnings: ['aggressiveCrawl: depth cap reached'],
+    };
+    const out = buildCrawlReportBlock(withErrors);
+    expect(out).toContain('Errors found: 1');
+    expect(out).toContain('https://example.com/broken');
+    expect(out).toContain('http_404');
+    expect(out).toContain('Warnings: 1');
+  });
+
+  it('caps total output at ~10000 chars on a large crawl', () => {
+    const bigPage = (i) => ({
+      url: `https://example.com/${i}`,
+      title: `Page ${i}`,
+      bodyText: 'A'.repeat(2000),
+      headings: Array.from({ length: 20 }, (_, j) => `Heading ${i}.${j}`),
+      surfaces: { links: [`https://example.com/link-${i}`], buttons: [], forms: [] },
+    });
+    const giant = { pages: Array.from({ length: 50 }, (_, i) => bigPage(i)), pagesCrawled: 50, depth: 5, errors: [], warnings: [] };
+    const out = buildCrawlReportBlock(giant);
+    expect(out.length).toBeLessThanOrEqual(10500); // 10000 cap + truncation tail
+  });
+});
+
+describe('produceMonitorText (DISPATCH 24 crawlReport plumbing)', () => {
+  const SAMPLE_CRAWL = {
+    ok: true,
+    pagesCrawled: 2,
+    depth: 1,
+    pages: [
+      { url: 'https://x/', title: 'X Home', bodyText: 'X is a demo product with many features and a pricing page.', headings: ['Welcome', 'Features'], surfaces: { links: ['https://x/pricing'], buttons: [], forms: [] } },
+      { url: 'https://x/pricing', title: 'Pricing', bodyText: 'Free / Pro / Enterprise plans.', headings: ['Pricing'], surfaces: { links: [], buttons: [], forms: [] } },
+    ],
+    errors: [], warnings: [],
+  };
+
+  it('threads crawlReport into the Claude prompt', async () => {
+    let capturedPrompt = '';
+    const anthropicMock = vi.fn(async (_url, init) => {
+      capturedPrompt = JSON.parse(init.body).messages[0].content;
+      return {
+        ok: true, status: 200, headers: { get: () => 'application/json' },
+        json: async () => ({ content: [{ type: 'text', text: SAMPLE_MONITOR_RESPONSE }], model: 'claude-sonnet-4-6', usage: {} }),
+        text: async () => '{}',
+      };
+    });
+    const fetchMock = sequencedFetch(
+      [{ ok: true, status: 200, statusText: 'OK', headers: { get: () => 'text/html' }, text: async () => SAMPLE_HTML }],
+      [],
+    );
+    // Compose: URL fetch goes through fetchMock; Anthropic call goes through anthropicMock.
+    const composed = vi.fn(async (url, init) => {
+      if (typeof url === 'string' && url.includes('anthropic.com')) return anthropicMock(url, init);
+      return fetchMock(url, init);
+    });
+    await produceMonitorText({
+      url: URL_OK, productId: 'demo', runId: 'r1',
+      crawlReport: SAMPLE_CRAWL,
+      opts: { fetch: composed, apiKey: API_KEY },
+    });
+    expect(capturedPrompt).toMatch(/MULTI-PAGE CRAWL REPORT/);
+    expect(capturedPrompt).toMatch(/Pages crawled: 2/);
+    expect(capturedPrompt).toContain('X Home');
+    expect(capturedPrompt).toContain('Pricing');
+    expect(capturedPrompt).toMatch(/the crawl shows the real product surface/i);
+  });
+
+  it('relaxes the SSR-empty guard when crawlReport is present', async () => {
+    // SPA shell HTML (4 words, would normally throw MONITOR_FETCH_FAILED)
+    const SPA_SHELL = '<!DOCTYPE html><html><body><div id="root">Loading app now</div></body></html>';
+    const composed = vi.fn(async (url, init) => {
+      if (typeof url === 'string' && url.includes('anthropic.com')) {
+        return {
+          ok: true, status: 200, headers: { get: () => 'application/json' },
+          json: async () => ({ content: [{ type: 'text', text: SAMPLE_MONITOR_RESPONSE }], model: 'claude-sonnet-4-6', usage: {} }),
+          text: async () => '{}',
+        };
+      }
+      return {
+        ok: true, status: 200, statusText: 'OK', headers: { get: () => 'text/html' },
+        text: async () => SPA_SHELL,
+      };
+    });
+    // With crawlReport — should NOT throw.
+    const r = await produceMonitorText({
+      url: URL_OK, productId: 'demo', runId: 'r1',
+      crawlReport: SAMPLE_CRAWL,
+      opts: { fetch: composed, apiKey: API_KEY },
+    });
+    expect(r.monitorText).toBeDefined();
+  });
+
+  it('still throws MONITOR_FETCH_FAILED on SPA shell when crawlReport ABSENT', async () => {
+    const SPA_SHELL = '<!DOCTYPE html><html><body><div id="root"></div></body></html>';
+    const fetchMock = vi.fn(async () => ({
+      ok: true, status: 200, statusText: 'OK', headers: { get: () => 'text/html' },
+      text: async () => SPA_SHELL, json: async () => ({}),
+    }));
+    try {
+      await produceMonitorText({
+        url: URL_OK, productId: 'demo', runId: 'r1',
+        opts: { fetch: fetchMock, apiKey: API_KEY },
+      });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.code).toBe('MONITOR_FETCH_FAILED');
+      expect(e.message).toMatch(/pass crawlReport from Agent #21/);
+    }
   });
 });
