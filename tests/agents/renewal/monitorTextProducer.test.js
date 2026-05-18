@@ -880,3 +880,173 @@ describe('produceMonitorText (DISPATCH 24 crawlReport plumbing)', () => {
     }
   });
 });
+
+// ── DISPATCH 27 — Vercel Deployment Protection bypass header ────────────────
+
+import {
+  resolveVercelBypassSecret,
+  isVercelDeploymentUrl,
+} from '../../../src/lib/agents/renewal/monitorTextProducer.js';
+
+describe('resolveVercelBypassSecret (DISPATCH 27)', () => {
+  it('resolves the env key by UPPER-CASING the product_id', () => {
+    expect(resolveVercelBypassSecret('mypreglife', {
+      VERCEL_BYPASS_SECRET_MYPREGLIFE: 'secret-mpl',
+    })).toBe('secret-mpl');
+  });
+
+  it('returns null when env var is missing', () => {
+    expect(resolveVercelBypassSecret('mypreglife', {})).toBeNull();
+  });
+
+  it('returns null when productId is null / undefined / empty', () => {
+    expect(resolveVercelBypassSecret(null, { VERCEL_BYPASS_SECRET_X: 'x' })).toBeNull();
+    expect(resolveVercelBypassSecret(undefined, {})).toBeNull();
+    expect(resolveVercelBypassSecret('', { VERCEL_BYPASS_SECRET_: 'x' })).toBeNull();
+  });
+
+  it('returns null when env var is empty string', () => {
+    expect(resolveVercelBypassSecret('mypreglife', {
+      VERCEL_BYPASS_SECRET_MYPREGLIFE: '',
+    })).toBeNull();
+  });
+
+  it('product-agnostic: works for any registry product_id', () => {
+    const env = {
+      VERCEL_BYPASS_SECRET_SAIGE: 's-saige',
+      VERCEL_BYPASS_SECRET_RELTWIN: 's-reltwin',
+      VERCEL_BYPASS_SECRET_PRESSAI: 's-pressai',
+      VERCEL_BYPASS_SECRET_REACHSMS: 's-reachsms',
+      VERCEL_BYPASS_SECRET_MYPREGLIFE: 's-mpl',
+    };
+    expect(resolveVercelBypassSecret('saige', env)).toBe('s-saige');
+    expect(resolveVercelBypassSecret('reltwin', env)).toBe('s-reltwin');
+    expect(resolveVercelBypassSecret('pressai', env)).toBe('s-pressai');
+    expect(resolveVercelBypassSecret('reachsms', env)).toBe('s-reachsms');
+    expect(resolveVercelBypassSecret('mypreglife', env)).toBe('s-mpl');
+  });
+
+  it('falls through for PATH B synthesized productIds (no env match)', () => {
+    const synth = 'flowai-upgraded-saige-platform-vercel-app-9b81fe4c';
+    expect(resolveVercelBypassSecret(synth, {
+      VERCEL_BYPASS_SECRET_SAIGE: 's-saige',
+    })).toBeNull();
+  });
+});
+
+describe('isVercelDeploymentUrl (DISPATCH 27)', () => {
+  it('detects *.vercel.app hosts', () => {
+    expect(isVercelDeploymentUrl('https://mypreglife-platform-abc123.vercel.app')).toBe(true);
+    expect(isVercelDeploymentUrl('https://saige.vercel.app')).toBe(true);
+    expect(isVercelDeploymentUrl('https://x-y-z.vercel.app/path')).toBe(true);
+  });
+
+  it('returns false for non-vercel hosts', () => {
+    expect(isVercelDeploymentUrl('https://example.com')).toBe(false);
+    expect(isVercelDeploymentUrl('https://github.com/owner/repo')).toBe(false);
+    expect(isVercelDeploymentUrl('https://flowai.com')).toBe(false);
+  });
+
+  it('returns false for malformed URLs', () => {
+    expect(isVercelDeploymentUrl('not a url')).toBe(false);
+    expect(isVercelDeploymentUrl('')).toBe(false);
+    expect(isVercelDeploymentUrl(null)).toBe(false);
+    expect(isVercelDeploymentUrl(undefined)).toBe(false);
+  });
+});
+
+describe('fetchUrlContent — bypass header injection (DISPATCH 27)', () => {
+  const VERCEL_URL = 'https://mypreglife-platform-abc.vercel.app';
+  const NON_VERCEL = 'https://example.com';
+  const SECRET_VALUE = 'super-secret-bypass-token-NEVER-LOG-xxxxxx';
+
+  function captureHeadersMock(responseHtml = '<html><body>ok</body></html>') {
+    const calls = [];
+    const fn = vi.fn(async (url, init) => {
+      calls.push({ url, init });
+      return {
+        ok: true, status: 200, statusText: 'OK',
+        headers: { get: () => 'text/html' },
+        text: async () => responseHtml,
+      };
+    });
+    fn.calls = calls;
+    return fn;
+  }
+
+  it('injects x-vercel-protection-bypass when URL=*.vercel.app + productId + env secret all present', async () => {
+    process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE = SECRET_VALUE;
+    try {
+      const fetchMock = captureHeadersMock();
+      const r = await fetchUrlContent(VERCEL_URL, { fetch: fetchMock, productId: 'mypreglife' });
+      expect(fetchMock.calls[0].init.headers['x-vercel-protection-bypass']).toBe(SECRET_VALUE);
+      expect(r.bypassAttempted).toBe(true);
+    } finally {
+      delete process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE;
+    }
+  });
+
+  it('does NOT inject header when URL is non-vercel (even with productId + secret present)', async () => {
+    process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE = SECRET_VALUE;
+    try {
+      const fetchMock = captureHeadersMock();
+      const r = await fetchUrlContent(NON_VERCEL, { fetch: fetchMock, productId: 'mypreglife' });
+      expect(fetchMock.calls[0].init.headers['x-vercel-protection-bypass']).toBeUndefined();
+      expect(r.bypassAttempted).toBe(false);
+    } finally {
+      delete process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE;
+    }
+  });
+
+  it('does NOT inject header when productId is missing (Vercel URL but no product context)', async () => {
+    process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE = SECRET_VALUE;
+    try {
+      const fetchMock = captureHeadersMock();
+      const r = await fetchUrlContent(VERCEL_URL, { fetch: fetchMock });
+      expect(fetchMock.calls[0].init.headers['x-vercel-protection-bypass']).toBeUndefined();
+      expect(r.bypassAttempted).toBe(false);
+    } finally {
+      delete process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE;
+    }
+  });
+
+  it('does NOT inject header when env secret is missing (Vercel URL + productId but no env)', async () => {
+    delete process.env.VERCEL_BYPASS_SECRET_RELTWIN;
+    const fetchMock = captureHeadersMock();
+    const r = await fetchUrlContent(VERCEL_URL, { fetch: fetchMock, productId: 'reltwin' });
+    expect(fetchMock.calls[0].init.headers['x-vercel-protection-bypass']).toBeUndefined();
+    expect(r.bypassAttempted).toBe(false);
+  });
+
+  it('secret value NEVER appears in error messages (non-2xx response)', async () => {
+    process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE = SECRET_VALUE;
+    try {
+      const fetchMock = vi.fn(async () => ({
+        ok: false, status: 401, statusText: 'Unauthorized',
+        headers: { get: () => null }, text: async () => '', json: async () => ({}),
+      }));
+      try {
+        await fetchUrlContent(VERCEL_URL, { fetch: fetchMock, productId: 'mypreglife' });
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e.message).not.toContain(SECRET_VALUE);
+        expect(e.message).toMatch(/vercel-protection-bypass attempted/);
+        expect(e.bypassAttempted).toBe(true);
+      }
+    } finally {
+      delete process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE;
+    }
+  });
+
+  it('secret value NEVER appears in return envelope', async () => {
+    process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE = SECRET_VALUE;
+    try {
+      const fetchMock = captureHeadersMock();
+      const r = await fetchUrlContent(VERCEL_URL, { fetch: fetchMock, productId: 'mypreglife' });
+      const serialised = JSON.stringify(r);
+      expect(serialised).not.toContain(SECRET_VALUE);
+    } finally {
+      delete process.env.VERCEL_BYPASS_SECRET_MYPREGLIFE;
+    }
+  });
+});

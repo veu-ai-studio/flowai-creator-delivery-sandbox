@@ -156,6 +156,44 @@ export function extractPageTitle(html) {
  * @param {object} [opts]
  * @returns {Promise<{ html: string, status: number, contentType: string }>}
  */
+/**
+ * Resolve a Vercel Deployment Protection bypass secret for a given product.
+ * Lookup convention (W1 #2): VERCEL_BYPASS_SECRET_<productId.toUpperCase()>.
+ * Returns the secret string OR null. NEVER logged; callers must not echo
+ * the return value into error messages or step logs.
+ *
+ * Product-agnostic: any product_registry.product_id resolves the same way.
+ * No hardcoded product names.
+ *
+ * @param {string|null|undefined} productId
+ * @param {object} [env]   — default: process.env
+ * @returns {string|null}
+ */
+export function resolveVercelBypassSecret(productId, env = process.env) {
+  if (typeof productId !== 'string' || productId.length === 0) return null;
+  const key = `VERCEL_BYPASS_SECRET_${productId.toUpperCase()}`;
+  const secret = env[key];
+  return typeof secret === 'string' && secret.length > 0 ? secret : null;
+}
+
+/**
+ * Determine whether a URL targets a Vercel deployment (preview or prod).
+ * Vercel uses *.vercel.app for previews and custom domains otherwise; this
+ * heuristic catches the .vercel.app shape that's the typical FlowAI
+ * Self-Renewal preview-deploy output. Custom-domain Vercel deployments
+ * would need explicit per-product host mapping — out of Phase A scope.
+ *
+ * @param {string} url
+ * @returns {boolean}
+ */
+export function isVercelDeploymentUrl(url) {
+  if (typeof url !== 'string' || url.length === 0) return false;
+  try {
+    const u = new URL(url);
+    return /\.vercel\.app$/i.test(u.hostname);
+  } catch { return false; }
+}
+
 export async function fetchUrlContent(url, opts = {}) {
   const fetchImpl = typeof opts.fetch === 'function' ? opts.fetch : globalThis.fetch;
   if (typeof fetchImpl !== 'function') {
@@ -166,14 +204,32 @@ export async function fetchUrlContent(url, opts = {}) {
   const timeoutId = controller && typeof setTimeout === 'function'
     ? setTimeout(() => controller.abort(), opts.timeoutMs ?? FETCH_TIMEOUT_MS)
     : null;
+
+  // ── Vercel Deployment Protection bypass (DISPATCH 27) ──────────────────────
+  // When the URL targets a *.vercel.app host AND a productId is supplied AND
+  // the per-product bypass secret is set in env, inject the
+  // x-vercel-protection-bypass header so Protection-enabled preview URLs
+  // return their real content instead of a 401. The secret is read via
+  // resolveVercelBypassSecret() — convention: VERCEL_BYPASS_SECRET_<UPPER>.
+  // Secret NEVER logged; never copied into error messages or return value.
+  const headers = {
+    'User-Agent': 'FlowAI-MonitorTextProducer/1.0 (+https://flowai)',
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  };
+  let bypassInjected = false;
+  if (isVercelDeploymentUrl(url)) {
+    const secret = resolveVercelBypassSecret(opts.productId);
+    if (secret) {
+      headers['x-vercel-protection-bypass'] = secret;
+      bypassInjected = true;
+    }
+  }
+
   let response;
   try {
     response = await fetchImpl(url, {
       method: 'GET',
-      headers: {
-        'User-Agent': 'FlowAI-MonitorTextProducer/1.0 (+https://flowai)',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
+      headers,
       signal: controller?.signal,
       redirect: 'follow',
     });
@@ -184,13 +240,16 @@ export async function fetchUrlContent(url, opts = {}) {
   }
   if (timeoutId) clearTimeout(timeoutId);
   if (!response.ok) {
+    // Error message names the URL + status + whether bypass was attempted
+    // (boolean only; the secret itself is never surfaced).
+    const bypassNote = bypassInjected ? ' (vercel-protection-bypass attempted)' : '';
     throw makeError('MONITOR_FETCH_FAILED',
-      `fetchUrlContent: ${url} returned ${response.status} ${response.statusText}`,
-      { status: response.status });
+      `fetchUrlContent: ${url} returned ${response.status} ${response.statusText}${bypassNote}`,
+      { status: response.status, bypassAttempted: bypassInjected });
   }
   const contentType = response.headers.get('content-type') ?? '';
   const html = await response.text();
-  return { html, status: response.status, contentType };
+  return { html, status: response.status, contentType, bypassAttempted: bypassInjected };
 }
 
 // ─── GitHub enrichment ─────────────────────────────────────────────────────
@@ -768,7 +827,11 @@ export async function produceMonitorText(args) {
   const opts = args.opts ?? {};
 
   // 1. Fetch the URL content.
-  const { html, status, contentType } = await fetchUrlContent(args.url, opts);
+  // DISPATCH 27: thread productId into fetchUrlContent so the Vercel
+  // Deployment Protection bypass header is injected when the URL targets
+  // a *.vercel.app host (Phase A preview deploys for registered products).
+  const fetchOpts = { ...opts, productId: args.productId };
+  const { html, status, contentType } = await fetchUrlContent(args.url, fetchOpts);
   const pageTitle = extractPageTitle(html);
   const pageText = extractVisibleText(html);
   const wordCount = pageText.split(/\s+/).filter(Boolean).length;
