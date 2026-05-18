@@ -787,59 +787,139 @@ export async function runOrchestration(args = {}) {
     // api/_lib/remediationEngine.js which generates a fresh file tree from
     // the issues + crawl signal and uploads it to FlowAI's own Vercel
     // account as a brand-new project.
-    let previewUrl;
-    try {
+    //
+    // DISPATCH 26 (PATH B graceful timeout): the remediationEngine path
+    // can take 60-120s+ to build (it generates a brand-new Vercel project
+    // from scratch and waits for the build). When the build genuinely
+    // times out (state=TIMEOUT or our hard 120s wrapper expires), we do
+    // NOT fail the pipeline. Instead we mark STEP 10 as 'degraded',
+    // set previewUrl=null, and continue to STEP 11 scoring the ORIGINAL
+    // URL (no preview to score). STEP 13 then opens a PR with a note
+    // explaining the deploy timeout — the operator can deploy manually.
+    let previewUrl = null;
+    let deployDegraded = false;
+    {
       const t0 = Date.now();
-      if (pathB) {
-        const result = await _remediationEngine({
-          productScope: product.product_id,
-          issues: prioritizedIssues,
-          sourceHints: product.__detectedRepoUrl ? { gitUrl: product.__detectedRepoUrl } : {},
-          requestOrigin: currentUrl,
-        });
-        if (!result || !result.ok || !result.renewedUrl) {
-          throw new Error(`remediationEngine failed: ${result?.reason ?? 'unknown'}`);
+      try {
+        if (pathB) {
+          const PATH_B_DEPLOY_TIMEOUT_MS = 120_000;
+          let timer;
+          const timeoutPromise = new Promise((resolve) => {
+            timer = setTimeout(() => resolve({ __timeout: true }), PATH_B_DEPLOY_TIMEOUT_MS);
+          });
+          const remediationPromise = _remediationEngine({
+            productScope: product.product_id,
+            issues: prioritizedIssues,
+            sourceHints: product.__detectedRepoUrl ? { gitUrl: product.__detectedRepoUrl } : {},
+            requestOrigin: currentUrl,
+          });
+          const raced = await Promise.race([remediationPromise, timeoutPromise]).catch((e) => ({
+            __error: e?.message ?? String(e),
+          }));
+          clearTimeout(timer);
+          if (raced && raced.__timeout) {
+            // 120s wrapper expired. Degrade gracefully.
+            deployDegraded = true;
+            previewUrl = null;
+            const log = makeStepLog({
+              iteration: iterationNumber, step: 10, status: 'degraded',
+              tool: 'remediationEngine.js (PATH B file-tree upload)',
+              why: 'PATH B universal-mode deploy — FlowAI Vercel account, no operator repo required',
+              result: {
+                previewUrl: null,
+                reason: 'deploy_timeout',
+                detail: `PATH B deploy exceeded ${PATH_B_DEPLOY_TIMEOUT_MS / 1000}s wrapper timeout — continuing to STEP 11 against the original URL`,
+              },
+              durationMs: Date.now() - t0, mode: state.mode,
+            });
+            emit(log); iterLog.steps.push(log);
+          } else if (raced && raced.__error) {
+            // Hard error from remediationEngine — also degrade rather than fail.
+            deployDegraded = true;
+            previewUrl = null;
+            const log = makeStepLog({
+              iteration: iterationNumber, step: 10, status: 'degraded',
+              tool: 'remediationEngine.js (PATH B file-tree upload)',
+              why: 'PATH B universal-mode deploy — FlowAI Vercel account, no operator repo required',
+              result: {
+                previewUrl: null,
+                reason: 'deploy_error',
+                detail: raced.__error,
+              },
+              durationMs: Date.now() - t0, mode: state.mode,
+            });
+            emit(log); iterLog.steps.push(log);
+          } else if (!raced || !raced.ok || !raced.renewedUrl) {
+            // remediationEngine returned a non-ok envelope (e.g. Vercel
+            // returned READY=ERROR/CANCELED/TIMEOUT). Degrade gracefully.
+            deployDegraded = true;
+            previewUrl = null;
+            const log = makeStepLog({
+              iteration: iterationNumber, step: 10, status: 'degraded',
+              tool: 'remediationEngine.js (PATH B file-tree upload)',
+              why: 'PATH B universal-mode deploy — FlowAI Vercel account, no operator repo required',
+              result: {
+                previewUrl: null,
+                reason: raced?.reason || 'deploy_failed',
+                detail: raced?.error || raced?.reason || 'remediationEngine returned non-ok envelope',
+              },
+              durationMs: Date.now() - t0, mode: state.mode,
+            });
+            emit(log); iterLog.steps.push(log);
+          } else {
+            // Happy path.
+            previewUrl = raced.renewedUrl;
+            finalPreviewUrl = previewUrl;
+            const log = makeStepLog({
+              iteration: iterationNumber, step: 10, status: 'complete',
+              tool: 'remediationEngine.js (PATH B file-tree upload)',
+              why: 'PATH B universal-mode deploy — FlowAI Vercel account, no operator repo required',
+              result: { previewUrl, path: raced.path, deploymentId: raced.deploymentId ?? null },
+              durationMs: Date.now() - t0, mode: state.mode,
+            });
+            emit(log); iterLog.steps.push(log);
+          }
+        } else {
+          // PATH A — operator branch deploy. No graceful-timeout wrapper here;
+          // PATH A keeps the existing fail-fast semantic since operators expect
+          // a clear failure when their branch build doesn't deploy.
+          const projectId = resolveVercelProjectId(productId);
+          if (!projectId) {
+            throw new Error(`no Vercel project ID for ${productId} (env VERCEL_PROJECT_ID_${productId.toUpperCase()})`);
+          }
+          const orgId = process.env.VERCEL_ORG_ID;
+          const vercelToken = process.env.VERCEL_TOKEN;
+          if (!orgId || !vercelToken) {
+            throw new Error('VERCEL_ORG_ID or VERCEL_TOKEN missing from env');
+          }
+          const deployment = await _deployBranchPreview({
+            projectId, orgId, owner, repo, branchName, token: vercelToken,
+          });
+          previewUrl = deployment.previewUrl;
+          finalPreviewUrl = previewUrl;
+          const log = makeStepLog({
+            iteration: iterationNumber, step: 10, status: 'complete',
+            tool: 'vercelBranchDeploy.js (PATH A operator branch deploy)',
+            why: 'live preview for score verification before PR',
+            result: { previewUrl, deploymentId: deployment.deploymentId },
+            durationMs: Date.now() - t0, mode: state.mode,
+          });
+          emit(log); iterLog.steps.push(log);
         }
-        previewUrl = result.renewedUrl;
-        finalPreviewUrl = previewUrl;
-        const log = makeStepLog({
-          iteration: iterationNumber, step: 10, status: 'complete',
-          tool: 'remediationEngine.js (PATH B file-tree upload)',
-          why: 'PATH B universal-mode deploy — FlowAI Vercel account, no operator repo required',
-          result: { previewUrl, path: result.path, deploymentId: result.deploymentId ?? null },
-          durationMs: Date.now() - t0, mode: state.mode,
-        });
-        emit(log); iterLog.steps.push(log);
-      } else {
-        const projectId = resolveVercelProjectId(productId);
-        if (!projectId) {
-          throw new Error(`no Vercel project ID for ${productId} (env VERCEL_PROJECT_ID_${productId.toUpperCase()})`);
-        }
-        const orgId = process.env.VERCEL_ORG_ID;
-        const vercelToken = process.env.VERCEL_TOKEN;
-        if (!orgId || !vercelToken) {
-          throw new Error('VERCEL_ORG_ID or VERCEL_TOKEN missing from env');
-        }
-        const deployment = await _deployBranchPreview({
-          projectId, orgId, owner, repo, branchName, token: vercelToken,
-        });
-        previewUrl = deployment.previewUrl;
-        finalPreviewUrl = previewUrl;
-        const log = makeStepLog({
-          iteration: iterationNumber, step: 10, status: 'complete',
-          tool: 'vercelBranchDeploy.js (PATH A operator branch deploy)',
-          why: 'live preview for score verification before PR',
-          result: { previewUrl, deploymentId: deployment.deploymentId },
-          durationMs: Date.now() - t0, mode: state.mode,
-        });
-        emit(log); iterLog.steps.push(log);
+      } catch (e) {
+        // PATH A errors still fail the pipeline (operator path expects failure
+        // semantics). PATH B errors are caught above and degrade gracefully.
+        return buildFailureReturn({ runId, mode: state.mode, product,
+          orchestrationLog, iterations, failedStep: 'STEP_10',
+          error: e?.message ?? String(e), code: e?.code ?? 'DEPLOY_FAILED' });
       }
-    } catch (e) {
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_10',
-        error: e?.message ?? String(e), code: e?.code ?? 'DEPLOY_FAILED' });
     }
     await state.checkpoint(onCheckpoint, { lastStep: 10, iteration: iterationNumber });
+
+    // DISPATCH 26: when PATH B deploy degraded, score the ORIGINAL URL
+    // instead of the (non-existent) preview URL. STEP 11 needs a URL to
+    // score; substituting the original keeps the pipeline progressing.
+    const postFixUrl = (deployDegraded || !previewUrl) ? currentUrl : previewUrl;
 
     // STEP 11 — Five-Layer Scoring (Post-Fix).
     // DISPATCH 6: token was minted in STEP 8 and is always available
@@ -854,14 +934,17 @@ export async function runOrchestration(args = {}) {
     let postScoreEnvelope;
     try {
       const t0 = Date.now();
+      // DISPATCH 26: on deploy-degraded (PATH B timeout/error), `postFixUrl`
+      // falls back to the original URL so STEP 11 still has something to
+      // score. On the happy path postFixUrl === previewUrl.
       const postMonitor = await _produceMonitorText({
-        url: previewUrl, productId, runId,
+        url: postFixUrl, productId, runId,
         githubRepoUrl: githubRepoUrl || undefined,
         token: token || undefined,
         crawlReport: crawlOutput,
       });
       postScoreEnvelope = await _computeScore({
-        productId, url: previewUrl, runId, monitorText: postMonitor.monitorText,
+        productId, url: postFixUrl, runId, monitorText: postMonitor.monitorText,
       });
       lastPostScore = postScoreEnvelope.total;
       const log = makeStepLog({
