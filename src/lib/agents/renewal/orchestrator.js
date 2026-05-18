@@ -895,7 +895,16 @@ export async function runOrchestration(args = {}) {
           const deployment = await _deployBranchPreview({
             projectId, orgId, owner, repo, branchName, token: vercelToken,
           });
-          previewUrl = deployment.previewUrl;
+          // DISPATCH 26: Vercel's deployments API returns the host without a
+          // protocol prefix (e.g. "app-xyz.vercel.app"). Downstream
+          // produceMonitorText → fetchUrlContent calls `new URL(url)` which
+          // throws "Failed to parse URL" without a scheme. Normalise here so
+          // STEP 11 doesn't crash on the deploy adapter's bare-host output.
+          previewUrl = typeof deployment.previewUrl === 'string'
+            && deployment.previewUrl.length > 0
+            && !/^https?:\/\//i.test(deployment.previewUrl)
+              ? `https://${deployment.previewUrl}`
+              : deployment.previewUrl;
           finalPreviewUrl = previewUrl;
           const log = makeStepLog({
             iteration: iterationNumber, step: 10, status: 'complete',
