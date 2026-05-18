@@ -393,18 +393,35 @@ export async function runOrchestration(args = {}) {
     }
     await state.checkpoint(onCheckpoint, { lastStep: 5, iteration: iterationNumber });
 
-    // STEP 6 — Issue Prioritization. Phase A: derive a single synthetic
-    // issue from the pre-score's lowest layer. Multi-issue ranking via
-    // Claude is a Phase B enhancement.
+    // STEP 6 — Issue Prioritization. Claude-powered (DISPATCH 23): given the
+    // Five-Layer scores + product context + monitor text, Claude returns up
+    // to 5 ranked issues with specific filePath/issue/fix/estimatedImpact.
+    // Falls back to the score-derived heuristic if Claude fails or returns
+    // unparseable output — never blocks the pipeline on prioritization.
     let prioritizedIssues;
     try {
       const t0 = Date.now();
-      prioritizedIssues = derivePrioritizedIssuesFromScore(preScoreEnvelope, product, args.issue);
+      const claudeIssues = await prioritizeIssuesWithClaude({
+        preScore: preScoreEnvelope, product, suppliedIssue: args.issue,
+      }).catch(() => null);
+      if (claudeIssues && claudeIssues.length > 0) {
+        prioritizedIssues = claudeIssues;
+      } else {
+        // Fallback: heuristic single-issue
+        prioritizedIssues = derivePrioritizedIssuesFromScore(preScoreEnvelope, product, args.issue);
+      }
       const log = makeStepLog({
         iteration: iterationNumber, step: 6, status: 'complete',
-        tool: 'score-derived heuristic (Phase A) — Claude ranking deferred to Phase B',
+        tool: claudeIssues
+          ? 'Claude-powered prioritization (DISPATCH 23 upgrade)'
+          : 'score-derived heuristic (Claude fallback failed)',
         why: 'rank issues by Five-Layer impact for max score improvement per iteration',
-        result: { issueCount: prioritizedIssues.length, topIssue: prioritizedIssues[0]?.title },
+        result: {
+          issueCount: prioritizedIssues.length,
+          topIssue: prioritizedIssues[0]?.title ?? prioritizedIssues[0]?.issue,
+          files: prioritizedIssues.map((i) => i.filePath).filter(Boolean),
+          source: claudeIssues ? 'claude' : 'heuristic',
+        },
         durationMs: Date.now() - t0, mode: state.mode,
       });
       emit(log); iterLog.steps.push(log);
@@ -464,7 +481,14 @@ export async function runOrchestration(args = {}) {
         }
         try {
           const fix = await _generateFix({
-            filePath, fileContent: current, findings: [issue], productId, runId,
+            filePath, fileContent: current,
+            // DISPATCH 23: pass through the precise fix instruction when
+            // available (from Claude prioritization). fixGenerator falls
+            // back to the findings-based prompt when `fix` is absent.
+            issue: issue.issue || issue.description || issue.title,
+            fix: issue.fix || null,
+            findings: [issue],
+            productId, runId,
           });
           fileChanges.push({ filePath, fileContent: fix.fixedContent });
         } catch (fixErr) {
@@ -739,6 +763,143 @@ export async function runOrchestration(args = {}) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * Claude-powered issue prioritization (DISPATCH 23 STEP 6 upgrade).
+ *
+ * Sends the Five-Layer scores + product context to Claude and asks for up
+ * to 5 ranked issues with specific filePath/issue/fix/estimatedImpact.
+ * Returns an array of issue objects, or null on failure (caller falls
+ * back to the score-derived heuristic).
+ *
+ * Honest residual: this module does NOT have access to the full repo file
+ * tree from monitorTextProducer (which fetches one URL's content, not the
+ * source tree). Claude is asked to suggest LIKELY paths for a typical
+ * React/Vite app; STEP 7 then attempts to fetch each file via GitHub
+ * Contents API and skips on 404. Phase B should pass a real file tree.
+ *
+ * @param {object} args
+ * @param {object} args.preScore           — scoring envelope (l1..l5, total)
+ * @param {object} args.product            — registry row
+ * @param {object} [args.suppliedIssue]    — if caller provides an explicit
+ *                                            issue, return it verbatim (skip Claude)
+ * @param {object} [args.opts]             — { fetch?, apiKey?, model? }
+ * @returns {Promise<Array<{ filePath, issue, fix, estimatedImpact, severity, title }>|null>}
+ */
+export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIssue, opts = {} }) {
+  if (suppliedIssue && typeof suppliedIssue === 'object') {
+    return [suppliedIssue];
+  }
+  const apiKey = opts.apiKey ?? process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+  const fetchImpl = typeof opts.fetch === 'function' ? opts.fetch : globalThis.fetch;
+  if (typeof fetchImpl !== 'function') return null;
+  const model = typeof opts.model === 'string' && opts.model ? opts.model : 'claude-sonnet-4-6';
+
+  const productId = product?.product_id ?? 'unknown';
+  const githubRepoUrl = product?.github_repo_url ?? '';
+
+  const prompt = [
+    'You are a code quality analyst. Given Five-Layer scores for a deployed product and the product\'s GitHub repo, identify the top 5 SPECIFIC issues causing low scores.',
+    '',
+    `Product: ${productId}`,
+    `GitHub repo: ${githubRepoUrl}`,
+    '',
+    'Five-Layer scores (each layer is /20, total is /100):',
+    `  L1 Functionality: ${preScore.l1}/20`,
+    `  L2 Operational:   ${preScore.l2}/20`,
+    `  L3 Financial:     ${preScore.l3}/20`,
+    `  L4 Business:      ${preScore.l4}/20`,
+    `  L5 GTM:           ${preScore.l5}/20`,
+    `  Total:            ${preScore.total}/100`,
+    '',
+    'Layer rubric:',
+    '  L1 Functionality — Does the product work? Broken interactions, missing features.',
+    '  L2 Operational  — Monitoring, error tracking, uptime signals, infrastructure readiness.',
+    '  L3 Financial    — Pricing clarity, monetization model, payment flow.',
+    '  L4 Business     — Competitive positioning, defensible moat, partnerships.',
+    '  L5 GTM          — ICP clarity, value proposition, CTAs, sales motion.',
+    '',
+    'Assume this is a Vite + React app. Likely source files:',
+    '  - README.md',
+    '  - package.json',
+    '  - index.html',
+    '  - src/App.jsx',
+    '  - src/main.jsx',
+    '  - src/pages/Home.jsx',
+    '  - src/components/Hero.jsx',
+    '  - src/components/Pricing.jsx',
+    '  - src/components/Footer.jsx',
+    '',
+    'Return STRICTLY valid JSON with this shape (no markdown code fences, no prose, just JSON):',
+    '{"issues": [',
+    '  {',
+    '    "filePath": "<exact path>",',
+    '    "issue": "<specific problem description>",',
+    '    "fix": "<exactly what change to make>",',
+    '    "estimatedImpact": { "layer": "L1|L2|L3|L4|L5", "delta": <integer> },',
+    '    "severity": "critical|high|medium|low",',
+    '    "title": "<short title>"',
+    '  }',
+    '  ... up to 5 entries, ranked by descending estimatedImpact.delta',
+    ']}',
+    '',
+    'Focus on real functional / content issues that would move the score; skip purely cosmetic ones.',
+  ].join('\n');
+
+  let response;
+  try {
+    response = await fetchImpl('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+  } catch {
+    return null;
+  }
+  if (!response.ok) return null;
+  let parsed;
+  try { parsed = await response.json(); } catch { return null; }
+  const text = Array.isArray(parsed.content)
+    ? parsed.content.filter((b) => b && b.type === 'text').map((b) => b.text ?? '').join('')
+    : '';
+  if (!text) return null;
+
+  // Tolerate ```json fences and leading prose; extract the JSON object.
+  let jsonText = text.trim();
+  const fenceMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenceMatch) jsonText = fenceMatch[1].trim();
+  // Find first `{` and last `}` as a fallback bracket-extraction.
+  const firstBrace = jsonText.indexOf('{');
+  const lastBrace = jsonText.lastIndexOf('}');
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    jsonText = jsonText.slice(firstBrace, lastBrace + 1);
+  }
+  let parsedJson;
+  try { parsedJson = JSON.parse(jsonText); } catch { return null; }
+  const arr = Array.isArray(parsedJson?.issues) ? parsedJson.issues : null;
+  if (!arr || arr.length === 0) return null;
+  // Normalize to the orchestrator's expected issue shape.
+  return arr.slice(0, 5).map((it, idx) => ({
+    severity: it.severity || 'medium',
+    title: it.title || `Fix issue ${idx + 1}`,
+    filePath: typeof it.filePath === 'string' && it.filePath ? it.filePath : 'README.md',
+    issue: it.issue || it.description || '',
+    fix: it.fix || '',
+    description: it.issue || '',
+    evidence: it.evidence || `Claude prioritization for ${productId}`,
+    estimatedImpact: it.estimatedImpact || null,
+    layer: it.estimatedImpact?.layer || null,
+  }));
+}
+
 function derivePrioritizedIssuesFromScore(scoreEnvelope, product, suppliedIssue) {
   if (suppliedIssue && typeof suppliedIssue === 'object') return [suppliedIssue];
   // Phase A: find the weakest layer + propose a README-level brand/clarity fix.
@@ -818,6 +979,7 @@ export const __internals = Object.freeze({
   computeProgress,
   discoverProduct,
   derivePrioritizedIssuesFromScore,
+  prioritizeIssuesWithClaude,
   buildPrBody,
   OrchestrationState,
 });
