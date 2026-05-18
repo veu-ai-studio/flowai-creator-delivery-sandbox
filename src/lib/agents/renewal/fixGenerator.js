@@ -531,7 +531,14 @@ export async function generateFix(args) {
     const applied = applyAndValidateDiff({
       original: args.fileContent,
       diffText,
-      opts: { maxChangeRatio: opts.maxChangeRatio },
+      opts: {
+        maxChangeRatio: opts.maxChangeRatio,
+        // D33 T2: scoped per-finding relaxation. Caller (orchestrator)
+        // passes { url_literal: [...substrings], fetch_call: [...], ... }
+        // when the finding's category directly implies modifying a
+        // normally-preserved construct on the offending line.
+        preserveExceptions: opts.preserveExceptions,
+      },
     });
     if (!applied.ok) {
       return {

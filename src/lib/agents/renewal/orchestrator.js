@@ -103,6 +103,10 @@ export function resolveLiveUrl(productId) {
     saige:      'https://saige-platform.vercel.app',
     reachsms:   'https://reachsms-platform.vercel.app',
     pressai:    'https://pressai-platform.vercel.app',
+    // DISPATCH 32 T1: FlowAI itself routes through the §19 self-test
+    // → score the production deployment promoted in D31 (commit 2f4cb97
+    // at the time of writing; subsequent prod promotions roll through).
+    flowai:     'https://flowai-dun.vercel.app',
   };
   return MAP[productId] ?? null;
 }
@@ -867,6 +871,12 @@ export async function runOrchestration(args = {}) {
       repo = repoParsed.repo;
 
       // STEP 7 — Multi-File Fix Generation (PATH A only).
+      // DISPATCH 33 T1 — visible rejections: every per-file generateFix
+      // outcome is captured in `fixOutcomes` (success or rejection,
+      // with reason verbatim). The aggregate is attached to iterLog +
+      // surfaced in the STEP 7 log entry so operators see WHY a fix
+      // didn't apply without log-diving.
+      const fixOutcomes = [];
       try {
         const t0 = Date.now();
         for (const issue of prioritizedIssues) {
@@ -875,26 +885,76 @@ export async function runOrchestration(args = {}) {
           try {
             current = await _fetchFileContent({ owner, repo, filePath, ref: 'main', token });
           } catch (fetchErr) {
-            continue;  // Skip files we can't fetch (e.g. doesn't exist on main)
+            fixOutcomes.push({
+              filePath, status: 'rejected',
+              reason: 'file_fetch_failed',
+              detail: (fetchErr?.message ?? String(fetchErr)).slice(0, 160),
+            });
+            continue;
           }
           try {
+            // DISPATCH 33 T2 — scoped per-finding preserve relaxation.
+            // If the finding's category directly implies modifying a
+            // normally-preserved construct (broken-link, network-failure,
+            // engine-error, slow-route, auth-gate-leak), pass the list of
+            // categories the diff editor is allowed to modify on the
+            // specific offending location ONLY.
+            const scopedRelax = deriveScopedRelaxation(issue);
             const fix = await _generateFix({
               filePath, fileContent: current,
               issue: issue.issue || issue.description || issue.title,
               fix: issue.fix || null,
               findings: [issue],
               productId, runId,
+              opts: scopedRelax ? { preserveExceptions: scopedRelax } : undefined,
             });
             fileChanges.push({ filePath, fileContent: fix.fixedContent });
+            fixOutcomes.push({
+              filePath, status: 'accepted',
+              mode: fix.mode ?? 'full',
+              attempts: fix.attempts ?? 1,
+              diffStats: fix.diffStats ?? null,
+            });
           } catch (fixErr) {
-            continue;  // FIX_NO_CHANGE or FIX_GENERATION_EMPTY — skip
+            // Capture the structured rejection reason. generateFix uses
+            // makeError(code, message) where the message contains the
+            // validation reason (e.g. "diff_preserve_violation:import"
+            // or "diff_hunk_does_not_apply:oldStart=14").
+            const msg = (fixErr?.message ?? String(fixErr)).toString();
+            // Extract the validation reason from the canonical message
+            // shape: "...validation failed for <path> after N attempt(s) — <reason>"
+            const reasonMatch = msg.match(/—\s+(.+)$/);
+            const extracted = reasonMatch ? reasonMatch[1].trim() : null;
+            fixOutcomes.push({
+              filePath, status: 'rejected',
+              code: fixErr?.code ?? 'UNKNOWN',
+              reason: extracted ?? msg.slice(0, 160),
+              validationReason: fixErr?.validationReason ?? null,
+            });
+            continue;
           }
         }
+        iterLog.fixOutcomes = fixOutcomes;
+        const accepted = fixOutcomes.filter((o) => o.status === 'accepted');
+        const rejected = fixOutcomes.filter((o) => o.status === 'rejected');
         const log = makeStepLog({
-          iteration: iterationNumber, step: 7, status: fileChanges.length > 0 ? 'complete' : 'skipped',
-          tool: 'fixGenerator.js (Claude API)',
+          iteration: iterationNumber, step: 7,
+          status: fileChanges.length > 0 ? 'complete' : (rejected.length > 0 ? 'degraded' : 'skipped'),
+          tool: 'fixGenerator.js (Claude API; diff-mode default per D32 T2)',
           why: 'generate concrete fixes for prioritized issues',
-          result: { filesFixed: fileChanges.length, files: fileChanges.map((c) => c.filePath) },
+          result: {
+            filesFixed: fileChanges.length,
+            files: accepted.map((o) => o.filePath),
+            rejectedCount: rejected.length,
+            rejected: rejected.map((o) => ({
+              filePath: o.filePath, code: o.code, reason: o.reason,
+            })),
+            accepted: accepted.map((o) => ({
+              filePath: o.filePath, mode: o.mode,
+              hunks: o.diffStats?.hunks ?? null,
+              changeRatio: o.diffStats?.changeRatio ?? null,
+            })),
+          },
           durationMs: Date.now() - t0, mode: state.mode,
         });
         emit(log); iterLog.steps.push(log);
@@ -1713,6 +1773,87 @@ export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIs
     estimatedImpact: it.estimatedImpact || null,
     layer: it.estimatedImpact?.layer || null,
   }));
+}
+
+// ── DISPATCH 33 T2 — scoped per-finding preserve relaxation ──────────────
+//
+// The diff editor (D32 T2) refuses to remove or modify any line that
+// contains a normally-preserved construct (import/export/fetch/route/
+// url_literal). That's the right default — but for findings whose
+// CATEGORY directly implies the fix MUST touch one of those constructs
+// (e.g. a network-failure finding on `fetch('/api/bad')` requires
+// editing that fetch line; a broken-link finding on `<a href="/x">`
+// requires editing the URL literal), the rule is over-broad and blocks
+// every possible fix.
+//
+// deriveScopedRelaxation(issue) returns either null (no relaxation
+// needed) or a `preserveExceptions` map of the form
+//   { <category>: [<allowed-substring>, ...] }
+// telling the diff editor "you may remove a line matching this
+// category IF the line ALSO contains one of these substrings". The
+// allowed-substring set is derived from the issue's `location` and
+// `evidence` fields — the exact URL or fetch path the finding names.
+// Lines that don't carry the substring stay preserved.
+//
+// Category mapping is conservative: only the §6 detector categories
+// where touching the construct is the literal intent of the fix get
+// the relaxation. xss-in-form-echo (hard-classified critical per
+// CA-10-Q3) never gets the relaxation — the fix is a different code
+// path entirely.
+function deriveScopedRelaxation(issue) {
+  if (!issue || typeof issue !== 'object') return null;
+  const cat = typeof issue.category === 'string' ? issue.category.toLowerCase() : '';
+  const location = typeof issue.location === 'string' ? issue.location : '';
+  const evidence = typeof issue.evidence === 'string' ? issue.evidence : '';
+  // Build allowed-substring set from the URL path components present
+  // in location/evidence. The diff editor uses these to check whether
+  // a removed line actually corresponds to the offending construct.
+  const substrings = new Set();
+  function addUrlParts(s) {
+    if (typeof s !== 'string' || !s) return;
+    // Add the full URL if it looks like one.
+    const urlMatch = s.match(/https?:\/\/\S+|\/[\w./%-]+/g);
+    if (urlMatch) {
+      for (const m of urlMatch) {
+        if (m.length >= 4) substrings.add(m);
+        // Also add the path portion for relative-URL matching.
+        try {
+          const u = new URL(m);
+          if (u.pathname && u.pathname !== '/' && u.pathname.length >= 4) substrings.add(u.pathname);
+        } catch { /* not a full URL — fine */ }
+      }
+    }
+  }
+  addUrlParts(location);
+  addUrlParts(evidence);
+
+  // Category → preserve-category that needs relaxation.
+  // network-failure / auth-gate-leak: the fix touches a fetch / URL line.
+  // broken-modal / dead-card / slow-route: typically a route/URL/fetch line.
+  // engine-error / console-error: usually the offending line is a fetch
+  // call or a URL — same relaxation.
+  // accessibility-headings / accessibility-alt-text: NEVER relaxes
+  // (touching imports/fetches/routes can't fix a missing h1).
+  // ai-agent-* / no-form-validation / external-script-leak: no relaxation
+  // here in Phase A (more nuanced; future dispatch).
+  const RELAX_CATEGORIES = new Set([
+    'network-failure', 'broken-link',
+    'auth-gate-leak',
+    'engine-error', 'console-error',
+    'slow-route',
+    'broken-modal', 'dead-card',
+  ]);
+  if (!RELAX_CATEGORIES.has(cat)) return null;
+  if (substrings.size === 0) return null;
+  const allowList = [...substrings];
+  // Return the same allow-list for url_literal + fetch_call + route_decl —
+  // any of those categories may be the underlying line in the file.
+  return {
+    url_literal: allowList,
+    fetch_call: allowList,
+    axios_call: allowList,
+    route_decl: allowList,
+  };
 }
 
 function derivePrioritizedIssuesFromScore(scoreEnvelope, product, suppliedIssue) {

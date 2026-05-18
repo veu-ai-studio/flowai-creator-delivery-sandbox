@@ -234,10 +234,23 @@ export function applyDiff(originalText, parsed) {
  *   - No removed line matches any PRESERVE_PATTERNS regex.
  *   - Total change ratio <= maxChangeRatio.
  *
+ * D33 T2 — scoped per-finding relaxation via `preserveExceptions`:
+ *   When the caller passes preserveExceptions = { <category>: [<substring>, ...] },
+ *   a removed line that matches PRESERVE_PATTERNS[category] is STILL
+ *   allowed IF the line ALSO contains at least one of the listed
+ *   substrings. The substring set is finding-derived (location/evidence
+ *   URL parts), so only the exact offending construct can be modified.
+ *   Other lines that match the same category but DON'T carry the
+ *   substring are still rejected.
+ *
  * @param {object} parsed   — result of parseUnifiedDiff()
  * @param {object} opts
  * @param {string} opts.original   — original file content
  * @param {number} [opts.maxChangeRatio=DEFAULT_MAX_CHANGE_RATIO]
+ * @param {object<string,string[]>} [opts.preserveExceptions]
+ *        — per-category list of substrings that authorize removal of an
+ *          otherwise-preserved line. See deriveScopedRelaxation in
+ *          orchestrator.js for the canonical derivation.
  * @returns {{ ok: boolean, reason?: string, violatingLine?: string, category?: string }}
  */
 export function validateDiff(parsed, opts = {}) {
@@ -245,6 +258,8 @@ export function validateDiff(parsed, opts = {}) {
     return { ok: false, reason: 'no_hunks_parsed' };
   }
   const maxRatio = Number.isFinite(opts.maxChangeRatio) ? opts.maxChangeRatio : DEFAULT_MAX_CHANGE_RATIO;
+  const exceptions = (opts.preserveExceptions && typeof opts.preserveExceptions === 'object')
+    ? opts.preserveExceptions : null;
   let totalAdded = 0;
   let totalRemoved = 0;
   for (const h of parsed.hunks) {
@@ -256,6 +271,15 @@ export function validateDiff(parsed, opts = {}) {
         totalRemoved += 1;
         for (const [cat, re] of Object.entries(PRESERVE_PATTERNS)) {
           if (re.test(body)) {
+            // D33 T2: check scoped relaxation. If this category has an
+            // exception list AND the line contains any of the listed
+            // substrings, the removal is allowed.
+            if (exceptions && Array.isArray(exceptions[cat]) && exceptions[cat].length > 0) {
+              const matched = exceptions[cat].some((sub) =>
+                typeof sub === 'string' && sub.length > 0 && body.includes(sub),
+              );
+              if (matched) continue;   // scoped relaxation authorizes this removal
+            }
             return {
               ok: false,
               reason: 'preserve_violation',
@@ -336,7 +360,11 @@ export function buildDiffPrompt({ filePath, fileContent, issue, fix }) {
 export function applyAndValidate({ original, diffText, opts = {} }) {
   const parsed = parseUnifiedDiff(diffText);
   if (!parsed.ok) return { ok: false, reason: `parse_failed:${parsed.reason}` };
-  const v = validateDiff(parsed, { original, maxChangeRatio: opts.maxChangeRatio });
+  const v = validateDiff(parsed, {
+    original,
+    maxChangeRatio: opts.maxChangeRatio,
+    preserveExceptions: opts.preserveExceptions,
+  });
   if (!v.ok) return { ok: false, reason: v.reason, category: v.category, violatingLine: v.violatingLine, ratio: v.ratio };
   const applied = applyDiff(original, parsed);
   if (!applied.ok) return { ok: false, reason: applied.reason };

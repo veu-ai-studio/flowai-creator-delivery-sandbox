@@ -1251,3 +1251,270 @@ describe('orchestrator — per-fix attribution (DISPATCH 30)', () => {
     } finally { clearVercelEnv(); }
   });
 });
+
+// ── DISPATCH 33 T1 — visible diff-rejection reasons ─────────────────────
+
+describe('orchestrator — visible diff-rejection reasons (DISPATCH 33 T1)', () => {
+  it('surfaces per-file rejection with code + reason in STEP 7 log', async () => {
+    withVercelEnv();
+    try {
+      const generateFix = vi.fn(async () => {
+        const err = new Error('generateFix: validation failed for src/X.jsx after 2 attempt(s) — diff_preserve_violation:import');
+        err.code = 'FIX_GENERATION_FAILED';
+        err.validationReason = 'diff_preserve_violation:import';
+        throw err;
+      });
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [50] });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd33-rej-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: { ...base, generateFix },
+        issue: { filePath: 'src/X.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't', category: 'console-error' },
+      });
+      // STEP 7 log surfaces the structured rejection list (iter envelope
+      // isn't pushed because NO_FIXES_GENERATED short-circuits before
+      // STEP 12 — operator sees the rejection via the log entry).
+      const step7 = result.orchestrationLog.find((l) =>
+        l.step === 7 && /fixGenerator\.js \(Claude API; diff-mode/.test(l.tool),
+      );
+      expect(step7).toBeDefined();
+      expect(step7.status).toBe('degraded');
+      expect(step7.result.rejectedCount).toBe(1);
+      expect(step7.result.rejected[0].filePath).toBe('src/X.jsx');
+      expect(step7.result.rejected[0].code).toBe('FIX_GENERATION_FAILED');
+      expect(step7.result.rejected[0].reason).toBe('diff_preserve_violation:import');
+      expect(result.exitReason).toBe('NO_FIXES_GENERATED');
+    } finally { clearVercelEnv(); }
+  });
+
+  it('surfaces accepted fixes with mode + diff stats', async () => {
+    withVercelEnv();
+    try {
+      const generateFix = vi.fn(async () => ({
+        fixedContent: 'const x = 2;\nexport default x;\n',
+        model: 'claude', promptTokens: 10, completionTokens: 5,
+        attempts: 1, mode: 'diff',
+        diffStats: { hunks: 1, linesAdded: 1, linesRemoved: 1, changeRatio: 0.2, totalLines: 5 },
+      }));
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd33-rej-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: { ...base, generateFix },
+        issue: { filePath: 'src/X.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't', category: 'accessibility-headings' },
+      });
+      const iter1 = result.iterations[0];
+      expect(iter1.fixOutcomes[0].status).toBe('accepted');
+      expect(iter1.fixOutcomes[0].mode).toBe('diff');
+      expect(iter1.fixOutcomes[0].diffStats.hunks).toBe(1);
+      const step7 = result.orchestrationLog.find((l) => l.step === 7 && l.tool.includes('fixGenerator'));
+      expect(step7.status).toBe('complete');
+      expect(step7.result.accepted[0].mode).toBe('diff');
+    } finally { clearVercelEnv(); }
+  });
+
+  it('captures file_fetch_failed when fetchFileContent throws', async () => {
+    withVercelEnv();
+    try {
+      const fetchFileContent = vi.fn(async () => {
+        const e = new Error('fetchFileContent: file "src/missing.js" not found on owner/repo@main');
+        e.code = 'FILE_NOT_FOUND';
+        throw e;
+      });
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [50] });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd33-rej-3', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: { ...base, fetchFileContent },
+        issue: { filePath: 'src/missing.js', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+      });
+      const step7 = result.orchestrationLog.find((l) =>
+        l.step === 7 && /fixGenerator/.test(l.tool),
+      );
+      expect(step7).toBeDefined();
+      expect(step7.result.rejectedCount).toBe(1);
+      expect(step7.result.rejected[0].filePath).toBe('src/missing.js');
+      expect(step7.result.rejected[0].reason).toBe('file_fetch_failed');
+    } finally { clearVercelEnv(); }
+  });
+});
+
+// ── DISPATCH 33 T2 — scoped per-finding preserve relaxation ─────────────
+
+describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () => {
+  it('passes preserveExceptions to generateFix for network-failure on a URL', async () => {
+    withVercelEnv();
+    try {
+      const generateFix = vi.fn(async () => ({
+        fixedContent: 'const x = 1;\n', model: 'claude',
+        promptTokens: 10, completionTokens: 5, attempts: 1, mode: 'diff',
+        diffStats: { hunks: 1, linesAdded: 1, linesRemoved: 1, changeRatio: 0.2, totalLines: 5 },
+      }));
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'd33-relax-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: { ...base, generateFix },
+        issue: {
+          filePath: 'src/X.jsx',
+          issue: 'broken link',
+          fix: 'remove the broken-link target',
+          severity: 'high', title: 't',
+          category: 'network-failure',
+          location: 'https://flowai-dun.vercel.app/app-logs/abc/log-user-in-app/home',
+          evidence: 'broken link',
+        },
+      });
+      const call = generateFix.mock.calls[0][0];
+      expect(call.opts).toBeDefined();
+      expect(call.opts.preserveExceptions).toBeDefined();
+      expect(Array.isArray(call.opts.preserveExceptions.url_literal)).toBe(true);
+      // Allow-list should contain the URL or its path component.
+      const allow = call.opts.preserveExceptions.url_literal;
+      expect(allow.some((s) => s.includes('flowai-dun.vercel.app'))).toBe(true);
+      expect(allow.some((s) => s.includes('/app-logs/'))).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('does NOT pass preserveExceptions for accessibility findings (no URL involvement)', async () => {
+    withVercelEnv();
+    try {
+      const generateFix = vi.fn(async () => ({
+        fixedContent: 'const x = 1;\n', model: 'claude',
+        promptTokens: 10, completionTokens: 5, attempts: 1, mode: 'diff',
+        diffStats: { hunks: 1, linesAdded: 1, linesRemoved: 1, changeRatio: 0.2, totalLines: 5 },
+      }));
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'd33-relax-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: { ...base, generateFix },
+        issue: {
+          filePath: 'src/X.jsx', issue: 'no h1', fix: 'add an h1',
+          severity: 'low', title: 't',
+          category: 'accessibility-headings',
+          location: 'https://flowai-dun.vercel.app/',
+          evidence: 'page has no heading elements',
+        },
+      });
+      const call = generateFix.mock.calls[0][0];
+      // accessibility-headings is NOT in the RELAX_CATEGORIES set →
+      // preserveExceptions should be omitted (opts undefined).
+      expect(call.opts).toBeUndefined();
+    } finally { clearVercelEnv(); }
+  });
+});
+
+describe('diffEditor.validateDiff — scoped relaxation via preserveExceptions (DISPATCH 33 T2)', () => {
+  it('allows removal of a URL line that matches the allow-list', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/diffEditor.js');
+    // Pad the file so the 1+1 change stays under the default 25% ratio
+    // cap — we want to isolate the preserve-exception behavior here.
+    const padding = Array.from({ length: 20 }, (_, i) => `// pad ${i}`).join('\n');
+    const file = [
+      padding,
+      'const x = 1;',
+      'const URL = "https://api.example.com/broken";',
+      'export { x };',
+      '',
+    ].join('\n');
+    const diff = mod.parseUnifiedDiff([
+      '@@ -22,1 +22,1 @@',
+      '-const URL = "https://api.example.com/broken";',
+      '+const URL = "https://api.example.com/fixed";',
+    ].join('\n'));
+    // Without exceptions → rejected by preserve_violation.
+    const noEx = mod.validateDiff(diff, { original: file });
+    expect(noEx.ok).toBe(false);
+    expect(noEx.reason).toBe('preserve_violation');
+    expect(noEx.category).toBe('url_literal');
+    // With exception listing the broken URL → allowed.
+    const r = mod.validateDiff(diff, {
+      original: file,
+      preserveExceptions: { url_literal: ['/broken'] },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('still rejects removal of an UNRELATED URL line even with exceptions set', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/diffEditor.js');
+    const file = [
+      'const A = "https://api.example.com/broken";',
+      'const B = "https://api.example.com/safe";',
+      '',
+    ].join('\n');
+    const diff = mod.parseUnifiedDiff([
+      '@@ -2,1 +2,1 @@',
+      '-const B = "https://api.example.com/safe";',
+      '+const B = "https://api.example.com/other";',
+    ].join('\n'));
+    const r = mod.validateDiff(diff, {
+      original: file,
+      preserveExceptions: { url_literal: ['/broken'] },
+    });
+    // Allow-list only authorizes lines containing '/broken'. The B line
+    // doesn't match → still rejected.
+    expect(r.ok).toBe(false);
+    expect(r.category).toBe('url_literal');
+  });
+
+  it('allows fetch_call relaxation by substring', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/diffEditor.js');
+    const padding = Array.from({ length: 20 }, (_, i) => `// pad ${i}`).join('\n');
+    const file = [
+      padding,
+      'export async function load() {',
+      '  return fetch("/api/broken/data");',
+      '}',
+      '',
+    ].join('\n');
+    const diff = mod.parseUnifiedDiff([
+      '@@ -22,1 +22,1 @@',
+      '-  return fetch("/api/broken/data");',
+      '+  return fetch("/api/v2/data");',
+    ].join('\n'));
+    expect(mod.validateDiff(diff, { original: file }).ok).toBe(false);
+    const r = mod.validateDiff(diff, {
+      original: file,
+      preserveExceptions: { fetch_call: ['/api/broken'] },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('exception substring of length 0 is ignored', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/diffEditor.js');
+    const file = ['import x from "y";', ''].join('\n');
+    const diff = mod.parseUnifiedDiff([
+      '@@ -1,1 +1,1 @@',
+      '-import x from "y";',
+      '+import * as x from "y";',
+    ].join('\n'));
+    const r = mod.validateDiff(diff, {
+      original: file,
+      preserveExceptions: { import: ['', null] },
+    });
+    expect(r.ok).toBe(false);              // empty / null substrings don't relax
+    expect(r.category).toBe('import');
+  });
+
+  it('exception relaxation does NOT bypass change_ratio_exceeded', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/diffEditor.js');
+    const file = Array.from({ length: 10 }, (_, i) =>
+      `const url${i} = "https://x.example/broken${i}";`,
+    ).join('\n');
+    // Remove all 10 URL lines (ratio = 2.0 — way over).
+    const lines = [];
+    for (let i = 0; i < 10; i += 1) {
+      lines.push(`-const url${i} = "https://x.example/broken${i}";`);
+      lines.push(`+const url${i} = "https://x.example/fixed${i}";`);
+    }
+    const diff = mod.parseUnifiedDiff(`@@ -1,10 +1,10 @@\n${lines.join('\n')}`);
+    const r = mod.validateDiff(diff, {
+      original: file,
+      preserveExceptions: { url_literal: ['/broken'] },
+      maxChangeRatio: 0.25,
+    });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('change_ratio_exceeded');
+  });
+});
