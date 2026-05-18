@@ -48,6 +48,14 @@ const BRANCH_PREFIX = 'flowai/renewal-';
 const PAGE_SIZE = 100;
 const MAX_PAGES = 50;   // hard upper bound: 5,000 branches per repo
 
+// Transient-gate constants per spec §5: 3 consecutive transient failures
+// on the same branch escalate to persistent classification. Counter TTL
+// is generous enough that a slow cron cadence won't reset prematurely
+// but short enough that orphaned counters from deleted branches expire
+// naturally.
+const TRANSIENT_THRESHOLD = 3;
+const TRANSIENT_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
+
 const FAILURE_REASONS = Object.freeze({
   PERMISSION_DENIED: 'permission_denied',
   BRANCH_NOT_FOUND:  'branch_not_found',
@@ -224,6 +232,98 @@ async function deleteBranch({ owner, repo, branchName, token, fetchImpl }) {
   });
 }
 
+// ─── Transient-failure gate (spec §5 — 3 consecutive transient failures
+//     on the same branch escalate to persistent classification) ─────────
+//
+// Counter keyed by `flowai:cleanup:transient:${productId || 'unknown'}:
+// ${branch}`. KV-backed when @vercel/kv is configured (KV_REST_API_URL
+// or KV_URL present in env); falls back to a process-local Map when KV
+// is unreachable. The in-memory fallback is documented + safe: with a
+// cold process per cron tick (Vercel's default) it effectively never
+// escalates, so transient runs of network errors stay transient instead
+// of falsely surfacing as persistent. This is the safer degradation
+// direction — false negatives on escalation are recoverable (operator
+// re-runs); false positives on escalation could noise up the
+// governance audit with cleanup_failed entries for transient blips.
+
+function buildTransientKey(productId, branchName) {
+  const pid = (typeof productId === 'string' && productId) ? productId : 'unknown';
+  return `flowai:cleanup:transient:${pid}:${branchName}`;
+}
+
+class InMemoryTransientGate {
+  constructor() { this._counts = new Map(); }
+  get backend() { return 'in-memory'; }
+  async record(key) {
+    const n = (this._counts.get(key) ?? 0) + 1;
+    this._counts.set(key, n);
+    return n;
+  }
+  async reset(key) {
+    this._counts.delete(key);
+  }
+  async read(key) {
+    return this._counts.get(key) ?? 0;
+  }
+}
+
+class KvBackedTransientGate {
+  constructor(kv) { this._kv = kv; }
+  get backend() { return 'vercel-kv'; }
+  async record(key) {
+    // INCR is atomic on KV; expire renews the TTL on every record. Errors
+    // degrade to "treat as 1" so a transient KV outage doesn't escalate
+    // every branch on the first network error.
+    try {
+      const n = await this._kv.incr(key);
+      await this._kv.expire(key, TRANSIENT_TTL_SECONDS);
+      return typeof n === 'number' ? n : 1;
+    } catch {
+      return 1;
+    }
+  }
+  async reset(key) {
+    try { await this._kv.del(key); }
+    catch { /* ignore — orphan counter will TTL-expire */ }
+  }
+  async read(key) {
+    try {
+      const v = await this._kv.get(key);
+      if (typeof v === 'number') return v;
+      if (typeof v === 'string') { const n = parseInt(v, 10); return Number.isFinite(n) ? n : 0; }
+      return 0;
+    } catch {
+      return 0;
+    }
+  }
+}
+
+// Lazy-initialised singleton. Default gate: KV-backed when configured,
+// in-memory fallback otherwise. Test code injects its own gate via the
+// `transientGate` opt on `cleanupStaleBranches` — the default singleton
+// is never reached in test paths.
+let _defaultGate = null;
+async function getDefaultTransientGate() {
+  if (_defaultGate) return _defaultGate;
+  const kvConfigured = !!(process.env.KV_REST_API_URL || process.env.KV_URL);
+  if (kvConfigured) {
+    try {
+      const mod = await import('@vercel/kv');
+      if (mod && mod.kv && typeof mod.kv.incr === 'function') {
+        _defaultGate = new KvBackedTransientGate(mod.kv);
+        return _defaultGate;
+      }
+    } catch {
+      // Module unavailable — fall through to in-memory.
+    }
+  }
+  _defaultGate = new InMemoryTransientGate();
+  return _defaultGate;
+}
+
+// Test-only: drop the cached singleton so a fresh env probe runs next call.
+export function _resetDefaultTransientGate() { _defaultGate = null; }
+
 async function writeGovernanceEntry({ supabase, entry }) {
   if (!supabase || typeof supabase.from !== 'function') return null;
   try {
@@ -252,6 +352,11 @@ async function writeGovernanceEntry({ supabase, entry }) {
  * @param {string} [args.trigger='scheduled'] — 'scheduled' | 'admin_on_demand'
  * @param {function} [args.fetch]             — DI for tests; defaults to globalThis.fetch
  * @param {function} [args.now]               — DI for tests; defaults to Date.now
+ * @param {object}   [args.transientGate]     — DI for tests; defaults to the
+ *                                               KV-backed (or in-memory fallback)
+ *                                               singleton per `getDefaultTransientGate()`.
+ *                                               Must implement `record(key)` /
+ *                                               `reset(key)` / `read(key)`.
  * @returns {Promise<object>} per-spec §3 envelope
  */
 export async function cleanupStaleBranches(args) {
@@ -264,6 +369,7 @@ export async function cleanupStaleBranches(args) {
   const trigger = args?.trigger === 'admin_on_demand' ? 'admin_on_demand' : 'scheduled';
   const fetchImpl = typeof args?.fetch === 'function' ? args.fetch : globalThis.fetch;
   const now = typeof args?.now === 'function' ? args.now : nowMs;
+  const transientGate = args?.transientGate ?? await getDefaultTransientGate();
 
   if (!owner || !repo) {
     return {
@@ -335,7 +441,12 @@ export async function cleanupStaleBranches(args) {
     // age_days > retentionDays AND openPrCount === 0 → DELETE.
     eligibleForDeletion += 1;
     const result = await deleteBranch({ owner, repo, branchName, token, fetchImpl });
+    const transientKey = buildTransientKey(productId, branchName);
     if (result.status === 204 || result.ok === true) {
+      // Success — reset the consecutive-failure counter so a future
+      // transient streak on a re-created branch with the same name
+      // starts fresh.
+      await transientGate.reset(transientKey).catch(() => {});
       const deletedAt = new Date(now()).toISOString();
       const entry = {
         kind:                 'self_renewal.branch_cleaned_up.v1',
@@ -354,20 +465,47 @@ export async function cleanupStaleBranches(args) {
       deleted.push({ branch: branchName, age_days, runId, deletedAt, ssotEntryRef });
       continue;
     }
-    // Delete failed — classify + record.
+    // Delete failed — classify and apply the transient gate per spec §5.
     const classification = classifyDeleteFailure(result.status, result.body);
+    let willRetry = classification.willRetry;
+    let persistent = classification.persistent;
+    let consecutiveFailures = 0;
+    let escalated = false;
+
+    if (!persistent) {
+      // Transient classification — record + check threshold.
+      consecutiveFailures = await transientGate.record(transientKey).catch(() => 1);
+      if (consecutiveFailures >= TRANSIENT_THRESHOLD) {
+        // Escalation per spec §5: 3 consecutive transient failures →
+        // re-classify as persistent for THIS run. Reset the counter
+        // so the next branch lifecycle starts fresh.
+        persistent = true;
+        willRetry = false;
+        escalated = true;
+        await transientGate.reset(transientKey).catch(() => {});
+      }
+    } else {
+      // Persistent classification — reset the counter so a future
+      // transient streak on the same branch starts fresh after the
+      // operator addresses the persistent cause.
+      await transientGate.reset(transientKey).catch(() => {});
+    }
+
     failed.push({
       branch: branchName,
       runId,
       reason: classification.reason,
-      willRetry: classification.willRetry,
+      willRetry,
       githubResponseStatus: result.status,
+      ...(consecutiveFailures > 0 ? { consecutiveFailures } : {}),
+      ...(escalated ? { escalated: true } : {}),
     });
-    if (classification.persistent) {
+
+    if (persistent) {
       // Spec §4.3 — emit cleanup_failed.v1 governance entry on persistent
-      // failure (transient failures wait for the 3-consecutive-failure
-      // gate — out of scope for this single-run module; the consumer of
-      // the result envelope sees willRetry: true and re-invokes).
+      // failure. Includes the transient escalation flag so audit reviewers
+      // can distinguish "first-touch persistent (e.g. 401)" from
+      // "escalated after 3 transient failures (e.g. 3× 503)".
       await writeGovernanceEntry({
         supabase,
         entry: {
@@ -377,7 +515,8 @@ export async function cleanupStaleBranches(args) {
           branch: branchName,
           reason: classification.reason,
           githubResponseStatus: result.status,
-          willRetryNextRun: classification.willRetry,
+          willRetryNextRun: willRetry,
+          ...(escalated ? { escalated: true, consecutiveFailures } : {}),
           at: new Date(now()).toISOString(),
         },
       });
@@ -401,6 +540,8 @@ export const __internals = Object.freeze({
   PAGE_SIZE,
   MAX_PAGES,
   FAILURE_REASONS,
+  TRANSIENT_THRESHOLD,
+  TRANSIENT_TTL_SECONDS,
   extractRunId,
   ageDays,
   scrubTokenFromText,
@@ -410,4 +551,8 @@ export const __internals = Object.freeze({
   inspectBranch,
   deleteBranch,
   writeGovernanceEntry,
+  buildTransientKey,
+  InMemoryTransientGate,
+  KvBackedTransientGate,
+  getDefaultTransientGate,
 });

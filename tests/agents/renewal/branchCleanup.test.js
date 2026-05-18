@@ -361,3 +361,206 @@ describe('cleanupStaleBranches — args validation', () => {
     expect(r.failed[0].reason).toBe('permission_denied');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────
+// Transient-gate (BC-X2): 3 consecutive transient failures escalate
+// ─────────────────────────────────────────────────────────────────────
+
+describe('branchCleanup — transient gate (spec §5)', () => {
+  // Helper: build a setup with a 503 DELETE response and a shared gate.
+  function setupTransient503({ gate }) {
+    const sb = supabaseSpy();
+    const fetchImpl = makeFetch([
+      { match: (u) => u.includes('/branches?per_page'), response: { status: 200, body: [{ name: 'flowai/renewal-rTrans', commit: { sha: 'a' } }] } },
+      { match: (u) => u.includes('/branches/flowai%2Frenewal-rTrans'), response: { status: 200, body: { commit: { commit: { committer: { date: daysAgoIso(10) } } } } } },
+      { match: (u) => u.includes('/pulls?head='), response: { status: 200, body: [] } },
+      { match: (u, i) => i?.method === 'DELETE', response: { status: 503, body: 'service down' } },
+    ]);
+    return { sb, fetchImpl, gate };
+  }
+
+  it('InMemoryTransientGate: record/reset/read primitives', async () => {
+    const gate = new __internals.InMemoryTransientGate();
+    expect(gate.backend).toBe('in-memory');
+    expect(await gate.read('k')).toBe(0);
+    expect(await gate.record('k')).toBe(1);
+    expect(await gate.record('k')).toBe(2);
+    expect(await gate.record('k')).toBe(3);
+    expect(await gate.read('k')).toBe(3);
+    await gate.reset('k');
+    expect(await gate.read('k')).toBe(0);
+  });
+
+  it('buildTransientKey honours productId + branch; unknown when productId absent', () => {
+    expect(__internals.buildTransientKey('mypreglife', 'flowai/renewal-r1'))
+      .toBe('flowai:cleanup:transient:mypreglife:flowai/renewal-r1');
+    expect(__internals.buildTransientKey(null, 'flowai/renewal-r1'))
+      .toBe('flowai:cleanup:transient:unknown:flowai/renewal-r1');
+    expect(__internals.buildTransientKey('', 'flowai/renewal-r1'))
+      .toBe('flowai:cleanup:transient:unknown:flowai/renewal-r1');
+  });
+
+  it('BC-X1 reaffirmed: 1st transient failure → willRetry=true, consecutiveFailures=1, NOT escalated', async () => {
+    const gate = new __internals.InMemoryTransientGate();
+    const { sb, fetchImpl } = setupTransient503({ gate });
+    const r = await cleanupStaleBranches({
+      owner: 'org', repo: 'repo', retentionDays: 7, token: TOKEN,
+      supabase: sb, productId: 'demo', transientGate: gate,
+      fetch: fetchImpl, now: () => NOW_MS,
+    });
+    expect(r.failed.length).toBe(1);
+    expect(r.failed[0].reason).toBe('github_5xx');
+    expect(r.failed[0].willRetry).toBe(true);
+    expect(r.failed[0].consecutiveFailures).toBe(1);
+    expect(r.failed[0].escalated).toBeUndefined();
+    expect(sb.inserts.length).toBe(0);
+    // Counter advanced.
+    expect(await gate.read('flowai:cleanup:transient:demo:flowai/renewal-rTrans')).toBe(1);
+  });
+
+  it('BC-X2 — 3 consecutive 503 → 3rd run escalates, emits cleanup_failed.v1, resets counter', async () => {
+    // Use a shared gate across three "runs" — simulates the multi-cron-tick
+    // case where the same branch keeps timing out.
+    const gate = new __internals.InMemoryTransientGate();
+    const key = 'flowai:cleanup:transient:demo:flowai/renewal-rTrans';
+
+    async function oneRun() {
+      const { sb, fetchImpl } = setupTransient503({ gate });
+      const r = await cleanupStaleBranches({
+        owner: 'org', repo: 'repo', retentionDays: 7, token: TOKEN,
+        supabase: sb, productId: 'demo', transientGate: gate,
+        fetch: fetchImpl, now: () => NOW_MS,
+      });
+      return { r, sb };
+    }
+
+    // Run 1: counter 0 → 1. No escalation. No cleanup_failed entry.
+    const { r: r1, sb: sb1 } = await oneRun();
+    expect(r1.failed[0].consecutiveFailures).toBe(1);
+    expect(r1.failed[0].escalated).toBeUndefined();
+    expect(r1.failed[0].willRetry).toBe(true);
+    expect(sb1.inserts.length).toBe(0);
+    expect(await gate.read(key)).toBe(1);
+
+    // Run 2: counter 1 → 2. Still no escalation.
+    const { r: r2, sb: sb2 } = await oneRun();
+    expect(r2.failed[0].consecutiveFailures).toBe(2);
+    expect(r2.failed[0].escalated).toBeUndefined();
+    expect(r2.failed[0].willRetry).toBe(true);
+    expect(sb2.inserts.length).toBe(0);
+    expect(await gate.read(key)).toBe(2);
+
+    // Run 3: counter 2 → 3. ESCALATE.
+    const { r: r3, sb: sb3 } = await oneRun();
+    expect(r3.failed[0].consecutiveFailures).toBe(3);
+    expect(r3.failed[0].escalated).toBe(true);
+    expect(r3.failed[0].willRetry).toBe(false);
+    expect(r3.failed[0].reason).toBe('github_5xx');
+    expect(sb3.inserts.length).toBe(1);
+    expect(sb3.inserts[0].kind).toBe('self_renewal.cleanup_failed.v1');
+    expect(sb3.inserts[0].reason).toBe('github_5xx');
+    expect(sb3.inserts[0].escalated).toBe(true);
+    expect(sb3.inserts[0].consecutiveFailures).toBe(3);
+    expect(sb3.inserts[0].willRetryNextRun).toBe(false);
+    // Counter reset after escalation.
+    expect(await gate.read(key)).toBe(0);
+  });
+
+  it('success resets counter (transient streak → success starts fresh)', async () => {
+    const gate = new __internals.InMemoryTransientGate();
+    const key = 'flowai:cleanup:transient:demo:flowai/renewal-rSuccess';
+    // Seed the counter at 2 to mimic a prior transient streak.
+    await gate.record(key);
+    await gate.record(key);
+    expect(await gate.read(key)).toBe(2);
+
+    const sb = supabaseSpy();
+    const fetchImpl = makeFetch([
+      { match: (u) => u.includes('/branches?per_page'), response: { status: 200, body: [{ name: 'flowai/renewal-rSuccess', commit: { sha: 'a' } }] } },
+      { match: (u) => u.includes('/branches/flowai%2Frenewal-rSuccess'), response: { status: 200, body: { commit: { commit: { committer: { date: daysAgoIso(10) } } } } } },
+      { match: (u) => u.includes('/pulls?head='), response: { status: 200, body: [] } },
+      { match: (u, i) => i?.method === 'DELETE', response: { status: 204, body: '' } },
+    ]);
+    const r = await cleanupStaleBranches({
+      owner: 'org', repo: 'repo', retentionDays: 7, token: TOKEN,
+      supabase: sb, productId: 'demo', transientGate: gate,
+      fetch: fetchImpl, now: () => NOW_MS,
+    });
+    expect(r.deleted.length).toBe(1);
+    expect(await gate.read(key)).toBe(0);   // success resets the counter
+  });
+
+  it('persistent failure (401) resets counter (branch-lifecycle clean slate)', async () => {
+    const gate = new __internals.InMemoryTransientGate();
+    const key = 'flowai:cleanup:transient:demo:flowai/renewal-rPersistent';
+    await gate.record(key);
+    expect(await gate.read(key)).toBe(1);
+
+    const sb = supabaseSpy();
+    const fetchImpl = makeFetch([
+      { match: (u) => u.includes('/branches?per_page'), response: { status: 200, body: [{ name: 'flowai/renewal-rPersistent', commit: { sha: 'a' } }] } },
+      { match: (u) => u.includes('/branches/flowai%2Frenewal-rPersistent'), response: { status: 200, body: { commit: { commit: { committer: { date: daysAgoIso(10) } } } } } },
+      { match: (u) => u.includes('/pulls?head='), response: { status: 200, body: [] } },
+      { match: (u, i) => i?.method === 'DELETE', response: { status: 401, body: 'Bad credentials' } },
+    ]);
+    const r = await cleanupStaleBranches({
+      owner: 'org', repo: 'repo', retentionDays: 7, token: TOKEN,
+      supabase: sb, productId: 'demo', transientGate: gate,
+      fetch: fetchImpl, now: () => NOW_MS,
+    });
+    expect(r.failed[0].reason).toBe('permission_denied');
+    // Persistent failure → counter reset (no escalated flag because
+    // first-touch persistent, not escalated transient).
+    expect(r.failed[0].escalated).toBeUndefined();
+    expect(await gate.read(key)).toBe(0);
+  });
+
+  it('KvBackedTransientGate: record/reset/read uses kv.incr / kv.del / kv.get + sets TTL', async () => {
+    const log = [];
+    const kvSpy = {
+      incr: async (k) => { log.push(['incr', k]); return 1; },
+      expire: async (k, ttl) => { log.push(['expire', k, ttl]); return 1; },
+      get: async (k) => { log.push(['get', k]); return 5; },
+      del: async (k) => { log.push(['del', k]); return 1; },
+    };
+    const gate = new __internals.KvBackedTransientGate(kvSpy);
+    expect(gate.backend).toBe('vercel-kv');
+    expect(await gate.record('k')).toBe(1);
+    expect(log[0]).toEqual(['incr', 'k']);
+    expect(log[1][0]).toBe('expire');
+    expect(log[1][2]).toBe(__internals.TRANSIENT_TTL_SECONDS);
+    expect(await gate.read('k')).toBe(5);
+    await gate.reset('k');
+    expect(log.find((l) => l[0] === 'del')).toEqual(['del', 'k']);
+  });
+
+  it('KvBackedTransientGate: KV failures degrade gracefully (record→1, read→0)', async () => {
+    const kvErrors = {
+      incr: async () => { throw new Error('KV down'); },
+      expire: async () => { throw new Error('KV down'); },
+      get: async () => { throw new Error('KV down'); },
+      del: async () => { throw new Error('KV down'); },
+    };
+    const gate = new __internals.KvBackedTransientGate(kvErrors);
+    expect(await gate.record('k')).toBe(1);   // degraded — treat as 1, no escalation
+    expect(await gate.read('k')).toBe(0);
+    await gate.reset('k');                    // does not throw
+  });
+
+  it('default gate: in-memory fallback when KV env vars absent', async () => {
+    // Save + clear env vars so the singleton probes "not configured".
+    const origKvUrl = process.env.KV_REST_API_URL;
+    const origKvUrlAlt = process.env.KV_URL;
+    delete process.env.KV_REST_API_URL;
+    delete process.env.KV_URL;
+    // Drop the cached singleton so the env probe runs fresh.
+    const mod = await import('../../../src/lib/agents/renewal/branchCleanup.js');
+    mod._resetDefaultTransientGate();
+    const gate = await __internals.getDefaultTransientGate();
+    expect(gate.backend).toBe('in-memory');
+    // Restore env state.
+    if (origKvUrl !== undefined) process.env.KV_REST_API_URL = origKvUrl;
+    if (origKvUrlAlt !== undefined) process.env.KV_URL = origKvUrlAlt;
+    mod._resetDefaultTransientGate();
+  });
+});
