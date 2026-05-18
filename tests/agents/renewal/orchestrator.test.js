@@ -405,6 +405,186 @@ describe('computeProgress', () => {
   });
 });
 
+// ── DISPATCH 24 — product-agnostic PATH A / PATH B ─────────────────────────
+
+describe('runOrchestration — DISPATCH 24 PATH A (known URL)', () => {
+  it('PATH A: known URL loads from registry; deploys via operator branch path', async () => {
+    withVercelEnv();
+    try {
+      // discoverProduct returns a registry row (PATH A — same as today).
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [96] });
+      // Sanity: the default PRODUCT used by happyDeps has __pathB undefined
+      // (i.e. PATH A). We explicitly assert this by tracking which deploy
+      // path was used.
+      const result = await runOrchestration({
+        url: 'https://mypreglife-platform.vercel.app', mode: 'auto', runId: 'pathA-1',
+        supabase: null, environment: 'prd', gtmTarget: 95, maxIterations: 10, deps,
+      });
+      expect(result.ok).toBe(true);
+      // PATH A took the operator branch-deploy path → deployBranchPreview was called.
+      expect(deps.deployBranchPreview).toHaveBeenCalledTimes(1);
+      // PATH A invokes the GitHub-write path (token mint + branch + commit).
+      expect(deps.getInstallationToken).toHaveBeenCalled();
+      expect(deps.createRenewalBranch).toHaveBeenCalled();
+      // Iteration log carries path='A'.
+      expect(result.iterations[0].path).toBe('A');
+      // STEP 1 log mentions PATH A.
+      const step1 = result.orchestrationLog.find((l) => l.step === 1);
+      expect(step1.status).toBe('complete');
+      expect(JSON.stringify(step1.result)).toMatch(/PATH A \(known\)/);
+    } finally { clearVercelEnv(); }
+  });
+});
+
+describe('runOrchestration — DISPATCH 24 PATH B (unknown URL)', () => {
+  it('PATH B: unknown URL proceeds with synthesized defaults — does not throw PRODUCT_NOT_FOUND', async () => {
+    const deps = happyDeps({ preScoreSequence: [40], postScoreSequence: [96] });
+    // Override discoverProduct to return a synthesized PATH B product
+    // (no registry hit → universal mode).
+    deps.discoverProduct = vi.fn(async ({ url, runId }) => ({
+      product_id: `flowai-upgraded-newsite-com-${(runId || '').slice(0, 8)}`,
+      org_id: 'flowai-self-hosted',
+      github_repo_url: null,                // score-only mode (no repo detected)
+      self_renewal_enabled: true,
+      environment: 'prd',
+      __pathB: true,
+      __sourceUrl: url,
+      __detectedRepoUrl: null,
+      self_renewal_max_per_day: 3,
+      self_renewal_minimum_delta: 1,
+      self_renewal_substantial_threshold: 5,
+      self_renewal_negative_delta_policy: 'ALWAYS_OPEN',
+    }));
+    deps.remediationEngine = vi.fn(async () => ({
+      ok: true, renewedUrl: 'https://flowai-upgraded-newsite-com-runid24-abc.vercel.app',
+      path: 'generate-from-scratch', deploymentId: 'dpl_pathB_fake',
+      deployedAt: '2099-01-01T00:00:00Z',
+    }));
+    const result = await runOrchestration({
+      url: 'https://newsite.com', mode: 'auto', runId: 'runid24-pathB-1',
+      supabase: null, environment: 'prd', gtmTarget: 95, maxIterations: 10, deps,
+    });
+    // PRODUCT_NOT_FOUND must NOT be the outcome.
+    expect(result.code).not.toBe('PRODUCT_NOT_FOUND');
+    expect(result.failedStep).not.toBe('STEP_1');
+    expect(result.ok).toBe(true);
+    // STEP 1 result should mention PATH B.
+    const step1 = result.orchestrationLog.find((l) => l.step === 1);
+    expect(step1.status).toBe('complete');
+    expect(JSON.stringify(step1.result)).toMatch(/PATH B \(unknown — proceeding in universal mode\)/);
+    // Iteration log records path='B'.
+    expect(result.iterations[0].path).toBe('B');
+  });
+
+  it('PATH B: deployment uses remediationEngine (not the operator branch-deploy path)', async () => {
+    const deps = happyDeps({ preScoreSequence: [40], postScoreSequence: [96] });
+    deps.discoverProduct = vi.fn(async ({ url, runId }) => ({
+      product_id: `flowai-upgraded-example-${(runId || '').slice(0, 8)}`,
+      org_id: 'flowai-self-hosted',
+      github_repo_url: null,
+      self_renewal_enabled: true, __pathB: true,
+      __sourceUrl: url, __detectedRepoUrl: null,
+      self_renewal_max_per_day: 3, self_renewal_minimum_delta: 1,
+      self_renewal_substantial_threshold: 5,
+    }));
+    deps.remediationEngine = vi.fn(async () => ({
+      ok: true, renewedUrl: 'https://flowai-upgraded-example-x-y.vercel.app',
+      path: 'generate-from-scratch', deploymentId: 'dpl_pathB',
+    }));
+    const result = await runOrchestration({
+      url: 'https://example.com', mode: 'auto', runId: 'pathB-deploy-1',
+      supabase: null, environment: 'prd', gtmTarget: 95, maxIterations: 10, deps,
+    });
+    expect(result.ok).toBe(true);
+    // remediationEngine called exactly once per iteration; branch-deploy NEVER.
+    expect(deps.remediationEngine).toHaveBeenCalledTimes(1);
+    expect(deps.deployBranchPreview).not.toHaveBeenCalled();
+    // GitHub-write path skipped: no token mint, no branch, no commit, no PR.
+    expect(deps.getInstallationToken).not.toHaveBeenCalled();
+    expect(deps.createRenewalBranch).not.toHaveBeenCalled();
+    expect(deps.commitFileToBranch).not.toHaveBeenCalled();
+    expect(deps.createRenewalPr).not.toHaveBeenCalled();
+    // STEP 7/8/9/13 logs should be 'skipped' with explicit PATH B rationale.
+    const log = (n) => result.orchestrationLog.find((l) => l.step === n && l.iteration > 0);
+    expect(log(7).status).toBe('skipped');
+    expect(JSON.stringify(log(7).result)).toMatch(/PATH B/);
+    expect(log(8).status).toBe('skipped');
+    expect(log(9).status).toBe('skipped');
+    // STEP 10 uses the remediationEngine tool label.
+    const step10 = log(10);
+    expect(step10.status).toBe('complete');
+    expect(step10.tool).toMatch(/remediationEngine/);
+    expect(step10.result.previewUrl).toMatch(/flowai-upgraded/);
+    // STEP 13 (PR creation) skipped — no upstream repo.
+    const step13 = result.orchestrationLog.find((l) => l.step === 13);
+    expect(step13.status).toBe('skipped');
+  });
+});
+
+describe('detectGithubRepoFromUrl', () => {
+  // Imported lazily so the test file's top-of-file import set stays clean.
+  it('finds repo from .well-known/flowai.json', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = vi.fn(async (url) => {
+      if (url.endsWith('/.well-known/flowai.json')) {
+        return {
+          ok: true, status: 200,
+          text: async () => JSON.stringify({ github_repo: 'https://github.com/op/repo' }),
+        };
+      }
+      return { ok: false, status: 404, text: async () => '' };
+    });
+    const repo = await mod.detectGithubRepoFromUrl({ url: 'https://example.com', fetch: fetchMock });
+    expect(repo).toBe('https://github.com/op/repo');
+  });
+
+  it('finds repo from <meta name="github-repo"> when well-known not present', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = vi.fn(async (url) => {
+      if (url.endsWith('/.well-known/flowai.json')) {
+        return { ok: false, status: 404, text: async () => '' };
+      }
+      return {
+        ok: true, status: 200,
+        text: async () => '<html><head><meta name="github-repo" content="https://github.com/op2/repo2"></head></html>',
+      };
+    });
+    const repo = await mod.detectGithubRepoFromUrl({ url: 'https://example.com', fetch: fetchMock });
+    expect(repo).toBe('https://github.com/op2/repo2');
+  });
+
+  it('falls back to github.com URL grep in page HTML', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = vi.fn(async (url) => {
+      if (url.endsWith('/.well-known/flowai.json')) {
+        return { ok: false, status: 404, text: async () => '' };
+      }
+      return {
+        ok: true, status: 200,
+        text: async () => '<html><body>see source <a href="https://github.com/op3/repo3">here</a></body></html>',
+      };
+    });
+    const repo = await mod.detectGithubRepoFromUrl({ url: 'https://example.com', fetch: fetchMock });
+    expect(repo).toBe('https://github.com/op3/repo3');
+  });
+
+  it('returns null when no signal is present', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = vi.fn(async () => ({
+      ok: true, status: 200, text: async () => '<html><body>nothing here</body></html>',
+    }));
+    const repo = await mod.detectGithubRepoFromUrl({ url: 'https://example.com', fetch: fetchMock });
+    expect(repo).toBeNull();
+  });
+
+  it('returns null on fetch failure (silent — never throws)', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = vi.fn(async () => { throw new Error('net down'); });
+    const repo = await mod.detectGithubRepoFromUrl({ url: 'https://example.com', fetch: fetchMock });
+    expect(repo).toBeNull();
+  });
+});
+
 describe('derivePrioritizedIssuesFromScore', () => {
   it('returns supplied issue verbatim when provided', () => {
     const supplied = { severity: 'high', title: 'x', filePath: 'a.js' };
