@@ -52,6 +52,7 @@
 import { BaseAgent, AUTHORITY } from '../BaseAgent.js';
 import { getAgent } from '../_registry.js';
 import { aggressiveCrawl, crawl } from '../../../../api/_lib/crawler.js';
+import { conductWithAuthFlow } from '../auth/authenticatedTraversal.js';
 
 const TOPICS = Object.freeze({
   crawlRequest: '1.crawl.request.v1',
@@ -309,6 +310,52 @@ export class Agent21AggressiveCrawlConductor extends BaseAgent {
       authGatedCount,
       fallbackUsed: false,
     };
+  }
+
+  /**
+   * DISPATCH 28 P0-1 — auth-traversal wire-in.
+   *
+   * Run an unauth-first crawl, and if credentials are supplied + auth-
+   * gated pages are detected, invoke the Phase 3 Executor's
+   * `conductCredentialedCrawl` per gated URL to obtain post-login page
+   * records. The auth flow itself (BrowserContext, login form fill,
+   * MFA fail-loud, storageState in-memory, scrubArtifacts) is fully
+   * delegated to the Executor per ENTRY 007 / AUTH_TRAVERSAL_SECURITY_SPEC v3.
+   *
+   * `opts.credentialedCrawlFn` is the wiring point — callers (typically
+   * `api/agent/21/execute.js` or the Self-Renewal orchestrator) bind
+   * `Executor.conductCredentialedCrawl.bind(executor)` here. Tests
+   * inject a stub.
+   *
+   * When `opts.credentials` is absent OR `opts.credentialedCrawlFn` is
+   * absent, the method falls through to plain `conductCrawl()` plus
+   * an `authPass` flag describing why the auth pass was skipped — so
+   * downstream observers can see the gap explicitly instead of
+   * silently scoring with a partial crawl.
+   *
+   * @param {string} url
+   * @param {object} [opts]
+   * @param {object} [opts.credentials]              — { email, password } or null
+   * @param {function} [opts.credentialedCrawlFn]    — Executor.conductCredentialedCrawl
+   * @param {string}   [opts.runId]
+   * @param {number}   [opts.depth]
+   * @param {number}   [opts.maxPages]
+   * @param {string}   [opts.force]
+   * @returns {Promise<object>} CrawlReport-shaped envelope augmented with `authPass`
+   */
+  async conductCrawlWithAuth(url, opts = {}) {
+    const passthroughOpts = {};
+    if (typeof opts.depth === 'number') passthroughOpts.depth = opts.depth;
+    if (typeof opts.maxPages === 'number') passthroughOpts.maxPages = opts.maxPages;
+    if (typeof opts.force === 'string') passthroughOpts.force = opts.force;
+    return conductWithAuthFlow({
+      unauthCrawl: (u, o) => this.conductCrawl(u, o),
+      credentialedCrawlFn: opts.credentialedCrawlFn ?? null,
+      url,
+      credentials: opts.credentials ?? null,
+      runId: opts.runId,
+      opts: passthroughOpts,
+    });
   }
 
   /**
