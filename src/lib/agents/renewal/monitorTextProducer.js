@@ -328,10 +328,10 @@ export async function fetchGithubSourceBundle({ githubRepoUrl, token, opts = {} 
   const sourceFileCandidates = [
     ...pagesListing
       .filter((e) => e?.type === 'file' && isJsxOrTsx(e.name))
-      .map((e) => ({ path: e.path, name: e.name, size: e.size ?? 0, dir: 'src/pages' })),
+      .map((e) => ({ type: 'file', path: e.path, name: e.name, size: e.size ?? 0, dir: 'src/pages' })),
     ...componentsListing
       .filter((e) => e?.type === 'file' && isJsxOrTsx(e.name))
-      .map((e) => ({ path: e.path, name: e.name, size: e.size ?? 0, dir: 'src/components' })),
+      .map((e) => ({ type: 'file', path: e.path, name: e.name, size: e.size ?? 0, dir: 'src/components' })),
   ].sort((a, b) => (b.size ?? 0) - (a.size ?? 0));
 
   // 4. README + package.json fetches (parallel, tolerant of 404).

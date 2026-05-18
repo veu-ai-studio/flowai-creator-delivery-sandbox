@@ -3,6 +3,12 @@
 // Test surface for src/lib/agents/renewal/monitorTextProducer.js. All
 // network calls are mocked. Verified-live test outcome (DISPATCH 22 FIX 2)
 // is documented in the report; this suite covers the unit + error paths.
+//
+// DISPATCH 6 — GitHub source enrichment tests appended at end of file:
+//   - happy-path enrichment with mocked GitHub + Anthropic
+//   - graceful degradation when token missing → URL-only path
+//   - filesRead count matches files actually fetched
+//   - token never appears in error messages or returned envelope
 
 import { describe, it, expect, vi } from 'vitest';
 import {
@@ -11,12 +17,16 @@ import {
   extractVisibleText,
   extractPageTitle,
   buildMonitorPrompt,
+  parseGithubRepoUrl,
+  fetchGithubSourceBundle,
   __internals,
 } from '../../../src/lib/agents/renewal/monitorTextProducer.js';
 import { computeScore } from '../../../src/lib/agents/renewal/preScoreAdapter.js';
 
 const API_KEY = 'sk-ant-TEST_KEY_xxxxxxxxxxxx';
 const URL_OK = 'https://example.com';
+const GH_TOKEN = 'ghs_TEST_TOKEN_xxxxxxxxxxxx';
+const GH_REPO = 'https://github.com/veu-ai-studio/test-product';
 
 const SAMPLE_HTML = `
 <!DOCTYPE html>
@@ -346,5 +356,332 @@ describe('produceMonitorText — API key never appears in output', () => {
     expect(err.api_key).toBeUndefined();
     expect(err.authorization).toBeUndefined();
     expect(err['x-api-key']).toBeUndefined();
+  });
+
+  it('makeError ALSO strips `token` from extra metadata (DISPATCH 6)', () => {
+    const err = __internals.makeError('TEST', 'msg', {
+      status: 401, token: 'ghs_secret_token_value', safe: 'ok',
+    });
+    expect(err.status).toBe(401);
+    expect(err.safe).toBe('ok');
+    expect(err.token).toBeUndefined();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// DISPATCH 6 — GitHub source enrichment
+// ─────────────────────────────────────────────────────────────────────
+
+describe('parseGithubRepoUrl', () => {
+  it.each([
+    { url: 'https://github.com/owner/repo',         expect: { owner: 'owner', repo: 'repo' } },
+    { url: 'https://github.com/owner/repo.git',     expect: { owner: 'owner', repo: 'repo' } },
+    { url: 'https://github.com/owner/repo/',        expect: { owner: 'owner', repo: 'repo' } },
+    { url: 'https://github.com/owner/repo/tree/main', expect: { owner: 'owner', repo: 'repo' } },
+    { url: 'https://www.github.com/owner/repo',     expect: { owner: 'owner', repo: 'repo' } },
+    { url: 'http://github.com/owner/repo',          expect: { owner: 'owner', repo: 'repo' } },
+  ])('parses $url', ({ url, expect: ex }) => {
+    expect(parseGithubRepoUrl(url)).toEqual(ex);
+  });
+
+  it.each([
+    null, undefined, '', 'not a url', 'https://gitlab.com/owner/repo',
+  ])('returns null for non-github input %p', (input) => {
+    expect(parseGithubRepoUrl(input)).toBeNull();
+  });
+});
+
+// Helper: build a fetch that routes calls by URL pattern. URL+anthropic
+// patterns go to the existing mock builders; github.com goes through a
+// scripted responder.
+function makeMixedFetch({ urlHtml, anthropicText = SAMPLE_MONITOR_RESPONSE, githubResponders = {} }) {
+  return vi.fn(async (url, init) => {
+    const s = typeof url === 'string' ? url : String(url);
+    if (s.includes('anthropic.com')) {
+      return {
+        ok: true, status: 200,
+        headers: { get: () => 'application/json' },
+        json: async () => ({ content: [{ type: 'text', text: anthropicText }], model: 'claude-sonnet-4-6', usage: { input_tokens: 100, output_tokens: 50 } }),
+        text: async () => '{}',
+      };
+    }
+    if (s.includes('api.github.com')) {
+      const sorted = Object.entries(githubResponders).sort(([a], [b]) => b.length - a.length);
+      for (const [pathFragment, body] of sorted) {
+        let matches = false;
+        if (pathFragment.endsWith('__ROOT__')) {
+          const prefix = pathFragment.replace('__ROOT__', '');
+          matches = s.endsWith(prefix);
+        } else {
+          matches = s.includes(pathFragment);
+        }
+        if (matches) {
+          if (body === '__404__') {
+            return {
+              ok: false, status: 404, statusText: 'Not Found',
+              headers: { get: () => 'application/json' },
+              text: async () => '{"message":"Not Found"}',
+              json: async () => ({ message: 'Not Found' }),
+            };
+          }
+          return {
+            ok: true, status: 200,
+            headers: { get: () => 'application/json' },
+            json: async () => body,
+            text: async () => JSON.stringify(body),
+          };
+        }
+      }
+      // Default: 404 so the helper degrades gracefully.
+      return {
+        ok: false, status: 404, statusText: 'Not Found',
+        headers: { get: () => 'application/json' },
+        text: async () => '{"message":"Not Found"}',
+        json: async () => ({ message: 'Not Found' }),
+      };
+    }
+    // Default: serve the URL HTML.
+    return {
+      ok: true, status: 200, statusText: 'OK',
+      headers: { get: (h) => h.toLowerCase() === 'content-type' ? 'text/html' : null },
+      text: async () => urlHtml,
+    };
+  });
+}
+
+function b64(s) { return Buffer.from(s, 'utf8').toString('base64'); }
+
+describe('fetchGithubSourceBundle', () => {
+  it('returns empty bundle when githubRepoUrl is invalid', async () => {
+    const r = await fetchGithubSourceBundle({
+      githubRepoUrl: 'not a url', token: GH_TOKEN,
+    });
+    expect(r.block).toBe('');
+    expect(r.filesRead).toBe(0);
+    expect(r.sources).toEqual([]);
+  });
+
+  it('returns empty bundle when token is missing', async () => {
+    const r = await fetchGithubSourceBundle({
+      githubRepoUrl: GH_REPO, token: '',
+    });
+    expect(r.block).toBe('');
+    expect(r.filesRead).toBe(0);
+    expect(r.sources).toEqual([]);
+  });
+
+  it('happy path: returns enriched block with README + package.json + source listings', async () => {
+    const rootListing = [
+      { name: 'README.md', type: 'file', size: 120, path: 'README.md' },
+      { name: 'package.json', type: 'file', size: 200, path: 'package.json' },
+      { name: 'src', type: 'dir', path: 'src' },
+    ];
+    const pagesListing = [
+      { name: 'Home.jsx', type: 'file', size: 1500, path: 'src/pages/Home.jsx' },
+      { name: 'About.jsx', type: 'file', size: 800, path: 'src/pages/About.jsx' },
+      { name: 'utils.ts', type: 'file', size: 300, path: 'src/pages/utils.ts' }, // not .jsx/.tsx — should be filtered
+    ];
+    const componentsListing = [
+      { name: 'Button.tsx', type: 'file', size: 600, path: 'src/components/Button.tsx' },
+    ];
+    const homeJsxContent = `
+      import { useState } from 'react';
+      import Button from '../components/Button';
+      import { Card } from '../components/Card';
+      export default function Home() { return <Button label="hi"/>; }
+    `;
+    const fetchMock = makeMixedFetch({
+      urlHtml: SAMPLE_HTML,
+      githubResponders: {
+        '/contents/__ROOT__': rootListing,
+        '/repos/veu-ai-studio/test-product/contents/src%2Fpages': pagesListing,
+        '/repos/veu-ai-studio/test-product/contents/src%2Fcomponents': componentsListing,
+        '/repos/veu-ai-studio/test-product/contents/README.md': {
+          encoding: 'base64', content: b64('# Test Product\nA helpful README with content.'),
+        },
+        '/repos/veu-ai-studio/test-product/contents/package.json': {
+          encoding: 'base64', content: b64(JSON.stringify({
+            name: 'test-product', description: 'demo',
+            dependencies: { react: '^18.0.0' },
+            scripts: { build: 'vite build', test: 'vitest' },
+          })),
+        },
+        '/repos/veu-ai-studio/test-product/contents/src%2Fpages%2FHome.jsx': {
+          encoding: 'base64', content: b64(homeJsxContent),
+        },
+        '/repos/veu-ai-studio/test-product/contents/src%2Fpages%2FAbout.jsx': {
+          encoding: 'base64', content: b64('export default function About(){return <div/>;}'),
+        },
+        '/repos/veu-ai-studio/test-product/contents/src%2Fcomponents%2FButton.tsx': {
+          encoding: 'base64', content: b64('export default function Button(){return <button/>;}'),
+        },
+      },
+    });
+
+    const r = await fetchGithubSourceBundle({
+      githubRepoUrl: GH_REPO, token: GH_TOKEN, opts: { fetch: fetchMock },
+    });
+    expect(r.sources).toContain('github');
+    expect(r.filesRead).toBe(5);  // README + package.json + Home.jsx + About.jsx + Button.tsx
+    expect(r.sourceDirsListed).toContain('src/pages');
+    expect(r.sourceDirsListed).toContain('src/components');
+    expect(r.block).toContain('GITHUB SOURCE ENRICHMENT');
+    expect(r.block).toContain('Repo: veu-ai-studio/test-product');
+    expect(r.block).toContain('PACKAGE.JSON SUMMARY');
+    expect(r.block).toContain('test-product');
+    expect(r.block).toContain('scripts: build, test');
+    expect(r.block).toContain('A helpful README');
+    expect(r.block).toContain('Home.jsx');
+    expect(r.block).toContain('Button.tsx');
+    // .ts file should NOT be in the listing (filter requires .jsx/.tsx).
+    expect(r.block).not.toContain('utils.ts');
+    // Component-name extraction from import statements:
+    expect(r.block).toContain('Button');
+    expect(r.block).toContain('Card');
+  });
+
+  it('credential redaction: secrets in README do NOT appear in enriched block', async () => {
+    const readmeWithSecret = 'Here is a leaked key: sk-test-ABCDEFGHIJKLMNOPQRSTUVWXYZ for OpenAI.';
+    const fetchMock = makeMixedFetch({
+      urlHtml: SAMPLE_HTML,
+      githubResponders: {
+        '/contents/__ROOT__': [
+          { name: 'README.md', type: 'file', size: 100, path: 'README.md' },
+        ],
+        '/repos/veu-ai-studio/test-product/contents/README.md': {
+          encoding: 'base64', content: b64(readmeWithSecret),
+        },
+      },
+    });
+    const r = await fetchGithubSourceBundle({
+      githubRepoUrl: GH_REPO, token: GH_TOKEN, opts: { fetch: fetchMock },
+    });
+    expect(r.block).toContain('[REDACTED]');
+    expect(r.block).not.toContain('sk-test-ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  });
+
+  it('graceful degradation when root listing 404s', async () => {
+    const fetchMock = makeMixedFetch({
+      urlHtml: SAMPLE_HTML,
+      githubResponders: {
+        '/contents/__ROOT__': '__404__',
+      },
+    });
+    const r = await fetchGithubSourceBundle({
+      githubRepoUrl: GH_REPO, token: GH_TOKEN, opts: { fetch: fetchMock },
+    });
+    expect(r.block).toBe('');
+    expect(r.filesRead).toBe(0);
+    expect(r.error).toMatch(/root listing failed/);
+  });
+});
+
+describe('produceMonitorText — GitHub enrichment integration', () => {
+  it('enriched path: returns monitor text whose envelope includes sources=[url,github] + filesRead>0', async () => {
+    const rootListing = [
+      { name: 'README.md', type: 'file', size: 60, path: 'README.md' },
+      { name: 'package.json', type: 'file', size: 100, path: 'package.json' },
+      { name: 'src', type: 'dir', path: 'src' },
+    ];
+    const fetchMock = makeMixedFetch({
+      urlHtml: SAMPLE_HTML,
+      githubResponders: {
+        '/contents/__ROOT__': rootListing,
+        '/repos/veu-ai-studio/test-product/contents/src%2Fpages': [],
+        '/repos/veu-ai-studio/test-product/contents/src%2Fcomponents': [],
+        '/repos/veu-ai-studio/test-product/contents/README.md': {
+          encoding: 'base64', content: b64('# Hello world README'),
+        },
+        '/repos/veu-ai-studio/test-product/contents/package.json': {
+          encoding: 'base64', content: b64('{"name":"test","scripts":{"build":"vite"}}'),
+        },
+      },
+    });
+    const r = await produceMonitorText({
+      url: URL_OK, productId: 'demo', runId: 'r1',
+      githubRepoUrl: GH_REPO, token: GH_TOKEN,
+      opts: { fetch: fetchMock, apiKey: API_KEY },
+    });
+    expect(r.sources).toEqual(['url', 'github']);
+    expect(r.filesRead).toBe(2);  // README + package.json
+    expect(r.sourceDirsListed).toEqual([]);  // both src/pages + src/components were empty arrays
+    expect(r.monitorText).toContain('[L1] Functionality Score');
+  });
+
+  it('graceful degradation: token missing → URL-only path, sources=[url], filesRead=0', async () => {
+    const fetchMock = makeMixedFetch({ urlHtml: SAMPLE_HTML });
+    const r = await produceMonitorText({
+      url: URL_OK, productId: 'demo', runId: 'r1',
+      githubRepoUrl: GH_REPO,  // present but no token
+      opts: { fetch: fetchMock, apiKey: API_KEY },
+    });
+    expect(r.sources).toEqual(['url']);
+    expect(r.filesRead).toBe(0);
+    expect(r.enrichmentError).toBeUndefined();
+  });
+
+  it('graceful degradation: githubRepoUrl missing → URL-only path', async () => {
+    const fetchMock = makeMixedFetch({ urlHtml: SAMPLE_HTML });
+    const r = await produceMonitorText({
+      url: URL_OK, productId: 'demo', runId: 'r1',
+      token: GH_TOKEN,  // present but no githubRepoUrl
+      opts: { fetch: fetchMock, apiKey: API_KEY },
+    });
+    expect(r.sources).toEqual(['url']);
+    expect(r.filesRead).toBe(0);
+  });
+
+  it('graceful degradation: both missing → URL-only path (backwards-compatible)', async () => {
+    const fetchMock = makeMixedFetch({ urlHtml: SAMPLE_HTML });
+    const r = await produceMonitorText({
+      url: URL_OK, productId: 'demo', runId: 'r1',
+      opts: { fetch: fetchMock, apiKey: API_KEY },
+    });
+    expect(r.sources).toEqual(['url']);
+    expect(r.filesRead).toBe(0);
+  });
+
+  it('graceful degradation: GitHub root listing 404 → URL-only path + enrichmentError surfaced', async () => {
+    const fetchMock = makeMixedFetch({
+      urlHtml: SAMPLE_HTML,
+      githubResponders: {
+        '/contents/__ROOT__': '__404__',
+      },
+    });
+    const r = await produceMonitorText({
+      url: URL_OK, productId: 'demo', runId: 'r1',
+      githubRepoUrl: GH_REPO, token: GH_TOKEN,
+      opts: { fetch: fetchMock, apiKey: API_KEY },
+    });
+    expect(r.sources).toEqual(['url']);
+    expect(r.filesRead).toBe(0);
+    expect(r.enrichmentError).toMatch(/root listing failed/);
+    // Monitor text still produced from URL content.
+    expect(r.monitorText).toContain('[L1] Functionality Score');
+  });
+
+  it('token NEVER appears in envelope or its serialization', async () => {
+    const rootListing = [
+      { name: 'README.md', type: 'file', size: 30, path: 'README.md' },
+    ];
+    const fetchMock = makeMixedFetch({
+      urlHtml: SAMPLE_HTML,
+      githubResponders: {
+        '/contents/__ROOT__': rootListing,
+        '/repos/veu-ai-studio/test-product/contents/src%2Fpages': '__404__',
+        '/repos/veu-ai-studio/test-product/contents/src%2Fcomponents': '__404__',
+        '/repos/veu-ai-studio/test-product/contents/README.md': {
+          encoding: 'base64', content: b64('# README'),
+        },
+      },
+    });
+    const r = await produceMonitorText({
+      url: URL_OK, productId: 'demo', runId: 'r1',
+      githubRepoUrl: GH_REPO, token: GH_TOKEN,
+      opts: { fetch: fetchMock, apiKey: API_KEY },
+    });
+    const serialised = JSON.stringify(r);
+    expect(serialised).not.toContain(GH_TOKEN);
+    expect(r.monitorText).not.toContain(GH_TOKEN);
   });
 });
