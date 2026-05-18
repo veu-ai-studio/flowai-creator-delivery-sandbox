@@ -1,0 +1,599 @@
+// src/pages/FlowAIDashboard.jsx
+//
+// FlowAI Dashboard — live orchestration UI for the DISPATCH 24 product-
+// agnostic Self-Renewal pipeline. Consumes the SSE endpoint added in
+// DISPATCH 13 PART A (api/agent/3/execute.js, Accept: text/event-stream)
+// and renders:
+//
+//   - Header with session info (runId, mode, started-at)
+//   - Input panel (URL, mode selector, GTM target slider, max-iter slider,
+//                  LAUNCH button)
+//   - Live progress (iteration counter, score progress bar, step-by-step
+//                    log with expandable rows, STOP / SWITCH MODE / CONTINUE
+//                    controls)
+//   - Five-Layer radar (pure SVG, no chart libs)
+//   - Iteration history (expandable per-iteration orchestration log)
+//   - Completion panel (GTM_READY / BEST_EFFORT badge, journey,
+//                       preview-URL + PR buttons, Run-Again)
+//
+// Tailwind CSS only — no shadcn/ui, no lucide-react, no recharts, no
+// framer-motion. Icons are inline SVG. No browser-storage APIs (no
+// localStorage / sessionStorage / IndexedDB writes).
+//
+// GUIDED-mode resume note: SSE is one-way, so the CONTINUE button can't
+// directly resume a paused orchestration over the same stream. Until a
+// /api/agent/3/control endpoint ships for back-channel commands, GUIDED
+// mode renders the CONTINUE button but the actual pause/resume of the
+// orchestrator is not bridged across the SSE wire. AUTO mode (the
+// default) is fully functional end-to-end.
+
+import { useState, useRef, useEffect, useMemo } from 'react';
+
+// ── Tiny inline-SVG icon set ───────────────────────────────────────────────
+
+const Icon = {
+  Rocket: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+      <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+    </svg>
+  ),
+  Stop: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </svg>
+  ),
+  Play: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <polygon points="5 3 19 12 5 21 5 3" />
+    </svg>
+  ),
+  Refresh: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><polyline points="21 3 21 8 16 8" />
+    </svg>
+  ),
+  Check: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ),
+  Warning: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  ),
+  External: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  ),
+  Chevron: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  ),
+};
+
+// ── Five-Layer radar (pure SVG, no chart libs) ─────────────────────────────
+
+function FiveLayerRadar({ scores, max = 20 }) {
+  const labels = ['L1 Func', 'L2 Op', 'L3 Fin', 'L4 Biz', 'L5 GTM'];
+  const values = [scores?.l1 ?? 0, scores?.l2 ?? 0, scores?.l3 ?? 0, scores?.l4 ?? 0, scores?.l5 ?? 0];
+  const cx = 130, cy = 130, R = 100;
+  const angle = (i) => (-Math.PI / 2) + (i * 2 * Math.PI) / 5;
+  const point = (i, r) => [cx + Math.cos(angle(i)) * r, cy + Math.sin(angle(i)) * r];
+  const polyPoints = values.map((v, i) => {
+    const r = (Math.max(0, Math.min(max, v)) / max) * R;
+    const [x, y] = point(i, r);
+    return `${x},${y}`;
+  }).join(' ');
+  const axisPoints = (rPct) =>
+    Array.from({ length: 5 }, (_, i) => point(i, R * rPct).join(',')).join(' ');
+  return (
+    <svg viewBox="0 0 260 260" className="w-full max-w-[260px] mx-auto">
+      {[0.25, 0.5, 0.75, 1].map((p) => (
+        <polygon key={p} points={axisPoints(p)} fill="none" stroke="rgb(100 116 139 / 0.3)" strokeWidth="1" />
+      ))}
+      {Array.from({ length: 5 }, (_, i) => {
+        const [x, y] = point(i, R);
+        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgb(100 116 139 / 0.2)" />;
+      })}
+      <polygon points={polyPoints} fill="rgb(16 185 129 / 0.25)" stroke="rgb(16 185 129)" strokeWidth="2" />
+      {values.map((v, i) => {
+        const r = (Math.max(0, Math.min(max, v)) / max) * R;
+        const [x, y] = point(i, r);
+        return <circle key={i} cx={x} cy={y} r="4" fill="rgb(16 185 129)" />;
+      })}
+      {labels.map((lbl, i) => {
+        const [x, y] = point(i, R + 20);
+        return (
+          <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle"
+                className="text-[11px] fill-slate-300 font-medium">{lbl}</text>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ── Step / iteration log helpers ───────────────────────────────────────────
+
+const STATUS_STYLE = {
+  complete: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  failed:   'bg-red-500/10 text-red-400 border-red-500/30',
+  skipped:  'bg-slate-500/10 text-slate-400 border-slate-500/30',
+  running:  'bg-blue-500/10 text-blue-400 border-blue-500/30 animate-pulse',
+};
+
+function StepRow({ log, expanded, onToggle }) {
+  const cls = STATUS_STYLE[log.status] || STATUS_STYLE.complete;
+  return (
+    <>
+      <tr className="border-b border-slate-800 hover:bg-slate-800/30 cursor-pointer" onClick={onToggle}>
+        <td className="px-3 py-2 text-xs text-slate-400">
+          <Icon.Chevron className={`w-3 h-3 inline transition-transform ${expanded ? 'rotate-90' : ''}`} />
+          {' '}{log.iteration > 0 ? `iter${log.iteration} · ` : ''}step {log.step}
+        </td>
+        <td className="px-3 py-2 text-xs text-slate-200 font-medium">{log.stepName ?? log.tool ?? '—'}</td>
+        <td className="px-3 py-2 text-xs text-slate-400 max-w-md truncate" title={log.why ?? ''}>{log.why ?? '—'}</td>
+        <td className="px-3 py-2 text-xs">
+          <span className={`px-2 py-0.5 rounded border text-[10px] uppercase font-bold ${cls}`}>{log.status}</span>
+        </td>
+        <td className="px-3 py-2 text-xs text-slate-300 max-w-sm truncate">
+          {log.result ? (typeof log.result === 'string' ? log.result : JSON.stringify(log.result).slice(0, 80)) : '—'}
+        </td>
+      </tr>
+      {expanded && (
+        <tr className="bg-slate-900/60">
+          <td colSpan={5} className="px-3 py-3">
+            <pre className="text-[10px] text-slate-300 whitespace-pre-wrap break-words font-mono">{JSON.stringify(log, null, 2)}</pre>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ── Main page ──────────────────────────────────────────────────────────────
+
+export default function FlowAIDashboard() {
+  // ── Form inputs ──────────────────────────────────────────────────────────
+  const [url, setUrl] = useState('');
+  const [mode, setMode] = useState('auto');
+  const [gtmTarget, setGtmTarget] = useState(95);
+  const [maxIterations, setMaxIterations] = useState(10);
+
+  // ── Run state ────────────────────────────────────────────────────────────
+  const [isRunning, setIsRunning] = useState(false);
+  const [runId, setRunId] = useState(null);
+  const [startedAt, setStartedAt] = useState(null);
+  const [stepLogs, setStepLogs] = useState([]);   // every emitted step log
+  const [iterations, setIterations] = useState([]); // completed iterations
+  const [finalResult, setFinalResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [expandedSteps, setExpandedSteps] = useState({});
+  const [expandedIters, setExpandedIters] = useState({});
+  const abortRef = useRef(null);
+
+  // Latest score envelope derived from the most recent scoring log.
+  const latestScore = useMemo(() => {
+    for (let i = stepLogs.length - 1; i >= 0; i -= 1) {
+      const l = stepLogs[i];
+      if (l && (l.step === 5 || l.step === 11) && l.result && typeof l.result === 'object') {
+        const r = l.result;
+        if (typeof r.preScore === 'number' || typeof r.postScore === 'number') {
+          return {
+            total: r.postScore ?? r.preScore ?? 0,
+            ...(r.layers && typeof r.layers === 'object' ? r.layers : {}),
+          };
+        }
+      }
+    }
+    return { total: 0, l1: 0, l2: 0, l3: 0, l4: 0, l5: 0 };
+  }, [stepLogs]);
+
+  const currentIterationNumber = useMemo(() => {
+    const last = stepLogs[stepLogs.length - 1];
+    return last?.iteration > 0 ? last.iteration : iterations.length || 0;
+  }, [stepLogs, iterations.length]);
+
+  const progressPct = useMemo(() => {
+    if (!latestScore.total) return 0;
+    return Math.min(100, Math.round((latestScore.total / gtmTarget) * 100));
+  }, [latestScore.total, gtmTarget]);
+
+  // ── SSE consumer ─────────────────────────────────────────────────────────
+  async function launch() {
+    if (isRunning) return;
+    setIsRunning(true);
+    setStepLogs([]); setIterations([]); setFinalResult(null);
+    setErrorMsg(null); setExpandedSteps({}); setExpandedIters({});
+    setStartedAt(new Date().toISOString());
+    const ac = new AbortController();
+    abortRef.current = ac;
+
+    let response;
+    try {
+      response = await fetch('/api/agent/3/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+          // SSE branch in execute.js requires SOME auth context. The
+          // dashboard claims its own scope; the SSE handler skips the
+          // productScope-match enforcement that the JSON path does.
+          'x-product-scope': 'flowai-dashboard',
+        },
+        body: JSON.stringify({ url: url || null, mode, maxIterations, gtmTarget }),
+        signal: ac.signal,
+      });
+    } catch (e) {
+      setErrorMsg(`Network error: ${e?.message ?? String(e)}`);
+      setIsRunning(false);
+      return;
+    }
+
+    if (!response.ok || !response.body) {
+      setErrorMsg(`Server error: HTTP ${response.status}`);
+      setIsRunning(false);
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const frames = buffer.split('\n\n');
+        buffer = frames.pop() ?? '';
+        for (const frame of frames) {
+          const line = frame.split('\n').find((l) => l.startsWith('data:'));
+          if (!line) continue;
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') continue;
+          let payload;
+          try { payload = JSON.parse(data); } catch { continue; }
+          if (payload?.type === 'start') {
+            setRunId(payload.runId || null);
+          } else if (payload?.type === 'step') {
+            setStepLogs((prev) => [...prev, payload.log]);
+          } else if (payload?.type === 'iteration') {
+            setIterations((prev) => [...prev, payload.iteration]);
+          } else if (payload?.type === 'final') {
+            setFinalResult(payload.result);
+            if (payload.result?.runId && !runId) setRunId(payload.result.runId);
+          } else if (payload?.type === 'error') {
+            setErrorMsg(`${payload.error}${payload.code ? ` (${payload.code})` : ''}`);
+          }
+        }
+      }
+    } catch (e) {
+      if (e?.name !== 'AbortError') {
+        setErrorMsg(`Stream error: ${e?.message ?? String(e)}`);
+      }
+    } finally {
+      setIsRunning(false);
+      abortRef.current = null;
+    }
+  }
+
+  function stop() {
+    if (abortRef.current) abortRef.current.abort();
+  }
+
+  function switchMode(next) {
+    setMode(next);
+    // Note: server-side orchestrator state is not bridged across SSE in
+    // this dispatch. Toggling here updates the UI immediately; the next
+    // run uses the new mode. Live mode-switch mid-run needs a follow-up
+    // /api/agent/3/control endpoint.
+  }
+
+  // Cleanup the in-flight stream if the page unmounts.
+  useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
+
+  const gtmReady = finalResult?.gtmReady === true;
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 px-6 py-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* ── Header ───────────────────────────────────────────────────── */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              <span className="text-emerald-400">Flow</span>AI Dashboard
+            </h1>
+            <p className="text-sm text-slate-400 mt-1">Product-Agnostic AI Operating System</p>
+          </div>
+          {runId && (
+            <div className="text-right text-xs font-mono text-slate-400 space-y-0.5">
+              <div><span className="text-slate-500">runId:</span> {runId}</div>
+              <div><span className="text-slate-500">mode:</span> {mode}</div>
+              {startedAt && <div><span className="text-slate-500">started:</span> {new Date(startedAt).toLocaleTimeString()}</div>}
+            </div>
+          )}
+        </div>
+
+        {/* ── Input panel ──────────────────────────────────────────────── */}
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-5">
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">URL</label>
+            <input
+              type="text" value={url} onChange={(e) => setUrl(e.target.value)}
+              disabled={isRunning}
+              placeholder="Enter any product URL or leave blank for auto-select"
+              className="w-full rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Mode</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              {[
+                { v: 'auto',   t: 'Auto',   d: 'Run end-to-end without pauses' },
+                { v: 'guided', t: 'Guided', d: 'Pause at each checkpoint; continue to advance' },
+                { v: 'manual', t: 'Manual', d: 'Pause at every step; user drives' },
+              ].map(({ v, t, d }) => (
+                <label key={v}
+                       className={`rounded-md border px-3 py-2 cursor-pointer ${mode === v ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-700 hover:border-slate-600'} ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  <input type="radio" name="mode" value={v} checked={mode === v}
+                         disabled={isRunning} onChange={() => setMode(v)} className="sr-only" />
+                  <div className="text-sm font-semibold">{t}</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">{d}</div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                GTM Target: <span className="text-emerald-400">{gtmTarget}/100</span>
+              </label>
+              <input type="range" min="50" max="100" value={gtmTarget} disabled={isRunning}
+                     onChange={(e) => setGtmTarget(Number(e.target.value))}
+                     className="w-full accent-emerald-500" />
+              <div className="flex justify-between text-[10px] text-slate-500 mt-0.5"><span>50</span><span>100</span></div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
+                Max Iterations: <span className="text-emerald-400">{maxIterations}</span>
+              </label>
+              <input type="range" min="1" max="10" value={maxIterations} disabled={isRunning}
+                     onChange={(e) => setMaxIterations(Number(e.target.value))}
+                     className="w-full accent-emerald-500" />
+              <div className="flex justify-between text-[10px] text-slate-500 mt-0.5"><span>1</span><span>10</span></div>
+            </div>
+          </div>
+
+          <button
+            type="button" onClick={launch} disabled={isRunning}
+            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
+            <Icon.Rocket className="w-5 h-5" />
+            {isRunning ? 'RUNNING…' : 'LAUNCH FLOWAI'}
+          </button>
+
+          {errorMsg && (
+            <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300 flex items-start gap-2">
+              <Icon.Warning className="w-4 h-4 mt-0.5 shrink-0" />
+              <div>{errorMsg}</div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Live progress panel ──────────────────────────────────────── */}
+        {(isRunning || stepLogs.length > 0) && (
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-xs text-slate-400 uppercase tracking-wide">Live Progress</p>
+                <p className="text-lg font-semibold mt-0.5">
+                  Iteration {currentIterationNumber} of {maxIterations}
+                  <span className="text-slate-400 font-normal text-sm ml-2">— Score: {latestScore.total ?? 0} → {gtmTarget} target</span>
+                </p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {isRunning && (
+                  <button type="button" onClick={stop}
+                          className="bg-red-600/80 hover:bg-red-500 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5">
+                    <Icon.Stop className="w-3.5 h-3.5" />STOP
+                  </button>
+                )}
+                <button type="button" disabled={isRunning}
+                        onClick={() => switchMode(mode === 'auto' ? 'guided' : mode === 'guided' ? 'manual' : 'auto')}
+                        className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-semibold disabled:opacity-50">
+                  Switch mode → {mode === 'auto' ? 'guided' : mode === 'guided' ? 'manual' : 'auto'}
+                </button>
+                {mode === 'guided' && isRunning && (
+                  <button type="button"
+                          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded text-sm font-bold flex items-center gap-1.5"
+                          title="Resume needs a follow-up /api/agent/3/control endpoint; UI only in this dispatch">
+                    <Icon.Play className="w-3.5 h-3.5" />CONTINUE
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Score progress bar */}
+            <div>
+              <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                <span>0</span><span className="text-emerald-400">{latestScore.total ?? 0}</span><span>{gtmTarget}</span>
+              </div>
+              <div className="h-2 rounded bg-slate-800 overflow-hidden">
+                <div className="h-full bg-emerald-500 transition-all" style={{ width: `${progressPct}%` }} />
+              </div>
+            </div>
+
+            {/* Step log */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-[10px] uppercase text-slate-500 border-b border-slate-800">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Step</th>
+                    <th className="px-3 py-2 text-left">Tool</th>
+                    <th className="px-3 py-2 text-left">Why</th>
+                    <th className="px-3 py-2 text-left">Status</th>
+                    <th className="px-3 py-2 text-left">Result</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stepLogs.length === 0 && (
+                    <tr><td colSpan={5} className="px-3 py-6 text-center text-slate-500 text-xs">awaiting first event…</td></tr>
+                  )}
+                  {stepLogs.map((log, i) => (
+                    <StepRow
+                      key={i} log={log}
+                      expanded={Boolean(expandedSteps[i])}
+                      onToggle={() => setExpandedSteps((s) => ({ ...s, [i]: !s[i] }))}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── Five-Layer radar + Iteration history ───────────────────────── */}
+        {(stepLogs.length > 0 || iterations.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+              <p className="text-xs text-slate-400 uppercase tracking-wide mb-3">Five-Layer Score</p>
+              <FiveLayerRadar scores={latestScore} />
+              <div className="grid grid-cols-5 gap-1 text-center mt-3">
+                {['l1', 'l2', 'l3', 'l4', 'l5'].map((k) => (
+                  <div key={k}>
+                    <p className="text-[10px] text-slate-500 uppercase">{k}</p>
+                    <p className="text-sm font-bold text-emerald-400">{latestScore[k] ?? 0}/20</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-center text-2xl font-bold mt-3">{latestScore.total ?? 0}<span className="text-sm text-slate-500">/100</span></p>
+            </div>
+
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+              <p className="text-xs text-slate-400 uppercase tracking-wide mb-3">Iteration History</p>
+              {iterations.length === 0 && (
+                <p className="text-xs text-slate-500 py-6 text-center">no completed iterations yet</p>
+              )}
+              {iterations.length > 0 && (
+                <table className="w-full text-sm">
+                  <thead className="text-[10px] uppercase text-slate-500 border-b border-slate-800">
+                    <tr>
+                      <th className="px-2 py-2 text-left">#</th>
+                      <th className="px-2 py-2 text-right">Pre</th>
+                      <th className="px-2 py-2 text-right">Post</th>
+                      <th className="px-2 py-2 text-right">Δ</th>
+                      <th className="px-2 py-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {iterations.map((it, i) => (
+                      <>
+                        <tr key={i} className="border-b border-slate-800/50 cursor-pointer hover:bg-slate-800/30"
+                            onClick={() => setExpandedIters((s) => ({ ...s, [i]: !s[i] }))}>
+                          <td className="px-2 py-2 text-xs">
+                            <Icon.Chevron className={`w-3 h-3 inline transition-transform ${expandedIters[i] ? 'rotate-90' : ''}`} />
+                            {' '}{it.number ?? i + 1}
+                          </td>
+                          <td className="px-2 py-2 text-right text-xs">{it.preScore ?? '—'}</td>
+                          <td className="px-2 py-2 text-right text-xs">{it.postScore ?? '—'}</td>
+                          <td className={`px-2 py-2 text-right text-xs font-bold ${it.delta >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {it.delta >= 0 ? '+' : ''}{it.delta ?? '—'}
+                          </td>
+                          <td className="px-2 py-2 text-xs">
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] border ${it.gtmReady ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/5' : 'border-slate-600 text-slate-400'}`}>
+                              {it.gtmReady ? 'GTM_READY' : (it.decision || 'in-progress')}
+                            </span>
+                          </td>
+                        </tr>
+                        {expandedIters[i] && (
+                          <tr className="bg-slate-900/60">
+                            <td colSpan={5} className="px-3 py-3">
+                              <pre className="text-[10px] text-slate-300 whitespace-pre-wrap break-words font-mono">{JSON.stringify(it, null, 2)}</pre>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Completion panel ─────────────────────────────────────────── */}
+        {finalResult && (
+          <div className={`rounded-xl border-2 p-6 space-y-4 ${gtmReady ? 'border-emerald-500/60 bg-emerald-500/5' : 'border-amber-500/60 bg-amber-500/5'}`}>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                {gtmReady ? (
+                  <span className="bg-emerald-500 text-slate-950 px-4 py-2 rounded-md font-bold flex items-center gap-2">
+                    <Icon.Check className="w-5 h-5" />GTM READY
+                  </span>
+                ) : (
+                  <span className="bg-amber-500 text-slate-950 px-4 py-2 rounded-md font-bold flex items-center gap-2">
+                    <Icon.Warning className="w-5 h-5" />BEST EFFORT
+                  </span>
+                )}
+                <span className="text-sm text-slate-300">
+                  Exit: <span className="font-mono">{finalResult.exitReason}</span> · {finalResult.iterationsCompleted} iterations
+                </span>
+              </div>
+              <button type="button" onClick={launch} disabled={isRunning}
+                      className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5">
+                <Icon.Refresh className="w-3.5 h-3.5" />Run Again
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+              <div className="rounded-md bg-slate-900/60 px-3 py-2">
+                <p className="text-[10px] text-slate-500 uppercase">Original score</p>
+                <p className="text-2xl font-bold">{finalResult.originalScore ?? 0}<span className="text-xs text-slate-500">/100</span></p>
+              </div>
+              <div className="rounded-md bg-slate-900/60 px-3 py-2">
+                <p className="text-[10px] text-slate-500 uppercase">Final score</p>
+                <p className="text-2xl font-bold text-emerald-400">{finalResult.finalScore ?? 0}<span className="text-xs text-slate-500">/100</span></p>
+              </div>
+              <div className="rounded-md bg-slate-900/60 px-3 py-2">
+                <p className="text-[10px] text-slate-500 uppercase">Total improvement</p>
+                <p className={`text-2xl font-bold ${(finalResult.totalDelta ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {(finalResult.totalDelta ?? 0) >= 0 ? '+' : ''}{finalResult.totalDelta ?? 0}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {finalResult.previewUrl && (
+                <a href={finalResult.previewUrl.startsWith('http') ? finalResult.previewUrl : `https://${finalResult.previewUrl}`}
+                   target="_blank" rel="noreferrer"
+                   className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5">
+                  <Icon.External className="w-3.5 h-3.5" />Open preview URL
+                </a>
+              )}
+              {finalResult.prUrl && (
+                <a href={finalResult.prUrl} target="_blank" rel="noreferrer"
+                   className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5">
+                  <Icon.External className="w-3.5 h-3.5" />Open GitHub PR
+                </a>
+              )}
+            </div>
+
+            <details className="bg-slate-900/60 rounded-md">
+              <summary className="px-3 py-2 text-sm cursor-pointer hover:bg-slate-900">Full orchestration log ({stepLogs.length} entries)</summary>
+              <div className="px-3 py-2 max-h-96 overflow-auto">
+                <pre className="text-[10px] text-slate-300 whitespace-pre-wrap break-words font-mono">{JSON.stringify(finalResult.orchestrationLog ?? stepLogs, null, 2)}</pre>
+              </div>
+            </details>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
