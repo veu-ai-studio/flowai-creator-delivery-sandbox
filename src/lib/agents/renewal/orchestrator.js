@@ -38,6 +38,7 @@ import {
   appendGovernanceEntry,
 } from './optionCPipeline.js';
 import { aggressiveCrawl } from '../../../../api/_lib/crawler.js';
+import { conductStructuredCrawl } from './crawlOutputAdapter.js';
 import { remediate as remediationEngine } from '../../../../api/_lib/remediationEngine.js';
 import { randomUUID } from 'node:crypto';
 
@@ -350,7 +351,8 @@ export async function runOrchestration(args = {}) {
   const _discoverProduct        = deps.discoverProduct        || discoverProduct;
   const _checkRateCap           = deps.checkRateCap           || checkRateCap;
   const _checkRunawayDetector   = deps.checkRunawayDetector   || checkRunawayDetector;
-  const _aggressiveCrawl        = deps.aggressiveCrawl        || aggressiveCrawl;
+  const _aggressiveCrawl          = deps.aggressiveCrawl          || aggressiveCrawl;
+  const _conductStructuredCrawl   = deps.conductStructuredCrawl   || conductStructuredCrawl;
   const _produceMonitorText     = deps.produceMonitorText     || produceMonitorText;
   const _computeScore           = deps.computeScore           || computeScore;
   const _generateFix            = deps.generateFix            || generateFix;
@@ -487,22 +489,40 @@ export async function runOrchestration(args = {}) {
 
     const iterLog = { number: iterationNumber, steps: [] };
 
-    // STEP 3 — Deep Crawl (Agent #21 multi-page BFS).
-    let crawlReport;
+    // STEP 3 — Deep Crawl (Agent #21 multi-page BFS, structured adapter).
+    // DISPATCH 7: routed through conductStructuredCrawl() so the rest of
+    // the pipeline (scoring, monitor producer) gets the canonical
+    // crawlOutput shape rather than the raw Agent #21 CrawlReport.
+    let crawlOutput;
     try {
       const t0 = Date.now();
-      crawlReport = await _aggressiveCrawl(currentUrl, { depth: 3, maxPages: 50 });
+      crawlOutput = await _conductStructuredCrawl({
+        url: currentUrl,
+        maxPages: 50,
+        depth: 5,
+        productId,
+        runId,
+      });
+      state.crawlOutput = crawlOutput;
       const log = makeStepLog({
         iteration: iterationNumber, step: 3, status: 'complete',
-        tool: 'Agent #21 AggressiveCrawlConductor',
-        why: 'comprehensive surface coverage: all pages, links, JS-rendered content',
-        result: { pagesCrawled: crawlReport?.pagesCrawled ?? 0, depth: crawlReport?.depth ?? 0 },
+        tool: 'Agent #21 AggressiveCrawlConductor → crawlOutputAdapter',
+        why: 'structured crawl output for downstream scoring + monitor producer',
+        result: {
+          pagesCrawled: crawlOutput.pagesCrawled,
+          depth: crawlOutput.depth,
+          forms: crawlOutput.forms.length,
+          brokenLinks: crawlOutput.brokenLinks.length,
+          interactiveElements: crawlOutput.interactiveElements.length,
+          totalTextLength: crawlOutput.totalTextLength,
+          errors: crawlOutput.errors.length,
+        },
         durationMs: Date.now() - t0, mode: state.mode,
       });
       emit(log); iterLog.steps.push(log);
     } catch (e) {
       emit(makeStepLog({ iteration: iterationNumber, step: 3, status: 'failed',
-        tool: 'Agent #21', why: 'deep crawl', result: { error: e?.message }, mode: state.mode }));
+        tool: 'Agent #21 → crawlOutputAdapter', why: 'deep crawl', result: { error: e?.message }, mode: state.mode }));
       return buildFailureReturn({ runId, mode: state.mode, product,
         orchestrationLog, iterations, failedStep: 'STEP_3',
         error: e?.message ?? String(e), code: e?.code ?? 'CRAWL_FAILED' });
