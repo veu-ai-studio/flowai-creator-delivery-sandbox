@@ -322,6 +322,62 @@ export async function createRenewalBranch(args) {
   };
 }
 
+/**
+ * Commit a single file to an EXISTING branch. Used by the orchestrator's
+ * multi-file commit path: `createRenewalBranch` creates the branch + commits
+ * the first file; `commitFileToBranch` commits each subsequent file to the
+ * same branch.
+ *
+ * Sequence (2 GitHub API calls):
+ *   1. GET  /repos/{owner}/{repo}/contents/{filePath}?ref={branchName}
+ *      → fetch current file SHA on the existing branch
+ *   2. PUT  /repos/{owner}/{repo}/contents/{filePath}
+ *      → commit the new content with `branch: branchName`
+ *
+ * Error mapping mirrors createRenewalBranch:
+ *   - 404 from GET contents → FILE_NOT_FOUND
+ *   - 401 / 403 anywhere → GITHUB_AUTH_FAILED
+ *   - 409 from PUT contents → FILE_SHA_CONFLICT (concurrent edit)
+ *   - Other failures → GITHUB_API_ERROR + status
+ *
+ * @param {object} args
+ * @param {string} args.owner
+ * @param {string} args.repo
+ * @param {string} args.branchName     — must already exist
+ * @param {string} args.filePath
+ * @param {string} args.fileContent    — new UTF-8 content
+ * @param {string} args.commitMessage
+ * @param {string} args.token          — installation access token
+ * @param {object} [args.opts]         — { fetch? }
+ *
+ * @returns {Promise<{ branchName: string, commitSha: string, filePath: string }>}
+ */
+export async function commitFileToBranch(args) {
+  if (!args || typeof args !== 'object') {
+    throw makeError('GITHUB_API_ERROR', 'commitFileToBranch: args object required');
+  }
+  const required = ['owner', 'repo', 'branchName', 'filePath', 'fileContent', 'commitMessage', 'token'];
+  for (const k of required) {
+    if (typeof args[k] !== 'string' || args[k].length === 0) {
+      throw makeError('GITHUB_API_ERROR',
+        `commitFileToBranch: ${k} must be a non-empty string`);
+    }
+  }
+
+  const { owner, repo, branchName, filePath, fileContent, commitMessage, token } = args;
+  const opts = args.opts ?? {};
+
+  // 1. Fetch the file's current SHA on the existing branch.
+  const fileSha = await getFileSha(owner, repo, filePath, branchName, token, opts);
+
+  // 2. Commit the new content on the same branch.
+  const commitSha = await putFileContent(
+    owner, repo, filePath, branchName, fileContent, fileSha, commitMessage, token, opts,
+  );
+
+  return { branchName, commitSha, filePath };
+}
+
 export const __internals = Object.freeze({
   GITHUB_API_BASE,
   GITHUB_API_VERSION,
