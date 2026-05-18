@@ -92,6 +92,7 @@ import DemoSandbox from './pages/DemoSandbox';
 import LiveDemo from './pages/LiveDemo';
 import EnterpriseDemo from './pages/EnterpriseDemo';
 import BaseAgentTest from './pages/BaseAgentTest';
+import FlowAIDashboard from './pages/FlowAIDashboard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -117,6 +118,7 @@ const AuthenticatedApp = () => {
     <ErrorBoundary>
     <Routes>
       <Route element={<AppLayout />}>
+        <Route path="/flowai" element={<FlowAIDashboard />} />
         <Route path="/old-dashboard" element={<Dashboard />} />
 
         <Route path="/flow-designer" element={<FlowDesigner />} />
