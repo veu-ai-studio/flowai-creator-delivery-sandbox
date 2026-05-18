@@ -27,6 +27,8 @@
 
 'use strict';
 
+import { buildDiffPrompt, applyAndValidate as applyAndValidateDiff } from './diffEditor.js';
+
 const ANTHROPIC_API_BASE = 'https://api.anthropic.com';
 const ANTHROPIC_API_VERSION = '2023-06-01';
 const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-6';
@@ -432,9 +434,29 @@ export async function generateFix(args) {
       'generateFix: fetch is not available on globalThis and no opts.fetch was provided. Node 18+ required.');
   }
 
-  // Build the appropriate prompt based on which input shape was provided.
+  // DISPATCH 32 T2: diff-mode is the default for precise-instruction
+  // fixes. The model returns a unified-diff (not a full file), which
+  // is parsed + validated against the preserve rules (no touching of
+  // import/export/fetch/route/URL lines outside the targeted change,
+  // bounded change-ratio) before applying to the original content.
+  // Set opts.mode = 'full' to use the legacy full-file regeneration
+  // path. Findings-based callers (no `fix` string) always use the
+  // legacy path since the diff prompt is built around a precise-fix
+  // instruction.
+  const mode = typeof opts.mode === 'string' && opts.mode === 'full'
+    ? 'full'
+    : (hasPreciseInstruction ? 'diff' : 'full');
+
+  // Build the appropriate prompt based on mode + which input shape.
   let prompt;
-  if (hasPreciseInstruction) {
+  if (mode === 'diff') {
+    prompt = buildDiffPrompt({
+      filePath: args.filePath,
+      fileContent: args.fileContent,
+      issue: sanitiseAndTruncate(args.issue, 1000),
+      fix: sanitiseAndTruncate(args.fix, 2000),
+    });
+  } else if (hasPreciseInstruction) {
     prompt = buildPreciseInstructionPrompt({
       filePath: args.filePath,
       fileContent: args.fileContent,
@@ -490,39 +512,115 @@ export async function generateFix(args) {
     return { text: extractText(parsed), parsed, stopReason: parsed?.stop_reason ?? null };
   }
 
-  // First attempt.
-  let { text: fixedContent, parsed, stopReason } = await callClaude(prompt);
-  let attempts = 1;
-  // DISPATCH 29: if Anthropic flagged max_tokens as the stop reason,
-  // the response was truncated mid-file — short-circuit validation and
-  // force the retry path with the explicit "return COMPLETE file" prompt.
-  let validation = stopReason === 'max_tokens'
-    ? { ok: false, reason: 'truncated_max_tokens' }
-    : await validateFixedContent(fixedContent, args.fileContent, args.filePath);
-
-  // Retry once with the explicit prompt if first attempt fails validation.
-  if (!validation.ok) {
-    let retryPrompt;
-    if (hasPreciseInstruction) {
-      retryPrompt = buildPreciseInstructionPrompt({
-        filePath: args.filePath,
-        fileContent: args.fileContent,
-        issue: sanitiseAndTruncate(args.issue, 1000),
-        fix: sanitiseAndTruncate(args.fix, 2000),
-        retry: true,
-      });
-    } else {
-      // Legacy findings path — augment the original prompt with stricter rules.
-      retryPrompt = `${prompt}\n\nPREVIOUS ATTEMPT FAILED (${validation.reason}). Return ONLY the COMPLETE fixed file from first line to last. The response MUST be meaningfully different from the input. Do NOT echo the input unchanged. Do NOT truncate. Do NOT use markdown code fences.`;
+  // DISPATCH 32 T2: diff-mode applies the model's response (a unified
+  // diff) to the original content before running validation. The diff
+  // editor enforces the structural preserve rules (no touching
+  // import/export/fetch/route/URL outside the change region, bounded
+  // change-ratio). If the diff is empty (no @@ hunks), the prompt
+  // contract says the orchestrator should skip the file cleanly →
+  // surfaced as FIX_NO_CHANGE.
+  async function diffModeAttempt(currentPrompt) {
+    const c = await callClaude(currentPrompt);
+    if (c.stopReason === 'max_tokens') {
+      return { ok: false, reason: 'truncated_max_tokens', call: c };
     }
-    const retryResult = await callClaude(retryPrompt);
-    fixedContent = retryResult.text;
-    parsed = retryResult.parsed;
-    stopReason = retryResult.stopReason;
-    attempts = 2;
+    const diffText = (c.text ?? '').trim();
+    if (diffText.length === 0) {
+      return { ok: false, reason: 'empty', call: c };
+    }
+    const applied = applyAndValidateDiff({
+      original: args.fileContent,
+      diffText,
+      opts: { maxChangeRatio: opts.maxChangeRatio },
+    });
+    if (!applied.ok) {
+      return {
+        ok: false,
+        reason: applied.reason === 'preserve_violation'
+          ? `diff_preserve_violation:${applied.category}`
+          : `diff_${applied.reason}`,
+        detail: applied.violatingLine ?? applied.ratio ?? null,
+        call: c,
+      };
+    }
+    return { ok: true, fixedContent: applied.content, stats: applied.stats, call: c };
+  }
+
+  // First attempt.
+  let fixedContent;
+  let parsed;
+  let stopReason;
+  let diffStats = null;
+  let attempts = 1;
+  let validation;
+
+  if (mode === 'diff') {
+    const a1 = await diffModeAttempt(prompt);
+    if (a1.ok) {
+      fixedContent = a1.fixedContent;
+      parsed = a1.call.parsed;
+      stopReason = a1.call.stopReason;
+      diffStats = a1.stats;
+      validation = await validateFixedContent(fixedContent, args.fileContent, args.filePath);
+    } else {
+      // diff-mode failed; treat as validation failure and retry below.
+      fixedContent = a1.call?.text ?? '';
+      parsed = a1.call?.parsed;
+      stopReason = a1.call?.stopReason;
+      validation = { ok: false, reason: a1.reason, detail: a1.detail };
+    }
+  } else {
+    const c = await callClaude(prompt);
+    fixedContent = c.text;
+    parsed = c.parsed;
+    stopReason = c.stopReason;
     validation = stopReason === 'max_tokens'
       ? { ok: false, reason: 'truncated_max_tokens' }
       : await validateFixedContent(fixedContent, args.fileContent, args.filePath);
+  }
+
+  // Retry once with the explicit prompt if first attempt fails validation.
+  if (!validation.ok) {
+    if (mode === 'diff') {
+      // Diff-mode retry: re-ask with the same prompt + an explicit
+      // failure-reason addendum so the model knows what to avoid.
+      const retryPrompt = `${prompt}\n\nPREVIOUS DIFF REJECTED: ${validation.reason}${validation.detail ? ` (${typeof validation.detail === 'string' ? validation.detail.slice(0, 80) : validation.detail})` : ''}. Return a SMALLER, MORE TARGETED unified diff that does NOT remove or modify any import/export/fetch/route/URL line. If a compliant diff is not possible, return an EMPTY response (no @@ hunks) and the orchestrator will skip cleanly.`;
+      const a2 = await diffModeAttempt(retryPrompt);
+      attempts = 2;
+      if (a2.ok) {
+        fixedContent = a2.fixedContent;
+        parsed = a2.call.parsed;
+        stopReason = a2.call.stopReason;
+        diffStats = a2.stats;
+        validation = await validateFixedContent(fixedContent, args.fileContent, args.filePath);
+      } else {
+        fixedContent = a2.call?.text ?? '';
+        parsed = a2.call?.parsed;
+        stopReason = a2.call?.stopReason;
+        validation = { ok: false, reason: a2.reason, detail: a2.detail };
+      }
+    } else {
+      let retryPrompt;
+      if (hasPreciseInstruction) {
+        retryPrompt = buildPreciseInstructionPrompt({
+          filePath: args.filePath,
+          fileContent: args.fileContent,
+          issue: sanitiseAndTruncate(args.issue, 1000),
+          fix: sanitiseAndTruncate(args.fix, 2000),
+          retry: true,
+        });
+      } else {
+        retryPrompt = `${prompt}\n\nPREVIOUS ATTEMPT FAILED (${validation.reason}). Return ONLY the COMPLETE fixed file from first line to last. The response MUST be meaningfully different from the input. Do NOT echo the input unchanged. Do NOT truncate. Do NOT use markdown code fences.`;
+      }
+      const retryResult = await callClaude(retryPrompt);
+      fixedContent = retryResult.text;
+      parsed = retryResult.parsed;
+      stopReason = retryResult.stopReason;
+      attempts = 2;
+      validation = stopReason === 'max_tokens'
+        ? { ok: false, reason: 'truncated_max_tokens' }
+        : await validateFixedContent(fixedContent, args.fileContent, args.filePath);
+    }
   }
 
   if (!validation.ok) {
@@ -543,10 +641,12 @@ export async function generateFix(args) {
 
   return {
     fixedContent,
-    model: parsed.model ?? model,
-    promptTokens: parsed.usage?.input_tokens ?? 0,
-    completionTokens: parsed.usage?.output_tokens ?? 0,
+    model: parsed?.model ?? model,
+    promptTokens: parsed?.usage?.input_tokens ?? 0,
+    completionTokens: parsed?.usage?.output_tokens ?? 0,
     attempts,
+    mode,
+    diffStats,  // null for full-mode; { hunks, linesAdded, linesRemoved, changeRatio, totalLines } for diff-mode
   };
 }
 

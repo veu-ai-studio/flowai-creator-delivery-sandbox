@@ -381,7 +381,8 @@ describe('generateFix — arg validation', () => {
       ...args,
       issue: 'Home component shows raw text',
       fix: 'Replace the literal "brokenrendered" with a structured greeting',
-      opts: { apiKey: API_KEY, fetch: fetchMock },
+      // D32 T2: opt back into legacy full-file mode for this DISPATCH 23 test.
+      opts: { apiKey: API_KEY, fetch: fetchMock, mode: 'full' },
     });
     expect(result.fixedContent).toBe(FIXED_CONTENT);
     expect(result.attempts).toBe(1);
@@ -435,7 +436,8 @@ describe('generateFix — validation + retry (DISPATCH 23)', () => {
     const result = await generateFix({
       ...args,
       issue: 'fix me', fix: 'change something',
-      opts: { apiKey: API_KEY, fetch: fetchMock },
+      // D32 T2: opt back into legacy full-file mode for this DISPATCH 23 test.
+      opts: { apiKey: API_KEY, fetch: fetchMock, mode: 'full' },
     });
     expect(result.fixedContent).toBe(FIXED_CONTENT);
     expect(result.attempts).toBe(2);
@@ -736,7 +738,8 @@ describe('generateFix — truncated_max_tokens rejection (DISPATCH 29)', () => {
       fix: 'rename old → x and add y',
       productId: 'mypreglife',
       runId: 'r1',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+      // D32 T2: explicit full-mode for this DISPATCH 29 truncation-retry test.
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'full' },
     });
     expect(call).toBe(2);                                    // exactly one retry triggered
     expect(r.attempts).toBe(2);
@@ -759,7 +762,8 @@ describe('generateFix — truncated_max_tokens rejection (DISPATCH 29)', () => {
       fileContent: 'const old = 1;\nexport default old;\n',
       issue: 'p', fix: 'q',
       productId: 'mypreglife', runId: 'r1',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+      // D32 T2: full-mode keeps the truncated_max_tokens path identical.
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'full' },
     })).rejects.toMatchObject({
       code: 'FIX_GENERATION_FAILED',
       message: expect.stringMatching(/truncated_max_tokens/),
@@ -828,7 +832,24 @@ describe('MINIMAL_CHANGE_GUARDRAILS — D30 prompt hardening', () => {
     expect(p).toMatch(/MINIMAL-CHANGE GUARDRAILS/);
   });
 
-  it('the guardrails are sent verbatim in the Claude request body', async () => {
+  it('appears in the diff-mode prompt (D32 T2 default)', () => {
+    // Mode='diff' path builds buildDiffPrompt, which carries its own
+    // preserve rules (import/export/fetch/route/URL list); the D30
+    // verbatim 88→83 block lives on the full-mode prompts. Verify
+    // that the diff-mode prompt has its own preserve-rule equivalents.
+    const { buildDiffPrompt } = require('../../../src/lib/agents/renewal/diffEditor.js');
+    const p = buildDiffPrompt({
+      filePath: 'src/x.jsx',
+      fileContent: 'const x = 1;\nexport default x;\n',
+      issue: 'demo',
+      fix: 'demo fix',
+    });
+    expect(p).toMatch(/DO NOT remove or modify any line that contains/);
+    expect(p).toMatch(/An import \/ export \/ require/);
+    expect(p).toMatch(/fetch\(\)/);
+  });
+
+  it('the guardrails are sent verbatim in the Claude request body (full-mode)', async () => {
     const fetchMock = vi.fn(async () => ({
       ok: true, status: 200,
       json: async () => ({
@@ -845,12 +866,205 @@ describe('MINIMAL_CHANGE_GUARDRAILS — D30 prompt hardening', () => {
       fix: 'rename x → y',
       productId: 'mypreglife',
       runId: 'r1',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+      // D32 T2: full-mode exercises the MINIMAL_CHANGE_GUARDRAILS append site
+      // in buildPreciseInstructionPrompt(). Diff-mode uses buildDiffPrompt
+      // which carries its own preserve-rules.
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'full' },
     });
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     const sentPrompt = body.messages[0].content;
     expect(sentPrompt).toMatch(/MINIMAL-CHANGE GUARDRAILS/);
     expect(sentPrompt).toMatch(/MyPregLife/);
     expect(sentPrompt).toMatch(/88.*83/);
+  });
+});
+
+// ── DISPATCH 32 T2 — diff-mode generateFix integration ──────────────────
+
+describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', () => {
+  const ORIG = [
+    'import React from "react";',
+    '',
+    'export default function X() {',
+    '  return (',
+    '    <div>',
+    '      <p>Old placeholder text.</p>',
+    '    </div>',
+    '  );',
+    '}',
+    '',
+  ].join('\n');
+
+  function diffFetch(diff) {
+    return vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        content: [{ type: 'text', text: diff }],
+        usage: { input_tokens: 100, output_tokens: 30 },
+        stop_reason: 'end_turn',
+        model: 'claude-sonnet-4-6',
+      }),
+      text: async () => '{}',
+    }));
+  }
+
+  it('default mode is "diff" when (issue + fix) is supplied', async () => {
+    const fetchMock = diffFetch([
+      '@@ -6,1 +6,1 @@',
+      '-      <p>Old placeholder text.</p>',
+      '+      <p>New polished text.</p>',
+    ].join('\n'));
+    const r = await generateFix({
+      filePath: 'src/X.jsx', fileContent: ORIG,
+      issue: 'replace placeholder', fix: 'update copy to be polished',
+      productId: 'flowai', runId: 'd32-1',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    });
+    expect(r.mode).toBe('diff');
+    expect(r.fixedContent).toContain('<p>New polished text.</p>');
+    expect(r.fixedContent).not.toContain('<p>Old placeholder text.</p>');
+    expect(r.diffStats).toBeTruthy();
+    expect(r.diffStats.linesAdded).toBe(1);
+    expect(r.diffStats.linesRemoved).toBe(1);
+    // Verify the prompt was the diff prompt, not the full-file prompt.
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].content;
+    expect(sent).toMatch(/Return ONLY a unified diff/);
+  });
+
+  it('explicit opts.mode = "full" bypasses diff-mode', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        content: [{ type: 'text', text: ORIG.replace('Old', 'New') }],
+        usage: { input_tokens: 50, output_tokens: 50 },
+        stop_reason: 'end_turn',
+        model: 'claude-sonnet-4-6',
+      }),
+      text: async () => '{}',
+    }));
+    const r = await generateFix({
+      filePath: 'src/X.jsx', fileContent: ORIG,
+      issue: 'replace placeholder', fix: 'update copy',
+      productId: 'flowai', runId: 'd32-2',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'full' },
+    });
+    expect(r.mode).toBe('full');
+    expect(r.diffStats).toBeNull();
+  });
+
+  it('rejects a diff that touches an import line (preserve_violation)', async () => {
+    const fetchMock = diffFetch([
+      '@@ -1,1 +1,1 @@',
+      '-import React from "react";',
+      '+import * as React from "react";',
+    ].join('\n'));
+    // Retry will also return the same bad diff → final throw.
+    await expect(generateFix({
+      filePath: 'src/X.jsx', fileContent: ORIG,
+      issue: 'I', fix: 'F',
+      productId: 'flowai', runId: 'd32-3',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    })).rejects.toMatchObject({
+      code: 'FIX_GENERATION_FAILED',
+      message: expect.stringMatching(/diff_preserve_violation:import/),
+    });
+  });
+
+  it('rejects a diff that touches a fetch() call (preserve_violation)', async () => {
+    const file = [
+      'export async function load() {',
+      '  return fetch("/api/data");',
+      '}',
+      '',
+    ].join('\n');
+    const fetchMock = diffFetch([
+      '@@ -2,1 +2,1 @@',
+      '-  return fetch("/api/data");',
+      '+  return fetch("/api/v2/data");',
+    ].join('\n'));
+    await expect(generateFix({
+      filePath: 'src/X.jsx', fileContent: file,
+      issue: 'I', fix: 'F',
+      productId: 'flowai', runId: 'd32-4',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    })).rejects.toMatchObject({
+      code: 'FIX_GENERATION_FAILED',
+      message: expect.stringMatching(/diff_preserve_violation:fetch_call/),
+    });
+  });
+
+  it('rejects an oversized diff (change_ratio_exceeded)', async () => {
+    const file = Array.from({ length: 20 }, (_, i) => `line ${i}`).join('\n');
+    const removals = Array.from({ length: 10 }, (_, i) => `-line ${i}`).join('\n');
+    const additions = Array.from({ length: 10 }, (_, i) => `+new ${i}`).join('\n');
+    const diff = `@@ -1,10 +1,10 @@\n${removals}\n${additions}`;
+    const fetchMock = diffFetch(diff);
+    await expect(generateFix({
+      filePath: 'src/X.js', fileContent: file,
+      issue: 'I', fix: 'F',
+      productId: 'flowai', runId: 'd32-5',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', maxChangeRatio: 0.25 },
+    })).rejects.toMatchObject({
+      code: 'FIX_GENERATION_FAILED',
+      message: expect.stringMatching(/diff_change_ratio_exceeded/),
+    });
+  });
+
+  it('rejects a non-applying diff (hunk_does_not_apply)', async () => {
+    const fetchMock = diffFetch([
+      '@@ -6,1 +6,1 @@',
+      '-      <p>NONEXISTENT line in file.</p>',
+      '+      <p>replacement.</p>',
+    ].join('\n'));
+    await expect(generateFix({
+      filePath: 'src/X.jsx', fileContent: ORIG,
+      issue: 'I', fix: 'F',
+      productId: 'flowai', runId: 'd32-6',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    })).rejects.toMatchObject({
+      code: 'FIX_GENERATION_FAILED',
+      message: expect.stringMatching(/diff_hunk_does_not_apply/),
+    });
+  });
+
+  it('rejects empty-diff response with FIX_GENERATION_EMPTY (caller skips file)', async () => {
+    const fetchMock = diffFetch('');
+    await expect(generateFix({
+      filePath: 'src/X.jsx', fileContent: ORIG,
+      issue: 'I', fix: 'F',
+      productId: 'flowai', runId: 'd32-7',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    })).rejects.toMatchObject({
+      code: 'FIX_GENERATION_EMPTY',
+    });
+  });
+
+  it('retries once on first bad diff and succeeds on second clean diff', async () => {
+    let call = 0;
+    const fetchMock = vi.fn(async () => {
+      call += 1;
+      const text = call === 1
+        ? ['@@ -1,1 +1,1 @@', '-import React from "react";', '+import * as React from "react";'].join('\n')
+        : ['@@ -6,1 +6,1 @@', '-      <p>Old placeholder text.</p>', '+      <p>New polished text.</p>'].join('\n');
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          content: [{ type: 'text', text }],
+          usage: { input_tokens: 100, output_tokens: 30 },
+          stop_reason: 'end_turn',
+          model: 'claude-sonnet-4-6',
+        }),
+        text: async () => '{}',
+      };
+    });
+    const r = await generateFix({
+      filePath: 'src/X.jsx', fileContent: ORIG,
+      issue: 'I', fix: 'F',
+      productId: 'flowai', runId: 'd32-8',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    });
+    expect(r.attempts).toBe(2);
+    expect(r.mode).toBe('diff');
+    expect(r.fixedContent).toContain('<p>New polished text.</p>');
   });
 });
