@@ -104,11 +104,14 @@ describe('signAppJwt — RS256 JWT signing', () => {
 });
 
 describe('buildAppJwtClaims — iat/exp window', () => {
-  it('iat is now - 60s and exp is now + 600s', () => {
+  it('iat is now - 60s and exp is now + 540s', () => {
+    // 540s (9 min) leaves 60s clock-skew headroom under GitHub's 600s max.
+    // DISPATCH 20 live test surfaced GitHub rejecting exp=600s when local
+    // clock was ~13s ahead.
     const claims = buildAppJwtClaims(12345, FIXED_NOW);
     const nowSec = Math.floor(FIXED_NOW / 1000);
     expect(claims.iat).toBe(nowSec - 60);
-    expect(claims.exp).toBe(nowSec + 600);
+    expect(claims.exp).toBe(nowSec + 540);
     expect(claims.iss).toBe('12345');
   });
 

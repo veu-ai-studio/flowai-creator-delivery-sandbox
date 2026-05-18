@@ -31,9 +31,13 @@ const GITHUB_API_BASE = 'https://api.github.com';
 
 // JWT validity window:
 //   iat: now - 60s   (clock skew tolerance — GitHub recommends this)
-//   exp: now + 600s  (10 minutes — GitHub's maximum is 10 min)
+//   exp: now + 540s  (9 minutes — GitHub's maximum is 10 min; 540s
+//                     leaves a 60s clock-skew tolerance on the upper
+//                     bound. DISPATCH 20 live test surfaced GitHub
+//                     rejecting exp=600s as "too far in the future"
+//                     when local clock was ~13s ahead of GitHub's.)
 const JWT_IAT_SKEW_SECONDS = 60;
-const JWT_TTL_SECONDS = 600;
+const JWT_TTL_SECONDS = 540;
 
 /**
  * Base64-url encode a Buffer or string. Per RFC 7515 §2: replace '+' with
