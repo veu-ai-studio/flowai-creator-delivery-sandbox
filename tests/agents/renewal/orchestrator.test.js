@@ -1036,3 +1036,131 @@ describe('orchestrator — STEP 10 Vercel failure non-fatal (DISPATCH 29)', () =
     } finally { clearVercelEnv(); }
   });
 });
+
+// ── DISPATCH 30 — post-deploy regression guard ──────────────────────────
+
+describe('orchestrator — post-deploy regression guard (DISPATCH 30)', () => {
+  // Drive the canonical §7.6 gate via the scoreCrawlOutput DI hook. We
+  // craft an alternating sequence so iter 1 produces a regression
+  // (pre=88, post=83 with new high findings); STEP 13 must NOT open a PR.
+  function regressionDeps(opts = {}) {
+    const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [50] });
+    const scoreSequence = [
+      // pre: 88 with all medium/low
+      { score: 88, counts: { critical: 0, high: 0, medium: 5, low: 4 }, band: 'demo-ready', label: 'Demo-ready', penalty: 12, formula: 'synth', issues: [] },
+      // post: 83 with NEW high findings → regression
+      { score: 83, counts: { critical: 0, high: 3, medium: 1, low: 0 }, band: 'demo-ready', label: 'Demo-ready', penalty: 17, formula: 'synth', issues: [] },
+      // iter 2 (if reached): same — keeps loop honest
+      { score: 88, counts: { critical: 0, high: 0, medium: 5, low: 4 }, band: 'demo-ready', label: 'Demo-ready', penalty: 12, formula: 'synth', issues: [] },
+      { score: 88, counts: { critical: 0, high: 0, medium: 5, low: 4 }, band: 'demo-ready', label: 'Demo-ready', penalty: 12, formula: 'synth', issues: [] },
+    ];
+    let i = 0;
+    return {
+      ...base,
+      scoreCrawlOutput: vi.fn(() => scoreSequence[i++] ?? scoreSequence[scoreSequence.length - 1]),
+      ...opts,
+    };
+  }
+
+  it('flags iteration as regressed when post-score is lower than pre-score', async () => {
+    withVercelEnv();
+    try {
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd30-rg-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps: regressionDeps(),
+      });
+      const iter1 = result.iterations[0];
+      expect(iter1.regressed).toBe(true);
+      expect(iter1.regressionDetail).toBeTruthy();
+      expect(iter1.regressionDetail.preScore).toBe(88);
+      expect(iter1.regressionDetail.postScore).toBe(83);
+      expect(iter1.regressionDetail.scoreDelta).toBe(-5);
+      expect(iter1.regressionDetail.newHigh).toBe(3);
+      expect(iter1.regressionDetail.newCritical).toBe(0);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('emits a regression-guard log entry verbatim with before/after counts', async () => {
+    withVercelEnv();
+    try {
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd30-rg-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps: regressionDeps(),
+      });
+      const guardLogs = result.orchestrationLog.filter((l) =>
+        l.tool === 'post-deploy regression guard (D30)',
+      );
+      expect(guardLogs).toHaveLength(1);
+      expect(guardLogs[0].status).toBe('degraded');
+      expect(guardLogs[0].result.regressed).toBe(true);
+      expect(guardLogs[0].result.detail.preCounts).toEqual({ critical: 0, high: 0, medium: 5, low: 4 });
+      expect(guardLogs[0].result.detail.postCounts).toEqual({ critical: 0, high: 3, medium: 1, low: 0 });
+    } finally { clearVercelEnv(); }
+  });
+
+  it('skips PR creation when final iteration regressed (never accepts fix into PR)', async () => {
+    withVercelEnv();
+    try {
+      const createRenewalPr = vi.fn(async () => ({ prNumber: 999, prHtmlUrl: 'https://example/pr' }));
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd30-rg-3', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: regressionDeps({ createRenewalPr }),
+      });
+      expect(createRenewalPr).not.toHaveBeenCalled();
+      expect(result.prUrl).toBeNull();
+      const step13 = result.orchestrationLog.filter((l) => l.step === 13);
+      expect(step13).toHaveLength(1);
+      expect(step13[0].status).toBe('skipped');
+      expect(step13[0].result.skipped).toBe('regression_guard');
+      expect(step13[0].result.detail).toBeTruthy();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('flags regression when only critical count increases (score unchanged)', async () => {
+    withVercelEnv();
+    try {
+      const scoreSeq = [
+        { score: 80, counts: { critical: 0, high: 4, medium: 0, low: 0 }, band: 'demo-ready', label: 'x', penalty: 20, formula: 'x', issues: [] },
+        { score: 80, counts: { critical: 1, high: 3, medium: 1, low: 0 }, band: 'demo-ready', label: 'x', penalty: 20, formula: 'x', issues: [] },
+      ];
+      let i = 0;
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [50] }),
+        scoreCrawlOutput: vi.fn(() => scoreSeq[i++] ?? scoreSeq[scoreSeq.length - 1]),
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd30-rg-4', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+      expect(result.iterations[0].regressed).toBe(true);
+      expect(result.iterations[0].regressionDetail.newCritical).toBe(1);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('does NOT flag regression when score improves and no new high/critical opened', async () => {
+    withVercelEnv();
+    try {
+      const scoreSeq = [
+        { score: 88, counts: { critical: 0, high: 0, medium: 5, low: 4 }, band: 'demo-ready', label: 'x', penalty: 12, formula: 'x', issues: [] },
+        { score: 95, counts: { critical: 0, high: 0, medium: 2, low: 2 }, band: 'showcase-ready', label: 'x', penalty: 5, formula: 'x', issues: [] },
+      ];
+      let i = 0;
+      const createRenewalPr = vi.fn(async () => ({ prNumber: 42, prHtmlUrl: 'https://example/pr/42' }));
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [50] }),
+        scoreCrawlOutput: vi.fn(() => scoreSeq[i++] ?? scoreSeq[scoreSeq.length - 1]),
+        createRenewalPr,
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd30-rg-5', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+      expect(result.iterations[0].regressed).toBe(false);
+      expect(result.iterations[0].regressionDetail).toBeNull();
+      // Reached GTM target → PR opened normally.
+      expect(createRenewalPr).toHaveBeenCalledOnce();
+      expect(result.prUrl).toMatch(/\/pr\/42$/);
+    } finally { clearVercelEnv(); }
+  });
+});

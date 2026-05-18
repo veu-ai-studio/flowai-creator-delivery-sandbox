@@ -1233,6 +1233,50 @@ export async function runOrchestration(args = {}) {
     }
     await state.checkpoint(onCheckpoint, { lastStep: 11, iteration: iterationNumber });
 
+    // DISPATCH 30 — Post-deploy regression guard.
+    // Compare canonical §7.6 post-fix against pre-fix. A fix is REJECTED
+    // (never accepted into a PR) when ANY of:
+    //   - postScore < preScore (score regressed)
+    //   - new critical findings opened (post.critical > pre.critical)
+    //   - new high findings opened (post.high > pre.high)
+    //
+    // On regression: mark iterLog.regressed=true (STEP 13 PR creation
+    // will skip), emit a regression-guard log entry with the verbatim
+    // before/after counts, and let STEP 12's delta policy handle the
+    // loop exit decision (typically NO_IMPROVEMENT on Δ≤0). The branch
+    // is left in place as postmortem evidence; the operator's main
+    // remains clean because no PR was opened.
+    {
+      const _preGtm  = iterLog.preGtm  ?? { score: 0, counts: { critical: 0, high: 0, medium: 0, low: 0 } };
+      const _postGtm = iterLog.postGtm ?? { score: 0, counts: { critical: 0, high: 0, medium: 0, low: 0 } };
+      const scoreRegressed   = _postGtm.score < _preGtm.score;
+      const newCritical      = (_postGtm.counts?.critical ?? 0) - (_preGtm.counts?.critical ?? 0);
+      const newHigh          = (_postGtm.counts?.high ?? 0)     - (_preGtm.counts?.high ?? 0);
+      const criticalRegressed = newCritical > 0;
+      const highRegressed     = newHigh > 0;
+      const regressed = scoreRegressed || criticalRegressed || highRegressed;
+      iterLog.regressed = regressed;
+      iterLog.regressionDetail = regressed ? {
+        scoreRegressed,
+        preScore: _preGtm.score,
+        postScore: _postGtm.score,
+        scoreDelta: _postGtm.score - _preGtm.score,
+        newCritical, newHigh,
+        preCounts: _preGtm.counts,
+        postCounts: _postGtm.counts,
+      } : null;
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 11, status: regressed ? 'degraded' : 'complete',
+        tool: 'post-deploy regression guard (D30)',
+        why: 'reject fixes that regress canonical §7.6 (lower score OR new critical/high findings); never accept into PR',
+        result: {
+          regressed,
+          detail: iterLog.regressionDetail,
+        },
+        durationMs: 0, mode: state.mode,
+      }));
+    }
+
     // STEP 12 — GTM Readiness Decision.
     // DISPATCH 28: gate uses canonical §7.6 score, not Five-Layer total.
     const preGtmForIter = iterLog.preGtm ?? { score: 0, counts: { critical: 0 } };
@@ -1327,6 +1371,21 @@ export async function runOrchestration(args = {}) {
       tool: 'githubPrWriter.js',
       why: 'human review gate — NEVER auto-merge',
       result: { skipped: 'PATH B — no operator GitHub repo; preview URL is the deliverable' },
+      mode: state.mode, canInterrupt: false,
+    }));
+  } else if (lastIter.regressed) {
+    // DISPATCH 30: regression guard fired on the final iteration. Never
+    // open a PR for regressing fixes. The branch is left on the remote
+    // as postmortem evidence; the operator's main remains clean.
+    emit(makeStepLog({
+      iteration: iterations.length, step: 13, status: 'skipped',
+      tool: 'githubPrWriter.js (regression guard)',
+      why: 'final iteration regressed canonical §7.6 score / introduced new critical or high findings — refusing to open PR',
+      result: {
+        skipped: 'regression_guard',
+        branchName: lastIter.branchName,
+        detail: lastIter.regressionDetail ?? null,
+      },
       mode: state.mode, canInterrupt: false,
     }));
   } else if (lastIter.branchName && token) {
