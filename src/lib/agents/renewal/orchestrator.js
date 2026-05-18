@@ -88,6 +88,23 @@ function computeProgress({ originalScore, currentScore, target }) {
 }
 
 /**
+ * Resolve the live (deployed) URL for a product. Phase A maps product_id
+ * to the canonical Vercel preview URL. Phase B should store this in
+ * product_registry.live_url; for now this is a static lookup matching
+ * the 5 VEU products that have Vercel deployments.
+ */
+export function resolveLiveUrl(productId) {
+  const MAP = {
+    mypreglife: 'https://mypreglife-platform.vercel.app',
+    reltwin:    'https://reltwin-platform.vercel.app',
+    saige:      'https://saige-platform.vercel.app',
+    reachsms:   'https://reachsms-platform.vercel.app',
+    pressai:    'https://pressai-platform.vercel.app',
+  };
+  return MAP[productId] ?? null;
+}
+
+/**
  * Resolve a target product from product_registry by URL OR by picking the
  * single enabled product when url is null. Returns the registry row.
  */
@@ -260,7 +277,10 @@ export async function runOrchestration(args = {}) {
 
   const productId = product.product_id;
   const githubRepoUrl = product.github_repo_url;
-  const initialUrl = args.url || githubRepoUrl;
+  // Prefer the explicit URL caller passed in; otherwise the LIVE deployed
+  // URL (NOT the GitHub repo URL, which 404s on direct fetch). Falling
+  // back to the repo URL is a last resort and almost certainly fails.
+  const initialUrl = args.url || resolveLiveUrl(productId) || githubRepoUrl;
 
   const policy = await _readProductPolicy({ productId, supabase }).catch(() => null);
 
