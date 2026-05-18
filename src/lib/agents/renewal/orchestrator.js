@@ -361,10 +361,20 @@ export async function runOrchestration(args = {}) {
     await state.checkpoint(onCheckpoint, { lastStep: 4, iteration: iterationNumber });
 
     // STEP 5 — Five-Layer Scoring (Pre-Fix).
+    // DISPATCH 6: pass githubRepoUrl + token (when available) so the
+    // producer enriches the monitor prompt with real source code. On
+    // iteration 1, token is null until STEP 8 mints it — the producer
+    // gracefully falls back to URL-only scoring in that case. From
+    // iteration 2 onward (or post-rework where token persists), the
+    // enriched path runs and pre-scores reflect real code signal.
     let preScoreEnvelope;
     try {
       const t0 = Date.now();
-      const monitor = await _produceMonitorText({ url: currentUrl, productId, runId });
+      const monitor = await _produceMonitorText({
+        url: currentUrl, productId, runId,
+        githubRepoUrl: githubRepoUrl || undefined,
+        token: token || undefined,
+      });
       preScoreEnvelope = await _computeScore({
         productId, url: currentUrl, runId, monitorText: monitor.monitorText,
       });
@@ -587,10 +597,19 @@ export async function runOrchestration(args = {}) {
     await state.checkpoint(onCheckpoint, { lastStep: 10, iteration: iterationNumber });
 
     // STEP 11 — Five-Layer Scoring (Post-Fix).
+    // DISPATCH 6: token was minted in STEP 8 and is always available
+    // here. Pass githubRepoUrl + token so the post-score reflects the
+    // newly-deployed branch's source (the source on disk is what STEP 7
+    // just edited, so the GitHub enrichment captures the post-fix
+    // state of the codebase, not just the rendered URL).
     let postScoreEnvelope;
     try {
       const t0 = Date.now();
-      const postMonitor = await _produceMonitorText({ url: previewUrl, productId, runId });
+      const postMonitor = await _produceMonitorText({
+        url: previewUrl, productId, runId,
+        githubRepoUrl: githubRepoUrl || undefined,
+        token: token || undefined,
+      });
       postScoreEnvelope = await _computeScore({
         productId, url: previewUrl, runId, monitorText: postMonitor.monitorText,
       });
