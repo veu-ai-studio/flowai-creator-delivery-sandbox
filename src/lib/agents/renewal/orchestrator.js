@@ -38,6 +38,7 @@ import {
   appendGovernanceEntry,
 } from './optionCPipeline.js';
 import { aggressiveCrawl } from '../../../../api/_lib/crawler.js';
+import { remediate as remediationEngine } from '../../../../api/_lib/remediationEngine.js';
 import { randomUUID } from 'node:crypto';
 
 export const GTM_READY_SCORE = 95;
@@ -104,41 +105,174 @@ export function resolveLiveUrl(productId) {
   return MAP[productId] ?? null;
 }
 
+// ── Product-agnostic helpers (DISPATCH 24) ───────────────────────────────────
+//
+// FlowAI is product-agnostic: any URL must work, registered or not. Two
+// resolution paths:
+//   PATH A — Known product (URL matches a product_registry row). Loads the
+//            operator's full config and uses the operator's GitHub repo +
+//            Vercel project for the branch-deploy path.
+//   PATH B — Unknown URL (no registry hit). Synthesizes a default config,
+//            attempts to detect a GitHub repo from the page (well-known
+//            file, meta tag, page content), and routes deployment through
+//            api/_lib/remediationEngine.js (file-tree upload to FlowAI's
+//            own Vercel account) instead of the operator's branch-deploy
+//            path. PATH B never throws on a "not registered" URL — that's
+//            the whole point.
+
+const PATH_B_DEFAULT_CONFIG = Object.freeze({
+  self_renewal_max_per_day: 3,
+  self_renewal_minimum_delta: 1,
+  self_renewal_substantial_threshold: 5,
+  self_renewal_negative_delta_policy: 'ALWAYS_OPEN',
+});
+
+function sanitizeHostname(hostname) {
+  if (typeof hostname !== 'string' || hostname.length === 0) return 'unknown';
+  return hostname.replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase().slice(0, 40);
+}
+
+function synthesizePathBProduct({ url, runId, detectedRepoUrl = null }) {
+  let hostname = 'unknown';
+  try { hostname = new URL(url).hostname; } catch { /* leave default */ }
+  const sanitized = sanitizeHostname(hostname);
+  const runShort = (runId || '').slice(0, 8) || 'norun';
+  return {
+    product_id: `flowai-upgraded-${sanitized}-${runShort}`,
+    org_id: 'flowai-self-hosted',
+    github_repo_url: detectedRepoUrl,   // may be null — score-only mode
+    self_renewal_enabled: true,
+    environment: 'prd',
+    // PATH B marker — downstream steps switch routing on this.
+    __pathB: true,
+    __sourceUrl: url,
+    __detectedRepoUrl: detectedRepoUrl,
+    // PATH B defaults per DISPATCH 24 spec.
+    ...PATH_B_DEFAULT_CONFIG,
+  };
+}
+
 /**
- * Resolve a target product from product_registry by URL OR by picking the
- * single enabled product when url is null. Returns the registry row.
+ * Best-effort detection of a GitHub repo URL for an arbitrary live URL.
+ * Tried in order; first hit wins; any failure is silent → returns null
+ * (PATH B then runs in score-only mode without a GitHub destination).
+ *
+ *   1. GET {origin}/.well-known/flowai.json — operator opt-in JSON:
+ *      { "github_repo": "https://github.com/owner/repo" }
+ *   2. Parse the page HTML for <meta name="github-repo" content="...">
+ *   3. Grep the page HTML for a github.com/<owner>/<repo> URL (last-resort)
+ *
+ * @param {object} args
+ * @param {string} args.url
+ * @param {function} [args.fetch]  — overridable for tests
+ * @param {number}   [args.timeoutMs=5000]
+ * @returns {Promise<string|null>}  the GitHub URL or null
  */
-async function discoverProduct({ url, supabase }) {
-  if (!supabase || typeof supabase.from !== 'function') {
-    // No DB — fallback to a sensible default (mypreglife is the Phase A target).
-    if (url && url.includes('mypreglife')) {
-      return {
-        product_id: 'mypreglife',
-        org_id: 'veu-ai-studio',
-        github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
-        self_renewal_enabled: true,
-      };
+export async function detectGithubRepoFromUrl({ url, fetch: fetchOverride, timeoutMs = 5_000 } = {}) {
+  if (typeof url !== 'string' || url.length === 0) return null;
+  const fetchImpl = typeof fetchOverride === 'function' ? fetchOverride : globalThis.fetch;
+  if (typeof fetchImpl !== 'function') return null;
+
+  let parsed;
+  try { parsed = new URL(url); } catch { return null; }
+  const origin = `${parsed.protocol}//${parsed.host}`;
+
+  const withTimeout = async (target) => {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), timeoutMs);
+    try {
+      const r = await fetchImpl(target, { signal: ac.signal, redirect: 'follow' });
+      return r;
+    } catch { return null; }
+    finally { clearTimeout(t); }
+  };
+
+  // 1. .well-known/flowai.json (operator opt-in, structured JSON).
+  try {
+    const res = await withTimeout(`${origin}/.well-known/flowai.json`);
+    if (res && res.ok) {
+      const text = await res.text();
+      const json = JSON.parse(text);
+      const candidate = typeof json?.github_repo === 'string' ? json.github_repo
+                       : typeof json?.githubRepo === 'string' ? json.githubRepo
+                       : null;
+      if (candidate && /^https?:\/\/github\.com\/[\w.-]+\/[\w.-]+/i.test(candidate)) {
+        return candidate.replace(/\.git$/i, '').replace(/\/+$/, '');
+      }
     }
-    return null;
+  } catch { /* fall through */ }
+
+  // 2. Page HTML — <meta name="github-repo" content="...">
+  let pageHtml = null;
+  try {
+    const res = await withTimeout(url);
+    if (res && res.ok) {
+      pageHtml = await res.text();
+      const metaMatch = pageHtml.match(/<meta[^>]+name=["']github-repo["'][^>]+content=["']([^"']+)["']/i);
+      if (metaMatch) {
+        const candidate = metaMatch[1].trim();
+        if (/^https?:\/\/github\.com\/[\w.-]+\/[\w.-]+/i.test(candidate)) {
+          return candidate.replace(/\.git$/i, '').replace(/\/+$/, '');
+        }
+      }
+    }
+  } catch { /* fall through */ }
+
+  // 3. Grep the page HTML for any github.com/owner/repo URL (last resort).
+  // Bounded to the page text already fetched; we don't make extra requests
+  // for robots.txt / package.json here to keep this fast and predictable.
+  if (typeof pageHtml === 'string' && pageHtml.length > 0) {
+    const match = pageHtml.match(/https?:\/\/github\.com\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+/);
+    if (match) {
+      return match[0].replace(/\.git$/i, '').replace(/\/+$/, '');
+    }
   }
-  // If a URL is provided, try to match by github_repo_url substring.
-  if (url) {
-    const { data } = await supabase
-      .from('product_registry')
-      .select('*')
-      .or(`github_repo_url.ilike.%${url}%,product_id.ilike.%${url}%`)
-      .maybeSingle();
-    if (data) return data;
+
+  return null;
+}
+
+/**
+ * Resolve a target product. NEVER returns null in DISPATCH 24+: the result
+ * is either a PATH A registry row (operator-known product) OR a PATH B
+ * synthesized config (FlowAI universal mode for any URL).
+ */
+async function discoverProduct({ url, supabase, runId, detectGithubFn = detectGithubRepoFromUrl }) {
+  // ── PATH A: try registry hit ───────────────────────────────────────────────
+  if (supabase && typeof supabase.from === 'function') {
+    if (url) {
+      const { data } = await supabase
+        .from('product_registry')
+        .select('*')
+        .or(`github_repo_url.ilike.%${url}%,product_id.ilike.%${url}%`)
+        .maybeSingle();
+      if (data) return data;
+    } else {
+      const { data } = await supabase
+        .from('product_registry')
+        .select('*')
+        .eq('self_renewal_enabled', true)
+        .order('product_id', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (data) return data;
+    }
+  } else if (url && url.includes('mypreglife')) {
+    // Test/dev convenience without a Supabase client: keep the historical
+    // mypreglife fast-path so existing AUTO-mode tests still resolve to a
+    // PATH A row.
+    return {
+      product_id: 'mypreglife',
+      org_id: 'veu-ai-studio',
+      github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
+      self_renewal_enabled: true,
+    };
   }
-  // No URL or no match — pick the first enabled product.
-  const { data } = await supabase
-    .from('product_registry')
-    .select('*')
-    .eq('self_renewal_enabled', true)
-    .order('product_id', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  return data ?? null;
+
+  // ── PATH B: no registry hit (or no DB) — synthesize a universal-mode product
+  // No URL at all → can't proceed; return null and let caller fail gracefully.
+  if (!url) return null;
+  const detectedRepoUrl = await detectGithubFn({ url }).catch(() => null);
+  return synthesizePathBProduct({ url, runId, detectedRepoUrl });
 }
 
 // ── Orchestrator class (encapsulates mode + stop/resume/switchMode state) ───
@@ -229,6 +363,7 @@ export async function runOrchestration(args = {}) {
   const _createRenewalPr        = deps.createRenewalPr        || createRenewalPr;
   const _readProductPolicy      = deps.readProductPolicy      || readProductPolicy;
   const _appendGovernanceEntry  = deps.appendGovernanceEntry  || appendGovernanceEntry;
+  const _remediationEngine      = deps.remediationEngine      || remediationEngine;
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   const orchestrationLog = [];
@@ -243,30 +378,58 @@ export async function runOrchestration(args = {}) {
   };
 
   // ── STEP 1 — Product Discovery (iteration 1 only, then carry forward) ─────
+  //
+  // DISPATCH 24 (product-agnostic URL handling): discoverProduct never
+  // throws or returns null when a URL is supplied. It returns either a
+  // PATH A registry row (operator-known product, existing flow) or a
+  // PATH B synthesized config (FlowAI universal mode — any URL works,
+  // no pre-registration needed). PATH B routes deployment through the
+  // remediationEngine.js file-tree upload instead of the operator's
+  // branch-deploy path; STEPS 7-9 and 13 are skipped for PATH B because
+  // there's no GitHub repo to commit to or PR against (unless a repo was
+  // auto-detected from the page).
   let product;
+  let pathB = false;
   try {
     const t0 = Date.now();
-    product = await _discoverProduct({ url: args.url, supabase });
-    if (!product || !product.github_repo_url) {
+    product = await _discoverProduct({ url: args.url, supabase, runId });
+    if (!product) {
+      // Only true failure: no URL AND no DB AND no registry hit. Nothing
+      // to operate on.
       const failLog = makeStepLog({
         iteration: 0, step: 1, status: 'failed',
-        tool: 'product_registry + URL parser',
-        why: 'identify which product this URL belongs to and load its configuration',
-        result: { error: 'no_product_resolved', url: args.url },
+        tool: 'product_registry lookup',
+        why: 'check if this URL is a known registered product',
+        result: { error: 'no_url_supplied_and_no_enabled_product', url: args.url },
         durationMs: Date.now() - t0, mode: state.mode, canInterrupt: false,
       });
       emit(failLog);
       return buildFailureReturn({
-        runId, mode: state.mode, product, orchestrationLog, iterations,
-        failedStep: 'STEP_1', error: 'no_product_resolved_from_url_or_registry',
+        runId, mode: state.mode, product: null, orchestrationLog, iterations,
+        failedStep: 'STEP_1', error: 'no_url_supplied_and_no_enabled_product',
         code: 'PRODUCT_NOT_FOUND',
       });
     }
+    pathB = product.__pathB === true;
     emit(makeStepLog({
       iteration: 0, step: 1, status: 'complete',
-      tool: 'product_registry + URL parser',
-      why: 'identify which product this URL belongs to and load its configuration',
-      result: { productId: product.product_id, githubRepoUrl: product.github_repo_url },
+      tool: 'product_registry lookup',
+      why: 'check if this URL is a known registered product',
+      result: pathB
+        ? {
+            path: 'PATH B (unknown — proceeding in universal mode)',
+            productId: product.product_id,
+            sourceUrl: product.__sourceUrl,
+            detectedRepoUrl: product.__detectedRepoUrl,        // null → score-only mode
+            note: product.__detectedRepoUrl
+              ? 'GitHub repo auto-detected; deploy via remediationEngine'
+              : 'no GitHub repo detected; score-only mode (no PR will be opened)',
+          }
+        : {
+            path: 'PATH A (known)',
+            productId: product.product_id,
+            githubRepoUrl: product.github_repo_url,
+          },
       durationMs: Date.now() - t0, mode: state.mode,
     }));
   } catch (e) {
@@ -367,6 +530,13 @@ export async function runOrchestration(args = {}) {
     // gracefully falls back to URL-only scoring in that case. From
     // iteration 2 onward (or post-rework where token persists), the
     // enriched path runs and pre-scores reflect real code signal.
+    //
+    // DISPATCH 24: crawlReport is now passed through to produceMonitorText
+    // so scoring can leverage the real multi-page crawl (titles, headings,
+    // links, forms, error states) rather than the producer's independent
+    // single-URL fetch. The producer currently ignores fields it doesn't
+    // destructure, so the wire is in place pending the producer-side
+    // enhancement that consumes it.
     let preScoreEnvelope;
     try {
       const t0 = Date.now();
@@ -374,6 +544,7 @@ export async function runOrchestration(args = {}) {
         url: currentUrl, productId, runId,
         githubRepoUrl: githubRepoUrl || undefined,
         token: token || undefined,
+        crawlReport,
       });
       preScoreEnvelope = await _computeScore({
         productId, url: currentUrl, runId, monitorText: monitor.monitorText,
@@ -444,151 +615,205 @@ export async function runOrchestration(args = {}) {
     }
     await state.checkpoint(onCheckpoint, { lastStep: 6, iteration: iterationNumber });
 
-    // STEP 8 — Credential Acquisition (mint App token for this iteration).
-    try {
-      const t0 = Date.now();
-      const minted = await _getInstallationToken();
-      token = minted.token;
-      const log = makeStepLog({
-        iteration: iterationNumber, step: 8, status: 'complete',
+    // ── STEP 8 + STEP 7 + STEP 9 — PATH A only ───────────────────────────────
+    //
+    // PATH B has no operator GitHub repo to commit to, so STEPS 7-9 are
+    // skipped: the remediationEngine in STEP 10 generates the patched
+    // file tree internally from the issues + crawl data and deploys it
+    // to FlowAI's own Vercel account. STEP 13 (PR) is also skipped for
+    // PATH B (no upstream repo to PR against).
+    //
+    // STEP 7 numerically precedes STEP 8 in the spec, but generating
+    // fixes requires the GitHub token to fetch file content — execution
+    // order is STEP 8 → STEP 7; logs preserve the numbered semantic.
+    let owner = null;
+    let repo = null;
+    const branchName = `flowai/renewal-${runId}-iter${iterationNumber}`;
+    const fileChanges = []; // { filePath, fileContent (new) } — PATH A only
+    if (pathB) {
+      // Log skipped steps so the orchestrator log is honest about what ran.
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 8, status: 'skipped',
         tool: 'githubApp.js',
         why: 'short-lived installation token (~9 min) for branch + PR writes',
-        result: { tokenAcquired: true, expiresAt: minted.expiresAt },
-        durationMs: Date.now() - t0, mode: state.mode,
-      });
-      emit(log); iterLog.steps.push(log);
-    } catch (e) {
-      emit(makeStepLog({ iteration: iterationNumber, step: 8, status: 'failed',
-        tool: 'githubApp', why: 'mint token', result: { error: e?.message }, mode: state.mode }));
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_8',
-        error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_AUTH_FAILED' });
-    }
-
-    // STEP 7 — Multi-File Fix Generation (uses token from STEP 8).
-    // Note: dispatch lists STEP 7 before STEP 8 numerically, but generating
-    // fixes requires the GitHub token to fetch file content. Order is
-    // STEP 8 → STEP 7 in execution; logs preserve the numbered semantic.
-    const repoParsed = parseGithubRepoUrl(githubRepoUrl);
-    if (!repoParsed) {
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_7',
-        error: `unparseable githubRepoUrl: ${githubRepoUrl}`, code: 'BAD_REPO_URL' });
-    }
-    const { owner, repo } = repoParsed;
-
-    const fileChanges = []; // { filePath, fileContent (new) }
-    try {
-      const t0 = Date.now();
-      for (const issue of prioritizedIssues) {
-        const filePath = issue.filePath || 'README.md';
-        let current;
-        try {
-          current = await _fetchFileContent({ owner, repo, filePath, ref: 'main', token });
-        } catch (fetchErr) {
-          // Skip files we can't fetch (e.g. doesn't exist on main)
-          continue;
-        }
-        try {
-          const fix = await _generateFix({
-            filePath, fileContent: current,
-            // DISPATCH 23: pass through the precise fix instruction when
-            // available (from Claude prioritization). fixGenerator falls
-            // back to the findings-based prompt when `fix` is absent.
-            issue: issue.issue || issue.description || issue.title,
-            fix: issue.fix || null,
-            findings: [issue],
-            productId, runId,
-          });
-          fileChanges.push({ filePath, fileContent: fix.fixedContent });
-        } catch (fixErr) {
-          // FIX_NO_CHANGE or FIX_GENERATION_EMPTY — skip this file
-          continue;
-        }
-      }
-      const log = makeStepLog({
-        iteration: iterationNumber, step: 7, status: fileChanges.length > 0 ? 'complete' : 'skipped',
+        result: { skipped: 'PATH B — no operator GitHub repo; remediationEngine handles fix+deploy' },
+        mode: state.mode,
+      }));
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 7, status: 'skipped',
         tool: 'fixGenerator.js (Claude API)',
         why: 'generate concrete fixes for prioritized issues',
-        result: { filesFixed: fileChanges.length, files: fileChanges.map((c) => c.filePath) },
-        durationMs: Date.now() - t0, mode: state.mode,
-      });
-      emit(log); iterLog.steps.push(log);
-    } catch (e) {
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_7',
-        error: e?.message ?? String(e), code: e?.code ?? 'FIX_GENERATION_FAILED' });
-    }
-    await state.checkpoint(onCheckpoint, { lastStep: 7, iteration: iterationNumber });
+        result: { skipped: 'PATH B — remediationEngine produces patched file tree internally' },
+        mode: state.mode,
+      }));
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 9, status: 'skipped',
+        tool: 'githubBranchWriter.js',
+        why: 'all fixes on isolated branch for review + rollback',
+        result: { skipped: 'PATH B — no operator GitHub repo for branch + commits' },
+        mode: state.mode,
+      }));
+      await state.checkpoint(onCheckpoint, { lastStep: 9, iteration: iterationNumber });
+    } else {
+      // ── PATH A: existing flow ──────────────────────────────────────────────
+      try {
+        const t0 = Date.now();
+        const minted = await _getInstallationToken();
+        token = minted.token;
+        const log = makeStepLog({
+          iteration: iterationNumber, step: 8, status: 'complete',
+          tool: 'githubApp.js',
+          why: 'short-lived installation token (~9 min) for branch + PR writes',
+          result: { tokenAcquired: true, expiresAt: minted.expiresAt },
+          durationMs: Date.now() - t0, mode: state.mode,
+        });
+        emit(log); iterLog.steps.push(log);
+      } catch (e) {
+        emit(makeStepLog({ iteration: iterationNumber, step: 8, status: 'failed',
+          tool: 'githubApp', why: 'mint token', result: { error: e?.message }, mode: state.mode }));
+        return buildFailureReturn({ runId, mode: state.mode, product,
+          orchestrationLog, iterations, failedStep: 'STEP_8',
+          error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_AUTH_FAILED' });
+      }
 
-    if (fileChanges.length === 0) {
-      // Nothing to commit; exit loop honestly.
-      exitReason = 'NO_FIXES_GENERATED';
-      break;
-    }
+      const repoParsed = parseGithubRepoUrl(githubRepoUrl);
+      if (!repoParsed) {
+        return buildFailureReturn({ runId, mode: state.mode, product,
+          orchestrationLog, iterations, failedStep: 'STEP_7',
+          error: `unparseable githubRepoUrl: ${githubRepoUrl}`, code: 'BAD_REPO_URL' });
+      }
+      owner = repoParsed.owner;
+      repo = repoParsed.repo;
 
-    // STEP 9 — Branch + multi-file commits.
-    const branchName = `flowai/renewal-${runId}-iter${iterationNumber}`;
-    let commitInfo;
-    try {
-      const t0 = Date.now();
-      // First file creates the branch.
-      const first = fileChanges[0];
-      commitInfo = await _createRenewalBranch({
-        owner, repo, baseBranch: 'main', branchName,
-        filePath: first.filePath, fileContent: first.fileContent,
-        commitMessage: `FlowAI Self-Renewal iter${iterationNumber} fix: ${first.filePath}`,
-        token,
-      });
-      // Subsequent files commit to the same branch.
-      for (let i = 1; i < fileChanges.length; i += 1) {
-        const f = fileChanges[i];
-        await _commitFileToBranch({
-          owner, repo, branchName, filePath: f.filePath, fileContent: f.fileContent,
-          commitMessage: `FlowAI Self-Renewal iter${iterationNumber} fix: ${f.filePath}`,
+      // STEP 7 — Multi-File Fix Generation (PATH A only).
+      try {
+        const t0 = Date.now();
+        for (const issue of prioritizedIssues) {
+          const filePath = issue.filePath || 'README.md';
+          let current;
+          try {
+            current = await _fetchFileContent({ owner, repo, filePath, ref: 'main', token });
+          } catch (fetchErr) {
+            continue;  // Skip files we can't fetch (e.g. doesn't exist on main)
+          }
+          try {
+            const fix = await _generateFix({
+              filePath, fileContent: current,
+              issue: issue.issue || issue.description || issue.title,
+              fix: issue.fix || null,
+              findings: [issue],
+              productId, runId,
+            });
+            fileChanges.push({ filePath, fileContent: fix.fixedContent });
+          } catch (fixErr) {
+            continue;  // FIX_NO_CHANGE or FIX_GENERATION_EMPTY — skip
+          }
+        }
+        const log = makeStepLog({
+          iteration: iterationNumber, step: 7, status: fileChanges.length > 0 ? 'complete' : 'skipped',
+          tool: 'fixGenerator.js (Claude API)',
+          why: 'generate concrete fixes for prioritized issues',
+          result: { filesFixed: fileChanges.length, files: fileChanges.map((c) => c.filePath) },
+          durationMs: Date.now() - t0, mode: state.mode,
+        });
+        emit(log); iterLog.steps.push(log);
+      } catch (e) {
+        return buildFailureReturn({ runId, mode: state.mode, product,
+          orchestrationLog, iterations, failedStep: 'STEP_7',
+          error: e?.message ?? String(e), code: e?.code ?? 'FIX_GENERATION_FAILED' });
+      }
+      await state.checkpoint(onCheckpoint, { lastStep: 7, iteration: iterationNumber });
+
+      if (fileChanges.length === 0) {
+        exitReason = 'NO_FIXES_GENERATED';
+        break;
+      }
+
+      // STEP 9 — Branch + multi-file commits (PATH A only).
+      try {
+        const t0 = Date.now();
+        const first = fileChanges[0];
+        await _createRenewalBranch({
+          owner, repo, baseBranch: 'main', branchName,
+          filePath: first.filePath, fileContent: first.fileContent,
+          commitMessage: `FlowAI Self-Renewal iter${iterationNumber} fix: ${first.filePath}`,
           token,
         });
+        for (let i = 1; i < fileChanges.length; i += 1) {
+          const f = fileChanges[i];
+          await _commitFileToBranch({
+            owner, repo, branchName, filePath: f.filePath, fileContent: f.fileContent,
+            commitMessage: `FlowAI Self-Renewal iter${iterationNumber} fix: ${f.filePath}`,
+            token,
+          });
+        }
+        const log = makeStepLog({
+          iteration: iterationNumber, step: 9, status: 'complete',
+          tool: 'githubBranchWriter.js (createRenewalBranch + commitFileToBranch)',
+          why: 'all fixes on isolated branch for review + rollback',
+          result: { branchName, filesCommitted: fileChanges.length },
+          durationMs: Date.now() - t0, mode: state.mode,
+        });
+        emit(log); iterLog.steps.push(log);
+      } catch (e) {
+        return buildFailureReturn({ runId, mode: state.mode, product,
+          orchestrationLog, iterations, failedStep: 'STEP_9',
+          error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_API_ERROR' });
       }
-      const log = makeStepLog({
-        iteration: iterationNumber, step: 9, status: 'complete',
-        tool: 'githubBranchWriter.js (createRenewalBranch + commitFileToBranch)',
-        why: 'all fixes on isolated branch for review + rollback',
-        result: { branchName, filesCommitted: fileChanges.length, branchUrl: commitInfo.branchUrl },
-        durationMs: Date.now() - t0, mode: state.mode,
-      });
-      emit(log); iterLog.steps.push(log);
-    } catch (e) {
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_9',
-        error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_API_ERROR' });
     }
 
-    // STEP 10 — Vercel preview deploy.
+    // STEP 10 — Preview deploy. PATH A uses the operator's Vercel branch-
+    // deploy path (vercelBranchDeploy.js). PATH B routes through
+    // api/_lib/remediationEngine.js which generates a fresh file tree from
+    // the issues + crawl signal and uploads it to FlowAI's own Vercel
+    // account as a brand-new project.
     let previewUrl;
     try {
       const t0 = Date.now();
-      const projectId = resolveVercelProjectId(productId);
-      if (!projectId) {
-        throw new Error(`no Vercel project ID for ${productId} (env VERCEL_PROJECT_ID_${productId.toUpperCase()})`);
+      if (pathB) {
+        const result = await _remediationEngine({
+          productScope: product.product_id,
+          issues: prioritizedIssues,
+          sourceHints: product.__detectedRepoUrl ? { gitUrl: product.__detectedRepoUrl } : {},
+          requestOrigin: currentUrl,
+        });
+        if (!result || !result.ok || !result.renewedUrl) {
+          throw new Error(`remediationEngine failed: ${result?.reason ?? 'unknown'}`);
+        }
+        previewUrl = result.renewedUrl;
+        finalPreviewUrl = previewUrl;
+        const log = makeStepLog({
+          iteration: iterationNumber, step: 10, status: 'complete',
+          tool: 'remediationEngine.js (PATH B file-tree upload)',
+          why: 'PATH B universal-mode deploy — FlowAI Vercel account, no operator repo required',
+          result: { previewUrl, path: result.path, deploymentId: result.deploymentId ?? null },
+          durationMs: Date.now() - t0, mode: state.mode,
+        });
+        emit(log); iterLog.steps.push(log);
+      } else {
+        const projectId = resolveVercelProjectId(productId);
+        if (!projectId) {
+          throw new Error(`no Vercel project ID for ${productId} (env VERCEL_PROJECT_ID_${productId.toUpperCase()})`);
+        }
+        const orgId = process.env.VERCEL_ORG_ID;
+        const vercelToken = process.env.VERCEL_TOKEN;
+        if (!orgId || !vercelToken) {
+          throw new Error('VERCEL_ORG_ID or VERCEL_TOKEN missing from env');
+        }
+        const deployment = await _deployBranchPreview({
+          projectId, orgId, owner, repo, branchName, token: vercelToken,
+        });
+        previewUrl = deployment.previewUrl;
+        finalPreviewUrl = previewUrl;
+        const log = makeStepLog({
+          iteration: iterationNumber, step: 10, status: 'complete',
+          tool: 'vercelBranchDeploy.js (PATH A operator branch deploy)',
+          why: 'live preview for score verification before PR',
+          result: { previewUrl, deploymentId: deployment.deploymentId },
+          durationMs: Date.now() - t0, mode: state.mode,
+        });
+        emit(log); iterLog.steps.push(log);
       }
-      const orgId = process.env.VERCEL_ORG_ID;
-      const vercelToken = process.env.VERCEL_TOKEN;
-      if (!orgId || !vercelToken) {
-        throw new Error('VERCEL_ORG_ID or VERCEL_TOKEN missing from env');
-      }
-      const deployment = await _deployBranchPreview({
-        projectId, orgId, owner, repo, branchName, token: vercelToken,
-      });
-      previewUrl = deployment.previewUrl;
-      finalPreviewUrl = previewUrl;
-      const log = makeStepLog({
-        iteration: iterationNumber, step: 10, status: 'complete',
-        tool: 'vercelBranchDeploy.js',
-        why: 'live preview for score verification before PR',
-        result: { previewUrl, deploymentId: deployment.deploymentId },
-        durationMs: Date.now() - t0, mode: state.mode,
-      });
-      emit(log); iterLog.steps.push(log);
     } catch (e) {
       return buildFailureReturn({ runId, mode: state.mode, product,
         orchestrationLog, iterations, failedStep: 'STEP_10',
@@ -602,6 +827,10 @@ export async function runOrchestration(args = {}) {
     // newly-deployed branch's source (the source on disk is what STEP 7
     // just edited, so the GitHub enrichment captures the post-fix
     // state of the codebase, not just the rendered URL).
+    //
+    // DISPATCH 24: crawlReport is passed through to produceMonitorText
+    // here too — same rationale as STEP 5 above. The post-fix score
+    // benefits from the same crawl signal.
     let postScoreEnvelope;
     try {
       const t0 = Date.now();
@@ -609,6 +838,7 @@ export async function runOrchestration(args = {}) {
         url: previewUrl, productId, runId,
         githubRepoUrl: githubRepoUrl || undefined,
         token: token || undefined,
+        crawlReport,
       });
       postScoreEnvelope = await _computeScore({
         productId, url: previewUrl, runId, monitorText: postMonitor.monitorText,
@@ -639,11 +869,18 @@ export async function runOrchestration(args = {}) {
     // STEP 12 — GTM Readiness Decision.
     const delta = postScoreEnvelope.total - preScoreEnvelope.total;
     const totalImprovement = postScoreEnvelope.total - (originalScore ?? 0);
-    const decisionPolicy = policy ?? {
+    // PATH B uses the universal-mode defaults synthesized into product;
+    // PATH A uses the loaded registry policy; both fall back to ALWAYS_OPEN
+    // with conservative thresholds when neither is set.
+    const decisionPolicy = policy ?? (pathB ? {
+      selfRenewalNegativeDeltaPolicy: product.self_renewal_negative_delta_policy ?? 'ALWAYS_OPEN',
+      selfRenewalMinimumDelta:        product.self_renewal_minimum_delta ?? 1,
+      selfRenewalSubstantialThreshold: product.self_renewal_substantial_threshold ?? 5,
+    } : {
       selfRenewalNegativeDeltaPolicy: 'ALWAYS_OPEN',
       selfRenewalMinimumDelta: 0,
       selfRenewalSubstantialThreshold: 5,
-    };
+    });
     const decision = _evaluateDelta({
       preScore: preScoreEnvelope, postScore: postScoreEnvelope,
       policy: decisionPolicy, runId, productId,
@@ -653,9 +890,10 @@ export async function runOrchestration(args = {}) {
     iterLog.delta = delta;
     iterLog.totalImprovement = totalImprovement;
     iterLog.gtmReady = postScoreEnvelope.total >= gtmTarget;
-    iterLog.branchName = branchName;
+    iterLog.branchName = pathB ? null : branchName;
     iterLog.previewUrl = previewUrl;
     iterLog.decision = decision.action;
+    iterLog.path = pathB ? 'B' : 'A';
     iterations.push(iterLog);
 
     let iterExit = null;
@@ -693,9 +931,18 @@ export async function runOrchestration(args = {}) {
     iterationNumber += 1;
   }
 
-  // STEP 13 — Final PR Creation.
+  // STEP 13 — Final PR Creation. PATH A only (PATH B has no upstream
+  // GitHub repo to PR against; preview URL is the deliverable).
   const lastIter = iterations[iterations.length - 1] || {};
-  if (lastIter.branchName && token) {
+  if (pathB) {
+    emit(makeStepLog({
+      iteration: iterations.length, step: 13, status: 'skipped',
+      tool: 'githubPrWriter.js',
+      why: 'human review gate — NEVER auto-merge',
+      result: { skipped: 'PATH B — no operator GitHub repo; preview URL is the deliverable' },
+      mode: state.mode, canInterrupt: false,
+    }));
+  } else if (lastIter.branchName && token) {
     try {
       const t0 = Date.now();
       pr = await _createRenewalPr({
