@@ -534,6 +534,16 @@ export async function runOrchestration(args = {}) {
 
   const productId = product.product_id;
   const githubRepoUrl = product.github_repo_url;
+  // DISPATCH 34 T2 — per-product branch-of-record (product-agnostic).
+  // product_registry.self_renewal_branch (migration 0019) carries the
+  // branch the orchestrator should target for Trees API + Contents
+  // API + commit operations. Defaults to 'main' for any product whose
+  // row lacks the column (back-compat with environments where 0019
+  // hasn't been applied yet). PATH B has no registry row → uses 'main'.
+  const productBranch = (typeof product.self_renewal_branch === 'string'
+    && product.self_renewal_branch.length > 0)
+    ? product.self_renewal_branch
+    : 'main';
   // Prefer the explicit URL caller passed in; otherwise the LIVE deployed
   // URL (NOT the GitHub repo URL, which 404s on direct fetch). Falling
   // back to the repo URL is a last resort and almost certainly fails.
@@ -723,7 +733,7 @@ export async function runOrchestration(args = {}) {
           const minted = await _getInstallationToken();
           token = minted.token;
           const treeResult = await _fetchRepoFileList({
-            owner: parsed.owner, repo: parsed.repo, ref: 'main', token,
+            owner: parsed.owner, repo: parsed.repo, ref: productBranch, token,
           });
           if (treeResult && treeResult.files && treeResult.files.length > 0) {
             repoFileList = treeResult.files;
@@ -883,7 +893,7 @@ export async function runOrchestration(args = {}) {
           const filePath = issue.filePath || 'README.md';
           let current;
           try {
-            current = await _fetchFileContent({ owner, repo, filePath, ref: 'main', token });
+            current = await _fetchFileContent({ owner, repo, filePath, ref: productBranch, token });
           } catch (fetchErr) {
             fixOutcomes.push({
               filePath, status: 'rejected',
@@ -1026,7 +1036,7 @@ export async function runOrchestration(args = {}) {
         const t0 = Date.now();
         const first = fileChanges[0];
         await _createRenewalBranch({
-          owner, repo, baseBranch: 'main', branchName,
+          owner, repo, baseBranch: productBranch, branchName,
           filePath: first.filePath, fileContent: first.fileContent,
           commitMessage: `FlowAI Self-Renewal iter${iterationNumber} fix: ${first.filePath}`,
           token,
@@ -1500,7 +1510,7 @@ export async function runOrchestration(args = {}) {
         owner: parseGithubRepoUrl(githubRepoUrl).owner,
         repo: parseGithubRepoUrl(githubRepoUrl).repo,
         branchName: lastIter.branchName,
-        baseBranch: 'main',
+        baseBranch: productBranch,
         title: `FlowAI Self-Renewal: ${runId.slice(0, 8)} (${exitReason})`,
         body: buildPrBody({
           runId, mode, exitReason,

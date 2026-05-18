@@ -1518,3 +1518,163 @@ describe('diffEditor.validateDiff — scoped relaxation via preserveExceptions (
     expect(r.reason).toBe('change_ratio_exceeded');
   });
 });
+
+// ── DISPATCH 34 T2 — per-product branch-of-record threading ─────────────
+
+describe('orchestrator — per-product branch threading (DISPATCH 34 T2)', () => {
+  it('passes product.self_renewal_branch as ref to fetchRepoFileList (Trees API)', async () => {
+    withVercelEnv();
+    try {
+      const fetchRepoFileList = vi.fn(async () => ({ files: ['README.md', 'src/App.jsx'], truncated: false, sha: 's', error: null }));
+      const fetchFileContent = vi.fn(async () => 'file content');
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'd34-t2-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: {
+          ...base,
+          fetchRepoFileList,
+          fetchFileContent,
+          discoverProduct: vi.fn(async () => ({
+            product_id: 'flowai',
+            org_id: 'veu-ai-studio',
+            github_repo_url: 'https://github.com/victor2081new-cloud/flowai',
+            self_renewal_enabled: true,
+            self_renewal_branch: 'flowai-v0.1',
+          })),
+        },
+        issue: { filePath: 'README.md', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+      });
+      // Trees API was called with the row's branch, not 'main'.
+      expect(fetchRepoFileList).toHaveBeenCalled();
+      const treeCallArgs = fetchRepoFileList.mock.calls[0][0];
+      expect(treeCallArgs.ref).toBe('flowai-v0.1');
+      // fetchFileContent was also called with the row's branch.
+      expect(fetchFileContent).toHaveBeenCalled();
+      const fetchCallArgs = fetchFileContent.mock.calls[0][0];
+      expect(fetchCallArgs.ref).toBe('flowai-v0.1');
+    } finally { clearVercelEnv(); }
+  });
+
+  it('falls back to "main" when product.self_renewal_branch is unset', async () => {
+    withVercelEnv();
+    try {
+      const fetchRepoFileList = vi.fn(async () => ({ files: ['README.md'], truncated: false, sha: 's', error: null }));
+      const fetchFileContent = vi.fn(async () => 'file content');
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'd34-t2-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: {
+          ...base,
+          fetchRepoFileList,
+          fetchFileContent,
+          discoverProduct: vi.fn(async () => ({
+            product_id: 'mypreglife',
+            org_id: 'veu-ai-studio',
+            github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
+            self_renewal_enabled: true,
+            // self_renewal_branch deliberately omitted
+          })),
+        },
+        issue: { filePath: 'README.md', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+      });
+      expect(fetchRepoFileList.mock.calls[0][0].ref).toBe('main');
+      expect(fetchFileContent.mock.calls[0][0].ref).toBe('main');
+    } finally { clearVercelEnv(); }
+  });
+
+  it('falls back to "main" when product.self_renewal_branch is empty string', async () => {
+    withVercelEnv();
+    try {
+      const fetchRepoFileList = vi.fn(async () => ({ files: ['README.md'], truncated: false, sha: 's', error: null }));
+      const fetchFileContent = vi.fn(async () => 'file content');
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'd34-t2-3', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: {
+          ...base,
+          fetchRepoFileList,
+          fetchFileContent,
+          discoverProduct: vi.fn(async () => ({
+            product_id: 'mypreglife',
+            org_id: 'veu-ai-studio',
+            github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
+            self_renewal_enabled: true,
+            self_renewal_branch: '',
+          })),
+        },
+        issue: { filePath: 'README.md', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+      });
+      expect(fetchRepoFileList.mock.calls[0][0].ref).toBe('main');
+      expect(fetchFileContent.mock.calls[0][0].ref).toBe('main');
+    } finally { clearVercelEnv(); }
+  });
+
+  it('threads productBranch through createRenewalBranch.baseBranch', async () => {
+    withVercelEnv();
+    try {
+      const createRenewalBranch = vi.fn(async ({ branchName }) => ({
+        branchName, commitSha: 'sha', branchUrl: 'https://x',
+      }));
+      const fetchRepoFileList = vi.fn(async () => ({ files: ['README.md'], truncated: false, sha: 's', error: null }));
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'd34-t2-4', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: {
+          ...base,
+          createRenewalBranch,
+          fetchRepoFileList,
+          discoverProduct: vi.fn(async () => ({
+            product_id: 'flowai',
+            org_id: 'veu-ai-studio',
+            github_repo_url: 'https://github.com/victor2081new-cloud/flowai',
+            self_renewal_enabled: true,
+            self_renewal_branch: 'flowai-v0.1',
+          })),
+        },
+        issue: { filePath: 'README.md', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+      });
+      expect(createRenewalBranch).toHaveBeenCalled();
+      expect(createRenewalBranch.mock.calls[0][0].baseBranch).toBe('flowai-v0.1');
+    } finally { clearVercelEnv(); }
+  });
+
+  it('threads productBranch through createRenewalPr.baseBranch', async () => {
+    withVercelEnv();
+    try {
+      const createRenewalPr = vi.fn(async () => ({ prNumber: 42, prHtmlUrl: 'https://example/pr/42' }));
+      const fetchRepoFileList = vi.fn(async () => ({ files: ['README.md'], truncated: false, sha: 's', error: null }));
+      // Force GTM_READY on iter 1 so STEP 13 (PR creation) runs.
+      const scoreSeq = [
+        { score: 88, counts: { critical: 0, high: 0, medium: 0, low: 0 }, band: 'showcase-ready', label: 'x', penalty: 0, formula: 'x', issues: [] },
+        { score: 100, counts: { critical: 0, high: 0, medium: 0, low: 0 }, band: 'showcase-ready', label: 'x', penalty: 0, formula: 'x', issues: [] },
+      ];
+      let i = 0;
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd34-t2-5', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: {
+          ...base,
+          createRenewalPr,
+          fetchRepoFileList,
+          scoreCrawlOutput: vi.fn(() => scoreSeq[i++] ?? scoreSeq[scoreSeq.length - 1]),
+          discoverProduct: vi.fn(async () => ({
+            product_id: 'flowai',
+            org_id: 'veu-ai-studio',
+            github_repo_url: 'https://github.com/victor2081new-cloud/flowai',
+            self_renewal_enabled: true,
+            self_renewal_branch: 'flowai-v0.1',
+          })),
+        },
+        issue: { filePath: 'README.md', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+      });
+      expect(result.gtmReady).toBe(true);
+      expect(createRenewalPr).toHaveBeenCalled();
+      expect(createRenewalPr.mock.calls[0][0].baseBranch).toBe('flowai-v0.1');
+    } finally { clearVercelEnv(); }
+  });
+});
