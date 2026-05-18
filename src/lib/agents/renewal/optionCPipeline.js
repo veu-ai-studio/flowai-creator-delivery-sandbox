@@ -1,10 +1,11 @@
 /**
- * Self-Renewal Phase A — Option C end-to-end pipeline orchestrator.
+ * Self-Renewal Phase A — helpers + thin delegate to the orchestrator.
  *
- * Wires the 9 previous modules into one runOptionC() call that takes
- * { productId, githubRepoUrl, issue, runId, supabase, environment }
- * and produces { previewUrl, prUrl, preScore, postScore, delta, action,
- * auditEntry }.
+ * As of DISPATCH 22 PART 5, runOptionC delegates to runOrchestration
+ * (which adds the repeat-until-GTM-ready loop, mode control, and real
+ * scoring via monitorTextProducer). This file keeps the pure utility
+ * helpers (parseGithubRepoUrl, resolveVercelProjectId, fetchFileContent,
+ * readProductPolicy, appendGovernanceEntry) that the orchestrator imports.
  *
  * Pipeline steps (executed in order, fail-fast on any step):
  *   A — rate-cap + runaway-detector pre-flight
@@ -438,3 +439,10 @@ export const __internals = Object.freeze({
   readProductPolicy,
   appendGovernanceEntry,
 });
+
+// ── Delegate to the orchestrator (PART 2 of DISPATCH 22) ────────────────────
+// runOrchestration is the new canonical entry — it adds the repeat-until-
+// GTM-ready loop + auto/guided/manual modes + real scoring via
+// monitorTextProducer. runOptionC (above) remains the single-iteration
+// Phase A pipeline shape; new callers should use runOrchestration.
+export { runOrchestration } from './orchestrator.js';
