@@ -488,7 +488,138 @@ export async function fetchGithubSourceBundle({ githubRepoUrl, token, opts = {} 
  *                                       produced by fetchGithubSourceBundle.
  * @returns {string}
  */
-export function buildMonitorPrompt({ url, pageTitle, pageText, githubBlock = '' }) {
+/**
+ * Build a Claude-readable block from a CrawlReport (the shape Agent #21's
+ * conductCrawl produces). DISPATCH 24 — feeds multi-page crawl signal into
+ * scoring so Claude scores against the real product surface, not the
+ * landing-page title alone.
+ *
+ * Input shape (from src/lib/agents/agents/Agent21AggressiveCrawlConductor.js):
+ *   {
+ *     pages: [{ url, title, metaDescription, bodyText, headings,
+ *               surfaces: { links, buttons, forms, images },
+ *               authGated, method, jsRendered, warnings }],
+ *     pagesCrawled, depth, errors: [], warnings: [], durationMs
+ *   }
+ *
+ * Caps the total block at ~10000 chars to stay inside Claude's token budget
+ * without crowding out the FIVE_LAYER_FRAMEWORK + scoring directives.
+ *
+ * @param {object|null} crawlReport
+ * @returns {string} the block, or '' if crawlReport is unusable
+ */
+export function buildCrawlReportBlock(crawlReport) {
+  if (!crawlReport || typeof crawlReport !== 'object') return '';
+  const pages = Array.isArray(crawlReport.pages) ? crawlReport.pages : [];
+  if (pages.length === 0) return '';
+
+  const TOTAL_CHAR_CAP = 10_000;
+  const PER_PAGE_BODY_CAP = 600;
+  const MAX_HEADINGS_PER_PAGE = 8;
+  const MAX_PAGES_RENDERED = 30;
+  const MAX_LINKS_LISTED = 50;
+  const MAX_FORMS_RENDERED = 10;
+
+  const lines = [];
+  lines.push('━━━ MULTI-PAGE CRAWL REPORT (Agent #21 BFS) ━━━');
+  lines.push(`Pages crawled: ${crawlReport.pagesCrawled ?? pages.length}`);
+  lines.push(`Depth: ${crawlReport.depth ?? '?'}`);
+  if (Array.isArray(crawlReport.errors) && crawlReport.errors.length > 0) {
+    lines.push(`Errors found: ${crawlReport.errors.length}`);
+    for (const err of crawlReport.errors.slice(0, 10)) {
+      const reason = err?.reason || err?.message || JSON.stringify(err);
+      const where  = err?.url || err?.phase || '';
+      lines.push(`  - [${where}] ${String(reason).slice(0, 200)}`);
+    }
+  }
+  if (Array.isArray(crawlReport.warnings) && crawlReport.warnings.length > 0) {
+    lines.push(`Warnings: ${crawlReport.warnings.length}`);
+    for (const w of crawlReport.warnings.slice(0, 5)) {
+      lines.push(`  - ${String(w).slice(0, 200)}`);
+    }
+  }
+  lines.push('');
+
+  // Aggregate inventories across pages (link union, form count, button count).
+  const allLinks = new Set();
+  let totalButtons = 0;
+  const allForms = [];
+
+  const renderedPages = pages.slice(0, MAX_PAGES_RENDERED);
+  for (const p of renderedPages) {
+    if (!p || typeof p !== 'object') continue;
+    const u = p.url ?? '(unknown url)';
+    const title = (p.title ?? '').toString().slice(0, 200);
+    const headings = Array.isArray(p.headings) ? p.headings.slice(0, MAX_HEADINGS_PER_PAGE) : [];
+    const body = typeof p.bodyText === 'string' ? p.bodyText.slice(0, PER_PAGE_BODY_CAP) : '';
+    const surfaces = p.surfaces && typeof p.surfaces === 'object' ? p.surfaces : {};
+    const links = Array.isArray(surfaces.links) ? surfaces.links : (Array.isArray(p.links) ? p.links : []);
+    const buttons = Array.isArray(surfaces.buttons) ? surfaces.buttons : [];
+    const forms = Array.isArray(surfaces.forms) ? surfaces.forms : [];
+
+    lines.push(`━━ Page: ${u} ━━`);
+    if (title) lines.push(`Title: ${title}`);
+    if (p.authGated) lines.push('[auth-gated]');
+    if (headings.length > 0) {
+      lines.push(`Headings: ${headings.map((h) => String(h).trim().slice(0, 120)).filter(Boolean).join(' | ')}`);
+    }
+    if (body) lines.push(`Body excerpt: ${body.replace(/\s+/g, ' ').trim()}`);
+
+    for (const l of links) allLinks.add(typeof l === 'string' ? l : (l?.href ?? ''));
+    totalButtons += Array.isArray(buttons) ? buttons.length : 0;
+    for (const f of forms.slice(0, 3)) {
+      allForms.push({ pageUrl: u, ...f });
+    }
+    lines.push('');
+    if (lines.join('\n').length > TOTAL_CHAR_CAP * 0.7) break; // stop adding pages once we're nearing the cap
+  }
+
+  // Link inventory across pages.
+  const linksList = Array.from(allLinks).filter(Boolean).slice(0, MAX_LINKS_LISTED);
+  if (linksList.length > 0) {
+    lines.push('━━ Discovered links (union across pages, capped) ━━');
+    for (const l of linksList) lines.push(`  - ${String(l).slice(0, 200)}`);
+    if (allLinks.size > MAX_LINKS_LISTED) {
+      lines.push(`  ... and ${allLinks.size - MAX_LINKS_LISTED} more`);
+    }
+    lines.push('');
+  }
+
+  if (totalButtons > 0) {
+    lines.push(`Interactive button count (across pages): ${totalButtons}`);
+    lines.push('');
+  }
+
+  if (allForms.length > 0) {
+    lines.push('━━ Forms detected ━━');
+    for (const f of allForms.slice(0, MAX_FORMS_RENDERED)) {
+      const fields = Array.isArray(f.fields) ? f.fields.map((x) => x?.name ?? '').filter(Boolean).join(', ') : '';
+      const button = f.submitLabel || f.button || '';
+      lines.push(`  - [${f.pageUrl}] action=${f.action ?? '?'} method=${f.method ?? '?'}${fields ? ` fields=${fields}` : ''}${button ? ` submit="${button}"` : ''}`);
+    }
+    lines.push('');
+  }
+
+  lines.push('━━━ END MULTI-PAGE CRAWL REPORT ━━━');
+
+  let out = lines.join('\n');
+  if (out.length > TOTAL_CHAR_CAP) {
+    out = `${out.slice(0, TOTAL_CHAR_CAP)}\n[truncated at ${TOTAL_CHAR_CAP} chars]`;
+  }
+  return out;
+}
+
+export function buildMonitorPrompt({ url, pageTitle, pageText, githubBlock = '', crawlBlock = '' }) {
+  const hasGithub = typeof githubBlock === 'string' && githubBlock.length > 0;
+  const hasCrawl  = typeof crawlBlock  === 'string' && crawlBlock.length  > 0;
+  let combinedSignalNote = null;
+  if (hasGithub && hasCrawl) {
+    combinedSignalNote = 'You have THREE signals above: the live URL content (what the user sees on the landing page), the full multi-page crawl (titles, headings, links, forms, errors across all crawled pages), AND the GitHub source code. Score against the COMBINED signal — the crawl shows operational surface; the source shows what the product actually does.';
+  } else if (hasGithub) {
+    combinedSignalNote = 'You have BOTH the live URL content AND the GitHub source code above. Use BOTH: the URL shows what the user sees; the source shows what the product actually does. Score against the combined signal.';
+  } else if (hasCrawl) {
+    combinedSignalNote = 'You have BOTH the live URL content AND the full multi-page crawl above. The crawl shows the real product surface (titles, headings, forms, errors across all pages). Score against the combined signal — DO NOT under-score because the landing page is sparse; weigh the full crawled surface.';
+  }
   return [
     "You are FlowAI's final reporting engine. Compile a complete five-layer intelligence final report for this URL.",
     '',
@@ -498,15 +629,15 @@ export function buildMonitorPrompt({ url, pageTitle, pageText, githubBlock = '' 
     '━━━ PAGE CONTENT ━━━',
     pageText.slice(0, MAX_PAGE_TEXT_CHARS),
     '━━━ END PAGE CONTENT ━━━',
-    githubBlock ? '' : null,
-    githubBlock || null,
+    hasCrawl ? '' : null,
+    hasCrawl ? crawlBlock : null,
+    hasGithub ? '' : null,
+    hasGithub ? githubBlock : null,
     '',
     FIVE_LAYER_FRAMEWORK,
     '',
     'Compile a comprehensive final assessment for this specific product across all five intelligence layers.',
-    githubBlock
-      ? 'You have BOTH the live URL content AND the GitHub source code above. Use BOTH: the URL shows what the user sees; the source shows what the product actually does. Score against the combined signal.'
-      : null,
+    combinedSignalNote,
     '',
     '1. EXECUTIVE SUMMARY — 3-4 sentences about THIS product\'s state, referencing specific findings from the page content above.',
     '',
@@ -642,11 +773,18 @@ export async function produceMonitorText(args) {
   const pageText = extractVisibleText(html);
   const wordCount = pageText.split(/\s+/).filter(Boolean).length;
 
-  if (wordCount < 5) {
+  // DISPATCH 24: relax the SSR-empty guard when a multi-page crawl was
+  // provided — the crawl contains real rendered content from Agent #21
+  // even when the landing page itself is a JS-shell. Only throw when the
+  // landing page is empty AND no crawl signal is available.
+  const hasCrawlSignal = !!(args.crawlReport
+    && Array.isArray(args.crawlReport.pages)
+    && args.crawlReport.pages.length > 0);
+  if (wordCount < 5 && !hasCrawlSignal) {
     // Degenerate page (empty, JS-rendered SPA shell with no SSR, error page).
     // Surface honestly rather than asking Claude to score an empty string.
     throw makeError('MONITOR_FETCH_FAILED',
-      `produceMonitorText: ${args.url} returned ${status} but extracted only ${wordCount} words of visible text (likely JS-rendered SPA without SSR; Phase B Browserless wiring required)`,
+      `produceMonitorText: ${args.url} returned ${status} but extracted only ${wordCount} words of visible text (likely JS-rendered SPA without SSR; pass crawlReport from Agent #21 or wait for Phase B Browserless wiring)`,
       { status, wordCount });
   }
 
@@ -673,10 +811,16 @@ export async function produceMonitorText(args) {
     }
   }
 
-  // 3. Build the Monitor prompt (with or without GitHub enrichment).
+  // 2b. DISPATCH 24: build the multi-page crawl block when the orchestrator
+  //     passed a crawlReport from Agent #21. Empty string when absent,
+  //     which the prompt builder treats as "skip the crawl section".
+  const crawlBlock = buildCrawlReportBlock(args.crawlReport);
+
+  // 3. Build the Monitor prompt (with crawl enrichment + optional GitHub).
   const prompt = buildMonitorPrompt({
     url: args.url, pageTitle, pageText,
     githubBlock: githubBundle.block,
+    crawlBlock,
   });
 
   // 4. Call Claude to produce the Monitor text.
