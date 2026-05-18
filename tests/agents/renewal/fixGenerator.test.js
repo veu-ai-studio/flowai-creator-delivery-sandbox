@@ -10,6 +10,8 @@ import {
   generateFix,
   sanitiseAndTruncate,
   sanitiseFindings,
+  buildPreciseInstructionPrompt,
+  validateFixedContent,
   __internals,
 } from '../../../src/lib/agents/renewal/fixGenerator.js';
 
@@ -354,19 +356,196 @@ describe('generateFix — arg validation', () => {
     }
   });
 
-  it('throws when findings is not a non-empty array', async () => {
+  it('throws when neither findings nor (issue+fix) is provided', async () => {
+    // DISPATCH 23: error message now names both shapes since either is acceptable.
     try {
       await generateFix({ ...HAPPY_ARGS, findings: [], opts: { apiKey: API_KEY, fetch: vi.fn() } });
       expect.unreachable('should have thrown');
     } catch (e) {
-      expect(e.message).toMatch(/findings must be a non-empty array/);
+      expect(e.message).toMatch(/issue \+ fix.*OR.*findings/);
     }
     try {
       await generateFix({ ...HAPPY_ARGS, findings: null, opts: { apiKey: API_KEY, fetch: vi.fn() } });
       expect.unreachable('should have thrown');
     } catch (e) {
-      expect(e.message).toMatch(/findings must be a non-empty array/);
+      expect(e.message).toMatch(/issue \+ fix.*OR.*findings/);
     }
+  });
+
+  it('accepts (issue + fix) precise-instruction pair without findings (DISPATCH 23)', async () => {
+    const fetchMock = mockOk(FIXED_CONTENT);
+    const args = { ...HAPPY_ARGS };
+    delete args.findings;
+    const result = await generateFix({
+      ...args,
+      issue: 'Home component shows raw text',
+      fix: 'Replace the literal "brokenrendered" with a structured greeting',
+      opts: { apiKey: API_KEY, fetch: fetchMock },
+    });
+    expect(result.fixedContent).toBe(FIXED_CONTENT);
+    expect(result.attempts).toBe(1);
+    // Verify the precise-instruction prompt is sent (contains "Make exactly this change")
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.messages[0].content).toMatch(/Make exactly this change/);
+  });
+
+  it('rejects (issue without fix) shape — both fields required for precise path', async () => {
+    const fetchMock = vi.fn();
+    const args = { ...HAPPY_ARGS };
+    delete args.findings;
+    try {
+      await generateFix({ ...args, issue: 'just an issue', opts: { apiKey: API_KEY, fetch: fetchMock } });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.message).toMatch(/issue \+ fix.*OR.*findings/);
+    }
+  });
+
+  it('rejects (fix without issue) shape', async () => {
+    const fetchMock = vi.fn();
+    const args = { ...HAPPY_ARGS };
+    delete args.findings;
+    try {
+      await generateFix({ ...args, fix: 'just a fix', opts: { apiKey: API_KEY, fetch: fetchMock } });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.message).toMatch(/issue \+ fix.*OR.*findings/);
+    }
+  });
+});
+
+// ── DISPATCH 23: validation + retry-once ────────────────────────────────────
+
+describe('generateFix — validation + retry (DISPATCH 23)', () => {
+  it('retries once on identical-to-input response, succeeds on retry', async () => {
+    // First call returns the input verbatim; second call returns a real fix.
+    let callIdx = 0;
+    const fetchMock = vi.fn(async () => {
+      callIdx += 1;
+      const text = callIdx === 1 ? INPUT_CONTENT : FIXED_CONTENT;
+      return {
+        ok: true, status: 200, statusText: 'OK',
+        json: async () => ({ content: [{ type: 'text', text }], usage: { input_tokens: 50, output_tokens: 25 }, model: 'claude-sonnet-4-6' }),
+        text: async () => JSON.stringify({ content: [{ type: 'text', text }] }),
+      };
+    });
+    const args = { ...HAPPY_ARGS };
+    delete args.findings;
+    const result = await generateFix({
+      ...args,
+      issue: 'fix me', fix: 'change something',
+      opts: { apiKey: API_KEY, fetch: fetchMock },
+    });
+    expect(result.fixedContent).toBe(FIXED_CONTENT);
+    expect(result.attempts).toBe(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // Second call should use the retry prompt with explicit "PREVIOUS ATTEMPT FAILED"
+    // or "BEGIN FILE" markers (precise-instruction retry shape).
+    const secondPrompt = JSON.parse(fetchMock.mock.calls[1][1].body).messages[0].content;
+    expect(secondPrompt).toMatch(/BEGIN FILE|previous response was rejected/i);
+  });
+
+  it('throws FIX_NO_CHANGE after retry still returns identical', async () => {
+    const fetchMock = mockOk(INPUT_CONTENT); // every call returns input verbatim
+    try {
+      await generateFix({ ...HAPPY_ARGS, opts: { apiKey: API_KEY, fetch: fetchMock } });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.code).toBe('FIX_NO_CHANGE');
+      expect(fetchMock).toHaveBeenCalledTimes(2); // first attempt + retry
+    }
+  });
+
+  it('throws FIX_GENERATION_FAILED with validationReason on unbalanced braces', async () => {
+    // Both attempts return obviously broken code (extra unmatched braces).
+    const broken = 'export default function Foo() {\n  return (\n    <div>\n      <span>broken{{{{</span>\n  );\n}\n';
+    const fetchMock = mockOk(broken);
+    try {
+      await generateFix({
+        filePath: 'src/Foo.jsx', fileContent: 'export default function Foo() { return <div/>; }',
+        findings: [{ severity: 'medium', message: 'fix it' }],
+        productId: 'p', runId: 'r',
+        opts: { apiKey: API_KEY, fetch: fetchMock },
+      });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.code).toBe('FIX_GENERATION_FAILED');
+      expect(e.message).toMatch(/validation failed.*unbalanced_braces/);
+      expect(e.validationReason).toMatch(/unbalanced_braces/);
+    }
+  });
+
+  it('whitespace-only diff is rejected (FIX_NO_CHANGE)', async () => {
+    const fetchMock = mockOk(INPUT_CONTENT + '   \n\n  ');
+    try {
+      await generateFix({ ...HAPPY_ARGS, opts: { apiKey: API_KEY, fetch: fetchMock } });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.code).toBe('FIX_NO_CHANGE');
+    }
+  });
+
+  it('validateFixedContent accepts meaningful diff for code files within brace tolerance', () => {
+    const before = 'const a = 1;\nexport default a;\n';
+    const after  = 'const a = 1;\nconst b = 2;\nexport default a + b;\n';
+    expect(validateFixedContent(after, before, 'src/x.js')).toEqual({ ok: true });
+  });
+
+  it('validateFixedContent flags empty', () => {
+    expect(validateFixedContent('', 'original', 'x.js').ok).toBe(false);
+    expect(validateFixedContent('', 'original', 'x.js').reason).toBe('empty');
+  });
+
+  it('validateFixedContent flags identical', () => {
+    const v = validateFixedContent('same', 'same', 'x.js');
+    expect(v.ok).toBe(false);
+    expect(v.reason).toBe('identical');
+  });
+
+  it('validateFixedContent flags unbalanced parens beyond tolerance', () => {
+    // 7 open vs 1 close = diff 6 (tolerance is >3)
+    const broken = 'function bad() { return ((((((unmatched; }';
+    const v = validateFixedContent(broken, 'function good() {}', 'x.js');
+    expect(v.ok).toBe(false);
+    expect(v.reason).toMatch(/unbalanced_parens/);
+  });
+
+  it('validateFixedContent does not balance-check non-code files', () => {
+    // Markdown / JSON files skip brace-balance check.
+    const md = '# Title\n\nSome { unbalanced markdown }}}';
+    const v = validateFixedContent(md, '# Original\n', 'README.md');
+    expect(v.ok).toBe(true);
+  });
+});
+
+// ── DISPATCH 23: buildPreciseInstructionPrompt ──────────────────────────────
+
+describe('buildPreciseInstructionPrompt', () => {
+  it('builds standard prompt with file + fix + issue', () => {
+    const prompt = buildPreciseInstructionPrompt({
+      filePath: 'src/Home.jsx',
+      fileContent: 'const x = 1;',
+      issue: 'Missing greeting',
+      fix: 'Add a Hello banner above the export',
+    });
+    expect(prompt).toContain('Make exactly this change to this file:');
+    expect(prompt).toContain('Add a Hello banner above the export');
+    expect(prompt).toContain('Missing greeting');
+    expect(prompt).toContain('src/Home.jsx');
+    expect(prompt).toContain('Return ONLY the complete fixed file');
+  });
+
+  it('retry prompt includes explicit BEGIN/END FILE markers', () => {
+    const prompt = buildPreciseInstructionPrompt({
+      filePath: 'src/Home.jsx',
+      fileContent: 'const x = 1;',
+      issue: 'fix me', fix: 'change x',
+      retry: true,
+    });
+    expect(prompt).toContain('previous response was rejected');
+    expect(prompt).toContain('BEGIN FILE');
+    expect(prompt).toContain('END FILE');
+    expect(prompt).toContain('STRICT REQUIREMENTS');
   });
 });
 
