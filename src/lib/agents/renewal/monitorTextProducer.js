@@ -15,8 +15,26 @@
  * traversal, no chatbot/modal probing. That's Phase B+ work — Phase A
  * is "make the scoring loop terminate honestly."
  *
- * Anthropic API key (`ANTHROPIC_API_KEY`) never logged. Same posture as
- * `fixGenerator.js`.
+ * DISPATCH 6 — GitHub source enrichment.
+ *   When githubRepoUrl + token are supplied, the producer ALSO reads a
+ *   curated subset of the product's GitHub source code (README, package
+ *   manifest, top src/pages + src/components files) and threads it into
+ *   the Claude prompt alongside the live-URL content. This gives Claude
+ *   real code signal across all five layers — Layer 2 (operational
+ *   posture from package.json scripts / deps), Layer 3 (monetization
+ *   surfaces in source), Layer 4 (component count = feature surface),
+ *   Layer 5 (page count = GTM surface). Without enrichment, scores are
+ *   dominated by what's visible on the landing page (often a glossy
+ *   marketing shell), so the model under-scores. With enrichment, the
+ *   model evaluates against the actual product.
+ *
+ *   The enrichment path is opt-in: omit githubRepoUrl OR token and the
+ *   producer falls back to URL-only scoring (returns the same envelope
+ *   shape minus the enrichment metadata).
+ *
+ * Anthropic API key (`ANTHROPIC_API_KEY`) never logged. GitHub App
+ * installation token never logged, never persisted, never appears in
+ * error messages.
  */
 
 'use strict';
@@ -27,6 +45,13 @@ const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-6';
 const DEFAULT_MAX_TOKENS = 2048;
 const FETCH_TIMEOUT_MS = 30_000;
 const MAX_PAGE_TEXT_CHARS = 50_000;
+
+// GitHub enrichment caps. Bounded so the producer can't OOM on a giant
+// monorepo or blow the Anthropic prompt budget.
+const GITHUB_API_BASE = 'https://api.github.com';
+const MAX_GITHUB_FILES = 10;          // README + package.json + up to 8 source files
+const MAX_FILE_CONTENT_CHARS = 8_000; // per-file char cap in the prompt
+const MAX_SOURCE_DIR_LISTING = 50;    // cap on src/pages and src/components listings
 
 const FIVE_LAYER_FRAMEWORK = `
 ━━━ FIVE-LAYER INTELLIGENCE REQUIREMENT ━━━
@@ -42,11 +67,33 @@ Label each insight with [L1], [L2], [L3], [L4], or [L5] so findings are clearly 
 ━━━ END FIVE-LAYER REQUIREMENT ━━━
 `;
 
+// Belt-and-suspenders: scrub anything that looks like a credential
+// before it goes into a Claude prompt. Source files in src/pages and
+// src/components shouldn't carry secrets (those live in .env, which
+// is gitignored), but a stray hardcoded key in dev code shouldn't
+// leak through to the LLM either.
+const CREDENTIAL_REDACT_PATTERNS = [
+  /sk-[A-Za-z0-9-_]{20,}/g,                // OpenAI / Anthropic-style
+  /AKIA[0-9A-Z]{16}/g,                     // AWS access key
+  /ghp_[A-Za-z0-9]{36,}/g,                 // GitHub PAT
+  /github_pat_[A-Za-z0-9_]{82,}/g,         // GitHub fine-grained PAT
+  /ghs_[A-Za-z0-9]{36,}/g,                 // GitHub server-to-server
+  /Bearer\s+[A-Za-z0-9_.-]{20,}/gi,        // generic bearer
+  /-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/g,
+];
+
+function scrubCredentials(text) {
+  if (typeof text !== 'string') return '';
+  let out = text;
+  for (const re of CREDENTIAL_REDACT_PATTERNS) out = out.replace(re, '[REDACTED]');
+  return out;
+}
+
 function makeError(code, message, extra = {}) {
   const err = new Error(message);
   err.code = code;
   for (const [k, v] of Object.entries(extra)) {
-    if (k !== 'apiKey' && k !== 'api_key' && k !== 'authorization' && k !== 'x-api-key') {
+    if (k !== 'apiKey' && k !== 'api_key' && k !== 'authorization' && k !== 'x-api-key' && k !== 'token') {
       err[k] = v;
     }
   }
@@ -146,6 +193,288 @@ export async function fetchUrlContent(url, opts = {}) {
   return { html, status: response.status, contentType };
 }
 
+// ─── GitHub enrichment ─────────────────────────────────────────────────────
+
+/**
+ * Parse `owner` and `repo` from a GitHub repo URL. Returns null if the
+ * URL doesn't look like a github.com/owner/repo[.git] shape.
+ */
+export function parseGithubRepoUrl(repoUrl) {
+  if (typeof repoUrl !== 'string') return null;
+  // Tolerate trailing slash, `.git`, and arbitrary path segments after owner/repo.
+  const m = repoUrl.match(/^https?:\/\/(?:www\.)?github\.com\/([^/]+)\/([^/.?#]+)(?:\.git)?/i);
+  if (!m) return null;
+  return { owner: m[1], repo: m[2] };
+}
+
+async function githubFetch(path, token, opts = {}) {
+  const fetchImpl = typeof opts.fetch === 'function' ? opts.fetch : globalThis.fetch;
+  if (typeof fetchImpl !== 'function') {
+    throw makeError('GITHUB_ENRICHMENT_FAILED',
+      'githubFetch: fetch unavailable on globalThis. Node 18+ required.');
+  }
+  const url = `${GITHUB_API_BASE}${path}`;
+  let response;
+  try {
+    response = await fetchImpl(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'FlowAI-MonitorTextProducer/1.0',
+      },
+    });
+  } catch (e) {
+    throw makeError('GITHUB_ENRICHMENT_FAILED',
+      `githubFetch: network error fetching ${path} — ${e?.message ?? String(e)}`);
+  }
+  if (!response.ok) {
+    let body = '';
+    try { body = await response.text(); } catch { /* ignore */ }
+    throw makeError('GITHUB_ENRICHMENT_FAILED',
+      `githubFetch: GitHub returned ${response.status} ${response.statusText} for ${path}. ` +
+      `Body: ${body.slice(0, 200)}`,
+      { status: response.status });
+  }
+  try { return await response.json(); }
+  catch (e) {
+    throw makeError('GITHUB_ENRICHMENT_FAILED',
+      `githubFetch: GitHub response for ${path} was not JSON — ${e?.message ?? String(e)}`);
+  }
+}
+
+function decodeContentEntry(entry) {
+  if (!entry || typeof entry !== 'object') return '';
+  if (entry.encoding !== 'base64' || typeof entry.content !== 'string') return '';
+  try {
+    return Buffer.from(entry.content, 'base64').toString('utf8');
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Probe a single directory (e.g. 'src/pages'). Returns an array of file
+ * entries from the GitHub contents API, or [] if the directory does
+ * not exist. Errors other than 404 are swallowed — we don't want a
+ * single bad directory to fail the entire enrichment.
+ */
+async function listDirectorySafely({ owner, repo, dirPath, token, opts }) {
+  try {
+    const out = await githubFetch(
+      `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(dirPath)}`,
+      token,
+      opts,
+    );
+    return Array.isArray(out) ? out : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Compose the GitHub-enrichment block for the monitor prompt. Returns
+ * { block, filesRead, sources, sourceDirsListed }. Never throws — on
+ * any failure, returns { block: '', filesRead: 0, sources: [], ... }
+ * so the URL-only fallback path still produces a clean monitor text.
+ *
+ * @param {{ githubRepoUrl: string, token: string, opts?: object }} args
+ */
+export async function fetchGithubSourceBundle({ githubRepoUrl, token, opts = {} }) {
+  const parsed = parseGithubRepoUrl(githubRepoUrl);
+  if (!parsed) return { block: '', filesRead: 0, sources: [], sourceDirsListed: [] };
+  if (typeof token !== 'string' || token.length === 0) {
+    return { block: '', filesRead: 0, sources: [], sourceDirsListed: [] };
+  }
+  const { owner, repo } = parsed;
+
+  // 1. Root listing → identify README.md + package.json + src/ directory presence.
+  let rootListing;
+  try {
+    rootListing = await githubFetch(
+      `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/`,
+      token,
+      opts,
+    );
+  } catch (e) {
+    return {
+      block: '',
+      filesRead: 0,
+      sources: [],
+      sourceDirsListed: [],
+      error: `root listing failed: ${e?.message ?? String(e)}`,
+    };
+  }
+  if (!Array.isArray(rootListing)) {
+    return { block: '', filesRead: 0, sources: [], sourceDirsListed: [] };
+  }
+
+  const rootByName = new Map(rootListing.map((e) => [String(e?.name ?? ''), e]));
+  const hasSrcDir = (rootByName.get('src')?.type === 'dir');
+
+  // 2. Probe src/pages and src/components in parallel for the file listings.
+  const [pagesListing, componentsListing] = hasSrcDir
+    ? await Promise.all([
+        listDirectorySafely({ owner, repo, dirPath: 'src/pages', token, opts }),
+        listDirectorySafely({ owner, repo, dirPath: 'src/components', token, opts }),
+      ])
+    : [[], []];
+
+  // 3. Build the "top N source files" set: prefer .jsx/.tsx files in
+  //    pages, then components, ordered by size descending so the
+  //    largest (and most informative) files win the per-file caps.
+  const isJsxOrTsx = (name) => /\.(jsx|tsx)$/i.test(String(name ?? ''));
+  const sourceFileCandidates = [
+    ...pagesListing
+      .filter((e) => e?.type === 'file' && isJsxOrTsx(e.name))
+      .map((e) => ({ path: e.path, name: e.name, size: e.size ?? 0, dir: 'src/pages' })),
+    ...componentsListing
+      .filter((e) => e?.type === 'file' && isJsxOrTsx(e.name))
+      .map((e) => ({ path: e.path, name: e.name, size: e.size ?? 0, dir: 'src/components' })),
+  ].sort((a, b) => (b.size ?? 0) - (a.size ?? 0));
+
+  // 4. README + package.json fetches (parallel, tolerant of 404).
+  const readmeEntry = rootByName.get('README.md') ?? rootByName.get('readme.md') ?? rootByName.get('README');
+  const packageEntry = rootByName.get('package.json');
+
+  async function fetchFileContents(entry) {
+    if (!entry || entry.type !== 'file') return null;
+    try {
+      const full = await githubFetch(
+        `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(entry.path)}`,
+        token,
+        opts,
+      );
+      return decodeContentEntry(full);
+    } catch {
+      return null;
+    }
+  }
+
+  // High-signal files: README + package.json claim 2 of the MAX_GITHUB_FILES
+  // slots; the remaining slots go to .jsx/.tsx source files (top 8).
+  const sourceFileSlots = MAX_GITHUB_FILES - 2;
+  const pickedSourceFiles = sourceFileCandidates.slice(0, Math.max(0, sourceFileSlots));
+
+  const [readmeText, packageJsonText, ...sourceFileTexts] = await Promise.all([
+    fetchFileContents(readmeEntry),
+    fetchFileContents(packageEntry),
+    ...pickedSourceFiles.map(fetchFileContents),
+  ]);
+
+  // 5. Parse package.json safely.
+  let packageJsonParsed = null;
+  if (typeof packageJsonText === 'string' && packageJsonText.length > 0) {
+    try { packageJsonParsed = JSON.parse(packageJsonText); }
+    catch { /* malformed package.json — surface as 'unparseable' below */ }
+  }
+
+  // 6. Extract unique component names from imports across the picked
+  //    source files. Heuristic but cheap.
+  const componentNameSet = new Set();
+  const importRe = /import\s+(?:\{([^}]+)\}|([A-Z][A-Za-z0-9_]*))(?:\s*,\s*\{([^}]+)\})?\s+from\s+['"][^'"]+['"]/g;
+  for (let i = 0; i < pickedSourceFiles.length; i++) {
+    const src = sourceFileTexts[i];
+    if (typeof src !== 'string') continue;
+    let m;
+    while ((m = importRe.exec(src)) !== null) {
+      const namedGroups = [m[1], m[3]].filter(Boolean);
+      for (const grp of namedGroups) {
+        for (const name of grp.split(',')) {
+          const trimmed = name.trim().split(/\s+as\s+/i)[0].trim();
+          if (/^[A-Z][A-Za-z0-9_]*$/.test(trimmed)) componentNameSet.add(trimmed);
+        }
+      }
+      if (m[2]) componentNameSet.add(m[2]);
+    }
+  }
+  const uniqueComponentNames = [...componentNameSet].sort().slice(0, 80);
+
+  // 7. Build the enrichment block.
+  const lines = [];
+  lines.push('━━━ GITHUB SOURCE ENRICHMENT ━━━');
+  lines.push(`Repo: ${owner}/${repo}`);
+
+  if (packageJsonParsed) {
+    const deps = packageJsonParsed.dependencies || {};
+    const devDeps = packageJsonParsed.devDependencies || {};
+    const scripts = packageJsonParsed.scripts || {};
+    lines.push('');
+    lines.push('PACKAGE.JSON SUMMARY');
+    lines.push(`  name: ${packageJsonParsed.name ?? '(unspecified)'}`);
+    lines.push(`  description: ${packageJsonParsed.description ?? '(unspecified)'}`);
+    lines.push(`  dependencies: ${Object.keys(deps).length} runtime, ${Object.keys(devDeps).length} dev`);
+    lines.push(`  scripts: ${Object.keys(scripts).join(', ') || '(none)'}`);
+  } else if (packageJsonText) {
+    lines.push('');
+    lines.push('PACKAGE.JSON: present but unparseable as JSON.');
+  } else {
+    lines.push('');
+    lines.push('PACKAGE.JSON: not present at repo root.');
+  }
+
+  if (typeof readmeText === 'string' && readmeText.length > 0) {
+    lines.push('');
+    lines.push('README.md (full, redacted)');
+    lines.push(scrubCredentials(readmeText).slice(0, MAX_FILE_CONTENT_CHARS));
+  } else {
+    lines.push('');
+    lines.push('README.md: not present at repo root.');
+  }
+
+  lines.push('');
+  lines.push('SOURCE FILE INVENTORY');
+  if (pagesListing.length === 0 && componentsListing.length === 0) {
+    lines.push('  (no src/pages or src/components directory found)');
+  } else {
+    if (pagesListing.length > 0) {
+      lines.push(`  src/pages (${pagesListing.length} entries; ${pagesListing.filter((e) => isJsxOrTsx(e.name)).length} .jsx/.tsx):`);
+      for (const e of pagesListing.filter((e) => isJsxOrTsx(e.name)).slice(0, MAX_SOURCE_DIR_LISTING)) {
+        lines.push(`    - ${e.name} (${e.size ?? 0} bytes)`);
+      }
+    }
+    if (componentsListing.length > 0) {
+      lines.push(`  src/components (${componentsListing.length} entries; ${componentsListing.filter((e) => isJsxOrTsx(e.name)).length} .jsx/.tsx):`);
+      for (const e of componentsListing.filter((e) => isJsxOrTsx(e.name)).slice(0, MAX_SOURCE_DIR_LISTING)) {
+        lines.push(`    - ${e.name} (${e.size ?? 0} bytes)`);
+      }
+    }
+  }
+
+  lines.push('');
+  lines.push('FEATURE SURFACE');
+  lines.push(`  Pages (count): ${pagesListing.filter((e) => isJsxOrTsx(e.name)).length}`);
+  lines.push(`  Components (count): ${componentsListing.filter((e) => isJsxOrTsx(e.name)).length}`);
+  lines.push(`  Unique component names referenced via imports (top 80): ${uniqueComponentNames.join(', ') || '(none discovered)'}`);
+
+  lines.push('');
+  lines.push('TOP SOURCE FILES (truncated, redacted)');
+  let filesActuallyRead = 0;
+  if (typeof readmeText === 'string' && readmeText.length > 0) filesActuallyRead += 1;
+  if (typeof packageJsonText === 'string' && packageJsonText.length > 0) filesActuallyRead += 1;
+  for (let i = 0; i < pickedSourceFiles.length; i++) {
+    const text = sourceFileTexts[i];
+    if (typeof text !== 'string' || text.length === 0) continue;
+    filesActuallyRead += 1;
+    lines.push('');
+    lines.push(`--- ${pickedSourceFiles[i].path} (${pickedSourceFiles[i].size} bytes) ---`);
+    lines.push(scrubCredentials(text).slice(0, MAX_FILE_CONTENT_CHARS));
+  }
+  lines.push('');
+  lines.push('━━━ END GITHUB SOURCE ENRICHMENT ━━━');
+
+  return {
+    block: lines.join('\n'),
+    filesRead: filesActuallyRead,
+    sources: ['github'],
+    sourceDirsListed: [
+      pagesListing.length > 0 ? 'src/pages' : null,
+      componentsListing.length > 0 ? 'src/components' : null,
+    ].filter(Boolean),
+  };
+}
+
 /**
  * Build the Monitor-style prompt for Claude. Same shape as the
  * AutoRunner Step 8 prompt — the per-layer score lines `[L1] ... X/10`
@@ -155,9 +484,11 @@ export async function fetchUrlContent(url, opts = {}) {
  * @param {string} args.url
  * @param {string} args.pageTitle
  * @param {string} args.pageText
+ * @param {string} [args.githubBlock] — optional GitHub enrichment block
+ *                                       produced by fetchGithubSourceBundle.
  * @returns {string}
  */
-export function buildMonitorPrompt({ url, pageTitle, pageText }) {
+export function buildMonitorPrompt({ url, pageTitle, pageText, githubBlock = '' }) {
   return [
     "You are FlowAI's final reporting engine. Compile a complete five-layer intelligence final report for this URL.",
     '',
@@ -167,10 +498,15 @@ export function buildMonitorPrompt({ url, pageTitle, pageText }) {
     '━━━ PAGE CONTENT ━━━',
     pageText.slice(0, MAX_PAGE_TEXT_CHARS),
     '━━━ END PAGE CONTENT ━━━',
+    githubBlock ? '' : null,
+    githubBlock || null,
     '',
     FIVE_LAYER_FRAMEWORK,
     '',
     'Compile a comprehensive final assessment for this specific product across all five intelligence layers.',
+    githubBlock
+      ? 'You have BOTH the live URL content AND the GitHub source code above. Use BOTH: the URL shows what the user sees; the source shows what the product actually does. Score against the combined signal.'
+      : null,
     '',
     '1. EXECUTIVE SUMMARY — 3-4 sentences about THIS product\'s state, referencing specific findings from the page content above.',
     '',
@@ -194,7 +530,7 @@ export function buildMonitorPrompt({ url, pageTitle, pageText }) {
     '- Do NOT output a "scoring note" or any text that reconciles, adjusts, or grants discretionary aggregate credit on top of the per-layer scores.',
     '- Do NOT include band/threshold text (e.g. "45-50", "above 30"). You are evaluating, not adjudicating.',
     '- The per-layer scores you output are the ONLY scoring authority. Code will sum and decide. Your aggregate opinion is not part of the report.',
-  ].join('\n');
+  ].filter((s) => s !== null).join('\n');
 }
 
 /**
@@ -273,9 +609,19 @@ async function callClaudeForMonitor({ prompt, opts = {} }) {
  * @param {string} args.url
  * @param {string} args.productId
  * @param {string} args.runId
+ * @param {string} [args.githubRepoUrl]  — DISPATCH 6: when present alongside
+ *                                          `token`, enriches the prompt with
+ *                                          curated GitHub source code.
+ * @param {string} [args.token]          — DISPATCH 6: GitHub App installation
+ *                                          token (≤1h TTL). Never logged.
  * @param {object} [args.opts]    — { fetch?, model?, apiKey?, maxTokens? }
  *
- * @returns {Promise<{ monitorText, rawContent, url, fetchedAt, wordCount, pageTitle, model, usage }>}
+ * @returns {Promise<{
+ *   monitorText, rawContent, url, fetchedAt, wordCount, pageTitle,
+ *   contentType, model, usage,
+ *   sources: ('url'|'github')[], filesRead: number,
+ *   sourceDirsListed?: string[], enrichmentError?: string
+ * }>}
  */
 export async function produceMonitorText(args) {
   if (!args || typeof args !== 'object') {
@@ -304,11 +650,39 @@ export async function produceMonitorText(args) {
       { status, wordCount });
   }
 
-  // 2. Build the Monitor prompt.
-  const prompt = buildMonitorPrompt({ url: args.url, pageTitle, pageText });
+  // 2. Optionally enrich with GitHub source. Both githubRepoUrl + token
+  //    must be present; either missing → URL-only path. The enrichment
+  //    call NEVER throws — internal failures surface via the bundle's
+  //    `error` field and degrade to URL-only.
+  let githubBundle = { block: '', filesRead: 0, sources: [], sourceDirsListed: [] };
+  let enrichmentError;
+  if (typeof args.githubRepoUrl === 'string' && args.githubRepoUrl.length > 0 &&
+      typeof args.token === 'string' && args.token.length > 0) {
+    try {
+      githubBundle = await fetchGithubSourceBundle({
+        githubRepoUrl: args.githubRepoUrl,
+        token: args.token,
+        opts,
+      });
+      if (githubBundle.error) enrichmentError = githubBundle.error;
+    } catch (e) {
+      // Defensive — fetchGithubSourceBundle promises not to throw, but
+      // belt-and-suspenders: degrade gracefully on any unexpected throw.
+      enrichmentError = e?.message ?? String(e);
+      githubBundle = { block: '', filesRead: 0, sources: [], sourceDirsListed: [] };
+    }
+  }
 
-  // 3. Call Claude to produce the Monitor text.
+  // 3. Build the Monitor prompt (with or without GitHub enrichment).
+  const prompt = buildMonitorPrompt({
+    url: args.url, pageTitle, pageText,
+    githubBlock: githubBundle.block,
+  });
+
+  // 4. Call Claude to produce the Monitor text.
   const llm = await callClaudeForMonitor({ prompt, opts });
+
+  const sources = ['url', ...(githubBundle.sources || [])];
 
   return {
     monitorText: llm.text,
@@ -320,6 +694,10 @@ export async function produceMonitorText(args) {
     contentType,
     model: llm.model,
     usage: llm.usage,
+    sources,
+    filesRead: githubBundle.filesRead || 0,
+    sourceDirsListed: githubBundle.sourceDirsListed || [],
+    ...(enrichmentError ? { enrichmentError } : {}),
   };
 }
 
@@ -329,11 +707,19 @@ export const __internals = Object.freeze({
   DEFAULT_MAX_TOKENS,
   FETCH_TIMEOUT_MS,
   MAX_PAGE_TEXT_CHARS,
+  GITHUB_API_BASE,
+  MAX_GITHUB_FILES,
+  MAX_FILE_CONTENT_CHARS,
+  MAX_SOURCE_DIR_LISTING,
   FIVE_LAYER_FRAMEWORK,
+  CREDENTIAL_REDACT_PATTERNS,
+  scrubCredentials,
   extractVisibleText,
   extractPageTitle,
   fetchUrlContent,
   buildMonitorPrompt,
   callClaudeForMonitor,
   makeError,
+  parseGithubRepoUrl,
+  decodeContentEntry,
 });
