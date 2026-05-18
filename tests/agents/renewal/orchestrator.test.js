@@ -54,6 +54,17 @@ function happyDeps({ preScoreSequence = [60], postScoreSequence = [72] } = {}) {
     checkRateCap: vi.fn(async () => ({ allowed: true, runsInWindow: 0, cap: 1 })),
     checkRunawayDetector: vi.fn(async () => ({ tripped: false })),
     aggressiveCrawl: vi.fn(async () => ({ pagesCrawled: 5, depth: 2, pages: [], ok: true })),
+    // DISPATCH 7 added conductStructuredCrawl to STEP 3 — mock returns
+    // the canonical crawlOutput shape that downstream steps consume so
+    // the orchestrator doesn't fall through to the real Agent #21
+    // CrawlConductor in unit tests.
+    conductStructuredCrawl: vi.fn(async ({ url }) => ({
+      pagesCrawled: 5, depth: 2,
+      pages: [{ url, title: 'demo', headings: [], text: 'page text', links: [], forms: [],
+                hasModal: false, hasChatbot: false, hasAIAgent: false, statusCode: 200, loadTimeMs: 50 }],
+      brokenLinks: [], forms: [], interactiveElements: [], errors: [],
+      totalTextLength: 9,
+    })),
     produceMonitorText: vi.fn(async ({ url }) => ({
       monitorText: `[L1] 6/10 [L2] 6/10 [L3] 6/10 [L4] 6/10 [L5] 6/10`,
       rawContent: 'page text', url, fetchedAt: 'now', wordCount: 100, pageTitle: 'demo',
