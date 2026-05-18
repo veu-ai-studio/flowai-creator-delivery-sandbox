@@ -608,3 +608,255 @@ describe('derivePrioritizedIssuesFromScore', () => {
     expect(out[0].layer).toBe('l3'); // l3 is weakest at 3
   });
 });
+
+// ── DISPATCH 27 — fetchRepoFileList (GitHub Trees API) ─────────────────────
+
+describe('fetchRepoFileList (DISPATCH 27)', () => {
+  const SAMPLE_TREE_RESPONSE = {
+    sha: 'tree-sha',
+    tree: [
+      { path: 'README.md', mode: '100644', type: 'blob', sha: 'b1' },
+      { path: 'package.json', mode: '100644', type: 'blob', sha: 'b2' },
+      { path: 'src', mode: '040000', type: 'tree', sha: 't1' },
+      { path: 'src/App.jsx', mode: '100644', type: 'blob', sha: 'b3' },
+      { path: 'src/pages/Home.jsx', mode: '100644', type: 'blob', sha: 'b4' },
+      { path: 'src/components/Hero.jsx', mode: '100644', type: 'blob', sha: 'b5' },
+    ],
+    truncated: false,
+  };
+
+  function sequencedFetch(...responses) {
+    let i = 0;
+    return vi.fn(async () => {
+      const r = responses[i++];
+      if (!r) throw new Error('mock ran out of responses');
+      return {
+        ok: r.ok !== false,
+        status: r.status ?? 200,
+        statusText: r.statusText ?? 'OK',
+        json: async () => r.body,
+        text: async () => JSON.stringify(r.body),
+      };
+    });
+  }
+
+  it('returns { files, truncated, sha, error: null } on happy path', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = sequencedFetch(
+      { body: { object: { sha: 'tree-sha', type: 'commit' } } },
+      { body: SAMPLE_TREE_RESPONSE },
+    );
+    const r = await mod.fetchRepoFileList({
+      owner: 'veu-ai-studio', repo: 'my-preg-life', ref: 'main', token: 'ghs_fake',
+      opts: { fetch: fetchMock },
+    });
+    expect(r.error).toBeNull();
+    expect(r.sha).toBe('tree-sha');
+    expect(r.truncated).toBe(false);
+    // Only blob entries — the directory tree entry is filtered out.
+    expect(r.files).toEqual([
+      'README.md', 'package.json', 'src/App.jsx', 'src/pages/Home.jsx', 'src/components/Hero.jsx',
+    ]);
+  });
+
+  it('returns truncated=true when GitHub flags the tree as truncated', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = sequencedFetch(
+      { body: { object: { sha: 'sha2', type: 'commit' } } },
+      { body: { sha: 'sha2', tree: [{ path: 'a.js', type: 'blob' }], truncated: true } },
+    );
+    const r = await mod.fetchRepoFileList({
+      owner: 'o', repo: 'r', token: 't', opts: { fetch: fetchMock },
+    });
+    expect(r.truncated).toBe(true);
+    expect(r.files).toEqual(['a.js']);
+  });
+
+  it('returns error: "ref_404" when the ref does not exist', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = sequencedFetch(
+      { ok: false, status: 404, statusText: 'Not Found', body: { message: 'Not Found' } },
+    );
+    const r = await mod.fetchRepoFileList({
+      owner: 'o', repo: 'r', token: 't', opts: { fetch: fetchMock },
+    });
+    expect(r.files).toEqual([]);
+    expect(r.error).toBe('ref_404');
+  });
+
+  it('returns error: "tree_404" when the tree fetch fails', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = sequencedFetch(
+      { body: { object: { sha: 'sha3', type: 'commit' } } },
+      { ok: false, status: 404, statusText: 'Not Found', body: { message: 'Not Found' } },
+    );
+    const r = await mod.fetchRepoFileList({
+      owner: 'o', repo: 'r', token: 't', opts: { fetch: fetchMock },
+    });
+    expect(r.files).toEqual([]);
+    expect(r.error).toBe('tree_404');
+  });
+
+  it('returns "bad_args" / "no_token" for missing required args', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = vi.fn();
+    expect((await mod.fetchRepoFileList({ owner: '', repo: 'r', token: 't', opts: { fetch: fetchMock } })).error).toBe('bad_args');
+    expect((await mod.fetchRepoFileList({ owner: 'o', repo: '', token: 't', opts: { fetch: fetchMock } })).error).toBe('bad_args');
+    expect((await mod.fetchRepoFileList({ owner: 'o', repo: 'r', token: '', opts: { fetch: fetchMock } })).error).toBe('no_token');
+  });
+
+  it('NEVER throws on network error — returns the envelope shape', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = vi.fn(async () => { throw new Error('ECONNREFUSED'); });
+    const r = await mod.fetchRepoFileList({
+      owner: 'o', repo: 'r', token: 't', opts: { fetch: fetchMock },
+    });
+    expect(r.files).toEqual([]);
+    expect(r.error).toMatch(/^ref_network:.*ECONNREFUSED/);
+  });
+
+  it('sends Authorization: Bearer <token> + the GitHub API version header', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = sequencedFetch(
+      { body: { object: { sha: 's', type: 'commit' } } },
+      { body: SAMPLE_TREE_RESPONSE },
+    );
+    await mod.fetchRepoFileList({
+      owner: 'o', repo: 'r', token: 'ghs_xyz', opts: { fetch: fetchMock },
+    });
+    for (const call of fetchMock.mock.calls) {
+      const init = call[1];
+      expect(init.headers.Authorization).toBe('Bearer ghs_xyz');
+      expect(init.headers.Accept).toBe('application/vnd.github+json');
+      expect(init.headers['X-GitHub-Api-Version']).toBe('2022-11-28');
+    }
+  });
+
+  it('uses recursive=1 on the tree endpoint', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = sequencedFetch(
+      { body: { object: { sha: 's', type: 'commit' } } },
+      { body: SAMPLE_TREE_RESPONSE },
+    );
+    await mod.fetchRepoFileList({
+      owner: 'o', repo: 'r', token: 't', opts: { fetch: fetchMock },
+    });
+    expect(fetchMock.mock.calls[1][0]).toMatch(/\/git\/trees\/s\?recursive=1$/);
+  });
+});
+
+describe('prioritizeIssuesWithClaude — fileList constraint (DISPATCH 27)', () => {
+  const PRESCORE = { l1: 4, l2: 4, l3: 2, l4: 6, l5: 4, total: 20 };
+  const PRODUCT_ROW = { product_id: 'mypreglife', github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life' };
+
+  function captureAnthropic() {
+    const captured = { prompt: '' };
+    const fn = vi.fn(async (_url, init) => {
+      captured.prompt = JSON.parse(init.body).messages[0].content;
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          content: [{ type: 'text', text: JSON.stringify({ issues: [
+            { filePath: 'src/App.jsx', issue: 'x', fix: 'y',
+              estimatedImpact: { layer: 'L1', delta: 5 },
+              severity: 'medium', title: 't' },
+          ] }) }],
+          model: 'claude-sonnet-4-6', usage: {},
+        }),
+        text: async () => '{}',
+      };
+    });
+    fn.captured = captured;
+    return fn;
+  }
+
+  it('includes the REAL file list in the prompt when fileList is provided', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = captureAnthropic();
+    await mod.prioritizeIssuesWithClaude({
+      preScore: PRESCORE,
+      product: PRODUCT_ROW,
+      fileList: ['README.md', 'package.json', 'src/App.jsx', 'src/components/Hero.jsx'],
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    });
+    const p = fetchMock.captured.prompt;
+    expect(p).toMatch(/REAL repo file list/);
+    expect(p).toContain('  - README.md');
+    expect(p).toContain('  - src/App.jsx');
+    expect(p).toContain('  - src/components/Hero.jsx');
+    expect(p).toMatch(/CRITICAL: if you propose a `filePath` that is NOT in the list above/);
+    // The fallback "Likely source files" hint must NOT be present.
+    expect(p).not.toMatch(/Likely source files/);
+  });
+
+  it('falls back to the guessed-paths hint when fileList is null/empty', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = captureAnthropic();
+    await mod.prioritizeIssuesWithClaude({
+      preScore: PRESCORE,
+      product: PRODUCT_ROW,
+      fileList: null,
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    });
+    const p = fetchMock.captured.prompt;
+    expect(p).toMatch(/Likely source files/);
+    expect(p).not.toMatch(/REAL repo file list/);
+  });
+
+  it('filters fileList to source-shaped extensions (drops binaries, gitignore, etc.)', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = captureAnthropic();
+    await mod.prioritizeIssuesWithClaude({
+      preScore: PRESCORE,
+      product: PRODUCT_ROW,
+      fileList: [
+        'src/App.jsx',
+        'public/logo.png',           // binary → dropped
+        'package-lock.json',          // .json → kept
+        'src/styles/main.css',        // kept
+        'docs/diagram.pdf',           // dropped
+        'README.md',
+        '.gitignore',                 // no recognized ext → dropped
+      ],
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    });
+    const p = fetchMock.captured.prompt;
+    expect(p).toContain('src/App.jsx');
+    expect(p).toContain('package-lock.json');
+    expect(p).toContain('src/styles/main.css');
+    expect(p).toContain('README.md');
+    expect(p).not.toContain('logo.png');
+    expect(p).not.toContain('diagram.pdf');
+  });
+
+  it('caps file list at 200 entries to keep prompt budget bounded', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = captureAnthropic();
+    const huge = Array.from({ length: 500 }, (_, i) => `src/component-${i}.jsx`);
+    await mod.prioritizeIssuesWithClaude({
+      preScore: PRESCORE,
+      product: PRODUCT_ROW,
+      fileList: huge,
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    });
+    const p = fetchMock.captured.prompt;
+    expect(p).toContain('src/component-0.jsx');
+    expect(p).toContain('src/component-199.jsx');
+    expect(p).not.toContain('src/component-200.jsx');
+    expect(p).not.toContain('src/component-499.jsx');
+  });
+
+  it('suppliedIssue still short-circuits past Claude (file-list ignored)', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const fetchMock = vi.fn();
+    const supplied = { severity: 'high', title: 'explicit issue', filePath: 'src/A.jsx' };
+    const r = await mod.prioritizeIssuesWithClaude({
+      preScore: PRESCORE, product: PRODUCT_ROW,
+      suppliedIssue: supplied,
+      fileList: ['src/A.jsx'],
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    });
+    expect(r).toEqual([supplied]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

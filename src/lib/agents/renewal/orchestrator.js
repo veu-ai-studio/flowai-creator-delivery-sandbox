@@ -233,6 +233,90 @@ export async function detectGithubRepoFromUrl({ url, fetch: fetchOverride, timeo
 }
 
 /**
+ * Fetch the real repo file list via GitHub Trees API (DISPATCH 27).
+ *
+ * Solves the W5a #26 residual #2: Claude's prioritizer was guessing typical
+ * Vite+React paths that didn't exist in the actual repo, causing STEP 7 to
+ * 404-skip 4 of 5 suggestions. With a real file list passed into the
+ * prioritization prompt, Claude is constrained to existing paths.
+ *
+ * Sequence:
+ *   1. GET /repos/{owner}/{repo}/git/ref/heads/{baseBranch} → root commit SHA
+ *   2. GET /repos/{owner}/{repo}/git/trees/{sha}?recursive=1 → flat tree
+ *   3. Filter to blob (file) entries; return paths as a flat string array
+ *
+ * Returns [] (empty array, NOT null) on any failure so the caller can
+ * distinguish "fetched a real but empty list" from "fetch errored." The
+ * prioritizer falls back to the guessed-paths hint when the list is empty.
+ *
+ * @param {object} args
+ * @param {string} args.owner
+ * @param {string} args.repo
+ * @param {string} [args.ref='main']
+ * @param {string} args.token
+ * @param {object} [args.opts]   — { fetch? } overridable for tests
+ * @returns {Promise<{ files: string[], truncated: boolean, sha: string|null, error: string|null }>}
+ */
+export async function fetchRepoFileList({ owner, repo, ref = 'main', token, opts = {} }) {
+  const fetchImpl = typeof opts.fetch === 'function' ? opts.fetch : globalThis.fetch;
+  if (typeof fetchImpl !== 'function') {
+    return { files: [], truncated: false, sha: null, error: 'fetch_unavailable' };
+  }
+  if (typeof owner !== 'string' || !owner || typeof repo !== 'string' || !repo) {
+    return { files: [], truncated: false, sha: null, error: 'bad_args' };
+  }
+  if (typeof token !== 'string' || !token) {
+    return { files: [], truncated: false, sha: null, error: 'no_token' };
+  }
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+  const enc = (s) => encodeURIComponent(s);
+
+  let refRes;
+  try {
+    refRes = await fetchImpl(
+      `https://api.github.com/repos/${enc(owner)}/${enc(repo)}/git/ref/heads/${enc(ref)}`,
+      { method: 'GET', headers },
+    );
+  } catch (e) {
+    return { files: [], truncated: false, sha: null, error: `ref_network:${e?.message ?? String(e)}` };
+  }
+  if (!refRes.ok) {
+    return { files: [], truncated: false, sha: null, error: `ref_${refRes.status}` };
+  }
+  let refBody;
+  try { refBody = await refRes.json(); } catch { return { files: [], truncated: false, sha: null, error: 'ref_parse' }; }
+  const sha = refBody?.object?.sha;
+  if (typeof sha !== 'string' || !sha) {
+    return { files: [], truncated: false, sha: null, error: 'ref_no_sha' };
+  }
+
+  let treeRes;
+  try {
+    treeRes = await fetchImpl(
+      `https://api.github.com/repos/${enc(owner)}/${enc(repo)}/git/trees/${enc(sha)}?recursive=1`,
+      { method: 'GET', headers },
+    );
+  } catch (e) {
+    return { files: [], truncated: false, sha, error: `tree_network:${e?.message ?? String(e)}` };
+  }
+  if (!treeRes.ok) {
+    return { files: [], truncated: false, sha, error: `tree_${treeRes.status}` };
+  }
+  let treeBody;
+  try { treeBody = await treeRes.json(); } catch { return { files: [], truncated: false, sha, error: 'tree_parse' }; }
+  const entries = Array.isArray(treeBody?.tree) ? treeBody.tree : [];
+  const files = entries
+    .filter((e) => e && e.type === 'blob' && typeof e.path === 'string')
+    .map((e) => e.path);
+  const truncated = !!treeBody?.truncated;
+  return { files, truncated, sha, error: null };
+}
+
+/**
  * Resolve a target product. NEVER returns null in DISPATCH 24+: the result
  * is either a PATH A registry row (operator-known product) OR a PATH B
  * synthesized config (FlowAI universal mode for any URL).
@@ -594,16 +678,54 @@ export async function runOrchestration(args = {}) {
     }
     await state.checkpoint(onCheckpoint, { lastStep: 5, iteration: iterationNumber });
 
+    // DISPATCH 27: For PATH A, mint the GitHub App token BEFORE STEP 6 so
+    // we can call the Trees API to fetch the real repo file list and feed
+    // it into the Claude prioritizer prompt. STEP 8's numbered position
+    // (after STEP 6) is preserved in the log envelope, but execution
+    // order hoists the token mint for PATH A. PATH B skips this since it
+    // has no operator repo to read.
+    //
+    // The token acquired here is REUSED by STEP 8/STEP 7/STEP 9 below —
+    // no duplicate mints. STEP 8's log entry still emits (as 'complete')
+    // when the hoisted mint succeeds.
+    const _fetchRepoFileList = deps.fetchRepoFileList || fetchRepoFileList;
+    let repoFileList = null; // null = no list available; array = real list (may be empty)
+    if (!pathB && githubRepoUrl) {
+      const parsed = parseGithubRepoUrl(githubRepoUrl);
+      if (parsed) {
+        try {
+          const minted = await _getInstallationToken();
+          token = minted.token;
+          const treeResult = await _fetchRepoFileList({
+            owner: parsed.owner, repo: parsed.repo, ref: 'main', token,
+          });
+          if (treeResult && treeResult.files && treeResult.files.length > 0) {
+            repoFileList = treeResult.files;
+          }
+        } catch {
+          // Hoisted token mint or trees fetch failed — the regular STEP 8
+          // block below will retry the token mint and log its outcome.
+          // Prioritizer falls back to the guessed-paths hint.
+        }
+      }
+    }
+
     // STEP 6 — Issue Prioritization. Claude-powered (DISPATCH 23): given the
     // Five-Layer scores + product context + monitor text, Claude returns up
     // to 5 ranked issues with specific filePath/issue/fix/estimatedImpact.
     // Falls back to the score-derived heuristic if Claude fails or returns
     // unparseable output — never blocks the pipeline on prioritization.
+    //
+    // DISPATCH 27: when repoFileList is non-null (PATH A with successful
+    // hoisted token + Trees API fetch), the prioritizer constrains Claude
+    // to ONLY propose files that actually exist in the repo. Eliminates
+    // the DISPATCH 26 "guessed paths 404 on fetch" failure mode.
     let prioritizedIssues;
     try {
       const t0 = Date.now();
       const claudeIssues = await prioritizeIssuesWithClaude({
         preScore: preScoreEnvelope, product, suppliedIssue: args.issue,
+        fileList: repoFileList,
       }).catch(() => null);
       if (claudeIssues && claudeIssues.length > 0) {
         prioritizedIssues = claudeIssues;
@@ -614,7 +736,9 @@ export async function runOrchestration(args = {}) {
       const log = makeStepLog({
         iteration: iterationNumber, step: 6, status: 'complete',
         tool: claudeIssues
-          ? 'Claude-powered prioritization (DISPATCH 23 upgrade)'
+          ? (repoFileList
+              ? 'Claude-powered prioritization (file-list-constrained, DISPATCH 27)'
+              : 'Claude-powered prioritization (DISPATCH 23 upgrade)')
           : 'score-derived heuristic (Claude fallback failed)',
         why: 'rank issues by Five-Layer impact for max score improvement per iteration',
         result: {
@@ -622,6 +746,7 @@ export async function runOrchestration(args = {}) {
           topIssue: prioritizedIssues[0]?.title ?? prioritizedIssues[0]?.issue,
           files: prioritizedIssues.map((i) => i.filePath).filter(Boolean),
           source: claudeIssues ? 'claude' : 'heuristic',
+          repoFileListSize: repoFileList ? repoFileList.length : 0,
         },
         durationMs: Date.now() - t0, mode: state.mode,
       });
@@ -676,15 +801,29 @@ export async function runOrchestration(args = {}) {
       await state.checkpoint(onCheckpoint, { lastStep: 9, iteration: iterationNumber });
     } else {
       // ── PATH A: existing flow ──────────────────────────────────────────────
+      // DISPATCH 27: if the hoisted token mint above already succeeded (for
+      // Trees API access during STEP 6), reuse that token here instead of
+      // minting again. Log as 'complete' either way so the step envelope
+      // is honest. Only re-mint if `token` is still null (hoist failed).
       try {
         const t0 = Date.now();
-        const minted = await _getInstallationToken();
-        token = minted.token;
+        let mintedNow = false;
+        let expiresAt = null;
+        if (!token) {
+          const minted = await _getInstallationToken();
+          token = minted.token;
+          expiresAt = minted.expiresAt;
+          mintedNow = true;
+        }
         const log = makeStepLog({
           iteration: iterationNumber, step: 8, status: 'complete',
           tool: 'githubApp.js',
           why: 'short-lived installation token (~9 min) for branch + PR writes',
-          result: { tokenAcquired: true, expiresAt: minted.expiresAt },
+          result: {
+            tokenAcquired: true,
+            expiresAt,
+            reusedFromHoist: !mintedNow,
+          },
           durationMs: Date.now() - t0, mode: state.mode,
         });
         emit(log); iterLog.steps.push(log);
@@ -1163,7 +1302,7 @@ export async function runOrchestration(args = {}) {
  * @param {object} [args.opts]             — { fetch?, apiKey?, model? }
  * @returns {Promise<Array<{ filePath, issue, fix, estimatedImpact, severity, title }>|null>}
  */
-export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIssue, opts = {} }) {
+export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIssue, fileList = null, opts = {} }) {
   if (suppliedIssue && typeof suppliedIssue === 'object') {
     return [suppliedIssue];
   }
@@ -1175,6 +1314,41 @@ export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIs
 
   const productId = product?.product_id ?? 'unknown';
   const githubRepoUrl = product?.github_repo_url ?? '';
+
+  // DISPATCH 27: when a real fileList is provided (from GitHub Trees API),
+  // Claude is told to choose ONLY from that list — eliminates the "guessed
+  // paths that 404 on fetch" failure mode from DISPATCH 26's live run.
+  // Falls back to the "likely Vite+React paths" hint when no fileList is
+  // available (Claude unavailable for tree fetch, PATH B with no repo, etc.).
+  const hasRealFileList = Array.isArray(fileList) && fileList.length > 0;
+  // Cap the file list in the prompt to keep token budget bounded. The Trees
+  // API can return thousands of entries on large monorepos; we filter to
+  // source-shaped files and cap at 200.
+  const filteredFileList = hasRealFileList
+    ? fileList
+        .filter((p) => typeof p === 'string' && /\.(js|jsx|ts|tsx|md|json|html|css|scss|vue|svelte|mjs|cjs)$/i.test(p))
+        .slice(0, 200)
+    : null;
+
+  const fileListSection = (filteredFileList && filteredFileList.length > 0)
+    ? [
+        'REAL repo file list (use ONLY these paths — do NOT invent paths that are not in this list):',
+        ...filteredFileList.map((p) => `  - ${p}`),
+        '',
+        'CRITICAL: if you propose a `filePath` that is NOT in the list above, your suggestion will be discarded. Choose only from the list.',
+      ]
+    : [
+        'No repo file list provided. Assume this is a Vite + React app. Likely source files:',
+        '  - README.md',
+        '  - package.json',
+        '  - index.html',
+        '  - src/App.jsx',
+        '  - src/main.jsx',
+        '  - src/pages/Home.jsx',
+        '  - src/components/Hero.jsx',
+        '  - src/components/Pricing.jsx',
+        '  - src/components/Footer.jsx',
+      ];
 
   const prompt = [
     'You are a code quality analyst. Given Five-Layer scores for a deployed product and the product\'s GitHub repo, identify the top 5 SPECIFIC issues causing low scores.',
@@ -1197,16 +1371,7 @@ export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIs
     '  L4 Business     — Competitive positioning, defensible moat, partnerships.',
     '  L5 GTM          — ICP clarity, value proposition, CTAs, sales motion.',
     '',
-    'Assume this is a Vite + React app. Likely source files:',
-    '  - README.md',
-    '  - package.json',
-    '  - index.html',
-    '  - src/App.jsx',
-    '  - src/main.jsx',
-    '  - src/pages/Home.jsx',
-    '  - src/components/Hero.jsx',
-    '  - src/components/Pricing.jsx',
-    '  - src/components/Footer.jsx',
+    ...fileListSection,
     '',
     'Return STRICTLY valid JSON with this shape (no markdown code fences, no prose, just JSON):',
     '{"issues": [',
@@ -1358,6 +1523,7 @@ export const __internals = Object.freeze({
   discoverProduct,
   derivePrioritizedIssuesFromScore,
   prioritizeIssuesWithClaude,
+  fetchRepoFileList,
   buildPrBody,
   OrchestrationState,
 });
