@@ -105,6 +105,9 @@ describe('deployBranchPreview — happy path', () => {
     expect(fetchMock.calls[0].url).toBe(`https://api.vercel.com/v13/deployments?teamId=${HAPPY_ARGS.orgId}`);
     expect(fetchMock.calls[0].init.method).toBe('POST');
     const postBody = JSON.parse(fetchMock.calls[0].init.body);
+    // NOTE: NO `target` field — Vercel /v13/deployments rejects
+    // `target: 'preview'` with a 400; preview is inferred from absence.
+    // Fixed 2026-05-18 (W5b dispatch #12, source commit 6ea928a).
     expect(postBody).toEqual({
       name: HAPPY_ARGS.repo,
       project: HAPPY_ARGS.projectId,
@@ -114,8 +117,8 @@ describe('deployBranchPreview — happy path', () => {
         repo: HAPPY_ARGS.repo,
         ref: HAPPY_ARGS.branchName,
       },
-      target: 'preview',
     });
+    expect(postBody.target).toBeUndefined();
   });
 
   it('GET polls hit /v13/deployments/{id}?teamId=<orgId> with no body', async () => {
