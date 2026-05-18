@@ -26,7 +26,7 @@ import { getInstallationToken } from './githubApp.js';
 import { produceMonitorText } from './monitorTextProducer.js';
 import { computeScore } from './preScoreAdapter.js';
 import { scoreCrawlOutput } from './gtmReadinessScorer.js';
-import { generateFix } from './fixGenerator.js';
+import { generateFix, __internals as fixGenInternals } from './fixGenerator.js';
 import { createRenewalBranch, commitFileToBranch } from './githubBranchWriter.js';
 import { deployBranchPreview } from './vercelBranchDeploy.js';
 import { evaluateDelta } from './deltaPolicy.js';
@@ -910,6 +910,57 @@ export async function runOrchestration(args = {}) {
         break;
       }
 
+      // DISPATCH 29 — Pre-deploy gate: parse-check every generated file
+      // before we commit it to the branch. Files that fail are filtered
+      // out so we never push syntactically-invalid code to GitHub +
+      // Vercel. This is the load-bearing safety net behind fixGenerator's
+      // own validateFixedContent: even if a future code path bypasses
+      // that check (or its regex tolerance lets a string-truncation
+      // through), this gate is the unconditional pre-deploy barrier.
+      {
+        const t0 = Date.now();
+        const _parseCheck = deps.parseCheckContent || fixGenInternals.parseCheckContent;
+        const beforeCount = fileChanges.length;
+        const passed = [];
+        const rejected = [];
+        for (const f of fileChanges) {
+          try {
+            const verdict = await _parseCheck(f.fileContent, f.filePath);
+            if (verdict.ok) {
+              passed.push(f);
+            } else {
+              rejected.push({ filePath: f.filePath, reason: verdict.reason, detail: (verdict.detail ?? '').slice(0, 120) });
+            }
+          } catch (e) {
+            rejected.push({ filePath: f.filePath, reason: 'parse_check_threw', detail: (e?.message ?? String(e)).slice(0, 120) });
+          }
+        }
+        // Replace fileChanges with the filtered list so STEP 9 only
+        // commits passing files. Empty list → loop will hit
+        // NO_FIXES_GENERATED below and continue / exit cleanly.
+        fileChanges.length = 0;
+        for (const f of passed) fileChanges.push(f);
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 9, status: rejected.length === 0 ? 'complete' : 'degraded',
+          tool: 'pre-deploy parse gate (esbuild)',
+          why: 'reject syntactically-invalid fixes before commit + deploy (DISPATCH 29)',
+          result: {
+            filesIn: beforeCount,
+            filesPassed: passed.length,
+            filesRejected: rejected.length,
+            rejected,
+          },
+          durationMs: Date.now() - t0, mode: state.mode,
+        }));
+      }
+      // If parse-check rejected ALL files, treat this iteration like
+      // NO_FIXES_GENERATED — exit the inner block (no commit, no deploy)
+      // and let the outer loop decide whether to iterate again.
+      if (fileChanges.length === 0) {
+        exitReason = 'NO_FIXES_GENERATED';
+        break;
+      }
+
       // STEP 9 — Branch + multi-file commits (PATH A only).
       try {
         const t0 = Date.now();
@@ -1077,11 +1128,30 @@ export async function runOrchestration(args = {}) {
           emit(log); iterLog.steps.push(log);
         }
       } catch (e) {
-        // PATH A errors still fail the pipeline (operator path expects failure
-        // semantics). PATH B errors are caught above and degrade gracefully.
-        return buildFailureReturn({ runId, mode: state.mode, product,
-          orchestrationLog, iterations, failedStep: 'STEP_10',
-          error: e?.message ?? String(e), code: e?.code ?? 'DEPLOY_FAILED' });
+        // DISPATCH 29: PATH A deploy failure (typically Vercel build
+        // error on the freshly-committed fixes) is now NON-FATAL —
+        // emit a degraded log, mark deploy as degraded, and let STEP 11
+        // score against the original URL. The delta policy at STEP 12
+        // will see a flat or negative score and trigger NO_IMPROVEMENT
+        // exit (or continue to next iteration), instead of crashing the
+        // entire run on a single bad-build iteration.
+        deployDegraded = true;
+        previewUrl = null;
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 10, status: 'degraded',
+          tool: 'vercelBranchDeploy.js (PATH A — degraded)',
+          why: 'Vercel deploy failed; fall back to scoring original URL so loop can continue',
+          result: {
+            degraded: true,
+            reason: e?.message ?? String(e),
+            code: e?.code ?? 'DEPLOY_FAILED',
+            // Common cause is build error in the fix branch — the pre-
+            // deploy parse gate (STEP 9 sub-gate) should catch most of
+            // these; this fallback covers the residual (e.g. runtime
+            // import errors that don't show up at parse time).
+          },
+          durationMs: Date.now() - t0, mode: state.mode,
+        }));
       }
     }
     await state.checkpoint(onCheckpoint, { lastStep: 10, iteration: iterationNumber });

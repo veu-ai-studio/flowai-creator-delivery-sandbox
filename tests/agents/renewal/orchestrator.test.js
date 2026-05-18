@@ -882,3 +882,157 @@ describe('prioritizeIssuesWithClaude — fileList constraint (DISPATCH 27)', () 
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+// ── DISPATCH 29 — pre-deploy parse gate + non-fatal Vercel failure ─────
+
+describe('orchestrator — pre-deploy parse gate (DISPATCH 29)', () => {
+  it('runs parse-check on every generated file before STEP 9 commit', async () => {
+    withVercelEnv();
+    try {
+      const generateFix = vi.fn(async ({ filePath }) => ({
+        fixedContent: `export const a = 1;\n// patched in ${filePath}\n`,
+        model: 'claude', promptTokens: 0, completionTokens: 0,
+      }));
+      const commitFileToBranch = vi.fn(async ({ filePath }) => ({ filePath, commitSha: 'sha', branchName: 'b' }));
+      const parseCheckContent = vi.fn(async () => ({ ok: true }));
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [50] }),
+        generateFix, commitFileToBranch, parseCheckContent,
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd29-pdg-pass', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        issue: { filePath: 'src/good.js', issue: 'x', fix: 'y', severity: 'medium', title: 'a' },
+      });
+      // The pre-deploy gate log surfaces in orchestrationLog with status:'complete'.
+      const gateLogs = result.orchestrationLog.filter((l) =>
+        l.tool === 'pre-deploy parse gate (esbuild)',
+      );
+      expect(gateLogs).toHaveLength(1);
+      expect(gateLogs[0].status).toBe('complete');
+      expect(gateLogs[0].result.filesIn).toBe(1);
+      expect(gateLogs[0].result.filesPassed).toBe(1);
+      expect(gateLogs[0].result.filesRejected).toBe(0);
+      expect(parseCheckContent).toHaveBeenCalledTimes(1);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('rejects a file that fails parse-check; log surfaces reason verbatim', async () => {
+    withVercelEnv();
+    try {
+      const generateFix = vi.fn(async () => ({
+        fixedContent: 'export const a = \'unterminated',
+        model: 'claude', promptTokens: 0, completionTokens: 0,
+      }));
+      const commitFileToBranch = vi.fn();
+      const deployBranchPreview = vi.fn();
+      const parseCheckContent = vi.fn(async () => ({
+        ok: false, reason: 'parse_error', detail: 'Unterminated string literal at line 1',
+      }));
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [50] }),
+        generateFix, commitFileToBranch, deployBranchPreview, parseCheckContent,
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd29-pdg-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        issue: { filePath: 'src/bad.js', issue: 'x', fix: 'y', severity: 'medium', title: 'b' },
+      });
+      expect(parseCheckContent).toHaveBeenCalledTimes(1);
+      // The bad file never gets committed or deployed.
+      expect(commitFileToBranch).not.toHaveBeenCalled();
+      expect(deployBranchPreview).not.toHaveBeenCalled();
+      // Gate log surfaces the rejection with the verbatim reason from the parser.
+      const gateLogs = result.orchestrationLog.filter((l) =>
+        l.tool === 'pre-deploy parse gate (esbuild)',
+      );
+      expect(gateLogs).toHaveLength(1);
+      expect(gateLogs[0].status).toBe('degraded');
+      expect(gateLogs[0].result.filesRejected).toBe(1);
+      expect(gateLogs[0].result.rejected[0].filePath).toBe('src/bad.js');
+      expect(gateLogs[0].result.rejected[0].reason).toBe('parse_error');
+      expect(gateLogs[0].result.rejected[0].detail).toMatch(/Unterminated/);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('exits NO_FIXES_GENERATED when ALL files fail the parse gate', async () => {
+    withVercelEnv();
+    try {
+      const generateFix = vi.fn(async () => ({
+        fixedContent: 'const x = \'unterminated',
+        model: 'claude', promptTokens: 0, completionTokens: 0,
+      }));
+      const parseCheckContent = vi.fn(async () => ({
+        ok: false, reason: 'parse_error', detail: 'Unterminated string literal',
+      }));
+      const commitFileToBranch = vi.fn();
+      const deployBranchPreview = vi.fn();
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [50] }),
+        generateFix,
+        commitFileToBranch,
+        deployBranchPreview,
+        parseCheckContent,
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd29-pdg-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        issue: { filePath: 'src/bad.js', issue: 'x', fix: 'y', severity: 'medium', title: 'b' },
+      });
+      expect(commitFileToBranch).not.toHaveBeenCalled();
+      expect(deployBranchPreview).not.toHaveBeenCalled();
+      // No iterations completed → finalScore stays at originalScore (no postScore).
+      expect(result.exitReason).toBe('NO_FIXES_GENERATED');
+    } finally { clearVercelEnv(); }
+  });
+});
+
+describe('orchestrator — STEP 10 Vercel failure non-fatal (DISPATCH 29)', () => {
+  it('PATH A: Vercel deploy throws → STEP 10 degraded, loop continues', async () => {
+    withVercelEnv();
+    try {
+      const deployBranchPreview = vi.fn(async () => {
+        throw new Error('deployment dpl_FAKE entered readyState=ERROR after 3 poll(s)');
+      });
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50, 60], postScoreSequence: [50, 50] }),
+        deployBranchPreview,
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd29-step10-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 2, deps,
+      });
+      // No fatal failure — the run completes; deploy failure is degraded.
+      expect(result.ok).toBe(true);
+      expect(result.failedStep).toBeUndefined();
+      // STEP 10 was logged as degraded with the Vercel error verbatim in the reason.
+      const step10Logs = result.orchestrationLog.filter((l) => l.step === 10);
+      expect(step10Logs.length).toBeGreaterThan(0);
+      const degraded = step10Logs.find((l) => l.status === 'degraded');
+      expect(degraded).toBeDefined();
+      expect(degraded.result.reason).toMatch(/readyState=ERROR/);
+      expect(degraded.result.degraded).toBe(true);
+      // previewUrl is null at run completion (no successful deploy).
+      expect(result.previewUrl).toBeNull();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('PATH A: degraded deploy still emits STEP 11 score against original URL', async () => {
+    withVercelEnv();
+    try {
+      const deployBranchPreview = vi.fn(async () => { throw new Error('build_error'); });
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [50] }),
+        deployBranchPreview,
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd29-step10-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+      // STEP 11 ran (post-score computed).
+      const step11Logs = result.orchestrationLog.filter((l) => l.step === 11);
+      expect(step11Logs.length).toBeGreaterThan(0);
+      expect(step11Logs[0].status).toBe('complete');
+    } finally { clearVercelEnv(); }
+  });
+});
