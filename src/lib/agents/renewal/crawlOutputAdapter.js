@@ -55,31 +55,68 @@ const DEFAULT_DEPTH = 5;
 // Heuristic regexes. Run against bodyText (lowercase-normalised) +
 // against script src attributes scraped from the page. Bounded set so
 // the heuristics are reviewable + audit-friendly.
-const CHATBOT_BODY_RE = /\b(chatbot|live\s+chat|chat\s+with\s+us|message\s+us|start\s+a\s+conversation|talk\s+to\s+(?:support|us|an\s+agent))\b/i;
-const CHATBOT_SCRIPT_RE = /\b(intercom|zendesk|drift|tawk\.to|crisp\.chat|hubspot\.com\/hub-fs|olark|livechatinc|tidio|hellobonsai)\b/i;
-const MODAL_BODY_RE = /\b(modal|dialog|popup|overlay|lightbox)\b/i;
-const AI_AGENT_BODY_RE = /\b(ai\s+(?:agent|assistant|chat)|ask\s+(?:anything|me|ai)|powered\s+by\s+(?:openai|anthropic|claude|gpt)|chat\s+with\s+(?:ai|assistant))\b/i;
+//
+// Each pattern set is split into TWO regexes:
+//   *_BODY_RE_CORE — original tight set (low false-positive risk).
+//   *_BODY_RE_EXT  — expanded patterns added in DISPATCH 8.
+// The detector runs both. Keeping them separate makes future audits
+// easy ("which match fired?" can be answered without re-running).
+//
+// Chatbot vendor coverage (DISPATCH 8 expansion):
+//   Core: intercom · zendesk · drift · tawk.to · crisp.chat · hubspot ·
+//         olark · livechatinc · tidio · hellobonsai
+//   Ext:  freshchat · helpscout/beacon · front · livechatinc (full host) ·
+//         liveperson · kustomer · genesys/purecloud · comm100 ·
+//         smartsupp · userlike · jivochat · jivosite · botpress · rasa ·
+//         ada.cx · ada.support · acquire.io · purechat · subiz ·
+//         birdeye · verloop · botsify · heyday (hootsuite) · tars ·
+//         dialogflow.cloud.google · watson chat · kommunicate ·
+//         yellowmessenger / yellow.ai · engati · manychat · chatfuel ·
+//         landbot · loop.global · gladly · zoho salesiq · webchat ·
+//         chatbot.com · pure chat · servicenow now-virtual-agent
+const CHATBOT_BODY_RE_CORE = /\b(chatbot|live\s+chat|chat\s+with\s+us|message\s+us|start\s+a\s+conversation|talk\s+to\s+(?:support|us|an\s+agent))\b/i;
+const CHATBOT_BODY_RE_EXT  = /\b(virtual\s+(?:agent|assistant|advisor)|automated\s+(?:assistant|chat|support)|chat\s+now|need\s+help\?|how\s+can\s+(?:we|i)\s+help|chat\s+to\s+an\s+expert|chat\s+with\s+(?:an?\s+)?(?:human|expert|specialist|agent))\b/i;
+const CHATBOT_SCRIPT_RE_CORE = /\b(intercom|zendesk|drift|tawk\.to|crisp\.chat|hubspot\.com\/hub-fs|olark|livechatinc|tidio|hellobonsai)\b/i;
+const CHATBOT_SCRIPT_RE_EXT  = /\b(freshchat|freshworks|helpscout|helpscout-beacon|frontapp|liveperson|liveengage|kustomerapp|genesys\.com|purecloud|comm100|smartsupp|userlike|jivochat|jivosite|botpress|rasa\.com|ada\.cx|ada\.support|acquire\.io|purechat\.com|subiz\.com\.vn|birdeye\.com|verloop\.io|botsify|heyday\.ai|hootsuite|hellotars\.com|dialogflow|watson(?:platform|assistant)|kommunicate|yellowmessenger|yellow\.ai|engati|manychat|chatfuel|landbot\.io|loop\.global|gladly\.com|salesiq|zopim|servicenow|chat-widget|chatbot-widget|chatbot\.com|botcopy|botstar|tars\.io)\b/i;
+const MODAL_BODY_RE_CORE = /\b(modal|dialog|popup|overlay|lightbox)\b/i;
+const MODAL_BODY_RE_EXT  = /\b(role=["']?dialog|aria-modal|data-modal|class=["'][^"']*modal[^"']*["']|open\s+in\s+modal|view\s+in\s+lightbox)/i;
+const AI_AGENT_BODY_RE_CORE = /\b(ai\s+(?:agent|assistant|chat)|ask\s+(?:anything|me|ai)|powered\s+by\s+(?:openai|anthropic|claude|gpt)|chat\s+with\s+(?:ai|assistant))\b/i;
+const AI_AGENT_BODY_RE_EXT  = /\b(ai[\s-]?powered\s+(?:support|chat|assistant|help|search|answers?)|talk\s+to\s+(?:an?\s+)?(?:ai|bot|chatbot)|chat\s+with\s+(?:gpt|claude|copilot|gemini|llama)|copilot|chatgpt|claude\.ai|character\.ai|perplexity(?:\.ai)?|gemini\.google|voiceflow|conversational\s+ai|generative\s+ai\s+(?:assistant|chat))\b/i;
+
+// Aggregate convenience constants — used by the legacy __internals exports
+// that other callers may rely on. New code should prefer the split CORE /
+// EXT constants for clarity.
+const CHATBOT_BODY_RE   = new RegExp(`${CHATBOT_BODY_RE_CORE.source}|${CHATBOT_BODY_RE_EXT.source}`, 'i');
+const CHATBOT_SCRIPT_RE = new RegExp(`${CHATBOT_SCRIPT_RE_CORE.source}|${CHATBOT_SCRIPT_RE_EXT.source}`, 'i');
+const MODAL_BODY_RE     = new RegExp(`${MODAL_BODY_RE_CORE.source}|${MODAL_BODY_RE_EXT.source}`, 'i');
+const AI_AGENT_BODY_RE  = new RegExp(`${AI_AGENT_BODY_RE_CORE.source}|${AI_AGENT_BODY_RE_EXT.source}`, 'i');
 
 function detectChatbot(page) {
   const body = (page?.bodyText ?? '').toString();
-  if (CHATBOT_BODY_RE.test(body)) return true;
+  if (CHATBOT_BODY_RE_CORE.test(body)) return true;
+  if (CHATBOT_BODY_RE_EXT.test(body))  return true;
   // Heuristic over link / src list when available.
   const links = page?.surfaces?.links ?? [];
   for (const l of links) {
     const href = typeof l === 'string' ? l : (l?.href ?? '');
-    if (CHATBOT_SCRIPT_RE.test(href)) return true;
+    if (CHATBOT_SCRIPT_RE_CORE.test(href)) return true;
+    if (CHATBOT_SCRIPT_RE_EXT.test(href))  return true;
   }
   return false;
 }
 
 function detectModal(page) {
   const body = (page?.bodyText ?? '').toString();
-  return MODAL_BODY_RE.test(body);
+  if (MODAL_BODY_RE_CORE.test(body)) return true;
+  if (MODAL_BODY_RE_EXT.test(body))  return true;
+  return false;
 }
 
 function detectAIAgent(page) {
   const body = (page?.bodyText ?? '').toString();
-  return AI_AGENT_BODY_RE.test(body);
+  if (AI_AGENT_BODY_RE_CORE.test(body)) return true;
+  if (AI_AGENT_BODY_RE_EXT.test(body))  return true;
+  return false;
 }
 
 function extractStatusCode(page) {
@@ -304,6 +341,15 @@ export const __internals = Object.freeze({
   CHATBOT_SCRIPT_RE,
   MODAL_BODY_RE,
   AI_AGENT_BODY_RE,
+  // DISPATCH 8 — split CORE / EXT patterns for audit + tests.
+  CHATBOT_BODY_RE_CORE,
+  CHATBOT_BODY_RE_EXT,
+  CHATBOT_SCRIPT_RE_CORE,
+  CHATBOT_SCRIPT_RE_EXT,
+  MODAL_BODY_RE_CORE,
+  MODAL_BODY_RE_EXT,
+  AI_AGENT_BODY_RE_CORE,
+  AI_AGENT_BODY_RE_EXT,
   detectChatbot,
   detectModal,
   detectAIAgent,
