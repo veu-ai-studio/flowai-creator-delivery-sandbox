@@ -10,7 +10,7 @@
 // AND the token is sent correctly on every call.
 
 import { describe, it, expect, vi } from 'vitest';
-import { createRenewalBranch, __internals } from '../../../src/lib/agents/renewal/githubBranchWriter.js';
+import { createRenewalBranch, commitFileToBranch, __internals } from '../../../src/lib/agents/renewal/githubBranchWriter.js';
 
 const TOKEN = 'ghs_TEST_INSTALLATION_TOKEN_SHOULD_NEVER_APPEAR_IN_LOGS_xxxxxxxxxx';
 const HAPPY_ARGS = Object.freeze({
@@ -346,5 +346,131 @@ describe('classifyStatus', () => {
   it('passes other statuses through to the fallback', () => {
     expect(__internals.classifyStatus(500, 'GITHUB_API_ERROR')).toBe('GITHUB_API_ERROR');
     expect(__internals.classifyStatus(422, 'OTHER_CODE')).toBe('OTHER_CODE');
+  });
+});
+
+// ── commitFileToBranch (multi-file commit helper) ────────────────────────────
+
+const COMMIT_FILE_ARGS = Object.freeze({
+  owner: 'veu-ai-studio',
+  repo: 'my-preg-life',
+  branchName: 'flowai/renewal-test456',
+  filePath: 'src/lib/helpers.js',
+  fileContent: 'export const greet = (n) => `Hello ${n}`;\n',
+  commitMessage: 'fix: second file commit on existing branch',
+  token: TOKEN,
+});
+
+const FILE_SHA_2 = 'aaa222bbb333ccc444ddd555eee666fff777000a';
+const COMMIT_SHA_2 = 'beef0000111122223333444455556666777788aa';
+
+describe('commitFileToBranch — happy path', () => {
+  it('returns { branchName, commitSha, filePath }', async () => {
+    const fetchMock = sequencedFetch([
+      { status: 200, body: { sha: FILE_SHA_2, path: COMMIT_FILE_ARGS.filePath, type: 'file' } },
+      { status: 200, body: { commit: { sha: COMMIT_SHA_2 } } },
+    ]);
+    const result = await commitFileToBranch({ ...COMMIT_FILE_ARGS, opts: { fetch: fetchMock } });
+    expect(result.branchName).toBe(COMMIT_FILE_ARGS.branchName);
+    expect(result.commitSha).toBe(COMMIT_SHA_2);
+    expect(result.filePath).toBe(COMMIT_FILE_ARGS.filePath);
+  });
+
+  it('makes exactly 2 GitHub API calls (GET contents → PUT contents)', async () => {
+    const fetchMock = sequencedFetch([
+      { status: 200, body: { sha: FILE_SHA_2, path: COMMIT_FILE_ARGS.filePath, type: 'file' } },
+      { status: 200, body: { commit: { sha: COMMIT_SHA_2 } } },
+    ]);
+    await commitFileToBranch({ ...COMMIT_FILE_ARGS, opts: { fetch: fetchMock } });
+    expect(fetchMock.calls.length).toBe(2);
+    expect(fetchMock.calls[0].init.method).toBe('GET');
+    expect(fetchMock.calls[0].url).toMatch(/\/contents\/src\/lib\/helpers\.js\?ref=flowai%2Frenewal-test456$/);
+    expect(fetchMock.calls[1].init.method).toBe('PUT');
+    expect(fetchMock.calls[1].url).toMatch(/\/contents\/src\/lib\/helpers\.js$/);
+  });
+
+  it('PUT body includes base64 content, file SHA, branch, and commit message', async () => {
+    const fetchMock = sequencedFetch([
+      { status: 200, body: { sha: FILE_SHA_2, path: COMMIT_FILE_ARGS.filePath, type: 'file' } },
+      { status: 200, body: { commit: { sha: COMMIT_SHA_2 } } },
+    ]);
+    await commitFileToBranch({ ...COMMIT_FILE_ARGS, opts: { fetch: fetchMock } });
+    const putBody = JSON.parse(fetchMock.calls[1].init.body);
+    expect(putBody.message).toBe(COMMIT_FILE_ARGS.commitMessage);
+    expect(putBody.sha).toBe(FILE_SHA_2);
+    expect(putBody.branch).toBe(COMMIT_FILE_ARGS.branchName);
+    expect(Buffer.from(putBody.content, 'base64').toString('utf8')).toBe(COMMIT_FILE_ARGS.fileContent);
+  });
+});
+
+describe('commitFileToBranch — error paths', () => {
+  it('throws FILE_NOT_FOUND when file does not exist on branch', async () => {
+    const fetchMock = sequencedFetch([
+      { status: 404, statusText: 'Not Found', body: { message: 'Not Found' } },
+    ]);
+    try {
+      await commitFileToBranch({ ...COMMIT_FILE_ARGS, opts: { fetch: fetchMock } });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.code).toBe('FILE_NOT_FOUND');
+    }
+  });
+
+  it('throws GITHUB_AUTH_FAILED on 401 from GET contents', async () => {
+    const fetchMock = sequencedFetch([
+      { status: 401, statusText: 'Unauthorized', body: { message: 'Bad credentials' } },
+    ]);
+    try {
+      await commitFileToBranch({ ...COMMIT_FILE_ARGS, opts: { fetch: fetchMock } });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.code).toBe('GITHUB_AUTH_FAILED');
+    }
+  });
+
+  it('throws GITHUB_AUTH_FAILED on 403 from PUT contents', async () => {
+    const fetchMock = sequencedFetch([
+      { status: 200, body: { sha: FILE_SHA_2, path: COMMIT_FILE_ARGS.filePath, type: 'file' } },
+      { status: 403, statusText: 'Forbidden', body: { message: 'Resource not accessible by integration' } },
+    ]);
+    try {
+      await commitFileToBranch({ ...COMMIT_FILE_ARGS, opts: { fetch: fetchMock } });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.code).toBe('GITHUB_AUTH_FAILED');
+    }
+  });
+
+  it('throws FILE_SHA_CONFLICT on 409 from PUT contents (race)', async () => {
+    const fetchMock = sequencedFetch([
+      { status: 200, body: { sha: FILE_SHA_2, path: COMMIT_FILE_ARGS.filePath, type: 'file' } },
+      { status: 409, statusText: 'Conflict', body: { message: 'sha mismatch' } },
+    ]);
+    try {
+      await commitFileToBranch({ ...COMMIT_FILE_ARGS, opts: { fetch: fetchMock } });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e.code).toBe('FILE_SHA_CONFLICT');
+    }
+  });
+});
+
+describe('commitFileToBranch — arg validation', () => {
+  it('throws when any required string arg is missing', async () => {
+    const required = ['owner', 'repo', 'branchName', 'filePath', 'fileContent', 'commitMessage', 'token'];
+    for (const k of required) {
+      const args = { ...COMMIT_FILE_ARGS, opts: { fetch: vi.fn() } };
+      delete args[k];
+      try {
+        await commitFileToBranch(args);
+        expect.unreachable(`should have thrown for missing ${k}`);
+      } catch (e) {
+        expect(e.message).toMatch(new RegExp(`${k} must be a non-empty string`));
+      }
+    }
+  });
+
+  it('throws when args is not an object', async () => {
+    await expect(commitFileToBranch(null)).rejects.toThrow(/args object required/);
   });
 });
