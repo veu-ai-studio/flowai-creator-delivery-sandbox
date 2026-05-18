@@ -524,4 +524,399 @@ describe('runOptionC — audit emission', () => {
       expect(result.auditWrite.reason).toMatch(/supabase down/);
     } finally { clearEnv(); }
   });
+
+  // DISPATCH 28 P0-5: §7 Output Contract #5 incompleteness signal.
+  it('exposes runIncomplete signal when audit-write fails (§7 #5)', async () => {
+    envWithVercel();
+    try {
+      const deps = happyDeps({
+        appendGovernanceEntry: vi.fn(async () => ({
+          written: false, reason: 'cas_conflict', attempts: 3,
+          rollback: async () => ({ rolled: true }),
+        })),
+      });
+      const result = await runOptionC({
+        productId: PRODUCT_ID, githubRepoUrl: REPO_URL,
+        issue: HAPPY_ISSUE, runId: RUN_ID,
+        supabase: null, environment: 'prd', deps,
+      });
+      expect(result.ok).toBe(true);                              // existing contract preserved
+      expect(result.runIncomplete).not.toBeNull();
+      expect(result.runIncomplete.reason).toBe('cas_conflict');
+      expect(typeof result.runIncomplete.rollback).toBe('function');
+    } finally { clearEnv(); }
+  });
+
+  it('runIncomplete is null when audit-write succeeds', async () => {
+    envWithVercel();
+    try {
+      const deps = happyDeps({
+        appendGovernanceEntry: vi.fn(async () => ({ written: true, attempts: 1 })),
+      });
+      const result = await runOptionC({
+        productId: PRODUCT_ID, githubRepoUrl: REPO_URL,
+        issue: HAPPY_ISSUE, runId: RUN_ID,
+        supabase: null, environment: 'prd', deps,
+      });
+      expect(result.runIncomplete).toBeNull();
+    } finally { clearEnv(); }
+  });
+});
+
+// ── DISPATCH 28 P0-5: atomic ProductSSOT write primitive ────────────────
+
+describe('withAtomicSsotWrite — snapshot + CAS + rollback', () => {
+  // Lightweight in-memory Supabase fake that supports the exact query
+  // chain the primitive uses: from(table).select(cols).eq(k,v).eq(k,v).maybeSingle()
+  // and from(table).update(fields).eq(k,v).eq(k,v).select(cols).
+  function makeFake({ initialRow }) {
+    const state = { row: { ...initialRow } };
+    return {
+      _state: state,
+      from: () => makeQuery(state),
+    };
+  }
+  function makeQuery(state) {
+    const q = {
+      _filters: [],
+      _select: '*',
+      _update: null,
+      _selectAfter: null,
+      select(cols) { q._select = cols; return q; },
+      update(fields) { q._update = fields; return q; },
+      eq(k, v) { q._filters.push({ k, v }); return q; },
+      async maybeSingle() {
+        const r = state.row;
+        if (!r) return { data: null, error: null };
+        for (const f of q._filters) {
+          if (r[f.k] !== f.v) return { data: null, error: null };
+        }
+        return { data: { ...r }, error: null };
+      },
+    };
+    // Chain finalizers — calling `select(cols)` after update returns the affected rows.
+    const origSelect = q.select;
+    q.select = function(cols) {
+      if (q._update !== null) {
+        // Apply update with the accumulated filters and return affected rows.
+        const r = state.row;
+        if (!r) return Promise.resolve({ data: [], error: null });
+        for (const f of q._filters) {
+          if (r[f.k] !== f.v) return Promise.resolve({ data: [], error: null });
+        }
+        Object.assign(state.row, q._update);
+        return Promise.resolve({ data: [{ id: r.id }], error: null });
+      }
+      return origSelect.call(q, cols);
+    };
+    return q;
+  }
+
+  it('happy path: snapshot → mutate → CAS update succeeds', async () => {
+    const fake = makeFake({
+      initialRow: {
+        id: 1, product_id: 'mypreglife', environment: 'prd',
+        governance_record: [{ a: 1 }], updated_at: 'T0',
+      },
+    });
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'mypreglife', environment: 'prd', supabase: fake,
+      fields: ['governance_record'],
+      mutate: (prior) => ({ governance_record: [...prior.governance_record, { a: 2 }] }),
+    });
+    expect(res.written).toBe(true);
+    expect(res.attempts).toBe(1);
+    expect(res.snapshot).toEqual({ governance_record: [{ a: 1 }] });
+    expect(fake._state.row.governance_record).toEqual([{ a: 1 }, { a: 2 }]);
+    expect(fake._state.row.updated_at).not.toBe('T0');           // CAS bumped updated_at
+    expect(typeof res.rollback).toBe('function');
+  });
+
+  it('rollback restores the snapshot state', async () => {
+    const fake = makeFake({
+      initialRow: {
+        id: 1, product_id: 'mypreglife', environment: 'prd',
+        governance_record: [{ a: 1 }], updated_at: 'T0',
+      },
+    });
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'mypreglife', environment: 'prd', supabase: fake,
+      fields: ['governance_record'],
+      mutate: (prior) => ({ governance_record: [...prior.governance_record, { a: 99 }] }),
+    });
+    expect(res.written).toBe(true);
+    expect(fake._state.row.governance_record).toEqual([{ a: 1 }, { a: 99 }]);
+    const r = await res.rollback();
+    expect(r.rolled).toBe(true);
+    expect(fake._state.row.governance_record).toEqual([{ a: 1 }]);
+  });
+
+  it('CAS conflict: stale updated_at triggers retry with fresh snapshot', async () => {
+    // First .update returns 0 rows (CAS conflict); second succeeds.
+    const fake = makeFake({
+      initialRow: {
+        id: 1, product_id: 'mypreglife', environment: 'prd',
+        governance_record: [{ a: 1 }], updated_at: 'T0',
+      },
+    });
+    let casCalls = 0;
+    const origFrom = fake.from;
+    fake.from = () => {
+      const q = origFrom();
+      const origSelect = q.select;
+      q.select = function(cols) {
+        if (this._update !== null) {
+          casCalls += 1;
+          if (casCalls === 1) {
+            return Promise.resolve({ data: [], error: null }); // CAS conflict
+          }
+        }
+        return origSelect.call(this, cols);
+      };
+      return q;
+    };
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'mypreglife', environment: 'prd', supabase: fake,
+      fields: ['governance_record'],
+      mutate: (prior) => ({ governance_record: [...prior.governance_record, { a: 2 }] }),
+      options: { maxRetries: 3, backoffMs: 0 },
+    });
+    expect(res.written).toBe(true);
+    expect(res.attempts).toBe(2);                                  // 1 conflict + 1 success
+  });
+
+  it('CAS conflict beyond maxRetries → written:false, reason:"cas_conflict"', async () => {
+    const fake = makeFake({
+      initialRow: {
+        id: 1, product_id: 'mypreglife', environment: 'prd',
+        governance_record: [], updated_at: 'T0',
+      },
+    });
+    const origFrom = fake.from;
+    fake.from = () => {
+      const q = origFrom();
+      const origSelect = q.select;
+      q.select = function(cols) {
+        if (this._update !== null) {
+          return Promise.resolve({ data: [], error: null }); // always conflicts
+        }
+        return origSelect.call(this, cols);
+      };
+      return q;
+    };
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'mypreglife', environment: 'prd', supabase: fake,
+      fields: ['governance_record'],
+      mutate: (prior) => ({ governance_record: [...(prior.governance_record ?? []), { a: 1 }] }),
+      options: { maxRetries: 2, backoffMs: 0 },
+    });
+    expect(res.written).toBe(false);
+    expect(res.reason).toBe('cas_conflict');
+    expect(res.attempts).toBe(2);
+    expect(typeof res.rollback).toBe('function');
+  });
+
+  it('returns "no_product_ssot_row" when the row is absent', async () => {
+    const fake = makeFake({ initialRow: null });
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'unknown', environment: 'prd', supabase: fake,
+      mutate: () => ({ governance_record: [] }),
+    });
+    expect(res.written).toBe(false);
+    expect(res.reason).toBe('no_product_ssot_row');
+    expect(res.attempts).toBe(1);
+  });
+
+  it('returns "supabase_unavailable" when supabase is null', async () => {
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'mypreglife', environment: 'prd', supabase: null,
+      mutate: () => ({ governance_record: [] }),
+    });
+    expect(res.written).toBe(false);
+    expect(res.reason).toBe('supabase_unavailable');
+  });
+
+  it('returns "bad_mutate_fn" when mutate is missing', async () => {
+    const fake = makeFake({ initialRow: { id: 1, product_id: 'p', environment: 'prd', updated_at: 'T0' } });
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'p', environment: 'prd', supabase: fake,
+    });
+    expect(res.written).toBe(false);
+    expect(res.reason).toBe('bad_mutate_fn');
+  });
+
+  it('mutate throwing → written:false with reason captured', async () => {
+    const fake = makeFake({
+      initialRow: { id: 1, product_id: 'p', environment: 'prd', governance_record: [], updated_at: 'T0' },
+    });
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'p', environment: 'prd', supabase: fake,
+      fields: ['governance_record'],
+      mutate: () => { throw new Error('boom'); },
+    });
+    expect(res.written).toBe(false);
+    expect(res.reason).toMatch(/^mutate_threw:.*boom/);
+  });
+
+  it('captures multiple jsonb fields when requested', async () => {
+    const fake = makeFake({
+      initialRow: {
+        id: 1, product_id: 'p', environment: 'prd',
+        governance_record: [{ g: 1 }], delta_log: [{ d: 1 }],
+        updated_at: 'T0',
+      },
+    });
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'p', environment: 'prd', supabase: fake,
+      fields: ['governance_record', 'delta_log'],
+      mutate: (prior) => ({
+        governance_record: [...prior.governance_record, { g: 2 }],
+        delta_log: [...prior.delta_log, { d: 2 }],
+      }),
+    });
+    expect(res.written).toBe(true);
+    expect(res.snapshot).toEqual({ governance_record: [{ g: 1 }], delta_log: [{ d: 1 }] });
+    expect(fake._state.row.governance_record).toEqual([{ g: 1 }, { g: 2 }]);
+    expect(fake._state.row.delta_log).toEqual([{ d: 1 }, { d: 2 }]);
+  });
+
+  it('fires onCommit hook after a successful CAS', async () => {
+    const fake = makeFake({
+      initialRow: { id: 1, product_id: 'p', environment: 'prd', governance_record: [], updated_at: 'T0' },
+    });
+    const onCommit = vi.fn(async () => undefined);
+    const res = await __internals.withAtomicSsotWrite({
+      productId: 'p', environment: 'prd', supabase: fake,
+      fields: ['governance_record'],
+      mutate: () => ({ governance_record: [{ a: 1 }] }),
+      options: { onCommit },
+    });
+    expect(res.written).toBe(true);
+    expect(onCommit).toHaveBeenCalledOnce();
+    expect(onCommit.mock.calls[0][0].rowId).toBe(1);
+  });
+});
+
+describe('appendGovernanceEntry — atomic write via primitive', () => {
+  function makeFake({ initialRow }) {
+    const state = { row: { ...initialRow } };
+    return {
+      _state: state,
+      from: () => {
+        const q = {
+          _filters: [], _select: '*', _update: null,
+          select(cols) {
+            if (q._update !== null) {
+              const r = state.row;
+              if (!r) return Promise.resolve({ data: [], error: null });
+              for (const f of q._filters) {
+                if (r[f.k] !== f.v) return Promise.resolve({ data: [], error: null });
+              }
+              Object.assign(state.row, q._update);
+              return Promise.resolve({ data: [{ id: r.id }], error: null });
+            }
+            q._select = cols; return q;
+          },
+          update(fields) { q._update = fields; return q; },
+          eq(k, v) { q._filters.push({ k, v }); return q; },
+          async maybeSingle() {
+            const r = state.row;
+            if (!r) return { data: null, error: null };
+            for (const f of q._filters) {
+              if (r[f.k] !== f.v) return { data: null, error: null };
+            }
+            return { data: { ...r }, error: null };
+          },
+        };
+        return q;
+      },
+    };
+  }
+
+  it('appends an entry atomically to governance_record', async () => {
+    const fake = makeFake({
+      initialRow: {
+        id: 1, product_id: 'mypreglife', environment: 'prd',
+        governance_record: [{ kind: 'old' }], updated_at: 'T0',
+      },
+    });
+    const result = await __internals.appendGovernanceEntry({
+      productId: 'mypreglife', environment: 'prd', supabase: fake,
+      entry: { kind: 'new' },
+    });
+    expect(result.written).toBe(true);
+    expect(fake._state.row.governance_record).toEqual([{ kind: 'old' }, { kind: 'new' }]);
+  });
+
+  it('returns supabase_unavailable when supabase is null', async () => {
+    const result = await __internals.appendGovernanceEntry({
+      productId: 'mypreglife', environment: 'prd', supabase: null,
+      entry: { kind: 'x' },
+    });
+    expect(result.written).toBe(false);
+    expect(result.reason).toBe('supabase_unavailable');
+    expect(typeof result.rollback).toBe('function');
+  });
+});
+
+describe('appendDeltaLogEntry — atomic write to delta_log (§7.5)', () => {
+  function makeFake({ initialRow }) {
+    const state = { row: { ...initialRow } };
+    return {
+      _state: state,
+      from: () => {
+        const q = {
+          _filters: [], _select: '*', _update: null,
+          select(cols) {
+            if (q._update !== null) {
+              const r = state.row;
+              if (!r) return Promise.resolve({ data: [], error: null });
+              for (const f of q._filters) {
+                if (r[f.k] !== f.v) return Promise.resolve({ data: [], error: null });
+              }
+              Object.assign(state.row, q._update);
+              return Promise.resolve({ data: [{ id: r.id }], error: null });
+            }
+            q._select = cols; return q;
+          },
+          update(fields) { q._update = fields; return q; },
+          eq(k, v) { q._filters.push({ k, v }); return q; },
+          async maybeSingle() {
+            const r = state.row;
+            if (!r) return { data: null, error: null };
+            for (const f of q._filters) {
+              if (r[f.k] !== f.v) return { data: null, error: null };
+            }
+            return { data: { ...r }, error: null };
+          },
+        };
+        return q;
+      },
+    };
+  }
+
+  it('appends an entry atomically to delta_log', async () => {
+    const fake = makeFake({
+      initialRow: {
+        id: 1, product_id: 'mypreglife', environment: 'prd',
+        delta_log: [], updated_at: 'T0',
+      },
+    });
+    const result = await __internals.appendDeltaLogEntry({
+      productId: 'mypreglife', environment: 'prd', supabase: fake,
+      entry: { entryId: 'e1', at: 'now', triggeredBy: 'agent3_self_renewal' },
+    });
+    expect(result.written).toBe(true);
+    expect(fake._state.row.delta_log).toHaveLength(1);
+    expect(fake._state.row.delta_log[0].triggeredBy).toBe('agent3_self_renewal');
+  });
+
+  it('returns supabase_unavailable when supabase is null', async () => {
+    const result = await __internals.appendDeltaLogEntry({
+      productId: 'p', environment: 'prd', supabase: null,
+      entry: { entryId: 'x' },
+    });
+    expect(result.written).toBe(false);
+    expect(result.reason).toBe('supabase_unavailable');
+  });
 });

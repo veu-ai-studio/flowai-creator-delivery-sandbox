@@ -1366,6 +1366,13 @@ export async function runOrchestration(args = {}) {
     runId,
     mode: state.mode,
     auditWrite,
+    // DISPATCH 28 P0-5: §7 Output Contract #5 incompleteness signal.
+    // If the atomic governance write failed, the run is INCOMPLETE per
+    // §7 line 146 — callers may invoke auditWrite.rollback() to restore
+    // the snapshot state (best-effort structural restore).
+    runIncomplete: !auditWrite?.written && auditWrite?.reason !== 'not_attempted'
+      ? { reason: auditWrite?.reason ?? 'unknown', rollback: auditWrite?.rollback ?? null }
+      : null,
   });
 }
 
