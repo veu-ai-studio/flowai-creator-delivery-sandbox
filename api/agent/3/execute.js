@@ -56,6 +56,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, error: 'invalid_json', detail: String(e?.message ?? e) });
   }
 
+  // ── SSE branch (DISPATCH 13) ────────────────────────────────────────────────
+  // When the request advertises Accept: text/event-stream, route to the
+  // dispatch-24 product-agnostic orchestrator and stream step logs +
+  // iteration results + final result as Server-Sent Events. This is the
+  // interactive entry point used by src/pages/FlowAIDashboard.jsx —
+  // bypasses the productScope+issue validation that the JSON path
+  // requires, since the orchestrator handles PATH B (unknown URL) end-
+  // to-end without an operator-registered product.
+  const acceptHeader = String(req.headers?.accept || '').toLowerCase();
+  if (acceptHeader.includes('text/event-stream')) {
+    return runSseOrchestration(req, res, body);
+  }
+
   // Body validation.
   const productScope = typeof body.productScope === 'string' ? body.productScope : null;
   const issue = body.issue && typeof body.issue === 'object' ? body.issue : null;
@@ -254,10 +267,98 @@ async function tryEnqueueInngest({ productScope, issue, mode, runId, sourceHints
   }
 }
 
+// ── SSE handler (DISPATCH 13) ──────────────────────────────────────────────
+//
+// Streams every step log, every completed iteration, and the final result
+// as SSE events with `data: <JSON>\n\n` framing, terminating with
+// `data: [DONE]\n\n`. Body fields:
+//
+//   url:           string|null     — any URL (PATH A registry hit OR PATH B
+//                                    universal mode); null → pick from
+//                                    product_registry (PATH A only)
+//   mode:          'auto'|'guided'|'manual'   (default 'auto')
+//   maxIterations: number          (default 10)
+//   gtmTarget:     number          (default 95)
+//   runId:         string?         — UUID; orchestrator generates one if absent
+//
+// Auth: any resolved auth context (internal or x-product-scope) is accepted;
+// the productScope-matching check is intentionally skipped here because
+// PATH B URLs have no registered product to match against. The dashboard
+// is the intended caller.
+async function runSseOrchestration(req, res, body) {
+  // Set SSE headers BEFORE any writes so they're sent on first flush.
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  if (typeof res.flushHeaders === 'function') {
+    try { res.flushHeaders(); } catch { /* swallow */ }
+  }
+
+  const sendEvent = (payload) => {
+    try {
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    } catch { /* socket closed; orchestrator will detect on next write */ }
+  };
+  const sendDone = () => {
+    try { res.write('data: [DONE]\n\n'); res.end(); } catch { /* ignored */ }
+  };
+
+  // Auth (relaxed for SSE — productScope-match check skipped).
+  const auth = resolveAuthContext(req);
+  if (!auth.ok) {
+    sendEvent({ type: 'error', error: auth.error, status: auth.status });
+    sendDone();
+    return;
+  }
+
+  // Parse body fields with defaults per dispatch spec.
+  const url = typeof body.url === 'string' && body.url.length > 0 ? body.url : null;
+  const mode = ['auto', 'guided', 'manual'].includes(body.mode) ? body.mode : 'auto';
+  const maxIterations = Number.isFinite(body.maxIterations) && body.maxIterations > 0
+    ? Math.min(body.maxIterations, 50) : 10;
+  const gtmTarget = Number.isFinite(body.gtmTarget) && body.gtmTarget >= 0 && body.gtmTarget <= 100
+    ? body.gtmTarget : 95;
+  const runId = typeof body.runId === 'string' && body.runId.length > 0 ? body.runId : null;
+
+  sendEvent({
+    type: 'start',
+    runId, url, mode, maxIterations, gtmTarget,
+    at: new Date().toISOString(),
+  });
+
+  let result;
+  try {
+    const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    // Best-effort Supabase client — orchestrator gracefully handles null.
+    let supabase = null;
+    try {
+      const { getSupabase } = await import('../../_lib/supabase.js');
+      supabase = getSupabase();
+    } catch { /* run without DB → PATH B fast path */ }
+
+    result = await runOrchestration({
+      url, mode, runId, supabase,
+      environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
+      gtmTarget, maxIterations,
+      onStep: (log) => sendEvent({ type: 'step', log }),
+      onIteration: (iteration) => sendEvent({ type: 'iteration', iteration }),
+    });
+  } catch (e) {
+    sendEvent({ type: 'error', error: e?.message ?? String(e), code: e?.code ?? 'ORCHESTRATION_FAILED' });
+    sendDone();
+    return;
+  }
+
+  sendEvent({ type: 'final', result });
+  sendDone();
+}
+
 // Exported for tests — the handler closure isn't easily testable otherwise.
 export const __test = Object.freeze({
   resolveAuthContext,
   buildExecutor,
+  runSseOrchestration,
   SYNC_TIMEOUT_MS,
   ALLOWED_MODES,
 });
