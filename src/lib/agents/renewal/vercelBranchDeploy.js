@@ -122,13 +122,20 @@ async function callVercel(method, pathAndQuery, token, opts = {}) {
  */
 async function createDeployment({ projectId, orgId, owner, repo, branchName, token, opts }) {
   const query = orgId ? `?teamId=${encodeURIComponent(orgId)}` : '';
+  // NOTE: do NOT send `target: 'preview'` — Vercel /v13/deployments only
+  // accepts `target` values of 'production', 'staging', or a custom env
+  // identifier; passing 'preview' returns 400 with
+  //   "Invalid request: `target` should be 'production', 'staging', or
+  //    a custom environment identifier."
+  // OMITTING the field entirely is the documented way to request a
+  // preview deployment (Vercel infers preview from absence of target).
+  // Fixed 2026-05-18 (W5b dispatch #12) after live 400 reproduction.
   const res = await callVercel('POST', `/v13/deployments${query}`, token, {
     ...opts,
     body: {
       name: repo,
       project: projectId,
       gitSource: { type: 'github', org: owner, repo, ref: branchName },
-      target: 'preview',
     },
   });
   if (res.status >= 200 && res.status < 300) {
@@ -141,10 +148,18 @@ async function createDeployment({ projectId, orgId, owner, repo, branchName, tok
     }
     return res.body;
   }
+  // Surface the Vercel error body so 4xx debugging doesn't require a
+  // separate curl round-trip (previously the raw response text was
+  // dropped on the floor; this preserves it for the orchestrator log).
+  const vercelMsg =
+    res.body && typeof res.body === 'object'
+      ? res.body.error?.message ?? JSON.stringify(res.body).slice(0, 300)
+      : (typeof res.body === 'string' ? res.body.slice(0, 300) : '');
   throw makeError(
     classifyStatus(res.status, 'DEPLOY_FAILED'),
-    `vercelBranchDeploy: POST /v13/deployments ${res.status} ${res.statusText} for ${owner}/${repo}@${branchName}`,
-    { status: res.status },
+    `vercelBranchDeploy: POST /v13/deployments ${res.status} ${res.statusText} for ${owner}/${repo}@${branchName}` +
+      (vercelMsg ? ` — ${vercelMsg}` : ''),
+    { status: res.status, vercelError: vercelMsg || null },
   );
 }
 
