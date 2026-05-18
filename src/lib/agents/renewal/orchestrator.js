@@ -25,6 +25,7 @@ import { checkRateCap, checkRunawayDetector } from './rateCap.js';
 import { getInstallationToken } from './githubApp.js';
 import { produceMonitorText } from './monitorTextProducer.js';
 import { computeScore } from './preScoreAdapter.js';
+import { scoreCrawlOutput } from './gtmReadinessScorer.js';
 import { generateFix } from './fixGenerator.js';
 import { createRenewalBranch, commitFileToBranch } from './githubBranchWriter.js';
 import { deployBranchPreview } from './vercelBranchDeploy.js';
@@ -450,6 +451,9 @@ export async function runOrchestration(args = {}) {
   const _readProductPolicy      = deps.readProductPolicy      || readProductPolicy;
   const _appendGovernanceEntry  = deps.appendGovernanceEntry  || appendGovernanceEntry;
   const _remediationEngine      = deps.remediationEngine      || remediationEngine;
+  // DISPATCH 28: scoreCrawlOutput is DI-overridable so tests can drive
+  // the §7.6 gate without having to construct issue-shaped crawl mocks.
+  const _scoreCrawlOutput       = deps.scoreCrawlOutput       || scoreCrawlOutput;
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   const orchestrationLog = [];
@@ -563,6 +567,11 @@ export async function runOrchestration(args = {}) {
   let currentUrl = initialUrl;
   let originalScore = null;
   let lastPostScore = null;
+  // DISPATCH 28 — canonical §7.6 GTM Readiness score (gating signal).
+  // Five-Layer (originalScore / lastPostScore) is retained as an
+  // internal-only telemetry signal per the dispatch directive.
+  let originalGtmScore = null;
+  let lastPostGtm = null;
   let finalPreviewUrl = null;
   let pr = null;
   let exitReason = 'UNKNOWN';
@@ -654,18 +663,31 @@ export async function runOrchestration(args = {}) {
         productId, url: currentUrl, runId, monitorText: monitor.monitorText,
       });
       if (originalScore === null) originalScore = preScoreEnvelope.total;
+      // DISPATCH 28 — canonical §7.6 GTM Readiness score from the
+      // structured crawl (pre-fix). This is THE gating signal at
+      // STEP 12; Five-Layer remains internal telemetry only.
+      const preGtm = _scoreCrawlOutput(crawlOutput);
+      if (originalGtmScore === null) originalGtmScore = preGtm.score;
+      iterLog.preGtm = preGtm;
       const log = makeStepLog({
         iteration: iterationNumber, step: 5, status: 'complete',
-        tool: 'monitorTextProducer + preScoreAdapter',
-        why: 'establish current score before fixes — measures improvement',
-        result: { preScore: preScoreEnvelope.total, layers: {
-          l1: preScoreEnvelope.l1, l2: preScoreEnvelope.l2, l3: preScoreEnvelope.l3,
-          l4: preScoreEnvelope.l4, l5: preScoreEnvelope.l5,
-        }, label: preScoreEnvelope.label },
+        tool: 'gtmReadinessScorer (§7.6) + monitorTextProducer (internal)',
+        why: 'establish canonical GTM Readiness score before fixes — measures improvement',
+        result: {
+          gtmScore: preGtm.score,
+          gtmBand: preGtm.band,
+          gtmCounts: preGtm.counts,
+          fiveLayerInternal: preScoreEnvelope.total,
+          layers: {
+            l1: preScoreEnvelope.l1, l2: preScoreEnvelope.l2, l3: preScoreEnvelope.l3,
+            l4: preScoreEnvelope.l4, l5: preScoreEnvelope.l5,
+          },
+          label: preGtm.label,
+        },
         durationMs: Date.now() - t0, mode: state.mode,
         scores: {
-          original: originalScore, current: preScoreEnvelope.total,
-          target: gtmTarget, progressPct: computeProgress({ originalScore, currentScore: preScoreEnvelope.total, target: gtmTarget }),
+          original: originalGtmScore, current: preGtm.score,
+          target: gtmTarget, progressPct: computeProgress({ originalScore: originalGtmScore, currentScore: preGtm.score, target: gtmTarget }),
         },
       });
       emit(log); iterLog.steps.push(log);
@@ -1095,18 +1117,42 @@ export async function runOrchestration(args = {}) {
         productId, url: postFixUrl, runId, monitorText: postMonitor.monitorText,
       });
       lastPostScore = postScoreEnvelope.total;
+      // DISPATCH 28 — focused post-fix re-crawl against the live
+      // preview URL so the canonical §7.6 score reflects the actual
+      // deployed state, not the pre-fix crawl. PATH B / deploy-degraded
+      // paths fall back to scoring the existing crawlOutput so the gate
+      // still emits a verdict.
+      let postFixCrawlOutput = crawlOutput;
+      if (!deployDegraded && previewUrl) {
+        try {
+          postFixCrawlOutput = await _conductStructuredCrawl({
+            url: postFixUrl, maxPages: 10, depth: 3, productId, runId,
+          });
+        } catch {
+          postFixCrawlOutput = crawlOutput;
+        }
+      }
+      const postGtm = _scoreCrawlOutput(postFixCrawlOutput);
+      lastPostGtm = postGtm;
+      iterLog.postGtm = postGtm;
       const log = makeStepLog({
         iteration: iterationNumber, step: 11, status: 'complete',
-        tool: 'monitorTextProducer + preScoreAdapter',
-        why: 'measure actual improvement from this iteration\'s fixes',
-        result: { postScore: postScoreEnvelope.total, layers: {
-          l1: postScoreEnvelope.l1, l2: postScoreEnvelope.l2, l3: postScoreEnvelope.l3,
-          l4: postScoreEnvelope.l4, l5: postScoreEnvelope.l5,
-        } },
+        tool: 'gtmReadinessScorer (§7.6) + post-fix re-crawl',
+        why: 'measure canonical GTM Readiness score from post-deploy crawl',
+        result: {
+          gtmScore: postGtm.score,
+          gtmBand: postGtm.band,
+          gtmCounts: postGtm.counts,
+          fiveLayerInternal: postScoreEnvelope.total,
+          layers: {
+            l1: postScoreEnvelope.l1, l2: postScoreEnvelope.l2, l3: postScoreEnvelope.l3,
+            l4: postScoreEnvelope.l4, l5: postScoreEnvelope.l5,
+          },
+        },
         durationMs: Date.now() - t0, mode: state.mode,
         scores: {
-          original: originalScore, current: postScoreEnvelope.total,
-          target: gtmTarget, progressPct: computeProgress({ originalScore, currentScore: postScoreEnvelope.total, target: gtmTarget }),
+          original: originalGtmScore, current: postGtm.score,
+          target: gtmTarget, progressPct: computeProgress({ originalScore: originalGtmScore, currentScore: postGtm.score, target: gtmTarget }),
         },
       });
       emit(log); iterLog.steps.push(log);
@@ -1118,8 +1164,13 @@ export async function runOrchestration(args = {}) {
     await state.checkpoint(onCheckpoint, { lastStep: 11, iteration: iterationNumber });
 
     // STEP 12 — GTM Readiness Decision.
-    const delta = postScoreEnvelope.total - preScoreEnvelope.total;
-    const totalImprovement = postScoreEnvelope.total - (originalScore ?? 0);
+    // DISPATCH 28: gate uses canonical §7.6 score, not Five-Layer total.
+    const preGtmForIter = iterLog.preGtm ?? { score: 0, counts: { critical: 0 } };
+    const postGtmForIter = iterLog.postGtm ?? { score: 0, counts: { critical: 0 } };
+    const delta = postGtmForIter.score - preGtmForIter.score;
+    const totalImprovement = postGtmForIter.score - (originalGtmScore ?? 0);
+    // Five-Layer internal delta retained for telemetry only.
+    const fiveLayerDelta = postScoreEnvelope.total - preScoreEnvelope.total;
     // PATH B uses the universal-mode defaults synthesized into product;
     // PATH A uses the loaded registry policy; both fall back to ALWAYS_OPEN
     // with conservative thresholds when neither is set.
@@ -1136,11 +1187,16 @@ export async function runOrchestration(args = {}) {
       preScore: preScoreEnvelope, postScore: postScoreEnvelope,
       policy: decisionPolicy, runId, productId,
     });
-    iterLog.preScore = preScoreEnvelope.total;
-    iterLog.postScore = postScoreEnvelope.total;
+    // DISPATCH 28: iterLog now records BOTH canonical (preScore/postScore =
+    // §7.6 GTM Readiness) and internal Five-Layer signal separately.
+    iterLog.preScore = preGtmForIter.score;          // canonical §7.6
+    iterLog.postScore = postGtmForIter.score;        // canonical §7.6
+    iterLog.fiveLayerPre = preScoreEnvelope.total;   // internal signal
+    iterLog.fiveLayerPost = postScoreEnvelope.total; // internal signal
     iterLog.delta = delta;
     iterLog.totalImprovement = totalImprovement;
-    iterLog.gtmReady = postScoreEnvelope.total >= gtmTarget;
+    // GTM ready per §7.6 + CA-13: score ≥ gtmTarget AND zero critical findings.
+    iterLog.gtmReady = postGtmForIter.score >= gtmTarget && postGtmForIter.counts.critical === 0;
     iterLog.branchName = pathB ? null : branchName;
     iterLog.previewUrl = previewUrl;
     iterLog.decision = decision.action;
@@ -1148,7 +1204,7 @@ export async function runOrchestration(args = {}) {
     iterations.push(iterLog);
 
     let iterExit = null;
-    if (postScoreEnvelope.total >= gtmTarget) {
+    if (iterLog.gtmReady) {
       iterExit = 'GTM_READY';
     } else if (iterationNumber >= maxIterations) {
       iterExit = 'MAX_ITERATIONS';
@@ -1158,13 +1214,23 @@ export async function runOrchestration(args = {}) {
     const decisionLog = makeStepLog({
       iteration: iterationNumber, step: 12,
       status: iterExit ? 'complete' : 'complete',
-      tool: 'deltaPolicy.js + orchestrator logic',
+      tool: 'deltaPolicy.js + §7.6 GTM Readiness gate',
       why: 'decide whether to open PR now or run another iteration',
-      result: { delta, postScore: postScoreEnvelope.total, gtmReady: iterLog.gtmReady, exitTrigger: iterExit, action: decision.action },
+      result: {
+        delta,
+        postScore: postGtmForIter.score,              // canonical
+        gtmBand: postGtmForIter.band,
+        gtmCounts: postGtmForIter.counts,
+        fiveLayerDelta,                                // internal telemetry
+        fiveLayerPost: postScoreEnvelope.total,        // internal telemetry
+        gtmReady: iterLog.gtmReady,
+        exitTrigger: iterExit,
+        action: decision.action,
+      },
       mode: state.mode,
       scores: {
-        original: originalScore, current: postScoreEnvelope.total,
-        target: gtmTarget, progressPct: computeProgress({ originalScore, currentScore: postScoreEnvelope.total, target: gtmTarget }),
+        original: originalGtmScore, current: postGtmForIter.score,
+        target: gtmTarget, progressPct: computeProgress({ originalScore: originalGtmScore, currentScore: postGtmForIter.score, target: gtmTarget }),
       },
     });
     emit(decisionLog); iterLog.steps.push(decisionLog);
@@ -1203,8 +1269,10 @@ export async function runOrchestration(args = {}) {
         baseBranch: 'main',
         title: `FlowAI Self-Renewal: ${runId.slice(0, 8)} (${exitReason})`,
         body: buildPrBody({
-          runId, mode, exitReason, originalScore,
-          finalScore: lastPostScore, totalDelta: (lastPostScore ?? 0) - (originalScore ?? 0),
+          runId, mode, exitReason,
+          originalScore: originalGtmScore ?? 0,
+          finalScore: lastPostGtm?.score ?? originalGtmScore ?? 0,
+          totalDelta: (lastPostGtm?.score ?? originalGtmScore ?? 0) - (originalGtmScore ?? 0),
           iterations, finalPreviewUrl, gtmTarget,
         }),
         token,
@@ -1227,6 +1295,15 @@ export async function runOrchestration(args = {}) {
   }
 
   // STEP 14 — Audit Record.
+  // DISPATCH 28: audit emits the canonical §7.6 GTM Readiness score
+  // alongside the Five-Layer telemetry. Per §7.6 + §14.1, every report
+  // emission writes a governance_record entry of kind
+  // 'gtm_readiness_score' so the score trajectory is auditable across
+  // the product's lifetime.
+  const finalGtmScore = lastPostGtm?.score ?? originalGtmScore ?? 0;
+  const finalGtmBand = lastPostGtm?.band ?? 'not-demo-ready';
+  const finalGtmCriticalCount = lastPostGtm?.counts?.critical ?? 0;
+  const canonicalGtmReady = finalGtmScore >= gtmTarget && finalGtmCriticalCount === 0;
   let auditWrite = { written: false, reason: 'not_attempted' };
   try {
     auditWrite = await _appendGovernanceEntry({
@@ -1234,10 +1311,15 @@ export async function runOrchestration(args = {}) {
       entry: {
         kind: 'self_renewal.orchestration_complete.v1',
         runId, productId, mode, exitReason,
-        originalScore, finalScore: lastPostScore,
-        totalDelta: (lastPostScore ?? 0) - (originalScore ?? 0),
+        originalScore: originalGtmScore,                  // canonical §7.6
+        finalScore: finalGtmScore,                        // canonical §7.6
+        finalGtmBand,
+        finalGtmCounts: lastPostGtm?.counts ?? null,
+        fiveLayerOriginal: originalScore,                 // internal telemetry
+        fiveLayerFinal: lastPostScore,                    // internal telemetry
+        totalDelta: finalGtmScore - (originalGtmScore ?? 0),
         iterationsCompleted: iterations.length,
-        gtmReady: (lastPostScore ?? 0) >= gtmTarget,
+        gtmReady: canonicalGtmReady,
         previewUrl: finalPreviewUrl,
         prUrl: pr?.prHtmlUrl ?? null,
         at: new Date().toISOString(),
@@ -1260,11 +1342,20 @@ export async function runOrchestration(args = {}) {
 
   return Object.freeze({
     ok: true,
-    gtmReady: (lastPostScore ?? 0) >= gtmTarget,
+    // DISPATCH 28: gtmReady + scores are now driven by the canonical §7.6
+    // formula. Five-Layer fields kept on the envelope as internal telemetry
+    // (fiveLayer* prefix) so existing consumers can read them, but the
+    // top-level originalScore / finalScore / totalDelta now refer to the
+    // canonical /100 GTM Readiness score.
+    gtmReady: canonicalGtmReady,
+    gtmBand: finalGtmBand,
+    gtmCounts: lastPostGtm?.counts ?? null,
     exitReason,
-    originalScore: originalScore ?? 0,
-    finalScore: lastPostScore ?? originalScore ?? 0,
-    totalDelta: (lastPostScore ?? originalScore ?? 0) - (originalScore ?? 0),
+    originalScore: originalGtmScore ?? 0,
+    finalScore: finalGtmScore,
+    totalDelta: finalGtmScore - (originalGtmScore ?? 0),
+    fiveLayerOriginalScore: originalScore ?? 0,
+    fiveLayerFinalScore: lastPostScore ?? originalScore ?? 0,
     iterationsCompleted: iterations.length,
     previewUrl: finalPreviewUrl,
     prUrl: pr?.prHtmlUrl ?? null,

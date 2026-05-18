@@ -49,6 +49,21 @@ function happyDeps({ preScoreSequence = [60], postScoreSequence = [72] } = {}) {
     if (i < postScoreSequence.length) sequence.push(postScoreSequence[i]);
   }
   let scoreIdx = 0;
+  // DISPATCH 28: the canonical §7.6 GTM gate uses scoreCrawlOutput()
+  // instead of the Five-Layer total. Reuse the same interleaved
+  // pre/post sequence so existing test expectations (originalScore /
+  // finalScore / GTM_READY trigger) keep working — the sequence drives
+  // both Five-Layer (computeScore) AND the canonical gate.
+  let gtmIdx = 0;
+  const synthGtm = (n) => ({
+    score: n,
+    counts: { critical: 0, high: 0, medium: 0, low: 0 },
+    band: n >= 90 ? 'showcase-ready' : n >= 75 ? 'demo-ready' : n >= 60 ? 'internal-only' : 'not-demo-ready',
+    label: 'synthetic',
+    penalty: 100 - n,
+    formula: 'synthetic',
+    issues: [],
+  });
   return {
     discoverProduct: vi.fn(async () => PRODUCT),
     checkRateCap: vi.fn(async () => ({ allowed: true, runsInWindow: 0, cap: 1 })),
@@ -74,6 +89,13 @@ function happyDeps({ preScoreSequence = [60], postScoreSequence = [72] } = {}) {
       const v = sequence[scoreIdx] ?? sequence[sequence.length - 1] ?? 50;
       scoreIdx += 1;
       return makeScoreEnvelope(v);
+    }),
+    // DISPATCH 28: parallel sequence drives the canonical §7.6 gate.
+    // Synchronous (matches the real scoreCrawlOutput signature).
+    scoreCrawlOutput: vi.fn(() => {
+      const v = sequence[gtmIdx] ?? sequence[sequence.length - 1] ?? 50;
+      gtmIdx += 1;
+      return synthGtm(v);
     }),
     generateFix: vi.fn(async () => ({
       fixedContent: 'fixed-content', model: 'claude', promptTokens: 10, completionTokens: 5,
