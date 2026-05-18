@@ -327,6 +327,50 @@ async function runSseOrchestration(req, res, body) {
     at: new Date().toISOString(),
   });
 
+  // ── Control bridge (DISPATCH 13 follow-up) ───────────────────────────────
+  // The orchestrator exposes its OrchestrationState via deps.__exposeState;
+  // we capture the reference here and start a small interval poller that
+  // reads /api/agent/3/control commands from runControlBus and applies them
+  // to the local state. KV-backed with in-memory fallback; commands are
+  // applied at the next poll boundary (default 500ms cadence).
+  let exposedState = null;
+  let controlPoller = null;
+  let runFinished = false;
+  try {
+    const { readAndClearCommand } = await import('../../_lib/runControlBus.js');
+    // Only poll when we have a runId to poll on. The orchestrator generates
+    // one when null is passed; we don't have visibility into that pre-call,
+    // so the no-runId case skips the poller and the dashboard's control
+    // buttons will be no-ops (which is correct — there's nothing to address).
+    const pollRunId = runId;
+    if (pollRunId) {
+      controlPoller = setInterval(async () => {
+        if (runFinished || !exposedState) return;
+        let cmd;
+        try { cmd = await readAndClearCommand(pollRunId); } catch { return; }
+        if (!cmd) return;
+        try {
+          if (cmd.command === 'pause') {
+            // Pause = flip to guided so the orchestrator stops at next checkpoint.
+            exposedState.switchMode('guided');
+            sendEvent({ type: 'control_applied', command: 'pause', envelopeId: cmd.id, at: new Date().toISOString() });
+          } else if (cmd.command === 'resume') {
+            exposedState.resume();
+            sendEvent({ type: 'control_applied', command: 'resume', envelopeId: cmd.id, at: new Date().toISOString() });
+          } else if (cmd.command === 'switchMode' && cmd.mode) {
+            exposedState.switchMode(cmd.mode);
+            sendEvent({ type: 'control_applied', command: 'switchMode', mode: cmd.mode, envelopeId: cmd.id, at: new Date().toISOString() });
+          } else if (cmd.command === 'stop') {
+            exposedState.stop();
+            sendEvent({ type: 'control_applied', command: 'stop', envelopeId: cmd.id, at: new Date().toISOString() });
+          }
+        } catch { /* state method missing or already-disposed; ignore */ }
+      }, 500);
+      // Best-effort timer cleanup if the Node process is shutting down.
+      controlPoller.unref?.();
+    }
+  } catch { /* runControlBus unavailable — controls become no-ops */ }
+
   let result;
   try {
     const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
@@ -343,13 +387,18 @@ async function runSseOrchestration(req, res, body) {
       gtmTarget, maxIterations,
       onStep: (log) => sendEvent({ type: 'step', log }),
       onIteration: (iteration) => sendEvent({ type: 'iteration', iteration }),
+      deps: { __exposeState: (state) => { exposedState = state; } },
     });
   } catch (e) {
+    runFinished = true;
+    if (controlPoller) clearInterval(controlPoller);
     sendEvent({ type: 'error', error: e?.message ?? String(e), code: e?.code ?? 'ORCHESTRATION_FAILED' });
     sendDone();
     return;
   }
 
+  runFinished = true;
+  if (controlPoller) clearInterval(controlPoller);
   sendEvent({ type: 'final', result });
   sendDone();
 }
