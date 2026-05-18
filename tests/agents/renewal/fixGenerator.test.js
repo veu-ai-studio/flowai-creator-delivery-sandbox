@@ -178,7 +178,7 @@ describe('generateFix — happy path', () => {
     expect(init.headers['content-type']).toBe('application/json');
     const body = JSON.parse(init.body);
     expect(body.model).toBe('claude-sonnet-4-6');
-    expect(body.max_tokens).toBe(4096);
+    expect(body.max_tokens).toBe(16384);
     expect(body.messages).toHaveLength(1);
     expect(body.messages[0].role).toBe('user');
     expect(body.messages[0].content).toContain('File: src/components/Home.jsx');
@@ -485,35 +485,36 @@ describe('generateFix — validation + retry (DISPATCH 23)', () => {
     }
   });
 
-  it('validateFixedContent accepts meaningful diff for code files within brace tolerance', () => {
+  it('validateFixedContent accepts meaningful diff for code files within brace tolerance', async () => {
     const before = 'const a = 1;\nexport default a;\n';
     const after  = 'const a = 1;\nconst b = 2;\nexport default a + b;\n';
-    expect(validateFixedContent(after, before, 'src/x.js')).toEqual({ ok: true });
+    expect(await validateFixedContent(after, before, 'src/x.js')).toEqual({ ok: true });
   });
 
-  it('validateFixedContent flags empty', () => {
-    expect(validateFixedContent('', 'original', 'x.js').ok).toBe(false);
-    expect(validateFixedContent('', 'original', 'x.js').reason).toBe('empty');
+  it('validateFixedContent flags empty', async () => {
+    const v = await validateFixedContent('', 'original', 'x.js');
+    expect(v.ok).toBe(false);
+    expect(v.reason).toBe('empty');
   });
 
-  it('validateFixedContent flags identical', () => {
-    const v = validateFixedContent('same', 'same', 'x.js');
+  it('validateFixedContent flags identical', async () => {
+    const v = await validateFixedContent('same', 'same', 'x.js');
     expect(v.ok).toBe(false);
     expect(v.reason).toBe('identical');
   });
 
-  it('validateFixedContent flags unbalanced parens beyond tolerance', () => {
+  it('validateFixedContent flags unbalanced parens beyond tolerance', async () => {
     // 7 open vs 1 close = diff 6 (tolerance is >3)
     const broken = 'function bad() { return ((((((unmatched; }';
-    const v = validateFixedContent(broken, 'function good() {}', 'x.js');
+    const v = await validateFixedContent(broken, 'function good() {}', 'x.js', { skipParseCheck: true });
     expect(v.ok).toBe(false);
     expect(v.reason).toMatch(/unbalanced_parens/);
   });
 
-  it('validateFixedContent does not balance-check non-code files', () => {
+  it('validateFixedContent does not balance-check non-code files', async () => {
     // Markdown / JSON files skip brace-balance check.
     const md = '# Title\n\nSome { unbalanced markdown }}}';
-    const v = validateFixedContent(md, '# Original\n', 'README.md');
+    const v = await validateFixedContent(md, '# Original\n', 'README.md');
     expect(v.ok).toBe(true);
   });
 });
@@ -618,5 +619,149 @@ describe('extractText', () => {
   it('returns "" on missing content', () => {
     expect(__internals.extractText({})).toBe('');
     expect(__internals.extractText(null)).toBe('');
+  });
+});
+
+// ── DISPATCH 29 — build-safe parse check + truncation rejection ─────────
+
+describe('parseCheckContent — esbuild build-safe gate (DISPATCH 29)', () => {
+  it('passes valid JSX', async () => {
+    const src = `import React from 'react';\nexport default function X() { return <div>hi</div>; }\n`;
+    const r = await __internals.parseCheckContent(src, 'src/X.jsx');
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects truncated mid-statement JSX (the exact MyPregLife failure)', async () => {
+    // Sourced from the actual Vercel build error: file ends mid style-object
+    const truncated = `import React from 'react';\nexport default function X() {\n  const s = {\n    display: 'grid',\n    gridTemplateColumns: '1fr 60px 60px 60px',\n    padding: '8px 14px',`;
+    const r = await __internals.parseCheckContent(truncated, 'src/X.jsx');
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('parse_error');
+    expect(r.detail).toBeTruthy();
+  });
+
+  it('rejects unterminated string literal', async () => {
+    const bad = `export default function X() { return <button onClick={() => onNavigate?.('`;
+    const r = await __internals.parseCheckContent(bad, 'src/X.jsx');
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('parse_error');
+  });
+
+  it('passes valid TypeScript', async () => {
+    const src = `type X = { a: number };\nexport const x: X = { a: 1 };\n`;
+    const r = await __internals.parseCheckContent(src, 'src/x.ts');
+    expect(r.ok).toBe(true);
+  });
+
+  it('passes valid plain JS', async () => {
+    const src = `export const a = 1; export const b = 2;\n`;
+    const r = await __internals.parseCheckContent(src, 'src/x.js');
+    expect(r.ok).toBe(true);
+  });
+
+  it('parses .json via JSON.parse and rejects bad JSON', async () => {
+    expect((await __internals.parseCheckContent('{"a":1}', 'x.json')).ok).toBe(true);
+    const r = await __internals.parseCheckContent('{ "a": ', 'x.json');
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('json_parse_error');
+  });
+
+  it('passes non-code files without invoking esbuild', async () => {
+    const r = await __internals.parseCheckContent('# Title\n\nSome { unbalanced }}}', 'README.md');
+    expect(r.ok).toBe(true);
+  });
+
+  it('returns ok:false with reason:"empty" on empty content', async () => {
+    const r = await __internals.parseCheckContent('', 'src/x.jsx');
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('empty');
+  });
+});
+
+describe('validateFixedContent — build-safe gate integration (DISPATCH 29)', () => {
+  it('rejects truncated JSX even when brace count is within tolerance', async () => {
+    // The file is "balanced enough" (no obvious brace mismatch) but still
+    // syntactically invalid because a string literal is unterminated.
+    const truncated = `import x from 'y'; const a = '`;
+    const r = await validateFixedContent(truncated, 'const a = 1;', 'src/x.jsx');
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('parse_error');
+  });
+
+  it('skipParseCheck:true bypasses esbuild gate (legacy behavior)', async () => {
+    const truncated = `import x from 'y'; const a = '`;
+    const r = await validateFixedContent(truncated, 'const a = 1;', 'src/x.jsx', { skipParseCheck: true });
+    // Brace check tolerates this (1 backtick is parsed as content) → falls through.
+    expect(r.ok).toBe(true);
+  });
+
+  it('still flags identical / empty / whitespace_only before parse-check', async () => {
+    expect((await validateFixedContent('x', 'x', 'a.js')).reason).toBe('identical');
+    expect((await validateFixedContent('', 'x', 'a.js')).reason).toBe('empty');
+  });
+});
+
+describe('generateFix — truncated_max_tokens rejection (DISPATCH 29)', () => {
+  it('rejects responses with stop_reason:"max_tokens" and retries', async () => {
+    let call = 0;
+    const fetchMock = vi.fn(async () => {
+      call += 1;
+      if (call === 1) {
+        return {
+          ok: true, status: 200,
+          json: async () => ({
+            content: [{ type: 'text', text: 'const x = 1;\n// truncated' }],
+            usage: { input_tokens: 50, output_tokens: 12 },
+            stop_reason: 'max_tokens',                       // ← triggers truncation rejection
+          }),
+          text: async () => '{}',
+        };
+      }
+      // Retry returns a valid, complete file.
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          content: [{ type: 'text', text: 'const x = 1;\nconst y = 2;\nexport { x, y };\n' }],
+          usage: { input_tokens: 60, output_tokens: 20 },
+          stop_reason: 'end_turn',
+        }),
+        text: async () => '{}',
+      };
+    });
+    const r = await generateFix({
+      filePath: 'src/x.js',
+      fileContent: 'const old = 1;\nexport default old;\n',
+      issue: 'placeholder',
+      fix: 'rename old → x and add y',
+      productId: 'mypreglife',
+      runId: 'r1',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    });
+    expect(call).toBe(2);                                    // exactly one retry triggered
+    expect(r.attempts).toBe(2);
+    expect(r.fixedContent).toContain('const x = 1;');
+    expect(r.fixedContent).toContain('export { x, y };');
+  });
+
+  it('surfaces FIX_GENERATION_FAILED when retry also returns max_tokens', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        content: [{ type: 'text', text: 'const x = 1;\n// trunc' }],
+        usage: { input_tokens: 50, output_tokens: 8 },
+        stop_reason: 'max_tokens',
+      }),
+      text: async () => '{}',
+    }));
+    await expect(generateFix({
+      filePath: 'src/x.js',
+      fileContent: 'const old = 1;\nexport default old;\n',
+      issue: 'p', fix: 'q',
+      productId: 'mypreglife', runId: 'r1',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    })).rejects.toMatchObject({
+      code: 'FIX_GENERATION_FAILED',
+      message: expect.stringMatching(/truncated_max_tokens/),
+    });
   });
 });

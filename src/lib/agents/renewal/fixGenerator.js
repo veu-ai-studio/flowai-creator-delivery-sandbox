@@ -30,7 +30,14 @@
 const ANTHROPIC_API_BASE = 'https://api.anthropic.com';
 const ANTHROPIC_API_VERSION = '2023-06-01';
 const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-6';
-const DEFAULT_MAX_TOKENS = 4096;
+// DISPATCH 29: bumped from 4096 → 16384 because real fix-target files
+// (BillingSubscriptionManager.jsx, HomeScreen.jsx) clocked in at >4K
+// tokens and Claude truncated mid-statement, producing files like
+// `padding: '8px 14px',` with no closing brace. Vercel build error
+// (esbuild "Expected identifier but found end of file") confirmed the
+// truncation. 16K matches Sonnet 4.6's comfortable output budget and
+// fits the largest renewal-target files in the MyPregLife repo.
+const DEFAULT_MAX_TOKENS = 16384;
 const MAX_EVIDENCE_CHARS = 500;
 
 // Prompt-injection patterns per Panel condition C. Conservative — only
@@ -165,19 +172,87 @@ export function buildPreciseInstructionPrompt({ filePath, fileContent, issue, fi
 }
 
 /**
+ * Run a build-safe parse check against generated source content using
+ * esbuild's transform — the SAME parser Vite uses on Vercel. If
+ * esbuild can't parse it, neither can Vite, and the deploy will fail
+ * at build-time with `[vite:esbuild] Transform failed`. Catching it
+ * here (before commit + deploy) is the load-bearing safety gate.
+ *
+ * For non-code files (markdown, json, txt), returns { ok: true }
+ * without running esbuild. JSON is parsed with native JSON.parse for
+ * a comparable structural check.
+ *
+ * DISPATCH 29 (P0): added because Sonnet 4.6 truncated fix output at
+ * the previous 4K token cap, producing files that ended mid-string
+ * literal. The brace/paren tolerance check missed them because brace
+ * counts can be off in valid JSX (strings containing braces, etc.).
+ *
+ * @param {string} content
+ * @param {string} filePath
+ * @returns {Promise<{ ok: boolean, reason?: string, detail?: string }>}
+ */
+export async function parseCheckContent(content, filePath) {
+  if (typeof content !== 'string' || content.length === 0) {
+    return { ok: false, reason: 'empty' };
+  }
+  const isJs = /\.(js|jsx|ts|tsx|mjs|cjs)$/.test(filePath);
+  const isJson = /\.json$/.test(filePath);
+  if (isJson) {
+    try { JSON.parse(content); return { ok: true }; }
+    catch (e) { return { ok: false, reason: 'json_parse_error', detail: e?.message ?? String(e) }; }
+  }
+  if (!isJs) {
+    // Markdown, txt, html, etc. — no parser available; trust the
+    // structural-balance check upstream.
+    return { ok: true };
+  }
+  // Use esbuild's transform — same as Vite. Lazy-loaded so tests
+  // without the package still work; production has it as a transitive
+  // dep through Vite.
+  let esbuild;
+  try {
+    esbuild = await import('esbuild');
+  } catch {
+    // esbuild unavailable — fall through to "ok"; the upstream
+    // brace/paren balance check is the only remaining gate.
+    return { ok: true, reason: 'esbuild_unavailable' };
+  }
+  const loader = /\.(jsx|tsx)$/.test(filePath) ? 'tsx'
+    : /\.tsx?$/.test(filePath) ? 'ts'
+    : 'jsx';                                         // .js / .mjs / .cjs treated as JSX-permissive
+  try {
+    esbuild.transformSync(content, {
+      loader,
+      sourcefile: filePath,
+      logLevel: 'silent',
+      // We only care about parse-time correctness; no minification or
+      // tree-shaking concerns at this gate.
+    });
+    return { ok: true };
+  } catch (e) {
+    const msg = e?.errors?.[0]?.text ?? e?.message ?? String(e);
+    return { ok: false, reason: 'parse_error', detail: msg };
+  }
+}
+
+/**
  * Validate Claude's output before returning it. DISPATCH 23 upgrade.
+ * DISPATCH 29: added parse-check via esbuild (same parser as Vite).
  *
  * Checks performed:
  *   1. Non-empty
  *   2. Different from input (meaningful diff — not whitespace-only)
  *   3. Basic syntax sanity (balanced braces/parens) for code files
+ *   4. Build-safe parse check (esbuild for JS/JSX/TS, JSON.parse for .json)
  *
  * @param {string} fixed
  * @param {string} original
  * @param {string} filePath
- * @returns {{ ok: boolean, reason?: string }}
+ * @param {object} [opts]
+ * @param {boolean} [opts.skipParseCheck=false] — bypass step 4 (tests/legacy)
+ * @returns {Promise<{ ok: boolean, reason?: string, detail?: string }>}
  */
-export function validateFixedContent(fixed, original, filePath) {
+export async function validateFixedContent(fixed, original, filePath, opts = {}) {
   if (typeof fixed !== 'string' || fixed.length === 0) {
     return { ok: false, reason: 'empty' };
   }
@@ -205,6 +280,13 @@ export function validateFixedContent(fixed, original, filePath) {
     }
     if (Math.abs(openParens - closeParens) > 3) {
       return { ok: false, reason: `unbalanced_parens:${openParens}vs${closeParens}` };
+    }
+  }
+  // DISPATCH 29: load-bearing build-safe gate.
+  if (!opts.skipParseCheck) {
+    const parseResult = await parseCheckContent(fixed, filePath);
+    if (!parseResult.ok && parseResult.reason !== 'esbuild_unavailable') {
+      return { ok: false, reason: parseResult.reason, detail: parseResult.detail };
     }
   }
   return { ok: true };
@@ -374,13 +456,18 @@ export async function generateFix(args) {
       throw makeError('FIX_GENERATION_FAILED',
         `generateFix: Anthropic response was not JSON — ${e?.message ?? String(e)}`);
     }
-    return { text: extractText(parsed), parsed };
+    return { text: extractText(parsed), parsed, stopReason: parsed?.stop_reason ?? null };
   }
 
   // First attempt.
-  let { text: fixedContent, parsed } = await callClaude(prompt);
+  let { text: fixedContent, parsed, stopReason } = await callClaude(prompt);
   let attempts = 1;
-  let validation = validateFixedContent(fixedContent, args.fileContent, args.filePath);
+  // DISPATCH 29: if Anthropic flagged max_tokens as the stop reason,
+  // the response was truncated mid-file — short-circuit validation and
+  // force the retry path with the explicit "return COMPLETE file" prompt.
+  let validation = stopReason === 'max_tokens'
+    ? { ok: false, reason: 'truncated_max_tokens' }
+    : await validateFixedContent(fixedContent, args.fileContent, args.filePath);
 
   // Retry once with the explicit prompt if first attempt fails validation.
   if (!validation.ok) {
@@ -400,8 +487,11 @@ export async function generateFix(args) {
     const retryResult = await callClaude(retryPrompt);
     fixedContent = retryResult.text;
     parsed = retryResult.parsed;
+    stopReason = retryResult.stopReason;
     attempts = 2;
-    validation = validateFixedContent(fixedContent, args.fileContent, args.filePath);
+    validation = stopReason === 'max_tokens'
+      ? { ok: false, reason: 'truncated_max_tokens' }
+      : await validateFixedContent(fixedContent, args.fileContent, args.filePath);
   }
 
   if (!validation.ok) {
@@ -441,4 +531,5 @@ export const __internals = Object.freeze({
   buildPrompt,
   extractText,
   makeError,
+  parseCheckContent,
 });
