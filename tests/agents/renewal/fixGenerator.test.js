@@ -238,9 +238,10 @@ describe('generateFix — prompt-injection guard applied to prompt', () => {
     });
     const prompt = JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].content;
     // Total occurrences of "X" in the prompt should be <= 500 (truncation)
-    // plus whatever appears in the rest of the prompt (which has no X's).
+    // plus a small number from the static prompt boilerplate (e.g. "EXAMPLE"
+    // in the MINIMAL_CHANGE_GUARDRAILS — D30 negative-example block).
     const xCount = (prompt.match(/X/g) || []).length;
-    expect(xCount).toBeLessThanOrEqual(500);
+    expect(xCount).toBeLessThanOrEqual(505);
     expect(prompt).toContain('…[truncated]');
   });
 
@@ -763,5 +764,93 @@ describe('generateFix — truncated_max_tokens rejection (DISPATCH 29)', () => {
       code: 'FIX_GENERATION_FAILED',
       message: expect.stringMatching(/truncated_max_tokens/),
     });
+  });
+});
+
+// ── DISPATCH 30 — minimal-change guardrails in the prompt ───────────────
+
+describe('MINIMAL_CHANGE_GUARDRAILS — D30 prompt hardening', () => {
+  it('exports a non-empty guardrails block', () => {
+    const g = __internals.MINIMAL_CHANGE_GUARDRAILS;
+    expect(typeof g).toBe('string');
+    expect(g.length).toBeGreaterThan(200);
+  });
+
+  it('contains the core preserve/no-refactor rules verbatim', () => {
+    const g = __internals.MINIMAL_CHANGE_GUARDRAILS;
+    expect(g).toMatch(/MINIMAL targeted change/);
+    expect(g).toMatch(/Do NOT refactor/);
+    expect(g).toMatch(/PRESERVE every existing import, export, prop/);
+    expect(g).toMatch(/PRESERVE every existing fetch \/ API call \/ route \/ URL string/);
+    expect(g).toMatch(/Do NOT introduce new network calls/);
+    expect(g).toMatch(/Do NOT change error-handling behavior, redirects, navigation, or auth flow/);
+    expect(g).toMatch(/BYTE-FOR-BYTE identical to the input/);
+    expect(g).toMatch(/return the file UNCHANGED/);
+  });
+
+  it('includes the 88→83 MyPregLife regression as a negative example', () => {
+    const g = __internals.MINIMAL_CHANGE_GUARDRAILS;
+    expect(g).toMatch(/NEGATIVE EXAMPLE/);
+    expect(g).toMatch(/MyPregLife/);
+    expect(g).toMatch(/88.*83/);
+    expect(g).toMatch(/3 new HIGH-severity network-failure findings/);
+  });
+
+  it('appears in the precise-instruction prompt (fresh attempt)', () => {
+    const p = buildPreciseInstructionPrompt({
+      filePath: 'src/x.jsx',
+      fileContent: 'const x = 1;\nexport default x;\n',
+      issue: 'demo issue',
+      fix: 'demo fix',
+    });
+    expect(p).toMatch(/MINIMAL-CHANGE GUARDRAILS/);
+    expect(p).toMatch(/NEGATIVE EXAMPLE/);
+  });
+
+  it('appears in the precise-instruction prompt (retry attempt)', () => {
+    const p = buildPreciseInstructionPrompt({
+      filePath: 'src/x.jsx',
+      fileContent: 'const x = 1;\nexport default x;\n',
+      issue: 'demo issue',
+      fix: 'demo fix',
+      retry: true,
+    });
+    expect(p).toMatch(/MINIMAL-CHANGE GUARDRAILS/);
+    expect(p).toMatch(/PRESERVE every existing import/);
+  });
+
+  it('appears in the legacy findings-based prompt', () => {
+    const p = __internals.buildPrompt({
+      filePath: 'src/x.jsx',
+      fileContent: 'const x = 1;\nexport default x;\n',
+      sanitisedFindings: [{ severity: 'medium', description: 'demo' }],
+    });
+    expect(p).toMatch(/MINIMAL-CHANGE GUARDRAILS/);
+  });
+
+  it('the guardrails are sent verbatim in the Claude request body', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        content: [{ type: 'text', text: 'const x = 2;\nexport default x;\n' }],
+        usage: { input_tokens: 50, output_tokens: 20 },
+        stop_reason: 'end_turn',
+      }),
+      text: async () => '{}',
+    }));
+    await generateFix({
+      filePath: 'src/x.jsx',
+      fileContent: 'const x = 1;\nexport default x;\n',
+      issue: 'demo',
+      fix: 'rename x → y',
+      productId: 'mypreglife',
+      runId: 'r1',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+    });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    const sentPrompt = body.messages[0].content;
+    expect(sentPrompt).toMatch(/MINIMAL-CHANGE GUARDRAILS/);
+    expect(sentPrompt).toMatch(/MyPregLife/);
+    expect(sentPrompt).toMatch(/88.*83/);
   });
 });

@@ -113,8 +113,36 @@ export function sanitiseFindings(findings) {
   });
 }
 
+// DISPATCH 30 — minimal-change guardrails. These rules are appended to
+// every fixGenerator prompt (both fresh attempts and retries). Sourced
+// from the verbatim MyPregLife 88→83 regression observed in D29: Claude
+// returned syntactically-valid output that introduced 3 new high-severity
+// network-failure findings by changing existing fetch calls / imports /
+// routing. The fix shipped was technically a fix; functionally it broke
+// things. These rules block that failure mode.
+const MINIMAL_CHANGE_GUARDRAILS = [
+  '',
+  'MINIMAL-CHANGE GUARDRAILS (DISPATCH 30 — non-negotiable):',
+  '- Make the MINIMAL targeted change required to resolve the specific finding above. Do NOT refactor.',
+  '- PRESERVE every existing import, export, prop, hook call, and function signature exactly. Do not remove or rename them.',
+  '- PRESERVE every existing fetch / API call / route / URL string. Do not add, remove, replace, or modify them.',
+  '- PRESERVE every existing component name and JSX element structure outside the targeted change.',
+  '- Do NOT introduce new network calls, third-party libraries, env-vars, or external dependencies.',
+  '- Do NOT change error-handling behavior, redirects, navigation, or auth flow.',
+  '- Lines outside the targeted change region must appear in the output BYTE-FOR-BYTE identical to the input.',
+  '- If the requested fix would require any of the above, return the file UNCHANGED (the orchestrator will skip it cleanly).',
+  '',
+  'NEGATIVE EXAMPLE (do NOT do this):',
+  '  A prior fixGenerator run on MyPregLife was asked to address a Stripe payment-flow finding. The model rewrote',
+  '  Stripe webhook handlers, swapped existing fetch endpoints, and re-routed onClick handlers. The output was',
+  '  syntactically valid but caused 3 new HIGH-severity network-failure findings on the deployed preview because',
+  '  routes that previously worked now returned 4xx. Score regressed 88→83. NEVER ship that kind of change.',
+  '  Correct behavior: change only the one specific line/block named in the fix instruction; touch nothing else.',
+].join('\n');
+
 /**
- * Build the precise-instruction Claude prompt (DISPATCH 23 upgrade).
+ * Build the precise-instruction Claude prompt (DISPATCH 23 upgrade;
+ * DISPATCH 30 minimal-change guardrails).
  * Used when caller provides a specific `fix` instruction string.
  *
  * @param {object} args
@@ -152,6 +180,7 @@ export function buildPreciseInstructionPrompt({ filePath, fileContent, issue, fi
       '- The response MUST be the entire file from first line to last (do not truncate).',
       '- The response MUST be meaningfully different from the input (do not echo unchanged).',
       '- Preserve the file format (JavaScript/JSX/TypeScript/Markdown/etc.) and existing code style.',
+      MINIMAL_CHANGE_GUARDRAILS,
     ].join('\n');
   }
   return [
@@ -168,6 +197,7 @@ export function buildPreciseInstructionPrompt({ filePath, fileContent, issue, fi
     fileContent,
     '',
     'Return ONLY the complete fixed file. No explanation. No markdown code fences. No preamble.',
+    MINIMAL_CHANGE_GUARDRAILS,
   ].join('\n');
 }
 
@@ -323,7 +353,8 @@ function buildPrompt({ filePath, fileContent, sanitisedFindings }) {
     'Issues found:\n' +
     `${findingsText}\n\n` +
     'Current file content:\n' +
-    fileContent
+    fileContent +
+    `\n${MINIMAL_CHANGE_GUARDRAILS}`
   );
 }
 
@@ -532,4 +563,5 @@ export const __internals = Object.freeze({
   extractText,
   makeError,
   parseCheckContent,
+  MINIMAL_CHANGE_GUARDRAILS,
 });
