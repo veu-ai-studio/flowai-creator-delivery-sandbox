@@ -175,6 +175,11 @@ export default function FlowAIDashboard() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [expandedSteps, setExpandedSteps] = useState({});
   const [expandedIters, setExpandedIters] = useState({});
+  // Control back-channel state — true when the orchestrator is parked at a
+  // checkpoint; reflects the latest `control_applied` event from the SSE
+  // stream so the UI swaps PAUSE ↔ RESUME without needing client-side guesses.
+  const [isPaused, setIsPaused] = useState(false);
+  const [controlApplied, setControlApplied] = useState(null);
   const abortRef = useRef(null);
 
   // Latest score envelope derived from the most recent scoring log.
@@ -208,6 +213,7 @@ export default function FlowAIDashboard() {
   async function launch() {
     if (isRunning) return;
     setIsRunning(true);
+    setIsPaused(false); setControlApplied(null);
     setStepLogs([]); setIterations([]); setFinalResult(null);
     setErrorMsg(null); setExpandedSteps({}); setExpandedIters({});
     setStartedAt(new Date().toISOString());
@@ -267,6 +273,17 @@ export default function FlowAIDashboard() {
           } else if (payload?.type === 'final') {
             setFinalResult(payload.result);
             if (payload.result?.runId && !runId) setRunId(payload.result.runId);
+          } else if (payload?.type === 'control_applied') {
+            // Server acknowledged our control command applied to the running
+            // state. Reflect mode changes locally so the UI stays in sync.
+            setControlApplied({
+              command: payload.command, mode: payload.mode ?? null,
+              envelopeId: payload.envelopeId, at: payload.at,
+            });
+            if (payload.command === 'switchMode' && payload.mode) setMode(payload.mode);
+            if (payload.command === 'pause') setMode('guided');
+            setIsPaused(payload.command === 'pause');
+            if (payload.command === 'resume') setIsPaused(false);
           } else if (payload?.type === 'error') {
             setErrorMsg(`${payload.error}${payload.code ? ` (${payload.code})` : ''}`);
           }
@@ -278,20 +295,55 @@ export default function FlowAIDashboard() {
       }
     } finally {
       setIsRunning(false);
+      setIsPaused(false);
       abortRef.current = null;
     }
   }
 
-  function stop() {
+  // POST to /api/agent/3/control to bridge a command into the SSE handler's
+  // OrchestrationState. Pre-condition: runId must be present (issued by
+  // the server's `start` SSE event). The server's poller picks the command
+  // up at the next 500ms boundary and emits a `control_applied` event back
+  // over the same SSE stream.
+  async function sendControl(command, modeArg = null) {
+    if (!runId) return { ok: false, reason: 'no_run_id' };
+    try {
+      const resp = await fetch('/api/agent/3/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-product-scope': 'flowai-dashboard' },
+        body: JSON.stringify({ runId, command, mode: modeArg }),
+      });
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        setErrorMsg(`Control failed (HTTP ${resp.status}): ${text.slice(0, 120)}`);
+        return { ok: false, status: resp.status };
+      }
+      return await resp.json();
+    } catch (e) {
+      setErrorMsg(`Control network error: ${e?.message ?? String(e)}`);
+      return { ok: false, reason: 'network' };
+    }
+  }
+
+  // STOP: client-side abort of the SSE stream PLUS server-side stop
+  // command so the orchestrator releases compute budget. Without the
+  // server stop, aborting the stream client-side would leave the
+  // orchestrator running to completion in the background.
+  async function stop() {
+    if (runId) await sendControl('stop');
     if (abortRef.current) abortRef.current.abort();
   }
 
-  function switchMode(next) {
+  // PAUSE / RESUME wired through the back-channel.
+  async function pauseRun() { await sendControl('pause'); }
+  async function resumeRun() { await sendControl('resume'); }
+
+  // SWITCH MODE: when running, this propagates to the live orchestrator
+  // via the back-channel; when idle, it just updates the form selector
+  // for the next run.
+  async function switchMode(next) {
     setMode(next);
-    // Note: server-side orchestrator state is not bridged across SSE in
-    // this dispatch. Toggling here updates the UI immediately; the next
-    // run uses the new mode. Live mode-switch mid-run needs a follow-up
-    // /api/agent/3/control endpoint.
+    if (isRunning && runId) await sendControl('switchMode', next);
   }
 
   // Cleanup the in-flight stream if the page unmounts.
@@ -401,24 +453,47 @@ export default function FlowAIDashboard() {
               <div className="flex gap-2 flex-wrap">
                 {isRunning && (
                   <button type="button" onClick={stop}
-                          className="bg-red-600/80 hover:bg-red-500 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5">
+                          className="bg-red-600/80 hover:bg-red-500 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5"
+                          title="Abort the SSE stream AND send a server-side stop command via /api/agent/3/control">
                     <Icon.Stop className="w-3.5 h-3.5" />STOP
                   </button>
                 )}
-                <button type="button" disabled={isRunning}
-                        onClick={() => switchMode(mode === 'auto' ? 'guided' : mode === 'guided' ? 'manual' : 'auto')}
-                        className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-semibold disabled:opacity-50">
-                  Switch mode → {mode === 'auto' ? 'guided' : mode === 'guided' ? 'manual' : 'auto'}
-                </button>
-                {mode === 'guided' && isRunning && (
-                  <button type="button"
-                          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded text-sm font-bold flex items-center gap-1.5"
-                          title="Resume needs a follow-up /api/agent/3/control endpoint; UI only in this dispatch">
+                {/* PAUSE / RESUME — only meaningful while running with a runId.
+                    Bridged through /api/agent/3/control → runControlBus →
+                    SSE handler's poller → OrchestrationState.{switchMode,resume}. */}
+                {isRunning && runId && !isPaused && (
+                  <button type="button" onClick={pauseRun}
+                          className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5"
+                          title="Flip to guided mode so the orchestrator pauses at the next checkpoint">
+                    PAUSE
+                  </button>
+                )}
+                {isRunning && runId && isPaused && (
+                  <button type="button" onClick={resumeRun}
+                          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded text-sm font-bold flex items-center gap-1.5">
                     <Icon.Play className="w-3.5 h-3.5" />CONTINUE
                   </button>
                 )}
+                <button type="button"
+                        onClick={() => switchMode(mode === 'auto' ? 'guided' : mode === 'guided' ? 'manual' : 'auto')}
+                        className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-semibold"
+                        title={isRunning && runId
+                          ? 'Bridges to the live orchestrator via /api/agent/3/control'
+                          : 'Updates the form selector for the next run'}>
+                  Switch mode → {mode === 'auto' ? 'guided' : mode === 'guided' ? 'manual' : 'auto'}
+                </button>
               </div>
             </div>
+
+            {/* Control-applied notice — confirms back-channel landed */}
+            {controlApplied && (
+              <div className="rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-1.5 text-xs text-emerald-300 flex items-center gap-2">
+                <Icon.Check className="w-3.5 h-3.5" />
+                Control applied: <span className="font-mono">{controlApplied.command}</span>
+                {controlApplied.mode && <span className="font-mono">(mode={controlApplied.mode})</span>}
+                <span className="text-slate-500 ml-auto">{new Date(controlApplied.at).toLocaleTimeString()}</span>
+              </div>
+            )}
 
             {/* Score progress bar */}
             <div>
