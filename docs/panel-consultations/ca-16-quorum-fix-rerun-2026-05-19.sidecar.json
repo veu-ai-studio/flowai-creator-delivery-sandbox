@@ -1,0 +1,1421 @@
+{
+  "schema": "quorum-fix.sidecar.v1",
+  "code": "CA-16",
+  "commit": "908f340",
+  "bundle_size": 31224,
+  "startedAt": "2026-05-19T04:34:06.725Z",
+  "finishedAt": "2026-05-19T04:36:41.585Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 31224
+  },
+  "tally": {
+    "engagedTotal": 9,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 1,
+    "perQuestion": {
+      "CA-16-A-Q1": {
+        "CA16AQ1-RATIFY": 2,
+        "CA16AQ1-REVISE": 2,
+        "CA16AQ1-REJECT": 0,
+        "CA16AQ1-DEFER": 3,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-16-A-Q2": {
+        "CA16AQ2-RATIFY": 1,
+        "CA16AQ2-LATER": 4,
+        "CA16AQ2-PARALLEL": 0,
+        "CA16AQ2-REJECT": 0,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "CA-16-A-Q3": {
+        "CA16AQ3-RATIFY": 6,
+        "CA16AQ3-OPEN": 0,
+        "CA16AQ3-NARROWER": 3,
+        "CA16AQ3-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-16-A-Q4": {
+        "CA16AQ4-RATIFY": 0,
+        "CA16AQ4-SHORTER": 4,
+        "CA16AQ4-LONGER": 0,
+        "CA16AQ4-CONFIG": 5,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-16-B-Q1": {
+        "CA16BQ1-RATIFY": 3,
+        "CA16BQ1-RENUMBER": 1,
+        "CA16BQ1-MERGE": 1,
+        "CA16BQ1-DEFER": 4,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-16-B-Q2": {
+        "CA16BQ2-RATIFY": 6,
+        "CA16BQ2-HIGHER": 1,
+        "CA16BQ2-LOWER": 1,
+        "CA16BQ2-NONE": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-16-B-Q3": {
+        "CA16BQ3-RATIFY": 7,
+        "CA16BQ3-WIDER": 0,
+        "CA16BQ3-NARROWER": 2,
+        "CA16BQ3-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-16-C-Q1": {
+        "CA16CQ1-RATIFY": 6,
+        "CA16CQ1-FEWER": 1,
+        "CA16CQ1-MORE": 1,
+        "CA16CQ1-DIFF": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-16-C-Q2": {
+        "CA16CQ2-RATIFY": 4,
+        "CA16CQ2-STRICTER": 5,
+        "CA16CQ2-LOOSER": 0,
+        "CA16CQ2-LLM": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-16-C-Q3": {
+        "CA16CQ3-AGENT8": 0,
+        "CA16CQ3-AGENT21": 6,
+        "CA16CQ3-NEW": 2,
+        "CA16CQ3-DEFER": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-16-C-Q4": {
+        "CA16CQ4-RATIFY": 8,
+        "CA16CQ4-PER_CLASS": 1,
+        "CA16CQ4-REJECT": 0,
+        "CA16CQ4-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 31,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Unbounded recommendation generation risk",
+        "detail": "§7 item #8 PA-6 requires at least 1 recommendation when purpose_fulfillment_score < 1.0, but sets no upper bound. A malicious or buggy recommender could flood operators with thousands of low-quality recommendations, overwhelming the Step 1.5 review process and creating denial-of-service conditions."
+      },
+      {
+        "slot": 1,
+        "title": "Circular dependency in purpose alignment",
+        "detail": "CA-16-A PA-1 requires all recommendations to cite purpose_record_link, but recommendations themselves can suggest changes to purpose_record per 'purpose_fulfillment_gap' category. This creates a circular dependency where recommendations to fix the purpose are validated against the flawed purpose they're trying to fix."
+      },
+      {
+        "slot": 1,
+        "title": "No rollback for accepted recommendations",
+        "detail": "PA-4 tracks 'accepted' recommendations through implementation but provides no mechanism to rollback or undo a recommendation that proves harmful post-implementation. The disposition lifecycle is one-way with no provision for reverting accepted changes that degrade the product."
+      },
+      {
+        "slot": 1,
+        "title": "Detection rules too rigid for emerging formats",
+        "detail": "CA-16-C's deterministic detection rules for 6 target classes will fail to identify hybrid formats (e.g., Progressive Web Apps that blur website/native boundaries) or emerging formats not yet conceived. The rigid taxonomy locks FlowAI into 2026-era format assumptions."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case the proactive recommendations or redesign/build environment changes cause unintended consequences. This is a significant risk, especially since the changes are intended to be operator-steerable and may not always align with the original product intent. For example, §7.6 score-formula generalization invariant may not be sufficient to prevent product-agnostic scoring issues."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "The proposal does not outline a comprehensive testing strategy for the new proactive recommendation and redesign/build environment features. This raises concerns about the potential for bugs, inconsistencies, or unintended behavior, particularly in the context of §11 Six-Step Clearance Protocol and the new Step 1.5 placement."
+      },
+      {
+        "slot": 3,
+        "title": "Over-Reliance on LLM",
+        "detail": "The proposal relies heavily on Large Language Models (LLMs) for tasks such as recommendation rationale and market definition analysis. However, LLMs can be prone to errors, biases, or inconsistencies, which may impact the overall effectiveness and reliability of the proactive recommendations and redesign/build environment. This is particularly concerning in the context of §16.1 six dimensions and the readiness scores."
+      },
+      {
+        "slot": 4,
+        "title": "Complexity of Proactive Recommendations",
+        "detail": "The introduction of proactive recommendations in §7 item #8 adds significant complexity to the system. The need to generate, rank, and manage recommendations could introduce latency and performance issues, especially if the system is not optimized for handling these additional tasks."
+      },
+      {
+        "slot": 4,
+        "title": "Redesign/Build Environment Overhead",
+        "detail": "The new Redesign/Build Environment in §29 may require substantial user training and adaptation. Operators might find it challenging to steer the redesign or rebuild process effectively, leading to potential misuse or underutilization of the feature."
+      },
+      {
+        "slot": 4,
+        "title": "Multi-Format Targets Integration",
+        "detail": "The generalization of detection and crawl mechanisms for multiple target classes in §6 could lead to inconsistencies and errors. Each target class may have unique characteristics that the current detection rules might not adequately address, resulting in false positives or negatives."
+      },
+      {
+        "slot": 5,
+        "title": "Unclear Recommendation Impact",
+        "detail": "The proposal does not clearly define how the impact of proactive recommendations will be measured or verified, which could lead to recommendations that are not actionable or valuable."
+      },
+      {
+        "slot": 5,
+        "title": "Potential Recommendation Overload",
+        "detail": "The system may generate an overwhelming number of recommendations, making it difficult for operators to prioritize and act on them effectively."
+      },
+      {
+        "slot": 5,
+        "title": "Lack of Clear Criteria for Recommendation Categories",
+        "detail": "The categories for recommendations are not well-defined, which could lead to confusion and inconsistent application by operators."
+      },
+      {
+        "slot": 6,
+        "title": "Proactive recs lack cost consideration",
+        "detail": "The `expected_impact` in §7 only considers the positive impact on purpose fulfillment and score, but not the cost or effort required to implement the recommendation. This could lead to recommendations that are technically beneficial but impractical."
+      },
+      {
+        "slot": 6,
+        "title": "Step 1.5 timing unclear",
+        "detail": "§11.5 states that Step 1.5 follows Step 1 and the presence of a `purpose_record`, but it's unclear how frequently this step is triggered. Is it only after the initial Governance Audit, or after every run where the `purpose_record` is present? This could lead to operator fatigue if recommendations are constantly resurfaced."
+      },
+      {
+        "slot": 6,
+        "title": "Redesign environment scope creep",
+        "detail": "The description of the Redesign/Build Environment in CA-16-B is vague and could lead to scope creep. It's unclear what capabilities this environment will provide and how it will integrate with existing FlowAI features. This could result in a complex and unwieldy environment that is difficult to use."
+      },
+      {
+        "slot": 6,
+        "title": "Multi-format detection fragility",
+        "detail": "CA-16-C introduces multi-format targets, but the detection rules for identifying these targets are likely to be brittle and require constant maintenance. Changes to website structure or app frameworks could easily break these rules, leading to inaccurate target classification."
+      },
+      {
+        "slot": 7,
+        "title": "PA-1 Mandatory Links Overconstrain",
+        "detail": "Requiring every recommendation to cite purpose_record_link and market_definition_link (§7 PA-1) may suppress valuable suggestions that don't neatly map to documented purposes. This could prevent novel improvements like accessibility enhancements not covered in initial purpose definitions."
+      },
+      {
+        "slot": 7,
+        "title": "PA-6 Forced Recommendations Risky",
+        "detail": "The mandate to emit purpose_fulfillment_gap recommendations when score <1.0 (§7 PA-6) forces output even when gaps stem from external factors. This could generate low-value suggestions that erode operator trust if the system fabricates impractical fixes to satisfy the requirement."
+      },
+      {
+        "slot": 7,
+        "title": "Redesign Environment Scope Creep",
+        "detail": "The §29 redesign environment enables operator-steered rebuilds without clear guardrails against mission drift. Complex redesigns initiated through this surface could divert FlowAI from core defect remediation toward subjective enhancements, increasing failure risk."
+      },
+      {
+        "slot": 7,
+        "title": "Multi-Format Detection Gaps",
+        "detail": "CA-16-C's target class detection lacks specificity in deterministic rules (§ CA-16-C-Q2). Ambiguity in distinguishing native vs. web apps could misapply crawlers/scorers, breaking products through inappropriate interactions."
+      },
+      {
+        "slot": 8,
+        "title": "Recommendation and defect mixing",
+        "detail": "§7 item #8 requires proactive recommendations to live alongside §7.6 defect findings and §10.1.1 audit findings, but PA-3 only says they must not duplicate a defect. That leaves a gray zone where the same underlying issue can be reframed as a “compound opportunity,” creating double-counting, metric inflation, and operator confusion across the `/architecture` surface and `governance_record_entry`."
+      },
+      {
+        "slot": 8,
+        "title": "Disposition suppression is irreversible",
+        "detail": "PA-4 says `rejected` recommendations are never re-surfaced, while `deferred` can reappear after a configurable delay. That creates a hard-fail memory of a possibly wrong human judgment with no explicit safety valve for changed context, model improvement, or a mistaken reject, which is especially risky because the recommendation IDs are intended to persist across runs."
+      },
+      {
+        "slot": 8,
+        "title": "Build environment approval is underspecified",
+        "detail": "CA-16-B introduces a redesign/rebuild environment and then leaves approval scope and numbering partially open, but the actual run-time control plane is unclear. The draft does not specify rollback, branch isolation, artifact provenance, or what happens if an operator steers a redesign that conflicts with existing ProductSSOT or §28 symbiotic feedback-loop data, so the environment can become a parallel source of truth."
+      },
+      {
+        "slot": 8,
+        "title": "Multi-format detection will overfit",
+        "detail": "CA-16-C asks for first-class target classes for websites, native apps, mobile apps, SaaS, agentic AIs, and generic URLs, but the detection rules are not shown in the excerpt and are explicitly a Q-disposed open design point. In practice, deterministic classification across these categories will misroute hybrid products (for example, a SaaS with embedded mobile shell and chatbot), causing the wrong crawl/score/repair path to run."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of Rollback Mechanism",
+        "detail": "The proposal introduces a new Redesign/Build Environment (§29) without specifying a rollback mechanism in case the redesign or rebuild fails or produces undesirable outcomes. This could lead to irreversible changes to the product."
+      },
+      {
+        "slot": 9,
+        "title": "Unclear Operator Disposition Lifecycle",
+        "detail": "The proactive recommendations envelope (§7 item #8) introduces an operator disposition lifecycle, but the specifics of how dispositions are handled across multiple runs and how they interact with the `governance_record_entry` are not clearly defined, potentially leading to inconsistent state."
+      },
+      {
+        "slot": 9,
+        "title": "Insufficient Testing for Multi-Format Targets",
+        "detail": "The proposal generalizes detection, crawl, Phase B, and build processes for Multi-Format Targets (§17) without detailing how the conformance tests will be adapted or expanded to cover the new target classes, risking untested and potentially buggy implementations."
+      },
+      {
+        "slot": 10,
+        "title": "PA-1 citation enforcement missing",
+        "detail": "§7 item #8 PA-1 requires every recommendation to cite non-null purpose_record_link and market_definition_link, yet the conformance test only stubs a null case and rejects at validation time; no mechanism (e.g., citation verifier or LLM grounding step) is specified to prevent fabricated links from reaching the governance_record_entry."
+      },
+      {
+        "slot": 10,
+        "title": "Step 1.5 adds non-blocking overhead",
+        "detail": "§11 NEW Step 1.5 inserts Proactive Recommendation Review after Governance Audit; although declared non-blocking, every disposition still appends to governance_record_entry with kind proactive_recommendation_disposition.v1, increasing append-only log size and future re-surfacing logic without any stated retention or compaction policy."
+      },
+      {
+        "slot": 10,
+        "title": "Redesign env lacks CA-14 safety cross-ref",
+        "detail": "§29 Redesign/Build Environment description (even in truncated form) omits any reference to the safety invariants or fix-safety rules introduced in CA-14 §10.4 and §7 item #6; operator-steerable rebuilds could therefore bypass the non-destructive error-state triggers and XSS opt-in controls defined in §6."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-16-A-Q1": {
+      "verdict": "PLURALITY_CA16AQ1-DEFER",
+      "detail": "3 of 9 on CA16AQ1-DEFER (below 7/10 quorum)",
+      "topKey": "CA16AQ1-DEFER",
+      "topCount": 3
+    },
+    "CA-16-A-Q2": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 4 between CA16AQ2-LATER / REJECT",
+      "topKey": "CA16AQ2-LATER",
+      "topCount": 4
+    },
+    "CA-16-A-Q3": {
+      "verdict": "PLURALITY_CA16AQ3-RATIFY",
+      "detail": "6 of 9 on CA16AQ3-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16AQ3-RATIFY",
+      "topCount": 6
+    },
+    "CA-16-A-Q4": {
+      "verdict": "PLURALITY_CA16AQ4-CONFIG",
+      "detail": "5 of 9 on CA16AQ4-CONFIG (below 7/10 quorum)",
+      "topKey": "CA16AQ4-CONFIG",
+      "topCount": 5
+    },
+    "CA-16-B-Q1": {
+      "verdict": "PLURALITY_CA16BQ1-DEFER",
+      "detail": "4 of 9 on CA16BQ1-DEFER (below 7/10 quorum)",
+      "topKey": "CA16BQ1-DEFER",
+      "topCount": 4
+    },
+    "CA-16-B-Q2": {
+      "verdict": "PLURALITY_CA16BQ2-RATIFY",
+      "detail": "6 of 9 on CA16BQ2-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16BQ2-RATIFY",
+      "topCount": 6
+    },
+    "CA-16-B-Q3": {
+      "verdict": "QUORUM_PLURALITY_CA16BQ3-RATIFY",
+      "detail": "7 of 9 on CA16BQ3-RATIFY (≥ quorum 7/10)",
+      "topKey": "CA16BQ3-RATIFY",
+      "topCount": 7
+    },
+    "CA-16-C-Q1": {
+      "verdict": "PLURALITY_CA16CQ1-RATIFY",
+      "detail": "6 of 9 on CA16CQ1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16CQ1-RATIFY",
+      "topCount": 6
+    },
+    "CA-16-C-Q2": {
+      "verdict": "PLURALITY_CA16CQ2-STRICTER",
+      "detail": "5 of 9 on CA16CQ2-STRICTER (below 7/10 quorum)",
+      "topKey": "CA16CQ2-STRICTER",
+      "topCount": 5
+    },
+    "CA-16-C-Q3": {
+      "verdict": "PLURALITY_CA16CQ3-AGENT21",
+      "detail": "6 of 9 on CA16CQ3-AGENT21 (below 7/10 quorum)",
+      "topKey": "CA16CQ3-AGENT21",
+      "topCount": 6
+    },
+    "CA-16-C-Q4": {
+      "verdict": "SUPERMAJORITY_CA16CQ4-RATIFY",
+      "detail": "8 of 9 on CA16CQ4-RATIFY (≥ 8/10)",
+      "topKey": "CA16CQ4-RATIFY",
+      "topCount": 8
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.43434343434343436,
+    "alignedCount": 43,
+    "totalPossible": 99,
+    "draftedQs": [
+      "CA-16-A-Q1",
+      "CA-16-A-Q2",
+      "CA-16-A-Q3",
+      "CA-16-A-Q4",
+      "CA-16-B-Q1",
+      "CA-16-B-Q2",
+      "CA-16-B-Q3",
+      "CA-16-C-Q1",
+      "CA-16-C-Q2",
+      "CA-16-C-Q3",
+      "CA-16-C-Q4"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 43.4 %, distinct objections 31"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unbounded recommendation generation risk",
+            "detail": "§7 item #8 PA-6 requires at least 1 recommendation when purpose_fulfillment_score < 1.0, but sets no upper bound. A malicious or buggy recommender could flood operators with thousands of low-quality recommendations, overwhelming the Step 1.5 review process and creating denial-of-service conditions."
+          },
+          {
+            "title": "Circular dependency in purpose alignment",
+            "detail": "CA-16-A PA-1 requires all recommendations to cite purpose_record_link, but recommendations themselves can suggest changes to purpose_record per 'purpose_fulfillment_gap' category. This creates a circular dependency where recommendations to fix the purpose are validated against the flawed purpose they're trying to fix."
+          },
+          {
+            "title": "No rollback for accepted recommendations",
+            "detail": "PA-4 tracks 'accepted' recommendations through implementation but provides no mechanism to rollback or undo a recommendation that proves harmful post-implementation. The disposition lifecycle is one-way with no provision for reverting accepted changes that degrade the product."
+          },
+          {
+            "title": "Detection rules too rigid for emerging formats",
+            "detail": "CA-16-C's deterministic detection rules for 6 target classes will fail to identify hybrid formats (e.g., Progressive Web Apps that blur website/native boundaries) or emerging formats not yet conceived. The rigid taxonomy locks FlowAI into 2026-era format assumptions."
+          }
+        ],
+        "worse_than_status_quo": "The proactive recommendation system could overwhelm operators with AI-generated 'improvements' that dilute focus from actual defects, causing critical security issues to be missed while operators review dozens of speculative enhancements.",
+        "precedent": "Microsoft's Clippy assistant generated unsolicited 'helpful' suggestions that users found intrusive and counterproductive, ultimately leading to its removal despite significant investment."
+      },
+      "rejection_steelman": "This proposal adds significant complexity with three major subsystems (recommendations, redesign environment, multi-format) that could destabilize the core defect-remediation flow that FlowAI has already proven. The proactive recommendations risk overwhelming operators with speculative improvements while the redesign environment creates a parallel development path that fragments the product lifecycle. We should defer until the existing self-renewal and clearance protocols have operated at scale for 6+ months.",
+      "votes": {
+        "CA-16-A-Q1": {
+          "key": "CA16AQ1-REVISE",
+          "pick_text": "Ratify with revision — adjust schema fields (specify)",
+          "rationale": "The schema needs a 'max_recommendations_per_run' field to prevent unbounded generation, and 'implementation_verified_at' timestamp to track when accepted recommendations are actually implemented."
+        },
+        "CA-16-A-Q2": {
+          "key": "CA16AQ2-LATER",
+          "pick_text": "Place after Step 2 (recommendations gated by initial audit)",
+          "rationale": "Recommendations should come after Launch Readiness verification ensures the product is stable, preventing suggestions that might break a working system."
+        },
+        "CA-16-A-Q3": {
+          "key": "CA16AQ3-NARROWER",
+          "pick_text": "Tighten enum — fewer categories than drafted",
+          "rationale": "Six categories create overlap and confusion; 'compound_opportunity' and 'other' are too vague and should be removed to force more specific categorization."
+        },
+        "CA-16-A-Q4": {
+          "key": "CA16AQ4-SHORTER",
+          "pick_text": "Shorter default defer-window",
+          "rationale": "30 days is too long for fast-moving products; a 14-day default would better match typical sprint cycles while remaining configurable."
+        },
+        "CA-16-B-Q1": {
+          "key": "CA16BQ1-MERGE",
+          "pick_text": "Merge §29 with an existing section",
+          "rationale": "The Redesign/Build Environment should be merged with §10 Self-Renewal patterns as it represents an alternative renewal path rather than a standalone concept."
+        },
+        "CA-16-B-Q2": {
+          "key": "CA16BQ2-NONE",
+          "pick_text": "No floor — operator-judged",
+          "rationale": "Forcing ≥3 options creates busywork when sometimes there's only one sensible redesign path; operators should decide based on context."
+        },
+        "CA-16-B-Q3": {
+          "key": "CA16BQ3-NARROWER",
+          "pick_text": "Narrow scope — CEO-only for redesign approval",
+          "rationale": "Redesigns represent major architectural changes that could introduce significant risk; CEO-level approval ensures appropriate oversight."
+        },
+        "CA-16-C-Q1": {
+          "key": "CA16CQ1-FEWER",
+          "pick_text": "Reduce target classes — keep only highest-value (specify)",
+          "rationale": "Start with websites + SaaS only; native/mobile apps require platform-specific expertise FlowAI hasn't demonstrated, and 'generic URLs' is too vague."
+        },
+        "CA-16-C-Q2": {
+          "key": "CA16CQ2-STRICTER",
+          "pick_text": "Stricter detection — fewer false positives",
+          "rationale": "False positive detection could cause FlowAI to apply wrong target-class assumptions, breaking products; better to miss edge cases than misclassify."
+        },
+        "CA-16-C-Q3": {
+          "key": "CA16CQ3-NEW",
+          "pick_text": "New agent owns Multi-Format",
+          "rationale": "Multi-format detection is sufficiently complex to warrant dedicated ownership rather than overloading existing agents with orthogonal concerns."
+        },
+        "CA-16-C-Q4": {
+          "key": "CA16CQ4-PER_CLASS",
+          "pick_text": "Allow per-target-class score-formula tuning (operator-configurable)",
+          "rationale": "Different target classes have fundamentally different quality signals; forcing a universal formula will produce meaningless scores for native apps vs websites."
+        }
+      },
+      "overallNotes": "The proposal's scope is too ambitious for a single amendment, risking destabilization of proven subsystems while adding untested complexity.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the proactive recommendations or redesign/build environment changes cause unintended consequences. This is a significant risk, especially since the changes are intended to be operator-steerable and may not always align with the original product intent. For example, §7.6 score-formula generalization invariant may not be sufficient to prevent product-agnostic scoring issues."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not outline a comprehensive testing strategy for the new proactive recommendation and redesign/build environment features. This raises concerns about the potential for bugs, inconsistencies, or unintended behavior, particularly in the context of §11 Six-Step Clearance Protocol and the new Step 1.5 placement."
+          },
+          {
+            "title": "Over-Reliance on LLM",
+            "detail": "The proposal relies heavily on Large Language Models (LLMs) for tasks such as recommendation rationale and market definition analysis. However, LLMs can be prone to errors, biases, or inconsistencies, which may impact the overall effectiveness and reliability of the proactive recommendations and redesign/build environment. This is particularly concerning in the context of §16.1 six dimensions and the readiness scores."
+          }
+        ],
+        "worse_than_status_quo": "If the proactive recommendations and redesign/build environment changes are not thoroughly tested and validated, they may introduce new errors or inconsistencies that worsen the overall product quality, potentially leading to a worse-than-status-quo scenario. For instance, if the recommendations are not properly aligned with the product's purpose, they may cause confusion or frustration for the operator, ultimately negatively impacting the product's effectiveness.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal's lack of a clear rollback strategy, insufficient testing, and over-reliance on LLMs raise significant concerns about its potential impact on product quality and operator experience. Given these risks, it may be prudent to reject or defer the proposal until more comprehensive testing, validation, and risk mitigation strategies are in place. This would ensure that any changes introduced do not compromise the product's integrity or the operator's trust in the system.",
+      "votes": {
+        "CA-16-A-Q1": {
+          "key": "CA16AQ1-RATIFY",
+          "pick_text": "Ratify envelope schema as drafted",
+          "rationale": "The proposed schema appears to be well-structured and comprehensive, providing a clear framework for proactive recommendations."
+        },
+        "CA-16-A-Q2": {
+          "key": "CA16AQ2-RATIFY",
+          "pick_text": "Ratify Step 1.5 placement as drafted",
+          "rationale": "The placement of Step 1.5 after Step 1 and before Step 2 seems logical, allowing for a clear sequence of operations and ensuring that proactive recommendations are considered in the context of the product's purpose and market definition."
+        },
+        "CA-16-A-Q3": {
+          "key": "CA16AQ3-RATIFY",
+          "pick_text": "Ratify enum as drafted; extensibility via Panel-ratified additions",
+          "rationale": "The proposed enum categories appear to be relevant and useful, and allowing for Panel-ratified additions provides a flexible and adaptive approach to recommendation categorization."
+        },
+        "CA-16-A-Q4": {
+          "key": "CA16AQ4-CONFIG",
+          "pick_text": "Per-product configurable; drafted value is default",
+          "rationale": "Providing a configurable defer-window allows for flexibility and adaptability to different product needs, while the drafted default value serves as a reasonable starting point."
+        },
+        "CA-16-B-Q1": {
+          "key": "CA16BQ1-RATIFY",
+          "pick_text": "Ratify §29 numbering as drafted",
+          "rationale": "The proposed numbering seems logical and consistent with the existing section sequence, and renumbering may introduce unnecessary complexity."
+        },
+        "CA-16-B-Q2": {
+          "key": "CA16BQ2-RATIFY",
+          "pick_text": "Ratify floor as drafted (e.g. ≥3 options)",
+          "rationale": "The proposed floor of ≥3 options appears to be a reasonable minimum, ensuring that operators have a sufficient range of choices while avoiding overwhelming complexity."
+        },
+        "CA-16-B-Q3": {
+          "key": "CA16BQ3-RATIFY",
+          "pick_text": "Ratify scope as drafted — admin-role required for redesign approval",
+          "rationale": "Requiring admin-role approval for redesigns ensures a level of oversight and control, helping to prevent unintended or unauthorized changes."
+        },
+        "CA-16-C-Q1": {
+          "key": "CA16CQ1-RATIFY",
+          "pick_text": "Ratify 6 target classes as drafted",
+          "rationale": "The proposed target classes appear to be comprehensive and relevant, covering a range of important product types and formats."
+        },
+        "CA-16-C-Q2": {
+          "key": "CA16CQ2-RATIFY",
+          "pick_text": "Ratify detection rules as drafted",
+          "rationale": "The proposed detection rules seem to be well-defined and effective, providing a clear basis for identifying and categorizing target classes."
+        },
+        "CA-16-C-Q3": {
+          "key": "CA16CQ3-AGENT21",
+          "pick_text": "Agent #21 ACE owns Multi-Format",
+          "rationale": "Assigning ownership of Multi-Format to Agent #21 ACE appears to be a logical choice, given the agent's existing responsibilities and expertise in related areas."
+        },
+        "CA-16-C-Q4": {
+          "key": "CA16CQ4-RATIFY",
+          "pick_text": "Ratify generalization invariant as drafted",
+          "rationale": "The proposed generalization invariant seems to be a reasonable and necessary condition, ensuring that the score formula remains product-agnostic and consistent across different target classes."
+        }
+      },
+      "overallNotes": "The proposal raises several important points and introduces new features that have the potential to enhance the product and operator experience. However, it is crucial to address the concerns and risks identified in the adversarial pass to ensure a successful and effective implementation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity of Proactive Recommendations",
+            "detail": "The introduction of proactive recommendations in §7 item #8 adds significant complexity to the system. The need to generate, rank, and manage recommendations could introduce latency and performance issues, especially if the system is not optimized for handling these additional tasks."
+          },
+          {
+            "title": "Redesign/Build Environment Overhead",
+            "detail": "The new Redesign/Build Environment in §29 may require substantial user training and adaptation. Operators might find it challenging to steer the redesign or rebuild process effectively, leading to potential misuse or underutilization of the feature."
+          },
+          {
+            "title": "Multi-Format Targets Integration",
+            "detail": "The generalization of detection and crawl mechanisms for multiple target classes in §6 could lead to inconsistencies and errors. Each target class may have unique characteristics that the current detection rules might not adequately address, resulting in false positives or negatives."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's complexity could lead to increased system latency and performance degradation, making the user experience worse than the current straightforward defect remediation process.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces unnecessary complexity and potential performance issues without clear evidence of significant benefits over the current system. The additional features may confuse users and require extensive training, leading to underutilization and potential misuse.",
+      "votes": {
+        "CA-16-A-Q1": {
+          "key": "CA16AQ1-DEFER",
+          "pick_text": "Defer schema to engineering dispatch.",
+          "rationale": "The schema requires further technical review and potential adjustments before canonicalization."
+        },
+        "CA-16-A-Q2": {
+          "key": "CA16AQ2-LATER",
+          "pick_text": "Place after Step 2 (recommendations gated by initial audit).",
+          "rationale": "Ensuring recommendations are reviewed after initial audit maintains the integrity of the clearance process."
+        },
+        "CA-16-A-Q3": {
+          "key": "CA16AQ3-RATIFY",
+          "pick_text": "Ratify enum as drafted; extensibility via Panel-ratified additions.",
+          "rationale": "The current categories are comprehensive and allow for future extensibility through a controlled process."
+        },
+        "CA-16-A-Q4": {
+          "key": "CA16AQ4-CONFIG",
+          "pick_text": "Per-product configurable; drafted value is default.",
+          "rationale": "Allowing per-product configuration provides flexibility while maintaining a sensible default."
+        },
+        "CA-16-B-Q1": {
+          "key": "CA16BQ1-RENUMBER",
+          "pick_text": "Renumber to fit existing section sequence (specify).",
+          "rationale": "Renumbering ensures logical flow and coherence within the documentation."
+        },
+        "CA-16-B-Q2": {
+          "key": "CA16BQ2-RATIFY",
+          "pick_text": "Ratify floor as drafted (e.g. ≥3 options).",
+          "rationale": "The drafted floor provides a reasonable balance between flexibility and guidance for operators."
+        },
+        "CA-16-B-Q3": {
+          "key": "CA16BQ3-RATIFY",
+          "pick_text": "Ratify scope as drafted — admin-role required for redesign approval.",
+          "rationale": "Admin-role approval ensures controlled and responsible use of the redesign features."
+        },
+        "CA-16-C-Q1": {
+          "key": "CA16CQ1-RATIFY",
+          "pick_text": "Ratify 6 target classes as drafted.",
+          "rationale": "The six target classes are comprehensive and cover the necessary scope for multi-format targets."
+        },
+        "CA-16-C-Q2": {
+          "key": "CA16CQ2-RATIFY",
+          "pick_text": "Ratify detection rules as drafted.",
+          "rationale": "The current detection rules are well-defined and should be maintained for consistency."
+        },
+        "CA-16-C-Q3": {
+          "key": "CA16CQ3-AGENT21",
+          "pick_text": "Agent #21 ACE owns Multi-Format.",
+          "rationale": "Agent #21 ACE is well-suited to handle multi-format target detection and scoring due to its existing capabilities."
+        },
+        "CA-16-C-Q4": {
+          "key": "CA16CQ4-RATIFY",
+          "pick_text": "Ratify generalization invariant as drafted.",
+          "rationale": "Maintaining a product-agnostic score formula ensures consistency and fairness across different target classes."
+        }
+      },
+      "overallNotes": "The proposal introduces valuable features but requires careful consideration of the added complexity and potential performance impacts.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unclear Recommendation Impact",
+            "detail": "The proposal does not clearly define how the impact of proactive recommendations will be measured or verified, which could lead to recommendations that are not actionable or valuable."
+          },
+          {
+            "title": "Potential Recommendation Overload",
+            "detail": "The system may generate an overwhelming number of recommendations, making it difficult for operators to prioritize and act on them effectively."
+          },
+          {
+            "title": "Lack of Clear Criteria for Recommendation Categories",
+            "detail": "The categories for recommendations are not well-defined, which could lead to confusion and inconsistent application by operators."
+          }
+        ],
+        "worse_than_status_quo": "If the recommendations are not actionable or are overwhelming, operators may spend more time managing recommendations than actually improving products, leading to decreased productivity.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The introduction of proactive recommendations could lead to an increase in operator workload without a clear path to measurable improvements, potentially distracting from core product development efforts.",
+      "votes": {
+        "CA-16-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — schema not yet ready for canonicalization.",
+          "rationale": "The schema requires further refinement to ensure clarity and actionable recommendations."
+        },
+        "CA-16-A-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — proactive recommendations should not be a clearance-protocol step.",
+          "rationale": "Proactive recommendations should be handled separately to avoid complicating the clearance process."
+        },
+        "CA-16-A-Q3": {
+          "key": "CA16AQ3-NARROWER",
+          "pick_text": "Tighten enum — fewer categories than drafted.",
+          "rationale": "Reducing the number of categories will help ensure clarity and focus."
+        },
+        "CA-16-A-Q4": {
+          "key": "CA16AQ4-SHORTER",
+          "pick_text": "Shorter default defer-window.",
+          "rationale": "A shorter defer-window will encourage timely action on recommendations."
+        },
+        "CA-16-B-Q1": {
+          "key": "CA16BQ1-RATIFY",
+          "pick_text": "Ratify §29 numbering as drafted.",
+          "rationale": "The proposed section numbering is clear and does not conflict with existing sections."
+        },
+        "CA-16-B-Q2": {
+          "key": "CA16BQ2-LOWER",
+          "pick_text": "Lower floor (e.g. ≥2 options).",
+          "rationale": "A lower floor will reduce the burden on operators while still providing meaningful choices."
+        },
+        "CA-16-B-Q3": {
+          "key": "CA16BQ3-RATIFY",
+          "pick_text": "Ratify scope as drafted — admin-role required for redesign approval.",
+          "rationale": "The current scope ensures that redesigns are reviewed by appropriate roles."
+        },
+        "CA-16-C-Q1": {
+          "key": "CA16CQ1-RATIFY",
+          "pick_text": "Ratify 6 target classes as drafted.",
+          "rationale": "The proposed target classes cover the necessary scope without overcomplicating the system."
+        },
+        "CA-16-C-Q2": {
+          "key": "CA16CQ2-STRICTER",
+          "pick_text": "Stricter detection — fewer false positives.",
+          "rationale": "Stricter detection will improve the accuracy of target class identification."
+        },
+        "CA-16-C-Q3": {
+          "key": "CA16CQ3-AGENT21",
+          "pick_text": "Agent #21 ACE owns Multi-Format.",
+          "rationale": "Agent #21 ACE is already responsible for similar tasks, making it a logical choice for ownership."
+        },
+        "CA-16-C-Q4": {
+          "key": "CA16CQ4-RATIFY",
+          "pick_text": "Ratify generalization invariant as drafted.",
+          "rationale": "The generalization invariant ensures consistency across different target classes."
+        }
+      },
+      "overallNotes": "The proposal has potential but requires further refinement to ensure actionable and manageable recommendations.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Proactive recs lack cost consideration",
+            "detail": "The `expected_impact` in §7 only considers the positive impact on purpose fulfillment and score, but not the cost or effort required to implement the recommendation. This could lead to recommendations that are technically beneficial but impractical."
+          },
+          {
+            "title": "Step 1.5 timing unclear",
+            "detail": "§11.5 states that Step 1.5 follows Step 1 and the presence of a `purpose_record`, but it's unclear how frequently this step is triggered. Is it only after the initial Governance Audit, or after every run where the `purpose_record` is present? This could lead to operator fatigue if recommendations are constantly resurfaced."
+          },
+          {
+            "title": "Redesign environment scope creep",
+            "detail": "The description of the Redesign/Build Environment in CA-16-B is vague and could lead to scope creep. It's unclear what capabilities this environment will provide and how it will integrate with existing FlowAI features. This could result in a complex and unwieldy environment that is difficult to use."
+          },
+          {
+            "title": "Multi-format detection fragility",
+            "detail": "CA-16-C introduces multi-format targets, but the detection rules for identifying these targets are likely to be brittle and require constant maintenance. Changes to website structure or app frameworks could easily break these rules, leading to inaccurate target classification."
+          }
+        ],
+        "worse_than_status_quo": "If proactive recommendations are poorly implemented, they could overwhelm operators with irrelevant or impractical suggestions, leading to alert fatigue and a decreased trust in the FlowAI system. This would be worse than the current system, where operators only receive defect remediation suggestions.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal introduces significant complexity to the FlowAI system without a clear demonstration of its value. The proactive recommendations could be overwhelming and impractical, the redesign environment is vaguely defined, and the multi-format target detection is likely to be brittle. Deferring this proposal would allow for further refinement and validation of its core concepts before implementation.",
+      "votes": {
+        "CA-16-A-Q1": {
+          "key": "CA16AQ1-REVISE",
+          "pick_text": "Ratify with revision — adjust schema fields (specify).",
+          "rationale": "Add a field to `expected_impact` to capture the estimated cost/effort of implementing the recommendation. This will help operators prioritize recommendations that are both impactful and practical."
+        },
+        "CA-16-A-Q2": {
+          "key": "CA16AQ2-LATER",
+          "pick_text": "Place after Step 2 (recommendations gated by initial audit).",
+          "rationale": "Placing Step 1.5 after Step 2 ensures that recommendations are only presented after the initial audit has been completed, reducing the risk of overwhelming operators with irrelevant suggestions early in the process."
+        },
+        "CA-16-A-Q3": {
+          "key": "CA16AQ3-RATIFY",
+          "pick_text": "Ratify enum as drafted; extensibility via Panel-ratified additions.",
+          "rationale": "Panel-ratified additions provide a controlled mechanism for extending the enum while maintaining consistency and avoiding operator-defined categories that could be ambiguous or inconsistent."
+        },
+        "CA-16-A-Q4": {
+          "key": "CA16AQ4-SHORTER",
+          "pick_text": "Shorter default defer-window.",
+          "rationale": "A shorter defer-window encourages operators to revisit recommendations more frequently, ensuring that potentially valuable improvements are not overlooked."
+        },
+        "CA-16-B-Q1": {
+          "key": "CA16BQ1-DEFER",
+          "pick_text": "Defer numbering to canonicalization commit.",
+          "rationale": "Deferring the numbering to the canonicalization commit ensures that the section numbering is consistent and avoids potential conflicts with other amendments."
+        },
+        "CA-16-B-Q2": {
+          "key": "CA16BQ2-RATIFY",
+          "pick_text": "Ratify floor as drafted (e.g. ≥3 options).",
+          "rationale": "A minimum of 3 options provides operators with a reasonable range of choices while avoiding decision paralysis."
+        },
+        "CA-16-B-Q3": {
+          "key": "CA16BQ3-RATIFY",
+          "pick_text": "Ratify scope as drafted — admin-role required for redesign approval.",
+          "rationale": "Requiring admin approval for redesigns ensures that changes are properly vetted and aligned with overall product strategy."
+        },
+        "CA-16-C-Q1": {
+          "key": "CA16CQ1-DIFF",
+          "pick_text": "Adopt different target-class taxonomy.",
+          "rationale": "The current taxonomy seems arbitrary. A more structured taxonomy based on technical characteristics (e.g., rendering engine, deployment model) would be more robust."
+        },
+        "CA-16-C-Q2": {
+          "key": "CA16CQ2-STRICTER",
+          "pick_text": "Stricter detection — fewer false positives.",
+          "rationale": "Prioritizing stricter detection rules reduces the risk of misclassifying targets, which could lead to inaccurate scoring and inappropriate recommendations."
+        },
+        "CA-16-C-Q3": {
+          "key": "CA16CQ3-AGENT21",
+          "pick_text": "Agent #21 ACE owns Multi-Format.",
+          "rationale": "Agent #21 (ACE) is already responsible for crawling and interaction, making it a natural fit for owning multi-format target detection and scoring."
+        },
+        "CA-16-C-Q4": {
+          "key": "CA16CQ4-RATIFY",
+          "pick_text": "Ratify generalization invariant as drafted.",
+          "rationale": "Maintaining a product-agnostic score formula ensures consistency and comparability across different target classes."
+        }
+      },
+      "overallNotes": "The proposal introduces several new features that could significantly enhance FlowAI's capabilities, but careful consideration must be given to their implementation to avoid overwhelming operators and introducing unnecessary complexity.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "PA-1 Mandatory Links Overconstrain",
+            "detail": "Requiring every recommendation to cite purpose_record_link and market_definition_link (§7 PA-1) may suppress valuable suggestions that don't neatly map to documented purposes. This could prevent novel improvements like accessibility enhancements not covered in initial purpose definitions."
+          },
+          {
+            "title": "PA-6 Forced Recommendations Risky",
+            "detail": "The mandate to emit purpose_fulfillment_gap recommendations when score <1.0 (§7 PA-6) forces output even when gaps stem from external factors. This could generate low-value suggestions that erode operator trust if the system fabricates impractical fixes to satisfy the requirement."
+          },
+          {
+            "title": "Redesign Environment Scope Creep",
+            "detail": "The §29 redesign environment enables operator-steered rebuilds without clear guardrails against mission drift. Complex redesigns initiated through this surface could divert FlowAI from core defect remediation toward subjective enhancements, increasing failure risk."
+          },
+          {
+            "title": "Multi-Format Detection Gaps",
+            "detail": "CA-16-C's target class detection lacks specificity in deterministic rules (§ CA-16-C-Q2). Ambiguity in distinguishing native vs. web apps could misapply crawlers/scorers, breaking products through inappropriate interactions."
+          }
+        ],
+        "worse_than_status_quo": "Operators overwhelmed by low-value proactive recommendations could ignore critical defect alerts, while misclassified multi-format targets receive incorrect treatments - e.g., a SaaS platform crawled as a website triggers destructive interactions that corrupt production data.",
+        "precedent": "Microsoft Clippy's proactive assistance often provided irrelevant suggestions that disrupted workflows and reduced user trust, demonstrating how unsolicited recommendations can become counterproductive noise."
+      },
+      "rejection_steelman": "The bundled amendments introduce significant unquantified risks: proactive recommendations could overwhelm operators with low-signal noise, the redesign environment enables high-impact changes without sufficient safeguards, and multi-format expansion lacks robust detection mechanics. Given CA-15's unresolved status and potential interdependencies, deferring CA-16 allows proper validation of each component's isolated impact before integration.",
+      "votes": {
+        "CA-16-A-Q1": {
+          "key": "CA16AQ1-DEFER",
+          "pick_text": "Defer schema to engineering dispatch.",
+          "rationale": "Schema requires refinement for evidence validation and deduplication mechanics before canonicalization."
+        },
+        "CA-16-A-Q2": {
+          "key": "CA16AQ2-LATER",
+          "pick_text": "Place after Step 2 (recommendations gated by initial audit).",
+          "rationale": "Prioritizing defect remediation (Steps 1-2) before enhancements reduces cognitive load and ensures stability-first."
+        },
+        "CA-16-A-Q3": {
+          "key": "CA16AQ3-NARROWER",
+          "pick_text": "Tighten enum — fewer categories than drafted.",
+          "rationale": "Consolidating categories (e.g., merging 'competitive_signal' into 'market_definition_gap') focuses recommendations on core value areas."
+        },
+        "CA-16-A-Q4": {
+          "key": "CA16AQ4-SHORTER",
+          "pick_text": "Shorter default defer-window.",
+          "rationale": "30-day default risks stale recommendations; 14 days balances persistence with recency."
+        },
+        "CA-16-B-Q1": {
+          "key": "CA16BQ1-DEFER",
+          "pick_text": "Defer numbering to canonicalization commit.",
+          "rationale": "Section numbering is trivial compared to substantive concerns about the environment's risk profile."
+        },
+        "CA-16-B-Q2": {
+          "key": "CA16BQ2-HIGHER",
+          "pick_text": "Raise floor (e.g. ≥5 options).",
+          "rationale": "≥3 options may insufficiently explore solution space; ≥5 forces deeper divergence analysis."
+        },
+        "CA-16-B-Q3": {
+          "key": "CA16BQ3-NARROWER",
+          "pick_text": "Narrow scope — CEO-only for redesign approval.",
+          "rationale": "Redesigns risk major regressions; CEO gate ensures alignment with strategic boundaries."
+        },
+        "CA-16-C-Q1": {
+          "key": "CA16CQ1-MORE",
+          "pick_text": "Expand target classes — add missing categories.",
+          "rationale": "Omission of CLI tools and hardware interfaces from the six classes creates coverage gaps."
+        },
+        "CA-16-C-Q2": {
+          "key": "CA16CQ2-STRICTER",
+          "pick_text": "Stricter detection — fewer false positives.",
+          "rationale": "Deterministic rules must prioritize precision to prevent misapplication of crawlers to sensitive targets."
+        },
+        "CA-16-C-Q3": {
+          "key": "CA16CQ3-AGENT21",
+          "pick_text": "Agent #21 ACE owns Multi-Format.",
+          "rationale": "ACE already handles crawling scope; extending to format detection maintains architectural cohesion."
+        },
+        "CA-16-C-Q4": {
+          "key": "CA16CQ4-RATIFY",
+          "pick_text": "Ratify generalization invariant as drafted.",
+          "rationale": "Product-agnostic scoring ensures consistent quality standards across formats."
+        }
+      },
+      "overallNotes": "Recommend decoupling CA-16 components for phased validation given interdependency risks.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Recommendation and defect mixing",
+            "detail": "§7 item #8 requires proactive recommendations to live alongside §7.6 defect findings and §10.1.1 audit findings, but PA-3 only says they must not duplicate a defect. That leaves a gray zone where the same underlying issue can be reframed as a “compound opportunity,” creating double-counting, metric inflation, and operator confusion across the `/architecture` surface and `governance_record_entry`."
+          },
+          {
+            "title": "Disposition suppression is irreversible",
+            "detail": "PA-4 says `rejected` recommendations are never re-surfaced, while `deferred` can reappear after a configurable delay. That creates a hard-fail memory of a possibly wrong human judgment with no explicit safety valve for changed context, model improvement, or a mistaken reject, which is especially risky because the recommendation IDs are intended to persist across runs."
+          },
+          {
+            "title": "Build environment approval is underspecified",
+            "detail": "CA-16-B introduces a redesign/rebuild environment and then leaves approval scope and numbering partially open, but the actual run-time control plane is unclear. The draft does not specify rollback, branch isolation, artifact provenance, or what happens if an operator steers a redesign that conflicts with existing ProductSSOT or §28 symbiotic feedback-loop data, so the environment can become a parallel source of truth."
+          },
+          {
+            "title": "Multi-format detection will overfit",
+            "detail": "CA-16-C asks for first-class target classes for websites, native apps, mobile apps, SaaS, agentic AIs, and generic URLs, but the detection rules are not shown in the excerpt and are explicitly a Q-disposed open design point. In practice, deterministic classification across these categories will misroute hybrid products (for example, a SaaS with embedded mobile shell and chatbot), causing the wrong crawl/score/repair path to run."
+          }
+        ],
+        "worse_than_status_quo": "A product with a genuine but subtle opportunity is surfaced under CA-16-A, the operator rejects it once, and the system never re-surfaced it after the underlying context changes. Compared with the status quo, the proposal can permanently suppress a valuable improvement and make the platform less adaptive, while also adding extra clearance friction and UI noise for every run.",
+        "precedent": "GitHub Dependabot and similar security bots have shown that persistent triage states can become stale when context changes; once alerts are dismissed or ignored, important follow-up can be missed unless there is explicit reactivation logic. no precedent known for the exact combined proactive-recommendation plus redesign-environment design."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring CA-16 is that it expands FlowAI from defect repair into opinionated product strategy, but without a sufficiently hardened governance and provenance model. It introduces new durable artifacts, new operator dispositions, and a new redesign environment before the specification nails down rollback, conflict resolution, and cross-target determinism; that is a large surface area for status-quo regression and speculative recommendations that may not be reproducible.",
+      "votes": {
+        "CA-16-A-Q1": {
+          "key": "CA16AQ1-DEFER",
+          "pick_text": "Defer schema to engineering dispatch.",
+          "rationale": "The envelope is richly specified, but several fields are still policy-heavy rather than purely structural, especially disposition persistence, ranking thresholds, and the relationship to the new §11.5 workflow. Deferring to engineering dispatch is safer than canonicalizing a schema that may need provenance, rollback, and dedup changes first."
+        },
+        "CA-16-A-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — proactive recommendations should not be a clearance-protocol step.",
+          "rationale": "Making proactive recommendations part of clearance creates a soft governance gate for non-defect suggestions, which risks delaying launch on subjective product advice. The material itself says Step 1.5 is non-blocking, so it does not belong in the clearance protocol proper."
+        },
+        "CA-16-A-Q3": {
+          "key": "CA16AQ3-RATIFY",
+          "pick_text": "Ratify enum as drafted; extensibility via Panel-ratified additions.",
+          "rationale": "The drafted categories are already broad enough to support the use cases described, and keeping the enum closed avoids operator-defined taxonomy drift. If new categories are needed, Panel-ratified additions preserve comparability and prevent metric fragmentation."
+        },
+        "CA-16-A-Q4": {
+          "key": "CA16AQ4-CONFIG",
+          "pick_text": "Per-product configurable; drafted value is default.",
+          "rationale": "The draft already treats the defer window as operator-configurable with bounds, which is the right control for different product cadences. A fixed global default would be too blunt, but keeping the drafted value as the default is reasonable."
+        },
+        "CA-16-B-Q1": {
+          "key": "CA16BQ1-DEFER",
+          "pick_text": "Defer numbering to canonicalization commit.",
+          "rationale": "The section-numbering problem is not substantive policy and should be resolved in a later canonicalization pass once the surrounding document is stable. Ratifying §29 now risks locking in an awkward insertion point that may conflict with future amendments."
+        },
+        "CA-16-B-Q2": {
+          "key": "CA16BQ2-RATIFY",
+          "pick_text": "Ratify floor as drafted (e.g. ≥3 options).",
+          "rationale": "A minimum of three redesign options gives the operator enough diversity to choose among materially distinct approaches without overwhelming them. The draft’s example floor is a sensible baseline and does not need immediate tightening."
+        },
+        "CA-16-B-Q3": {
+          "key": "CA16BQ3-RATIFY",
+          "pick_text": "Ratify scope as drafted — admin-role required for redesign approval.",
+          "rationale": "A redesign/rebuild environment can materially alter the product, so admin-gated approval is a prudent control. Letting operators approve redesigns directly would increase the chance of unauthorized strategic drift or accidental destructive rebuilds."
+        },
+        "CA-16-C-Q1": {
+          "key": "CA16CQ1-RATIFY",
+          "pick_text": "Ratify 6 target classes as drafted.",
+          "rationale": "The six classes map cleanly to the proposal’s stated use cases and keep the taxonomy understandable. Expanding or reducing classes now would weaken the intent to make multi-format targets first-class without overfitting to a single product type."
+        },
+        "CA-16-C-Q2": {
+          "key": "CA16CQ2-RATIFY",
+          "pick_text": "Ratify detection rules as drafted.",
+          "rationale": "Deterministic target-class detection is important if downstream crawling, scoring, and build flows need repeatable behavior. LLM-classified detection would blur the boundary between target identification and general reasoning, making audits harder."
+        },
+        "CA-16-C-Q3": {
+          "key": "CA16CQ3-AGENT21",
+          "pick_text": "Agent #21 ACE owns Multi-Format.",
+          "rationale": "The proposal already frames CA-16-C as an extension of the existing agentic execution and scoring pipeline, so keeping ownership with ACE minimizes new coordination overhead. A new agent would add needless governance surface without clear benefit."
+        },
+        "CA-16-C-Q4": {
+          "key": "CA16CQ4-RATIFY",
+          "pick_text": "Ratify generalization invariant as drafted.",
+          "rationale": "A product-agnostic score formula is necessary if FlowAI is to compare outcomes across target classes consistently. Allowing per-target-class tuning would make scores non-comparable and invite gaming."
+        }
+      },
+      "overallNotes": "I am not endorsing the design as a whole; the vote choices above reflect the least-bad path within the listed options. The core concern is that CA-16 adds durable recommendation memory and a redesign environment before its provenance, rollback, and reactivation semantics are fully hardened.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback Mechanism",
+            "detail": "The proposal introduces a new Redesign/Build Environment (§29) without specifying a rollback mechanism in case the redesign or rebuild fails or produces undesirable outcomes. This could lead to irreversible changes to the product."
+          },
+          {
+            "title": "Unclear Operator Disposition Lifecycle",
+            "detail": "The proactive recommendations envelope (§7 item #8) introduces an operator disposition lifecycle, but the specifics of how dispositions are handled across multiple runs and how they interact with the `governance_record_entry` are not clearly defined, potentially leading to inconsistent state."
+          },
+          {
+            "title": "Insufficient Testing for Multi-Format Targets",
+            "detail": "The proposal generalizes detection, crawl, Phase B, and build processes for Multi-Format Targets (§17) without detailing how the conformance tests will be adapted or expanded to cover the new target classes, risking untested and potentially buggy implementations."
+          }
+        ],
+        "worse_than_status_quo": "If the proactive recommendations are not properly filtered or ranked, they could overwhelm the operator with low-value suggestions, making the system worse than the status quo by decreasing the signal-to-noise ratio and potentially leading to operator fatigue.",
+        "precedent": "The introduction of a redesign/build environment without clear guidelines or gating mechanisms is reminiscent of the challenges faced by Google's 'Project Aristotle' team when they introduced a similar feature without adequate testing and feedback loops, leading to significant rework and user dissatisfaction."
+      },
+      "rejection_steelman": "The proposal could be rejected or deferred because it introduces significant new functionality (Redesign/Build Environment, Multi-Format Targets) without clear conformance tests or a detailed implementation plan, potentially leading to a complex and hard-to-maintain system.",
+      "votes": {
+        "CA-16-A-Q1": {
+          "key": "CA16AQ1-RATIFY",
+          "pick_text": "Ratify envelope schema as drafted.",
+          "rationale": "The schema appears well-structured and comprehensive."
+        },
+        "CA-16-A-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The placement of Step 1.5 should be determined by user feedback and testing rather than being fixed at this stage."
+        },
+        "CA-16-A-Q3": {
+          "key": "CA16AQ3-RATIFY",
+          "pick_text": "Ratify enum as drafted; extensibility via Panel-ratified additions.",
+          "rationale": "The current enum is reasonable and extensibility is important."
+        },
+        "CA-16-A-Q4": {
+          "key": "CA16AQ4-CONFIG",
+          "pick_text": "Per-product configurable; drafted value is default.",
+          "rationale": "Flexibility is needed for different products."
+        },
+        "CA-16-B-Q1": {
+          "key": "CA16BQ1-RATIFY",
+          "pick_text": "Ratify §29 numbering as drafted.",
+          "rationale": "Renumbering existing sections could cause confusion."
+        },
+        "CA-16-B-Q2": {
+          "key": "CA16BQ2-RATIFY",
+          "pick_text": "Ratify floor as drafted (e.g. ≥3 options).",
+          "rationale": "Three options provide a reasonable minimum for meaningful choice."
+        },
+        "CA-16-B-Q3": {
+          "key": "CA16BQ3-RATIFY",
+          "pick_text": "Ratify scope as drafted — admin-role required for redesign approval.",
+          "rationale": "Admin-gating ensures a level of oversight and control."
+        },
+        "CA-16-C-Q1": {
+          "key": "CA16CQ1-RATIFY",
+          "pick_text": "Ratify 6 target classes as drafted.",
+          "rationale": "The six classes cover a broad range of targets."
+        },
+        "CA-16-C-Q2": {
+          "key": "CA16CQ2-STRICTER",
+          "pick_text": "Stricter detection — fewer false positives.",
+          "rationale": "Reducing false positives improves the system's reliability."
+        },
+        "CA-16-C-Q3": {
+          "key": "CA16CQ3-NEW",
+          "pick_text": "New agent owns Multi-Format.",
+          "rationale": "A dedicated agent could better handle the complexity of Multi-Format targets."
+        },
+        "CA-16-C-Q4": {
+          "key": "CA16CQ4-RATIFY",
+          "pick_text": "Ratify generalization invariant as drafted.",
+          "rationale": "Maintaining a product-agnostic score formula is crucial for consistency."
+        }
+      },
+      "overallNotes": "The proposal is ambitious and introduces significant new features, but it requires careful consideration of the potential risks and edge cases.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "PA-1 citation enforcement missing",
+            "detail": "§7 item #8 PA-1 requires every recommendation to cite non-null purpose_record_link and market_definition_link, yet the conformance test only stubs a null case and rejects at validation time; no mechanism (e.g., citation verifier or LLM grounding step) is specified to prevent fabricated links from reaching the governance_record_entry."
+          },
+          {
+            "title": "Step 1.5 adds non-blocking overhead",
+            "detail": "§11 NEW Step 1.5 inserts Proactive Recommendation Review after Governance Audit; although declared non-blocking, every disposition still appends to governance_record_entry with kind proactive_recommendation_disposition.v1, increasing append-only log size and future re-surfacing logic without any stated retention or compaction policy."
+          },
+          {
+            "title": "Redesign env lacks CA-14 safety cross-ref",
+            "detail": "§29 Redesign/Build Environment description (even in truncated form) omits any reference to the safety invariants or fix-safety rules introduced in CA-14 §10.4 and §7 item #6; operator-steerable rebuilds could therefore bypass the non-destructive error-state triggers and XSS opt-in controls defined in §6."
+          }
+        ],
+        "worse_than_status_quo": "By surfacing ranked proactive recommendations before Launch Readiness, operators may accept speculative purpose_fulfillment_gap items that increase scope and regression risk, resulting in more frequent rollbacks via §10 Self-Protect than the current defect-only remediation path.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal bundles three substantial new surfaces (proactive envelope, Step 1.5, and §29 redesign environment) while several prerequisite amendments (CA-13/CA-14/CA-15) remain parked or unratified; ratifying CA-16 now risks creating dangling references to purpose_record and purpose_fulfillment_score that may never exist, plus additional governance_record bloat before the core Self-Renewal Executor is stable.",
+      "votes": {
+        "CA-16-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — schema not yet ready for canonicalization.",
+          "rationale": "Schema depends on unratified CA-15 purpose_record and lacks citation-verification enforcement."
+        },
+        "CA-16-A-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — proactive recommendations should not be a clearance-protocol step.",
+          "rationale": "Inserting a non-blocking but still logged step increases protocol complexity without clear benefit."
+        },
+        "CA-16-A-Q3": {
+          "key": "CA16AQ3-RATIFY",
+          "pick_text": "Ratify enum as drafted; extensibility via Panel-ratified additions.",
+          "rationale": "Enum is already reasonably scoped; open or modified versions risk uncontrolled growth."
+        },
+        "CA-16-A-Q4": {
+          "key": "CA16AQ4-CONFIG",
+          "pick_text": "Per-product configurable; drafted value is default.",
+          "rationale": "Allows tuning without changing the global default of 30 days."
+        },
+        "CA-16-B-Q1": {
+          "key": "CA16BQ1-DEFER",
+          "pick_text": "Defer numbering to canonicalization commit.",
+          "rationale": "Avoids premature renumbering while CA-13/14/15 status is still unresolved."
+        },
+        "CA-16-B-Q2": {
+          "key": "CA16BQ2-RATIFY",
+          "pick_text": "Ratify floor as drafted (e.g. ≥3 options).",
+          "rationale": "Provides minimum choice without over-constraining the redesign surface."
+        },
+        "CA-16-B-Q3": {
+          "key": "CA16BQ3-RATIFY",
+          "pick_text": "Ratify scope as drafted — admin-role required for redesign approval.",
+          "rationale": "Maintains existing admin gate semantics rather than widening or narrowing arbitrarily."
+        },
+        "CA-16-C-Q1": {
+          "key": "CA16CQ1-RATIFY",
+          "pick_text": "Ratify 6 target classes as drafted.",
+          "rationale": "Covers the stated scope without immediate expansion or reduction."
+        },
+        "CA-16-C-Q2": {
+          "key": "CA16CQ2-RATIFY",
+          "pick_text": "Ratify detection rules as drafted.",
+          "rationale": "Deterministic rules are preferable to LLM-only classification for reproducibility."
+        },
+        "CA-16-C-Q3": {
+          "key": "CA16CQ3-DEFER",
+          "pick_text": "Defer ownership to engineering dispatch.",
+          "rationale": "Agent assignment should follow implementation rather than be fixed in the amendment."
+        },
+        "CA-16-C-Q4": {
+          "key": "CA16CQ4-RATIFY",
+          "pick_text": "Ratify generalization invariant as drafted.",
+          "rationale": "Preserves product-agnostic scoring across target classes."
+        }
+      },
+      "overallNotes": "Multiple cross-references to still-parked amendments make the bundle fragile; deferral recommended until CA-15 ratification status is clarified.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-16-A-Q1",
+      "topic": "CA-16-A-Q1 — `agent.proactive_recommendation.v1` envelope schema ratification.",
+      "options": [
+        {
+          "key": "CA16AQ1-RATIFY",
+          "text": "Ratify envelope schema as drafted."
+        },
+        {
+          "key": "CA16AQ1-REVISE",
+          "text": "Ratify with revision — adjust schema fields (specify)."
+        },
+        {
+          "key": "CA16AQ1-REJECT",
+          "text": "Reject — schema not yet ready for canonicalization."
+        },
+        {
+          "key": "CA16AQ1-DEFER",
+          "text": "Defer schema to engineering dispatch."
+        }
+      ],
+      "draftedKey": "CA16AQ1-RATIFY"
+    },
+    {
+      "id": "CA-16-A-Q2",
+      "topic": "CA-16-A-Q2 — Step 1.5 placement in §11 Six-Step Clearance for proactive recommendations.",
+      "options": [
+        {
+          "key": "CA16AQ2-RATIFY",
+          "text": "Ratify Step 1.5 placement as drafted."
+        },
+        {
+          "key": "CA16AQ2-LATER",
+          "text": "Place after Step 2 (recommendations gated by initial audit)."
+        },
+        {
+          "key": "CA16AQ2-PARALLEL",
+          "text": "Parallel to Step 1 (not sequential)."
+        },
+        {
+          "key": "CA16AQ2-REJECT",
+          "text": "Reject — proactive recommendations should not be a clearance-protocol step."
+        }
+      ],
+      "draftedKey": "CA16AQ2-RATIFY"
+    },
+    {
+      "id": "CA-16-A-Q3",
+      "topic": "CA-16-A-Q3 — Recommendation categories enum + extensibility.",
+      "options": [
+        {
+          "key": "CA16AQ3-RATIFY",
+          "text": "Ratify enum as drafted; extensibility via Panel-ratified additions."
+        },
+        {
+          "key": "CA16AQ3-OPEN",
+          "text": "Make enum open-ended — operators may declare new categories."
+        },
+        {
+          "key": "CA16AQ3-NARROWER",
+          "text": "Tighten enum — fewer categories than drafted."
+        },
+        {
+          "key": "CA16AQ3-MODIFY",
+          "text": "Modify enum."
+        }
+      ],
+      "draftedKey": "CA16AQ3-RATIFY"
+    },
+    {
+      "id": "CA-16-A-Q4",
+      "topic": "CA-16-A-Q4 — Defer-window default for non-acted recommendations.",
+      "options": [
+        {
+          "key": "CA16AQ4-RATIFY",
+          "text": "Ratify default defer-window as drafted."
+        },
+        {
+          "key": "CA16AQ4-SHORTER",
+          "text": "Shorter default defer-window."
+        },
+        {
+          "key": "CA16AQ4-LONGER",
+          "text": "Longer default defer-window."
+        },
+        {
+          "key": "CA16AQ4-CONFIG",
+          "text": "Per-product configurable; drafted value is default."
+        }
+      ],
+      "draftedKey": "CA16AQ4-RATIFY"
+    },
+    {
+      "id": "CA-16-B-Q1",
+      "topic": "CA-16-B-Q1 — §29 Redesign/Build Environment section numbering.",
+      "options": [
+        {
+          "key": "CA16BQ1-RATIFY",
+          "text": "Ratify §29 numbering as drafted."
+        },
+        {
+          "key": "CA16BQ1-RENUMBER",
+          "text": "Renumber to fit existing section sequence (specify)."
+        },
+        {
+          "key": "CA16BQ1-MERGE",
+          "text": "Merge §29 with an existing section."
+        },
+        {
+          "key": "CA16BQ1-DEFER",
+          "text": "Defer numbering to canonicalization commit."
+        }
+      ],
+      "draftedKey": "CA16BQ1-RATIFY"
+    },
+    {
+      "id": "CA-16-B-Q2",
+      "topic": "CA-16-B-Q2 — Multi-option proposal floor (minimum N options per redesign proposal).",
+      "options": [
+        {
+          "key": "CA16BQ2-RATIFY",
+          "text": "Ratify floor as drafted (e.g. ≥3 options)."
+        },
+        {
+          "key": "CA16BQ2-HIGHER",
+          "text": "Raise floor (e.g. ≥5 options)."
+        },
+        {
+          "key": "CA16BQ2-LOWER",
+          "text": "Lower floor (e.g. ≥2 options)."
+        },
+        {
+          "key": "CA16BQ2-NONE",
+          "text": "No floor — operator-judged."
+        }
+      ],
+      "draftedKey": "CA16BQ2-RATIFY"
+    },
+    {
+      "id": "CA-16-B-Q3",
+      "topic": "CA-16-B-Q3 — Admin-gated approval scope for Redesign/Build Environment.",
+      "options": [
+        {
+          "key": "CA16BQ3-RATIFY",
+          "text": "Ratify scope as drafted — admin-role required for redesign approval."
+        },
+        {
+          "key": "CA16BQ3-WIDER",
+          "text": "Widen scope — operator-role may approve some redesigns."
+        },
+        {
+          "key": "CA16BQ3-NARROWER",
+          "text": "Narrow scope — CEO-only for redesign approval."
+        },
+        {
+          "key": "CA16BQ3-MODIFY",
+          "text": "Modify gate semantics."
+        }
+      ],
+      "draftedKey": "CA16BQ3-RATIFY"
+    },
+    {
+      "id": "CA-16-C-Q1",
+      "topic": "CA-16-C-Q1 — 6 canonical target classes for Multi-Format Targets ratification.",
+      "options": [
+        {
+          "key": "CA16CQ1-RATIFY",
+          "text": "Ratify 6 target classes as drafted."
+        },
+        {
+          "key": "CA16CQ1-FEWER",
+          "text": "Reduce target classes — keep only highest-value (specify)."
+        },
+        {
+          "key": "CA16CQ1-MORE",
+          "text": "Expand target classes — add missing categories."
+        },
+        {
+          "key": "CA16CQ1-DIFF",
+          "text": "Adopt different target-class taxonomy."
+        }
+      ],
+      "draftedKey": "CA16CQ1-RATIFY"
+    },
+    {
+      "id": "CA-16-C-Q2",
+      "topic": "CA-16-C-Q2 — Detection determinism (how engine identifies a target class).",
+      "options": [
+        {
+          "key": "CA16CQ2-RATIFY",
+          "text": "Ratify detection rules as drafted."
+        },
+        {
+          "key": "CA16CQ2-STRICTER",
+          "text": "Stricter detection — fewer false positives."
+        },
+        {
+          "key": "CA16CQ2-LOOSER",
+          "text": "Looser detection — broader coverage."
+        },
+        {
+          "key": "CA16CQ2-LLM",
+          "text": "LLM-classified detection instead of deterministic."
+        }
+      ],
+      "draftedKey": "CA16CQ2-RATIFY"
+    },
+    {
+      "id": "CA-16-C-Q3",
+      "topic": "CA-16-C-Q3 — Multi-Format ownership (which agent owns multi-format target detection + scoring).",
+      "options": [
+        {
+          "key": "CA16CQ3-AGENT8",
+          "text": "Agent #8 Quality Audit owns Multi-Format."
+        },
+        {
+          "key": "CA16CQ3-AGENT21",
+          "text": "Agent #21 ACE owns Multi-Format."
+        },
+        {
+          "key": "CA16CQ3-NEW",
+          "text": "New agent owns Multi-Format."
+        },
+        {
+          "key": "CA16CQ3-DEFER",
+          "text": "Defer ownership to engineering dispatch."
+        }
+      ],
+      "draftedKey": "CA16CQ3-AGENT8"
+    },
+    {
+      "id": "CA-16-C-Q4",
+      "topic": "CA-16-C-Q4 — §7.6 score-formula generalization invariant (score formula remains product-agnostic across target classes).",
+      "options": [
+        {
+          "key": "CA16CQ4-RATIFY",
+          "text": "Ratify generalization invariant as drafted."
+        },
+        {
+          "key": "CA16CQ4-PER_CLASS",
+          "text": "Allow per-target-class score-formula tuning (operator-configurable)."
+        },
+        {
+          "key": "CA16CQ4-REJECT",
+          "text": "Reject — score formula is already product-agnostic; invariant is redundant."
+        },
+        {
+          "key": "CA16CQ4-MODIFY",
+          "text": "Modify invariant."
+        }
+      ],
+      "draftedKey": "CA16CQ4-RATIFY"
+    }
+  ]
+}

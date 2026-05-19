@@ -1,0 +1,984 @@
+{
+  "schema": "quorum-fix.sidecar.v1",
+  "code": "CA-13",
+  "commit": "81cf144",
+  "bundle_size": 32412,
+  "startedAt": "2026-05-19T04:27:32.440Z",
+  "finishedAt": "2026-05-19T04:28:53.474Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 32412
+  },
+  "tally": {
+    "engagedTotal": 8,
+    "invalid": 0,
+    "tangential": 2,
+    "silent": 0,
+    "perQuestion": {
+      "CA-13-A-Q1": {
+        "CA13AQ1-RATIFY": 1,
+        "CA13AQ1-REVISE": 2,
+        "CA13AQ1-REJECT": 0,
+        "CA13AQ1-DEFER": 5,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-13-A-Q2": {
+        "CA13AQ2-RATIFY": 0,
+        "CA13AQ2-HARD": 4,
+        "CA13AQ2-TIGHTEN": 4,
+        "CA13AQ2-LOOSEN": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-13-A-Q3": {
+        "CA13AQ3-RATIFY": 6,
+        "CA13AQ3-REVISE": 1,
+        "CA13AQ3-REJECT": 0,
+        "CA13AQ3-MOVE": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-13-B-Q1": {
+        "CA13BQ1-RATIFY": 5,
+        "CA13BQ1-REVISE": 1,
+        "CA13BQ1-REJECT": 0,
+        "CA13BQ1-DEFER": 2,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-13-B-Q2": {
+        "CA13BQ2-RATIFY": 1,
+        "CA13BQ2-AGENTID": 3,
+        "CA13BQ2-CAPABILITY": 4,
+        "CA13BQ2-DEFER": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 34,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Conditional clearance creates governance bypass",
+        "detail": "§7.6 Near-GTM band (90-94) allows admin-only signoff to pass Step 5 as 'conditional clearance'. This creates a loophole where products missing up to 10% of their market definition can still go to market, undermining the CEO directive's intent that products must serve their FULL §1.1 market definition."
+      },
+      {
+        "slot": 1,
+        "title": "Sibling executor wiring lacks enforcement mechanism",
+        "detail": "CA-13-B references EXECUTOR_REGISTRY sibling pattern per CA-7 §15.5, but provides no compile-time validation that agents #21/#26 actually wire their elevated-authority siblings. The text mentions 'api/agent/21/execute.js' exists but doesn't specify how BaseAgent.guard() prevents direct auto_write_internal invocation on the primary."
+      },
+      {
+        "slot": 1,
+        "title": "GTM bar change breaks existing clearance records",
+        "detail": "Products that achieved clearance under ENTRY 006's ≥75 Demo-ready bar are now retroactively non-compliant under CA-13-A's ≥95 GTM-ready bar. The amendment provides no migration path for existing ClearanceRecord entities or guidance on whether historical clearances remain valid."
+      },
+      {
+        "slot": 1,
+        "title": "Two-95s reconciliation creates operator confusion",
+        "detail": "§19.0 attempts to clarify Self-Audit 95/95 vs GTM Readiness ≥95, but operators must now track which '95' applies in which context. The table helps but error messages like 'failed 95 threshold' become ambiguous without additional context."
+      },
+      {
+        "slot": 2,
+        "title": "Increased GTM threshold may delay launches",
+        "detail": "The proposal to increase the GTM readiness threshold from 75 to 95 in §7.6 could significantly delay product launches. This higher bar may require more resources and time to achieve, potentially slowing down the release of new products and updates."
+      },
+      {
+        "slot": 2,
+        "title": "Conditional clearance path lacks clarity",
+        "detail": "The conditional clearance path for Near-GTM scores (90-94) in §7.6 is not clearly defined. It relies on admin signoff and the publication of LIMITATIONS, but does not specify the criteria for admin approval, which could lead to inconsistent application."
+      },
+      {
+        "slot": 2,
+        "title": "Potential confusion with dual 95 thresholds",
+        "detail": "The introduction of two distinct 95 thresholds in §19 could lead to confusion among stakeholders. While the proposal attempts to clarify this with a new paragraph, the existence of two similar metrics might still cause misunderstandings about their distinct purposes."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case the changes introduced by CA-13-A or CA-13-B cause unforeseen issues. This lack of a rollback plan could lead to significant disruptions if problems arise."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "There is no mention of comprehensive testing for the new GTM Readiness Report bands or the EXECUTOR_REGISTRY sibling pattern. Without thorough testing, it's uncertain whether these changes will operate as intended."
+      },
+      {
+        "slot": 3,
+        "title": "Potential for Misinterpretation",
+        "detail": "The addition of a 'two-distinct-95 bars' reconciliation paragraph in §19.0, while intended to clarify, might still lead to confusion among team members or stakeholders who are not thoroughly familiar with the distinction between Self-Audit 95/95 and GTM Readiness ≥95."
+      },
+      {
+        "slot": 4,
+        "title": "Increased Complexity in GTM Readiness",
+        "detail": "The proposed change to raise the GTM readiness bar from 75 to 95 in §7.6 increases the complexity of the GTM process. This could lead to longer development cycles and potential delays in product releases. The current threshold of 75 has been proven to be achievable and striking a balance between quality and time-to-market."
+      },
+      {
+        "slot": 4,
+        "title": "Potential Overhead in Admin Signoff",
+        "detail": "The introduction of the 'Near-GTM' band (90–94) that requires admin signoff for conditional clearance adds an administrative overhead. This could lead to bottlenecks, especially if the admin resources are limited. The process might become inefficient, leading to delays in the deployment pipeline."
+      },
+      {
+        "slot": 4,
+        "title": "Redundancy in §19.0 Reconciliation",
+        "detail": "The proposed addition of §19.0 to reconcile the two distinct '95' bars seems redundant. The current §10 table already lists the three mechanisms, and adding another section might confuse rather than clarify. It could lead to maintenance overhead without significant benefit."
+      },
+      {
+        "slot": 5,
+        "title": "Complexity Increase",
+        "detail": "Raising the GTM-ready bar to 95 may significantly increase the complexity of the clearance process, potentially leading to longer development cycles and increased resource allocation."
+      },
+      {
+        "slot": 5,
+        "title": "Potential for Bottlenecks",
+        "detail": "The new GTM-ready bar could create bottlenecks in the pipeline, as products may struggle to meet the higher threshold, leading to delays in deployment."
+      },
+      {
+        "slot": 5,
+        "title": "Risk of Over-Engineering",
+        "detail": "There is a risk that teams may over-engineer products to meet the new GTM-ready bar, potentially leading to unnecessary complexity and maintenance overhead."
+      },
+      {
+        "slot": 6,
+        "title": "GTM bar too high?",
+        "detail": "Raising the GTM bar to 95 may be overly aggressive, potentially blocking valuable products that are 'good enough' but not perfect. This could stifle innovation and delay market entry unnecessarily, especially given the subjective nature of 'full market definition' (§1.1)."
+      },
+      {
+        "slot": 6,
+        "title": "Conditional clearance risk",
+        "detail": "The 'conditional clearance' path for Near-GTM (90-94) products introduces subjectivity and potential for abuse. Admin sign-off may not be consistently applied, leading to inconsistent product quality and customer experience. The LIMITATIONS section may not adequately convey the risks."
+      },
+      {
+        "slot": 6,
+        "title": "Executor naming unclear",
+        "detail": "The proposed naming convention for sibling charters (`<agent-short-name>-executor`) is not sufficiently descriptive. It doesn't clearly indicate the capabilities or purpose of the executor, making it harder to understand and maintain the system. The link between the agent and executor is implicit, not explicit."
+      },
+      {
+        "slot": 6,
+        "title": "SSOT bloat",
+        "detail": "The explicit 'two-distinct-95 bars' reconciliation paragraph (§19.0) adds complexity and length to the SSOT. While clarity is important, this level of detail may not be necessary and could contribute to information overload. The table format is also verbose."
+      },
+      {
+        "slot": 7,
+        "title": "Near-GTM conditional clearance risk",
+        "detail": "The conditional clearance path for Near-GTM scores (90-94) in §7.6 lacks enforcement mechanisms for LIMITATIONS publication. Without automated verification, admins could sign off without proper disclosure, leading to prospect demos with undocumented deficiencies."
+      },
+      {
+        "slot": 7,
+        "title": "Dual 95-bar confusion vector",
+        "detail": "The §19.0 reconciliation creates two distinct 95-based thresholds (Self-Audit 95/95 and GTM ≥95) with similar terminology. This could cause conflation in automated systems like ScoreEvaluator.js, especially during edge-case evaluations where one passes and the other fails."
+      },
+      {
+        "slot": 7,
+        "title": "Executor namespace governance gap",
+        "detail": "CA-13-B introduces executor names like 'aggressive-crawl-conductor-executor' without namespace collision prevention in §15.1. Future agent additions could cause naming conflicts, disrupting OrchestratorHub wiring and violating §25 Locked Rule 2's partition stability."
+      },
+      {
+        "slot": 7,
+        "title": "Conditional clearance incentive misalignment",
+        "detail": "The Near-GTM band in §7.6 may incentivize teams to stop at 94/100 to avoid GTM-ready scrutiny. This could create systemic '94 culture' where products avoid last 5% improvements despite being technically capable."
+      },
+      {
+        "slot": 8,
+        "title": "Threshold shift lacks evidence",
+        "detail": "CA-13-A changes §7.6 from the ENTRY 006 Demo-ready bar (75) to a GTM-ready bar of 95, but the proposal cites only a single CEO directive and one 42/100 demo as justification. There is no empirical bridge showing that 95 is the right operating threshold for all products, environments, or market definitions in §1.1, so the new bar risks being arbitrary and destabilizing."
+      },
+      {
+        "slot": 8,
+        "title": "Conditional clearance conflicts",
+        "detail": "The new §7.6 adds a Near-GTM 90–94 conditional path, but §11 still says Step 5 requires score ≥95, zero criticals, terminal resolution of high findings, and LIMITATIONS. That creates a contradiction between the gate and the exception, especially because the proposal also says Step 5 can pass conditionally with admin-only signoff; the approval semantics are under-specified and likely to be disputed in execution."
+      },
+      {
+        "slot": 8,
+        "title": "Two ninety-five bars may confuse ops",
+        "detail": "The proposed §19.0 attempts to distinguish Self-Audit 95/95 from GTM Readiness ≥95, but the text uses the same number for two separate gates with different owners, scopes, and override rules. In practice, engineers and reviewers may misread logs, dashboards, or clearance records and assume one gate satisfies the other, producing false confidence or redundant rework."
+      },
+      {
+        "slot": 8,
+        "title": "CA-13-B renames authority surface inconsistently",
+        "detail": "The CA-13-B edit changes §15 intro and rows 21/26 to Option (a), but the proposal leaves many references to the old CA-9-Q4=(b) phrasing in surrounding history and comments, and even mentions a non-literal wiring analog for Agent #26. This kind of partial reconciliation is dangerous because it can create a split-brain between canonical SSOT, executor wiring, and operational documentation."
+      },
+      {
+        "slot": 9,
+        "title": "GTM Readiness Score Complexity",
+        "detail": "The new §7.6 score bands introduce multiple thresholds (GTM-ready, Near-GTM, Internal-only, Pre-internal, Not-demo-ready) that may complicate the clearance process. The addition of a 'conditional clearance' path for Near-GTM scores (90–94) may introduce ambiguity in the decision-making process (§11 Step 5)."
+      },
+      {
+        "slot": 9,
+        "title": "Conflation Risk Remains",
+        "detail": "Despite the proposed §19.0 reconciliation paragraph, there's still a risk of conflating the Self-Audit 95/95 threshold with the GTM Readiness ≥95 bar, as both use the '95' threshold. The distinction between these mechanisms may not be clear to all stakeholders (§19)."
+      },
+      {
+        "slot": 9,
+        "title": "Authority and Governance",
+        "detail": "The CA-13-B amendment changes the authority structure for Agents #21 and #26, introducing an EXECUTOR_REGISTRY sibling pattern. This change may introduce complexity in understanding the governance and authority structure, potentially leading to misinterpretation or misuse (§15, §15.1)."
+      },
+      {
+        "slot": 10,
+        "title": "§7.6 band change lacks validation",
+        "detail": "The CA-13-A rewrite of score bands and Step 5 prerequisite in §7.6 changes ≥75 to ≥95 without any accompanying update to the scoring formula in the same section or any reference to empirical delta data from prior Self-Renewal runs stored in ProductSSOT.delta_log."
+      },
+      {
+        "slot": 10,
+        "title": "§19.0 introduces conflicting labels",
+        "detail": "The new §19.0 table defines 'Near-GTM' and 'Pre-internal' bands that directly contradict the existing Clearance Step 5 language in §11 and the three-mechanism table in §19, with no cross-reference or migration rule for ClearanceRecord entries created under the old bands."
+      },
+      {
+        "slot": 10,
+        "title": "CA-13-B authority edit omits code sync",
+        "detail": "The amendment to §15.1 rows 21 and 26 replaces authority arrays and cites EXECUTOR_REGISTRY siblings, yet leaves the BaseAgent.guard() implementation and the api/agent/*/execute.js wiring described in §15.5 untouched, creating a new canonical/code divergence."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-13-A-Q1": {
+      "verdict": "PLURALITY_CA13AQ1-DEFER",
+      "detail": "5 of 8 on CA13AQ1-DEFER (below 7/10 quorum)",
+      "topKey": "CA13AQ1-DEFER",
+      "topCount": 5
+    },
+    "CA-13-A-Q2": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 4 between CA13AQ2-HARD / CA13AQ2-TIGHTEN",
+      "topKey": "CA13AQ2-HARD",
+      "topCount": 4
+    },
+    "CA-13-A-Q3": {
+      "verdict": "PLURALITY_CA13AQ3-RATIFY",
+      "detail": "6 of 8 on CA13AQ3-RATIFY (below 7/10 quorum)",
+      "topKey": "CA13AQ3-RATIFY",
+      "topCount": 6
+    },
+    "CA-13-B-Q1": {
+      "verdict": "PLURALITY_CA13BQ1-RATIFY",
+      "detail": "5 of 8 on CA13BQ1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA13BQ1-RATIFY",
+      "topCount": 5
+    },
+    "CA-13-B-Q2": {
+      "verdict": "PLURALITY_CA13BQ2-CAPABILITY",
+      "detail": "4 of 8 on CA13BQ2-CAPABILITY (below 7/10 quorum)",
+      "topKey": "CA13BQ2-CAPABILITY",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.325,
+    "alignedCount": 13,
+    "totalPossible": 40,
+    "draftedQs": [
+      "CA-13-A-Q1",
+      "CA-13-A-Q2",
+      "CA-13-A-Q3",
+      "CA-13-B-Q1",
+      "CA-13-B-Q2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 32.5 %, distinct objections 34"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Conditional clearance creates governance bypass",
+            "detail": "§7.6 Near-GTM band (90-94) allows admin-only signoff to pass Step 5 as 'conditional clearance'. This creates a loophole where products missing up to 10% of their market definition can still go to market, undermining the CEO directive's intent that products must serve their FULL §1.1 market definition."
+          },
+          {
+            "title": "Sibling executor wiring lacks enforcement mechanism",
+            "detail": "CA-13-B references EXECUTOR_REGISTRY sibling pattern per CA-7 §15.5, but provides no compile-time validation that agents #21/#26 actually wire their elevated-authority siblings. The text mentions 'api/agent/21/execute.js' exists but doesn't specify how BaseAgent.guard() prevents direct auto_write_internal invocation on the primary."
+          },
+          {
+            "title": "GTM bar change breaks existing clearance records",
+            "detail": "Products that achieved clearance under ENTRY 006's ≥75 Demo-ready bar are now retroactively non-compliant under CA-13-A's ≥95 GTM-ready bar. The amendment provides no migration path for existing ClearanceRecord entities or guidance on whether historical clearances remain valid."
+          },
+          {
+            "title": "Two-95s reconciliation creates operator confusion",
+            "detail": "§19.0 attempts to clarify Self-Audit 95/95 vs GTM Readiness ≥95, but operators must now track which '95' applies in which context. The table helps but error messages like 'failed 95 threshold' become ambiguous without additional context."
+          }
+        ],
+        "worse_than_status_quo": "The conditional clearance path (90-94 with admin signoff) is worse than status quo because it creates a documented loophole for shipping products that explicitly fail the CEO's 'full market definition' directive, whereas the current ≥75 bar at least doesn't pretend to meet a higher standard while providing escape hatches.",
+        "precedent": "Google's Android app quality guidelines moved from 70% to 85% crash-free sessions in 2019, causing thousands of previously 'good' apps to suddenly fail quality bars with no grandfathering provision, similar to how CA-13-A retroactively invalidates existing clearances."
+      },
+      "rejection_steelman": "CA-13 should be rejected because it creates a self-contradictory governance structure where the CEO directive demanding '95 = full market definition' is immediately undermined by a conditional clearance path allowing 90-94 scores to pass. Additionally, the CA-13-B reconciliation to Option (a) lacks the engineering prerequisites (CA-7 §15.5 sibling registry implementation) needed to safely migrate from the current dual-authority pattern, risking a period where neither pattern is fully enforced.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-REVISE",
+          "pick_text": "Ratify with revision — adopt the bar change but adjust band labels or thresholds.",
+          "rationale": "The 95 bar aligns with CEO directive but the 90-94 'Near-GTM' conditional path undermines it; better to have 95+ as 'GTM-ready' and 90-94 as 'Internal-demo-ready' with no external clearance path."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-HARD",
+          "pick_text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff Near-GTM.",
+          "rationale": "The CEO directive explicitly states products must serve their 'FULL DEFINED MARKET' to be GTM-ready; allowing 90-94 to pass with admin override directly contradicts this mandate."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Load-bearing per Locked Rule 3.",
+          "rationale": "Despite creating some operator confusion, the explicit reconciliation prevents more dangerous conflation between build-quality gates (Self-Audit) and market-readiness gates (GTM score)."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-DEFER",
+          "pick_text": "Defer — amend §15 at the same commit that populates §15.5 sibling-row table.",
+          "rationale": "The EXECUTOR_REGISTRY sibling pattern referenced doesn't exist in the attached canonical reference; amending text before the implementation exists creates a documentation-code gap."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-AGENTID",
+          "pick_text": "Adopt agentId-keyed naming — e.g. `agent-21-executor`, `agent-26-executor`.",
+          "rationale": "AgentId-keyed naming provides unambiguous registry lookups and avoids collisions when agent names change; the drafted human-readable names create maintenance burden when charters evolve."
+        }
+      },
+      "overallNotes": "CA-13-A's conditional clearance path fundamentally undermines its own premise; CA-13-B references infrastructure (§15.5 sibling registry) not present in the canonical reference.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Increased GTM threshold may delay launches",
+            "detail": "The proposal to increase the GTM readiness threshold from 75 to 95 in §7.6 could significantly delay product launches. This higher bar may require more resources and time to achieve, potentially slowing down the release of new products and updates."
+          },
+          {
+            "title": "Conditional clearance path lacks clarity",
+            "detail": "The conditional clearance path for Near-GTM scores (90-94) in §7.6 is not clearly defined. It relies on admin signoff and the publication of LIMITATIONS, but does not specify the criteria for admin approval, which could lead to inconsistent application."
+          },
+          {
+            "title": "Potential confusion with dual 95 thresholds",
+            "detail": "The introduction of two distinct 95 thresholds in §19 could lead to confusion among stakeholders. While the proposal attempts to clarify this with a new paragraph, the existence of two similar metrics might still cause misunderstandings about their distinct purposes."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to longer development cycles and delayed product releases due to the increased GTM readiness threshold, potentially reducing the company's competitiveness in rapidly evolving markets.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal to increase the GTM readiness threshold to 95 may be too ambitious and could result in significant delays in product launches. This change might require more resources and time to achieve, which could hinder the company's ability to quickly adapt to market demands and maintain a competitive edge. Additionally, the introduction of two distinct 95 thresholds could create confusion among stakeholders, leading to potential misalignment in product development and evaluation processes.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end.",
+          "rationale": "Deferring the amendment allows for a practical assessment of the feasibility of achieving a 95 score before making it a formal requirement."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-TIGHTEN",
+          "pick_text": "Tighten — Near-GTM passes Step 5 ONLY when ALL `high` findings are Resolved.",
+          "rationale": "Tightening the criteria ensures that only products with resolved high-priority issues can proceed, maintaining quality without overly relying on admin discretion."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-REVISE",
+          "pick_text": "Ratify with revision — adjust §19.0 wording.",
+          "rationale": "Revising the wording can help clarify the distinction between the two 95 thresholds, reducing potential confusion."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-REVISE",
+          "pick_text": "Ratify with revision — adjust replacement wording.",
+          "rationale": "Revising the wording ensures clarity and consistency with the CEO's re-disposition while aligning with the current operational framework."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-CAPABILITY",
+          "pick_text": "Adopt capability-keyed naming — e.g. `crawl-write-executor`, `orchestra-admission-executor`.",
+          "rationale": "Capability-keyed naming provides clear insight into the executor's function, aiding in understanding and maintenance."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes that could impact product development timelines and clarity in governance metrics. Careful consideration and potential revisions are necessary to ensure alignment with operational goals.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the changes introduced by CA-13-A or CA-13-B cause unforeseen issues. This lack of a rollback plan could lead to significant disruptions if problems arise."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "There is no mention of comprehensive testing for the new GTM Readiness Report bands or the EXECUTOR_REGISTRY sibling pattern. Without thorough testing, it's uncertain whether these changes will operate as intended."
+          },
+          {
+            "title": "Potential for Misinterpretation",
+            "detail": "The addition of a 'two-distinct-95 bars' reconciliation paragraph in §19.0, while intended to clarify, might still lead to confusion among team members or stakeholders who are not thoroughly familiar with the distinction between Self-Audit 95/95 and GTM Readiness ≥95."
+          }
+        ],
+        "worse_than_status_quo": "If the implementation of CA-13-A and CA-13-B is rushed without proper testing and validation, it could lead to a situation where the GTM readiness assessment and the agent roster management become more complicated and less reliable than the current status quo, potentially causing delays in product deployment and affecting customer satisfaction.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The strongest argument for rejecting or deferring the proposal is the lack of a comprehensive rollback strategy and insufficient testing. Given the potential for significant disruptions and the complexity of the changes proposed, it would be prudent to defer the implementation of CA-13-A and CA-13-B until these concerns are adequately addressed. This would ensure that the introduction of new GTM readiness bands and the EXECUTOR_REGISTRY sibling pattern does not inadvertently compromise the stability and effectiveness of the current system.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-RATIFY",
+          "pick_text": "Ratify — adopt CA-13-A §7.6 bands verbatim. GTM-ready 95–100; Near-GTM 90–94; Internal-only 75–89; Pre-internal 60–74; Not-demo-ready 0–59.",
+          "rationale": "This option aligns with the CEO directive and provides a clear, updated framework for GTM readiness assessment."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-RATIFY",
+          "pick_text": "Ratify as drafted — Near-GTM passes Step 5 with admin signoff + LIMITATIONS published verbatim.",
+          "rationale": "This approach strikes a balance between flexibility for products that are near GTM readiness and the need for administrative oversight to ensure quality standards are met."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Load-bearing per Locked Rule 3.",
+          "rationale": "Clarifying the distinction between the two '95 bars' is essential for avoiding confusion and ensuring that all stakeholders understand the governance mechanisms in place."
+        },
+        "CA-13-B-Q1": {
+          "key": null,
+          "pick_text": "Ratify — strike '(b) dual-authority' from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "This change is necessary to ensure consistency between the canonical text and the code-level decisions recorded in ENTRY 009."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-RATIFY",
+          "pick_text": "Adopt as drafted — `<agent-short-name>-executor` pattern.",
+          "rationale": "The proposed naming convention is clear and directly relates to the agent's function, making it easier for team members to understand and work with the EXECUTOR_REGISTRY sibling pattern."
+        }
+      },
+      "overallNotes": "The proposal addresses important aspects of GTM readiness and agent roster management, but it requires careful consideration of potential risks and the implementation of robust testing and rollback strategies to ensure a smooth transition.",
+      "invalid_reason": "4/5 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Increased Complexity in GTM Readiness",
+            "detail": "The proposed change to raise the GTM readiness bar from 75 to 95 in §7.6 increases the complexity of the GTM process. This could lead to longer development cycles and potential delays in product releases. The current threshold of 75 has been proven to be achievable and striking a balance between quality and time-to-market."
+          },
+          {
+            "title": "Potential Overhead in Admin Signoff",
+            "detail": "The introduction of the 'Near-GTM' band (90–94) that requires admin signoff for conditional clearance adds an administrative overhead. This could lead to bottlenecks, especially if the admin resources are limited. The process might become inefficient, leading to delays in the deployment pipeline."
+          },
+          {
+            "title": "Redundancy in §19.0 Reconciliation",
+            "detail": "The proposed addition of §19.0 to reconcile the two distinct '95' bars seems redundant. The current §10 table already lists the three mechanisms, and adding another section might confuse rather than clarify. It could lead to maintenance overhead without significant benefit."
+          }
+        ],
+        "worse_than_status_quo": "The proposal to raise the GTM readiness bar to 95 could lead to a situation where products are perpetually stuck in the pre-internal or internal-only stages, never reaching the market. This would be worse than the current status quo where products with a score of 75 can still be demo-ready and move forward in the pipeline.",
+        "precedent": "In the past, similar increases in quality thresholds without adequate resource allocation have led to project delays and increased costs, as seen in the implementation of GDPR compliance measures across various tech companies."
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces unnecessary complexity and administrative overhead without a clear benefit. The current threshold of 75 has been working well, and raising it to 95 could lead to significant delays and bottlenecks in the product deployment pipeline.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end.",
+          "rationale": "This option allows for a more measured approach, ensuring that the new threshold is achievable before making it a hard requirement."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-HARD",
+          "pick_text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff Near-GTM.",
+          "rationale": "This option removes the administrative overhead and ensures that only products meeting the highest standards are released."
+        },
+        "CA-13-A-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — the §10 table already lists the three mechanisms; §19.0 is redundant.",
+          "rationale": "Adding §19.0 would introduce unnecessary complexity and potential confusion without significant benefit."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "This ensures consistency between the canonical text and the code-level decision, maintaining clarity and accuracy."
+        },
+        "CA-13-B-Q2": {
+          "key": null,
+          "pick_text": "Adopt as drafted — <agent-short-name>-executor pattern.",
+          "rationale": "This naming convention is clear and consistent, making it easy to understand and maintain."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes that need to be carefully considered to avoid potential delays and administrative overheads.",
+      "invalid_reason": "4/5 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity Increase",
+            "detail": "Raising the GTM-ready bar to 95 may significantly increase the complexity of the clearance process, potentially leading to longer development cycles and increased resource allocation."
+          },
+          {
+            "title": "Potential for Bottlenecks",
+            "detail": "The new GTM-ready bar could create bottlenecks in the pipeline, as products may struggle to meet the higher threshold, leading to delays in deployment."
+          },
+          {
+            "title": "Risk of Over-Engineering",
+            "detail": "There is a risk that teams may over-engineer products to meet the new GTM-ready bar, potentially leading to unnecessary complexity and maintenance overhead."
+          }
+        ],
+        "worse_than_status_quo": "If the new GTM-ready bar is too stringent, it could lead to a situation where products are never deemed ready for deployment, stalling progress and innovation.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal could lead to unnecessary delays and increased complexity in the product development process, potentially stifling innovation and progress.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end.",
+          "rationale": "Allowing time for practical demonstration before amending the canonical text ensures the new bar is feasible and beneficial."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-HARD",
+          "pick_text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff Near-GTM.",
+          "rationale": "Maintaining a hard threshold ensures consistency and clarity in the clearance process."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Load-bearing per Locked Rule 3.",
+          "rationale": "The explicit reconciliation is necessary to prevent confusion and ensure the distinct mechanisms are understood."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "Aligning the canonical text with the code-level decision ensures consistency and clarity."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-RATIFY",
+          "pick_text": "Adopt as drafted — `<agent-short-name>-executor` pattern.",
+          "rationale": "The drafted naming convention is clear and consistent with existing patterns."
+        }
+      },
+      "overallNotes": "The proposal requires careful consideration to balance the need for higher standards with the practicalities of product development.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "GTM bar too high?",
+            "detail": "Raising the GTM bar to 95 may be overly aggressive, potentially blocking valuable products that are 'good enough' but not perfect. This could stifle innovation and delay market entry unnecessarily, especially given the subjective nature of 'full market definition' (§1.1)."
+          },
+          {
+            "title": "Conditional clearance risk",
+            "detail": "The 'conditional clearance' path for Near-GTM (90-94) products introduces subjectivity and potential for abuse. Admin sign-off may not be consistently applied, leading to inconsistent product quality and customer experience. The LIMITATIONS section may not adequately convey the risks."
+          },
+          {
+            "title": "Executor naming unclear",
+            "detail": "The proposed naming convention for sibling charters (`<agent-short-name>-executor`) is not sufficiently descriptive. It doesn't clearly indicate the capabilities or purpose of the executor, making it harder to understand and maintain the system. The link between the agent and executor is implicit, not explicit."
+          },
+          {
+            "title": "SSOT bloat",
+            "detail": "The explicit 'two-distinct-95 bars' reconciliation paragraph (§19.0) adds complexity and length to the SSOT. While clarity is important, this level of detail may not be necessary and could contribute to information overload. The table format is also verbose."
+          }
+        ],
+        "worse_than_status_quo": "Raising the GTM bar to 95 without sufficient data or experience could lead to a backlog of 'near-GTM' products stuck in the clearance process, creating frustration and delaying revenue generation. The conditional clearance path, intended as a release valve, could become a loophole for pushing out subpar products with inadequate documentation of limitations.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal should be rejected because it introduces an overly strict GTM bar (95) without sufficient justification or consideration of the potential negative consequences. The conditional clearance path, while intended to provide flexibility, creates a risk of inconsistent product quality and potential abuse. The naming convention for sibling charters is also unclear and could hinder maintainability.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end.",
+          "rationale": "Deferring allows for data collection and validation of the 95 bar before making a permanent change to the SSOT. This reduces the risk of unintended consequences and ensures the bar is realistic and achievable."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-TIGHTEN",
+          "pick_text": "Tighten — Near-GTM passes Step 5 ONLY when ALL `high` findings are Resolved.",
+          "rationale": "Tightening the conditional clearance path by requiring all `high` findings to be resolved provides a stronger guarantee of product quality and reduces the risk of shipping products with significant known issues."
+        },
+        "CA-13-A-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — the §10 table already lists the three mechanisms; §19.0 is redundant.",
+          "rationale": "The existing table in §10 already provides a clear overview of the governance mechanisms. Adding a separate reconciliation paragraph in §19 is unnecessary and could contribute to information overload."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "It's important to align the canonical text with the code-level decision recorded in ENTRY 009 to maintain consistency and avoid confusion. The sibling-pattern language accurately reflects the current implementation."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-AGENTID",
+          "pick_text": "Adopt agentId-keyed naming — e.g. `agent-21-executor`, `agent-26-executor`.",
+          "rationale": "Using agentId-keyed naming provides a clear and unambiguous link between the agent and its executor. This improves maintainability and reduces the risk of misconfiguration."
+        }
+      },
+      "overallNotes": "The proposal has some good intentions, but the GTM bar change is too aggressive and the conditional clearance path needs to be tightened. The naming convention for sibling charters should also be improved for clarity.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Near-GTM conditional clearance risk",
+            "detail": "The conditional clearance path for Near-GTM scores (90-94) in §7.6 lacks enforcement mechanisms for LIMITATIONS publication. Without automated verification, admins could sign off without proper disclosure, leading to prospect demos with undocumented deficiencies."
+          },
+          {
+            "title": "Dual 95-bar confusion vector",
+            "detail": "The §19.0 reconciliation creates two distinct 95-based thresholds (Self-Audit 95/95 and GTM ≥95) with similar terminology. This could cause conflation in automated systems like ScoreEvaluator.js, especially during edge-case evaluations where one passes and the other fails."
+          },
+          {
+            "title": "Executor namespace governance gap",
+            "detail": "CA-13-B introduces executor names like 'aggressive-crawl-conductor-executor' without namespace collision prevention in §15.1. Future agent additions could cause naming conflicts, disrupting OrchestratorHub wiring and violating §25 Locked Rule 2's partition stability."
+          },
+          {
+            "title": "Conditional clearance incentive misalignment",
+            "detail": "The Near-GTM band in §7.6 may incentivize teams to stop at 94/100 to avoid GTM-ready scrutiny. This could create systemic '94 culture' where products avoid last 5% improvements despite being technically capable."
+          }
+        ],
+        "worse_than_status_quo": "A product scoring 94/100 (Near-GTM) receives conditional clearance but encounters a prospect-facing failure due to unpublished LIMITATIONS. Meanwhile, the same product under status quo would have been blocked at 94 (since old Demo-ready started at 75), preventing the reputational damage.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The 95-bar elevation lacks empirical validation—no VEU product has sustained ≥95 end-to-end. Implementing this now could paralyze GTM pipelines for borderline products while providing marginal benefit. Defer until Agent #21 ACE Conductor demonstrates measurable 95+ outcomes.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-RATIFY",
+          "pick_text": "Ratify — adopt CA-13-A §7.6 bands verbatim. GTM-ready 95–100; Near-GTM 90–94; Internal-only 75–89; Pre-internal 60–74; Not-demo-ready 0–59.",
+          "rationale": "CEO directive is unambiguous, and bands align with market-definition discipline; deferral would violate Locked Rule 1 hierarchy."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-TIGHTEN",
+          "pick_text": "Tighten — Near-GTM passes Step 5 ONLY when ALL `high` findings are Resolved.",
+          "rationale": "Prevents conditional clearance with open high-severity issues, addressing adversarial objection about risk bypass."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Load-bearing per Locked Rule 3.",
+          "rationale": "Explicit distinction is critical given identical numerical thresholds; redundancy is justified for anti-conflation."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "Mandatory per Locked Rule 1 to align canonical text with code-level ENTRY 009 disposition."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-AGENTID",
+          "pick_text": "Adopt agentId-keyed naming — e.g. `agent-21-executor`, `agent-26-executor`.",
+          "rationale": "Ensures namespace stability; capability-based names could drift if agent charters evolve."
+        }
+      },
+      "overallNotes": "Implement automated LIMITATIONS enforcement for Near-GTM conditional clearance to close §7.6 risk gap.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Threshold shift lacks evidence",
+            "detail": "CA-13-A changes §7.6 from the ENTRY 006 Demo-ready bar (75) to a GTM-ready bar of 95, but the proposal cites only a single CEO directive and one 42/100 demo as justification. There is no empirical bridge showing that 95 is the right operating threshold for all products, environments, or market definitions in §1.1, so the new bar risks being arbitrary and destabilizing."
+          },
+          {
+            "title": "Conditional clearance conflicts",
+            "detail": "The new §7.6 adds a Near-GTM 90–94 conditional path, but §11 still says Step 5 requires score ≥95, zero criticals, terminal resolution of high findings, and LIMITATIONS. That creates a contradiction between the gate and the exception, especially because the proposal also says Step 5 can pass conditionally with admin-only signoff; the approval semantics are under-specified and likely to be disputed in execution."
+          },
+          {
+            "title": "Two ninety-five bars may confuse ops",
+            "detail": "The proposed §19.0 attempts to distinguish Self-Audit 95/95 from GTM Readiness ≥95, but the text uses the same number for two separate gates with different owners, scopes, and override rules. In practice, engineers and reviewers may misread logs, dashboards, or clearance records and assume one gate satisfies the other, producing false confidence or redundant rework."
+          },
+          {
+            "title": "CA-13-B renames authority surface inconsistently",
+            "detail": "The CA-13-B edit changes §15 intro and rows 21/26 to Option (a), but the proposal leaves many references to the old CA-9-Q4=(b) phrasing in surrounding history and comments, and even mentions a non-literal wiring analog for Agent #26. This kind of partial reconciliation is dangerous because it can create a split-brain between canonical SSOT, executor wiring, and operational documentation."
+          }
+        ],
+        "worse_than_status_quo": "If the 95 GTM bar is adopted before product telemetry and review tooling are updated, teams may treat 90–94 products as either blocked or conditionally approvable depending on who is looking at the record. That is worse than the current single 75 bar because it introduces a second, higher gate plus a conditional exception path that can generate inconsistent approvals, delayed launches, and audit disputes.",
+        "precedent": "Apple App Store and many enterprise release processes have had separate QA and launch-readiness gates that were initially conflated in docs and dashboards, causing teams to believe a product was 'ready' when only one gate had passed. No single exact precedent known for this specific dual-95 design, but the general failure mode of overlapping readiness thresholds is well established in release engineering."
+      },
+      "rejection_steelman": "The strongest argument for rejecting or deferring this proposal is that it changes core launch semantics while simultaneously introducing exceptions and renamings that are not yet operationally settled. If the system already has a working 75 bar, a premature jump to 95 could slow delivery without demonstrable gain, and the proposed reconciliation text may create more confusion than clarity by layering two distinct 95 thresholds plus a conditional pass. Deferral would let the team gather evidence, align code and docs, and avoid hard-coding a policy that may need immediate revision.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end.",
+          "rationale": "This is the safest option because the proposal lacks evidence that 95 is the correct durable threshold across products, and the new bar materially changes clearance behavior. Deferring until at least one live product sustains 95 would validate the policy without locking in a potentially overstrict standard."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-HARD",
+          "pick_text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff Near-GTM.",
+          "rationale": "The conditional clearance path undermines the point of a hard GTM bar and creates ambiguous governance. If 95 is truly the GTM-ready threshold, then a 90–94 exception path should not be framed as passing Step 5."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Load-bearing per Locked Rule 3.",
+          "rationale": "The distinction between Self-Audit 95/95 and GTM Readiness ≥95 is genuinely important and should be spelled out to avoid conflation. Even though the wording could be improved, the reconciliation itself is necessary."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "The proposal is trying to align canon with the locked disposition in ENTRY 009, which is the right direction. The only caveat is that the surrounding references should be audited for consistency, but the core amendment is correct."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-CAPABILITY",
+          "pick_text": "Adopt capability-keyed naming — e.g. `crawl-write-executor`, `orchestra-admission-executor`.",
+          "rationale": "Capability-keyed names are more stable than agent-specific names if the executor surface is meant to be reused or re-chartered later. They also better express the sibling role without overfitting the naming to current agent IDs."
+        }
+      },
+      "overallNotes": "I am not endorsing the full package; the strongest objection is the 95-bar change plus conditional exception path arriving before sufficient operational evidence. The CA-13-B reconciliation is directionally sound, but it still needs a clean consistency sweep across adjacent docs and code comments.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "GTM Readiness Score Complexity",
+            "detail": "The new §7.6 score bands introduce multiple thresholds (GTM-ready, Near-GTM, Internal-only, Pre-internal, Not-demo-ready) that may complicate the clearance process. The addition of a 'conditional clearance' path for Near-GTM scores (90–94) may introduce ambiguity in the decision-making process (§11 Step 5)."
+          },
+          {
+            "title": "Conflation Risk Remains",
+            "detail": "Despite the proposed §19.0 reconciliation paragraph, there's still a risk of conflating the Self-Audit 95/95 threshold with the GTM Readiness ≥95 bar, as both use the '95' threshold. The distinction between these mechanisms may not be clear to all stakeholders (§19)."
+          },
+          {
+            "title": "Authority and Governance",
+            "detail": "The CA-13-B amendment changes the authority structure for Agents #21 and #26, introducing an EXECUTOR_REGISTRY sibling pattern. This change may introduce complexity in understanding the governance and authority structure, potentially leading to misinterpretation or misuse (§15, §15.1)."
+          }
+        ],
+        "worse_than_status_quo": "If the new score bands and clearance process are not properly understood or implemented, it could lead to delays or incorrect decisions in the deployment process, making the system worse than the status quo by introducing unnecessary complexity and potential for human error.",
+        "precedent": "The introduction of multiple thresholds and conditional clearance paths is reminiscent of the complexities seen in the governance structures of some blockchain protocols, where multiple thresholds and voting mechanisms can lead to confusion and disputes among stakeholders."
+      },
+      "rejection_steelman": "The proposal could be rejected or deferred because it introduces significant changes to the existing governance and clearance processes without sufficient evidence of their effectiveness in practice. The addition of new score bands and conditional clearance paths may add complexity that could hinder rather than help the deployment process.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-REVISE",
+          "pick_text": "Ratify with revision — adopt the bar change but adjust band labels or thresholds.",
+          "rationale": "While the CEO directive of ≥95 for GTM readiness is clear, the introduction of new band labels and thresholds should be carefully considered to ensure they are intuitive and effective in practice."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-TIGHTEN",
+          "pick_text": "Tighten — Near-GTM passes Step 5 ONLY when ALL `high` findings are Resolved.",
+          "rationale": "To maintain a high standard for deployment, the conditional clearance path for Near-GTM scores should be tightened to ensure that all high findings are resolved before clearance is granted."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Load-bearing per Locked Rule 3.",
+          "rationale": "The explicit reconciliation paragraph in §19.0 is necessary to prevent conflation between the Self-Audit 95/95 threshold and the GTM Readiness ≥95 bar, ensuring clarity in governance mechanisms."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "To ensure consistency between the canonical text and the code-level decisions, the outdated '(b) dual-authority' phrasing should be replaced with the correct Option (a) sibling-pattern language."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-CAPABILITY",
+          "pick_text": "Adopt capability-keyed naming — e.g. `crawl-write-executor`, `orchestra-admission-executor`.",
+          "rationale": "Capability-keyed naming for sibling charters is more descriptive and intuitive, making it easier to understand the purpose and function of each executor."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes that require careful consideration to ensure they enhance rather than complicate the existing processes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§7.6 band change lacks validation",
+            "detail": "The CA-13-A rewrite of score bands and Step 5 prerequisite in §7.6 changes ≥75 to ≥95 without any accompanying update to the scoring formula in the same section or any reference to empirical delta data from prior Self-Renewal runs stored in ProductSSOT.delta_log."
+          },
+          {
+            "title": "§19.0 introduces conflicting labels",
+            "detail": "The new §19.0 table defines 'Near-GTM' and 'Pre-internal' bands that directly contradict the existing Clearance Step 5 language in §11 and the three-mechanism table in §19, with no cross-reference or migration rule for ClearanceRecord entries created under the old bands."
+          },
+          {
+            "title": "CA-13-B authority edit omits code sync",
+            "detail": "The amendment to §15.1 rows 21 and 26 replaces authority arrays and cites EXECUTOR_REGISTRY siblings, yet leaves the BaseAgent.guard() implementation and the api/agent/*/execute.js wiring described in §15.5 untouched, creating a new canonical/code divergence."
+          }
+        ],
+        "worse_than_status_quo": "Raising the GTM bar to 95 while keeping the same Self-Renewal loop and scoring formula will cause products that previously cleared at 75-89 to enter indefinite repeat-until-GTM cycles, blocking live URL deliveries that the current §7.5 atomic ProductSSOT + Self-Heal path would have allowed.",
+        "precedent": "The 2018-2019 Kubernetes release process raised stability thresholds without corresponding tooling improvements, resulting in multi-month release delays and contributor burnout documented in the Kubernetes Steering Committee retrospective."
+      },
+      "rejection_steelman": "Bundling the GTM bar elevation with the CA-9-Q4 authority reconciliation into a single CA-13 cycle violates the incremental amendment discipline of §18; each change touches distinct governance surfaces (score bands vs agent authority) and should be reviewed and archived separately to avoid conflating unrelated failure modes.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end.",
+          "rationale": "No empirical evidence from existing delta_log entries supports the jump."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-HARD",
+          "pick_text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff Near-GTM.",
+          "rationale": "Conditional clearance reintroduces the exact override risk the 95 bar was meant to close."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Load-bearing per Locked Rule 3.",
+          "rationale": "Explicit separation prevents future conflation of the two 95 mechanisms."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-DEFER",
+          "pick_text": "Defer — amend §15 at the same commit that populates §15.5 sibling-row table.",
+          "rationale": "Authority text must be synchronized with the actual registry schema in one atomic change."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-CAPABILITY",
+          "pick_text": "Adopt capability-keyed naming — e.g. `crawl-write-executor`, `orchestra-admission-executor`.",
+          "rationale": "AgentId-keyed names will collide once multiple siblings per agent are added."
+        }
+      },
+      "overallNotes": "All objections are drawn directly from the amended sections listed in the CA-13 draft.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-13-A-Q1",
+      "topic": "CA-13-A-Q1 — Should §7.6 GTM Readiness Report adopt the CEO directive of ≥95 as the GTM-ready band (per CA-13-A), superseding the ENTRY 006 ≥75 Demo-ready band?",
+      "options": [
+        {
+          "key": "CA13AQ1-RATIFY",
+          "text": "Ratify — adopt CA-13-A §7.6 bands verbatim. GTM-ready 95–100; Near-GTM 90–94; Internal-only 75–89; Pre-internal 60–74; Not-demo-ready 0–59."
+        },
+        {
+          "key": "CA13AQ1-REVISE",
+          "text": "Ratify with revision — adopt the bar change but adjust band labels or thresholds."
+        },
+        {
+          "key": "CA13AQ1-REJECT",
+          "text": "Reject — keep ENTRY 006 ≥75 Demo-ready bar; surface CEO directive as operator-product GTM bar."
+        },
+        {
+          "key": "CA13AQ1-DEFER",
+          "text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end."
+        }
+      ],
+      "draftedKey": "CA13AQ1-RATIFY"
+    },
+    {
+      "id": "CA-13-A-Q2",
+      "topic": "CA-13-A-Q2 — Near-GTM band (90–94) MAY pass §11 Step 5 as \"conditional clearance\" with admin signoff. Right balance, or should the 95-bar be hard?",
+      "options": [
+        {
+          "key": "CA13AQ2-RATIFY",
+          "text": "Ratify as drafted — Near-GTM passes Step 5 with admin signoff + LIMITATIONS published verbatim."
+        },
+        {
+          "key": "CA13AQ2-HARD",
+          "text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff Near-GTM."
+        },
+        {
+          "key": "CA13AQ2-TIGHTEN",
+          "text": "Tighten — Near-GTM passes Step 5 ONLY when ALL `high` findings are Resolved."
+        },
+        {
+          "key": "CA13AQ2-LOOSEN",
+          "text": "Loosen — Near-GTM passes Step 5 with operator signoff (not just admin)."
+        }
+      ],
+      "draftedKey": "CA13AQ2-RATIFY"
+    },
+    {
+      "id": "CA-13-A-Q3",
+      "topic": "CA-13-A-Q3 — Should canonical §19 carry an explicit \"two-distinct-95 bars\" reconciliation paragraph (§19.0) to prevent conflation between Self-Audit 95/95 and GTM Readiness ≥95?",
+      "options": [
+        {
+          "key": "CA13AQ3-RATIFY",
+          "text": "Ratify — adopt §19.0 verbatim. Load-bearing per Locked Rule 3."
+        },
+        {
+          "key": "CA13AQ3-REVISE",
+          "text": "Ratify with revision — adjust §19.0 wording."
+        },
+        {
+          "key": "CA13AQ3-REJECT",
+          "text": "Reject — the §10 table already lists the three mechanisms; §19.0 is redundant."
+        },
+        {
+          "key": "CA13AQ3-MOVE",
+          "text": "Move reconciliation to §10 (Self-Governance) instead of §19."
+        }
+      ],
+      "draftedKey": "CA13AQ3-RATIFY"
+    },
+    {
+      "id": "CA-13-B-Q1",
+      "topic": "CA-13-B-Q1 — ENTRY 009 records CEO re-disposition of CA-9-Q4 to Option (a) — EXECUTOR_REGISTRY sibling pattern — but §15 intro + §15.1 rows 21/26 still carry old (b) phrasing. Amend canonical to match ENTRY 009?",
+      "options": [
+        {
+          "key": "CA13BQ1-RATIFY",
+          "text": "Ratify — strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009."
+        },
+        {
+          "key": "CA13BQ1-REVISE",
+          "text": "Ratify with revision — adjust replacement wording."
+        },
+        {
+          "key": "CA13BQ1-REJECT",
+          "text": "Reject — leave canonical text at (b) phrasing; ENTRY 009 stays code-level only."
+        },
+        {
+          "key": "CA13BQ1-DEFER",
+          "text": "Defer — amend §15 at the same commit that populates §15.5 sibling-row table."
+        }
+      ],
+      "draftedKey": "CA13BQ1-RATIFY"
+    },
+    {
+      "id": "CA-13-B-Q2",
+      "topic": "CA-13-B-Q2 — Sibling charter keys `aggressive-crawl-conductor-executor` and `orchestra-research-agent-executor`. Right naming?",
+      "options": [
+        {
+          "key": "CA13BQ2-RATIFY",
+          "text": "Adopt as drafted — `<agent-short-name>-executor` pattern."
+        },
+        {
+          "key": "CA13BQ2-AGENTID",
+          "text": "Adopt agentId-keyed naming — e.g. `agent-21-executor`, `agent-26-executor`."
+        },
+        {
+          "key": "CA13BQ2-CAPABILITY",
+          "text": "Adopt capability-keyed naming — e.g. `crawl-write-executor`, `orchestra-admission-executor`."
+        },
+        {
+          "key": "CA13BQ2-DEFER",
+          "text": "Defer naming to engineering dispatch."
+        }
+      ],
+      "draftedKey": "CA13BQ2-RATIFY"
+    }
+  ]
+}

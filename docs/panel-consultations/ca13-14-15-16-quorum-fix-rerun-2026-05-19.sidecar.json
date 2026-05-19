@@ -1,0 +1,2257 @@
+{
+  "schema": "consolidated-quorum-fix.sidecar.v1",
+  "startedAt": "2026-05-19T04:27:32.436Z",
+  "finishedAt": "2026-05-19T04:36:41.596Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "results": [
+    {
+      "code": "CA-13",
+      "commit": "81cf144",
+      "bundle_size": 32412,
+      "tally": {
+        "engagedTotal": 8,
+        "invalid": 0,
+        "tangential": 2,
+        "silent": 0,
+        "perQuestion": {
+          "CA-13-A-Q1": {
+            "CA13AQ1-RATIFY": 1,
+            "CA13AQ1-REVISE": 2,
+            "CA13AQ1-REJECT": 0,
+            "CA13AQ1-DEFER": 5,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-13-A-Q2": {
+            "CA13AQ2-RATIFY": 0,
+            "CA13AQ2-HARD": 4,
+            "CA13AQ2-TIGHTEN": 4,
+            "CA13AQ2-LOOSEN": 0,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-13-A-Q3": {
+            "CA13AQ3-RATIFY": 6,
+            "CA13AQ3-REVISE": 1,
+            "CA13AQ3-REJECT": 0,
+            "CA13AQ3-MOVE": 0,
+            "REJECT": 1,
+            "unmatched": 0
+          },
+          "CA-13-B-Q1": {
+            "CA13BQ1-RATIFY": 5,
+            "CA13BQ1-REVISE": 1,
+            "CA13BQ1-REJECT": 0,
+            "CA13BQ1-DEFER": 2,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-13-B-Q2": {
+            "CA13BQ2-RATIFY": 1,
+            "CA13BQ2-AGENTID": 3,
+            "CA13BQ2-CAPABILITY": 4,
+            "CA13BQ2-DEFER": 0,
+            "REJECT": 0,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 34,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Conditional clearance creates governance bypass",
+            "detail": "§7.6 Near-GTM band (90-94) allows admin-only signoff to pass Step 5 as 'conditional clearance'. This creates a loophole where products missing up to 10% of their market definition can still go to market, undermining the CEO directive's intent that products must serve their FULL §1.1 market definition."
+          },
+          {
+            "slot": 1,
+            "title": "Sibling executor wiring lacks enforcement mechanism",
+            "detail": "CA-13-B references EXECUTOR_REGISTRY sibling pattern per CA-7 §15.5, but provides no compile-time validation that agents #21/#26 actually wire their elevated-authority siblings. The text mentions 'api/agent/21/execute.js' exists but doesn't specify how BaseAgent.guard() prevents direct auto_write_internal invocation on the primary."
+          },
+          {
+            "slot": 1,
+            "title": "GTM bar change breaks existing clearance records",
+            "detail": "Products that achieved clearance under ENTRY 006's ≥75 Demo-ready bar are now retroactively non-compliant under CA-13-A's ≥95 GTM-ready bar. The amendment provides no migration path for existing ClearanceRecord entities or guidance on whether historical clearances remain valid."
+          },
+          {
+            "slot": 1,
+            "title": "Two-95s reconciliation creates operator confusion",
+            "detail": "§19.0 attempts to clarify Self-Audit 95/95 vs GTM Readiness ≥95, but operators must now track which '95' applies in which context. The table helps but error messages like 'failed 95 threshold' become ambiguous without additional context."
+          },
+          {
+            "slot": 2,
+            "title": "Increased GTM threshold may delay launches",
+            "detail": "The proposal to increase the GTM readiness threshold from 75 to 95 in §7.6 could significantly delay product launches. This higher bar may require more resources and time to achieve, potentially slowing down the release of new products and updates."
+          },
+          {
+            "slot": 2,
+            "title": "Conditional clearance path lacks clarity",
+            "detail": "The conditional clearance path for Near-GTM scores (90-94) in §7.6 is not clearly defined. It relies on admin signoff and the publication of LIMITATIONS, but does not specify the criteria for admin approval, which could lead to inconsistent application."
+          },
+          {
+            "slot": 2,
+            "title": "Potential confusion with dual 95 thresholds",
+            "detail": "The introduction of two distinct 95 thresholds in §19 could lead to confusion among stakeholders. While the proposal attempts to clarify this with a new paragraph, the existence of two similar metrics might still cause misunderstandings about their distinct purposes."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the changes introduced by CA-13-A or CA-13-B cause unforeseen issues. This lack of a rollback plan could lead to significant disruptions if problems arise."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Testing",
+            "detail": "There is no mention of comprehensive testing for the new GTM Readiness Report bands or the EXECUTOR_REGISTRY sibling pattern. Without thorough testing, it's uncertain whether these changes will operate as intended."
+          },
+          {
+            "slot": 3,
+            "title": "Potential for Misinterpretation",
+            "detail": "The addition of a 'two-distinct-95 bars' reconciliation paragraph in §19.0, while intended to clarify, might still lead to confusion among team members or stakeholders who are not thoroughly familiar with the distinction between Self-Audit 95/95 and GTM Readiness ≥95."
+          },
+          {
+            "slot": 4,
+            "title": "Increased Complexity in GTM Readiness",
+            "detail": "The proposed change to raise the GTM readiness bar from 75 to 95 in §7.6 increases the complexity of the GTM process. This could lead to longer development cycles and potential delays in product releases. The current threshold of 75 has been proven to be achievable and striking a balance between quality and time-to-market."
+          },
+          {
+            "slot": 4,
+            "title": "Potential Overhead in Admin Signoff",
+            "detail": "The introduction of the 'Near-GTM' band (90–94) that requires admin signoff for conditional clearance adds an administrative overhead. This could lead to bottlenecks, especially if the admin resources are limited. The process might become inefficient, leading to delays in the deployment pipeline."
+          },
+          {
+            "slot": 4,
+            "title": "Redundancy in §19.0 Reconciliation",
+            "detail": "The proposed addition of §19.0 to reconcile the two distinct '95' bars seems redundant. The current §10 table already lists the three mechanisms, and adding another section might confuse rather than clarify. It could lead to maintenance overhead without significant benefit."
+          },
+          {
+            "slot": 5,
+            "title": "Complexity Increase",
+            "detail": "Raising the GTM-ready bar to 95 may significantly increase the complexity of the clearance process, potentially leading to longer development cycles and increased resource allocation."
+          },
+          {
+            "slot": 5,
+            "title": "Potential for Bottlenecks",
+            "detail": "The new GTM-ready bar could create bottlenecks in the pipeline, as products may struggle to meet the higher threshold, leading to delays in deployment."
+          },
+          {
+            "slot": 5,
+            "title": "Risk of Over-Engineering",
+            "detail": "There is a risk that teams may over-engineer products to meet the new GTM-ready bar, potentially leading to unnecessary complexity and maintenance overhead."
+          },
+          {
+            "slot": 6,
+            "title": "GTM bar too high?",
+            "detail": "Raising the GTM bar to 95 may be overly aggressive, potentially blocking valuable products that are 'good enough' but not perfect. This could stifle innovation and delay market entry unnecessarily, especially given the subjective nature of 'full market definition' (§1.1)."
+          },
+          {
+            "slot": 6,
+            "title": "Conditional clearance risk",
+            "detail": "The 'conditional clearance' path for Near-GTM (90-94) products introduces subjectivity and potential for abuse. Admin sign-off may not be consistently applied, leading to inconsistent product quality and customer experience. The LIMITATIONS section may not adequately convey the risks."
+          },
+          {
+            "slot": 6,
+            "title": "Executor naming unclear",
+            "detail": "The proposed naming convention for sibling charters (`<agent-short-name>-executor`) is not sufficiently descriptive. It doesn't clearly indicate the capabilities or purpose of the executor, making it harder to understand and maintain the system. The link between the agent and executor is implicit, not explicit."
+          },
+          {
+            "slot": 6,
+            "title": "SSOT bloat",
+            "detail": "The explicit 'two-distinct-95 bars' reconciliation paragraph (§19.0) adds complexity and length to the SSOT. While clarity is important, this level of detail may not be necessary and could contribute to information overload. The table format is also verbose."
+          },
+          {
+            "slot": 7,
+            "title": "Near-GTM conditional clearance risk",
+            "detail": "The conditional clearance path for Near-GTM scores (90-94) in §7.6 lacks enforcement mechanisms for LIMITATIONS publication. Without automated verification, admins could sign off without proper disclosure, leading to prospect demos with undocumented deficiencies."
+          },
+          {
+            "slot": 7,
+            "title": "Dual 95-bar confusion vector",
+            "detail": "The §19.0 reconciliation creates two distinct 95-based thresholds (Self-Audit 95/95 and GTM ≥95) with similar terminology. This could cause conflation in automated systems like ScoreEvaluator.js, especially during edge-case evaluations where one passes and the other fails."
+          },
+          {
+            "slot": 7,
+            "title": "Executor namespace governance gap",
+            "detail": "CA-13-B introduces executor names like 'aggressive-crawl-conductor-executor' without namespace collision prevention in §15.1. Future agent additions could cause naming conflicts, disrupting OrchestratorHub wiring and violating §25 Locked Rule 2's partition stability."
+          },
+          {
+            "slot": 7,
+            "title": "Conditional clearance incentive misalignment",
+            "detail": "The Near-GTM band in §7.6 may incentivize teams to stop at 94/100 to avoid GTM-ready scrutiny. This could create systemic '94 culture' where products avoid last 5% improvements despite being technically capable."
+          },
+          {
+            "slot": 8,
+            "title": "Threshold shift lacks evidence",
+            "detail": "CA-13-A changes §7.6 from the ENTRY 006 Demo-ready bar (75) to a GTM-ready bar of 95, but the proposal cites only a single CEO directive and one 42/100 demo as justification. There is no empirical bridge showing that 95 is the right operating threshold for all products, environments, or market definitions in §1.1, so the new bar risks being arbitrary and destabilizing."
+          },
+          {
+            "slot": 8,
+            "title": "Conditional clearance conflicts",
+            "detail": "The new §7.6 adds a Near-GTM 90–94 conditional path, but §11 still says Step 5 requires score ≥95, zero criticals, terminal resolution of high findings, and LIMITATIONS. That creates a contradiction between the gate and the exception, especially because the proposal also says Step 5 can pass conditionally with admin-only signoff; the approval semantics are under-specified and likely to be disputed in execution."
+          },
+          {
+            "slot": 8,
+            "title": "Two ninety-five bars may confuse ops",
+            "detail": "The proposed §19.0 attempts to distinguish Self-Audit 95/95 from GTM Readiness ≥95, but the text uses the same number for two separate gates with different owners, scopes, and override rules. In practice, engineers and reviewers may misread logs, dashboards, or clearance records and assume one gate satisfies the other, producing false confidence or redundant rework."
+          },
+          {
+            "slot": 8,
+            "title": "CA-13-B renames authority surface inconsistently",
+            "detail": "The CA-13-B edit changes §15 intro and rows 21/26 to Option (a), but the proposal leaves many references to the old CA-9-Q4=(b) phrasing in surrounding history and comments, and even mentions a non-literal wiring analog for Agent #26. This kind of partial reconciliation is dangerous because it can create a split-brain between canonical SSOT, executor wiring, and operational documentation."
+          },
+          {
+            "slot": 9,
+            "title": "GTM Readiness Score Complexity",
+            "detail": "The new §7.6 score bands introduce multiple thresholds (GTM-ready, Near-GTM, Internal-only, Pre-internal, Not-demo-ready) that may complicate the clearance process. The addition of a 'conditional clearance' path for Near-GTM scores (90–94) may introduce ambiguity in the decision-making process (§11 Step 5)."
+          },
+          {
+            "slot": 9,
+            "title": "Conflation Risk Remains",
+            "detail": "Despite the proposed §19.0 reconciliation paragraph, there's still a risk of conflating the Self-Audit 95/95 threshold with the GTM Readiness ≥95 bar, as both use the '95' threshold. The distinction between these mechanisms may not be clear to all stakeholders (§19)."
+          },
+          {
+            "slot": 9,
+            "title": "Authority and Governance",
+            "detail": "The CA-13-B amendment changes the authority structure for Agents #21 and #26, introducing an EXECUTOR_REGISTRY sibling pattern. This change may introduce complexity in understanding the governance and authority structure, potentially leading to misinterpretation or misuse (§15, §15.1)."
+          },
+          {
+            "slot": 10,
+            "title": "§7.6 band change lacks validation",
+            "detail": "The CA-13-A rewrite of score bands and Step 5 prerequisite in §7.6 changes ≥75 to ≥95 without any accompanying update to the scoring formula in the same section or any reference to empirical delta data from prior Self-Renewal runs stored in ProductSSOT.delta_log."
+          },
+          {
+            "slot": 10,
+            "title": "§19.0 introduces conflicting labels",
+            "detail": "The new §19.0 table defines 'Near-GTM' and 'Pre-internal' bands that directly contradict the existing Clearance Step 5 language in §11 and the three-mechanism table in §19, with no cross-reference or migration rule for ClearanceRecord entries created under the old bands."
+          },
+          {
+            "slot": 10,
+            "title": "CA-13-B authority edit omits code sync",
+            "detail": "The amendment to §15.1 rows 21 and 26 replaces authority arrays and cites EXECUTOR_REGISTRY siblings, yet leaves the BaseAgent.guard() implementation and the api/agent/*/execute.js wiring described in §15.5 untouched, creating a new canonical/code divergence."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "CA-13-A-Q1": {
+          "verdict": "PLURALITY_CA13AQ1-DEFER",
+          "detail": "5 of 8 on CA13AQ1-DEFER (below 7/10 quorum)",
+          "topKey": "CA13AQ1-DEFER",
+          "topCount": 5
+        },
+        "CA-13-A-Q2": {
+          "verdict": "SPLIT",
+          "detail": "top tie at 4 between CA13AQ2-HARD / CA13AQ2-TIGHTEN",
+          "topKey": "CA13AQ2-HARD",
+          "topCount": 4
+        },
+        "CA-13-A-Q3": {
+          "verdict": "PLURALITY_CA13AQ3-RATIFY",
+          "detail": "6 of 8 on CA13AQ3-RATIFY (below 7/10 quorum)",
+          "topKey": "CA13AQ3-RATIFY",
+          "topCount": 6
+        },
+        "CA-13-B-Q1": {
+          "verdict": "PLURALITY_CA13BQ1-RATIFY",
+          "detail": "5 of 8 on CA13BQ1-RATIFY (below 7/10 quorum)",
+          "topKey": "CA13BQ1-RATIFY",
+          "topCount": 5
+        },
+        "CA-13-B-Q2": {
+          "verdict": "PLURALITY_CA13BQ2-CAPABILITY",
+          "detail": "4 of 8 on CA13BQ2-CAPABILITY (below 7/10 quorum)",
+          "topKey": "CA13BQ2-CAPABILITY",
+          "topCount": 4
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0.325,
+        "alignedCount": 13,
+        "totalPossible": 40,
+        "draftedQs": [
+          "CA-13-A-Q1",
+          "CA-13-A-Q2",
+          "CA-13-A-Q3",
+          "CA-13-B-Q1",
+          "CA-13-B-Q2"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 32.5 %, distinct objections 34"
+      },
+      "questions": [
+        {
+          "id": "CA-13-A-Q1",
+          "topic": "CA-13-A-Q1 — Should §7.6 GTM Readiness Report adopt the CEO directive of ≥95 as the GTM-ready band (per CA-13-A), superseding the ENTRY 006 ≥75 Demo-ready band?",
+          "options": [
+            {
+              "key": "CA13AQ1-RATIFY",
+              "text": "Ratify — adopt CA-13-A §7.6 bands verbatim. GTM-ready 95–100; Near-GTM 90–94; Internal-only 75–89; Pre-internal 60–74; Not-demo-ready 0–59."
+            },
+            {
+              "key": "CA13AQ1-REVISE",
+              "text": "Ratify with revision — adopt the bar change but adjust band labels or thresholds."
+            },
+            {
+              "key": "CA13AQ1-REJECT",
+              "text": "Reject — keep ENTRY 006 ≥75 Demo-ready bar; surface CEO directive as operator-product GTM bar."
+            },
+            {
+              "key": "CA13AQ1-DEFER",
+              "text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end."
+            }
+          ],
+          "draftedKey": "CA13AQ1-RATIFY"
+        },
+        {
+          "id": "CA-13-A-Q2",
+          "topic": "CA-13-A-Q2 — Near-GTM band (90–94) MAY pass §11 Step 5 as \"conditional clearance\" with admin signoff. Right balance, or should the 95-bar be hard?",
+          "options": [
+            {
+              "key": "CA13AQ2-RATIFY",
+              "text": "Ratify as drafted — Near-GTM passes Step 5 with admin signoff + LIMITATIONS published verbatim."
+            },
+            {
+              "key": "CA13AQ2-HARD",
+              "text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff Near-GTM."
+            },
+            {
+              "key": "CA13AQ2-TIGHTEN",
+              "text": "Tighten — Near-GTM passes Step 5 ONLY when ALL `high` findings are Resolved."
+            },
+            {
+              "key": "CA13AQ2-LOOSEN",
+              "text": "Loosen — Near-GTM passes Step 5 with operator signoff (not just admin)."
+            }
+          ],
+          "draftedKey": "CA13AQ2-RATIFY"
+        },
+        {
+          "id": "CA-13-A-Q3",
+          "topic": "CA-13-A-Q3 — Should canonical §19 carry an explicit \"two-distinct-95 bars\" reconciliation paragraph (§19.0) to prevent conflation between Self-Audit 95/95 and GTM Readiness ≥95?",
+          "options": [
+            {
+              "key": "CA13AQ3-RATIFY",
+              "text": "Ratify — adopt §19.0 verbatim. Load-bearing per Locked Rule 3."
+            },
+            {
+              "key": "CA13AQ3-REVISE",
+              "text": "Ratify with revision — adjust §19.0 wording."
+            },
+            {
+              "key": "CA13AQ3-REJECT",
+              "text": "Reject — the §10 table already lists the three mechanisms; §19.0 is redundant."
+            },
+            {
+              "key": "CA13AQ3-MOVE",
+              "text": "Move reconciliation to §10 (Self-Governance) instead of §19."
+            }
+          ],
+          "draftedKey": "CA13AQ3-RATIFY"
+        },
+        {
+          "id": "CA-13-B-Q1",
+          "topic": "CA-13-B-Q1 — ENTRY 009 records CEO re-disposition of CA-9-Q4 to Option (a) — EXECUTOR_REGISTRY sibling pattern — but §15 intro + §15.1 rows 21/26 still carry old (b) phrasing. Amend canonical to match ENTRY 009?",
+          "options": [
+            {
+              "key": "CA13BQ1-RATIFY",
+              "text": "Ratify — strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009."
+            },
+            {
+              "key": "CA13BQ1-REVISE",
+              "text": "Ratify with revision — adjust replacement wording."
+            },
+            {
+              "key": "CA13BQ1-REJECT",
+              "text": "Reject — leave canonical text at (b) phrasing; ENTRY 009 stays code-level only."
+            },
+            {
+              "key": "CA13BQ1-DEFER",
+              "text": "Defer — amend §15 at the same commit that populates §15.5 sibling-row table."
+            }
+          ],
+          "draftedKey": "CA13BQ1-RATIFY"
+        },
+        {
+          "id": "CA-13-B-Q2",
+          "topic": "CA-13-B-Q2 — Sibling charter keys `aggressive-crawl-conductor-executor` and `orchestra-research-agent-executor`. Right naming?",
+          "options": [
+            {
+              "key": "CA13BQ2-RATIFY",
+              "text": "Adopt as drafted — `<agent-short-name>-executor` pattern."
+            },
+            {
+              "key": "CA13BQ2-AGENTID",
+              "text": "Adopt agentId-keyed naming — e.g. `agent-21-executor`, `agent-26-executor`."
+            },
+            {
+              "key": "CA13BQ2-CAPABILITY",
+              "text": "Adopt capability-keyed naming — e.g. `crawl-write-executor`, `orchestra-admission-executor`."
+            },
+            {
+              "key": "CA13BQ2-DEFER",
+              "text": "Defer naming to engineering dispatch."
+            }
+          ],
+          "draftedKey": "CA13BQ2-RATIFY"
+        }
+      ]
+    },
+    {
+      "code": "CA-14",
+      "commit": "fae9ff3",
+      "bundle_size": 34212,
+      "tally": {
+        "engagedTotal": 10,
+        "invalid": 0,
+        "tangential": 0,
+        "silent": 0,
+        "perQuestion": {
+          "CA-14-A-Q1": {
+            "CA14AQ1-RATIFY": 2,
+            "CA14AQ1-REDUCED": 1,
+            "CA14AQ1-OPTIN": 4,
+            "CA14AQ1-REJECT": 0,
+            "REJECT": 3,
+            "unmatched": 0
+          },
+          "CA-14-A-Q2": {
+            "CA14AQ2-RATIFY": 7,
+            "CA14AQ2-PARAPHRASE": 0,
+            "CA14AQ2-SHORTER": 2,
+            "CA14AQ2-FREEFORM": 0,
+            "REJECT": 1,
+            "unmatched": 0
+          },
+          "CA-14-A-Q3": {
+            "CA14AQ3-AGENT21": 8,
+            "CA14AQ3-AGENT8": 0,
+            "CA14AQ3-OPSRUNNER": 0,
+            "CA14AQ3-DEFER": 1,
+            "REJECT": 1,
+            "unmatched": 0
+          },
+          "CA-14-A-Q4": {
+            "CA14AQ4-RATIFY": 8,
+            "CA14AQ4-DEFER": 0,
+            "CA14AQ4-REJECT": 0,
+            "CA14AQ4-MODIFY": 0,
+            "REJECT": 2,
+            "unmatched": 0
+          },
+          "CA-14-B-Q1": {
+            "CA14BQ1-RATIFY": 7,
+            "CA14BQ1-DROP": 1,
+            "CA14BQ1-EXPAND": 0,
+            "CA14BQ1-REJECT": 0,
+            "REJECT": 2,
+            "unmatched": 0
+          },
+          "CA-14-B-Q2": {
+            "CA14BQ2-RATIFY": 7,
+            "CA14BQ2-SOFTEN": 1,
+            "CA14BQ2-OVERRIDE": 1,
+            "CA14BQ2-MODIFY": 0,
+            "REJECT": 1,
+            "unmatched": 0
+          },
+          "CA-14-B-Q3": {
+            "CA14BQ3-RATIFY": 6,
+            "CA14BQ3-S12": 3,
+            "CA14BQ3-S19": 0,
+            "CA14BQ3-CROSSLIST": 1,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-14-C-Q1": {
+            "CA14CQ1-RATIFY": 6,
+            "CA14CQ1-STRONGER": 3,
+            "CA14CQ1-REJECT": 0,
+            "CA14CQ1-MODIFY": 1,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-14-C-Q2": {
+            "CA14CQ2-ADD": 6,
+            "CA14CQ2-CONDITIONAL": 0,
+            "CA14CQ2-SKIP": 3,
+            "CA14CQ2-MODIFY": 0,
+            "REJECT": 1,
+            "unmatched": 0
+          },
+          "CA-14-D-Q1": {
+            "CA14DQ1-RATIFY": 8,
+            "CA14DQ1-DROP": 1,
+            "CA14DQ1-EXPAND": 0,
+            "CA14DQ1-REJECT": 0,
+            "REJECT": 1,
+            "unmatched": 0
+          },
+          "CA-14-D-Q2": {
+            "CA14DQ2-BLOCK": 1,
+            "CA14DQ2-NDAYS": 6,
+            "CA14DQ2-IMMEDIATE": 3,
+            "CA14DQ2-MODIFY": 0,
+            "REJECT": 0,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 36,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Phase B scope creep without bounds",
+            "detail": "§6.10 Phase B defines adversarial testing including 'prompt-injection probes' and 'hostile input' but provides no upper bound on test complexity or time. Unlike Phase A's hard caps (depth=12, pages=2000), Phase B could expand indefinitely as new attack vectors emerge."
+          },
+          {
+            "slot": 1,
+            "title": "Atomic-audit-write creates deadlock risk",
+            "detail": "§7.5 requires ProductSSOT update to be atomic with output delivery - if ProductSSOT write fails, entire run rolls back. This creates a single point of failure where database contention or network issues could block all product renewals system-wide."
+          },
+          {
+            "slot": 1,
+            "title": "NO_IMPROVEMENT exit blocks valid fixes",
+            "detail": "§7 item #6d mandates rejecting any fix that causes score regression, but some legitimate fixes (security patches, removing vulnerable features) naturally reduce functionality scores. The 'never ships regression' guarantee prevents necessary security remediation."
+          },
+          {
+            "slot": 1,
+            "title": "Per-product branch proliferation unbounded",
+            "detail": "CA-14-D requires a branch-of-record per product but doesn't specify retention policy or cleanup. With continuous operation, this creates unbounded git repository growth as abandoned product branches accumulate indefinitely."
+          },
+          {
+            "slot": 2,
+            "title": "Phase B complexity and resource demand",
+            "detail": "The introduction of Phase B Adversarial Surface Testing as a hard prerequisite (§6.10) significantly increases the complexity and resource demand of the testing process. This could lead to delays in product releases and increased operational costs, especially for smaller teams or projects with limited resources."
+          },
+          {
+            "slot": 2,
+            "title": "Lack of rollback mechanism",
+            "detail": "The proposal does not specify a clear rollback mechanism if Phase B testing fails after a product has been partially deployed. This could result in incomplete or inconsistent product states, potentially affecting end-user experience and trust."
+          },
+          {
+            "slot": 2,
+            "title": "Potential for increased false negatives",
+            "detail": "The adversarial testing approach in Phase B may lead to increased false negatives, where legitimate product features are flagged as problematic due to overly aggressive testing scenarios. This could hinder the deployment of functional products and require unnecessary remediation efforts."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the Phase B Adversarial Surface Testing introduces unintended consequences or regressions, which could lead to system instability."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Error Handling",
+            "detail": "The §7.6 GTM Readiness Report score does not account for error handling and recovery mechanisms, which are crucial for ensuring system reliability and robustness."
+          },
+          {
+            "slot": 3,
+            "title": "Overreliance on Automated Testing",
+            "detail": "The proposal relies heavily on automated testing, which may not cover all edge cases and scenarios, potentially leading to undetected issues and vulnerabilities."
+          },
+          {
+            "slot": 4,
+            "title": "Phase B Overhead",
+            "detail": "The introduction of Phase B Adversarial Surface Testing may significantly increase the time and resources required for testing, potentially delaying product releases and increasing costs. §6.10 outlines extensive interactive testing requirements that could be overly burdensome."
+          },
+          {
+            "slot": 4,
+            "title": "Complexity in Self-Renewal",
+            "detail": "The Self-Renewal safety invariants in §7 Output Contract add complexity to the fix generation process. The diff-only and preserve rules might limit the effectiveness of automated fixes, leading to more manual interventions. The pre-deploy parse gate and post-deploy regression guard could introduce additional failure points."
+          },
+          {
+            "slot": 4,
+            "title": "Incomplete Seeding",
+            "detail": "The per-product seed migration in §7.5.1 is incomplete, with only 2 out of 5 VEU products seeded. This could lead to inconsistencies and potential issues in the ProductSSOT rows, affecting the reliability of the system."
+          },
+          {
+            "slot": 5,
+            "title": "Complexity Increase",
+            "detail": "Adding Phase B Adversarial Surface Testing as a hard prerequisite significantly increases the complexity of the clearance process, potentially leading to delays and resource strain."
+          },
+          {
+            "slot": 5,
+            "title": "Resource Allocation",
+            "detail": "The additional testing phase may require more computational resources and human oversight, which could divert resources from other critical areas."
+          },
+          {
+            "slot": 5,
+            "title": "False Positives",
+            "detail": "Phase B testing may generate false positives, leading to unnecessary rework and potential frustration among developers."
+          },
+          {
+            "slot": 6,
+            "title": "Phase B scope creep",
+            "detail": "The definition of Phase B in §6.10 is broad and could lead to scope creep.  The lack of specific, measurable criteria for 'adversarial' testing makes it difficult to determine when Phase B is truly 'passed'. This ambiguity could lead to inconsistent application and disputes."
+          },
+          {
+            "slot": 6,
+            "title": "LIMITATIONS disclosure burden",
+            "detail": "The mandatory verbatim text in §7 LIMITATIONS places a significant burden on operators.  While the intent is good, requiring exact phrasing is inflexible and could lead to awkward or unnatural disclosures.  The system should allow for paraphrasing while maintaining the core intent."
+          },
+          {
+            "slot": 6,
+            "title": "Self-Renewal safety rigidity",
+            "detail": "The §7 Output Contract item #6, particularly the 'diff-only' and 'preserve rules' invariants, may be overly restrictive.  Legitimate fixes might require more substantial changes than a simple diff, and preserving all existing code (including potentially flawed code) could hinder effective remediation."
+          },
+          {
+            "slot": 6,
+            "title": "Five-Layer Framework demotion",
+            "detail": "CA-14-C's demotion of the Five-Layer Intelligence Framework to telemetry-only seems premature. While findings-driven prioritization is important, the Five-Layer Framework could provide valuable context for understanding the business impact of different findings, potentially leading to more strategic remediation efforts.  The proposal doesn't adequately justify this shift."
+          },
+          {
+            "slot": 6,
+            "title": "ProductSSOT seeding risk",
+            "detail": "The per-product branch-of-record and ProductSSOT row seeding in CA-14-D introduce a risk of data inconsistencies if the seeding process is not carefully managed.  Seeding only two products (FlowAI + MyPregLife) while leaving the remaining four pending creates a potential for divergence and confusion."
+          },
+          {
+            "slot": 7,
+            "title": "Phase B scalability risk",
+            "detail": "CA-14-A §6.10 mandates comprehensive authenticated traversal and adversarial probing without defining resource constraints. The requirement to exercise every authenticated multi-page path and perform adversarial prompt injection on all AI agents could exponentially increase crawl time and compute costs beyond Phase A's hard caps, potentially stalling pipeline throughput."
+          },
+          {
+            "slot": 7,
+            "title": "Regression guard false positives",
+            "detail": "CA-14-B §7 item #6(d) mandates rejecting any fix causing §7.6 score regression. However, §7.6 scores fluctuate due to environmental factors (e.g., third-party API latency). This could cause valid fixes to be rejected for non-regression reasons, worsening Cluster D deferred issue backlog."
+          },
+          {
+            "slot": 7,
+            "title": "Atomic-write contention risk",
+            "detail": "CA-14-D §7.5.1 requires atomic ProductSSOT writes across environments. During concurrent pipeline runs for the same product, write contention could trigger rollbacks and incomplete runs, violating §7 Output Contract completeness guarantees and creating version skew."
+          },
+          {
+            "slot": 7,
+            "title": "Phase B opt-in expansion hazard",
+            "detail": "CA-14-A §6.10 expands XSS probe opt-in to dev/staging environments during Phase B. Without strict session isolation, adversarial payloads like <script>alert(1)</script> could contaminate test data stores and cause downstream data corruption in shared environments."
+          },
+          {
+            "slot": 8,
+            "title": "Phase B gate is underspecified",
+            "detail": "CA-14-A amends §7.6 and §11 Step 5 to require a Phase B adversarial pass, but it does not define a measurable pass/fail rubric for the new `phase_b_pass` boolean beyond “zero critical” and some high-finding handling. Without a canonical scoring contract, operators can satisfy the gate with inconsistent ad hoc test coverage while still presenting the result as a hard certification."
+          },
+          {
+            "slot": 8,
+            "title": "LIMITATIONS disclosure is brittle",
+            "detail": "The new §7 LIMITATIONS wording mandates a verbatim disclaimer for Phase A-only deliveries and forbids paraphrase. That creates a compliance footgun: any downstream formatting, localization, or report-generation layer that slightly alters the phrase turns a valid delivery into a canonical violation even if the substantive disclosure is present."
+          },
+          {
+            "slot": 8,
+            "title": "Safety invariants overreach into policy",
+            "detail": "CA-14-B elevates diff-only, preserve rules, parse gate, regression guard, and attribution into the SSOT as item #6 of §7 and as a Locked Rule extension. Several of these are implementation policies that belong in the remediation engine spec, not the canonical output contract; encoding them at SSOT level risks freezing tooling behavior that should remain evolvable."
+          },
+          {
+            "slot": 8,
+            "title": "Branch-of-record migration risk",
+            "detail": "CA-14-D requires per-product branch-of-record plus atomic-audit-write semantics across ProductSSOT seeding and audit logs, but the draft only names FlowAI and MyPregLife as already seeded while four other VEU products remain pending. Binding canonical behavior to partially migrated state can produce split-brain records where some products use the new branch model and others still rely on legacy paths."
+          },
+          {
+            "slot": 8,
+            "title": "Findings-driven priority may starve strategic work",
+            "detail": "CA-14-C makes §7.6 findings the source of truth for remediation and demotes the Five-Layer Framework to telemetry only. That can improve defect focus, but it also removes a structured mechanism for surfacing business, GTM, or financial risks that may not appear as high-severity technical findings yet still dominate product failure risk."
+          },
+          {
+            "slot": 9,
+            "title": "Overly Complex §6.10 Distinction",
+            "detail": "The new §6.10 distinction between Phase A and Phase B introduces additional complexity without clear benefits. It may lead to confusion among operators and developers."
+          },
+          {
+            "slot": 9,
+            "title": "Lack of Clear Ownership for Phase B",
+            "detail": "CA-14-A-Q3 does not clearly assign ownership for Phase B implementation, which may cause delays or confusion in the development process."
+          },
+          {
+            "slot": 9,
+            "title": "Insufficient Disclosure Requirements",
+            "detail": "The LIMITATIONS disclosure discipline introduced in CA-14-A may not be sufficient to ensure transparency, as it relies on operator compliance without clear enforcement mechanisms."
+          },
+          {
+            "slot": 10,
+            "title": "Phase B gate overloads §11 Step 5",
+            "detail": "The five-prerequisite gate added to §7.6 and §11 Step 5 (including new phase_b_pass boolean and skipped-paths enumeration) has no timeout, retry limit, or resource cap specified, unlike the depth=8/hard-cap=12 bounds already present in §6 Aggressive Crawl Engine; this can indefinitely block Clearance Step 5 for any product with complex authenticated flows."
+          },
+          {
+            "slot": 10,
+            "title": "Atomic ProductSSOT write lacks rollback",
+            "detail": "CA-14-D's atomic-audit-write requirement in §7.5 (tied to delta_log append and governance_record) combined with CA-14-B's post-deploy regression guard in new §7 item #6 can leave a ProductSSOT row in an inconsistent state if the guard triggers NO_IMPROVEMENT after a partial Self-Heal commit, with no explicit Self-Protect snapshot restore path named."
+          },
+          {
+            "slot": 10,
+            "title": "Findings-driven conflicts with §10 Self-Audit",
+            "detail": "CA-14-C's declaration that §7.6 findings are the sole remediation prioritizer (amending pipeline step 6) directly contradicts the five-dimension Self-Audit scoring engine in §10.1, which still feeds Platform Health Widget and triggers Self-Protection on sub-6 Security Posture without referencing findings as override."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "CA-14-A-Q1": {
+          "verdict": "PLURALITY_CA14AQ1-OPTIN",
+          "detail": "4 of 10 on CA14AQ1-OPTIN (below 7/10 quorum)",
+          "topKey": "CA14AQ1-OPTIN",
+          "topCount": 4
+        },
+        "CA-14-A-Q2": {
+          "verdict": "QUORUM_PLURALITY_CA14AQ2-RATIFY",
+          "detail": "7 of 10 on CA14AQ2-RATIFY (≥ quorum 7/10)",
+          "topKey": "CA14AQ2-RATIFY",
+          "topCount": 7
+        },
+        "CA-14-A-Q3": {
+          "verdict": "SUPERMAJORITY_CA14AQ3-AGENT21",
+          "detail": "8 of 10 on CA14AQ3-AGENT21 (≥ 8/10)",
+          "topKey": "CA14AQ3-AGENT21",
+          "topCount": 8
+        },
+        "CA-14-A-Q4": {
+          "verdict": "SUPERMAJORITY_CA14AQ4-RATIFY",
+          "detail": "8 of 10 on CA14AQ4-RATIFY (≥ 8/10)",
+          "topKey": "CA14AQ4-RATIFY",
+          "topCount": 8
+        },
+        "CA-14-B-Q1": {
+          "verdict": "QUORUM_PLURALITY_CA14BQ1-RATIFY",
+          "detail": "7 of 10 on CA14BQ1-RATIFY (≥ quorum 7/10)",
+          "topKey": "CA14BQ1-RATIFY",
+          "topCount": 7
+        },
+        "CA-14-B-Q2": {
+          "verdict": "QUORUM_PLURALITY_CA14BQ2-RATIFY",
+          "detail": "7 of 10 on CA14BQ2-RATIFY (≥ quorum 7/10)",
+          "topKey": "CA14BQ2-RATIFY",
+          "topCount": 7
+        },
+        "CA-14-B-Q3": {
+          "verdict": "PLURALITY_CA14BQ3-RATIFY",
+          "detail": "6 of 10 on CA14BQ3-RATIFY (below 7/10 quorum)",
+          "topKey": "CA14BQ3-RATIFY",
+          "topCount": 6
+        },
+        "CA-14-C-Q1": {
+          "verdict": "PLURALITY_CA14CQ1-RATIFY",
+          "detail": "6 of 10 on CA14CQ1-RATIFY (below 7/10 quorum)",
+          "topKey": "CA14CQ1-RATIFY",
+          "topCount": 6
+        },
+        "CA-14-C-Q2": {
+          "verdict": "PLURALITY_CA14CQ2-ADD",
+          "detail": "6 of 10 on CA14CQ2-ADD (below 7/10 quorum)",
+          "topKey": "CA14CQ2-ADD",
+          "topCount": 6
+        },
+        "CA-14-D-Q1": {
+          "verdict": "SUPERMAJORITY_CA14DQ1-RATIFY",
+          "detail": "8 of 10 on CA14DQ1-RATIFY (≥ 8/10)",
+          "topKey": "CA14DQ1-RATIFY",
+          "topCount": 8
+        },
+        "CA-14-D-Q2": {
+          "verdict": "PLURALITY_CA14DQ2-NDAYS",
+          "detail": "6 of 10 on CA14DQ2-NDAYS (below 7/10 quorum)",
+          "topKey": "CA14DQ2-NDAYS",
+          "topCount": 6
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0.6454545454545455,
+        "alignedCount": 71,
+        "totalPossible": 110,
+        "draftedQs": [
+          "CA-14-A-Q1",
+          "CA-14-A-Q2",
+          "CA-14-A-Q3",
+          "CA-14-A-Q4",
+          "CA-14-B-Q1",
+          "CA-14-B-Q2",
+          "CA-14-B-Q3",
+          "CA-14-C-Q1",
+          "CA-14-C-Q2",
+          "CA-14-D-Q1",
+          "CA-14-D-Q2"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 64.5 %, distinct objections 36"
+      },
+      "questions": [
+        {
+          "id": "CA-14-A-Q1",
+          "topic": "CA-14-A-Q1 — §11 Clearance Step 5 require Phase B Adversarial Surface Testing as HARD prerequisite?",
+          "options": [
+            {
+              "key": "CA14AQ1-RATIFY",
+              "text": "Ratify as drafted — Phase B is a hard gate; failure blocks Step 5."
+            },
+            {
+              "key": "CA14AQ1-REDUCED",
+              "text": "Ratify with reduced scope — Phase B mandatory only for `prd` environment."
+            },
+            {
+              "key": "CA14AQ1-OPTIN",
+              "text": "Ratify with admin-role opt-in — Phase B defaults mandatory but operator may opt out with audit-logged justification."
+            },
+            {
+              "key": "CA14AQ1-REJECT",
+              "text": "Reject — Phase A sufficient; Phase B as advisory signal without blocking."
+            }
+          ],
+          "draftedKey": "CA14AQ1-RATIFY"
+        },
+        {
+          "id": "CA-14-A-Q2",
+          "topic": "CA-14-A-Q2 — Verbatim LIMITATIONS disclosure phrase for Phase-A-only deliveries. Right wording?",
+          "options": [
+            {
+              "key": "CA14AQ2-RATIFY",
+              "text": "Ratify as drafted (verbatim canonical wording)."
+            },
+            {
+              "key": "CA14AQ2-PARAPHRASE",
+              "text": "Operator paraphrase permission — same intent, operator may rewrite."
+            },
+            {
+              "key": "CA14AQ2-SHORTER",
+              "text": "Adopt shorter form — \"§7.6 score reflects surface verification only; NOT a functional certification.\""
+            },
+            {
+              "key": "CA14AQ2-FREEFORM",
+              "text": "No verbatim wording — require disclosure but let operator phrase."
+            }
+          ],
+          "draftedKey": "CA14AQ2-RATIFY"
+        },
+        {
+          "id": "CA-14-A-Q3",
+          "topic": "CA-14-A-Q3 — Phase B implementation owner.",
+          "options": [
+            {
+              "key": "CA14AQ3-AGENT21",
+              "text": "Agent #21 ACE Conductor expand to own Phase B."
+            },
+            {
+              "key": "CA14AQ3-AGENT8",
+              "text": "Agent #8 Quality Audit owns Phase B (closer to QA)."
+            },
+            {
+              "key": "CA14AQ3-OPSRUNNER",
+              "text": "New Ops Runner role (#22/#24/#25) owns Phase B."
+            },
+            {
+              "key": "CA14AQ3-DEFER",
+              "text": "Defer ownership — engineering dispatch picks owner."
+            }
+          ],
+          "draftedKey": "CA14AQ3-AGENT21"
+        },
+        {
+          "id": "CA-14-A-Q4",
+          "topic": "CA-14-A-Q4 — Should CA-14-A add Locked Rule 19 (\"Phase A vs Phase B — DO NOT CONFLATE\") to §25?",
+          "options": [
+            {
+              "key": "CA14AQ4-RATIFY",
+              "text": "Ratify Locked Rule 19 as drafted."
+            },
+            {
+              "key": "CA14AQ4-DEFER",
+              "text": "Ratify but defer Rule 19 numbering — consolidate at end of CA cycle."
+            },
+            {
+              "key": "CA14AQ4-REJECT",
+              "text": "Reject Locked Rule 19 — §6.10 + §7.6 + §7 LIMITATIONS amendments sufficient."
+            },
+            {
+              "key": "CA14AQ4-MODIFY",
+              "text": "Modify Rule 19 wording."
+            }
+          ],
+          "draftedKey": "CA14AQ4-RATIFY"
+        },
+        {
+          "id": "CA-14-B-Q1",
+          "topic": "CA-14-B-Q1 — §7 Output Contract item #6 (5 fix-safety invariants: diff-only/preserve/parse/regression-guard/attribution) ratified as drafted?",
+          "options": [
+            {
+              "key": "CA14BQ1-RATIFY",
+              "text": "Ratify all 5 invariants as drafted."
+            },
+            {
+              "key": "CA14BQ1-DROP",
+              "text": "Ratify 4 invariants; drop one (specify)."
+            },
+            {
+              "key": "CA14BQ1-EXPAND",
+              "text": "Ratify with expansion — add a 6th invariant."
+            },
+            {
+              "key": "CA14BQ1-REJECT",
+              "text": "Reject — invariants belong in SELF_RENEWAL_SPEC.md not canonical SSOT."
+            }
+          ],
+          "draftedKey": "CA14BQ1-RATIFY"
+        },
+        {
+          "id": "CA-14-B-Q2",
+          "topic": "CA-14-B-Q2 — Canonical \"NEVER ships\" guarantee wording. Right wording?",
+          "options": [
+            {
+              "key": "CA14BQ2-RATIFY",
+              "text": "Ratify as drafted (verbatim canonical guarantee)."
+            },
+            {
+              "key": "CA14BQ2-SOFTEN",
+              "text": "Soften to \"rarely ships\" — acknowledges edge cases."
+            },
+            {
+              "key": "CA14BQ2-OVERRIDE",
+              "text": "Strengthen with operator-override clause — admin role may override with audit-logged justification."
+            },
+            {
+              "key": "CA14BQ2-MODIFY",
+              "text": "Modify wording."
+            }
+          ],
+          "draftedKey": "CA14BQ2-RATIFY"
+        },
+        {
+          "id": "CA-14-B-Q3",
+          "topic": "CA-14-B-Q3 — §10.4 \"Fix-Safety invariants\" placement. Where should it live?",
+          "options": [
+            {
+              "key": "CA14BQ3-RATIFY",
+              "text": "Ratify §10.4 placement."
+            },
+            {
+              "key": "CA14BQ3-S12",
+              "text": "Move to §12 Remediation Modes."
+            },
+            {
+              "key": "CA14BQ3-S19",
+              "text": "Move to §19 Governance."
+            },
+            {
+              "key": "CA14BQ3-CROSSLIST",
+              "text": "Cross-list (§10.4 + §12 + §19)."
+            }
+          ],
+          "draftedKey": "CA14BQ3-RATIFY"
+        },
+        {
+          "id": "CA-14-C-Q1",
+          "topic": "CA-14-C-Q1 — Five-Layer Framework is telemetry-only, not remediation prioritizer. Right framing?",
+          "options": [
+            {
+              "key": "CA14CQ1-RATIFY",
+              "text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical."
+            },
+            {
+              "key": "CA14CQ1-STRONGER",
+              "text": "Stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition)."
+            },
+            {
+              "key": "CA14CQ1-REJECT",
+              "text": "Reject — clarification is redundant; Locked Rule 6 already says \"tagging\"."
+            },
+            {
+              "key": "CA14CQ1-MODIFY",
+              "text": "Modify framing."
+            }
+          ],
+          "draftedKey": "CA14CQ1-RATIFY"
+        },
+        {
+          "id": "CA-14-C-Q2",
+          "topic": "CA-14-C-Q2 — §9 Step 6 row note referencing §7.6 findings as prio source.",
+          "options": [
+            {
+              "key": "CA14CQ2-ADD",
+              "text": "Add a §9 Step 6 row note referencing §7.6 findings."
+            },
+            {
+              "key": "CA14CQ2-CONDITIONAL",
+              "text": "Add note only if §9 step-row table format permits."
+            },
+            {
+              "key": "CA14CQ2-SKIP",
+              "text": "Don't touch §9 — §6.10 + §7.6 amendments sufficient."
+            },
+            {
+              "key": "CA14CQ2-MODIFY",
+              "text": "Modify approach."
+            }
+          ],
+          "draftedKey": "CA14CQ2-ADD"
+        },
+        {
+          "id": "CA-14-D-Q1",
+          "topic": "CA-14-D-Q1 — §7.5.1 three operational invariants (branch-of-record + ProductSSOT seeding + atomic-audit-write) ratified?",
+          "options": [
+            {
+              "key": "CA14DQ1-RATIFY",
+              "text": "Ratify all 3 invariants as drafted."
+            },
+            {
+              "key": "CA14DQ1-DROP",
+              "text": "Ratify 2; drop one (specify)."
+            },
+            {
+              "key": "CA14DQ1-EXPAND",
+              "text": "Ratify with expansion — add 4th invariant."
+            },
+            {
+              "key": "CA14DQ1-REJECT",
+              "text": "Reject — operational invariants belong in engineering spec not canonical."
+            }
+          ],
+          "draftedKey": "CA14DQ1-RATIFY"
+        },
+        {
+          "id": "CA-14-D-Q2",
+          "topic": "CA-14-D-Q2 — Per-product seed migration: FlowAI + MyPregLife seeded; remaining 4 VEU products pending. Block or proceed?",
+          "options": [
+            {
+              "key": "CA14DQ2-BLOCK",
+              "text": "Block CA-14 ratification until all 5 VEU products seeded."
+            },
+            {
+              "key": "CA14DQ2-NDAYS",
+              "text": "Ratify with acceptance criterion: remaining 4 products seeded within N days post-ratification."
+            },
+            {
+              "key": "CA14DQ2-IMMEDIATE",
+              "text": "Ratify immediately; remaining 4 products seeded per operator-driven order."
+            },
+            {
+              "key": "CA14DQ2-MODIFY",
+              "text": "Modify approach."
+            }
+          ],
+          "draftedKey": "CA14DQ2-NDAYS"
+        }
+      ]
+    },
+    {
+      "code": "CA-15",
+      "commit": "b953388",
+      "bundle_size": 32370,
+      "tally": {
+        "engagedTotal": 8,
+        "invalid": 0,
+        "tangential": 1,
+        "silent": 1,
+        "perQuestion": {
+          "CA-15-A-Q1": {
+            "CA15AQ1-RATIFY": 1,
+            "CA15AQ1-FEWER": 0,
+            "CA15AQ1-MORE": 1,
+            "CA15AQ1-DIFF": 1,
+            "REJECT": 5,
+            "unmatched": 0
+          },
+          "CA-15-A-Q2": {
+            "CA15AQ2-RATIFY": 1,
+            "CA15AQ2-SUBORD": 4,
+            "CA15AQ2-SEPARATE": 0,
+            "CA15AQ2-MODIFY": 0,
+            "REJECT": 3,
+            "unmatched": 0
+          },
+          "CA-15-A-Q3": {
+            "CA15AQ3-RATIFY": 1,
+            "CA15AQ3-FIXED": 0,
+            "CA15AQ3-ADMIN": 4,
+            "CA15AQ3-MODIFY": 0,
+            "REJECT": 3,
+            "unmatched": 0
+          },
+          "CA-15-B-Q1": {
+            "CA15BQ1-RATIFY": 1,
+            "CA15BQ1-OPTIONAL": 2,
+            "CA15BQ1-REJECT": 0,
+            "CA15BQ1-MODIFY": 1,
+            "REJECT": 4,
+            "unmatched": 0
+          },
+          "CA-15-B-Q2": {
+            "CA15BQ2-RATIFY": 2,
+            "CA15BQ2-DROP_RE": 3,
+            "CA15BQ2-DROP_ATT": 0,
+            "CA15BQ2-EXPAND": 0,
+            "REJECT": 3,
+            "unmatched": 0
+          },
+          "CA-15-B-Q3": {
+            "CA15BQ3-RATIFY": 1,
+            "CA15BQ3-EXPAND": 2,
+            "CA15BQ3-REJECT": 0,
+            "CA15BQ3-MODIFY": 0,
+            "REJECT": 5,
+            "unmatched": 0
+          },
+          "CA-15-C-Q1": {
+            "CA15CQ1-RATIFY": 2,
+            "CA15CQ1-FLOOR_ONLY": 2,
+            "CA15CQ1-NORTH_ONLY": 0,
+            "CA15CQ1-MODIFY": 1,
+            "REJECT": 3,
+            "unmatched": 0
+          },
+          "CA-15-C-Q2": {
+            "CA15CQ2-RATIFY": 2,
+            "CA15CQ2-HIGHER": 0,
+            "CA15CQ2-LOWER": 0,
+            "CA15CQ2-CONFIG": 2,
+            "REJECT": 4,
+            "unmatched": 0
+          },
+          "CA-15-C-Q3": {
+            "CA15CQ3-RATIFY": 1,
+            "CA15CQ3-BLOCK": 3,
+            "CA15CQ3-AUTO_RECAPTURE": 0,
+            "CA15CQ3-MODIFY": 1,
+            "REJECT": 3,
+            "unmatched": 0
+          },
+          "CA-15-D-Q1": {
+            "CA15DQ1-RATIFY": 2,
+            "CA15DQ1-CONTINUOUS": 0,
+            "CA15DQ1-ADVISORY": 3,
+            "CA15DQ1-MODIFY": 0,
+            "REJECT": 3,
+            "unmatched": 0
+          },
+          "CA-15-D-Q2": {
+            "CA15DQ2-RATIFY": 1,
+            "CA15DQ2-PARTIAL": 2,
+            "CA15DQ2-REJECT": 0,
+            "CA15DQ2-MODIFY": 1,
+            "REJECT": 4,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 31,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Axis overlap creates double-counting",
+            "detail": "CA-15-A defines a UI/UX axis in the 7-axis rubric that is 'distinct from §10.1 UI/UX' but both feed into §7.6 scoring with equal weight. This creates a double-counting problem where UI/UX issues get scored twice under different rubrics, artificially inflating their impact on the final score."
+          },
+          {
+            "slot": 1,
+            "title": "Purpose capture timing creates race condition",
+            "detail": "CA-15-B requires purpose capture 'before any optimization cycle runs' but §7.5 ProductSSOT updates are atomic with output per §7. This creates a race where the first run must both capture purpose AND produce output atomically, but purpose capture requires crawling/inference that may fail, blocking all output."
+          },
+          {
+            "slot": 1,
+            "title": "Conformance gate invalidation too aggressive",
+            "detail": "CA-15-D invalidates CEO sign-off on EVERY CA promotion, not just CAs that affect conformance testing. This means unrelated amendments (e.g., fixing a typo in §28) force re-validation of all products, creating unnecessary operational burden and potential service disruption."
+          },
+          {
+            "slot": 1,
+            "title": "Legal/privacy axes lack jurisdictional clarity",
+            "detail": "CA-15-A axes 5-6 detect 'legal exposure' and 'privacy gaps' but the conformance criteria only mention 'jurisdictional inference per §1.1'. The §1.1 market definitions don't provide sufficient granularity for legal compliance detection across 190+ jurisdictions with conflicting requirements."
+          },
+          {
+            "slot": 2,
+            "title": "Complexity of Multi-Dimensional Audit",
+            "detail": "The introduction of a 7-axis canonical rubric in §10.1.1 adds significant complexity to the audit process. Each axis requires precise conformance-test acceptance criteria, which may lead to increased false positives or negatives, especially in subjective areas like UI/UX and 'Other'."
+          },
+          {
+            "slot": 2,
+            "title": "Purpose Capture Ambiguity",
+            "detail": "The proposal in CA-15-B for capturing purpose into ProductSSOT lacks clarity on how 'inferred' and 'synthesized' modes will accurately reflect the operator's intent. This could lead to misalignment between the product's actual purpose and its recorded purpose, especially if LLM inference is inaccurate."
+          },
+          {
+            "slot": 2,
+            "title": "SSOT-Conformance Gate Rigidity",
+            "detail": "The end-stage SSOT-conformance gate in CA-15-D may introduce rigidity by blocking product deployment until conformance is achieved. This could delay time-sensitive releases and does not account for scenarios where full conformance is impractical or unnecessary."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the 7-axis Multi-Dimensional Quality Audit causes unintended consequences, such as false positives or negatives, which could lead to incorrect optimization decisions. This is particularly concerning in §10.1.1 where the audit findings are folded into the §7.6 GTM Readiness scoring formula."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not specify how the 7-axis Multi-Dimensional Quality Audit will be tested for accuracy and reliability, particularly for the 'other' axis which is extensible and may introduce variability in findings. This lack of testing could lead to inconsistent results and undermine the effectiveness of the audit."
+          },
+          {
+            "slot": 3,
+            "title": "Operator Overload",
+            "detail": "The introduction of the purpose_record block in ProductSSOT and the requirement for operators to capture purpose statements may lead to operator overload, particularly if the purpose statements are complex or require significant time and effort to craft. This could lead to decreased productivity and increased errors."
+          },
+          {
+            "slot": 4,
+            "title": "Complexity of Multi-Dimensional Quality Audit",
+            "detail": "The 7-axis canonical Quality Audit rubric introduces significant complexity. The mechanism for folding these findings into §7.6 GTM Readiness scoring may lead to confusion and potential misinterpretation of results. The conformance-test acceptance criterion for the 7-axis audit is too stringent and may not be achievable in practical scenarios."
+          },
+          {
+            "slot": 4,
+            "title": "Ambiguity in Purpose Capture Modes",
+            "detail": "The three canonical purpose capture modes (described, inferred, synthesized) are not clearly defined. The inferred mode, which relies on LLM inference from page content, may introduce inaccuracies and biases. The synthesized mode, which combines multiple inputs, may lead to conflicting or unclear purpose statements."
+          },
+          {
+            "slot": 4,
+            "title": "SSOT-Conformance Gate Overhead",
+            "detail": "The SSOT-Conformance Gate as an end-stage hard gate may introduce significant overhead and delay in the deployment pipeline. The requirement for CEO re-sign off on every CA promotion could become a bottleneck, especially in environments with frequent updates and promotions."
+          },
+          {
+            "slot": 5,
+            "title": "Complexity Overload",
+            "detail": "The addition of a 7-axis Multi-Dimensional Quality Audit (CA-15-A) significantly increases the complexity of the system, potentially leading to maintenance challenges and increased risk of errors."
+          },
+          {
+            "slot": 5,
+            "title": "Purpose Capture Ambiguity",
+            "detail": "The purpose capture mechanism (CA-15-B) relies heavily on LLM inference and synthesis, which may introduce inaccuracies and misalignments with the operator's actual intent."
+          },
+          {
+            "slot": 5,
+            "title": "SSOT-Conformance Gate Overhead",
+            "detail": "The end-stage SSOT-Conformance Gate (CA-15-D) adds an additional layer of testing, which may introduce delays and increase the operational burden on the system."
+          },
+          {
+            "slot": 6,
+            "title": "Overly complex quality audit",
+            "detail": "The 7-axis Multi-Dimensional Quality Audit in CA-15-A seems overly complex and potentially subjective. The conformance test acceptance criteria for each axis rely on precision/recall thresholds against labeled corpora, which may be difficult to create and maintain, especially for axes like 'UI/UX' and 'Other'."
+          },
+          {
+            "slot": 6,
+            "title": "Purpose capture ambiguity",
+            "detail": "The purpose capture modes in CA-15-B, particularly 'inferred' and 'synthesized', rely heavily on LLM inference, which can be unreliable and lead to inaccurate or biased purpose statements. The lack of clear guidelines for LLM synthesis could result in inconsistent and unpredictable purpose capture."
+          },
+          {
+            "slot": 6,
+            "title": "SSOT-conformance gate risk",
+            "detail": "The SSOT-conformance gate in CA-15-D, while intended to ensure adherence to the SSOT, could become a bottleneck in the development process. The requirement for CEO re-sign-off on every CA promotion could create delays and hinder agility, especially if the CEO is unavailable or has limited bandwidth."
+          },
+          {
+            "slot": 6,
+            "title": "Extensibility axis 'Other' vague",
+            "detail": "The 'Other' axis in the Multi-Dimensional Quality Audit (CA-15-A) is a catch-all that lacks clear definition. While intended for extensibility, it could become a dumping ground for subjective or irrelevant findings, undermining the overall rigor of the audit."
+          },
+          {
+            "slot": 6,
+            "title": "Purpose drift handling unclear",
+            "detail": "The handling of `PURPOSE_DRIFT` in CA-15-C is unclear. Exiting with `NO_IMPROVEMENT` and an annotation seems insufficient. A significant drift in purpose should trigger a more proactive response, such as requiring operator intervention or automatically re-running the purpose capture process."
+          },
+          {
+            "slot": 8,
+            "title": "Axis set mismatches question",
+            "detail": "CA-15-A-Q1 asks to ratify a 7-axis rubric with UX, API, Data, Auth, Perf, Accessibility, Observability, but the proposal text defines axes as redundancy, grammar, syntax, UI/UX-content, legal, privacy, and other. That mismatch makes the amendment internally inconsistent with its own acceptance criterion and untestable as written."
+          },
+          {
+            "slot": 8,
+            "title": "Duplicate scoring semantics",
+            "detail": "CA-15-A folds the new audit into §7.6 with the same score formula and equal footing with existing detectors, but it also says the axes are content-quality and separately says they are advisory in the legal axis. The proposal does not define how conflicts are resolved when content-quality findings, Phase A findings, and Phase B findings all overlap, so the same defect can be double-counted or suppressed depending on implementation choice."
+          },
+          {
+            "slot": 8,
+            "title": "Purpose capture risks false intent",
+            "detail": "CA-15-B lets the system infer or synthesize a product's purpose from crawls or multiple sources and then stores that as canonical ProductSSOT state. That creates a high risk of ossifying a model hallucination or a marketing page's incidental text as the product's real objective, especially when the operator never supplied a precise purpose statement."
+          },
+          {
+            "slot": 8,
+            "title": "Drift gate can deadlock runs",
+            "detail": "CA-15-C's PURPOSE_DRIFT semantics can exit NO_IMPROVEMENT with explicit drift annotation when the purpose changes, but it does not require a fresh operator approval path or a bounded fallback. A product whose legitimate scope changes during renewal could repeatedly fail the exit gate even after successful technical remediation, turning an optimization loop into a deadlock."
+          },
+          {
+            "slot": 8,
+            "title": "CEO re-sign every CA is brittle",
+            "detail": "CA-15-D-Q2 makes CEO sign-off invalid on every CA promotion, even promotions that do not affect the specific conformance gate. This couples ordinary governance churn to a single human approver and can stall the entire pipeline over unrelated amendments, creating an availability bottleneck rather than a control mechanism."
+          },
+          {
+            "slot": 9,
+            "title": "Purpose Capture Ambiguity",
+            "detail": "The three canonical purpose-capture modes (§7.5 `purpose_record`) may lead to inconsistent purpose statements. The 'inferred' mode relies on LLM inference, which may not always accurately capture the operator's intent."
+          },
+          {
+            "slot": 9,
+            "title": "SSOT-Conformance Gate Timing",
+            "detail": "The §27 SSOT-Conformance Gate is placed at the end-stage, which may allow non-conformant changes to propagate through the pipeline. It should be considered to run this gate at every §11 step."
+          },
+          {
+            "slot": 10,
+            "title": "§10.1.1 rubric overlaps §10.1",
+            "detail": "The 7-axis Multi-Dimensional Quality Audit in §10.1.1 redefines UI/UX as content/copy quality while §10.1 already scores build-quality UI/UX; no conflict-resolution rule is stated for when the same finding appears under both, and the folding formula in §7.6 simply unions them without deduplication."
+          },
+          {
+            "slot": 10,
+            "title": "purpose_record schema truncated",
+            "detail": "§7.5 adds purpose_record as the 7th block with a JSON schema that ends mid-array at fulfillment_signals; no validation, required-field, or atomic-write rule is provided, unlike the explicit atomicity guarantee for delta_log in the same section."
+          },
+          {
+            "slot": 10,
+            "title": "§27 gate depends on parked CAs",
+            "detail": "CA-15-D makes the end-stage SSOT-conformance test a hard gate, yet the proposal repeatedly cross-references parked CA-13 and CA-14 entries that are explicitly NOT in §18.4; no fallback or version-pin is defined if those amendments remain unratified."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "CA-15-A-Q1": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "5 of 8 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 5
+        },
+        "CA-15-A-Q2": {
+          "verdict": "PLURALITY_CA15AQ2-SUBORD",
+          "detail": "4 of 8 on CA15AQ2-SUBORD (below 7/10 quorum)",
+          "topKey": "CA15AQ2-SUBORD",
+          "topCount": 4
+        },
+        "CA-15-A-Q3": {
+          "verdict": "PLURALITY_CA15AQ3-ADMIN",
+          "detail": "4 of 8 on CA15AQ3-ADMIN (below 7/10 quorum)",
+          "topKey": "CA15AQ3-ADMIN",
+          "topCount": 4
+        },
+        "CA-15-B-Q1": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 4
+        },
+        "CA-15-B-Q2": {
+          "verdict": "SPLIT",
+          "detail": "top tie at 3 between CA15BQ2-DROP_RE / REJECT",
+          "topKey": "CA15BQ2-DROP_RE",
+          "topCount": 3
+        },
+        "CA-15-B-Q3": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "5 of 8 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 5
+        },
+        "CA-15-C-Q1": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "3 of 8 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 3
+        },
+        "CA-15-C-Q2": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 4
+        },
+        "CA-15-C-Q3": {
+          "verdict": "SPLIT",
+          "detail": "top tie at 3 between CA15CQ3-BLOCK / REJECT",
+          "topKey": "CA15CQ3-BLOCK",
+          "topCount": 3
+        },
+        "CA-15-D-Q1": {
+          "verdict": "SPLIT",
+          "detail": "top tie at 3 between CA15DQ1-ADVISORY / REJECT",
+          "topKey": "CA15DQ1-ADVISORY",
+          "topCount": 3
+        },
+        "CA-15-D-Q2": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 4
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0.17045454545454544,
+        "alignedCount": 15,
+        "totalPossible": 88,
+        "draftedQs": [
+          "CA-15-A-Q1",
+          "CA-15-A-Q2",
+          "CA-15-A-Q3",
+          "CA-15-B-Q1",
+          "CA-15-B-Q2",
+          "CA-15-B-Q3",
+          "CA-15-C-Q1",
+          "CA-15-C-Q2",
+          "CA-15-C-Q3",
+          "CA-15-D-Q1",
+          "CA-15-D-Q2"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 17.0 %, distinct objections 31"
+      },
+      "questions": [
+        {
+          "id": "CA-15-A-Q1",
+          "topic": "CA-15-A-Q1 — 7-axis canonical Quality Audit rubric (UX, API, Data, Auth, Perf, Accessibility, Observability) ratification.",
+          "options": [
+            {
+              "key": "CA15AQ1-RATIFY",
+              "text": "Ratify 7-axis rubric as drafted."
+            },
+            {
+              "key": "CA15AQ1-FEWER",
+              "text": "Reduce to 5 axes — drop Observability and Accessibility (specify reasoning)."
+            },
+            {
+              "key": "CA15AQ1-MORE",
+              "text": "Expand to 9+ axes — add SecurityPosture and Internationalization."
+            },
+            {
+              "key": "CA15AQ1-DIFF",
+              "text": "Adopt different axis set entirely (specify in rationale)."
+            }
+          ],
+          "draftedKey": "CA15AQ1-RATIFY"
+        },
+        {
+          "id": "CA-15-A-Q2",
+          "topic": "CA-15-A-Q2 — Fold 7-axis rubric into §7.6 (equal footing with Five-Layer)?",
+          "options": [
+            {
+              "key": "CA15AQ2-RATIFY",
+              "text": "Ratify — fold into §7.6 with equal footing; 7-axis is canonical alongside Five-Layer."
+            },
+            {
+              "key": "CA15AQ2-SUBORD",
+              "text": "Subordinate to Five-Layer — Multi-Dim rubric becomes telemetry feeding §7.6 score, not equal footing."
+            },
+            {
+              "key": "CA15AQ2-SEPARATE",
+              "text": "Keep separate from §7.6 — Multi-Dim Quality Audit lives in its own §27 section."
+            },
+            {
+              "key": "CA15AQ2-MODIFY",
+              "text": "Modify folding approach."
+            }
+          ],
+          "draftedKey": "CA15AQ2-RATIFY"
+        },
+        {
+          "id": "CA-15-A-Q3",
+          "topic": "CA-15-A-Q3 — Per-axis enable/disable knob per product?",
+          "options": [
+            {
+              "key": "CA15AQ3-RATIFY",
+              "text": "Ratify — operators may enable/disable axes per product via ProductRegistry.qualityAxes."
+            },
+            {
+              "key": "CA15AQ3-FIXED",
+              "text": "Reject knob — all 7 axes always-on; no per-product disable."
+            },
+            {
+              "key": "CA15AQ3-ADMIN",
+              "text": "Knob exists but admin-role only (operator cannot disable axes)."
+            },
+            {
+              "key": "CA15AQ3-MODIFY",
+              "text": "Modify knob shape."
+            }
+          ],
+          "draftedKey": "CA15AQ3-RATIFY"
+        },
+        {
+          "id": "CA-15-B-Q1",
+          "topic": "CA-15-B-Q1 — `purpose_record` as 7th canonical block in ProductSSOT (§7.5).",
+          "options": [
+            {
+              "key": "CA15BQ1-RATIFY",
+              "text": "Ratify — `purpose_record` is the 7th canonical block; required for every product."
+            },
+            {
+              "key": "CA15BQ1-OPTIONAL",
+              "text": "Ratify but optional — `purpose_record` exists but is not required."
+            },
+            {
+              "key": "CA15BQ1-REJECT",
+              "text": "Reject — purpose lives in operator-stated spec, not in ProductSSOT canonical schema."
+            },
+            {
+              "key": "CA15BQ1-MODIFY",
+              "text": "Modify block placement / shape."
+            }
+          ],
+          "draftedKey": "CA15BQ1-RATIFY"
+        },
+        {
+          "id": "CA-15-B-Q2",
+          "topic": "CA-15-B-Q2 — Three canonical purpose-capture modes (operator-stated / reverse-engineered / attested) ratified?",
+          "options": [
+            {
+              "key": "CA15BQ2-RATIFY",
+              "text": "Ratify all 3 modes as drafted."
+            },
+            {
+              "key": "CA15BQ2-DROP_RE",
+              "text": "Ratify 2 — drop reverse-engineered (risk of poisoning SSOT with wrong inferred intent)."
+            },
+            {
+              "key": "CA15BQ2-DROP_ATT",
+              "text": "Ratify 2 — drop attested (low signal vs operator-stated)."
+            },
+            {
+              "key": "CA15BQ2-EXPAND",
+              "text": "Expand — add 4th mode (e.g. CEO-decreed)."
+            }
+          ],
+          "draftedKey": "CA15BQ2-RATIFY"
+        },
+        {
+          "id": "CA-15-B-Q3",
+          "topic": "CA-15-B-Q3 — Placeholder rejection regex (reject Lorem Ipsum / TODO / FIXME in purpose_record).",
+          "options": [
+            {
+              "key": "CA15BQ3-RATIFY",
+              "text": "Ratify regex as drafted."
+            },
+            {
+              "key": "CA15BQ3-EXPAND",
+              "text": "Expand regex — add more placeholder patterns (e.g. \"PLACEHOLDER\", \"XXX\", \"TBD\")."
+            },
+            {
+              "key": "CA15BQ3-REJECT",
+              "text": "Reject regex — placeholder detection belongs in linter, not canonical."
+            },
+            {
+              "key": "CA15BQ3-MODIFY",
+              "text": "Modify regex."
+            }
+          ],
+          "draftedKey": "CA15BQ3-RATIFY"
+        },
+        {
+          "id": "CA-15-C-Q1",
+          "topic": "CA-15-C-Q1 — Floor + north-star two-step exit (purpose-fulfillment is north-star, not numeric threshold).",
+          "options": [
+            {
+              "key": "CA15CQ1-RATIFY",
+              "text": "Ratify two-step exit as drafted."
+            },
+            {
+              "key": "CA15CQ1-FLOOR_ONLY",
+              "text": "Floor only — keep numeric threshold, drop purpose-fulfillment exit."
+            },
+            {
+              "key": "CA15CQ1-NORTH_ONLY",
+              "text": "North-star only — drop numeric floor, purpose-fulfillment is sole gate."
+            },
+            {
+              "key": "CA15CQ1-MODIFY",
+              "text": "Modify exit semantics."
+            }
+          ],
+          "draftedKey": "CA15CQ1-RATIFY"
+        },
+        {
+          "id": "CA-15-C-Q2",
+          "topic": "CA-15-C-Q2 — `purpose_fulfillment_score` default threshold 0.7?",
+          "options": [
+            {
+              "key": "CA15CQ2-RATIFY",
+              "text": "Ratify 0.7 default."
+            },
+            {
+              "key": "CA15CQ2-HIGHER",
+              "text": "0.7 too low — raise to 0.8 or 0.85."
+            },
+            {
+              "key": "CA15CQ2-LOWER",
+              "text": "0.7 too high — lower to 0.6."
+            },
+            {
+              "key": "CA15CQ2-CONFIG",
+              "text": "Make per-product configurable; 0.7 is default."
+            }
+          ],
+          "draftedKey": "CA15CQ2-RATIFY"
+        },
+        {
+          "id": "CA-15-C-Q3",
+          "topic": "CA-15-C-Q3 — `PURPOSE_DRIFT` exit semantics (when purpose changes from prior capture).",
+          "options": [
+            {
+              "key": "CA15CQ3-RATIFY",
+              "text": "Ratify PURPOSE_DRIFT as drafted — exits NO_IMPROVEMENT with explicit drift annotation."
+            },
+            {
+              "key": "CA15CQ3-BLOCK",
+              "text": "Block instead — PURPOSE_DRIFT halts the run, requires operator re-capture."
+            },
+            {
+              "key": "CA15CQ3-AUTO_RECAPTURE",
+              "text": "Auto-recapture — engine re-runs purpose capture and continues."
+            },
+            {
+              "key": "CA15CQ3-MODIFY",
+              "text": "Modify drift semantics."
+            }
+          ],
+          "draftedKey": "CA15CQ3-RATIFY"
+        },
+        {
+          "id": "CA-15-D-Q1",
+          "topic": "CA-15-D-Q1 — §27 SSOT-Conformance Gate ratification (end-stage conformance test).",
+          "options": [
+            {
+              "key": "CA15DQ1-RATIFY",
+              "text": "Ratify §27 as drafted — end-stage SSOT-conformance test is a hard gate."
+            },
+            {
+              "key": "CA15DQ1-CONTINUOUS",
+              "text": "Promote §27 to continuous gate (runs at every §11 step, not just end-stage)."
+            },
+            {
+              "key": "CA15DQ1-ADVISORY",
+              "text": "Downgrade §27 to advisory — surfaces conformance issues but does not block."
+            },
+            {
+              "key": "CA15DQ1-MODIFY",
+              "text": "Modify gate semantics."
+            }
+          ],
+          "draftedKey": "CA15DQ1-RATIFY"
+        },
+        {
+          "id": "CA-15-D-Q2",
+          "topic": "CA-15-D-Q2 — CEO sign-off invalidation on every CA promotion (CA-15-D requires CEO re-sign every CA cycle).",
+          "options": [
+            {
+              "key": "CA15DQ2-RATIFY",
+              "text": "Ratify — CEO sign-off invalidates on every CA promotion; must re-sign."
+            },
+            {
+              "key": "CA15DQ2-PARTIAL",
+              "text": "Partial — CEO sign-off invalidates only on CA promotions affecting §27."
+            },
+            {
+              "key": "CA15DQ2-REJECT",
+              "text": "Reject — CEO sign-off is per-product, not per-CA-promotion."
+            },
+            {
+              "key": "CA15DQ2-MODIFY",
+              "text": "Modify invalidation scope."
+            }
+          ],
+          "draftedKey": "CA15DQ2-RATIFY"
+        }
+      ]
+    },
+    {
+      "code": "CA-16",
+      "commit": "908f340",
+      "bundle_size": 31224,
+      "tally": {
+        "engagedTotal": 9,
+        "invalid": 0,
+        "tangential": 0,
+        "silent": 1,
+        "perQuestion": {
+          "CA-16-A-Q1": {
+            "CA16AQ1-RATIFY": 2,
+            "CA16AQ1-REVISE": 2,
+            "CA16AQ1-REJECT": 0,
+            "CA16AQ1-DEFER": 3,
+            "REJECT": 2,
+            "unmatched": 0
+          },
+          "CA-16-A-Q2": {
+            "CA16AQ2-RATIFY": 1,
+            "CA16AQ2-LATER": 4,
+            "CA16AQ2-PARALLEL": 0,
+            "CA16AQ2-REJECT": 0,
+            "REJECT": 4,
+            "unmatched": 0
+          },
+          "CA-16-A-Q3": {
+            "CA16AQ3-RATIFY": 6,
+            "CA16AQ3-OPEN": 0,
+            "CA16AQ3-NARROWER": 3,
+            "CA16AQ3-MODIFY": 0,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-16-A-Q4": {
+            "CA16AQ4-RATIFY": 0,
+            "CA16AQ4-SHORTER": 4,
+            "CA16AQ4-LONGER": 0,
+            "CA16AQ4-CONFIG": 5,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-16-B-Q1": {
+            "CA16BQ1-RATIFY": 3,
+            "CA16BQ1-RENUMBER": 1,
+            "CA16BQ1-MERGE": 1,
+            "CA16BQ1-DEFER": 4,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-16-B-Q2": {
+            "CA16BQ2-RATIFY": 6,
+            "CA16BQ2-HIGHER": 1,
+            "CA16BQ2-LOWER": 1,
+            "CA16BQ2-NONE": 1,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-16-B-Q3": {
+            "CA16BQ3-RATIFY": 7,
+            "CA16BQ3-WIDER": 0,
+            "CA16BQ3-NARROWER": 2,
+            "CA16BQ3-MODIFY": 0,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-16-C-Q1": {
+            "CA16CQ1-RATIFY": 6,
+            "CA16CQ1-FEWER": 1,
+            "CA16CQ1-MORE": 1,
+            "CA16CQ1-DIFF": 1,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-16-C-Q2": {
+            "CA16CQ2-RATIFY": 4,
+            "CA16CQ2-STRICTER": 5,
+            "CA16CQ2-LOOSER": 0,
+            "CA16CQ2-LLM": 0,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-16-C-Q3": {
+            "CA16CQ3-AGENT8": 0,
+            "CA16CQ3-AGENT21": 6,
+            "CA16CQ3-NEW": 2,
+            "CA16CQ3-DEFER": 1,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "CA-16-C-Q4": {
+            "CA16CQ4-RATIFY": 8,
+            "CA16CQ4-PER_CLASS": 1,
+            "CA16CQ4-REJECT": 0,
+            "CA16CQ4-MODIFY": 0,
+            "REJECT": 0,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 31,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Unbounded recommendation generation risk",
+            "detail": "§7 item #8 PA-6 requires at least 1 recommendation when purpose_fulfillment_score < 1.0, but sets no upper bound. A malicious or buggy recommender could flood operators with thousands of low-quality recommendations, overwhelming the Step 1.5 review process and creating denial-of-service conditions."
+          },
+          {
+            "slot": 1,
+            "title": "Circular dependency in purpose alignment",
+            "detail": "CA-16-A PA-1 requires all recommendations to cite purpose_record_link, but recommendations themselves can suggest changes to purpose_record per 'purpose_fulfillment_gap' category. This creates a circular dependency where recommendations to fix the purpose are validated against the flawed purpose they're trying to fix."
+          },
+          {
+            "slot": 1,
+            "title": "No rollback for accepted recommendations",
+            "detail": "PA-4 tracks 'accepted' recommendations through implementation but provides no mechanism to rollback or undo a recommendation that proves harmful post-implementation. The disposition lifecycle is one-way with no provision for reverting accepted changes that degrade the product."
+          },
+          {
+            "slot": 1,
+            "title": "Detection rules too rigid for emerging formats",
+            "detail": "CA-16-C's deterministic detection rules for 6 target classes will fail to identify hybrid formats (e.g., Progressive Web Apps that blur website/native boundaries) or emerging formats not yet conceived. The rigid taxonomy locks FlowAI into 2026-era format assumptions."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the proactive recommendations or redesign/build environment changes cause unintended consequences. This is a significant risk, especially since the changes are intended to be operator-steerable and may not always align with the original product intent. For example, §7.6 score-formula generalization invariant may not be sufficient to prevent product-agnostic scoring issues."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not outline a comprehensive testing strategy for the new proactive recommendation and redesign/build environment features. This raises concerns about the potential for bugs, inconsistencies, or unintended behavior, particularly in the context of §11 Six-Step Clearance Protocol and the new Step 1.5 placement."
+          },
+          {
+            "slot": 3,
+            "title": "Over-Reliance on LLM",
+            "detail": "The proposal relies heavily on Large Language Models (LLMs) for tasks such as recommendation rationale and market definition analysis. However, LLMs can be prone to errors, biases, or inconsistencies, which may impact the overall effectiveness and reliability of the proactive recommendations and redesign/build environment. This is particularly concerning in the context of §16.1 six dimensions and the readiness scores."
+          },
+          {
+            "slot": 4,
+            "title": "Complexity of Proactive Recommendations",
+            "detail": "The introduction of proactive recommendations in §7 item #8 adds significant complexity to the system. The need to generate, rank, and manage recommendations could introduce latency and performance issues, especially if the system is not optimized for handling these additional tasks."
+          },
+          {
+            "slot": 4,
+            "title": "Redesign/Build Environment Overhead",
+            "detail": "The new Redesign/Build Environment in §29 may require substantial user training and adaptation. Operators might find it challenging to steer the redesign or rebuild process effectively, leading to potential misuse or underutilization of the feature."
+          },
+          {
+            "slot": 4,
+            "title": "Multi-Format Targets Integration",
+            "detail": "The generalization of detection and crawl mechanisms for multiple target classes in §6 could lead to inconsistencies and errors. Each target class may have unique characteristics that the current detection rules might not adequately address, resulting in false positives or negatives."
+          },
+          {
+            "slot": 5,
+            "title": "Unclear Recommendation Impact",
+            "detail": "The proposal does not clearly define how the impact of proactive recommendations will be measured or verified, which could lead to recommendations that are not actionable or valuable."
+          },
+          {
+            "slot": 5,
+            "title": "Potential Recommendation Overload",
+            "detail": "The system may generate an overwhelming number of recommendations, making it difficult for operators to prioritize and act on them effectively."
+          },
+          {
+            "slot": 5,
+            "title": "Lack of Clear Criteria for Recommendation Categories",
+            "detail": "The categories for recommendations are not well-defined, which could lead to confusion and inconsistent application by operators."
+          },
+          {
+            "slot": 6,
+            "title": "Proactive recs lack cost consideration",
+            "detail": "The `expected_impact` in §7 only considers the positive impact on purpose fulfillment and score, but not the cost or effort required to implement the recommendation. This could lead to recommendations that are technically beneficial but impractical."
+          },
+          {
+            "slot": 6,
+            "title": "Step 1.5 timing unclear",
+            "detail": "§11.5 states that Step 1.5 follows Step 1 and the presence of a `purpose_record`, but it's unclear how frequently this step is triggered. Is it only after the initial Governance Audit, or after every run where the `purpose_record` is present? This could lead to operator fatigue if recommendations are constantly resurfaced."
+          },
+          {
+            "slot": 6,
+            "title": "Redesign environment scope creep",
+            "detail": "The description of the Redesign/Build Environment in CA-16-B is vague and could lead to scope creep. It's unclear what capabilities this environment will provide and how it will integrate with existing FlowAI features. This could result in a complex and unwieldy environment that is difficult to use."
+          },
+          {
+            "slot": 6,
+            "title": "Multi-format detection fragility",
+            "detail": "CA-16-C introduces multi-format targets, but the detection rules for identifying these targets are likely to be brittle and require constant maintenance. Changes to website structure or app frameworks could easily break these rules, leading to inaccurate target classification."
+          },
+          {
+            "slot": 7,
+            "title": "PA-1 Mandatory Links Overconstrain",
+            "detail": "Requiring every recommendation to cite purpose_record_link and market_definition_link (§7 PA-1) may suppress valuable suggestions that don't neatly map to documented purposes. This could prevent novel improvements like accessibility enhancements not covered in initial purpose definitions."
+          },
+          {
+            "slot": 7,
+            "title": "PA-6 Forced Recommendations Risky",
+            "detail": "The mandate to emit purpose_fulfillment_gap recommendations when score <1.0 (§7 PA-6) forces output even when gaps stem from external factors. This could generate low-value suggestions that erode operator trust if the system fabricates impractical fixes to satisfy the requirement."
+          },
+          {
+            "slot": 7,
+            "title": "Redesign Environment Scope Creep",
+            "detail": "The §29 redesign environment enables operator-steered rebuilds without clear guardrails against mission drift. Complex redesigns initiated through this surface could divert FlowAI from core defect remediation toward subjective enhancements, increasing failure risk."
+          },
+          {
+            "slot": 7,
+            "title": "Multi-Format Detection Gaps",
+            "detail": "CA-16-C's target class detection lacks specificity in deterministic rules (§ CA-16-C-Q2). Ambiguity in distinguishing native vs. web apps could misapply crawlers/scorers, breaking products through inappropriate interactions."
+          },
+          {
+            "slot": 8,
+            "title": "Recommendation and defect mixing",
+            "detail": "§7 item #8 requires proactive recommendations to live alongside §7.6 defect findings and §10.1.1 audit findings, but PA-3 only says they must not duplicate a defect. That leaves a gray zone where the same underlying issue can be reframed as a “compound opportunity,” creating double-counting, metric inflation, and operator confusion across the `/architecture` surface and `governance_record_entry`."
+          },
+          {
+            "slot": 8,
+            "title": "Disposition suppression is irreversible",
+            "detail": "PA-4 says `rejected` recommendations are never re-surfaced, while `deferred` can reappear after a configurable delay. That creates a hard-fail memory of a possibly wrong human judgment with no explicit safety valve for changed context, model improvement, or a mistaken reject, which is especially risky because the recommendation IDs are intended to persist across runs."
+          },
+          {
+            "slot": 8,
+            "title": "Build environment approval is underspecified",
+            "detail": "CA-16-B introduces a redesign/rebuild environment and then leaves approval scope and numbering partially open, but the actual run-time control plane is unclear. The draft does not specify rollback, branch isolation, artifact provenance, or what happens if an operator steers a redesign that conflicts with existing ProductSSOT or §28 symbiotic feedback-loop data, so the environment can become a parallel source of truth."
+          },
+          {
+            "slot": 8,
+            "title": "Multi-format detection will overfit",
+            "detail": "CA-16-C asks for first-class target classes for websites, native apps, mobile apps, SaaS, agentic AIs, and generic URLs, but the detection rules are not shown in the excerpt and are explicitly a Q-disposed open design point. In practice, deterministic classification across these categories will misroute hybrid products (for example, a SaaS with embedded mobile shell and chatbot), causing the wrong crawl/score/repair path to run."
+          },
+          {
+            "slot": 9,
+            "title": "Lack of Rollback Mechanism",
+            "detail": "The proposal introduces a new Redesign/Build Environment (§29) without specifying a rollback mechanism in case the redesign or rebuild fails or produces undesirable outcomes. This could lead to irreversible changes to the product."
+          },
+          {
+            "slot": 9,
+            "title": "Unclear Operator Disposition Lifecycle",
+            "detail": "The proactive recommendations envelope (§7 item #8) introduces an operator disposition lifecycle, but the specifics of how dispositions are handled across multiple runs and how they interact with the `governance_record_entry` are not clearly defined, potentially leading to inconsistent state."
+          },
+          {
+            "slot": 9,
+            "title": "Insufficient Testing for Multi-Format Targets",
+            "detail": "The proposal generalizes detection, crawl, Phase B, and build processes for Multi-Format Targets (§17) without detailing how the conformance tests will be adapted or expanded to cover the new target classes, risking untested and potentially buggy implementations."
+          },
+          {
+            "slot": 10,
+            "title": "PA-1 citation enforcement missing",
+            "detail": "§7 item #8 PA-1 requires every recommendation to cite non-null purpose_record_link and market_definition_link, yet the conformance test only stubs a null case and rejects at validation time; no mechanism (e.g., citation verifier or LLM grounding step) is specified to prevent fabricated links from reaching the governance_record_entry."
+          },
+          {
+            "slot": 10,
+            "title": "Step 1.5 adds non-blocking overhead",
+            "detail": "§11 NEW Step 1.5 inserts Proactive Recommendation Review after Governance Audit; although declared non-blocking, every disposition still appends to governance_record_entry with kind proactive_recommendation_disposition.v1, increasing append-only log size and future re-surfacing logic without any stated retention or compaction policy."
+          },
+          {
+            "slot": 10,
+            "title": "Redesign env lacks CA-14 safety cross-ref",
+            "detail": "§29 Redesign/Build Environment description (even in truncated form) omits any reference to the safety invariants or fix-safety rules introduced in CA-14 §10.4 and §7 item #6; operator-steerable rebuilds could therefore bypass the non-destructive error-state triggers and XSS opt-in controls defined in §6."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "CA-16-A-Q1": {
+          "verdict": "PLURALITY_CA16AQ1-DEFER",
+          "detail": "3 of 9 on CA16AQ1-DEFER (below 7/10 quorum)",
+          "topKey": "CA16AQ1-DEFER",
+          "topCount": 3
+        },
+        "CA-16-A-Q2": {
+          "verdict": "SPLIT",
+          "detail": "top tie at 4 between CA16AQ2-LATER / REJECT",
+          "topKey": "CA16AQ2-LATER",
+          "topCount": 4
+        },
+        "CA-16-A-Q3": {
+          "verdict": "PLURALITY_CA16AQ3-RATIFY",
+          "detail": "6 of 9 on CA16AQ3-RATIFY (below 7/10 quorum)",
+          "topKey": "CA16AQ3-RATIFY",
+          "topCount": 6
+        },
+        "CA-16-A-Q4": {
+          "verdict": "PLURALITY_CA16AQ4-CONFIG",
+          "detail": "5 of 9 on CA16AQ4-CONFIG (below 7/10 quorum)",
+          "topKey": "CA16AQ4-CONFIG",
+          "topCount": 5
+        },
+        "CA-16-B-Q1": {
+          "verdict": "PLURALITY_CA16BQ1-DEFER",
+          "detail": "4 of 9 on CA16BQ1-DEFER (below 7/10 quorum)",
+          "topKey": "CA16BQ1-DEFER",
+          "topCount": 4
+        },
+        "CA-16-B-Q2": {
+          "verdict": "PLURALITY_CA16BQ2-RATIFY",
+          "detail": "6 of 9 on CA16BQ2-RATIFY (below 7/10 quorum)",
+          "topKey": "CA16BQ2-RATIFY",
+          "topCount": 6
+        },
+        "CA-16-B-Q3": {
+          "verdict": "QUORUM_PLURALITY_CA16BQ3-RATIFY",
+          "detail": "7 of 9 on CA16BQ3-RATIFY (≥ quorum 7/10)",
+          "topKey": "CA16BQ3-RATIFY",
+          "topCount": 7
+        },
+        "CA-16-C-Q1": {
+          "verdict": "PLURALITY_CA16CQ1-RATIFY",
+          "detail": "6 of 9 on CA16CQ1-RATIFY (below 7/10 quorum)",
+          "topKey": "CA16CQ1-RATIFY",
+          "topCount": 6
+        },
+        "CA-16-C-Q2": {
+          "verdict": "PLURALITY_CA16CQ2-STRICTER",
+          "detail": "5 of 9 on CA16CQ2-STRICTER (below 7/10 quorum)",
+          "topKey": "CA16CQ2-STRICTER",
+          "topCount": 5
+        },
+        "CA-16-C-Q3": {
+          "verdict": "PLURALITY_CA16CQ3-AGENT21",
+          "detail": "6 of 9 on CA16CQ3-AGENT21 (below 7/10 quorum)",
+          "topKey": "CA16CQ3-AGENT21",
+          "topCount": 6
+        },
+        "CA-16-C-Q4": {
+          "verdict": "SUPERMAJORITY_CA16CQ4-RATIFY",
+          "detail": "8 of 9 on CA16CQ4-RATIFY (≥ 8/10)",
+          "topKey": "CA16CQ4-RATIFY",
+          "topCount": 8
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0.43434343434343436,
+        "alignedCount": 43,
+        "totalPossible": 99,
+        "draftedQs": [
+          "CA-16-A-Q1",
+          "CA-16-A-Q2",
+          "CA-16-A-Q3",
+          "CA-16-A-Q4",
+          "CA-16-B-Q1",
+          "CA-16-B-Q2",
+          "CA-16-B-Q3",
+          "CA-16-C-Q1",
+          "CA-16-C-Q2",
+          "CA-16-C-Q3",
+          "CA-16-C-Q4"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 43.4 %, distinct objections 31"
+      },
+      "questions": [
+        {
+          "id": "CA-16-A-Q1",
+          "topic": "CA-16-A-Q1 — `agent.proactive_recommendation.v1` envelope schema ratification.",
+          "options": [
+            {
+              "key": "CA16AQ1-RATIFY",
+              "text": "Ratify envelope schema as drafted."
+            },
+            {
+              "key": "CA16AQ1-REVISE",
+              "text": "Ratify with revision — adjust schema fields (specify)."
+            },
+            {
+              "key": "CA16AQ1-REJECT",
+              "text": "Reject — schema not yet ready for canonicalization."
+            },
+            {
+              "key": "CA16AQ1-DEFER",
+              "text": "Defer schema to engineering dispatch."
+            }
+          ],
+          "draftedKey": "CA16AQ1-RATIFY"
+        },
+        {
+          "id": "CA-16-A-Q2",
+          "topic": "CA-16-A-Q2 — Step 1.5 placement in §11 Six-Step Clearance for proactive recommendations.",
+          "options": [
+            {
+              "key": "CA16AQ2-RATIFY",
+              "text": "Ratify Step 1.5 placement as drafted."
+            },
+            {
+              "key": "CA16AQ2-LATER",
+              "text": "Place after Step 2 (recommendations gated by initial audit)."
+            },
+            {
+              "key": "CA16AQ2-PARALLEL",
+              "text": "Parallel to Step 1 (not sequential)."
+            },
+            {
+              "key": "CA16AQ2-REJECT",
+              "text": "Reject — proactive recommendations should not be a clearance-protocol step."
+            }
+          ],
+          "draftedKey": "CA16AQ2-RATIFY"
+        },
+        {
+          "id": "CA-16-A-Q3",
+          "topic": "CA-16-A-Q3 — Recommendation categories enum + extensibility.",
+          "options": [
+            {
+              "key": "CA16AQ3-RATIFY",
+              "text": "Ratify enum as drafted; extensibility via Panel-ratified additions."
+            },
+            {
+              "key": "CA16AQ3-OPEN",
+              "text": "Make enum open-ended — operators may declare new categories."
+            },
+            {
+              "key": "CA16AQ3-NARROWER",
+              "text": "Tighten enum — fewer categories than drafted."
+            },
+            {
+              "key": "CA16AQ3-MODIFY",
+              "text": "Modify enum."
+            }
+          ],
+          "draftedKey": "CA16AQ3-RATIFY"
+        },
+        {
+          "id": "CA-16-A-Q4",
+          "topic": "CA-16-A-Q4 — Defer-window default for non-acted recommendations.",
+          "options": [
+            {
+              "key": "CA16AQ4-RATIFY",
+              "text": "Ratify default defer-window as drafted."
+            },
+            {
+              "key": "CA16AQ4-SHORTER",
+              "text": "Shorter default defer-window."
+            },
+            {
+              "key": "CA16AQ4-LONGER",
+              "text": "Longer default defer-window."
+            },
+            {
+              "key": "CA16AQ4-CONFIG",
+              "text": "Per-product configurable; drafted value is default."
+            }
+          ],
+          "draftedKey": "CA16AQ4-RATIFY"
+        },
+        {
+          "id": "CA-16-B-Q1",
+          "topic": "CA-16-B-Q1 — §29 Redesign/Build Environment section numbering.",
+          "options": [
+            {
+              "key": "CA16BQ1-RATIFY",
+              "text": "Ratify §29 numbering as drafted."
+            },
+            {
+              "key": "CA16BQ1-RENUMBER",
+              "text": "Renumber to fit existing section sequence (specify)."
+            },
+            {
+              "key": "CA16BQ1-MERGE",
+              "text": "Merge §29 with an existing section."
+            },
+            {
+              "key": "CA16BQ1-DEFER",
+              "text": "Defer numbering to canonicalization commit."
+            }
+          ],
+          "draftedKey": "CA16BQ1-RATIFY"
+        },
+        {
+          "id": "CA-16-B-Q2",
+          "topic": "CA-16-B-Q2 — Multi-option proposal floor (minimum N options per redesign proposal).",
+          "options": [
+            {
+              "key": "CA16BQ2-RATIFY",
+              "text": "Ratify floor as drafted (e.g. ≥3 options)."
+            },
+            {
+              "key": "CA16BQ2-HIGHER",
+              "text": "Raise floor (e.g. ≥5 options)."
+            },
+            {
+              "key": "CA16BQ2-LOWER",
+              "text": "Lower floor (e.g. ≥2 options)."
+            },
+            {
+              "key": "CA16BQ2-NONE",
+              "text": "No floor — operator-judged."
+            }
+          ],
+          "draftedKey": "CA16BQ2-RATIFY"
+        },
+        {
+          "id": "CA-16-B-Q3",
+          "topic": "CA-16-B-Q3 — Admin-gated approval scope for Redesign/Build Environment.",
+          "options": [
+            {
+              "key": "CA16BQ3-RATIFY",
+              "text": "Ratify scope as drafted — admin-role required for redesign approval."
+            },
+            {
+              "key": "CA16BQ3-WIDER",
+              "text": "Widen scope — operator-role may approve some redesigns."
+            },
+            {
+              "key": "CA16BQ3-NARROWER",
+              "text": "Narrow scope — CEO-only for redesign approval."
+            },
+            {
+              "key": "CA16BQ3-MODIFY",
+              "text": "Modify gate semantics."
+            }
+          ],
+          "draftedKey": "CA16BQ3-RATIFY"
+        },
+        {
+          "id": "CA-16-C-Q1",
+          "topic": "CA-16-C-Q1 — 6 canonical target classes for Multi-Format Targets ratification.",
+          "options": [
+            {
+              "key": "CA16CQ1-RATIFY",
+              "text": "Ratify 6 target classes as drafted."
+            },
+            {
+              "key": "CA16CQ1-FEWER",
+              "text": "Reduce target classes — keep only highest-value (specify)."
+            },
+            {
+              "key": "CA16CQ1-MORE",
+              "text": "Expand target classes — add missing categories."
+            },
+            {
+              "key": "CA16CQ1-DIFF",
+              "text": "Adopt different target-class taxonomy."
+            }
+          ],
+          "draftedKey": "CA16CQ1-RATIFY"
+        },
+        {
+          "id": "CA-16-C-Q2",
+          "topic": "CA-16-C-Q2 — Detection determinism (how engine identifies a target class).",
+          "options": [
+            {
+              "key": "CA16CQ2-RATIFY",
+              "text": "Ratify detection rules as drafted."
+            },
+            {
+              "key": "CA16CQ2-STRICTER",
+              "text": "Stricter detection — fewer false positives."
+            },
+            {
+              "key": "CA16CQ2-LOOSER",
+              "text": "Looser detection — broader coverage."
+            },
+            {
+              "key": "CA16CQ2-LLM",
+              "text": "LLM-classified detection instead of deterministic."
+            }
+          ],
+          "draftedKey": "CA16CQ2-RATIFY"
+        },
+        {
+          "id": "CA-16-C-Q3",
+          "topic": "CA-16-C-Q3 — Multi-Format ownership (which agent owns multi-format target detection + scoring).",
+          "options": [
+            {
+              "key": "CA16CQ3-AGENT8",
+              "text": "Agent #8 Quality Audit owns Multi-Format."
+            },
+            {
+              "key": "CA16CQ3-AGENT21",
+              "text": "Agent #21 ACE owns Multi-Format."
+            },
+            {
+              "key": "CA16CQ3-NEW",
+              "text": "New agent owns Multi-Format."
+            },
+            {
+              "key": "CA16CQ3-DEFER",
+              "text": "Defer ownership to engineering dispatch."
+            }
+          ],
+          "draftedKey": "CA16CQ3-AGENT8"
+        },
+        {
+          "id": "CA-16-C-Q4",
+          "topic": "CA-16-C-Q4 — §7.6 score-formula generalization invariant (score formula remains product-agnostic across target classes).",
+          "options": [
+            {
+              "key": "CA16CQ4-RATIFY",
+              "text": "Ratify generalization invariant as drafted."
+            },
+            {
+              "key": "CA16CQ4-PER_CLASS",
+              "text": "Allow per-target-class score-formula tuning (operator-configurable)."
+            },
+            {
+              "key": "CA16CQ4-REJECT",
+              "text": "Reject — score formula is already product-agnostic; invariant is redundant."
+            },
+            {
+              "key": "CA16CQ4-MODIFY",
+              "text": "Modify invariant."
+            }
+          ],
+          "draftedKey": "CA16CQ4-RATIFY"
+        }
+      ]
+    }
+  ]
+}
