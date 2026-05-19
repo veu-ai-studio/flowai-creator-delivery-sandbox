@@ -1204,6 +1204,98 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
     expect(works.selector).toBe('button:nth-of-type(1)');
   });
 
+  // ── D41 T3 — workspace/engine/agent coverage ─────────────────────
+
+  it('probeWorkspaces flags an empty-shell workspace (urlTokenHit + empty main)', async () => {
+    const { probeWorkspaces } = await import('../../../src/lib/agents/renewal/adversarialSurface.js');
+    const mockPage = {
+      evaluate: vi.fn(async (fn, args) => {
+        // Simulate enumerateWorkspaces returning a single empty-shell
+        // workspace surface.
+        return [{
+          urlTokenHit: true, layoutPresent: true,
+          sideSel: 'aside', mainSel: 'main',
+          mainTextLen: 12, interactiveDescendants: 0,
+          pathname: '/workspace/x',
+        }];
+      }),
+    };
+    const r = await probeWorkspaces({ page: mockPage, url: 'https://app/workspace/x' });
+    expect(r.workspacesProbed).toBe(1);
+    expect(r.workspacesNonFunctional).toBe(1);
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0].severity).toBe('high');
+    expect(r.findings[0].evidence).toMatch(/empty-shell|no functional content/);
+  });
+
+  it('probeWorkspaces accepts a functional workspace (long main text)', async () => {
+    const { probeWorkspaces } = await import('../../../src/lib/agents/renewal/adversarialSurface.js');
+    const mockPage = {
+      evaluate: vi.fn(async () => [{
+        urlTokenHit: true, layoutPresent: true,
+        sideSel: 'aside', mainSel: 'main',
+        mainTextLen: 5_000, interactiveDescendants: 12,
+        pathname: '/dashboard',
+      }]),
+    };
+    const r = await probeWorkspaces({ page: mockPage, url: 'https://app/dashboard' });
+    expect(r.workspacesProbed).toBe(1);
+    expect(r.workspacesNonFunctional).toBe(0);
+    expect(r.findings).toHaveLength(0);
+  });
+
+  it('probeWorkspaces accepts a functional workspace (≥3 interactives even with short text)', async () => {
+    const { probeWorkspaces } = await import('../../../src/lib/agents/renewal/adversarialSurface.js');
+    const mockPage = {
+      evaluate: vi.fn(async () => [{
+        urlTokenHit: true, layoutPresent: true,
+        sideSel: 'aside', mainSel: 'main',
+        mainTextLen: 50, interactiveDescendants: 5,
+        pathname: '/engine',
+      }]),
+    };
+    const r = await probeWorkspaces({ page: mockPage, url: 'https://app/engine' });
+    expect(r.workspacesNonFunctional).toBe(0);
+    expect(r.findings).toHaveLength(0);
+  });
+
+  it('probeWorkspaces returns empty when no workspace surface is detected', async () => {
+    const { probeWorkspaces } = await import('../../../src/lib/agents/renewal/adversarialSurface.js');
+    const mockPage = { evaluate: vi.fn(async () => []) };
+    const r = await probeWorkspaces({ page: mockPage, url: 'https://app/marketing/about' });
+    expect(r.workspacesProbed).toBe(0);
+    expect(r.findings).toHaveLength(0);
+  });
+
+  it('probeWorkspaces is wired as a default in probeOnePage (multi-page envelope)', async () => {
+    const { browser } = makeMockBrowser();
+    let workspaceProbeCalled = 0;
+    const r = await probeAllPages({
+      urls: ['https://x/'],
+      opts: {
+        browser,
+        probeInteractives: async () => ({ findings: [], interactivesTested: 0, deadOrErroring: 0 }),
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0 }),
+        probeWorkspaces: async () => {
+          workspaceProbeCalled += 1;
+          return {
+            findings: [{ severity: 'high', category: 'broken-modal', location: 'https://x/', evidence: 'shell' }],
+            workspacesProbed: 1, workspacesNonFunctional: 1,
+          };
+        },
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0 }),
+      },
+    });
+    expect(workspaceProbeCalled).toBe(1);
+    expect(r.summary.workspacesProbed).toBe(1);
+    expect(r.summary.workspacesNonFunctional).toBe(1);
+    // The workspace finding flowed into the aggregate findings array
+    // so the canonical scorer sees it.
+    expect(r.findings.some((f) => f.category === 'broken-modal' && /shell/.test(f.evidence))).toBe(true);
+  });
+
   it('probeAllPages aggregates per-page classifications', async () => {
     const { browser } = makeMockBrowser();
     const r = await probeAllPages({

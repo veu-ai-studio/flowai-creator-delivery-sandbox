@@ -916,17 +916,109 @@ export async function probeAgents({
 
 // ── D41 T3 — workspace / engine / dashboard probe ────────────────────
 //
-// Stub default. T3 fills this in with real detection of multi-pane
-// layouts (sidebar + main), routes containing "workspace"/"engine"/
-// "dashboard" tokens, and per-surface real-response-vs-stub
-// classification. Stub returns the empty envelope so probeOnePage
-// callers in T1 don't throw before T3 ships.
+// Detects high-value product surfaces — workspaces, dashboards,
+// "engines," consoles — and verifies each one rendered REAL content
+// (not just an empty shell). The dispatch's "engine/workspace/agent
+// coverage" requirement is satisfied by:
+//   1. URL token check: path contains workspace|dashboard|engine|
+//      console|admin|studio|app (case-insensitive).
+//   2. DOM signature: page has sidebar+main multi-pane layout
+//      (aside + main, [role=navigation] + [role=main], drawer + content).
+//   3. Per-detected-surface, classify:
+//        FUNCTIONAL   — main content area has > 200 chars of visible text
+//                       OR contains > 3 interactive descendants
+//        EMPTY-SHELL  — multi-pane layout present but main area empty/
+//                       skeleton-only (placeholder)
+//
+// AI-agent / chatbot coverage stays in probeAgents (D39 T4) — this
+// probe complements it by covering the non-agent workspace surfaces.
+// Findings are §7.6-shaped (severity high for engine-error category)
+// so they flow through gtmReadinessScorer like the other probes.
+
+const WORKSPACE_TOKENS = ['workspace', 'dashboard', 'engine', 'console', 'admin', 'studio', '/app', 'project'];
+
+async function enumerateWorkspaces(page) {
+  return await page.evaluate(({ tokens }) => {
+    const out = [];
+    const pathname = (location && typeof location.pathname === 'string') ? location.pathname.toLowerCase() : '';
+    const urlTokenHit = tokens.some((t) => pathname.includes(t.toLowerCase()));
+
+    // Detect a sidebar+main pattern. Both must be present and non-empty.
+    const candidates = [
+      { side: 'aside', main: 'main' },
+      { side: '[role="navigation"]', main: '[role="main"]' },
+      { side: '[class*="sidebar" i]', main: '[class*="content" i], [class*="main" i]' },
+      { side: '[class*="drawer" i]', main: 'main' },
+      { side: 'nav', main: 'main' },
+    ];
+    let layoutMatch = null;
+    for (const c of candidates) {
+      const s = document.querySelector(c.side);
+      const m = document.querySelector(c.main);
+      if (s && m && s.getBoundingClientRect().width > 0 && m.getBoundingClientRect().width > 0) {
+        layoutMatch = { sideSel: c.side, mainSel: c.main };
+        break;
+      }
+    }
+    if (!urlTokenHit && !layoutMatch) return out;
+
+    // Single-surface detection. We treat the (sidebar, main) pair as
+    // one workspace surface; pages with sub-routes get probed
+    // individually by the multi-page traversal in T1.
+    const mainEl = layoutMatch
+      ? document.querySelector(layoutMatch.mainSel)
+      : (document.querySelector('main') ?? document.body);
+    const mainText = (mainEl?.innerText || mainEl?.textContent || '').trim();
+    const mainTextLen = mainText.length;
+    const interactiveDescendants = mainEl
+      ? mainEl.querySelectorAll('button, a[href], input, textarea, [role="button"]').length
+      : 0;
+
+    out.push({
+      urlTokenHit, layoutPresent: !!layoutMatch,
+      sideSel: layoutMatch?.sideSel ?? null, mainSel: layoutMatch?.mainSel ?? null,
+      mainTextLen, interactiveDescendants,
+      pathname,
+    });
+    return out;
+  }, { tokens: WORKSPACE_TOKENS });
+}
 
 export async function probeWorkspaces({
   page, url, sliceBudget = 30_000,
   actionTimeoutMs = DEFAULT_ACTION_TIMEOUT_MS,
 } = {}) {
-  return { findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 };
+  const findings = [];
+  let workspacesProbed = 0;
+  let workspacesNonFunctional = 0;
+  if (!page) return { findings, workspacesProbed, workspacesNonFunctional };
+
+  let workspaces;
+  try {
+    workspaces = await enumerateWorkspaces(page);
+  } catch (e) {
+    findings.push(makeFinding(
+      'medium', 'engine-error', url,
+      `enumerateWorkspaces failed: ${(e?.message ?? String(e)).slice(0, 120)}`,
+    ));
+    return { findings, workspacesProbed, workspacesNonFunctional };
+  }
+
+  for (const w of workspaces) {
+    workspacesProbed += 1;
+    // Classify each detected workspace surface.
+    const isFunctional = (w.mainTextLen >= 200) || (w.interactiveDescendants >= 3);
+    if (!isFunctional) {
+      workspacesNonFunctional += 1;
+      findings.push(makeFinding(
+        'high', 'broken-modal',                   // closest §7.6 category for "advertised surface, empty render"
+        `${url}${w.pathname ? ` (${w.pathname})` : ''}`,
+        `workspace/engine surface detected (urlTokenHit=${w.urlTokenHit}, layoutPresent=${w.layoutPresent}) but main pane is empty-shell (text=${w.mainTextLen} chars, interactives=${w.interactiveDescendants}) — no functional content rendered`,
+      ));
+    }
+  }
+
+  return { findings, workspacesProbed, workspacesNonFunctional };
 }
 
 // ── T5 — Wired-vs-mock detection ──────────────────────────────────────
