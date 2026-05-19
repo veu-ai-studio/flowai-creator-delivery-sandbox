@@ -1,0 +1,1264 @@
+{
+  "schema": "v2-repanel.sidecar.v1",
+  "code": "CA-16-v2",
+  "commit": "d366acf",
+  "bundle_size": 31770,
+  "startedAt": "2026-05-19T12:12:35.809Z",
+  "finishedAt": "2026-05-19T12:15:02.415Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 31770
+  },
+  "tally": {
+    "engagedTotal": 6,
+    "invalid": 0,
+    "tangential": 3,
+    "silent": 1,
+    "perQuestion": {
+      "CA-16-A-v2-Q1": {
+        "CA16AV2Q1-RATIFY": 3,
+        "CA16AV2Q1-CONDITIONAL": 1,
+        "CA16AV2Q1-FULLSCHEMA": 1,
+        "CA16AV2Q1-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-16-A-v2-Q2": {
+        "CA16AV2Q2-RATIFY": 5,
+        "CA16AV2Q2-STEP65": 0,
+        "CA16AV2Q2-DASHONLY": 0,
+        "CA16AV2Q2-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-16-A-v2-Q3": {
+        "CA16AV2Q3-RATIFY": 3,
+        "CA16AV2Q3-REOPEN": 2,
+        "CA16AV2Q3-SIMPLER": 0,
+        "CA16AV2Q3-DEFER": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-16-A-v2-Q4": {
+        "CA16AV2Q4-RATIFY": 1,
+        "CA16AV2Q4-TIGHTER": 3,
+        "CA16AV2Q4-ADMIN30": 1,
+        "CA16AV2Q4-FIXED14": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-16-B-v2-Q1": {
+        "CA16BV2Q1-RATIFY": 3,
+        "CA16BV2Q1-PLACEHOLDER": 0,
+        "CA16BV2Q1-COMMIT29": 0,
+        "CA16BV2Q1-DEFERALL": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-16-B-v2-Q2": {
+        "CA16BV2Q2-RATIFY": 2,
+        "CA16BV2Q2-STRONGER": 2,
+        "CA16BV2Q2-REJECT": 0,
+        "CA16BV2Q2-DEFER": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-16-C-v2-Q1": {
+        "CA16CV2Q1-RATIFY": 4,
+        "CA16CV2Q1-MERGE5": 0,
+        "CA16CV2Q1-SPLIT7": 0,
+        "CA16CV2Q1-DEFER": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-16-C-v2-Q2": {
+        "CA16CV2Q2-RATIFY": 4,
+        "CA16CV2Q2-FLOOR090": 1,
+        "CA16CV2Q2-LOOSER": 0,
+        "CA16CV2Q2-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-16-C-v2-Q3": {
+        "CA16CV2Q3-RATIFY": 4,
+        "CA16CV2Q3-CO_OWN": 0,
+        "CA16CV2Q3-NEW27": 0,
+        "CA16CV2Q3-DEFER": 2,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 32,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Unbounded recommendation generation risk",
+        "detail": "§7 item #8's minimal envelope lacks any rate limits or caps on recommendation volume. Without PA-1..PA-N invariants, agents could flood operators with thousands of low-quality recommendations per run, creating noise that obscures critical findings."
+      },
+      {
+        "slot": 1,
+        "title": "Cost estimation without validation",
+        "detail": "The new cost.effort_hours_estimate field in §7 has no validation bounds or accuracy requirements. Agents could emit wildly incorrect estimates (0.1 hours for major refactors, 1000 hours for trivial changes) with no conformance test to catch this."
+      },
+      {
+        "slot": 1,
+        "title": "Rollback procedure underspecified",
+        "detail": "§7's rollback.revert_procedure is a free-text string with no schema or required steps. CA16A-v2-CT-3 only warns on non-revertable accepted recs but doesn't validate that revert_procedure is actually executable or complete."
+      },
+      {
+        "slot": 1,
+        "title": "Defer-window config lacks audit trail",
+        "detail": "§7 item #8 + §3 admin config allows per-product defer windows [1,365] days but has no requirement to log changes to recommendation_defer_window_days. An admin could set 365-day deferrals to effectively suppress recommendations without trace."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback mechanism in case the Redesign/Build Environment causes unintended changes to the ProductSSOT. This is a significant risk, as it could lead to data loss or corruption. The §29 Redesign/Build Environment section should include a detailed rollback plan to mitigate this risk."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Validation",
+        "detail": "The proposal does not provide sufficient validation rules for the proactive recommendations envelope. The minimal canonical envelope is too permissive, and the full schema deferred to engineering dispatch may not be thoroughly tested. This could lead to invalid or inconsistent data being stored in the ProductSSOT."
+      },
+      {
+        "slot": 3,
+        "title": "Overly Complex Taxonomy",
+        "detail": "The 6-class Multi-Format taxonomy may be overly complex and difficult to maintain. The proposal should consider a simpler taxonomy or provide a clear justification for the need for six classes. Additionally, the proposal should include a plan for handling new or emerging formats that do not fit into the existing taxonomy."
+      },
+      {
+        "slot": 4,
+        "title": "Overly Complex Deferral",
+        "detail": "The proposal defers too many critical details to engineering dispatch, such as the full schema invariants (PA-1..PA-N). This deferral could lead to inconsistencies and lack of clarity in the implementation phase. Specifically, §7 item #8 defers the full schema to engineering, which may cause misunderstandings and misalignments."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of Rollback Mechanism",
+        "detail": "The proposal introduces a `rollback` object but does not specify a concrete rollback mechanism for accepted recommendations. This could lead to situations where accepted recommendations cannot be safely reverted, causing potential disruptions. The `rollback` object in §7 item #8 should include a mandatory revert procedure."
+      },
+      {
+        "slot": 4,
+        "title": "Vague Admin Gating",
+        "detail": "The wording for the Redesign/Build Environment (RB-Env) is vague regarding admin gating. It states that RB-Env is admin-gated but does not specify the exact workflow or approval process. This vagueness could lead to misinterpretations and potential security risks. The scope statement in the Redesign/Build Environment section should be more explicit."
+      },
+      {
+        "slot": 5,
+        "title": "Minimal Envelope Risk",
+        "detail": "The minimal canonical envelope may not capture all necessary details for effective implementation, leading to potential gaps in the proactive recommendations system."
+      },
+      {
+        "slot": 5,
+        "title": "Defer-Window Complexity",
+        "detail": "The per-product defer-window configuration adds complexity without clear benefits, potentially leading to inconsistent application of recommendations across products."
+      },
+      {
+        "slot": 5,
+        "title": "Section Number Ambiguity",
+        "detail": "Deferring the section number for the Redesign/Build Environment creates ambiguity and may lead to confusion in the implementation and maintenance of the feature."
+      },
+      {
+        "slot": 6,
+        "title": "Cost object underspecified",
+        "detail": "The `cost` object in the `proactive_recommendation` schema (§7) lacks concrete guidance on how `effort_hours_estimate`, `risk_tier`, and `blast_radius` should be determined, leading to inconsistent application and potential gaming of the system. The lack of clear definitions for `risk_tier` and `blast_radius` makes them subjective and open to interpretation."
+      },
+      {
+        "slot": 6,
+        "title": "Rollback procedure ambiguity",
+        "detail": "The `rollback` object's `revert_procedure` field (§7) is optional and human-readable, which is insufficient for ensuring reliable reversibility.  Without a standardized, machine-executable rollback mechanism, the system relies on potentially error-prone manual processes, increasing the risk of failed rollbacks and system instability. The 'revertable' boolean alone is insufficient."
+      },
+      {
+        "slot": 6,
+        "title": "Deferral window clamping risk",
+        "detail": "The per-product defer-window config (§7) clamps out-of-bounds values, but the notification via `agent.product_registry.defer_window_clamped.v1` might be missed by admins, leading to unexpected behavior.  A more prominent warning or blocking mechanism might be necessary to ensure admins are aware of the clamping."
+      },
+      {
+        "slot": 6,
+        "title": "Ambiguity detection threshold",
+        "detail": "The stricter classifier in CA-16-C-Q2, with a confidence floor of 0.85, might lead to excessive `target_class_ambiguous` findings, overwhelming operators with dispute resolution tasks. The choice of 0.85 seems arbitrary and lacks empirical justification. This could lead to alert fatigue."
+      },
+      {
+        "slot": 7,
+        "title": "Deferred schema risks divergence",
+        "detail": "CA-16-A v2's deferred full schema to engineering dispatch creates future compatibility risks. Without canonical PA-1..PA-N invariants in §7, engineering implementations may diverge from intent, particularly around mandatory validation rules. This violates SSOT's single-source-of-truth principle and could break conformance tests like CA16A-v2-CT-2."
+      },
+      {
+        "slot": 7,
+        "title": "Rollback procedure inadequacy",
+        "detail": "The new rollback.revert_procedure field (§7 Proactive Recommendations) lacks enforcement mechanisms. Conformance test CA16A-v2-CT-3 only flags non-revertable recs without blocking acceptance. In complex deployments, manual revert steps may be insufficient for stateful changes, risking system instability when reversing implemented recommendations."
+      },
+      {
+        "slot": 7,
+        "title": "Ambiguity severity inflation",
+        "detail": "CA-16-C v2's stricter classifier (§6 Multi-Format) mandates 'high' severity for target_class_ambiguous at <0.85 confidence. This could flood operators with false-positive high-severity tickets for legitimate hybrid formats like PWAs, diluting attention from genuine critical findings and violating §7.6's severity calibration principles."
+      },
+      {
+        "slot": 7,
+        "title": "Defer-window governance gap",
+        "detail": "Per-product defer-window (CA-16-A-Q4) allows operators to set 365-day deferrals without admin oversight. This enables indefinite suppression of recommendations via recurrent deferrals, contravening the proactive intent. CA16A-v2-CT-5/6 only validate clamping, not governance of excessive deferral patterns."
+      },
+      {
+        "slot": 8,
+        "title": "Mandatory fields still undercut optionality",
+        "detail": "In CA-16-A v2, `purpose_record_link` and `market_definition_link` are made optional, but the envelope still requires `category`, `title`, `rationale`, and `source` without defining how null/empty recommendations are represented when the system has only a weak heuristic suggestion. That creates a gap between the claimed “minimal canonical envelope” and real emission paths from §7.6 / §10.1, especially for cross-cutting suggestions that do not map cleanly to a single product or run."
+      },
+      {
+        "slot": 8,
+        "title": "Rollback is advisory only",
+        "detail": "The new `rollback` object adds `revertable` and `revert_procedure`, but CA16A-v2-CT-3 explicitly says non-revertable accepted recommendations are only “flagged but not blocked.” This preserves the exact failure mode the Panel objected to in v1: operators can still accept recommendations that cannot be safely undone, with no hard gate or enforcement path in the canonical contract."
+      },
+      {
+        "slot": 8,
+        "title": "Defer-window can hide urgent recs",
+        "detail": "CA-16-A-Q4 moves defer timing into a per-product knob with bounds [1,365], but the spec does not define any escalation or override behavior for high-severity recommendations that are deferred long-term. A product owner could set 365 days and effectively suppress repeated resurfacing of a critical systemic recommendation, which is a concrete governance regression compared with a uniform shorter window."
+      },
+      {
+        "slot": 8,
+        "title": "RB-Env numbering deferral is incomplete",
+        "detail": "CA-16-B-Q1 defers the section number for Redesign/Build Environment, yet the same block continues to assert canonical scope, atomic-audit-write, and mandatory cross-references to CA-14 fix-safety invariants. This creates a half-canonical surface: implementers must wire behavior now, but the spec avoids the one piece that anchors documentation and review navigation, increasing divergence risk across mirrored copies and later amendments."
+      },
+      {
+        "slot": 8,
+        "title": "Silent fallback removed without evidence",
+        "detail": "CA-16-C-Q2 tightens classification by emitting `target_class_ambiguous.v1` whenever confidence <0.85, but the proposal does not specify calibration data, class priors, or how to handle known ambiguous hybrids like PWA/SaaS shells beyond operator dispute resolution. That can convert previously working generic fallbacks into a high-severity alert storm, increasing manual workload without proving better classification accuracy."
+      },
+      {
+        "slot": 9,
+        "title": "Unclear Impact of Cost Object",
+        "detail": "The new 'cost' object in proactive recommendations (§7 item #8) includes 'effort_hours_estimate', 'risk_tier', and 'blast_radius'. However, it's unclear how these fields will be used in practice and how they will affect the decision-making process for operators."
+      },
+      {
+        "slot": 9,
+        "title": "Rollback Mechanism Ambiguity",
+        "detail": "The 'rollback' object is introduced with a 'revertable' boolean and an optional 'revert_procedure'. The proposal lacks clarity on how this will be enforced or validated, particularly for complex recommendations."
+      },
+      {
+        "slot": 9,
+        "title": "Defer-Window Config Flexibility",
+        "detail": "The per-product defer-window configuration (§7 item #8 + §3 admin config) allows for a wide range of values ([1,365] days). This flexibility might lead to inconsistent practices across different products and operators."
+      },
+      {
+        "slot": 10,
+        "title": "Minimal envelope omits validation",
+        "detail": "§7 item #8 defines cost.risk_tier and rollback.revertable but states full schema invariants (PA-1..PA-N) are deferred to engineering dispatch; no canonical rule enforces atomicity with ProductSSOT delta_log writes per §7.5."
+      },
+      {
+        "slot": 10,
+        "title": "Stricter classifier lacks workflow",
+        "detail": "CA-16-C-v2-Q2 requires target_class_ambiguous at high severity for confidence <0.85 yet provides no operator dispute resolution path or tie-in to §6 deliberate error-state triggers or §11 ClearanceRecord steps."
+      },
+      {
+        "slot": 10,
+        "title": "Per-product defer desync risk",
+        "detail": "CA-16-A-Q4 adds recommendation_defer_window_days to product_registry without mandating atomic update alongside proactive_recommendation.disposition in the same run, violating the atomic guarantee claimed in §7.5."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-16-A-v2-Q1": {
+      "verdict": "PLURALITY_CA16AV2Q1-RATIFY",
+      "detail": "3 of 6 on CA16AV2Q1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16AV2Q1-RATIFY",
+      "topCount": 3
+    },
+    "CA-16-A-v2-Q2": {
+      "verdict": "PLURALITY_CA16AV2Q2-RATIFY",
+      "detail": "5 of 6 on CA16AV2Q2-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16AV2Q2-RATIFY",
+      "topCount": 5
+    },
+    "CA-16-A-v2-Q3": {
+      "verdict": "PLURALITY_CA16AV2Q3-RATIFY",
+      "detail": "3 of 6 on CA16AV2Q3-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16AV2Q3-RATIFY",
+      "topCount": 3
+    },
+    "CA-16-A-v2-Q4": {
+      "verdict": "PLURALITY_CA16AV2Q4-TIGHTER",
+      "detail": "3 of 6 on CA16AV2Q4-TIGHTER (below 7/10 quorum)",
+      "topKey": "CA16AV2Q4-TIGHTER",
+      "topCount": 3
+    },
+    "CA-16-B-v2-Q1": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between CA16BV2Q1-RATIFY / REJECT",
+      "topKey": "CA16BV2Q1-RATIFY",
+      "topCount": 3
+    },
+    "CA-16-B-v2-Q2": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 2 between CA16BV2Q2-RATIFY / CA16BV2Q2-STRONGER / REJECT",
+      "topKey": "CA16BV2Q2-RATIFY",
+      "topCount": 2
+    },
+    "CA-16-C-v2-Q1": {
+      "verdict": "PLURALITY_CA16CV2Q1-RATIFY",
+      "detail": "4 of 6 on CA16CV2Q1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16CV2Q1-RATIFY",
+      "topCount": 4
+    },
+    "CA-16-C-v2-Q2": {
+      "verdict": "PLURALITY_CA16CV2Q2-RATIFY",
+      "detail": "4 of 6 on CA16CV2Q2-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16CV2Q2-RATIFY",
+      "topCount": 4
+    },
+    "CA-16-C-v2-Q3": {
+      "verdict": "PLURALITY_CA16CV2Q3-RATIFY",
+      "detail": "4 of 6 on CA16CV2Q3-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16CV2Q3-RATIFY",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.5370370370370371,
+    "alignedCount": 29,
+    "totalPossible": 54,
+    "draftedQs": [
+      "CA-16-A-v2-Q1",
+      "CA-16-A-v2-Q2",
+      "CA-16-A-v2-Q3",
+      "CA-16-A-v2-Q4",
+      "CA-16-B-v2-Q1",
+      "CA-16-B-v2-Q2",
+      "CA-16-C-v2-Q1",
+      "CA-16-C-v2-Q2",
+      "CA-16-C-v2-Q3"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 53.7 %, distinct objections 32"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unbounded recommendation generation risk",
+            "detail": "§7 item #8's minimal envelope lacks any rate limits or caps on recommendation volume. Without PA-1..PA-N invariants, agents could flood operators with thousands of low-quality recommendations per run, creating noise that obscures critical findings."
+          },
+          {
+            "title": "Cost estimation without validation",
+            "detail": "The new cost.effort_hours_estimate field in §7 has no validation bounds or accuracy requirements. Agents could emit wildly incorrect estimates (0.1 hours for major refactors, 1000 hours for trivial changes) with no conformance test to catch this."
+          },
+          {
+            "title": "Rollback procedure underspecified",
+            "detail": "§7's rollback.revert_procedure is a free-text string with no schema or required steps. CA16A-v2-CT-3 only warns on non-revertable accepted recs but doesn't validate that revert_procedure is actually executable or complete."
+          },
+          {
+            "title": "Defer-window config lacks audit trail",
+            "detail": "§7 item #8 + §3 admin config allows per-product defer windows [1,365] days but has no requirement to log changes to recommendation_defer_window_days. An admin could set 365-day deferrals to effectively suppress recommendations without trace."
+          }
+        ],
+        "worse_than_status_quo": "The v2 minimal envelope with deferred schema creates a two-tier system where critical validation lives outside canonical SSOT, allowing engineering to ship recommendation generators that emit unbounded, unvalidated suggestions that could overwhelm operators worse than having no recommendations at all.",
+        "precedent": "Kubernetes' early CRD (Custom Resource Definition) system allowed arbitrary schemas without validation, leading to operators being flooded with malformed resources that crashed controllers - they had to retrofit OpenAPI validation in v1.16 to fix the damage."
+      },
+      "rejection_steelman": "The proposal fragments governance by moving critical invariants (PA-1..PA-N) out of canonical SSOT into engineering dispatch, creating a dangerous precedent where safety controls can be modified without Panel oversight. Combined with the elimination of recommendations from §11 Clearance flow, this creates an ungoverned side-channel that could emit arbitrary volumes of unvalidated suggestions, fundamentally undermining the SSOT's role as the single source of truth for system behavior.",
+      "votes": {
+        "CA-16-A-v2-Q1": {
+          "key": "CA16AV2Q1-FULLSCHEMA",
+          "pick_text": "Ratify with broader scope — full schema invariants (PA-1..PA-N) should be drafted in v2 itself.",
+          "rationale": "The minimal envelope without rate limits, validation rules, or generation bounds creates an ungoverned surface that could flood operators with noise, requiring full invariants in canonical."
+        },
+        "CA-16-A-v2-Q2": {
+          "key": "CA16AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (recs OUTSIDE §11).",
+          "rationale": "Despite concerns about ungoverned side-channels, keeping recommendations outside the critical clearance path prevents them from blocking product delivery."
+        },
+        "CA-16-A-v2-Q3": {
+          "key": "CA16AV2Q3-REOPEN",
+          "pick_text": "Ratify with reopen state added — rejected recs may be reopened by admin with rationale.",
+          "rationale": "The current lifecycle lacks reversibility for mistaken rejections; adding reopen state provides necessary flexibility while maintaining audit trail."
+        },
+        "CA-16-A-v2-Q4": {
+          "key": "CA16AV2Q4-TIGHTER",
+          "pick_text": "Ratify with stricter bounds — [7,90] instead of [1,365].",
+          "rationale": "A 365-day defer window effectively equals permanent suppression; [7,90] maintains the per-product flexibility while preventing recommendation burial."
+        },
+        "CA-16-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — RB-Env should not be canonical yet; defer whole surface to later CA-N.",
+          "rationale": "The surface is clearly underspecified per Panel objections #9,#16,#20,#24,#26; canonicalizing even the scope statement without the implementation details is premature."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording is too vague; needs concrete operator workflow spec in canonical.",
+          "rationale": "\"Operator-steerable rebuild\" provides no concrete workflow, state machine, or interaction model; this vagueness will create implementation divergence."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — defer canonical taxonomy until ≥1 product per class is in ProductSSOT.",
+          "rationale": "Canonicalizing a 6-class taxonomy before validating it against real products risks creating categories that don't match actual usage patterns."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-FLOOR090",
+          "pick_text": "Ratify with stricter floor — 0.90 (not 0.85).",
+          "rationale": "Given the high severity of ambiguous classification and lack of real-world validation of the classifier, a 0.90 floor provides better safety margin against misclassification."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-DEFER",
+          "pick_text": "Defer — ownership belongs in agent registry, not canonical SSOT spec.",
+          "rationale": "Agent ownership is an implementation detail that changes as agents evolve; embedding Agent #21 ownership in canonical spec creates unnecessary coupling."
+        }
+      },
+      "overallNotes": "The v2 revisions address some Panel concerns but create new governance gaps by deferring critical invariants to engineering dispatch.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback mechanism in case the Redesign/Build Environment causes unintended changes to the ProductSSOT. This is a significant risk, as it could lead to data loss or corruption. The §29 Redesign/Build Environment section should include a detailed rollback plan to mitigate this risk."
+          },
+          {
+            "title": "Insufficient Validation",
+            "detail": "The proposal does not provide sufficient validation rules for the proactive recommendations envelope. The minimal canonical envelope is too permissive, and the full schema deferred to engineering dispatch may not be thoroughly tested. This could lead to invalid or inconsistent data being stored in the ProductSSOT."
+          },
+          {
+            "title": "Overly Complex Taxonomy",
+            "detail": "The 6-class Multi-Format taxonomy may be overly complex and difficult to maintain. The proposal should consider a simpler taxonomy or provide a clear justification for the need for six classes. Additionally, the proposal should include a plan for handling new or emerging formats that do not fit into the existing taxonomy."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's lack of a clear rollback mechanism and insufficient validation rules could lead to a worse state than the current status quo, where data loss or corruption could occur due to unintended changes to the ProductSSOT.",
+        "precedent": "The Google+ debacle, where a poorly designed and untested system led to significant data exposure and loss, serves as a real-world precedent for the importance of thorough testing and validation in system design."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred due to its lack of a clear rollback mechanism and insufficient validation rules, which could lead to significant risks and unintended consequences. Additionally, the overly complex taxonomy and lack of clear justification for the need for six classes raise concerns about the proposal's maintainability and scalability.",
+      "votes": {
+        "CA-16-A-v2-Q1": {
+          "key": "CA16AV2Q1-CONDITIONAL",
+          "pick_text": "Ratify but require purpose_record_link mandatory IF `product_purpose` non-null (conditional mandatory)",
+          "rationale": "This option provides a compromise between the proposal's minimal canonical envelope and the need for sufficient validation rules."
+        },
+        "CA-16-A-v2-Q2": {
+          "key": "CA16AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (recs OUTSIDE §11)",
+          "rationale": "This option is consistent with the proposal's intent to keep proactive recommendations outside of the §11 Six-Step Clearance flow."
+        },
+        "CA-16-A-v2-Q3": {
+          "key": "CA16AV2Q3-REOPEN",
+          "pick_text": "Ratify with reopen state added — rejected recs may be reopened by admin with rationale",
+          "rationale": "This option provides an additional layer of flexibility and accountability in the disposition lifecycle."
+        },
+        "CA-16-A-v2-Q4": {
+          "key": "CA16AV2Q4-ADMIN30",
+          "pick_text": "Ratify with admin role required for any value > 30 days; operator may set up to 30",
+          "rationale": "This option provides a balance between flexibility and control, ensuring that longer defer windows require administrative approval."
+        },
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (section number = engineering decision)",
+          "rationale": "This option allows engineering to determine the best placement for the Redesign/Build Environment section."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": null,
+          "pick_text": "Ratify with stronger admin-gating wording — 'operator initiates; admin approves'",
+          "rationale": "This option provides clearer language and ensures that administrative approval is required for operator-initiated rebuilds."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-MERGE5",
+          "pick_text": "Ratify with one merge — web + mobile_app merge into web_or_pwa (5-class)",
+          "rationale": "This option simplifies the taxonomy and reduces the number of classes, making it easier to maintain and understand."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-LOOSER",
+          "pick_text": "Ratify with looser floor — 0.75; ambiguity emits at `medium`",
+          "rationale": "This option provides a more relaxed confidence floor, allowing for more flexibility in the classification process."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns)",
+          "rationale": "This option is consistent with the proposal's intent to assign ownership of Multi-Format target classification to Agent #21."
+        }
+      },
+      "overallNotes": "The proposal requires significant revisions to address the concerns raised in the adversarial pass. The lack of a clear rollback mechanism, insufficient validation rules, and overly complex taxonomy are major issues that need to be addressed. Additionally, the proposal should provide clearer language and justification for the need for six classes in the Multi-Format taxonomy.",
+      "invalid_reason": "8/9 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly Complex Deferral",
+            "detail": "The proposal defers too many critical details to engineering dispatch, such as the full schema invariants (PA-1..PA-N). This deferral could lead to inconsistencies and lack of clarity in the implementation phase. Specifically, §7 item #8 defers the full schema to engineering, which may cause misunderstandings and misalignments."
+          },
+          {
+            "title": "Lack of Rollback Mechanism",
+            "detail": "The proposal introduces a `rollback` object but does not specify a concrete rollback mechanism for accepted recommendations. This could lead to situations where accepted recommendations cannot be safely reverted, causing potential disruptions. The `rollback` object in §7 item #8 should include a mandatory revert procedure."
+          },
+          {
+            "title": "Vague Admin Gating",
+            "detail": "The wording for the Redesign/Build Environment (RB-Env) is vague regarding admin gating. It states that RB-Env is admin-gated but does not specify the exact workflow or approval process. This vagueness could lead to misinterpretations and potential security risks. The scope statement in the Redesign/Build Environment section should be more explicit."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's deferral of critical details to engineering dispatch could lead to a fragmented and inconsistent implementation, making the system worse than the current status quo where such details are clearly defined and centrally managed.",
+        "precedent": "In the case of the failed rollout of HealthCare.gov, similar deferrals and lack of clear rollback mechanisms led to significant issues and delays in the implementation phase."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it introduces too many uncertainties and deferrals, which could lead to a fragmented implementation and potential disruptions. The lack of a clear rollback mechanism and vague admin gating could also pose significant risks.",
+      "votes": {
+        "CA-16-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — proactive recs envelope should be canonical complete OR not canonical at all.",
+          "rationale": "The proposal defers too many critical details to engineering dispatch, which could lead to inconsistencies and lack of clarity."
+        },
+        "CA-16-A-v2-Q2": {
+          "key": "CA16AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (recs OUTSIDE §11).",
+          "rationale": "Keeping recommendations outside the clearance process avoids unnecessary complexity and overhead."
+        },
+        "CA-16-A-v2-Q3": {
+          "key": "CA16AV2Q3-REOPEN",
+          "pick_text": "Ratify with reopen state added — rejected recs may be reopened by admin with rationale.",
+          "rationale": "Adding a reopen state provides flexibility and ensures that rejected recommendations can be revisited if necessary."
+        },
+        "CA-16-A-v2-Q4": {
+          "key": "CA16AV2Q4-ADMIN30",
+          "pick_text": "Ratify with admin role required for any value > 30 days; operator may set up to 30.",
+          "rationale": "This ensures that longer deferral windows are subject to admin oversight, preventing potential misuse."
+        },
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-PLACEHOLDER",
+          "pick_text": "Ratify with placeholder §29-DRAFT in v2; engineering finalizes at promotion.",
+          "rationale": "Using a placeholder section number allows for flexibility while ensuring that the final number is determined by engineering."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": null,
+          "pick_text": "Ratify with stronger admin-gating wording — 'operator initiates; admin approves'.",
+          "rationale": "This clarifies the workflow and ensures that admin approval is explicitly required, reducing potential security risks."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (6 classes).",
+          "rationale": "The proposed taxonomy is comprehensive and covers the necessary formats without unnecessary complexity."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`).",
+          "rationale": "The stricter classifier ensures accuracy and reduces the risk of misclassification."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "Agent #21 is well-suited to own the classification process, ensuring consistency and accuracy."
+        }
+      },
+      "overallNotes": "The proposal introduces several positive changes but also raises significant concerns that need to be addressed before ratification.",
+      "invalid_reason": "8/9 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Minimal Envelope Risk",
+            "detail": "The minimal canonical envelope may not capture all necessary details for effective implementation, leading to potential gaps in the proactive recommendations system."
+          },
+          {
+            "title": "Defer-Window Complexity",
+            "detail": "The per-product defer-window configuration adds complexity without clear benefits, potentially leading to inconsistent application of recommendations across products."
+          },
+          {
+            "title": "Section Number Ambiguity",
+            "detail": "Deferring the section number for the Redesign/Build Environment creates ambiguity and may lead to confusion in the implementation and maintenance of the feature."
+          }
+        ],
+        "worse_than_status_quo": "The proposal introduces new fields and configurations without ensuring they are thoroughly vetted, which could lead to a more complex and error-prone system than the current status quo.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal introduces significant changes without sufficient vetting and may lead to a more complex system with potential gaps and inconsistencies. It is better to defer the implementation until a more robust and thoroughly tested schema is available.",
+      "votes": {
+        "CA-16-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — proactive recs envelope should be canonical complete OR not canonical at all.",
+          "rationale": "The minimal envelope may not be sufficient for effective implementation."
+        },
+        "CA-16-A-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — restore §11.5 Step 1.5 per v1.",
+          "rationale": "Proactive recommendations should be integrated into the clearance process for better oversight."
+        },
+        "CA-16-A-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — lifecycle should be simpler: open / decided (no sub-states).",
+          "rationale": "The current lifecycle is overly complex and may lead to confusion."
+        },
+        "CA-16-A-v2-Q4": {
+          "key": "REJECT",
+          "pick_text": "Reject — global fixed 14-day window simpler and sufficient.",
+          "rationale": "The per-product defer-window adds unnecessary complexity."
+        },
+        "CA-16-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — RB-Env should not be canonical yet; defer whole surface to later CA-N.",
+          "rationale": "The Redesign/Build Environment is not ready for a fixed section number and should be deferred."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": null,
+          "pick_text": "Ratify with stronger admin-gating wording — 'operator initiates; admin approves'.",
+          "rationale": "Stronger admin gating ensures better control over the rebuild process."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (6 classes).",
+          "rationale": "The current taxonomy is sufficient and does not require changes."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`).",
+          "rationale": "The current classifier settings are appropriate and do not need adjustment."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "Agent #21 is the appropriate owner for the Multi-Format target classification."
+        }
+      },
+      "overallNotes": "The proposal introduces several changes that require careful consideration to avoid increasing system complexity and potential errors.",
+      "invalid_reason": "8/9 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Cost object underspecified",
+            "detail": "The `cost` object in the `proactive_recommendation` schema (§7) lacks concrete guidance on how `effort_hours_estimate`, `risk_tier`, and `blast_radius` should be determined, leading to inconsistent application and potential gaming of the system. The lack of clear definitions for `risk_tier` and `blast_radius` makes them subjective and open to interpretation."
+          },
+          {
+            "title": "Rollback procedure ambiguity",
+            "detail": "The `rollback` object's `revert_procedure` field (§7) is optional and human-readable, which is insufficient for ensuring reliable reversibility.  Without a standardized, machine-executable rollback mechanism, the system relies on potentially error-prone manual processes, increasing the risk of failed rollbacks and system instability. The 'revertable' boolean alone is insufficient."
+          },
+          {
+            "title": "Deferral window clamping risk",
+            "detail": "The per-product defer-window config (§7) clamps out-of-bounds values, but the notification via `agent.product_registry.defer_window_clamped.v1` might be missed by admins, leading to unexpected behavior.  A more prominent warning or blocking mechanism might be necessary to ensure admins are aware of the clamping."
+          },
+          {
+            "title": "Ambiguity detection threshold",
+            "detail": "The stricter classifier in CA-16-C-Q2, with a confidence floor of 0.85, might lead to excessive `target_class_ambiguous` findings, overwhelming operators with dispute resolution tasks. The choice of 0.85 seems arbitrary and lacks empirical justification. This could lead to alert fatigue."
+          }
+        ],
+        "worse_than_status_quo": "By deferring the full proactive recommendation schema to engineering dispatch, the system risks inconsistent implementation and a lack of standardization across different products. This could lead to a fragmented user experience and increased maintenance burden compared to the status quo where at least some aspects were canonically defined.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal introduces several new features and defers key decisions to engineering dispatch, increasing the risk of inconsistent implementation and a lack of standardization. The cost and rollback objects are underspecified, and the stricter classifier might lead to alert fatigue. Deferring the entire proposal would allow for further refinement and a more comprehensive approach to proactive recommendations and multi-format target detection.",
+      "votes": {
+        "CA-16-A-v2-Q1": {
+          "key": "CA16AV2Q1-CONDITIONAL",
+          "pick_text": "Ratify but require purpose_record_link mandatory IF `product_purpose` non-null (conditional mandatory).",
+          "rationale": "If a product has a defined purpose, linking the recommendation to that purpose should be mandatory to ensure relevance and traceability."
+        },
+        "CA-16-A-v2-Q2": {
+          "key": "CA16AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (recs OUTSIDE §11).",
+          "rationale": "Keeping recommendations outside the critical path of the clearance process allows for more flexibility and avoids blocking deployments on non-critical improvements."
+        },
+        "CA-16-A-v2-Q3": {
+          "key": "CA16AV2Q3-REOPEN",
+          "pick_text": "Ratify with reopen state added — rejected recs may be reopened by admin with rationale.",
+          "rationale": "Adding a 'reopen' state allows for revisiting previously rejected recommendations in light of new information or changing circumstances, providing a more flexible lifecycle."
+        },
+        "CA-16-A-v2-Q4": {
+          "key": "CA16AV2Q4-ADMIN30",
+          "pick_text": "Ratify with admin role required for any value > 30 days; operator may set up to 30.",
+          "rationale": "Restricting the deferral window to 30 days for operators and requiring admin approval for longer periods strikes a balance between flexibility and control, preventing indefinite deferrals without proper oversight."
+        },
+        "CA-16-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — RB-Env should not be canonical yet; defer whole surface to later CA-N.",
+          "rationale": "Given the concerns about scope creep and lack of a rollback mechanism, it's premature to include the Redesign/Build Environment in the canonical SSOT. Deferring the entire surface allows for further refinement and a more comprehensive approach."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "CA16BV2Q2-STRONGER",
+          "pick_text": "Ratify with stronger admin-gating wording — \"operator initiates; admin approves\".",
+          "rationale": "Stronger admin gating ensures proper oversight and prevents unauthorized modifications to the system."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (6 classes).",
+          "rationale": "The 6-class taxonomy provides a reasonable level of granularity for classifying multi-format targets."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`).",
+          "rationale": "A confidence floor of 0.85 strikes a balance between accuracy and sensitivity, ensuring that ambiguous targets are flagged for operator review without being overly restrictive."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "Assigning ownership to Agent #21 aligns with its existing scope and provides a clear point of accountability for multi-format target classification."
+        }
+      },
+      "overallNotes": "The proposal makes reasonable progress, but some areas require further refinement, particularly the cost and rollback objects in proactive recommendations and the scope of the Redesign/Build Environment.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Deferred schema risks divergence",
+            "detail": "CA-16-A v2's deferred full schema to engineering dispatch creates future compatibility risks. Without canonical PA-1..PA-N invariants in §7, engineering implementations may diverge from intent, particularly around mandatory validation rules. This violates SSOT's single-source-of-truth principle and could break conformance tests like CA16A-v2-CT-2."
+          },
+          {
+            "title": "Rollback procedure inadequacy",
+            "detail": "The new rollback.revert_procedure field (§7 Proactive Recommendations) lacks enforcement mechanisms. Conformance test CA16A-v2-CT-3 only flags non-revertable recs without blocking acceptance. In complex deployments, manual revert steps may be insufficient for stateful changes, risking system instability when reversing implemented recommendations."
+          },
+          {
+            "title": "Ambiguity severity inflation",
+            "detail": "CA-16-C v2's stricter classifier (§6 Multi-Format) mandates 'high' severity for target_class_ambiguous at <0.85 confidence. This could flood operators with false-positive high-severity tickets for legitimate hybrid formats like PWAs, diluting attention from genuine critical findings and violating §7.6's severity calibration principles."
+          },
+          {
+            "title": "Defer-window governance gap",
+            "detail": "Per-product defer-window (CA-16-A-Q4) allows operators to set 365-day deferrals without admin oversight. This enables indefinite suppression of recommendations via recurrent deferrals, contravening the proactive intent. CA16A-v2-CT-5/6 only validate clamping, not governance of excessive deferral patterns."
+          }
+        ],
+        "worse_than_status_quo": "Under the new proactive recommendations system, an operator could accept a non-revertable recommendation (rollback.revertable=false) with underestimated cost (effort_hours_estimate), then encounter cascading failures during implementation. With no clearance gate (Step 1.5 removed), this could degrade system stability beyond the current zero-recommendation baseline, as status quo lacks this failure vector entirely.",
+        "precedent": "Google Health's 2008-2011 failure featured proactive recommendations without cost/rollback fields, leading to clinician rejection due to unquantified workflow disruption and irreversibility concerns—parallels CA-16-A's risk profile."
+      },
+      "rejection_steelman": "The proposal introduces significant unquantified risks: deferred schemas invite implementation drift, per-product defer-windows enable recommendation suppression, and stricter ambiguity classification may overwhelm operators. Until cost/rollback fields receive enforcement parity with clearance gates, and classifier thresholds gain empirical validation, deferring CA-16 preserves stability while avoiding new governance gaps.",
+      "votes": {
+        "CA-16-A-v2-Q1": {
+          "key": "CA16AV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minimal envelope + 2 new fields; full schema deferred)",
+          "rationale": "Minimal envelope addresses core objections while allowing engineering flexibility; conditional mandatory links would reintroduce v1's over-constraint issues."
+        },
+        "CA-16-A-v2-Q2": {
+          "key": "CA16AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (recs OUTSIDE §11)",
+          "rationale": "Eliminating Step 1.5 avoids clearance pipeline bloat; side-channel surfacing aligns with non-blocking intent while reducing operator cognitive load."
+        },
+        "CA-16-A-v2-Q3": {
+          "key": "CA16AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (same lifecycle as v1)",
+          "rationale": "Lifecycle states provide necessary granularity; adding reopen would complicate disposition tracking without addressing core adversarial concerns."
+        },
+        "CA-16-A-v2-Q4": {
+          "key": "CA16AV2Q4-TIGHTER",
+          "pick_text": "Ratify with stricter bounds — [7,90] instead of [1,365]",
+          "rationale": "[1,365] range enables dangerous suppression via year-long defers; [7,90] bounds prevent evasion while preserving operational flexibility."
+        },
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (section number = engineering decision)",
+          "rationale": "Section numbering is cosmetic; deferral avoids premature canonicalization while preserving RB-Env's functional invariants."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "CA16BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (carry-forward)",
+          "rationale": "Wording sufficiently conveys steerable nature; adding explicit admin approval language would duplicate §11.7's existing RB-7 controls."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (6 classes)",
+          "rationale": "Taxonomy covers observed formats; merging web/mobile_app ignores PWA distinctness, while splitting agentic_ai is premature without evidence."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`)",
+          "rationale": "0.85 balances strictness and practicality; 0.90 would increase false positives, while 0.75 or silent fallback would undermine detection rigor."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns)",
+          "rationale": "Ownership aligns with existing Phase B responsibilities; creating new agents or co-ownership would introduce fragmentation without clear benefit."
+        }
+      },
+      "overallNotes": "V2 improvements address key rerun objections, but enforcement gaps in rollback/cost fields warrant future scrutiny.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Mandatory fields still undercut optionality",
+            "detail": "In CA-16-A v2, `purpose_record_link` and `market_definition_link` are made optional, but the envelope still requires `category`, `title`, `rationale`, and `source` without defining how null/empty recommendations are represented when the system has only a weak heuristic suggestion. That creates a gap between the claimed “minimal canonical envelope” and real emission paths from §7.6 / §10.1, especially for cross-cutting suggestions that do not map cleanly to a single product or run."
+          },
+          {
+            "title": "Rollback is advisory only",
+            "detail": "The new `rollback` object adds `revertable` and `revert_procedure`, but CA16A-v2-CT-3 explicitly says non-revertable accepted recommendations are only “flagged but not blocked.” This preserves the exact failure mode the Panel objected to in v1: operators can still accept recommendations that cannot be safely undone, with no hard gate or enforcement path in the canonical contract."
+          },
+          {
+            "title": "Defer-window can hide urgent recs",
+            "detail": "CA-16-A-Q4 moves defer timing into a per-product knob with bounds [1,365], but the spec does not define any escalation or override behavior for high-severity recommendations that are deferred long-term. A product owner could set 365 days and effectively suppress repeated resurfacing of a critical systemic recommendation, which is a concrete governance regression compared with a uniform shorter window."
+          },
+          {
+            "title": "RB-Env numbering deferral is incomplete",
+            "detail": "CA-16-B-Q1 defers the section number for Redesign/Build Environment, yet the same block continues to assert canonical scope, atomic-audit-write, and mandatory cross-references to CA-14 fix-safety invariants. This creates a half-canonical surface: implementers must wire behavior now, but the spec avoids the one piece that anchors documentation and review navigation, increasing divergence risk across mirrored copies and later amendments."
+          },
+          {
+            "title": "Silent fallback removed without evidence",
+            "detail": "CA-16-C-Q2 tightens classification by emitting `target_class_ambiguous.v1` whenever confidence <0.85, but the proposal does not specify calibration data, class priors, or how to handle known ambiguous hybrids like PWA/SaaS shells beyond operator dispute resolution. That can convert previously working generic fallbacks into a high-severity alert storm, increasing manual workload without proving better classification accuracy."
+          }
+        ],
+        "worse_than_status_quo": "If a team sets a long defer window for a product and the system repeatedly defers a high-value recommendation while RB-Env changes are partially wired but section-numbered later, operators get noisier governance, less traceability, and more ambiguous ownership than the status quo. Instead of a simple fixed window and stable section anchors, reviewers may spend time reconciling missing canonical references while important suggestions stay hidden for months.",
+        "precedent": "GitHub’s long-running issues around ambiguous markdown/JSON handling and Docusaurus discussions on malformed code-block rendering show how “minimal canonical envelope now, schema later” often creates interoperability pain and parser drift. More directly, many systems that tried advisory-only safety flags before hard enforcement, such as warning-only release gates, saw operators routinely accept risky items that the warnings did not actually prevent."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring this proposal is that it still mixes canonical commitments with intentionally deferred schema details, leaving too much behavior to engineering judgment. The added cost and rollback fields help, but they do not close the enforcement gap for non-revertable recommendations or ambiguous multi-format classification, so the amendment may increase governance complexity without materially reducing risk. A clean deferral until the full recommendation schema, rollback semantics, and ownership model are specified would likely be safer and easier to implement consistently.",
+      "votes": {
+        "CA-16-A-v2-Q1": {
+          "key": "CA16AV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minimal envelope + 2 new fields; full schema deferred).",
+          "rationale": "This is the only option that matches the draft’s explicit minimal-envelope approach while preserving the new cost and rollback fields. The proposal is incomplete, but internally it clearly intends deferment rather than full canonicalization."
+        },
+        "CA-16-A-v2-Q2": {
+          "key": "CA16AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (recs OUTSIDE §11).",
+          "rationale": "The draft consistently removes Step 1.5 and routes recommendations to a side-channel governance surface. Even if risky, this is the proposal’s stated design and the question asks for that specific ratification."
+        },
+        "CA-16-A-v2-Q3": {
+          "key": "CA16AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (same lifecycle as v1).",
+          "rationale": "The disposition states are preserved from v1 and remain the only concrete lifecycle defined here. The draft does not provide a better alternative with clearer operational semantics."
+        },
+        "CA-16-A-v2-Q4": {
+          "key": "CA16AV2Q4-RATIFY",
+          "pick_text": "Ratify v2 as drafted.",
+          "rationale": "The per-product defer-window is explicitly specified with default, bounds, and admin configurability. While I object to edge cases, the proposed configuration model itself is internally coherent."
+        },
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (section number = engineering decision).",
+          "rationale": "The draft intentionally defers numbering to engineering dispatch and keeps the surface-name stable. That is consistent with the proposal’s own change log and avoids premature section anchoring."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "CA16BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (carry-forward).",
+          "rationale": "The wording is vague, but it is clearly marked as carry-forward and the concrete approval gate is handled elsewhere in the referenced cleared material. On this narrow question, the draft preserves the existing phraseology."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (6 classes).",
+          "rationale": "The six-class taxonomy is explicit and stable across the draft. The stricter ambiguity handling belongs to the classifier question, not the class list itself."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`).",
+          "rationale": "The proposal squarely tightens detection at the stated threshold and makes ambiguity visible instead of silently falling back. That is the specific change under review here."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "The draft assigns ownership directly and frames it as a coherent extension of an already-cleared scope. No alternative in the options is better supported by the text."
+        }
+      },
+      "overallNotes": "I’m voting within the draft’s stated structures, but the proposal still feels under-specified in enforcement terms, especially around non-revertable recommendations and ambiguous format classification.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unclear Impact of Cost Object",
+            "detail": "The new 'cost' object in proactive recommendations (§7 item #8) includes 'effort_hours_estimate', 'risk_tier', and 'blast_radius'. However, it's unclear how these fields will be used in practice and how they will affect the decision-making process for operators."
+          },
+          {
+            "title": "Rollback Mechanism Ambiguity",
+            "detail": "The 'rollback' object is introduced with a 'revertable' boolean and an optional 'revert_procedure'. The proposal lacks clarity on how this will be enforced or validated, particularly for complex recommendations."
+          },
+          {
+            "title": "Defer-Window Config Flexibility",
+            "detail": "The per-product defer-window configuration (§7 item #8 + §3 admin config) allows for a wide range of values ([1,365] days). This flexibility might lead to inconsistent practices across different products and operators."
+          }
+        ],
+        "worse_than_status_quo": "If the proactive recommendations are not properly filtered or prioritized, they might overwhelm operators with low-value suggestions, potentially leading to decision fatigue and decreased effectiveness of the FlowAI system.",
+        "precedent": "A similar design in a previous project led to information overload for operators, resulting in decreased adoption of the recommendation system."
+      },
+      "rejection_steelman": "The proposal could be rejected or deferred due to the lack of clear guidelines on how the new 'cost' and 'rollback' objects will be utilized and enforced in practice, potentially leading to inconsistent application and reduced effectiveness.",
+      "votes": {
+        "CA-16-A-v2-Q1": {
+          "key": "CA16AV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minimal envelope + 2 new fields; full schema deferred).",
+          "rationale": "The minimal envelope with new fields for cost and rollback seems like a reasonable step forward, and deferring the full schema to engineering dispatch allows for more detailed specification."
+        },
+        "CA-16-A-v2-Q2": {
+          "key": "CA16AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (recs OUTSIDE §11).",
+          "rationale": "Removing proactive recommendations from the §11 Clearance flow could streamline the clearance process, but it's crucial to ensure that recommendations are still effectively communicated to operators."
+        },
+        "CA-16-A-v2-Q3": {
+          "key": "CA16AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (same lifecycle as v1).",
+          "rationale": "The disposition lifecycle as drafted seems comprehensive, covering various states that a recommendation can be in, which is beneficial for tracking and managing recommendations."
+        },
+        "CA-16-A-v2-Q4": {
+          "key": "CA16AV2Q4-TIGHTER",
+          "pick_text": "Ratify with stricter bounds — [7,90] instead of [1,365].",
+          "rationale": "While per-product defer-window configuration is useful, stricter bounds could prevent extreme values that might not be practical or effective."
+        },
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (section number = engineering decision).",
+          "rationale": "Deferring the section number to engineering dispatch makes sense as it allows for flexibility in the final placement based on the overall structure decided by the engineering team."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "CA16BV2Q2-STRONGER",
+          "pick_text": "Ratify with stronger admin-gating wording — \"operator initiates; admin approves\".",
+          "rationale": "Clarifying the roles in the Redesign/Build Environment process with stronger admin-gating wording could improve the governance and control over the rebuild process."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (6 classes).",
+          "rationale": "The 6-class taxonomy for Multi-Format targets seems comprehensive and covers various types of applications and services, which is beneficial for classification purposes."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`).",
+          "rationale": "The stricter classifier confidence floor and the handling of ambiguity at 'high' severity seem like a balanced approach to ensure both accuracy and caution in classification."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "Assigning ownership of Multi-Format target classification to Agent #21, as per the existing scope in CA-14-A-Q3, maintains consistency and leverages the capabilities of this agent."
+        }
+      },
+      "overallNotes": "The proposal addresses several concerns from the previous version and refines the specifications for proactive recommendations, Redesign/Build Environment, and Multi-Format targets. However, the effectiveness of these changes depends on the detailed implementation and operational practices.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Minimal envelope omits validation",
+            "detail": "§7 item #8 defines cost.risk_tier and rollback.revertable but states full schema invariants (PA-1..PA-N) are deferred to engineering dispatch; no canonical rule enforces atomicity with ProductSSOT delta_log writes per §7.5."
+          },
+          {
+            "title": "Stricter classifier lacks workflow",
+            "detail": "CA-16-C-v2-Q2 requires target_class_ambiguous at high severity for confidence <0.85 yet provides no operator dispute resolution path or tie-in to §6 deliberate error-state triggers or §11 ClearanceRecord steps."
+          },
+          {
+            "title": "Per-product defer desync risk",
+            "detail": "CA-16-A-Q4 adds recommendation_defer_window_days to product_registry without mandating atomic update alongside proactive_recommendation.disposition in the same run, violating the atomic guarantee claimed in §7.5."
+          }
+        ],
+        "worse_than_status_quo": "Per-product defer windows plus deferred schema could produce stale or conflicting recommendation states across environments when a run updates ProductSSOT but the defer computation lags, creating more operator confusion than the prior fixed 14-day global rule.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The v2 draft defers too many critical mechanisms (full schema, section numbering, dispute workflows) to later engineering dispatches while still claiming canonical status for partial envelopes; this fragments the SSOT and weakens the safety invariants that CA-14-B and §10 Self-Heal were meant to enforce, making outright rejection or full deferral to a later complete CA cycle the safer choice.",
+      "votes": {
+        "CA-16-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — proactive recs envelope should be canonical complete OR not canonical at all.",
+          "rationale": "Partial envelope with deferred validation directly creates the enforcement gap named in objection 1."
+        },
+        "CA-16-A-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — restore §11.5 Step 1.5 per v1.",
+          "rationale": "Eliminating the step while leaving recommendations as an unintegrated side-channel increases operator overhead without clearance gating."
+        },
+        "CA-16-A-v2-Q3": {
+          "key": "CA16AV2Q3-DEFER",
+          "pick_text": "Defer entirely — lifecycle state machine belongs in engineering dispatch.",
+          "rationale": "Lifecycle interacts with the still-deferred defer-window logic and should not be frozen in canonical text yet."
+        },
+        "CA-16-A-v2-Q4": {
+          "key": "REJECT",
+          "pick_text": "Reject — global fixed 14-day window simpler and sufficient.",
+          "rationale": "Per-product config adds desync surface without atomicity guarantees, as flagged in objection 3."
+        },
+        "CA-16-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — RB-Env should not be canonical yet; defer whole surface to later CA-N.",
+          "rationale": "Naming the surface while deferring its section and full spec repeats the fragmentation problem."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording is too vague; needs concrete operator workflow spec in canonical.",
+          "rationale": "Steerable rebuild language lacks the RB-7 conformance detail required for admin-only gate."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — defer canonical taxonomy until ≥1 product per class is in ProductSSOT.",
+          "rationale": "6-class taxonomy is premature given the stricter classifier's ambiguity handling is still underspecified."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — restore v1 silent fallback to `generic_url`.",
+          "rationale": "0.85 floor with mandatory high-severity findings will flood operators without defined resolution paths."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-DEFER",
+          "pick_text": "Defer — ownership belongs in agent registry, not canonical SSOT spec.",
+          "rationale": "Agent #21 ownership claim should follow the same deferral discipline applied to schemas and section numbers."
+        }
+      },
+      "overallNotes": "Multiple deferrals undermine the claim that v2 is a stable canonical increment.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-16-A-v2-Q1",
+      "topic": "CA-16-A v2 Q1 — Does Panel ratify the minimal §7 item #8 envelope (purpose-link optional, new cost object, new rollback object) with full schema deferred to engineering dispatch?",
+      "options": [
+        {
+          "key": "CA16AV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted (minimal envelope + 2 new fields; full schema deferred)."
+        },
+        {
+          "key": "CA16AV2Q1-CONDITIONAL",
+          "text": "Ratify but require purpose_record_link mandatory IF `product_purpose` non-null (conditional mandatory)."
+        },
+        {
+          "key": "CA16AV2Q1-FULLSCHEMA",
+          "text": "Ratify with broader scope — full schema invariants (PA-1..PA-N) should be drafted in v2 itself."
+        },
+        {
+          "key": "CA16AV2Q1-REJECT",
+          "text": "Reject — proactive recs envelope should be canonical complete OR not canonical at all."
+        }
+      ],
+      "draftedKey": "CA16AV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-16-A-v2-Q2",
+      "topic": "CA-16-A v2 Q2 — Does Panel ratify that proactive recommendations DO NOT participate in §11 Six-Step Clearance (Step 1.5 eliminated)?",
+      "options": [
+        {
+          "key": "CA16AV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted (recs OUTSIDE §11)."
+        },
+        {
+          "key": "CA16AV2Q2-STEP65",
+          "text": "Ratify but with Step 6.5 — recs surface AFTER Step 6 (Deploy/Promote) as post-deploy candidates."
+        },
+        {
+          "key": "CA16AV2Q2-DASHONLY",
+          "text": "Ratify with admin-dashboard-only requirement — recs live ONLY on dashboard."
+        },
+        {
+          "key": "CA16AV2Q2-REJECT",
+          "text": "Reject — restore §11.5 Step 1.5 per v1."
+        }
+      ],
+      "draftedKey": "CA16AV2Q2-RATIFY"
+    },
+    {
+      "id": "CA-16-A-v2-Q3",
+      "topic": "CA-16-A v2 Q3 — Does Panel ratify the disposition lifecycle (open / accepted / rejected / deferred / implemented; carry-forward from v1)?",
+      "options": [
+        {
+          "key": "CA16AV2Q3-RATIFY",
+          "text": "Ratify v2 as drafted (same lifecycle as v1)."
+        },
+        {
+          "key": "CA16AV2Q3-REOPEN",
+          "text": "Ratify with reopen state added — rejected recs may be reopened by admin with rationale."
+        },
+        {
+          "key": "CA16AV2Q3-SIMPLER",
+          "text": "Reject — lifecycle should be simpler: open / decided (no sub-states)."
+        },
+        {
+          "key": "CA16AV2Q3-DEFER",
+          "text": "Defer entirely — lifecycle state machine belongs in engineering dispatch."
+        }
+      ],
+      "draftedKey": "CA16AV2Q3-RATIFY"
+    },
+    {
+      "id": "CA-16-A-v2-Q4",
+      "topic": "CA-16-A v2 Q4 — Does Panel ratify the per-product defer-window config (default 14 days; bounds [1,365]; admin-configurable)?",
+      "options": [
+        {
+          "key": "CA16AV2Q4-RATIFY",
+          "text": "Ratify v2 as drafted."
+        },
+        {
+          "key": "CA16AV2Q4-TIGHTER",
+          "text": "Ratify with stricter bounds — [7,90] instead of [1,365]."
+        },
+        {
+          "key": "CA16AV2Q4-ADMIN30",
+          "text": "Ratify with admin role required for any value > 30 days; operator may set up to 30."
+        },
+        {
+          "key": "CA16AV2Q4-FIXED14",
+          "text": "Reject — global fixed 14-day window simpler and sufficient."
+        }
+      ],
+      "draftedKey": "CA16AV2Q4-RATIFY"
+    },
+    {
+      "id": "CA-16-B-v2-Q1",
+      "topic": "CA-16-B v2 Q1 — Does Panel ratify deferring the Redesign/Build Environment section number to engineering dispatch?",
+      "options": [
+        {
+          "key": "CA16BV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted (section number = engineering decision)."
+        },
+        {
+          "key": "CA16BV2Q1-PLACEHOLDER",
+          "text": "Ratify with placeholder §29-DRAFT in v2; engineering finalizes at promotion."
+        },
+        {
+          "key": "CA16BV2Q1-COMMIT29",
+          "text": "Reject — commit to §29 in v2; renumbering is cosmetic non-issue."
+        },
+        {
+          "key": "CA16BV2Q1-DEFERALL",
+          "text": "Reject — RB-Env should not be canonical yet; defer whole surface to later CA-N."
+        }
+      ],
+      "draftedKey": "CA16BV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-16-B-v2-Q2",
+      "topic": "CA-16-B v2 Q2 — Does Panel ratify the v2 \"operator-steerable rebuild\" wording (same as v1)?",
+      "options": [
+        {
+          "key": "CA16BV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted (carry-forward)."
+        },
+        {
+          "key": "CA16BV2Q2-STRONGER",
+          "text": "Ratify with stronger admin-gating wording — \"operator initiates; admin approves\"."
+        },
+        {
+          "key": "CA16BV2Q2-REJECT",
+          "text": "Reject — wording is too vague; needs concrete operator workflow spec in canonical."
+        },
+        {
+          "key": "CA16BV2Q2-DEFER",
+          "text": "Defer to engineering dispatch entirely."
+        }
+      ],
+      "draftedKey": "CA16BV2Q2-RATIFY"
+    },
+    {
+      "id": "CA-16-C-v2-Q1",
+      "topic": "CA-16-C v2 Q1 — Does Panel ratify the 6-class Multi-Format taxonomy (web / mobile_app / native_app / saas / agentic_ai / generic_url)?",
+      "options": [
+        {
+          "key": "CA16CV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted (6 classes)."
+        },
+        {
+          "key": "CA16CV2Q1-MERGE5",
+          "text": "Ratify with one merge — web + mobile_app merge into web_or_pwa (5-class)."
+        },
+        {
+          "key": "CA16CV2Q1-SPLIT7",
+          "text": "Ratify with one split — agentic_ai splits into agentic_ai_chat + agentic_ai_api (7-class)."
+        },
+        {
+          "key": "CA16CV2Q1-DEFER",
+          "text": "Reject — defer canonical taxonomy until ≥1 product per class is in ProductSSOT."
+        }
+      ],
+      "draftedKey": "CA16CV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-16-C-v2-Q2",
+      "topic": "CA-16-C v2 Q2 — Does Panel ratify the stricter classifier (confidence floor 0.85; sub-floor ambiguity emits `target_class_ambiguous.v1` at `high`)?",
+      "options": [
+        {
+          "key": "CA16CV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`)."
+        },
+        {
+          "key": "CA16CV2Q2-FLOOR090",
+          "text": "Ratify with stricter floor — 0.90 (not 0.85)."
+        },
+        {
+          "key": "CA16CV2Q2-LOOSER",
+          "text": "Ratify with looser floor — 0.75; ambiguity emits at `medium`."
+        },
+        {
+          "key": "CA16CV2Q2-REJECT",
+          "text": "Reject — restore v1 silent fallback to `generic_url`."
+        }
+      ],
+      "draftedKey": "CA16CV2Q2-RATIFY"
+    },
+    {
+      "id": "CA-16-C-v2-Q3",
+      "topic": "CA-16-C v2 Q3 — Does Panel ratify Agent #21 ACE Conductor as owner of Multi-Format target classification?",
+      "options": [
+        {
+          "key": "CA16CV2Q3-RATIFY",
+          "text": "Ratify v2 as drafted (Agent #21 owns)."
+        },
+        {
+          "key": "CA16CV2Q3-CO_OWN",
+          "text": "Ratify with co-ownership — Agent #21 + Agent #26 jointly own."
+        },
+        {
+          "key": "CA16CV2Q3-NEW27",
+          "text": "Reject — a separate new Agent #27 should own classification."
+        },
+        {
+          "key": "CA16CV2Q3-DEFER",
+          "text": "Defer — ownership belongs in agent registry, not canonical SSOT spec."
+        }
+      ],
+      "draftedKey": "CA16CV2Q3-RATIFY"
+    }
+  ]
+}

@@ -1,0 +1,984 @@
+{
+  "schema": "v2-repanel.sidecar.v1",
+  "code": "CA-13-v2",
+  "commit": "8b38156",
+  "bundle_size": 34768,
+  "startedAt": "2026-05-19T12:07:00.097Z",
+  "finishedAt": "2026-05-19T12:09:38.546Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 34768
+  },
+  "tally": {
+    "engagedTotal": 8,
+    "invalid": 0,
+    "tangential": 2,
+    "silent": 0,
+    "perQuestion": {
+      "CA-13-A-v2-Q1": {
+        "CA13AV2Q1-RATIFY": 2,
+        "CA13AV2Q1-ADMIN": 1,
+        "CA13AV2Q1-FLOOR80": 1,
+        "CA13AV2Q1-REJECT": 0,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "CA-13-A-v2-Q2": {
+        "CA13AV2Q2-RATIFY": 3,
+        "CA13AV2Q2-RESERVE": 3,
+        "CA13AV2Q2-OPTIN_CONDITIONAL": 0,
+        "CA13AV2Q2-REJECT": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-13-A-v2-Q3": {
+        "CA13AV2Q3-RATIFY": 3,
+        "CA13AV2Q3-STRONGER": 2,
+        "CA13AV2Q3-REJECT": 0,
+        "CA13AV2Q3-MOVE": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-13-B-v2-Q1": {
+        "CA13BV2Q1-RATIFY": 4,
+        "CA13BV2Q1-SHORTER": 1,
+        "CA13BV2Q1-REJECT": 0,
+        "CA13BV2Q1-DEFER": 1,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-13-B-v2-Q2": {
+        "CA13BV2Q2-RATIFY": 4,
+        "CA13BV2Q2-MEMBERSHIP": 1,
+        "CA13BV2Q2-REJECT": 0,
+        "CA13BV2Q2-AGENTID": 1,
+        "REJECT": 2,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 34,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Operator override creates governance bypass",
+        "detail": "The `product_registry.gtm_ready_bar_override` knob in CA-13-A v2 allows operators to set GTM bar as low as 75, undermining the CEO directive for ≥95. This creates a permanent escape hatch where operators can ship at 75 indefinitely by never setting the override, making the '≥95 after first product' promise unenforceable."
+      },
+      {
+        "slot": 1,
+        "title": "Capability-keyed naming loses agent traceability",
+        "detail": "CA-13-B v2's switch to `crawl-write-executor` and `orchestra-admission-executor` obscures which primary agent owns the sibling. When debugging production issues, operators won't know that `crawl-write-executor` belongs to Agent #21 without cross-referencing the EXECUTOR_REGISTRY, increasing operational complexity."
+      },
+      {
+        "slot": 1,
+        "title": "Phase B prerequisite enforcement unclear",
+        "detail": "§11 Step 5 references 'Phase B pass per CA-14-A canonical' but CA-13-A v2 eliminates the Near-GTM conditional band without clarifying how partial Phase B passes (some paths skipped) affect clearance. The interaction between hard thresholds and Phase B skip-disclosure creates ambiguity about what constitutes a 'pass'."
+      },
+      {
+        "slot": 1,
+        "title": "No migration path for in-flight products",
+        "detail": "Products currently in the pipeline targeting 75-89 Demo-ready have no documented migration path if their operator later sets `gtm_ready_bar_override: 95`. The proposal doesn't specify whether the override applies retroactively to already-cleared products or only to new clearances, creating versioning confusion."
+      },
+      {
+        "slot": 2,
+        "title": "Operator-config knob risks inconsistency",
+        "detail": "The introduction of the `product_registry.gtm_ready_bar_override` knob in §7.6 could lead to inconsistencies across products if operators set different thresholds. This could undermine the uniformity of the GTM readiness criteria and complicate governance."
+      },
+      {
+        "slot": 2,
+        "title": "Elimination of Near-GTM band lacks flexibility",
+        "detail": "By eliminating the 90–94 Near-GTM conditional band, the proposal removes flexibility for products that are close to being market-ready but not quite there. This could delay the launch of products that are otherwise viable with minor adjustments."
+      },
+      {
+        "slot": 2,
+        "title": "Sibling naming convention may cause confusion",
+        "detail": "Switching to capability-keyed sibling charter naming could cause confusion if the capabilities are not clearly defined or if they overlap with other agents. This might lead to misunderstandings about the roles and responsibilities of each agent."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case the implementation of the `product_registry.gtm_ready_bar_override` knob causes unintended consequences. This could lead to difficulties in reverting changes and potentially causing harm to the system."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "The proposal does not outline a comprehensive testing plan to ensure the correctness and safety of the `product_registry.gtm_ready_bar_override` knob. This could lead to errors or security vulnerabilities being introduced into the system."
+      },
+      {
+        "slot": 3,
+        "title": "Inconsistent Authorization",
+        "detail": "The proposal introduces a new authorization mechanism for the `product_registry.gtm_ready_bar_override` knob, but it is unclear how this mechanism will interact with existing authorization systems. This could lead to inconsistencies or security vulnerabilities in the authorization process."
+      },
+      {
+        "slot": 4,
+        "title": "Operator override complexity",
+        "detail": "The introduction of `product_registry.gtm_ready_bar_override` adds complexity to the system. Operators may set arbitrary values without understanding the full implications, leading to inconsistent product quality. The §7.6 score bands should remain canonical and uniform across products to ensure consistency."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of migration path",
+        "detail": "The proposal does not provide a clear migration path for existing products that are already in the pipeline. This could lead to inconsistencies and potential failures in the clearance process for products that were initiated under the previous guidelines."
+      },
+      {
+        "slot": 4,
+        "title": "Potential for misuse",
+        "detail": "The operator-configurable knob could be misused by operators to bypass the strict quality standards set by the canonical §7.6 score bands. This could lead to products being cleared for GTM that do not meet the necessary quality standards, undermining the overall integrity of the system."
+      },
+      {
+        "slot": 5,
+        "title": "Operator Override Risk",
+        "detail": "The introduction of the `product_registry.gtm_ready_bar_override` knob allows operators to set a higher GTM readiness bar, but this could lead to inconsistent application of the GTM readiness criteria across different products, potentially undermining the integrity of the GTM process."
+      },
+      {
+        "slot": 5,
+        "title": "Complexity in Governance",
+        "detail": "The proposal adds another layer of complexity to the governance model by introducing an operator-configurable GTM bar, which may lead to confusion and difficulties in maintaining consistent governance practices across the organization."
+      },
+      {
+        "slot": 5,
+        "title": "Potential for Abuse",
+        "detail": "The capability-keyed naming for sibling charters could be exploited by operators to bypass certain governance checks, especially if the naming conventions are not strictly enforced or monitored."
+      },
+      {
+        "slot": 6,
+        "title": "Operator Config Knob Risk",
+        "detail": "The `product_registry.gtm_ready_bar_override` knob in §7.6 introduces a risk of inconsistent GTM readiness standards across products, potentially leading to customer confusion and diluted brand perception if some products are launched with lower quality scores than others. This undermines the purpose of having a standardized GTM readiness process."
+      },
+      {
+        "slot": 6,
+        "title": "Clamping Semantics",
+        "detail": "The silent clamping of out-of-bounds `gtm_ready_bar_override` values to [75, 100] in §7.6, while notifying admins, could lead to unexpected behavior and debugging challenges. Operators might assume their configured value is being used, leading to incorrect assumptions about GTM readiness."
+      },
+      {
+        "slot": 6,
+        "title": "Reconciliation Paragraph Redundancy",
+        "detail": "The §19.0 reconciliation paragraph distinguishing Self-Audit 95/95 from GTM Readiness bar seems redundant, as the §10 governance-mechanisms table already covers these distinctions. This adds unnecessary complexity to the document."
+      },
+      {
+        "slot": 6,
+        "title": "Sibling Naming Convention",
+        "detail": "While capability-keyed naming for sibling charters is generally better, the specific name `orchestra-admission-executor` might be too specific. It focuses on the 'admission' aspect, potentially overlooking other responsibilities the executor might have in the future."
+      },
+      {
+        "slot": 7,
+        "title": "§7.6 override risk",
+        "detail": "The operator-configurable GTM bar (gtm_ready_bar_override) lacks enforcement for CEO directives. §7.6 allows operators to set thresholds below the CEO-mandated 95 without consequences, creating misalignment between executive intent and implementation. The clamping mechanism only handles numerical bounds, not policy compliance."
+      },
+      {
+        "slot": 7,
+        "title": "Sibling naming ambiguity",
+        "detail": "Capability-keyed naming for executors (crawl-write-executor/orchestra-admission-executor) in §15.1 creates ambiguity. Unlike agent-specific names, these don't indicate primary association, risking confusion during incident debugging. The proposal lacks cross-referencing standards between primary agents and siblings."
+      },
+      {
+        "slot": 7,
+        "title": "HARD threshold fallout",
+        "detail": "Eliminating Near-GTM conditional band ignores operational realities. Products scoring 89 (Demo-ready) but blocked from conditional clearance due to a single high finding may undergo unnecessary rebuilds. §11 Step 5 HARD fails to account for context-dependent risk tolerance."
+      },
+      {
+        "slot": 7,
+        "title": "Phase B verification gap",
+        "detail": "CA-13-A-CT-4 conformance test only checks for conditional-clearance keywords but doesn't validate Phase B testing requirements. Agent #21's adversarial testing mandate (ENTRY 015) could be bypassed if implementation focuses solely on score thresholds without verifying interactive flow coverage."
+      },
+      {
+        "slot": 8,
+        "title": "Override weakens global defaults",
+        "detail": "In CA-13-A v2 §7.6, `product_registry.gtm_ready_bar_override` can raise the GTM bar per product while leaving the canonical threshold at 75. That creates a split-brain policy where the same clearance step means different things across products, environments, and operator views, increasing the chance of misconfigured launches and ambiguous audit outcomes."
+      },
+      {
+        "slot": 8,
+        "title": "Silent clamp hides operator errors",
+        "detail": "The proposed `[75, 100]` clamping in CA-13-A v2 silently converts out-of-bounds values instead of rejecting them. In a governance path, silent coercion is dangerous because a mistaken `50` becomes a seemingly valid `75`, which can mask operational mistakes and make post-incident forensics harder than a hard failure would."
+      },
+      {
+        "slot": 8,
+        "title": "Hard gate removes recovery path",
+        "detail": "CA-13-A v2 eliminates the 90–94 Near-GTM conditional path from §11 Step 5 entirely. That means a product that is otherwise launchable but temporarily blocked by a narrow, fixable issue cannot use a supervised conditional path, which may increase time-to-market and encourage risky workarounds outside the formal clearance flow."
+      },
+      {
+        "slot": 8,
+        "title": "Sibling naming still underspecified",
+        "detail": "CA-13-B v2 switches to capability-keyed names like `crawl-write-executor` and `orchestra-admission-executor`, but the draft excerpt truncates the EXECUTOR_REGISTRY definitions and does not fully specify collision handling, lifecycle, or migration from the old keys. Without explicit compatibility rules, this risks orphaned permissions or duplicate executor entries during rollout."
+      },
+      {
+        "slot": 9,
+        "title": "Config knob lacks audit trail",
+        "detail": "The `product_registry.gtm_ready_bar_override` knob is operator-configurable but lacks a clear audit trail. §7.6 mentions admin notification on out-of-bounds override, but not regular logging of changes."
+      },
+      {
+        "slot": 9,
+        "title": "Fallback clause ambiguity",
+        "detail": "The fallback clause for re-introducing a conditional path (§11 Step 5) requires ALL `high` findings to be Resolved. However, 'Resolved' is not clearly defined in the context of Self-Renewal cycles and post-fix score reflection."
+      },
+      {
+        "slot": 9,
+        "title": "Sibling charter naming inconsistency",
+        "detail": "CA-13-B-v2 switches to capability-keyed naming for sibling charters. However, the rationale does not clearly justify why this is superior to the previous agent-short-name-keyed approach, potentially introducing naming inconsistency."
+      },
+      {
+        "slot": 10,
+        "title": "gtm_ready_bar_override lacks migration",
+        "detail": "CA-13-A v2 §7.6 operator-config knob section defines product_registry.gtm_ready_bar_override with bounds [75,100] but names no migration path or existing-product backfill; §11 Step 5 row update references the knob without specifying how ClearanceRecord entities created pre-v2 are reconciled."
+      },
+      {
+        "slot": 10,
+        "title": "fallback clause weakens hard threshold",
+        "detail": "CA-13-A v2 Near-GTM elimination section's fallback clause still permits conditional paths if Panel re-introduces them, requiring only 'Resolved' high findings; this directly conflicts with §7.6 safety-invariants (a-e) that mandate diff-only + post-deploy regression guard without defining enforcement for the fallback."
+      },
+      {
+        "slot": 10,
+        "title": "EXECUTOR_REGISTRY sibling keys incomplete",
+        "detail": "CA-13-B v2 §15.1 rows 21/26 switch to capability-keyed names (crawl-write-executor, orchestra-admission-executor) but the EXECUTOR_REGISTRY typescript snippet omits required updates to BaseAgent.guard() authorityNeeded set membership and api/agent/21/execute.js wiring already referenced in §15.1."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-13-A-v2-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 4
+    },
+    "CA-13-A-v2-Q2": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between CA13AV2Q2-RATIFY / CA13AV2Q2-RESERVE",
+      "topKey": "CA13AV2Q2-RATIFY",
+      "topCount": 3
+    },
+    "CA-13-A-v2-Q3": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between CA13AV2Q3-RATIFY / REJECT",
+      "topKey": "CA13AV2Q3-RATIFY",
+      "topCount": 3
+    },
+    "CA-13-B-v2-Q1": {
+      "verdict": "PLURALITY_CA13BV2Q1-RATIFY",
+      "detail": "4 of 8 on CA13BV2Q1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA13BV2Q1-RATIFY",
+      "topCount": 4
+    },
+    "CA-13-B-v2-Q2": {
+      "verdict": "PLURALITY_CA13BV2Q2-RATIFY",
+      "detail": "4 of 8 on CA13BV2Q2-RATIFY (below 7/10 quorum)",
+      "topKey": "CA13BV2Q2-RATIFY",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.4,
+    "alignedCount": 16,
+    "totalPossible": 40,
+    "draftedQs": [
+      "CA-13-A-v2-Q1",
+      "CA-13-A-v2-Q2",
+      "CA-13-A-v2-Q3",
+      "CA-13-B-v2-Q1",
+      "CA-13-B-v2-Q2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 40.0 %, distinct objections 34"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Operator override creates governance bypass",
+            "detail": "The `product_registry.gtm_ready_bar_override` knob in CA-13-A v2 allows operators to set GTM bar as low as 75, undermining the CEO directive for ≥95. This creates a permanent escape hatch where operators can ship at 75 indefinitely by never setting the override, making the '≥95 after first product' promise unenforceable."
+          },
+          {
+            "title": "Capability-keyed naming loses agent traceability",
+            "detail": "CA-13-B v2's switch to `crawl-write-executor` and `orchestra-admission-executor` obscures which primary agent owns the sibling. When debugging production issues, operators won't know that `crawl-write-executor` belongs to Agent #21 without cross-referencing the EXECUTOR_REGISTRY, increasing operational complexity."
+          },
+          {
+            "title": "Phase B prerequisite enforcement unclear",
+            "detail": "§11 Step 5 references 'Phase B pass per CA-14-A canonical' but CA-13-A v2 eliminates the Near-GTM conditional band without clarifying how partial Phase B passes (some paths skipped) affect clearance. The interaction between hard thresholds and Phase B skip-disclosure creates ambiguity about what constitutes a 'pass'."
+          },
+          {
+            "title": "No migration path for in-flight products",
+            "detail": "Products currently in the pipeline targeting 75-89 Demo-ready have no documented migration path if their operator later sets `gtm_ready_bar_override: 95`. The proposal doesn't specify whether the override applies retroactively to already-cleared products or only to new clearances, creating versioning confusion."
+          }
+        ],
+        "worse_than_status_quo": "The operator-configurable knob fragments the GTM bar across products within the same FlowAI instance, where Product A ships at 75 while Product B requires 95, creating inconsistent quality standards that undermine market confidence in the 'FlowAI-cleared' brand.",
+        "precedent": "Kubernetes' admission controller webhooks suffered similar naming confusion when they switched from owner-based names to function-based names in v1.9, requiring a major documentation overhaul and breaking existing automation scripts."
+      },
+      "rejection_steelman": "This proposal should be rejected because it fundamentally undermines the CEO's ≥95 directive by making it permanently optional through the operator-config escape hatch. The promise to 're-promote via successor CA after ≥1 product sustains ≥95' is unenforceable since operators can keep all products at 75 forever, never triggering the successor CA condition. Combined with the capability-keyed naming that obscures agent ownership, this creates operational confusion without delivering the intended quality improvement.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject v2 — canonical §7.6 bands SHOULD update to ≥95 immediately per CEO directive regardless of single-product-evidence prerequisite.",
+          "rationale": "The operator-config knob creates a permanent loophole allowing indefinite operation at 75, making the CEO directive effectively optional rather than mandatory."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "CA13AV2Q2-RESERVE",
+          "pick_text": "Ratify with reservation — fallback clause mandatory if Panel ever re-introduces a conditional path (ALL `high` findings Resolved).",
+          "rationale": "While eliminating the conditional path is correct, the fallback clause provides necessary protection against future weakening of the standard through Panel amendments."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": "CA13AV2Q3-STRONGER",
+          "pick_text": "Ratify with stronger language — append \"These are NEVER conflated in any operator-facing surface\".",
+          "rationale": "The reconciliation paragraph is necessary but needs stronger language to prevent UI/UX designers from conflating the two 95s in dashboards or reports."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "CA13BV2Q1-DEFER",
+          "pick_text": "Defer to joint disposition with §15.5 sibling row-table populate.",
+          "rationale": "The wording change references EXECUTOR_REGISTRY mechanics that aren't fully specified in this amendment, making isolated ratification premature."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "CA13BV2Q2-AGENTID",
+          "pick_text": "Adopt agentId-keyed (`agent-21-executor`, `agent-26-executor`).",
+          "rationale": "AgentId-keyed naming preserves the critical parent-sibling relationship while being more maintainable than either capability-keyed or agent-short-name-keyed approaches."
+        }
+      },
+      "overallNotes": "The v2 revision addresses some Panel concerns but introduces new problems through the operator-config escape hatch and naming confusion.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Operator-config knob risks inconsistency",
+            "detail": "The introduction of the `product_registry.gtm_ready_bar_override` knob in §7.6 could lead to inconsistencies across products if operators set different thresholds. This could undermine the uniformity of the GTM readiness criteria and complicate governance."
+          },
+          {
+            "title": "Elimination of Near-GTM band lacks flexibility",
+            "detail": "By eliminating the 90–94 Near-GTM conditional band, the proposal removes flexibility for products that are close to being market-ready but not quite there. This could delay the launch of products that are otherwise viable with minor adjustments."
+          },
+          {
+            "title": "Sibling naming convention may cause confusion",
+            "detail": "Switching to capability-keyed sibling charter naming could cause confusion if the capabilities are not clearly defined or if they overlap with other agents. This might lead to misunderstandings about the roles and responsibilities of each agent."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to a fragmented approach to GTM readiness, with different products having different thresholds, potentially causing confusion and inconsistency in product launches.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal introduces complexity and potential inconsistency with the operator-configurable GTM bar, which could lead to governance challenges and uneven application of readiness criteria across products. Additionally, the elimination of the Near-GTM band removes a useful flexibility mechanism for products that are nearly market-ready, potentially delaying their launch unnecessarily.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "CA13AV2Q1-FLOOR80",
+          "pick_text": "Ratify with stricter bound — knob bounds [80,100] instead of [75,100].",
+          "rationale": "A stricter bound would ensure a higher baseline for GTM readiness, reducing the risk of inconsistency across products."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "CA13AV2Q2-RESERVE",
+          "pick_text": "Ratify with reservation — fallback clause mandatory if Panel ever re-introduces a conditional path (ALL `high` findings Resolved).",
+          "rationale": "This option provides a safeguard if the conditional path is reintroduced, ensuring that high findings are fully resolved."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": "CA13AV2Q3-STRONGER",
+          "pick_text": "Ratify with stronger language — append \"These are NEVER conflated in any operator-facing surface\".",
+          "rationale": "Stronger language would help clarify the distinction between the two mechanisms, reducing potential confusion."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "CA13BV2Q1-SHORTER",
+          "pick_text": "Ratify with revised phrasing — keep strike but shorten ENTRY 009 citation.",
+          "rationale": "Revised phrasing would maintain the intended changes while simplifying the documentation for clarity."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "CA13BV2Q2-MEMBERSHIP",
+          "pick_text": "Ratify capability-keyed BUT rename — `orchestra-membership-executor` not `orchestra-admission-executor`.",
+          "rationale": "Renaming to `orchestra-membership-executor` would provide clearer insight into the agent's role, reducing potential confusion."
+        }
+      },
+      "overallNotes": "The proposal introduces useful changes but could benefit from tighter controls and clearer naming conventions to avoid potential governance and operational issues.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the implementation of the `product_registry.gtm_ready_bar_override` knob causes unintended consequences. This could lead to difficulties in reverting changes and potentially causing harm to the system."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not outline a comprehensive testing plan to ensure the correctness and safety of the `product_registry.gtm_ready_bar_override` knob. This could lead to errors or security vulnerabilities being introduced into the system."
+          },
+          {
+            "title": "Inconsistent Authorization",
+            "detail": "The proposal introduces a new authorization mechanism for the `product_registry.gtm_ready_bar_override` knob, but it is unclear how this mechanism will interact with existing authorization systems. This could lead to inconsistencies or security vulnerabilities in the authorization process."
+          }
+        ],
+        "worse_than_status_quo": "If the implementation of the `product_registry.gtm_ready_bar_override` knob is not thoroughly tested and validated, it could lead to a situation where the system is more prone to errors or security vulnerabilities than it is currently. This would make the system worse than the status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces a new complexity to the system without providing sufficient guarantees of safety and correctness. The lack of a clear rollback strategy, insufficient testing, and inconsistent authorization mechanisms make it difficult to ensure that the implementation of the `product_registry.gtm_ready_bar_override` knob will not cause harm to the system.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "CA13AV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted — bands UNCHANGED + knob default 75 bounds [75,100]; ≥95 re-promotes via successor CA after ≥1 VEU product proves it.",
+          "rationale": "This option seems to be the most balanced approach, as it maintains the current bands while introducing a new knob that allows for more flexibility."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "CA13AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted: 90–94 Near-GTM band ELIMINATED; §11 Step 5 HARD.",
+          "rationale": "Eliminating the conditional path seems to be a good idea, as it simplifies the system and reduces the risk of errors or security vulnerabilities."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": "CA13AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 §19.0 as drafted.",
+          "rationale": "The current wording of §19.0 seems to be clear and concise, and it provides a useful distinction between Self-Audit 95/95 and GTM Readiness bar."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "CA13BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (same as v1).",
+          "rationale": "The current wording of §15-intro + §15.1 rows 21/26 seems to be clear and consistent with the rest of the proposal."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "CA13BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 capability-keyed naming as drafted.",
+          "rationale": "The capability-keyed naming approach seems to be more descriptive and consistent with the rest of the system."
+        }
+      },
+      "overallNotes": "The proposal seems to be well-structured and clear, but it requires more attention to detail and testing to ensure its safety and correctness.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Operator override complexity",
+            "detail": "The introduction of `product_registry.gtm_ready_bar_override` adds complexity to the system. Operators may set arbitrary values without understanding the full implications, leading to inconsistent product quality. The §7.6 score bands should remain canonical and uniform across products to ensure consistency."
+          },
+          {
+            "title": "Lack of migration path",
+            "detail": "The proposal does not provide a clear migration path for existing products that are already in the pipeline. This could lead to inconsistencies and potential failures in the clearance process for products that were initiated under the previous guidelines."
+          },
+          {
+            "title": "Potential for misuse",
+            "detail": "The operator-configurable knob could be misused by operators to bypass the strict quality standards set by the canonical §7.6 score bands. This could lead to products being cleared for GTM that do not meet the necessary quality standards, undermining the overall integrity of the system."
+          }
+        ],
+        "worse_than_status_quo": "The proposal introduces an operator-configurable knob that could lead to inconsistent product quality and potential misuse, making the system worse than the current status quo where canonical §7.6 score bands ensure uniform quality standards.",
+        "precedent": "In the early days of continuous integration/continuous deployment (CI/CD) pipelines, similar configurable overrides were introduced to allow for flexibility. However, this led to inconsistent build qualities and frequent failures, as operators often misused these overrides without fully understanding their implications."
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces unnecessary complexity and potential for misuse through the operator-configurable knob. The canonical §7.6 score bands should remain uniform to ensure consistent product quality and integrity across the system.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject v2 — canonical §7.6 bands SHOULD update to ≥95 immediately per CEO directive regardless of single-product-evidence prerequisite.",
+          "rationale": "The canonical §7.6 score bands should be updated to reflect the CEO directive immediately to ensure uniform quality standards across all products."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "CA13AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted: 90–94 Near-GTM band ELIMINATED; §11 Step 5 HARD.",
+          "rationale": "Eliminating the Near-GTM conditional band ensures that all products meet the necessary quality standards before clearance, maintaining the integrity of the system."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": "CA13AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 §19.0 as drafted.",
+          "rationale": "The §19.0 reconciliation paragraph is necessary to distinguish between the Self-Audit 95/95 threshold and the GTM Readiness bar, ensuring clarity and understanding for operators."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "CA13BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (same as v1).",
+          "rationale": "The §15-intro and §15.1 rows 21/26 wording should be ratified as drafted to maintain consistency with the ENTRY 009 LOCKED decision."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "CA13BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 capability-keyed naming as drafted.",
+          "rationale": "Capability-keyed naming provides clearer and more intuitive names for the sibling charters, improving understandability and maintainability."
+        }
+      },
+      "overallNotes": "The proposal introduces useful changes but also adds complexity and potential for misuse that need to be carefully managed.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Operator Override Risk",
+            "detail": "The introduction of the `product_registry.gtm_ready_bar_override` knob allows operators to set a higher GTM readiness bar, but this could lead to inconsistent application of the GTM readiness criteria across different products, potentially undermining the integrity of the GTM process."
+          },
+          {
+            "title": "Complexity in Governance",
+            "detail": "The proposal adds another layer of complexity to the governance model by introducing an operator-configurable GTM bar, which may lead to confusion and difficulties in maintaining consistent governance practices across the organization."
+          },
+          {
+            "title": "Potential for Abuse",
+            "detail": "The capability-keyed naming for sibling charters could be exploited by operators to bypass certain governance checks, especially if the naming conventions are not strictly enforced or monitored."
+          }
+        ],
+        "worse_than_status_quo": "If operators misuse the `product_registry.gtm_ready_bar_override` knob to set unrealistically high GTM bars, it could delay product launches and reduce market competitiveness, making the system worse than the status quo.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces unnecessary complexity and potential for inconsistency in the GTM readiness criteria, which could lead to governance challenges and potential delays in product launches.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The introduction of the operator-configurable GTM bar adds unnecessary complexity without clear benefits."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The elimination of the Near-GTM conditional band without a clear fallback mechanism could lead to governance loopholes."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The §19.0 reconciliation paragraph is redundant and should be integrated into the existing governance mechanisms."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The wording reconciliation in §15 should be deferred until the broader context is clear."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The switch to capability-keyed naming could introduce confusion and should be reconsidered."
+        }
+      },
+      "overallNotes": "The proposal introduces several governance complexities that need to be carefully evaluated before implementation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Operator Config Knob Risk",
+            "detail": "The `product_registry.gtm_ready_bar_override` knob in §7.6 introduces a risk of inconsistent GTM readiness standards across products, potentially leading to customer confusion and diluted brand perception if some products are launched with lower quality scores than others. This undermines the purpose of having a standardized GTM readiness process."
+          },
+          {
+            "title": "Clamping Semantics",
+            "detail": "The silent clamping of out-of-bounds `gtm_ready_bar_override` values to [75, 100] in §7.6, while notifying admins, could lead to unexpected behavior and debugging challenges. Operators might assume their configured value is being used, leading to incorrect assumptions about GTM readiness."
+          },
+          {
+            "title": "Reconciliation Paragraph Redundancy",
+            "detail": "The §19.0 reconciliation paragraph distinguishing Self-Audit 95/95 from GTM Readiness bar seems redundant, as the §10 governance-mechanisms table already covers these distinctions. This adds unnecessary complexity to the document."
+          },
+          {
+            "title": "Sibling Naming Convention",
+            "detail": "While capability-keyed naming for sibling charters is generally better, the specific name `orchestra-admission-executor` might be too specific. It focuses on the 'admission' aspect, potentially overlooking other responsibilities the executor might have in the future."
+          }
+        ],
+        "worse_than_status_quo": "Introducing the operator-configurable GTM bar could lead to a scenario where different products have vastly different quality standards for GTM readiness, creating a fragmented and inconsistent user experience. This could damage the overall brand perception and erode customer trust, making the system worse than the current standardized approach.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces an operator-configurable GTM bar, which could lead to inconsistent quality standards across products and dilute the overall brand perception. The silent clamping of out-of-bounds values adds complexity and potential for confusion. Deferring the proposal would allow for further exploration of these risks and alternative solutions that maintain a consistent and reliable GTM readiness process.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "CA13AV2Q1-ADMIN",
+          "pick_text": "Ratify with tighter knob — operator override admin-only (not operator role).",
+          "rationale": "Restricting the override to admin-only roles provides a necessary safeguard against potential misuse and ensures that GTM readiness standards are not compromised by lower-level operators."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "CA13AV2Q2-RESERVE",
+          "pick_text": "Ratify with reservation — fallback clause mandatory if Panel ever re-introduces a conditional path (ALL `high` findings Resolved).",
+          "rationale": "If a conditional path is reintroduced, requiring all `high` findings to be resolved ensures a higher level of quality and reduces the risk of shipping products with significant unresolved issues."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — §10 governance-mechanisms table already covers it; §19.0 redundant.",
+          "rationale": "The §19.0 reconciliation paragraph is redundant and adds unnecessary complexity to the document. The §10 governance-mechanisms table already adequately covers the distinctions between the two mechanisms."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "CA13BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (same as v1).",
+          "rationale": "Carrying forward the v1 wording that strikes the legacy dual-authority phrasing in favor of the sibling pattern is a reasonable approach, as it aligns with the existing architecture and governance model."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "CA13BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 capability-keyed naming as drafted.",
+          "rationale": "Capability-keyed naming provides better clarity and coherence by focusing on what the sibling executor does, rather than which primary agent it is associated with."
+        }
+      },
+      "overallNotes": "The proposal has some potential risks related to the operator-configurable GTM bar and the silent clamping of out-of-bounds values. Addressing these concerns would improve the overall quality and reliability of the GTM readiness process.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§7.6 override risk",
+            "detail": "The operator-configurable GTM bar (gtm_ready_bar_override) lacks enforcement for CEO directives. §7.6 allows operators to set thresholds below the CEO-mandated 95 without consequences, creating misalignment between executive intent and implementation. The clamping mechanism only handles numerical bounds, not policy compliance."
+          },
+          {
+            "title": "Sibling naming ambiguity",
+            "detail": "Capability-keyed naming for executors (crawl-write-executor/orchestra-admission-executor) in §15.1 creates ambiguity. Unlike agent-specific names, these don't indicate primary association, risking confusion during incident debugging. The proposal lacks cross-referencing standards between primary agents and siblings."
+          },
+          {
+            "title": "HARD threshold fallout",
+            "detail": "Eliminating Near-GTM conditional band ignores operational realities. Products scoring 89 (Demo-ready) but blocked from conditional clearance due to a single high finding may undergo unnecessary rebuilds. §11 Step 5 HARD fails to account for context-dependent risk tolerance."
+          },
+          {
+            "title": "Phase B verification gap",
+            "detail": "CA-13-A-CT-4 conformance test only checks for conditional-clearance keywords but doesn't validate Phase B testing requirements. Agent #21's adversarial testing mandate (ENTRY 015) could be bypassed if implementation focuses solely on score thresholds without verifying interactive flow coverage."
+          }
+        ],
+        "worse_than_status_quo": "An operator sets gtm_ready_bar_override=95 but misses CEO's evidence prerequisite. A product scores 94.9 with zero critical issues but fails Step 5 due to HARD threshold. Under status quo, it would have cleared as Demo-ready; now it's blocked despite being market-ready, causing revenue delays.",
+        "precedent": "Google Health's 2008-2011 failure: configurable compliance thresholds without centralized enforcement led to inconsistent PHI handling across modules, causing regulatory violations. Similar to gtm_ready_bar_override without CEO-directive enforcement."
+      },
+      "rejection_steelman": "This proposal should be deferred until after ≥1 VEU product sustains ≥95 end-to-end. Introducing configurable thresholds without evidence-backed defaults invites inconsistency, while eliminating Near-GTM bands reduces operational flexibility. The sibling naming changes create new ambiguity without solving core authority separation concerns.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "CA13AV2Q1-ADMIN",
+          "pick_text": "Ratify with tighter knob — operator override admin-only (not operator role).",
+          "rationale": "Limiting override to admin role addresses the governance gap while preserving the evidence-based promotion principle."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "CA13AV2Q2-RESERVE",
+          "pick_text": "Ratify with reservation — fallback clause mandatory if Panel ever re-introduces a conditional path (ALL `high` findings Resolved).",
+          "rationale": "The fallback clause provides a safety valve while maintaining the proposal's intent to eliminate risky conditional paths."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": null,
+          "pick_text": "Ratify with stronger language — append 'These are NEVER conflated in any operator-facing surface'.",
+          "rationale": "Explicit anti-conflation language prevents operational confusion between Self-Audit and GTM readiness mechanisms."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "CA13BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (same as v1).",
+          "rationale": "The ENTRY 009 alignment provides consistency, though the sibling authority pattern remains theoretically vulnerable to permission creep."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "CA13BV2Q2-MEMBERSHIP",
+          "pick_text": "Ratify capability-keyed BUT rename — `orchestra-membership-executor` not `orchestra-admission-executor`.",
+          "rationale": "'Membership' better reflects ongoing management duties beyond initial admission, aligning with §8.1 lifecycle requirements."
+        }
+      },
+      "overallNotes": "The knob implementation requires audit trails for CEO-directive deviations to prevent policy bypass.",
+      "invalid_reason": "4/5 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Override weakens global defaults",
+            "detail": "In CA-13-A v2 §7.6, `product_registry.gtm_ready_bar_override` can raise the GTM bar per product while leaving the canonical threshold at 75. That creates a split-brain policy where the same clearance step means different things across products, environments, and operator views, increasing the chance of misconfigured launches and ambiguous audit outcomes."
+          },
+          {
+            "title": "Silent clamp hides operator errors",
+            "detail": "The proposed `[75, 100]` clamping in CA-13-A v2 silently converts out-of-bounds values instead of rejecting them. In a governance path, silent coercion is dangerous because a mistaken `50` becomes a seemingly valid `75`, which can mask operational mistakes and make post-incident forensics harder than a hard failure would."
+          },
+          {
+            "title": "Hard gate removes recovery path",
+            "detail": "CA-13-A v2 eliminates the 90–94 Near-GTM conditional path from §11 Step 5 entirely. That means a product that is otherwise launchable but temporarily blocked by a narrow, fixable issue cannot use a supervised conditional path, which may increase time-to-market and encourage risky workarounds outside the formal clearance flow."
+          },
+          {
+            "title": "Sibling naming still underspecified",
+            "detail": "CA-13-B v2 switches to capability-keyed names like `crawl-write-executor` and `orchestra-admission-executor`, but the draft excerpt truncates the EXECUTOR_REGISTRY definitions and does not fully specify collision handling, lifecycle, or migration from the old keys. Without explicit compatibility rules, this risks orphaned permissions or duplicate executor entries during rollout."
+          }
+        ],
+        "worse_than_status_quo": "If an operator sets `gtm_ready_bar_override` to 95 for a sensitive product while other teams continue to assume the canonical demo-ready bar is 75, the product can appear compliant in one layer and blocked in another. That mismatch can cause last-minute launch confusion, delayed approvals, or accidental bypasses when people rely on stale dashboards rather than the per-product registry value.",
+        "precedent": "Uber's 2018 self-driving fatality review is a real-world example of governance and safety checks being too weakly integrated with operational decision-making, with ambiguous override and monitoring practices contributing to catastrophic failure. More generally, silent coercion and policy fragmentation have repeatedly caused trouble in access-control systems such as AWS IAM misconfigurations."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring CA-13 v2 is that it changes governance semantics without enough migration and compatibility detail. The proposal introduces a per-product GTM override, removes the conditional band, and renames executor siblings, but the excerpt does not provide a complete rollout plan, compatibility matrix, or explicit remediation path for existing products and dashboards. Given that the system already treats clearance as a hard safety boundary, deferring until the implementation and observability consequences are fully specified is the safer choice.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "CA13AV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted — bands UNCHANGED + knob default 75 bounds [75,100]; ≥95 re-promotes via successor CA after ≥1 VEU product proves it.",
+          "rationale": "This is the only option that preserves the draft’s stated policy separation: canonical bands remain unchanged while ≥95 is handled as an operator-configurable per-product setting. The objection is to operational risk, not to the specific policy text as drafted."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "CA13AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted: 90–94 Near-GTM band ELIMINATED; §11 Step 5 HARD.",
+          "rationale": "Although it reduces recovery flexibility, the draft is internally consistent that Step 5 should be hard and not admit a conditional clearance loophole. The fallback clause is only a contingency if a conditional path is reintroduced later."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": "CA13AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 §19.0 as drafted.",
+          "rationale": "The reconciliation paragraph usefully clarifies that the Self-Audit 95/95 threshold and the GTM Readiness bar are distinct mechanisms. That distinction is necessary to avoid conflation in operator-facing governance surfaces."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "CA13BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (same as v1).",
+          "rationale": "The v2 text preserves the existing sibling-pattern interpretation while merely restating the lock from ENTRY 009. Since the question is about wording reconciliation, the drafted carry-forward is acceptable."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "CA13BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 capability-keyed naming as drafted.",
+          "rationale": "Capability-keyed executor names are clearer than agent-short-name-keyed names because they describe function rather than lineage. That improves maintainability and reduces semantic drift in the registry."
+        }
+      },
+      "overallNotes": "I am not endorsing the rollout risk profile, only accepting the exact drafted text where the question asks whether the amendment should be ratified as written.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Config knob lacks audit trail",
+            "detail": "The `product_registry.gtm_ready_bar_override` knob is operator-configurable but lacks a clear audit trail. §7.6 mentions admin notification on out-of-bounds override, but not regular logging of changes."
+          },
+          {
+            "title": "Fallback clause ambiguity",
+            "detail": "The fallback clause for re-introducing a conditional path (§11 Step 5) requires ALL `high` findings to be Resolved. However, 'Resolved' is not clearly defined in the context of Self-Renewal cycles and post-fix score reflection."
+          },
+          {
+            "title": "Sibling charter naming inconsistency",
+            "detail": "CA-13-B-v2 switches to capability-keyed naming for sibling charters. However, the rationale does not clearly justify why this is superior to the previous agent-short-name-keyed approach, potentially introducing naming inconsistency."
+          }
+        ],
+        "worse_than_status_quo": "If the `gtm_ready_bar_override` knob is misused or set too high without proper oversight, it could lead to products being cleared for GTM without meeting the intended quality thresholds, potentially harming customer experience and trust.",
+        "precedent": "The configurable GTM readiness bar with operator override has a similar design pattern to Kubernetes' admission controllers, where certain checks can be bypassed or configured. However, Kubernetes also emphasizes audit logging for such configurations."
+      },
+      "rejection_steelman": "The proposal could be deferred because it introduces a new configuration knob without a comprehensive audit and change tracking mechanism, which is critical for governance and traceability in production environments.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "CA13AV2Q1-ADMIN",
+          "pick_text": "Ratify with tighter knob — operator override admin-only (not operator role).",
+          "rationale": "Restricting the override to admin role adds a layer of governance and reduces the risk of misuse."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "CA13AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted: 90–94 Near-GTM band ELIMINATED; §11 Step 5 HARD.",
+          "rationale": "Eliminating the conditional clearance path aligns with the intent of maintaining high quality thresholds for GTM readiness."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": null,
+          "pick_text": "Ratify with stronger language — append 'These are NEVER conflated in any operator-facing surface'.",
+          "rationale": "Adding stronger language clarifies the distinction between Self-Audit 95/95 and GTM Readiness bar, reducing potential confusion."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "CA13BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (same as v1).",
+          "rationale": "The v2 retains the v1 wording for §15-intro and §15.1 rows 21/26, which have been previously reviewed and deemed acceptable."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "CA13BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 capability-keyed naming as drafted.",
+          "rationale": "Capability-keyed naming provides clarity on the function of the sibling charters, which is beneficial for understanding and maintaining the system."
+        }
+      },
+      "overallNotes": "The proposal addresses several concerns raised in the previous Panel review, but careful implementation and monitoring of the new configuration knob are crucial.",
+      "invalid_reason": "4/5 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "gtm_ready_bar_override lacks migration",
+            "detail": "CA-13-A v2 §7.6 operator-config knob section defines product_registry.gtm_ready_bar_override with bounds [75,100] but names no migration path or existing-product backfill; §11 Step 5 row update references the knob without specifying how ClearanceRecord entities created pre-v2 are reconciled."
+          },
+          {
+            "title": "fallback clause weakens hard threshold",
+            "detail": "CA-13-A v2 Near-GTM elimination section's fallback clause still permits conditional paths if Panel re-introduces them, requiring only 'Resolved' high findings; this directly conflicts with §7.6 safety-invariants (a-e) that mandate diff-only + post-deploy regression guard without defining enforcement for the fallback."
+          },
+          {
+            "title": "EXECUTOR_REGISTRY sibling keys incomplete",
+            "detail": "CA-13-B v2 §15.1 rows 21/26 switch to capability-keyed names (crawl-write-executor, orchestra-admission-executor) but the EXECUTOR_REGISTRY typescript snippet omits required updates to BaseAgent.guard() authorityNeeded set membership and api/agent/21/execute.js wiring already referenced in §15.1."
+          }
+        ],
+        "worse_than_status_quo": "An operator sets gtm_ready_bar_override=95 on a product that previously cleared at the canonical 75 Demo-ready band; the product now fails §11 Step 5 indefinitely despite passing all other gates, blocking demos that status-quo ENTRY 006 bands would have allowed.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The v2 draft layers operator-configurable overrides and fallback clauses onto an already complex multi-gate clearance system (§11, §19, §7.6) without demonstrated production evidence or migration tooling; this risks governance fragmentation and configuration drift that could erode the canonical SSOT guarantees more than retaining the simpler ENTRY 006 bands.",
+      "votes": {
+        "CA-13-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All options either ratify an unproven knob or demand immediate canonical change; none addresses the missing migration path for existing ClearanceRecord entities."
+        },
+        "CA-13-A-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Retaining any fallback clause re-introduces conditional paths that contradict the hard-threshold intent and §7.6 invariants."
+        },
+        "CA-13-A-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "§19.0 remains redundant with the §19 governance table and adds no enforceable distinction between the two 95 bars."
+        },
+        "CA-13-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The sibling-pattern wording still lacks concrete BaseAgent.guard() and EXECUTOR_REGISTRY enforcement details."
+        },
+        "CA-13-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Capability-keyed naming is underspecified without corresponding wiring and guard updates in the referenced files."
+        }
+      },
+      "overallNotes": "All objections target named sections and mechanisms inside the v2 draft itself.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-13-A-v2-Q1",
+      "topic": "CA-13-A v2 Q1 — Does Panel ratify the v2 approach: §7.6 bands UNCHANGED from ENTRY 006; `product_registry.gtm_ready_bar_override` knob added (default 75, bounds [75,100]); ≥95 re-promotes via successor CA after ≥1 VEU product sustains ≥95 end-to-end?",
+      "options": [
+        {
+          "key": "CA13AV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted — bands UNCHANGED + knob default 75 bounds [75,100]; ≥95 re-promotes via successor CA after ≥1 VEU product proves it."
+        },
+        {
+          "key": "CA13AV2Q1-ADMIN",
+          "text": "Ratify with tighter knob — operator override admin-only (not operator role)."
+        },
+        {
+          "key": "CA13AV2Q1-FLOOR80",
+          "text": "Ratify with stricter bound — knob bounds [80,100] instead of [75,100]."
+        },
+        {
+          "key": "CA13AV2Q1-REJECT",
+          "text": "Reject v2 — canonical §7.6 bands SHOULD update to ≥95 immediately per CEO directive regardless of single-product-evidence prerequisite."
+        }
+      ],
+      "draftedKey": "CA13AV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-13-A-v2-Q2",
+      "topic": "CA-13-A v2 Q2 — Does Panel ratify the v2 elimination of the 90–94 Near-GTM conditional-clearance band (§11 Step 5 is HARD)?",
+      "options": [
+        {
+          "key": "CA13AV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted: 90–94 Near-GTM band ELIMINATED; §11 Step 5 HARD."
+        },
+        {
+          "key": "CA13AV2Q2-RESERVE",
+          "text": "Ratify with reservation — fallback clause mandatory if Panel ever re-introduces a conditional path (ALL `high` findings Resolved)."
+        },
+        {
+          "key": "CA13AV2Q2-OPTIN_CONDITIONAL",
+          "text": "Re-introduce a conditional path but only for products with gtm_ready_bar_override ≥ 90."
+        },
+        {
+          "key": "CA13AV2Q2-REJECT",
+          "text": "Reject v2 elimination — restore v1 Near-GTM conditional path with admin-only signoff."
+        }
+      ],
+      "draftedKey": "CA13AV2Q2-RATIFY"
+    },
+    {
+      "id": "CA-13-A-v2-Q3",
+      "topic": "CA-13-A v2 Q3 — Does Panel ratify the §19.0 reconciliation paragraph distinguishing Self-Audit 95/95 from GTM Readiness bar (carry-forward from v1, no change)?",
+      "options": [
+        {
+          "key": "CA13AV2Q3-RATIFY",
+          "text": "Ratify v2 §19.0 as drafted."
+        },
+        {
+          "key": "CA13AV2Q3-STRONGER",
+          "text": "Ratify with stronger language — append \"These are NEVER conflated in any operator-facing surface\"."
+        },
+        {
+          "key": "CA13AV2Q3-REJECT",
+          "text": "Reject — §10 governance-mechanisms table already covers it; §19.0 redundant."
+        },
+        {
+          "key": "CA13AV2Q3-MOVE",
+          "text": "Move §19.0 to §10 (Self-Governance) instead of §19."
+        }
+      ],
+      "draftedKey": "CA13AV2Q3-RATIFY"
+    },
+    {
+      "id": "CA-13-B-v2-Q1",
+      "topic": "CA-13-B v2 Q1 — Does Panel ratify the v2 §15-intro + §15.1 rows 21/26 wording that strikes legacy (b) dual-authority in favor of Option-(a) sibling-pattern per ENTRY 009 LOCKED (carry-forward from v1)?",
+      "options": [
+        {
+          "key": "CA13BV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted (same as v1)."
+        },
+        {
+          "key": "CA13BV2Q1-SHORTER",
+          "text": "Ratify with revised phrasing — keep strike but shorten ENTRY 009 citation."
+        },
+        {
+          "key": "CA13BV2Q1-REJECT",
+          "text": "Reject — leave §15/§15.1 at (b) phrasing; ENTRY 009 stays code-level only."
+        },
+        {
+          "key": "CA13BV2Q1-DEFER",
+          "text": "Defer to joint disposition with §15.5 sibling row-table populate."
+        }
+      ],
+      "draftedKey": "CA13BV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-13-B-v2-Q2",
+      "topic": "CA-13-B v2 Q2 — Does Panel ratify the v2 switch to capability-keyed sibling charter naming (`crawl-write-executor` for Agent #21 sibling; `orchestra-admission-executor` for Agent #26 sibling)?",
+      "options": [
+        {
+          "key": "CA13BV2Q2-RATIFY",
+          "text": "Ratify v2 capability-keyed naming as drafted."
+        },
+        {
+          "key": "CA13BV2Q2-MEMBERSHIP",
+          "text": "Ratify capability-keyed BUT rename — `orchestra-membership-executor` not `orchestra-admission-executor`."
+        },
+        {
+          "key": "CA13BV2Q2-REJECT",
+          "text": "Reject — restore v1 agent-short-name-keyed naming."
+        },
+        {
+          "key": "CA13BV2Q2-AGENTID",
+          "text": "Adopt agentId-keyed (`agent-21-executor`, `agent-26-executor`)."
+        }
+      ],
+      "draftedKey": "CA13BV2Q2-RATIFY"
+    }
+  ]
+}
