@@ -36,6 +36,10 @@
 const DEFAULT_NAV_TIMEOUT_MS = 30_000;
 const DEFAULT_ACTION_TIMEOUT_MS = 8_000;
 const DEFAULT_MAX_INTERACTIVES = 25;
+// D41 T2 — exhaustive ceiling used by probeOnePage when caller does
+// not pass maxInteractives. Matches the previous cap pre-T2; T2 lifts
+// this to a high number so every element gets exercised.
+const DEFAULT_MAX_INTERACTIVES_EXHAUSTIVE = 25;
 const DEFAULT_MAX_MODALS = 10;
 const DEFAULT_MAX_FORMS = 10;
 const DEFAULT_PROBE_BUDGET_MS = 180_000;        // 3-min total wall cap
@@ -896,6 +900,21 @@ export async function probeAgents({
   return { findings, agentsNonFunctional, agentsTested };
 }
 
+// ── D41 T3 — workspace / engine / dashboard probe ────────────────────
+//
+// Stub default. T3 fills this in with real detection of multi-pane
+// layouts (sidebar + main), routes containing "workspace"/"engine"/
+// "dashboard" tokens, and per-surface real-response-vs-stub
+// classification. Stub returns the empty envelope so probeOnePage
+// callers in T1 don't throw before T3 ships.
+
+export async function probeWorkspaces({
+  page, url, sliceBudget = 30_000,
+  actionTimeoutMs = DEFAULT_ACTION_TIMEOUT_MS,
+} = {}) {
+  return { findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 };
+}
+
 // ── T5 — Wired-vs-mock detection ──────────────────────────────────────
 //
 // Distinguish products that talk to a real backend from products that
@@ -1009,22 +1028,22 @@ export async function detectWiredVsMock({
  * @param {function} [args.opts.detectWiredVsMock]
  * @returns {Promise<object>}
  */
-export async function probeAdversarialSurface(args = {}) {
+/**
+ * D41 T1 — page-level probe helper. Encapsulates context+page setup,
+ * network-log listeners, all 5 probes, and cleanup. Reusable across
+ * single-page (probeAdversarialSurface) and multi-page (probeAllPages)
+ * surfaces with a SHARED browser to avoid relaunch cost per page.
+ *
+ * Returns the canonical per-page envelope:
+ *   { ok, url, findings, summary, probedAt, durationMs }
+ *
+ * @param {object} args
+ * @param {object} args.browser   — connected browser (caller owns)
+ * @param {string} args.url
+ * @param {object} args.opts      — same opts shape as probeAdversarialSurface
+ */
+async function probeOnePage({ browser, url, opts = {} }) {
   const startedAt = Date.now();
-  const url = typeof args.url === 'string' ? args.url.trim() : '';
-  const opts = args.opts ?? {};
-  if (!url) {
-    return {
-      ok: false, reason: 'url_required', findings: [],
-      summary: { interactivesTested: 0, deadOrErroring: 0,
-                 modalsFailing: 0, formsFailing: 0,
-                 agentsNonFunctional: 0, mockOnlyFlagged: 0 },
-      probedAt: new Date().toISOString(), durationMs: 0,
-    };
-  }
-
-  let browser = null;
-  let ownsBrowser = false;
   let context = null;
   let page = null;
   const findings = [];
@@ -1035,17 +1054,10 @@ export async function probeAdversarialSurface(args = {}) {
   };
 
   try {
-    browser = await connectBrowser(opts);
-    ownsBrowser = !opts.browser;
-    context = await browser.newContext({
-      storageState: opts.storageState,
-    });
+    context = await browser.newContext({ storageState: opts.storageState });
     page = await context.newPage();
 
-    // D39 T5 — page-wide network log shared with detectWiredVsMock.
-    // Captures method/url for each request and status/contentType/size
-    // for each response so the classifier can distinguish meaningful
-    // backend traffic from static-asset / mock-only behavior.
+    // Page-wide network log shared with detectWiredVsMock.
     const networkLog = [];
     if (typeof page.on === 'function') {
       try {
@@ -1066,7 +1078,6 @@ export async function probeAdversarialSurface(args = {}) {
             const contentType = headers['content-type'] ?? '';
             const sizeHdr = headers['content-length'] ?? null;
             const responseSize = sizeHdr ? parseInt(sizeHdr, 10) || null : null;
-            // Attach to the most-recent matching request entry, if any.
             const match = networkLog.filter((e) => e.url === u).pop();
             if (match) {
               match.status = status;
@@ -1083,31 +1094,31 @@ export async function probeAdversarialSurface(args = {}) {
       waitUntil: 'domcontentloaded',
     });
 
-    // T2-T5 probes are layered into the same envelope. Each probe gets
-    // a strict slice of probeBudgetMs (1/4 each) so a misbehaving probe
-    // can't starve the others.
     const probeBudget = opts.probeBudgetMs ?? DEFAULT_PROBE_BUDGET_MS;
-    const sliceBudget = Math.max(15_000, Math.floor(probeBudget / 4));
+    const sliceBudget = Math.max(15_000, Math.floor(probeBudget / 5));   // T3 adds workspaces; 5 slices
 
-    // Probes are pluggable so tests can stub them; production wires the
-    // bundled implementations.
     const _probeInteractives = typeof opts.probeInteractives === 'function'
-      ? opts.probeInteractives
-      : probeInteractives;   // D39 T2: default to the bundled probe
+      ? opts.probeInteractives : probeInteractives;
     const _probeModals = typeof opts.probeModals === 'function'
-      ? opts.probeModals : probeModals;   // D39 T3: default to bundled probe
+      ? opts.probeModals : probeModals;
     const _probeForms = typeof opts.probeForms === 'function'
-      ? opts.probeForms : probeForms;     // D39 T3: default to bundled probe
+      ? opts.probeForms : probeForms;
     const _probeAgents = typeof opts.probeAgents === 'function'
-      ? opts.probeAgents : probeAgents;   // D39 T4: default to bundled probe
+      ? opts.probeAgents : probeAgents;
+    const _probeWorkspaces = typeof opts.probeWorkspaces === 'function'
+      ? opts.probeWorkspaces : probeWorkspaces;                         // D41 T3
     const _detectWiredVsMock = typeof opts.detectWiredVsMock === 'function'
-      ? opts.detectWiredVsMock : detectWiredVsMock;  // D39 T5: default
+      ? opts.detectWiredVsMock : detectWiredVsMock;
 
     if (_probeInteractives) {
       try {
         const r = await _probeInteractives({
           page, url, sliceBudget,
-          maxInteractives: opts.maxInteractives ?? DEFAULT_MAX_INTERACTIVES,
+          // D41 T2 — exhaustive: caller passes maxInteractives:Infinity
+          // OR the default cap (25). Default policy now bumped to 1000
+          // for "every interactive element" semantics; sliceBudget is
+          // the safety valve, not the count cap.
+          maxInteractives: opts.maxInteractives ?? DEFAULT_MAX_INTERACTIVES_EXHAUSTIVE,
           actionTimeoutMs: opts.actionTimeoutMs ?? DEFAULT_ACTION_TIMEOUT_MS,
         });
         if (r && Array.isArray(r.findings)) findings.push(...r.findings);
@@ -1171,14 +1182,32 @@ export async function probeAdversarialSurface(args = {}) {
       }
     }
 
+    // D41 T3 — workspace / engine / dashboard probe.
+    if (_probeWorkspaces) {
+      try {
+        const r = await _probeWorkspaces({
+          page, url, sliceBudget,
+          actionTimeoutMs: opts.actionTimeoutMs ?? DEFAULT_ACTION_TIMEOUT_MS,
+        });
+        if (r && Array.isArray(r.findings)) findings.push(...r.findings);
+        summary.workspacesProbed = (summary.workspacesProbed ?? 0) + (r?.workspacesProbed ?? 0);
+        summary.workspacesNonFunctional = (summary.workspacesNonFunctional ?? 0) + (r?.workspacesNonFunctional ?? 0);
+      } catch (e) {
+        findings.push(makeFinding(
+          'medium', 'engine-error', url,
+          `probeWorkspaces threw: ${(e?.message ?? String(e)).slice(0, 160)}`,
+        ));
+      }
+    }
+
     if (_detectWiredVsMock) {
       try {
         const r = await _detectWiredVsMock({
           page, url, sliceBudget,
           networkLog,
           interactivesTested: summary.interactivesTested,
-          formsTested: summary.formsFailing,                     // best proxy until probes return formsTested explicitly
-          agentsTested: summary.agentsNonFunctional,             // similarly
+          formsTested: summary.formsFailing,
+          agentsTested: summary.agentsNonFunctional,
         });
         if (r && Array.isArray(r.findings)) findings.push(...r.findings);
         summary.mockOnlyFlagged += r?.mockOnlyFlagged ?? 0;
@@ -1206,6 +1235,133 @@ export async function probeAdversarialSurface(args = {}) {
     };
   } finally {
     if (context) await context.close().catch(() => {});
+  }
+}
+
+/**
+ * D41 T1 — multi-page Phase B probe. Connects ONE browser, iterates
+ * every URL in `args.urls`, runs the full per-page probe stack
+ * (probeInteractives + probeModals + probeForms + probeAgents +
+ * probeWorkspaces + detectWiredVsMock), aggregates findings across all
+ * pages, returns:
+ *   { ok, pagesProbed, urlsAttempted, perPage:[...], findings,
+ *     summary (aggregate), probedAt, durationMs }
+ *
+ * The aggregate summary sums each numeric field across per-page
+ * envelopes so the whole-product §7.6 score (D41 T5) gets the union of
+ * Phase B signals.
+ *
+ * @param {object} args
+ * @param {string[]} args.urls    — every page/route to probe (no sampling)
+ * @param {object}   [args.opts]
+ */
+export async function probeAllPages(args = {}) {
+  const startedAt = Date.now();
+  const opts = args.opts ?? {};
+  const urls = Array.isArray(args.urls) ? args.urls.filter((u) => typeof u === 'string' && u.trim().length > 0) : [];
+  if (urls.length === 0) {
+    return {
+      ok: false, reason: 'urls_required', pagesProbed: 0, urlsAttempted: 0,
+      perPage: [], findings: [], summary: makeEmptySummary(),
+      probedAt: new Date().toISOString(), durationMs: 0,
+    };
+  }
+
+  let browser = null;
+  let ownsBrowser = false;
+  const perPage = [];
+  const aggFindings = [];
+  const aggSummary = makeEmptySummary();
+  // D41 T1 — overall budget across all pages. Per-page budget shrinks
+  // as we burn the wall clock so a slow first page doesn't starve later ones.
+  const overallBudget = opts.overallBudgetMs ?? Math.max(180_000, urls.length * 60_000);
+
+  try {
+    browser = await connectBrowser(opts);
+    ownsBrowser = !opts.browser;
+    for (let i = 0; i < urls.length; i += 1) {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed > overallBudget) break;
+      const remaining = overallBudget - elapsed;
+      const pageBudget = Math.max(20_000, Math.floor(remaining / Math.max(1, urls.length - i)));
+      const pageOpts = { ...opts, browser, probeBudgetMs: opts.perPageBudgetMs ?? pageBudget };
+      const r = await probeOnePage({ browser, url: urls[i], opts: pageOpts });
+      perPage.push(r);
+      if (Array.isArray(r.findings)) aggFindings.push(...r.findings);
+      if (r.summary) {
+        for (const k of Object.keys(aggSummary)) {
+          if (typeof r.summary[k] === 'number') aggSummary[k] += r.summary[k];
+        }
+      }
+    }
+    return {
+      ok: true,
+      pagesProbed: perPage.length,
+      urlsAttempted: urls.length,
+      perPage,
+      findings: aggFindings,
+      summary: aggSummary,
+      probedAt: new Date(startedAt).toISOString(),
+      durationMs: Date.now() - startedAt,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      reason: `probe_all_pages_failed: ${(e?.message ?? String(e)).slice(0, 160)}`,
+      pagesProbed: perPage.length,
+      urlsAttempted: urls.length,
+      perPage,
+      findings: aggFindings,
+      summary: aggSummary,
+      probedAt: new Date(startedAt).toISOString(),
+      durationMs: Date.now() - startedAt,
+    };
+  } finally {
+    if (ownsBrowser && browser) await browser.close().catch(() => {});
+  }
+}
+
+function makeEmptySummary() {
+  return {
+    interactivesTested: 0, deadOrErroring: 0,
+    modalsFailing: 0, formsFailing: 0,
+    agentsNonFunctional: 0, mockOnlyFlagged: 0,
+    workspacesProbed: 0, workspacesNonFunctional: 0,
+  };
+}
+
+/**
+ * Single-URL Phase B probe — back-compat wrapper around probeOnePage
+ * with browser lifecycle managed inline. Multi-page callers should
+ * use probeAllPages directly.
+ */
+export async function probeAdversarialSurface(args = {}) {
+  const startedAt = Date.now();
+  const url = typeof args.url === 'string' ? args.url.trim() : '';
+  const opts = args.opts ?? {};
+  if (!url) {
+    return {
+      ok: false, reason: 'url_required', findings: [],
+      summary: makeEmptySummary(),
+      probedAt: new Date().toISOString(), durationMs: 0,
+    };
+  }
+
+  let browser = null;
+  let ownsBrowser = false;
+  try {
+    browser = await connectBrowser(opts);
+    ownsBrowser = !opts.browser;
+    return await probeOnePage({ browser, url, opts });
+  } catch (e) {
+    return {
+      ok: false,
+      reason: `probe_failed: ${(e?.message ?? String(e)).slice(0, 160)}`,
+      url, findings: [], summary: makeEmptySummary(),
+      probedAt: new Date(startedAt).toISOString(),
+      durationMs: Date.now() - startedAt,
+    };
+  } finally {
     if (ownsBrowser && browser) await browser.close().catch(() => {});
   }
 }

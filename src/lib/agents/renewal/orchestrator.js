@@ -41,7 +41,7 @@ import {
 } from './optionCPipeline.js';
 import { aggressiveCrawl } from '../../../../api/_lib/crawler.js';
 import { conductStructuredCrawl } from './crawlOutputAdapter.js';
-import { probeAdversarialSurface } from './adversarialSurface.js';
+import { probeAdversarialSurface, probeAllPages } from './adversarialSurface.js';
 import { remediate as remediationEngine } from '../../../../api/_lib/remediationEngine.js';
 import { randomUUID } from 'node:crypto';
 
@@ -686,39 +686,59 @@ export async function runOrchestration(args = {}) {
     // stub that returns deterministic findings without launching a
     // real browser.
     let phaseBFindings = [];
+    let phaseBSummary = null;
+    let phaseBPagesProbed = 0;
+    let phaseBUrlsAttempted = 0;
     try {
       const t0 = Date.now();
+      // D41 T1 — multi-page Phase B: probe EVERY crawled URL, not just
+      // the iteration's currentUrl. Phase A's structured-crawl gave us
+      // per-page presence signals — Phase B now exercises the interactive
+      // layer on every page (no sampling). Single-page fallback if the
+      // crawl produced nothing.
+      const _probeAllPages = deps.probeAllPages || probeAllPages;
       const _probeAdversarialSurface = deps.probeAdversarialSurface || probeAdversarialSurface;
-      // Phase B is bounded: we probe the SAME crawled URL (the root
-      // initial URL or the prior iteration's preview). Multi-page
-      // probing is a future extension; Phase A's structured-crawl
-      // already gave us per-page presence signals — Phase B adds
-      // interactive verification on the primary surface.
-      const probe = await _probeAdversarialSurface({
-        url: currentUrl,
-        opts: {
-          // Tight budgets so a misbehaving probe can't stall the run.
-          probeBudgetMs: state.phaseBProbeBudgetMs ?? 180_000,
-          maxInteractives: 25, maxModals: 10, maxForms: 10,
-          // Phase A doesn't yet thread storageState; auth-gated
-          // surfaces stay unauthenticated for now. The ENTRY-007
-          // path can pass storageState here once wired.
-        },
-      });
+      const crawledUrls = Array.isArray(crawlOutput?.pages)
+        ? crawlOutput.pages.map((p) => (typeof p?.url === 'string' ? p.url : null)).filter(Boolean)
+        : [];
+      const urls = (crawledUrls.length > 0) ? Array.from(new Set(crawledUrls)) : [currentUrl];
+      phaseBUrlsAttempted = urls.length;
+
+      const probeOpts = {
+        // Tight per-page budget so a misbehaving page can't stall the run.
+        // Overall wall cap scales with page count.
+        probeBudgetMs: state.phaseBProbeBudgetMs ?? 180_000,
+        overallBudgetMs: state.phaseBOverallBudgetMs ?? Math.max(180_000, urls.length * 60_000),
+        // D41 T4 — authenticated traversal: storageState plumbed from
+        // runOrchestration args (set by ENTRY-007 / external auth flow).
+        storageState: args.storageState ?? state.storageState ?? undefined,
+        maxModals: 10, maxForms: 10,
+      };
+
+      let probe;
+      if (urls.length > 1 || _probeAllPages !== probeAllPages) {
+        probe = await _probeAllPages({ urls, opts: probeOpts });
+        phaseBPagesProbed = probe?.pagesProbed ?? 0;
+      } else {
+        probe = await _probeAdversarialSurface({ url: urls[0], opts: probeOpts });
+        phaseBPagesProbed = (probe?.ok ? 1 : 0);
+      }
       if (probe && Array.isArray(probe.findings)) {
         phaseBFindings = probe.findings;
       }
+      phaseBSummary = probe?.summary ?? null;
       const log = makeStepLog({
         iteration: iterationNumber, step: 4,
         status: probe?.ok === false ? 'degraded' : 'complete',
-        tool: 'adversarialSurface (Phase B — real browser executor, D39)',
-        why: 'exercise interactive layer: clicks, modals, forms, AI agents; classify wired-vs-mock',
+        tool: 'adversarialSurface.probeAllPages (Phase B — multi-page real browser, D41)',
+        why: 'exercise interactive layer on EVERY crawled page; classify wired-vs-mock',
         result: {
           ok: !!probe?.ok,
           reason: probe?.reason ?? null,
-          url: probe?.url ?? currentUrl,
+          pagesProbed: phaseBPagesProbed,
+          urlsAttempted: phaseBUrlsAttempted,
           findingsCount: phaseBFindings.length,
-          summary: probe?.summary ?? null,
+          summary: phaseBSummary,
         },
         durationMs: Date.now() - t0, mode: state.mode,
       });
@@ -739,6 +759,9 @@ export async function runOrchestration(args = {}) {
     // already accepts an issues array — we union the Phase A crawl
     // findings with the Phase B probe findings before scoring).
     state.phaseBFindings = phaseBFindings;
+    state.phaseBSummary = phaseBSummary;
+    state.phaseBPagesProbed = phaseBPagesProbed;
+    state.phaseBUrlsAttempted = phaseBUrlsAttempted;
     await state.checkpoint(onCheckpoint, { lastStep: 4, iteration: iterationNumber });
 
     // STEP 5 — Five-Layer Scoring (Pre-Fix).

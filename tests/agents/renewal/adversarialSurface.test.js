@@ -239,7 +239,7 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
       const step4 = result.orchestrationLog.find((l) => l.step === 4);
       expect(step4).toBeDefined();
       expect(step4.status).toBe('complete');
-      expect(step4.tool).toMatch(/Phase B — real browser executor/);
+      expect(step4.tool).toMatch(/Phase B/);
       expect(step4.result.findingsCount).toBe(0);
       expect(step4.result.summary.interactivesTested).toBe(5);
       expect(step4.result.summary.deadOrErroring).toBe(1);
@@ -995,5 +995,147 @@ describe('detectWiredVsMock — T5 page-level classifier', () => {
     expect(r.summary).toHaveProperty('mockOnlyFlagged');
     // With empty pages, no interactives are tested → no mock-only flag.
     expect(r.summary.mockOnlyFlagged).toBe(0);
+  });
+});
+
+// ── D41 T1 — multi-page traversal (probeAllPages) ─────────────────────
+
+import { probeAllPages } from '../../../src/lib/agents/renewal/adversarialSurface.js';
+
+describe('probeAllPages — D41 T1 multi-page traversal', () => {
+  it('returns ok:false when urls is empty/missing', async () => {
+    const r1 = await probeAllPages({});
+    expect(r1.ok).toBe(false);
+    expect(r1.reason).toBe('urls_required');
+    expect(r1.pagesProbed).toBe(0);
+    const r2 = await probeAllPages({ urls: [] });
+    expect(r2.ok).toBe(false);
+    const r3 = await probeAllPages({ urls: [''] });
+    expect(r3.ok).toBe(false);
+  });
+
+  it('reuses ONE browser across multiple pages (no relaunch per page)', async () => {
+    const { browser } = makeMockBrowser();
+    const urls = ['https://a/', 'https://b/', 'https://c/'];
+    const r = await probeAllPages({
+      urls,
+      opts: {
+        browser,
+        // Stub all probes so we don't need real DOM signals.
+        probeInteractives: async () => ({ findings: [], interactivesTested: 0, deadOrErroring: 0 }),
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0, agentsTested: 0 }),
+        probeWorkspaces: async () => ({ findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 }),
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0, networkSummary: null }),
+      },
+    });
+    expect(r.ok).toBe(true);
+    expect(r.pagesProbed).toBe(3);
+    expect(r.urlsAttempted).toBe(3);
+    expect(r.perPage).toHaveLength(3);
+    // newContext is called once per page; but browser.close is NOT
+    // called by probeAllPages because the test injected a browser
+    // (caller-owned).
+    expect(browser.newContext).toHaveBeenCalledTimes(3);
+    expect(browser.close).not.toHaveBeenCalled();
+  });
+
+  it('unions findings across all probed pages into aggregate envelope', async () => {
+    const { browser } = makeMockBrowser();
+    let callCount = 0;
+    const r = await probeAllPages({
+      urls: ['https://a/', 'https://b/', 'https://c/'],
+      opts: {
+        browser,
+        probeInteractives: async ({ url }) => {
+          callCount += 1;
+          return {
+            findings: [{ severity: 'medium', category: 'dead-or-erroring-element', location: url, evidence: 'x' }],
+            interactivesTested: 5,
+            deadOrErroring: 1,
+          };
+        },
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0, agentsTested: 0 }),
+        probeWorkspaces: async () => ({ findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 }),
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0, networkSummary: null }),
+      },
+    });
+    expect(r.ok).toBe(true);
+    expect(callCount).toBe(3);
+    // Aggregate findings = 3 pages × 1 finding/page = 3
+    expect(r.findings).toHaveLength(3);
+    // Aggregate summary = sum across pages
+    expect(r.summary.interactivesTested).toBe(15);
+    expect(r.summary.deadOrErroring).toBe(3);
+    // perPage envelopes preserve per-URL detail
+    expect(r.perPage.map((p) => p.url)).toEqual(['https://a/', 'https://b/', 'https://c/']);
+    expect(r.perPage[0].findings).toHaveLength(1);
+  });
+
+  it('continues across pages when one page fails (probe_failed)', async () => {
+    const { browser } = makeMockBrowser();
+    // First page: page.goto throws via custom override.
+    let i = 0;
+    browser.newContext = vi.fn(async () => ({
+      newPage: vi.fn(async () => {
+        const isFirst = i === 0;
+        i += 1;
+        return {
+          goto: vi.fn(async () => { if (isFirst) throw new Error('nav_failed_test'); }),
+          on: vi.fn(),
+          off: vi.fn(),
+          evaluate: vi.fn(async () => []),
+          url: () => 'https://x/',
+          locator: vi.fn(),
+          waitForTimeout: vi.fn(async () => {}),
+          close: vi.fn(async () => {}),
+        };
+      }),
+      close: vi.fn(async () => {}),
+    }));
+    const r = await probeAllPages({
+      urls: ['https://a/', 'https://b/'],
+      opts: {
+        browser,
+        probeInteractives: async () => ({ findings: [], interactivesTested: 0, deadOrErroring: 0 }),
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0, agentsTested: 0 }),
+        probeWorkspaces: async () => ({ findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 }),
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0 }),
+      },
+    });
+    expect(r.ok).toBe(true);
+    expect(r.pagesProbed).toBe(2);
+    // First page envelope reports ok:false; second is ok:true.
+    expect(r.perPage[0].ok).toBe(false);
+    expect(r.perPage[1].ok).toBe(true);
+  });
+
+  it('respects overall budget — stops probing when wall budget burned', async () => {
+    const { browser } = makeMockBrowser();
+    const r = await probeAllPages({
+      urls: ['https://a/', 'https://b/', 'https://c/'],
+      opts: {
+        browser,
+        overallBudgetMs: 1,                     // expire immediately after first page
+        probeInteractives: async () => {
+          await new Promise((res) => setTimeout(res, 20));
+          return { findings: [], interactivesTested: 0, deadOrErroring: 0 };
+        },
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0, agentsTested: 0 }),
+        probeWorkspaces: async () => ({ findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 }),
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0 }),
+      },
+    });
+    expect(r.ok).toBe(true);
+    // 1 page probed before overall budget exit; remaining pages skipped.
+    expect(r.pagesProbed).toBeLessThan(3);
+    expect(r.urlsAttempted).toBe(3);
   });
 });
