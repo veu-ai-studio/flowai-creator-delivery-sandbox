@@ -29,6 +29,7 @@
 
 import { runOrchestration } from '../src/lib/agents/renewal/orchestrator.js';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 
 function parseArgs(argv) {
@@ -42,6 +43,10 @@ function parseArgs(argv) {
     if (a === '--timeout-ms') { out.timeoutMs = Number(argv[++i]); continue; }
     if (a === '--no-supabase') { out.noSupabase = true; continue; }
     if (a === '--mode') { out.mode = argv[++i]; continue; }
+    // D41 T4 — authenticated traversal: storage-state JSON path.
+    // The file is Playwright's storageState shape ({cookies, origins}).
+    // Phase B will probe logged-in surfaces using these credentials.
+    if (a === '--storage-state') { out.storageStatePath = argv[++i]; continue; }
     if (a === '--help' || a === '-h') { out.help = true; continue; }
   }
   return out;
@@ -55,6 +60,7 @@ if (args.help || (!args.product && !args.url)) {
   console.log('  --timeout-ms <n>   (default 1800000)');
   console.log('  --no-supabase      (test mode)');
   console.log('  --mode <auto|guided|manual> (default auto)');
+  console.log('  --storage-state <path>     Playwright storageState JSON for authenticated Phase B (D41 T4)');
   process.exit(args.help ? 0 : 2);
 }
 
@@ -115,6 +121,20 @@ console.log('');
 // Engine invocation. Zero per-product branching. The orchestrator
 // resolves everything it needs from the registry row (D40) +
 // per-iter Phase B probe (D39).
+// D41 T4 — load Playwright storageState JSON if a path was supplied
+// (--storage-state ./auth.json). Never log secret values; the file is
+// passed as opaque object to runOrchestration.
+let storageStateForRun;
+if (args.storageStatePath) {
+  try {
+    storageStateForRun = JSON.parse(readFileSync(args.storageStatePath, 'utf-8'));
+    console.log(`storageState: loaded from ${args.storageStatePath} (Phase B will probe authenticated)`);
+  } catch (e) {
+    console.error(`FATAL: storage-state load failed: ${e?.message ?? e}`);
+    process.exit(1);
+  }
+}
+
 const orchestrationPromise = runOrchestration({
   url: args.url ?? null,
   mode: MODE,
@@ -123,6 +143,7 @@ const orchestrationPromise = runOrchestration({
   environment: 'prd',
   gtmTarget: GTM_TARGET,
   maxIterations: MAX_ITERATIONS,
+  storageState: storageStateForRun,
   deps: discoverProductOverride ? { discoverProduct: discoverProductOverride } : {},
   onStep: (log) => {
     const score = log.scores?.current;

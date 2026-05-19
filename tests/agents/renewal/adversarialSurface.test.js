@@ -1317,6 +1317,155 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
     expect(r.classifications.map((c) => c.location).sort()).toEqual(['https://a/', 'https://b/']);
   });
 
+  // ── D41 T4 — authenticated traversal ─────────────────────────────
+
+  it('probeAllPages threads storageState into every page newContext call', async () => {
+    const { browser } = makeMockBrowser();
+    const seenStorageStates = [];
+    browser.newContext = vi.fn(async (opts) => {
+      seenStorageStates.push(opts?.storageState);
+      return {
+        newPage: vi.fn(async () => ({
+          goto: vi.fn(async () => {}),
+          on: vi.fn(), off: vi.fn(),
+          evaluate: vi.fn(async () => []),
+          url: () => 'https://app/',
+          locator: vi.fn(),
+          waitForTimeout: vi.fn(async () => {}),
+          close: vi.fn(async () => {}),
+        })),
+        close: vi.fn(async () => {}),
+      };
+    });
+    const STORAGE = { cookies: [{ name: 'session', value: 'opaque' }], origins: [] };
+    const r = await probeAllPages({
+      urls: ['https://app/a', 'https://app/b'],
+      opts: {
+        browser,
+        storageState: STORAGE,
+        probeInteractives: async () => ({ findings: [], interactivesTested: 0, deadOrErroring: 0 }),
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0 }),
+        probeWorkspaces: async () => ({ findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 }),
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0 }),
+      },
+    });
+    expect(r.ok).toBe(true);
+    expect(seenStorageStates).toHaveLength(2);
+    expect(seenStorageStates[0]).toBe(STORAGE);
+    expect(seenStorageStates[1]).toBe(STORAGE);
+  });
+
+  it('runOrchestration mints storageState via deps.authPreparer when credentials are supplied', async () => {
+    const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const MINTED = { cookies: [{ name: 's', value: 'x' }], origins: [] };
+    const authPreparer = vi.fn(async ({ credentials, url }) => MINTED);
+    let seenStorageState = null;
+    const probeAdversarialSurface = vi.fn(async ({ url, opts }) => {
+      seenStorageState = opts?.storageState ?? null;
+      return { ok: true, url, findings: [], summary: { interactivesTested: 0, deadOrErroring: 0, modalsFailing: 0, formsFailing: 0, agentsNonFunctional: 0, mockOnlyFlagged: 0 }, probedAt: 'now', durationMs: 1 };
+    });
+
+    const PRODUCT = Object.freeze({
+      product_id: 'mypreglife', org_id: 'veu-ai-studio',
+      github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
+      self_renewal_enabled: true,
+    });
+    process.env.VERCEL_PROJECT_ID_MYPREGLIFE = 'prj_fake';
+    process.env.VERCEL_ORG_ID = 'team_fake';
+    process.env.VERCEL_TOKEN = 'vercel_fake';
+    try {
+      const deps = {
+        discoverProduct: vi.fn(async () => PRODUCT),
+        checkRateCap: vi.fn(async () => ({ allowed: true })),
+        checkRunawayDetector: vi.fn(async () => ({ tripped: false })),
+        conductStructuredCrawl: vi.fn(async ({ url }) => ({
+          pagesCrawled: 1, depth: 1, pages: [],
+          brokenLinks: [], forms: [], interactiveElements: [],
+          errors: [], totalTextLength: 0,
+        })),
+        produceMonitorText: vi.fn(async ({ url }) => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10', rawContent: '', url, fetchedAt: 'now', wordCount: 0, pageTitle: '', model: 'c', usage: {} })),
+        computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
+        scoreCrawlOutput: vi.fn(() => ({
+          score: 100, counts: { critical: 0, high: 0, medium: 0, low: 0 },
+          band: 'showcase-ready', label: 'showcase-ready', penalty: 0,
+          formula: 'x', issues: [],
+        })),
+        getInstallationToken: vi.fn(async () => ({ token: 'ghs', expiresAt: '' })),
+        appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+        probeAdversarialSurface,
+        authPreparer,
+      };
+      const r = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd41-t4-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        credentials: { email: 'u@x', password: 'p' },
+      });
+      expect(authPreparer).toHaveBeenCalledOnce();
+      expect(seenStorageState).toBe(MINTED);
+      expect(r.gtmReady).toBe(true);
+    } finally {
+      delete process.env.VERCEL_PROJECT_ID_MYPREGLIFE;
+      delete process.env.VERCEL_ORG_ID;
+      delete process.env.VERCEL_TOKEN;
+    }
+  });
+
+  it('runOrchestration falls back unauthenticated when authPreparer throws (does NOT halt pipeline)', async () => {
+    const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    let seenStorageState = 'INITIAL';
+    const probeAdversarialSurface = vi.fn(async ({ url, opts }) => {
+      seenStorageState = opts?.storageState ?? null;
+      return { ok: true, url, findings: [], summary: { interactivesTested: 0, deadOrErroring: 0, modalsFailing: 0, formsFailing: 0, agentsNonFunctional: 0, mockOnlyFlagged: 0 }, probedAt: 'now', durationMs: 1 };
+    });
+
+    const PRODUCT = Object.freeze({
+      product_id: 'mypreglife', org_id: 'veu-ai-studio',
+      github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
+      self_renewal_enabled: true,
+    });
+    process.env.VERCEL_PROJECT_ID_MYPREGLIFE = 'prj_fake';
+    process.env.VERCEL_ORG_ID = 'team_fake';
+    process.env.VERCEL_TOKEN = 'vercel_fake';
+    try {
+      const r = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd41-t4-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        credentials: { email: 'u@x', password: 'p' },
+        deps: {
+          discoverProduct: vi.fn(async () => PRODUCT),
+          checkRateCap: vi.fn(async () => ({ allowed: true })),
+          checkRunawayDetector: vi.fn(async () => ({ tripped: false })),
+          conductStructuredCrawl: vi.fn(async ({ url }) => ({
+            pagesCrawled: 1, depth: 1, pages: [],
+            brokenLinks: [], forms: [], interactiveElements: [],
+            errors: [], totalTextLength: 0,
+          })),
+          produceMonitorText: vi.fn(async ({ url }) => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10', rawContent: '', url, fetchedAt: 'now', wordCount: 0, pageTitle: '', model: 'c', usage: {} })),
+          computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
+          scoreCrawlOutput: vi.fn(() => ({
+            score: 100, counts: { critical: 0, high: 0, medium: 0, low: 0 },
+            band: 'showcase-ready', label: 'showcase-ready', penalty: 0,
+            formula: 'x', issues: [],
+          })),
+          getInstallationToken: vi.fn(async () => ({ token: 'ghs', expiresAt: '' })),
+          appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+          probeAdversarialSurface,
+          authPreparer: async () => { throw new Error('login_failed_test'); },
+        },
+      });
+      // Pipeline did NOT halt; Phase B ran unauthenticated (no minted state).
+      expect(r.gtmReady).toBe(true);
+      expect(seenStorageState).toBeFalsy();
+      expect(probeAdversarialSurface).toHaveBeenCalled();
+    } finally {
+      delete process.env.VERCEL_PROJECT_ID_MYPREGLIFE;
+      delete process.env.VERCEL_ORG_ID;
+      delete process.env.VERCEL_TOKEN;
+    }
+  });
+
   it('respects overall budget — stops probing when wall budget burned', async () => {
     const { browser } = makeMockBrowser();
     const r = await probeAllPages({

@@ -614,6 +614,34 @@ export async function runOrchestration(args = {}) {
       error: e?.message ?? String(e), code: e?.code ?? 'RATE_LIMIT' });
   }
 
+  // D41 T4 — authenticated traversal preparation.
+  // Two input shapes are supported on runOrchestration:
+  //   (a) args.storageState  — Playwright storageState object/path
+  //                             (logged-in cookies + origins).
+  //   (b) args.credentials   — { email, password } — when paired with
+  //                             deps.authPreparer (resolves to a function
+  //                             returning storageState), mint storageState
+  //                             once here so every Phase B page-context
+  //                             starts already authenticated.
+  // Either form is FORWARDED to probeAllPages via the per-page
+  // newContext({ storageState }) call. If neither is supplied, Phase B
+  // runs unauthenticated (back-compat with all D39/D40 callers).
+  if (!state.storageState && args.credentials && typeof deps.authPreparer === 'function') {
+    try {
+      const minted = await deps.authPreparer({
+        credentials: args.credentials,
+        url: initialUrl,
+        runId,
+      });
+      if (minted) state.storageState = minted;
+    } catch (e) {
+      // Auth-prep failure does NOT halt the pipeline — Phase B falls
+      // back to unauthenticated. The error is surfaced via STEP 4's
+      // degraded log so the operator can fix the creds.
+      state.authPrepFailure = (e?.message ?? String(e)).slice(0, 160);
+    }
+  }
+
   // ── OUTER LOOP: repeat until GTM-ready / max iter / no improvement / stop ─
   let iterationNumber = 1;
   let currentUrl = initialUrl;
