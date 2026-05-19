@@ -1790,9 +1790,47 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
   - Full GTM-ready loop verified end-to-end (the current 42/100 is a single-pass demonstration; the canonical GTM-ready target is ≥75/100 sustained across the repeat-until-GTM loop until terminal decision).
 - **Lineage:** ENTRY 008 (session 2026-05-16/17 — substrate, migrations, MessageBus wiring, foundation audit) → ENTRY 009 (W05 closing decisions — cluster ratifications, Self-Renewal v4, agent specs, ProductSSOT migration committed) → migration 0013 + 0014 + 0015 applied to live Supabase → GitHub App + Doppler credential rollout → 10-module Phase A build (`flowai/renewal-b2ee1335-iter1` evidence trail) → live `mypreglife-platform-pjiyhvlyy-veu-ai-studio.vercel.app` proof → SSOT §1.1 market-definition canon (commit `c49f074`) + DB mirror (commit `91f0c71`) → this entry.
 
+### ENTRY 015 — 2026-05-19 — Cleared-8 promotion (W6 quorum-fix rerun)
+
+- **Session:** W6 ran a quorum-fix rerun on the four parked/pending CA drafts (CA-13 + CA-14 + CA-15 + CA-16) using focused per-amendment runs with ≤~30K-char bundles to match the proven 27,778-char engagement recipe. Result: eight individually quorum-cleared questions across CA-14 + CA-16; zero cleared on CA-13 or CA-15. Per CEO Locked Rule 13 decision (this entry), the cleared-8 promote in a one-shot pass; the remaining 19 questions re-Panel via v2 drafts (CA-13 v2 / CA-15 v2 / CA-16 v2, this commit's siblings — commits `8b38156`, `746bb7e`, `d366acf`).
+
+- **Panel evidence (commit `cc14a8f`):**
+  - `docs/panel-consultations/ca-13-quorum-fix-rerun-2026-05-19.md` — 32412 chars, 8/10 engaged, 34 distinct objections, 0/5 cleared, alignment 32.5% ✅ PASS dissent floor.
+  - `docs/panel-consultations/ca-14-quorum-fix-rerun-2026-05-19.md` — 34212 chars, 10/10 engaged, 36 distinct objections, **6/11 cleared**, alignment 64.5% ✅ PASS.
+  - `docs/panel-consultations/ca-15-quorum-fix-rerun-2026-05-19.md` — 32370 chars, 8/10 engaged, 31 distinct objections, 0/11 cleared, alignment 17.0% ✅ PASS.
+  - `docs/panel-consultations/ca-16-quorum-fix-rerun-2026-05-19.md` — 31224 chars, 9/10 engaged, 31 distinct objections, **2/11 cleared**, alignment 43.4% ✅ PASS.
+  - Cross-summary at `ca13-14-15-16-quorum-fix-rerun-2026-05-19.md`.
+
+- **Cleared-8 questions + verdicts (the 8 items ratified by ENTRY 015):**
+
+  | # | Question | Verdict | Top / Engaged | Target |
+  |---|---|---|---|---|
+  | 1 | CA-14-A-Q2 | `QUORUM_PLURALITY_CA14AQ2-RATIFY` | 7/10 | §7 LIMITATIONS verbatim wording |
+  | 2 | CA-14-A-Q3 | `SUPERMAJORITY_CA14AQ3-AGENT21` | 8/10 | Agent #21 owns Phase B (§15.1 row 21) |
+  | 3 | CA-14-A-Q4 | `SUPERMAJORITY_CA14AQ4-RATIFY` | 8/10 | NEW Locked Rule 19 (Phase A vs B) |
+  | 4 | CA-14-B-Q1 | `QUORUM_PLURALITY_CA14BQ1-RATIFY` | 7/10 | §7 NEW item #6 (5 fix-safety invariants) |
+  | 5 | CA-14-B-Q2 | `QUORUM_PLURALITY_CA14BQ2-RATIFY` | 7/10 | "FlowAI NEVER ships a fix" guarantee |
+  | 6 | CA-14-D-Q1 | `SUPERMAJORITY_CA14DQ1-RATIFY` | 8/10 | §7.5.1 NEW (3 operational invariants) |
+  | 7 | CA-16-B-Q3 | `QUORUM_PLURALITY_CA16BQ3-RATIFY` | 7/9 | §11.7 Redesign/Build admin-gated approval |
+  | 8 | CA-16-C-Q4 | `SUPERMAJORITY_CA16CQ4-RATIFY` | 8/9 | §7.6 formula-generalization invariant |
+
+  All 8 cleared with drafted-(a) ≥7/engaged per Locked Rule 17. Four questions (CA-14-A-Q3 + CA-14-A-Q4 + CA-14-D-Q1 + CA-16-C-Q4) cleared at supermajority threshold (≥8/engaged).
+
+- **Pre-promotion archive:** `docs/archive/FLOWAI_SSOT-pre-ENTRY015-promotion-2026-05-19.md` per §18.3. Captures canonical SSOT state at end-of-ENTRY-010 (no intervening §18.4 entries; ENTRY 011–014 are session-log drafts only, not yet in §18.4).
+
+- **What's still parked / pending:**
+  - **CA-13** (75→95 GTM bar + CA-9-Q4 §15 wording reconciliation): all 5 questions below quorum at quorum-fix rerun. CA-13 v2 draft (commit `8b38156`) applies REVISE directions per CEO dispatch — 95-bar DEFER, Near-GTM band ELIMINATE, capability-keyed sibling naming.
+  - **CA-15** (Multi-Dim Quality Audit + Purpose Capture + Purpose-Driven Optimization + SSOT-Conformance Gate): 0/11 cleared; every question REVISE or REJECT at quorum-fix rerun. CA-15 v2 (commit `746bb7e`) is a STRUCTURAL REWRITE per CEO dispatch — MERGE Multi-Dim into existing §10 5-dimension engine; Multi-Dim becomes telemetry (not equal-footing); purpose_record OPTIONAL not required; advisory not hard-gate.
+  - **CA-16** (remaining 9 questions): CA-16 v2 draft (commit `d366acf`) applies REVISE directions — recommendation-schema DEFER engineering; remove "Step 1.5" from clearance; ratify CA-16-C-Q4 via this ENTRY 015 (already done); strict precision-over-recall target detection; Agent #21 owns Multi-Format detection (consistent with CA-14-A-Q3).
+  - **CA-11 + CA-12** carry-forward from prior sessions; unchanged in this entry.
+
+- **Honest scope footer.** ENTRY 015 promotes ONLY the 8 individually quorum-cleared questions. It does NOT promote the broader CA-14 or CA-16 amendments wholesale — the parked questions require CA-14 v2 / CA-16 v2 + further Panel review. ENTRY 015 is the canonical first partial-promotion in the §18.4 history (prior entries promoted whole CA bundles); this sets the precedent for question-level granular ratification when bundle-level Panel verdicts split. Code state for the cleared 8 questions already matches canonical text after this promotion (per Locked Rule 1 — D27–D38 + D39–D41 W5a arcs ship the implementation; ENTRY 015 closes the canonical-text gap).
+
+- **Lineage:** ENTRY 010 (Phase A live build) → ENTRY 011 draft (D27–D38 arc) → ENTRY 012 draft (D39–D41 arc) → ENTRY 013 draft (CA-16 net-new scope) → ENTRY 014 draft (Path H CEO decision) → CA-13 + CA-14 joint Panel parked (`8e185a6`) → W6 quorum-fix rerun (`cc14a8f`) → CEO Locked Rule 13 cleared-8 ratification → **this entry** → CA-13 v2 / CA-15 v2 / CA-16 v2 drafts (sibling commits `8b38156` / `746bb7e` / `d366acf` this dispatch).
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-18)
+END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-19)
 
 
 

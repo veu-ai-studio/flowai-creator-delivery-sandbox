@@ -144,37 +144,6 @@ Every run produces:
 3. **Source disclosure** — `patch-existing-source` or `generate-from-scratch`, plus retrieval method (git-tarball / vercel-project / base44-stub / none).
 4. **LIMITATIONS section** — verbatim list of human-gated-skip and documented-limitation terminal decisions, per `api/_lib/beforeAfterReport.js`.
 5. **Updated ProductSSOT row** (per CA-10-A / ENTRY 005). On every pipeline run that produces an output, FlowAI writes a new `delta_log` entry to the product's ProductSSOT row (one row per `(productId, environment)` pair per §7.5). The write is **atomic** with the rest of the output contract: a run that produces a renewed URL but fails to update ProductSSOT is considered INCOMPLETE and rolled back (per §10 Self-Protect snapshot + Self-Heal pattern). The ProductSSOT update is the canonical living-document mechanism — it accumulates history across runs and is fed back into the next pipeline run per §28's symbiotic loop.
-6. **Self-Renewal safety-invariant compliance (CA-14-B canonical per ENTRY 015).** Every fix proposed by Self-Renewal Executor (or any descendant fix-generator) MUST clear ALL FIVE of the following before being accepted into a PR for operator review:
-
-   a. **Diff-only.** The fix is expressed as a minimal-change diff against the operator branch's HEAD; large rewrites are forbidden unless the finding category explicitly authorizes them (none in the current §6 detector set do).
-
-   b. **Preserve rules.** The fix MUST NOT remove existing imports, types, exports, or comments unless the finding-specific scoped relaxation explicitly permits it (per W5a commit `41e51ed` scoped per-finding preserve relaxation).
-
-   c. **Pre-deploy parse gate.** The post-fix file MUST parse cleanly under the project's build toolchain (per W5a commit `bbf75d9`). Parse failure → reject the diff; emit `agent.fix.parse_failed.v1`; exit `NO_IMPROVEMENT`.
-
-   d. **Post-deploy regression guard.** After preview-URL deploy, re-run §7.6 score. If `post_score < pre_score` OR if NEW `critical`/`high` findings appear, REJECT THE PR — emit `agent.fix.regression_detected.v1`; exit `NO_IMPROVEMENT` with the negative-delta trace (per W5a commit `fa9a8f0`).
-
-   e. **Per-fix attribution.** The fix carries a commit-order trace sufficient to isolate which individual fix in a multi-fix PR caused a regression (per W5a commit `2f4cb97`). Required for §10.3 Self-Heal forensics.
-
-   Operative implementation commits cited: `29ce070`, `41e51ed`, `e1f4298`, `bbf75d9`, `481e610`, `fa9a8f0`, `2f4cb97`, `f80ac70`.
-
-   **Canonical guarantee (CA-14-B-Q2 ratification, ENTRY 015, QUORUM 7/10):**
-
-   FlowAI NEVER ships a fix that regresses §7.6 score OR introduces new `critical`/`high` findings. It refuses the PR and exits `NO_IMPROVEMENT`. Operator + admin are notified via the standard governance-record audit trail. This guarantee is the canonical extension of the five invariants above and is binding on every Self-Renewal Executor invocation — including all descendant fix-generators (e.g. CA-16-B Redesign Environment build/wire dispatch when ratified).
-
-### LIMITATIONS disclosure discipline (CA-14-A canonical per ENTRY 015)
-
-Every operator-facing delivery (demo microsite, clearance package, GTM bundle) that cites a §7.6 score MUST disclose:
-
-1. Whether the score reflects **surface-only verification (Phase A only)** OR **surface + interactive verification (Phase A + Phase B)**.
-
-2. For Phase A only: the LIMITATIONS section MUST contain the verbatim phrase *"This §7.6 score reflects surface verification only. Interactive flows (authenticated paths, error-state recovery, engine adversarial probes) were not exercised. This score is NOT a functional certification."*
-
-3. For Phase A + B with skipped Phase B paths: enumerate every skipped path (e.g. "auth-traversal unavailable for /admin"); state the reason for skip.
-
-4. For full Phase A + B pass: the LIMITATIONS section MAY omit the surface-only disclaimer but MUST retain the band-vs-spec deltas per ENTRY 006.
-
-Operators MUST NOT remove or paraphrase these disclosures. The disclosure is load-bearing per CEO directive 2026-05-18.
 
 **Source acquisition order** (per `api/_lib/sourceAcquisition.js`): git URL → Vercel project → Base44 project → fallback to generate-from-scratch. Generate-from-scratch is canonical capability per parking-lot ENTRY 005, not a fallback in the colloquial "second-best" sense — it produces a fully functional working product whenever source is unreachable.
 
@@ -199,29 +168,6 @@ Plus a `version` field (monotonic per `(productId, environment)`, auto-increment
 
 **Relation to DeploymentScaffold (§16.2):** complementary, not duplicative. DeploymentScaffold = single deploy snapshot (per Sprint 6 Phase 2). ProductSSOT = full deployment history + governance trail + annotations across time. ProductSSOT's `architecture_snapshot` may derive from the most recent DeploymentScaffold; engineering dispatch reuses the shape where applicable.
 
-### 7.5.1 ProductSSOT operational invariants (CA-14-D canonical per ENTRY 015)
-
-Three load-bearing operational invariants apply to every ProductSSOT row:
-
-**Invariant 1 — Per-product branch-of-record.** Every operator product MUST have a `product_registry.self_renewal_branch` field populated with the canonical operator branch name (typically `main` for operator repos, or a configured equivalent). Self-Renewal Executor reads this field to determine the PR target. **Missing branch-of-record → Self-Renewal cycle refuses to start; emits `agent.product_registry.missing_branch.v1`; operator notified via standard governance channel.** Migration: `0019_product_registry_branch.sql` (commit `6fb0106`) adds the column + default. Orchestrator + probes thread the field through per `ecf486a`.
-
-**Invariant 2 — ProductSSOT row seeding precedes any Self-Renewal cycle.** Every operator product MUST have a `product_ssot` row inserted BEFORE any Self-Renewal Executor invocation, Aggressive Crawl Engine invocation, or governance-write attempt against the product. Per-product seed migrations:
-
-- FlowAI self-test: `0017_product_registry_flowai_row.sql` + `0018_product_ssot_flowai_seed.sql` (commits `323d5f4` + `464f65f`).
-- MyPregLife: `0020_product_ssot_mypreglife_seed.sql` (commit `a216762`).
-- SAIGE + ReachSMS + RelTwin + PressAI: `0021_product_ssot_seed_rows.sql` (commit `46eb051`).
-
-**Missing seed row → governance-write to that product fails hard with `agent.product_ssot.row_missing.v1`.**
-
-**Invariant 3 — Atomic-audit-write via snapshot + CAS + rollback.** Every write to `product_ssot.governance_record` (or any of the 6 canonical blocks per §7.5) MUST follow the snapshot + CAS + rollback pattern from commit `9b05ad7` (P0-5). The pattern:
-
-1. Read current row + capture row-version (timestamp or sequence).
-2. Compute write payload.
-3. UPDATE with `WHERE row-version = captured-version`; on 0 rows updated → rollback (someone else won); retry up to 3 times with exponential backoff (50ms / 100ms / 200ms).
-4. On 3rd failure → emit `agent.product_ssot.atomic_write_contention.v1`; operator notified.
-
-Persistent contention is non-retryable without operator intervention. The pattern mirrors Cluster A advisory-lock + statement_timeout philosophy (canonical template v3) for application-managed concurrency.
-
 ### 7.6 GTM Readiness Report (per Aggressive Crawl Engine / ENTRY 006)
 
 Every Aggressive Crawl Engine run on a product produces — atomically with the §7 Output Contract items 1–5 — a **GTM Readiness Report**: a per-`(productId, environment)` score in `[0, 100]` measuring demo-readiness for the prospect-facing channel. The report is owned by Agent #21 Ops Runner Alpha (Aggressive Crawl Conductor, §15.1 row 21); it is written into the affected ProductSSOT's `governance_record` block (kind: `gtm_readiness_score`) AND surfaced at `/architecture` per product per §16.
@@ -236,21 +182,6 @@ score = 100
      − (0.5 × count_low)
      clamped to [0, 100]
 ```
-
-**§7.6 formula generalization invariant (CA-16-C-Q4 canonical per ENTRY 015, SUPERMAJORITY 8/9):** the §7.6 scoring formula remains **unchanged across all submission/output target classes** (per CA-16-C target-class taxonomy when broader CA-16-C ratification clears, OR per existing web-default scope today). The formula is:
-
-```
-score = 100
-     − (10  × count_critical)
-     − (5   × count_high)
-     − (2   × count_medium)
-     − (0.5 × count_low)
-     clamped to [0, 100]
-```
-
-What CHANGES per target class is the finding-source set (Phase A detector set varies per class). What does NOT change is the formula, the band boundaries, or the prerequisite gate. No per-class weight adjustments; no per-class formula replacement. This invariant prevents per-class scoring drift and keeps cross-class comparisons meaningful.
-
-Cleared independently of CA-16-C-Q1 (6 canonical target classes — pluraled below quorum, re-Panel in CA-16 v2) — the formula invariant holds whether 6 classes ratify or fewer.
 
 Findings counted are those produced by the Aggressive Crawl Engine's issue-detection pass (per ENTRY 006 detector set: `ai-agent-unreachable`, `ai-agent-no-response`, `broken-modal`, `dead-card`, `engine-error`, `auth-gate-leak`, `console-error`, `network-failure`, `slow-route`, `missing-404-handler`, `missing-500-handler`, `no-offline-indicator`, `no-loading-indicator-on-slow-net`, `no-form-validation`, `xss-in-form-echo` [hard-classified critical, not promotable via override per CA-10-Q3], `external-script-leak`, `accessibility-headings`, `accessibility-alt-text`).
 
@@ -436,14 +367,6 @@ The Clearance Protocol gates every product handed to FlowAI before declaring it 
 
 Each step's status, evidence, and timestamps are recorded in `ClearanceRecord`. Clearance is **per product, per environment** — clearing a product in `staging` does not clear it in `prd`.
 
-### 11.7 Redesign/Build approval gate (CA-16-B-Q3 canonical per ENTRY 015)
-
-For any operator-initiated redesign or build/wire session (CA-16-B Redesign/Build Environment, full §29 sub-section pending broader CA-16 ratification): operators MAY steer (initiate session, modify proposals, constrain scope, veto changes); **only admin role (per §13) MAY approve final implementation** (transition from `operator_steered` → `implementation_in_progress`).
-
-Conformance-test acceptance criterion (RB-7 canonical): invoking approval-transition with `operator` role MUST return HTTP 403; only `admin` role MAY transition. Verified by deliberate-failure injection test at engineering dispatch.
-
-This Q is ratified ahead of the broader CA-16-B §29 because the admin-gating discipline is the load-bearing safety property — Stage 3 build/wire (per Path H ENTRY 014) cannot proceed without it, regardless of the remaining CA-16-B §29 sub-questions' Panel disposition.
-
 ---
 
 ## 12. REMEDIATION MODES — WIRED TO 8-STEP PIPELINE (gap #6 from Panel Q1)
@@ -569,7 +492,7 @@ All 26 agents (was 25 prior to CA-9-B / ENTRY 005) are proprietary VEU IP. All s
 | 18 | Business Planning | cross-step | — | flowai-only | DORMANT |
 | 19 | Technological Evolution | cross-step | — | embedded | DORMANT |
 | 20 | Environmental Impacts | cross-step | — | embedded | DORMANT |
-| 21 | Ops Runner Alpha — **Aggressive Crawl Conductor** (per ENTRY 006, Panel `05ac6f4` 7×UNANIMOUS + CEO arbitration Q6=(c)) | step-owner | (cross-step within step 1 research + step 8 monitor — Aggressive Crawl Engine phase) | embedded | DORMANT (charter ratified; engineering wire-in pending). Authority **`[recommend_only, auto_write_internal, requires_human_gate]`** (dual + gate mirroring Agent #26 per CA-9-Q4=(b)). Owns the full-site spider with click + modal + AI-probe + viewport + auth + error-trigger passes per §6 + Aggressive Crawl Engine spec `docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md` (commit `5b30dce`). Consumes: `1.crawl.request.v1`, `10.ssot.updated.v1`. Produces: `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1` + writes to ProductSSOT `architecture_snapshot` + `governance_record` (kind `gtm_readiness_score`). Required credentials: `BROWSERLESS_API_KEY`, `ANTHROPIC_API_KEY`. Marketplace tools: `playwright`, `browserless`, `anthropic-api`. Escalation: `xss-in-form-echo` or `auth-gate-leak` detected → IMMEDIATE admin gate (security-critical); crawl budget exceeded → emit candidate + escalate to Ops Runner Beta; 3 consecutive crawl failures on same product → disable crawl for that product 24h. Per CA-14-A-Q3 (ENTRY 015 ratification, SUPERMAJORITY 8/10): Agent #21 ACE Conductor owns **Phase B Adversarial Surface Testing** as a canonical extension of its ENTRY 006 charter. Phase B is distinct from Phase A (per Locked Rule 19 below): Phase A = surface verification owned by §6 detector set; Phase B = interactive adversarial verification owned by Agent #21 via authenticated multi-page traversal + click-everything pass + adversarial prompt-injection probes against AI-agent surfaces + error-state interactive triggers. Phase B emits its own `phase_b_pass` boolean + finding list shaped identically to §7.6 finding envelope. Required credentials remain `BROWSERLESS_API_KEY` + `ANTHROPIC_API_KEY` as for Phase A; no new credentials added. Implementation reference: D39-D41 W5a arc (`90210d0` → `ed0d779`); canonical text now matches code per Locked Rule 1. |
+| 21 | Ops Runner Alpha — **Aggressive Crawl Conductor** (per ENTRY 006, Panel `05ac6f4` 7×UNANIMOUS + CEO arbitration Q6=(c)) | step-owner | (cross-step within step 1 research + step 8 monitor — Aggressive Crawl Engine phase) | embedded | DORMANT (charter ratified; engineering wire-in pending). Authority **`[recommend_only, auto_write_internal, requires_human_gate]`** (dual + gate mirroring Agent #26 per CA-9-Q4=(b)). Owns the full-site spider with click + modal + AI-probe + viewport + auth + error-trigger passes per §6 + Aggressive Crawl Engine spec `docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md` (commit `5b30dce`). Consumes: `1.crawl.request.v1`, `10.ssot.updated.v1`. Produces: `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1` + writes to ProductSSOT `architecture_snapshot` + `governance_record` (kind `gtm_readiness_score`). Required credentials: `BROWSERLESS_API_KEY`, `ANTHROPIC_API_KEY`. Marketplace tools: `playwright`, `browserless`, `anthropic-api`. Escalation: `xss-in-form-echo` or `auth-gate-leak` detected → IMMEDIATE admin gate (security-critical); crawl budget exceeded → emit candidate + escalate to Ops Runner Beta; 3 consecutive crawl failures on same product → disable crawl for that product 24h. |
 | 22 | Ops Runner Beta | step-owner (proposed) | (TBD) | embedded | DORMANT |
 | 23 | Ops Runner Gamma | step-owner (proposed) | (TBD — possibly Cost Governor per Layer 2 plan PG1) | embedded | DORMANT |
 | 24 | Ops Runner Delta | step-owner (proposed) | (TBD) | embedded | DORMANT |
@@ -809,7 +732,6 @@ Every promotion creates a pre-promotion snapshot at `docs/archive/FLOWAI_SSOT-pr
 | ENTRY 004 | 2026-05-15 | `fd94f1e` | CA-7 (§15.5 EXECUTOR_REGISTRY + §14 three new rows for M2/M5) + CA-8 (§20.2 X-Test-Bypass-Token Contract with §20.2.1 Doppler env-suffix key naming). Panel: 5× UNANIMOUS_(a), 10/10 ENGAGED, commit `fb0bb64`. |
 | ENTRY 005 | 2026-05-15 | (this promotion) | CA-9 (§8.1 Orchestra Self-Expansion auto-admission + Agent #26 Orchestra Research Agent dual-authority `[recommend_only, auto_write_internal, requires_human_gate]` per CEO arbitration CA-9-Q4=(b); §15.1 charter expansions for Agents #3, #10, #11, #15, #17; §15.2 +21 new MessageBus topic constants; Locked Rule 2 amended 25→26 agents) + CA-10 (§7.5 ProductSSOT entity with 6 canonical blocks; §7 Output Contract item #5; §13.1 role gates + `/product-ssot/:productId` UI; §28 Symbiotic Feed-Back Loop; §14.3 ProductSSOT retention + PII-scrub; §11 Step 4 Data Export expanded). Panel: 7/8 SUPERMAJORITY/UNANIMOUS, commit `cc5fd8d`. |
 | ENTRY 006 | 2026-05-16 | (this promotion) | **Aggressive Crawl Engine (ACE)** promotion. Sections amended: §6 (crawl scope expanded — default depth=8 / hard cap depth=12; default pages=200 / hard cap pages=2000; click-everything pass + modal probing + AI-agent benign-probe + mobile-desktop viewports + non-destructive error-state triggers; XSS opt-in only per CEO arbitration Q6=(c); Orchestra wiring per §15.4 — Agent #21 dispatches via `playwright` + `browserless` + `anthropic-api`); §7.6 (NEW — GTM Readiness Report: 100-point scoring formula `100 − 10·crit − 5·high − 2·med − 0.5·low` clamped to [0,100]; 4 bands Showcase-ready / Demo-ready / Internal-only / Not demo-ready; $15/run cost ceiling; maps to §11 Clearance Step 5 with 4-prerequisite gate); §15.1 row 21 (Ops Runner Alpha pinned as **Aggressive Crawl Conductor** — step-owner, dual-authority `[recommend_only, auto_write_internal, requires_human_gate]`, consumes `1.crawl.request.v1`, produces 3 topics); §15.2 (+4 MessageBus topics: `1.crawl.request.v1`, `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1`; topic count 61 → **65**). Source spec: `docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md` (commit `5b30dce`). Panel consultation: `05ac6f4` — 7×UNANIMOUS (Q1 depth caps, Q2 agent-ownership Option B, Q3 AI-agent probe safety, Q4 parallelization scope, Q5 fix-loop autonomy on medium, Q7 readiness score formula, Q8 cost ceiling) + Q6 (error-state defaults) decided by CEO arbitration `(c)` non-destructive triggers always-on, XSS form-submit triggers opt-in only with operator confirmation + dev/staging-environment-only gate. Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-ACE-promotion-2026-05-16.md`. Closes parking-lot ENTRY 002 (CEO 2026-05-14 — "aggressive exhaustive crawler GTM-readiness bar"). |
-| ENTRY 015 | 2026-05-19 | (this promotion) | **Cleared-8 promotion** (CEO one-shot ratification per Locked Rule 13). Eight individually quorum-cleared questions from W6 quorum-fix rerun commit `cc14a8f` (`docs/panel-consultations/ca-{13,14,15,16}-quorum-fix-rerun-2026-05-19.md` + cross-summary). Sections amended: **§7** Output Contract NEW item #6 (5 Self-Renewal fix-safety invariants, CA-14-B-Q1 + canonical guarantee CA-14-B-Q2, 7/10 + 7/10) + NEW LIMITATIONS sub-section (CA-14-A-Q2, 7/10); **§7.5.1** NEW (3 ProductSSOT operational invariants — per-product branch-of-record + seeding + atomic-audit-write, CA-14-D-Q1, 8/10); **§7.6** NEW formula-generalization invariant paragraph (CA-16-C-Q4, 8/9); **§11.7** NEW Redesign/Build approval gate (admin-only final approval, CA-16-B-Q3, 7/9); **§15.1 row 21** Agent #21 charter extension to own Phase B (CA-14-A-Q3, 8/10); **§25** NEW Locked Rule 19 (Phase A vs Phase B — DO NOT CONFLATE, CA-14-A-Q4, 8/10; rule count 18→19). Implementing W5a commits cited: D27–D38 arc (`29ce070` → `b719c6d`) + D39–D41 Phase B implementation (`90210d0` → `ed0d779`). Open questions (CA-14: A-Q1, B-Q3, C-Q1, C-Q2, D-Q2; CA-13: all 5; CA-15: all 11; CA-16: A-Q1..A-Q4, B-Q1, B-Q2, C-Q1, C-Q2, C-Q3) re-Panel in CA-13 v2 / CA-15 v2 / CA-16 v2 drafts (this commit's siblings). Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-ENTRY015-promotion-2026-05-19.md`. |
 
 CA-4 + CA-5 + CA-6 deferred per Panel consultation `ssot-finalization-and-agent-roadmap-priority-2026-05-14.md`.
 
@@ -1063,7 +985,7 @@ No exceptions. Even short acknowledgements use the banner if they are reports to
 
 ---
 
-## 25. LOCKED RULES (19, do not violate)
+## 25. LOCKED RULES (18, do not violate)
 
 Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 18 Locked Rules are canonical and binding:
 
@@ -1085,7 +1007,6 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 16. Continuous marketplace intelligence + Self-Renewal Alerts ≥monthly.
 17. Every W0x→CEO message requiring CEO action must be Panel-reviewed (≥7/10) before delivery.
 18. Tool Intelligence Marketplace ranking formula canonical per §8 + `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md`.
-19. **Phase A (surface) vs Phase B (adversarial interactive) — DO NOT CONFLATE.** §7.6 score = Phase A signal. §11 Clearance Step 5 requires Phase A + Phase B. A §7.6 score alone is NOT a functional certification. LIMITATIONS disclosure per §7 CA-14-A canonical text (ENTRY 015) is mandatory for every operator-facing delivery. Phase B is owned by Agent #21 ACE Conductor per §15.1 row 21 (ENTRY 015 CA-14-A-Q3 ratification).
 
 ---
 
