@@ -805,9 +805,16 @@ export async function runOrchestration(args = {}) {
     let prioritizedIssues;
     try {
       const t0 = Date.now();
+      // D38 T1 — pass canonical §7.6 findings to the prioritizer so
+      // Claude targets the actual measurable defects observed by the
+      // Aggressive Crawl Engine (deriveIssuesFromCrawl output) rather
+      // than imagining problems based on Five-Layer telemetry. The
+      // iterLog.preGtm was captured during STEP 5 and carries the
+      // .issues array (severity-tagged, location-tagged).
       const claudeIssues = await prioritizeIssuesWithClaude({
         preScore: preScoreEnvelope, product, suppliedIssue: args.issue,
         fileList: repoFileList,
+        canonicalFindings: iterLog.preGtm?.issues ?? null,
       }).catch(() => null);
       if (claudeIssues && claudeIssues.length > 0) {
         prioritizedIssues = claudeIssues;
@@ -1699,7 +1706,7 @@ export async function runOrchestration(args = {}) {
  * @param {object} [args.opts]             — { fetch?, apiKey?, model? }
  * @returns {Promise<Array<{ filePath, issue, fix, estimatedImpact, severity, title }>|null>}
  */
-export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIssue, fileList = null, opts = {} }) {
+export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIssue, fileList = null, canonicalFindings = null, opts = {} }) {
   if (suppliedIssue && typeof suppliedIssue === 'object') {
     return [suppliedIssue];
   }
@@ -1711,6 +1718,26 @@ export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIs
 
   const productId = product?.product_id ?? 'unknown';
   const githubRepoUrl = product?.github_repo_url ?? '';
+
+  // D38 T1 — canonical §7.6 findings are the LITERAL measurable defects
+  // the engine observed on the deployed product. The prioritizer must
+  // target THESE — not Claude's imagination of what could be wrong
+  // based on Five-Layer scores. Five-Layer is internal telemetry; the
+  // findings list is the source of truth for "fix this specific thing."
+  const hasCanonicalFindings = Array.isArray(canonicalFindings) && canonicalFindings.length > 0;
+  const findingsSection = hasCanonicalFindings
+    ? [
+        'CANONICAL §7.6 FINDINGS (these are the ACTUAL measurable defects observed by the Aggressive Crawl Engine — TARGET THESE, not your imagination of what could be wrong):',
+        ...canonicalFindings.slice(0, 30).map((f, i) =>
+          `  ${i + 1}. [${f.severity}] ${f.category} @ ${f.location || 'n/a'}` +
+          (f.evidence ? `\n     evidence: ${typeof f.evidence === 'string' ? f.evidence.slice(0, 200) : ''}` : ''),
+        ),
+        '',
+        'EVERY issue you return MUST map directly to one of the findings above. Each fix MUST be the smallest possible change that removes the corresponding finding from the next crawl. Do NOT invent new improvement areas (no pricing pages, no monetization, no refactoring) unless they directly correspond to a listed finding.',
+      ]
+    : [
+        'No canonical findings supplied — falling back to Five-Layer score signal (lower-quality input).',
+      ];
 
   // DISPATCH 27: when a real fileList is provided (from GitHub Trees API),
   // Claude is told to choose ONLY from that list — eliminates the "guessed
@@ -1748,34 +1775,26 @@ export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIs
       ];
 
   const prompt = [
-    'You are a code quality analyst. Given Five-Layer scores for a deployed product and the product\'s GitHub repo, identify the top 5 SPECIFIC issues causing low scores.',
+    'You are a code quality analyst. Identify up to 5 SPECIFIC code-level fixes that will REMOVE the canonical §7.6 findings listed below from the next deploy crawl. Each fix maps 1:1 to a finding.',
     '',
     `Product: ${productId}`,
     `GitHub repo: ${githubRepoUrl}`,
     '',
-    'Five-Layer scores (each layer is /20, total is /100):',
-    `  L1 Functionality: ${preScore.l1}/20`,
-    `  L2 Operational:   ${preScore.l2}/20`,
-    `  L3 Financial:     ${preScore.l3}/20`,
-    `  L4 Business:      ${preScore.l4}/20`,
-    `  L5 GTM:           ${preScore.l5}/20`,
-    `  Total:            ${preScore.total}/100`,
+    ...findingsSection,
     '',
-    'Layer rubric:',
-    '  L1 Functionality — Does the product work? Broken interactions, missing features.',
-    '  L2 Operational  — Monitoring, error tracking, uptime signals, infrastructure readiness.',
-    '  L3 Financial    — Pricing clarity, monetization model, payment flow.',
-    '  L4 Business     — Competitive positioning, defensible moat, partnerships.',
-    '  L5 GTM          — ICP clarity, value proposition, CTAs, sales motion.',
+    'Five-Layer scores (INTERNAL telemetry — informational only; do NOT prioritize based on these — use the canonical findings above):',
+    `  L1 Functionality: ${preScore.l1}/20  L2 Operational: ${preScore.l2}/20  L3 Financial: ${preScore.l3}/20  L4 Business: ${preScore.l4}/20  L5 GTM: ${preScore.l5}/20  Total: ${preScore.total}/100`,
     '',
     ...fileListSection,
     '',
     'Return STRICTLY valid JSON with this shape (no markdown code fences, no prose, just JSON):',
     '{"issues": [',
     '  {',
-    '    "filePath": "<exact path>",',
-    '    "issue": "<specific problem description>",',
-    '    "fix": "<exactly what change to make>",',
+    '    "filePath": "<exact path from the file list above>",',
+    '    "category": "<the §7.6 finding category from the list above, e.g. console-error, network-failure, accessibility-headings>",',
+    '    "location": "<the finding\'s location URL, copied verbatim from the canonical findings>",',
+    '    "issue": "<specific problem description tied to the finding>",',
+    '    "fix": "<exactly what minimal change to make — describe the line(s) and the new value>",',
     '    "estimatedImpact": { "layer": "L1|L2|L3|L4|L5", "delta": <integer> },',
     '    "severity": "critical|high|medium|low",',
     '    "title": "<short title>"',
@@ -1783,7 +1802,11 @@ export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIs
     '  ... up to 5 entries, ranked by descending estimatedImpact.delta',
     ']}',
     '',
-    'Focus on real functional / content issues that would move the score; skip purely cosmetic ones.',
+    'CRITICAL RULES:',
+    '- Each issue MUST correspond to one of the canonical findings above. If no canonical finding maps to a file, do not propose a fix for that file.',
+    '- The "category" + "location" fields MUST be copied verbatim from the canonical findings list so downstream scoped-relaxation rules can recognize the finding.',
+    '- Do NOT invent improvement areas (pricing pages, monetization, refactoring) unless they directly correspond to a listed finding.',
+    '- If the canonical findings list is empty, return an empty issues array.',
   ].join('\n');
 
   let response;
