@@ -1,0 +1,923 @@
+{
+  "schema": "v3-repanel.sidecar.v1",
+  "code": "CA-13-v3",
+  "commit": "d396bd2",
+  "bundle_size": 34165,
+  "startedAt": "2026-05-19T13:23:22.731Z",
+  "finishedAt": "2026-05-19T13:27:08.152Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 1,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 34165
+  },
+  "tally": {
+    "engagedTotal": 8,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 1,
+    "perQuestion": {
+      "CA-13-A-v3-Q1": {
+        "CA13AV3Q1-RATIFY": 0,
+        "CA13AV3Q1-TIGHTER": 2,
+        "CA13AV3Q1-RUNGATED": 2,
+        "CA13AV3Q1-REJECT": 0,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "CA-13-A-v3-Q2": {
+        "CA13AV3Q2-RATIFY": 0,
+        "CA13AV3Q2-COHERENCE": 2,
+        "CA13AV3Q2-AUDIT": 1,
+        "CA13AV3Q2-REJECT": 0,
+        "REJECT": 5,
+        "unmatched": 0
+      },
+      "CA-13-A-v3-Q3": {
+        "CA13AV3Q3-RATIFY": 0,
+        "CA13AV3Q3-ADMINUI": 1,
+        "CA13AV3Q3-NOTABLE": 3,
+        "CA13AV3Q3-REJECT": 0,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "CA-13-B-v3-Q1": {
+        "CA13BV3Q1-RATIFY": 0,
+        "CA13BV3Q1-INLINE": 1,
+        "CA13BV3Q1-BUNDLE": 0,
+        "CA13BV3Q1-REJECT": 0,
+        "REJECT": 7,
+        "unmatched": 0
+      },
+      "CA-13-B-v3-Q2": {
+        "CA13BV3Q2-RATIFY": 0,
+        "CA13BV3Q2-MEMBERSHIP": 5,
+        "CA13BV3Q2-AGENTID": 0,
+        "CA13BV3Q2-REJECT": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 31,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Migration cutover creates deployment freeze",
+        "detail": "§7.6.2 blocks ALL products from using the new ≥95 bar until 100% of legacy ClearanceRecords are migrated. This creates a system-wide deployment freeze where no product can ship at the new standard until every legacy product is addressed, potentially blocking critical updates for weeks."
+      },
+      {
+        "slot": 1,
+        "title": "Admin bottleneck for routine operations",
+        "detail": "§7.6.1 requires admin role for ANY sub-95 deployment, even temporary staging deployments or emergency hotfixes. The 80-char rationale requirement and governance_record audit trail create friction that could delay critical fixes when the single admin is unavailable."
+      },
+      {
+        "slot": 1,
+        "title": "Expiry cliff creates operational chaos",
+        "detail": "§7.6.1 hard-expires overrides at 14 days OR next pipeline run, whichever is first. A product at 94 score suddenly fails Step 5 mid-deployment cycle with no warning, requiring emergency admin re-authorization even if nothing changed about the product's actual quality."
+      },
+      {
+        "slot": 1,
+        "title": "No escape hatch for systemic scoring bugs",
+        "detail": "If the §7.6 scoring engine has a bug that artificially deflates scores across all products, the admin must issue individual expiring overrides for EVERY affected product every 14 days. There's no provision for a temporary system-wide scoring adjustment during bug fixes."
+      },
+      {
+        "slot": 2,
+        "title": "Admin-only override risks abuse",
+        "detail": "The admin-only expiring override mechanism in §7.6.1 could be abused by admins to bypass the ≥95 GTM bar frequently, undermining the integrity of the standard. Without strict oversight or additional checks, this could lead to a culture of complacency where the override becomes the norm rather than the exception."
+      },
+      {
+        "slot": 2,
+        "title": "Migration path complexity",
+        "detail": "The ClearanceRecord migration path outlined in §7.6.2 is complex and may introduce significant operational overhead. The requirement for re-evaluation and potential re-categorization of existing records could lead to delays and errors, especially if the migration script encounters unforeseen issues."
+      },
+      {
+        "slot": 2,
+        "title": "Lack of operator involvement",
+        "detail": "By removing the operator-configurable knob and making the override admin-only, the proposal excludes operators from the decision-making process regarding GTM readiness. This could lead to frustration and disengagement from operators who feel they have valuable insights into product readiness."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback plan in case the new ≥95 canonical bar causes unintended consequences, such as a significant decrease in product deployments. This could lead to a situation where the system is worse than the status quo, as operators may struggle to meet the new bar."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "The proposal does not specify how the new admin-only expiring override mechanism will be tested to ensure it works correctly and does not introduce new bugs or security vulnerabilities. This lack of testing could lead to issues down the line, such as overrides not expiring correctly or being used in unintended ways."
+      },
+      {
+        "slot": 3,
+        "title": "Potential for Abuse",
+        "detail": "The admin-only expiring override mechanism could be abused by admins to consistently deploy products with low scores, undermining the purpose of the ≥95 canonical bar. There is no clear mechanism in place to prevent or detect such abuse, which could lead to a degradation of the system's overall quality."
+      },
+      {
+        "slot": 4,
+        "title": "Override Mechanism Complexity",
+        "detail": "The admin-only expiring override mechanism in §7.6.1 introduces significant complexity. The multiple rules for expiry and use, along with the need for detailed audit trails, could lead to implementation errors and increased maintenance burden."
+      },
+      {
+        "slot": 4,
+        "title": "Migration Path Risk",
+        "detail": "The migration path for ClearanceRecord entities in §7.6.2 requires a complete inventory and re-evaluation of all existing entities. This process is time-consuming and risky, as any errors in re-evaluation could lead to incorrect status assignments and potential compliance issues."
+      },
+      {
+        "slot": 4,
+        "title": "Conflation Invariant Redundancy",
+        "detail": "The mandatory invariant in §19.0 that states 'These are NEVER conflated in any operator-facing surface' is redundant with existing governance mechanisms in §10. This redundancy adds unnecessary complexity and could lead to confusion among operators."
+      },
+      {
+        "slot": 5,
+        "title": "Migration Complexity",
+        "detail": "The migration path for ClearanceRecord entities is complex and may introduce errors or delays in the system."
+      },
+      {
+        "slot": 5,
+        "title": "Admin Override Abuse",
+        "detail": "The admin-only expiring override mechanism could be abused by admins to bypass the ≥95 bar without proper justification."
+      },
+      {
+        "slot": 5,
+        "title": "Near-GTM Band Elimination",
+        "detail": "Eliminating the Near-GTM 90–94 conditional band without a fallback clause may be too rigid and could lead to unnecessary delays in product deployment."
+      },
+      {
+        "slot": 6,
+        "title": "Migration cutover deadlock risk",
+        "detail": "§7.6.2 cutover gate requires 100% of pending ClearanceRecord entities to resolve to (a)/(b)/(c) before the ≥95 bar activates. But there is no mechanism preventing NEW ClearanceRecord entities from being created during the migration window — a product created mid-migration would be tagged `migration_pending` and could block cutover indefinitely if the engineering team cannot resolve all legacy entities. The cutover envelope `ca13v3_cutover_complete.v1` may never fire, leaving the system permanently on the old 75-bar standard."
+      },
+      {
+        "slot": 6,
+        "title": "Override renewal loop — permanent sub-95 deployment",
+        "detail": "§7.6.1 grants admin authority to issue a fresh override after expiry with no cooldown, no spending limit, and no escalation requirement. An admin can issue a 30-day override for a product at score 75, then immediately issue another 30-day override when the first expires, in perpetuity. The audit trail records each grant individually but nowhere does the spec cap the number of sequential overrides per product. This transforms the 'admin-only expiring override' into a de facto permanent escape hatch — the exact structural problem the CEO decision was meant to eliminate."
+      },
+      {
+        "slot": 6,
+        "title": "Rationale quality gate is unenforceable",
+        "detail": "§7.6.1 requires `rationale: string ≥ 80 chars; cannot match canonical stop-words set` but the stop-words list is not defined in the proposal, no validation logic is specified, and there is no human-review gate on rationale quality. An admin can write 'This is necessary for business reasons to proceed with deployment' (80+ chars, no obvious stop-words) and pass the envelope write. The spec provides no automated quality check and no escalation trigger for low-quality rationales, making the ≥80-char requirement a pure formality."
+      },
+      {
+        "slot": 6,
+        "title": "Override floor rejection creates operational cliff",
+        "detail": "CA13A-v3-CT-3 specifies that `override_floor: 50` is REJECTED (not clamped). If an admin misconfigures the floor value and the override is rejected, the product falls immediately to the canonical ≥95 bar with no grace period. Unlike the migration path (which has a structured three-outcome resolution), there is no fallback mechanism for a rejected override envelope — the product simply fails Step 5 with no admin recourse documented in the spec. This creates a hard operational cliff where a single typo in an admin-issued override can halt deployment entirely."
+      },
+      {
+        "slot": 6,
+        "title": "Migration outcome (c) creates legacy underclass incentive",
+        "detail": "§7.6.2 outcome (c) allows admin annotation of ClearanceRecord as `legacy_pre_ca13v3` — these entities do not count toward any new §7.6 metrics. This creates a perverse incentive: any product that cannot score ≥95 can be re-categorized as legacy, removing it from the metric denominator entirely. The spec does not define who can apply outcome (c), what threshold triggers it, or whether there is a cap on legacy-archived entities. A product that scores 76 can be archived as legacy indefinitely, defeating the purpose of the ≥95 bar."
+      },
+      {
+        "slot": 7,
+        "title": "Migration script failure risk",
+        "detail": "§7.6.2 migration path lacks rollback mechanisms for failed re-evaluations. If the migration script encounters corrupted ClearanceRecord data during inventory pass, it could cascade failures across multiple products without recovery options. The conformance test CA13A-v3-CT-6 doesn't cover partial-failure states."
+      },
+      {
+        "slot": 7,
+        "title": "Override expiry race condition",
+        "detail": "§7.6.1 expiry rule 1 (next pipeline run) creates deployment race conditions. If two pipeline runs trigger simultaneously for the same product, override expiration timing becomes unpredictable. Audit envelope emission lacks atomicity guarantees with pipeline execution states."
+      },
+      {
+        "slot": 7,
+        "title": "Guard() cross-reference gap",
+        "detail": "B-Q1 EXECUTOR_REGISTRY cross-reference doesn't resolve Slot 10 #34's concern about BaseAgent.guard() argument validation. The spec doesn't mandate how authorityNeeded sets are populated for Agent #26's dual-authority requirement per CA-9-Q4(b)."
+      },
+      {
+        "slot": 7,
+        "title": "Legacy categorization loophole",
+        "detail": "§7.6.2 outcome (c) lets admins bypass migration via legacy_archived status without score verification. This creates an audit trail gap where pre-CA13v3 products avoid scrutiny indefinitely under the new standard."
+      },
+      {
+        "slot": 8,
+        "title": "Override loophole persists",
+        "detail": "In §7.6.1 the proposal replaces the operator-config knob with an admin-only expiring override, but it still preserves a discretionary sub-95 escape hatch. Because admins can re-issue overrides repeatedly, the effective threshold can remain below 95 indefinitely, just with more ceremony and audit logging."
+      },
+      {
+        "slot": 8,
+        "title": "Migration cutover is under-specified",
+        "detail": "§7.6.2 says the ≥95 bar takes effect only after 100% of legacy ClearanceRecords resolve, but it does not specify a bounded enforcement path for stuck or abandoned records. A single unresolved or disputed legacy row could block cutover forever, or force ad hoc legacy-archiving decisions that weaken the standard."
+      },
+      {
+        "slot": 8,
+        "title": "Dual-bar UI confusion risk",
+        "detail": "§19.0 adds a mandatory anti-conflation invariant and surface-labeling, yet the artifact still allows both the Self-Audit 95/95 threshold and the GTM bar to coexist in operator-facing surfaces. Without a single authoritative display contract, operators may misread one score as satisfying the other, especially during migration when old and new ClearanceRecords coexist."
+      },
+      {
+        "slot": 10,
+        "title": "Migration cutover stalls entire bar",
+        "detail": "§7.6.2 requires 100% ClearanceRecord resolution (a/b/c outcomes) before emitting ca13v3_cutover_complete.v1 and activating the ≥95 bar. No timeout, partial-cutover path, or fallback for products lacking recent pipeline runs is defined, so a single stuck legacy record freezes the canonical threshold indefinitely."
+      },
+      {
+        "slot": 10,
+        "title": "Expiring override window too wide",
+        "detail": "§7.6.1 allows admin to set expires_at up to granted_at+30 days and ties one expiry trigger to 'next pipeline run,' which may be weeks away. This creates a controllable multi-week sub-95 deployment window with only governance_record_entry audit, weaker than the v2 operator knob it replaces."
+      },
+      {
+        "slot": 10,
+        "title": "Conformance tests lack enforcement spec",
+        "detail": "CA13A-v3-CT-1 through CT-8 define role checks and rejection envelopes, yet §15.1 and BaseAgent.guard() cross-references in CA-13-B-v3-Q1 never map these new gtm_bar_admin_override.v1 kinds into the EXECUTOR_REGISTRY or ScoreEvaluator.js decision matrix."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-13-A-v3-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 4
+    },
+    "CA-13-A-v3-Q2": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "5 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 5
+    },
+    "CA-13-A-v3-Q3": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 4
+    },
+    "CA-13-B-v3-Q1": {
+      "verdict": "QUORUM_PLURALITY_REJECT",
+      "detail": "7 of 8 on REJECT (≥ quorum 7/10)",
+      "topKey": "REJECT",
+      "topCount": 7
+    },
+    "CA-13-B-v3-Q2": {
+      "verdict": "PLURALITY_CA13BV3Q2-MEMBERSHIP",
+      "detail": "5 of 8 on CA13BV3Q2-MEMBERSHIP (below 7/10 quorum)",
+      "topKey": "CA13BV3Q2-MEMBERSHIP",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0,
+    "alignedCount": 0,
+    "totalPossible": 40,
+    "draftedQs": [
+      "CA-13-A-v3-Q1",
+      "CA-13-A-v3-Q2",
+      "CA-13-A-v3-Q3",
+      "CA-13-B-v3-Q1",
+      "CA-13-B-v3-Q2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 0.0 %, distinct objections 31"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Migration cutover creates deployment freeze",
+            "detail": "§7.6.2 blocks ALL products from using the new ≥95 bar until 100% of legacy ClearanceRecords are migrated. This creates a system-wide deployment freeze where no product can ship at the new standard until every legacy product is addressed, potentially blocking critical updates for weeks."
+          },
+          {
+            "title": "Admin bottleneck for routine operations",
+            "detail": "§7.6.1 requires admin role for ANY sub-95 deployment, even temporary staging deployments or emergency hotfixes. The 80-char rationale requirement and governance_record audit trail create friction that could delay critical fixes when the single admin is unavailable."
+          },
+          {
+            "title": "Expiry cliff creates operational chaos",
+            "detail": "§7.6.1 hard-expires overrides at 14 days OR next pipeline run, whichever is first. A product at 94 score suddenly fails Step 5 mid-deployment cycle with no warning, requiring emergency admin re-authorization even if nothing changed about the product's actual quality."
+          },
+          {
+            "title": "No escape hatch for systemic scoring bugs",
+            "detail": "If the §7.6 scoring engine has a bug that artificially deflates scores across all products, the admin must issue individual expiring overrides for EVERY affected product every 14 days. There's no provision for a temporary system-wide scoring adjustment during bug fixes."
+          }
+        ],
+        "worse_than_status_quo": "The proposal makes emergency deployments worse than status quo by requiring admin authorization for ANY sub-95 deployment, even critical security patches, creating a single point of failure when the admin is unreachable during an incident.",
+        "precedent": "GitHub's branch protection rules initially required admin approval for all emergency commits, but after multiple incidents where admins were unreachable during outages, they added a 'break glass' mechanism for operators to bypass with heavy audit logging."
+      },
+      "rejection_steelman": "This proposal should be rejected because it creates a brittle single-point-of-failure system where ALL sub-95 deployments require the one admin role, with no provision for delegation, emergency bypass, or systemic issues. The 100% migration prerequisite means the entire system is held hostage to legacy products, and the 14-day expiry cliff will cause operational chaos when overrides expire mid-cycle. The proposal prioritizes theoretical purity over operational reality.",
+      "votes": {
+        "CA-13-A-v3-Q1": {
+          "key": "CA13AV3Q1-RUNGATED",
+          "pick_text": "Strengthen — override expires at next pipeline run ONLY (no N-day default; override expires the moment next run executes).",
+          "rationale": "The 14-day default creates unpredictable expiry cliffs; tying expiry strictly to pipeline runs ensures overrides expire only when the product is actually re-evaluated, avoiding mid-cycle failures."
+        },
+        "CA-13-A-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — restore v2 fallback clause as safety valve; v3 removal too rigid.",
+          "rationale": "Eliminating ALL conditional paths except admin override creates excessive rigidity; the v2 fallback clause provided a safety valve for Panel evolution without compromising the primary ≥95 standard."
+        },
+        "CA-13-A-v3-Q3": {
+          "key": "CA13AV3Q3-NOTABLE",
+          "pick_text": "Ratify but with redundancy fix — keep the invariant but DELETE §19.0 paragraph table (invariant alone suffices; §10 governance-mechanisms table already covers it).",
+          "rationale": "The invariant is valuable but the paragraph table duplicates §10 content; removing redundancy while keeping the enforceable invariant improves clarity."
+        },
+        "CA-13-B-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording remains too vague without actual §15.5 sibling row-table populate; defer entire CA-13-B until that engineering dispatch ships.",
+          "rationale": "Cross-references to not-yet-implemented specs create false confidence; the actual EXECUTOR_REGISTRY implementation must exist before ratifying governance rules that depend on it."
+        },
+        "CA-13-B-v3-Q2": {
+          "key": "CA13BV3Q2-MEMBERSHIP",
+          "pick_text": "Ratify with `membership` rename — Agent #26 sibling becomes `orchestra-membership-executor`; Agent #21 stays `crawl-write-executor`.",
+          "rationale": "The 'membership' terminology better captures Agent #26's ongoing orchestra management duties beyond initial admission, addressing the Slot 2 #20 concern about naming precision."
+        }
+      },
+      "overallNotes": "The proposal's admin-only bottleneck and 100% migration prerequisite create significant operational risks that outweigh the governance benefits.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Admin-only override risks abuse",
+            "detail": "The admin-only expiring override mechanism in §7.6.1 could be abused by admins to bypass the ≥95 GTM bar frequently, undermining the integrity of the standard. Without strict oversight or additional checks, this could lead to a culture of complacency where the override becomes the norm rather than the exception."
+          },
+          {
+            "title": "Migration path complexity",
+            "detail": "The ClearanceRecord migration path outlined in §7.6.2 is complex and may introduce significant operational overhead. The requirement for re-evaluation and potential re-categorization of existing records could lead to delays and errors, especially if the migration script encounters unforeseen issues."
+          },
+          {
+            "title": "Lack of operator involvement",
+            "detail": "By removing the operator-configurable knob and making the override admin-only, the proposal excludes operators from the decision-making process regarding GTM readiness. This could lead to frustration and disengagement from operators who feel they have valuable insights into product readiness."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to a situation where the admin-only override is overused, effectively lowering the GTM bar and allowing subpar products to be deployed, which could damage the reputation of the platform.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it centralizes too much power in the hands of admins, potentially leading to overuse of the override mechanism and undermining the intended quality standards. Additionally, the complexity of the migration path could introduce significant operational challenges and delays, outweighing the benefits of the proposed changes.",
+      "votes": {
+        "CA-13-A-v3-Q1": {
+          "key": "CA13AV3Q1-RUNGATED",
+          "pick_text": "Strengthen — override expires at next pipeline run ONLY (no N-day default; override expires the moment next run executes).",
+          "rationale": "This option reduces the risk of override abuse by ensuring that any granted override is short-lived and tied directly to the next pipeline run, maintaining the integrity of the GTM bar."
+        },
+        "CA-13-A-v3-Q2": {
+          "key": "CA13AV3Q2-COHERENCE",
+          "pick_text": "Strengthen — append \"Any future Panel proposal to re-introduce sub-95 conditional path is a candidate for CEO-Locked-Rule-13 dispositional veto by default, given the admin-only expiring override per §7.6.1.\"",
+          "rationale": "This option provides a stronger safeguard against the reintroduction of sub-95 conditional paths, reinforcing the importance of maintaining high standards."
+        },
+        "CA-13-A-v3-Q3": {
+          "key": "CA13AV3Q3-ADMINUI",
+          "pick_text": "Strengthen further — also require admin role for any UI surface displaying BOTH bars simultaneously (operator role cannot author dashboards mixing the two).",
+          "rationale": "This option ensures that only admins can manage complex UI displays involving both bars, reducing the risk of operator confusion or misuse."
+        },
+        "CA-13-B-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording remains too vague without actual §15.5 sibling row-table populate; defer entire CA-13-B until that engineering dispatch ships.",
+          "rationale": "The proposal lacks specificity in its current form, and deferring until more concrete details are available would ensure a more informed decision."
+        },
+        "CA-13-B-v3-Q2": {
+          "key": "CA13BV3Q2-MEMBERSHIP",
+          "pick_text": "Ratify with `membership` rename — Agent #26 sibling becomes `orchestra-membership-executor`; Agent #21 stays `crawl-write-executor`.",
+          "rationale": "This option provides clearer naming that better reflects the ongoing responsibilities of Agent #26, improving clarity and traceability."
+        }
+      },
+      "overallNotes": "The proposal centralizes decision-making power, which could lead to potential misuse and operational challenges. Strengthening safeguards and ensuring clarity in naming and processes are crucial.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback plan in case the new ≥95 canonical bar causes unintended consequences, such as a significant decrease in product deployments. This could lead to a situation where the system is worse than the status quo, as operators may struggle to meet the new bar."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not specify how the new admin-only expiring override mechanism will be tested to ensure it works correctly and does not introduce new bugs or security vulnerabilities. This lack of testing could lead to issues down the line, such as overrides not expiring correctly or being used in unintended ways."
+          },
+          {
+            "title": "Potential for Abuse",
+            "detail": "The admin-only expiring override mechanism could be abused by admins to consistently deploy products with low scores, undermining the purpose of the ≥95 canonical bar. There is no clear mechanism in place to prevent or detect such abuse, which could lead to a degradation of the system's overall quality."
+          }
+        ],
+        "worse_than_status_quo": "If the new ≥95 canonical bar is too stringent, it could lead to a situation where products are not deployed in a timely manner, causing delays and lost opportunities. This could be worse than the status quo, where products were deployed with a score of 75 or higher. Additionally, the admin-only expiring override mechanism could be abused, leading to a situation where low-quality products are deployed, which would be worse than the status quo.",
+        "precedent": "A similar design caused problems in the past when a strict quality gate was introduced without a clear rollback plan, leading to significant delays and frustration among operators. This precedent suggests that careful consideration and testing are necessary to avoid similar issues with the proposed ≥95 canonical bar."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it introduces a significant change to the system without providing sufficient safeguards against potential negative consequences. The lack of a clear rollback plan, insufficient testing, and potential for abuse are all significant concerns that need to be addressed before implementing the new ≥95 canonical bar. Additionally, the proposal may not be suitable for all products or environments, and a more nuanced approach may be necessary to ensure the system remains effective and efficient.",
+      "votes": {
+        "CA-13-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject the spine — return to v2 operator-config knob with bounds raised to [80,100] (Slot 2 FLOOR80 variant)",
+          "rationale": "This option is chosen because it provides a more nuanced approach to quality control, allowing operators to configure the quality gate to suit their specific needs while still maintaining a high level of quality."
+        },
+        "CA-13-A-v3-Q2": {
+          "key": null,
+          "pick_text": "Strengthen — append 'Any future Panel proposal to re-introduce sub-95 conditional path is a candidate for CEO-Locked-Rule-13 dispositional veto by default, given the admin-only expiring override per §7.6.1.'",
+          "rationale": "This option is chosen because it provides an additional layer of protection against the introduction of low-quality products, while still allowing for flexibility in the system."
+        },
+        "CA-13-A-v3-Q3": {
+          "key": "CA13AV3Q3-NOTABLE",
+          "pick_text": "Ratify but with redundancy fix — keep the invariant but DELETE §19.0 paragraph table (invariant alone suffices; §10 governance-mechanisms table already covers it)",
+          "rationale": "This option is chosen because it simplifies the system while maintaining the necessary safeguards against conflation of the two bars."
+        },
+        "CA-13-B-v3-Q1": {
+          "key": "CA13BV3Q1-BUNDLE",
+          "pick_text": "Strengthen — bundle §15.5 sibling row-table populate INTO CA-13-B v3 ratification (lands EXECUTOR_REGISTRY entries alongside wording)",
+          "rationale": "This option is chosen because it provides additional clarity and specificity to the proposal, ensuring that the necessary details are included in the ratification."
+        },
+        "CA-13-B-v3-Q2": {
+          "key": "CA13BV3Q2-MEMBERSHIP",
+          "pick_text": "Ratify with `membership` rename — Agent #26 sibling becomes `orchestra-membership-executor`; Agent #21 stays `crawl-write-executor`",
+          "rationale": "This option is chosen because it provides a clear and consistent naming convention, which is essential for maintaining the system's clarity and usability."
+        }
+      },
+      "overallNotes": "The proposal has some positive aspects, such as the introduction of a stricter quality gate, but it also raises significant concerns that need to be addressed. A more nuanced approach, careful testing, and additional safeguards are necessary to ensure the system remains effective and efficient.",
+      "invalid_reason": "4/5 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Override Mechanism Complexity",
+            "detail": "The admin-only expiring override mechanism in §7.6.1 introduces significant complexity. The multiple rules for expiry and use, along with the need for detailed audit trails, could lead to implementation errors and increased maintenance burden."
+          },
+          {
+            "title": "Migration Path Risk",
+            "detail": "The migration path for ClearanceRecord entities in §7.6.2 requires a complete inventory and re-evaluation of all existing entities. This process is time-consuming and risky, as any errors in re-evaluation could lead to incorrect status assignments and potential compliance issues."
+          },
+          {
+            "title": "Conflation Invariant Redundancy",
+            "detail": "The mandatory invariant in §19.0 that states 'These are NEVER conflated in any operator-facing surface' is redundant with existing governance mechanisms in §10. This redundancy adds unnecessary complexity and could lead to confusion among operators."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's complex override mechanism and migration path could lead to implementation errors and increased maintenance burden, making the system more error-prone and less reliable than the current status quo.",
+        "precedent": "The complex override and migration mechanisms proposed here are reminiscent of the failed migration attempts in large-scale enterprise systems, such as the healthcare.gov launch, where complex rules and migration paths led to significant implementation errors and system failures."
+      },
+      "rejection_steelman": "The proposal introduces unnecessary complexity with the admin-only expiring override mechanism and the migration path for ClearanceRecord entities. These complexities could lead to implementation errors, increased maintenance burden, and potential compliance issues. Additionally, the mandatory invariant in §19.0 is redundant with existing governance mechanisms, adding unnecessary complexity and potential confusion.",
+      "votes": {
+        "CA-13-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The complex override mechanism and migration path introduce significant risks and unnecessary complexity."
+        },
+        "CA-13-A-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Eliminating the Near-GTM band without a fallback clause is too rigid and does not provide a safety valve for exceptional cases."
+        },
+        "CA-13-A-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The mandatory invariant is redundant with existing governance mechanisms and adds unnecessary complexity."
+        },
+        "CA-13-B-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The wording remains too vague without actual §15.5 sibling row-table populate, and the cross-reference is insufficient."
+        },
+        "CA-13-B-v3-Q2": {
+          "key": "CA13BV3Q2-MEMBERSHIP",
+          "pick_text": "Ratify with `membership` rename — Agent #26 sibling becomes `orchestra-membership-executor`; Agent #21 stays `crawl-write-executor`.",
+          "rationale": "The `membership` rename provides better clarity on the ongoing duties of Agent #26 compared to `admission`."
+        }
+      },
+      "overallNotes": "The proposal's complexities and redundancies introduce significant risks and unnecessary burdens, making it difficult to support in its current form.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Migration Complexity",
+            "detail": "The migration path for ClearanceRecord entities is complex and may introduce errors or delays in the system."
+          },
+          {
+            "title": "Admin Override Abuse",
+            "detail": "The admin-only expiring override mechanism could be abused by admins to bypass the ≥95 bar without proper justification."
+          },
+          {
+            "title": "Near-GTM Band Elimination",
+            "detail": "Eliminating the Near-GTM 90–94 conditional band without a fallback clause may be too rigid and could lead to unnecessary delays in product deployment."
+          }
+        ],
+        "worse_than_status_quo": "If the admin-only expiring override is abused or the migration path fails, products may be deployed with a score lower than 75, which is worse than the current status quo.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal introduces significant changes to the GTM bar and override mechanisms without sufficient safeguards against abuse and errors, which could lead to a worse system state than the current status quo.",
+      "votes": {
+        "CA-13-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal lacks sufficient safeguards against admin override abuse and migration path errors."
+        },
+        "CA-13-A-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — restore v2 fallback clause as safety valve; v3 removal too rigid.",
+          "rationale": "Eliminating the Near-GTM band without a fallback clause is too rigid and could lead to unnecessary delays."
+        },
+        "CA-13-A-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal does not adequately address the redundancy concern and could lead to confusion in operator-facing surfaces."
+        },
+        "CA-13-B-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The wording remains too vague and the enforcement spec cross-reference is insufficient."
+        },
+        "CA-13-B-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The capability-keyed sibling naming is unclear and could lead to confusion."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes without sufficient safeguards and clarity, which could lead to a worse system state.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Migration cutover deadlock risk",
+            "detail": "§7.6.2 cutover gate requires 100% of pending ClearanceRecord entities to resolve to (a)/(b)/(c) before the ≥95 bar activates. But there is no mechanism preventing NEW ClearanceRecord entities from being created during the migration window — a product created mid-migration would be tagged `migration_pending` and could block cutover indefinitely if the engineering team cannot resolve all legacy entities. The cutover envelope `ca13v3_cutover_complete.v1` may never fire, leaving the system permanently on the old 75-bar standard."
+          },
+          {
+            "title": "Override renewal loop — permanent sub-95 deployment",
+            "detail": "§7.6.1 grants admin authority to issue a fresh override after expiry with no cooldown, no spending limit, and no escalation requirement. An admin can issue a 30-day override for a product at score 75, then immediately issue another 30-day override when the first expires, in perpetuity. The audit trail records each grant individually but nowhere does the spec cap the number of sequential overrides per product. This transforms the 'admin-only expiring override' into a de facto permanent escape hatch — the exact structural problem the CEO decision was meant to eliminate."
+          },
+          {
+            "title": "Rationale quality gate is unenforceable",
+            "detail": "§7.6.1 requires `rationale: string ≥ 80 chars; cannot match canonical stop-words set` but the stop-words list is not defined in the proposal, no validation logic is specified, and there is no human-review gate on rationale quality. An admin can write 'This is necessary for business reasons to proceed with deployment' (80+ chars, no obvious stop-words) and pass the envelope write. The spec provides no automated quality check and no escalation trigger for low-quality rationales, making the ≥80-char requirement a pure formality."
+          },
+          {
+            "title": "Override floor rejection creates operational cliff",
+            "detail": "CA13A-v3-CT-3 specifies that `override_floor: 50` is REJECTED (not clamped). If an admin misconfigures the floor value and the override is rejected, the product falls immediately to the canonical ≥95 bar with no grace period. Unlike the migration path (which has a structured three-outcome resolution), there is no fallback mechanism for a rejected override envelope — the product simply fails Step 5 with no admin recourse documented in the spec. This creates a hard operational cliff where a single typo in an admin-issued override can halt deployment entirely."
+          },
+          {
+            "title": "Migration outcome (c) creates legacy underclass incentive",
+            "detail": "§7.6.2 outcome (c) allows admin annotation of ClearanceRecord as `legacy_pre_ca13v3` — these entities do not count toward any new §7.6 metrics. This creates a perverse incentive: any product that cannot score ≥95 can be re-categorized as legacy, removing it from the metric denominator entirely. The spec does not define who can apply outcome (c), what threshold triggers it, or whether there is a cap on legacy-archived entities. A product that scores 76 can be archived as legacy indefinitely, defeating the purpose of the ≥95 bar."
+          }
+        ],
+        "worse_than_status_quo": "An admin issues a 30-day override for a product at score 75, then immediately issues another 30-day override when the first expires, repeating this cycle indefinitely. The audit trail shows a continuous series of individually valid grants, each with a fresh rationale and fresh expiry, but the product never reaches ≥95. The system is now in a worse state than the v2 operator-config knob because the override mechanism is buried in governance_record entries, harder to detect in aggregate, and has no spending limit — whereas the v2 knob was at least visible as a product-level flag.",
+        "precedent": "The 2017 Equifax data breach (CVE-2017-5638) resulted from a known vulnerability with a patch available but not applied. The underlying governance failure was a systematic override mechanism where the risk of 'not patching' was perceived as lower than the operational cost of patching — creating a permanent escape hatch that persisted until catastrophe. CA-13 v3's admin-only expiring override with no spending limit replicates the same structural failure: a governance mechanism that is individually compliant but collectively catastrophic when used repeatedly on the same asset."
+      },
+      "rejection_steelman": "CA-13 v3 attempts to resolve a Panel impasse via CEO Locked-Rule-13 fiat, but the resulting mechanism still conflates two semantically distinct concepts — Self-Audit 95/95 (a governance quality gate measuring internal process integrity) and GTM Readiness ≥95 (a launch readiness gate measuring product market-readiness) — by forcing them to the same numeric threshold. The proposal provides no empirical basis for why these two orthogonal dimensions should share a single number, and the §19.0 invariant ('These are NEVER conflated in any operator-facing surface') directly contradicts the structural decision to set them to the same value. Deferring until the Panel can establish an independent empirical basis for the GTM bar — rather than anchoring it to the governance threshold by administrative decree — would produce a more defensible and durable standard.",
+      "votes": {
+        "CA-13-A-v3-Q1": {
+          "key": "CA13AV3Q1-TIGHTER",
+          "pick_text": "Strengthen — expiry default 7 days (not 14), hard bounds [1,14]; rationale-quality validation requires ≥120 chars (not 80).",
+          "rationale": "The 14-day default is too permissive given the absence of any override-spending limit or cooldown mechanism identified in the adversarial pass. Shortening to 7 days default and tightening the rationale quality gate to 120 chars reduces the surface area for override abuse without fundamentally altering the mechanism's structure."
+        },
+        "CA-13-A-v3-Q2": {
+          "key": "CA13AV3Q2-AUDIT",
+          "pick_text": "Strengthen toward audit — every §11 Step 5 evaluation consulting an override emits additional `step5_override_consulted.v1` envelope alongside `gtm_bar_admin_override_used.v1`.",
+          "rationale": "The dual-envelope approach strengthens auditability without altering the override mechanism itself. The additional envelope provides a clearer signal for automated monitoring dashboards and reduces the forensic effort required to detect override renewal loops."
+        },
+        "CA-13-A-v3-Q3": {
+          "key": "CA13AV3Q3-NOTABLE",
+          "pick_text": "Ratify but with redundancy fix — keep the invariant but DELETE §19.0 paragraph table (invariant alone suffices; §10 governance-mechanisms table already covers it).",
+          "rationale": "The mandatory invariant is the binding element; the §19.0 paragraph table is descriptive and redundant with §10's governance-mechanisms table. Removing the paragraph eliminates the redundancy concern raised at v2 re-Panel while preserving the enforceable invariant."
+        },
+        "CA-13-B-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording remains too vague without actual §15.5 sibling row-table populate; defer entire CA-13-B until that engineering dispatch ships.",
+          "rationale": "The cross-reference to EXECUTOR_REGISTRY and BaseAgent.guard() is a citation, not a specification. Without the actual sibling row-table populate in §15.5, CA-13-B v3 ratification would lock in approval of language that references non-existent implementation details. Deferral until the engineering dispatch ships is the appropriate path."
+        },
+        "CA-13-B-v3-Q2": {
+          "key": "CA13BV3Q2-MEMBERSHIP",
+          "pick_text": "Ratify with `membership` rename — Agent #26 sibling becomes `orchestra-membership-executor`; Agent #21 stays `crawl-write-executor`.",
+          "rationale": "Slot 2's objection is well-founded: 'admission' is narrower than the ongoing membership-management duties Agent #26 owns per §8.1. The rename to 'orchestra-membership-executor' better reflects the agent's charter and is a low-cost improvement that resolves a legitimate naming precision concern."
+        }
+      },
+      "overallNotes": "The override renewal loop objection (objection 2) is the most structurally dangerous: it transforms a time-bounded exception into a permanent escape hatch without any spending limit or cooldown. Any ratification of the v3 spine should include a mandatory review of whether override-spending limits are within scope for CA-13 or require a separate follow-on amendment.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:minimax/minimax-m2.7"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Migration script failure risk",
+            "detail": "§7.6.2 migration path lacks rollback mechanisms for failed re-evaluations. If the migration script encounters corrupted ClearanceRecord data during inventory pass, it could cascade failures across multiple products without recovery options. The conformance test CA13A-v3-CT-6 doesn't cover partial-failure states."
+          },
+          {
+            "title": "Override expiry race condition",
+            "detail": "§7.6.1 expiry rule 1 (next pipeline run) creates deployment race conditions. If two pipeline runs trigger simultaneously for the same product, override expiration timing becomes unpredictable. Audit envelope emission lacks atomicity guarantees with pipeline execution states."
+          },
+          {
+            "title": "Guard() cross-reference gap",
+            "detail": "B-Q1 EXECUTOR_REGISTRY cross-reference doesn't resolve Slot 10 #34's concern about BaseAgent.guard() argument validation. The spec doesn't mandate how authorityNeeded sets are populated for Agent #26's dual-authority requirement per CA-9-Q4(b)."
+          },
+          {
+            "title": "Legacy categorization loophole",
+            "detail": "§7.6.2 outcome (c) lets admins bypass migration via legacy_archived status without score verification. This creates an audit trail gap where pre-CA13v3 products avoid scrutiny indefinitely under the new standard."
+          }
+        ],
+        "worse_than_status_quo": "During migration, if a product scores 80 under the new bar (failing) but had 78 under the old bar (passing), and the admin is unavailable to issue override, it becomes blocked while previously deployable. Simultaneous override expiry and pipeline run could cause production outages for borderline-scoring critical systems.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The migration prerequisite creates systemic deployment freeze risk for all pre-existing products, while the admin-only override concentrates critical path dependencies on limited personnel. Given unresolved edge cases in override expiry timing and legacy recategorization loopholes, deferring until atomic migration transitions and override-use idempotency are proven would reduce operational hazard.",
+      "votes": {
+        "CA-13-A-v3-Q1": {
+          "key": "CA13AV3Q1-TIGHTER",
+          "pick_text": "Strengthen — expiry default 7 days (not 14), hard bounds [1,14]; rationale-quality validation requires ≥120 chars (not 80).",
+          "rationale": "Shorter default expiry reduces override exposure window; extended rationale requirement addresses Slot 9 #29 audit-quality concerns without requiring full redesign."
+        },
+        "CA-13-A-v3-Q2": {
+          "key": "CA13AV3Q2-COHERENCE",
+          "pick_text": "Strengthen — append \"Any future Panel proposal to re-introduce sub-95 conditional path is a candidate for CEO-Locked-Rule-13 dispositional veto by default, given the admin-only expiring override per §7.6.1.\"",
+          "rationale": "Preempts regression attempts while preserving Panel authority, addressing Slot 10 #33's loophole concern more definitively than silent removal."
+        },
+        "CA-13-A-v3-Q3": {
+          "key": "CA13AV3Q3-NOTABLE",
+          "pick_text": "Ratify but with redundancy fix — keep the invariant but DELETE §19.0 paragraph table (invariant alone suffices; §10 governance-mechanisms table already covers it).",
+          "rationale": "Resolves Slot 6 #19's redundancy objection while retaining the core anti-conflation enforcement."
+        },
+        "CA-13-B-v3-Q1": {
+          "key": "CA13BV3Q1-INLINE",
+          "pick_text": "Strengthen — also inline schema snippet of BaseAgent.guard() arguments directly in §15-intro text, not just cross-reference.",
+          "rationale": "Directly addresses Slot 10 #34's specificity gap by showing authorityNeeded set structure, preventing implementation drift."
+        },
+        "CA-13-B-v3-Q2": {
+          "key": "CA13BV3Q2-MEMBERSHIP",
+          "pick_text": "Ratify with `membership` rename — Agent #26 sibling becomes `orchestra-membership-executor`; Agent #21 stays `crawl-write-executor`.",
+          "rationale": "\"Membership\" better reflects Agent #26's ongoing duties per §8.1 (Slot 2 #20) while preserving capability-keyed clarity."
+        }
+      },
+      "overallNotes": "Migration script must include circuit-breaker to pause on >5% failure rate during inventory pass.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Override loophole persists",
+            "detail": "In §7.6.1 the proposal replaces the operator-config knob with an admin-only expiring override, but it still preserves a discretionary sub-95 escape hatch. Because admins can re-issue overrides repeatedly, the effective threshold can remain below 95 indefinitely, just with more ceremony and audit logging."
+          },
+          {
+            "title": "Migration cutover is under-specified",
+            "detail": "§7.6.2 says the ≥95 bar takes effect only after 100% of legacy ClearanceRecords resolve, but it does not specify a bounded enforcement path for stuck or abandoned records. A single unresolved or disputed legacy row could block cutover forever, or force ad hoc legacy-archiving decisions that weaken the standard."
+          },
+          {
+            "title": "Dual-bar UI confusion risk",
+            "detail": "§19.0 adds a mandatory anti-conflation invariant and surface-labeling, yet the artifact still allows both the Self-Audit 95/95 threshold and the GTM bar to coexist in operator-facing surfaces. Without a single authoritative display contract, operators may misread one score as satisfying the other, especially during migration when old and new ClearanceRecords coexist."
+          }
+        ],
+        "worse_than_status_quo": "If an admin is pressured to keep shipping products under 95, the new design can institutionalize repeated temporary overrides rather than forcing a hard stop. That is worse than the current status quo if the current system at least makes sub-95 releases visibly exceptional, because the proposal normalizes them through a formal workflow and audit trail.",
+        "precedent": "The Kubernetes admission-control and feature-gate ecosystems have shown that temporary escape hatches often become long-lived operational dependencies when expiry and re-approval are easy to renew. Similar drift has also been seen with emergency change windows in large enterprises, where 'temporary' exceptions became the default path."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring this proposal is that it adds governance complexity without actually eliminating the core risk: a sub-95 release path. The admin-only override, migration prerequisite, and dual-bar UI rules introduce more state transitions, more audit surfaces, and more failure modes, while still leaving room for recurring exceptions and ambiguous operator interpretation. If the goal is a clean safety boundary, deferral until the override lifecycle and migration cutover are mechanically airtight would be prudent.",
+      "votes": {
+        "CA-13-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "None of the listed choices fully resolves the permanent-loophole problem introduced by repeated admin overrides, and the migration prerequisite is too open-ended. The proposal still allows practical sub-95 shipping through renewals, so ratifying as drafted would be premature."
+        },
+        "CA-13-A-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Eliminating the Near-GTM band is directionally sound, but the options do not address the operational ambiguity of the remaining override path. Without tighter constraints on override renewal and cutover, the safety valve remains effectively equivalent to a second conditional path."
+        },
+        "CA-13-A-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The invariant helps, but the proposal does not give a sufficiently crisp UI enforcement model to prevent conflation in practice. The listed options either add more policy without solving surface ambiguity or remove too much useful context."
+        },
+        "CA-13-B-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The cross-reference-only approach is too vague for an executor/guard mechanism that appears safety-critical. Bundling the row-table populate would still leave unresolved whether the runtime enforcement spec is complete and testable, so defer until the implementation dispatch lands."
+        },
+        "CA-13-B-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The naming options all trade off traceability, clarity, and role semantics, but none convincingly matches the underlying authority model described in the canonical reference. The proposal needs a stricter naming contract tied to agent IDs and permissions before ratification."
+        }
+      },
+      "overallNotes": "Net: the spine is closer to a policy patch than a robust safety boundary. My vote remains reject/defer until override renewal, migration cutover, and display semantics are all mechanically closed.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Migration cutover stalls entire bar",
+            "detail": "§7.6.2 requires 100% ClearanceRecord resolution (a/b/c outcomes) before emitting ca13v3_cutover_complete.v1 and activating the ≥95 bar. No timeout, partial-cutover path, or fallback for products lacking recent pipeline runs is defined, so a single stuck legacy record freezes the canonical threshold indefinitely."
+          },
+          {
+            "title": "Expiring override window too wide",
+            "detail": "§7.6.1 allows admin to set expires_at up to granted_at+30 days and ties one expiry trigger to 'next pipeline run,' which may be weeks away. This creates a controllable multi-week sub-95 deployment window with only governance_record_entry audit, weaker than the v2 operator knob it replaces."
+          },
+          {
+            "title": "Conformance tests lack enforcement spec",
+            "detail": "CA13A-v3-CT-1 through CT-8 define role checks and rejection envelopes, yet §15.1 and BaseAgent.guard() cross-references in CA-13-B-v3-Q1 never map these new gtm_bar_admin_override.v1 kinds into the EXECUTOR_REGISTRY or ScoreEvaluator.js decision matrix."
+          }
+        ],
+        "worse_than_status_quo": "If the migration script encounters more than a handful of pre-v3 ClearanceRecords without fresh scores, the cutover gate never fires; the system remains permanently on the old 75-bar for all products, eliminating even the partial pressure toward 95 that existed under the v2 operator-configurable knob.",
+        "precedent": "Facebook's 2010s 'temporary' feature-flag exceptions for high-priority launches that accumulated into permanent low-quality paths because migration and expiry logic were never enforced at cutover time."
+      },
+      "rejection_steelman": "The v3 spine still embeds a permanent admin-only escape hatch whose 30-day bound and pipeline-run trigger are too loose to be a genuine safety invariant. Combined with the all-or-nothing migration prerequisite, it risks locking the platform at the pre-CA-13 quality floor for an indeterminate period while adding new audit surface that itself requires governance. Deferral until a fully specified enforcement layer and bounded migration window are engineered is the safer course.",
+      "votes": {
+        "CA-13-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All options retain either the wide 30-day window or the migration cutover gate that can stall the bar change."
+        },
+        "CA-13-A-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "No option closes the audit-gap between override grant and actual Step 5 use."
+        },
+        "CA-13-A-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Invariant language alone does not address the missing UI-enforcement mapping to ScoreEvaluator.js."
+        },
+        "CA-13-B-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Cross-reference without concrete EXECUTOR_REGISTRY entries leaves the new override kinds unenforced."
+        },
+        "CA-13-B-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Capability naming remains underspecified relative to the dual-authority guard required by Agent #26."
+        }
+      },
+      "overallNotes": "All five questions share the same structural weakness: new governance envelopes are declared without corresponding executor-registry wiring or migration-timeout logic.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-13-A-v3-Q1",
+      "topic": "CA-13-A v3 Q1 — Does Panel ratify the CA-13 v3 spine (per CEO Locked Rule 13 option-(i)): canonical §7.6 GTM bar = ≥95; sub-95 only via admin-only expiring override (14-day default, [1,30] bounds, no silent clamping); ClearanceRecord migration path is implementation prerequisite for cutover?",
+      "options": [
+        {
+          "key": "CA13AV3Q1-RATIFY",
+          "text": "Ratify v3 as drafted (≥95 canonical + admin-only expiring override + 14-day default, [1,30] hard bounds + migration prerequisite per §7.6.2)."
+        },
+        {
+          "key": "CA13AV3Q1-TIGHTER",
+          "text": "Strengthen — expiry default 7 days (not 14), hard bounds [1,14]; rationale-quality validation requires ≥120 chars (not 80)."
+        },
+        {
+          "key": "CA13AV3Q1-RUNGATED",
+          "text": "Strengthen — override expires at next pipeline run ONLY (no N-day default; override expires the moment next run executes)."
+        },
+        {
+          "key": "CA13AV3Q1-REJECT",
+          "text": "Reject the spine — return to v2 operator-config knob with bounds raised to [80,100] (Slot 2 FLOOR80 variant)."
+        }
+      ],
+      "draftedKey": "CA13AV3Q1-RATIFY"
+    },
+    {
+      "id": "CA-13-A-v3-Q2",
+      "topic": "CA-13-A v3 Q2 — Does Panel ratify elimination of 90–94 Near-GTM conditional band with NO fallback clause? Admin-only expiring override (Q1) is the single controlled sub-95 exception.",
+      "options": [
+        {
+          "key": "CA13AV3Q2-RATIFY",
+          "text": "Ratify v3 as drafted (Near-GTM band eliminated; no fallback clause)."
+        },
+        {
+          "key": "CA13AV3Q2-COHERENCE",
+          "text": "Strengthen — append \"Any future Panel proposal to re-introduce sub-95 conditional path is a candidate for CEO-Locked-Rule-13 dispositional veto by default, given the admin-only expiring override per §7.6.1.\""
+        },
+        {
+          "key": "CA13AV3Q2-AUDIT",
+          "text": "Strengthen toward audit — every §11 Step 5 evaluation consulting an override emits additional `step5_override_consulted.v1` envelope alongside `gtm_bar_admin_override_used.v1`."
+        },
+        {
+          "key": "CA13AV3Q2-REJECT",
+          "text": "Reject — restore v2 fallback clause as safety valve; v3 removal too rigid."
+        }
+      ],
+      "draftedKey": "CA13AV3Q2-RATIFY"
+    },
+    {
+      "id": "CA-13-A-v3-Q3",
+      "topic": "CA-13-A v3 Q3 — Does Panel ratify §19.0 STRONGER variant: append mandatory invariant \"These are NEVER conflated in any operator-facing surface\" + UI surface enforcement?",
+      "options": [
+        {
+          "key": "CA13AV3Q3-RATIFY",
+          "text": "Ratify v3 as drafted (mandatory anti-conflation invariant + per-surface labeling + dual-display audit envelope)."
+        },
+        {
+          "key": "CA13AV3Q3-ADMINUI",
+          "text": "Strengthen further — also require admin role for any UI surface displaying BOTH bars simultaneously (operator role cannot author dashboards mixing the two)."
+        },
+        {
+          "key": "CA13AV3Q3-NOTABLE",
+          "text": "Ratify but with redundancy fix — keep the invariant but DELETE §19.0 paragraph table (invariant alone suffices; §10 governance-mechanisms table already covers it)."
+        },
+        {
+          "key": "CA13AV3Q3-REJECT",
+          "text": "Reject — §19.0 paragraph + invariant is redundant with §10; remove §19.0 entirely."
+        }
+      ],
+      "draftedKey": "CA13AV3Q3-RATIFY"
+    },
+    {
+      "id": "CA-13-B-v3-Q1",
+      "topic": "CA-13-B v3 Q1 — Does Panel ratify v3 §15-intro + §15.1 rows 21/26 wording (v2 carried) PLUS explicit EXECUTOR_REGISTRY + BaseAgent.guard() enforcement-spec cross-reference?",
+      "options": [
+        {
+          "key": "CA13BV3Q1-RATIFY",
+          "text": "Ratify v3 as drafted (wording carried + 3-bullet enforcement-spec cross-reference)."
+        },
+        {
+          "key": "CA13BV3Q1-INLINE",
+          "text": "Strengthen — also inline schema snippet of BaseAgent.guard() arguments directly in §15-intro text, not just cross-reference."
+        },
+        {
+          "key": "CA13BV3Q1-BUNDLE",
+          "text": "Strengthen — bundle §15.5 sibling row-table populate INTO CA-13-B v3 ratification (lands EXECUTOR_REGISTRY entries alongside wording)."
+        },
+        {
+          "key": "CA13BV3Q1-REJECT",
+          "text": "Reject — wording remains too vague without actual §15.5 sibling row-table populate; defer entire CA-13-B until that engineering dispatch ships."
+        }
+      ],
+      "draftedKey": "CA13BV3Q1-RATIFY"
+    },
+    {
+      "id": "CA-13-B-v3-Q2",
+      "topic": "CA-13-B v3 Q2 — Does Panel ratify v3 capability-keyed sibling naming `crawl-write-executor` + `orchestra-admission-executor`?",
+      "options": [
+        {
+          "key": "CA13BV3Q2-RATIFY",
+          "text": "Ratify v3 primary as drafted (`crawl-write-executor` + `orchestra-admission-executor`)."
+        },
+        {
+          "key": "CA13BV3Q2-MEMBERSHIP",
+          "text": "Ratify with `membership` rename — Agent #26 sibling becomes `orchestra-membership-executor`; Agent #21 stays `crawl-write-executor`."
+        },
+        {
+          "key": "CA13BV3Q2-AGENTID",
+          "text": "Adopt agentId-keyed — `agent-21-executor` + `agent-26-executor` (preserves traceability at cost of capability-clarity)."
+        },
+        {
+          "key": "CA13BV3Q2-REJECT",
+          "text": "Reject — restore v1 agent-short-name-keyed naming."
+        }
+      ],
+      "draftedKey": "CA13BV3Q2-RATIFY"
+    }
+  ]
+}

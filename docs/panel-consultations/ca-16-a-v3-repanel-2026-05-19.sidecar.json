@@ -1,0 +1,857 @@
+{
+  "schema": "v3-repanel.sidecar.v1",
+  "code": "CA-16-A-v3",
+  "commit": "e8bb7d4",
+  "bundle_size": 32341,
+  "startedAt": "2026-05-19T13:29:32.957Z",
+  "finishedAt": "2026-05-19T13:30:59.896Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 32341
+  },
+  "tally": {
+    "engagedTotal": 9,
+    "invalid": 1,
+    "tangential": 0,
+    "silent": 0,
+    "perQuestion": {
+      "CA-16-A-v3-Q1": {
+        "CA16AV3Q1-RATIFY": 2,
+        "CA16AV3Q1-SUMMARY": 2,
+        "CA16AV3Q1-LINKED": 0,
+        "CA16AV3Q1-REJECT": 0,
+        "REJECT": 5,
+        "unmatched": 0
+      },
+      "CA-16-A-v3-Q2": {
+        "CA16AV3Q2-RATIFY": 2,
+        "CA16AV3Q2-STEP65": 3,
+        "CA16AV3Q2-DASHONLY": 2,
+        "CA16AV3Q2-REJECT": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-16-A-v3-Q3": {
+        "CA16AV3Q3-RATIFY": 2,
+        "CA16AV3Q3-TWOADMIN": 2,
+        "CA16AV3Q3-DEFERRED": 0,
+        "CA16AV3Q3-REJECT": 0,
+        "REJECT": 5,
+        "unmatched": 0
+      },
+      "CA-16-A-v3-Q4": {
+        "CA16AV3Q4-RATIFY": 2,
+        "CA16AV3Q4-ADMIN30": 1,
+        "CA16AV3Q4-TIGHTER": 5,
+        "CA16AV3Q4-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 30,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Governance bypass via tooling-only recs",
+        "detail": "§2 moves proactive recommendations entirely outside canonical SSOT into tooling/dashboard. This creates an ungoverned shadow system where critical product improvements can be surfaced, accepted, and implemented without any canonical audit trail, violating §14 GovernanceAuditLog's tamper-evident principle."
+      },
+      {
+        "slot": 1,
+        "title": "ClearanceRecord reference creates false security",
+        "detail": "§3's lightweight `last_seen_clearance_record_id` reference is one-way and non-blocking. A product can accumulate 100+ critical recommendations after clearance, yet still show as 'cleared' because the reference provides no backward linkage or clearance invalidation mechanism."
+      },
+      {
+        "slot": 1,
+        "title": "REOPEN state enables recommendation laundering",
+        "detail": "§4's new `reopened` state allows previously rejected recommendations to re-enter the queue with only single-admin approval. Combined with the lack of canonical audit trail, this enables cycling rejected recommendations through reopen→reject loops to bypass governance oversight."
+      },
+      {
+        "slot": 1,
+        "title": "Defer window bounds incompatible with sprint cycles",
+        "detail": "§5's [7, 90] defer window with 14-day default creates a mismatch with FlowAI's sprint cycles. A 90-day deferral spans multiple §28 symbiotic loop iterations, allowing critical recommendations to remain hidden across product evolution cycles."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case the changes made to the canonical §7 item #8 proactive_recommendation envelope cause issues. This is a concern because the changes are significant and may have unintended consequences. Specifically, the section §7 — Output Contract does not mention any rollback plan."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "The proposal does not provide sufficient information about the testing that will be done to ensure that the changes to the recs living outside §11 Clearance with lightweight `last_seen_clearance_record_id` reference do not introduce any bugs or issues. This is a concern because the changes may affect the functionality of the system. The section §3 — CA-16-A v3 — Recs OUTSIDE §11 + lightweight ClearanceRecord reference does not mention any testing plans."
+      },
+      {
+        "slot": 3,
+        "title": "Security Risks",
+        "detail": "The proposal does not adequately address potential security risks associated with the addition of a `reopened` lifecycle state. This is a concern because the new state may introduce vulnerabilities that could be exploited by attackers. The section §4 — CA-16-A v3 — Lifecycle: ADD REOPEN state does not discuss security risks."
+      },
+      {
+        "slot": 4,
+        "title": "Schema Ownership Ambiguity",
+        "detail": "The proposal drops the canonical envelope for proactive recommendations, leaving schema ownership entirely to engineering (§2). This could lead to inconsistencies and lack of governance over the recommendations schema, which is critical for maintaining data integrity."
+      },
+      {
+        "slot": 4,
+        "title": "Clearance Reference Complexity",
+        "detail": "The lightweight ClearanceRecord reference (§3) adds complexity to the system. The one-way reference and the need to update it on every rec-surface event could introduce synchronization issues and potential data inconsistencies."
+      },
+      {
+        "slot": 4,
+        "title": "Lifecycle State Overhead",
+        "detail": "Adding a 'reopened' lifecycle state (§4) increases the complexity of the lifecycle management. The admin-gated reopening with a required rationale could introduce delays and overhead, especially if multiple admins are involved in the approval process."
+      },
+      {
+        "slot": 5,
+        "title": "Tooling-only risk",
+        "detail": "Moving proactive recommendations entirely to tooling/dashboard without a canonical envelope may lead to a lack of governance and oversight, as there is no formal record or audit trail for these recommendations within the canonical SSOT."
+      },
+      {
+        "slot": 5,
+        "title": "Lightweight reference limitation",
+        "detail": "The lightweight `last_seen_clearance_record_id` reference, while addressing traceability concerns, does not provide a strong enough linkage to ensure that recommendations are properly managed and reviewed in the context of product clearance."
+      },
+      {
+        "slot": 5,
+        "title": "Defer-window bounds",
+        "detail": "The defer-window bounds `[7, 90]` may still be too broad, potentially allowing recommendations to be deferred for an extended period, which could hinder the timely improvement of products."
+      },
+      {
+        "slot": 6,
+        "title": "Loss of auditability",
+        "detail": "Moving proactive recommendations entirely out of the canonical SSOT (§2) means losing a tamper-evident, hash-chained audit log for these recommendations. The dashboard's audit trail is not guaranteed to have the same level of integrity or accessibility as the GovernanceAuditLog (§14)."
+      },
+      {
+        "slot": 6,
+        "title": "ClearanceRecord reference fragility",
+        "detail": "The lightweight `last_seen_clearance_record_id` reference (§3) is fragile. If a ClearanceRecord is deleted or becomes inaccessible for any reason, the link is broken, and the historical context of the recommendation is lost. There's no mechanism to ensure the continued availability of the referenced ClearanceRecord."
+      },
+      {
+        "slot": 6,
+        "title": "REOPEN state rationale enforcement",
+        "detail": "While the REOPEN state (§4) requires a rationale, the check against stop-words is insufficient to guarantee meaningful rationales.  Admins could easily circumvent this with slightly modified stop-words or other meaningless text, defeating the purpose of the requirement."
+      },
+      {
+        "slot": 6,
+        "title": "ADMIN30 hybrid complexity",
+        "detail": "The ADMIN30 hybrid defer-window option adds unnecessary complexity (§5). Having different deferral limits for operators and admins introduces potential confusion and inconsistencies in how recommendations are handled. It also requires additional logic to enforce the role-based limits."
+      },
+      {
+        "slot": 7,
+        "title": "No canonical audit trail",
+        "detail": "By moving recommendations entirely to tooling/dashboard without governance_record_entry kind, we lose tamper-evident tracking of recommendation lifecycle changes. This violates §14's audit trail principles for governance-critical actions like deferrals/rejections."
+      },
+      {
+        "slot": 7,
+        "title": "Reopen state bypasses governance",
+        "detail": "The 'reopened' state allows admins to resurrect rejected recommendations with minimal (80-char) rationale. This creates a loophole where critical rejections could be repeatedly revived without Panel-grade scrutiny, violating W03 self-audit principles."
+      },
+      {
+        "slot": 7,
+        "title": "Deferral window suppression risk",
+        "detail": "90-day deferral maximum (3 sprint cycles) allows recommendations to be suppressed across multiple §28 symbiotic loop iterations. This could let accumulating technical debt evade detection until post-clearance deployment."
+      },
+      {
+        "slot": 8,
+        "title": "No canonical linkage drift",
+        "detail": "§2 drops the canonical proactive recommendation envelope entirely, but §3 then adds a lightweight `last_seen_clearance_record_id` reference. That creates a split-brain design where recs are “outside canon” yet still depend on canonical clearance state, with no authoritative lifecycle ownership or backfill rules if the reference is stale or missing."
+      },
+      {
+        "slot": 8,
+        "title": "Reopen state bypass risk",
+        "detail": "§4 adds `reopened` with admin-only authority and ≥80-char rationale, but there is no deduplication, cooldown, or maximum reopen count. A rejected rec can be reopened repeatedly to launder previously rejected ideas back into the active queue, especially if rationale length becomes a compliance ritual rather than substantive review."
+      },
+      {
+        "slot": 8,
+        "title": "Deferred window too rigid",
+        "detail": "§5 hard-bounds defer windows to [7, 90] and rejects out-of-bounds rather than clamping. That can break legitimate fast-follow or long-horizon products; the proposal provides no escape hatch for products with release trains shorter than a week or enterprise validation cycles longer than 90 days."
+      },
+      {
+        "slot": 8,
+        "title": "Tooling-only schema is brittle",
+        "detail": "The recommendation schema is moved to `scripts/types/proactive-recs.d.ts` and dashboard polling, but there is no canonical audit-log envelope and no enforced versioning contract. If tooling and dashboard deploy out of sync, operators can see recommendations that the audit trail cannot reconstruct, undermining forensic traceability."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of Canonical Schema",
+        "detail": "The proposal drops the canonical envelope for proactive recommendations entirely (§2), moving it to tooling/dashboard. This creates a risk of divergence between the tooling schema and the actual implementation."
+      },
+      {
+        "slot": 9,
+        "title": "Insufficient ClearanceRecord Linkage",
+        "detail": "The lightweight `last_seen_clearance_record_id` reference (§3) is non-gating and may not provide sufficient traceability. It relies on tooling to populate this field correctly, which could be a single point of failure."
+      },
+      {
+        "slot": 9,
+        "title": "Reopen State Vulnerability",
+        "detail": "The `reopened` lifecycle state (§4) is admin-gated but lacks additional safeguards. A single admin can reopen a rejected recommendation, potentially leading to abuse or inconsistent decision-making."
+      },
+      {
+        "slot": 10,
+        "title": "§3 reference is non-enforcing",
+        "detail": "§3 explicitly states the `last_seen_clearance_record_id` is a one-way informational reference only, with conformance test CA16A-v3-CT-2 requiring zero reads of any proactive_recommendation table in §11 Step 5/6 paths, so recommendations can be surfaced and then ignored without ever touching ProductSSOT delta_log or ClearanceRecord."
+      },
+      {
+        "slot": 10,
+        "title": "REOPEN creates admin bottleneck",
+        "detail": "§4 restricts reopened transitions to admin role plus ≥80-char rationale, yet the same section allows operator-initiated acceptance and deferral; this asymmetry can stall revival of rejected recommendations that later become relevant under the §28 symbiotic loop."
+      },
+      {
+        "slot": 10,
+        "title": "90-day defer still spans loops",
+        "detail": "§5 sets upper bound of 90 days (default 14) while citing Slot 10's concern that 365 days violates §28 feedback; 90 days still covers multiple pipeline iterations and can suppress recs across ProductSSOT updates without any canonical expiry trigger."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-16-A-v3-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "5 of 9 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 5
+    },
+    "CA-16-A-v3-Q2": {
+      "verdict": "PLURALITY_CA16AV3Q2-STEP65",
+      "detail": "3 of 9 on CA16AV3Q2-STEP65 (below 7/10 quorum)",
+      "topKey": "CA16AV3Q2-STEP65",
+      "topCount": 3
+    },
+    "CA-16-A-v3-Q3": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "5 of 9 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 5
+    },
+    "CA-16-A-v3-Q4": {
+      "verdict": "PLURALITY_CA16AV3Q4-TIGHTER",
+      "detail": "5 of 9 on CA16AV3Q4-TIGHTER (below 7/10 quorum)",
+      "topKey": "CA16AV3Q4-TIGHTER",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.2222222222222222,
+    "alignedCount": 8,
+    "totalPossible": 36,
+    "draftedQs": [
+      "CA-16-A-v3-Q1",
+      "CA-16-A-v3-Q2",
+      "CA-16-A-v3-Q3",
+      "CA-16-A-v3-Q4"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 22.2 %, distinct objections 30"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Governance bypass via tooling-only recs",
+            "detail": "§2 moves proactive recommendations entirely outside canonical SSOT into tooling/dashboard. This creates an ungoverned shadow system where critical product improvements can be surfaced, accepted, and implemented without any canonical audit trail, violating §14 GovernanceAuditLog's tamper-evident principle."
+          },
+          {
+            "title": "ClearanceRecord reference creates false security",
+            "detail": "§3's lightweight `last_seen_clearance_record_id` reference is one-way and non-blocking. A product can accumulate 100+ critical recommendations after clearance, yet still show as 'cleared' because the reference provides no backward linkage or clearance invalidation mechanism."
+          },
+          {
+            "title": "REOPEN state enables recommendation laundering",
+            "detail": "§4's new `reopened` state allows previously rejected recommendations to re-enter the queue with only single-admin approval. Combined with the lack of canonical audit trail, this enables cycling rejected recommendations through reopen→reject loops to bypass governance oversight."
+          },
+          {
+            "title": "Defer window bounds incompatible with sprint cycles",
+            "detail": "§5's [7, 90] defer window with 14-day default creates a mismatch with FlowAI's sprint cycles. A 90-day deferral spans multiple §28 symbiotic loop iterations, allowing critical recommendations to remain hidden across product evolution cycles."
+          }
+        ],
+        "worse_than_status_quo": "The proposal creates a dual-track governance system where canonical SSOT tracks only partial state while critical product recommendations live in an ungoverned tooling layer, making it impossible to reconstruct the full decision history during incident forensics.",
+        "precedent": "Kubernetes faced similar issues with ConfigMaps living outside the main API audit log, leading to configuration drift and debugging nightmares when critical settings changed without proper audit trails."
+      },
+      "rejection_steelman": "This proposal fundamentally breaks FlowAI's single-source-of-truth principle by creating a shadow governance system in tooling. By moving proactive recommendations entirely outside canonical SSOT while maintaining only a weak one-way reference, the system loses the ability to enforce consistent governance, audit compliance, or reconstruct decision histories. The REOPEN state adds complexity without solving the core problem of recommendations being ungoverned.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "CA16AV3Q1-SUMMARY",
+          "pick_text": "Ratify with stricter tooling discipline — tooling MUST emit `governance_record_entry kind:proactive_rec_summary.v1` ONCE PER DAY summarizing queue state; summary IS canonical-audit-trail-accessible.",
+          "rationale": "This option preserves some canonical visibility into the recommendation system while allowing tooling flexibility, addressing the governance bypass concern without full canonical schema commitment."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "CA16AV3Q2-STEP65",
+          "pick_text": "Strengthen — adopt Step 6.5 post-Deploy surface as the canonical home for recs (Slot 1 STEP65 variant); reference becomes a Step 6.5 attribute.",
+          "rationale": "Step 6.5 creates a proper checkpoint after deployment where recommendations are formally reviewed, preventing the accumulation of untracked critical recommendations post-clearance."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject the REOPEN state — 5-state lifecycle is sufficient; rejected recs that become relevant later should resurface as new `open` entries with fresh `id`.",
+          "rationale": "The REOPEN state adds unnecessary complexity and enables recommendation laundering; creating new entries with fresh IDs maintains cleaner audit trails."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "CA16AV3Q4-TIGHTER",
+          "pick_text": "Tighter — bounds [7, 60] (instead of [7, 90]); 90 days approaches one sprint cycle and may suppress recs across §28 symbiotic-loop iterations.",
+          "rationale": "60-day maximum prevents recommendations from being deferred across multiple product evolution cycles while still allowing reasonable deferral periods."
+        }
+      },
+      "overallNotes": "The proposal's core flaw is breaking SSOT discipline by moving critical governance data into ungoverned tooling, creating split-brain governance that will cause forensic nightmares.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "INVALID",
+      "adversarial": {
+        "valid": false,
+        "reason": "precedent missing"
+      },
+      "rejection_steelman": "The proposal's approach to handling proactive recommendations outside the canonical SSOT could lead to governance issues, as it lacks a robust audit trail and allows recommendations to be ignored without consequence. This could result in products being cleared with unresolved issues, potentially compromising quality and safety. Additionally, the limited criteria for reopening recommendations may hinder timely reassessment of important issues.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "CA16AV3Q1-SUMMARY",
+          "pick_text": "Ratify with stricter tooling discipline — tooling MUST emit `governance_record_entry kind:proactive_rec_summary.v1` ONCE PER DAY summarizing queue state; summary IS canonical-audit-trail-accessible.",
+          "rationale": "This option ensures that there is a canonical audit trail for proactive recommendations, improving traceability and governance."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "CA16AV3Q2-STEP65",
+          "pick_text": "Strengthen — adopt Step 6.5 post-Deploy surface as the canonical home for recs (Slot 1 STEP65 variant); reference becomes a Step 6.5 attribute.",
+          "rationale": "This option integrates recommendations more closely with the clearance process, ensuring they are considered before final product clearance."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "CA16AV3Q3-DEFERRED",
+          "pick_text": "Ratify but broaden eligibility — `deferred` recommendations also reopenable (currently rejected-only); allows admin to manually resurface a deferred rec.",
+          "rationale": "Broadening the eligibility for reopening recommendations allows for more flexibility in addressing issues that become relevant before their defer-until date."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "CA16AV3Q4-ADMIN30",
+          "pick_text": "Ratify the ADMIN30 hybrid alternative — operator role may set up to 30 days; admin role may extend to 90 days with rationale ≥80 chars.",
+          "rationale": "This option provides a balanced approach, allowing for flexibility while ensuring that longer deferrals are justified and documented."
+        }
+      },
+      "overallNotes": "The proposal's approach to handling proactive recommendations could benefit from stronger integration with the canonical SSOT and more flexible reopening criteria.",
+      "invalid_reason": "adversarial pass: precedent missing",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the changes made to the canonical §7 item #8 proactive_recommendation envelope cause issues. This is a concern because the changes are significant and may have unintended consequences. Specifically, the section §7 — Output Contract does not mention any rollback plan."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not provide sufficient information about the testing that will be done to ensure that the changes to the recs living outside §11 Clearance with lightweight `last_seen_clearance_record_id` reference do not introduce any bugs or issues. This is a concern because the changes may affect the functionality of the system. The section §3 — CA-16-A v3 — Recs OUTSIDE §11 + lightweight ClearanceRecord reference does not mention any testing plans."
+          },
+          {
+            "title": "Security Risks",
+            "detail": "The proposal does not adequately address potential security risks associated with the addition of a `reopened` lifecycle state. This is a concern because the new state may introduce vulnerabilities that could be exploited by attackers. The section §4 — CA-16-A v3 — Lifecycle: ADD REOPEN state does not discuss security risks."
+          }
+        ],
+        "worse_than_status_quo": "If the proposal is implemented without proper testing and rollback strategies, it may lead to a situation where the system is less stable and more prone to errors than it is currently. This could result in a worse-than-status-quo scenario where the changes made to the system actually decrease its overall quality and reliability.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it does not provide sufficient information about the potential risks and consequences of the changes being made. Additionally, the proposal does not provide a clear plan for testing and rollout, which could lead to unintended consequences. It is better to err on the side of caution and reject the proposal until more information is available.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "CA16AV3Q1-RATIFY",
+          "pick_text": "Ratify v3 as drafted (canonical envelope DROPPED; recs in tooling + admin dashboard; engineering owns schema in `scripts/types/proactive-recs.d.ts`)",
+          "rationale": "This option is chosen because it aligns with the CEO's decision to drop the canonical envelope and have recs live in tooling and the admin dashboard."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "CA16AV3Q2-RATIFY",
+          "pick_text": "Ratify v3 as drafted (recs OUTSIDE §11; lightweight ClearanceRecord reference; recs never block clearance)",
+          "rationale": "This option is chosen because it provides a clear and lightweight way to reference recs outside of §11 Clearance without blocking clearance."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "CA16AV3Q3-RATIFY",
+          "pick_text": "Ratify v3 as drafted (6-state lifecycle including REOPEN; admin-only; ≥80-char rationale; rejected→reopened→open transition path)",
+          "rationale": "This option is chosen because it provides a clear and structured way to handle reopened recs with a clear transition path."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "CA16AV3Q4-RATIFY",
+          "pick_text": "Ratify v3 primary as drafted ([7, 90] bounds; default 14; out-of-bounds rejected)",
+          "rationale": "This option is chosen because it provides a clear and reasonable defer-window bounds that align with the proposal."
+        }
+      },
+      "overallNotes": "The proposal has some potential risks and consequences that need to be carefully considered. However, with proper testing and rollout planning, the changes could potentially improve the system.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Schema Ownership Ambiguity",
+            "detail": "The proposal drops the canonical envelope for proactive recommendations, leaving schema ownership entirely to engineering (§2). This could lead to inconsistencies and lack of governance over the recommendations schema, which is critical for maintaining data integrity."
+          },
+          {
+            "title": "Clearance Reference Complexity",
+            "detail": "The lightweight ClearanceRecord reference (§3) adds complexity to the system. The one-way reference and the need to update it on every rec-surface event could introduce synchronization issues and potential data inconsistencies."
+          },
+          {
+            "title": "Lifecycle State Overhead",
+            "detail": "Adding a 'reopened' lifecycle state (§4) increases the complexity of the lifecycle management. The admin-gated reopening with a required rationale could introduce delays and overhead, especially if multiple admins are involved in the approval process."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's introduction of a lightweight ClearanceRecord reference could lead to synchronization issues and data inconsistencies, making the system more complex and less reliable than the current status quo.",
+        "precedent": "In the past, similar lightweight reference systems have led to data inconsistencies and synchronization issues, as seen in the initial implementation of microservices architecture in large-scale systems like Netflix and Amazon."
+      },
+      "rejection_steelman": "The proposal should be deferred until a more robust and governance-integrated schema management system is in place. The current approach leaves too much ambiguity and potential for data inconsistencies, which could negatively impact the overall system reliability and maintainability.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject the v3 drop — return to v2 minimal-envelope canonical position; defer engineering schema to successor CA-N.",
+          "rationale": "Maintaining a minimal canonical envelope ensures governance and consistency, avoiding the ambiguity and potential issues of leaving schema ownership entirely to engineering."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "CA16AV3Q2-STEP65",
+          "pick_text": "Strengthen — adopt Step 6.5 post-Deploy surface as the canonical home for recs (Slot 1 STEP65 variant); reference becomes a Step 6.5 attribute.",
+          "rationale": "This approach provides a clear and governed place for recommendations, reducing the complexity and potential issues of a lightweight reference system."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "CA16AV3Q3-TWOADMIN",
+          "pick_text": "Strengthen — REOPEN requires TWO admin sign-offs (different admins; second confirms within 24h); prevents single-admin reopen-spam failure.",
+          "rationale": "Requiring two admin sign-offs adds an additional layer of governance and prevents potential misuse or spamming of the reopen feature."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "CA16AV3Q4-TIGHTER",
+          "pick_text": "Tighter — bounds [7, 60] (instead of [7, 90]); 90 days approaches one sprint cycle and may suppress recs across §28 symbiotic-loop iterations.",
+          "rationale": "Tighter bounds ensure that recommendations are addressed in a timely manner, preventing them from being suppressed across multiple sprint cycles."
+        }
+      },
+      "overallNotes": "The proposal introduces several complexities and potential issues that need to be addressed before ratification. Deferring the proposal until a more robust schema management system is in place would be prudent.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Tooling-only risk",
+            "detail": "Moving proactive recommendations entirely to tooling/dashboard without a canonical envelope may lead to a lack of governance and oversight, as there is no formal record or audit trail for these recommendations within the canonical SSOT."
+          },
+          {
+            "title": "Lightweight reference limitation",
+            "detail": "The lightweight `last_seen_clearance_record_id` reference, while addressing traceability concerns, does not provide a strong enough linkage to ensure that recommendations are properly managed and reviewed in the context of product clearance."
+          },
+          {
+            "title": "Defer-window bounds",
+            "detail": "The defer-window bounds `[7, 90]` may still be too broad, potentially allowing recommendations to be deferred for an extended period, which could hinder the timely improvement of products."
+          }
+        ],
+        "worse_than_status_quo": "By removing the canonical envelope and relying solely on tooling, the system may become less transparent and harder to audit, leading to potential governance gaps and reduced accountability.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal to move proactive recommendations entirely to tooling without a canonical envelope could lead to a lack of formal governance and oversight, making it difficult to ensure that recommendations are properly managed and reviewed. This could result in a system that is less transparent and harder to audit, potentially leading to governance gaps and reduced accountability.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject the v3 drop — return to v2 minimal-envelope canonical position; defer engineering schema to successor CA-N.",
+          "rationale": "To ensure proper governance and oversight, proactive recommendations should have a canonical envelope."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — restore §11.5 Step 1.5 Proactive Recommendation Review per v1.",
+          "rationale": "To ensure recommendations are properly managed and reviewed, they should be integrated into the §11 Clearance Protocol."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject the REOPEN state — 5-state lifecycle is sufficient; rejected recs that become relevant later should resurface as new `open` entries with fresh `id`.",
+          "rationale": "The addition of a `reopened` state may complicate the lifecycle without providing significant benefits."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "CA16AV3Q4-TIGHTER",
+          "pick_text": "Tighter — bounds [7, 60] (instead of [7, 90]); 90 days approaches one sprint cycle and may suppress recs across §28 symbiotic-loop iterations.",
+          "rationale": "Tighter defer-window bounds will ensure recommendations are reviewed more frequently, aligning better with the §28 symbiotic-loop iterations."
+        }
+      },
+      "overallNotes": "The proposal needs stronger governance mechanisms to ensure recommendations are properly managed and reviewed.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Loss of auditability",
+            "detail": "Moving proactive recommendations entirely out of the canonical SSOT (§2) means losing a tamper-evident, hash-chained audit log for these recommendations. The dashboard's audit trail is not guaranteed to have the same level of integrity or accessibility as the GovernanceAuditLog (§14)."
+          },
+          {
+            "title": "ClearanceRecord reference fragility",
+            "detail": "The lightweight `last_seen_clearance_record_id` reference (§3) is fragile. If a ClearanceRecord is deleted or becomes inaccessible for any reason, the link is broken, and the historical context of the recommendation is lost. There's no mechanism to ensure the continued availability of the referenced ClearanceRecord."
+          },
+          {
+            "title": "REOPEN state rationale enforcement",
+            "detail": "While the REOPEN state (§4) requires a rationale, the check against stop-words is insufficient to guarantee meaningful rationales.  Admins could easily circumvent this with slightly modified stop-words or other meaningless text, defeating the purpose of the requirement."
+          },
+          {
+            "title": "ADMIN30 hybrid complexity",
+            "detail": "The ADMIN30 hybrid defer-window option adds unnecessary complexity (§5). Having different deferral limits for operators and admins introduces potential confusion and inconsistencies in how recommendations are handled. It also requires additional logic to enforce the role-based limits."
+          }
+        ],
+        "worse_than_status_quo": "If the dashboard's audit trail for proactive recommendations is compromised or lost, and the `last_seen_clearance_record_id` references become broken, the system would be worse than the status quo because there would be no reliable way to track the history and context of these recommendations, hindering future analysis and decision-making.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "While the proposal aims to simplify the system by removing the canonical envelope for proactive recommendations, it introduces new risks related to auditability and data integrity. The reliance on a tooling-internal audit trail and a fragile ClearanceRecord reference makes the system more vulnerable to data loss and manipulation. Deferring the proposal would allow for a more thorough evaluation of these risks and the development of a more robust solution for managing proactive recommendations.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "CA16AV3Q1-SUMMARY",
+          "pick_text": "Ratify with stricter tooling discipline — tooling MUST emit `governance_record_entry kind:proactive_rec_summary.v1` ONCE PER DAY summarizing queue state; summary IS canonical-audit-trail-accessible.",
+          "rationale": "This provides a minimal level of canonical auditability without the full envelope, mitigating the risk of losing track of recommendations entirely."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "CA16AV3Q2-DASHONLY",
+          "pick_text": "Ratify drop the reference — recs live ENTIRELY outside any canonical linkage; no `last_seen_clearance_record_id` field; pure side-channel.",
+          "rationale": "If the reference is fragile and adds complexity without a strong guarantee of value, it's better to remove it entirely and accept the side-channel nature of the recommendations."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject the REOPEN state — 5-state lifecycle is sufficient; rejected recs that become relevant later should resurface as new `open` entries with fresh `id`.",
+          "rationale": "The REOPEN state adds complexity without a clear benefit. Resurfacing as a new `open` entry ensures a fresh evaluation and avoids potential issues with stale rationales or outdated contexts."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "CA16AV3Q4-RATIFY",
+          "pick_text": "Ratify v3 primary as drafted ([7, 90] bounds; default 14; out-of-bounds rejected).",
+          "rationale": "The tighter bounds are a reasonable compromise, and rejecting out-of-bounds values is preferable to clamping, as it forces a conscious decision about the deferral period."
+        }
+      },
+      "overallNotes": "The proposal has some good intentions, but the loss of canonical auditability and the introduction of fragile references are concerning. The tooling-internal audit trail needs to be robust and reliable.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "No canonical audit trail",
+            "detail": "By moving recommendations entirely to tooling/dashboard without governance_record_entry kind, we lose tamper-evident tracking of recommendation lifecycle changes. This violates §14's audit trail principles for governance-critical actions like deferrals/rejections."
+          },
+          {
+            "title": "Reopen state bypasses governance",
+            "detail": "The 'reopened' state allows admins to resurrect rejected recommendations with minimal (80-char) rationale. This creates a loophole where critical rejections could be repeatedly revived without Panel-grade scrutiny, violating W03 self-audit principles."
+          },
+          {
+            "title": "Deferral window suppression risk",
+            "detail": "90-day deferral maximum (3 sprint cycles) allows recommendations to be suppressed across multiple §28 symbiotic loop iterations. This could let accumulating technical debt evade detection until post-clearance deployment."
+          }
+        ],
+        "worse_than_status_quo": "A product team defers a security-critical rec for 90 days using the new bounds, then clears the product. The rec resurfaces post-clearance when the product team has disbanded, leading to an unresolved vulnerability in production that wouldn't have existed under the status quo's 365-day visibility.",
+        "precedent": "Therac-25 radiation therapy machine incidents - deferred safety alerts and lack of audit trails allowed fatal dosage errors to recur despite prior near-misses."
+      },
+      "rejection_steelman": "This proposal creates systemic risk by decoupling recommendations from canonical oversight while introducing new lifecycle states that bypass existing governance checks. The combination of tooling-side recs without SSOT audit trails and admin-gated reopen powers could allow critical issues to slip through deferred/rejected/reopened cycles undetected.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "CA16AV3Q1-RATIFY",
+          "pick_text": "Ratify v3 as drafted (canonical envelope DROPPED; recs in tooling + admin dashboard; engineering owns schema in `scripts/types/proactive-recs.d.ts`).",
+          "rationale": "While problematic, the objection about audit trails isn't addressed by listed options. The drop aligns with CA-15 precedent."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "CA16AV3Q2-RATIFY",
+          "pick_text": "Ratify v3 as drafted (recs OUTSIDE §11; lightweight ClearanceRecord reference; recs never block clearance).",
+          "rationale": "The reference provides minimal traceability without creating governance coupling, satisfying key Panel concerns."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "CA16AV3Q3-RATIFY",
+          "pick_text": "Ratify v3 as drafted (6-state lifecycle including REOPEN; admin-only; ≥80-char rationale; rejected→reopened→open transition path).",
+          "rationale": "Admin gating and rationale requirements provide sufficient safeguards against abuse despite inherent risks."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "CA16AV3Q4-ADMIN30",
+          "pick_text": "Ratify the ADMIN30 hybrid alternative — operator role may set up to 30 days; admin role may extend to 90 days with rationale ≥80 chars.",
+          "rationale": "Balances operator agility with admin oversight, preventing extreme 90-day defers by junior staff while allowing justified exceptions."
+        }
+      },
+      "overallNotes": "While deeply flawed, the proposal's defects aren't sufficiently addressed by available options. Ratify with high-risk caveats.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "No canonical linkage drift",
+            "detail": "§2 drops the canonical proactive recommendation envelope entirely, but §3 then adds a lightweight `last_seen_clearance_record_id` reference. That creates a split-brain design where recs are “outside canon” yet still depend on canonical clearance state, with no authoritative lifecycle ownership or backfill rules if the reference is stale or missing."
+          },
+          {
+            "title": "Reopen state bypass risk",
+            "detail": "§4 adds `reopened` with admin-only authority and ≥80-char rationale, but there is no deduplication, cooldown, or maximum reopen count. A rejected rec can be reopened repeatedly to launder previously rejected ideas back into the active queue, especially if rationale length becomes a compliance ritual rather than substantive review."
+          },
+          {
+            "title": "Deferred window too rigid",
+            "detail": "§5 hard-bounds defer windows to [7, 90] and rejects out-of-bounds rather than clamping. That can break legitimate fast-follow or long-horizon products; the proposal provides no escape hatch for products with release trains shorter than a week or enterprise validation cycles longer than 90 days."
+          },
+          {
+            "title": "Tooling-only schema is brittle",
+            "detail": "The recommendation schema is moved to `scripts/types/proactive-recs.d.ts` and dashboard polling, but there is no canonical audit-log envelope and no enforced versioning contract. If tooling and dashboard deploy out of sync, operators can see recommendations that the audit trail cannot reconstruct, undermining forensic traceability."
+          }
+        ],
+        "worse_than_status_quo": "A product accumulates stale recommendations in the dashboard, the last-seen clearance reference points to an old ClearanceRecord, and an admin repeatedly reopens rejected items because the rationale check passes mechanically. Compared with the status quo, the team now has more visible governance work without a reliable way to tell whether anything was actually cleared, revised, or merely resurfaced.",
+        "precedent": "GitHub issue trackers and triage systems commonly suffered from reopen spam and “resolve/reopen” churn when no reopen budget or dedup rule existed; the pattern is well known in issue-management systems even when not codified as a formal failure mode."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring this proposal is that it formalizes a partial governance loop without a complete canonical contract. By moving recommendations out of SSOT but still tying them back to clearance state, it adds operational complexity, audit ambiguity, and more UI surfaces to maintain, while the benefits could be achieved later with a fully versioned schema and stronger lifecycle rules. Deferral would let the team prove traceability, reopen semantics, and defer-window policy in tooling before freezing any of it into long-lived process text.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Dropping the canonical envelope while requiring tooling-only schema ownership leaves no enforceable canonical contract, and the reference-only options either over-canonicalize or under-specify auditability. None of the listed choices cleanly resolves the split-brain between dashboard state and SSOT."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal’s chosen middle ground—outside §11 but with a lightweight clearance reference—is not represented by any option in a way that preserves both traceability and non-gating behavior. The available choices either make recs canonical, strip linkage entirely, or restore the old step, each of which changes the design materially."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "A reopen state may be useful, but the proposal does not define reopen budgets, anti-spam controls, or versioned rationale review, so ratifying it as-is is too permissive. The listed options do not include a stricter reopen policy that would make the state safe enough to adopt."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The [7, 90] bounds are arbitrary without an exception path for fast or slow release cadences, and the ADMIN30 hybrid still fails to address extreme but legitimate workflows. None of the options provides a principled override mechanism or product-class-specific policy."
+        }
+      },
+      "overallNotes": "This draft improves separation of concerns, but the governance surface is still incomplete and operationally fragile. I would defer until traceability, reopen controls, and exception handling are specified as enforceable mechanisms rather than policy intent.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Canonical Schema",
+            "detail": "The proposal drops the canonical envelope for proactive recommendations entirely (§2), moving it to tooling/dashboard. This creates a risk of divergence between the tooling schema and the actual implementation."
+          },
+          {
+            "title": "Insufficient ClearanceRecord Linkage",
+            "detail": "The lightweight `last_seen_clearance_record_id` reference (§3) is non-gating and may not provide sufficient traceability. It relies on tooling to populate this field correctly, which could be a single point of failure."
+          },
+          {
+            "title": "Reopen State Vulnerability",
+            "detail": "The `reopened` lifecycle state (§4) is admin-gated but lacks additional safeguards. A single admin can reopen a rejected recommendation, potentially leading to abuse or inconsistent decision-making."
+          }
+        ],
+        "worse_than_status_quo": "If the tooling fails to correctly populate `last_seen_clearance_record_id` or if admins abuse the `reopened` state, the system could end up with un traceable or inconsistent recommendations, making the governance surface worse than the status quo.",
+        "precedent": "Similar designs where critical governance logic is moved out of the canonical SSOT into tooling have caused problems in other projects, such as increased complexity and decreased visibility into the decision-making process."
+      },
+      "rejection_steelman": "Rejecting the proposal is justified because it removes a canonical schema for proactive recommendations without providing a robust alternative for ensuring traceability and consistency. The reliance on tooling to maintain a lightweight reference to ClearanceRecord may not be sufficient for governance purposes.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Dropping the canonical envelope entirely without a robust alternative for governance and traceability is not acceptable."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "CA16AV3Q2-STEP65",
+          "pick_text": "Strengthen — adopt Step 6.5 post-Deploy surface as the canonical home for recs (Slot 1 STEP65 variant); reference becomes a Step 6.5 attribute.",
+          "rationale": "Integrating recommendations into the clearance process more tightly could improve traceability and governance."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "CA16AV3Q3-TWOADMIN",
+          "pick_text": "Strengthen — REOPEN requires TWO admin sign-offs (different admins; second confirms within 24h); prevents single-admin reopen-spam failure.",
+          "rationale": "Adding an additional layer of approval for reopening recommendations could mitigate the risk of abuse."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "CA16AV3Q4-TIGHTER",
+          "pick_text": "Tighter — bounds [7, 60] (instead of [7, 90]); 90 days approaches one sprint cycle and may suppress recs across §28 symbiotic-loop iterations.",
+          "rationale": "Tighter bounds on the defer window could better align with the symbiotic loop feedback assumption and prevent long-term suppression of recommendations."
+        }
+      },
+      "overallNotes": "The proposal requires significant strengthening in terms of governance, traceability, and safeguards against potential abuse.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§3 reference is non-enforcing",
+            "detail": "§3 explicitly states the `last_seen_clearance_record_id` is a one-way informational reference only, with conformance test CA16A-v3-CT-2 requiring zero reads of any proactive_recommendation table in §11 Step 5/6 paths, so recommendations can be surfaced and then ignored without ever touching ProductSSOT delta_log or ClearanceRecord."
+          },
+          {
+            "title": "REOPEN creates admin bottleneck",
+            "detail": "§4 restricts reopened transitions to admin role plus ≥80-char rationale, yet the same section allows operator-initiated acceptance and deferral; this asymmetry can stall revival of rejected recommendations that later become relevant under the §28 symbiotic loop."
+          },
+          {
+            "title": "90-day defer still spans loops",
+            "detail": "§5 sets upper bound of 90 days (default 14) while citing Slot 10's concern that 365 days violates §28 feedback; 90 days still covers multiple pipeline iterations and can suppress recs across ProductSSOT updates without any canonical expiry trigger."
+          }
+        ],
+        "worse_than_status_quo": "Tooling-only recs with no canonical audit envelope or §11 linkage can silently accumulate stale entries that never reach delta_log, producing less traceable governance than the pre-CA-16 status quo where no such side-channel existed at all.",
+        "precedent": "Kubernetes GitHub issue tracker routinely loses deferred or labeled items across release cycles despite triage labels, exactly because side-channel state outside the canonical project board is never re-ingested into the main SSOT-like tracking."
+      },
+      "rejection_steelman": "The CEO split plus complete removal of any §7 envelope leaves the core Panel objections from v2 (partial data model, untracked side-channel, 365-day suppression) unaddressed; promoting a tooling-only surface now risks permanent divergence between dashboard state and the atomic ProductSSOT contract that §7.5 and §10 require for every run.",
+      "votes": {
+        "CA-16-A-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject the v3 drop — return to v2 minimal-envelope canonical position; defer engineering schema to successor CA-N.",
+          "rationale": "Dropping the envelope entirely repeats the partial-model problem the Panel already rejected 5/9 times."
+        },
+        "CA-16-A-v3-Q2": {
+          "key": "CA16AV3Q2-DASHONLY",
+          "pick_text": "Ratify drop the reference — recs live ENTIRELY outside any canonical linkage; no `last_seen_clearance_record_id` field; pure side-channel.",
+          "rationale": "The lightweight reference adds no enforcement yet creates a false sense of traceability."
+        },
+        "CA-16-A-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject the REOPEN state — 5-state lifecycle is sufficient; rejected recs that become relevant later should resurface as new `open` entries with fresh `id`.",
+          "rationale": "Admin-gated reopen adds complexity and single point of failure without solving the underlying queue-clutter concern."
+        },
+        "CA-16-A-v3-Q4": {
+          "key": "CA16AV3Q4-TIGHTER",
+          "pick_text": "Tighter — bounds [7, 60] (instead of [7, 90]); 90 days approaches one sprint cycle and may suppress recs across §28 symbiotic-loop iterations.",
+          "rationale": "90 days still violates the feedback-loop assumption cited in the v3 rationale itself."
+        }
+      },
+      "overallNotes": "All changes remain tooling-side with no rollback or conformance path back into canonical SSOT.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-16-A-v3-Q1",
+      "topic": "CA-16-A v3 Q1 — Does Panel ratify DROP of the canonical §7 item #8 proactive_recommendation envelope entirely? Recs surface ONLY via tooling/dashboard.",
+      "options": [
+        {
+          "key": "CA16AV3Q1-RATIFY",
+          "text": "Ratify v3 as drafted (canonical envelope DROPPED; recs in tooling + admin dashboard; engineering owns schema in `scripts/types/proactive-recs.d.ts`)."
+        },
+        {
+          "key": "CA16AV3Q1-SUMMARY",
+          "text": "Ratify with stricter tooling discipline — tooling MUST emit `governance_record_entry kind:proactive_rec_summary.v1` ONCE PER DAY summarizing queue state; summary IS canonical-audit-trail-accessible."
+        },
+        {
+          "key": "CA16AV3Q1-LINKED",
+          "text": "Ratify the drop BUT promote the lightweight ClearanceRecord reference into canonical: any tooling surfacing recs MUST populate `last_seen_clearance_record_id`; canonical SSOT enforces linkage."
+        },
+        {
+          "key": "CA16AV3Q1-REJECT",
+          "text": "Reject the v3 drop — return to v2 minimal-envelope canonical position; defer engineering schema to successor CA-N."
+        }
+      ],
+      "draftedKey": "CA16AV3Q1-RATIFY"
+    },
+    {
+      "id": "CA-16-A-v3-Q2",
+      "topic": "CA-16-A v3 Q2 — Does Panel ratify recs living OUTSIDE §11 Clearance with lightweight `last_seen_clearance_record_id` reference (non-gating; informational only)?",
+      "options": [
+        {
+          "key": "CA16AV3Q2-RATIFY",
+          "text": "Ratify v3 as drafted (recs OUTSIDE §11; lightweight ClearanceRecord reference; recs never block clearance)."
+        },
+        {
+          "key": "CA16AV3Q2-STEP65",
+          "text": "Strengthen — adopt Step 6.5 post-Deploy surface as the canonical home for recs (Slot 1 STEP65 variant); reference becomes a Step 6.5 attribute."
+        },
+        {
+          "key": "CA16AV3Q2-DASHONLY",
+          "text": "Ratify drop the reference — recs live ENTIRELY outside any canonical linkage; no `last_seen_clearance_record_id` field; pure side-channel."
+        },
+        {
+          "key": "CA16AV3Q2-REJECT",
+          "text": "Reject — restore §11.5 Step 1.5 Proactive Recommendation Review per v1."
+        }
+      ],
+      "draftedKey": "CA16AV3Q2-RATIFY"
+    },
+    {
+      "id": "CA-16-A-v3-Q3",
+      "topic": "CA-16-A v3 Q3 — Does Panel ratify addition of a `reopened` lifecycle state (admin-gated; rationale ≥80 chars; ONLY transitions from `rejected`)?",
+      "options": [
+        {
+          "key": "CA16AV3Q3-RATIFY",
+          "text": "Ratify v3 as drafted (6-state lifecycle including REOPEN; admin-only; ≥80-char rationale; rejected→reopened→open transition path)."
+        },
+        {
+          "key": "CA16AV3Q3-TWOADMIN",
+          "text": "Strengthen — REOPEN requires TWO admin sign-offs (different admins; second confirms within 24h); prevents single-admin reopen-spam failure."
+        },
+        {
+          "key": "CA16AV3Q3-DEFERRED",
+          "text": "Ratify but broaden eligibility — `deferred` recommendations also reopenable (currently rejected-only); allows admin to manually resurface a deferred rec."
+        },
+        {
+          "key": "CA16AV3Q3-REJECT",
+          "text": "Reject the REOPEN state — 5-state lifecycle is sufficient; rejected recs that become relevant later should resurface as new `open` entries with fresh `id`."
+        }
+      ],
+      "draftedKey": "CA16AV3Q3-RATIFY"
+    },
+    {
+      "id": "CA-16-A-v3-Q4",
+      "topic": "CA-16-A v3 Q4 — Does Panel ratify defer-window bounds `[7, 90]` (primary; default 14) with out-of-bounds REJECTED not clamped?",
+      "options": [
+        {
+          "key": "CA16AV3Q4-RATIFY",
+          "text": "Ratify v3 primary as drafted ([7, 90] bounds; default 14; out-of-bounds rejected)."
+        },
+        {
+          "key": "CA16AV3Q4-ADMIN30",
+          "text": "Ratify the ADMIN30 hybrid alternative — operator role may set up to 30 days; admin role may extend to 90 days with rationale ≥80 chars."
+        },
+        {
+          "key": "CA16AV3Q4-TIGHTER",
+          "text": "Tighter — bounds [7, 60] (instead of [7, 90]); 90 days approaches one sprint cycle and may suppress recs across §28 symbiotic-loop iterations."
+        },
+        {
+          "key": "CA16AV3Q4-REJECT",
+          "text": "Reject — restore v2 [1, 365] bounds despite Panel verdict."
+        }
+      ],
+      "draftedKey": "CA16AV3Q4-RATIFY"
+    }
+  ]
+}
