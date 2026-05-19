@@ -214,6 +214,40 @@ function extractErrors(report) {
   return out.slice(0, 500);
 }
 
+// D43 Lever c — per-page interactive seed list. Agent #21 records
+// per-page button labels and link hrefs in surfaces.{buttons,links}.
+// We pass those through verbatim so Phase B can use them as locator
+// seeds (text/role-based) instead of re-enumerating from a cold page
+// load. Each seed carries enough information for Playwright's
+// getByText/getByRole locators; no CSS selector is required.
+function extractInteractivesForPage(page) {
+  const out = [];
+  const seen = new Set();
+  const buttons = page?.surfaces?.buttons ?? [];
+  for (const b of buttons) {
+    const label = typeof b === 'string' ? b : (b?.label ?? b?.text ?? '');
+    if (!label || typeof label !== 'string') continue;
+    const t = label.trim();
+    if (t.length === 0 || t.length > 200) continue;
+    const key = `button:${t}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ tag: 'button', role: 'button', text: t, href: null });
+  }
+  const links = page?.surfaces?.links ?? [];
+  for (const l of links) {
+    const href = typeof l === 'string' ? l : (l?.href ?? '');
+    const text = typeof l === 'object' ? (l?.text ?? l?.label ?? '') : '';
+    const t = (typeof text === 'string' && text.length > 0 ? text : href).trim();
+    if (!t || t.length > 200) continue;
+    const key = `a:${t}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ tag: 'a', role: 'link', text: t, href: href || null });
+  }
+  return out.slice(0, 200);   // hard cap per page so a runaway crawl can't bloat the envelope
+}
+
 function mapPage(page) {
   const text = (page?.bodyText ?? '').toString();
   const links = page?.surfaces?.links ?? [];
@@ -230,6 +264,8 @@ function mapPage(page) {
     hasAIAgent:    detectAIAgent(page),
     statusCode:    extractStatusCode(page),
     loadTimeMs:    extractLoadTimeMs(page),
+    // D43 Lever c — per-page interactive seed list (text+role descriptors).
+    interactives:  extractInteractivesForPage(page),
   };
 }
 
@@ -257,6 +293,11 @@ function emptyEnvelope({ errors = [], depth = 0 } = {}) {
  * @param {string} [args.productId]
  * @param {string} [args.runId]
  * @param {object} [args.opts]
+ * @param {object} [args.storageState] — D43 Lever a: Playwright
+ *        storageState forwarded to the crawl engine so auth-gated
+ *        pages are reachable. richCapture/Browserless integration of
+ *        this signal is wired via the underlying ENTRY-007 stack;
+ *        conductStructuredCrawl is a transparent forwarder.
  * @param {function} [args.conductCrawlFn]  — DI for tests: defaults to
  *                                            a fresh Agent21 conductor.
  * @returns {Promise<object>} structured crawl output (always shaped;
@@ -274,25 +315,28 @@ export async function conductStructuredCrawl(args) {
   const depth = Number.isFinite(args.depth) && args.depth > 0 ? args.depth : DEFAULT_DEPTH;
   const opts = args.opts ?? {};
 
+  // D43 Lever a — storageState forwarder. Crawler doesn't yet drive
+  // Browserless with a logged-in session (richCapture is unauthenticated
+  // HTTP), but we accept the option here so the engine wire is in
+  // place for ENTRY-007 to plumb authenticated render later. Tests
+  // can also assert the option propagates.
+  const storageState = args.storageState ?? null;
+
   // 1. Acquire the crawl report. Tests inject conductCrawlFn; production
   //    constructs a fresh Agent21 conductor with a minimal-stub deps bag
   //    OR falls back to aggressiveCrawl() directly (no agent envelope).
   let report;
   if (typeof args.conductCrawlFn === 'function') {
-    try { report = await args.conductCrawlFn({ url, maxPages, depth, opts }); }
+    try { report = await args.conductCrawlFn({ url, maxPages, depth, opts, storageState }); }
     catch (e) {
       return emptyEnvelope({ errors: [`conductCrawlFn threw: ${e?.message ?? String(e)}`], depth });
     }
   } else {
-    // Production path. Call aggressiveCrawl() directly to avoid having
-    // to construct an Agent21 deps bag (BaseAgent requires clock /
-    // logger / messageBus / etc. — overkill for a read-only crawl).
-    // Agent21's conductCrawl() wraps aggressiveCrawl() with auth-gated
-    // detection + single-page fallback; we replicate that here through
-    // the static helper isAuthGated isn't necessary because the scoring
-    // layer only cares about the structured page shape, not auth state.
+    // Production path. aggressiveCrawl accepts opts; storageState is
+    // forwarded best-effort (richCapture ignores it today; ENTRY-007
+    // will wire it through Browserless when the auth-render path lands).
     try {
-      report = await aggressiveCrawl(url, { depth, maxPages });
+      report = await aggressiveCrawl(url, { depth, maxPages, storageState });
     } catch (e) {
       return emptyEnvelope({ errors: [`aggressiveCrawl threw: ${e?.message ?? String(e)}`], depth });
     }

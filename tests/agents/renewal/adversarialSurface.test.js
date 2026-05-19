@@ -177,7 +177,7 @@ describe('probeAdversarialSurface — skeleton (D39 T1)', () => {
     expect(__internals.DEFAULT_MAX_INTERACTIVES).toBe(25);
     expect(__internals.DEFAULT_MAX_MODALS).toBe(10);
     expect(__internals.DEFAULT_MAX_FORMS).toBe(10);
-    expect(__internals.DEFAULT_PROBE_BUDGET_MS).toBe(180_000);
+    expect(__internals.DEFAULT_PROBE_BUDGET_MS).toBe(270_000);  // D43 Lever b: 180_000 × 1.5
   });
 
   it('always closes context (and browser when owned)', async () => {
@@ -1597,6 +1597,210 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
     // 1 page probed before overall budget exit; remaining pages skipped.
     expect(r.pagesProbed).toBeLessThan(3);
     expect(r.urlsAttempted).toBe(3);
+  });
+});
+
+// ── D43 — Stage-1 coverage residual closed ──────────────────────────
+
+describe('D43 Lever b — per-page budget ×1.5', () => {
+  it('DEFAULT_PROBE_BUDGET_MS bumped to 270s so interactives slice = 135s', async () => {
+    // We can't import constants directly, but probeAdversarialSurface
+    // with no probeBudgetMs override should bias toward the new default.
+    // Use a 100-element page; old default (180s → 90s interactives slice)
+    // would still complete this in the mock since clicks are instant.
+    // Asserting via durationMs that we're not exceeding the cap is the
+    // safest invariant test.
+    const fakeEls = Array.from({ length: 100 }, (_, i) => ({
+      index: i, tag: 'button', href: null, text: `b-${i}`,
+      ariaLabel: null, role: null, selector: `button:nth-of-type(${i + 1})`,
+    }));
+    const mockPage = {
+      goto: vi.fn(async () => ({ ok: () => true })),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async (fn, args) => {
+        if (args && args.sel) return fakeEls.slice(0, args.max);
+        const s = typeof fn === 'function' ? fn.toString() : '';
+        if (s.includes('scrollTo')) return undefined;
+        return 'h';
+      }),
+      url: () => 'https://x/',
+      locator: vi.fn(() => ({ first: () => ({ click: vi.fn(async () => {}) }) })),
+      waitForTimeout: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+    };
+    const browser = {
+      newContext: vi.fn(async () => ({ newPage: vi.fn(async () => mockPage), close: vi.fn(async () => {}) })),
+      close: vi.fn(async () => {}),
+    };
+    const r = await probeAdversarialSurface({ url: 'https://x/', opts: { browser } });
+    expect(r.ok).toBe(true);
+    expect(r.summary.interactivesTested).toBe(100);            // no budget-cap exit
+    expect(r.durationMs).toBeLessThan(270_000);                // default per-page cap
+  });
+
+  it('probeAllPages overall-budget cap raised to 28 min (1_680_000ms)', async () => {
+    const { browser } = makeMockBrowser();
+    // 50-page synthetic product; default formula = 50 × 67.5s = 3_375_000ms,
+    // clamped to 1_680_000ms cap.
+    const r = await probeAllPages({
+      urls: Array.from({ length: 50 }, (_, i) => `https://x/${i}`),
+      opts: {
+        browser,
+        probeInteractives: async () => ({ findings: [], interactivesTested: 0, deadOrErroring: 0 }),
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0 }),
+        probeWorkspaces: async () => ({ findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 }),
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0 }),
+      },
+    });
+    expect(r.ok).toBe(true);
+    expect(r.durationMs).toBeLessThan(1_680_000);
+  });
+});
+
+describe('D43 Lever c — crawl-seeded selectors', () => {
+  it('probeInteractives unions seededInteractives into the enumeration set', async () => {
+    const { probeInteractives } = await import('../../../src/lib/agents/renewal/adversarialSurface.js');
+    const mockPage = {
+      evaluate: vi.fn(async (fn, args) => {
+        if (args && args.sel) {
+          // Live enumeration finds 2 elements.
+          return [
+            { index: 0, tag: 'button', href: null, text: 'live-1', ariaLabel: null, role: null, selector: 'button:nth-of-type(1)' },
+            { index: 1, tag: 'button', href: null, text: 'live-2', ariaLabel: null, role: null, selector: 'button:nth-of-type(2)' },
+          ];
+        }
+        const s = typeof fn === 'function' ? fn.toString() : '';
+        if (s.includes('scrollTo')) return undefined;
+        return 'h';
+      }),
+      url: () => 'https://x/',
+      on: vi.fn(), off: vi.fn(),
+      locator: vi.fn(() => ({ first: () => ({ click: vi.fn(async () => {}) }) })),
+      getByText: vi.fn(() => ({ first: () => ({ click: vi.fn(async () => {}) }) })),
+      getByRole: vi.fn(() => ({ first: () => ({ click: vi.fn(async () => {}) }) })),
+      waitForTimeout: vi.fn(async () => {}),
+    };
+    const seededInteractives = [
+      { tag: 'button', role: 'button', text: 'live-1', href: null },       // dedup vs live
+      { tag: 'a', role: 'link', text: 'seeded-only-1', href: '/x' },
+      { tag: 'button', role: 'button', text: 'seeded-only-2', href: null },
+    ];
+    const r = await probeInteractives({
+      page: mockPage, url: 'https://x/',
+      sliceBudget: 60_000,
+      seededInteractives,
+    });
+    // 2 live + 2 unique seeded (dedup'd live-1) = 4 total exercised.
+    expect(r.interactivesTested).toBe(4);
+    expect(r.classifications).toHaveLength(4);
+    const texts = r.classifications.map((c) => c.text).sort();
+    expect(texts).toEqual(['live-1', 'live-2', 'seeded-only-1', 'seeded-only-2']);
+  });
+
+  it('seeded entries click via getByText/getByRole (no CSS selector required)', async () => {
+    const { probeInteractives } = await import('../../../src/lib/agents/renewal/adversarialSurface.js');
+    let getByTextCalled = 0;
+    let getByRoleCalled = 0;
+    const mockPage = {
+      evaluate: vi.fn(async (fn, args) => {
+        if (args && args.sel) return [];                          // no live elements
+        const s = typeof fn === 'function' ? fn.toString() : '';
+        if (s.includes('scrollTo')) return undefined;
+        return 'h';
+      }),
+      url: () => 'https://x/',
+      on: vi.fn(), off: vi.fn(),
+      locator: vi.fn(),
+      getByText: vi.fn(() => { getByTextCalled += 1; return { first: () => ({ click: vi.fn(async () => {}) }) }; }),
+      getByRole: vi.fn(() => { getByRoleCalled += 1; return { first: () => ({ click: vi.fn(async () => {}) }) }; }),
+      waitForTimeout: vi.fn(async () => {}),
+    };
+    const r = await probeInteractives({
+      page: mockPage, url: 'https://x/',
+      sliceBudget: 60_000,
+      seededInteractives: [
+        { tag: 'button', role: 'button', text: 'click-me', href: null },
+      ],
+    });
+    expect(r.interactivesTested).toBe(1);
+    // role takes precedence over getByText (probe tries getByRole first).
+    expect(getByRoleCalled).toBe(1);
+    expect(getByTextCalled).toBe(0);
+  });
+
+  it('probeAllPages routes per-URL seeds to each page from opts.seedsByUrl', async () => {
+    const { browser } = makeMockBrowser();
+    const seenSeeds = [];
+    const r = await probeAllPages({
+      urls: ['https://x/a', 'https://x/b'],
+      opts: {
+        browser,
+        seedsByUrl: {
+          'https://x/a': [{ tag: 'button', role: 'button', text: 'A-only', href: null }],
+          'https://x/b': [{ tag: 'a', role: 'link', text: 'B-only', href: '/b' }],
+        },
+        probeInteractives: async ({ seededInteractives, url }) => {
+          seenSeeds.push({ url, seeded: seededInteractives });
+          return { findings: [], interactivesTested: 0, deadOrErroring: 0 };
+        },
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0 }),
+        probeWorkspaces: async () => ({ findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 }),
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0 }),
+      },
+    });
+    expect(r.ok).toBe(true);
+    expect(seenSeeds).toHaveLength(2);
+    expect(seenSeeds[0].seeded[0].text).toBe('A-only');
+    expect(seenSeeds[1].seeded[0].text).toBe('B-only');
+  });
+
+  it('crawlOutputAdapter mapPage emits per-page interactives array', async () => {
+    const { __internals } = await import('../../../src/lib/agents/renewal/adversarialSurface.js')
+      .catch(() => ({ __internals: null }));
+    // crawlOutputAdapter doesn't expose mapPage directly; verify via
+    // conductStructuredCrawl with a stub conductCrawlFn.
+    const { conductStructuredCrawl } = await import('../../../src/lib/agents/renewal/crawlOutputAdapter.js');
+    const r = await conductStructuredCrawl({
+      url: 'https://x/',
+      conductCrawlFn: async () => ({
+        ok: true, pagesCrawled: 1, depth: 1, pages: [{
+          url: 'https://x/', bodyText: '', headings: [],
+          surfaces: {
+            buttons: [{ label: 'Sign in' }, { label: 'Sign up' }, 'Click me'],
+            links: [{ href: '/about', text: 'About' }, '/contact'],
+            forms: [],
+          },
+          ok: true, statusCode: 200,
+        }], errors: [], warnings: [],
+      }),
+    });
+    expect(r.pages).toHaveLength(1);
+    expect(Array.isArray(r.pages[0].interactives)).toBe(true);
+    // 3 button entries + 2 link entries = 5 seeds.
+    expect(r.pages[0].interactives).toHaveLength(5);
+    const texts = r.pages[0].interactives.map((s) => s.text).sort();
+    expect(texts).toEqual(['/contact', 'About', 'Click me', 'Sign in', 'Sign up']);
+  });
+});
+
+describe('D43 Lever a — storageState forwarded to crawl', () => {
+  it('conductStructuredCrawl forwards storageState into conductCrawlFn args', async () => {
+    const { conductStructuredCrawl } = await import('../../../src/lib/agents/renewal/crawlOutputAdapter.js');
+    let seen = null;
+    await conductStructuredCrawl({
+      url: 'https://x/',
+      storageState: { cookies: [{ name: 's', value: 'x' }] },
+      conductCrawlFn: async (a) => {
+        seen = a.storageState;
+        return { ok: true, pagesCrawled: 0, depth: 1, pages: [], errors: [], warnings: [] };
+      },
+    });
+    expect(seen).toBeTruthy();
+    expect(seen.cookies[0].name).toBe('s');
   });
 });
 

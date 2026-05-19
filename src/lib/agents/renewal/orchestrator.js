@@ -675,6 +675,10 @@ export async function runOrchestration(args = {}) {
         depth: 5,
         productId,
         runId,
+        // D43 Lever a — authenticated traversal: forward storageState
+        // to the crawler so auth-gated pages are reachable when the
+        // ENTRY-007 stack is wired into richCapture/Browserless.
+        storageState: args.storageState ?? state.storageState ?? undefined,
       });
       state.crawlOutput = crawlOutput;
       const log = makeStepLog({
@@ -732,14 +736,31 @@ export async function runOrchestration(args = {}) {
       const urls = (crawledUrls.length > 0) ? Array.from(new Set(crawledUrls)) : [currentUrl];
       phaseBUrlsAttempted = urls.length;
 
+      // D43 Lever c — per-URL interactive seeds from the crawl. When
+      // crawlOutput.pages carry `interactives` descriptors (text+role
+      // pairs from crawlOutputAdapter), Phase B uses them as locator
+      // seeds instead of relying solely on page-load enumeration —
+      // covers off-screen / lazy-mounted clickables the cold page
+      // doesn't surface. Map keyed by URL; falsy entries fall through
+      // to the live-enumerate path inside probeOnePage.
+      const seedsByUrl = {};
+      for (const p of (Array.isArray(crawlOutput?.pages) ? crawlOutput.pages : [])) {
+        if (typeof p?.url === 'string' && Array.isArray(p?.interactives) && p.interactives.length > 0) {
+          seedsByUrl[p.url] = p.interactives;
+        }
+      }
+
       const probeOpts = {
-        // Tight per-page budget so a misbehaving page can't stall the run.
-        // Overall wall cap scales with page count.
-        probeBudgetMs: state.phaseBProbeBudgetMs ?? 180_000,
-        overallBudgetMs: state.phaseBOverallBudgetMs ?? Math.max(180_000, urls.length * 60_000),
+        // D43 Lever b — defaults bumped ×1.5 in adversarialSurface.js
+        // (DEFAULT_PROBE_BUDGET_MS 180_000 → 270_000); the orchestrator
+        // override remains opt-in via state.phaseBProbeBudgetMs.
+        probeBudgetMs: state.phaseBProbeBudgetMs ?? undefined,
+        overallBudgetMs: state.phaseBOverallBudgetMs ?? undefined,
         // D41 T4 — authenticated traversal: storageState plumbed from
         // runOrchestration args (set by ENTRY-007 / external auth flow).
         storageState: args.storageState ?? state.storageState ?? undefined,
+        // D43 Lever c — pass per-URL crawl-seeded interactive lists.
+        seedsByUrl,
         maxModals: 10, maxForms: 10,
       };
 
@@ -1491,8 +1512,13 @@ export async function runOrchestration(args = {}) {
       let postFixCrawlOutput = crawlOutput;
       if (!deployDegraded && previewUrl) {
         try {
+          // D43 — match the pre-fix crawl's maxPages/depth so the
+          // re-probe covers the same surface (D42 had maxPages:10
+          // which produced postFixPhaseBPagesProbed:1, defeating the
+          // re-probe's purpose).
           postFixCrawlOutput = await _conductStructuredCrawl({
-            url: postFixUrl, maxPages: 10, depth: 3, productId, runId,
+            url: postFixUrl, maxPages: 50, depth: 5, productId, runId,
+            storageState: args.storageState ?? state.storageState ?? undefined,
           });
         } catch {
           postFixCrawlOutput = crawlOutput;
@@ -1518,12 +1544,21 @@ export async function runOrchestration(args = {}) {
               .filter(Boolean),
           ));
           if (postFixUrls.length > 0) {
+            // D43 Lever c — seed re-probe from the post-fix crawl too.
+            const postFixSeedsByUrl = {};
+            for (const p of postFixCrawlOutput.pages) {
+              if (typeof p?.url === 'string' && Array.isArray(p?.interactives) && p.interactives.length > 0) {
+                postFixSeedsByUrl[p.url] = p.interactives;
+              }
+            }
             const reprobe = await _probeAllPagesPost({
               urls: postFixUrls,
               opts: {
-                probeBudgetMs: state.phaseBProbeBudgetMs ?? 180_000,
-                overallBudgetMs: state.phaseBOverallBudgetMs ?? Math.max(180_000, postFixUrls.length * 60_000),
+                // D43 Lever b — defaults bumped in adversarialSurface.js.
+                probeBudgetMs: state.phaseBProbeBudgetMs ?? undefined,
+                overallBudgetMs: state.phaseBOverallBudgetMs ?? undefined,
                 storageState: args.storageState ?? state.storageState ?? undefined,
+                seedsByUrl: postFixSeedsByUrl,
                 maxModals: 10, maxForms: 10,
               },
             });

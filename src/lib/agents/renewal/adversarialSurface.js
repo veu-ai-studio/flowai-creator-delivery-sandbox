@@ -44,7 +44,11 @@ const DEFAULT_MAX_INTERACTIVES = 25;
 const DEFAULT_MAX_INTERACTIVES_EXHAUSTIVE = 9999;
 const DEFAULT_MAX_MODALS = 10;
 const DEFAULT_MAX_FORMS = 10;
-const DEFAULT_PROBE_BUDGET_MS = 180_000;        // 3-min total wall cap
+// D43 Lever b — per-page interactive budget ×1.5 (180s → 270s). The
+// interactives slice (probeBudget × 0.5) now defaults to 135s/page,
+// up from 90s — enough to exercise ~250 elements/page at 500ms each
+// with headroom for slow clicks.
+const DEFAULT_PROBE_BUDGET_MS = 270_000;        // 4.5-min per-page wall cap
 
 // ── Connector ─────────────────────────────────────────────────────────
 
@@ -222,6 +226,15 @@ export async function probeInteractives({
   page, url, maxInteractives = DEFAULT_MAX_INTERACTIVES,
   actionTimeoutMs = DEFAULT_ACTION_TIMEOUT_MS,
   sliceBudget = 45_000,
+  // D43 Lever c — when the caller supplies seededInteractives (an
+  // array of {tag, role, text, href} descriptors from the crawl),
+  // the probe UNIONS them with the live-enumerated set. Each seeded
+  // entry is exercised via Playwright's text-/role-based locator
+  // (getByText / getByRole) instead of a CSS selector — covers
+  // lazy-mounted / off-screen clickables that page-load enumeration
+  // misses. Duplicates with live-enumerated elements are deduped by
+  // visible text.
+  seededInteractives = null,
 } = {}) {
   const findings = [];
   // D41 T2 — per-element classification log: every probed element
@@ -266,6 +279,36 @@ export async function probeInteractives({
     return { findings, classifications, interactivesTested: 0, deadOrErroring: 0 };
   }
 
+  // D43 Lever c — union live-enumerated clickables with crawl seeds.
+  // A seed is added when its visible text is NOT already covered by
+  // a live element (dedupe by trimmed lowercased text). Seeded
+  // clickables are flagged `seeded: true` so the click path uses a
+  // text/role locator instead of a CSS selector.
+  if (Array.isArray(seededInteractives) && seededInteractives.length > 0) {
+    const liveTexts = new Set();
+    for (const c of clickables) {
+      const t = typeof c.text === 'string' ? c.text.trim().toLowerCase() : '';
+      if (t) liveTexts.add(t);
+    }
+    for (const s of seededInteractives) {
+      if (!s || typeof s !== 'object') continue;
+      const sText = typeof s.text === 'string' ? s.text.trim() : '';
+      if (!sText) continue;
+      if (liveTexts.has(sText.toLowerCase())) continue;
+      if (clickables.length >= maxInteractives) break;
+      clickables.push({
+        index: clickables.length,
+        tag: typeof s.tag === 'string' ? s.tag : 'button',
+        href: typeof s.href === 'string' ? s.href : null,
+        text: sText,
+        ariaLabel: null,
+        role: typeof s.role === 'string' ? s.role : null,
+        selector: null,
+        seeded: true,
+      });
+    }
+  }
+
   for (const el of clickables) {
     if (Date.now() - startedAt > sliceBudget) break;
     interactivesTested += 1;
@@ -281,13 +324,28 @@ export async function probeInteractives({
     // Click with bounded timeout.
     let clickError = null;
     try {
-      const loc = page.locator ? page.locator(el.selector).first() : null;
+      let loc = null;
+      if (el.seeded) {
+        // D43 Lever c — seeded entry: use text/role locator (no CSS
+        // selector available from the crawl). Prefer getByRole when
+        // role is known, else getByText. Both narrow to .first() to
+        // disambiguate when multiple matches exist on a single page.
+        if (el.role && typeof page.getByRole === 'function') {
+          try { loc = page.getByRole(el.role, { name: el.text, exact: false }).first(); } catch { /* fall through */ }
+        }
+        if (!loc && typeof page.getByText === 'function') {
+          try { loc = page.getByText(el.text, { exact: false }).first(); } catch { /* fall through */ }
+        }
+        if (!loc && page.locator) {
+          // Last resort: text-content match via locator pseudo.
+          try { loc = page.locator(`text=${el.text}`).first(); } catch { /* ignore */ }
+        }
+      } else {
+        loc = page.locator ? page.locator(el.selector).first() : null;
+      }
       if (!loc) {
         clickError = 'no_locator_api';
       } else {
-        // Use .click with explicit timeout + `noWaitAfter:true` so a
-        // dead button doesn't hang the probe waiting for a network
-        // event that never comes.
         await loc.click({ timeout: actionTimeoutMs, trial: false, noWaitAfter: true });
       }
     } catch (e) {
@@ -1281,6 +1339,8 @@ async function probeOnePage({ browser, url, opts = {} }) {
           sliceBudget: interactivesSliceBudget,
           maxInteractives: opts.maxInteractives ?? DEFAULT_MAX_INTERACTIVES_EXHAUSTIVE,
           actionTimeoutMs: opts.actionTimeoutMs ?? DEFAULT_ACTION_TIMEOUT_MS,
+          // D43 Lever c — crawl-seeded interactives for this page.
+          seededInteractives: opts.seededInteractives ?? null,
         });
         if (r && Array.isArray(r.findings)) findings.push(...r.findings);
         if (r && Array.isArray(r.classifications)) classifications.push(...r.classifications);
@@ -1435,14 +1495,14 @@ export async function probeAllPages(args = {}) {
   const aggFindings = [];
   const aggClassifications = [];
   const aggSummary = makeEmptySummary();
-  // D42 T2 — per-page budget = 45s default (interactives slice = ~22s
-  // → ~40 elements/page at 500ms each, which exceeds the typical
-  // per-page interactive count by a wide margin). Capped at 25 min
-  // total so we stay inside the 30-min script timeout even for
-  // many-page products.
+  // D43 Lever b — per-page budget = 67.5s default (×1.5 from D42's
+  // 45s). Interactives slice = ~33s → ~60 elements/page at 500ms each.
+  // Cap raised to 28 min (1_680_000ms) so it still fits inside the
+  // generic runner's 30-min default script timeout with buffer for
+  // crawl + scoring + deploy overhead.
   const overallBudget = opts.overallBudgetMs ?? Math.min(
-    1_500_000,
-    Math.max(180_000, urls.length * 45_000),
+    1_680_000,
+    Math.max(270_000, urls.length * 67_500),
   );
 
   try {
@@ -1453,7 +1513,15 @@ export async function probeAllPages(args = {}) {
       if (elapsed > overallBudget) break;
       const remaining = overallBudget - elapsed;
       const pageBudget = Math.max(20_000, Math.floor(remaining / Math.max(1, urls.length - i)));
-      const pageOpts = { ...opts, browser, probeBudgetMs: opts.perPageBudgetMs ?? pageBudget };
+      // D43 Lever c — extract this URL's crawl-seeded interactives (if any).
+      const seedsForUrl = (opts.seedsByUrl && typeof opts.seedsByUrl === 'object')
+        ? (opts.seedsByUrl[urls[i]] ?? null)
+        : null;
+      const pageOpts = {
+        ...opts, browser,
+        probeBudgetMs: opts.perPageBudgetMs ?? pageBudget,
+        seededInteractives: seedsForUrl,
+      };
       const r = await probeOnePage({ browser, url: urls[i], opts: pageOpts });
       perPage.push(r);
       if (Array.isArray(r.findings)) aggFindings.push(...r.findings);
