@@ -1466,6 +1466,115 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
     }
   });
 
+  // ── D41 T5 — whole-product §7.6 aggregation ─────────────────────
+
+  it('scoreCrawlOutput unions Phase B findings from ALL pages (not per-page)', async () => {
+    const { scoreCrawlOutput } = await import('../../../src/lib/agents/renewal/gtmReadinessScorer.js');
+    const crawlOutput = {
+      pagesCrawled: 3, depth: 1,
+      pages: [
+        { url: 'https://a/p1', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 },
+        { url: 'https://a/p2', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 },
+        { url: 'https://a/p3', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 },
+      ],
+      brokenLinks: [], forms: [], interactiveElements: [], errors: [], totalTextLength: 9,
+    };
+    const surfaceOnly = scoreCrawlOutput(crawlOutput, null);
+    // Phase B findings spread across the three crawled pages.
+    const multiPagePhaseB = [
+      { severity: 'high', category: 'broken-modal', location: 'https://a/p1', evidence: 'dead button' },
+      { severity: 'high', category: 'broken-modal', location: 'https://a/p2', evidence: 'no agent response' },
+      { severity: 'medium', category: 'dead-card', location: 'https://a/p3', evidence: 'empty workspace shell' },
+    ];
+    const comprehensive = scoreCrawlOutput(crawlOutput, multiPagePhaseB);
+    // Whole-product score should drop relative to surface-only because
+    // Phase B contributed cross-page findings.
+    expect(comprehensive.score).toBeLessThan(surfaceOnly.score);
+    expect(comprehensive.phaseBCount).toBe(3);
+    expect(comprehensive.phaseACount).toBe(surfaceOnly.phaseACount);
+    // Penalty math: 2 high + 1 medium = 2×5 + 1×2 = 12 points.
+    expect(surfaceOnly.score - comprehensive.score).toBe(12);
+  });
+
+  it('runOrchestration logs surface-only vs comprehensive-Phase-B §7.6 in STEP 5', async () => {
+    const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    let scorerCallCount = 0;
+    const scoreCrawlOutput = vi.fn((crawl, extra) => {
+      scorerCallCount += 1;
+      const baseFindings = Array.isArray(extra) ? extra : [];
+      const score = 100 - (baseFindings.length * 5);
+      return {
+        score,
+        counts: { critical: 0, high: baseFindings.length, medium: 0, low: 0 },
+        band: 'showcase-ready', label: 'showcase-ready',
+        penalty: 100 - score, formula: 'test',
+        issues: baseFindings, phaseACount: 0, phaseBCount: baseFindings.length,
+      };
+    });
+    const probeAllPages = vi.fn(async ({ urls }) => ({
+      ok: true,
+      pagesProbed: urls.length,
+      urlsAttempted: urls.length,
+      perPage: urls.map((u) => ({ ok: true, url: u, findings: [], summary: {} })),
+      findings: [
+        { severity: 'high', category: 'broken-modal', location: urls[0], evidence: 'x' },
+        { severity: 'high', category: 'broken-modal', location: urls[1] ?? urls[0], evidence: 'y' },
+      ],
+      summary: { interactivesTested: 10, deadOrErroring: 0, modalsFailing: 0, formsFailing: 0, agentsNonFunctional: 0, mockOnlyFlagged: 0, workspacesProbed: 2, workspacesNonFunctional: 0 },
+      probedAt: 'now', durationMs: 1,
+    }));
+
+    const PRODUCT = Object.freeze({
+      product_id: 'mypreglife', org_id: 'veu-ai-studio',
+      github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
+      self_renewal_enabled: true,
+    });
+    process.env.VERCEL_PROJECT_ID_MYPREGLIFE = 'prj_fake';
+    process.env.VERCEL_ORG_ID = 'team_fake';
+    process.env.VERCEL_TOKEN = 'vercel_fake';
+    try {
+      const r = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd41-t5-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: {
+          discoverProduct: vi.fn(async () => PRODUCT),
+          checkRateCap: vi.fn(async () => ({ allowed: true })),
+          checkRunawayDetector: vi.fn(async () => ({ tripped: false })),
+          conductStructuredCrawl: vi.fn(async ({ url }) => ({
+            pagesCrawled: 2, depth: 1,
+            pages: [{ url: 'https://x/p1', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 },
+                    { url: 'https://x/p2', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 }],
+            brokenLinks: [], forms: [], interactiveElements: [], errors: [], totalTextLength: 4,
+          })),
+          produceMonitorText: vi.fn(async ({ url }) => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10', rawContent: '', url, fetchedAt: 'now', wordCount: 0, pageTitle: '', model: 'c', usage: {} })),
+          computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
+          scoreCrawlOutput,
+          getInstallationToken: vi.fn(async () => ({ token: 'ghs', expiresAt: '' })),
+          appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+          probeAllPages,
+        },
+      });
+      const step4 = r.orchestrationLog.find((l) => l.step === 4);
+      const step5 = r.orchestrationLog.find((l) => l.step === 5);
+      // Multi-page Phase B ran on both crawled URLs.
+      expect(step4.result.urlsAttempted).toBe(2);
+      expect(step4.result.pagesProbed).toBe(2);
+      // STEP 5 surfaces the surface-only and comprehensive scores
+      // alongside each other so the operator can see the Phase B
+      // contribution to the whole-product §7.6 score.
+      expect(step5.result).toHaveProperty('surfaceOnlyGtmScore');
+      expect(step5.result).toHaveProperty('gtmScore');
+      expect(step5.result).toHaveProperty('phaseBContribution');
+      expect(step5.result.surfaceOnlyGtmScore).toBeGreaterThan(step5.result.gtmScore);
+      expect(step5.result.phaseBContribution).toBe(10);          // 2 high findings × 5 points
+      expect(step5.result.phaseBPagesProbed).toBe(2);
+    } finally {
+      delete process.env.VERCEL_PROJECT_ID_MYPREGLIFE;
+      delete process.env.VERCEL_ORG_ID;
+      delete process.env.VERCEL_TOKEN;
+    }
+  });
+
   it('respects overall budget — stops probing when wall budget burned', async () => {
     const { browser } = makeMockBrowser();
     const r = await probeAllPages({

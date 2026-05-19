@@ -825,8 +825,16 @@ export async function runOrchestration(args = {}) {
       // D39: union Phase A crawl findings with Phase B adversarial-
       // surface findings (state.phaseBFindings captured in STEP 4).
       const preGtm = _scoreCrawlOutput(crawlOutput, state.phaseBFindings ?? null);
+      // D41 T5 — whole-product comparison: surface-only Phase A vs
+      // comprehensive Phase A + multi-page Phase B. Skip the extra
+      // call when Phase B contributed nothing — the two scores are
+      // identical and the redundant call wastes a Supabase round-trip.
+      const preGtmSurfaceOnly = (Array.isArray(state.phaseBFindings) && state.phaseBFindings.length > 0)
+        ? _scoreCrawlOutput(crawlOutput, null)
+        : preGtm;
       if (originalGtmScore === null) originalGtmScore = preGtm.score;
       iterLog.preGtm = preGtm;
+      iterLog.preGtmSurfaceOnly = preGtmSurfaceOnly;
       const log = makeStepLog({
         iteration: iterationNumber, step: 5, status: 'complete',
         tool: 'gtmReadinessScorer (§7.6) + monitorTextProducer (internal)',
@@ -835,6 +843,12 @@ export async function runOrchestration(args = {}) {
           gtmScore: preGtm.score,
           gtmBand: preGtm.band,
           gtmCounts: preGtm.counts,
+          // D41 T5 — surface-only vs comprehensive-Phase-B breakdown.
+          surfaceOnlyGtmScore: preGtmSurfaceOnly.score,
+          surfaceOnlyGtmCounts: preGtmSurfaceOnly.counts,
+          phaseBContribution: preGtmSurfaceOnly.score - preGtm.score,
+          phaseBPagesProbed: state.phaseBPagesProbed ?? 0,
+          phaseBUrlsAttempted: state.phaseBUrlsAttempted ?? 0,
           fiveLayerInternal: preScoreEnvelope.total,
           layers: {
             l1: preScoreEnvelope.l1, l2: preScoreEnvelope.l2, l3: preScoreEnvelope.l3,
@@ -1489,8 +1503,14 @@ export async function runOrchestration(args = {}) {
       // as a proxy — if the fix didn't change interactive layer, the
       // findings persist; if it did, Phase A regression-guard catches it.
       const postGtm = _scoreCrawlOutput(postFixCrawlOutput, state.phaseBFindings ?? null);
+      // D41 T5 — surface-only baseline alongside comprehensive score.
+      // Skip the extra call when Phase B is empty (identical scores).
+      const postGtmSurfaceOnly = (Array.isArray(state.phaseBFindings) && state.phaseBFindings.length > 0)
+        ? _scoreCrawlOutput(postFixCrawlOutput, null)
+        : postGtm;
       lastPostGtm = postGtm;
       iterLog.postGtm = postGtm;
+      iterLog.postGtmSurfaceOnly = postGtmSurfaceOnly;
       const log = makeStepLog({
         iteration: iterationNumber, step: 11, status: 'complete',
         tool: 'gtmReadinessScorer (§7.6) + post-fix re-crawl',
@@ -1499,6 +1519,11 @@ export async function runOrchestration(args = {}) {
           gtmScore: postGtm.score,
           gtmBand: postGtm.band,
           gtmCounts: postGtm.counts,
+          surfaceOnlyGtmScore: postGtmSurfaceOnly.score,
+          surfaceOnlyGtmCounts: postGtmSurfaceOnly.counts,
+          phaseBContribution: postGtmSurfaceOnly.score - postGtm.score,
+          phaseBPagesProbed: state.phaseBPagesProbed ?? 0,
+          phaseBUrlsAttempted: state.phaseBUrlsAttempted ?? 0,
           fiveLayerInternal: postScoreEnvelope.total,
           layers: {
             l1: postScoreEnvelope.l1, l2: postScoreEnvelope.l2, l3: postScoreEnvelope.l3,
