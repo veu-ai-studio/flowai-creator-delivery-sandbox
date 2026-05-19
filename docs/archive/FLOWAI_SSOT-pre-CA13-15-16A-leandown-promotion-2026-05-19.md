@@ -178,20 +178,6 @@ Operators MUST NOT remove or paraphrase these disclosures. The disclosure is loa
 
 **Source acquisition order** (per `api/_lib/sourceAcquisition.js`): git URL → Vercel project → Base44 project → fallback to generate-from-scratch. Generate-from-scratch is canonical capability per parking-lot ENTRY 005, not a fallback in the colloquial "second-best" sense — it produces a fully functional working product whenever source is unreachable.
 
-### §7 — Proactive recommendations are NOT a canonical Output Contract artifact (CA-16-A disposition per ENTRY 017)
-
-**CA-16-A disposition (CEO Decision B, Locked Rule 13 — COLLAPSE to ZERO canonical surface).** §7 remains at the canonical 6 items (1–5 per ENTRY 005 + item #6 per CA-14-B ENTRY 015 + LIMITATIONS disclosure discipline per CA-14-A ENTRY 015). **No §7 item #8 "Proactive Recommendations envelope" is promoted.** Proactive recommendations are wholly TOOLING-governed:
-
-- **No canonical §7 envelope.** No PA-schema in canonical SSOT.
-- **No §11 reference.** Proactive recs do NOT appear in the Six-Step Clearance Protocol; they are not a clearance gate or sub-step.
-- **No canonical lifecycle states.** No `REOPEN`, no `open`/`accepted`/`rejected`/`deferred`/`implemented`/`reopened` state machine in canonical SSOT.
-- **No canonical defer-window.** No `[7, 90]` bounds, no `[1, 365]` bounds — no defer-window in canonical at all.
-- **No canonical audit-log envelope.** No `governance_record_entry kind:'proactive_recommendation.v1'`.
-
-Engineering owns the recs surface entirely: `scripts/lint-proactive-recs.mjs` (or equivalent dispatch-time naming) + admin dashboard `/admin/recommendations`; schema lives in tooling-internal types under `scripts/types/`. The dashboard maintains its own audit; no cross-link to canonical state is required (no `last_seen_clearance_record_id` reference promoted either — the v3 draft's lightweight reference is NOT canonical per CEO Decision B).
-
-CA-16-B (Redesign/Build Environment §29-area sub-section) and CA-16-C (Multi-Format Targets §6 extension) remain DEFERRED to future CA-N — unchanged from prior CA-16 SPLIT disposition (`e8bb7d4`). The CA-16-B-Q3 admin-only Redesign approval gate per ENTRY 015 §11.7 + the CA-16-C-Q4 §7.6 formula-generalization invariant per ENTRY 015 §7.6 are already canonical and are NOT re-amended in this entry.
-
 ### 7.5 ProductSSOT entity — canonical living-document structure (per CA-10-A / ENTRY 005)
 
 One **ProductSSOT** row per `(productId, environment)` pair, where `environment ∈ {'dev', 'prd'}` per §16.3 (Dual Deployment — dev + prd tracked separately). A product registered in three states (dev + prd + an additional staging) gets three ProductSSOTs.
@@ -212,8 +198,6 @@ Plus a `version` field (monotonic per `(productId, environment)`, auto-increment
 **Supabase schema:** `product_ssot` table (RLS-enabled per §13.1) + `product_ssot_version` table (append-only audit; same hash chain as GovernanceAuditLog per §14.2). Migration: `supabase/migrations/00NN_product_ssot.sql` (engineering dispatch separate; W2 + W5x to implement).
 
 **Relation to DeploymentScaffold (§16.2):** complementary, not duplicative. DeploymentScaffold = single deploy snapshot (per Sprint 6 Phase 2). ProductSSOT = full deployment history + governance trail + annotations across time. ProductSSOT's `architecture_snapshot` may derive from the most recent DeploymentScaffold; engineering dispatch reuses the shape where applicable.
-
-**CA-15-B disposition (CEO Decision B, per ENTRY 017):** ProductSSOT remains EXACTLY the 6 canonical blocks above per CA-10-A. **No `product_purpose` field** (neither required nor optional) is added in CA-15. The v1 `purpose_record` block AND the v2 optional `product_purpose` field are BOTH explicitly rejected. Purpose information, if needed by an operator, lives entirely OUTSIDE ProductSSOT — in operator-maintained notes, README files, or any operator-process surface; these are NOT canonical FlowAI state. (Forward-looking discipline carried at §28.6: if a future CA ever re-introduces purpose information to canonical SSOT, only the `described` operator-supplied capture mode is admissible.)
 
 ### 7.5.1 ProductSSOT operational invariants (CA-14-D canonical per ENTRY 015)
 
@@ -296,10 +280,6 @@ Failure of any of the four prerequisites blocks §11 Clearance Step 5 with expli
 **Audit-log integration (per §14.1 ripple amendment from ENTRY 006):** every report emission writes a `governance_record_entry` to the affected ProductSSOT with `kind: 'gtm_readiness_score'` + the topic `21.gtm.readiness.v1` is emitted on the bus. Re-crawl after fix produces a new `governance_record_entry` (separate entry, not an update) so the score trajectory is auditable across the product's lifetime.
 
 **Market-definition scope (canonical, per §1.1 and CEO instruction 2026-05-18):** FlowAI GTM readiness scoring for each product MUST be evaluated against the product's actual market definition, not a narrow interpretation. A product is GTM-ready when it serves its full defined market, not just a subset of it. The §1.1 product market definitions are the authoritative scope inputs for Agent #21's issue-detection pass + the 100-point demo-readiness score; the matching `product_registry.market_definition` row is the runtime mirror.
-
-**CA-13 disposition (CEO Decision B, per ENTRY 017):** the §7.6 GTM bands per ENTRY 006 (90–100 Showcase-ready / 75–89 Demo-ready / 60–74 Internal-only / 0–59 Not-demo-ready) remain canonical. **NO canonical sub-95 exception path exists in CA-13** — the CA-13 v3 draft's admin-only expiring override mechanism (`gtm_bar_admin_override.v1` + `gtm_bar_admin_override_used.v1` envelopes + 14-day expiry + ClearanceRecord migration prerequisite) is NOT promoted. The uniform ≥95 directive (CEO 2026-05-18) does NOT live in CA-13 — it is deferred to the forthcoming mission/Purpose amendment as a DELIBERATE DECISION; whether any operational sub-95 exception path exists at all (and if so, what shape) is part of that deferred decision, not a CA-13 question. Per-product `gtm_ready_bar_override` operator-config knob from ENTRY 006 §7.6 maps remains unchanged in this entry.
-
-(The CA-13 §29 build/wire engine S6 invariant references `gtm_bar_admin_override.v1` and `gtm_bar_admin_override_used.v1` only in the closed-6-kind in-flight-invalidation list for the construction engine — these are referenced as future-extension hook names. The kinds are not currently emitted by canonical FlowAI capability; they would only be emitted if/when the mission/Purpose amendment introduces them.)
 
 ---
 
@@ -422,8 +402,6 @@ The Self-Governance Layer is what makes Level 2 ("FlowAI on Itself") and the `go
 | **Self-Heal** | Automatic fix application for detected issues, gated by Human Gates per §11 | Step 6 Self-Renewal recommendation accepted (Approve/Modify) | Applies the fix; re-runs Self-Test to verify; emits before/after delta |
 
 Plus: **Self-Optimize** (performance improvement cycle, targets dims below 8/10) and **Self-Upgrade** (version locking + upgrade management) — both Sprint 5.
-
-**CA-15-A disposition (CEO Decision B, per ENTRY 017):** §10.1 stays at the **5 canonical dimensions** above. The v1/v2 proposals to extend §10.1 to 7 dimensions (adding Content Quality + Accessibility) are REJECTED. Content quality + accessibility checks live in tooling — `scripts/lint-content-quality.mjs` + `scripts/lint-accessibility.mjs` — consistent with the CA-15-B-Q3 tooling discipline at §28.6 and the CA-15-B-Q1 "purpose lives outside SSOT" disposition at §7.5. These tooling lints surface at PR-time as warnings; they do NOT contribute to §7.6 score and they do NOT participate in §10.1 Step 4 Quality Audit verdicts.
 
 ### 10.2 Four Human Gates (Sprint 5, canonical per ARCH-1 Approve/Modify/Skip flow)
 
@@ -715,22 +693,16 @@ export interface ExecutorRecord {
    to an executor — executors are only invocable out-of-band via
    `/api/agent/<id>/execute` + the Inngest job runner.
 
-**Current population (3 executors as of CA-13 sliver per ENTRY 017):**
+**Current population (1 executor as of Rev-2.1 + CA-7):**
 
 | key | agentId | name | mode | authority | invoked via |
 |---|---|---|---|---|---|
 | `self-renewal-executor` | 3 | Self-Renewal Executor | `cross-step` | `auto_write_internal`, `requires_human_gate` | `/api/agent/3/execute` + Inngest job |
-| `crawl-write-executor` | 21 | Crawl-Write Executor (CA-13 sibling per ENTRY 017) | `cross-step` | `auto_write_internal`, `requires_human_gate` | `/api/agent/21/execute` + Inngest job |
-| `orchestra-membership-executor` | 26 | Orchestra Membership Executor (CA-13 sibling per ENTRY 017 — `membership` rename adopted over v3-draft `admission`; semantics align with §8.1 full lifecycle Trial / Probation / Full / Deprecated / Archived) | `cross-step` | `auto_write_internal`, `requires_human_gate` | `/api/agent/26/execute` + Inngest job |
 
-`self-renewal-executor` consumes: `3.renewal.candidate.v1` (emitted by the primary Agent #3).
-`self-renewal-executor` produces: `3.renewal.applied.v1`, `3.renewal.delta.v1`,
+`consumes`: `3.renewal.candidate.v1` (emitted by the primary Agent #3).
+`produces`: `3.renewal.applied.v1`, `3.renewal.delta.v1`,
 `3.renewal.build_failed.v1`, `3.renewal.disabled.v1` (per
 `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` §3.2).
-
-`crawl-write-executor` consumes ACE crawl outputs (per §6 + ENTRY 006 + §15.1 row 21); produces ProductSSOT `architecture_snapshot` + `governance_record kind:'gtm_readiness_score'` writes during the Aggressive Crawl Engine pass per CA-14-D-Q1 ENTRY 015 atomic-audit-write invariant. Required credentials: `BROWSERLESS_API_KEY`, `ANTHROPIC_API_KEY`. Escalation: critical/high finding → admin gate; cost-budget exceeded → escalate to Ops Runner Beta; 3 consecutive failures → disable 24h.
-
-`orchestra-membership-executor` consumes: `community.signal.v1`, `11.platform.discovery.v1`, `15.benchmark.head_to_head.v1`, `17.orchestra.deprecation_proposal.v1`. Produces the 7 `26.orchestra.*` topics enumerated in §8.1 (lifecycle state changes, admissions, deprecations, reactivations). Required credentials: `ANTHROPIC_API_KEY`, `BROWSERLESS_API_KEY`. Escalation: 4-condition auto-admission gate failure → Panel + CEO per Locked Rule 13.
 
 **Cross-link with §14 GovernanceAuditLog:** every audit-log row written
 by an executor MUST include an `executorKey` field disambiguating from
@@ -837,7 +809,6 @@ Every promotion creates a pre-promotion snapshot at `docs/archive/FLOWAI_SSOT-pr
 | ENTRY 004 | 2026-05-15 | `fd94f1e` | CA-7 (§15.5 EXECUTOR_REGISTRY + §14 three new rows for M2/M5) + CA-8 (§20.2 X-Test-Bypass-Token Contract with §20.2.1 Doppler env-suffix key naming). Panel: 5× UNANIMOUS_(a), 10/10 ENGAGED, commit `fb0bb64`. |
 | ENTRY 005 | 2026-05-15 | (this promotion) | CA-9 (§8.1 Orchestra Self-Expansion auto-admission + Agent #26 Orchestra Research Agent dual-authority `[recommend_only, auto_write_internal, requires_human_gate]` per CEO arbitration CA-9-Q4=(b); §15.1 charter expansions for Agents #3, #10, #11, #15, #17; §15.2 +21 new MessageBus topic constants; Locked Rule 2 amended 25→26 agents) + CA-10 (§7.5 ProductSSOT entity with 6 canonical blocks; §7 Output Contract item #5; §13.1 role gates + `/product-ssot/:productId` UI; §28 Symbiotic Feed-Back Loop; §14.3 ProductSSOT retention + PII-scrub; §11 Step 4 Data Export expanded). Panel: 7/8 SUPERMAJORITY/UNANIMOUS, commit `cc5fd8d`. |
 | ENTRY 006 | 2026-05-16 | (this promotion) | **Aggressive Crawl Engine (ACE)** promotion. Sections amended: §6 (crawl scope expanded — default depth=8 / hard cap depth=12; default pages=200 / hard cap pages=2000; click-everything pass + modal probing + AI-agent benign-probe + mobile-desktop viewports + non-destructive error-state triggers; XSS opt-in only per CEO arbitration Q6=(c); Orchestra wiring per §15.4 — Agent #21 dispatches via `playwright` + `browserless` + `anthropic-api`); §7.6 (NEW — GTM Readiness Report: 100-point scoring formula `100 − 10·crit − 5·high − 2·med − 0.5·low` clamped to [0,100]; 4 bands Showcase-ready / Demo-ready / Internal-only / Not demo-ready; $15/run cost ceiling; maps to §11 Clearance Step 5 with 4-prerequisite gate); §15.1 row 21 (Ops Runner Alpha pinned as **Aggressive Crawl Conductor** — step-owner, dual-authority `[recommend_only, auto_write_internal, requires_human_gate]`, consumes `1.crawl.request.v1`, produces 3 topics); §15.2 (+4 MessageBus topics: `1.crawl.request.v1`, `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1`; topic count 61 → **65**). Source spec: `docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md` (commit `5b30dce`). Panel consultation: `05ac6f4` — 7×UNANIMOUS (Q1 depth caps, Q2 agent-ownership Option B, Q3 AI-agent probe safety, Q4 parallelization scope, Q5 fix-loop autonomy on medium, Q7 readiness score formula, Q8 cost ceiling) + Q6 (error-state defaults) decided by CEO arbitration `(c)` non-destructive triggers always-on, XSS form-submit triggers opt-in only with operator confirmation + dev/staging-environment-only gate. Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-ACE-promotion-2026-05-16.md`. Closes parking-lot ENTRY 002 (CEO 2026-05-14 — "aggressive exhaustive crawler GTM-readiness bar"). |
-| ENTRY 017 | 2026-05-19 | (this promotion) | **CA-13 sliver + CA-15 lean-down + CA-16-A zero-canonical disposition** (CEO Decision B, Locked Rule 13 CEO-disposition track after 3-cycle Panel non-convergence 0/13 on the deadlocked questions across CA-13 v2 / CA-15 v2 / CA-16 v2 re-Panels). **CA-15 promoted (3 cleared-pending):** B-Q2 reverse-engineered/synthesized purpose-capture modes DROPPED (described-only carry-forward discipline if revived); B-Q3 placeholder detection moves to `scripts/lint-product-purpose.mjs` tooling (NOT canonical SSOT); C-Q2 hardcoded `purpose_fulfillment_score ≥ 0.7` threshold ELIMINATED. **CA-15 disposed (3 deadlocked):** C-Q1 → numeric-floor-only loop exit (LOCKED; no LLM check); D-Q1 → §19.1 SSOT-Conformance Gate HYBRID (blocks critical/high; advisory on medium/low); D-Q2 → §19.2 Scoped CEO re-sign BROADER scope (`src/lib/governance/**` + `src/lib/conformance/**` + `*.sql` migrations). **CA-13 collapsed:** 95-bar override/expiry/migration machinery DROPPED entirely from canonical; retained only — (1) sibling MEMBERSHIP rename in §15.5 (Agent #26 → `orchestra-membership-executor`, Agent #21 → `crawl-write-executor`; EXECUTOR_REGISTRY count 1→3); (2) §19.0 anti-conflation invariant one-liner ("two distinct 95 bars, NEVER conflated"); the v3-draft §19.0 reconciliation paragraph + 2-row distinction-table NOT promoted (invariant alone suffices per CA-13-A v3 option-(c)). Uniform ≥95 directive EXPLICITLY deferred to forthcoming mission/Purpose amendment (NOT in CA-13). **CA-16-A collapsed to ZERO canonical surface:** NO §7 envelope, NO §11 reference, NO REOPEN lifecycle state, NO canonical defer-window, NO `governance_record_entry kind:'proactive_recommendation.v1'`. Recs are wholly TOOLING-governed (`scripts/lint-proactive-recs.mjs` + admin dashboard). CA-16-B/C remain DEFERRED (unchanged from `e8bb7d4` CA-16 SPLIT). Sections amended: **§7 NEW disposition note** (CA-16-A zero-canonical); **§7.5 disposition** (CA-15-B no `product_purpose`); **§7.6 disposition** (CA-13 no canonical sub-95 exception path); **§10.1 disposition** (CA-15-A stays at 5 dims; tooling-only content_quality/accessibility); **§15.5 updated** (3 executors: `self-renewal-executor`, `crawl-write-executor`, `orchestra-membership-executor`); **§19.0 NEW** (anti-conflation invariant); **§19.1 NEW** (HYBRID SSOT-Conformance Gate); **§19.2 NEW** (broader Scoped CEO re-sign); **§28.6 NEW** (Purpose-Driven Optimization Loop numeric-floor exit + B-Q2/B-Q3/C-Q2 carry notes). Three explicit de-canonizations registered in ENTRY 017 history: (1) proactive-recs governance is tooling-only; (2) no canonical sub-95 exception path exists in CA-13 — operational exception is a DEFERRED DELIBERATE DECISION for the mission/Purpose amendment; (3) §27→§19.1 SSOT-Conformance Gate is HYBRID, not full-hard-gate. Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-CA13-15-16A-leandown-promotion-2026-05-19.md` per §18.3. |
 | ENTRY 016 | 2026-05-19 | (this promotion) | **CA-17 — Build/Wire Construction Engine v3-FINAL ratification** (CEO Decision A, Locked Rule 13 CEO-disposition track, not open re-Panel). Binding canonical contract: `docs/specs/BUILD_WIRE_ENGINE_SPEC_V3_FINAL_DRAFT.md` (commit `1d5e39b`, 33,974 chars). Eight invariants S1–S8 + 48-test conformance inventory + 26 failure envelopes become canonical authority for the construction engine. NON-OVERRIDABLE fidelity (S2/S4/S5/S6) preserved verbatim per Path H ENTRY 014 (no other invariant carries non-overridable status; S1/S3/S7/S8 PANEL-RATIFIABLE). Rationale per Locked Rule 13: convergence-final after documented J2→v2→re-Panel oscillation; W6 v2 4-run re-Panel (`4400958`) returned 0/8 cleared — Panel non-convergence is why CEO disposes. Sections amended: **NEW §29** Build/Wire Construction Engine canonical authority + per-invariant disposition + NON-OVERRIDABLE fidelity statement + 48-test inventory + Path H Stage 3 UNBLOCKED declaration + cross-CA dependencies. **Path H ENTRY 014 Stage 3 (build/wire) marked UNBLOCKED.** Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-CA17-promotion-2026-05-19.md` per §18.3. |
 | ENTRY 015 | 2026-05-19 | (this promotion) | **Cleared-8 promotion** (CEO one-shot ratification per Locked Rule 13). Eight individually quorum-cleared questions from W6 quorum-fix rerun commit `cc14a8f` (`docs/panel-consultations/ca-{13,14,15,16}-quorum-fix-rerun-2026-05-19.md` + cross-summary). Sections amended: **§7** Output Contract NEW item #6 (5 Self-Renewal fix-safety invariants, CA-14-B-Q1 + canonical guarantee CA-14-B-Q2, 7/10 + 7/10) + NEW LIMITATIONS sub-section (CA-14-A-Q2, 7/10); **§7.5.1** NEW (3 ProductSSOT operational invariants — per-product branch-of-record + seeding + atomic-audit-write, CA-14-D-Q1, 8/10); **§7.6** NEW formula-generalization invariant paragraph (CA-16-C-Q4, 8/9); **§11.7** NEW Redesign/Build approval gate (admin-only final approval, CA-16-B-Q3, 7/9); **§15.1 row 21** Agent #21 charter extension to own Phase B (CA-14-A-Q3, 8/10); **§25** NEW Locked Rule 19 (Phase A vs Phase B — DO NOT CONFLATE, CA-14-A-Q4, 8/10; rule count 18→19). Implementing W5a commits cited: D27–D38 arc (`29ce070` → `b719c6d`) + D39–D41 Phase B implementation (`90210d0` → `ed0d779`). Open questions (CA-14: A-Q1, B-Q3, C-Q1, C-Q2, D-Q2; CA-13: all 5; CA-15: all 11; CA-16: A-Q1..A-Q4, B-Q1, B-Q2, C-Q1, C-Q2, C-Q3) re-Panel in CA-13 v2 / CA-15 v2 / CA-16 v2 drafts (this commit's siblings). Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-ENTRY015-promotion-2026-05-19.md`. |
 
@@ -866,47 +837,6 @@ Three complementary governance mechanisms (per Locked Rule 3, do not conflate):
 | Monitor step 0–50 decision | Step 8 Monitor; clearance gate of last resort | End of pipeline |
 
 All three must pass independently; any single failure halts deployment (per Locked Rule 3 + Layer 1 SSOT L5).
-
-### 19.0 Anti-conflation invariant (CA-13 sliver canonical per ENTRY 017)
-
-The Self-Audit **95/95 threshold** (this §19, owned by `src/lib/governance/ScoreEvaluator.js`, enforced at Step 4 Quality Audit across §10.1's 5 dimensions) and the §7.6 **GTM Readiness score** (owned by Agent #21 Aggressive Crawl Conductor per §15.1 row 21, surfaced at §11 Step 5 Demo Readiness) are TWO DISTINCT bars. They are **NEVER conflated in any operator-facing surface.** This is a binding invariant on every UI surface, dashboard, and audit envelope that displays either bar; bare "95" without disambiguating qualifier ("Self-Audit 95/95" vs "GTM Readiness score") is a defect.
-
-(This is the CA-13 §19.0 anti-conflation sliver retained per ENTRY 017. The CA-13 v3 draft's full reconciliation paragraph + 2-row distinction-table is NOT promoted per CEO Decision B — the invariant alone suffices; §10 governance-mechanisms table already covers the distinction descriptively.)
-
-### 19.1 SSOT-Conformance Gate — HYBRID (CA-15-D-Q1 canonical per ENTRY 017)
-
-At the end of each §11 Six-Step Clearance Protocol run, an SSOT-Conformance test runs over the resulting ProductSSOT state + `governance_record_entry` log. Per CEO Decision B (Locked Rule 13 disposition of CA-15-D-Q1 deadlock at v2 5/9 REJECT vs v3 advisory-revert), the gate operates as a **HYBRID** — blocking on high-severity conformance findings, advisory on low-severity:
-
-**Gate checks (canonical):**
-
-1. ProductSSOT structure validates against the 6 canonical blocks per CA-10-A (any 7th block → blocking critical).
-2. Each `governance_record_entry` row references a known canonical `kind` (validation list maintained in `src/lib/governance/CanonicalKinds.ts`).
-3. Each `architecture_snapshot.gtm_readiness_score` write has a companion `governance_record_entry kind:'gtm_readiness_score'` per CA-14-D-Q1 ENTRY 015 atomic-audit-write invariant.
-4. Each `delta_log` row references a non-null `governance_record_entry.id` (provenance check).
-
-**HYBRID gate semantics:**
-
-- `critical` and `high`-severity conformance findings → **BLOCKING.** §11 Step 6 (Deploy/Promote) is BLOCKED until conformance achieved. Emits `governance_record_entry kind:'ssot_conformance_failure.v1' severity:'critical'` or `severity:'high'`.
-- `medium` and `low`-severity conformance findings → **ADVISORY.** §11 Step 6 NOT blocked. Surfaces as `governance_record_entry kind:'ssot_conformance_advisory.v1' severity:'medium'` or `severity:'low'` + admin dashboard alarm without gating deployment.
-- Admin override of a blocking finding requires admin role + audit-log entry per §19 existing 95/95-override rule; emits `governance_record_entry kind:'ssot_conformance_override.v1'`.
-
-Rationale (CEO Decision B): full hard-gate (v1 form) was preferred by 5/9 at v2 re-Panel; advisory-only (v2 form) was 4/9 plurality. CEO disposes via HYBRID — preserves enforcement teeth on consequential (critical/high) conformance violations while avoiding deployment-blocking churn on cosmetic (medium/low) findings. The HYBRID was Panel-electable as option (b) on the v3 draft's Q1; CEO selects it as the resolved disposition.
-
-### 19.2 Scoped CEO re-sign — BROADER scope (CA-15-D-Q2 canonical per ENTRY 017)
-
-CEO sign-off on a product's prior §11 Six-Step Clearance run is invalidated by a subsequent CA promotion ONLY when the CA explicitly amends any file under the **scoped governance surface**. Per CEO Decision B (Locked Rule 13 disposition of CA-15-D-Q2 deadlock), the scope is the **BROADER** set drafted as v3 option (b):
-
-**Scope (canonical, recursive):**
-
-- `src/lib/governance/**` — all files under the governance directory tree.
-- `src/lib/conformance/**` — all files under the conformance directory tree (host for CA-17 build/wire conformance tests per §29 + future SSOT-conformance test additions).
-- `*.sql` migration files — any schema-change migration regardless of path.
-
-**Trigger mechanism:** engineering dispatch adds a CI check at CA-promotion-commit time running `git diff --name-only <CA-base> HEAD` against the three scope patterns. Non-empty match → `ceo_resign_required: true` flag set on the corresponding §18.4 row + admin dashboard surfaces `ceo_resign_pending` until re-sign lands.
-
-**Out-of-scope CAs** (do NOT invalidate prior sign-offs): canonical-doc-only edits (e.g. `CANONICAL_REFERENCE.md` typo fixes, §18.4 row appends), agent registry edits NOT under `src/lib/governance/` or `src/lib/conformance/`, §28 narrative edits, panel-consultation artifact additions, archive snapshots.
-
-Rationale (CEO Decision B): v2's documentation-file scope (`docs/governance/CONFORMANCE_SCOPE.md`) had three structural flaws — circular dependency, brittle to maintain, gameable. v3 drafted entire `src/lib/governance/` as primary; CEO disposes BROADER per option (b) because schema-change CAs (`*.sql` migrations) AND future conformance-tree CAs (`src/lib/conformance/**` once CA-17 lands its test inventory) materially affect governance even when not under `src/lib/governance/` itself. The broader scope is self-detecting + audit-trail-preserving without manual scope-file maintenance.
 
 ---
 
@@ -1262,26 +1192,6 @@ When an admin override conflicts with the next auto-generated entry (e.g. admin 
 The §4 L2 ("FlowAI on Itself") and L3 ("FlowAI on External Products") status footnotes are read as: every L2 + L3 pipeline run reads the target product's ProductSSOT as canonical context input; the crawl scope per §6 is narrowed accordingly; admin annotations + overrides are treated as CEO-equivalent directives for that run. The ProductSSOT is updated atomically with the run output per §7 (amended Output Contract item #5) — failure to write ProductSSOT rolls back the entire run.
 
 §9 (8-step pipeline) footer: at run start, AutoRunner loads the target ProductSSOT row and threads it into the per-step context. Agents #6, #8, #3, #9 (when graduated from DORMANT) consume the relevant blocks; Agent #10 produces updates to the affected blocks. The Self-Renewal Executor (per CA-7 §15.5) writes the final `delta_log_entry` on run completion.
-
-### 28.6 Purpose-Driven Optimization Loop — numeric-floor exit (CA-15-C-Q1 canonical per ENTRY 017)
-
-The repeat-until-GTM Purpose-Driven Optimization Loop's exit criterion uses **numeric-floor-only** semantics — **no LLM-judged purpose-alignment check participates in the exit gate.**
-
-**Loop exit conditions (ALL must hold):**
-
-1. §7.6 GTM Readiness score ≥ the canonical floor (current canonical floor unchanged from ENTRY 006 — 75 for Demo-ready, with per-product operator-config retained; the uniform-≥95 directive is deferred per CA-13 disposition below).
-2. Zero `critical` findings open per CA-14-A canonical + ENTRY 015.
-3. Self-Renewal terminal on all `high` findings per CA-14-A + ENTRY 015 (terminal = Resolved / Documented-with-rationale / Human-gated).
-4. LIMITATIONS section published per CA-14-A-Q2 ENTRY 015 verbatim wording.
-5. Phase B pass per CA-14-A canonical + Agent #21 Phase B charter (ENTRY 015 §15.1 row 21).
-
-**CA-15-C-Q2 elimination (per ENTRY 017):** the hardcoded `purpose_fulfillment_score ≥ 0.7` threshold from CA-15 v1 is ELIMINATED entirely. No purpose-fulfillment-score parameterization (neither hardcoded nor operator-config knob) exists in canonical SSOT. The v2-era strengthen variant "add `product_purpose` non-null as 6th exit condition" is MOOT because `product_purpose` itself is not in canonical (per CA-15-B disposition at §7.5 above).
-
-**CA-15-B-Q2 forward-looking discipline (per ENTRY 017):** if a future CA ever re-introduces purpose information to canonical SSOT, only the `described` (operator-supplied) capture mode is admissible. `inferred` (LLM page-content analysis) and `synthesized` (multi-source merge) modes are PERMANENTLY forbidden — they were rejected at CA-15 v2 7/9 and the discipline carries forward as a canonical rule even though purpose is presently outside SSOT.
-
-**CA-15-B-Q3 tooling discipline (per ENTRY 017):** placeholder detection (lorem-ipsum, "TBD", etc.) lives in `scripts/lint-product-purpose.mjs` tooling, NOT canonical SSOT. The same tooling layer ALSO hosts `scripts/lint-content-quality.mjs` + `scripts/lint-accessibility.mjs` per the CA-15-A disposition at §10.1 above — tooling discipline applied uniformly across the three lint domains.
-
-PURPOSE_DRIFT detection (CA-15-C-Q3) was NOT disposed in CEO Decision B and is NOT canonical at ENTRY 017. The §6 closed-kind list at the build/wire engine §29 S6 invariant references `purpose_drift_annotation.v1 severity:'critical'` only because the binding spec for the build/wire engine names that kind as a future-extension hook; emission of that envelope is not currently a canonical FlowAI capability and remains for a future CA-N if/when drift detection lands.
 
 ---
 

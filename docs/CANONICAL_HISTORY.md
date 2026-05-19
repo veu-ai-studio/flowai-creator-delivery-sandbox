@@ -1871,6 +1871,83 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+### ENTRY 017 — 2026-05-19 — CA-13 sliver + CA-15 lean-down + CA-16-A zero-canonical disposition (CEO Decision B; Locked Rule 13 CEO-disposition track)
+
+- **Session:** CEO has executed Decision B — a lean-down disposition across the three CA tracks that have failed Panel convergence across three cycles. The three tracks (CA-13 95-bar spine, CA-15 multi-dim/purpose/conformance, CA-16-A proactive recs) returned **0/13 cleared** at v3-era re-Panels combined (CA-13 v2 4-run `db457a5`: 0/5; CA-15 v2 `db457a5`: 3/11 cleared but 4 questions deadlocked; CA-16 v2 sub-batch-A `40926fa`: 0/4 at the proactive-recs surface). Per Locked Rule 13, the CEO disposes — promoting the three already-cleared questions, disposing three deadlocked questions, collapsing the remaining surface to zero canonical content where appropriate.
+
+- **Rationale (CEO Decision B, Locked Rule 13):** 3-cycle Panel non-convergence on these surfaces (joint Panel `8e185a6` → quorum-fix rerun `cc14a8f` → v2 re-Panel `db457a5`) is the documented trigger for CEO disposition. The lean-down minimizes canonical governance surface: where Panel convergence stalled and the surface is properly tooling-governed (recs, lints, purpose-tracking), the disposition is to NOT promote canonical content; where Panel convergence stalled but the surface is load-bearing (conformance gate, scoped re-sign), CEO selects the Panel-electable middle option (HYBRID, BROADER) rather than forcing a primary vote that the Panel could not converge on.
+
+- **CA-15 promoted (3 cleared-pending; ratified at THIS entry):**
+
+  | # | Question | v2 verdict | v3 disposition |
+  |---|---|---|---|
+  | 1 | CA-15-B-Q2 | `QUORUM_PLURALITY` 7/9 ✅ | `inferred` + `synthesized` purpose-capture modes DROPPED. Only `described` (operator-supplied) mode admissible IF purpose ever returns to canonical SSOT (presently outside SSOT per CA-15-B-Q1 removal). |
+  | 2 | CA-15-B-Q3 | `QUORUM_PLURALITY` 7/9 ✅ | Placeholder detection (lorem-ipsum, "TBD", etc.) lives in `scripts/lint-product-purpose.mjs` tooling, NOT canonical SSOT. v3 broadens scope: content_quality + accessibility checks ALSO live in tooling per CA-15-A-Q1 removal. |
+  | 3 | CA-15-C-Q2 | `QUORUM_PLURALITY` 7/9 ✅ | Hardcoded `purpose_fulfillment_score ≥ 0.7` threshold from CA-15 v1 ELIMINATED entirely. No purpose-fulfillment-score parameterization (neither hardcoded nor operator-config knob) in canonical SSOT. |
+
+- **CA-15 disposed (3 deadlocked; CEO-disposition per Locked Rule 13):**
+
+  | # | Question | v2 verdict | CEO disposition |
+  |---|---|---|---|
+  | 4 | CA-15-C-Q1 | `PLURALITY` 6/9 (below quorum) | **Numeric-floor-only loop exit** (LOCKED; no LLM-judged purpose-alignment check participates). Canonical at §28.6 — 5 exit conditions: §7.6 score floor, zero critical, Self-Renewal terminal on high, LIMITATIONS published, Phase B pass. The v2 strengthen variant adding `product_purpose` non-null as 6th exit condition is MOOT (`product_purpose` itself is not in canonical per CA-15-B-Q1 removal). |
+  | 5 | CA-15-D-Q1 | `PLURALITY_REJECT` 5/9 (advisory rejected; hard-gate-revert was v3 primary at 5/9) | **§19.1 SSOT-Conformance Gate HYBRID** (Panel-electable option (b) from v3 draft elected as the resolved disposition). Critical/high-severity conformance findings → BLOCKING (§11 Step 6 deploy blocked until conformance). Medium/low-severity → ADVISORY (admin dashboard alarm, no deploy block). Admin override on blocking finding requires admin role + audit-log entry per §19 95/95-override rule. |
+  | 6 | CA-15-D-Q2 | `PLURALITY_RATIFY` 5/9 (below quorum; objections targeted v2 not-yet-written `CONFORMANCE_SCOPE.md`) | **§19.2 Scoped CEO re-sign BROADER scope** (Panel-electable option (b) from v3 draft elected). Scope = `src/lib/governance/**` AND `src/lib/conformance/**` AND any `*.sql` migration files. Concrete + existing-in-tree; CI-grep-based trigger at CA-promotion-commit time. Eliminates v2's circular-dependency + brittleness + gameable scope-file flaws. |
+
+- **CA-13 collapsed (CEO Decision B — DROP 95-bar machinery; RETAIN only sibling MEMBERSHIP rename + §19.0 invariant):**
+  - **DROPPED from canonical:** v3 draft's §7.6 ≥95 canonical bar + §7.6.1 admin-only expiring override envelope (`gtm_bar_admin_override.v1` + `gtm_bar_admin_override_used.v1` + 14-day expiry + ClearanceRecord migration prerequisite). Per CA-13 disposition at §7.6, **NO canonical sub-95 exception path exists in CA-13.** The uniform ≥95 directive (CEO 2026-05-18) is explicitly DEFERRED to the forthcoming mission/Purpose amendment as a DELIBERATE DECISION — not promoted in CA-13.
+  - **RETAINED in canonical (CA-13 sliver):**
+    - **Sibling MEMBERSHIP rename in §15.5:** EXECUTOR_REGISTRY population grows 1→3 with two new sibling executors: `crawl-write-executor` (Agent #21 sibling per CA-13-B-Q2 v3 primary; capability-keyed) and `orchestra-membership-executor` (Agent #26 sibling — `membership` rename adopted over the v3-draft `admission` per CA-13-B-Q2 v3 option (b); rename rationale: `membership` semantics broader than `admission`, aligning with the §8.1 full lifecycle Trial / Probation / Full member / Deprecated / Archived).
+    - **§19.0 anti-conflation invariant one-liner:** "Self-Audit 95/95 (§19) and §7.6 GTM Readiness are TWO DISTINCT bars; they are NEVER conflated in any operator-facing surface." The v3-draft's full §19.0 reconciliation paragraph + 2-row distinction-table is NOT promoted (per CA-13-A v3 option-(c) — invariant alone suffices; §10 governance-mechanisms table already covers the descriptive distinction).
+  - **NOT promoted (per Decision B):** CA-13-B-Q1 §15-intro + §15.1 rows 21/26 wording revision (the existing §15.1 row text per ENTRY 015 is already adequate; the v3 draft's enforcement-spec cross-reference is engineering-detail, not canonical-doc-detail); CA-13-A v3 Q2 explicit Near-GTM band elimination (moot — the bands per ENTRY 006 already do not include a 90–94 conditional band); CA-13-A v3 Q3 STRONGER §19.0 paragraph (collapsed to one-liner invariant per above).
+
+- **CA-16-A collapsed to ZERO canonical surface (CEO Decision B):**
+  - **NO canonical §7 envelope** for proactive recommendations. No PA-schema in canonical SSOT.
+  - **NO §11 reference.** Proactive recs do NOT appear in the Six-Step Clearance Protocol; not a Step gate or sub-step.
+  - **NO canonical lifecycle state machine.** No `open`/`accepted`/`rejected`/`deferred`/`implemented`/`REOPEN`.
+  - **NO canonical defer-window.** No `[7, 90]` bounds; no `[1, 365]` bounds; no defer-window at all.
+  - **NO canonical audit-log envelope.** No `governance_record_entry kind:'proactive_recommendation.v1'`.
+  - **NO lightweight ClearanceRecord reference.** The v3-draft's `last_seen_clearance_record_id` field is NOT promoted.
+  - Proactive recs are wholly TOOLING-governed: `scripts/lint-proactive-recs.mjs` (or equivalent dispatch-time naming) + admin dashboard `/admin/recommendations`; schema in tooling-internal types under `scripts/types/`. No cross-link to canonical state required.
+  - **CA-16-B and CA-16-C remain DEFERRED** to future CA-N (unchanged from `e8bb7d4` CA-16 SPLIT disposition). The CA-16-B-Q3 admin-only Redesign approval gate per ENTRY 015 §11.7 + the CA-16-C-Q4 §7.6 formula-generalization invariant per ENTRY 015 §7.6 are already canonical and are NOT re-amended.
+
+- **Three explicit de-canonizations registered (CEO Decision B — DELIBERATE non-promotions, recorded for audit-trail integrity):**
+
+  1. **Proactive-recs governance is tooling-only.** No canonical FlowAI SSOT surface exists or will exist for proactive recommendations under CA-16-A. Any future need for canonical recs governance requires a fresh CA cycle (CA-N), not a CA-16-A revival.
+
+  2. **No canonical sub-95 exception path exists in CA-13.** The CA-13 v3 draft's admin-only expiring override mechanism is explicitly NOT promoted. Whether ANY operational sub-95 exception path exists at all (and if so, what shape — admin-only / role-gated / time-bounded / per-product-knob / etc.) is a **DEFERRED DELIBERATE DECISION** belonging to the forthcoming mission/Purpose amendment, NOT to CA-13. The CA-13 §29 build/wire engine S6 invariant references the `gtm_bar_admin_override*` kind names only as future-extension hooks in the closed-6-kind invalidation list; the kinds are not currently emitted by canonical FlowAI capability.
+
+  3. **§19.1 SSOT-Conformance Gate is HYBRID, not full-hard-gate.** Critical/high-severity conformance findings BLOCK §11 Step 6 deploy; medium/low-severity findings surface as advisory + admin dashboard alarm WITHOUT blocking. The CA-15-D-Q1 v3 PRIMARY position (full hard-blocking-gate per v1 form) is NOT promoted; the Panel-electable HYBRID is.
+
+- **Sections amended in `docs/CANONICAL_REFERENCE.md`:**
+  - **§7 NEW disposition note** — CA-16-A zero-canonical surface declaration (no §7 envelope; tooling-only; CA-16-B/C deferred-unchanged).
+  - **§7.5 disposition note** — CA-15-B no `product_purpose` field; `described`-only forward-looking discipline carry-forward.
+  - **§7.6 disposition note** — CA-13 no canonical sub-95 exception path; uniform ≥95 deferred to mission/Purpose amendment.
+  - **§10.1 disposition note** — CA-15-A stays at 5 dimensions; content_quality + accessibility lints in tooling.
+  - **§15.5 updated** — EXECUTOR_REGISTRY population grows 1→3 (`self-renewal-executor` + `crawl-write-executor` (Agent #21) + `orchestra-membership-executor` (Agent #26)).
+  - **§19.0 NEW** — anti-conflation invariant one-liner (CA-13 sliver retention).
+  - **§19.1 NEW** — SSOT-Conformance Gate HYBRID (CA-15-D-Q1 disposition).
+  - **§19.2 NEW** — Scoped CEO re-sign BROADER scope (CA-15-D-Q2 disposition).
+  - **§28.6 NEW** — Purpose-Driven Optimization Loop numeric-floor exit (CA-15-C-Q1 disposition + B-Q2 / B-Q3 / C-Q2 cleared-pending carry notes + CA-15-C-Q3 PURPOSE_DRIFT non-promotion note).
+  - **§18.4** — ENTRY 017 row appended (above the ENTRY 016 row inserted earlier this dispatch).
+
+- **What is NOT touched at ENTRY 017:**
+  - Existing §10.1 5-dimension definition unchanged (CA-15-A disposition is a confirmation of unchanged state, not an amendment).
+  - Existing §7 6-item Output Contract unchanged (CA-16-A is a confirmation of unchanged state).
+  - Existing §7.5 6-block ProductSSOT structure unchanged (CA-15-B is a confirmation of unchanged state).
+  - Existing §7.6 GTM bands per ENTRY 006 + per-product `gtm_ready_bar_override` knob unchanged.
+  - §15.1 rows 21 + 26 charter text unchanged — the EXECUTOR_REGISTRY sibling addition is at §15.5 only.
+  - §11.7 CA-16-B-Q3 Redesign approval gate (per ENTRY 015) unchanged.
+  - §7.6 CA-16-C-Q4 formula-generalization invariant (per ENTRY 015) unchanged.
+  - §29 Build/Wire Construction Engine (per ENTRY 016, this dispatch's TASK A) unchanged.
+
+- **Pre-promotion archive:** `docs/archive/FLOWAI_SSOT-pre-CA13-15-16A-leandown-promotion-2026-05-19.md` per §18.3. Captures canonical SSOT state at end-of-ENTRY-016 (i.e. post-CA-17 promotion, immediately before the CA-13/15/16-A lean-down edits). 124,438 chars verbatim copy.
+
+- **Integrity:** doc-only; no code touched; binding specs unchanged. Diff scoped to three targets only: (1) `docs/CANONICAL_REFERENCE.md` (8 targeted sub-section additions + §18.4 row) + (2) `docs/CANONICAL_HISTORY.md` (this entry) + (3) `docs/archive/FLOWAI_SSOT-pre-CA13-15-16A-leandown-promotion-2026-05-19.md` (snapshot). `git add` discipline: per-file explicit adds; no `-A` / `.` / `-u`.
+
+- **Lineage:** CA-13 v1 (`81cf144`) + CA-15 v1 (`fae9ff3`) + CA-16 v1 (`908f340`) → joint Panel `8e185a6` engagement-gated → W6 quorum-fix rerun `cc14a8f` (CA-13 0/5, CA-15 0/11, CA-16 2/11) → ENTRY 015 cleared-8 promotion (CA-14-A/B/D + CA-16-B-Q3 + CA-16-C-Q4 — leaves CA-13 + CA-15 + CA-16-A open) → CA-13 v2 (`8b38156`) + CA-15 v2 (`746bb7e`) + CA-16 v2 (`d366acf`) → W6 v2 re-Panel (`db457a5`) → CA-13 v3 (`c5b050f` + `e8bb7d4`) + CA-15 v3 (`c5b050f`) + CA-16-A v3 (`e8bb7d4` CA-16 SPLIT) → W6 v3 convergence re-Panel `6e03d78` (`d396bd2` + `c5b050f` + `e8bb7d4`) → CEO Decision B dispatch (this entry) → **THIS ENTRY (CA-13 sliver + CA-15 lean-down + CA-16-A zero-canonical promotion + 3 explicit de-canonizations registered).**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-19)
 
 
