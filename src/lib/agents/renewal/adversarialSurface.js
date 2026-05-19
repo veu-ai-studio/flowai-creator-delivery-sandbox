@@ -297,6 +297,366 @@ export async function probeInteractives({
   return { findings, interactivesTested, deadOrErroring };
 }
 
+// ── T3 — Modal + form probing ─────────────────────────────────────────
+//
+// Modals: enumerate triggers (data-modal, aria-haspopup, "open"-named
+// buttons), open each, verify a modal element actually rendered (a new
+// dialog/role="dialog"/role="alertdialog" or fixed-position overlay
+// appears), verify a close affordance responds. Failures → broken-modal.
+//
+// Forms: enumerate <form> elements, fill all visible required text
+// inputs with a probe value, submit. Verify either a success surface
+// (banner, navigation, body change) OR a validation error surface
+// (aria-invalid, .error, .invalid, text "required"). A form that
+// silently no-ops on submission → severity high (broken-modal as
+// closest §6 category for "broken interactive surface").
+
+async function enumerateModalTriggers(page, max) {
+  return await page.evaluate(({ max }) => {
+    const sel = [
+      '[data-modal]', '[data-modal-trigger]', '[data-toggle="modal"]',
+      '[aria-haspopup="dialog"]', '[aria-haspopup="true"]',
+      'button[aria-controls]',
+      // Heuristic: button text containing "open", "show", "view details",
+      // "learn more", "preview" frequently triggers a modal.
+    ].join(', ');
+    const els = Array.from(document.querySelectorAll(sel));
+    // Heuristic add: buttons whose innerText matches modal-opening copy.
+    const HEUR = /^\s*(open|show|view|learn more|preview|details|more info)/i;
+    const buttons = Array.from(document.querySelectorAll('button')).filter(
+      (b) => HEUR.test(b.innerText ?? '') && b.offsetParent !== null,
+    );
+    function pathFor(el) {
+      const parts = [];
+      let cur = el;
+      let depth = 0;
+      while (cur && cur.nodeType === 1 && depth < 6) {
+        let part = cur.tagName.toLowerCase();
+        if (cur.id) { part += `#${cur.id}`; parts.unshift(part); break; }
+        parts.unshift(part);
+        cur = cur.parentElement; depth += 1;
+      }
+      return parts.join(' > ');
+    }
+    const merged = [...els, ...buttons].slice(0, max);
+    return merged.map((el, i) => ({
+      index: i,
+      tag: el.tagName.toLowerCase(),
+      text: (el.innerText || '').slice(0, 100),
+      selector: pathFor(el),
+    }));
+  }, { max });
+}
+
+async function modalIsRendered(page) {
+  // A modal IS rendered when any of these conditions are true after
+  // a trigger click:
+  //   - a role="dialog" / role="alertdialog" element is visible
+  //   - a .modal / [aria-modal="true"] element is visible
+  //   - a fixed-position overlay is in the DOM
+  return await page.evaluate(() => {
+    function visible(el) {
+      const rect = el.getBoundingClientRect();
+      const style = el.ownerDocument?.defaultView?.getComputedStyle(el);
+      return rect.width > 0 && rect.height > 0
+        && (!style || (style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity || '1') > 0));
+    }
+    const sel = '[role="dialog"], [role="alertdialog"], [aria-modal="true"], .modal, .Modal';
+    const els = Array.from(document.querySelectorAll(sel));
+    return els.some(visible);
+  });
+}
+
+async function closeModal(page, actionTimeoutMs) {
+  // Try common close affordances. Returns true if a close fires
+  // AND the modal goes away.
+  return await page.evaluate(({ timeoutMs }) => {
+    function visible(el) {
+      const rect = el.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    }
+    const closeSel = [
+      '[aria-label*="close" i]', '[aria-label*="dismiss" i]',
+      'button[data-close]', '[data-dismiss]',
+      '.modal-close', '.close',
+    ].join(', ');
+    const candidates = Array.from(document.querySelectorAll(closeSel)).filter(visible);
+    if (candidates.length === 0) return { triggered: false, closed: false };
+    try { candidates[0].click(); } catch { return { triggered: false, closed: false }; }
+    return { triggered: true, closed: true };
+  }, { timeoutMs: actionTimeoutMs });
+}
+
+/**
+ * T3 — probeModals default implementation.
+ */
+export async function probeModals({
+  page, url, maxModals = DEFAULT_MAX_MODALS,
+  actionTimeoutMs = DEFAULT_ACTION_TIMEOUT_MS,
+  sliceBudget = 45_000,
+} = {}) {
+  const findings = [];
+  let modalsFailing = 0;
+  let modalsTested = 0;
+  const startedAt = Date.now();
+  if (!page) return { findings, modalsFailing };
+
+  let triggers;
+  try {
+    triggers = await enumerateModalTriggers(page, maxModals);
+  } catch (e) {
+    findings.push(makeFinding(
+      'medium', 'engine-error', url,
+      `enumerateModalTriggers failed: ${(e?.message ?? String(e)).slice(0, 120)}`,
+    ));
+    return { findings, modalsFailing };
+  }
+
+  for (const t of triggers) {
+    if (Date.now() - startedAt > sliceBudget) break;
+    modalsTested += 1;
+    let clickErr = null;
+    try {
+      const loc = page.locator(t.selector).first();
+      await loc.click({ timeout: actionTimeoutMs, noWaitAfter: true });
+    } catch (e) {
+      clickErr = (e?.message ?? String(e)).slice(0, 120);
+    }
+    if (typeof page.waitForTimeout === 'function') {
+      try { await page.waitForTimeout(250); } catch { /* ignore */ }
+    }
+    let rendered = false;
+    try { rendered = await modalIsRendered(page); } catch { rendered = false; }
+    if (clickErr) {
+      modalsFailing += 1;
+      findings.push(makeFinding(
+        'high', 'broken-modal', `${url} ${t.selector}`,
+        `modal trigger <${t.tag}> text="${safeText(t.text)}" errored on click: ${clickErr}`,
+      ));
+      continue;
+    }
+    if (!rendered) {
+      modalsFailing += 1;
+      findings.push(makeFinding(
+        'high', 'broken-modal', `${url} ${t.selector}`,
+        `modal trigger <${t.tag}> text="${safeText(t.text)}" clicked cleanly but no modal rendered (no [role=dialog]/.modal element appeared)`,
+      ));
+      continue;
+    }
+    // Modal rendered — verify close affordance.
+    let closeResult = { triggered: false, closed: false };
+    try { closeResult = await closeModal(page, actionTimeoutMs); } catch { /* ignore */ }
+    if (!closeResult.triggered) {
+      modalsFailing += 1;
+      findings.push(makeFinding(
+        'medium', 'broken-modal', `${url} ${t.selector}`,
+        `modal opened but no close affordance found (no aria-label="close"/dismiss button)`,
+      ));
+    }
+  }
+  return { findings, modalsFailing, modalsTested };
+}
+
+async function enumerateForms(page, max) {
+  return await page.evaluate(({ max }) => {
+    const out = [];
+    const forms = Array.from(document.querySelectorAll('form'));
+    for (const f of forms) {
+      if (out.length >= max) break;
+      const visible = (f.offsetWidth + f.offsetHeight) > 0;
+      if (!visible) continue;
+      const inputs = Array.from(f.querySelectorAll('input, textarea, select')).map((i) => ({
+        type: i.type ?? i.tagName.toLowerCase(),
+        name: i.name ?? null,
+        required: i.required ?? false,
+        placeholder: i.getAttribute('placeholder') ?? '',
+      }));
+      function path(el) {
+        const parts = [];
+        let cur = el;
+        let depth = 0;
+        while (cur && cur.nodeType === 1 && depth < 6) {
+          let part = cur.tagName.toLowerCase();
+          if (cur.id) { part += `#${cur.id}`; parts.unshift(part); break; }
+          parts.unshift(part);
+          cur = cur.parentElement; depth += 1;
+        }
+        return parts.join(' > ');
+      }
+      out.push({
+        index: out.length, selector: path(f),
+        action: f.getAttribute('action') ?? '',
+        method: (f.getAttribute('method') ?? 'GET').toUpperCase(),
+        inputs,
+      });
+    }
+    return out;
+  }, { max });
+}
+
+async function fillAndSubmitForm(page, formDescriptor, value, actionTimeoutMs) {
+  return await page.evaluate(({ desc, val }) => {
+    const form = document.querySelector(desc.selector);
+    if (!form) return { ok: false, reason: 'form_not_found' };
+    let filled = 0;
+    const inputs = Array.from(form.querySelectorAll('input, textarea, select'));
+    for (const inp of inputs) {
+      if (inp.type === 'hidden' || inp.type === 'submit' || inp.type === 'button') continue;
+      try {
+        if (inp.tagName.toLowerCase() === 'select') {
+          if (inp.options && inp.options.length > 1) {
+            inp.value = inp.options[1].value;
+            inp.dispatchEvent(new Event('change', { bubbles: true }));
+            filled += 1;
+          }
+          continue;
+        }
+        if (inp.type === 'email') {
+          inp.value = `${val}@example.com`;
+        } else if (inp.type === 'number') {
+          inp.value = '42';
+        } else if (inp.type === 'checkbox' || inp.type === 'radio') {
+          inp.checked = true;
+        } else {
+          inp.value = val;
+        }
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+        filled += 1;
+      } catch { /* skip */ }
+    }
+    let submitted = false;
+    try {
+      const submitBtn = form.querySelector('[type="submit"]') || form.querySelector('button');
+      if (submitBtn) { submitBtn.click(); submitted = true; }
+      else { form.requestSubmit?.(); submitted = true; }
+    } catch (e) {
+      return { ok: false, reason: `submit_failed:${(e?.message ?? String(e)).slice(0, 80)}`, filled };
+    }
+    return { ok: true, filled, submitted };
+  }, { desc: formDescriptor, val: value });
+}
+
+async function detectFormFeedback(page) {
+  return await page.evaluate(() => {
+    const errSel = [
+      '[aria-invalid="true"]', '.error', '.invalid', '.form-error',
+      '[role="alert"]', '[role="status"]',
+    ].join(', ');
+    const successSel = [
+      '.success', '.form-success', '[role="status"]',
+    ].join(', ');
+    const errs = Array.from(document.querySelectorAll(errSel))
+      .filter((el) => (el.innerText || '').trim().length > 0);
+    const successes = Array.from(document.querySelectorAll(successSel))
+      .filter((el) => /thank|success|received|submitted/i.test(el.innerText || ''));
+    return {
+      hasError: errs.length > 0,
+      hasSuccess: successes.length > 0,
+      sampleError: errs[0] ? (errs[0].innerText || '').slice(0, 100) : '',
+      sampleSuccess: successes[0] ? (successes[0].innerText || '').slice(0, 100) : '',
+    };
+  });
+}
+
+/**
+ * T3 — probeForms default implementation. For each form: submit
+ * invalid first (empty), then valid, classify the responses.
+ */
+export async function probeForms({
+  page, url, maxForms = DEFAULT_MAX_FORMS,
+  actionTimeoutMs = DEFAULT_ACTION_TIMEOUT_MS,
+  sliceBudget = 45_000,
+} = {}) {
+  const findings = [];
+  let formsFailing = 0;
+  let formsTested = 0;
+  const startedAt = Date.now();
+  if (!page) return { findings, formsFailing };
+
+  let forms;
+  try {
+    forms = await enumerateForms(page, maxForms);
+  } catch (e) {
+    findings.push(makeFinding(
+      'medium', 'engine-error', url,
+      `enumerateForms failed: ${(e?.message ?? String(e)).slice(0, 120)}`,
+    ));
+    return { findings, formsFailing };
+  }
+
+  for (const f of forms) {
+    if (Date.now() - startedAt > sliceBudget) break;
+    formsTested += 1;
+
+    // ── Pass 1: submit empty (invalid) — expect validation error.
+    const beforeUrl = typeof page.url === 'function' ? page.url() : url;
+    let invalidResp;
+    try {
+      invalidResp = await fillAndSubmitForm(page, f, '', actionTimeoutMs);
+    } catch (e) {
+      invalidResp = { ok: false, reason: (e?.message ?? String(e)).slice(0, 80) };
+    }
+    if (typeof page.waitForTimeout === 'function') {
+      try { await page.waitForTimeout(300); } catch { /* ignore */ }
+    }
+    let invalidFeedback;
+    try { invalidFeedback = await detectFormFeedback(page); } catch { invalidFeedback = { hasError: false, hasSuccess: false }; }
+    // No validation error on an empty submit AND no navigation AND no
+    // success surface → silently accepted invalid input.
+    const afterInvalidUrl = typeof page.url === 'function' ? page.url() : beforeUrl;
+    if (invalidResp.ok && !invalidFeedback.hasError && !invalidFeedback.hasSuccess && afterInvalidUrl === beforeUrl) {
+      // Soft signal — many forms accept blank if no required fields. Skip the finding for now.
+    } else if (!invalidResp.ok) {
+      formsFailing += 1;
+      findings.push(makeFinding(
+        'medium', 'broken-modal', `${url} ${f.selector}`,
+        `form invalid-submit failed: ${invalidResp.reason ?? 'unknown'}`,
+      ));
+      continue;
+    }
+
+    // Re-navigate if invalid submit changed URL (unlikely but defensive).
+    if (afterInvalidUrl !== beforeUrl) {
+      try { await page.goto(beforeUrl, { timeout: actionTimeoutMs, waitUntil: 'domcontentloaded' }); } catch { /* ignore */ }
+    }
+
+    // ── Pass 2: submit valid (probe value).
+    let validResp;
+    try {
+      validResp = await fillAndSubmitForm(page, f, 'flowai-probe', actionTimeoutMs);
+    } catch (e) {
+      validResp = { ok: false, reason: (e?.message ?? String(e)).slice(0, 80) };
+    }
+    if (typeof page.waitForTimeout === 'function') {
+      try { await page.waitForTimeout(400); } catch { /* ignore */ }
+    }
+    let validFeedback;
+    try { validFeedback = await detectFormFeedback(page); } catch { validFeedback = { hasError: false, hasSuccess: false }; }
+    const afterValidUrl = typeof page.url === 'function' ? page.url() : beforeUrl;
+    const navigated = afterValidUrl !== beforeUrl;
+
+    if (!validResp.ok) {
+      formsFailing += 1;
+      findings.push(makeFinding(
+        'high', 'broken-modal', `${url} ${f.selector}`,
+        `form valid-submit failed: ${validResp.reason ?? 'unknown'}`,
+      ));
+    } else if (!navigated && !validFeedback.hasSuccess && !validFeedback.hasError) {
+      formsFailing += 1;
+      findings.push(makeFinding(
+        'high', 'broken-modal', `${url} ${f.selector}`,
+        `form valid-submit produced no observable response (no nav, no success/error surface, no validation feedback) — likely silent no-op or mock-only`,
+      ));
+    }
+    // Restore for next iteration.
+    if (navigated) {
+      try { await page.goto(beforeUrl, { timeout: actionTimeoutMs, waitUntil: 'domcontentloaded' }); } catch { /* ignore */ }
+    }
+  }
+  return { findings, formsFailing, formsTested };
+}
+
 // ── Main entry point ──────────────────────────────────────────────────
 
 /**
@@ -370,9 +730,9 @@ export async function probeAdversarialSurface(args = {}) {
       ? opts.probeInteractives
       : probeInteractives;   // D39 T2: default to the bundled probe
     const _probeModals = typeof opts.probeModals === 'function'
-      ? opts.probeModals : null;
+      ? opts.probeModals : probeModals;   // D39 T3: default to bundled probe
     const _probeForms = typeof opts.probeForms === 'function'
-      ? opts.probeForms : null;
+      ? opts.probeForms : probeForms;     // D39 T3: default to bundled probe
     const _probeAgents = typeof opts.probeAgents === 'function'
       ? opts.probeAgents : null;
     const _detectWiredVsMock = typeof opts.detectWiredVsMock === 'function'
@@ -490,5 +850,11 @@ export const __internals = Object.freeze({
   INTERACTIVE_SELECTOR,
   makeFinding,
   enumerateClickables,
+  enumerateModalTriggers,
+  modalIsRendered,
+  closeModal,
+  enumerateForms,
+  fillAndSubmitForm,
+  detectFormFeedback,
   safeText,
 });

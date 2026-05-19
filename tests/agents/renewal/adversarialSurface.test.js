@@ -8,6 +8,8 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   probeAdversarialSurface,
   probeInteractives,
+  probeModals,
+  probeForms,
   __internals,
 } from '../../../src/lib/agents/renewal/adversarialSurface.js';
 
@@ -22,7 +24,15 @@ function makeMockBrowser({ gotoThrows = false } = {}) {
       return { ok: () => true, status: () => 200 };
     }),
     on: vi.fn(),
-    evaluate: vi.fn(async () => null),
+    off: vi.fn(),
+    // Default evaluator returns an empty array — neither interactives
+    // nor forms nor modal triggers are enumerated unless a probe-
+    // specific mock overrides this. Probes that read body-hash get
+    // a stable string so before/after comparison is identity.
+    evaluate: vi.fn(async () => []),
+    url: () => 'https://example.test/',
+    locator: vi.fn(),
+    waitForTimeout: vi.fn(async () => {}),
     close: vi.fn(async () => {}),
   };
   const context = {
@@ -461,5 +471,189 @@ describe('probeInteractives — T2 click classification', () => {
     // is present in the summary even with zero clickables.
     expect(r.summary).toHaveProperty('interactivesTested');
     expect(r.summary.interactivesTested).toBe(0);
+  });
+});
+
+// ── D39 T3 — probeModals + probeForms ────────────────────────────────
+
+describe('probeModals — T3 modal trigger probe', () => {
+  // Mock page that dispatches results based on the trigger selector.
+  function makeModalPage({ triggers = [], modalRenders = {}, closeRenders = {}, clickOutcomes = {} } = {}) {
+    let renderState = false;
+    return {
+      goto: vi.fn(async () => {}),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async (fn) => {
+        const src = fn.toString();
+        if (src.includes('aria-haspopup') || src.includes('data-modal')) {
+          return triggers;
+        }
+        if (src.includes('role="dialog"') || src.includes('aria-modal')) {
+          return renderState;
+        }
+        if (src.includes('close') || src.includes('dismiss')) {
+          // closeModal helper — does both: triggers close + renders state.
+          return { triggered: !!renderState, closed: !!renderState };
+        }
+        return null;
+      }),
+      url: () => 'https://x/',
+      locator: vi.fn((sel) => ({
+        first: () => ({
+          click: vi.fn(async () => {
+            const outcome = clickOutcomes[sel] ?? 'opens';
+            if (outcome === 'throw') throw new Error('click failed');
+            renderState = !!modalRenders[sel];
+          }),
+        }),
+      })),
+      waitForTimeout: vi.fn(async () => {}),
+    };
+  }
+
+  it('flags a modal trigger that clicks cleanly but renders no modal', async () => {
+    const page = makeModalPage({
+      triggers: [{ index: 0, tag: 'button', text: 'Open', selector: 'button#open' }],
+      modalRenders: { 'button#open': false },
+      clickOutcomes: { 'button#open': 'opens' },
+    });
+    const r = await probeModals({ page, url: 'https://x/', maxModals: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.modalsFailing).toBe(1);
+    expect(r.findings[0]).toMatchObject({ severity: 'high', category: 'broken-modal' });
+    expect(r.findings[0].evidence).toMatch(/no modal rendered/);
+  });
+
+  it('flags a modal trigger that errored on click', async () => {
+    const page = makeModalPage({
+      triggers: [{ index: 0, tag: 'button', text: 'Bad', selector: 'button#bad' }],
+      clickOutcomes: { 'button#bad': 'throw' },
+    });
+    const r = await probeModals({ page, url: 'https://x/', maxModals: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.modalsFailing).toBe(1);
+    expect(r.findings[0]).toMatchObject({ severity: 'high', category: 'broken-modal' });
+    expect(r.findings[0].evidence).toMatch(/errored on click/);
+  });
+
+  it('accepts a modal that renders + has a close affordance', async () => {
+    const page = makeModalPage({
+      triggers: [{ index: 0, tag: 'button', text: 'Open', selector: 'button#open' }],
+      modalRenders: { 'button#open': true },
+    });
+    const r = await probeModals({ page, url: 'https://x/', maxModals: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.modalsFailing).toBe(0);
+    expect(r.findings).toEqual([]);
+  });
+
+  it('respects maxModals + sliceBudget', async () => {
+    const triggers = Array.from({ length: 3 }, (_, i) => ({
+      index: i, tag: 'button', text: `b${i}`, selector: `button#b${i}`,
+    }));
+    const page = makeModalPage({ triggers, modalRenders: {} });
+    const r = await probeModals({ page, url: 'https://x/', maxModals: 5, actionTimeoutMs: 100, sliceBudget: 5000 });
+    expect(r.modalsTested).toBe(3);
+  });
+
+  it('handles enumerateModalTriggers throwing', async () => {
+    const page = makeModalPage();
+    page.evaluate = vi.fn(async () => { throw new Error('eval blocked'); });
+    const r = await probeModals({ page, url: 'https://x/', maxModals: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.findings[0]).toMatchObject({ severity: 'medium', category: 'engine-error' });
+  });
+});
+
+describe('probeForms — T3 form submission probe', () => {
+  function makeFormPage({ forms = [], submitOutcomes = {}, feedback = { hasError: false, hasSuccess: false } } = {}) {
+    let currentUrl = 'https://x/';
+    return {
+      goto: vi.fn(async (u) => { currentUrl = u; }),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async (fn) => {
+        const src = fn.toString();
+        if (src.includes('querySelectorAll(\'form\')')) {
+          return forms;
+        }
+        if (src.includes('inp.dispatchEvent')) {
+          // fillAndSubmitForm — returns submit outcome.
+          const formArg = fn.toString();
+          // Use the most recent fill/submit outcome.
+          const formSel = forms[0]?.selector ?? '';
+          const outcome = submitOutcomes[formSel] ?? { ok: true, filled: 1, submitted: true };
+          return outcome;
+        }
+        if (src.includes('aria-invalid') || src.includes('form-success')) {
+          return feedback;
+        }
+        return null;
+      }),
+      url: () => currentUrl,
+      locator: vi.fn(),
+      waitForTimeout: vi.fn(async () => {}),
+    };
+  }
+
+  it('flags a form that silently no-ops on valid submission (mock-only signal)', async () => {
+    const formDesc = { index: 0, selector: 'form#contact', action: '', method: 'POST', inputs: [] };
+    const page = makeFormPage({
+      forms: [formDesc],
+      submitOutcomes: { 'form#contact': { ok: true, filled: 1, submitted: true } },
+      feedback: { hasError: false, hasSuccess: false },
+    });
+    const r = await probeForms({ page, url: 'https://x/', maxForms: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.formsFailing).toBe(1);
+    expect(r.findings[0]).toMatchObject({ severity: 'high', category: 'broken-modal' });
+    expect(r.findings[0].evidence).toMatch(/silent no-op or mock-only/);
+  });
+
+  it('accepts a form that produces a success surface', async () => {
+    const formDesc = { index: 0, selector: 'form#ok', action: '', method: 'POST', inputs: [] };
+    const page = makeFormPage({
+      forms: [formDesc],
+      submitOutcomes: { 'form#ok': { ok: true, filled: 1, submitted: true } },
+      feedback: { hasError: false, hasSuccess: true, sampleSuccess: 'Thanks!' },
+    });
+    const r = await probeForms({ page, url: 'https://x/', maxForms: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.formsFailing).toBe(0);
+    expect(r.findings).toEqual([]);
+  });
+
+  it('handles enumerateForms throwing', async () => {
+    const page = makeFormPage();
+    page.evaluate = vi.fn(async () => { throw new Error('eval blocked'); });
+    const r = await probeForms({ page, url: 'https://x/', maxForms: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.findings[0]).toMatchObject({ severity: 'medium', category: 'engine-error' });
+  });
+
+  it('returns empty findings when no forms present', async () => {
+    const page = makeFormPage({ forms: [] });
+    const r = await probeForms({ page, url: 'https://x/', maxForms: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.formsTested).toBe(0);
+    expect(r.findings).toEqual([]);
+  });
+
+  it('probeModals + probeForms wired as defaults in probeAdversarialSurface (T3)', async () => {
+    const mockPage = {
+      goto: vi.fn(async () => {}),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async () => []),
+      url: () => 'https://x/',
+      locator: vi.fn(),
+      waitForTimeout: vi.fn(async () => {}),
+    };
+    const browser = {
+      newContext: vi.fn(async () => ({
+        newPage: vi.fn(async () => mockPage),
+        close: vi.fn(async () => {}),
+      })),
+      close: vi.fn(async () => {}),
+    };
+    const r = await probeAdversarialSurface({
+      url: 'https://x/', opts: { browser },
+    });
+    expect(r.ok).toBe(true);
+    // Summary now has modalsFailing + formsFailing (T3 wired even on empty page).
+    expect(r.summary).toHaveProperty('modalsFailing');
+    expect(r.summary).toHaveProperty('formsFailing');
+    expect(r.summary.modalsFailing).toBe(0);
+    expect(r.summary.formsFailing).toBe(0);
   });
 });
