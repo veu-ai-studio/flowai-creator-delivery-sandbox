@@ -131,6 +131,16 @@ function happyDeps({ preScoreSequence = [60], postScoreSequence = [72] } = {}) {
       selfRenewalRunawayThreshold: 3,
     })),
     appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+    // D39 — adversarialSurface stub default. Real probe would launch
+    // Playwright; tests must override via deps if they exercise STEP 4
+    // behavior specifically.
+    probeAdversarialSurface: vi.fn(async () => ({
+      ok: true, url: 'https://x', findings: [],
+      summary: { interactivesTested: 0, deadOrErroring: 0,
+                 modalsFailing: 0, formsFailing: 0,
+                 agentsNonFunctional: 0, mockOnlyFlagged: 0 },
+      probedAt: 'now', durationMs: 0,
+    })),
   };
 }
 

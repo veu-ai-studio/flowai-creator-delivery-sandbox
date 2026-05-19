@@ -281,10 +281,18 @@ export function deriveIssuesFromCrawl(crawlOutput) {
  * @param {object} crawlOutput
  * @returns {{score:number, counts:object, band:string, label:string, penalty:number, formula:string, issues:Array}}
  */
-export function scoreCrawlOutput(crawlOutput) {
-  const issues = deriveIssuesFromCrawl(crawlOutput);
+export function scoreCrawlOutput(crawlOutput, extraFindings = null) {
+  const phaseAIssues = deriveIssuesFromCrawl(crawlOutput);
+  // D39 — Phase B adversarial-surface findings union with Phase A.
+  // Both are §7.6-shaped { severity, category, location, evidence }.
+  // The formula is signature-blind: it counts severities regardless
+  // of provenance.
+  const phaseBIssues = Array.isArray(extraFindings) ? extraFindings.filter((f) =>
+    f && typeof f === 'object' && typeof f.severity === 'string',
+  ) : [];
+  const issues = [...phaseAIssues, ...phaseBIssues];
   const verdict = computeGtmReadiness({ issues });
-  return { ...verdict, issues };
+  return { ...verdict, issues, phaseACount: phaseAIssues.length, phaseBCount: phaseBIssues.length };
 }
 
 export const __internals = Object.freeze({

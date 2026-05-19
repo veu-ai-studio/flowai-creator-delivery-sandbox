@@ -40,6 +40,7 @@ import {
 } from './optionCPipeline.js';
 import { aggressiveCrawl } from '../../../../api/_lib/crawler.js';
 import { conductStructuredCrawl } from './crawlOutputAdapter.js';
+import { probeAdversarialSurface } from './adversarialSurface.js';
 import { remediate as remediationEngine } from '../../../../api/_lib/remediationEngine.js';
 import { randomUUID } from 'node:crypto';
 
@@ -636,18 +637,71 @@ export async function runOrchestration(args = {}) {
     }
     await state.checkpoint(onCheckpoint, { lastStep: 3, iteration: iterationNumber });
 
-    // STEP 4 — Adversarial Surface Testing (Phase A: stub — Phase B+ work).
-    {
+    // STEP 4 — Adversarial Surface Testing (Phase B — D39).
+    // Composes over the Phase 1 crawl: walks each crawled page's
+    // surface with a real headless browser (Browserless or local
+    // Playwright), exercising interactive elements, modals, forms,
+    // and detected AI agents. Findings join the canonical §7.6
+    // pool so they get scored + prioritized like any other defect.
+    //
+    // The probe is OPT-IN via deps.probeAdversarialSurface (default
+    // injection point is the bundled module). Test paths supply a
+    // stub that returns deterministic findings without launching a
+    // real browser.
+    let phaseBFindings = [];
+    try {
       const t0 = Date.now();
+      const _probeAdversarialSurface = deps.probeAdversarialSurface || probeAdversarialSurface;
+      // Phase B is bounded: we probe the SAME crawled URL (the root
+      // initial URL or the prior iteration's preview). Multi-page
+      // probing is a future extension; Phase A's structured-crawl
+      // already gave us per-page presence signals — Phase B adds
+      // interactive verification on the primary surface.
+      const probe = await _probeAdversarialSurface({
+        url: currentUrl,
+        opts: {
+          // Tight budgets so a misbehaving probe can't stall the run.
+          probeBudgetMs: state.phaseBProbeBudgetMs ?? 180_000,
+          maxInteractives: 25, maxModals: 10, maxForms: 10,
+          // Phase A doesn't yet thread storageState; auth-gated
+          // surfaces stay unauthenticated for now. The ENTRY-007
+          // path can pass storageState here once wired.
+        },
+      });
+      if (probe && Array.isArray(probe.findings)) {
+        phaseBFindings = probe.findings;
+      }
       const log = makeStepLog({
-        iteration: iterationNumber, step: 4, status: 'skipped',
-        tool: 'Agent #21 Phase 3 auth traversal',
-        why: 'Phase A scope: surface testing (modals/chatbots/AI-agents/workspaces) deferred to Phase B Browserless wiring',
-        result: { skipped: 'phase_b_capability' },
+        iteration: iterationNumber, step: 4,
+        status: probe?.ok === false ? 'degraded' : 'complete',
+        tool: 'adversarialSurface (Phase B — real browser executor, D39)',
+        why: 'exercise interactive layer: clicks, modals, forms, AI agents; classify wired-vs-mock',
+        result: {
+          ok: !!probe?.ok,
+          reason: probe?.reason ?? null,
+          url: probe?.url ?? currentUrl,
+          findingsCount: phaseBFindings.length,
+          summary: probe?.summary ?? null,
+        },
         durationMs: Date.now() - t0, mode: state.mode,
       });
       emit(log); iterLog.steps.push(log);
+    } catch (e) {
+      // Phase B failures NEVER fail the pipeline — emit a degraded
+      // log and continue. Phase A signal is still complete.
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 4, status: 'degraded',
+        tool: 'adversarialSurface (Phase B — D39)',
+        why: 'Phase B probe threw; continuing with Phase A signal only',
+        result: { error: (e?.message ?? String(e)).slice(0, 200) },
+        durationMs: 0, mode: state.mode,
+      }));
     }
+    // Make the Phase B findings reachable to STEP 5 scoring so the
+    // canonical §7.6 score can incorporate them (gtmReadinessScorer
+    // already accepts an issues array — we union the Phase A crawl
+    // findings with the Phase B probe findings before scoring).
+    state.phaseBFindings = phaseBFindings;
     await state.checkpoint(onCheckpoint, { lastStep: 4, iteration: iterationNumber });
 
     // STEP 5 — Five-Layer Scoring (Pre-Fix).
@@ -680,7 +734,9 @@ export async function runOrchestration(args = {}) {
       // DISPATCH 28 — canonical §7.6 GTM Readiness score from the
       // structured crawl (pre-fix). This is THE gating signal at
       // STEP 12; Five-Layer remains internal telemetry only.
-      const preGtm = _scoreCrawlOutput(crawlOutput);
+      // D39: union Phase A crawl findings with Phase B adversarial-
+      // surface findings (state.phaseBFindings captured in STEP 4).
+      const preGtm = _scoreCrawlOutput(crawlOutput, state.phaseBFindings ?? null);
       if (originalGtmScore === null) originalGtmScore = preGtm.score;
       iterLog.preGtm = preGtm;
       const log = makeStepLog({
@@ -1337,7 +1393,11 @@ export async function runOrchestration(args = {}) {
           postFixCrawlOutput = crawlOutput;
         }
       }
-      const postGtm = _scoreCrawlOutput(postFixCrawlOutput);
+      // D39: Phase B re-probe of postFixUrl would be ideal but
+      // would double the budget. Use the iter's STEP 4 phaseBFindings
+      // as a proxy — if the fix didn't change interactive layer, the
+      // findings persist; if it did, Phase A regression-guard catches it.
+      const postGtm = _scoreCrawlOutput(postFixCrawlOutput, state.phaseBFindings ?? null);
       lastPostGtm = postGtm;
       iterLog.postGtm = postGtm;
       const log = makeStepLog({
