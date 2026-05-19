@@ -1830,6 +1830,47 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+### ENTRY 016 — 2026-05-19 — CA-17 BUILD/WIRE v3-FINAL ratification (CEO Decision A; Locked Rule 13 CEO-disposition track, not open re-Panel)
+
+- **Session:** CEO has ratified the Build/Wire Construction Engine v3-FINAL spec as **CA-17 — the BINDING canonical construction contract**. The disposition is under Locked Rule 13 (CEO absolute veto + CEO-disposition track when Panel non-convergence is documented). No further open re-Panel is scheduled. Path H ENTRY 014 Stage 3 (build/wire) is **UNBLOCKED** at this entry.
+
+- **Rationale (CEO Decision A, Locked Rule 13):** the Build/Wire spec has oscillated through J2 v1 strengthen → v2 over-extension → W6 v2 4-run re-Panel (`4400958`) which returned **0/8 cleared** (S1 SIMPLIFY 4/7, S2 DENSITY 3/7, S3 FULLBACKUP 4/10, S4 CSRF 5/10, S5 REJECT 4/10, S6 REJECT 5/10, S7 REJECT 6/9, S8 SIMPLIFY 6/9). Panel non-convergence at the 4-run is the documented trigger; CEO disposes per Locked Rule 13. The v3-FINAL spec applies the Panel-endorsed directions verbatim — rollbacks (S1/S7/S8 to v1), strengthenings (S2 density 100, S3 full-restore + row-count-diff <0.1%, S4 +CSRF 9th pillar), and softenings (S5 operator-confirm-to-fire, S6 narrow in-flight invalidation closed-6-kind list) — and routes to CEO ratification rather than another open re-Panel.
+
+- **Binding canonical contract:** `docs/specs/BUILD_WIRE_ENGINE_SPEC_V3_FINAL_DRAFT.md` at commit `1d5e39b` (33,974 chars, ≤34K cap). This file is the canonical authority for the construction engine going forward — engineering dispatches implement against it; any future deviation requires a new CA cycle. The "DRAFT" suffix in the filename is preserved for git-traceability to the CONVERGENCE PASS lineage; the contents are RATIFIED-CANONICAL at this entry.
+
+- **NON-OVERRIDABLE fidelity preserved verbatim per Path H ENTRY 014:** the CEO-locked NON-OVERRIDABLE invariants are EXACTLY **S2 / S4 / S5 / S6** per Path H ENTRY 014 + Locked Rule 13. No other invariant carries non-overridable status. **S1 / S3 / S7 / S8 are PANEL-RATIFIABLE.** NON-OVERRIDABLE invariants remain strengthen-only with no reject path. v3-final's S5 + S6 softenings are framed as execution-gate / narrow-trigger refinements that preserve the underlying invariant (rollback safety net + drift detection) — the invariant itself is unchanged, only the execution trigger or trigger set is narrowed per Panel feedback.
+
+- **Per-invariant v3-final disposition (summary; binding spec §3 is authoritative):**
+
+  | # | Invariant | Status | v3-final disposition |
+  |---|---|---|---|
+  | S1 | Pre-construction baseline | PANEL-RATIFIABLE | 6-field MANDATORY + 4-field admin-opt-in extended via `construction_extended_baseline_enabled` toggle (default OFF). |
+  | S2 🔒 | Bounded scope | NON-OVERRIDABLE | System caps 15/1500/3/4 unchanged; **density ceiling tightened 150→100 lines/file**. |
+  | S3 | Schema migration testing | PANEL-RATIFIABLE | DLP STRENGTHENED: `pg_dump` + **full-restore to CI-ephemeral DB + row-count-diff <0.1%** for destructive statements (replaces v2 checksum-only). |
+  | S4 🔒 | Construction security suite | NON-OVERRIDABLE | **9 pillars** (drafted 8 + CSRF); CSRF is hard pillar (advisory hybrid NOT adopted). |
+  | S5 🔒 | Rollback substrate | NON-OVERRIDABLE | **Auto-detect + auto-prepare + operator-confirm-to-fire** on Phase B post-merge failure; 30-day primary + 90-day admin-config option (hard bounds [30, 90]); new envelope `construction_auto_rollback_pending_operator_confirm.v1`. |
+  | S6 🔒 | Pre-construction approval | NON-OVERRIDABLE | **Narrow in-flight invalidation** — closed 6-kind list (`construction_pre_baseline.v1`, `architecture_snapshot.v1`, `gtm_bar_admin_override.v1`, `gtm_bar_admin_override_used.v1`, `construction_class.v1`, `purpose_drift_annotation.v1 severity:'critical'`); over-broad "any new entry" REJECTED. |
+  | S7 | Branch-of-record | PANEL-RATIFIABLE | ROLLBACK to v1 per-product `self_renewal_branch` only; v2 per-session sub-branches REMOVED; future session isolation belongs to CA-16-B (deferred per `e8bb7d4` CA-16 SPLIT). |
+  | S8 | Post-construction Phase B | PANEL-RATIFIABLE | ROLLBACK to v1 pre-PR Phase B only; v2 live-preview + dual-load + backend probes REMOVED; existing Agent #21 charter per ENTRY 015 §15.1 row 21 operates post-deploy as normal independently. |
+
+- **Conformance test inventory:** **48 tests** total (v1 33 → v2 49 → v3-final 48 net −1). Distribution: S1 4 / S2 6 / S3 5 / S4 9 / S5 8 / S6 8 / S7 3 / S8 3 / §4 lifecycle 2. When CA-15-D v3 SSOT-Conformance Gate ratifies (ENTRY 017 sibling — TASK B in this dispatch), the 48 tests register in canonical conformance inventory at `src/lib/conformance/__tests__/build_wire_engine/`.
+
+- **Failure envelopes:** 26 total (v1 19 + v2-retained 6 + v3-final NEW `construction_auto_rollback_pending_operator_confirm.v1`). v2's `redesign_session_subbranch_merged.v1` (S7 sub-branch revert) and `construction_phase_b_post_merge.v1` (S8 live-preview revert) REMOVED.
+
+- **Sections amended in `docs/CANONICAL_REFERENCE.md`:**
+  - **§29 NEW** — Build/Wire Construction Engine canonical authority: binding contract reference (`docs/specs/BUILD_WIRE_ENGINE_SPEC_V3_FINAL_DRAFT.md` @ `1d5e39b`); NON-OVERRIDABLE fidelity statement verbatim; per-invariant S1–S8 disposition table; 4-class construction taxonomy summary; 48-test conformance inventory pointer; 26-failure-envelope total; **Path H Stage 3 UNBLOCKED** declaration; cross-CA dependency preservation (CA-14-D, CA-14-A, CA-15-C, CA-16 SPLIT).
+  - **§18.4** — ENTRY 016 row appended to ratified-amendments table.
+
+- **Path H Stage 3 (build/wire) UNBLOCKED.** Per ENTRY 014's three-stage path: Stage 1 (Self-Renewal Executor + 5 fix-safety invariants) cleared at ENTRY 015 cleared-8; Stage 2 (Phase B Adversarial Surface Testing + Agent #21 ENTRY 015 §15.1 row 21 extension) cleared at ENTRY 015 cleared-8; **Stage 3 (Build/Wire Construction Engine — construction-class operations) UNBLOCKED at THIS ENTRY** by CA-17 ratification of the binding v3-FINAL spec. Engineering dispatch may now implement the construction engine against the binding spec without further Panel block; only Panel-ratifiable invariants (S1/S3/S7/S8) may be amended by future CA cycles, and any such amendment MUST preserve the NON-OVERRIDABLE fidelity (S2/S4/S5/S6 strengthen-only, no reject path).
+
+- **Pre-promotion archive:** `docs/archive/FLOWAI_SSOT-pre-CA17-promotion-2026-05-19.md` per §18.3. Captures canonical SSOT state at end-of-ENTRY-015 (immediately before §29 + §18.4 append). 117,114 chars verbatim copy.
+
+- **Integrity:** doc-only; no code touched; binding spec file unchanged in this commit (it was authored + committed at `1d5e39b` and is referenced here as a frozen-by-commit artifact). Diff scoped to two targets only: (1) `docs/CANONICAL_REFERENCE.md` (§29 NEW + §18.4 row) + (2) `docs/CANONICAL_HISTORY.md` (this entry). `git add` discipline: per-file explicit adds; no `-A` / `.` / `-u`.
+
+- **Lineage:** Build/Wire v1 (`4e6260b`) → v2 (`d0691c5` — 8 strengthen directions) → S8 fidelity (`448932b`) → W6 v2 4-run re-Panel (`4400958` — 0/8 cleared; documented Panel non-convergence) → CEO convergence dispatch (W3) → v3-FINAL DRAFT (`1d5e39b` — CONVERGENCE PASS, CEO-disposition track) → **THIS ENTRY (CA-17 ratification + Path H Stage 3 UNBLOCKED).**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-19)
 
 
