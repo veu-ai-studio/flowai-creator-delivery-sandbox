@@ -1,0 +1,719 @@
+{
+  "schema": "buildwire-v2.sidecar.v1",
+  "run": "run-2-S3-S4",
+  "bundle_size": 20536,
+  "startedAt": "2026-05-19T12:54:02.947Z",
+  "finishedAt": "2026-05-19T12:57:30.403Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 1,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 20536
+  },
+  "tally": {
+    "engagedTotal": 10,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 0,
+    "perQuestion": {
+      "J2v2-S3": {
+        "S3V2-RATIFY": 0,
+        "S3V2-COOLDOWN": 2,
+        "S3V2-FULLBACKUP": 4,
+        "S3V2-REJECT": 0,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "J2v2-S4": {
+        "S4V2-RATIFY": 0,
+        "S4V2-CSRF": 5,
+        "S4V2-PROTO": 0,
+        "S4V2-BOTH": 1,
+        "REJECT": 4,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 34,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Backup verification insufficient for data loss",
+        "detail": "§3.3 S3 5th pillar requires pg_dump backup but only verifies via checksum and row counts. A corrupted backup that passes checksum but has subtle data corruption in column values would not be detected until after irreversible DROP COLUMN executes."
+      },
+      {
+        "slot": 1,
+        "title": "SSRF probe set incomplete",
+        "detail": "§3.4 S4 7th pillar SSRF probes omit critical vectors: SSRF via redirect chains, protocol smuggling (gopher://), and cloud-specific IMDSv2 token bypass techniques. The probe set tests only basic direct-request patterns."
+      },
+      {
+        "slot": 1,
+        "title": "Rate limit default too permissive",
+        "detail": "§3.4 S4 8th pillar defaults to 60 req/min for undeclared endpoints. For mutation endpoints or resource-intensive operations, this default allows significant abuse potential before triggering 429 responses."
+      },
+      {
+        "slot": 1,
+        "title": "Schema migration lock timeout missing",
+        "detail": "§3.3 S3 3rd pillar requires <5s completion under p99 load but specifies no lock acquisition timeout. A migration could wait indefinitely for locks, causing production outages without automatic abort."
+      },
+      {
+        "slot": 2,
+        "title": "Data-loss prevention complexity",
+        "detail": "The addition of the 5th pillar in §3.3 for data-loss prevention introduces significant complexity. It requires explicit rationale citation, verified backups, and admin roles, which could slow down the development process and increase the risk of human error in managing these requirements."
+      },
+      {
+        "slot": 2,
+        "title": "Non-overridable security suite",
+        "detail": "The §3.4 security suite is non-overridable, which could lead to bottlenecks in development if false positives occur. The inability to bypass these checks, even temporarily, could delay critical updates or fixes."
+      },
+      {
+        "slot": 2,
+        "title": "Scope of construction classes",
+        "detail": "The construction classes in §2 impose strict limits on file and line counts, which may not be sufficient for more complex operations. This could lead to incomplete implementations or the need for multiple operations to achieve a single goal, increasing overhead."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case of failures during the construction process, which could lead to system instability. Specifically, §3.3 S3 — Schema migration testing does not outline a comprehensive rollback plan."
+      },
+      {
+        "slot": 3,
+        "title": "Overly Complex Security Suite",
+        "detail": "The 8-pillar security-test suite in §3.4 S4 — Construction security suite may be overly complex and difficult to maintain, potentially leading to false negatives or positives. The addition of new pillars such as SSRF and rate-limit probes may increase the complexity of the suite."
+      },
+      {
+        "slot": 3,
+        "title": "Inadequate Operator Role Definition",
+        "detail": "The proposal does not provide a clear definition of the operator role and its responsibilities, which could lead to confusion and errors during the construction process. Specifically, the requirement for an admin role in §3.3 S3 — Schema migration testing is not clearly defined."
+      },
+      {
+        "slot": 4,
+        "title": "Schema migration complexity",
+        "detail": "The proposed 5th pillar in §3.3 S3 introduces significant complexity. The requirement for a pre-migration backup and its verification adds additional steps that could delay the migration process and increase the risk of human error."
+      },
+      {
+        "slot": 4,
+        "title": "Overly restrictive security suite",
+        "detail": "The extension of S4 to include SSRF and rate-limit probes, along with the non-overridable nature of these checks, may lead to false positives and unnecessary blockages. This could hinder the development process and delay the deployment of critical features."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of rollback path",
+        "detail": "The proposal does not specify a clear rollback path for schema migrations that fail the data-loss prevention checks. This could lead to incomplete or failed migrations that are difficult to recover from, impacting system stability and data integrity."
+      },
+      {
+        "slot": 5,
+        "title": "Complexity increase",
+        "detail": "Adding a 5th pillar to S3 and extending S4 to 8 pillars significantly increases the complexity of the construction process, potentially leading to longer development cycles and higher maintenance costs."
+      },
+      {
+        "slot": 5,
+        "title": "False positives risk",
+        "detail": "The new data-loss prevention (DLP) pillar in S3 may generate false positives, blocking legitimate destructive migrations and causing unnecessary delays in the construction process."
+      },
+      {
+        "slot": 5,
+        "title": "Over-engineering concern",
+        "detail": "The proposal to strengthen S4 further by adding CSRF and prototype-pollution probes may be considered over-engineering, as these issues might be better addressed through other means, such as code reviews or runtime protections."
+      },
+      {
+        "slot": 6,
+        "title": "§3.3 S3: Backup verification weakness",
+        "detail": "The backup verification in S3 only checks row counts and checksums. It doesn't verify data integrity or consistency, potentially missing subtle data corruption issues introduced during the backup/restore process. A malicious actor could manipulate data in a way that doesn't affect row counts or checksums but still compromises the system."
+      },
+      {
+        "slot": 6,
+        "title": "§3.4 S4: SSRF probe limitations",
+        "detail": "The SSRF probes in S4 use a predefined set of payloads. This approach is vulnerable to bypasses if the application uses custom URL parsing or filtering logic. Attackers can craft SSRF payloads that are not detected by the standard probes but still allow them to access internal resources."
+      },
+      {
+        "slot": 6,
+        "title": "§3.4 S4: Rate-limit default value",
+        "detail": "The rate-limit pillar defaults to 60 req/min if undeclared. This default might be too high for some endpoints, especially those that perform resource-intensive operations. A lower default or a mechanism to dynamically adjust the rate limit based on endpoint functionality would be more secure."
+      },
+      {
+        "slot": 6,
+        "title": "§2: Redesign implementation scope",
+        "detail": "The 'redesign_implementation' class allows operator-declared scope, bounded by system caps. This introduces potential for operator error or malicious intent to declare a scope near the system cap, leading to unintended consequences or security vulnerabilities. The system cap itself might be too high."
+      },
+      {
+        "slot": 7,
+        "title": "DLP pillar complexity",
+        "detail": "The 5th pillar in §3.3 introduces significant complexity, especially the requirement for a pre-migration backup and its verification. This could slow down the development process and introduce new failure points."
+      },
+      {
+        "slot": 7,
+        "title": "Rate-limiting false positives",
+        "detail": "The 8th pillar in §3.4, which tests rate-limiting, might generate false positives if the endpoint is designed to handle bursts of traffic differently. This could lead to unnecessary rejections of valid constructions."
+      },
+      {
+        "slot": 7,
+        "title": "SSRF probe limitations",
+        "detail": "The SSRF probes in §3.4 are limited to a predefined set of payloads. This might not cover all possible SSRF attack vectors, leaving the system vulnerable to more sophisticated attacks."
+      },
+      {
+        "slot": 8,
+        "title": "Backup check is too late",
+        "detail": "In §3.3 S3 v2, the destructive migration can still be approved if the backup is merely taken and verified, but the test is framed after the operator has already authorized the statement. That means the system can spend time and operational risk preparing a destructive change before discovering the backup path is broken, which is the wrong failure point for a build/wire gate."
+      },
+      {
+        "slot": 8,
+        "title": "Admin role is under-specified",
+        "detail": "The new DLP pillar says operator role must be `admin`, but it does not define how that role is asserted, audited, or prevented from being spoofed in the `governance_record_entry`. Because the proposal is explicitly about construction classes and PR gates, an ambiguous role check is a direct policy bypass surface rather than a protective control."
+      },
+      {
+        "slot": 8,
+        "title": "TRUNCATE coverage is incomplete",
+        "detail": "§3.3 names `DROP COLUMN`, `DROP TABLE`, and `TRUNCATE`, but the phrase \"any statement that destroys persistent rows\" is broader than the explicit examples and can be interpreted inconsistently across SQL dialects and ORMs. That ambiguity invites accidental approval of destructive operations like `DELETE FROM` without a WHERE clause, partition drops, or cascading foreign-key effects that the text does not clearly bind."
+      },
+      {
+        "slot": 8,
+        "title": "Authz snapshot can miss behavior",
+        "detail": "In §3.4 S4 v2, the extended authorization regression checks only snapshot `{endpoint_path, method, required_role[], auth_middleware_chain[]}`. That can miss effective permission changes caused by policy engines, route wrappers, middleware order changes, or context-sensitive checks that live outside those arrays, so the system may falsely certify a weakened endpoint as safe."
+      },
+      {
+        "slot": 8,
+        "title": "SSRF probes are narrow",
+        "detail": "The new SSRF pillar enumerates a useful payload set, but it still treats detection as a small allowlist of probe classes rather than a general sink-to-egress analysis. A construction could pass the listed probes while still allowing redirects, non-HTTP schemes, DNS-based exfiltration, or indirect fetches through helper libraries."
+      },
+      {
+        "slot": 9,
+        "title": "Overly Complex S3 Tests",
+        "detail": "The addition of a 5th pillar to S3 introduces significant complexity with the data-loss prevention checks, which may be prone to false positives or negatives."
+      },
+      {
+        "slot": 9,
+        "title": "S4 Scope Creep",
+        "detail": "Extending S4 to 8 pillars with new tests like SSRF and rate-limit probing significantly broadens the security testing scope, potentially introducing new vulnerabilities or test fragility."
+      },
+      {
+        "slot": 9,
+        "title": "Potential for Overly Restrictive Policies",
+        "detail": "The requirement for admin role and verified pg_dump backup for destructive migrations in S3 v2 may be overly restrictive and could hinder development or operational efficiency."
+      },
+      {
+        "slot": 10,
+        "title": "S3 DLP lacks Self-Protect tie-in",
+        "detail": "§3.3 requires pg_dump backup + checksum for DROP operations but never references the §10 Self-Protect snapshot/rollback infrastructure; a failed post-backup migration can leave the live DB inconsistent with the governance_record_entry."
+      },
+      {
+        "slot": 10,
+        "title": "S4 authz snapshot undefined for new endpoints",
+        "detail": "§3.4 pillar 6 mandates pre-construction authz snapshot for every touched endpoint yet provides no mechanism or storage format when the endpoint itself is created by an endpoint_generation class construction."
+      },
+      {
+        "slot": 10,
+        "title": "Non-overridable conflicts with Locked Rule 13",
+        "detail": "§3.4 declares S4 NON-OVERRIDABLE per CEO Locked Rule 13, but canonical §25 rule 13 explicitly grants CEO absolute veto and Panel approval rights, creating an unresolvable precedence clash on any security-abort decision."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "J2v2-S3": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 4 between S3V2-FULLBACKUP / REJECT",
+      "topKey": "S3V2-FULLBACKUP",
+      "topCount": 4
+    },
+    "J2v2-S4": {
+      "verdict": "PLURALITY_S4V2-CSRF",
+      "detail": "5 of 10 on S4V2-CSRF (below 7/10 quorum)",
+      "topKey": "S4V2-CSRF",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0,
+    "alignedCount": 0,
+    "totalPossible": 20,
+    "draftedQs": [
+      "J2v2-S3",
+      "J2v2-S4"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 0.0 %, distinct objections 34"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Backup verification insufficient for data loss",
+            "detail": "§3.3 S3 5th pillar requires pg_dump backup but only verifies via checksum and row counts. A corrupted backup that passes checksum but has subtle data corruption in column values would not be detected until after irreversible DROP COLUMN executes."
+          },
+          {
+            "title": "SSRF probe set incomplete",
+            "detail": "§3.4 S4 7th pillar SSRF probes omit critical vectors: SSRF via redirect chains, protocol smuggling (gopher://), and cloud-specific IMDSv2 token bypass techniques. The probe set tests only basic direct-request patterns."
+          },
+          {
+            "title": "Rate limit default too permissive",
+            "detail": "§3.4 S4 8th pillar defaults to 60 req/min for undeclared endpoints. For mutation endpoints or resource-intensive operations, this default allows significant abuse potential before triggering 429 responses."
+          },
+          {
+            "title": "Schema migration lock timeout missing",
+            "detail": "§3.3 S3 3rd pillar requires <5s completion under p99 load but specifies no lock acquisition timeout. A migration could wait indefinitely for locks, causing production outages without automatic abort."
+          }
+        ],
+        "worse_than_status_quo": "The 5th DLP pillar creates false confidence - operators may execute DROP COLUMN believing the backup provides safety, but if the backup verification only checks row counts and not actual data integrity, corrupted backups could lead to permanent data loss that's worse than having no automated migration at all.",
+        "precedent": "GitLab's 2017 database incident where backup verification scripts showed success but the actual backups were missing critical data due to subtle corruption, leading to permanent loss of 6 hours of production data."
+      },
+      "rejection_steelman": "The build/wire engine v2 significantly expands automated construction scope to include destructive schema operations and security-critical endpoint generation. This crosses a fundamental safety boundary - automated systems should not make irreversible data deletions or generate new attack surfaces without mandatory human-in-the-loop review at execution time, not just approval time. The proposal should be deferred until it includes mandatory operator confirmation immediately before any destructive operation executes.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "S3V2-FULLBACKUP",
+          "pick_text": "Strengthen via backup verification — require backup-restore-and-row-count-match (full restore + count diff < 0.1%) BEFORE the destructive migration runs.",
+          "rationale": "Full restore verification before execution is the minimum viable protection against the GitLab-style backup corruption scenario, though even this doesn't address the lock timeout gap."
+        },
+        "J2v2-S4": {
+          "key": "S4V2-BOTH",
+          "pick_text": "Strengthen further — both — 10-pillar S4 (drafted 8 + CSRF + prototype-pollution).",
+          "rationale": "CSRF and prototype pollution are fundamental web security vulnerabilities that automated endpoint generation is highly likely to introduce without explicit checks."
+        }
+      },
+      "overallNotes": "The expansion to destructive operations requires stronger safeguards than proposed, particularly around backup integrity verification and execution-time operator gates.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Data-loss prevention complexity",
+            "detail": "The addition of the 5th pillar in §3.3 for data-loss prevention introduces significant complexity. It requires explicit rationale citation, verified backups, and admin roles, which could slow down the development process and increase the risk of human error in managing these requirements."
+          },
+          {
+            "title": "Non-overridable security suite",
+            "detail": "The §3.4 security suite is non-overridable, which could lead to bottlenecks in development if false positives occur. The inability to bypass these checks, even temporarily, could delay critical updates or fixes."
+          },
+          {
+            "title": "Scope of construction classes",
+            "detail": "The construction classes in §2 impose strict limits on file and line counts, which may not be sufficient for more complex operations. This could lead to incomplete implementations or the need for multiple operations to achieve a single goal, increasing overhead."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to increased development time and complexity, potentially causing delays in deployment and reducing the agility of the development process.",
+        "precedent": "The introduction of strict, non-overridable security measures in software development has been seen in projects like the OpenSSL FIPS module, where stringent requirements led to delays and increased complexity."
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and rigidity, particularly with the non-overridable security suite and the strict requirements for data-loss prevention. These could lead to delays and increased risk of human error, outweighing the potential benefits of enhanced security and data integrity.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "S3V2-FULLBACKUP",
+          "pick_text": "Strengthen via backup verification — require backup-restore-and-row-count-match (full restore + count diff < 0.1%) BEFORE the destructive migration runs.",
+          "rationale": "This option ensures that data integrity is maintained by verifying backups before any destructive actions, addressing concerns about data loss."
+        },
+        "J2v2-S4": {
+          "key": "S4V2-CSRF",
+          "pick_text": "Strengthen further — add 9th pillar CSRF probes for state-changing endpoints lacking CSRF-token or SameSite enforcement.",
+          "rationale": "Adding CSRF probes enhances security for state-changing operations, addressing potential vulnerabilities not covered by the existing pillars."
+        }
+      },
+      "overallNotes": "The proposal's focus on security and data integrity is commendable, but the added complexity and rigidity could hinder development agility.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Insufficient Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case of failures during the construction process, which could lead to system instability. Specifically, §3.3 S3 — Schema migration testing does not outline a comprehensive rollback plan."
+          },
+          {
+            "title": "Overly Complex Security Suite",
+            "detail": "The 8-pillar security-test suite in §3.4 S4 — Construction security suite may be overly complex and difficult to maintain, potentially leading to false negatives or positives. The addition of new pillars such as SSRF and rate-limit probes may increase the complexity of the suite."
+          },
+          {
+            "title": "Inadequate Operator Role Definition",
+            "detail": "The proposal does not provide a clear definition of the operator role and its responsibilities, which could lead to confusion and errors during the construction process. Specifically, the requirement for an admin role in §3.3 S3 — Schema migration testing is not clearly defined."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's introduction of a 5th pillar to S3, which requires explicit rationale citation, verified pg_dump backup, and admin role for destructive migrations, may lead to increased complexity and potential for errors, making the system worse than the status quo if not properly implemented.",
+        "precedent": "The Google Chrome browser's introduction of a complex security feature set, which initially led to increased complexity and potential for errors, serves as a real-world precedent where a similar design caused trouble."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it introduces significant complexity and potential for errors, particularly in the construction security suite and the definition of operator roles. The benefits of the proposal do not outweigh the potential risks and difficulties in implementation, and further refinement and simplification are necessary before it can be considered for adoption.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "S3V2-COOLDOWN",
+          "pick_text": "Strengthen further — DLP MUST also require a 24-hour operator-cooldown window between approval and execution.",
+          "rationale": "This option provides an additional layer of safety and review, allowing for potential issues to be identified and addressed before the destructive migration is executed."
+        },
+        "J2v2-S4": {
+          "key": "S4V2-CSRF",
+          "pick_text": "Strengthen further — add 9th pillar CSRF probes for state-changing endpoints lacking CSRF-token or SameSite enforcement.",
+          "rationale": "This option enhances the security of the system by addressing a specific vulnerability, and the addition of a new pillar can be done in a way that is consistent with the existing security suite."
+        }
+      },
+      "overallNotes": "The proposal requires further refinement and simplification to address the potential risks and difficulties in implementation. The introduction of new pillars and features should be carefully considered to ensure that they do not add unnecessary complexity to the system.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Schema migration complexity",
+            "detail": "The proposed 5th pillar in §3.3 S3 introduces significant complexity. The requirement for a pre-migration backup and its verification adds additional steps that could delay the migration process and increase the risk of human error."
+          },
+          {
+            "title": "Overly restrictive security suite",
+            "detail": "The extension of S4 to include SSRF and rate-limit probes, along with the non-overridable nature of these checks, may lead to false positives and unnecessary blockages. This could hinder the development process and delay the deployment of critical features."
+          },
+          {
+            "title": "Lack of rollback path",
+            "detail": "The proposal does not specify a clear rollback path for schema migrations that fail the data-loss prevention checks. This could lead to incomplete or failed migrations that are difficult to recover from, impacting system stability and data integrity."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's stringent security and data-loss prevention measures could lead to increased false positives and delayed deployments, making the system less agile and responsive to changes compared to the current status quo.",
+        "precedent": "The introduction of complex security and data integrity checks in the GitLab CI/CD pipeline led to significant delays and false positives, impacting the development workflow and productivity (GitLab CI/CD pipeline incidents, 2021)."
+      },
+      "rejection_steelman": "The proposal should be deferred until a thorough impact analysis is conducted to ensure that the additional security and data integrity checks do not introduce unnecessary delays and false positives. The lack of a clear rollback path for failed migrations is a critical gap that needs to be addressed.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "REJECT",
+          "pick_text": "Reject the 5th pillar — destructive migrations belong in a separate W5x dispatch with manual operator review; the build/wire engine should not handle them.",
+          "rationale": "The 5th pillar introduces significant complexity and risk without a clear rollback path, potentially impacting system stability and data integrity."
+        },
+        "J2v2-S4": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The extended security suite may lead to false positives and unnecessary blockages, hindering the development process and delaying critical feature deployments."
+        }
+      },
+      "overallNotes": "The proposal introduces valuable security and data integrity checks but needs to address the complexity, potential for false positives, and lack of a clear rollback path to ensure smooth and efficient system operation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity increase",
+            "detail": "Adding a 5th pillar to S3 and extending S4 to 8 pillars significantly increases the complexity of the construction process, potentially leading to longer development cycles and higher maintenance costs."
+          },
+          {
+            "title": "False positives risk",
+            "detail": "The new data-loss prevention (DLP) pillar in S3 may generate false positives, blocking legitimate destructive migrations and causing unnecessary delays in the construction process."
+          },
+          {
+            "title": "Over-engineering concern",
+            "detail": "The proposal to strengthen S4 further by adding CSRF and prototype-pollution probes may be considered over-engineering, as these issues might be better addressed through other means, such as code reviews or runtime protections."
+          }
+        ],
+        "worse_than_status_quo": "The increased complexity and potential for false positives may result in a slower and less efficient construction process compared to the current status quo.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal introduces significant changes to the construction process without a clear demonstration of the benefits outweighing the increased complexity and potential risks, making it prudent to reject or defer the proposal until a more thorough cost-benefit analysis is conducted.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "REJECT",
+          "pick_text": "Reject the 5th pillar — destructive migrations belong in a separate W5x dispatch with manual operator review; the build/wire engine should not handle them.",
+          "rationale": "The added complexity and potential for false positives outweigh the benefits of the DLP pillar."
+        },
+        "J2v2-S4": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal to strengthen S4 further may be considered over-engineering, and the current 8-pillar approach seems sufficient."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes that require a careful evaluation of the trade-offs involved.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§3.3 S3: Backup verification weakness",
+            "detail": "The backup verification in S3 only checks row counts and checksums. It doesn't verify data integrity or consistency, potentially missing subtle data corruption issues introduced during the backup/restore process. A malicious actor could manipulate data in a way that doesn't affect row counts or checksums but still compromises the system."
+          },
+          {
+            "title": "§3.4 S4: SSRF probe limitations",
+            "detail": "The SSRF probes in S4 use a predefined set of payloads. This approach is vulnerable to bypasses if the application uses custom URL parsing or filtering logic. Attackers can craft SSRF payloads that are not detected by the standard probes but still allow them to access internal resources."
+          },
+          {
+            "title": "§3.4 S4: Rate-limit default value",
+            "detail": "The rate-limit pillar defaults to 60 req/min if undeclared. This default might be too high for some endpoints, especially those that perform resource-intensive operations. A lower default or a mechanism to dynamically adjust the rate limit based on endpoint functionality would be more secure."
+          },
+          {
+            "title": "§2: Redesign implementation scope",
+            "detail": "The 'redesign_implementation' class allows operator-declared scope, bounded by system caps. This introduces potential for operator error or malicious intent to declare a scope near the system cap, leading to unintended consequences or security vulnerabilities. The system cap itself might be too high."
+          }
+        ],
+        "worse_than_status_quo": "The addition of the DLP pillar in S3, while intended to improve safety, could create a false sense of security. If the backup verification is insufficient, operators might be lulled into a belief that data is protected when it is not, leading to more reckless destructive migrations than before.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity with the new pillars in S3 and S4. While the intention is to improve security and data integrity, the added complexity could lead to implementation errors and unforeseen vulnerabilities. The non-overridable nature of S4 could also hinder legitimate operations in edge cases. Deferring the proposal would allow for further refinement and testing to mitigate these risks.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "S3V2-FULLBACKUP",
+          "pick_text": "Strengthen via backup verification — require backup-restore-and-row-count-match (full restore + count diff < 0.1%) BEFORE the destructive migration runs.",
+          "rationale": "This option provides a more robust verification of the backup's integrity before allowing destructive operations, reducing the risk of data loss."
+        },
+        "J2v2-S4": {
+          "key": "S4V2-CSRF",
+          "pick_text": "Strengthen further — add 9th pillar CSRF probes for state-changing endpoints lacking CSRF-token or SameSite enforcement.",
+          "rationale": "CSRF is a common vulnerability, and adding a probe for it would significantly improve the security posture of the system. It addresses a clear and present danger."
+        }
+      },
+      "overallNotes": "The proposal is generally well-intentioned, but the added complexity and potential for bypasses in the security checks warrant careful consideration and further refinement.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "DLP pillar complexity",
+            "detail": "The 5th pillar in §3.3 introduces significant complexity, especially the requirement for a pre-migration backup and its verification. This could slow down the development process and introduce new failure points."
+          },
+          {
+            "title": "Rate-limiting false positives",
+            "detail": "The 8th pillar in §3.4, which tests rate-limiting, might generate false positives if the endpoint is designed to handle bursts of traffic differently. This could lead to unnecessary rejections of valid constructions."
+          },
+          {
+            "title": "SSRF probe limitations",
+            "detail": "The SSRF probes in §3.4 are limited to a predefined set of payloads. This might not cover all possible SSRF attack vectors, leaving the system vulnerable to more sophisticated attacks."
+          }
+        ],
+        "worse_than_status_quo": "The added complexity of the DLP pillar and the potential for false positives in the rate-limiting tests could slow down the development process and introduce new failure points, making the system less efficient and more prone to errors.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and potential for false positives, which could slow down the development process and introduce new failure points. It might be better to defer these changes until a more robust and tested solution is available.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "S3V2-FULLBACKUP",
+          "pick_text": "Strengthen via backup verification — require backup-restore-and-row-count-match (full restore + count diff < 0.1%) BEFORE the destructive migration runs.",
+          "rationale": "This option provides a more robust verification mechanism, reducing the risk of data loss while maintaining the necessary safeguards."
+        },
+        "J2v2-S4": {
+          "key": "S4V2-CSRF",
+          "pick_text": "Strengthen further — add 9th pillar CSRF probes for state-changing endpoints lacking CSRF-token or SameSite enforcement.",
+          "rationale": "Adding CSRF probes would further enhance the security of the system, addressing a critical attack vector that is currently not covered."
+        }
+      },
+      "overallNotes": "The proposal has strong security and data protection measures, but the complexity and potential for false positives need to be carefully managed.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:qwen/qwen-2.5-72b-instruct"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Backup check is too late",
+            "detail": "In §3.3 S3 v2, the destructive migration can still be approved if the backup is merely taken and verified, but the test is framed after the operator has already authorized the statement. That means the system can spend time and operational risk preparing a destructive change before discovering the backup path is broken, which is the wrong failure point for a build/wire gate."
+          },
+          {
+            "title": "Admin role is under-specified",
+            "detail": "The new DLP pillar says operator role must be `admin`, but it does not define how that role is asserted, audited, or prevented from being spoofed in the `governance_record_entry`. Because the proposal is explicitly about construction classes and PR gates, an ambiguous role check is a direct policy bypass surface rather than a protective control."
+          },
+          {
+            "title": "TRUNCATE coverage is incomplete",
+            "detail": "§3.3 names `DROP COLUMN`, `DROP TABLE`, and `TRUNCATE`, but the phrase \"any statement that destroys persistent rows\" is broader than the explicit examples and can be interpreted inconsistently across SQL dialects and ORMs. That ambiguity invites accidental approval of destructive operations like `DELETE FROM` without a WHERE clause, partition drops, or cascading foreign-key effects that the text does not clearly bind."
+          },
+          {
+            "title": "Authz snapshot can miss behavior",
+            "detail": "In §3.4 S4 v2, the extended authorization regression checks only snapshot `{endpoint_path, method, required_role[], auth_middleware_chain[]}`. That can miss effective permission changes caused by policy engines, route wrappers, middleware order changes, or context-sensitive checks that live outside those arrays, so the system may falsely certify a weakened endpoint as safe."
+          },
+          {
+            "title": "SSRF probes are narrow",
+            "detail": "The new SSRF pillar enumerates a useful payload set, but it still treats detection as a small allowlist of probe classes rather than a general sink-to-egress analysis. A construction could pass the listed probes while still allowing redirects, non-HTTP schemes, DNS-based exfiltration, or indirect fetches through helper libraries."
+          }
+        ],
+        "worse_than_status_quo": "If an operator approves a DROP COLUMN change and the backup verification is miswired or slow, the pipeline may proceed under a false sense of safety and only fail after partial destructive execution in downstream tooling. That is worse than the status quo because v1 at least kept destructive migrations outside this build/wire path and therefore reduced the chance of normalizing them inside automated construction gates.",
+        "precedent": "GitHub Actions and other CI systems have repeatedly shown that broad trust in metadata-based role checks and artifact verification can be brittle; many supply-chain incidents exploited overly permissive workflow context or insufficiently verified artifacts. A closer precedent is database migration tooling in production systems where `DROP COLUMN` was allowed through automation and the backup/restore path turned out not to be restorable in practice, causing irreversible data loss."
+      },
+      "rejection_steelman": "The strongest reason to reject or defer this proposal is that it converts high-blast-radius destructive database work and endpoint-security certification into always-on build/wire machinery before the verification model is mature. Even with the added pillars, the spec still leaves room for false confidence from partial snapshots and payload-based probing, and a mistaken pass would create a safer-looking but actually more dangerous deployment pipeline. Deferring until destructive migrations and security hardening are separated into more specialized, operator-heavy flows would reduce the chance of institutionalizing a flawed gate.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "REJECT",
+          "pick_text": "Reject the 5th pillar — destructive migrations belong in a separate W5x dispatch with manual operator review; the build/wire engine should not handle them.",
+          "rationale": "This keeps high-risk data destruction out of the build/wire path and preserves a clearer separation between wiring work and irreversible schema operations. The S3 DLP controls are useful, but they are not yet strong enough to justify merging destructive migrations into this engine."
+        },
+        "J2v2-S4": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal strengthens S4 in the right direction, but all listed options either under-scope the missing attack classes or overreach by bundling unrelated extras. A better answer would preserve the 8 pillars while also adding broader authz-context and SSRF/redirect coverage, which is not one of the available choices."
+        }
+      },
+      "overallNotes": "I am voting reject/defer on both questions because the drafted controls are directionally good but still leave important bypass and blast-radius gaps. The objections are about specification quality and failure containment, not about the value of the underlying safety goals.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly Complex S3 Tests",
+            "detail": "The addition of a 5th pillar to S3 introduces significant complexity with the data-loss prevention checks, which may be prone to false positives or negatives."
+          },
+          {
+            "title": "S4 Scope Creep",
+            "detail": "Extending S4 to 8 pillars with new tests like SSRF and rate-limit probing significantly broadens the security testing scope, potentially introducing new vulnerabilities or test fragility."
+          },
+          {
+            "title": "Potential for Overly Restrictive Policies",
+            "detail": "The requirement for admin role and verified pg_dump backup for destructive migrations in S3 v2 may be overly restrictive and could hinder development or operational efficiency."
+          }
+        ],
+        "worse_than_status_quo": "The new S3 and S4 requirements could lead to significant slowdowns in development and deployment due to the increased complexity and stringent checks, potentially making the system worse than the status quo if not managed carefully.",
+        "precedent": "Similar stringent security and data protection measures in other projects have sometimes led to operational bottlenecks and increased false positive rates, e.g., in certain financial or healthcare software development projects."
+      },
+      "rejection_steelman": "Rejecting or deferring the proposal could be justified due to the potential operational and development challenges introduced by the new requirements in S3 and S4, which may outweigh the benefits of additional security and data protection measures.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "S3V2-COOLDOWN",
+          "pick_text": "Strengthen further — DLP MUST also require a 24-hour operator-cooldown window between approval and execution.",
+          "rationale": "Adding a cooldown window could mitigate potential risks associated with rushed or ill-considered destructive migrations."
+        },
+        "J2v2-S4": {
+          "key": "S4V2-CSRF",
+          "pick_text": "Strengthen further — add 9th pillar CSRF probes for state-changing endpoints lacking CSRF-token or SameSite enforcement.",
+          "rationale": "CSRF protection is crucial for state-changing endpoints, and adding this check would further enhance the security posture of the build/wire engine."
+        }
+      },
+      "overallNotes": "The proposal introduces significant enhancements to security and data protection but also adds complexity and potential operational challenges.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "S3 DLP lacks Self-Protect tie-in",
+            "detail": "§3.3 requires pg_dump backup + checksum for DROP operations but never references the §10 Self-Protect snapshot/rollback infrastructure; a failed post-backup migration can leave the live DB inconsistent with the governance_record_entry."
+          },
+          {
+            "title": "S4 authz snapshot undefined for new endpoints",
+            "detail": "§3.4 pillar 6 mandates pre-construction authz snapshot for every touched endpoint yet provides no mechanism or storage format when the endpoint itself is created by an endpoint_generation class construction."
+          },
+          {
+            "title": "Non-overridable conflicts with Locked Rule 13",
+            "detail": "§3.4 declares S4 NON-OVERRIDABLE per CEO Locked Rule 13, but canonical §25 rule 13 explicitly grants CEO absolute veto and Panel approval rights, creating an unresolvable precedence clash on any security-abort decision."
+          }
+        ],
+        "worse_than_status_quo": "The eight-pillar S4 gate plus mandatory admin-only DLP checks will cause every non-trivial schema or endpoint change to abort on the first SSRF or rate-limit probe, freezing the wire-up pipeline and forcing manual workarounds that bypass all recorded governance entries.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal layers irreversible destructive-migration and security gates on top of an already complex Self-Governance Layer without defining how the new pillars interact with existing Human Gates or the 26-agent roster lock; deferral is warranted until those cross-references and failure-recovery paths are specified.",
+      "votes": {
+        "J2v2-S3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "None of the options address the missing integration between DLP and the §10 Self-Protect rollback path."
+        },
+        "J2v2-S4": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All options assume the current 8-pillar design is coherent; the authz snapshot gap and Locked Rule 13 conflict make the whole suite unsound."
+        }
+      },
+      "overallNotes": "Adversarial review focused on cross-section consistency failures between the v2 additions and the canonical reference.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "J2v2-S3",
+      "topic": "J2v2-S3 — v2 adds a 5th pillar to S3: Data-Loss Prevention. DROP COLUMN / DROP TABLE / TRUNCATE require explicit rationale citation + verified pg_dump backup + admin role. Right scope? (PANEL-RATIFIABLE — reject path present.)",
+      "options": [
+        {
+          "key": "S3V2-RATIFY",
+          "text": "Ratify S3 v2 as drafted (5 pillars including DLP)."
+        },
+        {
+          "key": "S3V2-COOLDOWN",
+          "text": "Strengthen further — DLP MUST also require a 24-hour operator-cooldown window between approval and execution."
+        },
+        {
+          "key": "S3V2-FULLBACKUP",
+          "text": "Strengthen via backup verification — require backup-restore-and-row-count-match (full restore + count diff < 0.1%) BEFORE the destructive migration runs."
+        },
+        {
+          "key": "S3V2-REJECT",
+          "text": "Reject the 5th pillar — destructive migrations belong in a separate W5x dispatch with manual operator review; the build/wire engine should not handle them."
+        }
+      ],
+      "draftedKey": "S3V2-RATIFY"
+    },
+    {
+      "id": "J2v2-S4",
+      "topic": "J2v2-S4 — v2 extends S4 to 8 pillars (drafted 6 + SSRF + rate-limit) + authz-regression extended to cover REMOVAL. NON-OVERRIDABLE per CEO Locked Rule 13 (strengthen-only). Right scope?",
+      "options": [
+        {
+          "key": "S4V2-RATIFY",
+          "text": "Ratify S4 v2 as drafted (8 pillars including SSRF + rate-limit + extended authz)."
+        },
+        {
+          "key": "S4V2-CSRF",
+          "text": "Strengthen further — add 9th pillar CSRF probes for state-changing endpoints lacking CSRF-token or SameSite enforcement."
+        },
+        {
+          "key": "S4V2-PROTO",
+          "text": "Strengthen further — add 9th pillar prototype-pollution probes for Node.js endpoints that merge user-supplied objects."
+        },
+        {
+          "key": "S4V2-BOTH",
+          "text": "Strengthen further — both — 10-pillar S4 (drafted 8 + CSRF + prototype-pollution)."
+        }
+      ],
+      "draftedKey": "S4V2-RATIFY"
+    }
+  ]
+}

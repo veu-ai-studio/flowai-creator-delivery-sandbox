@@ -1,0 +1,1093 @@
+{
+  "schema": "buildwire-v2-consolidated.sidecar.v1",
+  "startedAt": "2026-05-19T12:51:34.549Z",
+  "finishedAt": "2026-05-19T13:00:11.993Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "runs": [
+    {
+      "name": "run-1-S1-S2",
+      "bundle": 20942,
+      "tally": {
+        "engagedTotal": 7,
+        "invalid": 0,
+        "tangential": 2,
+        "silent": 1,
+        "perQuestion": {
+          "J2v2-S1": {
+            "S1V2-RATIFY": 0,
+            "S1V2-USERJOURNEY": 3,
+            "S1V2-SIMPLIFY": 4,
+            "S1V2-REJECT": 0,
+            "REJECT": 0,
+            "unmatched": 0
+          },
+          "J2v2-S2": {
+            "S2V2-RATIFY": 1,
+            "S2V2-TIGHTER": 0,
+            "S2V2-DENSITY": 3,
+            "S2V2-PERCLASS": 0,
+            "REJECT": 3,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 31,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Hidden-state drift detection gap",
+            "detail": "§3.1 S1-CT-4 tests for mismatched runtime-config hash but doesn't specify HOW the engine detects drift between snapshot time and fix-generator invocation time. Without a continuous monitoring mechanism, the baseline could be stale by construction time."
+          },
+          {
+            "slot": 1,
+            "title": "Density ceiling circumvention via splitting",
+            "detail": "§3.2's 150-line per-file density ceiling can be trivially circumvented by splitting dense changes across multiple files. A malicious actor could distribute a 300-line dense refactor across 2 files at 149 lines each, staying under all caps while achieving the same risky outcome."
+          },
+          {
+            "slot": 1,
+            "title": "External contract checksum brittleness",
+            "detail": "§3.1 field 10 requires sha256 of external API contracts, but third-party APIs change without notice. This will cause false-positive baseline violations when external services update their contracts, blocking legitimate construction work that has nothing to do with the external change."
+          },
+          {
+            "slot": 1,
+            "title": "Background job enumeration incompleteness",
+            "detail": "§3.1 field 9 relies on `architecture_snapshot.background_jobs[]` which is a static declaration. Dynamic jobs spawned at runtime or jobs registered via third-party libraries won't appear in this inventory, creating a false sense of completeness."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Baseline",
+            "detail": "The 10-field baseline in §3.1 S1 may not capture all critical aspects of the product's state, potentially leading to incomplete or inaccurate assessments. For instance, the baseline does not account for external dependencies or third-party services that may impact the product's functionality."
+          },
+          {
+            "slot": 3,
+            "title": "Overly Restrictive Caps",
+            "detail": "The tightened system caps in §3.2 S2 (15/1500/3/4) may be too restrictive, potentially hindering the development of complex features or large-scale refactorings. This could lead to increased technical debt or workarounds that compromise the product's maintainability."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Operator Flexibility",
+            "detail": "The explicit upper bound for redesign_implementation operator-declared scope may limit the operator's ability to adapt to changing requirements or unexpected complexities, potentially leading to delays or suboptimal solutions."
+          },
+          {
+            "slot": 4,
+            "title": "Complexity in Baseline Capture",
+            "detail": "The proposal for §3.1 S1 introduces a ten-field baseline capture, which significantly increases the complexity of the pre-construction process. This could lead to increased overhead and potential errors in capturing all required fields accurately."
+          },
+          {
+            "slot": 4,
+            "title": "Rigid Scope Constraints",
+            "detail": "The tightened system caps in §3.2 S2, particularly the density-of-change ceiling, may be too restrictive. This could hinder necessary modifications and innovations, especially in complex projects where dense changes are unavoidable."
+          },
+          {
+            "slot": 4,
+            "title": "Lack of Flexibility in Redesign Implementation",
+            "detail": "The explicit upper bound for `redesign_implementation` operator-declared scope in §3.2 S2 limits the flexibility needed for substantial redesigns. This could prevent effective redesigns that require more extensive changes."
+          },
+          {
+            "slot": 5,
+            "title": "Baseline Complexity",
+            "detail": "The extended 10-field baseline in §3.1 S1 introduces significant complexity without clear evidence of necessity, potentially leading to maintenance challenges."
+          },
+          {
+            "slot": 5,
+            "title": "Scope Enforcement",
+            "detail": "The non-overridable nature of the tightened system caps in §3.2 S2 may stifle necessary flexibility in construction operations, hindering effective problem-solving."
+          },
+          {
+            "slot": 5,
+            "title": "Density Ceiling",
+            "detail": "The per-file density ceiling of 150 lines in §3.2 S2 could inadvertently limit legitimate refactoring efforts, leading to suboptimal code structures."
+          },
+          {
+            "slot": 6,
+            "title": "S1: Baseline scope creep",
+            "detail": "The addition of 4 new fields to the pre-construction baseline in §3.1 increases complexity and overhead.  The value of these new fields (runtime-config, feature flags, background-job inventory, external service contract checksums) may not justify the added cost and potential for false positives."
+          },
+          {
+            "slot": 6,
+            "title": "S2: Density ceiling ambiguity",
+            "detail": "The 'density-of-change ceiling' in §3.2, limiting changes to 150 lines per file, is ambiguous. It's unclear whether this applies to added lines only, modified lines only, or the sum of both. This ambiguity could lead to inconsistent enforcement."
+          },
+          {
+            "slot": 6,
+            "title": "S2: Clamping redesign scope",
+            "detail": "While capping the `redesign_implementation` scope in §3.2 is intended to prevent unbounded changes, it may hinder legitimate redesign efforts.  The system cap might be too restrictive for certain redesign tasks, forcing operators to break down larger changes into smaller, less efficient steps."
+          },
+          {
+            "slot": 6,
+            "title": "S1: External contract checksum fragility",
+            "detail": "The 'External service contract checksums' in §3.1 are fragile.  Even minor, non-breaking changes to an external API can trigger a checksum mismatch, leading to unnecessary construction aborts and developer frustration."
+          },
+          {
+            "slot": 6,
+            "title": "S2: Interaction of caps unclear",
+            "detail": "The interaction between the aggregate line count cap and the per-file density ceiling is not fully clear. A construction could theoretically violate both caps simultaneously, and it's unclear which violation takes precedence or how the system would report the error."
+          },
+          {
+            "slot": 7,
+            "title": "Volatile baseline fields",
+            "detail": "§3.1 S1's new runtime-config fingerprint and feature-flag state fields capture ephemeral values that change independently of code deployments. This creates false-positive drift detections during construction validation, aborting safe changes due to unrelated config updates."
+          },
+          {
+            "slot": 7,
+            "title": "Density ceiling rigidity",
+            "detail": "§3.2 S2's 150-line per-file density ceiling rejects necessary concentrated refactors. A single-file security patch adding 160 lines of input validation would violate the ceiling despite being safer than splitting across files, forcing fragmented implementations that increase vulnerability surface."
+          },
+          {
+            "slot": 7,
+            "title": "External contract instability",
+            "detail": "§3.1 S1's external service contract checksums assume third-party API stability. Real-world services like AWS S3 frequently update without notice, causing checksum mismatches that falsely abort constructions despite no product-side changes."
+          },
+          {
+            "slot": 7,
+            "title": "Redesign clamp side-effects",
+            "detail": "§3.2 S2 clamping redesign_implementation scope to 15 files forces complex architectural changes into artificial chunks. This creates integration gaps between phases, like security policies split from their target schemas, violating atomicity principles in §7 Output Contract."
+          },
+          {
+            "slot": 8,
+            "title": "Hidden-state scope is incomplete",
+            "detail": "§3.1 S1 adds runtime-config, feature-flag, background-job, and external-contract fingerprints, but it still does not baseline secrets, tenant-level permissions, or third-party rate-limit/state dependencies. A product can pass the 10-field baseline while remaining structurally vulnerable to environment-specific drift that is not captured by any listed hash or inventory."
+          },
+          {
+            "slot": 8,
+            "title": "Density ceiling is too blunt",
+            "detail": "§3.2 adds a 150-lines-per-file density rule, but the proposal does not define how generated code, formatting churn, vendored snapshots, or auto-generated migration files are exempted or normalized. That makes enforcement sensitive to tooling differences and encourages superficial file-splitting rather than safer design, while still missing semantically risky changes under 150 lines."
+          },
+          {
+            "slot": 8,
+            "title": "Redesign clamp can mask intent",
+            "detail": "§3.2 clamps operator-declared redesign_implementation scope to 15/1500/3/4, but the spec does not require a separate explicit approval when the requested scope is materially larger than the clamp. That means the operator may believe a broader rewrite was approved while the engine silently narrows it, creating audit ambiguity and a mismatch between intent, review, and executed work."
+          },
+          {
+            "slot": 9,
+            "title": "Overly Complex Baseline",
+            "detail": "The 10-field baseline in §3.1 S1 may be overly complex and difficult to maintain, potentially leading to errors or inconsistencies in the data."
+          },
+          {
+            "slot": 9,
+            "title": "Tightened System Caps",
+            "detail": "The v2 system caps in §3.2 S2 are tightened, but the rationale behind the specific values chosen (15/1500/3/4) is not clearly explained, potentially leading to overly restrictive limits."
+          },
+          {
+            "slot": 9,
+            "title": "Density-of-Change Ceiling",
+            "detail": "The introduction of a per-file density ceiling in §3.2 S2 may not be sufficient to prevent gameable refactors, as it only limits the number of lines added or modified per file."
+          },
+          {
+            "slot": 10,
+            "title": "S1 baseline omits Self-Protect linkage",
+            "detail": "§3.1 S1 requires 10-field baseline persisted as governance_record_entry kind 'construction_pre_baseline.v1' with S1-CT-3 immutability, yet §10.1 Self-Protect snapshot + rollback is only triggered pre-mutation and never references the baseline record, allowing a post-baseline construction failure to leave dangling immutable entries without §7.5 atomic ProductSSOT rollback."
+          },
+          {
+            "slot": 10,
+            "title": "Density ceiling trips redesign first",
+            "detail": "§3.2 S2 adds per-file 150-line density ceiling enforced before aggregate line_count_cap, but redesign_implementation class (capped at 15/1500/3/4) explicitly permits operator-steered sessions that legitimately exceed 150 lines in a single control-flow file; S2-CT-5 test only covers wire_up and never tests redesign_implementation under CA-16-B."
+          },
+          {
+            "slot": 10,
+            "title": "Non-overridable caps ignore roster lock",
+            "detail": "§3.2 declares system caps NON-OVERRIDABLE per CEO Locked Rule 13, but canonical §25 rule 2 mandates validateRosterPartition() for exactly 26 agents; a construction that adds a new runner agent ID would violate the 26-partition before any cap check, yet no cross-reference exists between construction_class declaration and roster validation."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "J2v2-S1": {
+          "verdict": "PLURALITY_S1V2-SIMPLIFY",
+          "detail": "4 of 7 on S1V2-SIMPLIFY (below 7/10 quorum)",
+          "topKey": "S1V2-SIMPLIFY",
+          "topCount": 4
+        },
+        "J2v2-S2": {
+          "verdict": "SPLIT",
+          "detail": "top tie at 3 between S2V2-DENSITY / REJECT",
+          "topKey": "S2V2-DENSITY",
+          "topCount": 3
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0.07142857142857142,
+        "alignedCount": 1,
+        "totalPossible": 14,
+        "draftedQs": [
+          "J2v2-S1",
+          "J2v2-S2"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 7.1 %, distinct objections 31"
+      },
+      "questions": [
+        {
+          "id": "J2v2-S1",
+          "topic": "J2v2-S1 — v2 extends S1 to a 10-field baseline (v1 6-field + runtime-config + feature-flag state + background-job inventory + external contract checksums). Right scope? (PANEL-RATIFIABLE — reject path present.)",
+          "options": [
+            {
+              "key": "S1V2-RATIFY",
+              "text": "Ratify S1 v2 as drafted (10-field baseline per the 4 NEW v2 hidden-state fields)."
+            },
+            {
+              "key": "S1V2-USERJOURNEY",
+              "text": "Strengthen further — also require operator-declared user-journey baseline (sequence of named flows the product is expected to serve; baseline captures whether each flow is presently functional)."
+            },
+            {
+              "key": "S1V2-SIMPLIFY",
+              "text": "Simplify — keep v1's 6-field baseline; v2's 4 NEW hidden-state fields move to a separate \"extended baseline\" admin-opt-in (default OFF) per CA-15-A v2 dims-6+7 pattern."
+            },
+            {
+              "key": "S1V2-REJECT",
+              "text": "Reject the 4 NEW fields entirely — v1's 6-field baseline is sufficient; the hidden-state failure mode is theoretical, not observed."
+            }
+          ],
+          "draftedKey": "S1V2-RATIFY"
+        },
+        {
+          "id": "J2v2-S2",
+          "topic": "J2v2-S2 — v2 tightens system caps to 15/1500/3/4 + adds per-file density ceiling 150 lines + explicit upper bound for redesign_implementation operator-declared scope. NON-OVERRIDABLE per CEO Locked Rule 13 (strengthen-only). Right caps?",
+          "options": [
+            {
+              "key": "S2V2-RATIFY",
+              "text": "Ratify S2 v2 as drafted (15/1500/3/4 system caps + 150 lines/file density + redesign_implementation clamped to system cap)."
+            },
+            {
+              "key": "S2V2-TIGHTER",
+              "text": "Strengthen further — tighten system caps to 10/1000/2/3 (half-step beyond v2 drafted) + density ceiling to 100 lines/file."
+            },
+            {
+              "key": "S2V2-DENSITY",
+              "text": "Strengthen via density-only — keep v2 system caps 15/1500/3/4 but tighten density to 100 lines/file."
+            },
+            {
+              "key": "S2V2-PERCLASS",
+              "text": "Strengthen via per-class only — keep v2 system caps + density 150, reduce per-class defaults to half (wire_up=3/100/0/2 etc.)."
+            }
+          ],
+          "draftedKey": "S2V2-RATIFY"
+        }
+      ]
+    },
+    {
+      "name": "run-2-S3-S4",
+      "bundle": 20536,
+      "tally": {
+        "engagedTotal": 10,
+        "invalid": 0,
+        "tangential": 0,
+        "silent": 0,
+        "perQuestion": {
+          "J2v2-S3": {
+            "S3V2-RATIFY": 0,
+            "S3V2-COOLDOWN": 2,
+            "S3V2-FULLBACKUP": 4,
+            "S3V2-REJECT": 0,
+            "REJECT": 4,
+            "unmatched": 0
+          },
+          "J2v2-S4": {
+            "S4V2-RATIFY": 0,
+            "S4V2-CSRF": 5,
+            "S4V2-PROTO": 0,
+            "S4V2-BOTH": 1,
+            "REJECT": 4,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 34,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Backup verification insufficient for data loss",
+            "detail": "§3.3 S3 5th pillar requires pg_dump backup but only verifies via checksum and row counts. A corrupted backup that passes checksum but has subtle data corruption in column values would not be detected until after irreversible DROP COLUMN executes."
+          },
+          {
+            "slot": 1,
+            "title": "SSRF probe set incomplete",
+            "detail": "§3.4 S4 7th pillar SSRF probes omit critical vectors: SSRF via redirect chains, protocol smuggling (gopher://), and cloud-specific IMDSv2 token bypass techniques. The probe set tests only basic direct-request patterns."
+          },
+          {
+            "slot": 1,
+            "title": "Rate limit default too permissive",
+            "detail": "§3.4 S4 8th pillar defaults to 60 req/min for undeclared endpoints. For mutation endpoints or resource-intensive operations, this default allows significant abuse potential before triggering 429 responses."
+          },
+          {
+            "slot": 1,
+            "title": "Schema migration lock timeout missing",
+            "detail": "§3.3 S3 3rd pillar requires <5s completion under p99 load but specifies no lock acquisition timeout. A migration could wait indefinitely for locks, causing production outages without automatic abort."
+          },
+          {
+            "slot": 2,
+            "title": "Data-loss prevention complexity",
+            "detail": "The addition of the 5th pillar in §3.3 for data-loss prevention introduces significant complexity. It requires explicit rationale citation, verified backups, and admin roles, which could slow down the development process and increase the risk of human error in managing these requirements."
+          },
+          {
+            "slot": 2,
+            "title": "Non-overridable security suite",
+            "detail": "The §3.4 security suite is non-overridable, which could lead to bottlenecks in development if false positives occur. The inability to bypass these checks, even temporarily, could delay critical updates or fixes."
+          },
+          {
+            "slot": 2,
+            "title": "Scope of construction classes",
+            "detail": "The construction classes in §2 impose strict limits on file and line counts, which may not be sufficient for more complex operations. This could lead to incomplete implementations or the need for multiple operations to achieve a single goal, increasing overhead."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case of failures during the construction process, which could lead to system instability. Specifically, §3.3 S3 — Schema migration testing does not outline a comprehensive rollback plan."
+          },
+          {
+            "slot": 3,
+            "title": "Overly Complex Security Suite",
+            "detail": "The 8-pillar security-test suite in §3.4 S4 — Construction security suite may be overly complex and difficult to maintain, potentially leading to false negatives or positives. The addition of new pillars such as SSRF and rate-limit probes may increase the complexity of the suite."
+          },
+          {
+            "slot": 3,
+            "title": "Inadequate Operator Role Definition",
+            "detail": "The proposal does not provide a clear definition of the operator role and its responsibilities, which could lead to confusion and errors during the construction process. Specifically, the requirement for an admin role in §3.3 S3 — Schema migration testing is not clearly defined."
+          },
+          {
+            "slot": 4,
+            "title": "Schema migration complexity",
+            "detail": "The proposed 5th pillar in §3.3 S3 introduces significant complexity. The requirement for a pre-migration backup and its verification adds additional steps that could delay the migration process and increase the risk of human error."
+          },
+          {
+            "slot": 4,
+            "title": "Overly restrictive security suite",
+            "detail": "The extension of S4 to include SSRF and rate-limit probes, along with the non-overridable nature of these checks, may lead to false positives and unnecessary blockages. This could hinder the development process and delay the deployment of critical features."
+          },
+          {
+            "slot": 4,
+            "title": "Lack of rollback path",
+            "detail": "The proposal does not specify a clear rollback path for schema migrations that fail the data-loss prevention checks. This could lead to incomplete or failed migrations that are difficult to recover from, impacting system stability and data integrity."
+          },
+          {
+            "slot": 5,
+            "title": "Complexity increase",
+            "detail": "Adding a 5th pillar to S3 and extending S4 to 8 pillars significantly increases the complexity of the construction process, potentially leading to longer development cycles and higher maintenance costs."
+          },
+          {
+            "slot": 5,
+            "title": "False positives risk",
+            "detail": "The new data-loss prevention (DLP) pillar in S3 may generate false positives, blocking legitimate destructive migrations and causing unnecessary delays in the construction process."
+          },
+          {
+            "slot": 5,
+            "title": "Over-engineering concern",
+            "detail": "The proposal to strengthen S4 further by adding CSRF and prototype-pollution probes may be considered over-engineering, as these issues might be better addressed through other means, such as code reviews or runtime protections."
+          },
+          {
+            "slot": 6,
+            "title": "§3.3 S3: Backup verification weakness",
+            "detail": "The backup verification in S3 only checks row counts and checksums. It doesn't verify data integrity or consistency, potentially missing subtle data corruption issues introduced during the backup/restore process. A malicious actor could manipulate data in a way that doesn't affect row counts or checksums but still compromises the system."
+          },
+          {
+            "slot": 6,
+            "title": "§3.4 S4: SSRF probe limitations",
+            "detail": "The SSRF probes in S4 use a predefined set of payloads. This approach is vulnerable to bypasses if the application uses custom URL parsing or filtering logic. Attackers can craft SSRF payloads that are not detected by the standard probes but still allow them to access internal resources."
+          },
+          {
+            "slot": 6,
+            "title": "§3.4 S4: Rate-limit default value",
+            "detail": "The rate-limit pillar defaults to 60 req/min if undeclared. This default might be too high for some endpoints, especially those that perform resource-intensive operations. A lower default or a mechanism to dynamically adjust the rate limit based on endpoint functionality would be more secure."
+          },
+          {
+            "slot": 6,
+            "title": "§2: Redesign implementation scope",
+            "detail": "The 'redesign_implementation' class allows operator-declared scope, bounded by system caps. This introduces potential for operator error or malicious intent to declare a scope near the system cap, leading to unintended consequences or security vulnerabilities. The system cap itself might be too high."
+          },
+          {
+            "slot": 7,
+            "title": "DLP pillar complexity",
+            "detail": "The 5th pillar in §3.3 introduces significant complexity, especially the requirement for a pre-migration backup and its verification. This could slow down the development process and introduce new failure points."
+          },
+          {
+            "slot": 7,
+            "title": "Rate-limiting false positives",
+            "detail": "The 8th pillar in §3.4, which tests rate-limiting, might generate false positives if the endpoint is designed to handle bursts of traffic differently. This could lead to unnecessary rejections of valid constructions."
+          },
+          {
+            "slot": 7,
+            "title": "SSRF probe limitations",
+            "detail": "The SSRF probes in §3.4 are limited to a predefined set of payloads. This might not cover all possible SSRF attack vectors, leaving the system vulnerable to more sophisticated attacks."
+          },
+          {
+            "slot": 8,
+            "title": "Backup check is too late",
+            "detail": "In §3.3 S3 v2, the destructive migration can still be approved if the backup is merely taken and verified, but the test is framed after the operator has already authorized the statement. That means the system can spend time and operational risk preparing a destructive change before discovering the backup path is broken, which is the wrong failure point for a build/wire gate."
+          },
+          {
+            "slot": 8,
+            "title": "Admin role is under-specified",
+            "detail": "The new DLP pillar says operator role must be `admin`, but it does not define how that role is asserted, audited, or prevented from being spoofed in the `governance_record_entry`. Because the proposal is explicitly about construction classes and PR gates, an ambiguous role check is a direct policy bypass surface rather than a protective control."
+          },
+          {
+            "slot": 8,
+            "title": "TRUNCATE coverage is incomplete",
+            "detail": "§3.3 names `DROP COLUMN`, `DROP TABLE`, and `TRUNCATE`, but the phrase \"any statement that destroys persistent rows\" is broader than the explicit examples and can be interpreted inconsistently across SQL dialects and ORMs. That ambiguity invites accidental approval of destructive operations like `DELETE FROM` without a WHERE clause, partition drops, or cascading foreign-key effects that the text does not clearly bind."
+          },
+          {
+            "slot": 8,
+            "title": "Authz snapshot can miss behavior",
+            "detail": "In §3.4 S4 v2, the extended authorization regression checks only snapshot `{endpoint_path, method, required_role[], auth_middleware_chain[]}`. That can miss effective permission changes caused by policy engines, route wrappers, middleware order changes, or context-sensitive checks that live outside those arrays, so the system may falsely certify a weakened endpoint as safe."
+          },
+          {
+            "slot": 8,
+            "title": "SSRF probes are narrow",
+            "detail": "The new SSRF pillar enumerates a useful payload set, but it still treats detection as a small allowlist of probe classes rather than a general sink-to-egress analysis. A construction could pass the listed probes while still allowing redirects, non-HTTP schemes, DNS-based exfiltration, or indirect fetches through helper libraries."
+          },
+          {
+            "slot": 9,
+            "title": "Overly Complex S3 Tests",
+            "detail": "The addition of a 5th pillar to S3 introduces significant complexity with the data-loss prevention checks, which may be prone to false positives or negatives."
+          },
+          {
+            "slot": 9,
+            "title": "S4 Scope Creep",
+            "detail": "Extending S4 to 8 pillars with new tests like SSRF and rate-limit probing significantly broadens the security testing scope, potentially introducing new vulnerabilities or test fragility."
+          },
+          {
+            "slot": 9,
+            "title": "Potential for Overly Restrictive Policies",
+            "detail": "The requirement for admin role and verified pg_dump backup for destructive migrations in S3 v2 may be overly restrictive and could hinder development or operational efficiency."
+          },
+          {
+            "slot": 10,
+            "title": "S3 DLP lacks Self-Protect tie-in",
+            "detail": "§3.3 requires pg_dump backup + checksum for DROP operations but never references the §10 Self-Protect snapshot/rollback infrastructure; a failed post-backup migration can leave the live DB inconsistent with the governance_record_entry."
+          },
+          {
+            "slot": 10,
+            "title": "S4 authz snapshot undefined for new endpoints",
+            "detail": "§3.4 pillar 6 mandates pre-construction authz snapshot for every touched endpoint yet provides no mechanism or storage format when the endpoint itself is created by an endpoint_generation class construction."
+          },
+          {
+            "slot": 10,
+            "title": "Non-overridable conflicts with Locked Rule 13",
+            "detail": "§3.4 declares S4 NON-OVERRIDABLE per CEO Locked Rule 13, but canonical §25 rule 13 explicitly grants CEO absolute veto and Panel approval rights, creating an unresolvable precedence clash on any security-abort decision."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "J2v2-S3": {
+          "verdict": "SPLIT",
+          "detail": "top tie at 4 between S3V2-FULLBACKUP / REJECT",
+          "topKey": "S3V2-FULLBACKUP",
+          "topCount": 4
+        },
+        "J2v2-S4": {
+          "verdict": "PLURALITY_S4V2-CSRF",
+          "detail": "5 of 10 on S4V2-CSRF (below 7/10 quorum)",
+          "topKey": "S4V2-CSRF",
+          "topCount": 5
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0,
+        "alignedCount": 0,
+        "totalPossible": 20,
+        "draftedQs": [
+          "J2v2-S3",
+          "J2v2-S4"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 0.0 %, distinct objections 34"
+      },
+      "questions": [
+        {
+          "id": "J2v2-S3",
+          "topic": "J2v2-S3 — v2 adds a 5th pillar to S3: Data-Loss Prevention. DROP COLUMN / DROP TABLE / TRUNCATE require explicit rationale citation + verified pg_dump backup + admin role. Right scope? (PANEL-RATIFIABLE — reject path present.)",
+          "options": [
+            {
+              "key": "S3V2-RATIFY",
+              "text": "Ratify S3 v2 as drafted (5 pillars including DLP)."
+            },
+            {
+              "key": "S3V2-COOLDOWN",
+              "text": "Strengthen further — DLP MUST also require a 24-hour operator-cooldown window between approval and execution."
+            },
+            {
+              "key": "S3V2-FULLBACKUP",
+              "text": "Strengthen via backup verification — require backup-restore-and-row-count-match (full restore + count diff < 0.1%) BEFORE the destructive migration runs."
+            },
+            {
+              "key": "S3V2-REJECT",
+              "text": "Reject the 5th pillar — destructive migrations belong in a separate W5x dispatch with manual operator review; the build/wire engine should not handle them."
+            }
+          ],
+          "draftedKey": "S3V2-RATIFY"
+        },
+        {
+          "id": "J2v2-S4",
+          "topic": "J2v2-S4 — v2 extends S4 to 8 pillars (drafted 6 + SSRF + rate-limit) + authz-regression extended to cover REMOVAL. NON-OVERRIDABLE per CEO Locked Rule 13 (strengthen-only). Right scope?",
+          "options": [
+            {
+              "key": "S4V2-RATIFY",
+              "text": "Ratify S4 v2 as drafted (8 pillars including SSRF + rate-limit + extended authz)."
+            },
+            {
+              "key": "S4V2-CSRF",
+              "text": "Strengthen further — add 9th pillar CSRF probes for state-changing endpoints lacking CSRF-token or SameSite enforcement."
+            },
+            {
+              "key": "S4V2-PROTO",
+              "text": "Strengthen further — add 9th pillar prototype-pollution probes for Node.js endpoints that merge user-supplied objects."
+            },
+            {
+              "key": "S4V2-BOTH",
+              "text": "Strengthen further — both — 10-pillar S4 (drafted 8 + CSRF + prototype-pollution)."
+            }
+          ],
+          "draftedKey": "S4V2-RATIFY"
+        }
+      ]
+    },
+    {
+      "name": "run-3-S5-S6",
+      "bundle": 22554,
+      "tally": {
+        "engagedTotal": 10,
+        "invalid": 0,
+        "tangential": 0,
+        "silent": 0,
+        "perQuestion": {
+          "J2v2-S5": {
+            "S5V2-RATIFY": 2,
+            "S5V2-RETAIN90": 1,
+            "S5V2-WINDOW24": 1,
+            "S5V2-BOTH": 2,
+            "REJECT": 4,
+            "unmatched": 0
+          },
+          "J2v2-S6": {
+            "S6V2-RATIFY": 0,
+            "S6V2-TWOADMIN": 2,
+            "S6V2-LLMRAT": 2,
+            "S6V2-BOTH": 1,
+            "REJECT": 5,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 32,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "In-flight invalidation creates thrashing",
+            "detail": "§3.6's context-change invalidation mechanism will cause approval thrashing on active products. Any delta_log entry from another pipeline run invalidates pending approvals, creating a race condition where high-activity products become unconstructable."
+          },
+          {
+            "slot": 1,
+            "title": "Auto-rollback 1h window too narrow",
+            "detail": "§3.5's 1-hour auto-rollback window for Phase B failures is too short for real-world deploy propagation. CDN cache, edge workers, and database replicas often take >1h to fully converge, meaning legitimate deploys could auto-rollback."
+          },
+          {
+            "slot": 1,
+            "title": "Rationale stop-words list gameable",
+            "detail": "§3.6's rationale quality validation uses a static stop-words list that's trivially bypassed by adding filler text. 'lgtm + 60 chars of lorem ipsum' passes validation while providing no actual rationale."
+          },
+          {
+            "slot": 1,
+            "title": "Real-rollback CI cost explosion",
+            "detail": "§3.5's real-rollback dry-run spawns ephemeral DB copies for every construction. For schema_migration class on large databases, this means GB-scale data copies per PR, multiplying CI costs by 10-100x."
+          },
+          {
+            "slot": 2,
+            "title": "Rollback mechanism complexity",
+            "detail": "The rollback mechanism in §3.5 introduces significant complexity with its real-rollback execution in CI and automatic rollback on Phase B failure. This complexity could lead to increased maintenance overhead and potential for new failure modes, especially if the rollback logic itself contains bugs."
+          },
+          {
+            "slot": 2,
+            "title": "Approval process rigidity",
+            "detail": "The approval process in §3.6 is highly rigid, requiring admin approval for all construction classes and a 15-minute freshness window. This could lead to bottlenecks in the development process, especially in fast-paced environments where quick iterations are necessary."
+          },
+          {
+            "slot": 2,
+            "title": "Potential for false positives in rationale validation",
+            "detail": "The rationale-quality validation in §3.6 could lead to false positives, where valid rationales are rejected due to overly strict matching against stop-words or phrases. This could frustrate operators and slow down the approval process unnecessarily."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Rollback Testing",
+            "detail": "The proposal does not provide sufficient details on how the rollback mechanism will be tested, particularly in scenarios where the construction-class operation fails. This lack of testing could lead to unforeseen consequences when the rollback is actually needed, as seen in the §3.5 S5 section."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Rationale Quality Validation",
+            "detail": "The rationale quality validation in §3.6 S6 may not be robust enough, as it only checks for a minimum of 60 characters and the absence of stop-words. This might not guarantee that the rationale provided is meaningful or relevant to the construction-class operation, potentially leading to poorly justified approvals."
+          },
+          {
+            "slot": 3,
+            "title": "In-Flight Context-Change Invalidation Limitations",
+            "detail": "The in-flight context-change invalidation mechanism in §3.6 S6 might not cover all possible scenarios where the context could change, such as external changes to the product or environment that are not captured by the governance_record_entry. This could lead to approvals being invalidated unnecessarily or, worse, not being invalidated when they should be."
+          },
+          {
+            "slot": 4,
+            "title": "Real-Rollback Execution",
+            "detail": "The real-rollback execution in CI (§3.5 S5) is complex and may introduce new points of failure. The system needs to ensure that the ephemeral copy accurately reflects the production environment, which can be challenging due to environmental differences."
+          },
+          {
+            "slot": 4,
+            "title": "Admin Role Requirement",
+            "detail": "Requiring admin-role approval for all construction classes (§3.6 S6) may create a bottleneck. Admin resources are limited, and this requirement could slow down the construction process, especially for simpler tasks like wire_up and endpoint_generation."
+          },
+          {
+            "slot": 4,
+            "title": "Rationale Quality Validation",
+            "detail": "The rationale quality validation (§3.6 S6) might be too rigid. Operators could struggle to provide meaningful rationales that meet the character and content requirements, leading to unnecessary delays and re-approvals."
+          },
+          {
+            "slot": 5,
+            "title": "Rollback complexity",
+            "detail": "The new rollback mechanism in §3.5 S5 introduces additional complexity with real-rollback execution in CI and automatic rollback on Phase B failure, which may lead to unforeseen issues in the rollback process itself."
+          },
+          {
+            "slot": 5,
+            "title": "Approval burden",
+            "detail": "The strengthened pre-construction operator approval in §3.6 S6, requiring admin-role approval for all classes with a 15-minute freshness window and rationale-quality validation, may significantly increase the operational burden on admins without a clear benefit."
+          },
+          {
+            "slot": 5,
+            "title": "Context-change invalidation risk",
+            "detail": "The in-flight context-change invalidation mechanism in §3.6 S6 could lead to frequent re-approvals if new governance entries are common, potentially disrupting the construction workflow."
+          },
+          {
+            "slot": 6,
+            "title": "S5: Rollback complexity",
+            "detail": "The real-rollback dry-run in CI in §3.5 adds significant complexity and operational overhead.  It requires maintaining ephemeral DBs and ensuring the rollback path is robust, increasing the risk of CI failures unrelated to the actual code changes."
+          },
+          {
+            "slot": 6,
+            "title": "S6: Context invalidation fragility",
+            "detail": "The in-flight context-change invalidation in §3.6, while well-intentioned, is overly sensitive.  Any new `delta_log`, `governance_record`, `score_history`, or `governance_record_entry` row landing on the product invalidates the approval, potentially leading to frequent re-approvals and developer frustration."
+          },
+          {
+            "slot": 6,
+            "title": "S6: Rationale quality subjectivity",
+            "detail": "The rationale quality validation in §3.6, while aiming to improve rationale quality, relies on a simple stop-word list and character count. This is easily bypassed with meaningless text and doesn't guarantee a truly informative rationale."
+          },
+          {
+            "slot": 6,
+            "title": "S5: Auto-rollback race condition",
+            "detail": "The automatic rollback on Phase B failure within 1 hour of PR merge in §3.5 could lead to race conditions. If a legitimate fix is deployed shortly after the initial merge, the auto-rollback could undo the correct fix."
+          },
+          {
+            "slot": 7,
+            "title": "S5 real-rollback CI overhead",
+            "detail": "§3.5 S5 requires full-state ephemeral copy creation and execution for every construction. For large products, this duplicates production-scale infrastructure in CI, creating significant resource overhead. The tolerance threshold for baseline state matching is undefined, risking flaky failures from transient environmental differences."
+          },
+          {
+            "slot": 7,
+            "title": "S6 rationale validation bypass",
+            "detail": "§3.6 S6 rationale validation uses a static stop-words list that is trivially bypassable (e.g., 'looks fine to me' or 'approved per policy'). The 60-character minimum doesn't ensure substantive reasoning. Adversarial admins could enter padded nonsense text that technically complies but provides no meaningful oversight."
+          },
+          {
+            "slot": 7,
+            "title": "S6 context invalidation overbroad",
+            "detail": "§3.6 S6 invalidates approval for ANY new governance record entry, including non-critical updates like score fluctuations. In high-velocity products, this forces constant re-approvals, creating operational friction. The mechanism doesn't distinguish between relevant state changes (e.g., schema modifications) and benign noise."
+          },
+          {
+            "slot": 7,
+            "title": "S5 automatic rollback risks",
+            "detail": "§3.5 S5 auto-rollback on Phase B failure within 1 hour could trigger premature rollbacks for transient issues (e.g., deployment lag). The 1-hour window is arbitrary and may not align with real failure modes. No hysteresis mechanism exists to prevent flip-flopping between states during partial outages."
+          },
+          {
+            "slot": 8,
+            "title": "Auto-rollback amplifies blast radius",
+            "detail": "§3.5 adds automatic rollback on Phase B post-merge failure within 1 hour. That couples live-preview detection to an irreversible action without operator confirmation, so a transient preview glitch can trigger a rollback of a healthy merge and create churn across downstream deploys."
+          },
+          {
+            "slot": 8,
+            "title": "Retention period underfits forensics",
+            "detail": "§3.5 sets construction_snapshot retention at 30 days, but many real defects and compliance reviews surface later than that. The spec also makes rollback evidence load-bearing for CI, so deleting snapshots after 30 days can prevent post-incident reconstruction and root-cause analysis."
+          },
+          {
+            "slot": 8,
+            "title": "Approval invalidation is overbroad",
+            "detail": "§3.6 invalidates approval on any new delta_log, governance_record, score_history, or governance_record_entry row for the product. In a busy system that creates false invalidations from unrelated governance noise, forcing repeated re-approval and increasing the chance that operators bypass or rush the process."
+          },
+          {
+            "slot": 9,
+            "title": "Overly Complex Approval Process",
+            "detail": "§3.6 S6 introduces multiple new checks (rationale-quality validation, in-flight context-change invalidation) that may slow down the approval process without clear benefit. The added complexity could lead to approval fatigue or errors."
+          },
+          {
+            "slot": 9,
+            "title": "Limited Rollback Window",
+            "detail": "§3.5 S5's automatic rollback on Phase B failure is limited to 1 hour post-PR merge. This window may be too narrow to catch all potential issues, especially for complex constructions."
+          },
+          {
+            "slot": 10,
+            "title": "S5 real-rollback execution fragility",
+            "detail": "§3.5 S5-CT-8 tests only a missing-column DOWN migration in ephemeral DB but does not cover external service dependencies or RLS policy side-effects referenced in schema_migration class (§2), so rollback success assertion against Phase A baseline can pass while leaving persistent state inconsistent."
+          },
+          {
+            "slot": 10,
+            "title": "S6 approval invalidation thrashing",
+            "detail": "§3.6 S6 in-flight context-change invalidation triggers on any new delta_log or governance_record_entry for the productId, which §7.5 ProductSSOT atomic writes and §10 Self-Audit scoring will generate on every run, forcing repeated re-approvals inside the 15-minute freshness window."
+          },
+          {
+            "slot": 10,
+            "title": "Redesign class cap conflicts with roster lock",
+            "detail": "§2 redesign_implementation is clamped to system cap 15/1500/3/4 while §25 Locked Rule 2 requires exact 26-agent partition validation in BaseAgent.js; no mechanism is defined to exceed the cap when roster changes are needed."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "J2v2-S5": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "4 of 10 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 4
+        },
+        "J2v2-S6": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "5 of 10 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 5
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0.1,
+        "alignedCount": 2,
+        "totalPossible": 20,
+        "draftedQs": [
+          "J2v2-S5",
+          "J2v2-S6"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 10.0 %, distinct objections 32"
+      },
+      "questions": [
+        {
+          "id": "J2v2-S5",
+          "topic": "J2v2-S5 — v2 strengthens S5 with: real-rollback execution in CI (replacing simulation) + 30-day retention + automatic rollback on Phase B post-merge failure within 1h. NON-OVERRIDABLE per CEO Locked Rule 13 (strengthen-only). Right mechanism?",
+          "options": [
+            {
+              "key": "S5V2-RATIFY",
+              "text": "Ratify S5 v2 as drafted (real-rollback execution + 30-day retention + auto-rollback on post-merge Phase B failure within 1h)."
+            },
+            {
+              "key": "S5V2-RETAIN90",
+              "text": "Strengthen retention — 90-day retention (instead of 30-day); covers longer-tail defect-discovery windows."
+            },
+            {
+              "key": "S5V2-WINDOW24",
+              "text": "Strengthen auto-rollback trigger window — auto-rollback on Phase B failure within 24 hours of PR merge (instead of 1h)."
+            },
+            {
+              "key": "S5V2-BOTH",
+              "text": "Strengthen via belt-and-suspenders — both — 90-day retention + 24h auto-rollback window."
+            }
+          ],
+          "draftedKey": "S5V2-RATIFY"
+        },
+        {
+          "id": "J2v2-S6",
+          "topic": "J2v2-S6 — v2 strengthens S6 with: admin-required for ALL 4 classes + 15-min freshness + rationale-quality validation + in-flight context-change invalidation. NON-OVERRIDABLE per CEO Locked Rule 13 (strengthen-only). Right approval model?",
+          "options": [
+            {
+              "key": "S6V2-RATIFY",
+              "text": "Ratify S6 v2 as drafted (admin-all + 15-min + rationale-quality + in-flight invalidation)."
+            },
+            {
+              "key": "S6V2-TWOADMIN",
+              "text": "Strengthen further — require two-admin sign-off for schema_migration + redesign_implementation; single-admin OK for wire_up + endpoint_generation."
+            },
+            {
+              "key": "S6V2-LLMRAT",
+              "text": "Strengthen rationale — require LLM-judged rationale quality (LLM-judge score ≥0.8 with admin override)."
+            },
+            {
+              "key": "S6V2-BOTH",
+              "text": "Strengthen via belt-and-suspenders — both — two-admin for heavy classes + LLM-judged rationale."
+            }
+          ],
+          "draftedKey": "S6V2-RATIFY"
+        }
+      ]
+    },
+    {
+      "name": "run-4-S7-S8",
+      "bundle": 20827,
+      "tally": {
+        "engagedTotal": 9,
+        "invalid": 0,
+        "tangential": 1,
+        "silent": 0,
+        "perQuestion": {
+          "J2v2-S7": {
+            "S7V2-RATIFY": 1,
+            "S7V2-EVERY": 1,
+            "S7V2-REJECT": 0,
+            "S7V2-PERCLASS": 1,
+            "REJECT": 6,
+            "unmatched": 0
+          },
+          "J2v2-S8": {
+            "S8V2-RATIFY": 1,
+            "S8V2-STRENGTHEN": 2,
+            "S8V2-SIMPLIFY": 6,
+            "S8V2-REJECT": 0,
+            "REJECT": 0,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 31,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Squash-merge destroys forensic history",
+            "detail": "§3.7's squash-merge for multi-construction redesign sessions collapses multiple construction commits into one, making it impossible to bisect which specific construction in a session caused a regression. This directly conflicts with §7.6(e) per-fix attribution requirement for Self-Heal forensics."
+          },
+          {
+            "slot": 1,
+            "title": "1-hour rollback window too narrow",
+            "detail": "§3.8's live-preview Phase B auto-rollback triggers only within 1 hour of PR merge. Many production issues (memory leaks under real traffic patterns, slow query degradation) manifest after hours or days, leaving the system vulnerable after the 1-hour window expires."
+          },
+          {
+            "slot": 1,
+            "title": "Backend probes miss distributed failures",
+            "detail": "§3.8's backend probes test only single-endpoint behaviors (connection pools, memory, deadlocks). They completely miss distributed system failures like cascading timeouts between services, eventual consistency violations, or message queue backpressure that only appear when multiple endpoints interact."
+          },
+          {
+            "slot": 2,
+            "title": "Sub-branch complexity",
+            "detail": "In §3.7, the introduction of sub-branches for multi-construction redesign sessions adds complexity to the branch management process. This could lead to increased overhead in managing branches and potential confusion among developers, especially if the sub-branching strategy is not well understood or documented."
+          },
+          {
+            "slot": 2,
+            "title": "Phase B redundancy",
+            "detail": "The proposal in §3.8 to run Phase B three times, including a live-preview Phase B, may be redundant. The pre-PR Phase B and operator PR review should already catch most issues, and the additional live-preview Phase B could be seen as an unnecessary duplication of effort, increasing the time and resources required for each deployment."
+          },
+          {
+            "slot": 2,
+            "title": "Backend probe limitations",
+            "detail": "The backend probes introduced in §3.8 for `endpoint_generation` may not cover all potential failure modes. For example, the memory-leak probe only checks for RSS growth over 60 seconds, which might not be sufficient to detect leaks that manifest over longer periods or under different load conditions."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case of failures during the construction process, which could lead to system instability. This is particularly concerning in §3.7 S7, where the use of sub-branches for multi-construction redesign sessions may introduce additional complexity."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Testing",
+            "detail": "The testing strategy outlined in §3.8 S8, while improved, may still not be sufficient to catch all potential issues, particularly in the context of endpoint_generation and schema_migration. The addition of dual-load testing and backend probes is a step in the right direction, but may not be enough to guarantee the stability of the system."
+          },
+          {
+            "slot": 3,
+            "title": "Over-Reliance on Automation",
+            "detail": "The proposal's emphasis on automation, while efficient, may lead to over-reliance on automated systems, potentially masking human errors or oversights. This is particularly concerning in the context of the Self-Governance Layer, where automated decision-making may not always align with human intent."
+          },
+          {
+            "slot": 4,
+            "title": "Complexity in Branch Management",
+            "detail": "The introduction of sub-branches for multi-construction redesign sessions in §3.7 S7 adds unnecessary complexity. Managing sub-branches and ensuring their proper squash-merge could lead to operational overhead and potential errors in branch management."
+          },
+          {
+            "slot": 4,
+            "title": "Overhead in Phase B Testing",
+            "detail": "The extended Phase B testing in §3.8 S8, including live-preview Phase B, dual-load testing, and backend probes, may introduce significant overhead. This could slow down the deployment process and increase the computational resources required for testing."
+          },
+          {
+            "slot": 4,
+            "title": "Potential for False Positives",
+            "detail": "The backend probes in §3.8 S8, such as the memory-leak probe and transaction-deadlock probe, might generate false positives. These could lead to unnecessary rollbacks and delays in the deployment process, impacting the system's overall efficiency."
+          },
+          {
+            "slot": 5,
+            "title": "Sub-branch complexity",
+            "detail": "The introduction of per-session sub-branches in §3.7 S7 adds unnecessary complexity without a clear safety benefit, potentially leading to confusion and errors in branch management."
+          },
+          {
+            "slot": 5,
+            "title": "Live-preview risk",
+            "detail": "The live-preview Phase B in §3.8 S8 could introduce risks if the preview environment does not accurately reflect production conditions, leading to false positives or negatives in testing."
+          },
+          {
+            "slot": 5,
+            "title": "Backend probe overhead",
+            "detail": "The addition of backend probes in §3.8 S8 may introduce significant overhead and complexity, potentially slowing down the construction process without a commensurate increase in safety."
+          },
+          {
+            "slot": 6,
+            "title": "Sub-branch complexity",
+            "detail": "The introduction of sub-branches for multi-construction redesign sessions in §3.7 adds complexity to the branching strategy.  The benefits of this added complexity, such as isolation, may not outweigh the cognitive overhead and potential for merge conflicts, especially if session IDs are not globally unique."
+          },
+          {
+            "slot": 6,
+            "title": "Live-preview rollback window",
+            "detail": "The 1-hour auto-rollback window after PR merge in §3.8 for live-preview Phase B failures might be insufficient for detecting certain types of regressions, especially those that manifest under sustained load or specific usage patterns. A longer monitoring period with more sophisticated anomaly detection might be necessary."
+          },
+          {
+            "slot": 6,
+            "title": "Redesign scope creep",
+            "detail": "The `redesign_implementation` construction class in §2, while bounded, still allows for significant changes. The reliance on operator-declared scope, even with system caps, introduces a risk of scope creep and unintended consequences, especially if the operator lacks a comprehensive understanding of the system's dependencies."
+          },
+          {
+            "slot": 7,
+            "title": "S7 squash-merge obscures history",
+            "detail": "§3.7 S7's sub-branch squash-merges erase granular commit history for multi-construction sessions, violating Locked Rule #1 (source-of-truth hierarchy) by making forensic analysis of individual session steps dependent on 30-day-retained sub-branches rather than canonical branch history."
+          },
+          {
+            "slot": 7,
+            "title": "S8 memory-leak probe false negatives",
+            "detail": "§3.8 S8's 20% RSS growth threshold for memory leaks allows dangerous accumulation (e.g. 19% growth per deploy). Combined with CA-14-B's continuous crawl cadence, this could permit exponential memory growth across deployments while passing Phase B."
+          },
+          {
+            "slot": 7,
+            "title": "Live-preview Phase B time window gap",
+            "detail": "The 1-hour auto-rollback window for live-preview Phase B failures (§3.8 S8-CT4) creates a race condition: latency-sensitive production traffic hitting the preview URL between merge and test completion could experience errors before rollback triggers."
+          },
+          {
+            "slot": 8,
+            "title": "Sub-branch merge hides provenance",
+            "detail": "In §3.7 S7, multi-construction redesign sessions squash-merge several commits from `<self_renewal_branch>/redesign-session-<sessionId>` into one per-product branch commit. That preserves history compactness, but it weakens forensic traceability promised elsewhere in the artifact because per-construction blame and intermediate rollback points disappear at the branch-of-record. The spec says `governance_record_entry` will record the merge, but that is not the same as retaining navigable source history."
+          },
+          {
+            "slot": 8,
+            "title": "Live-preview rollback window is narrow",
+            "detail": "§3.8 S8 requires a live-preview Phase B rerun only after PR merge, and failures within 1 hour trigger auto-rollback. Failures that surface after one hour are now outside the hard rollback guarantee, even though they may still be caused by the construction; that creates a blind spot versus status quo monitoring. The proposal adds a brittle temporal boundary where the system may silently drift into a bad state after the protection window closes."
+          },
+          {
+            "slot": 8,
+            "title": "Heavy-load probe is under-specified",
+            "detail": "The `endpoint_generation` dual-load requirement in §3.8 names 1 req/s and 100 req/s, but it does not define data volume, request mix, warmup, or success thresholds beyond generic correctness/latency/error-shape. In practice this can produce false confidence: a trivial endpoint can pass 100 req/s for 60s while still failing under bursty, stateful, or tenant-skewed traffic. The added probes may therefore certify the wrong thing while consuming nontrivial CI/runtime budget."
+          },
+          {
+            "slot": 8,
+            "title": "Connection-pool metric can misfire",
+            "detail": "The backend probe in §3.8 says pool size should be at least `p99 concurrent connections`, but the spec does not define how p99 is measured or over what interval. That can make compliant implementations fail due to measurement noise, while noncompliant implementations can tune superficially to the probe instead of actual workload behavior. This is a classic metric-gaming surface, especially for systems with short-lived spikes."
+          },
+          {
+            "slot": 9,
+            "title": "Sub-branch complexity",
+            "detail": "§3.7 introduces per-session sub-branches for multi-construction redesign sessions, adding complexity to the branch management process. The benefits of this added complexity are not clearly justified."
+          },
+          {
+            "slot": 9,
+            "title": "Live-preview Phase B timing",
+            "detail": "§3.8 introduces a live-preview Phase B run after PR merge, which may not be sufficient to catch issues that arise from the merge itself. The 1-hour window for auto-rollback may be too short for some constructions."
+          },
+          {
+            "slot": 9,
+            "title": "Backend probe coverage",
+            "detail": "§3.8 introduces three backend probes for endpoint_generation constructions, but it is unclear whether these probes are comprehensive enough to cover all potential issues, such as performance regressions under varying loads."
+          },
+          {
+            "slot": 10,
+            "title": "S7 sub-branch squash-merge",
+            "detail": "§3.7 defines per-session sub-branches with 30-day retention and squash-merge on approval, but provides no mechanism to prevent sub-branch divergence from the per-product self_renewal_branch HEAD during the session window, violating the CA-14-D invariant that every construction commit must land on the branch-of-record."
+          },
+          {
+            "slot": 10,
+            "title": "S8 live-preview 1-hour rollback",
+            "detail": "§3.8 S8-CT-4 triggers S5 auto-rollback only on Phase B failure within 1 hour of PR merge against the Vercel preview URL, yet the proposal gives no definition of how transient preview-environment differences (cold starts, env var propagation) are distinguished from genuine regressions."
+          },
+          {
+            "slot": 10,
+            "title": "S8 backend probe thresholds",
+            "detail": "§3.8 mandates RSS growth ≤20% and pool size ≥ p99 concurrent connections for endpoint_generation, but these numeric bounds appear in the conformance tests without reference to any measurement baseline or adjustment for the project's existing connection-pool configuration in api/_lib."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "J2v2-S7": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "6 of 9 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 6
+        },
+        "J2v2-S8": {
+          "verdict": "PLURALITY_S8V2-SIMPLIFY",
+          "detail": "6 of 9 on S8V2-SIMPLIFY (below 7/10 quorum)",
+          "topKey": "S8V2-SIMPLIFY",
+          "topCount": 6
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0.1111111111111111,
+        "alignedCount": 2,
+        "totalPossible": 18,
+        "draftedQs": [
+          "J2v2-S7",
+          "J2v2-S8"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 11.1 %, distinct objections 31"
+      },
+      "questions": [
+        {
+          "id": "J2v2-S7",
+          "topic": "J2v2-S7 — v2 adds per-session sub-branches within per-product `self_renewal_branch` for CA-16-B multi-construction redesign sessions; squash-merge to per-product branch on operator approval; per-product branch remains merge target. Right discipline? (PANEL-RATIFIABLE.)",
+          "options": [
+            {
+              "key": "S7V2-RATIFY",
+              "text": "Ratify S7 v2 as drafted (sub-branches for multi-construction; squash-merge; per-product branch remains target)."
+            },
+            {
+              "key": "S7V2-EVERY",
+              "text": "Strengthen — every construction (not just multi-construction sessions) uses a per-construction sub-branch; squash-merges to per-product branch on PR approval."
+            },
+            {
+              "key": "S7V2-REJECT",
+              "text": "Reject sub-branches — keep v1 behavior (every construction commits directly to per-product `self_renewal_branch`); sub-branches add complexity without commensurate safety gain."
+            },
+            {
+              "key": "S7V2-PERCLASS",
+              "text": "Adjust — sub-branches per construction-class instead of per-session (`<self_renewal_branch>/<class>/<runId>`)."
+            }
+          ],
+          "draftedKey": "S7V2-RATIFY"
+        },
+        {
+          "id": "J2v2-S8",
+          "topic": "J2v2-S8 — v2 extends S8 with: live-preview Phase B post-PR-merge (auto-rollback on failure within 1h) + dual-load testing for endpoint_generation + backend probes (connection-pool / memory-leak / transaction-deadlock). PANEL-RATIFIABLE per §3.8 (reject path present). Right scope?",
+          "options": [
+            {
+              "key": "S8V2-RATIFY",
+              "text": "Ratify S8 v2 as drafted (3 Phase B runs incl live-preview; dual-load; backend probes)."
+            },
+            {
+              "key": "S8V2-STRENGTHEN",
+              "text": "Strengthen further — add load-profile-shadow-traffic (replay 30 minutes of real production traffic against preview URL before merge) OR fail-injection (kill DB connection mid-request, network-partition, simulate disk-full; assert graceful degradation) OR both."
+            },
+            {
+              "key": "S8V2-SIMPLIFY",
+              "text": "Simplify — keep v1's pre-PR-only Phase B; drop v2 additions (live-preview post-merge + dual-load + backend probes); rely on post-deploy monitoring."
+            },
+            {
+              "key": "S8V2-REJECT",
+              "text": "Reject S8 v2 — Phase B against construction artifacts is duplicative of S4 + S3 + operator PR review; remove the mandatory Phase B step entirely."
+            }
+          ],
+          "draftedKey": "S8V2-RATIFY"
+        }
+      ]
+    }
+  ]
+}
