@@ -464,6 +464,16 @@ export async function runOrchestration(args = {}) {
   const _appendGovernanceEntry  = deps.appendGovernanceEntry  || appendGovernanceEntry;
   const _ensureProductSsotRow   = deps.ensureProductSsotRow   || ensureProductSsotRow;
   const _remediationEngine      = deps.remediationEngine      || remediationEngine;
+  // CA-17 Phase 1 — Build/Wire ConstructionEngine hook (DI-only; default no-op).
+  // When a product_registry row sets construction_eligible = true AND Phase B
+  // findings carry wire_up candidates, the engine generates real endpoint code
+  // + frontend wiring per CA-17 §4 (S1→S2→S6→GENERATE→S4→S5 envelopes). The
+  // resulting files are merged into fileChanges before the existing
+  // commit + deploy path. Default deps.runConstruction === null = standard
+  // flow unchanged.
+  const _runConstruction        = (typeof deps.runConstruction === 'function')
+    ? deps.runConstruction
+    : null;
   // DISPATCH 28: scoreCrawlOutput is DI-overridable so tests can drive
   // the §7.6 gate without having to construct issue-shaped crawl mocks.
   const _scoreCrawlOutput       = deps.scoreCrawlOutput       || scoreCrawlOutput;
@@ -1215,6 +1225,80 @@ export async function runOrchestration(args = {}) {
           error: e?.message ?? String(e), code: e?.code ?? 'FIX_GENERATION_FAILED' });
       }
       await state.checkpoint(onCheckpoint, { lastStep: 7, iteration: iterationNumber });
+
+      // CA-17 Phase 1 — Build/Wire ConstructionEngine attempt (opt-in via
+      // deps.runConstruction + product_registry.construction_eligible).
+      // Runs ADDITIVELY on top of standard fix generation: any wire_up
+      // candidate file set is merged into fileChanges and validated by the
+      // existing parse-check + commit path. Failures NEVER halt the
+      // pipeline — Phase 1 proof-of-concept logs the abort and continues.
+      if (_runConstruction && product?.construction_eligible === true) {
+        try {
+          const t0 = Date.now();
+          const constructionResult = await _runConstruction({
+            product,
+            environment,
+            phaseBFindings: state.phaseBFindings ?? [],
+            baselineArgs: {
+              preScore: preScoreEnvelope,
+              findings: iterLog.preGtm?.issues ?? [],
+              pages: state.crawlOutput?.pages ?? [],
+              endpoints: [],
+              schema: '',
+              dependencyGraph: '',
+              extendedEnabled: product?.construction_extended_baseline_enabled === true,
+            },
+            knownPackages: knownPackages
+              ? Object.fromEntries(Array.from(knownPackages).map((n) => [n, true]))
+              : {},
+            originPageResolver: deps.constructionOriginPageResolver ?? null,
+            registryConfig: {
+              s6AutoApproveInTestMode: product?.construction_s6_auto_approve_in_test_mode === true,
+              snapshotRetentionDays: product?.construction_snapshot_retention_days ?? undefined,
+              recentEntries: [],
+            },
+            appendGovernanceEntry: _appendGovernanceEntry,
+            supabase,
+            deps: { aiOpts: { apiKey: process.env.ANTHROPIC_API_KEY } },
+            logger: console,
+          });
+          const constructed = constructionResult?.result?.candidateFiles ?? [];
+          for (const cf of constructed) {
+            if (!cf || typeof cf.path !== 'string') continue;
+            // Only the non-diff files (the new endpoint handler) merge
+            // cleanly into the existing commit path. Diff files are
+            // applied through the existing diff-editor in the regular
+            // fix-generator path — out of scope for Phase 1 proof-of-
+            // concept merge.
+            if (cf.isDiff !== true && typeof cf.source === 'string' && cf.source.length > 0) {
+              fileChanges.push({ filePath: cf.path, fileContent: cf.source });
+            }
+          }
+          emit(makeStepLog({
+            iteration: iterationNumber, step: 7,
+            status: constructionResult?.ran ? 'complete' : 'skipped',
+            tool: 'ConstructionEngine (CA-17 Phase 1 wire_up)',
+            why: 'generate real endpoint + wire dead UI controls per Phase B findings',
+            result: {
+              ran: !!constructionResult?.ran,
+              reason: constructionResult?.reason ?? null,
+              candidatesGenerated: constructed.length,
+              construction_class: constructionResult?.result?.construction_class ?? null,
+            },
+            durationMs: Date.now() - t0, mode: state.mode,
+          }));
+        } catch (e) {
+          emit(makeStepLog({
+            iteration: iterationNumber, step: 7, status: 'degraded',
+            tool: 'ConstructionEngine (CA-17 Phase 1)',
+            why: 'wire_up construction attempt',
+            result: { error: (e?.message ?? String(e)).slice(0, 280), code: e?.code ?? 'CONSTRUCTION_ERROR', gate: e?.gate ?? null },
+            mode: state.mode,
+          }));
+          // Phase 1 proof-of-concept: never halt the pipeline on
+          // construction failure. The standard fix path stands as-is.
+        }
+      }
 
       if (fileChanges.length === 0) {
         exitReason = 'NO_FIXES_GENERATED';
