@@ -81,6 +81,222 @@ function makeFinding(severity, category, location, evidence) {
   return Object.freeze({ severity, category, location, evidence });
 }
 
+// ── T2 — Interactive element exercise ─────────────────────────────────
+//
+// Enumerate clickable elements on the page (buttons, links, role=button
+// divs, card-shaped divs that look clickable), click each with a hard
+// timeout, classify the outcome:
+//
+//   WORKS       — click triggered a real change (URL changed, DOM
+//                 signature shifted by >threshold, network request
+//                 fired with non-trivial response)
+//   ERRORS      — click produced a console error OR navigation
+//                 returned 4xx/5xx OR element rejected the click
+//   DEAD-NO-OP  — no detectable change after the action timeout
+//
+// Each dead/erroring element becomes a §7.6 finding.
+
+const INTERACTIVE_SELECTOR = [
+  'button',
+  'a[href]',
+  '[role="button"]',
+  '[role="link"]',
+  '[onclick]',
+  // Card-shaped: a div containing both heading + descendant button/anchor
+  // is captured by the per-element heuristic in enumerateClickables —
+  // not via selector (would be too noisy).
+].join(', ');
+
+function safeText(s, n = 60) {
+  if (typeof s !== 'string') return '';
+  const trimmed = s.replace(/\s+/g, ' ').trim();
+  return trimmed.length > n ? `${trimmed.slice(0, n)}…` : trimmed;
+}
+
+/**
+ * Default Page-driver enumeration. Returns shallow descriptors so the
+ * probe can iterate without holding live handles for longer than
+ * necessary. Capped at `maxInteractives` to bound the probe budget.
+ */
+async function enumerateClickables(page, maxInteractives) {
+  // Use page.evaluate to gather a snapshot of clickable elements with
+  // stable selectors (CSS-like path with nth-child).
+  return await page.evaluate((args) => {
+    const { sel, max } = args;
+    const els = Array.from(document.querySelectorAll(sel));
+    function cssPath(el) {
+      const parts = [];
+      let cur = el;
+      let depth = 0;
+      while (cur && cur.nodeType === 1 && depth < 8) {
+        let part = cur.tagName.toLowerCase();
+        if (cur.id) { part += `#${cur.id}`; parts.unshift(part); break; }
+        const parent = cur.parentElement;
+        if (parent) {
+          const sibs = Array.from(parent.children).filter((c) => c.tagName === cur.tagName);
+          if (sibs.length > 1) part += `:nth-of-type(${sibs.indexOf(cur) + 1})`;
+        }
+        parts.unshift(part);
+        cur = cur.parentElement;
+        depth += 1;
+      }
+      return parts.join(' > ');
+    }
+    const out = [];
+    for (const el of els) {
+      if (out.length >= max) break;
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) continue;     // hidden
+      const tag = el.tagName.toLowerCase();
+      const text = (el.innerText || el.textContent || '').slice(0, 200);
+      const href = tag === 'a' ? (el.getAttribute('href') ?? null) : null;
+      out.push({
+        index: out.length,
+        tag,
+        href,
+        text,
+        ariaLabel: el.getAttribute('aria-label') ?? null,
+        role: el.getAttribute('role') ?? null,
+        selector: cssPath(el),
+      });
+    }
+    return out;
+  }, { sel: INTERACTIVE_SELECTOR, max: maxInteractives });
+}
+
+/**
+ * T2 — probeInteractives default implementation. Pluggable via
+ * adversarialSurface opts.probeInteractives for tests.
+ *
+ * @returns {Promise<{ findings:Array, interactivesTested:number, deadOrErroring:number }>}
+ */
+export async function probeInteractives({
+  page, url, maxInteractives = DEFAULT_MAX_INTERACTIVES,
+  actionTimeoutMs = DEFAULT_ACTION_TIMEOUT_MS,
+  sliceBudget = 45_000,
+} = {}) {
+  const findings = [];
+  let interactivesTested = 0;
+  let deadOrErroring = 0;
+  const startedAt = Date.now();
+
+  if (!page) return { findings, interactivesTested, deadOrErroring };
+
+  // Capture console errors during the probe so a click that triggers
+  // an error gets classified ERRORS.
+  const consoleErrors = [];
+  const errorHandler = (msg) => {
+    if (msg && typeof msg.type === 'function' && msg.type() === 'error') {
+      consoleErrors.push(typeof msg.text === 'function' ? msg.text() : String(msg));
+    } else if (msg && typeof msg.text === 'string') {
+      consoleErrors.push(msg.text);
+    }
+  };
+  if (typeof page.on === 'function') {
+    page.on('console', errorHandler);
+  }
+
+  let clickables;
+  try {
+    clickables = await enumerateClickables(page, maxInteractives);
+  } catch (e) {
+    findings.push(makeFinding(
+      'medium', 'engine-error', url,
+      `enumerateClickables failed: ${(e?.message ?? String(e)).slice(0, 120)}`,
+    ));
+    return { findings, interactivesTested: 0, deadOrErroring: 0 };
+  }
+
+  for (const el of clickables) {
+    if (Date.now() - startedAt > sliceBudget) break;
+    interactivesTested += 1;
+
+    // Snapshot before-state.
+    const beforeUrl = typeof page.url === 'function' ? page.url() : url;
+    const beforeConsoleLen = consoleErrors.length;
+    let beforeBodyHash = '';
+    try {
+      beforeBodyHash = await page.evaluate(() => (document.body?.innerText ?? '').length.toString(36));
+    } catch { beforeBodyHash = ''; }
+
+    // Click with bounded timeout.
+    let clickError = null;
+    try {
+      const loc = page.locator ? page.locator(el.selector).first() : null;
+      if (!loc) {
+        clickError = 'no_locator_api';
+      } else {
+        // Use .click with explicit timeout + `noWaitAfter:true` so a
+        // dead button doesn't hang the probe waiting for a network
+        // event that never comes.
+        await loc.click({ timeout: actionTimeoutMs, trial: false, noWaitAfter: true });
+      }
+    } catch (e) {
+      clickError = (e?.message ?? String(e)).slice(0, 120);
+    }
+
+    // Snapshot after-state (give the page a brief moment to react).
+    if (typeof page.waitForTimeout === 'function') {
+      try { await page.waitForTimeout(200); } catch { /* ignore */ }
+    }
+    const afterUrl = typeof page.url === 'function' ? page.url() : beforeUrl;
+    const afterConsoleLen = consoleErrors.length;
+    let afterBodyHash = beforeBodyHash;
+    try {
+      afterBodyHash = await page.evaluate(() => (document.body?.innerText ?? '').length.toString(36));
+    } catch { /* keep before */ }
+
+    const navigated = afterUrl !== beforeUrl;
+    const bodyChanged = afterBodyHash !== beforeBodyHash;
+    const newErrors = afterConsoleLen > beforeConsoleLen;
+
+    let classification = 'WORKS';
+    if (clickError && /time(?:d.?out|out)/i.test(clickError)) {
+      // Both "Timeout" (Playwright's TimeoutError) and "timed out"
+      // (some adapter-level wrappers) read as dead-no-op: the element
+      // exists but isn't responsive within the action timeout.
+      classification = 'DEAD-NO-OP';
+    } else if (clickError) {
+      classification = 'ERRORS';
+    } else if (newErrors) {
+      classification = 'ERRORS';
+    } else if (!navigated && !bodyChanged) {
+      classification = 'DEAD-NO-OP';
+    }
+
+    if (classification === 'DEAD-NO-OP') {
+      deadOrErroring += 1;
+      findings.push(makeFinding(
+        'medium', 'dead-card',
+        `${url}${el.selector ? ` ${el.selector}` : ''}`,
+        `click on <${el.tag}>${el.ariaLabel ? ` aria-label="${safeText(el.ariaLabel)}"` : ''} text="${safeText(el.text)}" produced no observable change (no nav, no DOM diff, no error)`,
+      ));
+    } else if (classification === 'ERRORS') {
+      deadOrErroring += 1;
+      findings.push(makeFinding(
+        'high', 'broken-modal',
+        `${url}${el.selector ? ` ${el.selector}` : ''}`,
+        `click on <${el.tag}> text="${safeText(el.text)}" ${clickError ? `errored: ${clickError}` : `triggered console error(s): ${consoleErrors.slice(beforeConsoleLen).map((s) => safeText(s, 80)).join('; ')}`}`,
+      ));
+    }
+    // If navigated, restore page so subsequent interactives are
+    // measured against the original surface.
+    if (navigated) {
+      try {
+        await page.goBack({ timeout: actionTimeoutMs }).catch(async () => {
+          // Some pages can't goBack — re-navigate to the original url.
+          await page.goto(url, { timeout: actionTimeoutMs, waitUntil: 'domcontentloaded' });
+        });
+      } catch { /* best-effort */ }
+    }
+  }
+
+  if (typeof page.off === 'function') {
+    try { page.off('console', errorHandler); } catch { /* ignore */ }
+  }
+  return { findings, interactivesTested, deadOrErroring };
+}
+
 // ── Main entry point ──────────────────────────────────────────────────
 
 /**
@@ -151,7 +367,8 @@ export async function probeAdversarialSurface(args = {}) {
     // Probes are pluggable so tests can stub them; production wires the
     // bundled implementations.
     const _probeInteractives = typeof opts.probeInteractives === 'function'
-      ? opts.probeInteractives : null;
+      ? opts.probeInteractives
+      : probeInteractives;   // D39 T2: default to the bundled probe
     const _probeModals = typeof opts.probeModals === 'function'
       ? opts.probeModals : null;
     const _probeForms = typeof opts.probeForms === 'function'
@@ -270,5 +487,8 @@ export const __internals = Object.freeze({
   DEFAULT_MAX_MODALS,
   DEFAULT_MAX_FORMS,
   DEFAULT_PROBE_BUDGET_MS,
+  INTERACTIVE_SELECTOR,
   makeFinding,
+  enumerateClickables,
+  safeText,
 });

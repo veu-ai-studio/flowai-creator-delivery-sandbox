@@ -7,6 +7,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   probeAdversarialSurface,
+  probeInteractives,
   __internals,
 } from '../../../src/lib/agents/renewal/adversarialSurface.js';
 
@@ -277,5 +278,188 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
       delete process.env.VERCEL_ORG_ID;
       delete process.env.VERCEL_TOKEN;
     }
+  });
+});
+
+// ── D39 T2 — probeInteractives ───────────────────────────────────────
+
+describe('probeInteractives — T2 click classification', () => {
+  // Mock page surface — supports the calls probeInteractives makes.
+  function makeProbePage({ clickables = [], clickOutcomes = {}, urlAfter = {}, bodyHashAfter = {} } = {}) {
+    let currentUrl = 'https://x/';
+    const consoleListeners = [];
+    let bodyHash = 'pre';
+
+    return {
+      _state: { consoleListeners, currentUrl: () => currentUrl, bodyHash: () => bodyHash },
+      url: () => currentUrl,
+      goto: vi.fn(async (u) => { currentUrl = u; bodyHash = 'pre'; return { ok: () => true, status: () => 200 }; }),
+      on: vi.fn((evt, handler) => {
+        if (evt === 'console') consoleListeners.push(handler);
+      }),
+      off: vi.fn(),
+      evaluate: vi.fn(async (fn, args) => {
+        // First call (enumerateClickables): return clickables list.
+        // Subsequent calls return body hash.
+        const src = fn.toString();
+        if (src.includes('cssPath') || src.includes('querySelectorAll')) {
+          return clickables;
+        }
+        return bodyHash;
+      }),
+      locator: vi.fn((selector) => ({
+        first: () => ({
+          click: vi.fn(async ({ timeout } = {}) => {
+            const outcome = clickOutcomes[selector] ?? 'silent';
+            if (outcome === 'throw') throw new Error('locator click failed');
+            if (outcome === 'timeout') throw new Error('locator click timed out');
+            if (outcome === 'error-console') {
+              for (const h of consoleListeners) {
+                h({ type: () => 'error', text: () => 'simulated console error' });
+              }
+            }
+            if (outcome === 'navigate') currentUrl = urlAfter[selector] ?? 'https://x/after';
+            if (outcome === 'body-change') bodyHash = bodyHashAfter[selector] ?? 'post';
+          }),
+        }),
+      })),
+      waitForTimeout: vi.fn(async () => {}),
+      goBack: vi.fn(async () => {}),
+    };
+  }
+
+  it('classifies a click that produced no observable change as DEAD-NO-OP', async () => {
+    const page = makeProbePage({
+      clickables: [{ index: 0, tag: 'button', text: 'Dead button', selector: 'button#dead', href: null, ariaLabel: null, role: null }],
+      clickOutcomes: { 'button#dead': 'silent' },
+    });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.interactivesTested).toBe(1);
+    expect(r.deadOrErroring).toBe(1);
+    expect(r.findings).toHaveLength(1);
+    expect(r.findings[0]).toMatchObject({
+      severity: 'medium', category: 'dead-card',
+    });
+    expect(r.findings[0].evidence).toMatch(/no observable change/);
+    expect(r.findings[0].evidence).toMatch(/Dead button/);
+  });
+
+  it('classifies a click that errored as ERRORS (high severity)', async () => {
+    const page = makeProbePage({
+      clickables: [{ index: 0, tag: 'button', text: 'Bad button', selector: 'button#bad', href: null, ariaLabel: null, role: null }],
+      clickOutcomes: { 'button#bad': 'throw' },
+    });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.deadOrErroring).toBe(1);
+    expect(r.findings[0]).toMatchObject({ severity: 'high', category: 'broken-modal' });
+    expect(r.findings[0].evidence).toMatch(/errored: locator click failed/);
+  });
+
+  it('classifies timeout as DEAD-NO-OP (not error — element exists but isn\'t responsive)', async () => {
+    const page = makeProbePage({
+      clickables: [{ index: 0, tag: 'a', text: 'Stuck', selector: 'a#stuck', href: '/x', ariaLabel: null, role: null }],
+      clickOutcomes: { 'a#stuck': 'timeout' },
+    });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.findings[0].category).toBe('dead-card');
+  });
+
+  it('classifies a console-error click as ERRORS', async () => {
+    const page = makeProbePage({
+      clickables: [{ index: 0, tag: 'button', text: 'Erroring', selector: 'button#err', href: null, ariaLabel: null, role: null }],
+      clickOutcomes: { 'button#err': 'error-console' },
+    });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.findings[0].category).toBe('broken-modal');
+    expect(r.findings[0].evidence).toMatch(/console error/);
+  });
+
+  it('classifies a click that navigated as WORKS (no finding emitted)', async () => {
+    const page = makeProbePage({
+      clickables: [{ index: 0, tag: 'a', text: 'Real link', selector: 'a#go', href: '/y', ariaLabel: null, role: null }],
+      clickOutcomes: { 'a#go': 'navigate' },
+      urlAfter: { 'a#go': 'https://x/y' },
+    });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.interactivesTested).toBe(1);
+    expect(r.deadOrErroring).toBe(0);
+    expect(r.findings).toHaveLength(0);
+  });
+
+  it('classifies a click that changed the body as WORKS', async () => {
+    const page = makeProbePage({
+      clickables: [{ index: 0, tag: 'button', text: 'Expand', selector: 'button#exp', href: null, ariaLabel: null, role: null }],
+      clickOutcomes: { 'button#exp': 'body-change' },
+    });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.deadOrErroring).toBe(0);
+    expect(r.findings).toHaveLength(0);
+  });
+
+  it('caps iteration count at maxInteractives', async () => {
+    const clickables = Array.from({ length: 50 }, (_, i) => ({
+      index: i, tag: 'button', text: `b${i}`, selector: `button#b${i}`,
+      href: null, ariaLabel: null, role: null,
+    }));
+    const clickOutcomes = {};
+    for (const c of clickables) clickOutcomes[c.selector] = 'silent';
+    const page = makeProbePage({ clickables: clickables.slice(0, 5), clickOutcomes });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    // We capped at 5 in the mock's evaluate; the probe respects what
+    // enumerateClickables returned.
+    expect(r.interactivesTested).toBe(5);
+  });
+
+  it('respects sliceBudget — stops mid-loop when budget exhausted', async () => {
+    const clickables = Array.from({ length: 5 }, (_, i) => ({
+      index: i, tag: 'button', text: `b${i}`, selector: `button#b${i}`,
+      href: null, ariaLabel: null, role: null,
+    }));
+    const page = makeProbePage({
+      clickables,
+      clickOutcomes: clickables.reduce((acc, c) => { acc[c.selector] = 'silent'; return acc; }, {}),
+    });
+    // Override waitForTimeout to consume the budget — simulates a slow
+    // page where each post-click settle takes a long time.
+    page.waitForTimeout = vi.fn(async () => {
+      await new Promise((res) => setTimeout(res, 50));
+    });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 10, actionTimeoutMs: 1000, sliceBudget: 100 });
+    expect(r.interactivesTested).toBeLessThan(5);
+  });
+
+  it('returns empty findings when no clickables are present', async () => {
+    const page = makeProbePage({ clickables: [] });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.interactivesTested).toBe(0);
+    expect(r.findings).toEqual([]);
+  });
+
+  it('handles enumerateClickables throwing — surfaces an engine-error finding', async () => {
+    const page = makeProbePage();
+    page.evaluate = vi.fn(async () => { throw new Error('CSP blocked evaluate'); });
+    const r = await probeInteractives({ page, url: 'https://x/', maxInteractives: 5, actionTimeoutMs: 1000, sliceBudget: 5000 });
+    expect(r.interactivesTested).toBe(0);
+    expect(r.findings[0]).toMatchObject({ severity: 'medium', category: 'engine-error' });
+    expect(r.findings[0].evidence).toMatch(/CSP blocked evaluate/);
+  });
+
+  it('probeInteractives is now the default in probeAdversarialSurface (T2 wired)', async () => {
+    const mockPage = makeProbePage({ clickables: [] });
+    const browser = {
+      newContext: vi.fn(async () => ({
+        newPage: vi.fn(async () => mockPage),
+        close: vi.fn(async () => {}),
+      })),
+      close: vi.fn(async () => {}),
+    };
+    const r = await probeAdversarialSurface({
+      url: 'https://x/', opts: { browser },
+    });
+    expect(r.ok).toBe(true);
+    // probeInteractives was called as the default — interactivesTested
+    // is present in the summary even with zero clickables.
+    expect(r.summary).toHaveProperty('interactivesTested');
+    expect(r.summary.interactivesTested).toBe(0);
   });
 });
