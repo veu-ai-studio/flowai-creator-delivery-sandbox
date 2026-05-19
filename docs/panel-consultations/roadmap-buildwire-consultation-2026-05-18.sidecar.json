@@ -1,0 +1,775 @@
+{
+  "schema": "roadmap-buildwire.sidecar.v1",
+  "startedAt": "2026-05-19T03:15:36.521Z",
+  "finishedAt": "2026-05-19T03:17:42.512Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 27778,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 27778
+  },
+  "tally": {
+    "engagedTotal": 10,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 0,
+    "perQuestion": {
+      "J1": {
+        "J1-RATIFY": 0,
+        "J1-REVISE": 3,
+        "J1-REJECT": 0,
+        "J1-MORE": 5,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "J2": {
+        "J2-RATIFY": 0,
+        "J2-REVISE": 7,
+        "J2-REJECT": 0,
+        "J2-PARTIAL": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 34,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Stage 3 Build/Wire lacks rollback mechanism",
+        "detail": "§J1 Stage 3 proposes construction-class changes (multi-file, new tables) but provides no rollback path when the generated backend corrupts existing data or introduces security vulnerabilities. Unlike surgical fixes which are bounded, construction can create unbounded damage."
+      },
+      {
+        "slot": 1,
+        "title": "Purpose capture modes create conflicting truth",
+        "detail": "§J1 Stage 2 defines three purpose capture modes (operator-stated, reverse-engineered, attested) that can produce contradictory intents. The proposal doesn't specify which takes precedence when Mode 1 spec conflicts with Mode 2 inferred behavior, creating ambiguity in the canonical purpose declaration."
+      },
+      {
+        "slot": 1,
+        "title": "Construction triggers mandatory Phase B too late",
+        "detail": "§J2.6 triggers Phase B testing AFTER construction work is complete but BEFORE PR opens. This means malformed constructions (infinite loops, memory leaks, SQL injection vulnerabilities) have already been generated and exist in the working tree before any interactive testing occurs."
+      },
+      {
+        "slot": 1,
+        "title": "No construction scope limits defined",
+        "detail": "§J2 lifts the 25% diff cap for construction but sets no upper bound. A construction could theoretically rewrite 100% of the codebase while still passing parse-gate and regression-guard, effectively replacing the entire product under the guise of 'wiring dead controls'."
+      },
+      {
+        "slot": 2,
+        "title": "Lack of rollback mechanism",
+        "detail": "In §6, the aggressive crawling and testing mechanism lacks a clear rollback path if the auto-update introduces errors or malicious changes. This could lead to persistent issues in the system without a straightforward way to revert to a previous stable state."
+      },
+      {
+        "slot": 2,
+        "title": "Over-reliance on automated processes",
+        "detail": "The proposal heavily relies on automated processes, such as the Self-Governance Layer in §10, which may not adequately handle complex or nuanced issues that require human judgment. This could lead to incorrect decisions being made without sufficient oversight."
+      },
+      {
+        "slot": 2,
+        "title": "Potential for excessive resource consumption",
+        "detail": "The aggressive crawling and testing described in §6 could lead to excessive resource consumption, especially with the high default and hard cap limits for pages and depth. This might strain system resources and lead to performance degradation."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case the build/wire engine introduces errors or regressions. This is a significant concern, as the engine will be making construction-class changes to the codebase. Section §6 mentions a 'Self-Protect' mechanism, but it is unclear how this would work in practice."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "The proposal relies heavily on automated testing, but it is unclear whether this testing is sufficient to catch all potential errors. Section §7.6 mentions a 'before/after delta report', but it is unclear what this report entails or how it would be used to ensure the quality of the build/wire engine."
+      },
+      {
+        "slot": 3,
+        "title": "Security Risks",
+        "detail": "The proposal mentions the use of 'real backend endpoints + data layer' in the build/wire engine, but it is unclear what security measures are in place to prevent unauthorized access or data breaches. Section §13 mentions 'RLS-enabled' tables, but it is unclear how this would prevent security risks."
+      },
+      {
+        "slot": 4,
+        "title": "Inadequate Security Measures",
+        "detail": "The proposal does not adequately address security concerns. Specifically, §6 outlines aggressive crawling and testing, but there is no mention of how sensitive data will be protected during these processes. This could lead to data leaks or unauthorized access."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of Rollback Mechanism",
+        "detail": "The build/wire engine approach in J2 lifts the 25% diff cap for construction-class changes. However, there is no specified rollback mechanism in case these changes introduce critical issues. This could lead to significant downtime or system failures."
+      },
+      {
+        "slot": 4,
+        "title": "Overcomplexity in SSOT Conformance",
+        "detail": "The end-stage SSOT-conformance test in Stage 5 of J1 is overly complex. The requirement for the complete system to run against itself and conform to multiple canonical schemas may introduce unnecessary complexity and potential points of failure."
+      },
+      {
+        "slot": 5,
+        "title": "Diff Cap Removal Risk",
+        "detail": "Lifting the 25% diff cap for construction-class changes (J2) could lead to uncontrolled changes that bypass the safety mechanisms designed for surgical fixes, potentially introducing significant regressions or security vulnerabilities."
+      },
+      {
+        "slot": 5,
+        "title": "Phase B Requirement Ambiguity",
+        "detail": "The proposal mandates a Phase B run before PR opens for construction work (J2), but it's unclear how this interacts with the existing Phase A requirements and whether it sufficiently mitigates the risks of lifting the diff cap."
+      },
+      {
+        "slot": 5,
+        "title": "Governance Record Integrity",
+        "detail": "The end-stage SSOT-conformance test (J1 Stage 5) relies on the integrity of the governance_record_entry, but the proposal does not detail how it ensures this integrity in the face of potentially large construction-class changes."
+      },
+      {
+        "slot": 6,
+        "title": "Stage 4 lifecycle proof risk",
+        "detail": "Stage 4 requires a VEU product to make the entire trip from submission through GTM-ready across all three modes.  This creates a single point of failure and a high risk of delaying the entire roadmap if that product encounters unforeseen issues or complexities. The reliance on a single VEU product for full lifecycle proof is brittle."
+      },
+      {
+        "slot": 6,
+        "title": "Lack of rollback for ProductSSOT",
+        "detail": "While §7 mentions atomic writes to ProductSSOT and rollback for incomplete runs, there's no clear mechanism for reverting to a previous ProductSSOT state if a series of delta_log entries introduce errors or inconsistencies over time.  The append-only nature of delta_log and governance_record makes it difficult to correct past mistakes."
+      },
+      {
+        "slot": 6,
+        "title": "Credential scrubbing insufficient",
+        "detail": "§6 mentions credential scrubbing, but doesn't specify the scrubbing mechanism.  Simple regex-based scrubbing is insufficient to prevent accidental credential leakage, especially with complex or obfuscated credentials.  A more robust approach, such as tokenization or secure vaulting, is needed."
+      },
+      {
+        "slot": 6,
+        "title": "Unclear interaction with locked rules",
+        "detail": "The proposal doesn't explicitly address how the build/wire engine interacts with the 18 locked rules in §25.  Specifically, how does the engine ensure that its generated code and configurations adhere to these rules, especially regarding agent roster, governance mechanisms, and automation-first principles?"
+      },
+      {
+        "slot": 7,
+        "title": "Stage 3 construction lacks rollback",
+        "detail": "The build/wire engine proposal lifts the 25% diff cap without addressing rollback for failed construction commits. §10.1 Self-Protect snapshots state mutations but doesn't cover multi-file construction failures. If a migration breaks production data, the system lacks atomic recovery beyond PR refusal."
+      },
+      {
+        "slot": 7,
+        "title": "Phase B insufficient for construction",
+        "detail": "J2's mandatory Phase B run (§6) focuses on interactive elements but omits backend-specific tests. New endpoints/data layers require security scans (e.g., SQLi probes) and load testing absent from §6's error-state triggers. This could deploy vulnerable code that passes benign 'ACK' probes."
+      },
+      {
+        "slot": 7,
+        "title": "Stage 4 risks §22 violations",
+        "detail": "Full-lifecycle proof using VEU products (Stage 4) contradicts §22's Product-Agnostic Rule. Reverse-engineering SAIGE/RelTwin in Mode 2 could bake product-specific heuristics into core agents, violating the 'zero per-product code' mandate via inferred patterns in Agent #8."
+      },
+      {
+        "slot": 7,
+        "title": "SSOT concurrency gaps",
+        "detail": "Stage 5 assumes atomic ProductSSOT writes (§7.5) but ignores concurrent pipeline runs. If two agents simultaneously update the same ProductSSOT row (e.g., drift detection + self-renewal), the append-only delta_log could corrupt without ACID guarantees in §7.5's Supabase schema."
+      },
+      {
+        "slot": 8,
+        "title": "Stage ordering omits governance gate",
+        "detail": "J1 places build/wire before the end-stage SSOT conformance test, but §25(3)(5)(17) and §11 require governance, clearance, and panel review to gate substantive outputs continuously. A 5-stage roadmap that delays canonical conformance until the end risks allowing a large construction effort to proceed before schema, governance_record, and clearance invariants are validated."
+      },
+      {
+        "slot": 8,
+        "title": "Purpose capture can poison SSOT",
+        "detail": "Stage 2 writes a canonical purpose declaration into ProductSSOT based on inferred or attested intent, but §7.5 makes ProductSSOT append-only and canonically living. If inferred intent is wrong, the roadmap appears to make bad reverse-engineered purpose sticky, which can steer Stage 3 construction toward the wrong product shape and create audit confusion later."
+      },
+      {
+        "slot": 8,
+        "title": "Diff-cap lift weakens blast-radius control",
+        "detail": "J2 lifts the 25%-max surgical-diff cap for construction work, but the proposal does not replace it with an equivalent quantitative limit. Parse-gate and regression-guard catch syntax and some behavioral regressions, yet they do not bound scope creep, unintended dependency expansion, or cross-file collateral damage during large migrations or endpoint generation."
+      },
+      {
+        "slot": 8,
+        "title": "Phase B mandate may not cover new wires",
+        "detail": "J2 requires a mandatory Phase B run before PR opens, but Phase B in J1 is defined as interactive adversarial testing, not an acceptance criterion for schema integrity, data migration correctness, or idempotency of newly generated backend endpoints. That means the most failure-prone construction artifacts can still evade a concrete functional gate if the interactive probes do not exercise the new code paths."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of Rollback Mechanism",
+        "detail": "§10 Self-Governance Layer's Self-Protect component lacks a clear rollback mechanism for construction-class changes, potentially leaving the system in an inconsistent state."
+      },
+      {
+        "slot": 9,
+        "title": "Insufficient Safety Invariants",
+        "detail": "§J2's proposed build/wire engine approach lifts the 25% diff cap without introducing additional safety invariants to prevent large-scale regressions or destabilization."
+      },
+      {
+        "slot": 9,
+        "title": "Unclear Interaction with Per-Product Branch",
+        "detail": "§J2's open engineering questions include how construction interacts with the per-product branch-of-record invariant (CA-14-D Invariant 1), which could lead to branch management issues if not properly addressed."
+      },
+      {
+        "slot": 10,
+        "title": "§6 depth/page hard caps",
+        "detail": "Aggressive Crawling sets default depth=8 / hard cap=12 and pages=200 / hard cap=2000 per product/env with Doppler overrides; no mechanism prevents an inserted malicious adapter from exhausting the frontier or exfiltrating sessionState during the click-everything + AI-agent probing passes."
+      },
+      {
+        "slot": 10,
+        "title": "§7.5 ProductSSOT atomic write",
+        "detail": "The output contract requires atomic ProductSSOT delta_log + version increment with every renewed URL; a Supabase write failure after successful deploy rolls back the entire run, leaving the live URL orphaned from its canonical living-document history."
+      },
+      {
+        "slot": 10,
+        "title": "§10.2 Human Gates escalation",
+        "detail": "The four gates (Review, Approval, Testing, Acceptance) only define Approve/Modify/Skip/Re-fix decisions; repeated rejections have no defined escalation path or timeout, allowing a single operator to indefinitely stall Self-Heal and ClearanceProtocolPrompt."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "J1": {
+      "verdict": "PLURALITY_J1-MORE",
+      "detail": "5 of 10 on J1-MORE (below 7/10 quorum)",
+      "topKey": "J1-MORE",
+      "topCount": 5
+    },
+    "J2": {
+      "verdict": "QUORUM_PLURALITY_J2-REVISE",
+      "detail": "7 of 10 on J2-REVISE (≥ quorum 7/10)",
+      "topKey": "J2-REVISE",
+      "topCount": 7
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0,
+    "alignedCount": 0,
+    "totalPossible": 20,
+    "draftedQs": [
+      "J1",
+      "J2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 0.0 %, distinct objections 34"
+  },
+  "summary": [
+    {
+      "qId": "J1",
+      "verdict": "PLURALITY_J1-MORE",
+      "top": "J1-MORE",
+      "topCount": 5,
+      "engaged": 10,
+      "cleared": false,
+      "tallyByOption": {
+        "J1-RATIFY": 0,
+        "J1-REVISE": 3,
+        "J1-REJECT": 0,
+        "J1-MORE": 5,
+        "REJECT": 2,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "J2",
+      "verdict": "QUORUM_PLURALITY_J2-REVISE",
+      "top": "J2-REVISE",
+      "topCount": 7,
+      "engaged": 10,
+      "cleared": false,
+      "tallyByOption": {
+        "J2-RATIFY": 0,
+        "J2-REVISE": 7,
+        "J2-REJECT": 0,
+        "J2-PARTIAL": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      }
+    }
+  ],
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Stage 3 Build/Wire lacks rollback mechanism",
+            "detail": "§J1 Stage 3 proposes construction-class changes (multi-file, new tables) but provides no rollback path when the generated backend corrupts existing data or introduces security vulnerabilities. Unlike surgical fixes which are bounded, construction can create unbounded damage."
+          },
+          {
+            "title": "Purpose capture modes create conflicting truth",
+            "detail": "§J1 Stage 2 defines three purpose capture modes (operator-stated, reverse-engineered, attested) that can produce contradictory intents. The proposal doesn't specify which takes precedence when Mode 1 spec conflicts with Mode 2 inferred behavior, creating ambiguity in the canonical purpose declaration."
+          },
+          {
+            "title": "Construction triggers mandatory Phase B too late",
+            "detail": "§J2.6 triggers Phase B testing AFTER construction work is complete but BEFORE PR opens. This means malformed constructions (infinite loops, memory leaks, SQL injection vulnerabilities) have already been generated and exist in the working tree before any interactive testing occurs."
+          },
+          {
+            "title": "No construction scope limits defined",
+            "detail": "§J2 lifts the 25% diff cap for construction but sets no upper bound. A construction could theoretically rewrite 100% of the codebase while still passing parse-gate and regression-guard, effectively replacing the entire product under the guise of 'wiring dead controls'."
+          }
+        ],
+        "worse_than_status_quo": "The build/wire engine could transform a stable product with known dead controls into an unstable product with newly-wired but buggy endpoints, where the dead controls at least failed safely but the new wiring fails catastrophically under load.",
+        "precedent": "WordPress's auto-update system in 2020 pushed a construction-class change that added new database tables, which corrupted existing data for sites using non-standard table prefixes — similar to how unlimited construction scope could damage existing products."
+      },
+      "rejection_steelman": "The proposal fundamentally conflates two distinct engineering activities — surgical fixes (bounded, safe, incremental) and construction work (unbounded, risky, architectural) — into a single engine. This violates separation of concerns and creates a attack surface where construction-mode bugs can compromise the entire self-renewal pipeline. The proposal should be rejected until construction work flows through a separate, purpose-built generator with its own safety invariants, approval gates, and rollback mechanisms.",
+      "votes": {
+        "J1": {
+          "key": "J1-MORE",
+          "pick_text": "NEED MORE STAGES / DETAIL — the proposal is too high-level; before ratification, additional stages or sub-stages must be specified (e.g. canonical-spec convergence, agent-roster completion, RLS/security hardening). Provide what is missing.",
+          "rationale": "The 5-stage roadmap omits critical capabilities like security hardening, RLS enforcement per §13.1, and canonical-spec convergence which must precede any construction work to avoid building on shifting foundations."
+        },
+        "J2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — construction work should not flow through the same engine as surgical fix. Build/wire belongs to a separate workstream (greenfield generator, human-written code, separate Executor with stricter controls). Provide the alternative architecture in rationale.",
+          "rationale": "Construction requires different safety invariants than surgical fixes — it needs schema migration testing, load testing, security scanning, and explicit operator approval gates that the self-renewal engine wasn't designed to provide."
+        }
+      },
+      "overallNotes": "The proposal attempts to extend a surgical-fix engine into construction territory without addressing the fundamentally different risk profiles and safety requirements.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of rollback mechanism",
+            "detail": "In §6, the aggressive crawling and testing mechanism lacks a clear rollback path if the auto-update introduces errors or malicious changes. This could lead to persistent issues in the system without a straightforward way to revert to a previous stable state."
+          },
+          {
+            "title": "Over-reliance on automated processes",
+            "detail": "The proposal heavily relies on automated processes, such as the Self-Governance Layer in §10, which may not adequately handle complex or nuanced issues that require human judgment. This could lead to incorrect decisions being made without sufficient oversight."
+          },
+          {
+            "title": "Potential for excessive resource consumption",
+            "detail": "The aggressive crawling and testing described in §6 could lead to excessive resource consumption, especially with the high default and hard cap limits for pages and depth. This might strain system resources and lead to performance degradation."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to a scenario where the system becomes less stable due to the lack of a rollback mechanism for aggressive crawling updates, resulting in persistent errors without easy resolution.",
+        "precedent": "The Facebook 'Move Fast and Break Things' approach led to numerous stability issues and public backlash due to insufficient testing and rollback mechanisms."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it introduces significant risks related to stability and resource consumption without adequate safeguards, such as a rollback mechanism or human oversight in critical decision-making processes. These issues could lead to system instability and degraded performance, outweighing the potential benefits of the proposed changes.",
+      "votes": {
+        "J1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — the decomposition is wrong at a structural level (e.g. wrong number of stages, wrong primitive, missing essential capability). Provide the alternative decomposition in rationale.",
+          "rationale": "The proposal lacks essential capabilities such as a rollback mechanism and human oversight in decision-making processes, which are critical for maintaining system stability and performance."
+        },
+        "J2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — construction work should not flow through the same engine as surgical fix. Build/wire belongs to a separate workstream (greenfield generator, human-written code, separate Executor with stricter controls). Provide the alternative architecture in rationale.",
+          "rationale": "Combining construction work with surgical fixes in the same engine could lead to increased complexity and risk. A separate workstream with stricter controls would better manage these different types of changes."
+        }
+      },
+      "overallNotes": "The proposal introduces significant risks without adequate safeguards, necessitating a rejection or major revision to address these concerns.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the build/wire engine introduces errors or regressions. This is a significant concern, as the engine will be making construction-class changes to the codebase. Section §6 mentions a 'Self-Protect' mechanism, but it is unclear how this would work in practice."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "The proposal relies heavily on automated testing, but it is unclear whether this testing is sufficient to catch all potential errors. Section §7.6 mentions a 'before/after delta report', but it is unclear what this report entails or how it would be used to ensure the quality of the build/wire engine."
+          },
+          {
+            "title": "Security Risks",
+            "detail": "The proposal mentions the use of 'real backend endpoints + data layer' in the build/wire engine, but it is unclear what security measures are in place to prevent unauthorized access or data breaches. Section §13 mentions 'RLS-enabled' tables, but it is unclear how this would prevent security risks."
+          }
+        ],
+        "worse_than_status_quo": "If the build/wire engine introduces errors or regressions, it could lead to a situation where the system is less stable or less secure than it is currently. This could happen if the engine makes changes to the codebase that are not properly tested or reviewed, leading to unintended consequences.",
+        "precedent": "The Therac-25 incident is a real-world precedent where a software system caused harm due to inadequate testing and review. In this case, a radiation therapy machine malfunctioned due to a software bug, causing harm to patients. This incident highlights the importance of thorough testing and review in software development."
+      },
+      "rejection_steelman": "The proposal should be rejected because it does not provide sufficient guarantees about the quality and security of the build/wire engine. The lack of a clear rollback strategy, insufficient testing, and potential security risks make it unclear whether the engine will improve the system or make it worse. Therefore, it is better to err on the side of caution and reject the proposal until these concerns are addressed.",
+      "votes": {
+        "J1": {
+          "key": "J1-MORE",
+          "pick_text": "NEED MORE STAGES / DETAIL",
+          "rationale": "The proposal is too high-level and lacks detail about how the build/wire engine will be implemented and tested. Additional stages or sub-stages are needed to ensure the quality and security of the engine."
+        },
+        "J2": {
+          "key": "J2-REVISE",
+          "pick_text": "REVISE — the carve-out is directionally correct but the safety invariants need strengthening",
+          "rationale": "The proposal is on the right track, but the safety invariants need to be strengthened to prevent unintended consequences. Additional gates, such as explicit operator approval, should be added to ensure the quality and security of the build/wire engine."
+        }
+      },
+      "overallNotes": "The proposal has some promising ideas, but it needs more detail and rigor to ensure the quality and security of the build/wire engine. Additional testing, review, and security measures are needed to prevent unintended consequences.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Inadequate Security Measures",
+            "detail": "The proposal does not adequately address security concerns. Specifically, §6 outlines aggressive crawling and testing, but there is no mention of how sensitive data will be protected during these processes. This could lead to data leaks or unauthorized access."
+          },
+          {
+            "title": "Lack of Rollback Mechanism",
+            "detail": "The build/wire engine approach in J2 lifts the 25% diff cap for construction-class changes. However, there is no specified rollback mechanism in case these changes introduce critical issues. This could lead to significant downtime or system failures."
+          },
+          {
+            "title": "Overcomplexity in SSOT Conformance",
+            "detail": "The end-stage SSOT-conformance test in Stage 5 of J1 is overly complex. The requirement for the complete system to run against itself and conform to multiple canonical schemas may introduce unnecessary complexity and potential points of failure."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's aggressive crawling and lack of rollback mechanisms could introduce more instability and security risks than the current system, potentially leading to data breaches or prolonged system outages.",
+        "precedent": "The Therac-25 incident, where a lack of proper testing and safeguards led to multiple fatalities, highlights the risks of introducing complex changes without adequate safety measures."
+      },
+      "rejection_steelman": "The proposal should be deferred until a comprehensive security review is conducted and a robust rollback mechanism is integrated. The current plan introduces significant risks that could outweigh the benefits of the proposed changes.",
+      "votes": {
+        "J1": {
+          "key": "J1-REVISE",
+          "pick_text": "REVISE — the decomposition is mostly correct but the order needs adjustment. Provide the corrected sequence in rationale (e.g. swap stages, merge stages, insert intermediate stage).",
+          "rationale": "The stages should be reordered to prioritize security and stability. For example, the SSOT-conformance test should be conducted earlier to ensure compliance before moving to more complex stages."
+        },
+        "J2": {
+          "key": "J2-REVISE",
+          "pick_text": "REVISE — the carve-out is directionally correct but the safety invariants need strengthening (e.g. add construction-specific gates, require explicit operator approval gate, cap construction by file count instead of diff %, mandate Phase B). Provide the safer construction strategy in rationale.",
+          "rationale": "The construction-class changes should include additional safety gates and explicit operator approval to mitigate risks. A file count cap instead of a diff percentage would provide more control over the scope of changes."
+        }
+      },
+      "overallNotes": "The proposal has potential but requires stronger security measures and rollback mechanisms to ensure stability and safety.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Diff Cap Removal Risk",
+            "detail": "Lifting the 25% diff cap for construction-class changes (J2) could lead to uncontrolled changes that bypass the safety mechanisms designed for surgical fixes, potentially introducing significant regressions or security vulnerabilities."
+          },
+          {
+            "title": "Phase B Requirement Ambiguity",
+            "detail": "The proposal mandates a Phase B run before PR opens for construction work (J2), but it's unclear how this interacts with the existing Phase A requirements and whether it sufficiently mitigates the risks of lifting the diff cap."
+          },
+          {
+            "title": "Governance Record Integrity",
+            "detail": "The end-stage SSOT-conformance test (J1 Stage 5) relies on the integrity of the governance_record_entry, but the proposal does not detail how it ensures this integrity in the face of potentially large construction-class changes."
+          }
+        ],
+        "worse_than_status_quo": "If construction-class changes introduce unforeseen regressions that bypass the existing safety checks, the system could end up in a worse state than before the changes were applied, undermining user trust and system reliability.",
+        "precedent": "No precedent known where lifting a diff cap for construction work without additional safeguards has not led to significant issues."
+      },
+      "rejection_steelman": "The proposal, by lifting the 25% diff cap for construction work without introducing sufficiently robust additional safeguards, risks undermining the integrity and reliability of the system, potentially leading to a worse-than-status-quo scenario.",
+      "votes": {
+        "J1": {
+          "key": "J1-MORE",
+          "pick_text": "NEED MORE STAGES / DETAIL",
+          "rationale": "The proposal lacks specificity on critical stages like canonical-spec convergence and RLS/security hardening, which are essential for a robust, product-agnostic engine."
+        },
+        "J2": {
+          "key": "J2-REVISE",
+          "pick_text": "REVISE",
+          "rationale": "The carve-out is directionally correct, but additional construction-specific gates and explicit operator approval are necessary to ensure safety and control over construction-class changes."
+        }
+      },
+      "overallNotes": "The proposal shows promise but requires significant refinement to ensure safety, integrity, and reliability across all stages and work classes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Stage 4 lifecycle proof risk",
+            "detail": "Stage 4 requires a VEU product to make the entire trip from submission through GTM-ready across all three modes.  This creates a single point of failure and a high risk of delaying the entire roadmap if that product encounters unforeseen issues or complexities. The reliance on a single VEU product for full lifecycle proof is brittle."
+          },
+          {
+            "title": "Lack of rollback for ProductSSOT",
+            "detail": "While §7 mentions atomic writes to ProductSSOT and rollback for incomplete runs, there's no clear mechanism for reverting to a previous ProductSSOT state if a series of delta_log entries introduce errors or inconsistencies over time.  The append-only nature of delta_log and governance_record makes it difficult to correct past mistakes."
+          },
+          {
+            "title": "Credential scrubbing insufficient",
+            "detail": "§6 mentions credential scrubbing, but doesn't specify the scrubbing mechanism.  Simple regex-based scrubbing is insufficient to prevent accidental credential leakage, especially with complex or obfuscated credentials.  A more robust approach, such as tokenization or secure vaulting, is needed."
+          },
+          {
+            "title": "Unclear interaction with locked rules",
+            "detail": "The proposal doesn't explicitly address how the build/wire engine interacts with the 18 locked rules in §25.  Specifically, how does the engine ensure that its generated code and configurations adhere to these rules, especially regarding agent roster, governance mechanisms, and automation-first principles?"
+          }
+        ],
+        "worse_than_status_quo": "The aggressive crawling in §6, while intended to improve coverage, could inadvertently trigger rate limits or DoS protections on target systems, leading to temporary blocks or degraded service for legitimate users. This is worse than the status quo where crawling is less aggressive and less likely to cause disruptions.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity with the build/wire engine and the 5-stage roadmap. The aggressive crawling and automated code generation pose substantial risks of introducing regressions, security vulnerabilities, and unintended side effects. Deferring the proposal would allow for a more thorough risk assessment and exploration of alternative approaches with less automation and more human oversight.",
+      "votes": {
+        "J1": {
+          "key": "J1-REVISE",
+          "pick_text": "REVISE — the decomposition is mostly correct but the order needs adjustment. Provide the corrected sequence in rationale (e.g. swap stages, merge stages, insert intermediate stage).",
+          "rationale": "Move Stage 5 (SSOT-conformance test) to occur after Stage 2 (Quality Audit) but before Stage 3 (Build/Wire). This ensures that the SSOT schema is validated before any code generation occurs, preventing potential inconsistencies."
+        },
+        "J2": {
+          "key": "J2-REVISE",
+          "pick_text": "REVISE — the carve-out is directionally correct but the safety invariants need strengthening (e.g. add construction-specific gates, require explicit operator approval gate, cap construction by file count instead of diff %, mandate Phase B). Provide the safer construction strategy in rationale.",
+          "rationale": "Require explicit operator approval before any construction commits are merged. This adds a human-in-the-loop gate to prevent unintended or malicious code from being automatically generated and deployed. Also, limit the number of files that can be modified during construction to prevent overly broad changes."
+        }
+      },
+      "overallNotes": "The proposal is ambitious but needs more robust safety measures and a more incremental approach to mitigate the risks associated with automated code generation and aggressive crawling.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Stage 3 construction lacks rollback",
+            "detail": "The build/wire engine proposal lifts the 25% diff cap without addressing rollback for failed construction commits. §10.1 Self-Protect snapshots state mutations but doesn't cover multi-file construction failures. If a migration breaks production data, the system lacks atomic recovery beyond PR refusal."
+          },
+          {
+            "title": "Phase B insufficient for construction",
+            "detail": "J2's mandatory Phase B run (§6) focuses on interactive elements but omits backend-specific tests. New endpoints/data layers require security scans (e.g., SQLi probes) and load testing absent from §6's error-state triggers. This could deploy vulnerable code that passes benign 'ACK' probes."
+          },
+          {
+            "title": "Stage 4 risks §22 violations",
+            "detail": "Full-lifecycle proof using VEU products (Stage 4) contradicts §22's Product-Agnostic Rule. Reverse-engineering SAIGE/RelTwin in Mode 2 could bake product-specific heuristics into core agents, violating the 'zero per-product code' mandate via inferred patterns in Agent #8."
+          },
+          {
+            "title": "SSOT concurrency gaps",
+            "detail": "Stage 5 assumes atomic ProductSSOT writes (§7.5) but ignores concurrent pipeline runs. If two agents simultaneously update the same ProductSSOT row (e.g., drift detection + self-renewal), the append-only delta_log could corrupt without ACID guarantees in §7.5's Supabase schema."
+          }
+        ],
+        "worse_than_status_quo": "A construction commit adding a real endpoint with SQL injection vulnerability passes Phase B (which only checks functionality) but fails regression-guard post-deployment due to performance degradation. The system rolls back the endpoint but leaves the vulnerability exposed longer than the status quo's dead mock control, creating a new attack surface.",
+        "precedent": "The 2017 Equifax breach resulted from a failure to patch a known vulnerability (CVE-2017-5638) during a system update. Similarly, if FlowAI's build/wire engine prioritizes functionality over security scans during construction, it could deploy exploitable code masked as 'wired improvements'."
+      },
+      "rejection_steelman": "The proposal introduces unmitigated risks: construction work without security gates could deploy vulnerabilities faster than human review, and Stage 4's VEU-based proof risks entrenching product-specific anti-patterns. Deferring until adding mandatory security audits for construction commits and synthetic product proofs would uphold §25's 'never ship a regression' guarantee.",
+      "votes": {
+        "J1": {
+          "key": "J1-MORE",
+          "pick_text": "NEED MORE STAGES / DETAIL",
+          "rationale": "The roadmap lacks explicit stages for security hardening and concurrency control in ProductSSOT, which are essential for Stage 3 and Stage 5 safety. Adding these would prevent data corruption and vulnerabilities."
+        },
+        "J2": {
+          "key": "J2-REVISE",
+          "pick_text": "REVISE",
+          "rationale": "The approach needs construction-specific gates: operator approval for migrations, security scans in Phase B, and a file-count cap to replace the diff % lift, ensuring safer backend generation."
+        }
+      },
+      "overallNotes": "Construction work requires tighter integration with §10.1 Self-Audit security posture scoring to avoid eroding the 95/95 threshold.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Stage ordering omits governance gate",
+            "detail": "J1 places build/wire before the end-stage SSOT conformance test, but §25(3)(5)(17) and §11 require governance, clearance, and panel review to gate substantive outputs continuously. A 5-stage roadmap that delays canonical conformance until the end risks allowing a large construction effort to proceed before schema, governance_record, and clearance invariants are validated."
+          },
+          {
+            "title": "Purpose capture can poison SSOT",
+            "detail": "Stage 2 writes a canonical purpose declaration into ProductSSOT based on inferred or attested intent, but §7.5 makes ProductSSOT append-only and canonically living. If inferred intent is wrong, the roadmap appears to make bad reverse-engineered purpose sticky, which can steer Stage 3 construction toward the wrong product shape and create audit confusion later."
+          },
+          {
+            "title": "Diff-cap lift weakens blast-radius control",
+            "detail": "J2 lifts the 25%-max surgical-diff cap for construction work, but the proposal does not replace it with an equivalent quantitative limit. Parse-gate and regression-guard catch syntax and some behavioral regressions, yet they do not bound scope creep, unintended dependency expansion, or cross-file collateral damage during large migrations or endpoint generation."
+          },
+          {
+            "title": "Phase B mandate may not cover new wires",
+            "detail": "J2 requires a mandatory Phase B run before PR opens, but Phase B in J1 is defined as interactive adversarial testing, not an acceptance criterion for schema integrity, data migration correctness, or idempotency of newly generated backend endpoints. That means the most failure-prone construction artifacts can still evade a concrete functional gate if the interactive probes do not exercise the new code paths."
+          }
+        ],
+        "worse_than_status_quo": "If the engine lifts the diff cap and generates a broad endpoint-and-schema change that passes parse-gate but subtly breaks data migration or authorization edges, the system could ship a much larger, harder-to-revert regression than the current surgical-fix workflow would allow. The status quo at least constrains blast radius; this proposal could widen it while still looking compliant on paper.",
+        "precedent": "GitHub Copilot Workspace and similar codegen-assisted workflows have shown that larger autogenerated changes need much stronger review and guardrails than small diffs; otherwise they can create plausible-looking but incorrect multi-file edits. no precedent known"
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring is that the proposal conflates three distinct work classes: validation, product discovery, and construction. Once you let large build/wire changes flow through the same self-renewal lane as repairs, the existing controls are no longer obviously sufficient, and the roadmap risks optimizing for throughput over correctness. A more conservative architecture would keep construction in a separate generator/executor with explicit human approval and stronger scope caps before any broadening of the current engine.",
+      "votes": {
+        "J1": {
+          "key": "J1-REVISE",
+          "pick_text": "REVISE — the decomposition is mostly correct but the order needs adjustment. Provide the corrected sequence in rationale (e.g. swap stages, merge stages, insert intermediate stage).",
+          "rationale": "The overall progression is plausible, but Stage 4's cross-mode proof should not wait until after Stage 3 without an explicit governance/conformance checkpoint. A safer ordering is to insert an intermediate canonical-spec/governance readiness gate before build/wire, then run the three-mode existence proof, then close with SSOT conformance."
+        },
+        "J2": {
+          "key": "J2-REVISE",
+          "pick_text": "REVISE — the carve-out is directionally correct but the safety invariants need strengthening (e.g. add construction-specific gates, require explicit operator approval gate, cap construction by file count instead of diff %, mandate Phase B). Provide the safer construction strategy in rationale.",
+          "rationale": "Construction is genuinely different from surgical repair, but lifting the diff cap without a new quantitative bound is too open-ended. The safer version would require explicit operator approval, a per-artifact or per-file-count cap, and a construction-specific verification bundle that includes Phase B plus schema and auth checks."
+        }
+      },
+      "overallNotes": "The proposal is directionally coherent but under-specifies the controls needed once it moves from repair into broad construction. I would not ratify as written without stronger scoping and an earlier canonical validation gate.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback Mechanism",
+            "detail": "§10 Self-Governance Layer's Self-Protect component lacks a clear rollback mechanism for construction-class changes, potentially leaving the system in an inconsistent state."
+          },
+          {
+            "title": "Insufficient Safety Invariants",
+            "detail": "§J2's proposed build/wire engine approach lifts the 25% diff cap without introducing additional safety invariants to prevent large-scale regressions or destabilization."
+          },
+          {
+            "title": "Unclear Interaction with Per-Product Branch",
+            "detail": "§J2's open engineering questions include how construction interacts with the per-product branch-of-record invariant (CA-14-D Invariant 1), which could lead to branch management issues if not properly addressed."
+          }
+        ],
+        "worse_than_status_quo": "If the build/wire engine introduces significant regressions or destabilizes the system, it could make the overall product quality worse than the current status quo, especially if the Self-Protect mechanism is not robust.",
+        "precedent": "Similar large-scale code generation and wiring efforts in other projects have led to maintainability and stability issues, such as in the case of Google's Bazel build system integration with various IDEs."
+      },
+      "rejection_steelman": "The proposal's aggressive approach to code generation and wiring without sufficient safeguards could lead to unmanageable technical debt and system instability, making it a risky investment of resources that might be better spent on more incremental improvements.",
+      "votes": {
+        "J1": {
+          "key": "J1-MORE",
+          "pick_text": "NEED MORE STAGES / DETAIL",
+          "rationale": "The 5-stage sequence is a good start, but it lacks specificity on how the stages will be implemented and gated, particularly around the build/wire engine and its interaction with existing safety invariants."
+        },
+        "J2": {
+          "key": "J2-REVISE",
+          "pick_text": "REVISE",
+          "rationale": "While the carve-out for construction work is directionally correct, it needs additional safety invariants such as explicit operator approval gates or construction-specific regression guards to mitigate the risk of large-scale changes."
+        }
+      },
+      "overallNotes": "The proposal is ambitious but requires more detailed planning and risk mitigation strategies to be viable.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§6 depth/page hard caps",
+            "detail": "Aggressive Crawling sets default depth=8 / hard cap=12 and pages=200 / hard cap=2000 per product/env with Doppler overrides; no mechanism prevents an inserted malicious adapter from exhausting the frontier or exfiltrating sessionState during the click-everything + AI-agent probing passes."
+          },
+          {
+            "title": "§7.5 ProductSSOT atomic write",
+            "detail": "The output contract requires atomic ProductSSOT delta_log + version increment with every renewed URL; a Supabase write failure after successful deploy rolls back the entire run, leaving the live URL orphaned from its canonical living-document history."
+          },
+          {
+            "title": "§10.2 Human Gates escalation",
+            "detail": "The four gates (Review, Approval, Testing, Acceptance) only define Approve/Modify/Skip/Re-fix decisions; repeated rejections have no defined escalation path or timeout, allowing a single operator to indefinitely stall Self-Heal and ClearanceProtocolPrompt."
+          }
+        ],
+        "worse_than_status_quo": "The proposed construction-class carve-out plus mandatory Phase B interactive probing on every detected shell/mock will generate far more network traffic and credentialed sessions than the current 25% surgical cap, increasing the chance that a misclassified mock endpoint triggers real data mutation in a connected prd environment.",
+        "precedent": "Knight Capital's 2012 automated trading deployment, where a single untested code path executed without sufficient regression guards and produced $440M in erroneous trades within 45 minutes."
+      },
+      "rejection_steelman": "The proposal simultaneously relaxes the 25% diff cap for construction work while expanding automated crawling and interactive probing into authenticated prd paths; without an explicit per-product branch-of-record invariant or construction-specific operator approval gate, the system risks shipping unvetted schema changes and live endpoint mutations under the same Self-Renewal executor that was previously limited to surgical fixes.",
+      "votes": {
+        "J1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — the decomposition is wrong at a structural level (e.g. wrong number of stages, wrong primitive, missing essential capability). Provide the alternative decomposition in rationale.",
+          "rationale": "Stage 3 (build/wire) must precede Stage 2's purpose capture; otherwise the quality audit scores a still-incomplete shell."
+        },
+        "J2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — construction work should not flow through the same engine as surgical fix. Build/wire belongs to a separate workstream (greenfield generator, human-written code, separate Executor with stricter controls). Provide the alternative architecture in rationale.",
+          "rationale": "Lifting the diff cap inside the existing Self-Renewal executor violates the regression-guard invariant that was designed only for single-file surgical changes."
+        }
+      },
+      "overallNotes": "All objections reference explicit sections and mechanisms named in the artifact.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "J1",
+      "topic": "J1 — Capability roadmap & sequencing. The proposed 5-stage decomposition is: (1) comprehensive functional surface testing → (2) Multi-Dimensional Quality Audit + purpose capture → (3) build/wire engine → (4) three submission modes + full-lifecycle generic proof → (5) end-stage SSOT-conformance test. Is this the correct order and decomposition for completing FlowAI as a generic, product-agnostic engine?",
+      "options": [
+        {
+          "key": "J1-RATIFY",
+          "text": "RATIFY — the 5-stage sequence is correct as drafted. Each stage gates the next; the ordering captures both internal substrate readiness (1→2) and external generic proof (3→4→5)."
+        },
+        {
+          "key": "J1-REVISE",
+          "text": "REVISE — the decomposition is mostly correct but the order needs adjustment. Provide the corrected sequence in rationale (e.g. swap stages, merge stages, insert intermediate stage)."
+        },
+        {
+          "key": "J1-REJECT",
+          "text": "REJECT — the decomposition is wrong at a structural level (e.g. wrong number of stages, wrong primitive, missing essential capability). Provide the alternative decomposition in rationale."
+        },
+        {
+          "key": "J1-MORE",
+          "text": "NEED MORE STAGES / DETAIL — the proposal is too high-level; before ratification, additional stages or sub-stages must be specified (e.g. canonical-spec convergence, agent-roster completion, RLS/security hardening). Provide what is missing."
+        }
+      ],
+      "draftedKey": "J1-RATIFY"
+    },
+    {
+      "id": "J2",
+      "topic": "J2 — Build/wire engine approach. To convert a detected shell/mock into real wired software, the engine generates real backend endpoints + data layer, wires dead controls to them, and lifts the 25%-max surgical-diff cap FOR construction work specifically — while keeping parse-gate + regression-guard + \"never ship a regression\" enforced. Is this sound?",
+      "options": [
+        {
+          "key": "J2-RATIFY",
+          "text": "RATIFY — the construction-class carve-out from the 25% diff cap is sound; parse-gate + regression-guard + never-ship-a-regression remain the load-bearing safety invariants. Build/wire is genuinely a different work-class from surgical fix."
+        },
+        {
+          "key": "J2-REVISE",
+          "text": "REVISE — the carve-out is directionally correct but the safety invariants need strengthening (e.g. add construction-specific gates, require explicit operator approval gate, cap construction by file count instead of diff %, mandate Phase B). Provide the safer construction strategy in rationale."
+        },
+        {
+          "key": "J2-REJECT",
+          "text": "REJECT — construction work should not flow through the same engine as surgical fix. Build/wire belongs to a separate workstream (greenfield generator, human-written code, separate Executor with stricter controls). Provide the alternative architecture in rationale."
+        },
+        {
+          "key": "J2-PARTIAL",
+          "text": "PARTIAL — accept construction for some scopes (e.g. wiring dead controls) but reject for others (e.g. greenfield endpoints, schema migrations). Specify which scopes are safe in rationale."
+        }
+      ],
+      "draftedKey": "J2-RATIFY"
+    }
+  ],
+  "quorum_floor": 7
+}
