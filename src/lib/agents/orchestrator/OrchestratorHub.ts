@@ -49,7 +49,13 @@ export type AuditPhase =
   | 'step.success'
   | 'step.failure'
   | 'step.idempotent_hit'
-  | 'route.decision';
+  | 'route.decision'
+  // W5b — Tool Intelligence Service (CA-18 §3 modes + §8 Orchestra Selection).
+  // 'tool.selection' is written before step.start when a Tool Intelligence
+  // Service is attached. 'tool.usage_recorded' is written by
+  // ToolIntelligenceService.recordUsage() when score updates land.
+  | 'tool.selection'
+  | 'tool.usage_recorded';
 
 export interface AuditEntry {
   readonly runId: string;
@@ -242,6 +248,15 @@ export class OrchestratorHub {
       return (prior as { result: T }).result;
     }
 
+    // W5b — Tool Intelligence pre-selection. Runs before step.start and
+    // produces a `tool.selection` audit entry. Best-effort: any failure
+    // is captured as a selection-skipped lineage row and execution
+    // proceeds. The orchestrator NEVER blocks on tool-selection failure
+    // (recommend_only invariant).
+    if (this.toolIntelligenceService) {
+      await this.recordToolSelection(args.runId, args.stepKey);
+    }
+
     await this.cold.append({
       runId: args.runId,
       stepKey: args.stepKey,
@@ -369,6 +384,14 @@ export class OrchestratorHub {
   private alwaysOnSupervisor: { detach: () => void } | null = null;
   private readonly stepOwners: Map<string, StepOwnerAgent> = new Map();
 
+  // W5b Tool Intelligence Service — attached at hub-init time when the
+  // service is available. Null in test/browser bundles that do not load
+  // the service. The hub consults it before each executeStep() call to
+  // pre-select and log a recommended platform; selection is informational
+  // and NEVER blocks step execution (recommend_only invariant).
+  private toolIntelligenceService: ToolIntelligenceServiceLike | null = null;
+  private toolIntelligenceContext: ToolIntelligenceContext | null = null;
+
   /**
    * Wire an always-on supervisor (Agent #1). The agent must already be
    * configured with the same MessageBus + ColdStore the hub uses. The hub
@@ -431,6 +454,99 @@ export class OrchestratorHub {
    */
   getStepOwnerAgent(stepKey: string): StepOwnerAgent | undefined {
     return this.stepOwners.get(stepKey);
+  }
+
+  // ── Tool Intelligence wire-in (W5b) ──────────────────────────────────────
+  //
+  // Step agents resolve a recommended platform by calling
+  // hub.getToolIntelligenceService(). Default context (targetClass, mode,
+  // productId) is set via setToolIntelligenceContext() and used as the
+  // fallback when executeStep() pre-selects. Per-step overrides are
+  // possible by passing context directly to the service.
+
+  /**
+   * Attach a Tool Intelligence Service. Idempotent for the SAME service
+   * instance; reattaching a different instance throws (one service per
+   * hub). Pass `null` to detach. Optional `context` sets the default
+   * targetClass/mode/productId used by executeStep() pre-selection.
+   */
+  attachToolIntelligenceService(
+    service: ToolIntelligenceServiceLike | null,
+    context?: ToolIntelligenceContext,
+  ): void {
+    if (service === null) {
+      this.toolIntelligenceService = null;
+      this.toolIntelligenceContext = null;
+      return;
+    }
+    if (!service || typeof service.getTopTool !== 'function') {
+      throw new TypeError(
+        'attachToolIntelligenceService: service must expose getTopTool(step, targetClass, mode)',
+      );
+    }
+    if (this.toolIntelligenceService && this.toolIntelligenceService !== service) {
+      throw new Error('attachToolIntelligenceService: another service is already attached');
+    }
+    this.toolIntelligenceService = service;
+    if (context) this.toolIntelligenceContext = context;
+  }
+
+  /**
+   * Return the attached Tool Intelligence Service, or null. Step agents
+   * call this to ask the service for a recommended platform.
+   */
+  getToolIntelligenceService(): ToolIntelligenceServiceLike | null {
+    return this.toolIntelligenceService;
+  }
+
+  /**
+   * Internal helper used by executeStep() to pre-select a platform for
+   * the step and emit a `tool.selection` audit row. Best-effort: any
+   * failure surfaces a lineage row with `error` set and DOES NOT throw.
+   */
+  private async recordToolSelection(runId: string, stepKey: string): Promise<void> {
+    const svc = this.toolIntelligenceService;
+    if (!svc) return;
+    const ctx = this.toolIntelligenceContext ?? {};
+    const mode = ctx.mode ?? 'AUTOMATIC';
+    const targetClass = ctx.targetClass ?? null;
+    try {
+      const selection = await svc.getTopTool(stepKey, targetClass ?? undefined, mode);
+      const selected = mode === 'GUIDED'
+        ? (Array.isArray(selection) ? selection.map((p) => p.platform_name) : null)
+        : (selection && typeof (selection as { platform_name?: unknown }).platform_name === 'string'
+            ? (selection as { platform_name: string }).platform_name
+            : null);
+      await this.cold.append({
+        runId,
+        stepKey,
+        phase: 'tool.selection',
+        at: this.clock(),
+        meta: {
+          mode,
+          target_class: targetClass,
+          product_id: ctx.productId ?? null,
+          selected,
+        },
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      try {
+        await this.cold.append({
+          runId,
+          stepKey,
+          phase: 'tool.selection',
+          at: this.clock(),
+          error: msg,
+          meta: {
+            mode,
+            target_class: targetClass,
+            product_id: ctx.productId ?? null,
+            selected: null,
+          },
+        });
+      } catch { /* cold-store failure is non-fatal — recommend_only */ }
+    }
   }
 
   /**
@@ -522,6 +638,28 @@ export interface StepOwnerAgent {
     sourceSpecRef?: string | null;
     stepInputs?: unknown;
   }): Promise<StepOwnerRecommendation>;
+}
+
+// ── W5b Tool Intelligence wire-in shapes ─────────────────────────────────
+
+/**
+ * Minimum surface the OrchestratorHub consumes from
+ * ToolIntelligenceService. Real implementation lives at
+ * src/lib/tools/ToolIntelligenceService.js — typed here as an interface
+ * so the hub can be exercised in TS tests with a stub.
+ */
+export interface ToolIntelligenceServiceLike {
+  getTopTool(
+    step: string,
+    targetClass?: string,
+    mode?: string,
+  ): Promise<unknown>;
+}
+
+export interface ToolIntelligenceContext {
+  readonly mode?: string;
+  readonly targetClass?: string | null;
+  readonly productId?: string | null;
 }
 
 // ── In-memory store implementations (for tests + local dev) ──────────────────
