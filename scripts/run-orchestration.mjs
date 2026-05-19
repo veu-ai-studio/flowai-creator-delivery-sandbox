@@ -28,6 +28,7 @@
 // run (ensureProductSsotRow / D40).
 
 import { runOrchestration } from '../src/lib/agents/renewal/orchestrator.js';
+import { runConstruction } from '../src/lib/construction/index.js';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
@@ -144,7 +145,10 @@ const orchestrationPromise = runOrchestration({
   gtmTarget: GTM_TARGET,
   maxIterations: MAX_ITERATIONS,
   storageState: storageStateForRun,
-  deps: discoverProductOverride ? { discoverProduct: discoverProductOverride } : {},
+  deps: {
+    ...(discoverProductOverride ? { discoverProduct: discoverProductOverride } : {}),
+    runConstruction,
+  },
   onStep: (log) => {
     const score = log.scores?.current;
     const scoreStr = (score !== undefined && score !== null) ? ` SCORE: ${score}/100` : '';
