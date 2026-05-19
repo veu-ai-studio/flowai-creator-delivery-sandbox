@@ -1999,6 +1999,58 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+### ENTRY 019 — 2026-05-19 — CA-18 §6 Tool Intelligence Principle ADDITION + global mode-name LOCK (CEO-ratification track; Locked Rule 13 — no Panel)
+
+- **Session:** CEO has extended the CA-18 mission/purpose amendment (per ENTRY 018) with a new §6 Tool Intelligence Principle and has **locked the user-facing operating-mode triad globally** to **AUTOMATIC / GUIDED / MANUAL** across the §8 Tool Intelligence axis, the §8a System Operation axis, the §3 iteration model, and the §17 sidebar surface. This entry promotes the §6 addition + the global mode-name alignment + the associated canonical-reference edits in a single doc-only commit. No Panel was consulted — CEO-ratification track per Locked Rule 13.
+
+- **Rationale (CEO-ratification track, Locked Rule 13):** mode-naming is an operator-facing UX surface that the CEO owns directly (per §24 CEO Operating Rules + Locked Rule 13). The prior three-axis triad-mismatch (§8 Auto/Recommended/User-Choice + §8a Hands-On/Reviewed/Hands-Off + §3 initial Manual/Guided/Automatic of ENTRY 018 + §17 sidebar AUTO/GUIDED/MANUAL OPERATIONS) was Panel-flagged at gap #12 (NAMING_AMBIGUITY) and surfaced two Rev-2.1 Open Questions (OQ-6 + OQ-9). The CEO disposes via a single global lock: AUTOMATIC / GUIDED / MANUAL. The triad applies uniformly across axes; axis-disambiguation when ambiguity arises is by prefix (e.g. "AUTOMATIC tool selection" vs "AUTOMATIC system operation" vs "AUTOMATIC iteration"). Code may retain prior enum strings per surface-of-truth resolution.
+
+- **Binding canonical extension:** `docs/specs/FLOWAI_MISSION_PURPOSE_AMENDMENT_DRAFT.md` extended from 20,348 chars (ENTRY 018 state) to 25,259 chars (ENTRY 019 state) with the following changes:
+  - **§3 Iteration Model REWRITTEN** with uppercase locked labels: AUTOMATIC / GUIDED / MANUAL (was Manual / Guided / Automatic in ENTRY 018 draft). Order reversed (AUTOMATIC first, MANUAL last) to match the §6 tool-selection mode ordering.
+  - **§6 TOOL INTELLIGENCE PRINCIPLE — NEW SECTION.** Defines provider-agnostic + tool-agnostic posture; per-step research-driven ranking; top-5 platform set per step; monthly refresh cadence; three selection modes (AUTOMATIC = engine picks rank #1; GUIDED = engine presents top-5, user picks; MANUAL = user specifies exact tool); vendor-agnosticism invariant (no step locked to any single provider — Vercel/Anthropic/OpenAI/Cursor/Browserless/Playwright/Replit/Lovable/v0/Base44/OpenRouter rankings reflect current performance, NOT permanent commitment); operationalization paragraph stating that the §8 Orchestra Selection axis in canonical reference is REPLACED by this §6 (and the §8a System Operation axis is ALIGNED to the same triad); mode-alignment table covering §3 + §8 + §8a + §17 sidebar + Locked Rule 4 alignment.
+  - **§6 (Acceptance criteria for CA-18 ratification) renumbered to §7**; **§7 (Cross-CA reconciliation) renumbered to §8** to make room for the new §6 Tool Intelligence Principle.
+
+- **Sections amended in `docs/CANONICAL_REFERENCE.md`:**
+  - **§5 INPUT modes cross-ref** — updated mention of "Auto Orchestra selection under Hands-Off system operation" to AUTOMATIC tool selection (§8) under AUTOMATIC system operation (§8a) with explicit CA-18 §6 ENTRY 019 lock citation.
+  - **§8 Tool Intelligence (was: Orchestra Selection axis)** — body REPLACED with the §6 Tool Intelligence Principle canonical text + AUTOMATIC/GUIDED/MANUAL selection-mode table + vendor-agnosticism invariant + cross-reference to Locked Rule 18 ranking formula + cross-reference to `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` §7.4. The prior triad (Auto/Recommended/User-Choice) is RETIRED from canonical text but retained as historical aliases inside the new table for traceability.
+  - **§8.1 Orchestra Self-Expansion (Auto-Admission per CA-9-A — ENTRY 005)** — PRESERVED UNCHANGED. Auto-admission of new candidate platforms into the Orchestra registry is orthogonal to the user-facing selection-mode triad and is not affected by the mode-name lock.
+  - **§8a SYSTEM OPERATION** — labels REALIGNED to AUTOMATIC / GUIDED / MANUAL with the mapping Hands-Off → AUTOMATIC, Reviewed → GUIDED, Hands-On → MANUAL. Rev-2 triad (Hands-On / Reviewed / Hands-Off) and Rev-1 triad (Manual / Supervised / Autonomous) retained as historical aliases for shipping continuity. Independence statement updated: §8 and §8a remain independent axes both using the same AUTOMATIC/GUIDED/MANUAL triad; 9-combination matrix preserved; disambiguation-by-prefix paragraph added for cases where axis context is ambiguous.
+  - **§10.2 Review Gate** — "Reviewed or Hands-On system operation" updated to "GUIDED or MANUAL system operation (per CA-18 §6 ENTRY 019 §8a labels)".
+  - **§11 Clearance §7 inline-tool** — "Guided + Manual modes" updated to "GUIDED + MANUAL modes (per CA-18 §6 ENTRY 019 lock)".
+  - **§14.1 audit-log topics** — `session_started` description updated to "AUTOMATIC / GUIDED / MANUAL session launch"; `proposal_approved` / `proposal_modified` / `proposal_skipped` updated to "GUIDED/MANUAL <action> action" with ENTRY 019 citation. Payload schemas unchanged (engineering retains existing enum strings per surface-of-truth resolution); only the human-readable label-list updates.
+  - **§17 sidebar footnote** — Rev-2.1 amendment a footnote REWRITTEN. Prior framing "sidebar section names (AUTO OPERATIONS / GUIDED OPERATIONS / MANUAL OPERATIONS) are DISTINCT from canonical axis labels" is SUPERSEDED at ENTRY 019: the sidebar names now MATCH canonical because canonical adopts AUTOMATIC/GUIDED/MANUAL. Engineering may keep prior enum strings in code per Open Question 6 (RESOLVED at ENTRY 019).
+  - **§25 Locked Rule 4** — REWRITTEN: "Tool Intelligence axis (§8) and System Operation axis (§8a) — both LOCKED to AUTOMATIC / GUIDED / MANUAL per CA-18 §6 ENTRY 019. Single global triad; independent axes; 9-combination matrix valid. Prior Rev-2 + Rev-1 labels retained as historical aliases only — not used in new canonical text, dispatches, audit-log payloads, or Panel discourse. §3 iteration model uses the same triad."
+  - **§25 Locked Rule 18** — extended: "Top-5 platforms per Auto Runner step ranked by performance + cost + speed + reliability; rankings research-driven (not hardcoded) and refreshed monthly per CA-18 §6 ENTRY 019. Selection-mode triad LOCKED at AUTOMATIC / GUIDED / MANUAL per Locked Rule 4."
+  - **§27 Open Question 6** — marked RESOLVED at ENTRY 019 (surface-of-truth resolution: canonical labels lock to AUTOMATIC/GUIDED/MANUAL; engineering may keep prior enum strings).
+  - **§27 Open Question 9** — marked RESOLVED at ENTRY 019 (sidebar names now align with canonical; no surface/canonical gap remains).
+  - **§18.4** — ENTRY 019 row appended (above the ENTRY 018 row inserted in the prior dispatch).
+
+- **Global mode-name lock — alignment table (binding at ENTRY 019):**
+
+  | Context | Pre-ENTRY-019 triad | ENTRY 019 LOCKED triad |
+  |---|---|---|
+  | §3 Iteration Model (`FLOWAI_MISSION_PURPOSE_AMENDMENT_DRAFT.md`) | Manual / Guided / Automatic (ENTRY 018 initial draft) | **AUTOMATIC / GUIDED / MANUAL** |
+  | §8 Tool Intelligence axis (canonical reference; was "Orchestra Selection axis") | Auto / Recommended / User-Choice (Rev-2); Auto / Guided / Manual (Rev-1 alias) | **AUTOMATIC / GUIDED / MANUAL** |
+  | §8a System Operation axis (canonical reference) | Hands-On / Reviewed / Hands-Off (Rev-2); Manual / Supervised / Autonomous (Rev-1 alias) | **AUTOMATIC / GUIDED / MANUAL** (Hands-Off→AUTOMATIC, Reviewed→GUIDED, Hands-On→MANUAL) |
+  | §17 Sidebar section names (Sprint UX-C) | AUTO OPERATIONS / GUIDED OPERATIONS / MANUAL OPERATIONS | **UNCHANGED** — already aligned with the lock |
+  | Locked Rule 4 | "Auto / Recommended / User-Choice (canonical)" | **"AUTOMATIC / GUIDED / MANUAL — single globally locked triad"** |
+
+- **What is NOT touched at ENTRY 019:**
+  - **§8.1 Orchestra Self-Expansion (Auto-Admission)** — PRESERVED unchanged. Auto-admission of new candidate platforms is orthogonal to user-facing selection-mode triad.
+  - **§8 Locked Rule 18 ranking formula itself** — the `rank_score = (performance_score × 0.6) + (price_weight × 0.4)` formula is unchanged; only the user-facing selection-mode triad updates.
+  - **§14.1 audit-log payload schemas** — engineering retains existing enum strings; only label citations in the topic description column update.
+  - **§17 sidebar names** — already aligned; no rename needed.
+  - **Rev-2.1 header changelog at line 7** — historical record of W04-Rev-2.1 amendments; not rewritten (audit-trail integrity).
+  - **§18.4 ENTRY 003 historical row** (Rev-2.1 amendment a — sidebar-label footnote) — preserved unchanged for audit-trail integrity; the FOOTNOTE itself at §17 is updated, but the §18.4 row recording its addition is not rewritten.
+
+- **Pre-promotion archive:** `docs/archive/FLOWAI_SSOT-pre-CA18-tool-intelligence-promotion-2026-05-19.md` per §18.3. Captures canonical SSOT state at end-of-ENTRY-018 (immediately before the CA-18 §6 Tool Intelligence edits). 145,959 chars verbatim copy.
+
+- **Integrity:** doc-only; no code touched; engineering enum strings unchanged (surface-of-truth resolution). Diff scoped to four targets only: (1) `docs/specs/FLOWAI_MISSION_PURPOSE_AMENDMENT_DRAFT.md` (§3 reworded + §6 NEW + §6/§7 renumbered to §7/§8); (2) `docs/CANONICAL_REFERENCE.md` (§5 INPUT cross-ref + §8 body REPLACED + §8a labels REALIGNED + §10.2 Review Gate + §11 Clearance inline-tool + §14.1 audit-log topics + §17 footnote REWRITTEN + §25 Locked Rule 4 REWRITTEN + §25 Locked Rule 18 extended + §27 OQ-6 + OQ-9 RESOLVED + §18.4 ENTRY 019 row); (3) `docs/CANONICAL_HISTORY.md` (this entry); (4) `docs/archive/FLOWAI_SSOT-pre-CA18-tool-intelligence-promotion-2026-05-19.md` (snapshot). `git add` discipline: per-file explicit adds; no `-A` / `.` / `-u`.
+
+- **Lineage:** ENTRY 018 CA-18 mission/purpose amendment (CEO Decision A on mission, sibling commit `e017643`) → CEO mode-name lock dispatch (this dispatch) → **THIS ENTRY (CA-18 §6 Tool Intelligence Principle addition + global mode-name lock AUTOMATIC / GUIDED / MANUAL + Open Question 6 + 9 resolution).**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-19)
 
 

@@ -53,15 +53,15 @@ FlowAI optimizes the following dimensions in every run. The list is closed at th
 
 ## §3 — Iteration Model (how users and FlowAI work together)
 
-**Three modes.** FlowAI offers three operating modes that map to the user's preferred level of control:
+**Three modes (LOCKED naming — AUTOMATIC / GUIDED / MANUAL).** FlowAI offers three canonical operating modes that map to the user's preferred level of control. The naming triad AUTOMATIC / GUIDED / MANUAL is **locked globally** at this entry and applies uniformly across §3 iteration depth, §6 tool selection, and any axis that asks "how much should the user drive versus how much should the engine drive."
 
 | Mode | User involvement | FlowAI behavior |
 |---|---|---|
-| **Manual** | User-controlled, step-by-step | User initiates each run, each step within a run, and each acceptance decision. FlowAI proposes; user disposes. |
-| **Guided** | User-directed with AI assistance + suggestions | User sets direction (preset mode + free-form instruction); FlowAI suggests next runs, surfaces options, recommends focus areas. User decides when to stop. |
-| **Automatic** | Fully autonomous iteration | FlowAI iterates until ≥95 composite OR the diminishing-returns threshold is reached, whichever comes first. User is notified at each stop point; user can resume or terminate. |
+| **AUTOMATIC** | Fully autonomous iteration | FlowAI iterates until ≥95 composite OR the diminishing-returns threshold is reached, whichever comes first. User is notified at each stop point; user can resume or terminate. |
+| **GUIDED** | User-directed with AI assistance + suggestions | User sets direction (preset mode + free-form instruction); FlowAI suggests next runs, surfaces options, recommends focus areas. User decides when to stop. |
+| **MANUAL** | User-controlled, step-by-step | User initiates each run, each step within a run, and each acceptance decision. FlowAI proposes; user disposes. |
 
-These three modes are the **only** canonical operating modes. They are orthogonal to the §8 Orchestra Selection axis (Auto / Recommended / User-Choice — about which external tool to use per step) and the §8a System Operation axis (Hands-On / Reviewed / Hands-Off — about within-step approval cadence). All three axes are independently composable.
+These three modes are the **only** canonical operating modes. They subsume prior axis labels (the §8 Orchestra Selection axis triad Auto / Recommended / User-Choice and the §8a System Operation axis triad Hands-On / Reviewed / Hands-Off are both aligned to AUTOMATIC / GUIDED / MANUAL at this entry — see §6 Tool Intelligence Principle below for the §8 alignment and §7 Cross-CA reconciliation for the §8a alignment).
 
 **User input surfaces.** Each run accepts two user-input surfaces:
 
@@ -137,7 +137,37 @@ Per CA-16-C-Q4 ENTRY 015 formula-generalization invariant: the §7.6 GTM Readine
 
 ---
 
-## §6 — Acceptance criteria for CA-18 ratification
+## §6 — Tool Intelligence Principle (LOCKED — AUTOMATIC / GUIDED / MANUAL)
+
+**FlowAI is AI-provider-agnostic and tool-agnostic at every step.** For each of the 8 Auto Runner steps per §9 of the canonical reference, the engine researches, ranks, and selects from the **top 5 available platforms** based on current performance, cost, speed, and reliability for the specific task and the target class per §4 above. Rankings are **research-driven (not hardcoded)** and refreshed monthly.
+
+**Three selection modes (aligned with §3 iteration model; LOCKED at AUTOMATIC / GUIDED / MANUAL):**
+
+| Mode | Selection behavior |
+|---|---|
+| **AUTOMATIC** | Engine selects the rank-#1 platform for each step without user input. |
+| **GUIDED** | Engine presents the full top-5 ranked list per step; user selects before execution. |
+| **MANUAL** | User specifies the exact tool for any or all steps. |
+
+**Vendor-agnosticism invariant — no step is locked to any single provider.** Vercel, Anthropic, OpenAI, Cursor, Browserless, Playwright, Replit, Lovable, v0, Base44, OpenRouter, or any other vendor's current ranking reflects **current performance — not permanent commitment**. As better tools emerge, rankings update and FlowAI adopts them automatically. The Locked Rule 18 ranking formula (per `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` §7.4) is the canonical authority for how performance + cost + speed + reliability combine into the per-step rank; this amendment does not alter the formula, it locks the user-facing selection-mode triad to AUTOMATIC / GUIDED / MANUAL.
+
+**Operationalization (replaces canonical §8 Orchestra Selection axis as of ENTRY 019):** the §8 Orchestra Selection axis text in `docs/CANONICAL_REFERENCE.md` is REPLACED by this §6 Tool Intelligence Principle at promotion-commit time. The prior triad (Auto / Recommended / User-Choice) is REMOVED from canonical text; AUTOMATIC / GUIDED / MANUAL takes its place. The §8.1 Orchestra Self-Expansion sub-section (per CA-9-A — ENTRY 005) is PRESERVED unchanged — it governs auto-admission of new candidate platforms into the Orchestra registry, which is orthogonal to the selection-mode triad. The §8a System Operation axis (within-step approval cadence) is ALSO aligned to AUTOMATIC / GUIDED / MANUAL — the prior triad (Hands-On / Reviewed / Hands-Off) becomes historical aliases retained for shipping continuity but not used in new canonical text.
+
+**Mode-alignment table across all three contexts (binding global lock at ENTRY 019):**
+
+| Context | Old label triad | New LOCKED label triad |
+|---|---|---|
+| §3 Iteration Model (this amendment) | Manual / Guided / Automatic (initial CA-18 draft) | **AUTOMATIC / GUIDED / MANUAL** |
+| §8 Orchestra Selection axis → renamed Tool Intelligence axis (`docs/CANONICAL_REFERENCE.md`) | Auto / Recommended / User-Choice (Rev-2; with Auto / Guided / Manual as Rev-1 historical aliases) | **AUTOMATIC / GUIDED / MANUAL** |
+| §8a System Operation axis (`docs/CANONICAL_REFERENCE.md`) | Hands-On / Reviewed / Hands-Off (Rev-2; with Manual / Supervised / Autonomous as Rev-1 historical aliases) | **AUTOMATIC / GUIDED / MANUAL** (mapped: Hands-Off→AUTOMATIC, Reviewed→GUIDED, Hands-On→MANUAL) |
+| §17 Sidebar section names (UX-C) | AUTO OPERATIONS / GUIDED OPERATIONS / MANUAL OPERATIONS | **UNCHANGED** — already aligned with the new lock; the prior Rev-2.1 footnote describing the sidebar names as "distinct from canonical axis labels" is REMOVED (the names now match canonical, per ENTRY 019). |
+| Locked Rule 4 | "Auto / Recommended / User-Choice (canonical). Auto / Guided / Manual remain as historical aliases at the UX-C sidebar surface only" | **"AUTOMATIC / GUIDED / MANUAL — single globally locked triad applies to §6 Tool Intelligence axis, §3 iteration model, and §8a System Operation axis per CA-18 §6 ENTRY 019."** |
+
+**Why this matters.** The prior three different label sets across three axes (Auto/Recommended/User-Choice vs. Hands-On/Reviewed/Hands-Off vs. Manual/Guided/Automatic) created Panel-flagged ambiguity (gap #12) and operator-facing confusion. CA-18 §6 collapses the surface-of-truth to a single binding triad. Code may retain prior enum strings (`'guided'`, `'manual'`, `'hands_off'`) if migration cost is high — this lock applies to canonical user-facing labels, audit-log surfaces, dashboards, dispatches, and Panel discourse. Engineering-internal enum migration is an engineering-dispatch decision per the standard Open Question 6 resolution path.
+
+---
+
+## §7 — Acceptance criteria for CA-18 ratification
 
 This amendment is a **CEO-ratification track per Locked Rule 13 — no Panel consulted.** Ratification proceeds directly:
 
@@ -149,7 +179,7 @@ This amendment is a **CEO-ratification track per Locked Rule 13 — no Panel con
 
 ---
 
-## §7 — Cross-CA reconciliation
+## §8 — Cross-CA reconciliation
 
 This amendment intentionally consolidates and supersedes prior partial mission statements:
 
