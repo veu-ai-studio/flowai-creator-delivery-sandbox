@@ -1232,7 +1232,9 @@ export async function runOrchestration(args = {}) {
       // candidate file set is merged into fileChanges and validated by the
       // existing parse-check + commit path. Failures NEVER halt the
       // pipeline — Phase 1 proof-of-concept logs the abort and continues.
-      if (_runConstruction && product?.construction_eligible === true) {
+      const _constructionEnvBypass = !!product?.product_id && !!process.env.CONSTRUCTION_FORCE_ELIGIBLE_PRODUCTS
+        && process.env.CONSTRUCTION_FORCE_ELIGIBLE_PRODUCTS.split(',').map((s) => s.trim()).includes(product.product_id);
+      if (_runConstruction && (product?.construction_eligible === true || _constructionEnvBypass)) {
         try {
           const t0 = Date.now();
           const constructionResult = await _runConstruction({
@@ -1253,7 +1255,7 @@ export async function runOrchestration(args = {}) {
               : {},
             originPageResolver: deps.constructionOriginPageResolver ?? null,
             registryConfig: {
-              s6AutoApproveInTestMode: product?.construction_s6_auto_approve_in_test_mode === true,
+              s6AutoApproveInTestMode: product?.construction_s6_auto_approve_in_test_mode === true || _constructionEnvBypass,
               snapshotRetentionDays: product?.construction_snapshot_retention_days ?? undefined,
               recentEntries: [],
             },

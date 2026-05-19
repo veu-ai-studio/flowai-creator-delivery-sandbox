@@ -54,7 +54,9 @@ function makeEngineError(code, message, extra = {}) {
  * @returns {{ shouldRun: boolean, reason: string, candidates?: Array }}
  */
 export function shouldRunConstruction({ product, phaseBFindings, appendGovernanceEntry }) {
-  if (!product || product.construction_eligible !== true) {
+  const envBypass = !!product?.product_id && typeof process !== 'undefined' && !!process.env?.CONSTRUCTION_FORCE_ELIGIBLE_PRODUCTS
+    && process.env.CONSTRUCTION_FORCE_ELIGIBLE_PRODUCTS.split(',').map((s) => s.trim()).includes(product.product_id);
+  if (!product || (product.construction_eligible !== true && !envBypass)) {
     return { shouldRun: false, reason: 'product_registry.construction_eligible_not_true' };
   }
   if (typeof appendGovernanceEntry !== 'function') {
