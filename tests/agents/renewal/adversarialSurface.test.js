@@ -11,6 +11,7 @@ import {
   probeModals,
   probeForms,
   probeAgents,
+  detectWiredVsMock,
   __internals,
 } from '../../../src/lib/agents/renewal/adversarialSurface.js';
 
@@ -99,7 +100,10 @@ describe('probeAdversarialSurface — skeleton (D39 T1)', () => {
     expect(r.ok).toBe(true);
     expect(r.url).toBe('https://x/');
     expect(Array.isArray(r.findings)).toBe(true);
-    expect(r.summary).toEqual({
+    // Required summary fields per the contract (D39 T5 added
+    // networkSummary as an OPTIONAL extension, so we assert on each
+    // required field individually rather than full equality).
+    expect(r.summary).toMatchObject({
       interactivesTested: 0, deadOrErroring: 0,
       modalsFailing: 0, formsFailing: 0,
       agentsNonFunctional: 0, mockOnlyFlagged: 0,
@@ -802,5 +806,194 @@ describe('probeAgents — T4 agent functional probe', () => {
     expect(r.ok).toBe(true);
     expect(r.summary).toHaveProperty('agentsNonFunctional');
     expect(r.summary.agentsNonFunctional).toBe(0);
+  });
+});
+
+// ── D39 T5 — detectWiredVsMock ────────────────────────────────────────
+
+describe('isMeaningfulRequest — wired-vs-mock classifier (D39 T5)', () => {
+  it('accepts POST/PUT/PATCH/DELETE same-origin as meaningful', () => {
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/api/save', method: 'POST', status: 200 },
+      'https://x',
+    )).toBe(true);
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/api/save', method: 'PUT', status: 204 },
+      'https://x',
+    )).toBe(true);
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/api/save', method: 'PATCH', status: 200 },
+      'https://x',
+    )).toBe(true);
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/api/save', method: 'DELETE', status: 200 },
+      'https://x',
+    )).toBe(true);
+  });
+
+  it('accepts GET with JSON content-type as meaningful', () => {
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/api/data', method: 'GET', status: 200, contentType: 'application/json; charset=utf-8' },
+      'https://x',
+    )).toBe(true);
+  });
+
+  it('rejects static-asset GETs (.js, .css, .png, .svg, ...)', () => {
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/static/bundle.js', method: 'GET', status: 200 }, 'https://x',
+    )).toBe(false);
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/styles.css', method: 'GET', status: 200 }, 'https://x',
+    )).toBe(false);
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/logo.svg', method: 'GET', status: 200 }, 'https://x',
+    )).toBe(false);
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/photo.jpg?v=2', method: 'GET', status: 200 }, 'https://x',
+    )).toBe(false);
+  });
+
+  it('rejects cross-origin requests', () => {
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://other.test/api/save', method: 'POST', status: 200 },
+      'https://x',
+    )).toBe(false);
+  });
+
+  it('rejects 4xx/5xx response GETs (failed requests are not meaningful)', () => {
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/api/data', method: 'GET', status: 404, contentType: 'application/json' },
+      'https://x',
+    )).toBe(false);
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/api/data', method: 'GET', status: 500, contentType: 'application/json' },
+      'https://x',
+    )).toBe(false);
+  });
+
+  it('accepts GETs with substantive (>200 byte) body even without JSON content-type', () => {
+    expect(__internals.isMeaningfulRequest(
+      { url: 'https://x/api/page', method: 'GET', status: 200, contentType: 'text/html', responseSize: 5000 },
+      'https://x',
+    )).toBe(true);
+  });
+
+  it('rejects null/non-object entries safely', () => {
+    expect(__internals.isMeaningfulRequest(null, 'https://x')).toBe(false);
+    expect(__internals.isMeaningfulRequest('a string', 'https://x')).toBe(false);
+    expect(__internals.isMeaningfulRequest({ url: 'not-a-url', method: 'POST' }, 'https://x')).toBe(false);
+  });
+});
+
+describe('detectWiredVsMock — T5 page-level classifier', () => {
+  function makePage() {
+    return {
+      url: () => 'https://x/',
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async () => []),
+      waitForTimeout: vi.fn(async () => {}),
+    };
+  }
+
+  it('flags MOCK-ONLY when interactives present + ZERO meaningful traffic', async () => {
+    const r = await detectWiredVsMock({
+      page: makePage(), url: 'https://x/',
+      networkLog: [
+        { url: 'https://x/bundle.js', method: 'GET', status: 200 },
+        { url: 'https://x/styles.css', method: 'GET', status: 200 },
+      ],
+      interactivesTested: 5, formsTested: 1, agentsTested: 1,
+      sliceBudget: 5000,
+    });
+    expect(r.mockOnlyFlagged).toBe(1);
+    expect(r.findings[0]).toMatchObject({ severity: 'high', category: 'engine-error' });
+    expect(r.findings[0].evidence).toMatch(/mock-only signal/);
+    expect(r.findings[0].evidence).toMatch(/5 interactives/);
+    expect(r.findings[0].evidence).toMatch(/ZERO meaningful/);
+  });
+
+  it('does NOT flag MOCK-ONLY when meaningful traffic IS present', async () => {
+    const r = await detectWiredVsMock({
+      page: makePage(), url: 'https://x/',
+      networkLog: [
+        { url: 'https://x/bundle.js', method: 'GET', status: 200 },
+        { url: 'https://x/api/save', method: 'POST', status: 200 },        // meaningful
+      ],
+      interactivesTested: 5, formsTested: 1, agentsTested: 0,
+      sliceBudget: 5000,
+    });
+    expect(r.mockOnlyFlagged).toBe(0);
+    expect(r.findings).toEqual([]);
+    expect(r.networkSummary.meaningfulSameOrigin).toBe(1);
+  });
+
+  it('does NOT flag MOCK-ONLY when <3 interactives total (signal too weak)', async () => {
+    const r = await detectWiredVsMock({
+      page: makePage(), url: 'https://x/',
+      networkLog: [],
+      interactivesTested: 1, formsTested: 0, agentsTested: 0,
+      sliceBudget: 5000,
+    });
+    expect(r.mockOnlyFlagged).toBe(0);
+    expect(r.findings).toEqual([]);
+  });
+
+  it('returns a network summary with method counts + distinct URLs', async () => {
+    const r = await detectWiredVsMock({
+      page: makePage(), url: 'https://x/',
+      networkLog: [
+        { url: 'https://x/a.js', method: 'GET', status: 200 },
+        { url: 'https://x/b.js', method: 'GET', status: 200 },
+        { url: 'https://x/api/x', method: 'POST', status: 200 },
+        { url: 'https://x/api/x', method: 'POST', status: 200 },
+      ],
+      interactivesTested: 0, formsTested: 0, agentsTested: 0,
+      sliceBudget: 5000,
+    });
+    expect(r.networkSummary.totalRequests).toBe(4);
+    expect(r.networkSummary.meaningfulSameOrigin).toBe(2);
+    expect(r.networkSummary.distinctUrls).toBe(1);          // only 1 distinct meaningful URL
+    expect(r.networkSummary.methodCounts).toEqual({ GET: 2, POST: 2 });
+  });
+
+  it('handles malformed url in the page argument gracefully', async () => {
+    const r = await detectWiredVsMock({
+      page: makePage(), url: 'not-a-url',
+      networkLog: [{ url: 'https://x/api/y', method: 'POST', status: 200 }],
+      interactivesTested: 5, formsTested: 1, agentsTested: 0,
+      sliceBudget: 5000,
+    });
+    // pageOrigin can't be parsed → no meaningful match → flagged.
+    expect(r.mockOnlyFlagged).toBe(1);
+  });
+
+  it('returns empty envelope when page or networkLog missing', async () => {
+    expect((await detectWiredVsMock({ page: null, url: 'https://x/' })).findings).toEqual([]);
+    expect((await detectWiredVsMock({ page: makePage(), url: 'https://x/' })).findings).toEqual([]);
+  });
+
+  it('detectWiredVsMock is wired as default in probeAdversarialSurface (T5)', async () => {
+    const mockPage = {
+      goto: vi.fn(async () => {}),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async () => []),
+      url: () => 'https://x/',
+      locator: vi.fn(),
+      waitForTimeout: vi.fn(async () => {}),
+    };
+    const browser = {
+      newContext: vi.fn(async () => ({
+        newPage: vi.fn(async () => mockPage),
+        close: vi.fn(async () => {}),
+      })),
+      close: vi.fn(async () => {}),
+    };
+    const r = await probeAdversarialSurface({
+      url: 'https://x/', opts: { browser },
+    });
+    expect(r.ok).toBe(true);
+    expect(r.summary).toHaveProperty('mockOnlyFlagged');
+    // With empty pages, no interactives are tested → no mock-only flag.
+    expect(r.summary.mockOnlyFlagged).toBe(0);
   });
 });

@@ -896,6 +896,95 @@ export async function probeAgents({
   return { findings, agentsNonFunctional, agentsTested };
 }
 
+// ── T5 — Wired-vs-mock detection ──────────────────────────────────────
+//
+// Distinguish products that talk to a real backend from products that
+// simulate features client-side. Listens to every network request +
+// response during the probe and classifies the page on whether it
+// makes meaningful same-origin XHR/fetch traffic.
+//
+// "Same-origin meaningful traffic" means:
+//   - method is POST/PUT/PATCH/DELETE (write request), OR
+//   - method is GET to a non-static path (no .js/.css/.svg/.png suffix,
+//     not a font, not an image) AND response has non-trivial content
+//     (>200 bytes or JSON)
+//
+// Classification:
+//   WIRED       — has meaningful traffic
+//   MOCK-ONLY   — interactives present + no meaningful traffic
+//
+// MOCK-ONLY → severity:high, category:engine-error
+// (per §6 the closest category for "advertised feature has no backend"
+//  is engine-error / no-form-validation / dead-card depending on shape;
+//  we use engine-error as the catch-all for "feature unwired".)
+//
+// The probe relies on a networkLog (collected by probeAdversarialSurface
+// at the top level) so all probes share visibility into traffic.
+
+const STATIC_ASSET_RE = /\.(js|css|svg|png|jpg|jpeg|gif|webp|woff2?|ttf|otf|ico|map)(\?.*)?$/i;
+const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+function isMeaningfulRequest(entry, pageOrigin) {
+  if (!entry || typeof entry !== 'object') return false;
+  let reqOrigin = '';
+  try { reqOrigin = new URL(entry.url).origin; } catch { /* malformed */ }
+  if (!reqOrigin || reqOrigin !== pageOrigin) return false;
+  const method = (entry.method || 'GET').toUpperCase();
+  if (WRITE_METHODS.has(method)) return true;
+  // GET: must be a non-static path with substantive response.
+  if (STATIC_ASSET_RE.test(entry.url)) return false;
+  if (typeof entry.status === 'number' && entry.status >= 400) return false;
+  const contentType = (entry.contentType || '').toLowerCase();
+  if (contentType.includes('json') || contentType.includes('xml') || contentType.includes('text/event-stream')) return true;
+  if (typeof entry.responseSize === 'number' && entry.responseSize > 200) return true;
+  return false;
+}
+
+/**
+ * T5 — detectWiredVsMock default implementation.
+ *
+ * @returns {Promise<{ findings:Array, mockOnlyFlagged:number, networkSummary:object }>}
+ */
+export async function detectWiredVsMock({
+  page, url, networkLog,
+  interactivesTested = 0,
+  formsTested = 0,
+  agentsTested = 0,
+  sliceBudget = 30_000,
+} = {}) {
+  const findings = [];
+  let mockOnlyFlagged = 0;
+  if (!page || !Array.isArray(networkLog)) {
+    return { findings, mockOnlyFlagged, networkSummary: null };
+  }
+
+  let pageOrigin = '';
+  try { pageOrigin = new URL(url).origin; } catch { /* ignore */ }
+  const meaningful = networkLog.filter((e) => isMeaningfulRequest(e, pageOrigin));
+  const summary = {
+    totalRequests: networkLog.length,
+    meaningfulSameOrigin: meaningful.length,
+    distinctUrls: new Set(meaningful.map((e) => e.url)).size,
+    methodCounts: networkLog.reduce((acc, e) => {
+      const m = (e.method || 'GET').toUpperCase();
+      acc[m] = (acc[m] || 0) + 1;
+      return acc;
+    }, {}),
+  };
+
+  // Page-level signal: page has interactives but ZERO meaningful
+  // same-origin traffic during the probe → likely a static / mock
+  // landing page advertising features that aren't wired up.
+  if (interactivesTested + formsTested + agentsTested >= 3 && meaningful.length === 0) {
+    mockOnlyFlagged += 1;
+    findings.push(makeFinding(
+      'high', 'engine-error', url,
+      `mock-only signal: ${interactivesTested} interactives + ${formsTested} forms + ${agentsTested} agents exercised, ZERO meaningful same-origin XHR/fetch traffic captured during the probe (only static assets / no write requests). Likely advertised features are not wired to a backend.`,
+    ));
+  }
+  return { findings, mockOnlyFlagged, networkSummary: summary };
+}
+
 // ── Main entry point ──────────────────────────────────────────────────
 
 /**
@@ -952,6 +1041,43 @@ export async function probeAdversarialSurface(args = {}) {
       storageState: opts.storageState,
     });
     page = await context.newPage();
+
+    // D39 T5 — page-wide network log shared with detectWiredVsMock.
+    // Captures method/url for each request and status/contentType/size
+    // for each response so the classifier can distinguish meaningful
+    // backend traffic from static-asset / mock-only behavior.
+    const networkLog = [];
+    if (typeof page.on === 'function') {
+      try {
+        page.on('request', (req) => {
+          try {
+            networkLog.push({
+              url: typeof req.url === 'function' ? req.url() : '',
+              method: typeof req.method === 'function' ? req.method() : 'GET',
+              resourceType: typeof req.resourceType === 'function' ? req.resourceType() : '',
+            });
+          } catch { /* ignore */ }
+        });
+        page.on('response', (res) => {
+          try {
+            const u = typeof res.url === 'function' ? res.url() : '';
+            const status = typeof res.status === 'function' ? res.status() : 0;
+            const headers = typeof res.headers === 'function' ? res.headers() : {};
+            const contentType = headers['content-type'] ?? '';
+            const sizeHdr = headers['content-length'] ?? null;
+            const responseSize = sizeHdr ? parseInt(sizeHdr, 10) || null : null;
+            // Attach to the most-recent matching request entry, if any.
+            const match = networkLog.filter((e) => e.url === u).pop();
+            if (match) {
+              match.status = status;
+              match.contentType = contentType;
+              if (responseSize !== null) match.responseSize = responseSize;
+            }
+          } catch { /* ignore */ }
+        });
+      } catch { /* page.on missing in some mocks — fine */ }
+    }
+
     await page.goto(url, {
       timeout: opts.navTimeoutMs ?? DEFAULT_NAV_TIMEOUT_MS,
       waitUntil: 'domcontentloaded',
@@ -975,7 +1101,7 @@ export async function probeAdversarialSurface(args = {}) {
     const _probeAgents = typeof opts.probeAgents === 'function'
       ? opts.probeAgents : probeAgents;   // D39 T4: default to bundled probe
     const _detectWiredVsMock = typeof opts.detectWiredVsMock === 'function'
-      ? opts.detectWiredVsMock : null;
+      ? opts.detectWiredVsMock : detectWiredVsMock;  // D39 T5: default
 
     if (_probeInteractives) {
       try {
@@ -1049,9 +1175,14 @@ export async function probeAdversarialSurface(args = {}) {
       try {
         const r = await _detectWiredVsMock({
           page, url, sliceBudget,
+          networkLog,
+          interactivesTested: summary.interactivesTested,
+          formsTested: summary.formsFailing,                     // best proxy until probes return formsTested explicitly
+          agentsTested: summary.agentsNonFunctional,             // similarly
         });
         if (r && Array.isArray(r.findings)) findings.push(...r.findings);
         summary.mockOnlyFlagged += r?.mockOnlyFlagged ?? 0;
+        if (r?.networkSummary) summary.networkSummary = r.networkSummary;
       } catch (e) {
         findings.push(makeFinding(
           'medium', 'engine-error', url,
@@ -1101,5 +1232,8 @@ export const __internals = Object.freeze({
   classifyResponse,
   STUB_PATTERNS,
   PROBE_PROMPT,
+  isMeaningfulRequest,
+  STATIC_ASSET_RE,
+  WRITE_METHODS,
   safeText,
 });
