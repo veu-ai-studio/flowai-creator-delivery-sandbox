@@ -118,14 +118,115 @@ describe('parseGithubRepoUrl', () => {
 });
 
 describe('resolveVercelProjectId', () => {
-  it('resolves mypreglife from explicit env var', () => {
+  it('resolves any productId from uniform UPPER_SNAKE env var (zero hardcoded names — D40)', () => {
     expect(resolveVercelProjectId('mypreglife', { VERCEL_PROJECT_ID_MYPREGLIFE: 'prj_x' })).toBe('prj_x');
-  });
-  it('falls back to upper-case envelope', () => {
-    expect(resolveVercelProjectId('reltwin', { VERCEL_PROJECT_ID_RELTWIN: 'prj_r' })).toBe('prj_r');
+    expect(resolveVercelProjectId('saige',      { VERCEL_PROJECT_ID_SAIGE: 'prj_s' })).toBe('prj_s');
+    expect(resolveVercelProjectId('reltwin',    { VERCEL_PROJECT_ID_RELTWIN: 'prj_r' })).toBe('prj_r');
+    expect(resolveVercelProjectId('reachsms',   { VERCEL_PROJECT_ID_REACHSMS: 'prj_rs' })).toBe('prj_rs');
+    expect(resolveVercelProjectId('pressai',    { VERCEL_PROJECT_ID_PRESSAI: 'prj_p' })).toBe('prj_p');
+    expect(resolveVercelProjectId('flowai',     { VERCEL_PROJECT_ID_FLOWAI: 'prj_f' })).toBe('prj_f');
+    // Brand-new product — works without any code change.
+    expect(resolveVercelProjectId('brand-new', { VERCEL_PROJECT_ID_BRAND_NEW: 'prj_n' })).toBe('prj_n');
   });
   it('returns null when no env var matches', () => {
     expect(resolveVercelProjectId('unknown_product', {})).toBeNull();
+  });
+  // D40 — registry row takes precedence over env-var fallback.
+  it('product.vercel_project_id takes precedence over env-var fallback', () => {
+    expect(resolveVercelProjectId('any', { VERCEL_PROJECT_ID_ANY: 'env_value' },
+      { vercel_project_id: 'registry_value' },
+    )).toBe('registry_value');
+  });
+  it('falls through to env when registry row has empty vercel_project_id', () => {
+    expect(resolveVercelProjectId('mypreglife', { VERCEL_PROJECT_ID_MYPREGLIFE: 'env_v' },
+      { vercel_project_id: '' },
+    )).toBe('env_v');
+  });
+  it('falls through to env when product arg is null', () => {
+    expect(resolveVercelProjectId('mypreglife', { VERCEL_PROJECT_ID_MYPREGLIFE: 'env_v' }, null)).toBe('env_v');
+  });
+});
+
+// D40 — generic onboarding helper.
+describe('ensureProductSsotRow (D40 generic onboarding)', () => {
+  function makeFake({ rows = [] } = {}) {
+    const state = { rows: [...rows], inserts: [] };
+    const fake = {
+      _state: state,
+      from: () => {
+        const q = {
+          _filters: [], _insertBody: null,
+          select: vi.fn(() => q),
+          eq(k, v) { q._filters.push({ k, v }); return q; },
+          async maybeSingle() {
+            const found = state.rows.find((r) => q._filters.every((f) => r[f.k] === f.v));
+            return { data: found ?? null, error: null };
+          },
+          insert(body) { q._insertBody = body; return q; },
+          single: vi.fn(async () => {
+            if (q._insertBody) {
+              const row = { id: `id-${state.rows.length + 1}`, ...q._insertBody };
+              state.rows.push(row);
+              state.inserts.push(q._insertBody);
+              return { data: row, error: null };
+            }
+            return { data: null, error: { message: 'no_insert' } };
+          }),
+        };
+        return q;
+      },
+    };
+    return fake;
+  }
+
+  it('returns reason:supabase_unavailable when supabase null', async () => {
+    const r = await __internals.ensureProductSsotRow({ productId: 'p', environment: 'prd', supabase: null });
+    expect(r.created).toBe(false);
+    expect(r.reason).toBe('supabase_unavailable');
+  });
+
+  it('returns reason:bad_args on missing productId or environment', async () => {
+    const fake = makeFake();
+    expect((await __internals.ensureProductSsotRow({ productId: '', environment: 'prd', supabase: fake })).reason).toBe('bad_args');
+    expect((await __internals.ensureProductSsotRow({ productId: 'p', environment: '', supabase: fake })).reason).toBe('bad_args');
+  });
+
+  it('returns created:false reason:already_exists when row is present', async () => {
+    const fake = makeFake({ rows: [{ id: 'existing-1', product_id: 'p', environment: 'prd' }] });
+    const r = await __internals.ensureProductSsotRow({ productId: 'p', environment: 'prd', supabase: fake });
+    expect(r.created).toBe(false);
+    expect(r.reason).toBe('already_exists');
+    expect(r.id).toBe('existing-1');
+    // No insert was made.
+    expect(fake._state.inserts).toHaveLength(0);
+  });
+
+  it('auto-creates the row when absent — first-run flow', async () => {
+    const fake = makeFake({ rows: [] });
+    const r = await __internals.ensureProductSsotRow({
+      productId: 'brand-new', environment: 'prd', supabase: fake,
+      identity: { productName: 'Brand New', productUrl: 'https://x', ownerProviderOrgId: 'org' },
+    });
+    expect(r.created).toBe(true);
+    expect(typeof r.id).toBe('string');
+    expect(fake._state.inserts).toHaveLength(1);
+    const payload = fake._state.inserts[0];
+    expect(payload.product_id).toBe('brand-new');
+    expect(payload.environment).toBe('prd');
+    expect(payload.identity_block.productName).toBe('Brand New');
+    expect(payload.identity_block.productUrl).toBe('https://x');
+    expect(payload.identity_block.ownerProviderOrgId).toBe('org');
+    expect(payload.identity_block.createdBy.userId).toBe('system');
+  });
+
+  it('defaults productName to productId + nulls when identity overlay omitted', async () => {
+    const fake = makeFake({ rows: [] });
+    const r = await __internals.ensureProductSsotRow({ productId: 'minimal', environment: 'prd', supabase: fake });
+    expect(r.created).toBe(true);
+    const payload = fake._state.inserts[0];
+    expect(payload.identity_block.productName).toBe('minimal');
+    expect(payload.identity_block.productUrl).toBe(null);
+    expect(payload.identity_block.ownerProviderOrgId).toBe(null);
   });
 });
 

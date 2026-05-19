@@ -1933,3 +1933,58 @@ describe('orchestrator — canonical findings threading (DISPATCH 38)', () => {
     } finally { clearVercelEnv(); }
   });
 });
+
+// ── D40 — resolveLiveUrl registry-driven + no hardcoded fast-paths ─────
+
+describe('resolveLiveUrl — D40 generic resolution (registry-row primary)', () => {
+  it('prefers product.product_url over the legacy fallback map', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    // Even for mypreglife (which IS in the legacy map), an explicit
+    // registry row's product_url takes precedence.
+    expect(mod.resolveLiveUrl('mypreglife', {
+      product_url: 'https://custom-prod.example/',
+    })).toBe('https://custom-prod.example/');
+    // For a brand-new productId not in the legacy map, the registry
+    // row's product_url is the only resolution path — generic.
+    expect(mod.resolveLiveUrl('brand-new-product', {
+      product_url: 'https://brand-new.example/',
+    })).toBe('https://brand-new.example/');
+  });
+
+  it('falls back to the legacy map only when no row is supplied', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    expect(mod.resolveLiveUrl('mypreglife')).toBe('https://mypreglife-platform.vercel.app');
+    expect(mod.resolveLiveUrl('saige')).toBe('https://saige-platform.vercel.app');
+  });
+
+  it('returns null for unknown productId when no row supplied', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    expect(mod.resolveLiveUrl('brand-new-product')).toBeNull();
+  });
+
+  it('row with empty product_url falls through to legacy map / null', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    expect(mod.resolveLiveUrl('mypreglife', { product_url: '' })).toBe('https://mypreglife-platform.vercel.app');
+    expect(mod.resolveLiveUrl('brand-new', { product_url: '' })).toBeNull();
+  });
+});
+
+describe('discoverProduct — D40 no hardcoded mypreglife fast-path', () => {
+  it('does NOT short-circuit to a hardcoded mypreglife row without supabase', async () => {
+    const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    // With no supabase + url containing "mypreglife", D40 removed the
+    // test-convenience fast-path. discoverProduct now falls through to
+    // PATH B synthesized routing.
+    const product = await mod.__internals.discoverProduct({
+      url: 'https://mypreglife-platform.vercel.app/',
+      supabase: null,
+      runId: 'd40-1',
+      detectGithubFn: async () => null,
+    });
+    // PATH B synthesized product has product_id with the "flowai-upgraded-..." prefix
+    // (per synthesizePathBProduct convention).
+    expect(product).not.toBeNull();
+    expect(product.product_id).not.toBe('mypreglife');
+    expect(product.product_id).toMatch(/^flowai-upgraded-/);
+  });
+});

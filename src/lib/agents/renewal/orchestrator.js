@@ -37,6 +37,7 @@ import {
   fetchFileContent,
   readProductPolicy,
   appendGovernanceEntry,
+  ensureProductSsotRow,
 } from './optionCPipeline.js';
 import { aggressiveCrawl } from '../../../../api/_lib/crawler.js';
 import { conductStructuredCrawl } from './crawlOutputAdapter.js';
@@ -92,24 +93,36 @@ function computeProgress({ originalScore, currentScore, target }) {
 }
 
 /**
- * Resolve the live (deployed) URL for a product. Phase A maps product_id
- * to the canonical Vercel preview URL. Phase B should store this in
- * product_registry.live_url; for now this is a static lookup matching
- * the 5 VEU products that have Vercel deployments.
+ * Resolve the live (deployed) URL for a product. D40 generic-engine
+ * refactor: PRIMARY source is the product_registry row's product_url
+ * column (added by migration 0021). Falls back to a small hardcoded
+ * map ONLY for tests / environments where the column hasn't been
+ * applied yet — those entries are scheduled for removal once all
+ * environments are on 0021.
+ *
+ * @param {string} productId
+ * @param {object} [product]   — optional registry row; if supplied,
+ *                               product.product_url takes precedence
+ *                               over the legacy fallback map.
+ * @returns {string|null}
  */
-export function resolveLiveUrl(productId) {
-  const MAP = {
+export function resolveLiveUrl(productId, product = null) {
+  if (product && typeof product.product_url === 'string' && product.product_url.length > 0) {
+    return product.product_url;
+  }
+  // Legacy fallback — kept ONLY for tests + back-compat with
+  // environments missing migration 0021. New onboarding does NOT
+  // require touching this map; the registry row + product_url
+  // column are the canonical onboarding surface.
+  const LEGACY_FALLBACK = {
     mypreglife: 'https://mypreglife-platform.vercel.app',
     reltwin:    'https://reltwin-platform.vercel.app',
     saige:      'https://saige-platform.vercel.app',
     reachsms:   'https://reachsms-platform.vercel.app',
     pressai:    'https://pressai-platform.vercel.app',
-    // DISPATCH 32 T1: FlowAI itself routes through the §19 self-test
-    // → score the production deployment promoted in D31 (commit 2f4cb97
-    // at the time of writing; subsequent prod promotions roll through).
     flowai:     'https://flowai-dun.vercel.app',
   };
-  return MAP[productId] ?? null;
+  return LEGACY_FALLBACK[productId] ?? null;
 }
 
 // ── Product-agnostic helpers (DISPATCH 24) ───────────────────────────────────
@@ -347,17 +360,11 @@ async function discoverProduct({ url, supabase, runId, detectGithubFn = detectGi
         .maybeSingle();
       if (data) return data;
     }
-  } else if (url && url.includes('mypreglife')) {
-    // Test/dev convenience without a Supabase client: keep the historical
-    // mypreglife fast-path so existing AUTO-mode tests still resolve to a
-    // PATH A row.
-    return {
-      product_id: 'mypreglife',
-      org_id: 'veu-ai-studio',
-      github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
-      self_renewal_enabled: true,
-    };
   }
+  // D40 — removed the hardcoded `mypreglife` test-convenience fast-path.
+  // Tests that need a PATH-A row must now supply one via
+  // deps.discoverProduct (the canonical DI seam) — the engine itself
+  // carries zero per-product code paths.
 
   // ── PATH B: no registry hit (or no DB) — synthesize a universal-mode product
   // No URL at all → can't proceed; return null and let caller fail gracefully.
@@ -455,6 +462,7 @@ export async function runOrchestration(args = {}) {
   const _createRenewalPr        = deps.createRenewalPr        || createRenewalPr;
   const _readProductPolicy      = deps.readProductPolicy      || readProductPolicy;
   const _appendGovernanceEntry  = deps.appendGovernanceEntry  || appendGovernanceEntry;
+  const _ensureProductSsotRow   = deps.ensureProductSsotRow   || ensureProductSsotRow;
   const _remediationEngine      = deps.remediationEngine      || remediationEngine;
   // DISPATCH 28: scoreCrawlOutput is DI-overridable so tests can drive
   // the §7.6 gate without having to construct issue-shaped crawl mocks.
@@ -548,7 +556,36 @@ export async function runOrchestration(args = {}) {
   // Prefer the explicit URL caller passed in; otherwise the LIVE deployed
   // URL (NOT the GitHub repo URL, which 404s on direct fetch). Falling
   // back to the repo URL is a last resort and almost certainly fails.
-  const initialUrl = args.url || resolveLiveUrl(productId) || githubRepoUrl;
+  // D40 — pass the discovered registry row to resolveLiveUrl so the
+  // product_url column is used as the primary source, with the legacy
+  // map only as fallback. Generic onboarding: add a registry row +
+  // product_url → engine runs end-to-end; no code change required.
+  const initialUrl = args.url || resolveLiveUrl(productId, product) || githubRepoUrl;
+
+  // D40 generic-engine — auto-create the product_ssot row on first
+  // Self-Renewal run if absent. Replaces the per-product migration
+  // pattern (0018 flowai, 0020 mypreglife). New products onboard
+  // with just a product_registry row + product_url; the engine
+  // self-provisions the audit-trail substrate.
+  try {
+    const ssotProvision = await _ensureProductSsotRow({
+      productId, environment, supabase,
+      identity: {
+        productName: productId,
+        productUrl: initialUrl,
+        ownerProviderOrgId: product?.org_id ?? null,
+      },
+    });
+    if (ssotProvision?.created) {
+      emit(makeStepLog({
+        iteration: 0, step: 1, status: 'complete',
+        tool: 'ensureProductSsotRow (D40 generic onboarding)',
+        why: 'auto-create product_ssot row on first run for this product+env (replaces per-product migrations)',
+        result: { created: true, id: ssotProvision.id },
+        durationMs: 0, mode: state.mode,
+      }));
+    }
+  } catch { /* ensure is best-effort; atomic-audit will surface absence via reason */ }
 
   const policy = await _readProductPolicy({ productId, supabase }).catch(() => null);
 
@@ -1286,7 +1323,10 @@ export async function runOrchestration(args = {}) {
           // PATH A — operator branch deploy. No graceful-timeout wrapper here;
           // PATH A keeps the existing fail-fast semantic since operators expect
           // a clear failure when their branch build doesn't deploy.
-          const projectId = resolveVercelProjectId(productId);
+          // D40 — pass registry row so vercel_project_id column is used
+          // as primary source; env-var fallback only kicks in when the
+          // column isn't populated.
+          const projectId = resolveVercelProjectId(productId, process.env, product);
           if (!projectId) {
             throw new Error(`no Vercel project ID for ${productId} (env VERCEL_PROJECT_ID_${productId.toUpperCase()})`);
           }

@@ -58,13 +58,26 @@ export function parseGithubRepoUrl(url) {
 }
 
 /**
- * Resolve the Vercel project ID for a given product. Phase A maps
- * productId → env-var name via a static lookup table; future phases
- * read this from product_registry.vercel_project_id.
+ * Resolve the Vercel project ID for a product. D40 generic-engine
+ * refactor: PRIMARY source is product_registry.vercel_project_id (the
+ * column from migration 0014). Falls through to the env-var
+ * convention VERCEL_PROJECT_ID_<UPPER_SNAKE> as legacy fallback for
+ * environments where the column isn't populated yet.
+ *
+ * Zero hardcoded product names — uniform `<UPPER_SNAKE>` env-var
+ * derivation works for ANY productId (mypreglife, saige, flowai,
+ * any future addition).
+ *
+ * @param {string} productId
+ * @param {object} [env]      — defaults to process.env
+ * @param {object} [product]  — optional registry row; if supplied,
+ *                              product.vercel_project_id takes precedence
  */
-export function resolveVercelProjectId(productId, env = process.env) {
-  if (productId === 'mypreglife') return env.VERCEL_PROJECT_ID_MYPREGLIFE ?? null;
-  // Lower-case fallback then envelope: also try VERCEL_PROJECT_ID_<PRODUCT_UPPER>
+export function resolveVercelProjectId(productId, env = process.env, product = null) {
+  if (product && typeof product.vercel_project_id === 'string' && product.vercel_project_id.length > 0) {
+    return product.vercel_project_id;
+  }
+  // Legacy env-var fallback — uniform derivation, no per-product cases.
   const upper = String(productId || '').toUpperCase().replace(/[^A-Z0-9]+/g, '_');
   return env[`VERCEL_PROJECT_ID_${upper}`] ?? null;
 }
@@ -358,6 +371,73 @@ export async function withAtomicSsotWrite({
  * yet — failure shape is `{ written: false, reason }` and the orchestrator
  * surfaces it.
  */
+/**
+ * D40 generic-engine: ensure a product_ssot row exists for the given
+ * (productId, environment) before any atomic-audit write. If the row
+ * is absent, AUTO-CREATE it with minimal identity_block + build_brief
+ * scaffolding so downstream withAtomicSsotWrite calls succeed on the
+ * very first Self-Renewal run for a brand-new product.
+ *
+ * This replaces the per-product migration pattern (0018 flowai seed,
+ * 0020 mypreglife seed) — onboarding a new product no longer requires
+ * a migration, just a product_registry row + product_url.
+ *
+ * Returns { created, reason?, id? }. created=true when this call
+ * actually inserted a row; false when the row was already present.
+ *
+ * @param {object} args
+ * @param {string} args.productId
+ * @param {string} args.environment   — 'dev' | 'stg' | 'prd'
+ * @param {object} args.supabase
+ * @param {object} [args.identity]    — optional identity_block overlay
+ *                                       ({ productName, productUrl, ownerProviderOrgId })
+ */
+export async function ensureProductSsotRow({ productId, environment, supabase, identity = {} }) {
+  if (!supabase || typeof supabase.from !== 'function') {
+    return { created: false, reason: 'supabase_unavailable' };
+  }
+  if (typeof productId !== 'string' || !productId || typeof environment !== 'string' || !environment) {
+    return { created: false, reason: 'bad_args' };
+  }
+  try {
+    const { data: existing, error: selErr } = await supabase
+      .from('product_ssot')
+      .select('id, product_id, environment')
+      .eq('product_id', productId)
+      .eq('environment', environment)
+      .maybeSingle();
+    if (selErr) return { created: false, reason: `select_failed:${selErr.message}` };
+    if (existing) return { created: false, reason: 'already_exists', id: existing.id };
+
+    const now = new Date().toISOString();
+    const { data: inserted, error: insErr } = await supabase
+      .from('product_ssot')
+      .insert({
+        product_id: productId,
+        environment,
+        identity_block: {
+          productName: identity.productName ?? productId,
+          productUrl:  identity.productUrl ?? null,
+          ownerProviderOrgId: identity.ownerProviderOrgId ?? null,
+          ownerOperatorIds: [],
+          createdAt: now,
+          createdBy: { userId: 'system', displayName: 'auto-created-by-engine', role: 'admin' },
+        },
+        build_brief: {
+          originalInput: { mode: 'self-renewal-phase-a' },
+          normalizedConcept: identity.normalizedConcept ?? `${productId} — auto-onboarded by engine`,
+        },
+        architecture_snapshot: { capturedAt: now, framework: identity.framework ?? null },
+      })
+      .select('id')
+      .single();
+    if (insErr) return { created: false, reason: `insert_failed:${insErr.message}` };
+    return { created: true, id: inserted?.id ?? null };
+  } catch (e) {
+    return { created: false, reason: e?.message ?? String(e) };
+  }
+}
+
 export async function appendGovernanceEntry({ productId, environment, entry, supabase, options }) {
   if (!supabase || typeof supabase.from !== 'function') {
     return { written: false, reason: 'supabase_unavailable', rollback: async () => ({ rolled: false, reason: 'no_prior_state' }) };
@@ -656,6 +736,7 @@ export const __internals = Object.freeze({
   readProductPolicy,
   appendGovernanceEntry,
   appendDeltaLogEntry,
+  ensureProductSsotRow,
   withAtomicSsotWrite,
   DEFAULT_CAS_MAX_RETRIES,
   DEFAULT_CAS_BACKOFF_MS,
