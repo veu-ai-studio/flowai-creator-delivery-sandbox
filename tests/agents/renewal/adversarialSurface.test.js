@@ -10,6 +10,7 @@ import {
   probeInteractives,
   probeModals,
   probeForms,
+  probeAgents,
   __internals,
 } from '../../../src/lib/agents/renewal/adversarialSurface.js';
 
@@ -655,5 +656,151 @@ describe('probeForms — T3 form submission probe', () => {
     expect(r.summary).toHaveProperty('formsFailing');
     expect(r.summary.modalsFailing).toBe(0);
     expect(r.summary.formsFailing).toBe(0);
+  });
+});
+
+// ── D39 T4 — probeAgents ─────────────────────────────────────────────
+
+describe('classifyResponse — T4 stub/working/no-response classifier', () => {
+  it('flags canned stub responses as STUB', () => {
+    expect(__internals.classifyResponse("I'm sorry, I can't help with that yet.")).toBe('STUB');
+    expect(__internals.classifyResponse('Coming soon — this feature is not yet implemented.')).toBe('STUB');
+    expect(__internals.classifyResponse('this feature is not yet available')).toBe('STUB');
+  });
+
+  it('flags error-prefix responses as STUB', () => {
+    expect(__internals.classifyResponse('error: something went wrong. Please try again later — sorry!')).toBe('STUB');
+    expect(__internals.classifyResponse('Sorry, this response failed. Please retry.')).toBe('STUB');
+  });
+
+  it('flags too-short responses as NO-RESPONSE', () => {
+    expect(__internals.classifyResponse('ok')).toBe('NO-RESPONSE');
+    expect(__internals.classifyResponse('')).toBe('NO-RESPONSE');
+    expect(__internals.classifyResponse('Yes.')).toBe('NO-RESPONSE');
+  });
+
+  it('accepts substantive responses as WORKS', () => {
+    expect(__internals.classifyResponse(
+      'This product is a pregnancy and maternal-health AI companion that helps users track milestones and access care guidance.',
+    )).toBe('WORKS');
+  });
+});
+
+describe('probeAgents — T4 agent functional probe', () => {
+  // Mock page surface — evaluate dispatches on the function source.
+  function makeAgentPage({ agentInput = null, sendOk = true, sendReason = null, response = null } = {}) {
+    let bodyLen = 1000;
+    return {
+      goto: vi.fn(async () => {}),
+      on: vi.fn(), off: vi.fn(),
+      url: () => 'https://x/',
+      locator: vi.fn(),
+      waitForTimeout: vi.fn(async () => {}),
+      evaluate: vi.fn(async (fn, args) => {
+        const src = fn.toString();
+        if (src.includes('contenteditable') && src.includes('placeholder')) {
+          return agentInput;
+        }
+        if (src.includes('dispatchEvent') && src.includes('KeyboardEvent')) {
+          if (!sendOk) return { ok: false, reason: sendReason ?? 'unknown' };
+          return { ok: true, bodyBefore: bodyLen };
+        }
+        if (src.includes('bodyDiffLen')) {
+          // Response detection — return body growth if `response` is set.
+          if (response) {
+            return { bodyLength: bodyLen + response.length, bodyDiffLen: response.length };
+          }
+          return { bodyLength: bodyLen, bodyDiffLen: 0 };
+        }
+        if (src.includes('role="article"') || src.includes('class*="message"')) {
+          return response ?? '';
+        }
+        return null;
+      }),
+    };
+  }
+
+  it('emits no finding when no agent input is detected (legitimate absence)', async () => {
+    const page = makeAgentPage({ agentInput: null });
+    const r = await probeAgents({ page, url: 'https://x/', sliceBudget: 5_000, responseWaitMs: 500 });
+    expect(r.agentsTested).toBe(0);
+    expect(r.findings).toEqual([]);
+  });
+
+  it('flags an agent that takes prompt but never responds (NO-RESPONSE)', async () => {
+    const page = makeAgentPage({
+      agentInput: { selector: 'textarea#chat', placeholder: 'Ask me anything', ariaLabel: '', tag: 'textarea' },
+      sendOk: true, response: null,
+    });
+    const r = await probeAgents({ page, url: 'https://x/', sliceBudget: 5_000, responseWaitMs: 600 });
+    expect(r.agentsTested).toBe(1);
+    expect(r.agentsNonFunctional).toBe(1);
+    expect(r.findings[0]).toMatchObject({ severity: 'high', category: 'ai-agent-no-response' });
+    expect(r.findings[0].evidence).toMatch(/did not respond.*probe prompt/);
+  });
+
+  it('flags an agent that responds with a stub/canned message', async () => {
+    const page = makeAgentPage({
+      agentInput: { selector: 'textarea#chat', placeholder: 'Ask anything', ariaLabel: '', tag: 'textarea' },
+      sendOk: true,
+      response: "I'm sorry, I can't help with that yet. This is a demo placeholder.",
+    });
+    const r = await probeAgents({ page, url: 'https://x/', sliceBudget: 5_000, responseWaitMs: 1_000 });
+    expect(r.agentsNonFunctional).toBe(1);
+    expect(r.findings[0]).toMatchObject({ severity: 'high', category: 'ai-agent-no-response' });
+    expect(r.findings[0].evidence).toMatch(/canned\/stub response/);
+  });
+
+  it('flags an agent where the prompt send itself failed (UNREACHABLE)', async () => {
+    const page = makeAgentPage({
+      agentInput: { selector: 'textarea#chat', placeholder: 'Ask', ariaLabel: '', tag: 'textarea' },
+      sendOk: false, sendReason: 'submit threw',
+    });
+    const r = await probeAgents({ page, url: 'https://x/', sliceBudget: 5_000, responseWaitMs: 500 });
+    expect(r.findings[0]).toMatchObject({ severity: 'high', category: 'ai-agent-unreachable' });
+    expect(r.findings[0].evidence).toMatch(/agent prompt failed to send/);
+  });
+
+  it('accepts an agent with a substantive, non-stub response (WORKS — no finding)', async () => {
+    const page = makeAgentPage({
+      agentInput: { selector: 'textarea#chat', placeholder: 'Ask', ariaLabel: '', tag: 'textarea' },
+      sendOk: true,
+      response: 'This product is a pregnancy companion app that helps expecting parents track milestones, get personalized guidance, and access community support.',
+    });
+    const r = await probeAgents({ page, url: 'https://x/', sliceBudget: 5_000, responseWaitMs: 1_000 });
+    expect(r.agentsTested).toBe(1);
+    expect(r.agentsNonFunctional).toBe(0);
+    expect(r.findings).toEqual([]);
+  });
+
+  it('handles findAgentInput throwing — surfaces engine-error', async () => {
+    const page = makeAgentPage();
+    page.evaluate = vi.fn(async () => { throw new Error('eval blocked'); });
+    const r = await probeAgents({ page, url: 'https://x/', sliceBudget: 5_000, responseWaitMs: 500 });
+    expect(r.findings[0]).toMatchObject({ severity: 'medium', category: 'engine-error' });
+  });
+
+  it('probeAgents is wired as default in probeAdversarialSurface (T4)', async () => {
+    const mockPage = {
+      goto: vi.fn(async () => {}),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async () => []),
+      url: () => 'https://x/',
+      locator: vi.fn(),
+      waitForTimeout: vi.fn(async () => {}),
+    };
+    const browser = {
+      newContext: vi.fn(async () => ({
+        newPage: vi.fn(async () => mockPage),
+        close: vi.fn(async () => {}),
+      })),
+      close: vi.fn(async () => {}),
+    };
+    const r = await probeAdversarialSurface({
+      url: 'https://x/', opts: { browser },
+    });
+    expect(r.ok).toBe(true);
+    expect(r.summary).toHaveProperty('agentsNonFunctional');
+    expect(r.summary.agentsNonFunctional).toBe(0);
   });
 });

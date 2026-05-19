@@ -657,6 +657,245 @@ export async function probeForms({
   return { findings, formsFailing, formsTested };
 }
 
+// ── T4 — AI agent / chatbot functional probe ─────────────────────────
+//
+// Detects in-product AI agents / chatbots and exercises them with a
+// standard probe prompt: "What does this product do? Answer in one
+// sentence." A coherent, non-trivial, non-error response classifies
+// the agent as WORKING. A stub/canned/error/no-response classifies
+// it as non-functional and emits a §7.6 finding.
+//
+// Detection signals (DOM-only — vendor-script presence is signal but
+// not proof; we require an interactive input we can actually exercise):
+//   - input[placeholder*="ask"|"chat"|"message"|"question"]
+//   - textarea[placeholder*="ask"|"chat"|"message"|"question"]
+//   - [role="textbox"] near a button labeled "send"/"submit"
+//   - input[type=text] inside a container with chatbot vendor class
+//     (intercom, drift, zendesk-Web-Widget, etc.) — partial coverage
+//
+// Stub indicators (response classified as STUB rather than WORKS):
+//   - exact-match to canned-response strings: "i'm sorry, i can't help",
+//     "this is a demo", "coming soon", "i don't know"
+//   - response length < 30 chars
+//   - response identical to user prompt
+
+const PROBE_PROMPT = 'What does this product do? Answer in one sentence.';
+
+const STUB_PATTERNS = Object.freeze([
+  /^\s*(i'?m sorry|i cannot|i can'?t|this is a demo|coming soon|i don'?t know)/i,
+  /^\s*(error|sorry|something went wrong|please try again)/i,
+  /(this feature is not yet available|placeholder response|stub response)/i,
+]);
+
+async function findAgentInput(page) {
+  return await page.evaluate(() => {
+    function visible(el) {
+      const rect = el.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    }
+    function path(el) {
+      const parts = [];
+      let cur = el;
+      let depth = 0;
+      while (cur && cur.nodeType === 1 && depth < 8) {
+        let part = cur.tagName.toLowerCase();
+        if (cur.id) { part += `#${cur.id}`; parts.unshift(part); break; }
+        const parent = cur.parentElement;
+        if (parent) {
+          const sibs = Array.from(parent.children).filter((c) => c.tagName === cur.tagName);
+          if (sibs.length > 1) part += `:nth-of-type(${sibs.indexOf(cur) + 1})`;
+        }
+        parts.unshift(part);
+        cur = cur.parentElement; depth += 1;
+      }
+      return parts.join(' > ');
+    }
+    const HINT = /(ask|chat|message|question|prompt|how can i help|talk to|ai)/i;
+    const candidates = [
+      ...document.querySelectorAll('textarea, input[type="text"], [contenteditable="true"], [role="textbox"]'),
+    ].filter(visible);
+    for (const c of candidates) {
+      const placeholder = c.getAttribute('placeholder') ?? '';
+      const aria = c.getAttribute('aria-label') ?? '';
+      const label = (c.labels?.[0]?.innerText ?? '');
+      const blob = `${placeholder} ${aria} ${label}`;
+      if (HINT.test(blob)) {
+        return { selector: path(c), placeholder, ariaLabel: aria, tag: c.tagName.toLowerCase() };
+      }
+    }
+    return null;
+  });
+}
+
+async function sendPromptToAgent(page, inputDescriptor, promptText, actionTimeoutMs) {
+  // Type into the input + press Enter; capture body-text length
+  // before/after so we can compare for response detection.
+  return await page.evaluate(({ desc, prompt, timeout }) => {
+    const el = document.querySelector(desc.selector);
+    if (!el) return { ok: false, reason: 'agent_input_not_found' };
+    try {
+      const bodyBefore = (document.body?.innerText ?? '').length;
+      if (el.tagName.toLowerCase() === 'textarea' || el.tagName.toLowerCase() === 'input') {
+        el.value = prompt;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (el.getAttribute('contenteditable') === 'true') {
+        el.innerText = prompt;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      // Try Enter key, then look for a sibling send button.
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      el.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true, cancelable: true }));
+      // Look for adjacent send affordance.
+      const parent = el.closest('form, div') || el.parentElement;
+      let sendBtn = null;
+      if (parent) {
+        sendBtn = parent.querySelector('button[type="submit"], button[aria-label*="send" i], button[title*="send" i]');
+        if (!sendBtn) {
+          for (const b of Array.from(parent.querySelectorAll('button'))) {
+            if (/^\s*send|submit|ask/i.test(b.innerText || '')) { sendBtn = b; break; }
+          }
+        }
+      }
+      if (sendBtn) sendBtn.click();
+      return { ok: true, bodyBefore };
+    } catch (e) {
+      return { ok: false, reason: (e?.message ?? String(e)).slice(0, 100) };
+    }
+  }, { desc: inputDescriptor, prompt: promptText, timeout: actionTimeoutMs });
+}
+
+async function detectAgentResponse(page, bodyBefore, waitMs) {
+  // Wait up to waitMs for the page body text to grow by a meaningful
+  // amount AND contain a candidate response near the input.
+  const startedAt = Date.now();
+  let lastDiff = '';
+  while (Date.now() - startedAt < waitMs) {
+    let snapshot;
+    try {
+      snapshot = await page.evaluate((before) => {
+        const body = (document.body?.innerText ?? '');
+        return { bodyLength: body.length, bodyDiffLen: body.length - before };
+      }, bodyBefore);
+    } catch { snapshot = { bodyLength: 0, bodyDiffLen: 0 }; }
+    if (snapshot.bodyDiffLen > 40) {                            // meaningful growth
+      // Pull a candidate response snippet — last visible message bubble.
+      try {
+        const snippet = await page.evaluate(() => {
+          const sel = '[role="article"], [class*="message"], [class*="response"], [class*="bubble"], li, p';
+          const els = Array.from(document.querySelectorAll(sel))
+            .filter((el) => (el.innerText || '').length > 20);
+          // Last visible — most-recent in DOM order.
+          return els.length > 0 ? (els[els.length - 1].innerText || '').slice(0, 400) : '';
+        });
+        if (snippet && snippet.length > 0) return { responded: true, snippet };
+      } catch { /* keep polling */ }
+      lastDiff = `body grew by ${snapshot.bodyDiffLen} chars`;
+    }
+    if (typeof page.waitForTimeout === 'function') {
+      try { await page.waitForTimeout(500); } catch { /* ignore */ }
+    } else {
+      await new Promise((res) => setTimeout(res, 500));
+    }
+  }
+  return { responded: false, snippet: lastDiff };
+}
+
+function classifyResponse(snippet) {
+  if (typeof snippet !== 'string' || snippet.length < 30) return 'NO-RESPONSE';
+  for (const re of STUB_PATTERNS) if (re.test(snippet)) return 'STUB';
+  return 'WORKS';
+}
+
+/**
+ * T4 — probeAgents default implementation.
+ *
+ * @returns {Promise<{ findings:Array, agentsNonFunctional:number, agentsTested:number }>}
+ */
+export async function probeAgents({
+  page, url,
+  actionTimeoutMs = DEFAULT_ACTION_TIMEOUT_MS,
+  sliceBudget = 45_000,
+  promptText = PROBE_PROMPT,
+  responseWaitMs = 25_000,
+} = {}) {
+  const findings = [];
+  let agentsNonFunctional = 0;
+  let agentsTested = 0;
+  if (!page) return { findings, agentsNonFunctional, agentsTested };
+
+  let agentInput;
+  try {
+    agentInput = await findAgentInput(page);
+  } catch (e) {
+    findings.push(makeFinding(
+      'medium', 'engine-error', url,
+      `findAgentInput failed: ${(e?.message ?? String(e)).slice(0, 120)}`,
+    ));
+    return { findings, agentsNonFunctional, agentsTested };
+  }
+  if (!agentInput || typeof agentInput !== 'object' || typeof agentInput.selector !== 'string') {
+    // No detectable agent input on this page — not a finding (the page
+    // may legitimately not have an AI agent). Phase A's presence
+    // detection covers the "advertises AI but no surface" case.
+    return { findings, agentsNonFunctional, agentsTested };
+  }
+
+  agentsTested = 1;
+  let sendResult;
+  try {
+    sendResult = await sendPromptToAgent(page, agentInput, promptText, actionTimeoutMs);
+  } catch (e) {
+    sendResult = { ok: false, reason: (e?.message ?? String(e)).slice(0, 100) };
+  }
+  if (!sendResult.ok) {
+    agentsNonFunctional += 1;
+    findings.push(makeFinding(
+      'high', 'ai-agent-unreachable',
+      `${url} ${agentInput.selector}`,
+      `agent prompt failed to send: ${sendResult.reason ?? 'unknown'}`,
+    ));
+    return { findings, agentsNonFunctional, agentsTested };
+  }
+
+  const waitBudget = Math.min(responseWaitMs, Math.max(5_000, sliceBudget - 5_000));
+  let resp;
+  try {
+    resp = await detectAgentResponse(page, sendResult.bodyBefore ?? 0, waitBudget);
+  } catch (e) {
+    resp = { responded: false, snippet: (e?.message ?? String(e)).slice(0, 80) };
+  }
+
+  if (!resp.responded) {
+    agentsNonFunctional += 1;
+    findings.push(makeFinding(
+      'high', 'ai-agent-no-response',
+      `${url} ${agentInput.selector}`,
+      `agent did not respond to standard probe prompt within ${waitBudget}ms`,
+    ));
+    return { findings, agentsNonFunctional, agentsTested };
+  }
+
+  const cls = classifyResponse(resp.snippet);
+  if (cls === 'STUB') {
+    agentsNonFunctional += 1;
+    findings.push(makeFinding(
+      'high', 'ai-agent-no-response',
+      `${url} ${agentInput.selector}`,
+      `agent returned canned/stub response: "${safeText(resp.snippet, 120)}"`,
+    ));
+  } else if (cls === 'NO-RESPONSE') {
+    agentsNonFunctional += 1;
+    findings.push(makeFinding(
+      'high', 'ai-agent-no-response',
+      `${url} ${agentInput.selector}`,
+      `agent response too short / non-coherent: "${safeText(resp.snippet, 120)}"`,
+    ));
+  }
+  // WORKS → no finding
+  return { findings, agentsNonFunctional, agentsTested };
+}
+
 // ── Main entry point ──────────────────────────────────────────────────
 
 /**
@@ -734,7 +973,7 @@ export async function probeAdversarialSurface(args = {}) {
     const _probeForms = typeof opts.probeForms === 'function'
       ? opts.probeForms : probeForms;     // D39 T3: default to bundled probe
     const _probeAgents = typeof opts.probeAgents === 'function'
-      ? opts.probeAgents : null;
+      ? opts.probeAgents : probeAgents;   // D39 T4: default to bundled probe
     const _detectWiredVsMock = typeof opts.detectWiredVsMock === 'function'
       ? opts.detectWiredVsMock : null;
 
@@ -856,5 +1095,11 @@ export const __internals = Object.freeze({
   enumerateForms,
   fillAndSubmitForm,
   detectFormFeedback,
+  findAgentInput,
+  sendPromptToAgent,
+  detectAgentResponse,
+  classifyResponse,
+  STUB_PATTERNS,
+  PROBE_PROMPT,
   safeText,
 });
