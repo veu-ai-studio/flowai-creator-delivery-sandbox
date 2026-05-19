@@ -1498,14 +1498,54 @@ export async function runOrchestration(args = {}) {
           postFixCrawlOutput = crawlOutput;
         }
       }
-      // D39: Phase B re-probe of postFixUrl would be ideal but
-      // would double the budget. Use the iter's STEP 4 phaseBFindings
-      // as a proxy — if the fix didn't change interactive layer, the
-      // findings persist; if it did, Phase A regression-guard catches it.
-      const postGtm = _scoreCrawlOutput(postFixCrawlOutput, state.phaseBFindings ?? null);
+      // D42 T1 — Phase B re-probe against the post-fix preview.
+      // The pre-fix phaseBFindings (state.phaseBFindings from STEP 4)
+      // are no longer valid after fixes deploy: an interactive that
+      // was DEAD may now WORK (or vice versa). We re-run probeAllPages
+      // on the post-fix crawl's pages so comprehensive §7.6 reflects
+      // POST-fix interactive state. Fall back to pre-fix findings if
+      // re-probe fails / deploy is degraded — never worse than D41.
+      let postFixPhaseBFindings = state.phaseBFindings ?? null;
+      let postFixPhaseBSummary = null;
+      let postFixPagesProbed = 0;
+      let postFixUrlsAttempted = 0;
+      const _probeAllPagesPost = deps.probeAllPages || probeAllPages;
+      if (!deployDegraded && previewUrl && Array.isArray(postFixCrawlOutput?.pages) && postFixCrawlOutput.pages.length > 0) {
+        try {
+          const postFixUrls = Array.from(new Set(
+            postFixCrawlOutput.pages
+              .map((p) => (typeof p?.url === 'string' ? p.url : null))
+              .filter(Boolean),
+          ));
+          if (postFixUrls.length > 0) {
+            const reprobe = await _probeAllPagesPost({
+              urls: postFixUrls,
+              opts: {
+                probeBudgetMs: state.phaseBProbeBudgetMs ?? 180_000,
+                overallBudgetMs: state.phaseBOverallBudgetMs ?? Math.max(180_000, postFixUrls.length * 60_000),
+                storageState: args.storageState ?? state.storageState ?? undefined,
+                maxModals: 10, maxForms: 10,
+              },
+            });
+            if (reprobe && reprobe.ok !== false && Array.isArray(reprobe.findings)) {
+              postFixPhaseBFindings = reprobe.findings;
+              postFixPhaseBSummary = reprobe.summary ?? null;
+              postFixPagesProbed = reprobe.pagesProbed ?? 0;
+              postFixUrlsAttempted = reprobe.urlsAttempted ?? postFixUrls.length;
+              state.phaseBPostFixFindings = postFixPhaseBFindings;
+              state.phaseBPostFixSummary = postFixPhaseBSummary;
+            }
+          }
+        } catch {
+          // Re-probe failure ⇒ keep pre-fix findings as fallback.
+          // No log emission here — the post-fix probe is best-effort;
+          // STEP 11 still emits its score log below.
+        }
+      }
+      const postGtm = _scoreCrawlOutput(postFixCrawlOutput, postFixPhaseBFindings);
       // D41 T5 — surface-only baseline alongside comprehensive score.
       // Skip the extra call when Phase B is empty (identical scores).
-      const postGtmSurfaceOnly = (Array.isArray(state.phaseBFindings) && state.phaseBFindings.length > 0)
+      const postGtmSurfaceOnly = (Array.isArray(postFixPhaseBFindings) && postFixPhaseBFindings.length > 0)
         ? _scoreCrawlOutput(postFixCrawlOutput, null)
         : postGtm;
       lastPostGtm = postGtm;
@@ -1524,6 +1564,14 @@ export async function runOrchestration(args = {}) {
           phaseBContribution: postGtmSurfaceOnly.score - postGtm.score,
           phaseBPagesProbed: state.phaseBPagesProbed ?? 0,
           phaseBUrlsAttempted: state.phaseBUrlsAttempted ?? 0,
+          // D42 T1 — post-fix Phase B re-probe metrics. When the
+          // re-probe ran successfully, these reflect the post-fix
+          // interactive state; otherwise they're 0 and postGtm is
+          // computed from pre-fix findings (fallback).
+          postFixPhaseBPagesProbed: postFixPagesProbed,
+          postFixPhaseBUrlsAttempted: postFixUrlsAttempted,
+          postFixPhaseBSummary: postFixPhaseBSummary,
+          postFixPhaseBFindingsCount: Array.isArray(postFixPhaseBFindings) ? postFixPhaseBFindings.length : 0,
           fiveLayerInternal: postScoreEnvelope.total,
           layers: {
             l1: postScoreEnvelope.l1, l2: postScoreEnvelope.l2, l3: postScoreEnvelope.l3,

@@ -1599,3 +1599,205 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
     expect(r.urlsAttempted).toBe(3);
   });
 });
+
+// ── D42 T1 — Phase-B re-probe after fix ─────────────────────────────
+
+function fullHappyDeps({ scoreSequence } = {}) {
+  let scoreIdx = 0;
+  return {
+    discoverProduct: vi.fn(async () => ({
+      product_id: 'mypreglife', org_id: 'veu-ai-studio',
+      github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
+      self_renewal_enabled: true,
+    })),
+    checkRateCap: vi.fn(async () => ({ allowed: true, runsInWindow: 0, cap: 1 })),
+    checkRunawayDetector: vi.fn(async () => ({ tripped: false })),
+    produceMonitorText: vi.fn(async ({ url }) => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10', rawContent: '', url, fetchedAt: 'now', wordCount: 0, pageTitle: '', model: 'c', usage: {} })),
+    computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
+    generateFix: vi.fn(async () => ({ fixedContent: 'fixed', model: 'c', promptTokens: 1, completionTokens: 1 })),
+    getInstallationToken: vi.fn(async () => ({ token: 'ghs', expiresAt: '2099-01-01' })),
+    fetchFileContent: vi.fn(async () => 'orig'),
+    createRenewalBranch: vi.fn(async ({ branchName }) => ({ branchName, commitSha: 'abc', branchUrl: 'https://github.com/x/y/tree/' + branchName })),
+    commitFileToBranch: vi.fn(async ({ branchName, filePath }) => ({ branchName, commitSha: 'def', filePath })),
+    deployBranchPreview: vi.fn(async ({ branchName }) => ({ deploymentId: 'dpl', previewUrl: `https://demo-${branchName}.vercel.app`, inspectorUrl: '' })),
+    evaluateDelta: vi.fn(({ preScore, postScore, runId, productId }) => ({
+      action: 'open_pr', delta: postScore.total - preScore.total,
+      preScore: preScore.total, postScore: postScore.total,
+      isSubstantial: postScore.total - preScore.total >= 5, prBanner: '✅',
+      auditEntry: { kind: 'self_renewal.delta_evaluated.v1', runId, productId, delta: postScore.total - preScore.total, at: 'now' },
+    })),
+    createRenewalPr: vi.fn(async () => ({ prNumber: 42, prUrl: 'api', prHtmlUrl: 'https://github.com/x/y/pull/42', existing: false })),
+    readProductPolicy: vi.fn(async () => ({
+      selfRenewalNegativeDeltaPolicy: 'ALWAYS_OPEN', selfRenewalMinimumDelta: 0,
+      selfRenewalSubstantialThreshold: 5, selfRenewalMaxPerDay: 1, selfRenewalRunawayThreshold: 3,
+    })),
+    appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+  };
+}
+
+describe('orchestrator STEP 11 — Phase B re-probe after fix (D42 T1)', () => {
+  it('re-probes the post-fix preview URLs and uses fresh findings for postGtm', async () => {
+    const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const probeCalls = [];
+    const probeAllPages = vi.fn(async ({ urls }) => {
+      const callIdx = probeCalls.length;
+      probeCalls.push({ urls, callIdx });
+      // Pre-fix probe (callIdx 0): 3 high findings.
+      // Post-fix re-probe (callIdx 1): only 1 high finding (fix worked).
+      const findings = callIdx === 0
+        ? [
+            { severity: 'high', category: 'broken-modal', location: urls[0], evidence: 'pre-1' },
+            { severity: 'high', category: 'broken-modal', location: urls[0], evidence: 'pre-2' },
+            { severity: 'high', category: 'broken-modal', location: urls[1] ?? urls[0], evidence: 'pre-3' },
+          ]
+        : [
+            { severity: 'high', category: 'broken-modal', location: urls[0], evidence: 'post-1' },
+          ];
+      return {
+        ok: true,
+        pagesProbed: urls.length, urlsAttempted: urls.length,
+        perPage: urls.map((u) => ({ ok: true, url: u, findings: [], summary: {} })),
+        findings,
+        summary: { interactivesTested: callIdx === 0 ? 6 : 8, deadOrErroring: findings.length,
+                   modalsFailing: 0, formsFailing: 0, agentsNonFunctional: 0, mockOnlyFlagged: 0,
+                   workspacesProbed: 0, workspacesNonFunctional: 0 },
+        probedAt: 'now', durationMs: 1,
+      };
+    });
+    const conductStructuredCrawl = vi.fn(async ({ url }) => ({
+      pagesCrawled: 2, depth: 1,
+      pages: [
+        { url: 'https://x/p1', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 },
+        { url: 'https://x/p2', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 },
+      ],
+      brokenLinks: [], forms: [], interactiveElements: [], errors: [], totalTextLength: 4,
+    }));
+    const scoreCrawlOutput = vi.fn((crawl, extra) => {
+      const baseCount = Array.isArray(extra) ? extra.length : 0;
+      const score = 100 - (baseCount * 5);
+      return {
+        score, counts: { critical: 0, high: baseCount, medium: 0, low: 0 },
+        band: 'showcase-ready', label: 'showcase-ready',
+        penalty: 100 - score, formula: 'test',
+        issues: extra ?? [], phaseACount: 0, phaseBCount: baseCount,
+      };
+    });
+
+    process.env.VERCEL_PROJECT_ID_MYPREGLIFE = 'prj_fake';
+    process.env.VERCEL_ORG_ID = 'team_fake';
+    process.env.VERCEL_TOKEN = 'vercel_fake';
+    try {
+      const deps = { ...fullHappyDeps(), conductStructuredCrawl, scoreCrawlOutput, probeAllPages };
+      const r = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd42-t1-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+      // Both crawls produced 2 URLs each → probeAllPages was invoked
+      // twice: once pre-fix (STEP 4), once post-fix (STEP 11 re-probe).
+      expect(probeAllPages).toHaveBeenCalledTimes(2);
+      expect(probeCalls[0].urls).toHaveLength(2);
+      expect(probeCalls[1].urls).toHaveLength(2);
+
+      const step11 = r.orchestrationLog.find((l) => l.step === 11);
+      expect(step11).toBeDefined();
+      expect(step11.result.postFixPhaseBPagesProbed).toBe(2);
+      expect(step11.result.postFixPhaseBUrlsAttempted).toBe(2);
+      expect(step11.result.postFixPhaseBFindingsCount).toBe(1);
+      // postGtm uses POST-fix findings (1 high) not pre-fix (3 high).
+      // 100 − 1·5 = 95 (vs 100 − 3·5 = 85 if we'd used pre-fix).
+      expect(step11.result.gtmScore).toBe(95);
+    } finally {
+      delete process.env.VERCEL_PROJECT_ID_MYPREGLIFE;
+      delete process.env.VERCEL_ORG_ID;
+      delete process.env.VERCEL_TOKEN;
+    }
+  });
+
+  it('falls back to pre-fix phaseBFindings when re-probe fails', async () => {
+    const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    let callCount = 0;
+    const probeAllPages = vi.fn(async ({ urls }) => {
+      callCount += 1;
+      if (callCount === 2) throw new Error('reprobe_failed_test');
+      return {
+        ok: true, pagesProbed: 1, urlsAttempted: 1, perPage: [],
+        findings: [
+          { severity: 'high', category: 'broken-modal', location: urls[0], evidence: 'persistent' },
+          { severity: 'high', category: 'broken-modal', location: urls[0], evidence: 'persistent-2' },
+        ],
+        summary: { interactivesTested: 1, deadOrErroring: 2, modalsFailing: 0, formsFailing: 0, agentsNonFunctional: 0, mockOnlyFlagged: 0, workspacesProbed: 0, workspacesNonFunctional: 0 },
+        probedAt: 'now', durationMs: 1,
+      };
+    });
+    const conductStructuredCrawl = vi.fn(async ({ url }) => ({
+      pagesCrawled: 1, depth: 1,
+      pages: [{ url: 'https://x/p1', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 }],
+      brokenLinks: [], forms: [], interactiveElements: [], errors: [], totalTextLength: 2,
+    }));
+    const scoreCrawlOutput = vi.fn((crawl, extra) => {
+      const baseCount = Array.isArray(extra) ? extra.length : 0;
+      return { score: 100 - (baseCount * 5), counts: { critical: 0, high: baseCount, medium: 0, low: 0 }, band: 'showcase-ready', label: 'x', penalty: baseCount * 5, formula: 't', issues: extra ?? [], phaseACount: 0, phaseBCount: baseCount };
+    });
+
+    process.env.VERCEL_PROJECT_ID_MYPREGLIFE = 'prj_fake';
+    process.env.VERCEL_ORG_ID = 'team_fake';
+    process.env.VERCEL_TOKEN = 'vercel_fake';
+    try {
+      const deps = { ...fullHappyDeps(), conductStructuredCrawl, scoreCrawlOutput, probeAllPages };
+      const r = await runOrchestration({
+        url: null, mode: 'auto', runId: 'd42-t1-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+      const step11 = r.orchestrationLog.find((l) => l.step === 11);
+      // Re-probe threw; pre-fix findings (2 high) used as fallback.
+      // postFixPhaseBPagesProbed stays at 0 (re-probe didn't succeed).
+      expect(step11.result.postFixPhaseBPagesProbed).toBe(0);
+      // postGtm still computed from pre-fix findings.
+      expect(step11.result.gtmScore).toBe(90);                  // 100 − 2·5
+    } finally {
+      delete process.env.VERCEL_PROJECT_ID_MYPREGLIFE;
+      delete process.env.VERCEL_ORG_ID;
+      delete process.env.VERCEL_TOKEN;
+    }
+  });
+
+  it('does NOT re-probe when deploy is degraded (preview URL absent)', async () => {
+    const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
+    const probeAllPages = vi.fn(async ({ urls }) => ({
+      ok: true, pagesProbed: 1, urlsAttempted: 1, perPage: [],
+      findings: [{ severity: 'high', category: 'broken-modal', location: urls[0], evidence: 'x' }],
+      summary: { interactivesTested: 1, deadOrErroring: 1, modalsFailing: 0, formsFailing: 0, agentsNonFunctional: 0, mockOnlyFlagged: 0, workspacesProbed: 0, workspacesNonFunctional: 0 },
+      probedAt: 'now', durationMs: 1,
+    }));
+    const conductStructuredCrawl = vi.fn(async ({ url }) => ({
+      pagesCrawled: 1, depth: 1,
+      pages: [{ url: 'https://x/p1', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 }],
+      brokenLinks: [], forms: [], interactiveElements: [], errors: [], totalTextLength: 2,
+    }));
+
+    process.env.VERCEL_PROJECT_ID_MYPREGLIFE = 'prj_fake';
+    process.env.VERCEL_ORG_ID = 'team_fake';
+    process.env.VERCEL_TOKEN = 'vercel_fake';
+    try {
+      const deps = {
+        ...fullHappyDeps(),
+        conductStructuredCrawl,
+        scoreCrawlOutput: vi.fn(() => ({ score: 90, counts: { critical: 0, high: 1, medium: 0, low: 0 }, band: 'x', label: 'x', penalty: 5, formula: 't', issues: [], phaseACount: 0, phaseBCount: 1 })),
+        probeAllPages,
+        // Force deploy-degraded by making the preview deploy throw.
+        deployBranchPreview: vi.fn(async () => { throw new Error('deploy_failed_test'); }),
+      };
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'd42-t1-3', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+      // probeAllPages called once (STEP 4 pre-fix) but NOT a second
+      // time (STEP 11 re-probe skipped due to deploy-degraded).
+      expect(probeAllPages).toHaveBeenCalledTimes(1);
+    } finally {
+      delete process.env.VERCEL_PROJECT_ID_MYPREGLIFE;
+      delete process.env.VERCEL_ORG_ID;
+      delete process.env.VERCEL_TOKEN;
+    }
+  });
+});
