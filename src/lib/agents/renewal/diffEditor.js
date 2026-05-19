@@ -227,6 +227,151 @@ export function applyDiff(originalText, parsed) {
   };
 }
 
+// ── Added-import resolution (D37) ──────────────────────────────────────
+//
+// D36 surfaced a new failure mode: Claude's diff INTRODUCED a new
+// `import OnboardingWizard from "../OnboardingWizard"` line for a
+// sibling file that doesn't exist. Parse-check passed (file parses)
+// but Rollup build-time module resolution failed →
+//   `Could not resolve "../OnboardingWizard" from
+//    src/components/birthsafe/screens/HomeScreen.jsx`
+//
+// PRESERVE_PATTERNS forbids REMOVING import/require lines (don't break
+// existing imports). The symmetric rule: any ADDED import must point
+// to (a) a path that exists in the supplied fileInventory, OR (b) a
+// package name listed in knownPackages. If neither, reject the diff
+// with reason 'added_import_unresolved:<spec>'.
+
+const IMPORT_SPEC_RE_ES = /^\s*(?:import\s+(?:type\s+)?[^'"`]*?from\s+|import\s+)['"`]([^'"`]+)['"`]/;
+const IMPORT_SPEC_RE_CJS = /\brequire\s*\(\s*['"`]([^'"`]+)['"`]\s*\)/;
+
+/** Normalize a relative import spec against the importing file path. */
+export function resolveRelativeSpec(specPath, importerFilePath) {
+  if (typeof specPath !== 'string' || typeof importerFilePath !== 'string') return null;
+  if (!specPath.startsWith('./') && !specPath.startsWith('../')) return null;
+  // Walk dir segments. importerDir = importerFilePath without trailing basename.
+  const importerParts = importerFilePath.replace(/\\/g, '/').split('/');
+  importerParts.pop(); // drop the file name itself
+  const specParts = specPath.replace(/\\/g, '/').split('/');
+  for (const seg of specParts) {
+    if (seg === '.' || seg === '') continue;
+    if (seg === '..') importerParts.pop();
+    else importerParts.push(seg);
+  }
+  return importerParts.join('/');
+}
+
+/** Probe variants for a resolved relative spec — `.js`, `.jsx`, `.ts`,
+ *  `.tsx`, `/index.{js,jsx,ts,tsx}`, plain. Returns the first that
+ *  exists in inventorySet. */
+function specResolvesInInventory(resolved, inventorySet) {
+  if (!resolved) return false;
+  const candidates = [
+    resolved,
+    `${resolved}.js`, `${resolved}.jsx`, `${resolved}.ts`, `${resolved}.tsx`,
+    `${resolved}.mjs`, `${resolved}.cjs`,
+    `${resolved}.json`, `${resolved}.css`, `${resolved}.svg`,
+    `${resolved}/index.js`, `${resolved}/index.jsx`,
+    `${resolved}/index.ts`, `${resolved}/index.tsx`,
+  ];
+  for (const c of candidates) {
+    if (inventorySet.has(c)) return true;
+    // Also accept inventory entries that may carry a leading './'
+    if (inventorySet.has(`./${c}`)) return true;
+  }
+  return false;
+}
+
+/** A bare specifier (e.g. 'react', 'lodash/x', '@scope/pkg') is allowed
+ *  when its top-level package name is in the knownPackages set. Path
+ *  imports (./, ../, /abs) and protocol imports are NOT bare. */
+function bareSpecPackageName(spec) {
+  if (typeof spec !== 'string' || spec.length === 0) return null;
+  if (spec.startsWith('./') || spec.startsWith('../') || spec.startsWith('/')) return null;
+  if (/^[a-z]+:/.test(spec)) return null; // node:, data:, http(s):, file:
+  // Scoped: '@scope/name' → '@scope/name' (first two segments)
+  if (spec.startsWith('@')) {
+    const parts = spec.split('/');
+    if (parts.length < 2) return null;
+    return `${parts[0]}/${parts[1]}`;
+  }
+  // Plain: 'name' or 'name/sub' → 'name'
+  return spec.split('/')[0];
+}
+
+/**
+ * Check every `+import ... from "<spec>"` (and `+require("<spec>")`) line
+ * in the diff. Reject the diff if any added spec can't be resolved
+ * against fileInventory (for relative imports) OR knownPackages (for
+ * bare specs).
+ *
+ * @param {object} parsed                     — parseUnifiedDiff output
+ * @param {object} opts
+ * @param {string} [opts.importerFilePath]    — required for relative-spec resolution
+ * @param {Set<string>|string[]} [opts.fileInventory] — repo file paths (e.g. Trees API output)
+ * @param {Set<string>|string[]} [opts.knownPackages] — top-level package names installed
+ * @returns {{ ok: boolean, reason?: string, spec?: string, line?: string }}
+ */
+export function validateAddedImports(parsed, opts = {}) {
+  if (!parsed || !Array.isArray(parsed.hunks)) return { ok: true };
+  const inventory = opts.fileInventory instanceof Set
+    ? opts.fileInventory
+    : (Array.isArray(opts.fileInventory) ? new Set(opts.fileInventory) : null);
+  const packages = opts.knownPackages instanceof Set
+    ? opts.knownPackages
+    : (Array.isArray(opts.knownPackages) ? new Set(opts.knownPackages) : null);
+  // If the caller passes neither, we can't validate. Honest default:
+  // skip the check (return ok:true) — preserves D32/D33 behavior for
+  // tests that don't wire inventory.
+  if (!inventory && !packages) return { ok: true };
+
+  for (const h of parsed.hunks) {
+    for (const l of h.lines) {
+      if (l[0] !== '+') continue;
+      const body = l.slice(1);
+      const m = body.match(IMPORT_SPEC_RE_ES) || body.match(IMPORT_SPEC_RE_CJS);
+      if (!m) continue;
+      const spec = m[1];
+      // Side-effect imports (e.g. `import "./styles.css"`) hit the same
+      // ES regex via the `import\s+['"]` branch — we check them too.
+      if (spec.startsWith('./') || spec.startsWith('../')) {
+        if (!inventory) {
+          return { ok: false, reason: 'added_import_no_inventory', spec, line: body.slice(0, 200) };
+        }
+        const resolved = resolveRelativeSpec(spec, opts.importerFilePath ?? '');
+        if (!specResolvesInInventory(resolved, inventory)) {
+          return {
+            ok: false,
+            reason: 'added_import_unresolved',
+            spec,
+            resolved,
+            line: body.slice(0, 200),
+          };
+        }
+        continue;
+      }
+      // Bare specs: check knownPackages.
+      const pkgName = bareSpecPackageName(spec);
+      if (pkgName === null) continue; // protocol / absolute → skip
+      if (!packages) {
+        // No package list supplied → cannot validate; skip silently
+        // rather than over-block (back-compat).
+        continue;
+      }
+      if (!packages.has(pkgName)) {
+        return {
+          ok: false,
+          reason: 'added_import_unknown_package',
+          spec,
+          pkgName,
+          line: body.slice(0, 200),
+        };
+      }
+    }
+  }
+  return { ok: true };
+}
+
 // ── Validator ──────────────────────────────────────────────────────────
 
 /**
@@ -306,6 +451,17 @@ export function validateDiff(parsed, opts = {}) {
       }
     }
   }
+  // D37 — added-import resolution (symmetric to remove-import preserve).
+  // Only fires when caller supplied fileInventory / knownPackages; back-
+  // compat preserved (no-op without those opts).
+  if (opts.fileInventory || opts.knownPackages) {
+    const importCheck = validateAddedImports(parsed, {
+      importerFilePath: opts.importerFilePath,
+      fileInventory: opts.fileInventory,
+      knownPackages: opts.knownPackages,
+    });
+    if (!importCheck.ok) return importCheck;
+  }
   return { ok: true };
 }
 
@@ -364,8 +520,19 @@ export function applyAndValidate({ original, diffText, opts = {} }) {
     original,
     maxChangeRatio: opts.maxChangeRatio,
     preserveExceptions: opts.preserveExceptions,
+    // D37 — pass-through for added-import resolution.
+    importerFilePath: opts.importerFilePath,
+    fileInventory: opts.fileInventory,
+    knownPackages: opts.knownPackages,
   });
-  if (!v.ok) return { ok: false, reason: v.reason, category: v.category, violatingLine: v.violatingLine, ratio: v.ratio };
+  if (!v.ok) {
+    return {
+      ok: false, reason: v.reason,
+      category: v.category, violatingLine: v.violatingLine, ratio: v.ratio,
+      // D37 surface — pass spec/pkgName/resolved up so orchestrator log can show them.
+      spec: v.spec, resolved: v.resolved, pkgName: v.pkgName, line: v.line,
+    };
+  }
   const applied = applyDiff(original, parsed);
   if (!applied.ok) return { ok: false, reason: applied.reason };
   return { ok: true, content: applied.content, stats: applied.stats };
@@ -375,4 +542,8 @@ export const __internals = Object.freeze({
   PRESERVE_PATTERNS,
   DEFAULT_MAX_CHANGE_RATIO,
   DEFAULT_MAX_HUNK_LINES,
+  IMPORT_SPEC_RE_ES,
+  IMPORT_SPEC_RE_CJS,
+  specResolvesInInventory,
+  bareSpecPackageName,
 });

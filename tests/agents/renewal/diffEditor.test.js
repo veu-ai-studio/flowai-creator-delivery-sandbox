@@ -386,3 +386,257 @@ describe('buildDiffPrompt', () => {
     expect(p).toContain('<p>Old description.</p>');
   });
 });
+
+// ── D37 — Added-import resolution ──────────────────────────────────────
+
+import {
+  validateAddedImports,
+  resolveRelativeSpec,
+} from '../../../src/lib/agents/renewal/diffEditor.js';
+
+describe('resolveRelativeSpec', () => {
+  it('resolves ./Foo from src/X/Y.jsx → src/X/Foo', () => {
+    expect(resolveRelativeSpec('./Foo', 'src/X/Y.jsx')).toBe('src/X/Foo');
+  });
+
+  it('resolves ../Foo from src/X/Y/Z.jsx → src/X/Foo', () => {
+    expect(resolveRelativeSpec('../Foo', 'src/X/Y/Z.jsx')).toBe('src/X/Foo');
+  });
+
+  it('resolves ../../shared from a/b/c/d.jsx → a/shared', () => {
+    expect(resolveRelativeSpec('../../shared', 'a/b/c/d.jsx')).toBe('a/shared');
+  });
+
+  it('returns null for bare specs (not relative)', () => {
+    expect(resolveRelativeSpec('react', 'src/X.jsx')).toBeNull();
+    expect(resolveRelativeSpec('@scope/pkg', 'src/X.jsx')).toBeNull();
+  });
+});
+
+describe('validateAddedImports — D37 symmetric import resolution', () => {
+  it('accepts a +import that resolves in fileInventory (with .jsx extension probe)', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' export default function X() {}',
+      "+import Foo from './Foo';",
+    ].join('\n'));
+    const r = validateAddedImports(parsed, {
+      importerFilePath: 'src/components/X.jsx',
+      fileInventory: ['src/components/Foo.jsx', 'src/components/X.jsx'],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects a +import to a non-existent relative file (the MyPregLife D36 case)', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' export default function HomeScreen() {}',
+      "+import OnboardingWizard from '../OnboardingWizard';",
+    ].join('\n'));
+    const r = validateAddedImports(parsed, {
+      importerFilePath: 'src/components/birthsafe/screens/HomeScreen.jsx',
+      fileInventory: ['src/components/birthsafe/screens/HomeScreen.jsx'],
+    });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('added_import_unresolved');
+    expect(r.spec).toBe('../OnboardingWizard');
+    expect(r.resolved).toBe('src/components/birthsafe/OnboardingWizard');
+  });
+
+  it('accepts +import for a bare spec that is in knownPackages (react)', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+import React from 'react';",
+    ].join('\n'));
+    const r = validateAddedImports(parsed, {
+      knownPackages: ['react', 'react-dom'],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('accepts +import for a bare spec subpath (lodash/x)', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+import map from 'lodash/map';",
+    ].join('\n'));
+    const r = validateAddedImports(parsed, {
+      knownPackages: ['lodash'],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects +import for a bare spec NOT in knownPackages', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+import x from 'nonexistent-pkg';",
+    ].join('\n'));
+    const r = validateAddedImports(parsed, {
+      knownPackages: ['react'],
+    });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('added_import_unknown_package');
+    expect(r.pkgName).toBe('nonexistent-pkg');
+  });
+
+  it('accepts +import for scoped package present in knownPackages (@scope/pkg)', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+import x from '@supabase/supabase-js';",
+    ].join('\n'));
+    const r = validateAddedImports(parsed, {
+      knownPackages: ['@supabase/supabase-js'],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('skips protocol imports (node:, http(s):, data:)', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,4 @@',
+      ' const x = 1;',
+      "+import crypto from 'node:crypto';",
+      "+import 'data:text/plain,hi';",
+      "+import 'http://example.com/script';",
+    ].join('\n'));
+    const r = validateAddedImports(parsed, {
+      knownPackages: ['react'],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('handles side-effect imports (import "./styles.css")', () => {
+    const parsedOk = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+import './styles.css';",
+    ].join('\n'));
+    const ok = validateAddedImports(parsedOk, {
+      importerFilePath: 'src/components/X.jsx',
+      fileInventory: ['src/components/X.jsx', 'src/components/styles.css'],
+    });
+    expect(ok.ok).toBe(true);
+
+    const parsedBad = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+import './missing.css';",
+    ].join('\n'));
+    const bad = validateAddedImports(parsedBad, {
+      importerFilePath: 'src/components/X.jsx',
+      fileInventory: ['src/components/X.jsx'],
+    });
+    expect(bad.ok).toBe(false);
+    expect(bad.spec).toBe('./missing.css');
+  });
+
+  it('handles require() spec resolution (CJS path)', () => {
+    const parsedBad = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+const Foo = require('./missing');",
+    ].join('\n'));
+    const bad = validateAddedImports(parsedBad, {
+      importerFilePath: 'src/X.js',
+      fileInventory: ['src/X.js'],
+    });
+    expect(bad.ok).toBe(false);
+    expect(bad.spec).toBe('./missing');
+  });
+
+  it('back-compat: no inventory and no packages supplied → ok:true (no-op)', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+import x from 'literally-anything';",
+    ].join('\n'));
+    expect(validateAddedImports(parsed, {}).ok).toBe(true);
+  });
+
+  it('returns added_import_no_inventory when relative spec exists but inventory missing', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+import x from './missing';",
+    ].join('\n'));
+    const r = validateAddedImports(parsed, {
+      importerFilePath: 'src/X.jsx',
+      knownPackages: ['react'],   // packages supplied but inventory is not
+    });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('added_import_no_inventory');
+  });
+
+  it('probes /index.{js,jsx,ts,tsx} for directory-style imports', () => {
+    const parsed = parseUnifiedDiff([
+      '@@ -1,1 +1,2 @@',
+      ' const x = 1;',
+      "+import Foo from './Foo';",
+    ].join('\n'));
+    const r = validateAddedImports(parsed, {
+      importerFilePath: 'src/X.jsx',
+      fileInventory: ['src/X.jsx', 'src/Foo/index.jsx'],
+    });
+    expect(r.ok).toBe(true);
+  });
+});
+
+describe('validateDiff — D37 import-resolution wired through', () => {
+  // Pad the file so the 1-line addition stays under the 25% ratio cap.
+  const padding = Array.from({ length: 30 }, (_, i) => `// pad ${i}`).join('\n');
+
+  it('rejects diff that introduces an unresolved relative import (full pipeline)', () => {
+    const file = `${padding}\nexport default function X() { return null; }\n`;
+    const parsed = parseUnifiedDiff([
+      '@@ -31,1 +31,2 @@',
+      "+import Missing from '../Missing';",
+      ' export default function X() { return null; }',
+    ].join('\n'));
+    const r = validateDiff(parsed, {
+      original: file,
+      importerFilePath: 'src/components/X.jsx',
+      fileInventory: ['src/components/X.jsx'],
+    });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('added_import_unresolved');
+  });
+
+  it('back-compat: validateDiff without fileInventory/knownPackages does NOT run the import check', () => {
+    const file = `${padding}\nexport default function X() { return null; }\n`;
+    const parsed = parseUnifiedDiff([
+      '@@ -31,1 +31,2 @@',
+      "+import Missing from '../Missing';",
+      ' export default function X() { return null; }',
+    ].join('\n'));
+    // No inventory supplied → import check is skipped; only the
+    // existing rules fire. The +import line doesn't trigger any
+    // PRESERVE_PATTERNS removal (this is an ADDITION, not removal),
+    // and the change ratio is small → ok:true.
+    expect(validateDiff(parsed, { original: file }).ok).toBe(true);
+  });
+});
+
+describe('applyAndValidate — D37 import-resolution surface', () => {
+  it('returns the unresolved-import envelope verbatim through applyAndValidate', () => {
+    const padding = Array.from({ length: 30 }, (_, i) => `// pad ${i}`).join('\n');
+    const file = `${padding}\nexport default function X() { return null; }\n`;
+    const diffText = [
+      '@@ -31,1 +31,2 @@',
+      "+import Missing from '../Missing';",
+      ' export default function X() { return null; }',
+    ].join('\n');
+    const r = applyAndValidate({
+      original: file, diffText,
+      opts: {
+        importerFilePath: 'src/components/X.jsx',
+        fileInventory: ['src/components/X.jsx'],
+      },
+    });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('added_import_unresolved');
+    expect(r.spec).toBe('../Missing');
+    expect(r.resolved).toBe('src/Missing');
+  });
+});

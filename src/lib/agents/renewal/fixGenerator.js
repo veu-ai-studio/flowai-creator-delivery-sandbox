@@ -538,6 +538,14 @@ export async function generateFix(args) {
         // when the finding's category directly implies modifying a
         // normally-preserved construct on the offending line.
         preserveExceptions: opts.preserveExceptions,
+        // D37: symmetric added-import resolution. Orchestrator passes
+        // fileInventory (from Trees API) + knownPackages (from package.json
+        // dependencies) + importerFilePath (the file being patched) so
+        // the diff editor can reject diffs that invent imports pointing
+        // at non-existent files / packages.
+        importerFilePath: args.filePath,
+        fileInventory: opts.fileInventory,
+        knownPackages: opts.knownPackages,
       },
     });
     if (!applied.ok) {

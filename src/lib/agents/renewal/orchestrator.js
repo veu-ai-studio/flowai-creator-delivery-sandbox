@@ -726,6 +726,9 @@ export async function runOrchestration(args = {}) {
     // when the hoisted mint succeeds.
     const _fetchRepoFileList = deps.fetchRepoFileList || fetchRepoFileList;
     let repoFileList = null; // null = no list available; array = real list (may be empty)
+    // D37: capture the Trees-API outcome explicitly so operators see it
+    // in the orchestration log (D36 was unclear due to log truncation).
+    let treesOutcome = { ok: false, reason: 'not_attempted', filesCount: 0, sha: null };
     if (!pathB && githubRepoUrl) {
       const parsed = parseGithubRepoUrl(githubRepoUrl);
       if (parsed) {
@@ -735,13 +738,56 @@ export async function runOrchestration(args = {}) {
           const treeResult = await _fetchRepoFileList({
             owner: parsed.owner, repo: parsed.repo, ref: productBranch, token,
           });
-          if (treeResult && treeResult.files && treeResult.files.length > 0) {
-            repoFileList = treeResult.files;
+          if (treeResult && treeResult.error) {
+            treesOutcome = { ok: false, reason: treeResult.error, filesCount: 0, sha: treeResult.sha ?? null };
+          } else if (treeResult && Array.isArray(treeResult.files)) {
+            treesOutcome = {
+              ok: treeResult.files.length > 0,
+              reason: treeResult.files.length > 0 ? 'fetched' : 'empty_tree',
+              filesCount: treeResult.files.length,
+              sha: treeResult.sha ?? null,
+              truncated: !!treeResult.truncated,
+            };
+            if (treeResult.files.length > 0) repoFileList = treeResult.files;
+          } else {
+            treesOutcome = { ok: false, reason: 'malformed_envelope', filesCount: 0, sha: null };
           }
+        } catch (e) {
+          treesOutcome = { ok: false, reason: `threw:${(e?.message ?? String(e)).slice(0, 80)}`, filesCount: 0, sha: null };
+        }
+        // Always emit a log entry so the outcome is visible.
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 6, status: treesOutcome.ok ? 'complete' : 'degraded',
+          tool: 'fetchRepoFileList (GitHub Trees API; D27 hoist + D37 visibility)',
+          why: 'fetch real repo file inventory for prioritizer + added-import validation',
+          result: { ...treesOutcome, ref: productBranch },
+          durationMs: 0, mode: state.mode,
+        }));
+      }
+    }
+
+    // D37 T2 — package.json's dependencies + devDependencies = the
+    // knownPackages set used by validateAddedImports for bare specifiers.
+    // Best-effort: fetch via Contents API on the productBranch; on
+    // failure the import validator falls through (back-compat).
+    let knownPackages = null;
+    if (!pathB && githubRepoUrl && token && repoFileList) {
+      const parsed = parseGithubRepoUrl(githubRepoUrl);
+      if (parsed && repoFileList.includes('package.json')) {
+        try {
+          const pkgRaw = await _fetchFileContent({
+            owner: parsed.owner, repo: parsed.repo,
+            filePath: 'package.json', ref: productBranch, token,
+          });
+          const pkg = JSON.parse(pkgRaw);
+          const names = new Set();
+          for (const k of Object.keys(pkg.dependencies ?? {})) names.add(k);
+          for (const k of Object.keys(pkg.devDependencies ?? {})) names.add(k);
+          for (const k of Object.keys(pkg.peerDependencies ?? {})) names.add(k);
+          for (const k of Object.keys(pkg.optionalDependencies ?? {})) names.add(k);
+          knownPackages = names;
         } catch {
-          // Hoisted token mint or trees fetch failed — the regular STEP 8
-          // block below will retry the token mint and log its outcome.
-          // Prioritizer falls back to the guessed-paths hint.
+          knownPackages = null;
         }
       }
     }
@@ -910,13 +956,22 @@ export async function runOrchestration(args = {}) {
             // categories the diff editor is allowed to modify on the
             // specific offending location ONLY.
             const scopedRelax = deriveScopedRelaxation(issue);
+            // D37 T2 — pass fileInventory + knownPackages to the diff
+            // editor (via generateFix opts) so it can reject diffs
+            // that introduce imports pointing at non-existent files
+            // or unknown packages. Symmetric to the existing
+            // remove-import preserve rule.
             const fix = await _generateFix({
               filePath, fileContent: current,
               issue: issue.issue || issue.description || issue.title,
               fix: issue.fix || null,
               findings: [issue],
               productId, runId,
-              opts: scopedRelax ? { preserveExceptions: scopedRelax } : undefined,
+              opts: {
+                ...(scopedRelax ? { preserveExceptions: scopedRelax } : {}),
+                ...(repoFileList ? { fileInventory: repoFileList } : {}),
+                ...(knownPackages ? { knownPackages } : {}),
+              },
             });
             fileChanges.push({ filePath, fileContent: fix.fixedContent });
             fixOutcomes.push({

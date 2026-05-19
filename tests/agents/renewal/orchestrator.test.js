@@ -1399,8 +1399,80 @@ describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () =>
       });
       const call = generateFix.mock.calls[0][0];
       // accessibility-headings is NOT in the RELAX_CATEGORIES set →
-      // preserveExceptions should be omitted (opts undefined).
-      expect(call.opts).toBeUndefined();
+      // preserveExceptions should be OMITTED. D37 T2 widened opts to
+      // also carry fileInventory + knownPackages, so opts is now an
+      // object (possibly empty) instead of undefined. The contract
+      // we still enforce: preserveExceptions key is absent.
+      expect(call.opts?.preserveExceptions).toBeUndefined();
+    } finally { clearVercelEnv(); }
+  });
+
+  // ── D37 T2 — fileInventory + knownPackages threaded to generateFix ──
+  it('passes fileInventory + knownPackages to generateFix when Trees API + package.json available', async () => {
+    withVercelEnv();
+    try {
+      const fetchRepoFileList = vi.fn(async () => ({
+        files: ['package.json', 'src/X.jsx', 'src/components/Foo.jsx', 'README.md'],
+        truncated: false, sha: 'sha', error: null,
+      }));
+      const fetchFileContent = vi.fn(async ({ filePath }) => {
+        if (filePath === 'package.json') {
+          return JSON.stringify({
+            dependencies: { react: '^18.0.0', '@supabase/supabase-js': '^2.0.0' },
+            devDependencies: { vitest: '^1.0.0' },
+          });
+        }
+        return 'export default function X() {}';
+      });
+      const generateFix = vi.fn(async () => ({
+        fixedContent: 'export default function X() {}', model: 'c',
+        promptTokens: 0, completionTokens: 0, attempts: 1, mode: 'diff',
+        diffStats: { hunks: 1, linesAdded: 1, linesRemoved: 1, changeRatio: 0.1, totalLines: 10 },
+      }));
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'd37-thread-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: { ...base, fetchRepoFileList, fetchFileContent, generateFix },
+        issue: {
+          filePath: 'src/X.jsx', issue: 'demo', fix: 'demo',
+          severity: 'medium', title: 't',
+          category: 'accessibility-headings',
+        },
+      });
+      // Confirm generateFix received the inventory + packages.
+      const callOpts = generateFix.mock.calls[0][0].opts;
+      expect(Array.isArray(callOpts?.fileInventory)).toBe(true);
+      expect(callOpts.fileInventory).toContain('src/components/Foo.jsx');
+      expect(callOpts.knownPackages).toBeInstanceOf(Set);
+      expect(callOpts.knownPackages.has('react')).toBe(true);
+      expect(callOpts.knownPackages.has('@supabase/supabase-js')).toBe(true);
+      expect(callOpts.knownPackages.has('vitest')).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('omits inventory when Trees API returns empty + omits packages when package.json missing', async () => {
+    withVercelEnv();
+    try {
+      const fetchRepoFileList = vi.fn(async () => ({
+        files: [], truncated: false, sha: 'sha', error: null,
+      }));
+      const fetchFileContent = vi.fn(async () => 'content');
+      const generateFix = vi.fn(async () => ({
+        fixedContent: 'x', model: 'c',
+        promptTokens: 0, completionTokens: 0, attempts: 1, mode: 'diff',
+        diffStats: { hunks: 1, linesAdded: 1, linesRemoved: 1, changeRatio: 0.1, totalLines: 10 },
+      }));
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'd37-thread-2', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: { ...base, fetchRepoFileList, fetchFileContent, generateFix },
+        issue: { filePath: 'src/X.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+      });
+      const callOpts = generateFix.mock.calls[0][0].opts;
+      expect(callOpts?.fileInventory).toBeUndefined();
+      expect(callOpts?.knownPackages).toBeUndefined();
     } finally { clearVercelEnv(); }
   });
 });
