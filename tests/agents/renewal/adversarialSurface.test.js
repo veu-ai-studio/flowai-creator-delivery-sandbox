@@ -1115,6 +1115,116 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
     expect(r.perPage[1].ok).toBe(true);
   });
 
+  // ── D41 T2 — exhaustive element exercise ─────────────────────────
+
+  it('default maxInteractives is lifted to exhaustive ceiling (≥125 for reltwin)', async () => {
+    // 200 fake elements → all should be enumerated when caller does
+    // not pass maxInteractives (default ceiling now 9999, not 25).
+    const fakeEls = Array.from({ length: 200 }, (_, i) => ({
+      index: i, tag: 'button', href: null, text: `btn-${i}`,
+      ariaLabel: null, role: null, selector: `button:nth-of-type(${i + 1})`,
+    }));
+    const mockPage = {
+      goto: vi.fn(async () => ({ ok: () => true })),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async (fn, args) => {
+        // First call: enumerateClickables → return fake list.
+        // Subsequent calls: body-hash → return stable string.
+        if (args && args.sel) return fakeEls.slice(0, args.max);
+        return 'h';
+      }),
+      url: () => 'https://x/',
+      locator: vi.fn(() => ({ first: () => ({ click: vi.fn(async () => {}) }) })),
+      waitForTimeout: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+    };
+    const browser = {
+      newContext: vi.fn(async () => ({
+        newPage: vi.fn(async () => mockPage),
+        close: vi.fn(async () => {}),
+      })),
+      close: vi.fn(async () => {}),
+    };
+    const r = await probeAdversarialSurface({
+      url: 'https://x/', opts: {
+        browser,
+        // High sliceBudget so the loop doesn't time-out mid-way.
+        probeBudgetMs: 10_000_000,
+      },
+    });
+    expect(r.ok).toBe(true);
+    // 200 elements exercised — well above the prior cap of 25.
+    expect(r.summary.interactivesTested).toBe(200);
+  });
+
+  it('per-element classifications are surfaced on the per-page envelope', async () => {
+    const mockPage = {
+      goto: vi.fn(async () => ({ ok: () => true })),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async (fn, args) => {
+        if (args && args.sel) {
+          return [
+            { index: 0, tag: 'button', href: null, text: 'works', ariaLabel: null, role: null, selector: 'button:nth-of-type(1)' },
+            { index: 1, tag: 'button', href: null, text: 'dead',  ariaLabel: null, role: null, selector: 'button:nth-of-type(2)' },
+          ];
+        }
+        return mockPage.__hash ?? 'h0';
+      }),
+      url: () => 'https://x/',
+      locator: vi.fn((sel) => ({
+        first: () => ({
+          click: vi.fn(async () => {
+            // First button changes the body; second is a no-op.
+            if (sel.includes('1')) mockPage.__hash = 'h1';
+          }),
+        }),
+      })),
+      waitForTimeout: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+    };
+    const browser = {
+      newContext: vi.fn(async () => ({
+        newPage: vi.fn(async () => mockPage),
+        close: vi.fn(async () => {}),
+      })),
+      close: vi.fn(async () => {}),
+    };
+    const r = await probeAdversarialSurface({
+      url: 'https://x/', opts: { browser, probeBudgetMs: 60_000 },
+    });
+    expect(r.ok).toBe(true);
+    expect(Array.isArray(r.classifications)).toBe(true);
+    expect(r.classifications).toHaveLength(2);
+    const works = r.classifications.find((c) => c.text === 'works');
+    const dead  = r.classifications.find((c) => c.text === 'dead');
+    expect(works.classification).toBe('WORKS');
+    expect(dead.classification).toBe('DEAD-NO-OP');
+    // Each classification carries page + selector for the audit table.
+    expect(works.location).toBe('https://x/');
+    expect(works.selector).toBe('button:nth-of-type(1)');
+  });
+
+  it('probeAllPages aggregates per-page classifications', async () => {
+    const { browser } = makeMockBrowser();
+    const r = await probeAllPages({
+      urls: ['https://a/', 'https://b/'],
+      opts: {
+        browser,
+        probeInteractives: async ({ url }) => ({
+          findings: [], interactivesTested: 1, deadOrErroring: 0,
+          classifications: [{ classification: 'WORKS', location: url, selector: 'button', tag: 'button', text: 'go' }],
+        }),
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0 }),
+        probeWorkspaces: async () => ({ findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 }),
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0 }),
+      },
+    });
+    expect(r.classifications).toHaveLength(2);
+    expect(r.classifications.map((c) => c.location).sort()).toEqual(['https://a/', 'https://b/']);
+  });
+
   it('respects overall budget — stops probing when wall budget burned', async () => {
     const { browser } = makeMockBrowser();
     const r = await probeAllPages({

@@ -37,9 +37,11 @@ const DEFAULT_NAV_TIMEOUT_MS = 30_000;
 const DEFAULT_ACTION_TIMEOUT_MS = 8_000;
 const DEFAULT_MAX_INTERACTIVES = 25;
 // D41 T2 — exhaustive ceiling used by probeOnePage when caller does
-// not pass maxInteractives. Matches the previous cap pre-T2; T2 lifts
-// this to a high number so every element gets exercised.
-const DEFAULT_MAX_INTERACTIVES_EXHAUSTIVE = 25;
+// not pass maxInteractives. Lifted from the original 25-cap so every
+// crawled element gets exercised. 9999 is effectively unbounded for
+// real product pages (reltwin's largest page has 125 interactives).
+// Time bounding now comes from sliceBudget alone, not element count.
+const DEFAULT_MAX_INTERACTIVES_EXHAUSTIVE = 9999;
 const DEFAULT_MAX_MODALS = 10;
 const DEFAULT_MAX_FORMS = 10;
 const DEFAULT_PROBE_BUDGET_MS = 180_000;        // 3-min total wall cap
@@ -180,11 +182,17 @@ export async function probeInteractives({
   sliceBudget = 45_000,
 } = {}) {
   const findings = [];
+  // D41 T2 — per-element classification log: every probed element
+  // gets a {classification, location, selector, text} entry so the
+  // caller can produce the "WORKS / ERRORS / DEAD / MOCK-ONLY"
+  // audit table the dispatch requires. (MOCK-ONLY is page-level and
+  // appended by detectWiredVsMock.)
+  const classifications = [];
   let interactivesTested = 0;
   let deadOrErroring = 0;
   const startedAt = Date.now();
 
-  if (!page) return { findings, interactivesTested, deadOrErroring };
+  if (!page) return { findings, classifications, interactivesTested, deadOrErroring };
 
   // Capture console errors during the probe so a click that triggers
   // an error gets classified ERRORS.
@@ -208,7 +216,7 @@ export async function probeInteractives({
       'medium', 'engine-error', url,
       `enumerateClickables failed: ${(e?.message ?? String(e)).slice(0, 120)}`,
     ));
-    return { findings, interactivesTested: 0, deadOrErroring: 0 };
+    return { findings, classifications, interactivesTested: 0, deadOrErroring: 0 };
   }
 
   for (const el of clickables) {
@@ -268,6 +276,12 @@ export async function probeInteractives({
       classification = 'DEAD-NO-OP';
     }
 
+    // D41 T2 — record every classification, not just the failing ones.
+    classifications.push({
+      classification, location: url, selector: el.selector ?? null,
+      tag: el.tag, text: safeText(el.text), ariaLabel: el.ariaLabel ?? null,
+    });
+
     if (classification === 'DEAD-NO-OP') {
       deadOrErroring += 1;
       findings.push(makeFinding(
@@ -298,7 +312,7 @@ export async function probeInteractives({
   if (typeof page.off === 'function') {
     try { page.off('console', errorHandler); } catch { /* ignore */ }
   }
-  return { findings, interactivesTested, deadOrErroring };
+  return { findings, classifications, interactivesTested, deadOrErroring };
 }
 
 // ── T3 — Modal + form probing ─────────────────────────────────────────
@@ -1047,6 +1061,10 @@ async function probeOnePage({ browser, url, opts = {} }) {
   let context = null;
   let page = null;
   const findings = [];
+  // D41 T2 — per-element classification list (WORKS / ERRORS /
+  // DEAD-NO-OP / MOCK-ONLY) carried through the per-page envelope so
+  // the caller can audit exactly which selectors were exercised.
+  const classifications = [];
   const summary = {
     interactivesTested: 0, deadOrErroring: 0,
     modalsFailing: 0, formsFailing: 0,
@@ -1122,6 +1140,7 @@ async function probeOnePage({ browser, url, opts = {} }) {
           actionTimeoutMs: opts.actionTimeoutMs ?? DEFAULT_ACTION_TIMEOUT_MS,
         });
         if (r && Array.isArray(r.findings)) findings.push(...r.findings);
+        if (r && Array.isArray(r.classifications)) classifications.push(...r.classifications);
         summary.interactivesTested += r?.interactivesTested ?? 0;
         summary.deadOrErroring += r?.deadOrErroring ?? 0;
       } catch (e) {
@@ -1221,7 +1240,7 @@ async function probeOnePage({ browser, url, opts = {} }) {
     }
 
     return {
-      ok: true, url, findings, summary,
+      ok: true, url, findings, summary, classifications,
       probedAt: new Date(startedAt).toISOString(),
       durationMs: Date.now() - startedAt,
     };
@@ -1229,7 +1248,7 @@ async function probeOnePage({ browser, url, opts = {} }) {
     return {
       ok: false,
       reason: `probe_failed: ${(e?.message ?? String(e)).slice(0, 160)}`,
-      url, findings, summary,
+      url, findings, summary, classifications,
       probedAt: new Date(startedAt).toISOString(),
       durationMs: Date.now() - startedAt,
     };
@@ -1271,9 +1290,8 @@ export async function probeAllPages(args = {}) {
   let ownsBrowser = false;
   const perPage = [];
   const aggFindings = [];
+  const aggClassifications = [];
   const aggSummary = makeEmptySummary();
-  // D41 T1 — overall budget across all pages. Per-page budget shrinks
-  // as we burn the wall clock so a slow first page doesn't starve later ones.
   const overallBudget = opts.overallBudgetMs ?? Math.max(180_000, urls.length * 60_000);
 
   try {
@@ -1288,6 +1306,7 @@ export async function probeAllPages(args = {}) {
       const r = await probeOnePage({ browser, url: urls[i], opts: pageOpts });
       perPage.push(r);
       if (Array.isArray(r.findings)) aggFindings.push(...r.findings);
+      if (Array.isArray(r.classifications)) aggClassifications.push(...r.classifications);
       if (r.summary) {
         for (const k of Object.keys(aggSummary)) {
           if (typeof r.summary[k] === 'number') aggSummary[k] += r.summary[k];
@@ -1300,6 +1319,7 @@ export async function probeAllPages(args = {}) {
       urlsAttempted: urls.length,
       perPage,
       findings: aggFindings,
+      classifications: aggClassifications,
       summary: aggSummary,
       probedAt: new Date(startedAt).toISOString(),
       durationMs: Date.now() - startedAt,
@@ -1312,6 +1332,7 @@ export async function probeAllPages(args = {}) {
       urlsAttempted: urls.length,
       perPage,
       findings: aggFindings,
+      classifications: aggClassifications,
       summary: aggSummary,
       probedAt: new Date(startedAt).toISOString(),
       durationMs: Date.now() - startedAt,
