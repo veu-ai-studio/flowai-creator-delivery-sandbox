@@ -120,6 +120,48 @@ function safeText(s, n = 60) {
 }
 
 /**
+ * D42 T2 — scroll through the page so off-screen / lazy-loaded
+ * content mounts before enumeration. Many SPAs only render rows
+ * within the viewport; without this pass, enumerateClickables only
+ * sees what was visible at first paint. We scroll in steps, wait
+ * briefly between each so IntersectionObserver/lazy-mount logic
+ * fires, then return — leaving enumerateClickables to find the
+ * full set of elements that the crawl already counted.
+ *
+ * Bounded: max 40 steps × 100ms = 4s wall, capped by scrollPassMs.
+ */
+async function scrollPageToBottom(page, scrollPassMs = 4_000) {
+  if (!page || typeof page.evaluate !== 'function') return;
+  const deadline = Date.now() + scrollPassMs;
+  try {
+    await page.evaluate(async () => {
+      const docH = () => Math.max(
+        document.documentElement?.scrollHeight ?? 0,
+        document.body?.scrollHeight ?? 0,
+        document.documentElement?.clientHeight ?? 0,
+      );
+      const viewport = window.innerHeight || 800;
+      const step = Math.max(200, Math.floor(viewport * 0.8));
+      let y = 0;
+      const cap = 40;
+      for (let i = 0; i < cap; i += 1) {
+        const h = docH();
+        window.scrollTo({ top: y, behavior: 'auto' });
+        y += step;
+        if (y >= h + viewport) break;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      // Return to top so subsequent locator clicks see the same
+      // surface enumerateClickables snapshotted.
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    });
+  } catch { /* mocks may not implement evaluate fully — fine */ }
+  if (Date.now() > deadline && typeof page.waitForTimeout === 'function') {
+    try { await page.waitForTimeout(200); } catch { /* ignore */ }
+  }
+}
+
+/**
  * Default Page-driver enumeration. Returns shallow descriptors so the
  * probe can iterate without holding live handles for longer than
  * necessary. Capped at `maxInteractives` to bound the probe budget.
@@ -207,6 +249,11 @@ export async function probeInteractives({
   if (typeof page.on === 'function') {
     page.on('console', errorHandler);
   }
+
+  // D42 T2 — scroll-pass: surface lazy-loaded / off-screen elements
+  // before enumeration so we exercise EVERY clickable the user could
+  // reach, not just the ones above-the-fold at first paint.
+  try { await scrollPageToBottom(page, 4_000); } catch { /* best-effort */ }
 
   let clickables;
   try {
@@ -1205,7 +1252,11 @@ async function probeOnePage({ browser, url, opts = {} }) {
     });
 
     const probeBudget = opts.probeBudgetMs ?? DEFAULT_PROBE_BUDGET_MS;
-    const sliceBudget = Math.max(15_000, Math.floor(probeBudget / 5));   // T3 adds workspaces; 5 slices
+    // D42 T2 — interactives is the largest workload (N elements per
+    // page vs ≤1 surface per other probe). Give it half the page budget,
+    // split the other half across modals/forms/agents/workspaces/wired.
+    const interactivesSliceBudget = Math.max(20_000, Math.floor(probeBudget * 0.5));
+    const sliceBudget = Math.max(8_000, Math.floor((probeBudget * 0.5) / 5));
 
     const _probeInteractives = typeof opts.probeInteractives === 'function'
       ? opts.probeInteractives : probeInteractives;
@@ -1223,11 +1274,11 @@ async function probeOnePage({ browser, url, opts = {} }) {
     if (_probeInteractives) {
       try {
         const r = await _probeInteractives({
-          page, url, sliceBudget,
-          // D41 T2 — exhaustive: caller passes maxInteractives:Infinity
-          // OR the default cap (25). Default policy now bumped to 1000
-          // for "every interactive element" semantics; sliceBudget is
-          // the safety valve, not the count cap.
+          page, url,
+          // D42 T2 — give interactives the larger slice (interactivesSliceBudget,
+          // half the page budget) so all enumerated elements actually get
+          // exercised; other probes share the remaining half.
+          sliceBudget: interactivesSliceBudget,
           maxInteractives: opts.maxInteractives ?? DEFAULT_MAX_INTERACTIVES_EXHAUSTIVE,
           actionTimeoutMs: opts.actionTimeoutMs ?? DEFAULT_ACTION_TIMEOUT_MS,
         });
@@ -1384,7 +1435,15 @@ export async function probeAllPages(args = {}) {
   const aggFindings = [];
   const aggClassifications = [];
   const aggSummary = makeEmptySummary();
-  const overallBudget = opts.overallBudgetMs ?? Math.max(180_000, urls.length * 60_000);
+  // D42 T2 — per-page budget = 45s default (interactives slice = ~22s
+  // → ~40 elements/page at 500ms each, which exceeds the typical
+  // per-page interactive count by a wide margin). Capped at 25 min
+  // total so we stay inside the 30-min script timeout even for
+  // many-page products.
+  const overallBudget = opts.overallBudgetMs ?? Math.min(
+    1_500_000,
+    Math.max(180_000, urls.length * 45_000),
+  );
 
   try {
     browser = await connectBrowser(opts);

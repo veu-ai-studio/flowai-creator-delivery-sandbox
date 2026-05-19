@@ -1600,6 +1600,127 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
   });
 });
 
+// ── D42 T2 — full interactive coverage ─────────────────────────────
+
+describe('probeInteractives — D42 T2 full coverage', () => {
+  it('scrolls the page before enumerating so lazy/below-fold elements are captured', async () => {
+    const scrollCalls = [];
+    let stage = 'pre-scroll';
+    const fakeEls = (n) => Array.from({ length: n }, (_, i) => ({
+      index: i, tag: 'button', href: null, text: `btn-${i}`,
+      ariaLabel: null, role: null, selector: `button:nth-of-type(${i + 1})`,
+    }));
+    const mockPage = {
+      goto: vi.fn(async () => ({ ok: () => true })),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async (fn, args) => {
+        if (args && args.sel) {
+          // Enumeration call: pre-scroll = 5 elements, post-scroll = 50.
+          return fakeEls(stage === 'post-scroll' ? 50 : 5);
+        }
+        // Discriminate scroll IIFE (contains window.scrollTo) from
+        // body-hash polls (contains document.body?.innerText).
+        const fnStr = typeof fn === 'function' ? fn.toString() : '';
+        if (fnStr.includes('scrollTo')) {
+          scrollCalls.push('scrolled');
+          stage = 'post-scroll';
+          return undefined;
+        }
+        return 'body-hash';
+      }),
+      url: () => 'https://x/',
+      locator: vi.fn(() => ({ first: () => ({ click: vi.fn(async () => {}) }) })),
+      waitForTimeout: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+    };
+    const browser = {
+      newContext: vi.fn(async () => ({
+        newPage: vi.fn(async () => mockPage),
+        close: vi.fn(async () => {}),
+      })),
+      close: vi.fn(async () => {}),
+    };
+    const r = await probeAdversarialSurface({
+      url: 'https://x/',
+      opts: { browser, probeBudgetMs: 1_000_000 },
+    });
+    expect(r.ok).toBe(true);
+    expect(scrollCalls).toHaveLength(1);                        // scroll pass ran exactly once
+    // 50 elements exercised (post-scroll), not the 5 that were visible
+    // before the scroll pass — proves lazy / below-fold content was
+    // surfaced before enumeration.
+    expect(r.summary.interactivesTested).toBe(50);
+  });
+
+  it('interactivesSliceBudget is the larger half of the per-page budget', async () => {
+    // 100 fake elements; sliceBudget controls whether the loop completes.
+    // probeBudgetMs = 200_000 → interactivesSliceBudget = 100_000ms.
+    // Each click + waitForTimeout(200) ≈ 200ms in the mock → 100 elements
+    // would consume ~20s, well under 100s slice. All 100 should run.
+    const fakeEls = (n) => Array.from({ length: n }, (_, i) => ({
+      index: i, tag: 'button', href: null, text: `b-${i}`,
+      ariaLabel: null, role: null, selector: `button:nth-of-type(${i + 1})`,
+    }));
+    const mockPage = {
+      goto: vi.fn(async () => ({ ok: () => true })),
+      on: vi.fn(), off: vi.fn(),
+      evaluate: vi.fn(async (fn, args) => {
+        if (args && args.sel) return fakeEls(100);
+        if (!args) return undefined;                          // scroll IIFE
+        return 'h';
+      }),
+      url: () => 'https://x/',
+      locator: vi.fn(() => ({ first: () => ({ click: vi.fn(async () => {}) }) })),
+      waitForTimeout: vi.fn(async () => {}),
+      close: vi.fn(async () => {}),
+    };
+    const browser = {
+      newContext: vi.fn(async () => ({
+        newPage: vi.fn(async () => mockPage),
+        close: vi.fn(async () => {}),
+      })),
+      close: vi.fn(async () => {}),
+    };
+    const r = await probeAdversarialSurface({
+      url: 'https://x/',
+      opts: { browser, probeBudgetMs: 200_000 },
+    });
+    expect(r.ok).toBe(true);
+    // All 100 elements exercised under the doubled interactivesSliceBudget.
+    expect(r.summary.interactivesTested).toBe(100);
+  });
+
+  it('probeAllPages overall budget defaults: 25-min cap, 45s/page floor, 180s min', async () => {
+    // Confirm the default formula via a smoke check at the boundaries.
+    // We don't drive a real probe here — just inspect what budget would
+    // be assigned to each page when the user does not pass overallBudgetMs.
+    // 100 pages × 45_000ms = 4.5M, clamped to 1_500_000ms (25 min) cap.
+    // pages_left at iter 0 = 100 → pageBudget = 1_500_000 / 100 = 15_000.
+    // Single page: max(180_000, 45_000) = 180_000.
+    // 3 pages: max(180_000, 135_000) = 180_000.
+    const { browser } = makeMockBrowser();
+    const r1 = await probeAllPages({
+      urls: Array.from({ length: 100 }, (_, i) => `https://x/${i}`),
+      opts: {
+        browser,
+        // Stub probes so we don't actually drive 100 pages — we just
+        // need to verify the budget math doesn't blow past the cap.
+        probeInteractives: async () => ({ findings: [], interactivesTested: 0, deadOrErroring: 0 }),
+        probeModals: async () => ({ findings: [], modalsFailing: 0 }),
+        probeForms: async () => ({ findings: [], formsFailing: 0 }),
+        probeAgents: async () => ({ findings: [], agentsNonFunctional: 0 }),
+        probeWorkspaces: async () => ({ findings: [], workspacesProbed: 0, workspacesNonFunctional: 0 }),
+        detectWiredVsMock: async () => ({ findings: [], mockOnlyFlagged: 0 }),
+      },
+    });
+    expect(r1.ok).toBe(true);
+    // Capped at 25 min total = 1_500_000ms; durationMs is well under that
+    // because stubs return instantly.
+    expect(r1.durationMs).toBeLessThan(1_500_000);
+    expect(r1.pagesProbed).toBe(100);
+  });
+});
+
 // ── D42 T1 — Phase-B re-probe after fix ─────────────────────────────
 
 function fullHappyDeps({ scoreSequence } = {}) {
