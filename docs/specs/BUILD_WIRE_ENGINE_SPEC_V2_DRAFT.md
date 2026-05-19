@@ -6,7 +6,7 @@
 
 **Lineage:** v1 (`4e6260b`) → W6 J2 re-Panel (`b2... commit pending` — verbatim verdicts at `j2-buildwire-repanel-2026-05-19.md`, 7/10 engaged, 0/8 cleared, all 8 verdicts PLURALITY-STRENGTHEN or SPLIT-STRENGTHEN) → CEO dispatch STRENGTHEN directions per CEO Locked Rule 13 (this v2).
 
-**PRESERVE: NON-OVERRIDABLE discipline.** S2 / S4 / S5 / S6 are CEO-locked strengthen-only per Path H ENTRY 014 + Locked Rule 13. v2 PRESERVES this — questions for those invariants offer no reject path. This held under live Panel fire (rerun shows zero votes for a hypothetical "weaken S2/S4/S5/S6" option; the verdicts above pure strengthen variants); v2 does not weaken it.
+**NON-OVERRIDABLE inventory — fidelity statement.** The CEO-locked NON-OVERRIDABLE invariants are EXACTLY **S2 / S4 / S5 / S6** per Path H ENTRY 014 + Locked Rule 13. No other invariant carries non-overridable status. Specifically: **S1 / S3 / S7 / S8 are PANEL-RATIFIABLE** — Panel may strengthen, simplify, or reject these. v2 PRESERVES the non-overridable set unchanged from Path H. The S2/S4/S5/S6 questions in this draft offer no reject path; S1/S3/S7/S8 questions include reject options consistent with §3 prose.
 
 ---
 
@@ -21,7 +21,7 @@
 | **S5** 🔒 | `PLURALITY_J2S5-AUTO` 4/7 (NON-OVERRIDABLE) | **Automatic rollback on Phase B failure** within 1 hour of PR merge — engine auto-invokes rollback path without operator action. **30-day retention** — pre-commit snapshot persists in `construction_snapshot` table for ≥30 days post-merge (was undefined retention). **STRENGTHEN dry-run to a REAL rollback invocation in CI before rollback is considered tested** — v1's "simulate rollback" replaced with: execute the actual rollback path against a CI-spawned ephemeral copy of the construction artifacts; rollback success = the ephemeral copy reverts to Phase A baseline state. Dry-run that ONLY validates the script syntax (no execution) is REJECTED. Adds **S5-CT-6** (auto-rollback), **S5-CT-7** (30-day retention), **S5-CT-8** (real-rollback-in-CI). | Slot 1 + Slot 2 + Slot 4 + Slot 6 + Slot 9 + Slot 10 auto-rollback votes (4/7); Slot 7 #22 + Slot 8 #26 + Slot 9 #27 + Slot 10 #31 GitLab-restore-precedent verbatim. |
 | **S6** 🔒 | `PLURALITY_J2S6-ADMINALL` 3/7 (NON-OVERRIDABLE) | **Admin-required for ALL construction classes** (not just `schema_migration`). v1's role gate "admin-only for schema_migration; operator permitted for other classes" → v2 "admin-only for all 4 classes". **Freshness window 15 minutes** (was 1 hour). Add **rationale-quality validation** — operator-supplied `rationale` field rejected if < 60 chars OR if matches stop-words set (`approved`, `ok`, `lgtm`, `looks fine`, etc.); rejection emits `construction_rationale_quality_failure.v1`. Add **in-flight context-change invalidation** — if any `governance_record_entry` lands for the target product between approval and fix-generator-start, approval is invalidated; new approval required. Adds **S6-CT-5** (admin-all), **S6-CT-6** (15-min), **S6-CT-7** (rationale-quality), **S6-CT-8** (in-flight invalidation). | Slot 1 + Slot 2 + Slot 3 + Slot 4 + Slot 6 + Slot 10 ADMINALL/BOTH votes; Slot 1 #4 stale approval; Slot 7 #23 rationale unverified; Slot 10 #32 in-flight context. |
 | **S7** | `PLURALITY_J2S7-SUBBRANCH` 5/7 | **Per-session sub-branches** within the per-product `self_renewal_branch` for multi-construction redesign sessions (CA-16-B). Branch naming canonical: `<self_renewal_branch>/redesign-session-<sessionId>`. Squash-merge to per-product branch on operator approval (single commit per session in the per-product branch history). Per-product `self_renewal_branch` REMAINS the merge target (preserves CA-14-D Invariant 1 ENTRY 015). Adds **S7-CT-4** (sub-branch + squash-merge). | Slot 1 + Slot 2 + Slot 3 + Slot 4 + Slot 6 + Slot 10 SUBBRANCH 5/7. |
-| **S8** 🔒 | `PLURALITY_J2S8-LIVEPREV` 5/7 (NON-OVERRIDABLE per dispatch designation) | **Live-preview Phase B post-PR-merge.** Run Phase B AGAIN on the live preview URL after PR merge; failure within 1 hour triggers S5 auto-rollback. **Dual-load profile testing for `endpoint_generation`** — Phase B runs against TWO load profiles (light: 1 req/s for 60s; heavy: 100 req/s for 60s). Add **connection-pool / memory-leak / transaction-deadlock probes** to the Phase B suite for `endpoint_generation`. Adds **S8-CT-4** (live-preview post-merge), **S8-CT-5** (dual-load), **S8-CT-6** (backend probes). | Slot 1 #2 backend coverage verbatim; Slot 1 + Slot 2 + Slot 4 + Slot 6 + Slot 7 + Slot 8 + Slot 9 + Slot 10 LIVEPREV/BOTH 5/7. |
+| **S8** | `PLURALITY_J2S8-LIVEPREV` 5/7 (PANEL-RATIFIABLE) | **Live-preview Phase B post-PR-merge.** Run Phase B AGAIN on the live preview URL after PR merge; failure within 1 hour triggers S5 auto-rollback. **Dual-load profile testing for `endpoint_generation`** — Phase B runs against TWO load profiles (light: 1 req/s for 60s; heavy: 100 req/s for 60s). Add **connection-pool / memory-leak / transaction-deadlock probes** to the Phase B suite for `endpoint_generation`. Adds **S8-CT-4** (live-preview post-merge), **S8-CT-5** (dual-load), **S8-CT-6** (backend probes). | Slot 1 #2 backend coverage verbatim; Slot 1 + Slot 2 + Slot 4 + Slot 6 + Slot 7 + Slot 8 + Slot 9 + Slot 10 LIVEPREV/BOTH 5/7. |
 
 **Net v2 size:** v1 spec had 33 conformance tests across S1–S8 + lifecycle. v2 adds **16 new** conformance tests (S1-CT-4, S2-CT-5, S2-CT-6, S3-CT-5, S4-CT-6, S4-CT-7, S4-CT-8, S5-CT-6, S5-CT-7, S5-CT-8, S6-CT-5, S6-CT-6, S6-CT-7, S6-CT-8, S7-CT-4, S8-CT-4, S8-CT-5, S8-CT-6) → **49 conformance tests total**.
 
@@ -389,7 +389,7 @@ The prior J2 bundle was 43,081 chars (over the 35K engagement ceiling that W6 fl
 - **Run 3: S5 + S6** (rollback substrate + pre-construction approval)
 - **Run 4: S7 + S8** (branch-of-record + post-construction Phase B)
 
-**NON-OVERRIDABLE discipline preserved:** S2 / S4 / S5 / S6 questions in each run's bundle offer **strengthen-only options** + INSUFFICIENT — no reject path. v2 enforces this verbatim per CEO Locked Rule 13.
+**NON-OVERRIDABLE discipline preserved:** S2 / S4 / S5 / S6 questions in each run's bundle offer **strengthen-only options** + INSUFFICIENT — no reject path per CEO Locked Rule 13 + Path H ENTRY 014. The remaining four invariants (S1 / S3 / S7 / S8) are PANEL-RATIFIABLE — their questions include a reject option alongside strengthen variants + INSUFFICIENT, consistent with §3 prose.
 
 See §8 below for the 4 bundle-ready run blocks.
 
@@ -600,11 +600,11 @@ v2 strengthens S6 with: admin-required for ALL 4 classes + 15-min freshness + ra
 
 ---
 
-### §8.4 — RUN 4 BUNDLE — S7 (branch-of-record) + S8 (post-construction Phase B) 🔒
+### §8.4 — RUN 4 BUNDLE — S7 (branch-of-record) + S8 (post-construction Phase B)
 
 **[BUNDLE START — Run 4: S7 + S8 — target ≤30K chars]**
 
-**Context for Panel (Run 4):** Run 4 covers S7 (per-product branch with per-session sub-branches for CA-16-B redesigns) + S8 (pre-PR Phase B + live-preview post-merge Phase B + dual-load + backend probes for endpoint_generation). S8 is NON-OVERRIDABLE per CEO Locked Rule 13 dispatch designation — strengthen-only options offered.
+**Context for Panel (Run 4):** Run 4 covers S7 (per-product branch with per-session sub-branches for CA-16-B redesigns) + S8 (pre-PR Phase B + live-preview post-merge Phase B + dual-load + backend probes for endpoint_generation). Both S7 and S8 are PANEL-RATIFIABLE per §3 — Panel may strengthen, simplify, or reject. The CEO-locked NON-OVERRIDABLE set is EXACTLY S2/S4/S5/S6 per Path H ENTRY 014; S8 is NOT in that set.
 
 **§3.7 S7 — Branch-of-record interaction (PANEL-RATIFIABLE; v2 ADDS SUB-BRANCHES)**
 
@@ -619,7 +619,7 @@ v2 strengthens S6 with: admin-required for ALL 4 classes + 15-min freshness + ra
 
 **Conformance tests (v2):** S7-CT-1 (main-target refused), S7-CT-2 (multi-construction sequence), S7-CT-3 (per-product isolation), **S7-CT-4 NEW v2** (sub-branch + squash-merge — 3 proposals committed to sub-branch; one squash-merge commit to per-product branch; sub-branch retained 30 days).
 
-**§3.8 S8 — Post-construction Phase B mandatory (NON-OVERRIDABLE per CEO Path H dispatch designation; v2 EXTENDED) 🔒**
+**§3.8 S8 — Post-construction Phase B mandatory (PANEL-RATIFIABLE; v2 EXTENDED)**
 
 **Invariant:** Phase B runs 3 times against construction artifacts: pre-PR (v1) + live-preview post-PR-merge (NEW v2) + dual-load for endpoint_generation (NEW v2). Backend probes added for endpoint_generation: connection-pool exhaustion + memory-leak + transaction-deadlock.
 
@@ -630,7 +630,7 @@ v2 strengthens S6 with: admin-required for ALL 4 classes + 15-min freshness + ra
 - **Dual-load for endpoint_generation (NEW v2)**: Phase B against light (1 req/s × 60s) + heavy (100 req/s × 60s) load profiles.
 - **Backend probes (NEW v2)** for endpoint_generation: connection-pool exhaustion, memory-leak (RSS ≤20% growth at t=60s), transaction-deadlock (pg_locks no `deadlock_detected` in 60s window). Slot 1 #2 verbatim.
 
-**Why NON-OVERRIDABLE per dispatch:** the dispatch designates S8 NON-OVERRIDABLE alongside S2/S4/S5/S6 (strengthen-only). v2 STRENGTHENS the Phase B coverage; no reject path.
+**Status (Run 4 fidelity statement):** S8 is PANEL-RATIFIABLE per §3 prose — Panel may strengthen, simplify, or reject. The CEO-locked NON-OVERRIDABLE set per Path H ENTRY 014 is exactly S2/S4/S5/S6; S8 is NOT in that set. v2 strengthens the Phase B coverage substantively, but the panel retains the standard ratify/strengthen/simplify/reject option-set.
 
 **Conformance tests (v2):** S8-CT-1 (pre-PR Phase B fail aborts PR), S8-CT-2 (endpoint_generation backend tests), S8-CT-3 (results recorded), **S8-CT-4 NEW v2** (live-preview Phase B post-merge → S5 auto-rollback cross-trigger), **S8-CT-5 NEW v2** (dual-load light + heavy; race-condition fails Phase B), **S8-CT-6 NEW v2** (connection-pool exhaustion + memory-leak + deadlock probes; each with distinct `failure_class` in `construction_phase_b_failure.v1`).
 
@@ -644,14 +644,14 @@ v2 adds per-session sub-branches within per-product `self_renewal_branch` for CA
 - (d) Adjust — sub-branches per construction-class instead of per-session (`<self_renewal_branch>/<class>/<runId>`); preserves per-product branch but adds class-level visibility.
 - (e) INSUFFICIENT_INFORMATION.
 
-#### Question J2v2-S8-Q (Run 4, Q2) — Post-construction Phase B (NON-OVERRIDABLE — strengthen-only)
+#### Question J2v2-S8-Q (Run 4, Q2) — Post-construction Phase B (PANEL-RATIFIABLE)
 
-v2 extends S8 with: live-preview Phase B post-PR-merge (auto-rollback on failure within 1h) + dual-load testing for endpoint_generation + backend probes (connection-pool / memory-leak / transaction-deadlock). NON-OVERRIDABLE per CEO Locked Rule 13 dispatch designation. Right scope?
+v2 extends S8 with: live-preview Phase B post-PR-merge (auto-rollback on failure within 1h) + dual-load testing for endpoint_generation + backend probes (connection-pool / memory-leak / transaction-deadlock). PANEL-RATIFIABLE per §3.8 — Panel may strengthen, simplify, or reject. Right scope?
 
 - (a) **Ratify S8 v2 as drafted** (3 Phase B runs incl live-preview; dual-load; backend probes).
-- (b) Strengthen further — add **load-profile-shadow-traffic** test: replay 30 minutes of real production traffic against the construction's preview URL before merge; surfaces real-world-pattern bugs CI-synthetic-load misses.
-- (c) Strengthen further — add **fail-injection** to Phase B for endpoint_generation: deliberately kill DB connection mid-request, network-partition the preview from external services, simulate disk-full; assert graceful degradation + proper error envelopes.
-- (d) Strengthen via belt-and-suspenders — both (b) AND (c) — shadow-traffic replay + fail-injection.
+- (b) Strengthen further — add either **load-profile-shadow-traffic** (replay 30 minutes of real production traffic against the construction's preview URL before merge; surfaces real-world-pattern bugs CI-synthetic-load misses) OR **fail-injection** to Phase B for endpoint_generation (deliberately kill DB connection mid-request, network-partition the preview from external services, simulate disk-full; assert graceful degradation + proper error envelopes) OR both.
+- (c) Simplify — keep v1's pre-PR-only Phase B; drop the v2 additions (live-preview post-merge + dual-load + backend probes). Reduces operational surface; relies on post-deploy monitoring instead of construction-time verification.
+- (d) Reject S8 v2 — Phase B against construction artifacts is duplicative of S4 (security suite) + S3 (schema testing) + operator PR review; remove the mandatory Phase B step entirely; rely on the existing Phase B per ENTRY 015 CA-14-A-Q3 (Agent #21 Phase B charter) running post-deploy as usual without a construction-specific gate.
 - (e) INSUFFICIENT_INFORMATION.
 
 **[BUNDLE END — Run 4]**
@@ -663,7 +663,7 @@ v2 extends S8 with: live-preview Phase B post-PR-merge (auto-rollback on failure
 - W6 v2 re-Panel ratification ≥7/10 ENGAGED on each of the 8 J2v2-S?-Q questions across the 4 runs.
 - Each run's bundle ≤30K chars (proven engagement recipe; W6 flagged 35K ceiling on prior J2).
 - Engagement filter per `docs/PANEL_INFRASTRUCTURE.md` §6.
-- CEO disposition per Locked Rule 13. NON-OVERRIDABLE S2/S4/S5/S6 (+S8 per dispatch designation) cannot be eliminated by Panel; Panel feedback surfaces as recommendation.
+- CEO disposition per Locked Rule 13. NON-OVERRIDABLE S2/S4/S5/S6 (Path H ENTRY 014; no other invariants) cannot be eliminated by Panel; Panel feedback on those four surfaces as recommendation. S1/S3/S7/S8 are PANEL-RATIFIABLE — Panel may reject; if Panel rejects, the corresponding invariant is removed from the spec at promotion time.
 - If all 8 ratify (a)-clean per run, spec promotes as a single CA cycle (next free CA number — CA-17 candidate).
 - Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-buildwire-v2-promotion-<date>.md` per §18.3.
 - Once promoted, Path H Stage 3 (build/wire) becomes UNBLOCKED.
@@ -690,4 +690,4 @@ When CA-15-D v2 ratifies, this spec's tests register in canonical conformance-te
 
 ---
 
-*End of Build/Wire Engine Spec V2 DRAFT. Pending W6 4-run × 2-invariant re-Panel ratification + CEO disposition per Locked Rule 13. Doc-only; canonical files NOT amended in this commit per CA-n cycle discipline. NON-OVERRIDABLE discipline preserved (S2/S4/S5/S6 + S8 per dispatch designation) — no weakening under live Panel fire. Path H ENTRY 014 Stage 3 (build/wire) remains BLOCKED until this spec ratifies.*
+*End of Build/Wire Engine Spec V2 DRAFT. Pending W6 4-run × 2-invariant re-Panel ratification + CEO disposition per Locked Rule 13. Doc-only; canonical files NOT amended in this commit per CA-n cycle discipline. NON-OVERRIDABLE discipline preserved EXACTLY at S2/S4/S5/S6 per Path H ENTRY 014 — no other invariant carries non-overridable status. S1/S3/S7/S8 remain PANEL-RATIFIABLE with reject options present. Path H ENTRY 014 Stage 3 (build/wire) remains BLOCKED until this spec ratifies.*
