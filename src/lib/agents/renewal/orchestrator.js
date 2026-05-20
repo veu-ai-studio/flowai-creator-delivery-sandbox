@@ -662,7 +662,11 @@ export async function runOrchestration(args = {}) {
   // internal-only telemetry signal per the dispatch directive.
   let originalGtmScore = null;
   let lastPostGtm = null;
-  let finalPreviewUrl = null;
+  // W5b TRACK B PART 2 — initialize to the URL we tested against, NOT null.
+  // When the run exits early (e.g. NO_FIXES_GENERATED before STEP 10), this
+  // anchors the governance_record entry to the artifact we actually evaluated.
+  // STEP 10 overwrites this when a new preview is deployed.
+  let finalPreviewUrl = initialUrl ?? null;
   let pr = null;
   let exitReason = 'UNKNOWN';
   let token = null;
