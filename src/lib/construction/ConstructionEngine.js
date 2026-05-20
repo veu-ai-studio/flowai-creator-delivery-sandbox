@@ -75,13 +75,15 @@ export function shouldRunConstruction({ product, phaseBFindings, appendGovernanc
  * from the finding and maps page paths back to repo-relative files
  * using the supplied resolver.
  */
-function resolveCandidatePaths({ candidate, originPageResolver }) {
+async function resolveCandidatePaths({ candidate, originPageResolver }) {
   if (typeof originPageResolver !== 'function') {
     throw makeEngineError('NO_ORIGIN_PAGE_RESOLVER',
       'ConstructionEngine: originPageResolver dep required to map Phase B finding location → repo file');
   }
-  const resolved = originPageResolver(candidate);
-  if (!resolved || typeof resolved.path !== 'string') {
+  const resolved = await originPageResolver({ candidate });
+  const resolvedPath = resolved?.repoRelativePath ?? resolved?.path;
+  const resolvedContent = resolved?.currentContent ?? resolved?.content;
+  if (!resolved || typeof resolvedPath !== 'string') {
     throw makeEngineError('ORIGIN_PAGE_NOT_RESOLVED',
       `ConstructionEngine: could not resolve origin page for finding ${candidate.location ?? '(unknown)'}`,
       { candidate });
@@ -96,8 +98,8 @@ function resolveCandidatePaths({ candidate, originPageResolver }) {
     .toLowerCase()
     .slice(0, 40) || 'wireup';
   return {
-    originPagePath: resolved.path,
-    originPageContent: typeof resolved.content === 'string' ? resolved.content : '',
+    originPagePath: resolvedPath,
+    originPageContent: typeof resolvedContent === 'string' ? resolvedContent : '',
     endpointHandlerPath: `api/wire/${slug}.js`,
   };
 }
@@ -165,7 +167,7 @@ export async function runWireUpConstruction({ product, environment, candidate, b
   });
 
   // 4. GENERATE — invoke WireUpConstructor.
-  const paths = resolveCandidatePaths({ candidate, originPageResolver });
+  const paths = await resolveCandidatePaths({ candidate, originPageResolver });
   const generateImpl = typeof deps?.generateWireUp === 'function' ? deps.generateWireUp : generateWireUp;
   const generated = await generateImpl({
     finding: candidate,

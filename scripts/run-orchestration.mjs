@@ -29,6 +29,7 @@
 
 import { runOrchestration } from '../src/lib/agents/renewal/orchestrator.js';
 import { runConstruction } from '../src/lib/construction/index.js';
+import { createOriginPageResolver } from '../src/lib/construction/resolvers/originPageResolver.js';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
@@ -58,7 +59,7 @@ if (args.help || (!args.product && !args.url)) {
   console.log('Usage: run-orchestration.mjs --product <id> | --url <url> [opts]');
   console.log('  --gtm-target <n>   (default 95)');
   console.log('  --max-iters <n>    (default 5)');
-  console.log('  --timeout-ms <n>   (default 1800000)');
+  console.log('  --timeout-ms <n>   (default 3600000 — 60 min)');
   console.log('  --no-supabase      (test mode)');
   console.log('  --mode <auto|guided|manual> (default auto)');
   console.log('  --storage-state <path>     Playwright storageState JSON for authenticated Phase B (D41 T4)');
@@ -67,7 +68,9 @@ if (args.help || (!args.product && !args.url)) {
 
 const GTM_TARGET = Number.isFinite(args.gtmTarget) ? args.gtmTarget : 95;
 const MAX_ITERATIONS = Number.isFinite(args.maxIterations) ? args.maxIterations : 5;
-const TIMEOUT_MS = Number.isFinite(args.timeoutMs) ? args.timeoutMs : 1800000;
+// W5a — default bumped 1800000 → 3600000 (60 min) so Vercel preview deploy
+// + post-fix Phase B + construction-engine cycles complete in one iteration.
+const TIMEOUT_MS = Number.isFinite(args.timeoutMs) ? args.timeoutMs : 3600000;
 const MODE = args.mode ?? 'auto';
 
 const supabase = (!args.noSupabase && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
@@ -148,6 +151,11 @@ const orchestrationPromise = runOrchestration({
   deps: {
     ...(discoverProductOverride ? { discoverProduct: discoverProductOverride } : {}),
     runConstruction,
+    // Resolver FACTORY — the orchestrator instantiates the actual resolver
+    // per-iteration with the iteration's GitHub token + owner/repo bound
+    // to the repoFileList / fetchFileContent closures. See
+    // src/lib/agents/renewal/orchestrator.js construction hook for binding.
+    createOriginPageResolver,
   },
   onStep: (log) => {
     const score = log.scores?.current;

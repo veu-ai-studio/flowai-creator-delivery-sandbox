@@ -1253,7 +1253,19 @@ export async function runOrchestration(args = {}) {
             knownPackages: knownPackages
               ? Object.fromEntries(Array.from(knownPackages).map((n) => [n, true]))
               : {},
-            originPageResolver: deps.constructionOriginPageResolver ?? null,
+            // W5a — instantiate the originPageResolver inline with this
+            // iteration's GitHub credentials. The runner supplies the
+            // factory via deps.createOriginPageResolver; we bind
+            // repoFileList + fetchFileContent to the orchestrator's
+            // current owner/repo/branch/token so the resolver can look
+            // up files without re-doing the auth handshake.
+            originPageResolver: deps.constructionOriginPageResolver
+              ?? (typeof deps.createOriginPageResolver === 'function' && owner && repo && token && Array.isArray(repoFileList)
+                ? deps.createOriginPageResolver({
+                    repoFileList: async () => repoFileList,
+                    fetchFileContent: async (filePath) => _fetchFileContent({ owner, repo, filePath, ref: productBranch, token }),
+                  })
+                : null),
             registryConfig: {
               s6AutoApproveInTestMode: product?.construction_s6_auto_approve_in_test_mode === true || _constructionEnvBypass,
               snapshotRetentionDays: product?.construction_snapshot_retention_days ?? undefined,
