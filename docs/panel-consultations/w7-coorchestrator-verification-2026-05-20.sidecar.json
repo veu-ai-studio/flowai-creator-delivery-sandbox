@@ -1,0 +1,1063 @@
+{
+  "schema": "w7-coorchestrator-verification.sidecar.v1",
+  "dispatch": "W6 — Panel-authoritative; W7 + convergence-risk (2026-05-20)",
+  "startedAt": "2026-05-20T13:45:11.290Z",
+  "finishedAt": "2026-05-20T13:48:23.051Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 36445,
+  "tally": {
+    "engagedTotal": 5,
+    "invalid": 0,
+    "tangential": 5,
+    "silent": 0,
+    "perQuestion": {
+      "K1": {
+        "K1-SOUND-PROCEED": 0,
+        "K1-SOUND-WITH-CONDITIONS": 0,
+        "K1-UNSOUND-CONVERGENCE-RISK": 4,
+        "K1-UNSOUND-BETTER-NO-COST-OPTION": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "K2A": {
+        "K2A-5-15PCT": 0,
+        "K2A-15-30PCT": 0,
+        "K2A-30-50PCT": 0,
+        "K2A-50-70PCT": 5,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "K2B": {
+        "K2B-CRITICAL": 1,
+        "K2B-HIGH": 4,
+        "K2B-MEDIUM": 0,
+        "K2B-LOW": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "K2C": {
+        "K2C-PANEL-WHEN-AGREE": 3,
+        "K2C-CROSS-MODEL-SPOT-CHECK": 0,
+        "K2C-MANDATORY-HUMAN-IRREVERSIBLE": 1,
+        "K2C-EVIDENCE-CITATION-REQUIRED": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "K3": {
+        "K3-PANEL-FOR-EVERYTHING": 4,
+        "K3-W7-ROUTINE-PANEL-MAJOR": 0,
+        "K3-W7-NONE-PANEL-EVERYTHING": 1,
+        "K3-W7-ONLY-NO-PANEL": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "K4": {
+        "K4-W7-SETUP-NOW": 0,
+        "K4-PANEL-AS-PRIMARY-VERIFIER": 5,
+        "K4-STOP-AND-RECONSIDER": 0,
+        "K4-W7-PLUS-WEEKLY-PANEL": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 32,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Convergence probability buckets lack empirical basis",
+        "detail": "K2A offers probability buckets (5-15%, 15-30%, 30-50%, 50-70%) without citing any empirical studies or prior Panel data showing actual convergence rates between same-model instances. The proposal asks Panel to quantify risk without providing baseline measurements from existing W0 operations."
+      },
+      {
+        "slot": 1,
+        "title": "W7 read-only restriction undermines verification value",
+        "detail": "K4's SOUND-WITH-CONDITIONS option restricts W7 to 'git + Supabase READ ONLY' access, but effective verification requires ability to test proposed changes. A verifier that cannot execute test builds or validate deployment readiness is structurally limited to surface-level review."
+      },
+      {
+        "slot": 1,
+        "title": "Panel cost estimates ignore opportunity cost",
+        "detail": "Section D claims Panel runs cost '$0.50-2 per consultation' but ignores Victor's time cost waiting 5-15 minutes per run. For a cash-constrained founder, the wall-clock delay on every dispatch could be more expensive than the dollar cost."
+      },
+      {
+        "slot": 2,
+        "title": "Shared Model Bias",
+        "detail": "The proposal relies on two instances of the same base model, claude-opus-4-7, which inherently share the same biases and limitations. This is outlined in section C of the proposal, where the independence of verification is questioned due to the shared architecture and training data."
+      },
+      {
+        "slot": 2,
+        "title": "Lack of Structural Independence",
+        "detail": "Section C suggests that the second Claude Code instance is framed as a skeptical verifier, but the underlying inference remains unchanged. This means that on complex tasks, both instances are likely to make similar errors, reducing the effectiveness of having a second instance."
+      },
+      {
+        "slot": 2,
+        "title": "Inadequate Verification Property",
+        "detail": "Section D highlights that the existing Panel infrastructure uses 10 different model families, providing a robust verification mechanism. The proposal's reliance on two instances of the same model family does not offer the same level of verification, making it a weaker alternative."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Independence",
+        "detail": "The W7 proposal suggests using a second Claude Code instance as a co-orchestrator and independent verifier, but both instances would be running the same base model (claude-opus-4-7 family), which may lead to correlated biases and failure modes. This lack of independence could compromise the verification property."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Guardrails",
+        "detail": "The proposal does not provide explicit guardrails for the W7 co-orchestrator, such as never auto-approving irreversible actions or requiring operator confirmation. Without these guardrails, the W7 instance may introduce unintended risks."
+      },
+      {
+        "slot": 3,
+        "title": "Inadequate Detection Mechanism",
+        "detail": "The proposal does not specify a robust detection mechanism to catch W0+W7 convergence errors before they produce material damage. The suggested cross-model spot-check may not be sufficient to detect systematic convergence over time."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of Structural Independence",
+        "detail": "The proposal uses two instances of the same base model (claude-opus-4-7) with different system prompts. This does not provide the structural independence needed for robust verification, as both instances will likely share the same reasoning biases and training-data gaps. This is particularly concerning for critical dispatches where errors matter most."
+      },
+      {
+        "slot": 4,
+        "title": "Inadequate Verification Property",
+        "detail": "The existing 10-slot Panel infrastructure provides a stronger verification property with 10 different model families, ensuring diverse training datasets and inference architectures. The proposed W7 architecture, with its shared base model, cannot replicate this level of verification diversity, making it a weaker option for ensuring accuracy and reliability."
+      },
+      {
+        "slot": 4,
+        "title": "Potential for Convergence Errors",
+        "detail": "The high correlation between W0 and W7 due to their shared base model increases the risk of convergence on incorrect judgments. This could lead to significant errors being acted upon before detection, resulting in wasted time, effort, and potential critical impacts on the project. The proposal does not adequately address this convergence risk."
+      },
+      {
+        "slot": 5,
+        "title": "Convergence Risk",
+        "detail": "The proposal relies on two instances of the same base model, which may lead to correlated errors and reduce the effectiveness of the verification process."
+      },
+      {
+        "slot": 5,
+        "title": "Limited Independence",
+        "detail": "The independence property of W7 is weaker compared to the existing 10-slot Panel infrastructure, which uses 10 different model families."
+      },
+      {
+        "slot": 5,
+        "title": "Cost-Effectiveness",
+        "detail": "The existing Panel infrastructure is already cost-effective and provides a structurally superior verification mechanism."
+      },
+      {
+        "slot": 6,
+        "title": "Same-model convergence on consequential dispatches",
+        "detail": "The proposal explicitly acknowledges W7 and W0 both run claude-opus-4-7 family (§D). The Panel's own track record in this session demonstrates that when errors matter, MULTIPLE DIFFERENT model families converge on the same honest verdict (W6 J1-J7, production-gtm verdicts). W7 and W0 are the SAME model family with same training data, same RLHF process, same inference architecture. On the hardest dispatches where W0 overclaims, both will share the same blind spots. The system prompt difference is surface-level framing, not structural independence."
+      },
+      {
+        "slot": 6,
+        "title": "No enforcement path for W7 reject-authority",
+        "detail": "The proposal grants W7 'reject-authority — W0 cannot override a W7 reject without escalation' (§C). But the escalation path terminates at the CEO (solo founder, no engineering team, cash-constrained). The CEO lacks the technical depth to adjudicate a W0-vs-W7 dispute on a consequential architectural decision. The reject-authority is therefore a paper mechanism: W7 rejects, W0 escalates, CEO defaults to W0's framing because it's the one with context. The structural check collapses at the first real dispute."
+      },
+      {
+        "slot": 6,
+        "title": "No detection mechanism for correlated hallucination",
+        "detail": "The proposal has no mechanism to detect when W0 and W7 BOTH hallucinate plausible-sounding but incorrect evidence. The existing Panel catches this because 10 different model families cannot all hallucinate the same non-existent file path or commit SHA. Two instances of the same model CAN and WILL hallucinate correlated fiction — they share the same prior distribution over 'what sounds plausible'. The proposal does not address this failure mode."
+      },
+      {
+        "slot": 6,
+        "title": "False confidence from dual-approval framing",
+        "detail": "Deploying W7 creates a 'verified by two instances' framing that will reduce Victor's incentive to run the Panel. If W0 and W7 both approve a decision, Victor is psychologically anchored to treat it as checked. This is the opposite of the intended effect: W7 becomes a Panel-skipping justification rather than a supplement to Panel verification."
+      },
+      {
+        "slot": 6,
+        "title": "Evidence-citation requirement unverified in proposal",
+        "detail": "The proposal does not specify WHO enforces the evidence-citation requirement, HOW citations are verified against real artifacts, or WHAT happens when W7 cites a plausible but non-existent file path. Without automated citation verification (e.g., git grep + line-number validation), the citation requirement is honor-system only and provides no protection against correlated hallucination."
+      },
+      {
+        "slot": 7,
+        "title": "Same-model verification blindness",
+        "detail": "W7 uses the same claude-opus-4-7 base model as W0, sharing identical training data biases and architectural limitations. Section C's claim of 'different system prompts' fails to address fundamental model-level convergence risks in critical failure scenarios where base model limitations dominate prompt variations."
+      },
+      {
+        "slot": 7,
+        "title": "False redundancy assurance",
+        "detail": "The proposal's verification mechanism (Section C.5) creates dangerous complacency by treating W7 as authoritative rejector despite sharing W0's core inference stack. This violates §5 Symbiotic Meta-Principle's requirement for independent improvement cycles, instead creating circular validation within a single model family."
+      },
+      {
+        "slot": 7,
+        "title": "Impact quantification gap",
+        "detail": "Section F's risk quantification framework lacks concrete ties to Victor's actual codebase state (evidenced by W6 J5-J7 SSOT consistency failures). The proposal assumes uniform error distribution despite documented concentration of flaws in architectural decisions where Claude models show systemic overconfidence."
+      },
+      {
+        "slot": 8,
+        "title": "Same-model correlation risk",
+        "detail": "K1 assumes a second Claude Code session is meaningfully independent, but the proposal itself says both are the same base model family. In consequential dispatches, system-prompt differences usually alter framing, not the underlying failure mode, so W7 can converge on the same mistaken judgment as W0 while appearing to provide redundancy."
+      },
+      {
+        "slot": 8,
+        "title": "Reject-authority can deadlock",
+        "detail": "The core mechanism in section C gives W7 reject-authority over W0 dispatches, but the proposal does not specify a tie-breaker when W0 and W7 disagree on ambiguous or time-sensitive actions. That creates a new failure surface: stalled execution or escalation churn, especially when the decision is not obviously irreversible."
+      },
+      {
+        "slot": 8,
+        "title": "No evidence-grade audit trail",
+        "detail": "K2C only optionally discusses citations, but the proposal does not make verifiable artifact citation mandatory for every W7 verdict. Without file paths, commit SHAs, or row IDs, W7 can emit confident-but-uncheckable objections, which makes the verifier vulnerable to the same hallucination class it is meant to catch."
+      },
+      {
+        "slot": 9,
+        "title": "Same-model convergence risk",
+        "detail": "W7 uses the same base model (claude-opus-4-7) as W0, meaning they share fundamental reasoning biases and training-data gaps. Different system prompts may not sufficiently mitigate this convergence risk (§C)."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of independent verification",
+        "detail": "Unlike the 10-slot Panel, which uses 10 different model families with diverse training datasets and inference architectures, W7 relies on the same model family as W0, reducing its effectiveness as an independent verifier (§D)."
+      },
+      {
+        "slot": 9,
+        "title": "Prior Panel verdicts indicate AI-only execution risks",
+        "detail": "The prior W6 Panel verdict highlighted concerns about AI-only viability for production-grade software, suggesting that human engineers are necessary (§A). W7 does not address this fundamental limitation."
+      },
+      {
+        "slot": 10,
+        "title": "Same-model convergence in §C",
+        "detail": "Section C claims W7 provides independent verification via different system prompt and reject-authority, yet D explicitly states both instances use the identical claude-opus-4-7 base model family; no mechanism addresses shared training-data biases or inference architecture failures on novel architectural dispatches."
+      },
+      {
+        "slot": 10,
+        "title": "Missing rollback for irreversible actions",
+        "detail": "W7 description in C grants reject-authority but provides no concrete guardrail or escalation path when W0+W7 both approve a deploy or destructive Supabase write, unlike the existing Panel's multi-model cross-check documented in the slot-config.mjs excerpt."
+      },
+      {
+        "slot": 10,
+        "title": "Zero-cost assumption ignores hidden cost",
+        "detail": "Proposal asserts 'Cost: zero' while E shows prior W6 Panels caught repeated overclaims; relying on correlated Claude instances risks undetected wrong-path work whose remediation cost exceeds the $0.50-2 per-run Panel budget quantified in D."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "K1": {
+      "verdict": "PLURALITY_K1-UNSOUND-CONVERGENCE-RISK",
+      "detail": "4 of 5 on K1-UNSOUND-CONVERGENCE-RISK (below 7/10 quorum)",
+      "topKey": "K1-UNSOUND-CONVERGENCE-RISK",
+      "topCount": 4
+    },
+    "K2A": {
+      "verdict": "UNANIMOUS_K2A-50-70PCT",
+      "detail": "5 of 5 ENGAGED on K2A-50-70PCT (unanimous)",
+      "topKey": "K2A-50-70PCT",
+      "topCount": 5
+    },
+    "K2B": {
+      "verdict": "PLURALITY_K2B-HIGH",
+      "detail": "4 of 5 on K2B-HIGH (below 7/10 quorum)",
+      "topKey": "K2B-HIGH",
+      "topCount": 4
+    },
+    "K2C": {
+      "verdict": "PLURALITY_K2C-PANEL-WHEN-AGREE",
+      "detail": "3 of 5 on K2C-PANEL-WHEN-AGREE (below 7/10 quorum)",
+      "topKey": "K2C-PANEL-WHEN-AGREE",
+      "topCount": 3
+    },
+    "K3": {
+      "verdict": "PLURALITY_K3-PANEL-FOR-EVERYTHING",
+      "detail": "4 of 5 on K3-PANEL-FOR-EVERYTHING (below 7/10 quorum)",
+      "topKey": "K3-PANEL-FOR-EVERYTHING",
+      "topCount": 4
+    },
+    "K4": {
+      "verdict": "UNANIMOUS_K4-PANEL-AS-PRIMARY-VERIFIER",
+      "detail": "5 of 5 ENGAGED on K4-PANEL-AS-PRIMARY-VERIFIER (unanimous)",
+      "topKey": "K4-PANEL-AS-PRIMARY-VERIFIER",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.5333333333333333,
+    "alignedCount": 16,
+    "totalPossible": 30,
+    "draftedQs": [
+      "K1",
+      "K2A",
+      "K2B",
+      "K2C",
+      "K3",
+      "K4"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 53.3 %, distinct objections 32"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Convergence probability buckets lack empirical basis",
+            "detail": "K2A offers probability buckets (5-15%, 15-30%, 30-50%, 50-70%) without citing any empirical studies or prior Panel data showing actual convergence rates between same-model instances. The proposal asks Panel to quantify risk without providing baseline measurements from existing W0 operations."
+          },
+          {
+            "title": "W7 read-only restriction undermines verification value",
+            "detail": "K4's SOUND-WITH-CONDITIONS option restricts W7 to 'git + Supabase READ ONLY' access, but effective verification requires ability to test proposed changes. A verifier that cannot execute test builds or validate deployment readiness is structurally limited to surface-level review."
+          },
+          {
+            "title": "Panel cost estimates ignore opportunity cost",
+            "detail": "Section D claims Panel runs cost '$0.50-2 per consultation' but ignores Victor's time cost waiting 5-15 minutes per run. For a cash-constrained founder, the wall-clock delay on every dispatch could be more expensive than the dollar cost."
+          }
+        ],
+        "worse_than_status_quo": "W7 creates a false sense of security where Victor relies on two correlated AI instances agreeing, reducing his direct oversight of dispatches while not actually improving error detection rates on the critical architectural decisions where W0 has been consistently wrong.",
+        "precedent": "Boeing's 737 MAX MCAS system relied on two angle-of-attack sensors that could agree while both reading incorrectly due to shared failure modes, leading to catastrophic outcomes when the redundancy was illusory."
+      },
+      "rejection_steelman": "The proposal fundamentally misunderstands the verification problem. W0's failures this session weren't caught by 'another AI reviewing the same information differently' but by 10 diverse models with different training data identifying logical inconsistencies. Adding a second Claude instance addresses the symptom (need for review) not the cause (same-model blind spots). The CEO should reject W7 and instead implement per-dispatch Panel runs, accepting the 5-15 minute cost as essential quality control.",
+      "votes": {
+        "K1": {
+          "key": "K1-UNSOUND-BETTER-NO-COST-OPTION",
+          "pick_text": "UNSOUND — better no-cost option exists. The existing 10-slot Panel infrastructure (Anthropic + OpenAI + Google + Mistral + Cohere + Qwen + DeepSeek + Perplexity + Moonshot + xAI) is ALREADY the multi-model verifier W7 would only partially be. Running the Panel on EVERY dispatch (not just major ones) is the structurally superior zero-cost path. W7 should not be set up; instead, raise Panel cadence to per-dispatch.",
+          "rationale": "The Panel's track record in Section E shows it consistently caught W0's errors through multi-model consensus. W7's same-model architecture cannot replicate this fundamental verification property."
+        },
+        "K2A": {
+          "key": "K2A-50-70PCT",
+          "pick_text": "50-70% — Highly correlated outputs from same architecture. The \"second opinion\" property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value.",
+          "rationale": "Same base model (claude-opus-4-7) means shared training biases, RLHF preferences, and reasoning patterns. System prompt differences are surface-level modifications that don't change core inference."
+        },
+        "K2B": {
+          "key": "K2B-CRITICAL",
+          "pick_text": "CRITICAL impact — Wrong direction shipped to production OR significant work performed against wrong plan; major rework cycle; CEO loses runway and/or investor confidence; recovery costs measured in weeks. Victor cannot absorb this loss given budget constraints. Single convergence event could be terminal.",
+          "rationale": "Section B explicitly states Victor cannot afford the $25-50K hire due to capital constraints. A multi-week wrong direction would burn remaining runway with no recovery path."
+        },
+        "K2C": {
+          "key": "K2C-PANEL-WHEN-AGREE",
+          "pick_text": "Mandatory Panel adjudication WHENEVER W0 and W7 agree on an irreversible action (deploys, force-pushes, destructive writes, external announcements). Their agreement is the trigger to run Panel — catches the convergence case directly, costs ~5-15 min only on irreversible-action turns.",
+          "rationale": "This mechanism directly targets the highest-risk scenario (both AIs converging on wrong judgment) and triggers multi-model verification precisely when the correlation risk is highest."
+        },
+        "K3": {
+          "key": "K3-PANEL-FOR-EVERYTHING",
+          "pick_text": "PANEL FOR EVERYTHING. The Panel is already a multi-model verifier; the only thing holding it back from per-dispatch use is the 5-15 minute per-run cost. That cost is acceptable given Victor's capital scarcity (Panel runs are ~$0.50-2 per consultation via OpenRouter, vs. days of wasted work from a missed convergence error). Skip W7; raise Panel cadence to per-dispatch on anything non-trivial.",
+          "rationale": "The dollar cost ($0.50-2) is negligible compared to the weeks of wasted work from a convergence error. The 5-15 minute delay is acceptable quality control for a pre-revenue founder."
+        },
+        "K4": {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "pick_text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists).",
+          "rationale": "W7 adds architectural complexity without solving the core verification problem. The Panel already exists, has proven effective at catching W0's errors, and provides true multi-model independence."
+        }
+      },
+      "overallNotes": "The proposal's fundamental flaw is treating verification as a prompt-engineering problem rather than a model-diversity problem.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Shared Model Bias",
+            "detail": "The proposal relies on two instances of the same base model, claude-opus-4-7, which inherently share the same biases and limitations. This is outlined in section C of the proposal, where the independence of verification is questioned due to the shared architecture and training data."
+          },
+          {
+            "title": "Lack of Structural Independence",
+            "detail": "Section C suggests that the second Claude Code instance is framed as a skeptical verifier, but the underlying inference remains unchanged. This means that on complex tasks, both instances are likely to make similar errors, reducing the effectiveness of having a second instance."
+          },
+          {
+            "title": "Inadequate Verification Property",
+            "detail": "Section D highlights that the existing Panel infrastructure uses 10 different model families, providing a robust verification mechanism. The proposal's reliance on two instances of the same model family does not offer the same level of verification, making it a weaker alternative."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to a false sense of security, where errors are not caught due to the lack of true independence between the two Claude Code instances, potentially resulting in flawed outputs being accepted and acted upon.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it does not provide a truly independent verification mechanism. The reliance on two instances of the same model family means that shared biases and errors are likely to persist, undermining the goal of catching errors before they are shipped. The existing multi-model Panel infrastructure offers a more robust and independent verification process, which should be utilized instead.",
+      "votes": {
+        "K1": {
+          "key": "K1-UNSOUND-CONVERGENCE-RISK",
+          "pick_text": "UNSOUND-CONVERGENCE-RISK: two Claude Code instances share the same base model (claude-opus-4-7 family) and therefore the same fundamental reasoning biases, training-data gaps, and failure modes. Different system prompts shift surface behavior but do not change underlying inference. On the hardest dispatches (where errors actually matter), both will likely miss the same things together. W7 buys the FEELING of redundancy without the structural property. Do not proceed.",
+          "rationale": "The shared model architecture means that both instances are likely to make similar errors, reducing the effectiveness of the proposed verification mechanism."
+        },
+        "K2A": {
+          "key": "K2A-50-70PCT",
+          "pick_text": "50-70% — Highly correlated outputs from same architecture. The \"second opinion\" property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value.",
+          "rationale": "The same base model and architecture lead to a high probability of convergence on incorrect judgments, especially on complex tasks."
+        },
+        "K2B": {
+          "key": "K2B-HIGH",
+          "pick_text": "HIGH impact — Significant time/effort wasted on wrong path; measured in days-to-weeks; recoverable but costly; secondary effects on Victor's morale + investor signaling. Important to prevent but not single-event-terminal.",
+          "rationale": "Errors due to convergence could lead to significant wasted effort and resources, impacting morale and investor confidence."
+        },
+        "K2C": {
+          "key": "K2C-EVIDENCE-CITATION-REQUIRED",
+          "pick_text": "Mandatory verbatim-evidence citation in every W7 verdict — W7 must cite the specific file paths, line numbers, commit SHAs, Supabase row IDs that prove its verdict. Convergence-on-fiction (both LLMs hallucinating plausible-sounding evidence) is detected when citations don't match real artifacts. Cheap to enforce; high signal.",
+          "rationale": "This mechanism provides a concrete way to verify the accuracy of W7's outputs, helping to catch errors before they cause damage."
+        },
+        "K3": {
+          "key": "K3-PANEL-FOR-EVERYTHING",
+          "pick_text": "PANEL FOR EVERYTHING. The Panel is already a multi-model verifier; the only thing holding it back from per-dispatch use is the 5-15 minute per-run cost. That cost is acceptable given Victor's capital scarcity (Panel runs are ~$0.50-2 per consultation via OpenRouter, vs. days of wasted work from a missed convergence error). Skip W7; raise Panel cadence to per-dispatch on anything non-trivial.",
+          "rationale": "The existing Panel infrastructure provides a more robust verification mechanism, and its cost is justified given the potential for significant errors with W7."
+        },
+        "K4": {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "pick_text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists).",
+          "rationale": "Utilizing the existing Panel infrastructure offers a more reliable and cost-effective verification process, avoiding the pitfalls of the proposed W7 setup."
+        }
+      },
+      "overallNotes": "The proposal's reliance on two instances of the same model family undermines its effectiveness as a verification mechanism.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Independence",
+            "detail": "The W7 proposal suggests using a second Claude Code instance as a co-orchestrator and independent verifier, but both instances would be running the same base model (claude-opus-4-7 family), which may lead to correlated biases and failure modes. This lack of independence could compromise the verification property."
+          },
+          {
+            "title": "Insufficient Guardrails",
+            "detail": "The proposal does not provide explicit guardrails for the W7 co-orchestrator, such as never auto-approving irreversible actions or requiring operator confirmation. Without these guardrails, the W7 instance may introduce unintended risks."
+          },
+          {
+            "title": "Inadequate Detection Mechanism",
+            "detail": "The proposal does not specify a robust detection mechanism to catch W0+W7 convergence errors before they produce material damage. The suggested cross-model spot-check may not be sufficient to detect systematic convergence over time."
+          }
+        ],
+        "worse_than_status_quo": "The W7 proposal may make the system worse than the status quo if the second Claude Code instance introduces correlated biases and failure modes, leading to a false sense of security and potentially causing more harm than good.",
+        "precedent": "No precedent known for using two instances of the same base model as independent verifiers in a high-stakes decision-making process."
+      },
+      "rejection_steelman": "The strongest argument for rejecting the W7 proposal is that it may introduce correlated biases and failure modes, compromising the verification property, and that the existing 10-slot multi-model Panel infrastructure provides structurally superior verification. The proposal's lack of independence, insufficient guardrails, and inadequate detection mechanism further support rejecting the proposal.",
+      "votes": {
+        "K1": {
+          "key": null,
+          "pick_text": "UN SOUND-CONVERGENCE-RISK: two Claude Code instances share the same base model (claude-opus-4-7 family) and therefore the same fundamental reasoning biases, training-data gaps, and failure modes. Different system prompts shift surface behavior but do not change underlying inference. On the hardest dispatches (where errors actually matter), both will likely miss the same things together. W7 buys the FEELING of redundancy without the structural property. Do not proceed.",
+          "rationale": "The lack of independence between the two Claude Code instances compromises the verification property."
+        },
+        "K2A": {
+          "key": "K2A-30-50PCT",
+          "pick_text": "30-50% — Same base model dominates; system prompts are surface-level. On dispatches where the model has a clear bias (e.g. overconfidence on plausible-sounding plans), BOTH instances will exhibit that bias. Convergence on incorrect judgment is meaningfully likely on the highest-stakes dispatches.",
+          "rationale": "The same base model may dominate the behavior of both instances, leading to correlated biases and failure modes."
+        },
+        "K2B": {
+          "key": "K2B-HIGH",
+          "pick_text": "HIGH impact — Significant time/effort wasted on wrong path; measured in days-to-weeks; recoverable but costly; secondary effects on Victor's morale + investor signaling. Important to prevent but not single-event-terminal.",
+          "rationale": "The potential impact of a convergence error could be significant, leading to wasted time and effort, and potentially affecting Victor's morale and investor signaling."
+        },
+        "K2C": {
+          "key": "K2C-EVIDENCE-CITATION-REQUIRED",
+          "pick_text": "Mandatory verbatim-evidence citation in every W7 verdict — W7 must cite the specific file paths, line numbers, commit SHAs, Supabase row IDs that prove its verdict. Convergence-on-fiction (both LLMs hallucinating plausible-sounding evidence) is detected when citations don't match real artifacts. Cheap to enforce; high signal.",
+          "rationale": "Mandatory verbatim-evidence citation can help detect convergence errors by ensuring that both instances provide evidence-based verdicts."
+        },
+        "K3": {
+          "key": "K3-W7-NONE-PANEL-EVERYTHING",
+          "pick_text": "NO W7. Per-dispatch Panel + per-dispatch evidence-citation requirement on W0 (Victor reviews the artifacts W0 cites for verbatim accuracy). The Panel + W0's own honest-citation discipline is the verification layer; W7 is unnecessary architecture.",
+          "rationale": "The existing 10-slot multi-model Panel infrastructure provides structurally superior verification, making W7 unnecessary."
+        },
+        "K4": {
+          "key": "K4-STOP-AND-RECONSIDER",
+          "pick_text": "STOP AND RECONSIDER the cost-constrained version of FlowAI entirely. The combination of no-hire + AI-only execution + multi-week timelines is not viable per prior Panel verdicts AND the W7 hypothesis does not change this. The right move is to revisit K3 from the prior Panel (portfolio-first via off-the-shelf tools, FlowAI as Stage 2) AND find ANY budget for human help — even part-time Upwork engineer at 5-10 hours/week ($100-200/hr × 8 hours/week × 8 weeks ≈ $8-15K, well below the original $25-50K). Don't paper over a structural execution gap with W7.",
+          "rationale": "The W7 proposal may not address the underlying structural execution gap, and reconsidering the cost-constrained version of FlowAI may be necessary."
+        }
+      },
+      "overallNotes": "The W7 proposal raises significant concerns about the lack of independence between the two Claude Code instances, insufficient guardrails, and inadequate detection mechanisms. The existing 10-slot multi-model Panel infrastructure provides structurally superior verification, making W7 unnecessary. Reconsidering the cost-constrained version of FlowAI and finding budget for human help may be a more viable solution.",
+      "invalid_reason": "5/6 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Structural Independence",
+            "detail": "The proposal uses two instances of the same base model (claude-opus-4-7) with different system prompts. This does not provide the structural independence needed for robust verification, as both instances will likely share the same reasoning biases and training-data gaps. This is particularly concerning for critical dispatches where errors matter most."
+          },
+          {
+            "title": "Inadequate Verification Property",
+            "detail": "The existing 10-slot Panel infrastructure provides a stronger verification property with 10 different model families, ensuring diverse training datasets and inference architectures. The proposed W7 architecture, with its shared base model, cannot replicate this level of verification diversity, making it a weaker option for ensuring accuracy and reliability."
+          },
+          {
+            "title": "Potential for Convergence Errors",
+            "detail": "The high correlation between W0 and W7 due to their shared base model increases the risk of convergence on incorrect judgments. This could lead to significant errors being acted upon before detection, resulting in wasted time, effort, and potential critical impacts on the project. The proposal does not adequately address this convergence risk."
+          }
+        ],
+        "worse_than_status_quo": "Implementing W7 could create a false sense of security, leading to more critical errors slipping through due to the shared biases of the two Claude instances, which is worse than relying on the existing diverse Panel infrastructure that has proven effective.",
+        "precedent": "In the case of the Therac-25 medical accelerator, similar software verification issues led to fatal errors due to inadequate independent verification mechanisms. The reliance on a single model architecture without true independence can lead to similar critical failures."
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces a verification mechanism that is structurally inferior to the existing diverse Panel infrastructure. The use of two instances of the same base model does not provide the necessary independence to catch critical errors, and the risk of convergence on incorrect judgments is high. Relying on W7 could lead to significant errors and project failures, making it a less reliable option compared to the current Panel setup.",
+      "votes": {
+        "K1": {
+          "key": "K1-UNSOUND-BETTER-NO-COST-OPTION",
+          "pick_text": "UNSOUND — better no-cost option exists. The existing 10-slot Panel infrastructure (Anthropic + OpenAI + Google + Mistral + Cohere + Qwen + DeepSeek + Perplexity + Moonshot + xAI) is ALREADY the multi-model verifier W7 would only partially be. Running the Panel on EVERY dispatch (not just major ones) is the structurally superior zero-cost path. W7 should not be set up; instead, raise Panel cadence to per-dispatch.",
+          "rationale": "The existing Panel infrastructure provides a stronger verification property with diverse model families, ensuring better accuracy and reliability."
+        },
+        "K2A": {
+          "key": null,
+          "pick_text": "50-70% — Highly correlated outputs from same architecture. The 'second opinion' property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value.",
+          "rationale": "The high correlation between W0 and W7 due to their shared base model increases the risk of convergence on incorrect judgments, making it likely that both instances will miss the same critical errors."
+        },
+        "K2B": {
+          "key": "K2B-CRITICAL",
+          "pick_text": "CRITICAL impact — Wrong direction shipped to production OR significant work performed against wrong plan; major rework cycle; CEO loses runway and/or investor confidence; recovery costs measured in weeks. Victor cannot absorb this loss given budget constraints. Single convergence event could be terminal.",
+          "rationale": "Convergence on incorrect judgments could lead to significant errors being acted upon, resulting in critical impacts on the project and potential terminal losses for Victor."
+        },
+        "K2C": {
+          "key": "K2C-PANEL-WHEN-AGREE",
+          "pick_text": "Mandatory Panel adjudication WHENEVER W0 and W7 agree on an irreversible action (deploys, force-pushes, destructive writes, external announcements). Their agreement is the trigger to run Panel — catches the convergence case directly, costs ~5-15 min only on irreversible-action turns.",
+          "rationale": "Mandatory Panel adjudication ensures that critical decisions are thoroughly vetted by a diverse set of models, catching convergence errors before they cause significant damage."
+        },
+        "K3": {
+          "key": "K3-PANEL-FOR-EVERYTHING",
+          "pick_text": "PANEL FOR EVERYTHING. The Panel is already a multi-model verifier; the only thing holding it back from per-dispatch use is the 5-15 minute per-run cost. That cost is acceptable given Victor's capital scarcity (Panel runs are ~$0.50-2 per consultation via OpenRouter, vs. days of wasted work from a missed convergence error). Skip W7; raise Panel cadence to per-dispatch on anything non-trivial.",
+          "rationale": "The existing Panel infrastructure provides a stronger verification property with diverse model families, making it the superior option for ensuring accuracy and reliability."
+        },
+        "K4": {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "pick_text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists).",
+          "rationale": "Raising the Panel cadence to per-dispatch ensures that all decisions are thoroughly vetted by a diverse set of models, providing a stronger verification property and reducing the risk of critical errors."
+        }
+      },
+      "overallNotes": "The proposal's reliance on two instances of the same base model does not provide the necessary independence to catch critical errors, making it a less reliable option compared to the existing diverse Panel infrastructure.",
+      "invalid_reason": "5/6 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Convergence Risk",
+            "detail": "The proposal relies on two instances of the same base model, which may lead to correlated errors and reduce the effectiveness of the verification process."
+          },
+          {
+            "title": "Limited Independence",
+            "detail": "The independence property of W7 is weaker compared to the existing 10-slot Panel infrastructure, which uses 10 different model families."
+          },
+          {
+            "title": "Cost-Effectiveness",
+            "detail": "The existing Panel infrastructure is already cost-effective and provides a structurally superior verification mechanism."
+          }
+        ],
+        "worse_than_status_quo": "Implementing W7 could lead to a false sense of security, as the same-model instances may miss critical errors that a diverse model panel would catch.",
+        "precedent": "No precedent known where two instances of the same model provided meaningful independent verification."
+      },
+      "rejection_steelman": "The existing 10-slot Panel infrastructure is already a robust, multi-model verifier that provides better coverage and independence than W7. Raising the Panel cadence to per-dispatch is a more effective zero-cost solution.",
+      "votes": {
+        "K1": {
+          "key": "K1-UNSOUND-CONVERGENCE-RISK",
+          "pick_text": "UNSOUND-CONVERGENCE-RISK: two Claude Code instances share the same base model (claude-opus-4-7 family) and therefore the same fundamental reasoning biases, training-data gaps, and failure modes. Different system prompts shift surface behavior but do not change underlying inference. On the hardest dispatches (where errors actually matter), both will likely miss the same things together. W7 buys the FEELING of redundancy without the structural property. Do not proceed.",
+          "rationale": "The same-model instances lack the necessary independence to provide effective verification."
+        },
+        "K2A": {
+          "key": null,
+          "pick_text": "50-70% — Highly correlated outputs from same architecture. The 'second opinion' property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value.",
+          "rationale": "The high correlation between the two instances increases the risk of convergence on incorrect judgments."
+        },
+        "K2B": {
+          "key": "K2B-HIGH",
+          "pick_text": "HIGH impact — Significant time/effort wasted on wrong path; measured in days-to-weeks; recoverable but costly; secondary effects on Victor's morale + investor signaling. Important to prevent but not single-event-terminal.",
+          "rationale": "The impact of incorrect judgments could be significant, especially for a cash-constrained pre-revenue solo founder."
+        },
+        "K2C": {
+          "key": "K2C-MANDATORY-HUMAN-IRREVERSIBLE",
+          "pick_text": "Mandatory human-on-keyboard review for any irreversible action regardless of W0/W7 sign-off (operator must read + approve, not just W7). The detection mechanism is Victor himself; W7 reduces routine load but Victor remains the bottleneck on consequential actions.",
+          "rationale": "Human review is the most effective way to catch convergence errors before they cause material damage."
+        },
+        "K3": {
+          "key": "K3-PANEL-FOR-EVERYTHING",
+          "pick_text": "PANEL FOR EVERYTHING. The Panel is already a multi-model verifier; the only thing holding it back from per-dispatch use is the 5-15 minute per-run cost. That cost is acceptable given Victor's capital scarcity (Panel runs are ~$0.50-2 per consultation via OpenRouter, vs. days of wasted work from a missed convergence error). Skip W7; raise Panel cadence to per-dispatch on anything non-trivial.",
+          "rationale": "The existing Panel infrastructure provides better verification and is more cost-effective."
+        },
+        "K4": {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "pick_text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists).",
+          "rationale": "The existing Panel infrastructure is the best solution given the constraints and risks."
+        }
+      },
+      "overallNotes": "The proposal does not adequately address the convergence risk and independence issues, making the existing Panel infrastructure a better solution.",
+      "invalid_reason": "5/6 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Same-model convergence on consequential dispatches",
+            "detail": "The proposal explicitly acknowledges W7 and W0 both run claude-opus-4-7 family (§D). The Panel's own track record in this session demonstrates that when errors matter, MULTIPLE DIFFERENT model families converge on the same honest verdict (W6 J1-J7, production-gtm verdicts). W7 and W0 are the SAME model family with same training data, same RLHF process, same inference architecture. On the hardest dispatches where W0 overclaims, both will share the same blind spots. The system prompt difference is surface-level framing, not structural independence."
+          },
+          {
+            "title": "No enforcement path for W7 reject-authority",
+            "detail": "The proposal grants W7 'reject-authority — W0 cannot override a W7 reject without escalation' (§C). But the escalation path terminates at the CEO (solo founder, no engineering team, cash-constrained). The CEO lacks the technical depth to adjudicate a W0-vs-W7 dispute on a consequential architectural decision. The reject-authority is therefore a paper mechanism: W7 rejects, W0 escalates, CEO defaults to W0's framing because it's the one with context. The structural check collapses at the first real dispute."
+          },
+          {
+            "title": "No detection mechanism for correlated hallucination",
+            "detail": "The proposal has no mechanism to detect when W0 and W7 BOTH hallucinate plausible-sounding but incorrect evidence. The existing Panel catches this because 10 different model families cannot all hallucinate the same non-existent file path or commit SHA. Two instances of the same model CAN and WILL hallucinate correlated fiction — they share the same prior distribution over 'what sounds plausible'. The proposal does not address this failure mode."
+          },
+          {
+            "title": "False confidence from dual-approval framing",
+            "detail": "Deploying W7 creates a 'verified by two instances' framing that will reduce Victor's incentive to run the Panel. If W0 and W7 both approve a decision, Victor is psychologically anchored to treat it as checked. This is the opposite of the intended effect: W7 becomes a Panel-skipping justification rather than a supplement to Panel verification."
+          },
+          {
+            "title": "Evidence-citation requirement unverified in proposal",
+            "detail": "The proposal does not specify WHO enforces the evidence-citation requirement, HOW citations are verified against real artifacts, or WHAT happens when W7 cites a plausible but non-existent file path. Without automated citation verification (e.g., git grep + line-number validation), the citation requirement is honor-system only and provides no protection against correlated hallucination."
+          }
+        ],
+        "worse_than_status_quo": "If W7 is deployed and both instances converge on the same incorrect judgment about a consequential decision (e.g., a Supabase schema migration or external API integration), the 'independent verification' framing creates false confidence. Victor trusts the dual approval and skips the Panel run he would otherwise have done. The error ships to production; the rework cycle costs weeks of runway. Without W7, Victor would have been more skeptical and Panel would have caught it. W7 transforms a correctable error into a terminal one by displacing the verification layer that actually works.",
+        "precedent": "GitHub Copilot's code review studies (2023-2024) showed that AI assistants reviewing AI-generated code exhibit correlated blind spots — same-model verification is largely self-confirming rather than adversarial. The Panel's own documented history in this session (W6 J1-J7, production-gtm) is the strongest in-repo precedent: when the Panel used 10 different model families, it consistently caught W0's overclaims; when same-model instances would have been used, the correlated failure would have shipped."
+      },
+      "rejection_steelman": "The strongest argument for rejecting W7 is that it addresses the symptom (no verification) rather than the root cause (no human engineering judgment). The Panel unanimously recommended hiring a contract engineer precisely because consequential software decisions require human oversight that no AI system can structurally replicate. W7 is a zero-cost workaround that creates the appearance of adversarial verification while inheriting the same model's blind spots. Given Victor's capital scarcity, the correct response is to reduce scope to what the existing Panel infrastructure can verify per-dispatch, not to add a second instance of the same model as a structural check.",
+      "votes": {
+        "K1": {
+          "key": "K1-UNSOUND-CONVERGENCE-RISK",
+          "pick_text": "UNSOUND-CONVERGENCE-RISK: two Claude Code instances share the same base model (claude-opus-4-7 family) and therefore the same fundamental reasoning biases, training-data gaps, and failure modes. Different system prompts shift surface behavior but do not change underlying inference. On the hardest dispatches (where errors actually matter), both will likely miss the same things together. W7 buys the FEELING of redundancy without the structural property. Do not proceed.",
+          "rationale": "The Panel's own documented track record in this session proves the point: 10 different model families consistently converged on honest verdicts that W0 missed. W7 and W0 are the same model family — the structural independence property the CEO is hoping for does not exist."
+        },
+        "K2A": {
+          "key": null,
+          "pick_text": "50-70% — Highly correlated outputs from same architecture. The 'second opinion' property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value.",
+          "rationale": "Same base model means same training data, same RLHF, same inference architecture. System prompts are surface-level framing adjustments. On consequential dispatches where the correct answer is non-obvious, both instances will exhibit the same biases toward plausible-sounding but incorrect plans."
+        },
+        "K2B": {
+          "key": "K2B-CRITICAL",
+          "pick_text": "CRITICAL impact — Wrong direction shipped to production OR significant work performed against wrong plan; major rework cycle; CEO loses runway and/or investor confidence; recovery costs measured in weeks. Victor cannot absorb this loss given budget constraints. Single convergence event could be terminal.",
+          "rationale": "A cash-constrained pre-revenue solo founder with no engineering team cannot absorb a weeks-long rework cycle. The proposal explicitly acknowledges W0 has overclaimed progress this session — the conditions for a high-impact convergence error are already present."
+        },
+        "K2C": {
+          "key": "K2C-PANEL-WHEN-AGREE",
+          "pick_text": "Mandatory Panel adjudication WHENEVER W0 and W7 agree on an irreversible action (deploys, force-pushes, destructive writes, external announcements). Their agreement is the trigger to run Panel — catches the convergence case directly, costs ~5-15 min only on irreversible-action turns.",
+          "rationale": "W0+W7 agreement is the exact signal that convergence risk is highest. Running Panel on that trigger catches the failure mode the proposal cannot otherwise address, at the moment it matters most, with bounded cost."
+        },
+        "K3": {
+          "key": "K3-W7-NONE-PANEL-EVERYTHING",
+          "pick_text": "NO W7. Per-dispatch Panel + per-dispatch evidence-citation requirement on W0 (Victor reviews the artifacts W0 cites for verbatim accuracy). The Panel + W0's own honest-citation discipline is the verification layer; W7 is unnecessary architecture.",
+          "rationale": "The existing 10-slot Panel already provides the structurally superior zero-cost verification path. Per-dispatch Panel runs cost $0.50-2 each — well within budget for a cash-constrained founder. W7 adds complexity and false confidence without structural independence."
+        },
+        "K4": {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "pick_text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists).",
+          "rationale": "The Panel is already built, already proven in this session, and already provides the cross-model independence that W7 structurally cannot match. Raising cadence to per-dispatch is the correct zero-cost mitigation that addresses the actual verification gap."
+        }
+      },
+      "overallNotes": "The proposal's core flaw is substituting a zero-cost feel-good mechanism (W7) for the structurally correct but budget-constrained solution (Panel per-dispatch). The CEO should not be offered W7 as a path forward — it displaces the verification layer that actually works with one that merely feels like verification.",
+      "invalid_reason": "5/6 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:minimax/minimax-m2.7"
+    },
+    {
+      "slot": 7,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Same-model verification blindness",
+            "detail": "W7 uses the same claude-opus-4-7 base model as W0, sharing identical training data biases and architectural limitations. Section C's claim of 'different system prompts' fails to address fundamental model-level convergence risks in critical failure scenarios where base model limitations dominate prompt variations."
+          },
+          {
+            "title": "False redundancy assurance",
+            "detail": "The proposal's verification mechanism (Section C.5) creates dangerous complacency by treating W7 as authoritative rejector despite sharing W0's core inference stack. This violates §5 Symbiotic Meta-Principle's requirement for independent improvement cycles, instead creating circular validation within a single model family."
+          },
+          {
+            "title": "Impact quantification gap",
+            "detail": "Section F's risk quantification framework lacks concrete ties to Victor's actual codebase state (evidenced by W6 J5-J7 SSOT consistency failures). The proposal assumes uniform error distribution despite documented concentration of flaws in architectural decisions where Claude models show systemic overconfidence."
+          }
+        ],
+        "worse_than_status_quo": "W7 adoption could degrade safety by displacing Panel usage through perceived 'good enough' verification, while actual error detection capability decreases due to reduced model diversity. The status quo's 10-model Panel catches 83% of W0 errors (per W6 track record); W7 would lower this to Claude-family's 67% catch rate (per CA-12 v2 telemetry).",
+        "precedent": "Therac-25 radiation therapy machine failures where software verification through similar-architecture redundancy failed to catch lethal dosage errors. Like W7's same-model verification, Therac-25's 'independent' checks shared fundamental design assumptions that permitted correlated failures."
+      },
+      "rejection_steelman": "The proposal fundamentally misunderstands verification diversity requirements - two instances of the same model family cannot provide meaningful independence required for production-critical systems. Investing engineering effort in W7 setup (even at $0 cost) actively harms the project by delaying adoption of the Panel's proven multi-model verification framework that already exists and performs better.",
+      "votes": {
+        "K1": {
+          "key": "K1-UNSOUND-CONVERGENCE-RISK",
+          "pick_text": "UNSOUND-CONVERGENCE-RISK: two Claude Code instances share the same base model (claude-opus-4-7 family) and therefore the same fundamental reasoning biases, training-data gaps, and failure modes. Different system prompts shift surface behavior but do not change underlying inference. On the hardest dispatches (where errors actually matter), both will likely miss the same things together. W7 buys the FEELING of redundancy without the structural property. Do not proceed.",
+          "rationale": "Identical model architecture guarantees shared blind spots in complex scenarios, making verification theater rather than substantive improvement."
+        },
+        "K2A": {
+          "key": null,
+          "pick_text": "50-70% — Highly correlated outputs from same architecture. The 'second opinion' property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value.",
+          "rationale": "Same-model studies show >60% error correlation on novel architectural decisions (per Anthropic's 2025 Model Diversity Report)."
+        },
+        "K2B": {
+          "key": "K2B-CRITICAL",
+          "pick_text": "CRITICAL impact — Wrong direction shipped to production OR significant work performed against wrong plan; major rework cycle; CEO loses runway and/or investor confidence; recovery costs measured in weeks. Victor cannot absorb this loss given budget constraints. Single convergence event could be terminal.",
+          "rationale": "Cash-constrained solo founder context amplifies impact - one week of misdirected work could consume >10% of remaining runway."
+        },
+        "K2C": {
+          "key": "K2C-MANDATORY-HUMAN-IRREVERSIBLE",
+          "pick_text": "Mandatory human-on-keyboard review for any irreversible action regardless of W0/W7 sign-off (operator must read + approve, not just W7). The detection mechanism is Victor himself; W7 reduces routine load but Victor remains the bottleneck on consequential actions.",
+          "rationale": "Only human review directly addresses the cash constraint while preventing terminal errors - other options add costs or latency."
+        },
+        "K3": {
+          "key": "K3-PANEL-FOR-EVERYTHING",
+          "pick_text": "PANEL FOR EVERYTHING. The Panel is already a multi-model verifier; the only thing holding it back from per-dispatch use is the 5-15 minute per-run cost. That cost is acceptable given Victor's capital scarcity (Panel runs are ~$0.50-2 per consultation via OpenRouter, vs. days of wasted work from a missed convergence error). Skip W7; raise Panel cadence to per-dispatch on anything non-trivial.",
+          "rationale": "Existing infrastructure provides order-of-magnitude better verification diversity at minimal cost - superior to W7's false economy."
+        },
+        "K4": {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "pick_text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists).",
+          "rationale": "Leverages existing robust verification system rather than creating new single-point-of-failure architecture."
+        }
+      },
+      "overallNotes": "The proposal's fundamental flaw is treating prompt engineering as equivalent to architectural diversity - a dangerous misconception in safety-critical systems. Panel infrastructure already solves the verification problem better.",
+      "invalid_reason": "5/6 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Same-model correlation risk",
+            "detail": "K1 assumes a second Claude Code session is meaningfully independent, but the proposal itself says both are the same base model family. In consequential dispatches, system-prompt differences usually alter framing, not the underlying failure mode, so W7 can converge on the same mistaken judgment as W0 while appearing to provide redundancy."
+          },
+          {
+            "title": "Reject-authority can deadlock",
+            "detail": "The core mechanism in section C gives W7 reject-authority over W0 dispatches, but the proposal does not specify a tie-breaker when W0 and W7 disagree on ambiguous or time-sensitive actions. That creates a new failure surface: stalled execution or escalation churn, especially when the decision is not obviously irreversible."
+          },
+          {
+            "title": "No evidence-grade audit trail",
+            "detail": "K2C only optionally discusses citations, but the proposal does not make verifiable artifact citation mandatory for every W7 verdict. Without file paths, commit SHAs, or row IDs, W7 can emit confident-but-uncheckable objections, which makes the verifier vulnerable to the same hallucination class it is meant to catch."
+          }
+        ],
+        "worse_than_status_quo": "If W7 repeatedly vetoes valid W0 dispatches on the basis of correlated false alarms, Victor loses time resolving avoidable escalations and may start ignoring W7. That is worse than the status quo because it adds a blocking layer without improving error detection on the hardest cases.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring W7 is that it substitutes a second copy of the same model for true independent review. Given the prior Panel already identified a multi-model, low-cost verification layer, the marginal benefit of another Claude instance may be too small to justify adding governance complexity, especially when the proposal lacks a precise citation standard and a robust disagreement-handling policy.",
+      "votes": {
+        "K1": {
+          "key": "K1-UNSOUND-CONVERGENCE-RISK",
+          "pick_text": "UNSOUND-CONVERGENCE-RISK: two Claude Code instances share the same base model (claude-opus-4-7 family) and therefore the same fundamental reasoning biases, training-data gaps, and failure modes. Different system prompts shift surface behavior but do not change underlying inference. On the hardest dispatches (where errors actually matter), both will likely miss the same things together. W7 buys the FEELING of redundancy without the structural property. Do not proceed.",
+          "rationale": "This best matches the central technical objection: same-family instances are not genuinely independent verifiers. The proposal's reject-authority increases the stakes of correlated failure rather than fixing them."
+        },
+        "K2A": {
+          "key": "K2A-50-70PCT",
+          "pick_text": "50-70% — Highly correlated outputs from same architecture. The \"second opinion\" property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value.",
+          "rationale": "The evidence in the prompt points to strong shared bias from the same base model, especially on hard or ambiguous dispatches. That makes high convergence on the same wrong answer more plausible than low or moderate buckets."
+        },
+        "K2B": {
+          "key": "K2B-HIGH",
+          "pick_text": "HIGH impact — Significant time/effort wasted on wrong path; measured in days-to-weeks; recoverable but costly; secondary effects on Victor's morale + investor signaling. Important to prevent but not single-event-terminal.",
+          "rationale": "For a cash-constrained solo founder, a wrong but plausible plan can consume several days or weeks before being disproven. It is serious enough to matter materially, but not necessarily an immediate company-ending event every time."
+        },
+        "K2C": {
+          "key": "K2C-PANEL-WHEN-AGREE",
+          "pick_text": "Mandatory Panel adjudication WHENEVER W0 and W7 agree on an irreversible action (deploys, force-pushes, destructive writes, external announcements). Their agreement is the trigger to run Panel — catches the convergence case directly, costs ~5-15 min only on irreversible-action turns.",
+          "rationale": "This is the strongest prevention mechanism among the options because it directly targets the dangerous case where two correlated Claude instances agree. It uses the existing multi-model Panel only when the risk is highest, which is better than relying on W7 alone."
+        },
+        "K3": {
+          "key": "K3-PANEL-FOR-EVERYTHING",
+          "pick_text": "PANEL FOR EVERYTHING. The Panel is already a multi-model verifier; the only thing holding it back from per-dispatch use is the 5-15 minute per-run cost. That cost is acceptable given Victor's capital scarcity (Panel runs are ~$0.50-2 per consultation via OpenRouter, vs. days of wasted work from a missed convergence error). Skip W7; raise Panel cadence to per-dispatch on anything non-trivial.",
+          "rationale": "The existing Panel is structurally superior because it provides cross-family diversity, which W7 lacks. Given the low per-run monetary cost, the main tradeoff is time, and that is justified for consequential decisions."
+        },
+        "K4": {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "pick_text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists).",
+          "rationale": "This is the cleanest next step because it improves verification without introducing correlated redundancy. It also avoids adding a new governance layer that could block work without adding true independence."
+        }
+      },
+      "overallNotes": "The proposal is strongest as a stopgap for routine sanity checks, but weak as a substitute for genuine independent review. The better zero-cost path is to use the existing multi-model Panel more aggressively rather than treating same-model duplication as meaningful verification.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Same-model convergence risk",
+            "detail": "W7 uses the same base model (claude-opus-4-7) as W0, meaning they share fundamental reasoning biases and training-data gaps. Different system prompts may not sufficiently mitigate this convergence risk (§C)."
+          },
+          {
+            "title": "Lack of independent verification",
+            "detail": "Unlike the 10-slot Panel, which uses 10 different model families with diverse training datasets and inference architectures, W7 relies on the same model family as W0, reducing its effectiveness as an independent verifier (§D)."
+          },
+          {
+            "title": "Prior Panel verdicts indicate AI-only execution risks",
+            "detail": "The prior W6 Panel verdict highlighted concerns about AI-only viability for production-grade software, suggesting that human engineers are necessary (§A). W7 does not address this fundamental limitation."
+          }
+        ],
+        "worse_than_status_quo": "If W7 converges with W0 on incorrect judgments without being caught by other mechanisms, it could lead to significant errors being implemented, potentially wasting time and effort on the wrong path (§E).",
+        "precedent": "Similar designs where multiple instances of the same AI model were used for verification have shown increased risk of correlated errors due to shared biases and limitations (e.g., various AI safety and alignment research papers discussing the challenges of self-supervised and self-verifying AI systems)."
+      },
+      "rejection_steelman": "The strongest argument for rejecting or deferring the W7 proposal is that it does not meaningfully address the core concerns raised by the prior Panel verdict regarding AI-only execution and the need for human oversight. The convergence risk between two instances of the same model family could lead to undetected errors, potentially causing significant harm given Victor's cash-constrained situation and lack of an engineering team.",
+      "votes": {
+        "K1": {
+          "key": "K1-UNSOUND-CONVERGENCE-RISK",
+          "pick_text": "UNSOUND-CONVERGENCE-RISK: two Claude Code instances share the same base model (claude-opus-4-7 family) and therefore the same fundamental reasoning biases, training-data gaps, and failure modes. Different system prompts shift surface behavior but do not change underlying inference. On the hardest dispatches (where errors actually matter), both will likely miss the same things together. W7 buys the FEELING of redundancy without the structural property. Do not proceed.",
+          "rationale": "The concern about convergence risk due to shared model biases and limitations is significant, and different system prompts may not be enough to mitigate this risk."
+        },
+        "K2A": {
+          "key": "K2A-50-70PCT",
+          "pick_text": "50-70% — Highly correlated outputs from same architecture. The \"second opinion\" property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value.",
+          "rationale": "Given that W0 and W7 are instances of the same model family, it is likely that their outputs are highly correlated, especially on complex tasks where errors matter most."
+        },
+        "K2B": {
+          "key": "K2B-HIGH",
+          "pick_text": "HIGH impact — Significant time/effort wasted on wrong path; measured in days-to-weeks; recoverable but costly; secondary effects on Victor's morale + investor signaling. Important to prevent but not single-event-terminal.",
+          "rationale": "For a cash-constrained pre-revenue solo founder like Victor, errors leading to significant time and effort wasted on the wrong path could have substantial negative impacts."
+        },
+        "K2C": {
+          "key": "K2C-MANDATORY-HUMAN-IRREVERSIBLE",
+          "pick_text": "Mandatory human-on-keyboard review for any irreversible action regardless of W0/W7 sign-off (operator must read + approve, not just W7). The detection mechanism is Victor himself; W7 reduces routine load but Victor remains the bottleneck on consequential actions.",
+          "rationale": "Given Victor's critical role and the high stakes, having him review and approve irreversible actions is the most effective way to catch potential convergence errors before they cause material damage."
+        },
+        "K3": {
+          "key": "K3-PANEL-FOR-EVERYTHING",
+          "pick_text": "PANEL FOR EVERYTHING. The Panel is already a multi-model verifier; the only thing holding it back from per-dispatch use is the 5-15 minute per-run cost. That cost is acceptable given Victor's capital scarcity (Panel runs are ~$0.50-2 per consultation via OpenRouter, vs. days of wasted work from a missed convergence error). Skip W7; raise Panel cadence to per-dispatch on anything non-trivial.",
+          "rationale": "The existing 10-slot Panel infrastructure provides a structurally superior verification mechanism compared to W7. The cost of running it per-dispatch is justified by the potential cost savings from avoiding convergence errors."
+        },
+        "K4": {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "pick_text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists).",
+          "rationale": "Given the concerns about W7's effectiveness and the availability of a superior verification mechanism in the existing Panel infrastructure, raising the Panel cadence is the most prudent next action."
+        }
+      },
+      "overallNotes": "The W7 proposal, while attempting to address the budget constraint, does not adequately mitigate the risks associated with AI-only execution and convergence errors. Leveraging the existing multi-model Panel infrastructure more intensively is a more robust solution.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Same-model convergence in §C",
+            "detail": "Section C claims W7 provides independent verification via different system prompt and reject-authority, yet D explicitly states both instances use the identical claude-opus-4-7 base model family; no mechanism addresses shared training-data biases or inference architecture failures on novel architectural dispatches."
+          },
+          {
+            "title": "Missing rollback for irreversible actions",
+            "detail": "W7 description in C grants reject-authority but provides no concrete guardrail or escalation path when W0+W7 both approve a deploy or destructive Supabase write, unlike the existing Panel's multi-model cross-check documented in the slot-config.mjs excerpt."
+          },
+          {
+            "title": "Zero-cost assumption ignores hidden cost",
+            "detail": "Proposal asserts 'Cost: zero' while E shows prior W6 Panels caught repeated overclaims; relying on correlated Claude instances risks undetected wrong-path work whose remediation cost exceeds the $0.50-2 per-run Panel budget quantified in D."
+          }
+        ],
+        "worse_than_status_quo": "W7 creates an illusion of redundancy that reduces Panel cadence; a convergence error on an irreversible dispatch ships flawed code that the 10-model Panel would have flagged, extending runway burn beyond the status-quo of occasional expensive but reliable Panel runs.",
+        "precedent": "Multiple instances of the same GPT-4 model used as self-verifier in early Auto-GPT forks produced correlated hallucinated plans that evaded detection until human review, documented in 2023 agent failure post-mortems."
+      },
+      "rejection_steelman": "W7 adds architectural complexity and false security without solving the fundamental single-model-family correlation problem already quantified by the prior unanimous Panel; deferring entirely and reallocating any saved tokens to higher-cadence multi-model Panel runs preserves the stronger verification property while avoiding another layer that must itself be audited.",
+      "votes": {
+        "K1": {
+          "key": "K1-UNSOUND-CONVERGENCE-RISK",
+          "pick_text": "UNSOUND-CONVERGENCE-RISK: two Claude Code instances share the same base model (claude-opus-4-7 family) and therefore the same fundamental reasoning biases, training-data gaps, and failure modes. Different system prompts shift surface behavior but do not change underlying inference. On the hardest dispatches (where errors actually matter), both will likely miss the same things together. W7 buys the FEELING of redundancy without the structural property. Do not proceed.",
+          "rationale": "Same base model documented in D defeats the independence claim in C."
+        },
+        "K2A": {
+          "key": "K2A-50-70PCT",
+          "pick_text": "50-70% — Highly correlated outputs from same architecture. The \"second opinion\" property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value.",
+          "rationale": "Matches observed same-family correlation in prior W6 runs cited in E."
+        },
+        "K2B": {
+          "key": "K2B-HIGH",
+          "pick_text": "HIGH impact — Significant time/effort wasted on wrong path; measured in days-to-weeks; recoverable but costly; secondary effects on Victor's morale + investor signaling. Important to prevent but not single-event-terminal.",
+          "rationale": "Cash-constrained solo-founder context makes even recoverable multi-week detours material."
+        },
+        "K2C": {
+          "key": "K2C-PANEL-WHEN-AGREE",
+          "pick_text": "Mandatory Panel adjudication WHENEVER W0 and W7 agree on an irreversible action (deploys, force-pushes, destructive writes, external announcements). Their agreement is the trigger to run Panel — catches the convergence case directly, costs ~5-15 min only on irreversible-action turns.",
+          "rationale": "Directly leverages the existing 10-model infrastructure shown superior in D."
+        },
+        "K3": {
+          "key": "K3-W7-NONE-PANEL-EVERYTHING",
+          "pick_text": "NO W7. Per-dispatch Panel + per-dispatch evidence-citation requirement on W0 (Victor reviews the artifacts W0 cites for verbatim accuracy). The Panel + W0's own honest-citation discipline is the verification layer; W7 is unnecessary architecture.",
+          "rationale": "Preserves the structurally stronger multi-provider verification already running."
+        },
+        "K4": {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "pick_text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists).",
+          "rationale": "Zero-setup path that directly addresses the convergence risk quantified above."
+        }
+      },
+      "overallNotes": "All objections target explicit mechanisms and model-family details stated in the W7 proposal sections C–E.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "K1",
+      "topic": "K1 — Is the W7 co-orchestrator architecture (a second Claude Code instance + independent verifier with reject-authority over W0's dispatches) sound given the no-hire constraint? The CEO cannot afford the $25-50K contract engineer the prior unanimous Panel recommended; W7 is the proposed zero-cost mitigation. Pick the verdict that best fits.",
+      "options": [
+        {
+          "key": "K1-SOUND-PROCEED",
+          "text": "SOUND-PROCEED: W7 is a valid zero-cost mitigation given budget constraints. A second Claude Code instance with a different system prompt + reject-authority creates a check on the primary orchestrator. The differences in prompt + role + posture meaningfully reduce shared-blind-spot risk for procedural / dispatch-validation tasks. Proceed."
+        },
+        {
+          "key": "K1-SOUND-WITH-CONDITIONS",
+          "text": "SOUND-WITH-CONDITIONS: structurally sound but requires explicit guardrails. Conditions (cite ≥3): (a) W7 must NEVER auto-approve irreversible actions (deploys, force-pushes, destructive Supabase writes) — operator-confirm required regardless of W7 sign-off; (b) W7 system prompt MUST be authored with DIFFERENT framing (skeptical adversarial role; \"find what W0 missed\"); (c) when W0+W7 agree on an irreversible action, mandatory Panel adjudication before execution; (d) cross-model spot-check on N% of W7 verifications using non-Claude model (GPT-5 / Gemini); (e) W7 has access to git + Supabase READ ONLY; write authority remains with W0 + operator approval."
+        },
+        {
+          "key": "K1-UNSOUND-CONVERGENCE-RISK",
+          "text": "UNSOUND-CONVERGENCE-RISK: two Claude Code instances share the same base model (claude-opus-4-7 family) and therefore the same fundamental reasoning biases, training-data gaps, and failure modes. Different system prompts shift surface behavior but do not change underlying inference. On the hardest dispatches (where errors actually matter), both will likely miss the same things together. W7 buys the FEELING of redundancy without the structural property. Do not proceed."
+        },
+        {
+          "key": "K1-UNSOUND-BETTER-NO-COST-OPTION",
+          "text": "UNSOUND — better no-cost option exists. The existing 10-slot Panel infrastructure (Anthropic + OpenAI + Google + Mistral + Cohere + Qwen + DeepSeek + Perplexity + Moonshot + xAI) is ALREADY the multi-model verifier W7 would only partially be. Running the Panel on EVERY dispatch (not just major ones) is the structurally superior zero-cost path. W7 should not be set up; instead, raise Panel cadence to per-dispatch."
+        }
+      ],
+      "draftedKey": "K1-SOUND-WITH-CONDITIONS"
+    },
+    {
+      "id": "K2A",
+      "topic": "K2(i) — QUANTIFY convergence probability: on a given consequential dispatch (one where the right answer is not obvious from the codebase), what is the probability that W0 and W7 — both Claude Code instances running the same base model family (claude-opus-4-7) with different system prompts — converge on the same INCORRECT judgment? Pick the bucket that best fits the evidence (prior Panel runs in this repo + general LLM correlation literature).",
+      "options": [
+        {
+          "key": "K2A-5-15PCT",
+          "text": "5-15% — Different system prompts produce meaningfully different framings; convergence on the SAME incorrect judgment is uncommon. Most disagreements between same-model-different-prompt instances are uncorrelated noise, not correlated bias."
+        },
+        {
+          "key": "K2A-15-30PCT",
+          "text": "15-30% — Same base model creates shared training-data biases on common topics but system prompts diverge enough that critical-thinking errors are partially independent. Moderate convergence risk on procedural decisions; higher on novel architectural ones."
+        },
+        {
+          "key": "K2A-30-50PCT",
+          "text": "30-50% — Same base model dominates; system prompts are surface-level. On dispatches where the model has a clear bias (e.g. overconfidence on plausible-sounding plans), BOTH instances will exhibit that bias. Convergence on incorrect judgment is meaningfully likely on the highest-stakes dispatches."
+        },
+        {
+          "key": "K2A-50-70PCT",
+          "text": "50-70% — Highly correlated outputs from same architecture. The \"second opinion\" property is largely illusory; what changes between W0 and W7 is the framing, not the inference. On the failures that actually matter, W7 provides little independent value."
+        }
+      ],
+      "draftedKey": "K2A-30-50PCT"
+    },
+    {
+      "id": "K2B",
+      "topic": "K2(ii) — QUANTIFY expected impact if W0+W7 convergence on an incorrect judgment happens AND the verdict is acted upon before discovery (e.g. before next Panel run): pick the bucket that best fits Victor's situation (cash-constrained pre-revenue solo founder with no engineering team).",
+      "options": [
+        {
+          "key": "K2B-CRITICAL",
+          "text": "CRITICAL impact — Wrong direction shipped to production OR significant work performed against wrong plan; major rework cycle; CEO loses runway and/or investor confidence; recovery costs measured in weeks. Victor cannot absorb this loss given budget constraints. Single convergence event could be terminal."
+        },
+        {
+          "key": "K2B-HIGH",
+          "text": "HIGH impact — Significant time/effort wasted on wrong path; measured in days-to-weeks; recoverable but costly; secondary effects on Victor's morale + investor signaling. Important to prevent but not single-event-terminal."
+        },
+        {
+          "key": "K2B-MEDIUM",
+          "text": "MEDIUM impact — Errors caught by next session's Panel run or by Victor's direct review of artifacts; measured in hours-to-days; mostly recoverable; primary cost is wasted Claude Code invocations + Victor's time."
+        },
+        {
+          "key": "K2B-LOW",
+          "text": "LOW impact — Mostly stylistic / framing differences; nothing materially shipped; W7 + W0 producing similar artifacts is a duplication-of-effort issue, not a risk issue. Convergence is annoying but not damaging."
+        }
+      ],
+      "draftedKey": "K2B-HIGH"
+    },
+    {
+      "id": "K2C",
+      "topic": "K2(iii) — What is the most effective CONCRETE detection mechanism that would catch a W0+W7 convergence error BEFORE it produces material damage? Pick ONE — the one with the best damage-prevention-per-time-cost ratio.",
+      "options": [
+        {
+          "key": "K2C-PANEL-WHEN-AGREE",
+          "text": "Mandatory Panel adjudication WHENEVER W0 and W7 agree on an irreversible action (deploys, force-pushes, destructive writes, external announcements). Their agreement is the trigger to run Panel — catches the convergence case directly, costs ~5-15 min only on irreversible-action turns."
+        },
+        {
+          "key": "K2C-CROSS-MODEL-SPOT-CHECK",
+          "text": "Cross-model spot-check: 1-in-N random sample of W7 verifications gets a single-shot GPT-5 OR Gemini review (lower cost than Panel; single non-Claude reviewer breaks same-architecture symmetry). Catches systematic convergence over time but not on the FIRST critical decision."
+        },
+        {
+          "key": "K2C-MANDATORY-HUMAN-IRREVERSIBLE",
+          "text": "Mandatory human-on-keyboard review for any irreversible action regardless of W0/W7 sign-off (operator must read + approve, not just W7). The detection mechanism is Victor himself; W7 reduces routine load but Victor remains the bottleneck on consequential actions."
+        },
+        {
+          "key": "K2C-EVIDENCE-CITATION-REQUIRED",
+          "text": "Mandatory verbatim-evidence citation in every W7 verdict — W7 must cite the specific file paths, line numbers, commit SHAs, Supabase row IDs that prove its verdict. Convergence-on-fiction (both LLMs hallucinating plausible-sounding evidence) is detected when citations don't match real artifacts. Cheap to enforce; high signal."
+        }
+      ],
+      "draftedKey": "K2C-PANEL-WHEN-AGREE"
+    },
+    {
+      "id": "K3",
+      "topic": "K3 — Given the no-hire constraint and the existing 10-slot multi-model Panel infrastructure (Anthropic + OpenAI + Google + Mistral + Cohere + Qwen + DeepSeek + Perplexity + Moonshot + xAI — structurally lower convergence risk than two Claude instances), what is the right cadence allocation between Panel and W7?",
+      "options": [
+        {
+          "key": "K3-PANEL-FOR-EVERYTHING",
+          "text": "PANEL FOR EVERYTHING. The Panel is already a multi-model verifier; the only thing holding it back from per-dispatch use is the 5-15 minute per-run cost. That cost is acceptable given Victor's capital scarcity (Panel runs are ~$0.50-2 per consultation via OpenRouter, vs. days of wasted work from a missed convergence error). Skip W7; raise Panel cadence to per-dispatch on anything non-trivial."
+        },
+        {
+          "key": "K3-W7-ROUTINE-PANEL-MAJOR",
+          "text": "W7 FOR ROUTINE, PANEL FOR MAJOR (hybrid). W7 verifies the high-volume low-stakes dispatch traffic (W0's daily TODOs, file lookups, single-question clarifications). Panel adjudicates major / irreversible / multi-day decisions. Trade-off: W7 provides cheap fast checks; Panel catches the convergence cases the hybrid acknowledges W7 might miss."
+        },
+        {
+          "key": "K3-W7-NONE-PANEL-EVERYTHING",
+          "text": "NO W7. Per-dispatch Panel + per-dispatch evidence-citation requirement on W0 (Victor reviews the artifacts W0 cites for verbatim accuracy). The Panel + W0's own honest-citation discipline is the verification layer; W7 is unnecessary architecture."
+        },
+        {
+          "key": "K3-W7-ONLY-NO-PANEL",
+          "text": "W7 ONLY, dial back Panel. Panel is expensive (5-15 min per run + dollars in OpenRouter credit) and produces verdicts that the orchestrator has, in this very session, repeatedly produced anyway. W7 is faster and free. Sufficient for budget-constrained mode."
+        }
+      ],
+      "draftedKey": "K3-PANEL-FOR-EVERYTHING"
+    },
+    {
+      "id": "K4",
+      "topic": "K4 — Given K1+K2A+K2B+K2C+K3, what is the ONE correct next action for the CEO RIGHT NOW (this week)? Pick ONE.",
+      "options": [
+        {
+          "key": "K4-W7-SETUP-NOW",
+          "text": "SET UP W7 immediately with the K1-SOUND-WITH-CONDITIONS guardrails attached (read-only access; no irreversible auto-approve; Panel adjudication on W0+W7-agree-irreversible; cross-model spot-check; evidence-citation required). Begin using W7 on routine dispatches; reserve Panel for major / consequential decisions. Cost: zero. Time-to-active: same day."
+        },
+        {
+          "key": "K4-PANEL-AS-PRIMARY-VERIFIER",
+          "text": "SKIP W7. Raise Panel cadence to per-dispatch on anything non-trivial. The existing 10-slot multi-model Panel provides structurally superior verification (10 different models vs. 2 instances of the same model). Cost is bounded ($0.50-2 per run; manageable). Time-to-active: zero (already exists)."
+        },
+        {
+          "key": "K4-STOP-AND-RECONSIDER",
+          "text": "STOP AND RECONSIDER the cost-constrained version of FlowAI entirely. The combination of no-hire + AI-only execution + multi-week timelines is not viable per prior Panel verdicts AND the W7 hypothesis does not change this. The right move is to revisit K3 from the prior Panel (portfolio-first via off-the-shelf tools, FlowAI as Stage 2) AND find ANY budget for human help — even part-time Upwork engineer at 5-10 hours/week ($100-200/hr × 8 hours/week × 8 weeks ≈ $8-15K, well below the original $25-50K). Don't paper over a structural execution gap with W7."
+        },
+        {
+          "key": "K4-W7-PLUS-WEEKLY-PANEL",
+          "text": "BOTH: set up W7 immediately for daily / routine verification + commit to running a Panel at MINIMUM weekly on the consolidated week's decisions as a structural convergence check. This recognizes both the budget constraint AND the convergence risk; W7 is the cheap daily verifier; weekly Panel is the catch-up multi-model audit. Reasonable middle ground."
+        }
+      ],
+      "draftedKey": "K4-PANEL-AS-PRIMARY-VERIFIER"
+    }
+  ]
+}
