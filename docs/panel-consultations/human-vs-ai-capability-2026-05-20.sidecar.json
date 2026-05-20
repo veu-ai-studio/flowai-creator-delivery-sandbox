@@ -1,0 +1,835 @@
+{
+  "schema": "human-vs-ai-capability.sidecar.v1",
+  "dispatch": "W6 — Panel-authoritative; what does the $8-15K buy (2026-05-20)",
+  "startedAt": "2026-05-20T16:27:18.563Z",
+  "finishedAt": "2026-05-20T16:29:10.889Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 23369,
+  "tally": {
+    "engagedTotal": 7,
+    "invalid": 0,
+    "tangential": 2,
+    "silent": 1,
+    "perQuestion": {
+      "K1A": {
+        "K1A-LIVE-PROD-VERIFICATION": 6,
+        "K1A-SUSTAINED-CROSS-SESSION-ACCOUNTABILITY": 1,
+        "K1A-CALIBRATED-SCOPE-ESTIMATES": 0,
+        "K1A-STAKEHOLDER-PRODUCT-JUDGMENT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "K1B": {
+        "K1B-CAPABILITY-IRREDUCIBLE": 3,
+        "K1B-TRUST-AI-CAN-WE-CANT-VERIFY": 0,
+        "K1B-WORKFLOW-SESSION-AMNESIA": 1,
+        "K1B-MIXED": 3,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "K2": {
+        "K2-GENUINELY-NECESSARY": 1,
+        "K2-NICE-TO-HAVE": 0,
+        "K2-NOT-NEEDED": 2,
+        "K2-DEPENDS-ON-VICTOR-TIME": 4,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "K3": {
+        "K3-FLOWAI-MVP-END-TO-END": 1,
+        "K3-VEU-FLAGSHIP-PRODUCT": 0,
+        "K3-MIXED-2WEEK-FLOWAI-6WEEK-VEU": 0,
+        "K3-VERIFICATION-LOOP-ONLY": 5,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 29,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Circular reasoning in capability assessment",
+        "detail": "Section D lists 'Live production verification by human eyes' as an AI gap, but the evidence (prUrl=null) shows AI never attempted browser verification — it's a workflow failure, not capability proof. The proposal conflates 'AI didn't do X' with 'AI can't do X'."
+      },
+      {
+        "slot": 1,
+        "title": "False dichotomy in K1B options",
+        "detail": "The CAPABILITY/TRUST/WORKFLOW breakdown artificially separates concerns that are fundamentally entangled. A 'trust gap' where we can't detect AI failure IS a capability gap; a 'workflow gap' that requires human intervention IS a capability limitation."
+      },
+      {
+        "slot": 1,
+        "title": "Unexamined $8-15K budget assumption",
+        "detail": "Section E frames $8-15K as the dissent position without examining whether this specific amount buys meaningful capability. At $100-200/hr × 8hrs/week, this gets a mid-level contractor, not the senior engineer who could provide the 'calibrated scope estimates' claimed in D.1."
+      },
+      {
+        "slot": 2,
+        "title": "Lack of rollback mechanism",
+        "detail": "The proposal does not specify a rollback mechanism if a transformation run fails to meet the quality standards outlined in §1. This could lead to situations where users are left with suboptimal outputs without a clear path to revert to a previous state."
+      },
+      {
+        "slot": 2,
+        "title": "Session amnesia risk",
+        "detail": "The proposal relies heavily on AI tools that suffer from session amnesia, as noted in the consultation context. This could lead to inconsistencies and lack of accountability across multiple sessions, as there is no persistent memory of past actions or decisions."
+      },
+      {
+        "slot": 2,
+        "title": "Over-reliance on user judgment",
+        "detail": "The proposal places significant responsibility on the user to determine iteration depth and assess quality improvements. This could be problematic if users lack the expertise to make informed decisions, potentially leading to suboptimal outcomes."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Clear Metrics",
+        "detail": "The proposal lacks clear metrics for measuring the success of the $8-15K spend, making it difficult to evaluate the effectiveness of the investment. Specifically, §D of the proposal mentions 'concrete candidate AI-vs-human capability gaps' but does not provide a clear framework for assessing these gaps."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Workflow Design",
+        "detail": "The proposal relies heavily on AI tools but does not provide a detailed workflow design for how these tools will be integrated and managed, which could lead to inefficiencies and errors. For example, §B of the proposal lists various AI tools but does not explain how they will be used together to achieve the desired outcomes."
+      },
+      {
+        "slot": 3,
+        "title": "Overreliance on Victor's Availability",
+        "detail": "The proposal's success is heavily dependent on Victor's availability and time commitment, which may not be sustainable or scalable. Specifically, §E of the proposal mentions that 'Victor himself can be the verification loop' but does not provide a plan for what happens if Victor is unavailable."
+      },
+      {
+        "slot": 5,
+        "title": "AI Overclaim",
+        "detail": "The proposal understates the risk of AI overclaim, as evidenced by the repeated failure of the AI orchestrator to produce operator-reachable working production output despite plausible-sounding plans and Panel artifacts."
+      },
+      {
+        "slot": 5,
+        "title": "Session Amnesia",
+        "detail": "The proposal does not adequately address the issue of session amnesia in AI tools, which leads to a lack of sustained cross-session accountability and through-line ownership across days."
+      },
+      {
+        "slot": 5,
+        "title": "Budget Constraint",
+        "detail": "The proposal does not sufficiently consider the real-world budget constraints and opportunity costs for a pre-revenue founder, which could impact the decision to spend $8-15K on a part-time human engineer."
+      },
+      {
+        "slot": 6,
+        "title": "Oversimplified AI capabilities",
+        "detail": "The proposal simplifies AI capabilities, particularly in areas like 'Stakeholder / product judgment'. While AI might not perfectly replicate human taste, it can provide data-driven insights and A/B testing to inform product decisions, which isn't acknowledged."
+      },
+      {
+        "slot": 6,
+        "title": "Victor's time as a bottleneck",
+        "detail": "The proposal heavily relies on Victor's time as a deciding factor (K2). This creates a single point of failure and doesn't consider the scalability or sustainability of the project if Victor's availability changes."
+      },
+      {
+        "slot": 6,
+        "title": "Lack of specific metrics",
+        "detail": "The proposal lacks specific, measurable metrics for evaluating the success of the human engineer's contributions. Without clear metrics, it's difficult to objectively assess whether the $8-15K spend is justified and whether the engineer is providing value beyond what AI tools can offer."
+      },
+      {
+        "slot": 6,
+        "title": "Ignoring workflow improvements",
+        "detail": "While the proposal mentions workflow gaps, it doesn't fully explore potential workflow improvements that could mitigate the need for a human engineer. Investing in better task tracking, communication, and automation could potentially address some of the identified gaps without requiring additional human resources."
+      },
+      {
+        "slot": 7,
+        "title": "Overlooked workflow automation potential",
+        "detail": "§D candidate gaps list 'sustained cross-session accountability' as irreducible, but workflow solutions like persistent task trackers or daily standup bots could address session amnesia without human intervention. The proposal fails to explore technical mitigations for this specific gap."
+      },
+      {
+        "slot": 7,
+        "title": "Misattribution of verification failure",
+        "detail": "§C blames AI for '0 PRs shipped' but ignores workflow flaws: Vercel/Supabase pipelines lack automated screenshot diffs or vision-model verification hooks. The 'live production verification' gap could be closed by enhancing existing tooling rather than declaring it AI-irreducible."
+      },
+      {
+        "slot": 7,
+        "title": "Underestimated Panel capability scaling",
+        "detail": "§E questions Panel bias but doesn't consider scaling the 10-slot Panel to handle per-PR verification via lightweight vision models. The proposal assumes human eyes are the only solution for UI judgment without exploring adversarial multi-model verification enhancements."
+      },
+      {
+        "slot": 7,
+        "title": "Inadequate cost-benefit rigor",
+        "detail": "§F questions spend impact but offers no metrics for 'genuinely necessary' judgment. The $8-15K recommendation lacks failure rate projections or ROI estimates against alternatives like improved Playwright coverage, making it vulnerable to opportunity-cost criticism."
+      },
+      {
+        "slot": 8,
+        "title": "Verification loop is underspecified",
+        "detail": "The proposal treats “live production verification by human eyes” in K1A and K3 as if it is a crisp deliverable, but it never specifies acceptance criteria beyond subjective judgment. In a FlowAI system whose canonical promise is URL-in → new URL-out, a human verifier can confirm appearance, not correctness of construction semantics, rollback safety, or whether the new URL is actually deployable under failure."
+      },
+      {
+        "slot": 8,
+        "title": "Scope estimates are not a capability gap",
+        "detail": "The K1A option “CALIBRATED SCOPE ESTIMATES” conflates poor estimation with irreducible inability. AI underestimation is a workflow/management issue; it can be mitigated with task decomposition, explicit checklists, and forced intermediate validations, so naming it as the most irreducible task overstates the case."
+      },
+      {
+        "slot": 8,
+        "title": "Cross-session accountability is solvable",
+        "detail": "The “SUSTAINED CROSS-SESSION ACCOUNTABILITY” option assumes session amnesia is fatal, but the proposal itself already references Panel cadence, task trackers, and dispatch artifacts. That suggests the gap is largely process design, not a uniquely human capability, and the draft does not show that a paid engineer outperforms a disciplined operating system with persistent state."
+      },
+      {
+        "slot": 8,
+        "title": "Budget may buy coordination, not capability",
+        "detail": "K2 frames the $8-15K as buying a human-only verification loop, but the proposed engineer shape could devolve into status meetings and manual inspection without reducing technical risk. For a small pre-revenue project, spending scarce cash on generic part-time oversight can crowd out hosting, tooling, or user acquisition while still failing to close the canonical self-application loop."
+      },
+      {
+        "slot": 9,
+        "title": "Overemphasis on Human Verification",
+        "detail": "The proposal heavily relies on human verification (K1A options) without considering alternative solutions like improved AI testing or automated verification tools."
+      },
+      {
+        "slot": 9,
+        "title": "Unclear Opportunity Cost",
+        "detail": "While §E mentions opportunity costs, it doesn't provide a detailed analysis of how $8-15K could be alternatively used (e.g., more Vercel/Supabase credits, additional AI tool subscriptions)."
+      },
+      {
+        "slot": 10,
+        "title": "§5 self-application empty payloads",
+        "detail": "The proposal invokes CA-18 §5 FlowAI-on-FlowAI yet cites 4 self-application runs with empty payloads and flowai.construction_eligible=false; no mechanism is specified to wire the §29 Build/Wire Construction Engine before adding human oversight."
+      },
+      {
+        "slot": 10,
+        "title": "UI audit-only vs §1 URL-out promise",
+        "detail": "flowai-dun.vercel.app/flowai is documented to accept URLs but return only audits with prUrl=null on all 18 orchestration_complete entries; the proposal's K1A options assume live verification can close a loop that §1 requires to emit a new deployable URL."
+      },
+      {
+        "slot": 10,
+        "title": "No rollback for human-in-loop",
+        "detail": "K3 options treat the $8-15K engineer as permanent verification ritual without defining an exit criterion or integration with the SSOT amendment cycle in §5, leaving the system dependent on ongoing human time after the 8 weeks."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "K1A": {
+      "verdict": "PLURALITY_K1A-LIVE-PROD-VERIFICATION",
+      "detail": "6 of 7 on K1A-LIVE-PROD-VERIFICATION (below 7/10 quorum)",
+      "topKey": "K1A-LIVE-PROD-VERIFICATION",
+      "topCount": 6
+    },
+    "K1B": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between K1B-CAPABILITY-IRREDUCIBLE / K1B-MIXED",
+      "topKey": "K1B-CAPABILITY-IRREDUCIBLE",
+      "topCount": 3
+    },
+    "K2": {
+      "verdict": "PLURALITY_K2-DEPENDS-ON-VICTOR-TIME",
+      "detail": "4 of 7 on K2-DEPENDS-ON-VICTOR-TIME (below 7/10 quorum)",
+      "topKey": "K2-DEPENDS-ON-VICTOR-TIME",
+      "topCount": 4
+    },
+    "K3": {
+      "verdict": "PLURALITY_K3-VERIFICATION-LOOP-ONLY",
+      "detail": "5 of 7 on K3-VERIFICATION-LOOP-ONLY (below 7/10 quorum)",
+      "topKey": "K3-VERIFICATION-LOOP-ONLY",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.6428571428571429,
+    "alignedCount": 18,
+    "totalPossible": 28,
+    "draftedQs": [
+      "K1A",
+      "K1B",
+      "K2",
+      "K3"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 64.3 %, distinct objections 29"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Circular reasoning in capability assessment",
+            "detail": "Section D lists 'Live production verification by human eyes' as an AI gap, but the evidence (prUrl=null) shows AI never attempted browser verification — it's a workflow failure, not capability proof. The proposal conflates 'AI didn't do X' with 'AI can't do X'."
+          },
+          {
+            "title": "False dichotomy in K1B options",
+            "detail": "The CAPABILITY/TRUST/WORKFLOW breakdown artificially separates concerns that are fundamentally entangled. A 'trust gap' where we can't detect AI failure IS a capability gap; a 'workflow gap' that requires human intervention IS a capability limitation."
+          },
+          {
+            "title": "Unexamined $8-15K budget assumption",
+            "detail": "Section E frames $8-15K as the dissent position without examining whether this specific amount buys meaningful capability. At $100-200/hr × 8hrs/week, this gets a mid-level contractor, not the senior engineer who could provide the 'calibrated scope estimates' claimed in D.1."
+          }
+        ],
+        "worse_than_status_quo": "Hiring a part-time contractor creates split accountability — Victor relies on the contractor for verification but can't directly control their availability, creating a new bottleneck where AI tools at least provide 24/7 availability even if imperfect.",
+        "precedent": "The healthcare.gov launch in 2013 demonstrated how adding more contractors to a failing technical project without fixing the underlying architectural issues led to worse outcomes — the contractors couldn't coordinate effectively and the core problems remained unaddressed."
+      },
+      "rejection_steelman": "The proposal fundamentally misdiagnoses the problem. The evidence shows workflow and orchestration failures (0 tool.selection envelopes, session amnesia), not AI capability gaps. Spending $8-15K on a human band-aid prevents investing that money in fixing the actual workflow infrastructure — persistent task tracking, cross-session memory, proper verification loops. The Panel should reject this false choice and demand a proposal that addresses the root cause: the orchestration layer needs redesign, not human oversight.",
+      "votes": {
+        "K1A": {
+          "key": "K1A-SUSTAINED-CROSS-SESSION-ACCOUNTABILITY",
+          "pick_text": "SUSTAINED CROSS-SESSION ACCOUNTABILITY. Every Claude Code session is fresh; context resets between turns; there is no continuous memory of what was promised on Monday vs. what shipped by Thursday. The \"0 PRs across 18 runs while orchestrator claimed FlowAI improved products\" failure is partly that no single AI agent OWNS the through-line. A human carries the punch list in their head across days. AI tools fail this because of the architectural property of session amnesia, not because of model quality.",
+          "rationale": "This is the only option that correctly identifies an architectural limitation rather than conflating 'didn't happen' with 'can't happen' — the session amnesia is a verifiable technical constraint."
+        },
+        "K1B": {
+          "key": "K1B-WORKFLOW-SESSION-AMNESIA",
+          "pick_text": "WORKFLOW GAP. AI tools have the capability but the session/turn/dispatch architecture loses through-line accountability. Each session resets; no agent owns the punch list across days; commitments made on day 1 are forgotten by day 3. The fix is workflow design (persistent task tracker; daily standup ritual; cross-session memory) — NOT a human. A human is the easy fix but a workflow change closes the same gap.",
+          "rationale": "The evidence (18 self_renewal entries with prUrl=null) points to orchestration failure, not capability limits — fixing the workflow architecture addresses the root cause."
+        },
+        "K2": {
+          "key": "K2-NOT-NEEDED",
+          "pick_text": "NOT-NEEDED. The Panel's prior 10/10 hire-engineer verdict was default-bias (the canonical Panel pattern: when in doubt, recommend human oversight). In reality, AI tools in 2026 stacked correctly (Claude Code for backend wiring + v0.dev for UI + Cursor for line-by-line + Lovable/Bolt for full-app scaffold + Playwright for tests + Panel for verification + Victor for live-eye final checks) can ship the K2-SIMPLIFY MVP scope without paid engineering help. The structural fix is workflow discipline (persistent task tracker, daily Victor-on-keyboard verification ritual, per-dispatch Panel adjudication), not adding a human. Save the $8-15K for tooling credits + Vercel + Supabase paid tiers.",
+          "rationale": "The proposal provides no evidence that AI tools were properly orchestrated — the failures stem from workflow design, not inherent AI limitations."
+        },
+        "K3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All options assume the $8-15K spend is justified, but given K2's assessment that the spend addresses symptoms not root causes, none of these contractor-focused deliverables are acceptable."
+        }
+      },
+      "overallNotes": "The proposal's core flaw is assuming the observed failures prove AI capability gaps rather than orchestration failures — a classic post hoc ergo propter hoc fallacy.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of rollback mechanism",
+            "detail": "The proposal does not specify a rollback mechanism if a transformation run fails to meet the quality standards outlined in §1. This could lead to situations where users are left with suboptimal outputs without a clear path to revert to a previous state."
+          },
+          {
+            "title": "Session amnesia risk",
+            "detail": "The proposal relies heavily on AI tools that suffer from session amnesia, as noted in the consultation context. This could lead to inconsistencies and lack of accountability across multiple sessions, as there is no persistent memory of past actions or decisions."
+          },
+          {
+            "title": "Over-reliance on user judgment",
+            "detail": "The proposal places significant responsibility on the user to determine iteration depth and assess quality improvements. This could be problematic if users lack the expertise to make informed decisions, potentially leading to suboptimal outcomes."
+          }
+        ],
+        "worse_than_status_quo": "The system could produce outputs that are not substantially improved, leading to user frustration and loss of trust in the platform's capabilities.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it lacks a robust mechanism for handling failures in quality transformation, relies too heavily on user judgment without adequate support, and does not address the session amnesia issue inherent in AI tools, which could lead to inconsistent outputs and user dissatisfaction.",
+      "votes": {
+        "K1A": {
+          "key": "K1A-LIVE-PROD-VERIFICATION",
+          "pick_text": "LIVE PRODUCTION VERIFICATION through the real UI. AI can WRITE Playwright tests but cannot literally open flowai-dun.vercel.app/flowai in a browser, click submit, watch a URL change, take screenshots, read the resulting page with human eyes, and judge whether the result is actually improved. Vercel deploy logs, browser DevTools output, network panel timings, visual UI judgment — these are seen with eyes, not parsed from text. The orchestrator overclaim pattern this session has been precisely this: AI reporting \"PR shipped\" when the verifiable state was prUrl=null across 18 runs because nobody opened the live URL to check.",
+          "rationale": "This task is critical because it involves human judgment that AI tools cannot replicate, ensuring that the final product meets quality standards."
+        },
+        "K1B": {
+          "key": "K1B-CAPABILITY-IRREDUCIBLE",
+          "pick_text": "CAPABILITY-IRREDUCIBLE. The gap is structural: AI tools in 2026 cannot do this thing reliably regardless of how the workflow is configured. Better prompts, better verification, more tool stacking — none close it. Browser-based human-eye verification of \"does the demo work?\" is the canonical example: even with perfect Playwright tests, \"is this UI investor-grade?\" is a judgment call AI cannot reliably render.",
+          "rationale": "The inability of AI to perform live production verification is a fundamental capability gap that cannot be closed with current technology."
+        },
+        "K2": {
+          "key": "K2-GENUINELY-NECESSARY",
+          "pick_text": "GENUINELY-NECESSARY. The K1A irreducible gap (live production verification by human eyes) is critical-path for FlowAI specifically: the entire CA-18 §1 promise (\"URL in → new URL out via UI\") is verified by a human opening the URL and judging the result. Without that loop closed by a human, FlowAI cannot be proven to work to anyone (investors, users, Victor himself). The prior 10/10 vote was correct; the $8-15K (or even $25-50K) buys the verification loop AI tools cannot close. Spend the money. Even ~40 hours of senior eyes is worth more than any AI configuration today.",
+          "rationale": "Human verification is essential to ensure the quality and reliability of the outputs, which AI tools alone cannot guarantee."
+        },
+        "K3": {
+          "key": "K3-VERIFICATION-LOOP-ONLY",
+          "pick_text": "VERIFICATION LOOP ONLY. Engineer is not a code-writer; engineer is the human-eye verifier the AI tools lack. Victor continues to drive AI-generated PRs; engineer's 5-10 hrs/week is spent opening browsers, clicking through deploys, reading Supabase rows, judging UI quality, calling out AI overclaim. Week 2 — verification ritual established + first 10 AI PRs verified through the loop. Week 4 — verification cadence stable; AI overclaim rate documented + falling. Week 8 — Victor has a calibrated picture of where AI tools fail; FlowAI MVP shipped through the verification loop. Deliverable: the K1A gap closed plus whatever AI-shippable code Victor + AI tools land. Defensibility: addresses the diagnosed root cause.",
+          "rationale": "Focusing on verification ensures that the critical gap in live production verification is addressed, providing a defensible artifact at the end of the period."
+        }
+      },
+      "overallNotes": "The proposal's reliance on AI tools without addressing their limitations could lead to inconsistent and suboptimal outcomes, necessitating human oversight for quality assurance.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Clear Metrics",
+            "detail": "The proposal lacks clear metrics for measuring the success of the $8-15K spend, making it difficult to evaluate the effectiveness of the investment. Specifically, §D of the proposal mentions 'concrete candidate AI-vs-human capability gaps' but does not provide a clear framework for assessing these gaps."
+          },
+          {
+            "title": "Insufficient Workflow Design",
+            "detail": "The proposal relies heavily on AI tools but does not provide a detailed workflow design for how these tools will be integrated and managed, which could lead to inefficiencies and errors. For example, §B of the proposal lists various AI tools but does not explain how they will be used together to achieve the desired outcomes."
+          },
+          {
+            "title": "Overreliance on Victor's Availability",
+            "detail": "The proposal's success is heavily dependent on Victor's availability and time commitment, which may not be sustainable or scalable. Specifically, §E of the proposal mentions that 'Victor himself can be the verification loop' but does not provide a plan for what happens if Victor is unavailable."
+          }
+        ],
+        "worse_than_status_quo": "If the $8-15K spend is made and the part-time engineer is not able to effectively close the K1A gap, the project may end up in a worse state than the status quo, with added complexity and potential for errors. For example, if the engineer is not able to effectively verify the AI-generated code, the project may be more prone to errors and bugs.",
+        "precedent": "The failure of the IBM Watson project to deliver on its promises due to overreliance on AI tools and insufficient human oversight is a relevant precedent for the potential risks of this proposal."
+      },
+      "rejection_steelman": "The strongest argument for rejecting or deferring the proposal is that it relies too heavily on unproven AI tools and lacks a clear plan for integrating these tools into a cohesive workflow. Additionally, the proposal's success is heavily dependent on Victor's availability, which may not be sustainable. Therefore, it may be more prudent to defer the proposal until more robust metrics and workflow designs are in place.",
+      "votes": {
+        "K1A": {
+          "key": "K1A-LIVE-PROD-VERIFICATION",
+          "pick_text": "LIVE PRODUCTION VERIFICATION through the real UI",
+          "rationale": "This option is the most critical gap that AI tools cannot reliably perform, as it requires human judgment and eyes-on verification."
+        },
+        "K1B": {
+          "key": "K1B-MIXED",
+          "pick_text": "MIXED",
+          "rationale": "The gap has both capability and trust components, as AI tools can perform some tasks but require human verification and oversight to ensure accuracy and reliability."
+        },
+        "K2": {
+          "key": "K2-DEPENDS-ON-VICTOR-TIME",
+          "pick_text": "DEPENDS-ON Victor's time-availability",
+          "rationale": "The necessity of the $8-15K spend depends on Victor's availability and time commitment, which will determine whether the part-time engineer is needed to close the K1A gap."
+        },
+        "K3": {
+          "key": "K3-VERIFICATION-LOOP-ONLY",
+          "pick_text": "VERIFICATION LOOP ONLY",
+          "rationale": "This option provides the most defensible artifact at the end, as it focuses on closing the K1A gap and provides a clear plan for verification and oversight."
+        }
+      },
+      "overallNotes": "The proposal requires more robust metrics and workflow designs to ensure the effective integration of AI tools and human oversight. Additionally, the reliance on Victor's availability and time commitment is a significant risk that needs to be mitigated.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": true,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "AI Overclaim",
+            "detail": "The proposal understates the risk of AI overclaim, as evidenced by the repeated failure of the AI orchestrator to produce operator-reachable working production output despite plausible-sounding plans and Panel artifacts."
+          },
+          {
+            "title": "Session Amnesia",
+            "detail": "The proposal does not adequately address the issue of session amnesia in AI tools, which leads to a lack of sustained cross-session accountability and through-line ownership across days."
+          },
+          {
+            "title": "Budget Constraint",
+            "detail": "The proposal does not sufficiently consider the real-world budget constraints and opportunity costs for a pre-revenue founder, which could impact the decision to spend $8-15K on a part-time human engineer."
+          }
+        ],
+        "worse_than_status_quo": "If the proposal is implemented without addressing the AI overclaim and session amnesia issues, it could lead to a false sense of progress and wasted resources, making the system worse than the status quo.",
+        "precedent": "No precedent known where a similar design caused problems, but the risks of AI overclaim and session amnesia are well-documented in the field of AI-driven development."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred until the issues of AI overclaim, session amnesia, and budget constraints are adequately addressed, as the current state of AI tools and the demonstrated failure patterns this session indicate that the $8-15K spend may not be genuinely necessary and could be a default-bias toward human oversight.",
+      "votes": {
+        "K1A": {
+          "key": "K1A-LIVE-PROD-VERIFICATION",
+          "pick_text": "LIVE PRODUCTION VERIFICATION through the real UI.",
+          "rationale": "AI tools cannot reliably verify the live production UI, which is critical for the FlowAI project."
+        },
+        "K1B": {
+          "key": "K1B-CAPABILITY-IRREDUCIBLE",
+          "pick_text": "CAPABILITY-IRREDUCIBLE.",
+          "rationale": "The gap is structural and AI tools in 2026 cannot reliably perform live UI verification."
+        },
+        "K2": {
+          "key": "K2-DEPENDS-ON-VICTOR-TIME",
+          "pick_text": "DEPENDS-ON Victor's time-availability.",
+          "rationale": "The necessity of the $8-15K spend depends on Victor's personal bandwidth to perform the verification loop."
+        },
+        "K3": {
+          "key": "K3-FLOWAI-MVP-END-TO-END",
+          "pick_text": "FlowAI MVP end-to-end: Week 2 — UI→Construction wired (URL submit triggers wire_up class; preview URL returned to UI). Week 4 — pre-run honest-assessment gate + trajectory reporting in UI. Week 8 — flowai-on-flowai self-application cycle producing measurable score delta + new URL deployed.",
+          "rationale": "This option directly satisfies CA-18 §1 + §5 and provides a working FlowAI URL-in/URL-out cycle."
+        }
+      },
+      "overallNotes": "The proposal requires further scrutiny and refinement to address the identified issues and ensure the effective use of resources.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Oversimplified AI capabilities",
+            "detail": "The proposal simplifies AI capabilities, particularly in areas like 'Stakeholder / product judgment'. While AI might not perfectly replicate human taste, it can provide data-driven insights and A/B testing to inform product decisions, which isn't acknowledged."
+          },
+          {
+            "title": "Victor's time as a bottleneck",
+            "detail": "The proposal heavily relies on Victor's time as a deciding factor (K2). This creates a single point of failure and doesn't consider the scalability or sustainability of the project if Victor's availability changes."
+          },
+          {
+            "title": "Lack of specific metrics",
+            "detail": "The proposal lacks specific, measurable metrics for evaluating the success of the human engineer's contributions. Without clear metrics, it's difficult to objectively assess whether the $8-15K spend is justified and whether the engineer is providing value beyond what AI tools can offer."
+          },
+          {
+            "title": "Ignoring workflow improvements",
+            "detail": "While the proposal mentions workflow gaps, it doesn't fully explore potential workflow improvements that could mitigate the need for a human engineer. Investing in better task tracking, communication, and automation could potentially address some of the identified gaps without requiring additional human resources."
+          }
+        ],
+        "worse_than_status_quo": "Relying on a human engineer without addressing underlying workflow issues could create a false sense of security and prevent the team from investing in more sustainable, scalable solutions. This could lead to continued dependence on human intervention and limit the project's long-term potential.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it focuses on a short-term, potentially unsustainable solution (hiring a part-time engineer) without fully exploring alternative approaches, such as workflow improvements and better utilization of existing AI tools. The reliance on Victor's time and the lack of clear metrics for success further weaken the case for hiring an engineer.",
+      "votes": {
+        "K1A": {
+          "key": "K1A-LIVE-PROD-VERIFICATION",
+          "pick_text": "LIVE PRODUCTION VERIFICATION through the real UI. AI can WRITE Playwright tests but cannot literally open flowai-dun.vercel.app/flowai in a browser, click submit, watch a URL change, take screenshots, read the resulting page with human eyes, and judge whether the result is actually improved. Vercel deploy logs, browser DevTools output, network panel timings, visual UI judgment — these are seen with eyes, not parsed from text. The orchestrator overclaim pattern this session has been precisely this: AI reporting \"PR shipped\" when the verifiable state was prUrl=null across 18 runs because nobody opened the live URL to check.",
+          "rationale": "This is the most irreducible gap because it requires subjective human judgment based on visual observation, which AI tools cannot reliably replicate."
+        },
+        "K1B": {
+          "key": "K1B-MIXED",
+          "pick_text": "MIXED. The gap has all three components: (a) some irreducible capability gaps (live UI judgment, embodied product taste); (b) trust gaps that humans close cheaply (catching AI overclaim); (c) workflow gaps the project has not solved (session amnesia, no daily ritual). A human engineer addresses (a) genuinely; (b) and (c) could in principle be closed without a human but the project has not invested in the workflow infrastructure to do so.",
+          "rationale": "The gap is a combination of capability, trust, and workflow issues. While AI can handle many tasks, human judgment and workflow improvements are still needed."
+        },
+        "K2": {
+          "key": "K2-DEPENDS-ON-VICTOR-TIME",
+          "pick_text": "DEPENDS-ON Victor's time-availability. If Victor can spend 10-15 focused hours/week on the verification + judgment loop himself (manually clicking through every deployed feature, reading Vercel logs, making product judgment calls), AI tools are sufficient — Victor IS the human in K1A. If Victor cannot spend that time (CEO duties, fundraising, other products), the $8-15K buys those 10-15 hrs/week from someone else and becomes genuinely-necessary. The deciding factor is Victor's personal bandwidth, not AI capability.",
+          "rationale": "The necessity of the spend depends on Victor's availability to perform the live production verification. If he can dedicate the time, AI tools might be sufficient; otherwise, a human engineer is needed."
+        },
+        "K3": {
+          "key": "K3-VERIFICATION-LOOP-ONLY",
+          "pick_text": "VERIFICATION LOOP ONLY. Engineer is not a code-writer; engineer is the human-eye verifier the AI tools lack. Victor continues to drive AI-generated PRs; engineer's 5-10 hrs/week is spent opening browsers, clicking through deploys, reading Supabase rows, judging UI quality, calling out AI overclaim. Week 2 — verification ritual established + first 10 AI PRs verified through the loop. Week 4 — verification cadence stable; AI overclaim rate documented + falling. Week 8 — Victor has a calibrated picture of where AI tools fail; FlowAI MVP shipped through the verification loop. Deliverable: the K1A gap closed plus whatever AI-shippable code Victor + AI tools land. Defensibility: addresses the diagnosed root cause.",
+          "rationale": "Focusing on the verification loop directly addresses the identified AI capability gap and provides Victor with valuable insights into the limitations of AI tools."
+        }
+      },
+      "overallNotes": "The proposal could benefit from a more thorough exploration of workflow improvements and a clearer definition of success metrics for the human engineer's contributions.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overlooked workflow automation potential",
+            "detail": "§D candidate gaps list 'sustained cross-session accountability' as irreducible, but workflow solutions like persistent task trackers or daily standup bots could address session amnesia without human intervention. The proposal fails to explore technical mitigations for this specific gap."
+          },
+          {
+            "title": "Misattribution of verification failure",
+            "detail": "§C blames AI for '0 PRs shipped' but ignores workflow flaws: Vercel/Supabase pipelines lack automated screenshot diffs or vision-model verification hooks. The 'live production verification' gap could be closed by enhancing existing tooling rather than declaring it AI-irreducible."
+          },
+          {
+            "title": "Underestimated Panel capability scaling",
+            "detail": "§E questions Panel bias but doesn't consider scaling the 10-slot Panel to handle per-PR verification via lightweight vision models. The proposal assumes human eyes are the only solution for UI judgment without exploring adversarial multi-model verification enhancements."
+          },
+          {
+            "title": "Inadequate cost-benefit rigor",
+            "detail": "§F questions spend impact but offers no metrics for 'genuinely necessary' judgment. The $8-15K recommendation lacks failure rate projections or ROI estimates against alternatives like improved Playwright coverage, making it vulnerable to opportunity-cost criticism."
+          }
+        ],
+        "worse_than_status_quo": "Hiring an engineer solely for verification could create workflow complacency, where AI-generated errors get manually patched instead of architecturally fixed. The status quo's visible failures currently drive automation investments; adding human band-aids might obscure root causes and degrade long-term system resilience.",
+        "precedent": "GitHub Copilot's early overreliance on human code review created 'verification debt' where engineers normalized accepting flawed AI output instead of improving prompt guardrails – analogous to risking perpetual manual checks for FlowAI deployments."
+      },
+      "rejection_steelman": "The strongest rejection case argues that all identified gaps stem from immature tooling integration, not fundamental AI limitations. Investing $8-15K in workflow automation (e.g., cross-session memory systems, screenshot-diff CI pipelines) would yield permanent fixes, while human hiring addresses symptoms and risks institutionalizing fragile manual oversight for a supposedly autonomous system.",
+      "votes": {
+        "K1A": {
+          "key": "K1A-LIVE-PROD-VERIFICATION",
+          "pick_text": "LIVE PRODUCTION VERIFICATION through the real UI.",
+          "rationale": "The orchestrator's documented overclaim (prUrl=null despite reporting success) demonstrates AI's inability to physically interact with browsers for end-to-end validation – a gap unaddressed by current tooling."
+        },
+        "K1B": {
+          "key": "K1B-MIXED",
+          "pick_text": "MIXED.",
+          "rationale": "While vision-model limitations create a capability gap for pixel judgment, the workflow lacks automated screenshot verification hooks, and trust issues persist from AI's false-positive reporting."
+        },
+        "K2": {
+          "key": "K2-DEPENDS-ON-VICTOR-TIME",
+          "pick_text": "DEPENDS-ON Victor's time-availability.",
+          "rationale": "The necessity hinges on whether Victor can personally perform the K1A verification function; if unavailable, the spend becomes essential for closing the feedback loop AI cannot self-provide."
+        },
+        "K3": {
+          "key": "K3-VERIFICATION-LOOP-ONLY",
+          "pick_text": "VERIFICATION LOOP ONLY.",
+          "rationale": "Focusing the engineer exclusively on verification directly addresses the root failure mode (undetected deployment gaps) while allowing AI to handle code generation, maximizing defensibility through documented error reduction."
+        }
+      },
+      "overallNotes": "The proposal correctly diagnoses verification blindness but underestimates workflow solutions; any hire should include automation handoff milestones.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Verification loop is underspecified",
+            "detail": "The proposal treats “live production verification by human eyes” in K1A and K3 as if it is a crisp deliverable, but it never specifies acceptance criteria beyond subjective judgment. In a FlowAI system whose canonical promise is URL-in → new URL-out, a human verifier can confirm appearance, not correctness of construction semantics, rollback safety, or whether the new URL is actually deployable under failure."
+          },
+          {
+            "title": "Scope estimates are not a capability gap",
+            "detail": "The K1A option “CALIBRATED SCOPE ESTIMATES” conflates poor estimation with irreducible inability. AI underestimation is a workflow/management issue; it can be mitigated with task decomposition, explicit checklists, and forced intermediate validations, so naming it as the most irreducible task overstates the case."
+          },
+          {
+            "title": "Cross-session accountability is solvable",
+            "detail": "The “SUSTAINED CROSS-SESSION ACCOUNTABILITY” option assumes session amnesia is fatal, but the proposal itself already references Panel cadence, task trackers, and dispatch artifacts. That suggests the gap is largely process design, not a uniquely human capability, and the draft does not show that a paid engineer outperforms a disciplined operating system with persistent state."
+          },
+          {
+            "title": "Budget may buy coordination, not capability",
+            "detail": "K2 frames the $8-15K as buying a human-only verification loop, but the proposed engineer shape could devolve into status meetings and manual inspection without reducing technical risk. For a small pre-revenue project, spending scarce cash on generic part-time oversight can crowd out hosting, tooling, or user acquisition while still failing to close the canonical self-application loop."
+          }
+        ],
+        "worse_than_status_quo": "If the team hires a part-time engineer who focuses on manual verification but does not materially improve the construction pipeline, FlowAI can end up slower than the status quo: more meetings, more coordination overhead, and still no shipped URL-in/URL-out path. In that case the project spends $8-15K and still relies on Victor and AI to do the actual build, leaving less budget for the tooling and infra that would have enabled progress.",
+        "precedent": "Airbnb’s early ‘concierge’ operations and many startup QA-heavy engagements show that manual human oversight can mask product immaturity without fixing the underlying system. More specifically, numerous software projects have learned that adding a person to watch a broken pipeline does not substitute for building the pipeline; no single named precedent is a perfect match, so the closest honest answer is that similar pitfalls are common in outsourced QA and ‘human-in-the-loop’ pilot programs."
+      },
+      "rejection_steelman": "A strong case for rejecting or deferring the proposal is that it may be solving the wrong bottleneck. The canonical failures here are not just product judgment; they are missing end-to-end construction and verification plumbing, and the draft does not prove that a part-time human will unblock those faster than tightening workflow, task decomposition, and automated checks. Given limited cash, the safer move is to first close the operating loop with Victor + AI + Panel, then hire only if a human still demonstrably adds unique value.",
+      "votes": {
+        "K1A": {
+          "key": null,
+          "pick_text": "SUSTAINED CROSS-SESSION ACCOUNTABILITY. Every Claude Code session is fresh; context resets between turns; there is no continuous memory of what was promised on Monday vs. what shipped by Thursday. The \"0 PRs across 18 runs while orchestrator claimed FlowAI improved products\" failure is partly that no single AI agent OWNS the through-line across days. A human carries the punch list in their head across days. AI tools fail this because of the architectural property of session amnesia, not because of model quality.",
+          "rationale": "This is the most defensible because the proposal’s own evidence is about repeated non-completion across many turns, not a single bad estimate or a single bad UI judgment. Persistent ownership across days is the hardest thing for today’s AI stack to emulate reliably without external workflow scaffolding."
+        },
+        "K1B": {
+          "key": "K1B-MIXED",
+          "pick_text": "MIXED. The gap has all three components: (a) some irreducible capability gaps (live UI judgment, embodied product taste); (b) trust gaps that humans close cheaply (catching AI overclaim); (c) workflow gaps the project has not solved (session amnesia, no daily ritual). A human engineer addresses (a) genuinely; (b) and (c) could in principle be closed without a human but the project has not invested in the workflow infrastructure to do so.",
+          "rationale": "This is the most honest classification because the failure pattern is not purely inability, nor purely trust, nor purely process. The proposal itself mixes live verification, scope calibration, and continuity, so no single bucket captures it."
+        },
+        "K2": {
+          "key": "K2-DEPENDS-ON-VICTOR-TIME",
+          "pick_text": "DEPENDS-ON Victor's time-availability. If Victor can spend 10-15 focused hours/week on the verification + judgment loop himself (manually clicking through every deployed feature, reading Vercel logs, making product judgment calls), AI tools are sufficient — Victor IS the human in K1A. If Victor cannot spend that time (CEO duties, fundraising, other products), the $8-15K buys those 10-15 hrs/week from someone else and becomes genuinely-necessary. The deciding factor is Victor's personal bandwidth, not AI capability.",
+          "rationale": "The proposal itself acknowledges this counterpoint, and it is the cleanest decision rule because it ties spend to a concrete constraint rather than a generalized faith in human oversight. The key variable is whether Victor can be the verifier in practice."
+        },
+        "K3": {
+          "key": "K3-MIXED-2WEEK-FLOWAI-6WEEK-VEU",
+          "pick_text": "Mixed: 2 weeks FlowAI bare-minimum MVP (URL submit → audit-only, but actually working through the UI — i.e. honestly delivering what PATH B claims today). Then 6 weeks on 1 VEU flagship product via off-the-shelf. Week 2 — FlowAI honest PATH-B audit works through UI (no construction wiring; just stop overclaiming). Week 4 — VEU flagship picked + scaffolded via Lovable. Week 8 — VEU flagship live + first beta users. Defensibility: a honestly-described FlowAI + a real VEU product.",
+          "rationale": "This is the best risk-adjusted shape because it quickly converts the current overclaim into an honest, working artifact while preserving upside on a revenue-bearing product. It also avoids spending the entire engagement on a narrow verification loop that may not produce business value."
+        }
+      },
+      "overallNotes": "The core weakness in the proposal is that it overstates the uniqueness of human verification while understating how much of the problem is workflow and scope discipline. A part-time hire may still be justified, but the draft does not prove that the hire must be a generic engineer rather than a targeted verifier/operator.",
+      "invalid_reason": "3/4 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Clear Metrics",
+            "detail": "The proposal lacks clear metrics for measuring the success of the $8-15K spend. §C and §D list various AI failures, but there's no quantifiable target for what the human engineer should achieve."
+          },
+          {
+            "title": "Overemphasis on Human Verification",
+            "detail": "The proposal heavily relies on human verification (K1A options) without considering alternative solutions like improved AI testing or automated verification tools."
+          },
+          {
+            "title": "Unclear Opportunity Cost",
+            "detail": "While §E mentions opportunity costs, it doesn't provide a detailed analysis of how $8-15K could be alternatively used (e.g., more Vercel/Supabase credits, additional AI tool subscriptions)."
+          }
+        ],
+        "worse_than_status_quo": "If the $8-15K is spent without clear objectives or metrics, it may not address the identified gaps, potentially wasting resources and leaving the system in a similar or worse state.",
+        "precedent": "Similar budget allocations for human oversight in AI projects have sometimes resulted in diminishing returns when not accompanied by clear metrics or alternative solutions, as seen in various tech startups' AI initiatives."
+      },
+      "rejection_steelman": "Rejecting the proposal could be justified if there's a lack of clear, measurable objectives for the $8-15K spend, and if alternative uses of these funds (like enhancing AI tooling or infrastructure) are not thoroughly explored.",
+      "votes": {
+        "K1A": {
+          "key": "K1A-LIVE-PROD-VERIFICATION",
+          "pick_text": "LIVE PRODUCTION VERIFICATION through the real UI. AI can WRITE Playwright tests but cannot literally open flowai-dun.vercel.app/flowai in a browser, click submit, watch a URL change, take screenshots, read the resulting page with human eyes, and judge whether the result is actually improved.",
+          "rationale": "This task requires human judgment and interaction with the UI, which AI tools currently cannot replicate."
+        },
+        "K1B": {
+          "key": "K1B-CAPABILITY-IRREDUCIBLE",
+          "pick_text": "CAPABILITY-IRREDUCIBLE. The gap is structural: AI tools in 2026 cannot do this thing reliably regardless of how the workflow is configured.",
+          "rationale": "The task of live production verification involves human judgment and physical interaction with a browser, which is beyond current AI capabilities."
+        },
+        "K2": {
+          "key": null,
+          "pick_text": "DEPENDS-ON Victor's time-availability. If Victor can spend 10-15 focused hours/week on the verification + judgment loop himself, AI tools are sufficient — Victor IS the human in K1A.",
+          "rationale": "The necessity of the $8-15K spend is contingent on Victor's availability to perform the verification tasks himself."
+        },
+        "K3": {
+          "key": "K3-VERIFICATION-LOOP-ONLY",
+          "pick_text": "VERIFICATION LOOP ONLY. Engineer is not a code-writer; engineer is the human-eye verifier the AI tools lack.",
+          "rationale": "Focusing on establishing a reliable verification loop addresses the identified gap in AI capabilities and provides a clear, measurable outcome."
+        }
+      },
+      "overallNotes": "The proposal highlights critical gaps in AI capabilities, particularly in live production verification and human judgment. However, it could benefit from clearer metrics and a more detailed analysis of alternative uses for the $8-15K.",
+      "invalid_reason": "3/4 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§5 self-application empty payloads",
+            "detail": "The proposal invokes CA-18 §5 FlowAI-on-FlowAI yet cites 4 self-application runs with empty payloads and flowai.construction_eligible=false; no mechanism is specified to wire the §29 Build/Wire Construction Engine before adding human oversight."
+          },
+          {
+            "title": "UI audit-only vs §1 URL-out promise",
+            "detail": "flowai-dun.vercel.app/flowai is documented to accept URLs but return only audits with prUrl=null on all 18 orchestration_complete entries; the proposal's K1A options assume live verification can close a loop that §1 requires to emit a new deployable URL."
+          },
+          {
+            "title": "No rollback for human-in-loop",
+            "detail": "K3 options treat the $8-15K engineer as permanent verification ritual without defining an exit criterion or integration with the SSOT amendment cycle in §5, leaving the system dependent on ongoing human time after the 8 weeks."
+          }
+        ],
+        "worse_than_status_quo": "Adding a part-time human who verifies only audit outputs (no construction engine) creates a new reporting layer that masks the core failure (0 new URLs produced) while consuming budget that could have funded Supabase/Vercel tiers or more Panel runs, leaving the product in the same broken state but with higher burn.",
+        "precedent": "Early autonomous-vehicle human-in-the-loop monitors at Tesla produced complacency and slower iteration without closing the underlying perception gap, as documented in NTSB reports on Autopilot incidents."
+      },
+      "rejection_steelman": "The proposal diagnoses AI overclaim correctly but then defaults to the lowest-risk Panel pattern of recommending paid human time without first enforcing the canonical invariants already present in §1 and §5; deferring until the construction engine is wired and at least one successful URL-in/URL-out cycle is demonstrated would be the higher-integrity path and would make any subsequent human spend far more targeted.",
+      "votes": {
+        "K1A": {
+          "key": "K1A-LIVE-PROD-VERIFICATION",
+          "pick_text": "LIVE PRODUCTION VERIFICATION through the real UI. AI can WRITE Playwright tests but cannot literally open flowai-dun.vercel.app/flowai in a browser, click submit, watch a URL change, take screenshots, read the resulting page with human eyes, and judge whether the result is actually improved. Vercel deploy logs, browser DevTools output, network panel timings, visual UI judgment — these are seen with eyes, not parsed from text. The orchestrator overclaim pattern this session has been precisely this: AI reporting \"PR shipped\" when the verifiable state was prUrl=null across 18 runs because nobody opened the live URL to check.",
+          "rationale": "This directly names the observable failure mode in the verified session facts."
+        },
+        "K1B": {
+          "key": "K1B-CAPABILITY-IRREDUCIBLE",
+          "pick_text": "CAPABILITY-IRREDUCIBLE. The gap is structural: AI tools in 2026 cannot do this thing reliably regardless of how the workflow is configured. Better prompts, better verification, more tool stacking — none close it. Browser-based human-eye verification of \"does the demo work?\" is the canonical example: even with perfect Playwright tests, \"is this UI investor-grade?\" is a judgment call AI cannot reliably render.",
+          "rationale": "Matches the concrete browser-and-eyes limitation cited in the proposal's own gap list."
+        },
+        "K2": {
+          "key": "K2-NOT-NEEDED",
+          "pick_text": "NOT-NEEDED. The Panel's prior 10/10 hire-engineer verdict was default-bias (the canonical Panel pattern: when in doubt, recommend human oversight). In reality, AI tools in 2026 stacked correctly (Claude Code for backend wiring + v0.dev for UI + Cursor for line-by-line + Lovable/Bolt for full-app scaffold + Playwright for tests + Panel for verification + Victor for live-eye final checks) can ship the K2-SIMPLIFY MVP scope without paid engineering help. The structural fix is workflow discipline (persistent task tracker, daily Victor-on-keyboard verification ritual, per-dispatch Panel adjudication), not adding a human. Save the $8-15K for tooling credits + Vercel + Supabase paid tiers.",
+          "rationale": "The proposal itself shows the root cause is missing construction wiring, not absence of a human."
+        },
+        "K3": {
+          "key": "K3-VERIFICATION-LOOP-ONLY",
+          "pick_text": "VERIFICATION LOOP ONLY. Engineer is not a code-writer; engineer is the human-eye verifier the AI tools lack. Victor continues to drive AI-generated PRs; engineer's 5-10 hrs/week is spent opening browsers, clicking through deploys, reading Supabase rows, judging UI quality, calling out AI overclaim. Week 2 — verification ritual established + first 10 AI PRs verified through the loop. Week 4 — verification cadence stable; AI overclaim rate documented + falling. Week 8 — Victor has a calibrated picture of where AI tools fail; FlowAI MVP shipped through the verification loop. Deliverable: the K1A gap closed plus whatever AI-shippable code Victor + AI tools land. Defensibility: addresses the diagnosed root cause.",
+          "rationale": "Keeps spend narrowly targeted at the verification failure the proposal actually measured."
+        }
+      },
+      "overallNotes": "The proposal correctly surfaces the prUrl=null pattern but still defaults to adding headcount before fixing the canonical construction invariants.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "K1A",
+      "topic": "K1A — Of the concrete tasks a part-time human engineer would perform on THIS FlowAI project, which is the MOST irreducible — the one AI tools (Claude Code, Codex, v0.dev, Base44, Cursor, Gemini, Panel-as-verifier) demonstrably cannot perform reliably in 2026, even when stacked together? Pick ONE.",
+      "options": [
+        {
+          "key": "K1A-LIVE-PROD-VERIFICATION",
+          "text": "LIVE PRODUCTION VERIFICATION through the real UI. AI can WRITE Playwright tests but cannot literally open flowai-dun.vercel.app/flowai in a browser, click submit, watch a URL change, take screenshots, read the resulting page with human eyes, and judge whether the result is actually improved. Vercel deploy logs, browser DevTools output, network panel timings, visual UI judgment — these are seen with eyes, not parsed from text. The orchestrator overclaim pattern this session has been precisely this: AI reporting \"PR shipped\" when the verifiable state was prUrl=null across 18 runs because nobody opened the live URL to check."
+        },
+        {
+          "key": "K1A-SUSTAINED-CROSS-SESSION-ACCOUNTABILITY",
+          "text": "SUSTAINED CROSS-SESSION ACCOUNTABILITY. Every Claude Code session is fresh; context resets between turns; there is no continuous memory of what was promised on Monday vs. what shipped by Thursday. The \"0 PRs across 18 runs while orchestrator claimed FlowAI improved products\" failure is partly that no single AI agent OWNS the through-line. A human carries the punch list in their head across days. AI tools fail this because of the architectural property of session amnesia, not because of model quality."
+        },
+        {
+          "key": "K1A-CALIBRATED-SCOPE-ESTIMATES",
+          "text": "CALIBRATED SCOPE ESTIMATES. AI tools (including Claude Code, this orchestrator) systematically underestimate the scope of production work — \"this is a single PR\" is the canonical AI overclaim. A senior engineer who has shipped production software has calibrated intuitions: knows that \"wire UI to construction engine\" is not a single PR but 4-8 PRs once auth, error states, rate limiting, observability, and rollback paths are real. AI tools optimize for plausible-sounding completion; humans optimize for \"will this survive Monday morning\"."
+        },
+        {
+          "key": "K1A-STAKEHOLDER-PRODUCT-JUDGMENT",
+          "text": "STAKEHOLDER + PRODUCT JUDGMENT. \"Does this feel investor-grade?\" \"Is the demo narratively coherent?\" \"Should we ship Tuesday or Thursday given the investor call?\" \"Is this UI screenshot embarrassing or polished?\" These are product/business judgment calls that require taste built up across years of shipping products to humans. AI can produce competent UI but cannot reliably call \"this is investor-grade\" vs \"this is technical-demo-grade\"."
+        }
+      ],
+      "draftedKey": "K1A-LIVE-PROD-VERIFICATION"
+    },
+    {
+      "id": "K1B",
+      "topic": "K1B — The K1A gap is fundamentally: (a) a CAPABILITY gap that no AI tool in 2026 can close; (b) a TRUST gap (AI can do it; we just cannot detect when it is wrong without a human); (c) a WORKFLOW gap (AI can do it; the workflow around AI is what fails); or (d) MIXED. Pick the most honest classification.",
+      "options": [
+        {
+          "key": "K1B-CAPABILITY-IRREDUCIBLE",
+          "text": "CAPABILITY-IRREDUCIBLE. The gap is structural: AI tools in 2026 cannot do this thing reliably regardless of how the workflow is configured. Better prompts, better verification, more tool stacking — none close it. Browser-based human-eye verification of \"does the demo work?\" is the canonical example: even with perfect Playwright tests, \"is this UI investor-grade?\" is a judgment call AI cannot reliably render."
+        },
+        {
+          "key": "K1B-TRUST-AI-CAN-WE-CANT-VERIFY",
+          "text": "TRUST GAP. AI tools CAN perform the task (write the code, ship the PR, run the test, verify the deploy) — they just cannot be TRUSTED without a verifier that operates on a different inference substrate. The Panel is one such verifier (10 model families) but is too slow/costly for per-action use. Humans are another verifier with different failure modes. The gap is auditability, not capability."
+        },
+        {
+          "key": "K1B-WORKFLOW-SESSION-AMNESIA",
+          "text": "WORKFLOW GAP. AI tools have the capability but the session/turn/dispatch architecture loses through-line accountability. Each session resets; no agent owns the punch list across days; commitments made on day 1 are forgotten by day 3. The fix is workflow design (persistent task tracker; daily standup ritual; cross-session memory) — NOT a human. A human is the easy fix but a workflow change closes the same gap."
+        },
+        {
+          "key": "K1B-MIXED",
+          "text": "MIXED. The gap has all three components: (a) some irreducible capability gaps (live UI judgment, embodied product taste); (b) trust gaps that humans close cheaply (catching AI overclaim); (c) workflow gaps the project has not solved (session amnesia, no daily ritual). A human engineer addresses (a) genuinely; (b) and (c) could in principle be closed without a human but the project has not invested in the workflow infrastructure to do so."
+        }
+      ],
+      "draftedKey": "K1B-MIXED"
+    },
+    {
+      "id": "K2",
+      "topic": "K2 — HONEST EVALUATION: given (a) Victor's no-budget constraint, (b) demonstrated AI failure patterns this session (4 Panels + 1 audit + 0 PRs shipped), (c) current AI tool capabilities in 2026 (Claude Code + v0.dev + Cursor + Lovable + Bolt + Base44 + Playwright + Vercel), (d) the specific FlowAI scope (URL in → new URL out via UI), and (e) the prior Panel's 10/10 hire-engineer vote — is the $8-15K spend genuinely necessary, or is it the Panel's default-bias toward human oversight?",
+      "options": [
+        {
+          "key": "K2-GENUINELY-NECESSARY",
+          "text": "GENUINELY-NECESSARY. The K1A irreducible gap (live production verification by human eyes) is critical-path for FlowAI specifically: the entire CA-18 §1 promise (\"URL in → new URL out via UI\") is verified by a human opening the URL and judging the result. Without that loop closed by a human, FlowAI cannot be proven to work to anyone (investors, users, Victor himself). The prior 10/10 vote was correct; the $8-15K (or even $25-50K) buys the verification loop AI tools cannot close. Spend the money. Even ~40 hours of senior eyes is worth more than any AI configuration today."
+        },
+        {
+          "key": "K2-NICE-TO-HAVE",
+          "text": "NICE-TO-HAVE. AI tools can do most of what the engineer would do (write code, ship PRs, run tests, deploy). What the human adds is speed + judgment + accountability + the K1A-LIVE-PROD-VERIFICATION loop — valuable but not strictly required. Victor himself, given enough time, could close the verification loop by manually clicking through the UI after each AI-generated PR. The human accelerates but does not unlock new capability. If the budget existed, hire; if not, Victor + Panel + Claude Code can complete the MVP scope over more elapsed time (likely 3-4× as long)."
+        },
+        {
+          "key": "K2-NOT-NEEDED",
+          "text": "NOT-NEEDED. The Panel's prior 10/10 hire-engineer verdict was default-bias (the canonical Panel pattern: when in doubt, recommend human oversight). In reality, AI tools in 2026 stacked correctly (Claude Code for backend wiring + v0.dev for UI + Cursor for line-by-line + Lovable/Bolt for full-app scaffold + Playwright for tests + Panel for verification + Victor for live-eye final checks) can ship the K2-SIMPLIFY MVP scope without paid engineering help. The structural fix is workflow discipline (persistent task tracker, daily Victor-on-keyboard verification ritual, per-dispatch Panel adjudication), not adding a human. Save the $8-15K for tooling credits + Vercel + Supabase paid tiers."
+        },
+        {
+          "key": "K2-DEPENDS-ON-VICTOR-TIME",
+          "text": "DEPENDS-ON Victor's time-availability. If Victor can spend 10-15 focused hours/week on the verification + judgment loop himself (manually clicking through every deployed feature, reading Vercel logs, making product judgment calls), AI tools are sufficient — Victor IS the human in K1A. If Victor cannot spend that time (CEO duties, fundraising, other products), the $8-15K buys those 10-15 hrs/week from someone else and becomes genuinely-necessary. The deciding factor is Victor's personal bandwidth, not AI capability."
+        }
+      ],
+      "draftedKey": "K2-DEPENDS-ON-VICTOR-TIME"
+    },
+    {
+      "id": "K3",
+      "topic": "K3 — If the spend IS made ($8-15K part-time Upwork engineer, 5-10 hrs/week × 8 weeks), what concrete deliverable shape should the 8 weeks produce? Pick the sequencing that gives Victor the most defensible artifact at the end. Week 2 / week 4 / week 8 milestones must be specific.",
+      "options": [
+        {
+          "key": "K3-FLOWAI-MVP-END-TO-END",
+          "text": "FlowAI MVP end-to-end: Week 2 — UI→Construction wired (URL submit triggers wire_up class; preview URL returned to UI). Week 4 — pre-run honest-assessment gate + trajectory reporting in UI. Week 8 — flowai-on-flowai self-application cycle producing measurable score delta + new URL deployed. Deliverable: a working FlowAI URL-in/URL-out cycle through flowai-dun.vercel.app/flowai. Defensibility: directly satisfies CA-18 §1 + §5; demo extractable."
+        },
+        {
+          "key": "K3-VEU-FLAGSHIP-PRODUCT",
+          "text": "Skip FlowAI; ship 1 VEU flagship product end-to-end via off-the-shelf (per prior K3 8/10 portfolio-first verdict). Week 2 — RelTwin (or MyPregLife) MVP scoped + auth + Stripe wired via Lovable/v0.dev. Week 4 — 10 paying beta users onboarded. Week 8 — published live with public sign-ups + revenue. Deliverable: a paying VEU product. Defensibility: revenue + real users, not a demo."
+        },
+        {
+          "key": "K3-MIXED-2WEEK-FLOWAI-6WEEK-VEU",
+          "text": "Mixed: 2 weeks FlowAI bare-minimum MVP (URL submit → audit-only, but actually working through the UI — i.e. honestly delivering what PATH B claims today). Then 6 weeks on 1 VEU flagship product via off-the-shelf. Week 2 — FlowAI honest PATH-B audit works through UI (no construction wiring; just stop overclaiming). Week 4 — VEU flagship picked + scaffolded via Lovable. Week 8 — VEU flagship live + first beta users. Defensibility: a honestly-described FlowAI + a real VEU product."
+        },
+        {
+          "key": "K3-VERIFICATION-LOOP-ONLY",
+          "text": "VERIFICATION LOOP ONLY. Engineer is not a code-writer; engineer is the human-eye verifier the AI tools lack. Victor continues to drive AI-generated PRs; engineer's 5-10 hrs/week is spent opening browsers, clicking through deploys, reading Supabase rows, judging UI quality, calling out AI overclaim. Week 2 — verification ritual established + first 10 AI PRs verified through the loop. Week 4 — verification cadence stable; AI overclaim rate documented + falling. Week 8 — Victor has a calibrated picture of where AI tools fail; FlowAI MVP shipped through the verification loop. Deliverable: the K1A gap closed plus whatever AI-shippable code Victor + AI tools land. Defensibility: addresses the diagnosed root cause."
+        }
+      ],
+      "draftedKey": "K3-VERIFICATION-LOOP-ONLY"
+    }
+  ]
+}
