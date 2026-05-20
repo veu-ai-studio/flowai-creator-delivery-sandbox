@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -13,6 +14,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // which is the only way client-side code can see a server-only env var.
 // NODE_ENV is intentionally NOT redefined here — Vite manages it.
 const vercelEnvDefine = JSON.stringify(process.env.VERCEL_ENV ?? '');
+
+// Source-map upload to Sentry. No-op unless SENTRY_AUTH_TOKEN / SENTRY_ORG
+// / SENTRY_PROJECT are all set (Doppler-injected at Vercel build time).
+const sentryUploadEnabled = Boolean(
+  process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT
+);
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -32,6 +39,10 @@ export default defineConfig({
   define: {
     'process.env.VERCEL_ENV': vercelEnvDefine,
   },
+  build: {
+    // Required for Sentry to map minified frames back to source. Off in dev.
+    sourcemap: true,
+  },
   plugins: [
     base44({
       // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.
@@ -43,5 +54,12 @@ export default defineConfig({
       visualEditAgent: true
     }),
     react(),
-  ]
+    sentryUploadEnabled && sentryVitePlugin({
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      release: { name: process.env.VERCEL_GIT_COMMIT_SHA || undefined },
+      telemetry: false,
+    }),
+  ].filter(Boolean),
 });
