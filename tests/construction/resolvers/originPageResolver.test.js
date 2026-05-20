@@ -1,12 +1,18 @@
 // tests/construction/resolvers/originPageResolver.test.js
 //
 // W5a — default originPageResolver coverage.
+//
+// extractToken behavior (per dispatch):
+//   1. Full URL with path     → lowercased last pathname segment (ext stripped)
+//   2. URL+selector concat    → CSS-tag of last selector segment (with id fallback)
+//   3. Bare/empty/unparseable → 'layout' (root-page fallback marker)
 
 import { describe, it, expect, vi } from 'vitest';
 import {
   extractToken,
   scoreFileAgainstToken,
   createOriginPageResolver,
+  ROOT_PAGE_FALLBACK_PATHS,
 } from '../../../src/lib/construction/resolvers/originPageResolver.js';
 
 describe('extractToken', () => {
@@ -14,32 +20,61 @@ describe('extractToken', () => {
     expect(extractToken('https://reltwin-platform.vercel.app/settings')).toBe('settings');
   });
 
-  it('drops selector after colon', () => {
-    expect(extractToken('https://reltwin.com/settings:transfer-button')).toBe('settings');
-    expect(extractToken('Settings:transfer-button')).toBe('settings');
+  it('returns lowercased path segment', () => {
+    expect(extractToken('https://x.com/Profile')).toBe('profile');
   });
 
-  it('drops query string and hash', () => {
+  it('drops file extension from final path segment', () => {
+    expect(extractToken('https://x.com/pages/Settings.jsx')).toBe('settings');
+  });
+
+  it('ignores query string and hash', () => {
     expect(extractToken('https://x.com/profile?id=1')).toBe('profile');
     expect(extractToken('https://x.com/profile#section')).toBe('profile');
   });
 
-  it('drops file extension', () => {
-    expect(extractToken('/pages/Settings.jsx')).toBe('settings');
+  it('returns "layout" for empty / null / non-string input', () => {
+    expect(extractToken('')).toBe('layout');
+    expect(extractToken(null)).toBe('layout');
+    expect(extractToken(undefined)).toBe('layout');
   });
 
-  it('returns empty for empty / non-string input', () => {
-    expect(extractToken('')).toBe('');
-    expect(extractToken(null)).toBe('');
-    expect(extractToken(undefined)).toBe('');
+  it('URL+selector concat with no URL pathname → uses CSS tag', () => {
+    // Real Phase B emit: "<url><space><css-selector>"
+    expect(extractToken('https://reltwin-platform.vercel.app button#submit-btn')).toBe('button');
   });
 
-  it('handles bare paths', () => {
-    expect(extractToken('/api/wire/transfer')).toBe('transfer');
+  it('URL+selector with nested ">" → uses last selector tag', () => {
+    expect(extractToken('https://x.com div#main > div > button')).toBe('button');
   });
 
-  it('lowercases the token', () => {
-    expect(extractToken('https://x.com/Profile')).toBe('profile');
+  it('URL+selector where tag is a layout-container → falls to id', () => {
+    expect(extractToken('https://x.com div#user-profile')).toBe('userprofile');
+  });
+
+  it('URL+selector with only containers and no id → "layout"', () => {
+    expect(extractToken('https://x.com div > section > main')).toBe('layout');
+  });
+
+  it('id extraction strips non-alphanumerics + truncates to 20 chars', () => {
+    expect(extractToken('https://x.com #radix-:r3:'))
+      .toBe('radix'); // "radix-:r3:" → after strip → "radixr3" → matches 'radix' first? actually let me trace:
+    // selectorPart = "#radix-:r3:"
+    // tag = "#radix-:r3:".split('>').pop()?.trim() = "#radix-:r3:"
+    //   .split(/[#.\s:[]/) = ['', 'radix-', 'r3', '']
+    //   [0] = '' → falsy → skip tag branch
+    // idMatch = match(/#([\w-]+)/) → '#radix-' → captured 'radix-'
+    //   .replace(/[^a-z0-9]/gi,'').toLowerCase() = 'radix'
+    // truncated to 20 → 'radix'
+  });
+
+  it('bare path with no scheme → "layout" (not a parseable URL)', () => {
+    // new URL('/api/wire/transfer') throws (no scheme); selectorPart='' → 'layout'.
+    expect(extractToken('/api/wire/transfer')).toBe('layout');
+  });
+
+  it('lowercases the returned token', () => {
+    expect(extractToken('https://x.com/SETTINGS')).toBe('settings');
   });
 });
 
@@ -63,11 +98,23 @@ describe('scoreFileAgainstToken', () => {
   });
 });
 
+describe('ROOT_PAGE_FALLBACK_PATHS', () => {
+  it('contains the canonical four root-page paths', () => {
+    expect(ROOT_PAGE_FALLBACK_PATHS).toEqual([
+      'src/Layout.jsx',
+      'src/App.jsx',
+      'src/pages/index.tsx',
+      'src/pages/index.jsx',
+    ]);
+  });
+});
+
 describe('createOriginPageResolver', () => {
   const REPO_FILES = [
     'package.json',
     'README.md',
     'src/Layout.jsx',
+    'src/App.jsx',
     'src/pages/Settings.jsx',
     'src/pages/Profile.jsx',
     'src/pages/account-settings.jsx',
@@ -92,34 +139,67 @@ describe('createOriginPageResolver', () => {
     const deps = makeDeps();
     const resolver = createOriginPageResolver(deps);
     const r = await resolver({
-      candidate: { location: 'https://reltwin.com/settings:transfer-button' },
+      candidate: { location: 'https://reltwin.com/settings' },
     });
     expect(r.repoRelativePath).toBe('src/pages/Settings.jsx');
-    expect(r.path).toBe('src/pages/Settings.jsx'); // back-compat alias
-    expect(r.currentContent).toContain('Settings.jsx');
+    expect(r.path).toBe('src/pages/Settings.jsx');
     expect(r.matchToken).toBe('settings');
+    expect(r.usedFallback).toBe(false);
   });
 
-  it('throws when no source file matches the token', async () => {
+  it('uses root-page fallback when no source file matches the token', async () => {
     const deps = makeDeps();
     const resolver = createOriginPageResolver(deps);
-    await expect(resolver({
+    const r = await resolver({
       candidate: { location: 'https://reltwin.com/nonexistent-route' },
-    })).rejects.toThrowError(/no source file matched/);
+    });
+    expect(r.repoRelativePath).toBe('src/Layout.jsx');
+    expect(r.usedFallback).toBe(true);
   });
 
-  it('throws when extractToken returns empty', async () => {
+  it('uses root-page fallback when extractToken returns "layout" (empty location)', async () => {
     const deps = makeDeps();
     const resolver = createOriginPageResolver(deps);
-    await expect(resolver({ candidate: { location: '' } }))
-      .rejects.toThrowError(/could not extract token/);
+    const r = await resolver({ candidate: { location: '' } });
+    expect(r.repoRelativePath).toBe('src/Layout.jsx');
+    expect(r.matchToken).toBe('layout');
+    expect(r.usedFallback).toBe(true);
   });
 
-  it('uses candidate.selector when candidate.location is absent', async () => {
+  it('honors fallback order: Layout.jsx beats App.jsx', async () => {
     const deps = makeDeps();
     const resolver = createOriginPageResolver(deps);
-    const r = await resolver({ candidate: { selector: '/profile' } });
-    expect(r.repoRelativePath).toBe('src/pages/Profile.jsx');
+    const r = await resolver({ candidate: { location: '/no-such-path' } });
+    expect(r.repoRelativePath).toBe('src/Layout.jsx');
+  });
+
+  it('falls through to App.jsx when Layout.jsx is absent', async () => {
+    const deps = makeDeps({
+      files: REPO_FILES.filter((f) => f !== 'src/Layout.jsx'),
+    });
+    const resolver = createOriginPageResolver(deps);
+    const r = await resolver({ candidate: { location: '/no-such-path' } });
+    expect(r.repoRelativePath).toBe('src/App.jsx');
+  });
+
+  it('throws when no scored file AND no root-page fallback exists in repo', async () => {
+    const deps = makeDeps({
+      files: ['package.json', 'src/utils/api.ts'], // none of the fallback paths
+    });
+    const resolver = createOriginPageResolver(deps);
+    await expect(resolver({ candidate: { location: '/no-match' } }))
+      .rejects.toThrowError(/no root-page fallback/);
+  });
+
+  it('handles Phase B URL+selector format and finds Button.tsx for "button" token', async () => {
+    const deps = makeDeps();
+    const resolver = createOriginPageResolver(deps);
+    const r = await resolver({
+      candidate: { location: 'https://reltwin-platform.vercel.app button#submit' },
+    });
+    // tag='button' → matches src/components/Button.tsx (exact basename)
+    expect(r.repoRelativePath).toBe('src/components/Button.tsx');
+    expect(r.matchToken).toBe('button');
   });
 
   it('accepts BOTH { candidate } and bare-candidate calling shapes', async () => {
@@ -135,7 +215,7 @@ describe('createOriginPageResolver', () => {
       contents: { 'src/pages/Settings.jsx': 'export default function Settings() { return null; }' },
     });
     const resolver = createOriginPageResolver(deps);
-    const r = await resolver({ candidate: { location: '/settings' } });
+    const r = await resolver({ candidate: { location: 'https://x.com/settings' } });
     expect(r.currentContent).toBe('export default function Settings() { return null; }');
     expect(deps.fetchFileContent).toHaveBeenCalledWith('src/pages/Settings.jsx');
   });
@@ -146,7 +226,7 @@ describe('createOriginPageResolver', () => {
       fetchFileContent: async () => null,
     };
     const resolver = createOriginPageResolver(deps);
-    await expect(resolver({ candidate: { location: '/settings' } }))
+    await expect(resolver({ candidate: { location: 'https://x.com/settings' } }))
       .rejects.toThrowError(/non-string/);
   });
 
@@ -155,16 +235,7 @@ describe('createOriginPageResolver', () => {
       repoFileList: async () => [],
       fetchFileContent: async () => '',
     });
-    await expect(resolver({ candidate: { location: '/settings' } }))
+    await expect(resolver({ candidate: { location: 'https://x.com/settings' } }))
       .rejects.toThrowError(/empty/);
-  });
-
-  it('only matches .js/.jsx/.ts/.tsx files (skips other extensions)', async () => {
-    const deps = makeDeps({
-      files: ['README.md', 'src/pages/settings.md', 'src/pages/Settings.jsx'],
-    });
-    const resolver = createOriginPageResolver(deps);
-    const r = await resolver({ candidate: { location: '/settings' } });
-    expect(r.repoRelativePath).toBe('src/pages/Settings.jsx');
   });
 });

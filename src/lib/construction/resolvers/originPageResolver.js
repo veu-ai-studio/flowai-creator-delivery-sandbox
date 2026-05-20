@@ -38,28 +38,36 @@
  * @param {string} locationStr
  * @returns {string}                lowercased token, possibly empty
  */
+// W5a — extractToken handles three location shapes:
+//   1. Full URL with path        — "https://x.com/settings" → "settings"
+//   2. Full URL (no path) + CSS selector — "https://x.com button#submit-btn" → "button" (or "submit-btn" via id fallback)
+//   3. Bare/empty/unparseable    — "layout" (root-page fallback marker)
+// The 'layout' return signals the caller to fall back to a canonical
+// root-page lookup (src/Layout.jsx, src/App.jsx, etc.).
+const SELECTOR_TAG_SKIP = Object.freeze(['div', 'span', 'section', 'main', 'nav', 'header', 'footer']);
+
 export function extractToken(locationStr) {
-  if (typeof locationStr !== 'string' || locationStr.length === 0) return '';
-  // Strip protocol + host when the input is a full URL — otherwise the
-  // "://" colon trips the selector-split below.
-  let pathPart = locationStr;
-  if (/^https?:\/\//i.test(locationStr)) {
-    try {
-      pathPart = new URL(locationStr).pathname;
-    } catch {
-      const m = locationStr.match(/^https?:\/\/[^/]+(\/.*)?$/i);
-      pathPart = (m && m[1]) ? m[1] : '';
-    }
+  if (typeof locationStr !== 'string') return 'layout';
+  const trimmed = locationStr.trim();
+  if (!trimmed) return 'layout';
+  const spaceIdx = trimmed.indexOf(' ');
+  const urlPart = spaceIdx === -1 ? trimmed : trimmed.slice(0, spaceIdx);
+  const selectorPart = spaceIdx === -1 ? '' : trimmed.slice(spaceIdx + 1).trim();
+  // Try URL pathname first.
+  try {
+    const url = new URL(urlPart);
+    const pathToken = url.pathname.split('/').filter(Boolean).pop()
+      ?.split('.')[0]?.toLowerCase();
+    if (pathToken) return pathToken;
+  } catch { /* not a URL — fall through to selector branch */ }
+  // Fall back to CSS selector tag name (then id).
+  if (selectorPart) {
+    const tag = selectorPart.split('>').pop()?.trim().split(/[#.\s:[]/)[0]?.toLowerCase();
+    if (tag && !SELECTOR_TAG_SKIP.includes(tag)) return tag;
+    const idMatch = selectorPart.match(/#([\w-]+)/);
+    if (idMatch) return idMatch[1].replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 20);
   }
-  // Drop CSS-selector-like suffix (everything after the first ":"),
-  // then query string + hash.
-  pathPart = pathPart.split(':')[0].split(/[?#]/)[0];
-  const segments = pathPart.split('/').filter(Boolean);
-  if (segments.length === 0) return '';
-  // Drop file extension on the final segment.
-  let last = segments[segments.length - 1];
-  last = last.split('.')[0];
-  return last.toLowerCase();
+  return 'layout';
 }
 
 /**
@@ -78,6 +86,17 @@ export function scoreFileAgainstToken(filePath, token) {
 }
 
 const SOURCE_EXT_RE = /\.(?:tsx|jsx|ts|js)$/i;
+
+// W5a — root-page fallback chain. Used when extractToken returns the
+// 'layout' sentinel (no path / no selector tag we can score) OR when
+// the scored-file search returns zero hits. Paths checked in order;
+// first one found in repoFileList wins.
+export const ROOT_PAGE_FALLBACK_PATHS = Object.freeze([
+  'src/Layout.jsx',
+  'src/App.jsx',
+  'src/pages/index.tsx',
+  'src/pages/index.jsx',
+]);
 
 /**
  * Create the default originPageResolver for the ConstructionEngine.
@@ -107,22 +126,47 @@ export function createOriginPageResolver({ repoFileList, fetchFileContent }) {
     }
     const locationStr = candidate.location || candidate.selector || candidate.id || '';
     const token = extractToken(locationStr);
-    if (!token) {
-      throw new Error(`originPageResolver: could not extract token from location "${locationStr}"`);
-    }
     const files = await repoFileList();
     if (!Array.isArray(files) || files.length === 0) {
       throw new Error('originPageResolver: repoFileList returned empty');
     }
-    const scored = files
-      .filter((f) => typeof f === 'string' && SOURCE_EXT_RE.test(f))
-      .map((f) => ({ path: f, score: scoreFileAgainstToken(f, token) }))
-      .filter((s) => s.score > 0)
-      .sort((a, b) => b.score - a.score);
-    if (scored.length === 0) {
-      throw new Error(`originPageResolver: no source file matched token "${token}" from location "${locationStr}"`);
+    const fileSet = new Set(files);
+
+    // W5a — root-page fallback resolver (only consults the in-memory
+    // file list; no fetch). Returns null when none of the canonical
+    // root paths exist in the repo.
+    function pickRootFallback() {
+      for (const p of ROOT_PAGE_FALLBACK_PATHS) {
+        if (fileSet.has(p)) return p;
+      }
+      return null;
     }
-    const repoRelativePath = scored[0].path;
+
+    let repoRelativePath = null;
+    let matchScore = 0;
+    let usedFallback = false;
+
+    if (token === 'layout') {
+      repoRelativePath = pickRootFallback();
+      usedFallback = true;
+    } else {
+      const scored = files
+        .filter((f) => typeof f === 'string' && SOURCE_EXT_RE.test(f))
+        .map((f) => ({ path: f, score: scoreFileAgainstToken(f, token) }))
+        .filter((s) => s.score > 0)
+        .sort((a, b) => b.score - a.score);
+      if (scored.length > 0) {
+        repoRelativePath = scored[0].path;
+        matchScore = scored[0].score;
+      } else {
+        repoRelativePath = pickRootFallback();
+        usedFallback = true;
+      }
+    }
+
+    if (!repoRelativePath) {
+      throw new Error(`originPageResolver: no source file matched token "${token}" from location "${locationStr}" and no root-page fallback present in repoFileList`);
+    }
     const currentContent = await fetchFileContent(repoRelativePath);
     if (typeof currentContent !== 'string') {
       throw new Error(`originPageResolver: fetchFileContent for ${repoRelativePath} returned non-string`);
@@ -135,8 +179,9 @@ export function createOriginPageResolver({ repoFileList, fetchFileContent }) {
       path: repoRelativePath,
       content: currentContent,
       // Debugging aid:
-      matchScore: scored[0].score,
+      matchScore,
       matchToken: token,
+      usedFallback,
     };
   };
 }
