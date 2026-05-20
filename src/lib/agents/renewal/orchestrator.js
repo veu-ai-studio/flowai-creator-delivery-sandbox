@@ -1242,7 +1242,24 @@ export async function runOrchestration(args = {}) {
             environment,
             phaseBFindings: state.phaseBFindings ?? [],
             baselineArgs: {
-              preScore: preScoreEnvelope,
+              // S1Baseline.buildBaseline contract: { score:number, layers?:{ui_ux,api,logic,business_value,security_posture}, findings? }.
+              // §7.6 GTM score is the canonical baseline anchor; Five-Layer
+              // L1-L5 carry the per-dim signal (L1 Functionality → logic,
+              // L2 Operational → api, L4 Business → business_value,
+              // L5 GTM → ui_ux; L3 Financial and S6 Security Posture have
+              // no direct counterpart in the §7.6 rubric — null per S1's
+              // null-tolerant snapshot builder).
+              preScore: {
+                score: iterLog.preGtm?.score ?? preScoreEnvelope?.total ?? 0,
+                layers: {
+                  ui_ux: preScoreEnvelope?.l5 ?? null,
+                  api: preScoreEnvelope?.l2 ?? null,
+                  logic: preScoreEnvelope?.l1 ?? null,
+                  business_value: preScoreEnvelope?.l4 ?? null,
+                  security_posture: null,
+                },
+                findings: iterLog.preGtm?.issues ?? [],
+              },
               findings: iterLog.preGtm?.issues ?? [],
               pages: state.crawlOutput?.pages ?? [],
               endpoints: [],
