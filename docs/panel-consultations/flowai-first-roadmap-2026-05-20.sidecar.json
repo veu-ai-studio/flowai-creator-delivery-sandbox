@@ -1,0 +1,799 @@
+{
+  "schema": "flowai-first-roadmap.sidecar.v1",
+  "dispatch": "W6 — Panel-authoritative; FlowAI-first roadmap (2026-05-20)",
+  "startedAt": "2026-05-20T20:30:30.009Z",
+  "finishedAt": "2026-05-20T20:32:28.257Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 18590,
+  "tally": {
+    "engagedTotal": 9,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 0,
+    "perQuestion": {
+      "K1": {
+        "K1-UI-FIRST-WIRING": 1,
+        "K1-ENGINE-FIRST-FIX-CONSTRUCTION": 3,
+        "K1-CONSTRUCTION-LOOP-FIRST": 3,
+        "K1-DEMO-RELIABLE-PATH-FIRST": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "K2": {
+        "K2-8-10-WEEKS": 0,
+        "K2-10-13-WEEKS": 1,
+        "K2-13-16-WEEKS": 5,
+        "K2-16-20-WEEKS": 1,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "K3": {
+        "K3-REPLACE-API-RUN-STUB": 0,
+        "K3-DEBUG-EMPTY-PAYLOAD-SELF-RUN": 1,
+        "K3-FIRST-CONSTRUCTION-COMPLETE-ENVELOPE": 3,
+        "K3-FLIP-CONSTRUCTION-ELIGIBLE-AND-RUN": 3,
+        "REJECT": 2,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 32,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Construction engine 0% success rate",
+        "detail": "Section B shows 26 construction-class envelopes on reltwin with 0 construction_complete - the engine has never successfully completed a single run. Building FlowAI MVP on a foundation that has 100% failure rate violates CA-18 §1's quality guarantee of substantial transformation per run."
+      },
+      {
+        "slot": 1,
+        "title": "Self-application produces empty payloads",
+        "detail": "Section A shows 4 self-runs all with empty payload, directly violating CA-18 §5's requirement that FlowAI applies to its own development process. The system cannot improve itself if self-runs produce no actionable output."
+      },
+      {
+        "slot": 1,
+        "title": "Missing 85% of quality dimensions",
+        "detail": "Section A shows §2 Quality Dims at ~15% with 6/10 dimensions silently omitted and no jurisdiction column. CA-18 §1 requires perfection across ALL quality dimensions - shipping with 15% coverage violates the core promise."
+      },
+      {
+        "slot": 1,
+        "title": "Tool Intelligence has zero call sites",
+        "detail": "Section A shows §6 Tool Intelligence at ~35% with 0 call sites and 0 tool.selection envelopes despite ToolIntelligenceService being built. A service with no integration points cannot deliver intelligent tool selection as required."
+      },
+      {
+        "slot": 2,
+        "title": "Lack of rollback mechanism",
+        "detail": "The proposal does not specify a rollback mechanism for changes made by FlowAI, particularly in the event of a failure or error during the construction process. This could lead to incomplete or incorrect deployments without a clear path to revert to a previous stable state."
+      },
+      {
+        "slot": 2,
+        "title": "Incomplete self-application process",
+        "detail": "In §5, the proposal mentions FlowAI's self-application capabilities but notes that the flowai.construction_eligible flag is set to FALSE and self-runs produce empty payloads. This indicates that the self-improvement cycle is not fully operational, which could undermine the tool's ability to refine itself effectively."
+      },
+      {
+        "slot": 2,
+        "title": "Potential for user confusion",
+        "detail": "The user agency section in §1 emphasizes user control over iteration depth, but the complexity of the information provided (e.g., score trajectories, diminishing returns) may overwhelm users, leading to suboptimal decision-making or disengagement from the process."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case of failures or errors during the construction process, which could lead to data loss or corruption. Specifically, §1 Core Definition does not mention any rollback mechanisms."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Error Handling",
+        "detail": "The proposal does not provide sufficient details on error handling and debugging mechanisms, which could lead to difficulties in identifying and resolving issues. For example, §3 Iteration does not specify how errors are handled during the iteration process."
+      },
+      {
+        "slot": 3,
+        "title": "Unclear Construction Engine",
+        "detail": "The proposal does not provide a clear explanation of the construction engine and its components, which could lead to difficulties in understanding and implementing the system. Specifically, §5 Symbiotic Meta-Principle mentions the construction engine, but does not provide sufficient details."
+      },
+      {
+        "slot": 4,
+        "title": "Incomplete §2 Quality Dimensions",
+        "detail": "The proposal notes that §2 Quality Dimensions are only ~15% complete with 6/10 dimensions silently omitted and no jurisdiction column. This incomplete implementation could lead to unreliable quality assessments and poor user experiences."
+      },
+      {
+        "slot": 4,
+        "title": "Unreliable Construction Engine",
+        "detail": "The construction engine has 26 construction-class envelopes on reltwin with 0 construction_complete, indicating significant issues with end-to-end construction. This could lead to failed builds and unreliable outputs."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of Honest Assessment Gate",
+        "detail": "The pre-run honest-gate is only ~15% complete, which means FlowAI may not accurately communicate when a product already meets quality standards. This could result in unnecessary iterations and wasted resources."
+      },
+      {
+        "slot": 5,
+        "title": "Incomplete Quality Dimensions",
+        "detail": "The proposal fails to address the incomplete implementation of §2 quality dimensions, which are critical for evaluating the output of FlowAI."
+      },
+      {
+        "slot": 5,
+        "title": "Unresolved Construction Aborts",
+        "detail": "The 26 construction_attempt_aborted envelopes on reltwin indicate unresolved issues in the construction engine that need to be debugged and fixed."
+      },
+      {
+        "slot": 5,
+        "title": "Lack of Tool Intelligence Integration",
+        "detail": "The Tool Intelligence service is built but has no call sites, indicating a lack of integration which is essential for the proposed FlowAI MVP."
+      },
+      {
+        "slot": 6,
+        "title": "Oversimplified MVP scope",
+        "detail": "Dropping jurisdiction/access/privacy/legal from §2 in the MVP scope (D) introduces significant risk. These dimensions are crucial for real-world applicability and ignoring them early could lead to architectural issues later. This simplification might create a false sense of progress."
+      },
+      {
+        "slot": 6,
+        "title": "Unclear 'substantial transformation'",
+        "detail": "§1's 'substantial transformation' quality guarantee lacks a clear, measurable definition. This ambiguity makes it difficult to objectively assess whether a run is a success or failure, potentially leading to subjective interpretations and inconsistent results. The lack of a quantitative threshold undermines the guarantee's value."
+      },
+      {
+        "slot": 6,
+        "title": "Self-application risks",
+        "detail": "§5's self-application of FlowAI to its own development process could lead to a feedback loop of increasingly complex and potentially unstable code. Without careful monitoring and control, this self-improvement cycle could introduce unintended consequences and make the system harder to understand and maintain."
+      },
+      {
+        "slot": 6,
+        "title": "Honest assessment subjectivity",
+        "detail": "§1's 'honest assessment' relies on FlowAI proactively communicating when a product already meets the quality standard. This assessment is inherently subjective and could be influenced by biases or incomplete information, leading to inaccurate recommendations and potentially hindering genuine improvements."
+      },
+      {
+        "slot": 7,
+        "title": "§2 Quality Dims incomplete",
+        "detail": "Current implementation only covers 6/10 quality dimensions with no jurisdiction handling, violating CA-18 §1's quality guarantee. This risks producing outputs that appear compliant but fail key metrics like accessibility or legal alignment."
+      },
+      {
+        "slot": 7,
+        "title": "Construction engine non-functional",
+        "detail": "26 construction attempts aborted with 0 completions (A.8) indicates core S1-S8 gates are failing in production. MVP can't deliver URL-in/URL-out without fixing this first-order failure in src/lib/construction/."
+      },
+      {
+        "slot": 7,
+        "title": "Self-application gap",
+        "detail": "flowai.construction_eligible=FALSE (A.5) blocks CA-18 §5's symbiotic principle. Four empty self-runs show FlowAI can't yet improve itself - critical path for long-term viability remains unproven."
+      },
+      {
+        "slot": 8,
+        "title": "UI-first assumes working engine",
+        "detail": "The K1 UI-FIRST path wires `/api/run-construction` and LandingPage submission before proving the underlying construction engine can actually complete end-to-end. The proposal itself states there are 26 `construction_attempt_aborted` envelopes and 0 `construction_complete` envelopes, so this sequencing risks building a polished shell around an unresolved failure mode."
+      },
+      {
+        "slot": 8,
+        "title": "Demo path can diverge silently",
+        "detail": "The K1 DEMO-RELIABLE-PATH-FIRST option explicitly hard-codes a reliable demo and then generalizes backwards. That creates a high risk of a bifurcated system where the shown path succeeds while the general path remains audit-only or brittle, which undermines the stated goal of a real operator-reachable URL-in/URL-out product."
+      },
+      {
+        "slot": 8,
+        "title": "Week-one deliverable is under-specified",
+        "detail": "K3 options talk about emitting `construction_complete.v1`, flipping `construction_eligible`, or replacing `/api/run.js`, but none gives a crisp acceptance criterion for correctness beyond internal envelopes or a single curl. There is no explicit rollback, no negative test, and no guarantee that the verified artifact corresponds to a durable user-visible capability rather than a one-off debug event."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of rollback path",
+        "detail": "The proposal under §D (Pre-decided scope) does not mention a rollback path for changes made by FlowAI, which could lead to irreversible damage if the construction engine or Tool Intelligence service malfunctions."
+      },
+      {
+        "slot": 9,
+        "title": "Insufficient testing",
+        "detail": "The proposal mentions E2E Playwright (~20h) but does not specify how comprehensive the testing will be, potentially leaving critical edge cases untested."
+      },
+      {
+        "slot": 9,
+        "title": "Risk of demo path divergence",
+        "detail": "The DEMO-RELIABLE-PATH-FIRST option under K1 risks creating a demo path that diverges from the general path, potentially leading to maintenance issues or inconsistencies."
+      },
+      {
+        "slot": 10,
+        "title": "§2 Quality Dims FAIL unaddressed",
+        "detail": "Verified facts table lists §2 Quality Dims at FAIL (~15%) with 6/10 dimensions silently omitted and no jurisdiction column, yet no K1 option sequences dimension envelope restoration before exposing UI submit at LandingPage.jsx:442."
+      },
+      {
+        "slot": 10,
+        "title": "26 aborts ignored in UI-FIRST",
+        "detail": "Proposal states 26 construction-class envelopes on reltwin with 0 construction_complete and engine starts but never finishes, but UI-FIRST begins /api/run-construction wiring without first resolving any S8 Phase B abort via ConstructionEngine.js."
+      },
+      {
+        "slot": 10,
+        "title": "§5 self-application bypassed",
+        "detail": "CA-18 §5 requires FlowAI to apply §29 Build/Wire Construction Engine and §10 Self-Audit to its own source tree, but roadmap budgets only 15h self-application debug after UI work and sets flowai.construction_eligible=FALSE."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "K1": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between K1-ENGINE-FIRST-FIX-CONSTRUCTION / K1-CONSTRUCTION-LOOP-FIRST",
+      "topKey": "K1-ENGINE-FIRST-FIX-CONSTRUCTION",
+      "topCount": 3
+    },
+    "K2": {
+      "verdict": "PLURALITY_K2-13-16-WEEKS",
+      "detail": "5 of 9 on K2-13-16-WEEKS (below 7/10 quorum)",
+      "topKey": "K2-13-16-WEEKS",
+      "topCount": 5
+    },
+    "K3": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between K3-FIRST-CONSTRUCTION-COMPLETE-ENVELOPE / K3-FLIP-CONSTRUCTION-ELIGIBLE-AND-RUN",
+      "topKey": "K3-FIRST-CONSTRUCTION-COMPLETE-ENVELOPE",
+      "topCount": 3
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.18518518518518517,
+    "alignedCount": 5,
+    "totalPossible": 27,
+    "draftedQs": [
+      "K1",
+      "K2",
+      "K3"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 18.5 %, distinct objections 32"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Construction engine 0% success rate",
+            "detail": "Section B shows 26 construction-class envelopes on reltwin with 0 construction_complete - the engine has never successfully completed a single run. Building FlowAI MVP on a foundation that has 100% failure rate violates CA-18 §1's quality guarantee of substantial transformation per run."
+          },
+          {
+            "title": "Self-application produces empty payloads",
+            "detail": "Section A shows 4 self-runs all with empty payload, directly violating CA-18 §5's requirement that FlowAI applies to its own development process. The system cannot improve itself if self-runs produce no actionable output."
+          },
+          {
+            "title": "Missing 85% of quality dimensions",
+            "detail": "Section A shows §2 Quality Dims at ~15% with 6/10 dimensions silently omitted and no jurisdiction column. CA-18 §1 requires perfection across ALL quality dimensions - shipping with 15% coverage violates the core promise."
+          },
+          {
+            "title": "Tool Intelligence has zero call sites",
+            "detail": "Section A shows §6 Tool Intelligence at ~35% with 0 call sites and 0 tool.selection envelopes despite ToolIntelligenceService being built. A service with no integration points cannot deliver intelligent tool selection as required."
+          }
+        ],
+        "worse_than_status_quo": "Rushing FlowAI MVP with a 0% success rate construction engine and 85% missing quality dimensions would produce a system that fails on every run, damaging user trust more than having no system at all.",
+        "precedent": "Google Wave launched with core collaboration features that worked 0% of the time in production despite working in demos, leading to immediate user abandonment and project cancellation within a year."
+      },
+      "rejection_steelman": "The proposal should be rejected because it builds on a construction engine with 0% success rate across 26 attempts, violating CA-18 §1's requirement that each run produces substantial transformation. The 85% missing quality dimensions and empty self-application payloads mean the MVP cannot fulfill FlowAI's core promises. Proceeding would damage credibility more than delaying to fix foundational issues.",
+      "votes": {
+        "K1": {
+          "key": "K1-CONSTRUCTION-LOOP-FIRST",
+          "pick_text": "CONSTRUCTION-LOOP-FIRST: W1-3 construction engine end-to-end against ANY product CLI (debug all aborts; first successful construction_complete). W4-5 UI submit triggers construction. W6-7 FlowAI-on-FlowAI cycle (canonical proof per CA-18 §5). W8-9 honest-gate + Tool Intelligence + dimensions envelope. W10-12 auth + observability + Sentry + polish + demo. Strongest CA-18 §5 alignment; slowest to UI-visible milestone.",
+          "rationale": "With 26 failed construction attempts and 0% success rate, fixing the engine first is mandatory - building UI on a broken foundation violates CA-18 §1's quality guarantee."
+        },
+        "K2": {
+          "key": "K2-16-20-WEEKS",
+          "pick_text": "16-20 weeks. Pessimistic. The 2/8 prior Panel dissent that voted K2-250+-HRS implies upper-end ~250h ÷ 12h/wk ≈ 21 weeks. Reflects the reality that \"production-ready\" includes things AI underestimates: cross-browser testing, error states, rollback paths, observability tuning, RLS hardening, dependency-CVE handling. Slowest but most likely.",
+          "rationale": "Given 0% construction success rate, empty self-run payloads, and 85% missing quality dimensions, the original 120-180 hour estimate is wildly optimistic for reaching production-ready status."
+        },
+        "K3": {
+          "key": "K3-FIRST-CONSTRUCTION-COMPLETE-ENVELOPE",
+          "pick_text": "Produce first construction_complete.v1 envelope. Time: 4-6 hrs. Files: src/lib/construction/ConstructionEngine.js + src/lib/construction/gates/S8PhaseB.js + scripts/run-orchestration.mjs. Action: run construction CLI on reltwin (already has 26 attempt_aborted); add VERBOSE logging at each gate; identify why S8 Phase B aborts; fix or downgrade requirement to MVP-acceptable. Emit construction_complete.v1 with class + filesChanged + linesChanged + scoreDelta. Verification (Victor EOD Day 1): construction_complete.v1 entry visible in product_ssot.governance_record for reltwin. CA-17 §29 first end-to-end proof.",
+          "rationale": "Must fix the 0% success rate construction engine before any other work - this directly addresses the 26 failed attempts and provides the first working proof."
+        }
+      },
+      "overallNotes": "The proposal's timeline severely underestimates the work needed to fix fundamental failures in the construction engine and quality dimension coverage.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of rollback mechanism",
+            "detail": "The proposal does not specify a rollback mechanism for changes made by FlowAI, particularly in the event of a failure or error during the construction process. This could lead to incomplete or incorrect deployments without a clear path to revert to a previous stable state."
+          },
+          {
+            "title": "Incomplete self-application process",
+            "detail": "In §5, the proposal mentions FlowAI's self-application capabilities but notes that the flowai.construction_eligible flag is set to FALSE and self-runs produce empty payloads. This indicates that the self-improvement cycle is not fully operational, which could undermine the tool's ability to refine itself effectively."
+          },
+          {
+            "title": "Potential for user confusion",
+            "detail": "The user agency section in §1 emphasizes user control over iteration depth, but the complexity of the information provided (e.g., score trajectories, diminishing returns) may overwhelm users, leading to suboptimal decision-making or disengagement from the process."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to a situation where users are overwhelmed by the complexity of iteration data, resulting in either excessive iterations without meaningful improvement or premature termination of potentially beneficial iterations.",
+        "precedent": "The Google Wave project suffered from user confusion and complexity, leading to its eventual discontinuation despite having advanced features."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred until a robust rollback mechanism is implemented to ensure stability and reliability in deployments. Additionally, the self-application process must be fully operational to guarantee that FlowAI can effectively improve itself, and user interfaces should be simplified to prevent user confusion and ensure optimal engagement with the iteration process.",
+      "votes": {
+        "K1": {
+          "key": "K1-ENGINE-FIRST-FIX-CONSTRUCTION",
+          "pick_text": "ENGINE-FIRST: W1-2 fix the 26 construction_attempt_aborted envelopes on reltwin → produce FIRST construction_complete.v1 envelope via CLI (reveals why construction never finishes). W3-4 add /api/run-construction route + UI wiring. W5-6 honest-gate + Tool Intelligence wiring. W7-8 dimensions envelope + self-application + auth + Sentry. W9-10 E2E + polish + demo. Risk: longer to first UI win but each week's milestone is real construction progress.",
+          "rationale": "This option focuses on resolving foundational issues first, ensuring that the construction engine is reliable before proceeding to UI integration, which aligns with addressing the core technical challenges."
+        },
+        "K2": {
+          "key": "K2-13-16-WEEKS",
+          "pick_text": "13-16 weeks. Realistic with friction. Anticipates: (a) the empty-payload self-run debug takes longer than 15h budgeted; (b) auth + Sentry + rate-limit integration has hidden complexity; (c) E2E Playwright on real Vercel deploys requires retry-and-flake-handling work; (d) Victor's 10-15 hrs/wk has weeks where it dips below. Closer to upper-bound prior hours estimate.",
+          "rationale": "This timeframe accounts for potential debugging and integration challenges, providing a realistic estimate that allows for unforeseen issues without overly optimistic assumptions."
+        },
+        "K3": {
+          "key": "K3-FIRST-CONSTRUCTION-COMPLETE-ENVELOPE",
+          "pick_text": "Produce first construction_complete.v1 envelope. Time: 4-6 hrs. Files: src/lib/construction/ConstructionEngine.js + src/lib/construction/gates/S8PhaseB.js + scripts/run-orchestration.mjs. Action: run construction CLI on reltwin (already has 26 attempt_aborted); add VERBOSE logging at each gate; identify why S8 Phase B aborts; fix or downgrade requirement to MVP-acceptable. Emit construction_complete.v1 with class + filesChanged + linesChanged + scoreDelta. Verification (Victor EOD Day 1): construction_complete.v1 entry visible in product_ssot.governance_record for reltwin. CA-17 §29 first end-to-end proof.",
+          "rationale": "This task addresses a critical blocker in the construction process, providing valuable insights into why constructions are failing and setting the stage for subsequent development efforts."
+        }
+      },
+      "overallNotes": "The proposal's focus on foundational issues first is crucial for long-term success, but user interface complexity and lack of rollback mechanisms need urgent attention.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case of failures or errors during the construction process, which could lead to data loss or corruption. Specifically, §1 Core Definition does not mention any rollback mechanisms."
+          },
+          {
+            "title": "Insufficient Error Handling",
+            "detail": "The proposal does not provide sufficient details on error handling and debugging mechanisms, which could lead to difficulties in identifying and resolving issues. For example, §3 Iteration does not specify how errors are handled during the iteration process."
+          },
+          {
+            "title": "Unclear Construction Engine",
+            "detail": "The proposal does not provide a clear explanation of the construction engine and its components, which could lead to difficulties in understanding and implementing the system. Specifically, §5 Symbiotic Meta-Principle mentions the construction engine, but does not provide sufficient details."
+          }
+        ],
+        "worse_than_status_quo": "If the proposal is implemented without proper testing and validation, it could lead to a situation where the system is less reliable and more prone to errors than the current status quo, potentially causing more harm than good.",
+        "precedent": "The Therac-25 incident, where a radiation therapy machine malfunctioned due to software errors, is a real-world precedent that highlights the importance of proper testing and validation in complex systems."
+      },
+      "rejection_steelman": "The proposal lacks a clear and comprehensive approach to addressing the complexities of the system, and the risks associated with its implementation outweigh the potential benefits. Therefore, it is recommended to reject or defer the proposal until more thorough testing and validation can be conducted.",
+      "votes": {
+        "K1": {
+          "key": "K1-ENGINE-FIRST-FIX-CONSTRUCTION",
+          "pick_text": "ENGINE-FIRST: W1-2 fix the 26 construction_attempt_aborted envelopes on reltwin → produce FIRST construction_complete.v1 envelope via CLI (reveals why construction never finishes). W3-4 add /api/run-construction route + UI wiring. W5-6 honest-gate + Tool Intelligence wiring. W7-8 dimensions envelope + self-application + auth + Sentry. W9-10 E2E + polish + demo. Risk: longer to first UI win but each week's milestone is real construction progress.",
+          "rationale": "This option provides a more comprehensive approach to addressing the construction engine and its components, which is essential for a reliable and efficient system."
+        },
+        "K2": {
+          "key": "K2-10-13-WEEKS",
+          "pick_text": "10-13 weeks. Realistic mid-range. 120-180 hours at 10-15 hrs/wk = 8-18 weeks; 10-13 is the median with normal friction. Allows time for the 26 construction_attempt_aborted debug + 1-2 unplanned issues without slipping the timeline. Best match for prior Panel hour estimate.",
+          "rationale": "This option provides a realistic estimate of the time required to complete the project, taking into account potential issues and friction."
+        },
+        "K3": {
+          "key": "K3-FLIP-CONSTRUCTION-ELIGIBLE-AND-RUN",
+          "pick_text": "Flip flowai.construction_eligible=true + run construction CLI on FlowAI. Time: 2-3 hrs. Files: scripts/run-orchestration.mjs (no code change; just data + invocation). Action: UPDATE product_registry SET construction_eligible = true WHERE product_id = 'flowai'; doppler run -- node scripts/run-orchestration.mjs --product flowai. Observe what fails; document specifically; route to the right Day 2 dispatch. Verification (Victor EOD Day 1): Victor has a concrete failure list pinned to specific files/gates from a real construction-on-flowai attempt. Smallest possible PR; biggest learning per hour.",
+          "rationale": "This option provides a quick and efficient way to test the construction engine and identify potential issues, which is essential for a reliable and efficient system."
+        }
+      },
+      "overallNotes": "The proposal requires more thorough testing and validation to ensure the reliability and efficiency of the system. The construction engine and its components need to be clearly explained and implemented, and a comprehensive approach to addressing errors and debugging is necessary.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Incomplete §2 Quality Dimensions",
+            "detail": "The proposal notes that §2 Quality Dimensions are only ~15% complete with 6/10 dimensions silently omitted and no jurisdiction column. This incomplete implementation could lead to unreliable quality assessments and poor user experiences."
+          },
+          {
+            "title": "Unreliable Construction Engine",
+            "detail": "The construction engine has 26 construction-class envelopes on reltwin with 0 construction_complete, indicating significant issues with end-to-end construction. This could lead to failed builds and unreliable outputs."
+          },
+          {
+            "title": "Lack of Honest Assessment Gate",
+            "detail": "The pre-run honest-gate is only ~15% complete, which means FlowAI may not accurately communicate when a product already meets quality standards. This could result in unnecessary iterations and wasted resources."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's focus on building FlowAI MVP first could lead to a situation where the existing VEU products are processed by an incomplete and unreliable FlowAI, resulting in lower quality outputs than the current status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it prioritizes the development of FlowAI MVP over ensuring the quality and reliability of the existing VEU products. This could lead to a situation where the VEU products are processed by an incomplete and unreliable FlowAI, resulting in lower quality outputs and a poor user experience.",
+      "votes": {
+        "K1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "None of the listed options adequately address the significant risks associated with the incomplete implementation of §2 Quality Dimensions, the unreliable construction engine, and the lack of a pre-run honest-gate."
+        },
+        "K2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposed timelines do not account for the significant risks and potential delays associated with the incomplete implementation of critical components."
+        },
+        "K3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposed Day 1 dispatches do not address the fundamental issues with the construction engine and the pre-run honest-gate, which are critical for the successful development of FlowAI MVP."
+        }
+      },
+      "overallNotes": "The proposal needs to address the significant risks associated with the incomplete implementation of critical components before proceeding with the development of FlowAI MVP.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Incomplete Quality Dimensions",
+            "detail": "The proposal fails to address the incomplete implementation of §2 quality dimensions, which are critical for evaluating the output of FlowAI."
+          },
+          {
+            "title": "Unresolved Construction Aborts",
+            "detail": "The 26 construction_attempt_aborted envelopes on reltwin indicate unresolved issues in the construction engine that need to be debugged and fixed."
+          },
+          {
+            "title": "Lack of Tool Intelligence Integration",
+            "detail": "The Tool Intelligence service is built but has no call sites, indicating a lack of integration which is essential for the proposed FlowAI MVP."
+          }
+        ],
+        "worse_than_status_quo": "If the MVP is released with unresolved construction aborts and incomplete quality dimensions, it could lead to a system that is less reliable and of lower quality than the current Base44 products.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "Given the incomplete state of critical components and the potential for releasing an inferior product, the proposal should be rejected or deferred until these issues are adequately addressed.",
+      "votes": {
+        "K1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposed sequencing options do not adequately address the critical unresolved issues in the construction engine and quality dimensions."
+        },
+        "K2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The total weeks bucket options do not account for the necessary time to resolve the critical issues before reaching a production-ready MVP."
+        },
+        "K3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposed Week 1 Day 1 actual dispatch options do not sufficiently address the critical issues that need immediate attention."
+        }
+      },
+      "overallNotes": "The proposal requires significant adjustments to ensure a robust and reliable FlowAI MVP.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Oversimplified MVP scope",
+            "detail": "Dropping jurisdiction/access/privacy/legal from §2 in the MVP scope (D) introduces significant risk. These dimensions are crucial for real-world applicability and ignoring them early could lead to architectural issues later. This simplification might create a false sense of progress."
+          },
+          {
+            "title": "Unclear 'substantial transformation'",
+            "detail": "§1's 'substantial transformation' quality guarantee lacks a clear, measurable definition. This ambiguity makes it difficult to objectively assess whether a run is a success or failure, potentially leading to subjective interpretations and inconsistent results. The lack of a quantitative threshold undermines the guarantee's value."
+          },
+          {
+            "title": "Self-application risks",
+            "detail": "§5's self-application of FlowAI to its own development process could lead to a feedback loop of increasingly complex and potentially unstable code. Without careful monitoring and control, this self-improvement cycle could introduce unintended consequences and make the system harder to understand and maintain."
+          },
+          {
+            "title": "Honest assessment subjectivity",
+            "detail": "§1's 'honest assessment' relies on FlowAI proactively communicating when a product already meets the quality standard. This assessment is inherently subjective and could be influenced by biases or incomplete information, leading to inaccurate recommendations and potentially hindering genuine improvements."
+          }
+        ],
+        "worse_than_status_quo": "Focusing solely on FlowAI MVP first, while the 5 VEU products remain on Base44, could create a fragmented system where the VEU products are not fully integrated with FlowAI's capabilities. This could lead to inconsistencies and inefficiencies, making the overall system worse than the current state where all products are on Base44.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal prioritizes building FlowAI MVP first, potentially neglecting the integration and migration of existing VEU products. This approach could lead to a disjointed system with limited real-world applicability, making it difficult to demonstrate the value of FlowAI and hindering its adoption. Deferring the proposal would allow for a more comprehensive plan that addresses the integration of existing products and ensures a seamless transition to FlowAI.",
+      "votes": {
+        "K1": {
+          "key": "K1-UI-FIRST-WIRING",
+          "pick_text": "UI-FIRST: W1 add /api/run-construction route + wire LandingPage.jsx:442 submit to call it. W2 first end-to-end run through UI on a small test product (preview URL returned). W3 pre-run honest-assessment gate + trajectory reporting. W4 attachToolIntelligenceService + first tool.selection envelopes. W5 dimensions_contributing[] envelope + KNOWN-GAP disclosure UI. W6 flip flowai.construction_eligible + debug self-run empty payloads. W7 E2E Playwright + first FlowAI-on-FlowAI cycle. W8 auth + Sentry + rate-limit + demo extract. Risk: relies on construction engine working when invoked.",
+          "rationale": "UI-FIRST provides the fastest path to a Victor-verifiable milestone, allowing for early feedback and iteration. While it relies on the construction engine working, this risk is acceptable given the potential for rapid progress."
+        },
+        "K2": {
+          "key": "K2-13-16-WEEKS",
+          "pick_text": "13-16 weeks. Realistic with friction. Anticipates: (a) the empty-payload self-run debug takes longer than 15h budgeted; (b) auth + Sentry + rate-limit integration has hidden complexity; (c) E2E Playwright on real Vercel deploys requires retry-and-flake-handling work; (d) Victor's 10-15 hrs/wk has weeks where it dips below. Closer to upper-bound prior hours estimate.",
+          "rationale": "This option accounts for potential delays and complexities, providing a more realistic estimate of the total time required. The other options seem overly optimistic given the potential for unforeseen issues."
+        },
+        "K3": {
+          "key": "K3-FLIP-CONSTRUCTION-ELIGIBLE-AND-RUN",
+          "pick_text": "Flip flowai.construction_eligible=true + run construction CLI on FlowAI. Time: 2-3 hrs. Files: scripts/run-orchestration.mjs (no code change; just data + invocation). Action: UPDATE product_registry SET construction_eligible = true WHERE product_id = 'flowai'; doppler run -- node scripts/run-orchestration.mjs --product flowai. Observe what fails; document specifically; route to the right Day 2 dispatch. Verification (Victor EOD Day 1): Victor has a concrete failure list pinned to specific files/gates from a real construction-on-flowai attempt. Smallest possible PR; biggest learning per hour.",
+          "rationale": "This option provides the quickest and most informative first PR, allowing Victor to identify and address potential issues early on. It's a low-risk, high-reward approach that sets the stage for subsequent development efforts."
+        }
+      },
+      "overallNotes": "The proposal needs a more robust definition of 'substantial transformation' and a clearer plan for integrating existing VEU products. The self-application aspect should be carefully monitored to prevent unintended consequences.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§2 Quality Dims incomplete",
+            "detail": "Current implementation only covers 6/10 quality dimensions with no jurisdiction handling, violating CA-18 §1's quality guarantee. This risks producing outputs that appear compliant but fail key metrics like accessibility or legal alignment."
+          },
+          {
+            "title": "Construction engine non-functional",
+            "detail": "26 construction attempts aborted with 0 completions (A.8) indicates core S1-S8 gates are failing in production. MVP can't deliver URL-in/URL-out without fixing this first-order failure in src/lib/construction/."
+          },
+          {
+            "title": "Self-application gap",
+            "detail": "flowai.construction_eligible=FALSE (A.5) blocks CA-18 §5's symbiotic principle. Four empty self-runs show FlowAI can't yet improve itself - critical path for long-term viability remains unproven."
+          }
+        ],
+        "worse_than_status_quo": "Rushing MVP without fixing construction aborts could institutionalize broken quality gates, causing FlowAI to mass-produce superficially compliant but substantively flawed outputs at scale - worse than current manual Base44 process with human oversight.",
+        "precedent": "Microsoft Tay AI chatbot (2016) - rushed deployment without proper quality gates led to rapid corruption from user inputs, requiring full shutdown within 16 hours due to unconstrained generation failures."
+      },
+      "rejection_steelman": "The proposal assumes construction engine viability while current evidence shows 100% failure rate (26/26 aborted). Shipping MVP without first proving core transformation capability risks cementing flawed architecture. Prudent engineering demands fixing construction_complete rate to >90% before any UI/API work.",
+      "votes": {
+        "K1": {
+          "key": null,
+          "pick_text": "UI-FIRST: W1 add /api/run-construction route + wire LandingPage.jsx:442 submit to call it. W2 first end-to-end run through UI on a small test product...",
+          "rationale": "Prioritizes visible user-facing progress per CEO directive, though carries risk of construction engine failures derailing later weeks. Best aligns with pre-decided scope in D )."
+        },
+        "K2": {
+          "key": "K2-13-16-WEEKS",
+          "pick_text": "13-16 weeks. Realistic with friction.",
+          "rationale": "Accounts for inevitable delays in debugging 26 construction aborts and self-run payload issues, while staying within original 120-180h estimate range at Victor's 10-15h/week capacity."
+        },
+        "K3": {
+          "key": null,
+          "pick_text": "Replace /api/run.js stub with real /api/run-construction route. Time: 3-5 hrs. Files: src/api/run-construction.js (new POST route...",
+          "rationale": "Unblocks UI integration immediately while providing concrete API artifact for verification. Avoids premature construction engine debugging that could consume Week 1."
+        }
+      },
+      "overallNotes": "While objections are severe, CEO directive forces progress on visible milestones. UI-FIRST path gambles on construction engine being salvageable via later weeks' work.",
+      "invalid_reason": "1/3 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "UI-first assumes working engine",
+            "detail": "The K1 UI-FIRST path wires `/api/run-construction` and LandingPage submission before proving the underlying construction engine can actually complete end-to-end. The proposal itself states there are 26 `construction_attempt_aborted` envelopes and 0 `construction_complete` envelopes, so this sequencing risks building a polished shell around an unresolved failure mode."
+          },
+          {
+            "title": "Demo path can diverge silently",
+            "detail": "The K1 DEMO-RELIABLE-PATH-FIRST option explicitly hard-codes a reliable demo and then generalizes backwards. That creates a high risk of a bifurcated system where the shown path succeeds while the general path remains audit-only or brittle, which undermines the stated goal of a real operator-reachable URL-in/URL-out product."
+          },
+          {
+            "title": "Week-one deliverable is under-specified",
+            "detail": "K3 options talk about emitting `construction_complete.v1`, flipping `construction_eligible`, or replacing `/api/run.js`, but none gives a crisp acceptance criterion for correctness beyond internal envelopes or a single curl. There is no explicit rollback, no negative test, and no guarantee that the verified artifact corresponds to a durable user-visible capability rather than a one-off debug event."
+          }
+        ],
+        "worse_than_status_quo": "If the team picks UI-FIRST or the demo-reliable path and the route returns a preview or stubbed success while the engine still aborts, users will see apparent progress without real construction. That is worse than the current honest audit-only state because it can mislead stakeholders into believing FlowAI is operational when it is not.",
+        "precedent": "The Therac-25 failures are a real-world precedent: a user-facing interface and workflow suggested operation while hidden internal state and insufficient validation produced catastrophic mismatch between perceived and actual behavior."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring this proposal is that it optimizes for visible milestones before the core construction loop is verified. Because the artifact already shows empty self-runs, missing dimensions, and zero end-to-end construction completes, any roadmap that front-loads UI or demo reliability risks institutionalizing a partial system as if it were production-ready. A short deferral to stabilize the engine and define stricter verification would likely reduce rework and prevent confidence from outrunning capability.",
+      "votes": {
+        "K1": {
+          "key": "K1-CONSTRUCTION-LOOP-FIRST",
+          "pick_text": "CONSTRUCTION-LOOP-FIRST: W1-3 construction engine end-to-end against ANY product CLI (debug all aborts; first successful construction_complete). W4-5 UI submit triggers construction. W6-7 FlowAI-on-FlowAI cycle (canonical proof per CA-18 §5). W8-9 honest-gate + Tool Intelligence + dimensions envelope. W10-12 auth + observability + Sentry + polish + demo. Strongest CA-18 §5 alignment; slowest to UI-visible milestone.",
+          "rationale": "This is the least likely to create a deceptive demo because it forces a real construction-complete proof before UI polish. It also aligns best with the canonical self-application requirement in §5, even if it delays visible progress."
+        },
+        "K2": {
+          "key": "K2-13-16-WEEKS",
+          "pick_text": "13-16 weeks. Realistic with friction. Anticipates: (a) the empty-payload self-run debug takes longer than 15h budgeted; (b) auth + Sentry + rate-limit integration has hidden complexity; (c) E2E Playwright on real Vercel deploys requires retry-and-flake-handling work; (d) Victor's 10-15 hrs/wk has weeks where it dips below. Closer to upper-bound prior hours estimate.",
+          "rationale": "Given the documented aborts, empty payloads, and missing call sites, the lower buckets are too optimistic. This range better absorbs engine debug, integration friction, and verification overhead without pretending the remaining work is mostly wiring."
+        },
+        "K3": {
+          "key": "K3-DEBUG-EMPTY-PAYLOAD-SELF-RUN",
+          "pick_text": "Debug empty-payload self-runs first. Time: 4-6 hrs. Files: src/lib/agents/renewal/orchestrator.js + scripts/run-orchestration.mjs (add debug logging). Action: run scripts/run-orchestration.mjs --product flowai with VERBOSE=1; trace where the orchestration_complete payload becomes empty before write. Fix the write path or the envelope construction. Verification (Victor EOD Day 1): 5th flowai self-run produces a governance_record entry with non-null mode/gtmReady/exitReason/finalScore/previewUrl fields. Foundational debug; unblocks §5.",
+          "rationale": "This is the best Day 1 choice because it attacks the specific failure already observed on FlowAI self-runs, instead of adding a new route atop broken output. It produces the most diagnostic value per hour and directly unblocks the self-application loop."
+        }
+      },
+      "overallNotes": "I am not endorsing the roadmap as written; the votes above reflect the least risky options among the listed choices. The proposal still needs stricter acceptance tests tied to durable end-to-end behavior, not just envelopes or UI affordances.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of rollback path",
+            "detail": "The proposal under §D (Pre-decided scope) does not mention a rollback path for changes made by FlowAI, which could lead to irreversible damage if the construction engine or Tool Intelligence service malfunctions."
+          },
+          {
+            "title": "Insufficient testing",
+            "detail": "The proposal mentions E2E Playwright (~20h) but does not specify how comprehensive the testing will be, potentially leaving critical edge cases untested."
+          },
+          {
+            "title": "Risk of demo path divergence",
+            "detail": "The DEMO-RELIABLE-PATH-FIRST option under K1 risks creating a demo path that diverges from the general path, potentially leading to maintenance issues or inconsistencies."
+          }
+        ],
+        "worse_than_status_quo": "If the construction engine fails to produce a construction_complete.v1 envelope and the debug process is prolonged, the project could stall, making the system worse than the status quo by delaying progress without delivering tangible results.",
+        "precedent": "The Theranos case is a real-world precedent where a rushed development process without adequate testing and validation led to significant failures."
+      },
+      "rejection_steelman": "The proposal's aggressive timeline and scope could lead to a rushed implementation that overlooks critical risks or edge cases, potentially resulting in a lower quality product or significant rework down the line.",
+      "votes": {
+        "K1": {
+          "key": "K1-ENGINE-FIRST-FIX-CONSTRUCTION",
+          "pick_text": "ENGINE-FIRST: W1-2 fix the 26 construction_attempt_aborted envelopes on reltwin → produce FIRST construction_complete.v1 envelope via CLI (reveals why construction never finishes). W3-4 add /api/run-construction route + UI wiring. W5-6 honest-gate + Tool Intelligence wiring. W7-8 dimensions envelope + self-application + auth + Sentry. W9-10 E2E + polish + demo. Risk: longer to first UI win but each week's milestone is real construction progress.",
+          "rationale": "This option provides a clear, step-by-step approach that ensures the construction engine is robust before moving to UI integration, reducing the risk of downstream problems."
+        },
+        "K2": {
+          "key": "K2-13-16-WEEKS",
+          "pick_text": "13-16 weeks. Realistic with friction. Anticipates: (a) the empty-payload self-run debug takes longer than 15h budgeted; (b) auth + Sentry + rate-limit integration has hidden complexity; (c) E2E Playwright on real Vercel deploys requires retry-and-flake-handling work; (d) Victor's 10-15 hrs/wk has weeks where it dips below. Closer to upper-bound prior hours estimate.",
+          "rationale": "This timeframe accounts for potential delays and complexities in the development process, providing a more realistic estimate."
+        },
+        "K3": {
+          "key": "K3-FLIP-CONSTRUCTION-ELIGIBLE-AND-RUN",
+          "pick_text": "Flip flowai.construction_eligible=true + run construction CLI on FlowAI. Time: 2-3 hrs. Files: scripts/run-orchestration.mjs (no code change; just data + invocation). Action: UPDATE product_registry SET construction_eligible = true WHERE product_id = 'flowai'; doppler run -- node scripts/run-orchestration.mjs --product flowai. Observe what fails; document specifically; route to the right Day 2 dispatch. Verification (Victor EOD Day 1): Victor has a concrete failure list pinned to specific files/gates from a real construction-on-flowai attempt. Smallest possible PR; biggest learning per hour.",
+          "rationale": "This option provides immediate learning by attempting to run construction on FlowAI itself, highlighting potential issues early on."
+        }
+      },
+      "overallNotes": "The proposal is ambitious and requires careful execution to meet its goals without compromising quality.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§2 Quality Dims FAIL unaddressed",
+            "detail": "Verified facts table lists §2 Quality Dims at FAIL (~15%) with 6/10 dimensions silently omitted and no jurisdiction column, yet no K1 option sequences dimension envelope restoration before exposing UI submit at LandingPage.jsx:442."
+          },
+          {
+            "title": "26 aborts ignored in UI-FIRST",
+            "detail": "Proposal states 26 construction-class envelopes on reltwin with 0 construction_complete and engine starts but never finishes, but UI-FIRST begins /api/run-construction wiring without first resolving any S8 Phase B abort via ConstructionEngine.js."
+          },
+          {
+            "title": "§5 self-application bypassed",
+            "detail": "CA-18 §5 requires FlowAI to apply §29 Build/Wire Construction Engine and §10 Self-Audit to its own source tree, but roadmap budgets only 15h self-application debug after UI work and sets flowai.construction_eligible=FALSE."
+          }
+        ],
+        "worse_than_status_quo": "UI-FIRST deploys the current /api/run.js stub that fabricates fake URLs (line 33-35) to production, so users receive non-deployable previewUrls instead of the current Base44 partial system that at least preserves real artifacts.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The verified facts show §1 Core Loop at only 20-30% with zero PRs across 18 runs and construction never completing end-to-end; shipping any UI-exposed FlowAI MVP before a single construction_complete.v1 envelope exists risks violating the substantial-transformation guarantee and honest-assessment obligation in CA-18 §1, so deferral until the engine is proven on reltwin is the lower-risk path.",
+      "votes": {
+        "K1": {
+          "key": "K1-CONSTRUCTION-LOOP-FIRST",
+          "pick_text": "CONSTRUCTION-LOOP-FIRST: W1-3 construction engine end-to-end against ANY product CLI (debug all aborts; first successful construction_complete). W4-5 UI submit triggers construction. W6-7 FlowAI-on-FlowAI cycle (canonical proof per CA-18 §5). W8-9 honest-gate + Tool Intelligence + dimensions envelope. W10-12 auth + observability + Sentry + polish + demo. Strongest CA-18 §5 alignment; slowest to UI-visible milestone.",
+          "rationale": "Prioritizes fixing the zero construction_complete state before any UI exposure."
+        },
+        "K2": {
+          "key": "K2-13-16-WEEKS",
+          "pick_text": "13-16 weeks. Realistic with friction. Anticipates: (a) the empty-payload self-run debug takes longer than 15h budgeted; (b) auth + Sentry + rate-limit integration has hidden complexity; (c) E2E Playwright on real Vercel deploys requires retry-and-flake-handling work; (d) Victor's 10-15 hrs/wk has weeks where it dips below. Closer to upper-bound prior hours estimate.",
+          "rationale": "Matches the documented partial states and debug risks."
+        },
+        "K3": {
+          "key": "K3-FIRST-CONSTRUCTION-COMPLETE-ENVELOPE",
+          "pick_text": "Produce first construction_complete.v1 envelope. Time: 4-6 hrs. Files: src/lib/construction/ConstructionEngine.js + src/lib/construction/gates/S8PhaseB.js + scripts/run-orchestration.mjs. Action: run construction CLI on reltwin (already has 26 attempt_aborted); add VERBOSE logging at each gate; identify why S8 Phase B aborts; fix or downgrade requirement to MVP-acceptable. Emit construction_complete.v1 with class + filesChanged + linesChanged + scoreDelta. Verification (Victor EOD Day 1): construction_complete.v1 entry visible in product_ssot.governance_record for reltwin. CA-17 §29 first end-to-end proof.",
+          "rationale": "Directly targets the documented 0 construction_complete failure mode."
+        }
+      },
+      "overallNotes": "All K1 paths still defer full §2 dimension coverage; consider adding an explicit dimension-restoration gate.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "K1",
+      "topic": "K1 — FLOWAI-FIRST week-by-week roadmap sequencing. Pick the shape that gives Victor a Victor-verifiable milestone each week and reaches operator-reachable URL-in/URL-out via UI fastest with lowest deferred-risk. The roadmap must produce a Victor-verifiable result every week (open browser, click, see new URL or score delta). The 5 VEU products on Base44 are PROCESSED BY FlowAI, not rebuilt.",
+      "options": [
+        {
+          "key": "K1-UI-FIRST-WIRING",
+          "text": "UI-FIRST: W1 add /api/run-construction route + wire LandingPage.jsx:442 submit to call it. W2 first end-to-end run through UI on a small test product (preview URL returned). W3 pre-run honest-assessment gate + trajectory reporting. W4 attachToolIntelligenceService + first tool.selection envelopes. W5 dimensions_contributing[] envelope + KNOWN-GAP disclosure UI. W6 flip flowai.construction_eligible + debug self-run empty payloads. W7 E2E Playwright + first FlowAI-on-FlowAI cycle. W8 auth + Sentry + rate-limit + demo extract. Risk: relies on construction engine working when invoked."
+        },
+        {
+          "key": "K1-ENGINE-FIRST-FIX-CONSTRUCTION",
+          "text": "ENGINE-FIRST: W1-2 fix the 26 construction_attempt_aborted envelopes on reltwin → produce FIRST construction_complete.v1 envelope via CLI (reveals why construction never finishes). W3-4 add /api/run-construction route + UI wiring. W5-6 honest-gate + Tool Intelligence wiring. W7-8 dimensions envelope + self-application + auth + Sentry. W9-10 E2E + polish + demo. Risk: longer to first UI win but each week's milestone is real construction progress."
+        },
+        {
+          "key": "K1-CONSTRUCTION-LOOP-FIRST",
+          "text": "CONSTRUCTION-LOOP-FIRST: W1-3 construction engine end-to-end against ANY product CLI (debug all aborts; first successful construction_complete). W4-5 UI submit triggers construction. W6-7 FlowAI-on-FlowAI cycle (canonical proof per CA-18 §5). W8-9 honest-gate + Tool Intelligence + dimensions envelope. W10-12 auth + observability + Sentry + polish + demo. Strongest CA-18 §5 alignment; slowest to UI-visible milestone."
+        },
+        {
+          "key": "K1-DEMO-RELIABLE-PATH-FIRST",
+          "text": "DEMO-RELIABLE-PATH-FIRST: W1-2 hard-code one reliable demo (FlowAI processes one specific URL with known good outcome → guaranteed new URL via UI). W3-4 generalize backwards (UI accepts any URL; demo path for known-reliable URLs). W5-7 honest PATH-B for unknown URLs (audit-only + KNOWN-GAP disclosure). W8-9 honest-gate + Tool Intelligence + dimensions. W10-12 auth + Sentry + investor demo. Risk: demo path may diverge from general path."
+        }
+      ],
+      "draftedKey": "K1-UI-FIRST-WIRING"
+    },
+    {
+      "id": "K2",
+      "topic": "K2 — Total weeks to FlowAI MVP production-ready at Victor's 10-15 hrs/week pace using v0.dev + Claude Code + Codex spot-check + CodeRabbit + Vercel Checks + Sentry. Reference: prior Panel cleared K2-120-180-HRS realistic mid-range. 120h ÷ 12h/wk = 10w; 180h ÷ 12h/wk = 15w. Pick the bucket that fits the chosen K1 sequencing + Victor's expected learning curve + realistic AI-tool friction.",
+      "options": [
+        {
+          "key": "K2-8-10-WEEKS",
+          "text": "8-10 weeks. Aggressive but plausible if Victor hits 15 hrs/wk consistently AND AI tools (v0.dev + Claude Code) ship work cleanly first try AND no major debug rabbit-holes (e.g. empty-payload self-runs resolve quickly). Likely only achievable with K1-UI-FIRST-WIRING (skip engine-first detour)."
+        },
+        {
+          "key": "K2-10-13-WEEKS",
+          "text": "10-13 weeks. Realistic mid-range. 120-180 hours at 10-15 hrs/wk = 8-18 weeks; 10-13 is the median with normal friction. Allows time for the 26 construction_attempt_aborted debug + 1-2 unplanned issues without slipping the timeline. Best match for prior Panel hour estimate."
+        },
+        {
+          "key": "K2-13-16-WEEKS",
+          "text": "13-16 weeks. Realistic with friction. Anticipates: (a) the empty-payload self-run debug takes longer than 15h budgeted; (b) auth + Sentry + rate-limit integration has hidden complexity; (c) E2E Playwright on real Vercel deploys requires retry-and-flake-handling work; (d) Victor's 10-15 hrs/wk has weeks where it dips below. Closer to upper-bound prior hours estimate."
+        },
+        {
+          "key": "K2-16-20-WEEKS",
+          "text": "16-20 weeks. Pessimistic. The 2/8 prior Panel dissent that voted K2-250+-HRS implies upper-end ~250h ÷ 12h/wk ≈ 21 weeks. Reflects the reality that \"production-ready\" includes things AI underestimates: cross-browser testing, error states, rollback paths, observability tuning, RLS hardening, dependency-CVE handling. Slowest but most likely."
+        }
+      ],
+      "draftedKey": "K2-10-13-WEEKS"
+    },
+    {
+      "id": "K3",
+      "topic": "K3 — WEEK 1 DAY 1 actual dispatch. NOT planning. NOT scoping. ACTUAL CODE. Pick the concrete first PR — the one that produces a tangible artifact Victor can verify by EOD Day 1. Each option states the exact files + exact action + exact verification + exact time budget.",
+      "options": [
+        {
+          "key": "K3-REPLACE-API-RUN-STUB",
+          "text": "Replace /api/run.js stub with real /api/run-construction route. Time: 3-5 hrs. Files: src/api/run-construction.js (new); src/api/run.js (deprecate). Action: new POST route accepts { url, mode }, calls runOrchestration from src/lib/agents/renewal/orchestrator.js with { product: ensureProductRegistryRow(url), mode, gtmTarget: 95 }, streams progress via SSE. Verification (Victor EOD Day 1): curl localhost:5173/api/run-construction with FlowAI's own URL; receive progress stream; confirm orchestration_complete envelope writes to product_ssot with non-null payload. Unblocks UI wiring (next PR)."
+        },
+        {
+          "key": "K3-DEBUG-EMPTY-PAYLOAD-SELF-RUN",
+          "text": "Debug empty-payload self-runs first. Time: 4-6 hrs. Files: src/lib/agents/renewal/orchestrator.js + scripts/run-orchestration.mjs (add debug logging). Action: run scripts/run-orchestration.mjs --product flowai with VERBOSE=1; trace where the orchestration_complete payload becomes empty before write. Fix the write path or the envelope construction. Verification (Victor EOD Day 1): 5th flowai self-run produces a governance_record entry with non-null mode/gtmReady/exitReason/finalScore/previewUrl fields. Foundational debug; unblocks §5."
+        },
+        {
+          "key": "K3-FIRST-CONSTRUCTION-COMPLETE-ENVELOPE",
+          "text": "Produce first construction_complete.v1 envelope. Time: 4-6 hrs. Files: src/lib/construction/ConstructionEngine.js + src/lib/construction/gates/S8PhaseB.js + scripts/run-orchestration.mjs. Action: run construction CLI on reltwin (already has 26 attempt_aborted); add VERBOSE logging at each gate; identify why S8 Phase B aborts; fix or downgrade requirement to MVP-acceptable. Emit construction_complete.v1 with class + filesChanged + linesChanged + scoreDelta. Verification (Victor EOD Day 1): construction_complete.v1 entry visible in product_ssot.governance_record for reltwin. CA-17 §29 first end-to-end proof."
+        },
+        {
+          "key": "K3-FLIP-CONSTRUCTION-ELIGIBLE-AND-RUN",
+          "text": "Flip flowai.construction_eligible=true + run construction CLI on FlowAI. Time: 2-3 hrs. Files: scripts/run-orchestration.mjs (no code change; just data + invocation). Action: UPDATE product_registry SET construction_eligible = true WHERE product_id = 'flowai'; doppler run -- node scripts/run-orchestration.mjs --product flowai. Observe what fails; document specifically; route to the right Day 2 dispatch. Verification (Victor EOD Day 1): Victor has a concrete failure list pinned to specific files/gates from a real construction-on-flowai attempt. Smallest possible PR; biggest learning per hour."
+        }
+      ],
+      "draftedKey": "K3-FLIP-CONSTRUCTION-ELIGIBLE-AND-RUN"
+    }
+  ]
+}
