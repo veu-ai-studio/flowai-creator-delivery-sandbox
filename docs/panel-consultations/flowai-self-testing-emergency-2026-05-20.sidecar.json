@@ -1,0 +1,840 @@
+{
+  "schema": "emergency-panel.sidecar.v1",
+  "dispatch": "W6 Emergency Panel — FlowAI self-testing capability (2026-05-20)",
+  "startedAt": "2026-05-20T06:45:50.696Z",
+  "finishedAt": "2026-05-20T06:47:27.473Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 29782,
+  "tally": {
+    "engagedTotal": 8,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 1,
+    "perQuestion": {
+      "J1": {
+        "J1-FLAW": 8,
+        "J1-ACCEPTABLE": 0,
+        "J1-DEFERRABLE": 0,
+        "J1-REFRAME": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J2": {
+        "J2-UI-CONSTRUCT": 7,
+        "J2-ENGINE-MERGE": 0,
+        "J2-NEW-PRODUCT-ROUTE": 0,
+        "J2-MANUAL-MIGRATION": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "J3": {
+        "J3-SELF-FIRST": 4,
+        "J3-PARALLEL": 1,
+        "J3-EXTERNAL-FIRST": 0,
+        "J3-MILESTONE-GATED": 3,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J4": {
+        "J4-INVALIDATES": 5,
+        "J4-VALID-ENGINE-PROOF": 1,
+        "J4-VALID-INTERIM": 0,
+        "J4-INVALID-AND-MISLEADING": 2,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 30,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "§5 self-application creates infinite regress",
+        "detail": "CA-18 §5 mandates FlowAI applies to its own development, but if FlowAI must improve itself before being considered functional, and it needs to be functional to improve itself, the system enters an unresolvable bootstrap paradox. The spec provides no escape hatch or initial bootstrap mechanism."
+      },
+      {
+        "slot": 1,
+        "title": "PATH B violates core §1 promise",
+        "detail": "The proposal admits PATH B produces no new URL despite CA-18 §1 explicitly stating 'Output: ALWAYS a new, separate, deployable URL'. This isn't a minor gap - it's a fundamental violation of the core product definition that the UI actively advertises but cannot deliver."
+      },
+      {
+        "slot": 1,
+        "title": "No rollback for self-improvement failures",
+        "detail": "CA-18 §5 requires FlowAI to improve its own source tree via §29 Build/Wire Construction Engine, but neither §5 nor the proposal defines what happens when FlowAI damages itself during self-improvement. Unlike external products where both URLs are preserved, self-modification could brick the platform."
+      },
+      {
+        "slot": 1,
+        "title": "Proof validation relies on deceptive evidence",
+        "detail": "The proposal reveals PATH A testing uses 'Claude-Code-operated CLI scripts' - an external LLM agent manually operating FlowAI, not FlowAI operating itself. This fundamentally misrepresents the product's actual capabilities to stakeholders reviewing proof artifacts."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of UI",
+        "detail": "The current implementation of FlowAI does not have a functional UI that can complete a full improvement cycle, which contradicts the promise made in CA-18 §1. The UI at `flowai-dun.vercel.app/flowai` only accepts URL input and runs a partial audit, but does not generate fixes or deploy a new URL."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "The current testing approach relies on CLI scripts invoked through Claude Code agents, which may not be representative of real-world usage and may not exercise the product surface as intended. This could lead to a false sense of security and mask potential issues with the product."
+      },
+      {
+        "slot": 3,
+        "title": "Inconsistent Architecture",
+        "detail": "The existence of two separate paths, PATH A and PATH B, may indicate an inconsistent architecture that could lead to maintenance and scalability issues. The lack of a unified canonical FlowAI Engine that can be invoked by any caller (UI, CLI, API, agent) may cause problems in the long run."
+      },
+      {
+        "slot": 4,
+        "title": "Incomplete UI Integration",
+        "detail": "The proposal does not address the integration of the Construction Engine with the UI. §10 Self-Audit engine is functional, but there is no mechanism to trigger the Construction Engine from the UI, which is a critical gap."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of Operator Control",
+        "detail": "The current design lacks operator control over the improvement cycle. Operators cannot initiate or control the construction process from the UI, which contradicts the user agency principle in CA-18 §1."
+      },
+      {
+        "slot": 4,
+        "title": "Potential for Infinite Self-Loop",
+        "detail": "The proposal suggests prioritizing FlowAI-on-FlowAI improvements, which could lead to an infinite self-loop. This focus may delay the platform's ability to improve external products, limiting its practical utility."
+      },
+      {
+        "slot": 5,
+        "title": "PATH B audit-only",
+        "detail": "PATH B currently only performs an audit and does not generate a new deployable URL, which contradicts CA-18 §1."
+      },
+      {
+        "slot": 5,
+        "title": "No UI-driven construction",
+        "detail": "There is no operator-reachable path through the UI to complete a full improvement cycle as required by CA-18 §1."
+      },
+      {
+        "slot": 5,
+        "title": "Self-application gap",
+        "detail": "FlowAI's self-application to its own development process (CA-18 §5) is not fully realized through the UI, creating a gap in the symbiotic relationship."
+      },
+      {
+        "slot": 6,
+        "title": "Conflicting definitions of 'product'",
+        "detail": "The document uses 'product' to refer to both FlowAI itself and the external URLs it processes. This ambiguity, especially in J4, makes it difficult to assess whether the 'product' is being adequately tested."
+      },
+      {
+        "slot": 6,
+        "title": "Unclear 'substantial transformation' metric",
+        "detail": "CA-18 §1 emphasizes 'substantial transformation' as a quality guarantee, but the definition of 'substantial' is subjective and lacks concrete metrics. This makes it difficult to objectively determine whether FlowAI is meeting its promise, especially in self-testing scenarios."
+      },
+      {
+        "slot": 6,
+        "title": "Risk of over-optimization on self-loop",
+        "detail": "Focusing solely on FlowAI-on-FlowAI (J3) could lead to over-optimization for a narrow use case, potentially neglecting the broader range of inputs and edge cases encountered with external products. This could result in a system that performs well on itself but poorly on real-world applications."
+      },
+      {
+        "slot": 6,
+        "title": "Lack of rollback strategy for UI wiring",
+        "detail": "Wiring the UI directly to the Construction Engine (J2) without a clear rollback strategy poses a risk. If the integration introduces bugs or instability, it could disrupt the entire FlowAI workflow, including the CLI-based construction path."
+      },
+      {
+        "slot": 7,
+        "title": "PATH B violates §1 output requirement",
+        "detail": "CA-18 §1 mandates 'Output: ALWAYS a new, separate, deployable URL' for any input. PATH B's audit-only output without a deployable URL fundamentally fails this core promise. The proposal acknowledges this gap but offers no interim mitigation."
+      },
+      {
+        "slot": 7,
+        "title": "Self-application failure in §5",
+        "detail": "The absence of UI-path self-improvement violates CA-18 §5's requirement that FlowAI applies to its own development. PATH A's CLI dependency creates a special-case exemption where FlowAI-on-FlowAI requires non-canonical operator intervention, undermining the symbiotic principle."
+      },
+      {
+        "slot": 7,
+        "title": "Proof validity misrepresentation risk",
+        "detail": "Reporting external product improvements via PATH A while the UI remains broken creates false product readiness signals. This risks stakeholder deception by demonstrating capabilities through non-product-surface mechanisms (Claude Code CLI), contravening honest assessment obligations in §1."
+      },
+      {
+        "slot": 7,
+        "title": "Architectural fragmentation",
+        "detail": "Maintaining separate PATH A (construction) and PATH B (audit) engines violates §5's symbiotic principle by preventing knowledge transfer between internal and external improvement cycles. Findings from PATH B audits don't feed into PATH A's construction logic, creating disjointed learning loops."
+      },
+      {
+        "slot": 8,
+        "title": "Audit-only breaks §1 promise",
+        "detail": "In PATH B, the UI accepts a URL but terminates at findings instead of producing a new deployable URL. That directly conflicts with CA-18 §1’s explicit “Output: ALWAYS a new, separate, deployable URL,” so the UI is not implementing the advertised product promise. The proposal treats this as a gap, but it may actually be a separate product class (audit) mislabeled as improvement."
+      },
+      {
+        "slot": 8,
+        "title": "Self-loop not proven in UI",
+        "detail": "CA-18 §5 says FlowAI applies to its own development process, including its own UI and source tree. The proposal admits the current self-improvement path is CLI-only via Claude Code, which means the canonical self-application is not reachable through the product surface. That makes the self-reference claim operationally unverified and creates a mismatch between canonical language and user-facing behavior."
+      },
+      {
+        "slot": 8,
+        "title": "Registry adoption adds hidden coupling",
+        "detail": "The proposed “adopt as product” / product_registry-based path in J2 risks adding manual classification just to make URL improvement possible. That injects operator judgment and schema coupling into what should be a direct URL-in/URL-out flow, increasing the chance of misregistration, stale registry state, and ambiguous provenance for outputs. It also creates a new failure mode where the system can appear to support arbitrary URLs only after a non-obvious manual step."
+      },
+      {
+        "slot": 9,
+        "title": "PATH B contradicts CA-18 §1",
+        "detail": "The current UI implementation (PATH B) does not produce a new deployable URL, violating the canonical promise of 'any URL in -> new deployable URL out'."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of self-improvement capability",
+        "detail": "FlowAI cannot improve its own UI through its own UI, contradicting CA-18 §5 which states that FlowAI applies to its own development process."
+      },
+      {
+        "slot": 9,
+        "title": "CLI workaround is not product-level proof",
+        "detail": "The current testing approach using CLI scripts invoked through Claude Code agents does not exercise the product surface, potentially invalidating the proof that FlowAI works as a product."
+      },
+      {
+        "slot": 10,
+        "title": "§1 output guarantee unmet by PATH B",
+        "detail": "CA-18 §1 explicitly requires 'ALWAYS a new, separate, deployable URL' for any input URL, yet PATH B (UI arbitrary-URL submission) only runs §10 Self-Audit and terminates without invoking the §29 Construction Engine or producing a new URL; the audit-only short-circuit directly violates the 'substantial transformation per run' metric."
+      },
+      {
+        "slot": 10,
+        "title": "§5 self-application lacks UI path",
+        "detail": "CA-18 §5 mandates FlowAI-on-FlowAI via the §29 Build/Wire engine and §11 Clearance Protocol, but the only working path (PATH A) requires Claude-Code CLI invocation outside the operator-facing UI at flowai-dun.vercel.app/flowai, collapsing the published 'self-application is canonical operating mode' claim."
+      },
+      {
+        "slot": 10,
+        "title": "8-Step Pipeline omits UI wiring",
+        "detail": "The canonical 8-step pipeline (§9) places 'build' (step 3) and 'deploy' (step 5) after research/design, yet no mechanism connects the UI form input to product_registry registration or S1-S8 execution; the Self-Governance Layer (§10) components trigger only on existing registered products, leaving arbitrary-URL flows stranded at audit."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "J1": {
+      "verdict": "UNANIMOUS_J1-FLAW",
+      "detail": "8 of 8 ENGAGED on J1-FLAW (unanimous)",
+      "topKey": "J1-FLAW",
+      "topCount": 8
+    },
+    "J2": {
+      "verdict": "QUORUM_PLURALITY_J2-UI-CONSTRUCT",
+      "detail": "7 of 8 on J2-UI-CONSTRUCT (≥ quorum 7/10)",
+      "topKey": "J2-UI-CONSTRUCT",
+      "topCount": 7
+    },
+    "J3": {
+      "verdict": "PLURALITY_J3-SELF-FIRST",
+      "detail": "4 of 8 on J3-SELF-FIRST (below 7/10 quorum)",
+      "topKey": "J3-SELF-FIRST",
+      "topCount": 4
+    },
+    "J4": {
+      "verdict": "PLURALITY_J4-INVALIDATES",
+      "detail": "5 of 8 on J4-INVALIDATES (below 7/10 quorum)",
+      "topKey": "J4-INVALIDATES",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.75,
+    "alignedCount": 24,
+    "totalPossible": 32,
+    "draftedQs": [
+      "J1",
+      "J2",
+      "J3",
+      "J4"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 75.0 %, distinct objections 30"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§5 self-application creates infinite regress",
+            "detail": "CA-18 §5 mandates FlowAI applies to its own development, but if FlowAI must improve itself before being considered functional, and it needs to be functional to improve itself, the system enters an unresolvable bootstrap paradox. The spec provides no escape hatch or initial bootstrap mechanism."
+          },
+          {
+            "title": "PATH B violates core §1 promise",
+            "detail": "The proposal admits PATH B produces no new URL despite CA-18 §1 explicitly stating 'Output: ALWAYS a new, separate, deployable URL'. This isn't a minor gap - it's a fundamental violation of the core product definition that the UI actively advertises but cannot deliver."
+          },
+          {
+            "title": "No rollback for self-improvement failures",
+            "detail": "CA-18 §5 requires FlowAI to improve its own source tree via §29 Build/Wire Construction Engine, but neither §5 nor the proposal defines what happens when FlowAI damages itself during self-improvement. Unlike external products where both URLs are preserved, self-modification could brick the platform."
+          },
+          {
+            "title": "Proof validation relies on deceptive evidence",
+            "detail": "The proposal reveals PATH A testing uses 'Claude-Code-operated CLI scripts' - an external LLM agent manually operating FlowAI, not FlowAI operating itself. This fundamentally misrepresents the product's actual capabilities to stakeholders reviewing proof artifacts."
+          }
+        ],
+        "worse_than_status_quo": "Implementing CA-18 §5's self-improvement mandate without proper safeguards could result in FlowAI corrupting its own codebase during an improvement cycle, leaving the platform non-functional with no automated recovery path - worse than simply having limited functionality.",
+        "precedent": "The Therac-25 radiation therapy machine's software updates introduced lethal bugs because the system lacked proper safeguards when modifying its own operational parameters - similar to FlowAI modifying its own source without defined failure boundaries."
+      },
+      "rejection_steelman": "The proposal should be rejected because it attempts to paper over a fundamental architectural flaw with process band-aids. FlowAI's UI cannot deliver its core §1 promise (URL in -> new URL out), and the proposed fixes either require massive architectural changes or perpetuate the current deception of using external LLM agents to simulate functionality. The platform should first be architected to actually work through its own UI before any self-improvement capabilities are considered.",
+      "votes": {
+        "J1": {
+          "key": "J1-FLAW",
+          "pick_text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed.",
+          "rationale": "The specification is unambiguous - 'ALWAYS a new, separate, deployable URL' leaves no room for audit-only paths to claim compliance with §1."
+        },
+        "J2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All options assume the Construction Engine is production-ready for arbitrary URLs, but the proposal admits it only works via 'Claude-Code-operated CLI scripts' - none address the fundamental issue that the engine itself may not be ready for UI integration."
+        },
+        "J3": {
+          "key": "J3-SELF-FIRST",
+          "pick_text": "YES, self-first. §5 explicitly makes FlowAI-on-FlowAI canonical. A platform that cannot improve itself through its own UI has not yet demonstrated the §1 promise; testing external products before the self-test is theatre. Lock external proof until self-loop closes.",
+          "rationale": "If FlowAI cannot improve itself through its own UI, it has not proven it can improve anything - external tests would be meaningless theater when the core loop is broken."
+        },
+        "J4": {
+          "key": "J4-INVALID-AND-MISLEADING",
+          "pick_text": "Worse than invalid — actively misleading. Reporting \"FlowAI improved product X\" when the only invocation path was a Claude-Code-operated CLI builds false expectations among reviewers/stakeholders that the UI works. Either (a) stop calling these runs \"FlowAI improvement cycles\" until the UI closes the loop, or (b) explicitly mark every artifact \"produced via CLI; UI does not yet support this\".",
+          "rationale": "Using an external LLM to manually operate CLI scripts fundamentally misrepresents the product's capabilities - stakeholders believe FlowAI is self-operating when it's actually being puppeted by Claude."
+        }
+      },
+      "overallNotes": "The proposal reveals FlowAI is essentially non-functional as specified in CA-18 §1, relying on external LLM agents to simulate capabilities it doesn't possess through its actual product surface.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of UI",
+            "detail": "The current implementation of FlowAI does not have a functional UI that can complete a full improvement cycle, which contradicts the promise made in CA-18 §1. The UI at `flowai-dun.vercel.app/flowai` only accepts URL input and runs a partial audit, but does not generate fixes or deploy a new URL."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "The current testing approach relies on CLI scripts invoked through Claude Code agents, which may not be representative of real-world usage and may not exercise the product surface as intended. This could lead to a false sense of security and mask potential issues with the product."
+          },
+          {
+            "title": "Inconsistent Architecture",
+            "detail": "The existence of two separate paths, PATH A and PATH B, may indicate an inconsistent architecture that could lead to maintenance and scalability issues. The lack of a unified canonical FlowAI Engine that can be invoked by any caller (UI, CLI, API, agent) may cause problems in the long run."
+          }
+        ],
+        "worse_than_status_quo": "If the current implementation of FlowAI is released without a functional UI that can complete a full improvement cycle, it may lead to user frustration and disappointment, ultimately making the system worse than the status quo. Users may expect a seamless experience, but instead, they will be faced with a product that requires CLI workarounds or manual intervention.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it does not provide a clear plan for addressing the fundamental flaws in the current implementation of FlowAI. The lack of a functional UI and the inconsistent architecture may lead to significant problems down the line, and the current testing approach may not be sufficient to ensure the product works as intended. It is better to take the time to address these issues now rather than risking a failed product launch.",
+      "votes": {
+        "J1": {
+          "key": "J1-FLAW",
+          "pick_text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed.",
+          "rationale": "PATH B as audit-only does not meet the promise made in CA-18 §1, and it is essential to fix this flaw to ensure the product works as intended."
+        },
+        "J2": {
+          "key": "J2-UI-CONSTRUCT",
+          "pick_text": "Wire the UI submit-URL form to the existing Construction Engine (CA-17 S1-S8) end-to-end: URL input -> S1 baseline -> S2-S7 transform -> S8 deploy-to-new-URL, with progress streamed to the UI. No new architecture; activate what already exists per CA-17 + remove the audit-only short-circuit in PATH B.",
+          "rationale": "This option seems to be the most straightforward way to address the issue, as it leverages existing architecture and removes the need for CLI workarounds."
+        },
+        "J3": {
+          "key": "J3-SELF-FIRST",
+          "pick_text": "YES, self-first. §5 explicitly makes FlowAI-on-FlowAI canonical. A platform that cannot improve itself through its own UI has not yet demonstrated the §1 promise; testing external products before the self-test is theatre. Lock external proof until self-loop closes.",
+          "rationale": "It is essential to ensure that FlowAI can improve itself before testing external products, as this demonstrates the product's ability to work as intended and builds trust in its capabilities."
+        },
+        "J4": {
+          "key": "J4-INVALIDATES",
+          "pick_text": "INVALIDATES the proof. FlowAI's product surface is the UI per CA-18 §1 (\"any URL in -> new deployable URL out\"). Cycles run via Claude Code CLI workarounds prove only that the engine library functions, not that the product exists. A product that requires an LLM agent operator to bypass its own UI is not yet a product.",
+          "rationale": "The current testing approach does not provide valid evidence that the product works as intended, as it relies on CLI workarounds and does not exercise the product surface through the UI."
+        }
+      },
+      "overallNotes": "The proposal highlights significant issues with the current implementation of FlowAI, and it is essential to address these flaws before proceeding with the product launch. The lack of a functional UI and the inconsistent architecture may lead to significant problems down the line, and the current testing approach may not be sufficient to ensure the product works as intended.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Incomplete UI Integration",
+            "detail": "The proposal does not address the integration of the Construction Engine with the UI. §10 Self-Audit engine is functional, but there is no mechanism to trigger the Construction Engine from the UI, which is a critical gap."
+          },
+          {
+            "title": "Lack of Operator Control",
+            "detail": "The current design lacks operator control over the improvement cycle. Operators cannot initiate or control the construction process from the UI, which contradicts the user agency principle in CA-18 §1."
+          },
+          {
+            "title": "Potential for Infinite Self-Loop",
+            "detail": "The proposal suggests prioritizing FlowAI-on-FlowAI improvements, which could lead to an infinite self-loop. This focus may delay the platform's ability to improve external products, limiting its practical utility."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's focus on self-improvement could lead to a scenario where FlowAI becomes highly optimized for improving itself but ineffective at improving external products, making it less useful than the current status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it prioritizes self-improvement over external product improvement, which contradicts the platform's mission to democratize AI-powered product creation for a global audience. The current design also lacks critical UI integration and operator control, making it incomplete and impractical.",
+      "votes": {
+        "J1": {
+          "key": "J1-FLAW",
+          "pick_text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed.",
+          "rationale": "The core promise of FlowAI is to produce a new, improved URL. An audit-only path does not fulfill this promise and should be considered a fundamental flaw."
+        },
+        "J2": {
+          "key": "J2-UI-CONSTRUCT",
+          "pick_text": "Wire the UI submit-URL form to the existing Construction Engine (CA-17 S1-S8) end-to-end: URL input -> S1 baseline -> S2-S7 transform -> S8 deploy-to-new-URL, with progress streamed to the UI. No new architecture; activate what already exists per CA-17 + remove the audit-only short-circuit in PATH B.",
+          "rationale": "This option leverages existing capabilities and integrates the Construction Engine with the UI, addressing the critical gap in the current design."
+        },
+        "J3": {
+          "key": "J3-PARALLEL",
+          "pick_text": "No — self-loop and external-loop should proceed in parallel. Self-loop matures the engine; external-loop matures the I/O surface (jurisdictional declarations, deploy-target diversity, finding-source breadth). Each surfaces different defects.",
+          "rationale": "Parallel development allows for a more balanced and comprehensive testing approach, ensuring that FlowAI is effective at improving both itself and external products."
+        },
+        "J4": {
+          "key": "J4-INVALIDATES",
+          "pick_text": "INVALIDATES the proof. FlowAI's product surface is the UI per CA-18 §1 (\"any URL in -> new deployable URL out\"). Cycles run via Claude Code CLI workarounds prove only that the engine library functions, not that the product exists. A product that requires an LLM agent operator to bypass its own UI is not yet a product.",
+          "rationale": "The current testing approach does not validate the product's UI, which is a critical component of FlowAI's promise. Therefore, it invalidates the proof that FlowAI works as a product."
+        }
+      },
+      "overallNotes": "The proposal has significant gaps in UI integration and operator control, which need to be addressed for FlowAI to fulfill its promise.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "PATH B audit-only",
+            "detail": "PATH B currently only performs an audit and does not generate a new deployable URL, which contradicts CA-18 §1."
+          },
+          {
+            "title": "No UI-driven construction",
+            "detail": "There is no operator-reachable path through the UI to complete a full improvement cycle as required by CA-18 §1."
+          },
+          {
+            "title": "Self-application gap",
+            "detail": "FlowAI's self-application to its own development process (CA-18 §5) is not fully realized through the UI, creating a gap in the symbiotic relationship."
+          }
+        ],
+        "worse_than_status_quo": "If PATH B remains audit-only, users will be misled into believing they are using a fully functional product when they are not, leading to dissatisfaction and loss of trust.",
+        "precedent": "No precedent known where a product promised a full improvement cycle but delivered only an audit tool."
+      },
+      "rejection_steelman": "Rejecting the proposal allows for a thorough re-evaluation of the architecture to ensure it aligns with the canonical promise of CA-18 §1, preventing future misalignments and user disappointment.",
+      "votes": {
+        "J1": {
+          "key": "J1-FLAW",
+          "pick_text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed.",
+          "rationale": "PATH B must be fixed to align with the canonical promise."
+        },
+        "J2": {
+          "key": "J2-UI-CONSTRUCT",
+          "pick_text": "Wire the UI submit-URL form to the existing Construction Engine (CA-17 S1-S8) end-to-end: URL input -> S1 baseline -> S2-S7 transform -> S8 deploy-to-new-URL, with progress streamed to the UI. No new architecture; activate what already exists per CA-17 + remove the audit-only short-circuit in PATH B.",
+          "rationale": "This option leverages existing architecture to fulfill the canonical promise without introducing new complexity."
+        },
+        "J3": {
+          "key": "J3-SELF-FIRST",
+          "pick_text": "YES, self-first. §5 explicitly makes FlowAI-on-FlowAI canonical. A platform that cannot improve itself through its own UI has not yet demonstrated the §1 promise; testing external products before the self-test is theatre. Lock external proof until self-loop closes.",
+          "rationale": "Ensuring FlowAI can improve itself through its UI is a critical proof of concept before external testing."
+        },
+        "J4": {
+          "key": "J4-INVALIDATES",
+          "pick_text": "INVALIDATES the proof. FlowAI's product surface is the UI per CA-18 §1 (\"any URL in -> new deployable URL out\"). Cycles run via Claude Code CLI workarounds prove only that the engine library functions, not that the product exists. A product that requires an LLM agent operator to bypass its own UI is not yet a product.",
+          "rationale": "The current testing approach does not validate the product as a whole, only the engine."
+        }
+      },
+      "overallNotes": "The proposal must be re-evaluated to ensure alignment with CA-18 §1 and §5.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Conflicting definitions of 'product'",
+            "detail": "The document uses 'product' to refer to both FlowAI itself and the external URLs it processes. This ambiguity, especially in J4, makes it difficult to assess whether the 'product' is being adequately tested."
+          },
+          {
+            "title": "Unclear 'substantial transformation' metric",
+            "detail": "CA-18 §1 emphasizes 'substantial transformation' as a quality guarantee, but the definition of 'substantial' is subjective and lacks concrete metrics. This makes it difficult to objectively determine whether FlowAI is meeting its promise, especially in self-testing scenarios."
+          },
+          {
+            "title": "Risk of over-optimization on self-loop",
+            "detail": "Focusing solely on FlowAI-on-FlowAI (J3) could lead to over-optimization for a narrow use case, potentially neglecting the broader range of inputs and edge cases encountered with external products. This could result in a system that performs well on itself but poorly on real-world applications."
+          },
+          {
+            "title": "Lack of rollback strategy for UI wiring",
+            "detail": "Wiring the UI directly to the Construction Engine (J2) without a clear rollback strategy poses a risk. If the integration introduces bugs or instability, it could disrupt the entire FlowAI workflow, including the CLI-based construction path."
+          }
+        ],
+        "worse_than_status_quo": "If FlowAI prioritizes self-improvement (FlowAI-on-FlowAI) without adequately testing external products, it could create a false sense of confidence and lead to a system that performs poorly in real-world scenarios, damaging user trust and adoption.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it attempts to address a conformance gap without a clear understanding of the underlying architectural implications. Rushing to wire the UI to the construction engine without a robust testing and rollback strategy could introduce instability and undermine the overall reliability of the FlowAI platform. A more thorough analysis of the architectural dependencies and potential risks is needed before proceeding with any implementation.",
+      "votes": {
+        "J1": {
+          "key": "J1-FLAW",
+          "pick_text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed.",
+          "rationale": "The core promise of FlowAI is to produce a new, deployable URL. An audit-only path fundamentally violates this promise and should be addressed."
+        },
+        "J2": {
+          "key": "J2-UI-CONSTRUCT",
+          "pick_text": "Wire the UI submit-URL form to the existing Construction Engine (CA-17 S1-S8) end-to-end: URL input -> S1 baseline -> S2-S7 transform -> S8 deploy-to-new-URL, with progress streamed to the UI. No new architecture; activate what already exists per CA-17 + remove the audit-only short-circuit in PATH B.",
+          "rationale": "This option leverages existing architecture and directly addresses the gap by enabling the UI to trigger the full construction pipeline. It's the most direct path to fulfilling CA-18 §1."
+        },
+        "J3": {
+          "key": "J3-MILESTONE-GATED",
+          "pick_text": "Self-first ONLY through a defined milestone (e.g. one full improvement cycle completed against flowai-dun.vercel.app/flowai with measurable score delta + new URL deployed), then external products. Avoids indefinite self-loop while honoring §5.",
+          "rationale": "Prioritizing self-improvement up to a defined milestone ensures that the core functionality is working before expanding to external products, while also preventing the risk of getting stuck in an endless self-optimization loop."
+        },
+        "J4": {
+          "key": "J4-VALID-ENGINE-PROOF",
+          "pick_text": "VALID as engine-level proof; INVALID as product-level proof. Distinguish the two: the CLI runs prove the §29 Construction Engine + §10 Self-Audit work end-to-end; they do not prove the product surface works. Both proofs are needed; the current state has one of two.",
+          "rationale": "The CLI-based testing provides valuable evidence that the underlying engine is functional, but it does not validate the end-to-end user experience through the UI. Both types of proof are necessary for a complete assessment."
+        }
+      },
+      "overallNotes": "The proposal highlights a critical gap in FlowAI's functionality. Addressing this gap by wiring the UI to the existing construction engine, while prioritizing self-improvement up to a defined milestone, seems like a reasonable approach.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "PATH B violates §1 output requirement",
+            "detail": "CA-18 §1 mandates 'Output: ALWAYS a new, separate, deployable URL' for any input. PATH B's audit-only output without a deployable URL fundamentally fails this core promise. The proposal acknowledges this gap but offers no interim mitigation."
+          },
+          {
+            "title": "Self-application failure in §5",
+            "detail": "The absence of UI-path self-improvement violates CA-18 §5's requirement that FlowAI applies to its own development. PATH A's CLI dependency creates a special-case exemption where FlowAI-on-FlowAI requires non-canonical operator intervention, undermining the symbiotic principle."
+          },
+          {
+            "title": "Proof validity misrepresentation risk",
+            "detail": "Reporting external product improvements via PATH A while the UI remains broken creates false product readiness signals. This risks stakeholder deception by demonstrating capabilities through non-product-surface mechanisms (Claude Code CLI), contravening honest assessment obligations in §1."
+          },
+          {
+            "title": "Architectural fragmentation",
+            "detail": "Maintaining separate PATH A (construction) and PATH B (audit) engines violates §5's symbiotic principle by preventing knowledge transfer between internal and external improvement cycles. Findings from PATH B audits don't feed into PATH A's construction logic, creating disjointed learning loops."
+          }
+        ],
+        "worse_than_status_quo": "If implemented without fixing PATH B, operators could mistakenly believe pasting FlowAI's own URL into the UI would self-improve the platform per §5. When only an audit appears without follow-on construction, this would demonstrate catastrophic self-application failure more visibly than the current silent gap, eroding trust in canonical promises.",
+        "precedent": "IBM Watson Health's failure: marketed as self-improving AI but required extensive manual engineering for each deployment, creating expectation-reality gaps that collapsed stakeholder trust when core self-application promises went unfulfilled despite external 'successes'."
+      },
+      "rejection_steelman": "This proposal should be rejected because it documents but does not resolve fundamental contradictions between canonical requirements and implementation. Deploying audit-only PATH B while §1 mandates URL-out functionality creates legal liability for false advertising. Prioritizing external product tests via CLI workarounds before closing the self-loop per §5 risks cementing architectural debt that may require costly rewrites later.",
+      "votes": {
+        "J1": {
+          "key": "J1-FLAW",
+          "pick_text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed.",
+          "rationale": "CA-18 §1 explicitly requires new URL output for any input; audit-only PATH B violates this core definition and cannot coexist with the promise without misleading users."
+        },
+        "J2": {
+          "key": "J2-UI-CONSTRUCT",
+          "pick_text": "Wire the UI submit-URL form to the existing Construction Engine (CA-17 S1-S8) end-to-end: URL input -> S1 baseline -> S2-S7 transform -> S8 deploy-to-new-URL, with progress streamed to the UI. No new architecture; activate what already exists per CA-17 + remove the audit-only short-circuit in PATH B.",
+          "rationale": "This directly satisfies §1 with minimal change by repurposing proven components, avoiding new registries or workflow interruptions while maintaining architectural coherence."
+        },
+        "J3": {
+          "key": "J3-MILESTONE-GATED",
+          "pick_text": "Self-first ONLY through a defined milestone (e.g. one full improvement cycle completed against flowai-dun.vercel.app/flowai with measurable score delta + new URL deployed), then external products. Avoids indefinite self-loop while honoring §5.",
+          "rationale": "Balances §5's canonical imperative with delivery pragmatism by setting a concrete self-improvement gate before external validation, preventing infinite self-iteration traps."
+        },
+        "J4": {
+          "key": "J4-INVALIDATES",
+          "pick_text": "INVALIDATES the proof. FlowAI's product surface is the UI per CA-18 §1 (\"any URL in -> new deployable URL out\"). Cycles run via Claude Code CLI workarounds prove only that the engine library functions, not that the product exists. A product that requires an LLM agent operator to bypass its own UI is not yet a product.",
+          "rationale": "The CLI path demonstrates technical components but fails to validate the integrated product experience promised in §1, creating misleading evidence of completeness."
+        }
+      },
+      "overallNotes": "The architectural disconnect between PATH A and B suggests deeper fragmentation in the engine design that threatens §5's symbiotic principle; recommend holistic engine unification beyond immediate fixes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Audit-only breaks §1 promise",
+            "detail": "In PATH B, the UI accepts a URL but terminates at findings instead of producing a new deployable URL. That directly conflicts with CA-18 §1’s explicit “Output: ALWAYS a new, separate, deployable URL,” so the UI is not implementing the advertised product promise. The proposal treats this as a gap, but it may actually be a separate product class (audit) mislabeled as improvement."
+          },
+          {
+            "title": "Self-loop not proven in UI",
+            "detail": "CA-18 §5 says FlowAI applies to its own development process, including its own UI and source tree. The proposal admits the current self-improvement path is CLI-only via Claude Code, which means the canonical self-application is not reachable through the product surface. That makes the self-reference claim operationally unverified and creates a mismatch between canonical language and user-facing behavior."
+          },
+          {
+            "title": "Registry adoption adds hidden coupling",
+            "detail": "The proposed “adopt as product” / product_registry-based path in J2 risks adding manual classification just to make URL improvement possible. That injects operator judgment and schema coupling into what should be a direct URL-in/URL-out flow, increasing the chance of misregistration, stale registry state, and ambiguous provenance for outputs. It also creates a new failure mode where the system can appear to support arbitrary URLs only after a non-obvious manual step."
+          }
+        ],
+        "worse_than_status_quo": "If the UI keeps offering “improve any URL” while only performing audit, users may trust that a deployable improved URL is forthcoming and plan work around it. That is worse than a transparent read-only audit tool, because it creates false confidence and wastes operator time on a workflow that cannot complete.",
+        "precedent": "Aider’s own writeup on code-in-JSON notes that wrapping code in structured JSON can worsen output quality and that plain-text/code-first flows were often better; similarly, forcing an interface promise before the end-to-end path exists can degrade the actual product experience. More broadly, many tools that expose a partial “AI-assisted” workflow before the action loop is closed end up being treated as demos rather than usable products."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring is that the proposal seems to conflate a backend capability with a product capability. Until the UI itself can complete URL-in to new-URL-out, any claim of “FlowAI works” is at best incomplete and at worst misleading. Deferring would preserve honesty, avoid overpromising, and force the team to unify the experience before expanding scope.",
+      "votes": {
+        "J1": {
+          "key": "J1-FLAW",
+          "pick_text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed.",
+          "rationale": "This is the clearest reading of the canonical promise: URL in must yield a new deployable URL out. An audit-only surface cannot satisfy that requirement and therefore cannot stand as a compliant FlowAI path."
+        },
+        "J2": {
+          "key": "J2-UI-CONSTRUCT",
+          "pick_text": "Wire the UI submit-URL form to the existing Construction Engine (CA-17 S1-S8) end-to-end: URL input -> S1 baseline -> S2-S7 transform -> S8 deploy-to-new-URL, with progress streamed to the UI. No new architecture; activate what already exists per CA-17 + remove the audit-only short-circuit in PATH B.",
+          "rationale": "This is the minimum change that directly closes the gap described in the proposal without inventing a new product model. It preserves the existing engine while making the UI actually satisfy the canonical flow."
+        },
+        "J3": {
+          "key": "J3-MILESTONE-GATED",
+          "pick_text": "Self-first ONLY through a defined milestone (e.g. one full improvement cycle completed against flowai-dun.vercel.app/flowai with measurable score delta + new URL deployed), then external products. Avoids indefinite self-loop while honoring §5.",
+          "rationale": "This best balances the canonical self-application requirement with a practical milestone to prevent endless self-referential work. It establishes a concrete proof gate before external expansion."
+        },
+        "J4": {
+          "key": "J4-INVALID-AND-MISLEADING",
+          "pick_text": "Worse than invalid — actively misleading. Reporting \"FlowAI improved product X\" when the only invocation path was a Claude-Code-operated CLI builds false expectations among reviewers/stakeholders that the UI works. Either (a) stop calling these runs \"FlowAI improvement cycles\" until the UI closes the loop, or (b) explicitly mark every artifact \"produced via CLI; UI does not yet support this\".",
+          "rationale": "This goes beyond merely distinguishing engine vs product; it flags the communication risk created by the current evidence. If the UI path fails, presenting CLI runs as product proof is misleading unless carefully labeled."
+        }
+      },
+      "overallNotes": "The main issue is not whether the underlying engines exist, but whether the shipped product fulfills its own published contract. On that standard, the UI-only audit path is insufficient until it can produce a deployable URL end-to-end.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "PATH B contradicts CA-18 §1",
+            "detail": "The current UI implementation (PATH B) does not produce a new deployable URL, violating the canonical promise of 'any URL in -> new deployable URL out'."
+          },
+          {
+            "title": "Lack of self-improvement capability",
+            "detail": "FlowAI cannot improve its own UI through its own UI, contradicting CA-18 §5 which states that FlowAI applies to its own development process."
+          },
+          {
+            "title": "CLI workaround is not product-level proof",
+            "detail": "The current testing approach using CLI scripts invoked through Claude Code agents does not exercise the product surface, potentially invalidating the proof that FlowAI works as a product."
+          }
+        ],
+        "worse_than_status_quo": "If FlowAI is deployed with PATH B as is, it will not meet customer expectations, potentially damaging the platform's reputation and trustworthiness.",
+        "precedent": "Similar design flaws have caused issues in other AI platforms where the product surface did not match the canonical capabilities, leading to user dissatisfaction and loss of confidence."
+      },
+      "rejection_steelman": "Rejecting the proposal is justified because the current implementation does not satisfy the canonical promises made in CA-18 §1 and §5, and the testing approach does not adequately prove the product's functionality through its intended user interface.",
+      "votes": {
+        "J1": {
+          "key": "J1-FLAW",
+          "pick_text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed.",
+          "rationale": "PATH B's audit-only functionality does not align with the canonical definition of FlowAI."
+        },
+        "J2": {
+          "key": "J2-UI-CONSTRUCT",
+          "pick_text": "Wire the UI submit-URL form to the existing Construction Engine (CA-17 S1-S8) end-to-end: URL input -> S1 baseline -> S2-S7 transform -> S8 deploy-to-new-URL, with progress streamed to the UI. No new architecture; activate what already exists per CA-17 + remove the audit-only short-circuit in PATH B.",
+          "rationale": "This option directly addresses the gap between PATH A and PATH B by utilizing existing architecture."
+        },
+        "J3": {
+          "key": null,
+          "pick_text": "YES, self-first. §5 explicitly makes FlowAI-on-FlowAI canonical. A platform that cannot improve itself through its own UI has not yet demonstrated in the §1 promise; testing external products before the self-test is theatre. Lock external proof until self-loop closes.",
+          "rationale": "CA-18 §5 requires FlowAI to apply to its own development process, making self-improvement a prerequisite for external testing."
+        },
+        "J4": {
+          "key": "J4-INVALIDATES",
+          "pick_text": "INVALIDATES the proof. FlowAI's product surface is the UI per CA-18 §1 (\"any URL in -> new deployable URL out\"). Cycles run via Claude Code CLI workarounds prove only that the engine library functions, not that the product exists. A product that requires an LLM agent operator to bypass its own UI is not yet a product.",
+          "rationale": "The product surface is critical to proving FlowAI's functionality as per CA-18 §1."
+        }
+      },
+      "overallNotes": "The proposal needs significant changes to meet the canonical requirements and prove the product's functionality through its UI.",
+      "invalid_reason": "3/4 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§1 output guarantee unmet by PATH B",
+            "detail": "CA-18 §1 explicitly requires 'ALWAYS a new, separate, deployable URL' for any input URL, yet PATH B (UI arbitrary-URL submission) only runs §10 Self-Audit and terminates without invoking the §29 Construction Engine or producing a new URL; the audit-only short-circuit directly violates the 'substantial transformation per run' metric."
+          },
+          {
+            "title": "§5 self-application lacks UI path",
+            "detail": "CA-18 §5 mandates FlowAI-on-FlowAI via the §29 Build/Wire engine and §11 Clearance Protocol, but the only working path (PATH A) requires Claude-Code CLI invocation outside the operator-facing UI at flowai-dun.vercel.app/flowai, collapsing the published 'self-application is canonical operating mode' claim."
+          },
+          {
+            "title": "8-Step Pipeline omits UI wiring",
+            "detail": "The canonical 8-step pipeline (§9) places 'build' (step 3) and 'deploy' (step 5) after research/design, yet no mechanism connects the UI form input to product_registry registration or S1-S8 execution; the Self-Governance Layer (§10) components trigger only on existing registered products, leaving arbitrary-URL flows stranded at audit."
+          }
+        ],
+        "worse_than_status_quo": "Forcing self-first per §5 before external validation could trap the system in repeated low-value self-audits on its own small dashboard, consuming compute and delaying any production URL output while external products remain untested.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal treats ratified canonical text (CA-18 §1 and §5) as immediately binding on the live UI surface, yet the documented gap shows the product cannot yet deliver its own stated promise; deferring until the Construction Engine is wired to the UI would avoid shipping a system whose core guarantee is known to be broken and whose self-application claim rests on non-UI workarounds.",
+      "votes": {
+        "J1": {
+          "key": "J1-FLAW",
+          "pick_text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed.",
+          "rationale": "PATH B directly violates the explicit output requirement in the canonical §1 text."
+        },
+        "J2": {
+          "key": "J2-UI-CONSTRUCT",
+          "pick_text": "Wire the UI submit-URL form to the existing Construction Engine (CA-17 S1-S8) end-to-end: URL input -> S1 baseline -> S2-S7 transform -> S8 deploy-to-new-URL, with progress streamed to the UI. No new architecture; activate what already exists per CA-17 + remove the audit-only short-circuit in PATH B.",
+          "rationale": "Reuses the proven §29 engine without introducing new registry or clearance layers."
+        },
+        "J3": {
+          "key": "J3-SELF-FIRST",
+          "pick_text": "YES, self-first. §5 explicitly makes FlowAI-on-FlowAI canonical. A platform that cannot improve itself through its own UI has not yet demonstrated the §1 promise; testing external products before the self-test is theatre. Lock external proof until self-loop closes.",
+          "rationale": "Honors the symbiotic meta-principle without allowing external testing to mask the UI gap."
+        },
+        "J4": {
+          "key": "J4-INVALIDATES",
+          "pick_text": "INVALIDATES the proof. FlowAI's product surface is the UI per CA-18 §1 (\"any URL in -> new deployable URL out\"). Cycles run via Claude Code CLI workarounds prove only that the engine library functions, not that the product exists. A product that requires an LLM agent operator to bypass its own UI is not yet a product.",
+          "rationale": "The product claim is defined by the UI surface, not the underlying engine."
+        }
+      },
+      "overallNotes": "All objections target explicit mismatches between canonical sections and current PATH A/B implementation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "J1",
+      "topic": "J1 — Is PATH B (audit-only, no fixes, no new deployable URL) an acceptable design for FlowAI, or a fundamental flaw that must be fixed for FlowAI to deliver its promise per CA-18 §1 (\"any URL in -> new deployable URL out, perfected across all 10 quality dimensions per run\")?",
+      "options": [
+        {
+          "key": "J1-FLAW",
+          "text": "Fundamental flaw — PATH B as audit-only contradicts CA-18 §1 (\"Output: ALWAYS a new, separate, deployable URL\"). A URL-in path that produces no new URL is not FlowAI by definition; it is a separate audit tool mislabeled as FlowAI. MUST be fixed."
+        },
+        {
+          "key": "J1-ACCEPTABLE",
+          "text": "Acceptable design — audit-only is a legitimate Mode A (read-only inspection) and the \"new URL out\" promise applies only when the user explicitly requests construction/improvement. PATH B as audit can coexist with a separate Construct/Improve path."
+        },
+        {
+          "key": "J1-DEFERRABLE",
+          "text": "Flaw but deferrable — PATH B violates §1 in principle but the proof-phase exemption allows shipping audit-only externally while construction matures internally; document the gap and revisit at GA."
+        },
+        {
+          "key": "J1-REFRAME",
+          "text": "Reframe the question — PATH B is fine IF the UI labels it explicitly as \"Audit\" (a distinct surface from \"Improve\"); the §1 promise applies to the Improve surface only. Add a labeling fix, not an architectural fix."
+        }
+      ],
+      "draftedKey": "J1-FLAW"
+    },
+    {
+      "id": "J2",
+      "topic": "J2 — What is the minimum architectural change to enable FlowAI to improve any URL submitted through its own UI (including its own URL flowai-dun.vercel.app/flowai), without CLI workarounds — i.e., to satisfy CA-18 §1 end-to-end through the UI?",
+      "options": [
+        {
+          "key": "J2-UI-CONSTRUCT",
+          "text": "Wire the UI submit-URL form to the existing Construction Engine (CA-17 S1-S8) end-to-end: URL input -> S1 baseline -> S2-S7 transform -> S8 deploy-to-new-URL, with progress streamed to the UI. No new architecture; activate what already exists per CA-17 + remove the audit-only short-circuit in PATH B."
+        },
+        {
+          "key": "J2-ENGINE-MERGE",
+          "text": "Merge PATH A (CLI construction) and PATH B (UI audit) into a single canonical FlowAI Engine that any caller (UI, CLI, API, agent) invokes the same way; PATHs become call-sites, not separate engines."
+        },
+        {
+          "key": "J2-NEW-PRODUCT-ROUTE",
+          "text": "Add a \"submit any URL\" canonical entry-point that registers the URL as a new product_registry entry and triggers the standard §11 Six-Step Clearance + §29 Build/Wire flow; UI calls this entry-point. Minimal: it is one new HTTP route + product_registry insert, but reuses every downstream engine."
+        },
+        {
+          "key": "J2-MANUAL-MIGRATION",
+          "text": "Provide the operator a UI affordance to migrate any submitted URL into the existing product_registry manually (one-click \"adopt as product\"), then run the existing construction flow against the adopted product. Cheaper than full URL-in/URL-out automation; preserves operator control."
+        }
+      ],
+      "draftedKey": "J2-UI-CONSTRUCT"
+    },
+    {
+      "id": "J3",
+      "topic": "J3 — Should FlowAI-on-FlowAI (the platform improving its own UI/source) be the PRIMARY proof-of-concept — i.e., fix the product's ability to improve itself BEFORE testing any external product (RelTwin, SAIGE, etc.) — per CA-18 §5 (\"FlowAI applies to its own development process\")?",
+      "options": [
+        {
+          "key": "J3-SELF-FIRST",
+          "text": "YES, self-first. §5 explicitly makes FlowAI-on-FlowAI canonical. A platform that cannot improve itself through its own UI has not yet demonstrated the §1 promise; testing external products before the self-test is theatre. Lock external proof until self-loop closes."
+        },
+        {
+          "key": "J3-PARALLEL",
+          "text": "No — self-loop and external-loop should proceed in parallel. Self-loop matures the engine; external-loop matures the I/O surface (jurisdictional declarations, deploy-target diversity, finding-source breadth). Each surfaces different defects."
+        },
+        {
+          "key": "J3-EXTERNAL-FIRST",
+          "text": "No — external products are higher fidelity proofs. FlowAI itself is too small/familiar a target; improving its own static dashboard does not exercise the full §2 dimension space. RelTwin/SAIGE are richer test surfaces."
+        },
+        {
+          "key": "J3-MILESTONE-GATED",
+          "text": "Self-first ONLY through a defined milestone (e.g. one full improvement cycle completed against flowai-dun.vercel.app/flowai with measurable score delta + new URL deployed), then external products. Avoids indefinite self-loop while honoring §5."
+        }
+      ],
+      "draftedKey": "J3-SELF-FIRST"
+    },
+    {
+      "id": "J4",
+      "topic": "J4 — Is the current testing approach (running improvement cycles via CLI scripts invoked through Claude Code agents, with the UI unable to complete a full cycle) valid evidence that FlowAI works as a product, or does it invalidate the proof because the product is not being exercised through its own product surface?",
+      "options": [
+        {
+          "key": "J4-INVALIDATES",
+          "text": "INVALIDATES the proof. FlowAI's product surface is the UI per CA-18 §1 (\"any URL in -> new deployable URL out\"). Cycles run via Claude Code CLI workarounds prove only that the engine library functions, not that the product exists. A product that requires an LLM agent operator to bypass its own UI is not yet a product."
+        },
+        {
+          "key": "J4-VALID-ENGINE-PROOF",
+          "text": "VALID as engine-level proof; INVALID as product-level proof. Distinguish the two: the CLI runs prove the §29 Construction Engine + §10 Self-Audit work end-to-end; they do not prove the product surface works. Both proofs are needed; the current state has one of two."
+        },
+        {
+          "key": "J4-VALID-INTERIM",
+          "text": "VALID for the proof phase. CLI/Claude-Code invocation is the same FlowAI engine; the UI is a deployment surface, not the engine. Proof-of-concept requires the engine to function; UI wiring is a downstream Ship-engineering task. Do not conflate the two."
+        },
+        {
+          "key": "J4-INVALID-AND-MISLEADING",
+          "text": "Worse than invalid — actively misleading. Reporting \"FlowAI improved product X\" when the only invocation path was a Claude-Code-operated CLI builds false expectations among reviewers/stakeholders that the UI works. Either (a) stop calling these runs \"FlowAI improvement cycles\" until the UI closes the loop, or (b) explicitly mark every artifact \"produced via CLI; UI does not yet support this\"."
+        }
+      ],
+      "draftedKey": "J4-INVALIDATES"
+    }
+  ]
+}
