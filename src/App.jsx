@@ -93,6 +93,8 @@ import LiveDemo from './pages/LiveDemo';
 import EnterpriseDemo from './pages/EnterpriseDemo';
 import BaseAgentTest from './pages/BaseAgentTest';
 import FlowAIDashboard from './pages/FlowAIDashboard';
+import Login from './pages/Login';
+import RequireAuth from '@/components/RequireAuth';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -151,7 +153,10 @@ const AuthenticatedApp = () => {
         <Route path="/gtm-engine" element={<GTMEngine />} />
         <Route path="/self-protection" element={<SelfProtection />} />
         <Route path="/self-healing" element={<SelfHealing />} />
-        <Route path="/governance" element={<Governance />} />
+        {/* TRACK-E PR4 — magic-link auth required for governance and the
+            autonomous runner. RequireAuth honors VITE_AUTH_BYPASS=1 so the
+            CEO demo path stays open until full enforcement flips on. */}
+        <Route path="/governance" element={<RequireAuth><Governance /></RequireAuth>} />
         <Route path="/domain-manager" element={<DomainManager />} />
         <Route path="/brand-system" element={<BrandSystem />} />
         <Route path="/white-label" element={<WhiteLabel />} />
@@ -171,7 +176,7 @@ const AuthenticatedApp = () => {
         <Route path="/configuration" element={<Configuration />} />
         <Route path="/workspace" element={<Navigate to="/configuration" replace />} />
         <Route path="/my-products" element={<MyCreations />} />
-        <Route path="/auto-runner" element={<AutoRunner />} />
+        <Route path="/auto-runner" element={<RequireAuth><AutoRunner /></RequireAuth>} />
         <Route path="/renewal" element={<Renewal />} />
         <Route path="/guided/:step" element={<GuidedStep />} />
         <Route path="/manual/:step" element={<ManualStep />} />
@@ -207,6 +212,7 @@ const AuthenticatedApp = () => {
         <Route path="/my-creations" element={<MyCreations />} />
       </Route>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/landing" element={<MarketingPage />} />
       {/* GTM Demo Tiers — public, no AppLayout */}
       <Route path="/veuaas" element={<VEUaaSMarketing />} />
