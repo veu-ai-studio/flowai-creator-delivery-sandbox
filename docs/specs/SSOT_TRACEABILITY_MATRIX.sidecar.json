@@ -1,10 +1,10 @@
 {
   "schema": "ssot-traceability-matrix.sidecar.v1",
-  "generatedAt": "2026-05-21T22:17:03Z",
+  "generatedAt": "2026-05-21T22:26:03Z",
   "headCommit": "158a427293f2987b287759af0b3503f7bb7d4a98",
   "headBranch": "flowai-v0.1",
-  "productionCommit": "cdacd726be54b1c5988efec87092ee198881dd07",
-  "productionDeployment": "flowai-9wgblioh5-veu-ai-studio.vercel.app",
+  "productionCommit": "158a427293f2987b287759af0b3503f7bb7d4a98",
+  "productionDeployment": "flowai-mil59ba8z-veu-ai-studio.vercel.app",
   "governanceStatus": "PROPOSED_GOVERNANCE",
   "panelArtifact": "UNAVAILABLE",
   "panelArtifactSearchedAt": "docs/panel-consultations/",
@@ -371,9 +371,9 @@
       "status": "PARTIAL",
       "confidence": "MEDIUM",
       "scope": "PRODUCTION",
-      "lastVerifiedAt": "2026-05-21T22:17:03Z",
+      "lastVerifiedAt": "2026-05-21T22:26:03Z",
       "verifiedAgainstCommit": "158a427293f2987b287759af0b3503f7bb7d4a98",
-      "verifiedAgainstDeployment": "flowai-9wgblioh5-veu-ai-studio.vercel.app",
+      "verifiedAgainstDeployment": "flowai-mil59ba8z-veu-ai-studio.vercel.app",
       "verificationType": "DEPLOYMENT_EVIDENCE",
       "runtimeArtifactRequired": true,
       "operationalSeverity": "CRITICAL",
@@ -384,22 +384,16 @@
       ],
       "testFiles": [],
       "runtimeEvidence": [
-        "Production GET https://flowai-dun.vercel.app/api/version observed at 2026-05-21T19:24:37Z returned commit='cdacd726be54' (full: cdacd726be54b1c5988efec87092ee198881dd07), branch='flowai-v0.1', deployUrl='flowai-9wgblioh5-veu-ai-studio.vercel.app' — captured in the 2026-05-21 release-readiness report rerun"
+        "Production GET https://flowai-dun.vercel.app/api/version observed at 2026-05-21T22:26:03Z returned commit='158a427293f2' (full: 158a427293f2987b287759af0b3503f7bb7d4a98), branch='flowai-v0.1', deployUrl='flowai-mil59ba8z-veu-ai-studio.vercel.app' — production currently matches the matrix HEAD commit"
       ],
       "governanceEvidence": [
         "docs/CANONICAL_REFERENCE.md §CA-18 deployment-truth principle"
       ],
-      "contradictions": [
-        {
-          "claim": "production commit equals HEAD",
-          "evidence": "Production /api/version returns cdacd726be54 while local HEAD is 158a4272 — production is 4 commits behind HEAD on flowai-v0.1; runtime honestly exposes the drift (does not falsely claim parity) but no automated governance write of the drift exists",
-          "severity": "HIGH"
-        }
-      ],
+      "contradictions": [],
       "gaps": [
         "No active drift-detection script that compares /api/version's commit to HEAD and writes a governance entry.",
         "No automated docs/audits/deploy-truth-<date>.md artifact is generated on each deploy/promotion.",
-        "Drift is observable on demand via /api/version but not surfaced as a governance record — operators must query the endpoint manually."
+        "Drift/parity is observable on demand via /api/version but not surfaced as a governance record — operators must query the endpoint manually."
       ],
       "nextAction": "Separate dispatch: implement an automated drift-detection script that queries /api/version, compares against the current branch HEAD, writes a governance entry of kind='deploy_truth.drift_check.v1', and persists a daily docs/audits/deploy-truth-YYYY-MM-DD.md artifact. VERIFIED requires that automated artifact, not just on-demand /api/version probing."
     },
