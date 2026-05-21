@@ -44,6 +44,7 @@ import { conductStructuredCrawl } from './crawlOutputAdapter.js';
 import { probeAdversarialSurface, probeAllPages } from './adversarialSurface.js';
 import { remediate as remediationEngine } from '../../../../api/_lib/remediationEngine.js';
 import { runEvaluationPipeline } from '../../evaluation/evaluationPipeline.js';
+import { runRemediation } from '../../remediation/runRemediation.js';
 import { randomUUID } from 'node:crypto';
 
 export const GTM_READY_SCORE = 95;
@@ -482,6 +483,9 @@ export async function runOrchestration(args = {}) {
   // runtimeDiagnostics, plus pass-through Phase B). DI-overridable so
   // tests can stub it with deterministic findings.
   const _runEvaluationPipeline  = deps.runEvaluationPipeline  || runEvaluationPipeline;
+  // PHASE B2 — Rule-based remediation pipeline (classifier → budget →
+  // patch generators → conflict detection). DI-overridable for tests.
+  const _runRemediation         = deps.runRemediation         || runRemediation;
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   const orchestrationLog = [];
@@ -1678,6 +1682,110 @@ export async function runOrchestration(args = {}) {
         }
       }
 
+      // ── PHASE B2 — Rule-based remediation (classifier + budget + patches) ─
+      //
+      // Complements the ConstructionEngine: where the engine handles
+      // wire_up (dead UI → real backend) via AI, the remediation engine
+      // handles deterministic, low-risk fixes (alt attributes, CSS
+      // contrast, metadata injection, aria labels, 404 asset paths)
+      // via plain code transforms. NO AI in this path.
+      //
+      // Inputs:  state.pipelineFindings (Phase B1 normalized output)
+      // Output:  patches pushed into fileChanges + remediationSummary
+      //          on state for the S14 governance write.
+      //
+      // Graceful: any patch generator failure is captured in the summary;
+      // the pipeline always returns. No throw escapes this block.
+      let remediationOutput = null;
+      try {
+        const _findings = Array.isArray(state.pipelineFindings) && state.pipelineFindings.length > 0
+          ? state.pipelineFindings
+          : (Array.isArray(state.phaseBFindings) ? state.phaseBFindings : []);
+        if (_findings.length > 0) {
+          const t0 = Date.now();
+          remediationOutput = await _runRemediation({
+            findings: _findings,
+            // File resolver: PATH A uses the GitHub Contents API; PATH B
+            // skips remediation patches entirely (no operator repo to
+            // commit against). Best-effort — null = no file, generator
+            // declines cleanly.
+            fetchFileForFinding: async ({ finding }) => {
+              if (pathB || !token || !githubRepoUrl) return null;
+              const parsed = parseGithubRepoUrl(githubRepoUrl);
+              if (!parsed) return null;
+              // Generator-specific path heuristics:
+              //   inject-metadata / inject-viewport / inject-alt-attribute /
+              //   inject-aria-label / repair-asset-path → index.html
+              //   css-contrast-adjust → first .css file from repoFileList
+              const strategy = finding?.remediationStrategy;
+              let candidatePath = null;
+              if (strategy === 'css-contrast-adjust') {
+                candidatePath = (repoFileList ?? []).find((p) => /\.css$/i.test(p)) ?? 'index.html';
+              } else {
+                candidatePath = (repoFileList ?? []).find((p) => /^|\/index\.html?$/i.test(p) || /index\.html?$/i.test(p)) ?? 'index.html';
+              }
+              try {
+                const content = await _fetchFileContent({
+                  owner: parsed.owner, repo: parsed.repo,
+                  filePath: candidatePath, ref: productBranch, token,
+                });
+                if (typeof content !== 'string') return null;
+                return { filePath: candidatePath, fileContent: content };
+              } catch { return null; }
+            },
+            budgets: undefined,  // use DEFAULT_BUDGETS
+            onStep: (evt) => {
+              try {
+                emit(makeStepLog({
+                  iteration: iterationNumber, step: 7,
+                  status: 'complete',
+                  tool: `remediation:${evt?.log?.kind ?? 'event'}`,
+                  why: 'PHASE B2 — rule-based remediation pipeline event',
+                  result: evt?.log ?? null,
+                  mode: state.mode,
+                }));
+              } catch { /* swallow */ }
+            },
+          });
+          // Merge approved patches into fileChanges using
+          // last-write-wins on filePath (a later remediation patch
+          // supersedes an earlier construction-engine entry for the
+          // same path). Sequential, deterministic.
+          const byPath = new Map(fileChanges.map((f) => [f.filePath, f]));
+          for (const p of (remediationOutput?.patches ?? [])) {
+            if (!p || typeof p.filePath !== 'string' || typeof p.patchedContent !== 'string') continue;
+            // If the path is already in fileChanges, replace its content;
+            // otherwise append. The replacement is intentional — a fresh
+            // patch built on the just-fetched file is a strict superset.
+            byPath.set(p.filePath, { filePath: p.filePath, fileContent: p.patchedContent });
+          }
+          fileChanges.length = 0;
+          for (const v of byPath.values()) fileChanges.push(v);
+          state.remediationSummary = remediationOutput?.summary ?? null;
+          state.remediationConflicts = remediationOutput?.conflicts ?? [];
+          state.remediationDeferred  = (remediationOutput?.deferred ?? []).map((d) => Object.freeze({
+            category: d.category, severity: d.severity, reason: d.deferralReason,
+          }));
+          state.remediationEscalated = remediationOutput?.escalated ?? [];
+          emit(makeStepLog({
+            iteration: iterationNumber, step: 7,
+            status: 'complete',
+            tool: 'remediationEngine.runRemediation (PHASE B2)',
+            why: 'classify findings → budget → generate patches → resolve conflicts',
+            result: remediationOutput?.summary ?? null,
+            durationMs: Date.now() - t0, mode: state.mode,
+          }));
+        }
+      } catch (e) {
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 7, status: 'degraded',
+          tool: 'remediationEngine (PHASE B2)',
+          why: 'rule-based remediation attempt',
+          result: { error: (e?.message ?? String(e)).slice(0, 280) },
+          mode: state.mode,
+        }));
+      }
+
       if (fileChanges.length === 0) {
         exitReason = 'NO_FIXES_GENERATED';
         break;
@@ -2387,6 +2495,15 @@ export async function runOrchestration(args = {}) {
         prUrl: pr?.prHtmlUrl ?? null,
         // W6 INTEGRATION — STEP 4: CA-18 §2 honest disclosure.
         dimensions_contributing: dimensionsContributing,
+        // PHASE B2 — rule-based remediation summary (classifier counts,
+        // budget application, conflicts). Null when remediation didn't
+        // run (e.g. PATH B with no findings).
+        remediationSummary: state.remediationSummary ?? null,
+        remediationConflicts: state.remediationConflicts ?? [],
+        remediationEscalatedCount: Array.isArray(state.remediationEscalated)
+          ? state.remediationEscalated.length : 0,
+        remediationDeferredCount: Array.isArray(state.remediationDeferred)
+          ? state.remediationDeferred.length : 0,
         at: new Date().toISOString(),
       },
       supabase,
@@ -2427,6 +2544,8 @@ export async function runOrchestration(args = {}) {
     prNumber: pr?.prNumber ?? null,
     // W6 INTEGRATION — STEP 4: CA-18 §2 honest disclosure on result envelope.
     dimensions_contributing: dimensionsContributing,
+    // PHASE B2 — rule-based remediation summary on the result envelope.
+    remediationSummary: state.remediationSummary ?? null,
     orchestrationLog,
     iterations,
     product,
