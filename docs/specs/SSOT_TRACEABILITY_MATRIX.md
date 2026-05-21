@@ -1,8 +1,9 @@
 # SSOT Claim-to-Runtime Traceability Matrix
 
-**Generated:** 2026-05-21T21:16:42Z
-**HEAD commit:** `aeff00e4abde1014bb4025cd63c90897715a9d10`
+**Generated:** 2026-05-21T22:17:03Z
+**HEAD commit:** `158a427293f2987b287759af0b3503f7bb7d4a98`
 **Branch:** `flowai-v0.1`
+**Production commit:** `cdacd726be54b1c5988efec87092ee198881dd07` (observed via `GET /api/version` on `flowai-9wgblioh5-veu-ai-studio.vercel.app` at 2026-05-21T19:24:37Z — production is 4 commits behind HEAD; runtime exposes drift honestly via `/api/version`)
 **Governance status:** `PROPOSED_GOVERNANCE`
 **Panel artifact:** `UNAVAILABLE` (no traceability-matrix Panel ratification artifact found in `docs/panel-consultations/`)
 **Companion sidecar:** [`SSOT_TRACEABILITY_MATRIX.sidecar.json`](./SSOT_TRACEABILITY_MATRIX.sidecar.json)
@@ -90,30 +91,32 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 | 6 | `CA18-DELTA-VERIFY` | `PARTIAL` | `MEDIUM` | `MEDIUM` | `BRANCH_ONLY` | `LIVE_RUNTIME` | true | false |
 | 7 | `CA18-REMEDIATION-SAFETY` | `PARTIAL` | `LOW` | `HIGH` | `BRANCH_ONLY` | `LIVE_RUNTIME` | true | false |
 | 8 | `CA18-UNIVERSAL-LIMIT` | `PARTIAL` | `HIGH` | `CRITICAL` | `BRANCH_ONLY` | `LIVE_RUNTIME` | true | false |
-| 9 | `CA18-AUDIT-TRAIL` | `PARTIAL` | `MEDIUM` | `HIGH` | `GOVERNANCE` | `GOVERNANCE_RECORD` | false | false |
-| 10 | `CA18-DEPLOY-TRUTH` | `NOT_IMPLEMENTED` | `HIGH` | `CRITICAL` | `PRODUCTION` | `DEPLOYMENT_EVIDENCE` | true | false |
+| 9 | `CA18-AUDIT-TRAIL` | `VERIFIED` | `HIGH` | `HIGH` | `GOVERNANCE` | `GOVERNANCE_RECORD` | false | false |
+| 10 | `CA18-DEPLOY-TRUTH` | `PARTIAL` | `MEDIUM` | `CRITICAL` | `PRODUCTION` | `DEPLOYMENT_EVIDENCE` | true | false |
 | 11 | `FALSE-CLAIM-AUTONOMOUS-DEPLOY` | `NOT_IMPLEMENTED` | `HIGH` | `CRITICAL` | `GOVERNANCE` | `MANUAL_INSPECTION` | false | **true** |
 
 ---
 
 ## §4 — Honest summary
 
-- `VERIFIED`: **0**
-- `PARTIAL`: **9**
+- `VERIFIED`: **1** (claim 9 — `CA18-AUDIT-TRAIL`)
+- `PARTIAL`: **9** (claims 1–8 + claim 10)
 - `STUBBED`: **0**
 - `SIMULATED`: **0**
-- `NOT_IMPLEMENTED`: **2** (claim 10 = real gap; claim 11 = negative control, intentional)
+- `NOT_IMPLEMENTED`: **1** (claim 11 — negative control, intentional)
 - `DEFERRED`: **0**
 - `UNKNOWN`: **0**
 - Negative controls: **1**
 - Critical-severity non-VERIFIED (excluding negative controls): **3** — claims 1, 8, 10
 
-**Why no `VERIFIED` rows.** Eight of the 10 real claims have solid implementation evidence and branch-level test/smoke evidence, but per §2.5 evidence rules + the dispatch's strict reading (LIVE_RUNTIME claims require runtime artifacts; production-facing claims need production evidence to be `VERIFIED`, not just branch-level smoke output), they advance to `PARTIAL` only. Promoting any of them to `VERIFIED` requires a live production run with the corresponding artifact (e.g. governance_record export, prod live-URL log with effectiveTrustScore, deployment-commit verification).
+**What changed (post-U1 advance).** `CA18-AUDIT-TRAIL` (claim 9) advanced from `PARTIAL` to `VERIFIED` because U1's orchestrator + test additions now satisfy its upgrade gate verbatim: branch tests at `tests/agents/renewal/orchestrator.test.js:2115-2141` directly assert that the `self_renewal.orchestration_complete.v1` governance entry carries a `skippedSteps[]` array where every element has `step ∈ {7, 8, 9, 13}` and `autoFixSkippedReason = 'UNIVERSAL_NO_REPO_ACCESS'`. Per the per-claim gate ("May use governance record evidence from branch tests if governance_record entries contain skippedSteps with reasons. Does not require production deployment."), branch test evidence is sufficient. `CA18-DEPLOY-TRUTH` (claim 10) advanced from `NOT_IMPLEMENTED` to `PARTIAL` because `api/version.js:49-58` exposes `VERCEL_GIT_COMMIT_SHA` + branch and was observed in production returning `cdacd726be54` — runtime honestly exposes drift (does not falsely claim parity), but no automated governance write of drift exists yet.
+
+**Why most rows remain `PARTIAL`.** Eight of the 10 real claims have solid implementation evidence and branch-level test/smoke evidence, but per §2.5 evidence rules + the production-evidence gates (LIVE_RUNTIME claims require runtime artifacts; production-facing claims need production evidence to be `VERIFIED`, not just branch-level smoke output), they stay `PARTIAL`. Promoting any of them to `VERIFIED` requires a live production run with the corresponding artifact (e.g. governance_record export, prod live-URL log with effectiveTrustScore, deployment-commit verification). Production is currently 4 commits behind HEAD on `flowai-v0.1` (`cdacd72` vs `158a427`), so the production-facing claims also wait on the next promote-to-production.
 
 **Critical gaps.**
 
-1. **`CA18-DEPLOY-TRUTH` is `NOT_IMPLEMENTED`** (claim 10, CRITICAL). No code path was found that verifies the deployed production commit matches HEAD or discloses drift. This is a hard gap that the matrix is designed to surface — a separate dispatch must fix this.
-2. **`CA18-EVAL-PIPELINE` is `PARTIAL` LOW confidence** (claim 5, HIGH). All four evaluators are wired but the per-finding `evaluator_id` field is missing from `findingNormalizer.js`; findings carry `source` + `evaluatorVersion` but not a unique evaluator-id as the CA-18 claim implies.
+1. **`CA18-DEPLOY-TRUTH` is `PARTIAL`** (claim 10, CRITICAL). `api/version.js` exposes the production commit so drift is observable on demand, but no automated drift-detection script or governance-write of drift exists — operators must query `/api/version` manually. A separate dispatch must implement the automated drift-check + governance entry.
+2. **`CA18-EVAL-PIPELINE` is `PARTIAL` LOW confidence** (claim 5, HIGH). All four evaluators are wired and findings now carry the U1 `generated_by` provenance field (per `findingNormalizer.js` `coerceSource` + `ALLOWED_SOURCES` enum), but no production run-log captures all four evaluators' contributions with provenance — the gate explicitly requires runtime evidence, not just normalizer unit tests.
 3. **`CA18-REMEDIATION-SAFETY` is `PARTIAL` LOW confidence** (claim 7, HIGH). Rate-cap and remediation engine exist, but registry, explicit confidence threshold constants, and rollback invocation are not canonically documented.
 
 **Negative control fires correctly.** Claim 11 (`FALSE-CLAIM-AUTONOMOUS-DEPLOY`) records as `NOT_IMPLEMENTED` with `isNegativeControl: true` and HIGH confidence. The grep+citation in `src/lib/agents/renewal/githubPrWriter.js:11-12` proves the `/merge` string appears only in comments documenting the prohibition. This row demonstrates the matrix correctly rejects false-capability claims.
@@ -139,4 +142,4 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 
 ---
 
-*End of SSOT Traceability Matrix v1. Generated 2026-05-21 from HEAD `aeff00e`. No product code changes accompany this document.*
+*End of SSOT Traceability Matrix v1. Last advance: 2026-05-21 from HEAD `158a427` — `CA18-AUDIT-TRAIL` advanced to `VERIFIED`; `CA18-DEPLOY-TRUTH` advanced from `NOT_IMPLEMENTED` to `PARTIAL`. No product code changes accompany this document.*
