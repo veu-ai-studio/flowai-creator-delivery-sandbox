@@ -43,6 +43,11 @@ const navSections = [
     icon: Zap,
     tooltip: "FlowAI executes all 8 steps automatically without pausing. You review the final report only.",
     items: [
+      // DISPATCH U2 — the FlowAI Dashboard (/flowai route) is the
+      // headline entry point for a universal-mode assessment run.
+      // Placed at the top of AUTO OPERATIONS so it is the first action
+      // a new user encounters after opening the sidebar.
+      { label: "Launch FlowAI", path: "/flowai", icon: Zap, tooltip: "Run a universal-mode FlowAI assessment against any URL — evaluation, scoring, and remediation findings in one pass." },
       { label: "Auto Runner", path: "/auto-runner", icon: Play, tooltip: "Watch FlowAI execute all eight process steps live — Research through Monitor — in one continuous automated session." },
       { label: "Renewal Workspace", path: "/renewal", icon: RefreshCw, tooltip: "Three input methods — URL, description, paste / upload — pipe through one renewal engine that produces a renewed static preview + before/after report." },
     ],
