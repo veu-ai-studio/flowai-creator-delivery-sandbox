@@ -51,7 +51,7 @@ function makeError(code, message, extra = {}) {
  */
 export function extractWireUpCandidates({ findings, limit = 5 }) {
   if (!Array.isArray(findings)) return [];
-  const wireUpCategories = new Set(['engine-error', 'broken-modal', 'broken-form']);
+  const wireUpCategories = new Set(['engine-error', 'broken-modal', 'broken-form', 'dead-card']);
   const candidates = findings.filter((f) => {
     if (!f || typeof f !== 'object') return false;
     if (typeof f.category !== 'string') return false;
