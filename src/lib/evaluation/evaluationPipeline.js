@@ -198,6 +198,7 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
 
   const errors = {};
   const perEvaluator = {};
+  const evaluatorMetrics = {};
   const findingsByEvaluator = {};
 
   // 1. Phase B — pass-through (the existing probe runs upstream in the
@@ -224,6 +225,7 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
       runLighthouseSafely({ url, opts: options }).then((res) => {
         findingsByEvaluator['lighthouse'] = res.ok ? res.findings : [];
         perEvaluator['lighthouse'] = res.findings.length;
+        evaluatorMetrics['lighthouse'] = { scores: res.scores ?? {} };
         if (!res.ok && res.error) errors['lighthouse'] = res.error;
         safeEmit(onStep, {
           type: 'step',
@@ -262,6 +264,7 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
       if (enabled.has('axe')) {
         findingsByEvaluator['axe-core'] = pwResult.axe.findings ?? [];
         perEvaluator['axe-core'] = (pwResult.axe.findings ?? []).length;
+        evaluatorMetrics['axe-core'] = { violations: perEvaluator['axe-core'] };
         if (!pwResult.axe.ok && pwResult.axe.error) errors['axe-core'] = pwResult.axe.error;
         safeEmit(onStep, {
           type: 'step',
@@ -277,6 +280,10 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
       if (enabled.has('runtime')) {
         findingsByEvaluator['runtime-diagnostics'] = pwResult.runtime.findings ?? [];
         perEvaluator['runtime-diagnostics'] = (pwResult.runtime.findings ?? []).length;
+        evaluatorMetrics['runtime-diagnostics'] = {
+          findings: perEvaluator['runtime-diagnostics'],
+          raw: pwResult.runtime.raw ?? null,
+        };
         if (!pwResult.runtime.ok && pwResult.runtime.error) errors['runtime-diagnostics'] = pwResult.runtime.error;
         safeEmit(onStep, {
           type: 'step',
@@ -302,7 +309,7 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
   return {
     ok: Object.values(errors).length === 0,
     findings,
-    stats: { ...stats, perEvaluatorRaw: perEvaluator },
+    stats: { ...stats, perEvaluatorRaw: perEvaluator, evaluatorMetrics },
     perEvaluator,
     errors,
   };

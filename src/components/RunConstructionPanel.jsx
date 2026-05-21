@@ -107,6 +107,56 @@ function KnownGapBanner({ dimensions }) {
   );
 }
 
+function DeltaTable({ transformationDelta }) {
+  if (!transformationDelta || !Array.isArray(transformationDelta.deltas) || transformationDelta.deltas.length === 0) {
+    return null;
+  }
+  const aggregate = transformationDelta.aggregate || {};
+  const regressionDetected = (aggregate.totalRegressed ?? 0) > 0 || transformationDelta.regressionGatePassed === false;
+  const rows = transformationDelta.deltas.slice(0, 8);
+  const colorFor = (direction) => direction === 'improved'
+    ? 'text-emerald-400'
+    : direction === 'regressed'
+      ? 'text-red-400'
+      : 'text-muted-foreground';
+  return (
+    <div className="rounded-lg border border-border bg-background/40 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className={`text-[11px] font-bold ${regressionDetected ? 'text-red-400' : 'text-emerald-400'}`}>
+          {regressionDetected
+            ? `REGRESSION DETECTED: ${aggregate.totalRegressed ?? 0} metrics worsened`
+            : `Net improvement: +${aggregate.netDelta ?? 0}`}
+        </span>
+        <span className="text-[10px] text-muted-foreground">Transformation delta</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-[11px]">
+          <thead className="text-muted-foreground">
+            <tr className="border-b border-border">
+              <th className="py-1 text-left font-medium">Metric</th>
+              <th className="py-1 text-right font-medium">Before</th>
+              <th className="py-1 text-right font-medium">After</th>
+              <th className="py-1 text-right font-medium">Delta</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((d) => (
+              <tr key={d.metric} className="border-b border-border/50 last:border-0">
+                <td className="py-1.5 pr-2 text-foreground">{d.label || d.metric}</td>
+                <td className="py-1.5 text-right text-muted-foreground">{d.before}</td>
+                <td className="py-1.5 text-right text-muted-foreground">{d.after}</td>
+                <td className={`py-1.5 text-right font-semibold ${colorFor(d.direction)}`}>
+                  {d.delta > 0 ? '+' : ''}{d.delta}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function ResultCard({ final, runId }) {
   const ready = final.gtmReady === true;
   const score = typeof final.finalScore === 'number' ? final.finalScore : 0;
@@ -149,6 +199,7 @@ function ResultCard({ final, runId }) {
             </a>
           </div>
         )}
+        <DeltaTable transformationDelta={final.transformationDelta} />
         <div className="flex items-center gap-2 text-xs pt-1">
           <span className="text-muted-foreground">Iterations: {final.iterationsCompleted ?? 0}</span>
           <a href={`/governance/${recordId}`}

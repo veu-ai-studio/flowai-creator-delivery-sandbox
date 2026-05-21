@@ -148,6 +148,11 @@ export async function runLighthouseEvaluator(url, opts = {}) {
   const audits = lhr.audits || {};
   const categoryRefs = lhr.categories || {};
   const findings = [];
+  const scores = {};
+  for (const catKey of categories) {
+    const score = categoryRefs[catKey]?.score;
+    scores[catKey] = typeof score === 'number' ? Math.round(score * 100) : null;
+  }
 
   for (const catKey of categories) {
     const cat = categoryRefs[catKey];
@@ -166,7 +171,7 @@ export async function runLighthouseEvaluator(url, opts = {}) {
     }
   }
 
-  return { ok: true, findings };
+  return { ok: true, findings, scores };
 }
 
 export const __internals = Object.freeze({

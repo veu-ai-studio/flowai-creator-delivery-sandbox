@@ -45,6 +45,11 @@ import { probeAdversarialSurface, probeAllPages } from './adversarialSurface.js'
 import { remediate as remediationEngine } from '../../../../api/_lib/remediationEngine.js';
 import { runEvaluationPipeline } from '../../evaluation/evaluationPipeline.js';
 import { runRemediation } from '../../remediation/runRemediation.js';
+import { captureBaselineSnapshot } from '../../verification/baselineSnapshot.js';
+import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
+import { calculateTransformationDelta } from '../../verification/deltaCalculator.js';
+import { classifyPatchEffects } from '../../verification/patchEffectClassifier.js';
+import { runRegressionGate } from '../../verification/regressionGate.js';
 import { randomUUID } from 'node:crypto';
 
 export const GTM_READY_SCORE = 95;
@@ -486,6 +491,11 @@ export async function runOrchestration(args = {}) {
   // PHASE B2 — Rule-based remediation pipeline (classifier → budget →
   // patch generators → conflict detection). DI-overridable for tests.
   const _runRemediation         = deps.runRemediation         || runRemediation;
+  const _captureBaselineSnapshot = deps.captureBaselineSnapshot || captureBaselineSnapshot;
+  const _capturePostFixSnapshot = deps.capturePostFixSnapshot || capturePostFixSnapshot;
+  const _calculateTransformationDelta = deps.calculateTransformationDelta || calculateTransformationDelta;
+  const _classifyPatchEffects = deps.classifyPatchEffects || classifyPatchEffects;
+  const _runRegressionGate = deps.runRegressionGate || runRegressionGate;
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   const orchestrationLog = [];
@@ -1130,6 +1140,37 @@ export async function runOrchestration(args = {}) {
       state.pipelineFindings = Array.isArray(pipelineOutput?.findings) ? pipelineOutput.findings : [];
       state.pipelineStats = pipelineOutput?.stats ?? null;
       state.pipelineErrors = pipelineOutput?.errors ?? {};
+      try {
+        const baselineSnapshot = await _captureBaselineSnapshot({
+          url: currentUrl,
+          evaluationResult: pipelineOutput,
+          runEvaluationPipeline: _runEvaluationPipeline,
+        });
+        state.transformationBaseline = baselineSnapshot;
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 4, status: 'complete',
+          tool: 'verification.captureBaselineSnapshot (PHASE C)',
+          why: 'capture before snapshot before remediation patches are applied',
+          result: {
+            url: baselineSnapshot.url,
+            lighthouseScores: baselineSnapshot.lighthouseScores,
+            axeViolations: baselineSnapshot.axeViolations,
+            runtimeErrors: baselineSnapshot.runtimeErrors,
+            consoleErrors: baselineSnapshot.consoleErrors,
+            totalFindings: baselineSnapshot.totalFindings,
+          },
+          mode: state.mode,
+        }));
+      } catch (snapshotErr) {
+        state.transformationBaseline = null;
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 4, status: 'degraded',
+          tool: 'verification.captureBaselineSnapshot (PHASE C)',
+          why: 'baseline delta snapshot failed; continuing without transformation delta',
+          result: { error: (snapshotErr?.message ?? String(snapshotErr)).slice(0, 200) },
+          mode: state.mode,
+        }));
+      }
       const log = makeStepLog({
         iteration: iterationNumber, step: 4,
         status: pipelineOutput?.ok ? 'complete' : 'degraded',
@@ -1762,6 +1803,7 @@ export async function runOrchestration(args = {}) {
           fileChanges.length = 0;
           for (const v of byPath.values()) fileChanges.push(v);
           state.remediationSummary = remediationOutput?.summary ?? null;
+          state.remediationPatches = remediationOutput?.patches ?? [];
           state.remediationConflicts = remediationOutput?.conflicts ?? [];
           state.remediationDeferred  = (remediationOutput?.deferred ?? []).map((d) => Object.freeze({
             category: d.category, severity: d.severity, reason: d.deferralReason,
@@ -2047,6 +2089,60 @@ export async function runOrchestration(args = {}) {
     // instead of the (non-existent) preview URL. STEP 11 needs a URL to
     // score; substituting the original keeps the pipeline progressing.
     const postFixUrl = (deployDegraded || !previewUrl) ? currentUrl : previewUrl;
+    let postFixEvaluationOutput = null;
+    let postFixSnapshot = null;
+    try {
+      const t0 = Date.now();
+      postFixEvaluationOutput = await _runEvaluationPipeline({
+        url: postFixUrl,
+        options: {
+          phaseBFindings: [],
+          onStep: (evt) => {
+            try {
+              emit(makeStepLog({
+                iteration: iterationNumber, step: 11,
+                status: evt?.log?.ok === false ? 'degraded' : 'complete',
+                tool: `evaluationPipeline:${evt?.log?.evaluator ?? 'unknown'} (PHASE C post-fix)`,
+                why: 'Phase C post-fix evaluator complete signal',
+                result: evt?.log ?? null,
+                mode: state.mode,
+              }));
+            } catch { /* swallow */ }
+          },
+        },
+      });
+      postFixSnapshot = await _capturePostFixSnapshot({
+        url: postFixUrl,
+        evaluationResult: postFixEvaluationOutput,
+        runEvaluationPipeline: _runEvaluationPipeline,
+      });
+      state.transformationPostFix = postFixSnapshot;
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 11, status: postFixEvaluationOutput?.ok ? 'complete' : 'degraded',
+        tool: 'verification.capturePostFixSnapshot (PHASE C)',
+        why: 'capture after snapshot using the same evaluator pipeline against deployed preview',
+        result: {
+          url: postFixSnapshot.url,
+          lighthouseScores: postFixSnapshot.lighthouseScores,
+          axeViolations: postFixSnapshot.axeViolations,
+          runtimeErrors: postFixSnapshot.runtimeErrors,
+          consoleErrors: postFixSnapshot.consoleErrors,
+          totalFindings: postFixSnapshot.totalFindings,
+          errors: postFixEvaluationOutput?.errors ?? {},
+        },
+        durationMs: Date.now() - t0, mode: state.mode,
+      }));
+    } catch (snapshotErr) {
+      postFixSnapshot = null;
+      state.transformationPostFix = null;
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 11, status: 'degraded',
+        tool: 'verification.capturePostFixSnapshot (PHASE C)',
+        why: 'post-fix delta snapshot failed; continuing with existing scoring path',
+        result: { error: (snapshotErr?.message ?? String(snapshotErr)).slice(0, 200) },
+        mode: state.mode,
+      }));
+    }
 
     // STEP 11 — Five-Layer Scoring (Post-Fix).
     // DISPATCH 6: token was minted in STEP 8 and is always available
@@ -2190,6 +2286,56 @@ export async function runOrchestration(args = {}) {
         },
       });
       emit(log); iterLog.steps.push(log);
+      if (state.transformationBaseline && postFixSnapshot) {
+        const deltaResult = _calculateTransformationDelta({
+          baseline: state.transformationBaseline,
+          postFix: postFixSnapshot,
+        });
+        const patchEffects = _classifyPatchEffects({
+          patches: state.remediationPatches ?? [],
+          deltas: deltaResult.deltas,
+        });
+        const regressionGate = _runRegressionGate({
+          deltaResult,
+          threshold: product?.regression_gate_threshold ?? undefined,
+          onStep: (evt) => {
+            emit(makeStepLog({
+              iteration: iterationNumber, step: 11,
+              status: evt?.log?.passed === false ? 'degraded' : 'complete',
+              tool: 'verification.regressionGate (PHASE C)',
+              why: 'halt iteration when post-fix evaluators detect unacceptable regression',
+              result: evt?.log ?? null,
+              mode: state.mode,
+            }));
+          },
+        });
+        const transformationDelta = Object.freeze({
+          baseline: state.transformationBaseline,
+          postFix: postFixSnapshot,
+          deltas: deltaResult.deltas,
+          aggregate: deltaResult.aggregate,
+          regressions: deltaResult.regressions,
+          patchEffects,
+          regressionGatePassed: regressionGate.passed,
+        });
+        state.transformationDelta = transformationDelta;
+        iterLog.transformationDelta = transformationDelta;
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 11,
+          status: regressionGate.passed ? 'complete' : 'degraded',
+          tool: 'verification.deltaCalculator (PHASE C)',
+          why: 'compare before vs after evaluator snapshots and classify patch effects',
+          result: {
+            kind: 'delta_verified',
+            improved: deltaResult.aggregate.totalImproved,
+            neutral: deltaResult.aggregate.totalNeutral,
+            regressed: deltaResult.aggregate.totalRegressed,
+            netDelta: deltaResult.aggregate.netDelta,
+            patchEffects,
+          },
+          mode: state.mode,
+        }));
+      }
     } catch (e) {
       return buildFailureReturn({ runId, mode: state.mode, product,
         orchestrationLog, iterations, failedStep: 'STEP_11',
@@ -2324,7 +2470,9 @@ export async function runOrchestration(args = {}) {
     iterations.push(iterLog);
 
     let iterExit = null;
-    if (iterLog.gtmReady) {
+    if (iterLog.transformationDelta && iterLog.transformationDelta.regressionGatePassed === false) {
+      iterExit = 'REGRESSION_DETECTED';
+    } else if (iterLog.gtmReady) {
       iterExit = 'GTM_READY';
     } else if (iterationNumber >= maxIterations) {
       iterExit = 'MAX_ITERATIONS';
@@ -2504,6 +2652,7 @@ export async function runOrchestration(args = {}) {
           ? state.remediationEscalated.length : 0,
         remediationDeferredCount: Array.isArray(state.remediationDeferred)
           ? state.remediationDeferred.length : 0,
+        transformationDelta: state.transformationDelta ?? null,
         at: new Date().toISOString(),
       },
       supabase,
@@ -2546,6 +2695,7 @@ export async function runOrchestration(args = {}) {
     dimensions_contributing: dimensionsContributing,
     // PHASE B2 — rule-based remediation summary on the result envelope.
     remediationSummary: state.remediationSummary ?? null,
+    transformationDelta: state.transformationDelta ?? null,
     orchestrationLog,
     iterations,
     product,
