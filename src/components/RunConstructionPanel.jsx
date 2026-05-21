@@ -224,29 +224,73 @@ function ResultUrlSection({ previewUrl, inputUrl, exitReason }) {
   );
 }
 
+function InsufficientCoverageBanner({ scored, total, minimum }) {
+  if (typeof scored !== 'number' || typeof total !== 'number' || typeof minimum !== 'number') return null;
+  if (scored >= minimum) return null;
+  return (
+    <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-1">
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4 text-amber-400" />
+        <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+          Insufficient dimension coverage for GTM readiness
+        </span>
+      </div>
+      <p className="text-[11px] text-foreground/90">
+        {scored}/{total} dimensions scored, minimum {minimum} required. The trust score below
+        reflects this coverage gap — additional evaluators must be wired before GTM-ready can be claimed.
+      </p>
+    </div>
+  );
+}
+
 function ResultCard({ final, runId, inputUrl }) {
   const ready = final.gtmReady === true;
-  const score = typeof final.finalScore === 'number' ? final.finalScore : 0;
+  const rawScore = typeof final.rawScore === 'number' ? final.rawScore
+    : (typeof final.finalScore === 'number' ? final.finalScore : 0);
+  const trustScore = typeof final.effectiveTrustScore === 'number'
+    ? final.effectiveTrustScore
+    : rawScore;
+  const scoredDims = typeof final.scoredDimensions === 'number' ? final.scoredDimensions : null;
+  const totalDims = typeof final.totalDimensions === 'number' ? final.totalDimensions : null;
+  const minDimsForGTM = typeof final.minimumScoredDimensionsForGTM === 'number'
+    ? final.minimumScoredDimensionsForGTM : 7;
+  const hasCoverageData = scoredDims !== null && totalDims !== null;
   const recordId = final.governanceRecordId || runId;
   const isHonestGate = final.exitReason === 'HONEST_GATE_REFUSAL_ALREADY_PASSING';
+  const isInsufficientCoverage = final.exitReason === 'INSUFFICIENT_DIMENSION_COVERAGE';
 
   return (
     <div className="space-y-3">
       <KnownGapBanner dimensions={final.dimensions_contributing} />
+      {hasCoverageData && (
+        <InsufficientCoverageBanner scored={scoredDims} total={totalDims} minimum={minDimsForGTM} />
+      )}
       <div className={`rounded-xl border p-5 space-y-3 ${
         isHonestGate ? 'border-amber-500/40 bg-amber-500/5'
+        : isInsufficientCoverage ? 'border-amber-500/40 bg-amber-500/5'
         : ready ? 'border-emerald-500/40 bg-emerald-500/5'
         : 'border-border bg-card'
       }`}>
         <div className="flex items-center gap-2 flex-wrap">
           {isHonestGate
             ? <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">HONEST GATE — ALREADY PASSING</span>
-            : ready
-              ? <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">GTM-READY</span>
-              : <span className="text-[10px] font-bold text-muted-foreground bg-muted/30 px-2 py-0.5 rounded">NOT GTM-READY</span>
+            : isInsufficientCoverage
+              ? <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">INSUFFICIENT COVERAGE</span>
+              : ready
+                ? <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">GTM-READY</span>
+                : <span className="text-[10px] font-bold text-muted-foreground bg-muted/30 px-2 py-0.5 rounded">NOT GTM-READY</span>
           }
           <span className="text-[10px] text-muted-foreground">exitReason: <span className="font-mono text-foreground">{final.exitReason || 'UNKNOWN'}</span></span>
-          <span className="ml-auto text-xl font-bold text-foreground">{score.toFixed(1)}<span className="text-muted-foreground text-sm">/100</span></span>
+          <div className="ml-auto text-right">
+            <div className="text-xl font-bold text-foreground leading-none">
+              Trust Score: {trustScore.toFixed(1)}<span className="text-muted-foreground text-sm">/100</span>
+            </div>
+            {hasCoverageData && (
+              <div className="text-[10px] text-muted-foreground mt-1 font-mono">
+                raw {rawScore.toFixed(1)} · coverage {scoredDims}/{totalDims}
+              </div>
+            )}
+          </div>
         </div>
         <ResultUrlSection previewUrl={final.previewUrl} inputUrl={inputUrl} exitReason={final.exitReason} />
         {final.prUrl && (

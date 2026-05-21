@@ -223,6 +223,24 @@ export default async function handler(req, res) {
     // to the SSE consumer. The UI's KNOWN-GAP banner reads this array.
     dimensions_contributing: Array.isArray(result?.dimensions_contributing)
       ? result.dimensions_contributing : null,
+    // CAPABILITY-WEIGHTED SCORING — forwarded so the UI can render the
+    // trust score (primary) + raw score + coverage (secondary) and
+    // gate the GTM badge on meetsMinimumCoverage.
+    rawScore: typeof result?.rawScore === 'number' ? result.rawScore : null,
+    effectiveTrustScore: typeof result?.effectiveTrustScore === 'number'
+      ? result.effectiveTrustScore : null,
+    coverageConfidence: typeof result?.coverageConfidence === 'number'
+      ? result.coverageConfidence : null,
+    scoredDimensions: typeof result?.scoredDimensions === 'number'
+      ? result.scoredDimensions : null,
+    totalDimensions: typeof result?.totalDimensions === 'number'
+      ? result.totalDimensions : null,
+    meetsMinimumCoverage: typeof result?.meetsMinimumCoverage === 'boolean'
+      ? result.meetsMinimumCoverage : null,
+    minimumScoredDimensionsForGTM: typeof result?.minimumScoredDimensionsForGTM === 'number'
+      ? result.minimumScoredDimensionsForGTM : 7,
+    coverageDisclosure: typeof result?.coverageDisclosure === 'string'
+      ? result.coverageDisclosure : null,
     runId,
   });
   return done();

@@ -30,6 +30,7 @@
 // records reasons.
 
 import { normalizeFindings } from './findingNormalizer.js';
+import { evaluatorsForTier, TIER } from './evaluationBudget.js';
 
 /** Emit a step event via the provided callback (best-effort, never throws). */
 function safeEmit(onStep, payload) {
@@ -192,9 +193,14 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
     return { ok: false, findings: [], stats: null, perEvaluator: {}, errors: { _: 'url_required' } };
   }
   const onStep = options.onStep;
-  const enabled = new Set(Array.isArray(options.evaluators) && options.evaluators.length > 0
+  // PART B — Evaluation budget tiering. An explicit options.evaluators wins.
+  // Otherwise an options.evaluationTier (TIER_1/2/3 from evaluationBudget.js)
+  // selects the evaluator allowlist. Default = full stack (back-compat).
+  const tier = typeof options.evaluationTier === 'string' ? options.evaluationTier : null;
+  const evaluatorList = Array.isArray(options.evaluators) && options.evaluators.length > 0
     ? options.evaluators
-    : ['phase-b', 'lighthouse', 'axe', 'runtime']);
+    : (tier ? evaluatorsForTier(tier) : ['phase-b', 'lighthouse', 'axe', 'runtime']);
+  const enabled = new Set(evaluatorList);
 
   const errors = {};
   const perEvaluator = {};
@@ -309,7 +315,15 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
   return {
     ok: Object.values(errors).length === 0,
     findings,
-    stats: { ...stats, perEvaluatorRaw: perEvaluator, evaluatorMetrics },
+    stats: {
+      ...stats,
+      perEvaluatorRaw: perEvaluator,
+      evaluatorMetrics,
+      // PART B — tier tag for callers aggregating tier1Count / tier2Count /
+      // tier3Count across a multi-page evaluation pass.
+      evaluationTier: tier,
+      evaluators: Array.from(enabled),
+    },
     perEvaluator,
     errors,
   };
@@ -317,4 +331,5 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
 
 export const __internals = Object.freeze({
   normalizeExistingPhaseBShape,
+  TIER,
 });

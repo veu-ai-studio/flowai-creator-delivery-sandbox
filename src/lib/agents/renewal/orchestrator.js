@@ -50,6 +50,11 @@ import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
 import { calculateTransformationDelta } from '../../verification/deltaCalculator.js';
 import { classifyPatchEffects } from '../../verification/patchEffectClassifier.js';
 import { runRegressionGate } from '../../verification/regressionGate.js';
+import {
+  computeCapabilityWeightedScore,
+  decideGtmGate,
+  MINIMUM_SCORED_DIMENSIONS_FOR_GTM,
+} from '../../scoring/capabilityWeightedScore.js';
 import { randomUUID } from 'node:crypto';
 
 export const GTM_READY_SCORE = 95;
@@ -2461,8 +2466,32 @@ export async function runOrchestration(args = {}) {
     iterLog.fiveLayerPost = postScoreEnvelope.total; // internal signal
     iterLog.delta = delta;
     iterLog.totalImprovement = totalImprovement;
-    // GTM ready per §7.6 + CA-13: score ≥ gtmTarget AND zero critical findings.
-    iterLog.gtmReady = postGtmForIter.score >= gtmTarget && postGtmForIter.counts.critical === 0;
+
+    // CAPABILITY-WEIGHTED GATE (CA-18 §2 honest disclosure enforcement).
+    // The raw §7.6 score is deflated by coverage_confidence (scored
+    // dimensions / total) so a "99.5/100 with 4/10 dimensions" outcome
+    // cannot mask the missing evidence. Coverage <7 forces refusal
+    // regardless of trust score (per spec — even maximum trust at low
+    // coverage is not GTM-claimable).
+    const scoredDimensionsForIter = _countCurrentScoredDimensions(
+      state.pipelineStats, state.pipelineErrors,
+    );
+    const weighted = computeCapabilityWeightedScore({
+      rawScore: postGtmForIter.score,
+      scoredDimensions: scoredDimensionsForIter,
+      totalDimensions: 10,
+    });
+    const gateVerdict = decideGtmGate({ weighted, gtmTarget });
+    iterLog.rawScore = weighted.rawScore;
+    iterLog.effectiveTrustScore = weighted.effectiveTrustScore;
+    iterLog.coverageConfidence = weighted.coverageConfidence;
+    iterLog.scoredDimensions = weighted.scoredDimensions;
+    iterLog.totalDimensions = weighted.totalDimensions;
+    iterLog.meetsMinimumCoverage = weighted.meetsMinimumCoverage;
+    iterLog.coverageDisclosure = weighted.coverageDisclosure;
+    // GTM ready per §7.6 + CA-13 + capability-weighted gate: both
+    // gateVerdict (trust>=target AND scored>=7) AND zero criticals.
+    iterLog.gtmReady = gateVerdict.gtmReady && postGtmForIter.counts.critical === 0;
     iterLog.branchName = pathB ? null : branchName;
     iterLog.previewUrl = previewUrl;
     iterLog.decision = decision.action;
@@ -2474,6 +2503,16 @@ export async function runOrchestration(args = {}) {
       iterExit = 'REGRESSION_DETECTED';
     } else if (iterLog.gtmReady) {
       iterExit = 'GTM_READY';
+    } else if (
+      // Honest exit: raw score is at/above target AND zero criticals,
+      // but coverage is insufficient to claim readiness. Further
+      // iteration cannot fix this — it's an evidence-collection gap,
+      // not a quality gap. Stop and surface the gap to the operator.
+      postGtmForIter.score >= gtmTarget
+      && postGtmForIter.counts.critical === 0
+      && !weighted.meetsMinimumCoverage
+    ) {
+      iterExit = 'INSUFFICIENT_DIMENSION_COVERAGE';
     } else if (iterationNumber >= maxIterations) {
       iterExit = 'MAX_ITERATIONS';
     } else if (delta <= 0) {
@@ -2603,7 +2642,6 @@ export async function runOrchestration(args = {}) {
   const finalGtmScore = lastPostGtm?.score ?? originalGtmScore ?? 0;
   const finalGtmBand = lastPostGtm?.band ?? 'not-demo-ready';
   const finalGtmCriticalCount = lastPostGtm?.counts?.critical ?? 0;
-  const canonicalGtmReady = finalGtmScore >= gtmTarget && finalGtmCriticalCount === 0;
 
   // W6 INTEGRATION — STEP 4: CA-18 §2 dimensions_contributing[] honest disclosure.
   // The platform forbids silent omission of dimensions. We emit one entry per
@@ -2622,6 +2660,31 @@ export async function runOrchestration(args = {}) {
     pipelineStats: state.pipelineStats ?? null,
     pipelineErrors: state.pipelineErrors ?? null,
   });
+
+  // Capability-weighted final score (CA-18 §2 honest disclosure). Uses
+  // the just-built dimensions_contributing[] as the source of truth for
+  // how many dimensions actually have evidence behind them.
+  const finalWeighted = computeCapabilityWeightedScore({
+    rawScore: finalGtmScore,
+    dimensionsContributing,
+  });
+  const finalGate = decideGtmGate({ weighted: finalWeighted, gtmTarget });
+  const canonicalGtmReady = finalGate.gtmReady && finalGtmCriticalCount === 0;
+  // Promote INSUFFICIENT_DIMENSION_COVERAGE into exitReason when the
+  // run ended without a clean GTM exit AND the only blocker was the
+  // coverage floor. Keeps GTM_READY and other terminal reasons intact.
+  if (
+    exitReason !== 'GTM_READY'
+    && exitReason !== 'USER_STOPPED'
+    && exitReason !== 'STEP_FAILED'
+    && exitReason !== 'REGRESSION_DETECTED'
+    && exitReason !== 'INSUFFICIENT_DIMENSION_COVERAGE'
+    && finalGtmScore >= gtmTarget
+    && finalGtmCriticalCount === 0
+    && !finalWeighted.meetsMinimumCoverage
+  ) {
+    exitReason = 'INSUFFICIENT_DIMENSION_COVERAGE';
+  }
 
   let auditWrite = { written: false, reason: 'not_attempted' };
   try {
@@ -2643,6 +2706,17 @@ export async function runOrchestration(args = {}) {
         prUrl: pr?.prHtmlUrl ?? null,
         // W6 INTEGRATION — STEP 4: CA-18 §2 honest disclosure.
         dimensions_contributing: dimensionsContributing,
+        // CAPABILITY-WEIGHTED SCORING — finalScore above is the raw
+        // §7.6 score; trust score deflates it by coverage_confidence
+        // and exposes the minimum-coverage floor (7/10) for honesty.
+        rawScore: finalWeighted.rawScore,
+        effectiveTrustScore: finalWeighted.effectiveTrustScore,
+        coverageConfidence: finalWeighted.coverageConfidence,
+        scoredDimensions: finalWeighted.scoredDimensions,
+        totalDimensions: finalWeighted.totalDimensions,
+        meetsMinimumCoverage: finalWeighted.meetsMinimumCoverage,
+        minimumScoredDimensionsForGTM: MINIMUM_SCORED_DIMENSIONS_FOR_GTM,
+        coverageDisclosure: finalWeighted.coverageDisclosure,
         // PHASE B2 — rule-based remediation summary (classifier counts,
         // budget application, conflicts). Null when remediation didn't
         // run (e.g. PATH B with no findings).
@@ -2693,6 +2767,17 @@ export async function runOrchestration(args = {}) {
     prNumber: pr?.prNumber ?? null,
     // W6 INTEGRATION — STEP 4: CA-18 §2 honest disclosure on result envelope.
     dimensions_contributing: dimensionsContributing,
+    // CAPABILITY-WEIGHTED SCORING — surfaced on the result envelope so
+    // the UI can display the deflated trust score as the headline and
+    // the raw score + coverage ratio as the secondary line.
+    rawScore: finalWeighted.rawScore,
+    effectiveTrustScore: finalWeighted.effectiveTrustScore,
+    coverageConfidence: finalWeighted.coverageConfidence,
+    scoredDimensions: finalWeighted.scoredDimensions,
+    totalDimensions: finalWeighted.totalDimensions,
+    meetsMinimumCoverage: finalWeighted.meetsMinimumCoverage,
+    minimumScoredDimensionsForGTM: MINIMUM_SCORED_DIMENSIONS_FOR_GTM,
+    coverageDisclosure: finalWeighted.coverageDisclosure,
     // PHASE B2 — rule-based remediation summary on the result envelope.
     remediationSummary: state.remediationSummary ?? null,
     transformationDelta: state.transformationDelta ?? null,
@@ -3069,6 +3154,31 @@ function buildPrBody({ runId, mode, exitReason, originalScore, finalScore, total
  * @param {Array} args.iterations
  * @returns {Array<{dimension,scored,scoreBefore,scoreAfter,evidence}>}
  */
+/**
+ * Mirror of buildDimensionsContributing's scored/not-scored logic, but
+ * returns just the count — used by STEP 12's capability-weighted gate
+ * which runs BEFORE the full dimensions_contributing array is built.
+ *
+ * Stable through the run: the 4 always-scored dimensions (syntax,
+ * duplication, ui_ux, functional_completeness) plus the 3 evaluator-
+ * conditional dimensions (bugs_errors_detector, performance,
+ * accessibility) — total floor 4, ceiling 7 for partial coverage,
+ * remaining 3 (security, privacy_jurisdiction, legal_jurisdiction)
+ * stay KNOWN_GAP_NOT_IMPLEMENTED in v1.
+ */
+function _countCurrentScoredDimensions(pipelineStats, pipelineErrors) {
+  const perEvaluator = pipelineStats?.perEvaluator ?? pipelineStats?.perEvaluatorRaw ?? {};
+  const errors = pipelineErrors ?? {};
+  const ranLighthouse = Object.prototype.hasOwnProperty.call(perEvaluator, 'lighthouse') && !errors.lighthouse;
+  const ranAxe        = Object.prototype.hasOwnProperty.call(perEvaluator, 'axe-core') && !errors['axe-core'];
+  const ranRuntime    = Object.prototype.hasOwnProperty.call(perEvaluator, 'runtime-diagnostics') && !errors['runtime-diagnostics'];
+  let scored = 4; // syntax, duplication, ui_ux, functional_completeness
+  if (ranRuntime) scored += 1;                  // bugs_errors_detector
+  if (ranLighthouse) scored += 1;               // performance
+  if (ranAxe || ranLighthouse) scored += 1;     // accessibility
+  return scored;
+}
+
 function buildDimensionsContributing({ preScoreEnvelope, lastPostScore, originalGtmScore, finalGtmScore, finalGtmCounts, iterations, pipelineStats = null, pipelineErrors = null }) {
   const lastIter = Array.isArray(iterations) && iterations.length > 0
     ? iterations[iterations.length - 1] : null;
