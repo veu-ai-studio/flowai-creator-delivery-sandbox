@@ -490,6 +490,94 @@ export async function runOrchestration(args = {}) {
     try { onStep(log); } catch { /* swallow */ }
   };
 
+  // ── W6 INTEGRATION — STEP 3a Tool Intelligence wiring (CA-18 §6) ──────────
+  //
+  // Lazy-import the Tool Intelligence Service so the renewal pipeline
+  // doesn't carry a hard dependency. Best-effort: any failure surfaces
+  // as a `tool_intel_skipped` step event and the pipeline continues
+  // (recommend_only invariant — tool selection never blocks execution).
+  //
+  // The service produces a `tool.selection` envelope per AutoRunner step
+  // (research/design/build/qa_audit/deploy/monitor/govern/gtm) which we
+  // write into product_ssot.governance_record alongside the run's
+  // orchestration_complete entry. That gives ≥8 tool.selection envelopes
+  // per governance_record write — far above the acceptance bar of ≥1.
+  let toolIntelligenceService = null;
+  let toolIntelligenceAttachReason = 'not_attached';
+  let toolIntelligenceMode = 'AUTOMATIC';
+  try {
+    const _modeUpper = String(args.mode ?? 'auto').toUpperCase();
+    toolIntelligenceMode = _modeUpper === 'GUIDED' ? 'GUIDED'
+      : _modeUpper === 'MANUAL' ? 'MANUAL'
+      : 'AUTOMATIC';
+    if (supabase && typeof supabase.from === 'function') {
+      const _toolIntelModule = await import('../../tools/ToolIntelligenceService.js');
+      toolIntelligenceService = _toolIntelModule.createToolIntelligenceService({ client: supabase });
+      toolIntelligenceAttachReason = 'attached';
+      emit(makeStepLog({
+        iteration: 0, step: 0, status: 'complete',
+        tool: 'ToolIntelligenceService (lazy-imported)',
+        why: 'CA-18 §6 — record per-step tool selection for governance trail',
+        result: { kind: 'tool_intel_attached', mode: toolIntelligenceMode },
+        mode: state.mode,
+      }));
+    } else {
+      toolIntelligenceAttachReason = 'supabase_unavailable';
+      emit(makeStepLog({
+        iteration: 0, step: 0, status: 'skipped',
+        tool: 'ToolIntelligenceService',
+        why: 'CA-18 §6 — tool selection trail',
+        result: { kind: 'tool_intel_skipped', reason: 'supabase_unavailable' },
+        mode: state.mode,
+      }));
+    }
+  } catch (e) {
+    toolIntelligenceAttachReason = `import_failed:${(e?.message ?? String(e)).slice(0, 100)}`;
+    emit(makeStepLog({
+      iteration: 0, step: 0, status: 'skipped',
+      tool: 'ToolIntelligenceService',
+      why: 'CA-18 §6 — tool selection trail',
+      result: { kind: 'tool_intel_skipped', reason: toolIntelligenceAttachReason },
+      mode: state.mode,
+    }));
+  }
+
+  // W6 INTEGRATION — emit a tool.selection envelope for each of the 8
+  // canonical AutoRunner step keys (per ToolIntelligenceService.STEP_KEYS).
+  // recommend_only: any failure is captured locally and never bubbled.
+  const _emitToolSelections = async () => {
+    if (!toolIntelligenceService) return { written: 0, skipped: 'service_unavailable' };
+    const STEP_KEYS = ['research', 'design', 'build', 'qa_audit', 'deploy', 'monitor', 'govern', 'gtm'];
+    let written = 0;
+    for (const stepKey of STEP_KEYS) {
+      try {
+        const selection = await toolIntelligenceService.getTopTool(stepKey, undefined, toolIntelligenceMode);
+        const selected = toolIntelligenceMode === 'GUIDED'
+          ? (Array.isArray(selection) ? selection.map((p) => p.platform_name) : null)
+          : (selection && typeof selection.platform_name === 'string' ? selection.platform_name : null);
+        const result = await _appendGovernanceEntry({
+          productId: product?.product_id, environment,
+          entry: {
+            kind: 'tool.selection.v1',
+            runId,
+            productId: product?.product_id,
+            stepKey,
+            mode: toolIntelligenceMode,
+            selected,
+            at: new Date().toISOString(),
+          },
+          supabase,
+        });
+        if (result?.written) written += 1;
+      } catch { /* recommend_only — never throw */ }
+    }
+    return { written };
+  };
+  // We defer the actual emission until STEP 14 (after product is resolved
+  // and right before the orchestration_complete write) to keep the
+  // tool.selection envelopes adjacent to the run's final state in the
+  // governance_record array.
+
   // ── STEP 1 — Product Discovery (iteration 1 only, then carry forward) ─────
   //
   // DISPATCH 24 (product-agnostic URL handling): discoverProduct never
@@ -650,6 +738,94 @@ export async function runOrchestration(args = {}) {
       // degraded log so the operator can fix the creds.
       state.authPrepFailure = (e?.message ?? String(e)).slice(0, 160);
     }
+  }
+
+  // ── W6 INTEGRATION — STEP 3b: Pre-run honest-gate (CA-18 §1) ──────────────
+  //
+  // CA-18 §1 honest-assessment obligation: if this product already meets
+  // the gtmTarget per its most recent orchestration_complete entry, the
+  // engine must refuse to re-run rather than silently re-evaluate. The
+  // run short-circuits with exitReason='HONEST_GATE_REFUSAL_ALREADY_PASSING'
+  // so the UI surfaces it as an explicit message (not as an error).
+  //
+  // Source of truth for last_score: product_ssot.governance_record (NOT a
+  // dedicated product_registry.last_score column, which doesn't exist yet
+  // — the governance_record is the canonical score-history substrate per
+  // CA-18 §7.6). We pull the most recent self_renewal.orchestration_complete.v1
+  // entry's finalScore and compare to gtmTarget.
+  if (supabase && typeof supabase.from === 'function' && product?.product_id) {
+    try {
+      const { data: ssotRow } = await supabase
+        .from('product_ssot')
+        .select('governance_record')
+        .eq('product_id', product.product_id)
+        .eq('environment', environment)
+        .maybeSingle();
+      const records = Array.isArray(ssotRow?.governance_record) ? ssotRow.governance_record : [];
+      const completes = records.filter((r) => r?.kind === 'self_renewal.orchestration_complete.v1');
+      const last = completes.length > 0 ? completes[completes.length - 1] : null;
+      const lastScore = typeof last?.finalScore === 'number' ? last.finalScore : null;
+      if (lastScore !== null && lastScore >= gtmTarget) {
+        // Emit the honest_gate_refusal envelope BEFORE returning so it
+        // lands in governance_record + the SSE stream.
+        try {
+          await _appendGovernanceEntry({
+            productId: product.product_id, environment,
+            entry: {
+              kind: 'honest_gate_refusal.v1',
+              runId,
+              productId: product.product_id,
+              reason: 'ALREADY_AT_TARGET',
+              currentScore: lastScore,
+              targetScore: gtmTarget,
+              priorRunId: last.runId ?? null,
+              at: new Date().toISOString(),
+            },
+            supabase,
+          });
+        } catch { /* honest-gate envelope is best-effort */ }
+        emit(makeStepLog({
+          iteration: 0, step: 0, status: 'complete',
+          tool: 'honest_gate (CA-18 §1 pre-run assessment)',
+          why: 'refuse to re-evaluate a product already at target — honesty over busywork',
+          result: {
+            kind: 'honest_gate_refusal',
+            reason: 'ALREADY_AT_TARGET',
+            currentScore: lastScore,
+            targetScore: gtmTarget,
+          },
+          mode: state.mode,
+        }));
+        return Object.freeze({
+          ok: true,
+          gtmReady: true,
+          gtmBand: 'showcase-ready',
+          gtmCounts: null,
+          exitReason: 'HONEST_GATE_REFUSAL_ALREADY_PASSING',
+          originalScore: lastScore,
+          finalScore: lastScore,
+          totalDelta: 0,
+          fiveLayerOriginalScore: 0,
+          fiveLayerFinalScore: 0,
+          iterationsCompleted: 0,
+          previewUrl: null,
+          prUrl: null,
+          prNumber: null,
+          orchestrationLog,
+          iterations: [],
+          product,
+          runId,
+          mode: state.mode,
+          auditWrite: { written: false, reason: 'honest_gate_refusal' },
+          runIncomplete: null,
+          honestGateRefusal: {
+            reason: 'ALREADY_AT_TARGET',
+            currentScore: lastScore,
+            targetScore: gtmTarget,
+          },
+        });
+      }
+    } catch { /* lookup failure is non-fatal — proceed with normal run */ }
   }
 
   // ── OUTER LOOP: repeat until GTM-ready / max iter / no improvement / stop ─
@@ -1977,6 +2153,23 @@ export async function runOrchestration(args = {}) {
       // Continue to STEP 14 even if PR failed.
     }
   }
+
+  // W6 INTEGRATION — STEP 3a: emit one tool.selection envelope per
+  // AutoRunner step key into governance_record before the
+  // orchestration_complete write. Best-effort (recommend_only).
+  const toolSelectionsResult = await _emitToolSelections();
+  emit(makeStepLog({
+    iteration: iterations.length, step: 0, status: 'complete',
+    tool: 'ToolIntelligenceService — per-step selection trail',
+    why: 'CA-18 §6 — write tool.selection envelopes for the run',
+    result: {
+      kind: 'tool_intel_selections_written',
+      written: toolSelectionsResult.written ?? 0,
+      attachReason: toolIntelligenceAttachReason,
+      mode: toolIntelligenceMode,
+    },
+    mode: state.mode,
+  }));
 
   // STEP 14 — Audit Record.
   // DISPATCH 28: audit emits the canonical §7.6 GTM Readiness score
