@@ -219,6 +219,10 @@ export default async function handler(req, res) {
     exitReason: result?.exitReason ?? 'UNKNOWN',
     iterationsCompleted: result?.iterationsCompleted ?? 0,
     prUrl: result?.prUrl ?? null,
+    // W6 INTEGRATION — STEP 4: CA-18 §2 honest disclosure forwarded
+    // to the SSE consumer. The UI's KNOWN-GAP banner reads this array.
+    dimensions_contributing: Array.isArray(result?.dimensions_contributing)
+      ? result.dimensions_contributing : null,
     runId,
   });
   return done();
