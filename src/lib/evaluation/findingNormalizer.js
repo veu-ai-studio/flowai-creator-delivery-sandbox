@@ -107,6 +107,11 @@ function normalizeOne(raw, sourceTag) {
     count: 1,
     occurrences: [{ url: String(location || ''), detail: raw.detail ?? null }],
     source,
+    // DISPATCH U1 — provenance alias. Every emitted finding carries
+    // `generated_by` so universal-mode consumers can attribute the
+    // evidence to a specific evaluator (lighthouse | axe-core |
+    // runtime-diagnostics | crawler | phase-b-playwright).
+    generated_by: source,
     sources: [{
       source, evaluatorVersion, confidence, evidenceType,
       weight: DEFAULT_WEIGHTS[source] ?? 0.7,
@@ -135,6 +140,7 @@ function mergeTwo(a, b) {
   const occurrences = [...a.occurrences, ...b.occurrences].slice(0, 8);
   const sourceTags = Array.from(new Set([...(Array.isArray(a.source) ? a.source : [a.source]),
                                           ...(Array.isArray(b.source) ? b.source : [b.source])]));
+  const mergedSource = sourceTags.length === 1 ? sourceTags[0] : sourceTags;
   return Object.freeze({
     id: a.id,
     dimension: a.dimension,
@@ -145,7 +151,9 @@ function mergeTwo(a, b) {
     description: a.description,
     count,
     occurrences,
-    source: sourceTags.length === 1 ? sourceTags[0] : sourceTags,
+    source: mergedSource,
+    // DISPATCH U1 — see normalizeOne(); same shape on merged findings.
+    generated_by: mergedSource,
     sources,
     confidence,
     evidenceType: a.evidenceType,
