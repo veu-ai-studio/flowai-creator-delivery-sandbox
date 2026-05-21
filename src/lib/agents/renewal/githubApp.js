@@ -125,23 +125,40 @@ export function buildAppJwtClaims(appId, nowMs) {
 }
 
 /**
- * Mint a GitHub App installation access token.
+ * Mint a GitHub App installation access token — OR, when GITHUB_PAT is
+ * set, short-circuit and return that personal access token instead.
+ *
+ * PAT fallback (added 2026-05-21): the FlowAI GitHub App is installed on
+ * the veu-ai-studio org. When the construction engine targets a repo on
+ * a different owner (e.g. victor2081new-cloud/flowai) the App auth path
+ * returns 404 on the Trees API. Setting GITHUB_PAT to a fine-grained
+ * personal access token with repo access lets the engine reach those
+ * repos without installing the App there. Envelope shape:
+ *   { token, source: 'pat' }    — when GITHUB_PAT is set
+ *   { token, expiresAt, ... }   — when minting an App installation token
  *
  * @param {object} [opts]
+ * @param {string} [opts.pat]                   — default: process.env.GITHUB_PAT (PAT fallback)
  * @param {string|number} [opts.appId]          — default: process.env.GITHUB_APP_ID
  * @param {string} [opts.privateKey]            — default: process.env.GITHUB_APP_PRIVATE_KEY
  * @param {string|number} [opts.installationId] — default: process.env.GITHUB_APP_INSTALLATION_ID
  * @param {() => number} [opts.now]             — default: Date.now (overridable for tests)
  * @param {typeof globalThis.fetch} [opts.fetch] — default: globalThis.fetch (overridable for tests)
  *
- * @returns {Promise<{ token: string, expiresAt: string, permissions?: object, repositorySelection?: string }>}
- *   - token: the 1-hour installation access token. The caller MUST NOT
- *     log it; this module also refuses to log it in error paths.
- *   - expiresAt: ISO-8601 timestamp from GitHub's response.
+ * @returns {Promise<{ token: string, expiresAt?: string, source?: string, permissions?: object, repositorySelection?: string }>}
+ *   - token: either the PAT (source='pat') or a 1-hour installation
+ *     access token. The caller MUST NOT log it; this module also refuses
+ *     to log it in error paths.
+ *   - expiresAt: ISO-8601 timestamp from GitHub's response (App path only).
  *   - permissions / repositorySelection: pass-through metadata GitHub
  *     returns; useful for debugging without leaking the token itself.
  */
 export async function getInstallationToken(opts = {}) {
+  // PAT fallback — short-circuits the App auth path entirely. See
+  // jsdoc above for rationale.
+  const pat = opts.pat ?? process.env.GITHUB_PAT;
+  if (pat) return { token: pat, source: 'pat' };
+
   const appId = opts.appId ?? process.env.GITHUB_APP_ID;
   const privateKey = opts.privateKey ?? process.env.GITHUB_APP_PRIVATE_KEY;
   const installationId = opts.installationId ?? process.env.GITHUB_APP_INSTALLATION_ID;
