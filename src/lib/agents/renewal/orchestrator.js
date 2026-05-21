@@ -43,6 +43,7 @@ import { aggressiveCrawl } from '../../../../api/_lib/crawler.js';
 import { conductStructuredCrawl } from './crawlOutputAdapter.js';
 import { probeAdversarialSurface, probeAllPages } from './adversarialSurface.js';
 import { remediate as remediationEngine } from '../../../../api/_lib/remediationEngine.js';
+import { runEvaluationPipeline } from '../../evaluation/evaluationPipeline.js';
 import { randomUUID } from 'node:crypto';
 
 export const GTM_READY_SCORE = 95;
@@ -477,6 +478,10 @@ export async function runOrchestration(args = {}) {
   // DISPATCH 28: scoreCrawlOutput is DI-overridable so tests can drive
   // the §7.6 gate without having to construct issue-shaped crawl mocks.
   const _scoreCrawlOutput       = deps.scoreCrawlOutput       || scoreCrawlOutput;
+  // PHASE B1 — Multi-engine evaluation pipeline (Lighthouse + axe-core +
+  // runtimeDiagnostics, plus pass-through Phase B). DI-overridable so
+  // tests can stub it with deterministic findings.
+  const _runEvaluationPipeline  = deps.runEvaluationPipeline  || runEvaluationPipeline;
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   const orchestrationLog = [];
@@ -1077,6 +1082,77 @@ export async function runOrchestration(args = {}) {
     state.phaseBSummary = phaseBSummary;
     state.phaseBPagesProbed = phaseBPagesProbed;
     state.phaseBUrlsAttempted = phaseBUrlsAttempted;
+
+    // ── PHASE B1 — Multi-Engine Evaluation Pipeline (CA-18 §2 broader coverage) ─
+    //
+    // PROBLEM (D38/D41 residual): Phase B alone finds 0 interactives on
+    // thin SPAs whose first paint contains no clickable surface; the
+    // construction engine then starves for findings to wire up. The
+    // pipeline fans out to 3 additional evaluators (Lighthouse, axe-core,
+    // runtime diagnostics) in parallel, normalizes + deduplicates, and
+    // produces findings on ANY page regardless of interactive density.
+    //
+    // Contract: graceful — any single evaluator failure (Chrome launch,
+    // import miss, timeout) returns [] for that evaluator and the
+    // pipeline continues. Errors land in `state.pipelineErrors` for the
+    // S14 audit envelope.
+    //
+    // Pass-through: state.phaseBFindings is fed in as the 'phase-b'
+    // evaluator output so the normalizer can dedupe Phase B findings
+    // against findings the other engines surface for the same node/URL.
+    let pipelineOutput = null;
+    try {
+      const t0 = Date.now();
+      pipelineOutput = await _runEvaluationPipeline({
+        url: currentUrl,
+        options: {
+          phaseBFindings,
+          onStep: (evt) => {
+            // Forward each evaluator_complete to the SSE stream so the
+            // UI can render per-evaluator progress.
+            try {
+              emit(makeStepLog({
+                iteration: iterationNumber, step: 4,
+                status: evt?.log?.ok === false ? 'degraded' : 'complete',
+                tool: `evaluationPipeline:${evt?.log?.evaluator ?? 'unknown'}`,
+                why: 'Phase B1 — per-evaluator complete signal',
+                result: evt?.log ?? null,
+                mode: state.mode,
+              }));
+            } catch { /* swallow */ }
+          },
+        },
+      });
+      state.pipelineFindings = Array.isArray(pipelineOutput?.findings) ? pipelineOutput.findings : [];
+      state.pipelineStats = pipelineOutput?.stats ?? null;
+      state.pipelineErrors = pipelineOutput?.errors ?? {};
+      const log = makeStepLog({
+        iteration: iterationNumber, step: 4,
+        status: pipelineOutput?.ok ? 'complete' : 'degraded',
+        tool: 'evaluationPipeline.runEvaluationPipeline (Phase B1)',
+        why: 'fan-out to Lighthouse + axe-core + runtimeDiagnostics; normalize + dedupe',
+        result: {
+          combinedFindings: state.pipelineFindings.length,
+          perEvaluator: pipelineOutput?.perEvaluator ?? {},
+          stats: pipelineOutput?.stats ?? null,
+          errors: pipelineOutput?.errors ?? {},
+        },
+        durationMs: Date.now() - t0, mode: state.mode,
+      });
+      emit(log); iterLog.steps.push(log);
+    } catch (e) {
+      state.pipelineFindings = [];
+      state.pipelineStats = null;
+      state.pipelineErrors = { _: (e?.message ?? String(e)).slice(0, 200) };
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 4, status: 'degraded',
+        tool: 'evaluationPipeline (Phase B1)',
+        why: 'pipeline threw; continuing with Phase A + raw Phase B only',
+        result: { error: (e?.message ?? String(e)).slice(0, 200) },
+        mode: state.mode,
+      }));
+    }
+
     await state.checkpoint(onCheckpoint, { lastStep: 4, iteration: iterationNumber });
 
     // STEP 5 — Five-Layer Scoring (Pre-Fix).
@@ -1111,12 +1187,19 @@ export async function runOrchestration(args = {}) {
       // STEP 12; Five-Layer remains internal telemetry only.
       // D39: union Phase A crawl findings with Phase B adversarial-
       // surface findings (state.phaseBFindings captured in STEP 4).
-      const preGtm = _scoreCrawlOutput(crawlOutput, state.phaseBFindings ?? null);
+      // PHASE B1: prefer the normalized multi-engine pipeline output
+      // (Phase B + Lighthouse + axe-core + runtime diagnostics) when
+      // available — falls back to raw Phase B if the pipeline produced
+      // nothing (e.g. all extra engines errored gracefully).
+      const _multiEngineFindings = (Array.isArray(state.pipelineFindings) && state.pipelineFindings.length > 0)
+        ? state.pipelineFindings
+        : (state.phaseBFindings ?? null);
+      const preGtm = _scoreCrawlOutput(crawlOutput, _multiEngineFindings);
       // D41 T5 — whole-product comparison: surface-only Phase A vs
       // comprehensive Phase A + multi-page Phase B. Skip the extra
       // call when Phase B contributed nothing — the two scores are
       // identical and the redundant call wastes a Supabase round-trip.
-      const preGtmSurfaceOnly = (Array.isArray(state.phaseBFindings) && state.phaseBFindings.length > 0)
+      const preGtmSurfaceOnly = (Array.isArray(_multiEngineFindings) && _multiEngineFindings.length > 0)
         ? _scoreCrawlOutput(crawlOutput, null)
         : preGtm;
       if (originalGtmScore === null) originalGtmScore = preGtm.score;
@@ -1496,7 +1579,15 @@ export async function runOrchestration(args = {}) {
           const constructionResult = await _runConstruction({
             product,
             environment,
-            phaseBFindings: state.phaseBFindings ?? [],
+            // PHASE B1: prefer the normalized multi-engine pipeline output
+            // when present — it carries Phase B findings plus axe/runtime/
+            // Lighthouse evidence with provenance. The construction engine's
+            // wire_up classifier filters by category, so the wider input
+            // surface only ADDS candidates; it never displaces Phase B's
+            // dead-card / broken-modal / broken-form signal.
+            phaseBFindings: (Array.isArray(state.pipelineFindings) && state.pipelineFindings.length > 0)
+              ? state.pipelineFindings
+              : (state.phaseBFindings ?? []),
             baselineArgs: {
               // S1Baseline.buildBaseline contract: { score:number, layers?:{ui_ux,api,logic,business_value,security_posture}, findings? }.
               // §7.6 GTM score is the canonical baseline anchor; Five-Layer
@@ -2269,6 +2360,11 @@ export async function runOrchestration(args = {}) {
     finalGtmScore,
     finalGtmCounts: lastPostGtm?.counts ?? null,
     iterations,
+    // PHASE B1 — pass the pipeline's per-evaluator stats so dimension
+    // entries can disclose evidence_source (lighthouse / axe-core /
+    // runtime-diagnostics) and partial-coverage state honestly.
+    pipelineStats: state.pipelineStats ?? null,
+    pipelineErrors: state.pipelineErrors ?? null,
   });
 
   let auditWrite = { written: false, reason: 'not_attempted' };
@@ -2704,7 +2800,7 @@ function buildPrBody({ runId, mode, exitReason, originalScore, finalScore, total
  * @param {Array} args.iterations
  * @returns {Array<{dimension,scored,scoreBefore,scoreAfter,evidence}>}
  */
-function buildDimensionsContributing({ preScoreEnvelope, lastPostScore, originalGtmScore, finalGtmScore, finalGtmCounts, iterations }) {
+function buildDimensionsContributing({ preScoreEnvelope, lastPostScore, originalGtmScore, finalGtmScore, finalGtmCounts, iterations, pipelineStats = null, pipelineErrors = null }) {
   const lastIter = Array.isArray(iterations) && iterations.length > 0
     ? iterations[iterations.length - 1] : null;
   // Iteration-level survived-gate signal — if any fix landed in a
@@ -2715,12 +2811,27 @@ function buildDimensionsContributing({ preScoreEnvelope, lastPostScore, original
   const fiveLayerFinalTotal = typeof lastPostScore === 'number' ? lastPostScore : null;
   const _critical = finalGtmCounts?.critical ?? null;
   const _high = finalGtmCounts?.high ?? null;
+
+  // PHASE B1 — per-evaluator availability flags from the multi-engine
+  // pipeline. An evaluator counts as "ran" only when it returned a
+  // numeric finding count for THIS product (no errors entry, present
+  // in perEvaluator). The dimension is then upgraded from
+  // KNOWN_GAP_NOT_IMPLEMENTED → scored:true with coverage:'partial'.
+  const _perEvaluator = pipelineStats?.perEvaluator ?? pipelineStats?.perEvaluatorRaw ?? {};
+  const _errors = pipelineErrors ?? {};
+  const ranLighthouse = Object.prototype.hasOwnProperty.call(_perEvaluator, 'lighthouse') && !_errors.lighthouse;
+  const ranAxe        = Object.prototype.hasOwnProperty.call(_perEvaluator, 'axe-core') && !_errors['axe-core'];
+  const ranRuntime    = Object.prototype.hasOwnProperty.call(_perEvaluator, 'runtime-diagnostics') && !_errors['runtime-diagnostics'];
+  const cnt = (k) => Number.isFinite(_perEvaluator?.[k]) ? _perEvaluator[k] : null;
+
   return [
     {
       dimension: 'syntax',
       scored: true,
+      coverage: 'partial',
       scoreBefore: null,
       scoreAfter: fixesSurvived ? 1 : 0,
+      evidence_source: 'parse-gate',
       evidence: fixesSurvived
         ? 'DISPATCH 29 pre-deploy parse gate passed for committed files'
         : 'No fixes reached commit — parse gate not exercised this run',
@@ -2728,8 +2839,10 @@ function buildDimensionsContributing({ preScoreEnvelope, lastPostScore, original
     {
       dimension: 'duplication',
       scored: true,
+      coverage: 'partial',
       scoreBefore: null,
       scoreAfter: fixesSurvived ? 1 : 0,
+      evidence_source: 'diff-preserve-gate',
       evidence: fixesSurvived
         ? 'fixGenerator diff_preserve_violation gate passed for committed diffs'
         : 'No fixes reached commit — diff_preserve gate not exercised this run',
@@ -2737,57 +2850,113 @@ function buildDimensionsContributing({ preScoreEnvelope, lastPostScore, original
     {
       dimension: 'ui_ux',
       scored: true,
+      coverage: 'partial',
       scoreBefore: fiveLayerL5,
-      scoreAfter: fiveLayerL5, // post-fix layer breakdown is not currently captured separately
-      evidence: `Five-Layer L5 (UI/UX) signal + §7.6 GTM Readiness composite (final ${finalGtmScore?.toFixed?.(1) ?? finalGtmScore}/100, critical=${_critical ?? 'n/a'})`,
+      scoreAfter: fiveLayerL5,
+      // PHASE B1: Lighthouse SEO audits map to ui_ux per the dimension
+      // mapping in lighthouseEvaluator.js. When Lighthouse ran, we add
+      // it as an additional evidence source for ui_ux.
+      evidence_source: ranLighthouse ? 'five-layer-L5+lighthouse-seo' : 'five-layer-L5',
+      evidence: `Five-Layer L5 (UI/UX) signal + §7.6 GTM Readiness composite (final ${finalGtmScore?.toFixed?.(1) ?? finalGtmScore}/100, critical=${_critical ?? 'n/a'})`
+        + (ranLighthouse ? ` + Lighthouse SEO audits (${cnt('lighthouse')} total findings across categories)` : ''),
     },
     {
       dimension: 'functional_completeness',
       scored: true,
+      coverage: 'partial',
       scoreBefore: fiveLayerL1,
       scoreAfter: fiveLayerL1,
-      evidence: `Five-Layer L1 (Functionality) + Phase B dead-card/broken-modal/engine-error findings (high=${_high ?? 'n/a'})`,
+      evidence_source: ranRuntime ? 'five-layer-L1+phase-b+runtime-network' : 'five-layer-L1+phase-b',
+      evidence: `Five-Layer L1 (Functionality) + Phase B dead-card/broken-modal/engine-error findings (high=${_high ?? 'n/a'})`
+        + (ranRuntime ? ` + runtime network-failure capture (${cnt('runtime-diagnostics')} runtime findings)` : ''),
     },
-    {
-      dimension: 'bugs_errors_detector',
-      scored: false,
-      scoreBefore: null,
-      scoreAfter: null,
-      evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
-    },
-    {
-      dimension: 'performance',
-      scored: false,
-      scoreBefore: null,
-      scoreAfter: null,
-      evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
-    },
-    {
-      dimension: 'accessibility',
-      scored: false,
-      scoreBefore: null,
-      scoreAfter: null,
-      evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
-    },
+    // ── PHASE B1 — newly partial-coverage dimensions ────────────────────────────
+    ranRuntime
+      ? {
+          dimension: 'bugs_errors_detector',
+          scored: true,
+          coverage: 'partial',
+          scoreBefore: null,
+          scoreAfter: null,
+          evidence_source: 'runtime-diagnostics',
+          evidence: `runtimeDiagnostics console.error + pageerror capture (${cnt('runtime-diagnostics')} findings)`
+            + (ranLighthouse ? '; Lighthouse best-practices audits supplement.' : ''),
+        }
+      : {
+          dimension: 'bugs_errors_detector',
+          scored: false,
+          coverage: 'none',
+          scoreBefore: null,
+          scoreAfter: null,
+          evidence_source: null,
+          evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
+        },
+    ranLighthouse
+      ? {
+          dimension: 'performance',
+          scored: true,
+          coverage: 'partial',
+          scoreBefore: null,
+          scoreAfter: null,
+          evidence_source: 'lighthouse',
+          evidence: `Lighthouse performance audits (subset of ${cnt('lighthouse')} total Lighthouse findings)`,
+        }
+      : {
+          dimension: 'performance',
+          scored: false,
+          coverage: 'none',
+          scoreBefore: null,
+          scoreAfter: null,
+          evidence_source: null,
+          evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
+        },
+    (ranAxe || ranLighthouse)
+      ? {
+          dimension: 'accessibility',
+          scored: true,
+          coverage: 'partial',
+          scoreBefore: null,
+          scoreAfter: null,
+          evidence_source: ranAxe && ranLighthouse ? 'axe-core+lighthouse' : (ranAxe ? 'axe-core' : 'lighthouse'),
+          evidence: (ranAxe ? `axe-core deterministic violations (${cnt('axe-core')} findings)` : '')
+            + (ranAxe && ranLighthouse ? '; ' : '')
+            + (ranLighthouse ? 'Lighthouse accessibility audits' : ''),
+        }
+      : {
+          dimension: 'accessibility',
+          scored: false,
+          coverage: 'none',
+          scoreBefore: null,
+          scoreAfter: null,
+          evidence_source: null,
+          evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
+        },
+    // ── Remaining 3 dimensions stay KNOWN_GAP_NOT_IMPLEMENTED per CA-18 §2 ─
     {
       dimension: 'security',
       scored: false,
+      coverage: 'none',
       scoreBefore: null,
       scoreAfter: null,
+      evidence_source: null,
       evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
     },
     {
       dimension: 'privacy_jurisdiction',
       scored: false,
+      coverage: 'none',
       scoreBefore: null,
       scoreAfter: null,
+      evidence_source: null,
       evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
     },
     {
       dimension: 'legal_jurisdiction',
       scored: false,
+      coverage: 'none',
       scoreBefore: null,
       scoreAfter: null,
+      evidence_source: null,
       evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
     },
   ];
