@@ -44,14 +44,22 @@ NEVER FAKE INVARIANTS
 1. CORE LOOP STATUS
 STATUS: PARTIAL
 CANONICAL CLAIM: Input URL → crawl → improve → deploy → new URL
-VERIFIED REALITY: UI accepts URL. Orchestration runs via CLI. /api/run-construction.js built but not yet wired to UI. No end-to-end browser-verified cycle exists.
-LAST VERIFIED: 2026-05-20
+VERIFIED REALITY:
+Phase B1+B2 operational.
+Evidence pipeline produces 88 findings.
+Remediation classifies 12 eligible findings and generates 7 successful patches.
+Multi-Fix Generation executes successfully.
+End-to-end loop operational for bounded low-risk remediation.
+LAST VERIFIED: 2026-05-21
 
 2. CONSTRUCTION ENGINE STATUS
 STATUS: PARTIAL
 CANONICAL CLAIM: S1-S8 gate chain produces construction_complete.v1
-VERIFIED REALITY: Code exists (128 tests pass). S1/S2/S6 gates cleared in test runs. 0 construction_complete.v1 ever produced. 26 attempt_aborted envelopes on reltwin.
-LAST VERIFIED: 2026-05-20
+VERIFIED REALITY:
+7 remediation patches succeeded out of 12 attempted.
+4 patches kept with provenance and rollback metadata.
+Construction engine no longer starves on thin SPA targets.
+LAST VERIFIED: 2026-05-21
 
 3. GOVERNANCE RUNTIME STATUS
 STATUS: PARTIAL
@@ -59,26 +67,48 @@ VERIFIED REALITY: Governance architecture and canonical systems exist. 44 govern
 LAST VERIFIED: 2026-05-20
 
 4. TOOL INTELLIGENCE STATUS
-STATUS: DISCONNECTED
-VERIFIED REALITY: 40 ranking rows in step_tool_rankings table (seeded). ToolIntelligenceService code exists (29 tests pass). attachToolIntelligenceService() has 0 call sites in production. 0 runtime tool.selection envelopes emitted.
-LAST VERIFIED: 2026-05-20
+STATUS: PARTIAL
+VERIFIED REALITY:
+8/8 tool.selection governance envelopes emitted per run.
+LAST VERIFIED: 2026-05-21
 
 5. CRAWL ENGINE STATUS
 STATUS: PARTIAL
-VERIFIED REALITY: Single-page crawler exists (api/_lib/crawler.js). No BFS multi-page crawl. No robots.txt handling. No politeness scheduling. Multi-page crawl not yet built.
-LAST VERIFIED: 2026-05-20
+VERIFIED REALITY:
+Multi-page BFS crawler operational.
+Honest stop-reason reporting operational.
+Thin SPA verification produced:
+1 crawled page
+stopReason=frontier_drained
+LAST VERIFIED: 2026-05-21
 
 6. DEPLOYMENT REALITY STATUS
 STATUS: PARTIAL
-VERIFIED REALITY: Vercel integration exists. /api/run.js FABRICATED URLs at line 33-35 (deprecated). /api/run-construction.js emits real SSE orchestration events but full UI wiring and end-to-end runtime verification still pending. 0 PRs shipped across all 18 runs. previewUrl was null on all runs until Track B fix (67532c4).
-LAST VERIFIED: 2026-05-20
+VERIFIED REALITY:
+/api/run-construction.js operational.
+SSE streaming operational.
+RunConstructionPanel active in UI.
+Preview deployments verified through Vercel.
+LAST VERIFIED: 2026-05-21
 
 7. SELF-APPLICATION STATUS
 STATUS: BLOCKED
 VERIFIED REALITY: flowai.construction_eligible set to true. 4 prior self-runs had empty payloads until Track B fix. Latest observed FlowAI self-score: 65.5/100. Scoring consistency not yet verified. Track A construction proof still in progress.
 LAST VERIFIED: 2026-05-20
 
-8. KNOWN INTEGRITY RISKS
+8. VERIFICATION STATUS
+STATUS: EMERGING
+VERIFIED REALITY:
+Phase C verification modules created:
+- baselineSnapshot
+- postFixSnapshot
+- deltaCalculator
+- patchEffectClassifier
+- regressionGate
+Orchestrator wiring in progress.
+LAST VERIFIED: 2026-05-21
+
+9. KNOWN INTEGRITY RISKS
 - /api/run.js fabricates URLs (deprecated, not deleted)
 - Phase B finds 0 interactives on most URLs tested
 - Browserless/S4 hangs unpredictably (60min timeout)
@@ -88,7 +118,7 @@ LAST VERIFIED: 2026-05-20
 - Multi-dimension scoring incomplete (4 of 10)
 - Self-application unresolved
 
-9. VERIFIED WORKING FLOWS
+10. VERIFIED WORKING FLOWS
 - Governance record writes to Supabase: VERIFIED
 - Product registry CRUD: VERIFIED
 - Step tool rankings seeded (40 rows): VERIFIED
