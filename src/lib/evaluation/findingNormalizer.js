@@ -47,7 +47,34 @@ const DEFAULT_WEIGHTS = Object.freeze({
   'axe-core':           0.95,
   'runtime-diagnostics': 0.9,
   'lighthouse':          0.7,
+  'crawler':             0.7,
+  'unattributed':        0.5,
 });
+
+/**
+ * Allowed evaluator provenance values. A finding whose declared source
+ * falls outside this set is coerced to 'unattributed' — we never infer
+ * the evaluator identity from context and we never silently drop the
+ * finding for missing provenance. See DISPATCH "fix: coerce unknown
+ * finding provenance to unattributed".
+ */
+export const ALLOWED_SOURCES = Object.freeze(new Set([
+  'lighthouse',
+  'axe-core',
+  'runtime-diagnostics',
+  'crawler',
+  'phase-b-playwright',
+  'unattributed',
+]));
+
+/** Coerce a raw source value into the allowed-enum set. */
+function coerceSource(raw, sourceTag) {
+  const candidate = (typeof raw === 'string' && raw.length > 0) ? raw
+                   : (typeof sourceTag === 'string' && sourceTag.length > 0) ? sourceTag
+                   : null;
+  if (candidate && ALLOWED_SOURCES.has(candidate)) return candidate;
+  return 'unattributed';
+}
 
 /** Map any incoming severity string to a canonical bucket. */
 export function calibrateSeverity(raw) {
@@ -86,7 +113,10 @@ function findingId(loc, cat) {
  */
 function normalizeOne(raw, sourceTag) {
   if (!raw || typeof raw !== 'object') return null;
-  const source = raw.source ?? sourceTag ?? 'unknown';
+  // Coerce into the allowed-enum set. Missing or out-of-enum sources
+  // are labelled 'unattributed' — we never drop findings for missing
+  // provenance and we never infer evaluator identity from context.
+  const source = coerceSource(raw.source, sourceTag);
   const evaluatorVersion = raw.evaluatorVersion ?? '1.0';
   const confidence = clamp01(raw.confidence ?? 0.7);
   const evidenceType = raw.evidenceType ?? raw.category ?? 'unspecified';
@@ -209,10 +239,10 @@ export function normalizeFindings(input) {
 
   if (Array.isArray(input)) {
     for (const f of input) {
-      const norm = normalizeOne(f, f?.source ?? 'unknown');
+      const norm = normalizeOne(f, f?.source);
       if (norm) {
         flat.push(norm);
-        const tag = norm.sources[0]?.source ?? 'unknown';
+        const tag = norm.sources[0]?.source ?? 'unattributed';
         perEvaluator[tag] = (perEvaluator[tag] || 0) + 1;
       }
     }
