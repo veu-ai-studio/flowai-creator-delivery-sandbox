@@ -23,7 +23,7 @@
 //     - { type: 'error',  error, code }    // terminal; followed by [DONE]
 //   Terminator: `data: [DONE]\n\n`
 //
-// Mode semantics (orchestrator normalizes via normalizeMode):
+// Mode semantics:
 //   FOREGROUND — orchestrator runs in 'auto' (no checkpoints); client
 //                keeps the SSE socket open until 'final'.
 //   BACKGROUND — orchestrator runs in 'auto'; behaves identically over
@@ -47,11 +47,15 @@
 //   returned as runId for SSE-consumer correlation).
 
 import { createHash, randomUUID } from 'node:crypto';
+import { rateLimit } from './_lib/rateLimit.js';
 
 const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED']);
 const GTM_TARGET = 95;
+const RATE_LIMIT_CAPACITY = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 export default async function handler(req, res) {
+  // CORS / preflight.
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
@@ -65,6 +69,31 @@ export default async function handler(req, res) {
     return res.end(JSON.stringify({ ok: false, error: 'method_not_allowed' }));
   }
 
+  // ── Rate limit ────────────────────────────────────────────────────────────
+  // Anonymous public submit stays anonymous — we throttle by IP, never by
+  // session cookie. Internal callers bearing a valid CRON_SECRET bypass
+  // (Vercel Cron and operator-triggered re-runs).
+  const verdict = await rateLimit(req, {
+    capacity: RATE_LIMIT_CAPACITY,
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    bucket: 'run-construction',
+  });
+  res.setHeader('X-RateLimit-Limit', String(verdict.limit));
+  res.setHeader('X-RateLimit-Remaining', String(Math.max(0, verdict.remaining)));
+  res.setHeader('X-RateLimit-Backend', verdict.backend);
+  if (!verdict.allowed) {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Retry-After', String(verdict.retryAfterSec));
+    res.statusCode = 429;
+    return res.end(JSON.stringify({
+      ok: false,
+      error: 'rate_limited',
+      detail: `Limit ${verdict.limit} req/hr per IP. Retry in ${verdict.retryAfterSec}s.`,
+      retryAfterSec: verdict.retryAfterSec,
+    }));
+  }
+
+  // Body parse.
   let body;
   try {
     body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body ?? {});
@@ -84,6 +113,7 @@ export default async function handler(req, res) {
     return res.end(JSON.stringify({ ok: false, error: 'invalid_url', detail: 'body.url must be an http(s) URL' }));
   }
 
+  // ── SSE preamble ─────────────────────────────────────────────────────────
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
@@ -99,6 +129,9 @@ export default async function handler(req, res) {
     try { res.write('data: [DONE]\n\n'); res.end(); } catch { /* ignore */ }
   };
 
+  // Best-effort Supabase. When unavailable, the orchestrator falls through
+  // to PATH B; we skip the registry upsert and report governanceRecordId
+  // as the runId so the SSE consumer still has a correlation handle.
   const runId = randomUUID();
   const supabase = await loadSupabaseClient();
 
@@ -109,6 +142,7 @@ export default async function handler(req, res) {
     at: new Date().toISOString(),
   });
 
+  // ── ensureProductRegistryRow (upsert keyed by sha256(url)) ───────────────
   let registryRow = null;
   try {
     registryRow = await ensureProductRegistryRow({ url, supabase });
@@ -120,9 +154,12 @@ export default async function handler(req, res) {
       });
     }
   } catch (e) {
+    // Upsert failures are non-fatal — the orchestrator can still run via
+    // PATH B. Surface the reason on the wire for operator visibility.
     send({ type: 'registry', action: 'skipped', reason: (e?.message ?? String(e)).slice(0, 200) });
   }
 
+  // ── Orchestrator invocation ──────────────────────────────────────────────
   let runOrchestration;
   let runConstruction;
   let createOriginPageResolver;
@@ -135,6 +172,12 @@ export default async function handler(req, res) {
     return done();
   }
 
+  const orchestratorMode = mode === 'GUIDED' ? 'guided' : 'auto';
+
+  // If we have a registry row keyed by URL hash, hand the orchestrator a
+  // discoverProduct override so it uses our row directly (no second
+  // registry lookup, no PATH B detour). Without a row, omit the override
+  // and let discoverProduct take its normal path.
   const deps = {};
   if (registryRow) {
     deps.discoverProduct = async () => registryRow;
@@ -150,9 +193,7 @@ export default async function handler(req, res) {
   try {
     result = await runOrchestration({
       url,
-      // Pass the UI mode verbatim; the orchestrator's normalizeMode handles
-      // FOREGROUND/BACKGROUND → 'auto' and GUIDED → 'guided'.
-      mode,
+      mode: orchestratorMode,
       runId,
       supabase,
       environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
@@ -183,6 +224,12 @@ export default async function handler(req, res) {
   return done();
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Lazy-load the @supabase/supabase-js client. Returns null on any failure
+ * so the caller can degrade to PATH B without throwing.
+ */
 async function loadSupabaseClient() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -212,6 +259,8 @@ export async function ensureProductRegistryRow({ url, supabase }) {
   const productId = `url-${urlHash}`;
   const orgId = 'flowai-self-hosted';
 
+  // Read first — preserves operator-set columns (vercel_project_id,
+  // self_renewal_branch, market_definition) across re-runs.
   const existing = await supabase
     .from('product_registry')
     .select('*')
@@ -219,6 +268,8 @@ export async function ensureProductRegistryRow({ url, supabase }) {
     .maybeSingle();
 
   if (existing?.data) {
+    // Touch product_url in case the URL has been normalized differently
+    // since the row was first written; ignore failures (read-only env).
     if (existing.data.product_url !== url) {
       await supabase
         .from('product_registry')
@@ -241,6 +292,8 @@ export async function ensureProductRegistryRow({ url, supabase }) {
     .select('*')
     .single();
   if (error) {
+    // Insert race (another concurrent request created it) — re-read and
+    // return that row. Anything else propagates as a registry skip.
     if (error.code === '23505') {
       const reread = await supabase
         .from('product_registry')
@@ -254,6 +307,7 @@ export async function ensureProductRegistryRow({ url, supabase }) {
   return { ...data, __created: true };
 }
 
+// Test seam.
 export const __test = Object.freeze({
   ALLOWED_MODES,
   GTM_TARGET,
