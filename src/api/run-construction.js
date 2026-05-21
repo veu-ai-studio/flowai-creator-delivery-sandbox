@@ -241,6 +241,17 @@ export default async function handler(req, res) {
       ? result.minimumScoredDimensionsForGTM : 7,
     coverageDisclosure: typeof result?.coverageDisclosure === 'string'
       ? result.coverageDisclosure : null,
+    // DISPATCH U1 ITEM 3 — universal-mode fields forwarded so the UI
+    // can suppress noisy deployment-step entries, render the findings
+    // rollup, and show the "Register this product" CTA.
+    runMode: typeof result?.runMode === 'string' ? result.runMode : null,
+    universalMode: typeof result?.universalMode === 'boolean' ? result.universalMode : false,
+    autoFixAvailable: typeof result?.autoFixAvailable === 'boolean' ? result.autoFixAvailable : true,
+    registerCTA: typeof result?.registerCTA === 'boolean' ? result.registerCTA : false,
+    findingsCount: typeof result?.findingsCount === 'number' ? result.findingsCount : null,
+    findingsSeverity: result?.findingsSeverity && typeof result.findingsSeverity === 'object'
+      ? result.findingsSeverity : null,
+    skippedSteps: Array.isArray(result?.skippedSteps) ? result.skippedSteps : [],
     runId,
   });
   return done();

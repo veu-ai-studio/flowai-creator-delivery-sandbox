@@ -619,39 +619,75 @@ export async function runOrchestration(args = {}) {
     const t0 = Date.now();
     product = await _discoverProduct({ url: args.url, supabase, runId });
     if (!product) {
-      // Only true failure: no URL AND no DB AND no registry hit. Nothing
-      // to operate on.
-      const failLog = makeStepLog({
-        iteration: 0, step: 1, status: 'failed',
-        tool: 'product_registry lookup',
-        why: 'check if this URL is a known registered product',
-        result: { error: 'no_url_supplied_and_no_enabled_product', url: args.url },
-        durationMs: Date.now() - t0, mode: state.mode, canInterrupt: false,
-      });
-      emit(failLog);
-      return buildFailureReturn({
-        runId, mode: state.mode, product: null, orchestrationLog, iterations,
-        failedStep: 'STEP_1', error: 'no_url_supplied_and_no_enabled_product',
-        code: 'PRODUCT_NOT_FOUND',
-      });
+      // DISPATCH U1 ITEM 3 — when discoverProduct returns null but the
+      // caller supplied a URL, synthesize a minimal universal-mode
+      // product instead of failing. Unknown URL = DEFAULT path, not an
+      // error (per CA-18 §1 "Operator submits any URL"). Only when the
+      // caller supplied NO URL do we surface the legacy failure.
+      if (typeof args.url === 'string' && args.url.length > 0) {
+        product = Object.freeze({
+          product_id: `flowai-universal-${runId.slice(0, 8)}`,
+          org_id: 'flowai-self-hosted',
+          github_repo_url: null,
+          self_renewal_enabled: true,
+          environment: 'prd',
+          __pathB: true,
+          __sourceUrl: args.url,
+          __detectedRepoUrl: null,
+          self_renewal_max_per_day: 3,
+          self_renewal_minimum_delta: 1,
+          self_renewal_substantial_threshold: 5,
+          self_renewal_negative_delta_policy: 'ALWAYS_OPEN',
+        });
+      } else {
+        const failLog = makeStepLog({
+          iteration: 0, step: 1, status: 'failed',
+          tool: 'product_registry lookup',
+          why: 'check if this URL is a known registered product',
+          result: { error: 'no_url_supplied_and_no_enabled_product', url: args.url },
+          durationMs: Date.now() - t0, mode: state.mode, canInterrupt: false,
+        });
+        emit(failLog);
+        return buildFailureReturn({
+          runId, mode: state.mode, product: null, orchestrationLog, iterations,
+          failedStep: 'STEP_1', error: 'no_url_supplied_and_no_enabled_product',
+          code: 'PRODUCT_NOT_FOUND',
+        });
+      }
     }
     pathB = product.__pathB === true;
+    // DISPATCH U1 ITEM 3 — universal mode = unknown URL with no
+    // detected GitHub repo. This is THE primary use case per CA-18 §1
+    // ("Operator submits any URL"). Universal mode runs the full
+    // evaluation + scoring + governance trail but skips every step
+    // that would mutate a third-party system (no commit, no PR, no
+    // deploy). Skipped steps are still recorded — `autoFixSkippedReason`
+    // explains why so the governance trail stays honest.
+    state.universalMode = pathB && !product.__detectedRepoUrl;
+    state.runMode = state.universalMode
+      ? 'UNIVERSAL'
+      : (pathB ? 'PATH_B_WITH_REPO' : 'PATH_A');
+    state.skippedSteps = [];
     emit(makeStepLog({
       iteration: 0, step: 1, status: 'complete',
       tool: 'product_registry lookup',
       why: 'check if this URL is a known registered product',
       result: pathB
         ? {
-            path: 'PATH B (unknown — proceeding in universal mode)',
+            path: state.universalMode
+              ? 'UNIVERSAL (unknown URL, evaluation-only mode)'
+              : 'PATH B (unknown URL with auto-detected repo)',
+            runMode: state.runMode,
             productId: product.product_id,
             sourceUrl: product.__sourceUrl,
-            detectedRepoUrl: product.__detectedRepoUrl,        // null → score-only mode
-            note: product.__detectedRepoUrl
-              ? 'GitHub repo auto-detected; deploy via remediationEngine'
-              : 'no GitHub repo detected; score-only mode (no PR will be opened)',
+            detectedRepoUrl: product.__detectedRepoUrl,        // null → universal
+            note: state.universalMode
+              ? 'evaluation + scoring only; no commit / no PR / no deploy'
+              : 'GitHub repo auto-detected; deploy via remediationEngine',
           }
         : {
             path: 'PATH A (known)',
+            runMode: state.runMode,
             productId: product.product_id,
             githubRepoUrl: product.github_repo_url,
           },
@@ -866,7 +902,12 @@ export async function runOrchestration(args = {}) {
   // When the run exits early (e.g. NO_FIXES_GENERATED before STEP 10), this
   // anchors the governance_record entry to the artifact we actually evaluated.
   // STEP 10 overwrites this when a new preview is deployed.
-  let finalPreviewUrl = initialUrl ?? null;
+  // W5b TRACK B initializes this to initialUrl so the audit anchors to
+  // the evaluated artifact when no preview deploy happens. DISPATCH U1
+  // (universal mode) keeps this null — the run is evaluation-only and
+  // STEP 10 is skipped, so there is no preview to report. The
+  // governance trail still captures the input URL via product.__sourceUrl.
+  let finalPreviewUrl = state.universalMode ? null : (initialUrl ?? null);
   let pr = null;
   let exitReason = 'UNKNOWN';
   let token = null;
@@ -1443,28 +1484,45 @@ export async function runOrchestration(args = {}) {
     const branchName = `flowai/renewal-${runId}-iter${iterationNumber}`;
     const fileChanges = []; // { filePath, fileContent (new) } — PATH A only
     if (pathB) {
-      // Log skipped steps so the orchestrator log is honest about what ran.
-      emit(makeStepLog({
-        iteration: iterationNumber, step: 8, status: 'skipped',
-        tool: 'githubApp.js',
-        why: 'short-lived installation token (~9 min) for branch + PR writes',
-        result: { skipped: 'PATH B — no operator GitHub repo; remediationEngine handles fix+deploy' },
-        mode: state.mode,
-      }));
-      emit(makeStepLog({
-        iteration: iterationNumber, step: 7, status: 'skipped',
-        tool: 'fixGenerator.js (Claude API)',
-        why: 'generate concrete fixes for prioritized issues',
-        result: { skipped: 'PATH B — remediationEngine produces patched file tree internally' },
-        mode: state.mode,
-      }));
-      emit(makeStepLog({
-        iteration: iterationNumber, step: 9, status: 'skipped',
-        tool: 'githubBranchWriter.js',
-        why: 'all fixes on isolated branch for review + rollback',
-        result: { skipped: 'PATH B — no operator GitHub repo for branch + commits' },
-        mode: state.mode,
-      }));
+      // DISPATCH U1 ITEM 3 — annotate each skipped step with
+      // autoFixSkippedReason so the governance trail (and the UI's
+      // collapse logic) can attribute the gap honestly. The UI hides
+      // these entries from the active step list but governance keeps
+      // a verbatim record.
+      const skipReason = state.universalMode
+        ? 'UNIVERSAL_NO_REPO_ACCESS'
+        : 'PATH_B_REMEDIATION_ENGINE_OWNS_DEPLOY';
+      const pathBSkips = [
+        { step: 8, tool: 'githubApp.js',
+          why: 'short-lived installation token (~9 min) for branch + PR writes',
+          detail: state.universalMode
+            ? 'universal mode — no operator GitHub repo to authorize against'
+            : 'PATH B — remediationEngine handles fix+deploy' },
+        { step: 7, tool: 'fixGenerator.js (Claude API)',
+          why: 'generate concrete fixes for prioritized issues',
+          detail: state.universalMode
+            ? 'universal mode — no repo for AI-generated diffs to land in'
+            : 'PATH B — remediationEngine produces patched file tree internally' },
+        { step: 9, tool: 'githubBranchWriter.js',
+          why: 'all fixes on isolated branch for review + rollback',
+          detail: state.universalMode
+            ? 'universal mode — no operator GitHub repo for branch + commits'
+            : 'PATH B — no operator GitHub repo for branch + commits' },
+      ];
+      for (const s of pathBSkips) {
+        const result = {
+          skipped: s.detail,
+          autoFixSkippedReason: skipReason,
+        };
+        emit(makeStepLog({
+          iteration: iterationNumber, step: s.step, status: 'skipped',
+          tool: s.tool, why: s.why, result, mode: state.mode,
+        }));
+        state.skippedSteps.push({
+          iteration: iterationNumber, step: s.step, tool: s.tool,
+          autoFixSkippedReason: skipReason, detail: s.detail,
+        });
+      }
       await state.checkpoint(onCheckpoint, { lastStep: 9, iteration: iterationNumber });
     } else {
       // ── PATH A: existing flow ──────────────────────────────────────────────
@@ -1944,7 +2002,25 @@ export async function runOrchestration(args = {}) {
     {
       const t0 = Date.now();
       try {
-        if (pathB) {
+        if (state.universalMode) {
+          // DISPATCH U1 ITEM 3 — universal mode never deploys. The
+          // run is evaluation-only; preview URL stays null and we
+          // record the skip in governance with explicit reason.
+          previewUrl = null;
+          deployDegraded = false;
+          const skipDetail = 'universal mode — no operator GitHub repo and no FlowAI-owned destination to deploy into';
+          emit(makeStepLog({
+            iteration: iterationNumber, step: 10, status: 'skipped',
+            tool: 'vercelBranchDeploy.js / remediationEngine.js',
+            why: 'preview deploy step (skipped — universal mode is evaluation-only)',
+            result: { skipped: skipDetail, autoFixSkippedReason: 'UNIVERSAL_NO_REPO_ACCESS' },
+            durationMs: Date.now() - t0, mode: state.mode,
+          }));
+          state.skippedSteps.push({
+            iteration: iterationNumber, step: 10, tool: 'vercelBranchDeploy/remediationEngine',
+            autoFixSkippedReason: 'UNIVERSAL_NO_REPO_ACCESS', detail: skipDetail,
+          });
+        } else if (pathB) {
           const PATH_B_DEPLOY_TIMEOUT_MS = 120_000;
           let timer;
           const timeoutPromise = new Promise((resolve) => {
@@ -2559,13 +2635,23 @@ export async function runOrchestration(args = {}) {
   // GitHub repo to PR against; preview URL is the deliverable).
   const lastIter = iterations[iterations.length - 1] || {};
   if (pathB) {
+    const skipReason = state.universalMode
+      ? 'UNIVERSAL_NO_REPO_ACCESS'
+      : 'PATH_B_REMEDIATION_ENGINE_OWNS_DEPLOY';
+    const skipDetail = state.universalMode
+      ? 'universal mode — no operator GitHub repo to open PR against'
+      : 'PATH B — preview URL is the deliverable';
     emit(makeStepLog({
       iteration: iterations.length, step: 13, status: 'skipped',
       tool: 'githubPrWriter.js',
       why: 'human review gate — NEVER auto-merge',
-      result: { skipped: 'PATH B — no operator GitHub repo; preview URL is the deliverable' },
+      result: { skipped: skipDetail, autoFixSkippedReason: skipReason },
       mode: state.mode, canInterrupt: false,
     }));
+    state.skippedSteps.push({
+      iteration: iterations.length, step: 13, tool: 'githubPrWriter.js',
+      autoFixSkippedReason: skipReason, detail: skipDetail,
+    });
   } else if (lastIter.regressed) {
     // DISPATCH 30: regression guard fired on the final iteration. Never
     // open a PR for regressing fixes. The branch is left on the remote
@@ -2661,6 +2747,22 @@ export async function runOrchestration(args = {}) {
     pipelineErrors: state.pipelineErrors ?? null,
   });
 
+  // DISPATCH U1 ITEM 3 — universal-mode findings rollup. Counted from
+  // the latest pipeline output so the SSE consumer can render the
+  // severity breakdown alongside the trust score. Falls back to {} when
+  // no pipeline output exists (e.g. STEP 4 failed gracefully).
+  const _findingsForRollup = Array.isArray(state.pipelineFindings)
+    ? state.pipelineFindings
+    : (Array.isArray(state.phaseBFindings) ? state.phaseBFindings : []);
+  const findingsSeverity = { critical: 0, high: 0, medium: 0, low: 0 };
+  for (const f of _findingsForRollup) {
+    const sev = f?.severity;
+    if (sev === 'critical' || sev === 'high' || sev === 'medium' || sev === 'low') {
+      findingsSeverity[sev] += 1;
+    }
+  }
+  const findingsCount = _findingsForRollup.length;
+
   // Capability-weighted final score (CA-18 §2 honest disclosure). Uses
   // the just-built dimensions_contributing[] as the source of truth for
   // how many dimensions actually have evidence behind them.
@@ -2717,6 +2819,17 @@ export async function runOrchestration(args = {}) {
         meetsMinimumCoverage: finalWeighted.meetsMinimumCoverage,
         minimumScoredDimensionsForGTM: MINIMUM_SCORED_DIMENSIONS_FOR_GTM,
         coverageDisclosure: finalWeighted.coverageDisclosure,
+        // DISPATCH U1 ITEM 3 — universal-mode metadata. Governance
+        // ALWAYS records the runMode + every skipped step (never
+        // silently omitted from the audit trail, per dispatch
+        // governance rule). The UI may collapse these — governance
+        // does not.
+        runMode: state.runMode ?? null,
+        universalMode: !!state.universalMode,
+        autoFixAvailable: !state.universalMode,
+        findingsCount,
+        findingsSeverity,
+        skippedSteps: Array.isArray(state.skippedSteps) ? state.skippedSteps : [],
         // PHASE B2 — rule-based remediation summary (classifier counts,
         // budget application, conflicts). Null when remediation didn't
         // run (e.g. PATH B with no findings).
@@ -2778,6 +2891,20 @@ export async function runOrchestration(args = {}) {
     meetsMinimumCoverage: finalWeighted.meetsMinimumCoverage,
     minimumScoredDimensionsForGTM: MINIMUM_SCORED_DIMENSIONS_FOR_GTM,
     coverageDisclosure: finalWeighted.coverageDisclosure,
+    // DISPATCH U1 ITEM 3 — universal-mode fields on the result envelope
+    // so the SSE consumer (and the UI) can:
+    //   - distinguish universal from PATH A / PATH B with repo,
+    //   - render findings count + severity breakdown,
+    //   - hide the "Open preview URL" button when there's no
+    //     deployable artifact,
+    //   - render the "Register this product" CTA.
+    runMode: state.runMode ?? null,
+    universalMode: !!state.universalMode,
+    autoFixAvailable: !state.universalMode,
+    registerCTA: !!state.universalMode,
+    findingsCount,
+    findingsSeverity,
+    skippedSteps: Array.isArray(state.skippedSteps) ? state.skippedSteps : [],
     // PHASE B2 — rule-based remediation summary on the result envelope.
     remediationSummary: state.remediationSummary ?? null,
     transformationDelta: state.transformationDelta ?? null,

@@ -34,6 +34,11 @@ const KNOWN_GAP_DIMENSIONS = new Set([
 
 function StepRow({ event }) {
   const log = event.log || {};
+  // DISPATCH U1 ITEM 3 — universal-mode deployment steps are honest in
+  // governance but visually muted in the UI to keep the active step
+  // list focused on evaluation. Governance still has the verbatim row;
+  // this is presentation only.
+  const isUniversalSkip = log.result?.autoFixSkippedReason === 'UNIVERSAL_NO_REPO_ACCESS';
   const statusIcon = {
     complete: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />,
     failed:   <XCircle className="h-3.5 w-3.5 text-red-400" />,
@@ -44,6 +49,17 @@ function StepRow({ event }) {
   const score = log.scores?.current;
   const scoreDelta = typeof score === 'number' && typeof log.scores?.original === 'number'
     ? score - log.scores.original : null;
+
+  if (isUniversalSkip) {
+    return (
+      <div className="flex items-center gap-2 py-1 text-[10px] text-muted-foreground/70 border-b border-border/20 last:border-0">
+        <span className="h-2 w-2 rounded-full bg-muted-foreground/30 shrink-0" />
+        <span className="font-mono truncate">
+          [S{log.step ?? '?'}] {log.stepName || log.tool || 'step'} — deployment skipped (universal mode)
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-start gap-2 py-1.5 text-[11px] border-b border-border/30 last:border-0">
@@ -224,6 +240,57 @@ function ResultUrlSection({ previewUrl, inputUrl, exitReason }) {
   );
 }
 
+function UniversalModePanel({ findingsCount, findingsSeverity, inputUrl }) {
+  const sev = findingsSeverity || { critical: 0, high: 0, medium: 0, low: 0 };
+  const total = typeof findingsCount === 'number' ? findingsCount : (sev.critical + sev.high + sev.medium + sev.low);
+  return (
+    <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <CheckCircle2 className="h-4 w-4 text-primary" />
+        <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+          Universal mode — evaluation complete
+        </span>
+      </div>
+      <p className="text-[11px] text-foreground/90">
+        FlowAI evaluated <span className="font-mono">{inputUrl || 'this URL'}</span> without requiring
+        registration, GitHub access, or deployment configuration.
+      </p>
+      <div className="grid grid-cols-5 gap-1 text-[10px]">
+        <div className="rounded bg-muted/40 p-1.5 text-center">
+          <div className="font-bold text-foreground">{total}</div>
+          <div className="text-muted-foreground">findings</div>
+        </div>
+        <div className="rounded bg-red-500/15 p-1.5 text-center">
+          <div className="font-bold text-red-400">{sev.critical ?? 0}</div>
+          <div className="text-muted-foreground">critical</div>
+        </div>
+        <div className="rounded bg-orange-500/15 p-1.5 text-center">
+          <div className="font-bold text-orange-400">{sev.high ?? 0}</div>
+          <div className="text-muted-foreground">high</div>
+        </div>
+        <div className="rounded bg-amber-500/15 p-1.5 text-center">
+          <div className="font-bold text-amber-400">{sev.medium ?? 0}</div>
+          <div className="text-muted-foreground">medium</div>
+        </div>
+        <div className="rounded bg-muted/30 p-1.5 text-center">
+          <div className="font-bold text-muted-foreground">{sev.low ?? 0}</div>
+          <div className="text-muted-foreground">low</div>
+        </div>
+      </div>
+      <a
+        href="/products"
+        className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-primary-foreground font-semibold text-xs hover:bg-primary/90"
+      >
+        Register this product for auto-fix and deployment <ChevronRight className="h-3 w-3" />
+      </a>
+      <p className="text-[10px] text-muted-foreground">
+        Universal mode produces DOM/HTML-level findings only. Auto-fix, PR creation, and preview
+        deployment require a registered product with GitHub access.
+      </p>
+    </div>
+  );
+}
+
 function InsufficientCoverageBanner({ scored, total, minimum }) {
   if (typeof scored !== 'number' || typeof total !== 'number' || typeof minimum !== 'number') return null;
   if (scored >= minimum) return null;
@@ -258,6 +325,7 @@ function ResultCard({ final, runId, inputUrl }) {
   const recordId = final.governanceRecordId || runId;
   const isHonestGate = final.exitReason === 'HONEST_GATE_REFUSAL_ALREADY_PASSING';
   const isInsufficientCoverage = final.exitReason === 'INSUFFICIENT_DIMENSION_COVERAGE';
+  const isUniversalMode = final.universalMode === true || final.runMode === 'UNIVERSAL';
 
   return (
     <div className="space-y-3">
@@ -292,7 +360,14 @@ function ResultCard({ final, runId, inputUrl }) {
             )}
           </div>
         </div>
-        <ResultUrlSection previewUrl={final.previewUrl} inputUrl={inputUrl} exitReason={final.exitReason} />
+        {isUniversalMode
+          ? <UniversalModePanel
+              findingsCount={final.findingsCount}
+              findingsSeverity={final.findingsSeverity}
+              inputUrl={inputUrl}
+            />
+          : <ResultUrlSection previewUrl={final.previewUrl} inputUrl={inputUrl} exitReason={final.exitReason} />
+        }
         {final.prUrl && (
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground">PR:</span>

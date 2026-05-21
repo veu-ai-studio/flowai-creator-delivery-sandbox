@@ -550,22 +550,30 @@ describe('runOrchestration — DISPATCH 24 PATH B (unknown URL)', () => {
     expect(result.code).not.toBe('PRODUCT_NOT_FOUND');
     expect(result.failedStep).not.toBe('STEP_1');
     expect(result.ok).toBe(true);
-    // STEP 1 result should mention PATH B.
+    // STEP 1 result must signal universal mode (DISPATCH U1 renamed the
+    // PATH-B-with-no-repo bucket to UNIVERSAL since CA-18 §1's "operator
+    // submits any URL" treats unknown URLs as the primary path, not a
+    // fallback).
     const step1 = result.orchestrationLog.find((l) => l.step === 1);
     expect(step1.status).toBe('complete');
-    expect(JSON.stringify(step1.result)).toMatch(/PATH B \(unknown — proceeding in universal mode\)/);
-    // Iteration log records path='B'.
+    expect(JSON.stringify(step1.result)).toMatch(/UNIVERSAL \(unknown URL, evaluation-only mode\)/);
+    // Iteration log records path='B' (universal is a subset of PATH B).
     expect(result.iterations[0].path).toBe('B');
   });
 
   it('PATH B: deployment uses remediationEngine (not the operator branch-deploy path)', async () => {
     const deps = happyDeps({ preScoreSequence: [40], postScoreSequence: [96] });
+    // DISPATCH U1 — PATH_B_WITH_REPO is the path that uses
+    // remediationEngine: an auto-detected GitHub repo gives FlowAI a
+    // source to operate on without operator pre-registration. Without
+    // a detected repo, the run falls into UNIVERSAL mode (no deploy at
+    // all — covered by a separate U1 test below).
     deps.discoverProduct = vi.fn(async ({ url, runId }) => ({
       product_id: `flowai-upgraded-example-${(runId || '').slice(0, 8)}`,
       org_id: 'flowai-self-hosted',
       github_repo_url: null,
       self_renewal_enabled: true, __pathB: true,
-      __sourceUrl: url, __detectedRepoUrl: null,
+      __sourceUrl: url, __detectedRepoUrl: 'https://github.com/example/site',
       self_renewal_max_per_day: 3, self_renewal_minimum_delta: 1,
       self_renewal_substantial_threshold: 5,
     }));
@@ -586,12 +594,18 @@ describe('runOrchestration — DISPATCH 24 PATH B (unknown URL)', () => {
     expect(deps.createRenewalBranch).not.toHaveBeenCalled();
     expect(deps.commitFileToBranch).not.toHaveBeenCalled();
     expect(deps.createRenewalPr).not.toHaveBeenCalled();
-    // STEP 7/8/9/13 logs should be 'skipped' with explicit PATH B rationale.
+    // STEP 7/8/9/13 logs should be 'skipped' with explicit
+    // autoFixSkippedReason. PATH_B_WITH_REPO uses the
+    // remediationEngine for deploy, so it carries the
+    // PATH_B_REMEDIATION_ENGINE_OWNS_DEPLOY reason (universal mode
+    // would be UNIVERSAL_NO_REPO_ACCESS — see the U1 describe block).
     const log = (n) => result.orchestrationLog.find((l) => l.step === n && l.iteration > 0);
     expect(log(7).status).toBe('skipped');
-    expect(JSON.stringify(log(7).result)).toMatch(/PATH B/);
+    expect(log(7).result.autoFixSkippedReason).toBe('PATH_B_REMEDIATION_ENGINE_OWNS_DEPLOY');
     expect(log(8).status).toBe('skipped');
+    expect(log(8).result.autoFixSkippedReason).toBe('PATH_B_REMEDIATION_ENGINE_OWNS_DEPLOY');
     expect(log(9).status).toBe('skipped');
+    expect(log(9).result.autoFixSkippedReason).toBe('PATH_B_REMEDIATION_ENGINE_OWNS_DEPLOY');
     // STEP 10 uses the remediationEngine tool label.
     const step10 = log(10);
     expect(step10.status).toBe('complete');
@@ -2025,5 +2039,104 @@ describe('discoverProduct — D40 no hardcoded mypreglife fast-path', () => {
     expect(product).not.toBeNull();
     expect(product.product_id).not.toBe('mypreglife');
     expect(product.product_id).toMatch(/^flowai-upgraded-/);
+  });
+});
+
+describe('orchestrator — UNIVERSAL mode (DISPATCH U1)', () => {
+  it('does NOT throw on unknown URL when discoverProduct returns null (synthesizes universal-mode product)', async () => {
+    const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+    // Force discoverProduct to return null so the synthesizer fallback fires.
+    base.discoverProduct = vi.fn(async () => null);
+    // Disable construction/remediation deps that would assume a repo.
+    const result = await runOrchestration({
+      url: 'https://unknown-example.com',
+      mode: 'auto',
+      gtmTarget: 95,
+      maxIterations: 1,
+      deps: base,
+    });
+    expect(result.ok).toBe(true);
+    expect(result.product?.product_id).toMatch(/^flowai-universal-/);
+  });
+
+  it('emits runMode UNIVERSAL on the result envelope and in the governance entry', async () => {
+    const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+    base.discoverProduct = vi.fn(async () => null);
+    const governanceEntries = [];
+    base.appendGovernanceEntry = vi.fn(async ({ entry }) => {
+      governanceEntries.push(entry);
+      return { written: true };
+    });
+    const result = await runOrchestration({
+      url: 'https://unknown-example.com',
+      mode: 'auto',
+      gtmTarget: 95,
+      maxIterations: 1,
+      deps: base,
+    });
+    expect(result.runMode).toBe('UNIVERSAL');
+    expect(result.universalMode).toBe(true);
+    expect(result.autoFixAvailable).toBe(false);
+    expect(result.registerCTA).toBe(true);
+    const complete = governanceEntries.find((e) => e?.kind === 'self_renewal.orchestration_complete.v1');
+    expect(complete).toBeDefined();
+    expect(complete.runMode).toBe('UNIVERSAL');
+    expect(complete.universalMode).toBe(true);
+  });
+
+  it('suppresses preview URL and surfaces findings counts in UNIVERSAL mode', async () => {
+    const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+    base.discoverProduct = vi.fn(async () => null);
+    // Inject some pipeline findings so the rollup is non-empty.
+    base.runEvaluationPipeline = vi.fn(async () => ({
+      ok: true,
+      findings: [
+        { severity: 'high', category: 'axe:color-contrast' },
+        { severity: 'medium', category: 'lighthouse:meta-description' },
+        { severity: 'low', category: 'runtime:console' },
+      ],
+      stats: { perEvaluator: { lighthouse: 1, 'axe-core': 1, 'runtime-diagnostics': 1 }, evaluatorMetrics: {} },
+      perEvaluator: { lighthouse: 1, 'axe-core': 1, 'runtime-diagnostics': 1 },
+      errors: {},
+    }));
+    const result = await runOrchestration({
+      url: 'https://unknown-example.com',
+      mode: 'auto',
+      gtmTarget: 95,
+      maxIterations: 1,
+      deps: base,
+    });
+    expect(result.previewUrl).toBeNull();
+    expect(result.runMode).toBe('UNIVERSAL');
+    expect(result.findingsCount).toBe(3);
+    expect(result.findingsSeverity).toEqual({ critical: 0, high: 1, medium: 1, low: 1 });
+  });
+
+  it('logs every skipped deployment step in governance with autoFixSkippedReason=UNIVERSAL_NO_REPO_ACCESS', async () => {
+    const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+    base.discoverProduct = vi.fn(async () => null);
+    const governanceEntries = [];
+    base.appendGovernanceEntry = vi.fn(async ({ entry }) => {
+      governanceEntries.push(entry);
+      return { written: true };
+    });
+    const result = await runOrchestration({
+      url: 'https://unknown-example.com',
+      mode: 'auto',
+      gtmTarget: 95,
+      maxIterations: 1,
+      deps: base,
+    });
+    const complete = governanceEntries.find((e) => e?.kind === 'self_renewal.orchestration_complete.v1');
+    expect(complete?.skippedSteps).toBeInstanceOf(Array);
+    expect(complete.skippedSteps.length).toBeGreaterThanOrEqual(3);
+    for (const s of complete.skippedSteps) {
+      expect(s.autoFixSkippedReason).toBe('UNIVERSAL_NO_REPO_ACCESS');
+    }
+    // Steps 7, 8, 9, 13 are the four canonical skip points
+    const stepNums = complete.skippedSteps.map((s) => s.step).sort();
+    expect(stepNums).toEqual(expect.arrayContaining([7, 8, 9, 13]));
+    // result envelope also surfaces them
+    expect(result.skippedSteps.length).toBeGreaterThanOrEqual(3);
   });
 });
