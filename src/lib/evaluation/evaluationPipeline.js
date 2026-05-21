@@ -61,47 +61,114 @@ function normalizeExistingPhaseBShape(phaseBFindings) {
 }
 
 /**
+ * Strip BROWSERLESS_API_KEY from any string. Used on error messages
+ * before emission so the websocket URL (which contains ?token=…) never
+ * leaks through SSE / logs / governance.
+ */
+function redactBrowserlessToken(message) {
+  const key = typeof process !== 'undefined' ? process.env?.BROWSERLESS_API_KEY : '';
+  if (!key) return message;
+  const s = typeof message === 'string' ? message : String(message ?? '');
+  return s.split(key).join('***BROWSERLESS_TOKEN***');
+}
+
+/**
  * Acquire (or accept) a Playwright Page. If caller passed opts.page,
  * we use it. Otherwise we spin up our own chromium instance just for
  * axe + runtimeDiagnostics. Returns { page, cleanup } — cleanup is a
  * no-op when the page was caller-provided.
  *
- * Graceful: returns { page: null, cleanup: noop, error } if Playwright
- * isn't available or launch fails. axe + runtime evaluators then return
- * empty findings.
+ * PRODUCTION RULES (Vercel serverless):
+ *   - When process.env.VERCEL is set, NEVER attempt chromium.launch()
+ *     — there is no Chromium binary in the serverless bundle.
+ *   - Always connect to Browserless via connectOverCDP when
+ *     BROWSERLESS_API_KEY is set.
+ *   - If both VERCEL is set AND no Browserless key: return a degraded
+ *     {page:null,error} envelope. axe + runtime evaluators then return
+ *     empty findings (graceful degrade, no crash).
+ *
+ * DEVELOPMENT (no VERCEL env):
+ *   - Try Browserless first if key is set; fall through to local
+ *     chromium.launch() if it isn't.
+ *
+ * TOKEN SAFETY:
+ *   - The websocket URL (containing the token) is NEVER emitted.
+ *   - Every error message is run through redactBrowserlessToken()
+ *     before being surfaced.
+ *
+ * LIFECYCLE:
+ *   - cleanup() unconditionally closes context + browser in finally.
  */
 async function ensurePlaywrightPage({ url, providedPage, opts }) {
   if (providedPage) {
     return { page: providedPage, browser: null, cleanup: async () => {}, owned: false };
   }
-  let chromium;
-  try {
-    const playwrightDep = opts?.deps?.playwright;
-    if (playwrightDep) {
-      chromium = playwrightDep.chromium ?? playwrightDep;
-    } else {
-      const pw = await import('playwright');
-      chromium = pw.chromium;
-    }
-  } catch (e) {
-    return { page: null, browser: null, cleanup: async () => {}, owned: false, error: `playwright_import_failed:${e?.message}` };
-  }
+  const isVercel = typeof process !== 'undefined' && !!process.env?.VERCEL;
+  const browserlessKey = typeof process !== 'undefined' ? process.env?.BROWSERLESS_API_KEY : null;
+  const connectTimeoutMs = Number.isFinite(opts?.connectTimeoutMs) ? opts.connectTimeoutMs : 15_000;
+  const navTimeoutMs = Number.isFinite(opts?.gotoTimeoutMs) ? opts.gotoTimeoutMs : 30_000;
+
   let browser;
-  try {
-    browser = await chromium.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-dev-shm-usage'],
-    });
-  } catch (e) {
-    return { page: null, browser: null, cleanup: async () => {}, owned: false, error: `playwright_launch_failed:${(e?.message ?? String(e)).slice(0, 160)}` };
+
+  // PRODUCTION: must use Browserless. No local launch attempted.
+  if (browserlessKey) {
+    try {
+      const mod = await import('../agents/auth/browserlessAdapter.js');
+      browser = await mod.connectBrowserless({
+        apiKey: browserlessKey,
+        timeoutMs: connectTimeoutMs,
+      });
+    } catch (e) {
+      const msg = redactBrowserlessToken(`browserless_connect_failed:${(e?.message ?? String(e)).slice(0, 160)}`);
+      // In production we never fall through to chromium.launch().
+      if (isVercel) {
+        return { page: null, browser: null, cleanup: async () => {}, owned: false, error: msg };
+      }
+      // Dev: fall through to local launch.
+    }
+  } else if (isVercel) {
+    // Production with no Browserless key configured → graceful degrade.
+    return {
+      page: null, browser: null, cleanup: async () => {}, owned: false,
+      error: 'browserless_unavailable_in_production:BROWSERLESS_API_KEY_not_set',
+    };
   }
+
+  // Local-launch path (DEV only, or when Browserless not configured AND
+  // we are not running under Vercel).
+  if (!browser) {
+    let chromium;
+    try {
+      const playwrightDep = opts?.deps?.playwright;
+      if (playwrightDep) {
+        chromium = playwrightDep.chromium ?? playwrightDep;
+      } else {
+        const pw = await import('playwright');
+        chromium = pw.chromium;
+      }
+    } catch (e) {
+      return { page: null, browser: null, cleanup: async () => {}, owned: false, error: `playwright_import_failed:${e?.message}` };
+    }
+    try {
+      browser = await chromium.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-dev-shm-usage'],
+        timeout: connectTimeoutMs,
+      });
+    } catch (e) {
+      return { page: null, browser: null, cleanup: async () => {}, owned: false, error: redactBrowserlessToken(`playwright_launch_failed:${(e?.message ?? String(e)).slice(0, 160)}`) };
+    }
+  }
+
   let context, page;
   try {
     context = await browser.newContext(opts?.contextOptions ?? {});
     page = await context.newPage();
+    page.setDefaultNavigationTimeout?.(navTimeoutMs);
+    page.setDefaultTimeout?.(navTimeoutMs);
   } catch (e) {
     try { await browser.close(); } catch { /* ignore */ }
-    return { page: null, browser: null, cleanup: async () => {}, owned: false, error: `playwright_page_failed:${e?.message}` };
+    return { page: null, browser: null, cleanup: async () => {}, owned: false, error: redactBrowserlessToken(`playwright_page_failed:${e?.message}`) };
   }
   return {
     page,
@@ -253,20 +320,32 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
     tasks.push((async () => {
       pwSlot = await ensurePlaywrightPage({ url, providedPage: page, opts: options });
       if (pwSlot.error) {
-        errors['playwright'] = pwSlot.error;
+        const safeError = redactBrowserlessToken(pwSlot.error);
+        errors['playwright'] = safeError;
         if (enabled.has('axe')) {
           findingsByEvaluator['axe-core'] = [];
           perEvaluator['axe-core'] = 0;
-          safeEmit(onStep, { type: 'step', log: { kind: 'evaluator_complete', evaluator: 'axe-core', findingsCount: 0, ok: false, error: pwSlot.error } });
+          safeEmit(onStep, { type: 'step', log: { kind: 'evaluator_complete', evaluator: 'axe-core', findingsCount: 0, ok: false, error: safeError } });
         }
         if (enabled.has('runtime')) {
           findingsByEvaluator['runtime-diagnostics'] = [];
           perEvaluator['runtime-diagnostics'] = 0;
-          safeEmit(onStep, { type: 'step', log: { kind: 'evaluator_complete', evaluator: 'runtime-diagnostics', findingsCount: 0, ok: false, error: pwSlot.error } });
+          safeEmit(onStep, { type: 'step', log: { kind: 'evaluator_complete', evaluator: 'runtime-diagnostics', findingsCount: 0, ok: false, error: safeError } });
         }
         return;
       }
-      const pwResult = await runPlaywrightEvaluators({ page: pwSlot.page, url, opts: options });
+      // DISPATCH (Browserless) — unconditional cleanup in finally so a
+      // throw during axe/runtime never leaves a remote Browserless
+      // session open (the service would idle-reap it, but burning
+      // those minutes is wasteful).
+      let pwResult;
+      try {
+        pwResult = await runPlaywrightEvaluators({ page: pwSlot.page, url, opts: options });
+      } finally {
+        if (pwSlot?.owned) {
+          try { await pwSlot.cleanup(); } catch { /* ignore */ }
+        }
+      }
       if (enabled.has('axe')) {
         findingsByEvaluator['axe-core'] = pwResult.axe.findings ?? [];
         perEvaluator['axe-core'] = (pwResult.axe.findings ?? []).length;
@@ -302,9 +381,8 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
           },
         });
       }
-      if (pwSlot.owned) {
-        try { await pwSlot.cleanup(); } catch { /* ignore */ }
-      }
+      // Cleanup moved into finally above so a throw during evaluator
+      // execution still releases the Browserless session.
     })());
   }
 

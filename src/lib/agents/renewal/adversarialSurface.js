@@ -64,17 +64,39 @@ const DEFAULT_PROBE_BUDGET_MS = 270_000;        // 4.5-min per-page wall cap
 export async function connectBrowser(opts = {}) {
   if (opts.browser) return opts.browser;
   const apiKey = opts.browserlessApiKey ?? process.env.BROWSERLESS_API_KEY;
+  // DISPATCH (Browserless prod rule) — in Vercel serverless, never
+  // attempt chromium.launch(): the Chromium binary is not bundled.
+  // Production must reach the remote browser via Browserless; if the
+  // key is missing or the connect fails, surface a clear error and
+  // let the caller degrade gracefully (no crash).
+  const isVercel = typeof process !== 'undefined' && !!process.env?.VERCEL;
+
   if (apiKey) {
     try {
       const mod = await import('../auth/browserlessAdapter.js');
       return await mod.connectBrowserless({ apiKey, timeoutMs: opts.connectTimeoutMs });
     } catch (e) {
-      // Fall through to local chromium if browserless connect fails.
-      if (opts.requireBrowserless) throw e;
+      // In production we NEVER fall through to chromium.launch(). Re-throw
+      // so the caller can register a degraded probe envelope.
+      if (isVercel || opts.requireBrowserless) {
+        const safe = typeof e?.message === 'string' && apiKey
+          ? e.message.split(apiKey).join('***BROWSERLESS_TOKEN***')
+          : (e?.message ?? String(e));
+        const wrapped = new Error(`browserless_connect_failed:${safe}`);
+        wrapped.code = 'BROWSERLESS_CONNECT_FAILED';
+        throw wrapped;
+      }
+      // Dev fall-through to local chromium below.
     }
+  } else if (isVercel) {
+    // Production with no Browserless key — graceful refusal.
+    const err = new Error('browserless_unavailable_in_production:BROWSERLESS_API_KEY_not_set');
+    err.code = 'BROWSERLESS_UNAVAILABLE';
+    throw err;
   }
-  // Local Playwright fallback. Lazy-imported so tests without
-  // playwright still work.
+
+  // Local Playwright fallback (DEV ONLY). Lazy-imported so tests
+  // without playwright still work.
   const pw = await import('playwright').catch(() => null);
   if (!pw || !pw.chromium) {
     throw new Error('adversarialSurface.connectBrowser: neither Browserless nor local Playwright available');

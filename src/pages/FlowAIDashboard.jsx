@@ -183,14 +183,29 @@ export default function FlowAIDashboard() {
   const abortRef = useRef(null);
 
   // Latest score envelope derived from the most recent scoring log.
+  // DISPATCH (production runtime fixes) — the orchestrator emits
+  // `gtmScore` (canonical §7.6) + `layers` (Five-Layer telemetry) on
+  // STEP 5 / STEP 11 result objects; an earlier rev of this UI was
+  // reading the legacy `preScore` / `postScore` field names which the
+  // orchestrator stopped emitting after DISPATCH 28. The radar was
+  // showing 0/100 with all layers 0/20 because the match check
+  // dropped through to the zero default. We now read the existing
+  // fields directly — no fabrication.
   const latestScore = useMemo(() => {
     for (let i = stepLogs.length - 1; i >= 0; i -= 1) {
       const l = stepLogs[i];
       if (l && (l.step === 5 || l.step === 11) && l.result && typeof l.result === 'object') {
         const r = l.result;
-        if (typeof r.preScore === 'number' || typeof r.postScore === 'number') {
+        const hasScore = typeof r.gtmScore === 'number'
+          || typeof r.fiveLayerInternal === 'number'
+          || typeof r.preScore === 'number'
+          || typeof r.postScore === 'number';
+        if (hasScore) {
           return {
-            total: r.postScore ?? r.preScore ?? 0,
+            // §7.6 canonical score is the headline number; Five-Layer
+            // internal total is the fallback for runs that only carry
+            // telemetry data.
+            total: r.gtmScore ?? r.postScore ?? r.preScore ?? r.fiveLayerInternal ?? 0,
             ...(r.layers && typeof r.layers === 'object' ? r.layers : {}),
           };
         }

@@ -950,12 +950,28 @@ export async function runOrchestration(args = {}) {
           }));
         },
       });
+      // DISPATCH (production runtime fixes) — the two crawl entry
+      // points measure different things and a single-page run can
+      // legitimately produce divergent counts:
+      //   pagesActuallyCrawled (W6 STEP 5, multiPageCrawler.crawlSite)
+      //     — BFS that honors robots.txt; if the root path is blocked
+      //       this can be 0 even when the site has visible content.
+      //   pagesCrawled (W6 STEP 3, conductStructuredCrawl / Agent #21)
+      //     — single-fetch deep crawler that bypasses robots.txt; on a
+      //       reachable root it always reports >=1.
+      // We surface the metric definitions on the SSE envelope so the UI
+      // can render them as distinct labeled measurements rather than
+      // contradictory unlabeled counts.
       multiPageCrawlSummary = {
         pagesActuallyCrawled: crawlSiteResult.pagesActuallyCrawled,
         pagesDiscovered: crawlSiteResult.pagesDiscovered,
         maxPages: crawlSiteResult.maxPages,
         reasonStopped: crawlSiteResult.reasonStopped,
         durationMs: crawlSiteResult.durationMs,
+        // Labels explain what each count measures (matches dispatch
+        // guidance: "no contradictory unlabeled page counts").
+        pagesActuallyCrawledLabel: 'BFS pages fetched (robots.txt honored)',
+        pagesDiscoveredLabel: 'URLs seen in the link graph',
       };
       state.multiPageCrawl = crawlSiteResult;
       try {
@@ -1018,6 +1034,12 @@ export async function runOrchestration(args = {}) {
         why: 'structured crawl output for downstream scoring + monitor producer',
         result: {
           pagesCrawled: crawlOutput.pagesCrawled,
+          // DISPATCH (production runtime fixes) — explicit label so the
+          // UI can render this side-by-side with W6 STEP 5's
+          // pagesActuallyCrawled without surfacing contradictory
+          // unlabeled numbers. See multiPageCrawlSummary above for the
+          // companion label.
+          pagesCrawledLabel: 'Deep-crawl pages fetched (robots.txt bypassed)',
           depth: crawlOutput.depth,
           forms: crawlOutput.forms.length,
           brokenLinks: crawlOutput.brokenLinks.length,
