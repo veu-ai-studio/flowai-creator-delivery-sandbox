@@ -847,6 +847,82 @@ export async function runOrchestration(args = {}) {
   let exitReason = 'UNKNOWN';
   let token = null;
 
+  // ── W6 INTEGRATION — STEP 5: Multi-page BFS crawl (CA-18 §5) ───────────────
+  //
+  // Before the gate loop runs, walk the same-origin site with the new
+  // multiPageCrawler. Emits one 'page_crawled' step event per page so the
+  // SSE consumer can render the live page counter, then a 'crawl_complete'
+  // iteration event once the frontier drains.
+  //
+  // Honest constraint: the existing renewal STEP 3 (conductStructuredCrawl)
+  // ALSO does a multi-page walk, so this pre-walk is currently additive
+  // for visibility — it doesn't yet REPLACE the iteration-local crawl.
+  // The aggregated findings feed into state for downstream gates that
+  // want a whole-site signal (Phase B prober already does per-page).
+  let multiPageCrawlSummary = null;
+  if (initialUrl && /^https?:\/\//i.test(initialUrl)) {
+    try {
+      const _multiPageCrawler = deps.crawlSite || (await import('../../crawl/multiPageCrawler.js')).crawlSite;
+      const _maxPages = Number.isFinite(args.crawlMaxPages) ? args.crawlMaxPages : 250;
+      const _maxDepth = Number.isFinite(args.crawlMaxDepth) ? args.crawlMaxDepth : 4;
+      const crawlSiteResult = await _multiPageCrawler(initialUrl, {
+        maxPages: _maxPages,
+        maxDepth: _maxDepth,
+        sameOriginOnly: true,
+        respectRobotsTxt: args.respectRobotsTxt !== false,
+        onPage: ({ pageIndex, totalDiscovered, url: pageUrl, status: pageStatus, findings: pageFindings }) => {
+          emit(makeStepLog({
+            iteration: 0, step: 0,
+            status: pageStatus === 'fetched' ? 'complete' : 'degraded',
+            tool: 'multiPageCrawler.crawlSite (W6 STEP 5)',
+            why: 'whole-site BFS — per-page signal flows into gate inputs',
+            result: {
+              kind: 'page_crawled',
+              pageIndex, totalDiscovered, url: pageUrl,
+              status: pageStatus, findingsCount: pageFindings.length,
+            },
+            mode: state.mode,
+          }));
+        },
+      });
+      multiPageCrawlSummary = {
+        pagesActuallyCrawled: crawlSiteResult.pagesActuallyCrawled,
+        pagesDiscovered: crawlSiteResult.pagesDiscovered,
+        maxPages: crawlSiteResult.maxPages,
+        reasonStopped: crawlSiteResult.reasonStopped,
+        durationMs: crawlSiteResult.durationMs,
+      };
+      state.multiPageCrawl = crawlSiteResult;
+      try {
+        onIteration({
+          number: 0,
+          kind: 'crawl_complete',
+          ...multiPageCrawlSummary,
+        });
+      } catch { /* swallow per recommend_only */ }
+      emit(makeStepLog({
+        iteration: 0, step: 0, status: crawlSiteResult.ok ? 'complete' : 'degraded',
+        tool: 'multiPageCrawler.crawlSite (W6 STEP 5)',
+        why: 'whole-site BFS complete — honest pagesActuallyCrawled + reasonStopped',
+        result: {
+          kind: 'crawl_complete',
+          ...multiPageCrawlSummary,
+          aggregatedFindings: crawlSiteResult.findings.length,
+        },
+        mode: state.mode,
+      }));
+    } catch (e) {
+      // Crawler failure NEVER blocks the pipeline — STEP 3 will still run.
+      emit(makeStepLog({
+        iteration: 0, step: 0, status: 'degraded',
+        tool: 'multiPageCrawler.crawlSite (W6 STEP 5)',
+        why: 'whole-site BFS pre-walk',
+        result: { kind: 'crawl_failed', error: (e?.message ?? String(e)).slice(0, 200) },
+        mode: state.mode,
+      }));
+    }
+  }
+
   outerLoop: while (iterationNumber <= maxIterations) {
     if (state._stopRequested) { exitReason = 'USER_STOPPED'; break; }
 
