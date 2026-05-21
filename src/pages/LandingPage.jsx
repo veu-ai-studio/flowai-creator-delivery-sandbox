@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { saveSessionConfig } from './Configuration';
 import UniversalNav from '@/components/shared/UniversalNav';
+import RunConstructionPanel from '@/components/RunConstructionPanel';
 
 const SPEECH_SUPPORTED = typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -364,6 +365,12 @@ export default function LandingPage() {
   const [mode, setMode] = useState('auto');
   const [depth, setDepth] = useState('Standard');
 
+  // W6 INTEGRATION — Track C: inline construction-engine run panel.
+  // Shown when the user clicks "Run FlowAI" from Card A + Auto mode.
+  // The legacy /auto-runner path is still available as the secondary
+  // "Advanced (legacy)" link.
+  const [runPanelUrl, setRunPanelUrl] = useState(null);
+
   // ── Test Fetch (Card A) ──
   // Routes through FlowAI's own /api/research-url (Browserless-backed, full
   // JS rendering). Previously called a dead Replit proxy that returned null
@@ -485,12 +492,25 @@ export default function LandingPage() {
 
     saveSessionConfig(config);
 
+    // W6 INTEGRATION — Track C: when the user picks Card A (live URL)
+    // + Auto mode, the primary path is the inline construction-engine
+    // run via /api/run-construction (real SSE, real preview deploy,
+    // real governance record). The legacy /auto-runner remains the
+    // secondary "Advanced (legacy)" link below.
+    if (activeCard === 'A' && mode === 'auto' && urlInput.trim()) {
+      setRunPanelUrl(urlInput.trim());
+      return;
+    }
+
     if (mode === 'auto') navigate('/auto-runner');
     else if (mode === 'guided') navigate('/guided/research');
     else navigate('/manual/research');
   };
 
-  const launchLabel = mode === 'auto'
+  const isConstructionEnginePath = activeCard === 'A' && mode === 'auto' && !!urlInput.trim();
+  const launchLabel = isConstructionEnginePath
+    ? 'Run FlowAI on this URL →'
+    : mode === 'auto'
     ? 'Launch Auto Run →'
     : mode === 'guided'
     ? 'Start Guided Session →'
@@ -727,23 +747,50 @@ export default function LandingPage() {
 
         {/* ── SECTION 5: LAUNCH ── */}
         <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-muted-foreground">
-              {hasValidInput
-                ? <span className="text-foreground font-semibold">Ready — {activeCard === 'A' ? 'URL' : activeCard === 'B' ? 'Description' : 'Pasted content'} loaded · {OBJECTIVES.find(o => o.value === objective)?.label}</span>
-                : <span>Select an input above to enable launch</span>
-              }
+          {/* W6 INTEGRATION — Track C: when the construction-engine
+              path is active, the launch card is replaced inline by
+              the streaming run panel after click. */}
+          {runPanelUrl ? (
+            <RunConstructionPanel
+              url={runPanelUrl}
+              mode="FOREGROUND"
+              onClose={() => setRunPanelUrl(null)}
+            />
+          ) : (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm text-muted-foreground">
+                  {hasValidInput
+                    ? <span className="text-foreground font-semibold">Ready — {activeCard === 'A' ? 'URL' : activeCard === 'B' ? 'Description' : 'Pasted content'} loaded · {OBJECTIVES.find(o => o.value === objective)?.label}</span>
+                    : <span>Select an input above to enable launch</span>
+                  }
+                </div>
+                <Button
+                  onClick={launch}
+                  disabled={!hasValidInput}
+                  size="lg"
+                  className="gap-2 w-full sm:min-w-[220px] sm:w-auto text-sm font-bold min-h-[48px]"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  {launchLabel}
+                </Button>
+              </div>
+              {/* Secondary legacy link: only shown when the construction-
+                  engine path is the active primary (URL+Auto). Otherwise
+                  this CTA already routes through /auto-runner. */}
+              {isConstructionEnginePath && (
+                <div className="text-[11px] text-muted-foreground text-right">
+                  Need the legacy multi-step pipeline?{' '}
+                  <button
+                    onClick={() => navigate('/auto-runner')}
+                    className="underline underline-offset-2 hover:text-foreground transition-colors"
+                  >
+                    Advanced (legacy) →
+                  </button>
+                </div>
+              )}
             </div>
-            <Button
-              onClick={launch}
-              disabled={!hasValidInput}
-              size="lg"
-              className="gap-2 w-full sm:min-w-[220px] sm:w-auto text-sm font-bold min-h-[48px]"
-            >
-              <ChevronRight className="h-4 w-4" />
-              {launchLabel}
-            </Button>
-          </div>
+          )}
         </motion.section>
 
         {/* ── SECTION 6: QUICK ACCESS PANEL ── */}
