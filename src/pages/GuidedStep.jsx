@@ -13,7 +13,7 @@ import { STEPS, buildStepPrompt, buildProposalPrompt, buildFinalReportPrompt, fe
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
 import {
-  ChevronLeft, ChevronRight, Zap, Wrench, CheckCircle2,
+  ChevronLeft, Zap, Wrench, CheckCircle2,
   Loader2, RotateCcw, AlertCircle, Edit3, Mic, MicOff,
   Play, SkipForward, ThumbsUp, FileEdit
 } from 'lucide-react';

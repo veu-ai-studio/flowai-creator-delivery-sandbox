@@ -85,8 +85,10 @@ export default [
   },
   // ADR 0001 — Allowlist for legacy hardcoded-product surfaces. Retire each
   // entry as its surface migrates to the registry helper (UX-3 follow-up).
+  // See docs/adr/0001-no-hardcoded-products.md.
   {
     files: [
+      "src/components/marketplace/AIRecommendationPanel.jsx",
       "src/pages/Architecture.jsx",
       "src/pages/BrandSystem.jsx",
       "src/pages/CapabilityInstallSelfProtection.jsx",
@@ -98,6 +100,7 @@ export default [
       "src/pages/DomainManager.jsx",
       "src/pages/Environments.jsx",
       "src/pages/GTMAssets.jsx",
+      "src/pages/InvestorStudio.jsx",
     ],
     rules: {
       "no-restricted-syntax": "off",

@@ -1394,12 +1394,16 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
         })),
         getInstallationToken: vi.fn(async () => ({ token: 'ghs', expiresAt: '' })),
         appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+        // PHASE B1 — pipeline mock supplies 4 evaluator entries so the
+        // capability-weighted gate clears the 7-dimension minimum.
+        runEvaluationPipeline: defaultPipelineMock(),
         probeAdversarialSurface,
         authPreparer,
       };
       const r = await runOrchestration({
+        // gtmTarget=65 → effective(100)=70 with coverage 7/10 clears gate.
         url: null, mode: 'auto', runId: 'd41-t4-1', supabase: null,
-        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        environment: 'prd', gtmTarget: 65, maxIterations: 1, deps,
         credentials: { email: 'u@x', password: 'p' },
       });
       expect(authPreparer).toHaveBeenCalledOnce();
@@ -1430,8 +1434,9 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
     process.env.VERCEL_TOKEN = 'vercel_fake';
     try {
       const r = await runOrchestration({
+        // gtmTarget=65 → effective(100)=70 with coverage 7/10 clears gate.
         url: null, mode: 'auto', runId: 'd41-t4-2', supabase: null,
-        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        environment: 'prd', gtmTarget: 65, maxIterations: 1,
         credentials: { email: 'u@x', password: 'p' },
         deps: {
           discoverProduct: vi.fn(async () => PRODUCT),
@@ -1451,6 +1456,9 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
           })),
           getInstallationToken: vi.fn(async () => ({ token: 'ghs', expiresAt: '' })),
           appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+          // PHASE B1 — pipeline mock supplies 4 evaluator entries so the
+          // capability-weighted gate clears the 7-dimension minimum.
+          runEvaluationPipeline: defaultPipelineMock(),
           probeAdversarialSurface,
           authPreparer: async () => { throw new Error('login_failed_test'); },
         },
@@ -1535,7 +1543,7 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
     try {
       const r = await runOrchestration({
         url: null, mode: 'auto', runId: 'd41-t5-1', supabase: null,
-        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        environment: 'prd', gtmTarget: 65, maxIterations: 1,
         deps: {
           discoverProduct: vi.fn(async () => PRODUCT),
           checkRateCap: vi.fn(async () => ({ allowed: true })),
@@ -1551,6 +1559,9 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
           scoreCrawlOutput,
           getInstallationToken: vi.fn(async () => ({ token: 'ghs', expiresAt: '' })),
           appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+          // PHASE B1 — keep state.pipelineFindings empty so the test's
+          // phaseBContribution math (2 high × 5 = 10) matches.
+          runEvaluationPipeline: defaultPipelineMock(),
           probeAllPages,
         },
       });
@@ -1927,6 +1938,24 @@ describe('probeInteractives — D42 T2 full coverage', () => {
 
 // ── D42 T1 — Phase-B re-probe after fix ─────────────────────────────
 
+// Shared mock for the PHASE B1 multi-engine pipeline. Returns 4 populated
+// evaluator entries so the capability-weighted gate (aa3df60) can reach
+// scoredDimensions=7. Without this, the real pipeline launches Playwright
+// in test env and either times out or produces non-deterministic findings.
+function defaultPipelineMock() {
+  return vi.fn(async () => ({
+    ok: true,
+    findings: [],
+    stats: {
+      perEvaluator: { 'phase-b-playwright': 0, 'lighthouse': 80, 'axe-core': 4, 'runtime-diagnostics': 16 },
+      perEvaluatorRaw: { 'phase-b-playwright': 0, 'lighthouse': 80, 'axe-core': 4, 'runtime-diagnostics': 16 },
+      evaluatorMetrics: {},
+    },
+    perEvaluator: { 'phase-b-playwright': 0, 'lighthouse': 80, 'axe-core': 4, 'runtime-diagnostics': 16 },
+    errors: {},
+  }));
+}
+
 function fullHappyDeps({ scoreSequence } = {}) {
   let scoreIdx = 0;
   return {
@@ -1957,6 +1986,32 @@ function fullHappyDeps({ scoreSequence } = {}) {
       selfRenewalSubstantialThreshold: 5, selfRenewalMaxPerDay: 1, selfRenewalRunawayThreshold: 3,
     })),
     appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+    // PHASE B1 + Phase C — pipeline + verification stubs so the orchestrator
+    // can reach the canonical scoring path without real Playwright / network.
+    runEvaluationPipeline: defaultPipelineMock(),
+    captureBaselineSnapshot: vi.fn(async () => ({
+      url: 'https://x', lighthouseScores: {},
+      axeViolations: 0, runtimeErrors: 0, consoleErrors: 0, totalFindings: 0,
+    })),
+    capturePostFixSnapshot: vi.fn(async () => ({
+      url: 'https://x', lighthouseScores: {},
+      axeViolations: 0, runtimeErrors: 0, consoleErrors: 0, totalFindings: 0,
+    })),
+    calculateTransformationDelta: vi.fn(() => ({
+      deltas: [],
+      aggregate: { totalRegressed: 0, totalImproved: 0, netDelta: 0 },
+      regressionGatePassed: true,
+    })),
+    classifyPatchEffects: vi.fn(() => []),
+    runRegressionGate: vi.fn(() => ({ passed: true, regressed: [] })),
+    runRemediation: vi.fn(async () => ({
+      patches: [], conflicts: [], escalated: [], deferred: [],
+      summary: { applied: 0, classified: 0 },
+    })),
+    crawlSite: vi.fn(async () => ({
+      ok: true, pagesActuallyCrawled: 1, pagesDiscovered: 1, maxPages: 250,
+      reasonStopped: 'frontier_drained', durationMs: 0, findings: [],
+    })),
   };
 }
 
@@ -2023,7 +2078,11 @@ describe('orchestrator STEP 11 — Phase B re-probe after fix (D42 T1)', () => {
       expect(probeCalls[0].urls).toHaveLength(2);
       expect(probeCalls[1].urls).toHaveLength(2);
 
-      const step11 = r.orchestrationLog.find((l) => l.step === 11);
+      // STEP 11 emits multiple log entries (evaluator-pipeline progress,
+      // post-fix snapshot, then the canonical scorer). The post-fix
+      // re-probe metrics live on the scorer entry — match it by tool.
+      const step11 = r.orchestrationLog.find((l) =>
+        l.step === 11 && typeof l.tool === 'string' && l.tool.includes('post-fix re-crawl'));
       expect(step11).toBeDefined();
       expect(step11.result.postFixPhaseBPagesProbed).toBe(2);
       expect(step11.result.postFixPhaseBUrlsAttempted).toBe(2);
@@ -2073,7 +2132,9 @@ describe('orchestrator STEP 11 — Phase B re-probe after fix (D42 T1)', () => {
         url: null, mode: 'auto', runId: 'd42-t1-2', supabase: null,
         environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
       });
-      const step11 = r.orchestrationLog.find((l) => l.step === 11);
+      // STEP 11 emits multiple log entries — grab the scorer one by tool.
+      const step11 = r.orchestrationLog.find((l) =>
+        l.step === 11 && typeof l.tool === 'string' && l.tool.includes('post-fix re-crawl'));
       // Re-probe threw; pre-fix findings (2 high) used as fallback.
       // postFixPhaseBPagesProbed stays at 0 (re-probe didn't succeed).
       expect(step11.result.postFixPhaseBPagesProbed).toBe(0);

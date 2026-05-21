@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Package, Plus, Search, MoreHorizontal, ExternalLink,
-  History, ShieldCheck, Archive, Loader2, X, CheckCircle2, AlertTriangle
+  History, ShieldCheck, Archive, Loader2, X, CheckCircle2
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 

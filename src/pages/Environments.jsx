@@ -4,8 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Globe, RefreshCw, Loader2, CheckCircle2, AlertCircle,
-  Copy, Check, GitCompare, Plus, Pencil, Save, X
+  Globe, RefreshCw, Loader2, AlertCircle,
+  Copy, Check, GitCompare, Pencil, Save, X
 } from 'lucide-react';
 
 const PILOT_PRODUCTS = [

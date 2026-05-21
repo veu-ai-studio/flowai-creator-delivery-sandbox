@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import {
   Server, Loader2, CheckCircle2, AlertCircle, Copy, Check,
-  ChevronDown, ChevronUp, Zap, ShieldAlert, BarChart3, FileText
+  Zap, ShieldAlert, BarChart3, FileText
 } from 'lucide-react';
 
 const PRODUCTS = [

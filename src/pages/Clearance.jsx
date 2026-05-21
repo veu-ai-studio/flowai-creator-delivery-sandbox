@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Tooltip from '@/components/ui/Tooltip';
 import {
-  ShieldCheck, Plus, X, Play, RotateCcw, ChevronRight,
+  ShieldCheck, Plus, X, Play, RotateCcw,
   Search, CheckSquare, Square, Bell, BellOff, BarChart3
 } from 'lucide-react';
 import ClearanceWizard from '@/components/clearance/ClearanceWizard';

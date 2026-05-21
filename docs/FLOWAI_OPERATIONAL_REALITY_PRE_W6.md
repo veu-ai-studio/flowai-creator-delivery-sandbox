@@ -63,8 +63,13 @@ LAST VERIFIED: 2026-05-21
 
 3. GOVERNANCE RUNTIME STATUS
 STATUS: PARTIAL
-VERIFIED REALITY: Governance architecture and canonical systems exist. 44 governance_record entries across 7 product_ssot rows. 0 tool.selection envelopes. 6 of 10 dimensions silently omitted. dimensions_contributing[] field does not exist on any envelope.
-LAST VERIFIED: 2026-05-20
+VERIFIED REALITY:
+44+ governance_record entries. 8/8 tool.selection envelopes
+per run. dimensions_contributing[] with 7/10 scored (partial
+coverage), 3 KNOWN_GAP. Capability-weighted scoring operational
+(effectiveTrustScore deflates raw by coverage). Noise suppression
+and non-linear regression gate operational.
+LAST VERIFIED: 2026-05-21
 
 4. TOOL INTELLIGENCE STATUS
 STATUS: PARTIAL

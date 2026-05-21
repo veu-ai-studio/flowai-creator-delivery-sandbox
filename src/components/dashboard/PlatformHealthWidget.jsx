@@ -1,7 +1,7 @@
 // ─── PLATFORM HEALTH WIDGET — Phase 2A ───────────────────────────────────────
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Shield, Loader2, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { Shield, Loader2, AlertTriangle, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { resolveProxyBaseUrl } from '@/lib/platform-health/proxy-url';
 

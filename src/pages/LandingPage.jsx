@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import {
   Zap, Clock, Wrench, Link2, Pencil, Clipboard, Mic, MicOff,
   CheckCircle2, XCircle, Loader2, UploadCloud, ChevronRight,
-  Layers, Users, History, ShieldCheck, BookOpen, BarChart3, X
+  Layers, History, ShieldCheck, BookOpen, BarChart3, X
 } from 'lucide-react';
 import { saveSessionConfig } from './Configuration';
 import UniversalNav from '@/components/shared/UniversalNav';
