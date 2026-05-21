@@ -157,7 +157,74 @@ function DeltaTable({ transformationDelta }) {
   );
 }
 
-function ResultCard({ final, runId }) {
+function normalizeUrlForCompare(value) {
+  if (typeof value !== 'string' || value.trim().length === 0) return '';
+  try {
+    const u = new URL(value);
+    u.hash = '';
+    const path = u.pathname.replace(/\/+$/, '') || '/';
+    return `${u.protocol}//${u.host}${path}${u.search}`;
+  } catch {
+    return value.trim().replace(/\/+$/, '');
+  }
+}
+
+function ResultUrlSection({ previewUrl, inputUrl, exitReason }) {
+  const hasPreview = typeof previewUrl === 'string' && previewUrl.length > 0;
+  const originalUrl = typeof inputUrl === 'string' ? inputUrl : '';
+  const sameAsInput = hasPreview && normalizeUrlForCompare(previewUrl) === normalizeUrlForCompare(originalUrl);
+
+  if (!hasPreview) {
+    return (
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs space-y-1">
+        <p className="font-semibold text-amber-400">No preview URL generated</p>
+        <p className="text-muted-foreground">Reason: <span className="font-mono text-foreground">{exitReason || 'UNKNOWN'}</span></p>
+        {originalUrl && (
+          <p className="break-all">
+            <span className="text-muted-foreground">Original URL (unchanged): </span>
+            <a href={originalUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-mono">
+              {originalUrl}
+            </a>
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (sameAsInput) {
+    return (
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs space-y-1">
+        <p className="font-semibold text-amber-400">No new URL produced - no fixes were applied this run.</p>
+        <p className="text-muted-foreground">Reason: <span className="font-mono text-foreground">{exitReason || 'UNKNOWN'}</span></p>
+        <p className="break-all">
+          <span className="text-muted-foreground">Original URL (unchanged): </span>
+          <a href={originalUrl || previewUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-mono">
+            {originalUrl || previewUrl}
+          </a>
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5 text-xs">
+      <a href={previewUrl} target="_blank" rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-primary-foreground font-semibold hover:bg-primary/90">
+        Open improved URL <ExternalLink className="h-3 w-3" />
+      </a>
+      {originalUrl && (
+        <p className="break-all">
+          <span className="text-muted-foreground">Original URL (preserved): </span>
+          <a href={originalUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-mono">
+            {originalUrl}
+          </a>
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ResultCard({ final, runId, inputUrl }) {
   const ready = final.gtmReady === true;
   const score = typeof final.finalScore === 'number' ? final.finalScore : 0;
   const recordId = final.governanceRecordId || runId;
@@ -181,15 +248,7 @@ function ResultCard({ final, runId }) {
           <span className="text-[10px] text-muted-foreground">exitReason: <span className="font-mono text-foreground">{final.exitReason || 'UNKNOWN'}</span></span>
           <span className="ml-auto text-xl font-bold text-foreground">{score.toFixed(1)}<span className="text-muted-foreground text-sm">/100</span></span>
         </div>
-        {final.previewUrl && (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-muted-foreground">Preview:</span>
-            <a href={final.previewUrl} target="_blank" rel="noopener noreferrer"
-              className="text-primary hover:underline font-mono inline-flex items-center gap-1">
-              {final.previewUrl} <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
-        )}
+        <ResultUrlSection previewUrl={final.previewUrl} inputUrl={inputUrl} exitReason={final.exitReason} />
         {final.prUrl && (
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground">PR:</span>
@@ -368,7 +427,7 @@ export default function RunConstructionPanel({ url, mode = 'FOREGROUND', onClose
         </div>
       )}
 
-      {final && status === 'done' && <ResultCard final={final} runId={runId} />}
+      {final && status === 'done' && <ResultCard final={final} runId={runId} inputUrl={url} />}
     </div>
   );
 }
