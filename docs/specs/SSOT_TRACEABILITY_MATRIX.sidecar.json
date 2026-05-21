@@ -1,0 +1,430 @@
+{
+  "schema": "ssot-traceability-matrix.sidecar.v1",
+  "generatedAt": "2026-05-21T21:16:42Z",
+  "headCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+  "headBranch": "flowai-v0.1",
+  "productionCommit": "UNKNOWN",
+  "productionDeployment": null,
+  "governanceStatus": "PROPOSED_GOVERNANCE",
+  "panelArtifact": "UNAVAILABLE",
+  "panelArtifactSearchedAt": "docs/panel-consultations/",
+  "claims": [
+    {
+      "claimId": "CA18-URL-ANY",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18 (lines 607-615)",
+      "claimText": "Operator can submit any URL; unknown URL enters UNIVERSAL mode without registration.",
+      "runtimeExpectation": "Unknown URL submitted via /api/run-construction routes through synthesizePathBProduct() with __pathB:true; orchestrator executes evaluation-only path.",
+      "status": "PARTIAL",
+      "confidence": "MEDIUM",
+      "scope": "BRANCH_ONLY",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "LIVE_RUNTIME",
+      "runtimeArtifactRequired": true,
+      "operationalSeverity": "CRITICAL",
+      "evidenceFreshness": "RECENT",
+      "isNegativeControl": false,
+      "implementationFiles": [
+        "src/lib/agents/renewal/orchestrator.js:167-185 (synthesizePathBProduct)",
+        "src/lib/agents/renewal/orchestrator.js:620-641 (STEP 1 Product Discovery + PATH B branch)",
+        "src/lib/agents/renewal/orchestrator.js:627-635 (URL string check + synthesize)"
+      ],
+      "testFiles": [
+        "tests/agents/renewal/orchestrator.test.js"
+      ],
+      "runtimeEvidence": [
+        ".w03-cache/orchestra-renewal-smoke-2026-05-14/summary.json",
+        ".w03-cache/orchestra-renewal-smoke-2026-05-14/patch-existing-source.report.json"
+      ],
+      "governanceEvidence": [
+        "docs/CANONICAL_REFERENCE.md §CA-18 (lines 607-615)",
+        "docs/CANONICAL_REFERENCE.md §PATH B (lines 143-153)"
+      ],
+      "contradictions": [],
+      "gaps": [
+        "No production live-URL run captured; only branch-level smoke artifact exists.",
+        "Smoke summary from 2026-05-14 (7 days old) is RECENT, not CURRENT."
+      ],
+      "nextAction": "Capture a production run with a fully unknown URL hitting /api/run-construction to confirm live UNIVERSAL entry; attach the run-log path to runtimeEvidence and re-grade to VERIFIED if scope advances to PRODUCTION."
+    },
+    {
+      "claimId": "CA18-HONEST-URL",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18",
+      "claimText": "FlowAI must not show original URL as improved preview; no preview button unless new URL exists.",
+      "runtimeExpectation": "UI gates preview button on (previewUrl !== originalUrl); when sameAsInput is true, render honest 'No new URL produced' message instead.",
+      "status": "PARTIAL",
+      "confidence": "MEDIUM",
+      "scope": "BRANCH_ONLY",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "LIVE_RUNTIME",
+      "runtimeArtifactRequired": true,
+      "operationalSeverity": "HIGH",
+      "evidenceFreshness": "CURRENT",
+      "isNegativeControl": false,
+      "implementationFiles": [
+        "src/components/RunConstructionPanel.jsx:210-223 (ResultUrlSection sameAsInput message)",
+        "src/components/RunConstructionPanel.jsx:225-240 (preview button gated on sameAsInput)",
+        "src/components/RunConstructionPanel.jsx:363-369 (UNIVERSAL mode panel branch)"
+      ],
+      "testFiles": [
+        "tests/ui/trustScoreDisplay.test.js:24-32"
+      ],
+      "runtimeEvidence": [],
+      "governanceEvidence": [
+        "docs/CANONICAL_REFERENCE.md §CA-18 honest-disclosure principle"
+      ],
+      "contradictions": [],
+      "gaps": [
+        "No explicit unit test asserting the preview button is NOT rendered when sameAsInput===true.",
+        "No production run captured demonstrating the honest-disclosure path."
+      ],
+      "nextAction": "Add unit test asserting button absence on sameAsInput===true case; capture a production run with an unknown URL that yields no new URL."
+    },
+    {
+      "claimId": "CA18-WEIGHTED-SCORE",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18",
+      "claimText": "Raw score must not hide missing dimensions; effectiveTrustScore = rawScore × coverageConfidence.",
+      "runtimeExpectation": "Final event payload includes both rawScore and effectiveTrustScore; the latter computed via computeCapabilityWeightedScore.",
+      "status": "PARTIAL",
+      "confidence": "MEDIUM",
+      "scope": "BRANCH_ONLY",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "LIVE_RUNTIME",
+      "runtimeArtifactRequired": true,
+      "operationalSeverity": "HIGH",
+      "evidenceFreshness": "CURRENT",
+      "isNegativeControl": false,
+      "implementationFiles": [
+        "src/lib/scoring/capabilityWeightedScore.js:9-10 (formula docstring)",
+        "src/lib/scoring/capabilityWeightedScore.js:91-131 (computeCapabilityWeightedScore implementation, formula at lines 112-113)"
+      ],
+      "testFiles": [
+        "tests/ui/trustScoreDisplay.test.js:6-32"
+      ],
+      "runtimeEvidence": [],
+      "governanceEvidence": [
+        "docs/CANONICAL_REFERENCE.md §CA-18"
+      ],
+      "contradictions": [],
+      "gaps": [
+        "No production run-log shows rawScore and effectiveTrustScore values from a live evaluation."
+      ],
+      "nextAction": "Capture a production evaluation and attach the run log showing both rawScore and effectiveTrustScore to runtimeEvidence."
+    },
+    {
+      "claimId": "CA18-DIMENSION-DISCLOSURE",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18 §2 no-silent-omission",
+      "claimText": "No silent omission of unscored dimensions; dimensions_contributing[] emitted and shown.",
+      "runtimeExpectation": "Orchestrator emits dimensions_contributing[] in final event; UI renders via KnownGapBanner.",
+      "status": "PARTIAL",
+      "confidence": "MEDIUM",
+      "scope": "BRANCH_ONLY",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "LIVE_RUNTIME",
+      "runtimeArtifactRequired": true,
+      "operationalSeverity": "MEDIUM",
+      "evidenceFreshness": "CURRENT",
+      "isNegativeControl": false,
+      "implementationFiles": [
+        "src/lib/agents/renewal/orchestrator.js:2732-2810 (STEP 4 builds dimensionsContributing)",
+        "src/lib/agents/renewal/orchestrator.js:2810 (included in final event payload)",
+        "src/lib/agents/renewal/orchestrator.js:2882 (dimensions_contributing in return)",
+        "src/components/RunConstructionPanel.jsx:332 (KnownGapBanner mount)",
+        "src/components/RunConstructionPanel.jsx:99-100 (per-dimension render in banner)"
+      ],
+      "testFiles": [
+        "tests/agents/renewal/orchestrator.test.js"
+      ],
+      "runtimeEvidence": [],
+      "governanceEvidence": [
+        "docs/CANONICAL_REFERENCE.md §CA-18 §2"
+      ],
+      "contradictions": [],
+      "gaps": [
+        "No explicit test asserting ALL unscored dimensions are emitted (array-completeness).",
+        "No production run-log shows dimensions_contributing[] with non-empty content."
+      ],
+      "nextAction": "Add unit test for dimensions_contributing array completeness and coverage-count accuracy; capture a production run with at least one unscored dimension and attach run log."
+    },
+    {
+      "claimId": "CA18-EVAL-PIPELINE",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18 evaluation pipeline",
+      "claimText": "Lighthouse, axe-core, runtime diagnostics, and crawler contribute findings; evaluator provenance visible per finding.",
+      "runtimeExpectation": "Each finding carries a unique evaluator_id (or equivalent provenance field) identifying which evaluator produced it.",
+      "status": "PARTIAL",
+      "confidence": "LOW",
+      "scope": "BRANCH_ONLY",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "LIVE_RUNTIME",
+      "runtimeArtifactRequired": true,
+      "operationalSeverity": "HIGH",
+      "evidenceFreshness": "CURRENT",
+      "isNegativeControl": false,
+      "implementationFiles": [
+        "src/lib/evaluation/evaluationPipeline.js:1-40 (entry point + evaluator list)",
+        "src/lib/evaluation/evaluationPipeline.js:135-136 (axe-core + runtime-diagnostics wired)",
+        "src/lib/evaluation/evaluationPipeline.js:169-172 (Lighthouse wired)",
+        "src/lib/evaluation/findingNormalizer.js:46-60 (per-finding source + evaluatorVersion fields)"
+      ],
+      "testFiles": [
+        "tests/agents/renewal/adversarialSurface.test.js",
+        "tests/ui/trustScoreDisplay.test.js"
+      ],
+      "runtimeEvidence": [],
+      "governanceEvidence": [],
+      "contradictions": [
+        {
+          "claim": "evaluator provenance visible per finding",
+          "evidence": "findingNormalizer.js emits source + evaluatorVersion but no unique evaluator_id per finding",
+          "severity": "MEDIUM"
+        }
+      ],
+      "gaps": [
+        "Per-finding evaluator_id field is missing from findingNormalizer.js output schema.",
+        "Lighthouse and axe-core are conditionally skipped under graceful degradation; not guaranteed to run on every evaluation.",
+        "No production run-log shows all four evaluators' contributions with provenance."
+      ],
+      "nextAction": "Add a unique evaluator_id field to findingNormalizer.js output (separate dispatch); capture a production run that exercises all four evaluators and attach the log."
+    },
+    {
+      "claimId": "CA18-DELTA-VERIFY",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18 transformation-delta principle",
+      "claimText": "Patch applied is not equivalent to product improved; baseline/post-fix snapshots and deltas required.",
+      "runtimeExpectation": "Orchestrator captures baseline snapshot pre-fix, post-fix snapshot, and computes deltas; UI renders DeltaTable.",
+      "status": "PARTIAL",
+      "confidence": "MEDIUM",
+      "scope": "BRANCH_ONLY",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "LIVE_RUNTIME",
+      "runtimeArtifactRequired": true,
+      "operationalSeverity": "MEDIUM",
+      "evidenceFreshness": "CURRENT",
+      "isNegativeControl": false,
+      "implementationFiles": [
+        "src/lib/verification/baselineSnapshot.js (baseline capture)",
+        "src/lib/verification/postFixSnapshot.js (post-fix capture)",
+        "src/lib/verification/deltaCalculator.js (delta computation)",
+        "src/lib/agents/renewal/orchestrator.js:48-50 (imports)",
+        "src/components/RunConstructionPanel.jsx:126-148 (DeltaTable render)"
+      ],
+      "testFiles": [
+        "tests/construction/gates/S1Baseline.test.js",
+        "tests/construction/gates/S5Rollback.test.js"
+      ],
+      "runtimeEvidence": [],
+      "governanceEvidence": [
+        "docs/CANONICAL_REFERENCE.md §CA-18 transformation-delta"
+      ],
+      "contradictions": [],
+      "gaps": [
+        "No production run-log shows baseline/post-fix snapshot artifacts stored or retrieved.",
+        "Live delta values from a real evaluation are not captured."
+      ],
+      "nextAction": "Capture a production run with a fix application and attach the baseline/post-fix snapshot files plus delta output to runtimeEvidence."
+    },
+    {
+      "claimId": "CA18-REMEDIATION-SAFETY",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18 remediation safety",
+      "claimText": "Low-risk fixes only auto-applied; registry, budget, confidence threshold, and rollback required.",
+      "runtimeExpectation": "Remediation engine consults a registry, enforces a budget cap, applies a confidence threshold, and rolls back on failure.",
+      "status": "PARTIAL",
+      "confidence": "LOW",
+      "scope": "BRANCH_ONLY",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "LIVE_RUNTIME",
+      "runtimeArtifactRequired": true,
+      "operationalSeverity": "HIGH",
+      "evidenceFreshness": "CURRENT",
+      "isNegativeControl": false,
+      "implementationFiles": [
+        "src/lib/remediation/runRemediation.js (remediation engine)",
+        "src/lib/agents/renewal/rateCap.js (rate / budget cap)",
+        "src/lib/agents/renewal/orchestrator.js:24 (checkRateCap import)",
+        "src/lib/agents/renewal/orchestrator.js:45 (remediationEngine import)"
+      ],
+      "testFiles": [
+        "tests/agents/renewal/orchestrator.test.js (rate-cap mocks)"
+      ],
+      "runtimeEvidence": [],
+      "governanceEvidence": [],
+      "contradictions": [
+        {
+          "claim": "registry of auto-applicable fixes",
+          "evidence": "no explicit registry file or constant found in remediation engine",
+          "severity": "MEDIUM"
+        },
+        {
+          "claim": "explicit confidence threshold for low-risk classification",
+          "evidence": "no named threshold constant; risk classification is implicit",
+          "severity": "MEDIUM"
+        },
+        {
+          "claim": "rollback path documented",
+          "evidence": "S5Rollback test exists but rollback invocation policy is not canonically documented",
+          "severity": "LOW"
+        }
+      ],
+      "gaps": [
+        "Remediation registry is implicit, not codified as a named structure.",
+        "Confidence threshold constants are not surfaced.",
+        "Rollback invocation policy lacks canonical documentation.",
+        "No production run-log shows remediation decision + budget check + rollback path."
+      ],
+      "nextAction": "Document the remediation registry (which fix categories are auto vs. manual); add explicit named confidence-threshold constants; document rollback invocation rules; capture a production remediation run with full audit trail."
+    },
+    {
+      "claimId": "CA18-UNIVERSAL-LIMIT",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18 + §PATH B",
+      "claimText": "Unknown URLs are evaluation-only, not deployment; no commits, PRs, or deploys in UNIVERSAL mode.",
+      "runtimeExpectation": "When __pathB is true: orchestrator skips STEPS 7-9 (branch creation, PR write, deploy); UI hides deploy controls.",
+      "status": "PARTIAL",
+      "confidence": "HIGH",
+      "scope": "BRANCH_ONLY",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "LIVE_RUNTIME",
+      "runtimeArtifactRequired": true,
+      "operationalSeverity": "CRITICAL",
+      "evidenceFreshness": "RECENT",
+      "isNegativeControl": false,
+      "implementationFiles": [
+        "src/lib/agents/renewal/orchestrator.js:1471-1477 (PATH B skip-steps comment)",
+        "src/lib/agents/renewal/orchestrator.js:1486-1494 (if(pathB) skip block)",
+        "src/lib/agents/renewal/orchestrator.js:1817 (branch creation gated by !pathB)",
+        "src/lib/agents/renewal/orchestrator.js:2571 (branchName null in PATH B)",
+        "src/components/RunConstructionPanel.jsx:363-369 (UniversalModePanel mount)",
+        "src/components/RunConstructionPanel.jsx:280-290 (registration link, not direct deploy)"
+      ],
+      "testFiles": [
+        "tests/agents/renewal/orchestrator.test.js (PATH B skip behavior)"
+      ],
+      "runtimeEvidence": [
+        ".w03-cache/orchestra-renewal-smoke-2026-05-14/summary.json"
+      ],
+      "governanceEvidence": [
+        "docs/CANONICAL_REFERENCE.md §PATH B (lines 143-153)"
+      ],
+      "contradictions": [],
+      "gaps": [
+        "Smoke artifact is 7 days old (RECENT, not CURRENT); no production live-URL run captured to confirm UNIVERSAL mode truly blocks deploys in the prod environment."
+      ],
+      "nextAction": "Capture a production run with an unknown URL and assert the run-log shows no branch creation, no PR write, no deploy invocation. Attach to runtimeEvidence."
+    },
+    {
+      "claimId": "CA18-AUDIT-TRAIL",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18 §2 no-silent-omission",
+      "claimText": "Governance record logs skipped steps and reasons; no silent skipped steps.",
+      "runtimeExpectation": "Every skipped step in orchestrator emits an audit entry with reason; delta policy ALWAYS returns auditEntry per HARD INVARIANT.",
+      "status": "PARTIAL",
+      "confidence": "MEDIUM",
+      "scope": "GOVERNANCE",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "GOVERNANCE_RECORD",
+      "runtimeArtifactRequired": false,
+      "operationalSeverity": "HIGH",
+      "evidenceFreshness": "CURRENT",
+      "isNegativeControl": false,
+      "implementationFiles": [
+        "src/lib/agents/renewal/orchestrator.js:1487-1494 (autoFixSkippedReason on skip)",
+        "src/lib/agents/renewal/deltaPolicy.js:1-66 (HARD INVARIANT line 20: ALWAYS returns auditEntry)"
+      ],
+      "testFiles": [
+        "tests/agents/renewal/deltaPolicy.test.js:1-106"
+      ],
+      "runtimeEvidence": [],
+      "governanceEvidence": [
+        "docs/CANONICAL_REFERENCE.md §CA-18 §2",
+        "docs/specs/FLOWAI_MISSION_PURPOSE_AMENDMENT_DRAFT.md §2"
+      ],
+      "contradictions": [],
+      "gaps": [
+        "No canonical schema document for governance_record structure.",
+        "No production governance_record example exported and stored as evidence.",
+        "Skipped-step recording is tested via deltaPolicy.test.js but not shown in a live production audit record."
+      ],
+      "nextAction": "Author a canonical governance_record schema document (separate dispatch); export at least one production governance_record and attach to governanceEvidence to advance status to VERIFIED."
+    },
+    {
+      "claimId": "CA18-DEPLOY-TRUTH",
+      "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18 deployment-truth principle",
+      "claimText": "Deployed product matches certified branch; production commit equals HEAD or drift is disclosed.",
+      "runtimeExpectation": "A verification path queries the production deployment (Vercel API) for its current commit SHA and compares to HEAD; drift surfaced in governance record.",
+      "status": "NOT_IMPLEMENTED",
+      "confidence": "HIGH",
+      "scope": "PRODUCTION",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "DEPLOYMENT_EVIDENCE",
+      "runtimeArtifactRequired": true,
+      "operationalSeverity": "CRITICAL",
+      "evidenceFreshness": "UNKNOWN",
+      "isNegativeControl": false,
+      "implementationFiles": [],
+      "testFiles": [],
+      "runtimeEvidence": [],
+      "governanceEvidence": [
+        "docs/CANONICAL_REFERENCE.md §CA-18 deployment-truth principle"
+      ],
+      "contradictions": [
+        {
+          "claim": "production commit equals HEAD or drift disclosed",
+          "evidence": "no code path found that queries deployment commit or computes drift; api/run-construction.js is a Vercel shim but does not report deployment state",
+          "severity": "HIGH"
+        }
+      ],
+      "gaps": [
+        "No deployment-verification code path exists.",
+        "No drift-detection script exists.",
+        "No production evidence captured.",
+        "productionCommit at the sidecar root is UNKNOWN because no mechanism queries it."
+      ],
+      "nextAction": "Separate dispatch: implement a deployment-verification endpoint or script that queries Vercel deployment API, compares SHA to HEAD, and writes a drift-disclosure record to docs/audits/deploy-truth-<date>.md. Do NOT mark this row VERIFIED until that artifact exists."
+    },
+    {
+      "claimId": "FALSE-CLAIM-AUTONOMOUS-DEPLOY",
+      "ssotSource": "(synthetic negative control; not from SSOT)",
+      "claimText": "FlowAI can autonomously deploy production-safe changes without human approval.",
+      "runtimeExpectation": "(NEGATIVE CONTROL) This capability should NOT exist. Verification = confirmation of absence.",
+      "status": "NOT_IMPLEMENTED",
+      "confidence": "HIGH",
+      "scope": "GOVERNANCE",
+      "lastVerifiedAt": "2026-05-21T21:16:42Z",
+      "verifiedAgainstCommit": "aeff00e4abde1014bb4025cd63c90897715a9d10",
+      "verifiedAgainstDeployment": null,
+      "verificationType": "MANUAL_INSPECTION",
+      "runtimeArtifactRequired": false,
+      "operationalSeverity": "CRITICAL",
+      "evidenceFreshness": "CURRENT",
+      "isNegativeControl": true,
+      "implementationFiles": [],
+      "testFiles": [],
+      "runtimeEvidence": [],
+      "governanceEvidence": [
+        "src/lib/agents/renewal/githubPrWriter.js:7-13 (HARD INVARIANT comment: 'FlowAI NEVER merges autonomously; the string /merge does not appear in any code path of this file')",
+        "Grep confirmation: '/merge' appears only in prohibition comments (lines 11-12), not in any executable code path"
+      ],
+      "contradictions": [],
+      "gaps": [
+        "This row is intentionally NOT_IMPLEMENTED to demonstrate the matrix rejects false-capability claims. The matrix would FAIL if a contradicting implementation were found."
+      ],
+      "nextAction": "Maintain the static-grep assertion that '/merge' never appears in executable paths of githubPrWriter.js; preserve as a regression guard."
+    }
+  ]
+}
