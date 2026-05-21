@@ -1,12 +1,39 @@
 // src/lib/verification/deltaCalculator.js
+//
+// PART A — Delta noise suppression. Each metric carries an explicit
+// NOISE_THRESHOLD; an absolute raw delta within that envelope is
+// classified 'neutral' (NOT 'improved' or 'regressed') and the gate
+// downstream ignores it. Prevents single-page evaluator flicker from
+// triggering false-positive regression halts.
 
 'use strict';
 
+/**
+ * Per-metric noise thresholds. Lighthouse scores carry a ±3 envelope
+ * (their own run-to-run variance is ~2-3 points). Axe + runtime metrics
+ * have zero noise (they're deterministic). totalFindings carries a ±2
+ * envelope to absorb single Phase B retry flips.
+ */
+export const NOISE_THRESHOLDS = Object.freeze({
+  'lighthouse.performance':  3,
+  'lighthouse.accessibility': 3,
+  'lighthouse.bestPractices': 3,
+  'lighthouse.seo':          3,
+  axeViolations:             0,
+  axeImageAltViolations:     0,
+  axeContrastViolations:     0,
+  axeAriaViolations:         0,
+  runtimeErrors:             0,
+  runtime404s:               0,
+  consoleErrors:             0,
+  totalFindings:             2,
+});
+
 const METRICS = Object.freeze([
-  { key: 'lighthouse.performance', label: 'performance', higherIsBetter: true, tolerance: 3, get: (s) => s?.lighthouseScores?.performance },
-  { key: 'lighthouse.accessibility', label: 'accessibility', higherIsBetter: true, tolerance: 3, get: (s) => s?.lighthouseScores?.accessibility },
-  { key: 'lighthouse.bestPractices', label: 'best-practices', higherIsBetter: true, tolerance: 3, get: (s) => s?.lighthouseScores?.bestPractices },
-  { key: 'lighthouse.seo', label: 'seo', higherIsBetter: true, tolerance: 3, get: (s) => s?.lighthouseScores?.seo },
+  { key: 'lighthouse.performance', label: 'performance', higherIsBetter: true, get: (s) => s?.lighthouseScores?.performance },
+  { key: 'lighthouse.accessibility', label: 'accessibility', higherIsBetter: true, get: (s) => s?.lighthouseScores?.accessibility },
+  { key: 'lighthouse.bestPractices', label: 'best-practices', higherIsBetter: true, get: (s) => s?.lighthouseScores?.bestPractices },
+  { key: 'lighthouse.seo', label: 'seo', higherIsBetter: true, get: (s) => s?.lighthouseScores?.seo },
   { key: 'axeViolations', label: 'axe violations', higherIsBetter: false, get: (s) => s?.axeViolations },
   { key: 'axeImageAltViolations', label: 'image alt issues', higherIsBetter: false, get: (s) => s?.axeImageAltViolations },
   { key: 'axeContrastViolations', label: 'contrast issues', higherIsBetter: false, get: (s) => s?.axeContrastViolations },
@@ -21,8 +48,8 @@ function numeric(v) {
   return typeof v === 'number' && Number.isFinite(v) ? v : null;
 }
 
-function directionFor({ rawDelta, higherIsBetter, tolerance = 0 }) {
-  if (Math.abs(rawDelta) <= tolerance) return 'neutral';
+function directionFor({ rawDelta, higherIsBetter, noiseThreshold = 0 }) {
+  if (Math.abs(rawDelta) <= noiseThreshold) return 'neutral';
   const qualityDelta = higherIsBetter ? rawDelta : -rawDelta;
   if (qualityDelta > 0) return 'improved';
   if (qualityDelta < 0) return 'regressed';
@@ -36,6 +63,8 @@ export function calculateTransformationDelta({ baseline, postFix } = {}) {
     const after = numeric(metric.get(postFix));
     if (before === null || after === null) continue;
     const rawDelta = after - before;
+    const noiseThreshold = NOISE_THRESHOLDS[metric.key] ?? 0;
+    const aboveNoise = Math.abs(rawDelta) > noiseThreshold;
     deltas.push(Object.freeze({
       metric: metric.key,
       label: metric.label,
@@ -43,7 +72,9 @@ export function calculateTransformationDelta({ baseline, postFix } = {}) {
       after,
       delta: rawDelta,
       qualityDelta: metric.higherIsBetter ? rawDelta : -rawDelta,
-      direction: directionFor({ rawDelta, higherIsBetter: metric.higherIsBetter, tolerance: metric.tolerance ?? 0 }),
+      direction: directionFor({ rawDelta, higherIsBetter: metric.higherIsBetter, noiseThreshold }),
+      noiseThreshold,
+      aboveNoise,
     }));
   }
   const regressions = deltas.filter((d) => d.direction === 'regressed');
@@ -59,4 +90,4 @@ export function calculateTransformationDelta({ baseline, postFix } = {}) {
   return Object.freeze({ deltas, aggregate, regressions });
 }
 
-export const __internals = Object.freeze({ METRICS });
+export const __internals = Object.freeze({ METRICS, NOISE_THRESHOLDS });
