@@ -49,6 +49,19 @@ describe('UI trust score display (DISPATCH U1 ITEM 2)', () => {
     expect(dashboardSrc).toMatch(/raw\s*\{finalRawScore\.toFixed/);
   });
 
+  it('/flowai dashboard labels the evaluator output as raw score', () => {
+    expect(dashboardSrc).toMatch(/Raw score/);
+    expect(dashboardSrc).toMatch(/raw evaluator output - see Trust Score/);
+    expect(dashboardSrc).not.toMatch(/Original score/);
+  });
+
+  it('/flowai dashboard renders the radar footer from the Five-Layer sum', () => {
+    expect(dashboardSrc).toMatch(/const latestLayerTotal = useMemo/);
+    expect(dashboardSrc).toMatch(/\['l1', 'l2', 'l3', 'l4', 'l5'\]\.reduce/);
+    expect(dashboardSrc).toMatch(/\{latestLayerTotal\}<span className="text-sm text-slate-500">\/100<\/span>/);
+    expect(dashboardSrc).toMatch(/Five-Layer total/);
+  });
+
   it('SSE handler forwards universal-mode fields for the U1 result card', () => {
     expect(handlerSrc).toMatch(/runMode:\s*typeof result\?\.runMode/);
     expect(handlerSrc).toMatch(/universalMode:\s*typeof result\?\.universalMode/);

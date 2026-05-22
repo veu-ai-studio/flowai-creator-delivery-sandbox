@@ -68,14 +68,36 @@
  * @returns {string}
  */
 export function buildBrowserlessWssUrl(apiKey) {
-  if (typeof apiKey !== 'string' || !apiKey) {
-    throw new Error('buildBrowserlessWssUrl: apiKey required (non-empty string)');
-  }
+  const token = normalizeBrowserlessApiKey(apiKey);
   const base = process.env.BROWSERLESS_WSS_URL
     || process.env.BROWSERLESS_WSS_BASE
     || 'wss://production-sfo.browserless.io';
   const sep = base.includes('?') ? '&' : '?';
-  return `${base}${sep}token=${encodeURIComponent(apiKey)}`;
+  return `${base}${sep}token=${encodeURIComponent(token)}`;
+}
+
+export function normalizeBrowserlessApiKey(apiKey) {
+  if (typeof apiKey !== 'string' || !apiKey.trim()) {
+    throw new Error('buildBrowserlessWssUrl: apiKey required (non-empty string)');
+  }
+  let token = apiKey.trim().replace(/^['"]|['"]$/g, '').trim();
+  if (/^(wss?|https?):\/\//i.test(token)) {
+    try {
+      const parsed = new URL(token);
+      token = parsed.searchParams.get('token') || token;
+    } catch {
+      // Let the token= cleanup below handle any copy/paste residue it can.
+    }
+  }
+  token = token.replace(/^token=/i, '').trim();
+  if (!token) {
+    throw new Error('buildBrowserlessWssUrl: apiKey required (non-empty string)');
+  }
+  return token;
+}
+
+export function redactBrowserlessWssUrl(wssUrl) {
+  return String(wssUrl).replace(/([?&]token=)[^&\s]+/i, '$1***BROWSERLESS_TOKEN***');
 }
 
 /**
@@ -89,10 +111,10 @@ export function buildBrowserlessWssUrl(apiKey) {
  * @returns {Promise<object>} Playwright Browser
  */
 export async function connectBrowserless(opts = {}) {
-  const apiKey = typeof opts.apiKey === 'string' && opts.apiKey
+  const rawApiKey = typeof opts.apiKey === 'string' && opts.apiKey
     ? opts.apiKey
     : process.env.BROWSERLESS_API_KEY;
-  if (!apiKey) {
+  if (!rawApiKey) {
     throw new Error(
       'connectBrowserless: BROWSERLESS_API_KEY not set. ' +
       'The Phase 3 authenticated-crawl path requires Browserless — there is no ' +
@@ -116,7 +138,9 @@ export async function connectBrowserless(opts = {}) {
     );
   }
 
+  const apiKey = normalizeBrowserlessApiKey(rawApiKey);
   const wssUrl = buildBrowserlessWssUrl(apiKey);
+  const redactedWssUrl = redactBrowserlessWssUrl(wssUrl);
   const timeoutMs = Number.isFinite(opts.timeoutMs) ? opts.timeoutMs : 30_000;
 
   let browser;
@@ -128,8 +152,12 @@ export async function connectBrowserless(opts = {}) {
     // Honest failure surface — the WSS URL is NOT included in the error
     // message because it contains the API key in the query string. The
     // message names the failure mode without leaking the token.
+    const safeMessage = String(connectErr?.message ?? connectErr)
+      .split(apiKey).join('***BROWSERLESS_TOKEN***')
+      .split(encodeURIComponent(apiKey)).join('***BROWSERLESS_TOKEN***');
     throw new Error(
-      `connectBrowserless: chromium.connectOverCDP failed — ${connectErr?.message ?? String(connectErr)}. ` +
+      `connectBrowserless: chromium.connectOverCDP failed — ${safeMessage}. ` +
+      `Browserless endpoint: ${redactedWssUrl}. ` +
       'Verify BROWSERLESS_API_KEY is valid and the Browserless service is reachable. ' +
       'NOTE: The token is NEVER included in error output.',
     );

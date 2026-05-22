@@ -4,7 +4,11 @@
 // honors the BROWSERLESS_WSS_URL / BROWSERLESS_WSS_BASE overrides.
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { buildBrowserlessWssUrl } from '../../../src/lib/agents/auth/browserlessAdapter.js';
+import {
+  buildBrowserlessWssUrl,
+  normalizeBrowserlessApiKey,
+  redactBrowserlessWssUrl,
+} from '../../../src/lib/agents/auth/browserlessAdapter.js';
 
 const SAVED = {
   BROWSERLESS_WSS_URL: process.env.BROWSERLESS_WSS_URL,
@@ -59,8 +63,24 @@ describe('buildBrowserlessWssUrl', () => {
     expect(url).toBe('wss://production-sfo.browserless.io?token=tok%2Bwith%2Freserved%3Dchars');
   });
 
+  it('normalizes copied dashboard token values before building the WSS URL', () => {
+    expect(normalizeBrowserlessApiKey(' "TOKEN123" ')).toBe('TOKEN123');
+    expect(normalizeBrowserlessApiKey('token=TOKEN123')).toBe('TOKEN123');
+    expect(normalizeBrowserlessApiKey('wss://production-sfo.browserless.io?token=TOKEN123')).toBe('TOKEN123');
+    expect(buildBrowserlessWssUrl('token=tok+with/reserved=chars'))
+      .toBe('wss://production-sfo.browserless.io?token=tok%2Bwith%2Freserved%3Dchars');
+  });
+
+  it('redacts the final Browserless endpoint while preserving endpoint shape', () => {
+    expect(redactBrowserlessWssUrl('wss://production-sfo.browserless.io?token=TOKEN123'))
+      .toBe('wss://production-sfo.browserless.io?token=***BROWSERLESS_TOKEN***');
+    expect(redactBrowserlessWssUrl('wss://example.com/chromium?launch=foo&token=TOKEN123'))
+      .toBe('wss://example.com/chromium?launch=foo&token=***BROWSERLESS_TOKEN***');
+  });
+
   it('throws on empty or non-string apiKey', () => {
     expect(() => buildBrowserlessWssUrl('')).toThrow();
+    expect(() => buildBrowserlessWssUrl('   ')).toThrow();
     expect(() => buildBrowserlessWssUrl(null)).toThrow();
     expect(() => buildBrowserlessWssUrl(undefined)).toThrow();
     expect(() => buildBrowserlessWssUrl(42)).toThrow();
