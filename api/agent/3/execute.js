@@ -40,6 +40,8 @@ import verificationAdapters from '../../../src/lib/agents/verificationAdapters.j
 import { getServerMessageBus } from '../../_lib/messageBus.js';
 
 const SYNC_TIMEOUT_MS = 25_000;
+const SSE_SOFT_TIMEOUT_MS = 240_000;
+const SSE_HEARTBEAT_MS = 15_000;
 const ALLOWED_MODES = new Set(['recommend_only', 'fork_and_fix']);
 
 export default async function handler(req, res) {
@@ -319,7 +321,9 @@ async function runSseOrchestration(req, res, body) {
     ? Math.min(body.maxIterations, 50) : 10;
   const gtmTarget = Number.isFinite(body.gtmTarget) && body.gtmTarget >= 0 && body.gtmTarget <= 100
     ? body.gtmTarget : 95;
-  const runId = typeof body.runId === 'string' && body.runId.length > 0 ? body.runId : null;
+  const runId = typeof body.runId === 'string' && body.runId.length > 0
+    ? body.runId
+    : `sse_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
   sendEvent({
     type: 'start',
@@ -335,7 +339,16 @@ async function runSseOrchestration(req, res, body) {
   // applied at the next poll boundary (default 500ms cadence).
   let exposedState = null;
   let controlPoller = null;
+  let heartbeat = null;
   let runFinished = false;
+  const stepLogs = [];
+  const iterations = [];
+  heartbeat = setInterval(() => {
+    if (!runFinished) {
+      sendEvent({ type: 'heartbeat', at: new Date().toISOString() });
+    }
+  }, SSE_HEARTBEAT_MS);
+  heartbeat.unref?.();
   try {
     const { readAndClearCommand } = await import('../../_lib/runControlBus.js');
     // Only poll when we have a runId to poll on. The orchestrator generates
@@ -372,6 +385,7 @@ async function runSseOrchestration(req, res, body) {
   } catch { /* runControlBus unavailable — controls become no-ops */ }
 
   let result;
+  let softTimeout = null;
   try {
     const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
     // Best-effort Supabase client — orchestrator gracefully handles null.
@@ -381,17 +395,43 @@ async function runSseOrchestration(req, res, body) {
       supabase = getSupabase();
     } catch { /* run without DB → PATH B fast path */ }
 
-    result = await runOrchestration({
+    const orchestrationPromise = runOrchestration({
       url, mode, runId, supabase,
       environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
       gtmTarget, maxIterations,
-      onStep: (log) => sendEvent({ type: 'step', log }),
-      onIteration: (iteration) => sendEvent({ type: 'iteration', iteration }),
+      onStep: (log) => {
+        stepLogs.push(log);
+        sendEvent({ type: 'step', log });
+      },
+      onIteration: (iteration) => {
+        iterations.push(iteration);
+        sendEvent({ type: 'iteration', iteration });
+      },
       deps: { __exposeState: (state) => { exposedState = state; } },
     });
+    const timeoutPromise = new Promise((resolve) => {
+      softTimeout = setTimeout(() => resolve({ __sseSoftTimeout: true }), SSE_SOFT_TIMEOUT_MS);
+    });
+    const raced = await Promise.race([orchestrationPromise, timeoutPromise]);
+    if (raced?.__sseSoftTimeout) {
+      try { exposedState?.stop?.(); } catch { /* best-effort stop */ }
+      sendEvent({
+        type: 'timeout',
+        kind: 'sse_soft_timeout',
+        timeoutMs: SSE_SOFT_TIMEOUT_MS,
+        at: new Date().toISOString(),
+      });
+      result = buildSseSoftTimeoutResult({
+        runId, url, mode, maxIterations, gtmTarget, stepLogs, iterations,
+      });
+    } else {
+      result = raced;
+    }
   } catch (e) {
     runFinished = true;
     if (controlPoller) clearInterval(controlPoller);
+    if (heartbeat) clearInterval(heartbeat);
+    if (softTimeout) clearTimeout(softTimeout);
     sendEvent({ type: 'error', error: e?.message ?? String(e), code: e?.code ?? 'ORCHESTRATION_FAILED' });
     sendDone();
     return;
@@ -399,15 +439,81 @@ async function runSseOrchestration(req, res, body) {
 
   runFinished = true;
   if (controlPoller) clearInterval(controlPoller);
+  if (heartbeat) clearInterval(heartbeat);
+  if (softTimeout) clearTimeout(softTimeout);
   sendEvent({ type: 'final', result });
   sendDone();
 }
 
 // Exported for tests — the handler closure isn't easily testable otherwise.
+function scoreFromStepLogs(stepLogs = []) {
+  for (let i = stepLogs.length - 1; i >= 0; i -= 1) {
+    const log = stepLogs[i];
+    const stepResult = log?.result;
+    if (!stepResult || typeof stepResult !== 'object') continue;
+    const score = stepResult.gtmScore
+      ?? stepResult.postScore
+      ?? stepResult.preScore
+      ?? stepResult.fiveLayerInternal;
+    if (typeof score === 'number' && Number.isFinite(score)) {
+      return {
+        score,
+        layers: stepResult.layers && typeof stepResult.layers === 'object'
+          ? stepResult.layers
+          : null,
+      };
+    }
+  }
+  return { score: 0, layers: null };
+}
+
+function buildSseSoftTimeoutResult({
+  runId,
+  url,
+  mode,
+  maxIterations,
+  gtmTarget,
+  stepLogs = [],
+  iterations = [],
+} = {}) {
+  const { score, layers } = scoreFromStepLogs(stepLogs);
+  return {
+    ok: false,
+    partial: true,
+    timedOut: true,
+    timeoutMs: SSE_SOFT_TIMEOUT_MS,
+    exitReason: 'SOFT_TIMEOUT_PARTIAL_RESULTS',
+    runId,
+    url,
+    mode,
+    maxIterations,
+    gtmTarget,
+    originalScore: score,
+    finalScore: score,
+    rawScore: score,
+    effectiveTrustScore: score,
+    totalDelta: 0,
+    gtmReady: false,
+    iterationsCompleted: iterations.length,
+    iterations,
+    orchestrationLog: stepLogs,
+    latestLayers: layers,
+    skippedSteps: [{
+      step: 'remaining_orchestration',
+      reason: 'sse_soft_timeout',
+      detail: `Agent #3 execute reached ${SSE_SOFT_TIMEOUT_MS / 1000}s soft timeout and returned partial streamed results before Vercel hard timeout.`,
+    }],
+  };
+}
+
 export const __test = Object.freeze({
   resolveAuthContext,
   buildExecutor,
   runSseOrchestration,
+  buildSseSoftTimeoutResult,
+  scoreFromStepLogs,
   SYNC_TIMEOUT_MS,
+  SSE_SOFT_TIMEOUT_MS,
+  SSE_HEARTBEAT_MS,
   ALLOWED_MODES,
 });
