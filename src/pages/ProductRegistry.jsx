@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Package, Plus, Search, MoreHorizontal, ExternalLink,
-  History, ShieldCheck, Archive, Loader2, X, CheckCircle2
+  History, ShieldCheck, Archive, Loader2, X, CheckCircle2, Play
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -121,6 +121,22 @@ export default function ProductRegistry() {
     setProducts(prev => [...prev, p]);
   };
 
+  const productUrl = (product) => product?.live_url || product?.url || product?.base44_url || '';
+
+  const runProduct = (product) => {
+    const params = new URLSearchParams();
+    const targetUrl = productUrl(product);
+    if (targetUrl) params.set('url', targetUrl);
+    if (product?.name) params.set('product', product.name);
+    if (product?.slug) params.set('productId', product.slug);
+    navigate(`/flowai${params.toString() ? `?${params.toString()}` : ''}`);
+  };
+
+  const stopAction = (event, action) => {
+    event.stopPropagation();
+    action();
+  };
+
   const archiveProduct = async (slug) => {
     setProducts(prev => prev.map(p => p.slug === slug ? { ...p, status: 'archived' } : p));
     setOpenMenu(null);
@@ -200,13 +216,18 @@ export default function ProductRegistry() {
                   const reg = registryMap[p.name];
                   const cleared = cl?.overall_status === 'cleared';
                   return (
-                    <tr key={p.slug} className="border-b border-border/50 hover:bg-secondary/20 transition-colors last:border-0">
+                    <tr
+                      key={p.slug}
+                      onClick={() => runProduct(p)}
+                      className="border-b border-border/50 hover:bg-secondary/20 transition-colors last:border-0 cursor-pointer"
+                      title={`Run ${p.name} in FlowAI`}
+                    >
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">{p.name}</span>
                           {cleared && <CheckCircle2 className="h-3 w-3 text-emerald-400" />}
                         </div>
-                        <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{p.live_url}</p>
+                        <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{productUrl(p)}</p>
                       </td>
                       <td className="px-4 py-3 font-mono text-muted-foreground">{p.slug}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.org || '—'}</td>
@@ -223,25 +244,32 @@ export default function ProductRegistry() {
                       </td>
                       <td className="px-5 py-3 text-right">
                         <div className="flex items-center justify-end gap-1 relative">
-                          <button onClick={() => navigate('/')} title="Open Workspace"
+                          <button
+                            onClick={(event) => stopAction(event, () => runProduct(p))}
+                            title={`Run ${p.name}`}
+                            className="inline-flex items-center gap-1 rounded bg-primary px-2 py-1.5 text-[11px] font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+                          >
+                            <Play className="h-3 w-3 fill-current" /> Run
+                          </button>
+                          <button onClick={(event) => stopAction(event, () => navigate('/'))} title="Open Workspace"
                             className="p-1.5 rounded hover:bg-secondary/50 text-muted-foreground hover:text-primary transition-colors">
                             <ExternalLink className="h-3.5 w-3.5" />
                           </button>
-                          <button onClick={() => navigate('/runs')} title="View History"
+                          <button onClick={(event) => stopAction(event, () => navigate('/runs'))} title="View History"
                             className="p-1.5 rounded hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
                             <History className="h-3.5 w-3.5" />
                           </button>
-                          <button onClick={() => navigate('/clearance')} title="Run Clearance"
+                          <button onClick={(event) => stopAction(event, () => navigate('/clearance'))} title="Run Clearance"
                             className="p-1.5 rounded hover:bg-secondary/50 text-muted-foreground hover:text-emerald-400 transition-colors">
                             <ShieldCheck className="h-3.5 w-3.5" />
                           </button>
-                          <button onClick={() => setOpenMenu(openMenu === p.slug ? null : p.slug)}
+                          <button onClick={(event) => stopAction(event, () => setOpenMenu(openMenu === p.slug ? null : p.slug))}
                             className="p-1.5 rounded hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
                             <MoreHorizontal className="h-3.5 w-3.5" />
                           </button>
                           {openMenu === p.slug && (
                             <div className="absolute right-0 top-8 z-20 bg-card border border-border rounded-lg shadow-lg py-1 min-w-[120px]">
-                              <button onClick={() => archiveProduct(p.slug)}
+                              <button onClick={(event) => stopAction(event, () => archiveProduct(p.slug))}
                                 className="w-full text-left px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 flex items-center gap-2">
                                 <Archive className="h-3.5 w-3.5" /> Archive
                               </button>

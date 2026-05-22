@@ -170,6 +170,15 @@ export default function FlowAIDashboard() {
   const [gtmTarget, setGtmTarget] = useState(95);
   const [maxIterations, setMaxIterations] = useState(10);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const selectedUrl = params.get('url');
+    if (selectedUrl) {
+      setInputMethod('url');
+      setUrl(selectedUrl);
+    }
+  }, []);
+
   // ── Run state ────────────────────────────────────────────────────────────
   const [isRunning, setIsRunning] = useState(false);
   const [runId, setRunId] = useState(null);
