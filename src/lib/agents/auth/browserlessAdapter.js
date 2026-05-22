@@ -42,9 +42,27 @@
 'use strict';
 
 /**
- * Build the Browserless WSS endpoint URL from an API key. The Browserless
- * cloud service exposes `wss://chrome.browserless.io?token=<KEY>`. Self-
- * hosted deployments can override the base via BROWSERLESS_WSS_BASE.
+ * Build the Browserless WSS endpoint URL from an API key.
+ *
+ * Browserless BaaS V2 endpoint (docs verified 2026-05-21):
+ *   wss://production-sfo.browserless.io/chromium?token=<KEY>
+ *
+ * The /chromium path is the V2 open-source-build endpoint (per
+ * docs.browserless.io/baas/start — "Recommended for most automation
+ * tasks"). The V1 cloud at chrome.browserless.io has been retired.
+ *
+ * Env-var precedence (highest first):
+ *   1. BROWSERLESS_WSS_URL  — full URL with optional path, no token
+ *      (this is the canonical knob; matches the per-account WS URL
+ *      Browserless shows on the dashboard for V2 BaaS).
+ *   2. BROWSERLESS_WSS_BASE — legacy alias; kept for back-compat
+ *      with any existing env files that already set it.
+ *   3. default: wss://production-sfo.browserless.io/chromium
+ *
+ * The token is appended as a `?token=` query parameter. Header-form
+ * (Authorization: Bearer …) is NOT used because Playwright's
+ * connectOverCDP doesn't expose a header configuration knob in the
+ * project's pinned 1.59.1.
  *
  * @param {string} apiKey
  * @returns {string}
@@ -53,13 +71,9 @@ export function buildBrowserlessWssUrl(apiKey) {
   if (typeof apiKey !== 'string' || !apiKey) {
     throw new Error('buildBrowserlessWssUrl: apiKey required (non-empty string)');
   }
-  const base = process.env.BROWSERLESS_WSS_BASE || 'wss://chrome.browserless.io';
-  // The endpoint accepts the token via either the `token` query param
-  // (cloud convention) or the `Authorization: Bearer <key>` header. We use
-  // the query-param form because Playwright's connectOverCDP doesn't
-  // expose a header configuration knob in older Playwright versions, and
-  // the project's pinned 1.59.1 may or may not support it. Query-param
-  // form is universally supported.
+  const base = process.env.BROWSERLESS_WSS_URL
+    || process.env.BROWSERLESS_WSS_BASE
+    || 'wss://production-sfo.browserless.io/chromium';
   const sep = base.includes('?') ? '&' : '?';
   return `${base}${sep}token=${encodeURIComponent(apiKey)}`;
 }

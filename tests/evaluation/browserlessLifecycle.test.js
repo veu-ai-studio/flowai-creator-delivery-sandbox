@@ -86,7 +86,7 @@ describe('Browserless lifecycle (DISPATCH production runtime)', () => {
     await withEnv({ VERCEL: '1', BROWSERLESS_API_KEY: TEST_TOKEN }, async () => {
       const launchSpy = vi.fn(() => { throw new Error('SHOULD_NEVER_LAUNCH_IN_PROD'); });
       // We rely on the adapter throwing because connectOverCDP can't reach
-      // wss://chrome.browserless.io in this test sandbox.
+      // wss://production-sfo.browserless.io/chromium in this test sandbox.
       const out = await runEvaluationPipeline({
         url: 'https://example.com',
         options: {
