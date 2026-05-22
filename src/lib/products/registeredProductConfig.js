@@ -6,7 +6,7 @@ export const REGISTERED_PRODUCT_CONFIG = Object.freeze([
     branch: 'main',
     status: 'registered',
     note: 'repo contains zip only - source mapping limited until codebase extracted',
-    systemNote: 'SAIGE repo registered. Source mapping limited: repo contains saige-github-upload.zip only. Extract zip to repo root to enable full U5 fix generation.',
+    systemNote: 'SAIGE repo registered. Full source codebase available at github.com/victor2081new-cloud/saige (main). U5 fix generation enabled.',
   }),
 ]);
 

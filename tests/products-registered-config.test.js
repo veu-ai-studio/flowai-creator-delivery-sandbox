@@ -15,7 +15,8 @@ describe('registered product config', () => {
       note: 'repo contains zip only - source mapping limited until codebase extracted',
     });
     expect(saige.systemNote).toContain('SAIGE repo registered');
-    expect(saige.systemNote).toContain('saige-github-upload.zip');
+    expect(saige.systemNote).toContain('github.com/victor2081new-cloud/saige (main)');
+    expect(saige.systemNote).toContain('U5 fix generation enabled');
   });
 
   it('matches SAIGE URLs by host only', () => {
