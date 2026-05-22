@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { searchFeatures } from '@/lib/searchIndex';
 import { Button } from '@/components/ui/button';
-import { Search, ExternalLink, Loader2, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
 
 export default function SearchModal({ isOpen, onClose }) {
   const [query, setQuery] = useState('');

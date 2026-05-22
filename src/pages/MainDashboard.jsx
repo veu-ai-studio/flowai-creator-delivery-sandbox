@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import {
-  Zap, Shield, AlertTriangle, Clock, Activity,
+  Zap, AlertTriangle, Clock, Activity,
   CreditCard, Loader2, CheckCircle2, ArrowRight,
   TrendingUp, MonitorCheck, Search
 } from 'lucide-react';

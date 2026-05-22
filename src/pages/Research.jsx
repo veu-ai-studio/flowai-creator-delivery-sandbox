@@ -8,7 +8,6 @@ import {
   Search, Loader2, AlertCircle, CheckCircle2, ArrowRight,
   Globe, Swords, Lightbulb, AlertTriangle, TrendingUp, History
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useOrchestration } from '@/lib/OrchestrationContext';
 import ResearchHistoryPanel from '@/components/research/ResearchHistoryPanel';
 

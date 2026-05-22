@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Send, X, Loader2, User, Smile, Reply, Trash2 } from "lucide-react";
+import { MessageSquare, Send, X, Loader2, Smile, Reply, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Play, CheckCircle2, Circle, Loader2, ArrowRight, Zap, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Play, CheckCircle2, Circle, Loader2, ArrowRight, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const STAGE_CONFIGS = {

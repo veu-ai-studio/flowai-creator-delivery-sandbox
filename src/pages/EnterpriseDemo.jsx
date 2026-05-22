@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Building2, CheckCircle2, ChevronRight, ChevronLeft,
+  Building2, ChevronRight, ChevronLeft,
   Loader2, Layers, Play, ShieldCheck, DollarSign,
   BarChart3, Zap, Calendar, X
 } from 'lucide-react';

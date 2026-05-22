@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Activity, RefreshCw, AlertTriangle, CheckCircle2, XCircle, Loader2, TrendingUp, Zap } from 'lucide-react';
+import { Activity, RefreshCw, AlertTriangle, CheckCircle2, Loader2, TrendingUp, Zap } from 'lucide-react';
 
 const SEV_STYLES = {
   critical: 'border-red-500/40 bg-red-500/5 text-red-400',

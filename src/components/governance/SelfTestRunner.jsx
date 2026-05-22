@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import {
-  CheckCircle2, XCircle, AlertTriangle, Loader2, RefreshCw,
-  Minus, HelpCircle
+  CheckCircle2, XCircle, AlertTriangle, Loader2, RefreshCw, HelpCircle
 } from 'lucide-react';
 
 const DIMENSIONS = [

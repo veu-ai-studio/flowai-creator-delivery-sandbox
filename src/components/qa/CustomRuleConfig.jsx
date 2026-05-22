@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings, Plus, Trash2, Check } from 'lucide-react';
+import { Settings, Plus, Trash2 } from 'lucide-react';
 
 export default function CustomRuleConfig({ onRulesChange }) {
   const [rules, setRules] = useState({

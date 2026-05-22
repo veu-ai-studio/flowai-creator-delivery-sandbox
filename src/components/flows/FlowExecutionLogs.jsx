@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, Loader2, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { formatDistanceToNow } from 'date-fns';
 

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useJobs } from '@/lib/JobContext';
 import {
-  Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp,
-  X, Trash2, Zap, Sparkles, Shield, Clock
+  Loader2, ChevronDown, ChevronUp,
+  X, Trash2, Zap, Sparkles, Shield
 } from 'lucide-react';
 
 const TYPE_ICON = {

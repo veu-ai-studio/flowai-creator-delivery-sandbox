@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { TrendingUp, TrendingDown, Zap, Clock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Zap, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { subDays, format, isAfter } from 'date-fns';
 
 const TT_STYLE = { background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11 };

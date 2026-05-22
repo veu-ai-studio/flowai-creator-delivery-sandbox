@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from '@/lib/SessionContext';
 import { base44 } from '@/api/base44Client';
@@ -8,9 +8,8 @@ import { Label } from '@/components/ui/label';
 import Tooltip from '@/components/ui/Tooltip';
 import PortfolioQuickSelect from '@/components/governance/PortfolioQuickSelect';
 import {
-  Zap, Plus, X, ChevronDown, ChevronUp, Info, Loader2,
-  Shield, Wrench, TrendingUp, ArrowUpCircle, GitBranch, Check,
-  AlertCircle, Users
+  Zap, Plus, X, ChevronDown, ChevronUp, Info, Loader2, Check,
+  AlertCircle
 } from 'lucide-react';
 
 const ACTIVITIES = [

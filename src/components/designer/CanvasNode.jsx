@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState } from "react";
 import { TextCursorInput, Brain, Cog, ArrowRightFromLine, X, AlertTriangle, XCircle } from "lucide-react";
 import { useFlow, BLOCK_TYPES } from "@/lib/flowStore";
 

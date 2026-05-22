@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Loader2, Brain, TrendingUp, Zap, CheckCircle2, ArrowRight, Star, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Loader2, Brain, TrendingUp, Zap, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react';
 
 const SCORE_COLOR = s => s >= 8 ? 'text-emerald-400' : s >= 6 ? 'text-amber-400' : 'text-red-400';
 

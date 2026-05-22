@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Zap, Play, ShieldCheck, DollarSign, BarChart3, Package,
-  CheckCircle2, XCircle, AlertTriangle, Loader2, Mail, ChevronDown, ChevronUp
+  Zap, Play, ShieldCheck, DollarSign, Package,
+  CheckCircle2, Loader2, Mail, ChevronDown, ChevronUp
 } from 'lucide-react';
 import SandboxBanner from '@/components/demo/SandboxBanner';
 import DemoFooter from '@/components/demo/DemoFooter';

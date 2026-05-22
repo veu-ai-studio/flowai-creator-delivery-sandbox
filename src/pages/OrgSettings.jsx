@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Settings, Users, Plug, Building2, CheckCircle2,
-  AlertTriangle, XCircle, Loader2, RefreshCw
+  AlertTriangle, XCircle
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 const TABS = [
   { key: 'org', label: 'Organization', icon: Building2 },

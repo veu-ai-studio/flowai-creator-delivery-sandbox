@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { Bug, RefreshCw, ChevronDown, ChevronRight, AlertTriangle, Info, XCircle, Loader2, Trash2 } from 'lucide-react';
+import { Bug, RefreshCw, ChevronDown, ChevronRight, AlertTriangle, Info, XCircle, Loader2 } from 'lucide-react';
 
 const SEVERITY_STYLES = {
   critical: 'border-red-500/40 bg-red-500/5 text-red-400',

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import {
-  Zap, Shield, BarChart3, Layers, Users, Building2,
+  Zap, Shield, Users, Building2,
   ChevronRight, Globe, CheckCircle2, ArrowRight
 } from 'lucide-react';
 import ClearanceSimulator from '@/components/demo/ClearanceSimulator';

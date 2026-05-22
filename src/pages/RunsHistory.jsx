@@ -3,11 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import {
-  Play, Search, Filter, ChevronDown, ChevronUp,
-  CheckCircle2, XCircle, AlertTriangle, Loader2, Clock,
-  DollarSign, Zap, BarChart3
+  Play, Search, ChevronDown, ChevronUp,
+  CheckCircle2, XCircle, AlertTriangle, Loader2, Zap
 } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 
 const STATUS_CFG = {

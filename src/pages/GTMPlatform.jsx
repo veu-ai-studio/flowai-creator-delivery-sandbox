@@ -10,7 +10,7 @@ import MonitoringPanel from '@/components/gtm/MonitoringPanel';
 import BillingPanel from '@/components/gtm/BillingPanel';
 import {
   ShieldCheck, Database, Brain, Globe, Layers,
-  BarChart2, CreditCard, CheckCircle2, XCircle, Loader2, AlertTriangle
+  BarChart2, CreditCard, CheckCircle2, XCircle, Loader2
 } from 'lucide-react';
 
 const LAYERS = [

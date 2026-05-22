@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, AlertCircle, CheckCircle2, Zap } from 'lucide-react';
+import { TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function ImprovementSummary({ currentRun, previousRun }) {
   if (!previousRun) {

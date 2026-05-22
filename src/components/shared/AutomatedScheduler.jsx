@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Plus, Trash2, Play, CheckCircle2, AlertTriangle, Calendar } from 'lucide-react';
+import { Clock, Plus, Trash2, Play, CheckCircle2, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 

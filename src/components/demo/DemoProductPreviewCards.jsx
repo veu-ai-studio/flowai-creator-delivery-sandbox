@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Database, FileCode, MapPin, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Database, FileCode, MapPin, CheckCircle2, Clock } from 'lucide-react';
 
 const STATUS_CONFIG = {
   not_generated: { label: 'Not Generated', color: 'text-muted-foreground', dot: 'bg-muted-foreground/40' },

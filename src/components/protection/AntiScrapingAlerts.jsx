@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, AlertTriangle, Bell, BellOff, RefreshCw, Loader2, Shield } from 'lucide-react';
 import { base44 } from '@/api/base44Client';

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { History, Loader2, Trash2, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { Loader2, Trash2, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();

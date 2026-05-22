@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Zap, CheckCircle2, Loader2, RefreshCw, TrendingUp, AlertTriangle } from 'lucide-react';

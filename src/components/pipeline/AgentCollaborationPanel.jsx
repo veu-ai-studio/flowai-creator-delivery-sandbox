@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Brain, Send, Loader2, RefreshCw, ChevronDown } from 'lucide-react';
+import { Brain, Send, Loader2, RefreshCw } from 'lucide-react';
 
 const AGENTS = [
   { key: 'planner',  label: 'Planner',  color: 'text-primary',    bg: 'bg-primary/10'    },

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, FileText, Check, Loader2 } from 'lucide-react';
+import { Download, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function FlowPerformanceExport({ flowId, flowName, runs = [] }) {

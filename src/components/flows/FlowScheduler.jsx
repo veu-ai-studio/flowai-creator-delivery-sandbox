@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Plus, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
+import { Clock, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
 
 const INTERVALS = [
   { label: 'Every 5 min',  value: '5m' },
