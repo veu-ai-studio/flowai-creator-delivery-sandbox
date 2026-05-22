@@ -787,6 +787,7 @@ export default function FlowAIDashboard() {
             <FindingsReport
               deepBrowserAnalysis={finalResult.deepBrowserAnalysis}
               fixProposals={finalResult.fixProposals}
+              sourceMappedFixProposals={finalResult.sourceMappedFixProposals}
               findingsCount={finalResult.findingsCount}
               findingsSeverity={finalResult.findingsSeverity}
             />

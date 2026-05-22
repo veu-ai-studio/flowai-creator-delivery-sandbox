@@ -26,4 +26,12 @@ describe('FindingsReport', () => {
     expect(componentSrc).toContain('Deep browser analysis unavailable');
     expect(componentSrc).toMatch(/deep\.ok\s*===\s*false/);
   });
+
+  it('renders U5 source-mapped recommendations as recommendation-only', () => {
+    expect(componentSrc).toContain('Source-Mapped Recommendations');
+    expect(componentSrc).toContain('FlowAI will not auto-apply these changes');
+    expect(componentSrc).toContain('sourceMappedFixProposals');
+    expect(componentSrc).toContain('recommend_only');
+    expect(componentSrc).toContain('Source map incomplete');
+  });
 });

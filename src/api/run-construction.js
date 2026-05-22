@@ -256,6 +256,8 @@ export default async function handler(req, res) {
     fixProposals: Array.isArray(result?.fixProposals) ? result.fixProposals : [],
     sourceMapping: result?.sourceMapping && typeof result.sourceMapping === 'object'
       ? result.sourceMapping : null,
+    sourceMappedFixProposals: Array.isArray(result?.sourceMappedFixProposals)
+      ? result.sourceMappedFixProposals : [],
     transformationDelta: result?.transformationDelta && typeof result.transformationDelta === 'object'
       ? result.transformationDelta : null,
     skippedSteps: Array.isArray(result?.skippedSteps) ? result.skippedSteps : [],

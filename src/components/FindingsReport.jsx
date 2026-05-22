@@ -25,9 +25,10 @@ function downloadJson(payload) {
   } catch { /* ignore */ }
 }
 
-export default function FindingsReport({ deepBrowserAnalysis, fixProposals, findingsCount, findingsSeverity }) {
+export default function FindingsReport({ deepBrowserAnalysis, fixProposals, sourceMappedFixProposals, findingsCount, findingsSeverity }) {
   const [copied, setCopied] = useState(null);
   const proposals = Array.isArray(fixProposals) ? fixProposals : [];
+  const sourceMapped = Array.isArray(sourceMappedFixProposals) ? sourceMappedFixProposals : [];
   const deep = deepBrowserAnalysis && typeof deepBrowserAnalysis === 'object' ? deepBrowserAnalysis : null;
   const framework = deep?.frameworkDetection;
   const summary = deep?.summary || {};
@@ -44,9 +45,10 @@ export default function FindingsReport({ deepBrowserAnalysis, fixProposals, find
     networkFindings: deep?.networkFindings ?? [],
     assetInventory: deep?.assetInventory ?? {},
     fixProposals: proposals,
-  }), [deep, framework, proposals, summary]);
+    sourceMappedFixProposals: sourceMapped,
+  }), [deep, framework, proposals, sourceMapped, summary]);
 
-  if (!deep && proposals.length === 0 && total === 0) return null;
+  if (!deep && proposals.length === 0 && sourceMapped.length === 0 && total === 0) return null;
 
   return (
     <div className="rounded-lg border border-border bg-background/50 p-3 space-y-3">
@@ -148,6 +150,56 @@ export default function FindingsReport({ deepBrowserAnalysis, fixProposals, find
         </div>
       ) : (
         <p className="text-[11px] text-muted-foreground">No DOM-level proposals were generated from the current evidence.</p>
+      )}
+
+      {sourceMapped.length > 0 && (
+        <div className="space-y-2">
+          <div>
+            <p className="text-xs font-bold text-foreground">Source-Mapped Recommendations</p>
+            <p className="text-[10px] text-muted-foreground">
+              U5 recommendations are source-aware and recommendation-only. FlowAI will not auto-apply these changes.
+            </p>
+          </div>
+          {sourceMapped.slice(0, 8).map((proposal, i) => (
+            <details key={`${proposal.findingId || proposal.category || 'source'}-${i}`} className="rounded border border-border/60 bg-card/60">
+              <summary className="cursor-pointer px-3 py-2 text-xs flex items-center gap-2">
+                <ShieldAlert className="h-3.5 w-3.5 text-primary" />
+                <span className="font-semibold flex-1">{proposal.category || 'source recommendation'}</span>
+                <span className={`rounded border px-1.5 py-0.5 ${
+                  proposal.confidence === 'HIGH'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : proposal.confidence === 'MEDIUM'
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                      : 'bg-muted/30 text-muted-foreground border-border'
+                }`}>
+                  {proposal.confidence || 'LOW'}
+                </span>
+                <span className="rounded border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-blue-300">
+                  {proposal.authority || 'recommend_only'}
+                </span>
+              </summary>
+              <div className="px-3 pb-3 space-y-2 text-[11px]">
+                {proposal.sourceMapComplete ? (
+                  <p className="text-muted-foreground">
+                    <span className="text-foreground font-semibold">Source:</span>{' '}
+                    <span className="font-mono">{proposal.filePath}</span>
+                    {proposal.lineNumber && <span className="font-mono">:{proposal.lineNumber}</span>}
+                  </p>
+                ) : (
+                  <div className="rounded border border-amber-500/30 bg-amber-500/10 p-2 flex gap-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                    <span>Source map incomplete. FlowAI is intentionally limiting this to a LOW-confidence recommendation.</span>
+                  </div>
+                )}
+                <p className="text-foreground/90">{proposal.proposedFix}</p>
+                <p className="text-muted-foreground">Reason: {proposal.reason || 'source_mapped_recommendation'}</p>
+                <pre className="rounded bg-black/30 p-2 overflow-auto whitespace-pre-wrap">
+                  <span className="text-muted-foreground">Current snippet</span>{'\n'}{proposal.currentSnippet || '(not available)'}
+                </pre>
+              </div>
+            </details>
+          ))}
+        </div>
       )}
     </div>
   );

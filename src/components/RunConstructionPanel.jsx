@@ -413,6 +413,7 @@ function ResultCard({ final, runId, inputUrl }) {
         <FindingsReport
           deepBrowserAnalysis={final.deepBrowserAnalysis}
           fixProposals={final.fixProposals}
+          sourceMappedFixProposals={final.sourceMappedFixProposals}
           findingsCount={final.findingsCount}
           findingsSeverity={final.findingsSeverity}
         />

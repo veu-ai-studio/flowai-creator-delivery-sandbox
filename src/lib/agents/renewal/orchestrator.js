@@ -49,6 +49,7 @@ import {
   mapFindingsToSource,
   sourcePathForFinding,
 } from '../../sourceMapping/registeredRepoSourceMapper.js';
+import { generateSourceMappedFixProposals } from '../../sourceMapping/sourceMappedFixGenerator.js';
 import { captureBaselineSnapshot } from '../../verification/baselineSnapshot.js';
 import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
 import { calculateTransformationDelta } from '../../verification/deltaCalculator.js';
@@ -506,6 +507,7 @@ export async function runOrchestration(args = {}) {
   const _classifyPatchEffects = deps.classifyPatchEffects || classifyPatchEffects;
   const _runRegressionGate = deps.runRegressionGate || runRegressionGate;
   const _mapFindingsToSource = deps.mapFindingsToSource || mapFindingsToSource;
+  const _generateSourceMappedFixProposals = deps.generateSourceMappedFixProposals || generateSourceMappedFixProposals;
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   const orchestrationLog = [];
@@ -1471,6 +1473,38 @@ export async function runOrchestration(args = {}) {
           highConfidence: sourceMapping?.highConfidence ?? 0,
           repoFilesConsidered: sourceMapping?.repoFilesConsidered ?? 0,
         },
+        durationMs: 0, mode: state.mode,
+      }));
+    }
+
+    try {
+      const recommendationFindings = Array.isArray(state.pipelineFindings) && state.pipelineFindings.length > 0
+        ? state.pipelineFindings
+        : (Array.isArray(iterLog.preGtm?.issues) ? iterLog.preGtm.issues : []);
+      state.sourceMappedFixProposals = await _generateSourceMappedFixProposals({
+        findings: recommendationFindings,
+        sourceMapping: state.sourceMapping,
+      });
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 6,
+        status: state.sourceMappedFixProposals.length > 0 ? 'complete' : 'degraded',
+        tool: 'sourceMappedFixGenerator.generateSourceMappedFixProposals (U5)',
+        why: 'emit recommend-only source-mapped engineering recommendations without applying patches',
+        result: {
+          kind: 'source_mapped_recommendations',
+          proposals: state.sourceMappedFixProposals.length,
+          recommendOnly: true,
+          lowConfidence: state.sourceMappedFixProposals.filter((p) => p.confidence === 'LOW').length,
+        },
+        durationMs: 0, mode: state.mode,
+      }));
+    } catch (e) {
+      state.sourceMappedFixProposals = [];
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 6, status: 'degraded',
+        tool: 'sourceMappedFixGenerator.generateSourceMappedFixProposals (U5)',
+        why: 'recommendation generation failed; continuing without blocking run',
+        result: { error: (e?.message ?? String(e)).slice(0, 200) },
         durationMs: 0, mode: state.mode,
       }));
     }
@@ -2925,6 +2959,8 @@ export async function runOrchestration(args = {}) {
         remediationDeferredCount: Array.isArray(state.remediationDeferred)
           ? state.remediationDeferred.length : 0,
         sourceMapping: state.sourceMapping ?? null,
+        sourceMappedFixProposals: Array.isArray(state.sourceMappedFixProposals)
+          ? state.sourceMappedFixProposals : [],
         transformationDelta: state.transformationDelta ?? null,
         at: new Date().toISOString(),
       },
@@ -2996,6 +3032,8 @@ export async function runOrchestration(args = {}) {
     // PHASE B2 — rule-based remediation summary on the result envelope.
     remediationSummary: state.remediationSummary ?? null,
     sourceMapping: state.sourceMapping ?? null,
+    sourceMappedFixProposals: Array.isArray(state.sourceMappedFixProposals)
+      ? state.sourceMappedFixProposals : [],
     transformationDelta: state.transformationDelta ?? null,
     orchestrationLog,
     iterations,
