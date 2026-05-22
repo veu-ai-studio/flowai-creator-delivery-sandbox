@@ -1,0 +1,43 @@
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const sidebarSrc = readFileSync(resolve(__dirname, '../../src/components/layout/Sidebar.jsx'), 'utf8');
+const dashboardSrc = readFileSync(resolve(__dirname, '../../src/pages/FlowAIDashboard.jsx'), 'utf8');
+const appSrc = readFileSync(resolve(__dirname, '../../src/App.jsx'), 'utf8');
+
+describe('FlowAI unified operating system shell', () => {
+  it('routes workspace into the single FlowAI run surface', () => {
+    expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<Navigate to="\/flowai" replace/);
+  });
+
+  it('exposes the canonical sidebar sections and labels', () => {
+    expect(sidebarSrc).toMatch(/Product-Agnostic AI Operating System/);
+    expect(sidebarSrc).toMatch(/title:\s*"LAUNCH"/);
+    expect(sidebarSrc).toMatch(/label:\s*"New Run"/);
+    expect(sidebarSrc).toMatch(/title:\s*"PORTFOLIO"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Portfolio Dashboard"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Product Registry"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Run History"/);
+    expect(sidebarSrc).toMatch(/title:\s*"CONFIGURATION"/);
+    expect(sidebarSrc).toMatch(/label:\s*"My Products"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Objective & Settings"/);
+  });
+
+  it('does not keep the old split launch/workspace navigation labels in the sidebar', () => {
+    expect(sidebarSrc).not.toMatch(/Launch FlowAI/);
+    expect(sidebarSrc).not.toMatch(/Renewal Workspace/);
+    expect(sidebarSrc).not.toMatch(/AUTO OPERATIONS/);
+    expect(sidebarSrc).not.toMatch(/GUIDED OPERATIONS/);
+    expect(sidebarSrc).not.toMatch(/MANUAL OPERATIONS/);
+  });
+
+  it('combines URL, description, and pasted content in New Run', () => {
+    expect(dashboardSrc).toMatch(/Enter URL/);
+    expect(dashboardSrc).toMatch(/Describe Product/);
+    expect(dashboardSrc).toMatch(/Paste Content/);
+    expect(dashboardSrc).toMatch(/input:\s*inputPayload/);
+  });
+});

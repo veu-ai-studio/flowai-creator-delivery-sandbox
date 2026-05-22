@@ -161,7 +161,10 @@ function StepRow({ log, expanded, onToggle }) {
 
 export default function FlowAIDashboard() {
   // ── Form inputs ──────────────────────────────────────────────────────────
+  const [inputMethod, setInputMethod] = useState('url');
   const [url, setUrl] = useState('');
+  const [productDescription, setProductDescription] = useState('');
+  const [pastedContent, setPastedContent] = useState('');
   const [mode, setMode] = useState('auto');
   const [gtmTarget, setGtmTarget] = useState(95);
   const [maxIterations, setMaxIterations] = useState(10);
@@ -238,10 +241,25 @@ export default function FlowAIDashboard() {
   const finalTrustScore = typeof finalResult?.effectiveTrustScore === 'number'
     ? finalResult.effectiveTrustScore
     : finalRawScore;
+  const inputPayload = useMemo(() => ({
+    method: inputMethod,
+    url: url.trim() || null,
+    productDescription: productDescription.trim() || null,
+    pastedContent: pastedContent.trim() || null,
+  }), [inputMethod, url, productDescription, pastedContent]);
+  const canLaunch = inputMethod === 'url'
+    ? true
+    : inputMethod === 'describe'
+      ? Boolean(inputPayload.productDescription)
+      : Boolean(inputPayload.pastedContent);
 
   // ── SSE consumer ─────────────────────────────────────────────────────────
   async function launch() {
     if (isRunning) return;
+    if (!canLaunch) {
+      setErrorMsg('Add a product description or pasted content before launching this run.');
+      return;
+    }
     setIsRunning(true);
     setIsPaused(false); setControlApplied(null);
     setStepLogs([]); setIterations([]); setFinalResult(null);
@@ -262,7 +280,13 @@ export default function FlowAIDashboard() {
           // productScope-match enforcement that the JSON path does.
           'x-product-scope': 'flowai-dashboard',
         },
-        body: JSON.stringify({ url: url || null, mode, maxIterations, gtmTarget }),
+        body: JSON.stringify({
+          url: inputPayload.url,
+          mode,
+          maxIterations,
+          gtmTarget,
+          input: inputPayload,
+        }),
         signal: ac.signal,
       });
     } catch (e) {
@@ -405,14 +429,71 @@ export default function FlowAIDashboard() {
         {/* ── Input panel ──────────────────────────────────────────────── */}
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-5">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">URL</label>
-            <input
-              type="text" value={url} onChange={(e) => setUrl(e.target.value)}
-              disabled={isRunning}
-              placeholder="Enter any product URL or leave blank for auto-select"
-              className="w-full rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50"
-            />
+            <p className="text-xs text-slate-400 uppercase tracking-wide">New Run</p>
+            <p className="text-lg font-semibold mt-0.5">Analyze any product from one operating surface</p>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {[
+              { key: 'url', label: 'Enter URL', desc: 'Live product analysis' },
+              { key: 'describe', label: 'Describe Product', desc: 'Text brief or concept' },
+              { key: 'paste', label: 'Paste Content', desc: 'Copy, notes, screenshots' },
+            ].map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setInputMethod(item.key)}
+                disabled={isRunning}
+                className={`rounded-md border px-3 py-2 text-left transition disabled:opacity-50 ${
+                  inputMethod === item.key
+                    ? 'border-emerald-500 bg-emerald-500/5'
+                    : 'border-slate-700 hover:border-slate-600'
+                }`}
+              >
+                <span className="block text-sm font-semibold">{item.label}</span>
+                <span className="block text-[11px] text-slate-400 mt-0.5">{item.desc}</span>
+              </button>
+            ))}
+          </div>
+
+          {inputMethod === 'url' && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Product URL</label>
+              <input
+                type="text" value={url} onChange={(e) => setUrl(e.target.value)}
+                disabled={isRunning}
+                placeholder="https://saigeplatform.com"
+                className="w-full rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+              />
+              <p className="text-[11px] text-slate-500 mt-1">Leave blank to let FlowAI use the default registered product.</p>
+            </div>
+          )}
+
+          {inputMethod === 'describe' && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Product Description</label>
+              <textarea
+                value={productDescription}
+                onChange={(e) => setProductDescription(e.target.value)}
+                disabled={isRunning}
+                placeholder="Describe the product, target user, main workflow, known issues, and what you want FlowAI to evaluate."
+                className="w-full min-h-28 rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50 resize-y"
+              />
+            </div>
+          )}
+
+          {inputMethod === 'paste' && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Pasted Content Or Screenshot Context</label>
+              <textarea
+                value={pastedContent}
+                onChange={(e) => setPastedContent(e.target.value)}
+                disabled={isRunning}
+                placeholder="Paste page copy, console output, bug notes, screenshot observations, or exported content for FlowAI to include in the run context."
+                className="w-full min-h-28 rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50 resize-y"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Mode</label>
@@ -455,10 +536,10 @@ export default function FlowAIDashboard() {
           </div>
 
           <button
-            type="button" onClick={launch} disabled={isRunning}
+            type="button" onClick={launch} disabled={isRunning || !canLaunch}
             className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
             <Icon.Rocket className="w-5 h-5" />
-            {isRunning ? 'RUNNING…' : 'LAUNCH FLOWAI'}
+            {isRunning ? 'RUNNING…' : 'START NEW RUN'}
           </button>
 
           {errorMsg && (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Sidebar from "./Sidebar";
 import OrchestrationBar from "./OrchestrationBar";
@@ -9,7 +9,6 @@ import { Search, Menu, X } from "lucide-react";
 import ActiveJobsPanel from "@/components/jobs/ActiveJobsPanel";
 import IPFooter from "@/components/shared/IPFooter";
 import { installRightClickProtection, installDevToolsDetection } from "@/lib/contentProtection";
-import UniversalNav from "@/components/shared/UniversalNav";
 import FlowAIHealthBadge from "@/components/layout/FlowAIHealthBadge";
 
 export default function AppLayout() {
@@ -83,17 +82,20 @@ export default function AppLayout() {
       <div className="md:ml-64 flex flex-col min-h-screen">
         <OrchestrationBar />
 
-        {/* Top bar — UniversalNav + Search, shown on all authenticated pages */}
+        {/* Top bar - utility controls only; primary navigation lives in the sidebar. */}
         <div className="px-4 md:px-6 py-2 border-b border-border flex items-center justify-between gap-3">
           {/* Mobile: hamburger on the left */}
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 md:hidden shrink-0" onClick={() => setSidebarOpen(v => !v)}>
             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
 
-          {/* UniversalNav — Back, Home, Workspace, Landing */}
-          <UniversalNav />
+          <div className="flex min-w-0 flex-col">
+            <p className="text-xs font-semibold text-foreground">FlowAI</p>
+            <p className="text-[10px] text-muted-foreground truncate">Product-Agnostic AI Operating System</p>
+          </div>
 
-          {/* FlowAI Health Badge */}
+          <div className="flex-1" />
+
           <FlowAIHealthBadge />
 
           {/* Search */}
