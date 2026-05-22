@@ -8,6 +8,34 @@ export const REGISTERED_PRODUCT_CONFIG = Object.freeze([
     note: 'repo contains zip only - source mapping limited until codebase extracted',
     systemNote: 'SAIGE repo registered. Full source codebase available at github.com/victor2081new-cloud/saige (main). U5 fix generation enabled.',
   }),
+  Object.freeze({
+    name: 'RelTwin',
+    domain: 'reltwin.com',
+    repo: 'https://github.com/veu-ai-studio/rel-twin',
+    branch: 'main',
+    status: 'registered',
+  }),
+  Object.freeze({
+    name: 'ReachSMS',
+    domain: 'ourcommunitiesai.com',
+    repo: 'https://github.com/veu-ai-studio/reachsms',
+    branch: 'main',
+    status: 'registered',
+  }),
+  Object.freeze({
+    name: 'PressAI',
+    domain: 'ourpublishingai.com',
+    repo: 'https://github.com/veu-ai-studio/press-ai',
+    branch: 'main',
+    status: 'registered',
+  }),
+  Object.freeze({
+    name: 'MyPregLife',
+    domain: 'preglife.com',
+    repo: 'https://github.com/veu-ai-studio/my-preg-life',
+    branch: 'main',
+    status: 'registered',
+  }),
 ]);
 
 export function findRegisteredProductConfigForUrl(url) {
