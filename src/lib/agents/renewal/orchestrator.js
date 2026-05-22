@@ -45,6 +45,10 @@ import { probeAdversarialSurface, probeAllPages } from './adversarialSurface.js'
 import { remediate as remediationEngine } from '../../../../api/_lib/remediationEngine.js';
 import { runEvaluationPipeline } from '../../evaluation/evaluationPipeline.js';
 import { runRemediation } from '../../remediation/runRemediation.js';
+import {
+  mapFindingsToSource,
+  sourcePathForFinding,
+} from '../../sourceMapping/registeredRepoSourceMapper.js';
 import { captureBaselineSnapshot } from '../../verification/baselineSnapshot.js';
 import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
 import { calculateTransformationDelta } from '../../verification/deltaCalculator.js';
@@ -501,6 +505,7 @@ export async function runOrchestration(args = {}) {
   const _calculateTransformationDelta = deps.calculateTransformationDelta || calculateTransformationDelta;
   const _classifyPatchEffects = deps.classifyPatchEffects || classifyPatchEffects;
   const _runRegressionGate = deps.runRegressionGate || runRegressionGate;
+  const _mapFindingsToSource = deps.mapFindingsToSource || mapFindingsToSource;
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   const orchestrationLog = [];
@@ -1438,6 +1443,38 @@ export async function runOrchestration(args = {}) {
       }
     }
 
+    // U4 — registered repo source analysis. Use the real Trees API
+    // inventory to map observed findings back to concrete repo files.
+    // This is intentionally evidence-only: no path is invented, and
+    // low-confidence mappings stay visible but are not used for patching.
+    let sourceMapping = null;
+    if (!pathB && Array.isArray(repoFileList) && repoFileList.length > 0) {
+      const mappingFindings = Array.isArray(state.pipelineFindings) && state.pipelineFindings.length > 0
+        ? state.pipelineFindings
+        : (Array.isArray(iterLog.preGtm?.issues) ? iterLog.preGtm.issues : []);
+      sourceMapping = _mapFindingsToSource({
+        findings: mappingFindings,
+        repoFileList,
+      });
+      state.sourceMapping = sourceMapping;
+      state.sourceMappings = sourceMapping?.mappings ?? [];
+      emit(makeStepLog({
+        iteration: iterationNumber, step: 6,
+        status: sourceMapping?.mapped > 0 ? 'complete' : 'degraded',
+        tool: 'registeredRepoSourceMapper.mapFindingsToSource (U4)',
+        why: 'map runtime/evaluator findings to real registered-repo source files before fix generation',
+        result: {
+          kind: 'source_mapping_complete',
+          totalFindings: sourceMapping?.totalFindings ?? 0,
+          mapped: sourceMapping?.mapped ?? 0,
+          unmapped: sourceMapping?.unmapped ?? 0,
+          highConfidence: sourceMapping?.highConfidence ?? 0,
+          repoFilesConsidered: sourceMapping?.repoFilesConsidered ?? 0,
+        },
+        durationMs: 0, mode: state.mode,
+      }));
+    }
+
     // STEP 6 — Issue Prioritization. Claude-powered (DISPATCH 23): given the
     // Five-Layer scores + product context + monitor text, Claude returns up
     // to 5 ranked issues with specific filePath/issue/fix/estimatedImpact.
@@ -1467,6 +1504,20 @@ export async function runOrchestration(args = {}) {
       } else {
         // Fallback: heuristic single-issue
         prioritizedIssues = derivePrioritizedIssuesFromScore(preScoreEnvelope, product, args.issue);
+      }
+      if (Array.isArray(state.sourceMappings) && state.sourceMappings.length > 0 && Array.isArray(prioritizedIssues)) {
+        prioritizedIssues = prioritizedIssues.map((issue) => {
+          const explicit = issue?.filePath;
+          if (typeof explicit === 'string' && (!repoFileList || repoFileList.includes(explicit))) return issue;
+          const mappedPath = sourcePathForFinding({
+            finding: issue,
+            sourceMappings: state.sourceMappings,
+            minimumConfidence: 0.7,
+          });
+          return mappedPath
+            ? { ...issue, filePath: mappedPath, sourceMapped: true }
+            : issue;
+        });
       }
       const log = makeStepLog({
         iteration: iterationNumber, step: 6, status: 'complete',
@@ -1849,11 +1900,15 @@ export async function runOrchestration(args = {}) {
               //   inject-aria-label / repair-asset-path → index.html
               //   css-contrast-adjust → first .css file from repoFileList
               const strategy = finding?.remediationStrategy;
-              let candidatePath = null;
+              let candidatePath = sourcePathForFinding({
+                finding,
+                sourceMappings: state.sourceMappings,
+                minimumConfidence: 0.7,
+              });
               if (strategy === 'css-contrast-adjust') {
-                candidatePath = (repoFileList ?? []).find((p) => /\.css$/i.test(p)) ?? 'index.html';
-              } else {
-                candidatePath = (repoFileList ?? []).find((p) => /^|\/index\.html?$/i.test(p) || /index\.html?$/i.test(p)) ?? 'index.html';
+                candidatePath = candidatePath ?? (repoFileList ?? []).find((p) => /\.css$/i.test(p)) ?? 'index.html';
+              } else if (!candidatePath) {
+                candidatePath = (repoFileList ?? []).find((p) => /(^|\/)index\.html?$/i.test(p)) ?? 'index.html';
               }
               try {
                 const content = await _fetchFileContent({
@@ -2424,6 +2479,7 @@ export async function runOrchestration(args = {}) {
           aggregate: deltaResult.aggregate,
           regressions: deltaResult.regressions,
           patchEffects,
+          regressionGate,
           regressionGatePassed: regressionGate.passed,
         });
         state.transformationDelta = transformationDelta;
@@ -2868,6 +2924,7 @@ export async function runOrchestration(args = {}) {
           ? state.remediationEscalated.length : 0,
         remediationDeferredCount: Array.isArray(state.remediationDeferred)
           ? state.remediationDeferred.length : 0,
+        sourceMapping: state.sourceMapping ?? null,
         transformationDelta: state.transformationDelta ?? null,
         at: new Date().toISOString(),
       },
@@ -2938,6 +2995,7 @@ export async function runOrchestration(args = {}) {
     skippedSteps: Array.isArray(state.skippedSteps) ? state.skippedSteps : [],
     // PHASE B2 — rule-based remediation summary on the result envelope.
     remediationSummary: state.remediationSummary ?? null,
+    sourceMapping: state.sourceMapping ?? null,
     transformationDelta: state.transformationDelta ?? null,
     orchestrationLog,
     iterations,

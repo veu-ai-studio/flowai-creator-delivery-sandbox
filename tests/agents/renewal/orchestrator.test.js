@@ -1539,6 +1539,49 @@ describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () =>
       expect(callOpts?.knownPackages).toBeUndefined();
     } finally { clearVercelEnv(); }
   });
+
+  it('emits U4 source mapping for registered products with repo inventory', async () => {
+    withVercelEnv();
+    try {
+      const fetchRepoFileList = vi.fn(async () => ({
+        files: ['package.json', 'index.html', 'src/pages/Settings.jsx', 'src/styles/global.css'],
+        truncated: false, sha: 'sha', error: null,
+      }));
+      const fetchFileContent = vi.fn(async ({ filePath }) => {
+        if (filePath === 'package.json') return JSON.stringify({ dependencies: { react: '^18.0.0' } });
+        return 'export default function Settings() {}';
+      });
+      const runEvaluationPipeline = vi.fn(async () => ({
+        ok: true,
+        findings: [{
+          id: 'f-settings',
+          source: 'runtime-diagnostics',
+          category: 'network:http_404',
+          severity: 'medium',
+          location: 'https://saigeplatform.com/settings',
+        }],
+        stats: { perEvaluator: {}, perEvaluatorRaw: {}, evaluatorMetrics: {} },
+        perEvaluator: {},
+        errors: {},
+      }));
+      const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'u4-map-1', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        deps: { ...base, fetchRepoFileList, fetchFileContent, runEvaluationPipeline },
+        issue: { filePath: 'src/pages/Settings.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+      });
+
+      expect(result.sourceMapping).toMatchObject({
+        kind: 'registered_repo_source_mapping',
+        totalFindings: 1,
+        mapped: 1,
+        highConfidence: 1,
+      });
+      expect(result.sourceMapping.mappings[0].selectedFilePath).toBe('src/pages/Settings.jsx');
+      expect(result.orchestrationLog.some((l) => l.result?.kind === 'source_mapping_complete')).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
 });
 
 describe('diffEditor.validateDiff — scoped relaxation via preserveExceptions (DISPATCH 33 T2)', () => {

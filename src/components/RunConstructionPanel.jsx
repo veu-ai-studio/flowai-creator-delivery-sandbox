@@ -174,6 +174,47 @@ function DeltaTable({ transformationDelta }) {
   );
 }
 
+function SourceMappingSummary({ sourceMapping }) {
+  if (!sourceMapping || !Array.isArray(sourceMapping.mappings)) return null;
+  const rows = sourceMapping.mappings.filter((m) => m.mapped).slice(0, 6);
+  return (
+    <div className="rounded-lg border border-border bg-background/40 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold text-primary">
+          Source mapped: {sourceMapping.mapped ?? 0}/{sourceMapping.totalFindings ?? 0}
+        </span>
+        <span className="text-[10px] text-muted-foreground">Registered repo analysis</span>
+      </div>
+      {rows.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[11px]">
+            <thead className="text-muted-foreground">
+              <tr className="border-b border-border">
+                <th className="py-1 text-left font-medium">Finding</th>
+                <th className="py-1 text-left font-medium">Source file</th>
+                <th className="py-1 text-right font-medium">Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((m, i) => (
+                <tr key={`${m.findingId || m.category || 'finding'}-${i}`} className="border-b border-border/50 last:border-0">
+                  <td className="py-1.5 pr-2 text-muted-foreground">{m.category || m.findingId || 'finding'}</td>
+                  <td className="py-1.5 pr-2 text-foreground font-mono">{m.selectedFilePath}</td>
+                  <td className="py-1.5 text-right text-primary font-semibold">{Math.round((m.confidence ?? 0) * 100)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted-foreground">
+          Repository file inventory was available, but no finding cleared source-mapping confidence.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function normalizeUrlForCompare(value) {
   if (typeof value !== 'string' || value.trim().length === 0) return '';
   try {
@@ -385,6 +426,7 @@ function ResultCard({ final, runId, inputUrl }) {
           </div>
         )}
         <DeltaTable transformationDelta={final.transformationDelta} />
+        <SourceMappingSummary sourceMapping={final.sourceMapping} />
         <div className="flex items-center gap-2 text-xs pt-1">
           <span className="text-muted-foreground">Iterations: {final.iterationsCompleted ?? 0}</span>
           <a href={`/governance/${recordId}`}

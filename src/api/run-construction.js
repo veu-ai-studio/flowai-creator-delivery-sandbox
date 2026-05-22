@@ -254,6 +254,10 @@ export default async function handler(req, res) {
     deepBrowserAnalysis: result?.deepBrowserAnalysis && typeof result.deepBrowserAnalysis === 'object'
       ? result.deepBrowserAnalysis : null,
     fixProposals: Array.isArray(result?.fixProposals) ? result.fixProposals : [],
+    sourceMapping: result?.sourceMapping && typeof result.sourceMapping === 'object'
+      ? result.sourceMapping : null,
+    transformationDelta: result?.transformationDelta && typeof result.transformationDelta === 'object'
+      ? result.transformationDelta : null,
     skippedSteps: Array.isArray(result?.skippedSteps) ? result.skippedSteps : [],
     runId,
   });
