@@ -1574,7 +1574,8 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
         },
       });
       const step4 = r.orchestrationLog.find((l) => l.step === 4);
-      const step5 = r.orchestrationLog.find((l) => l.step === 5);
+      const step5Logs = r.orchestrationLog.filter((l) => l.step === 5);
+      const step5 = step5Logs[step5Logs.length - 1];
       // Multi-page Phase B ran on both crawled URLs.
       expect(step4.result.urlsAttempted).toBe(2);
       expect(step4.result.pagesProbed).toBe(2);

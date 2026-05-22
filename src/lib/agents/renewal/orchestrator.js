@@ -1066,6 +1066,68 @@ export async function runOrchestration(args = {}) {
     }
     await state.checkpoint(onCheckpoint, { lastStep: 3, iteration: iterationNumber });
 
+    // STEP 5 — Five-Layer Scoring (Early Baseline).
+    //
+    // Production D8: the live Vercel smoke showed the timeout guard
+    // returning clean partial results, but with 0/100 because scoring sat
+    // behind the expensive browser/evaluator stages. Score immediately
+    // after the structured crawl so every run has a real baseline before
+    // long-tail analysis can consume the function window. STEP 5 is
+    // enriched with Phase B/B1 findings below when those stages finish.
+    let preScoreEnvelope;
+    try {
+      const t0 = Date.now();
+      const monitor = await _produceMonitorText({
+        url: currentUrl, productId, runId,
+        githubRepoUrl: githubRepoUrl || undefined,
+        token: token || undefined,
+        crawlReport: crawlOutput,
+      });
+      preScoreEnvelope = await _computeScore({
+        productId, url: currentUrl, runId, monitorText: monitor.monitorText,
+      });
+      if (originalScore === null) originalScore = preScoreEnvelope.total;
+
+      const preGtm = _scoreCrawlOutput(crawlOutput, null);
+      if (originalGtmScore === null) originalGtmScore = preGtm.score;
+      iterLog.preGtm = preGtm;
+      iterLog.preGtmSurfaceOnly = preGtm;
+      const log = makeStepLog({
+        iteration: iterationNumber, step: 5, status: 'complete',
+        tool: 'gtmReadinessScorer (§7.6) + monitorTextProducer (early baseline)',
+        why: 'establish canonical GTM Readiness score immediately after crawl before long browser/evaluator work',
+        result: {
+          gtmScore: preGtm.score,
+          gtmBand: preGtm.band,
+          gtmCounts: preGtm.counts,
+          surfaceOnlyGtmScore: preGtm.score,
+          surfaceOnlyGtmCounts: preGtm.counts,
+          phaseBContribution: 0,
+          phaseBPagesProbed: 0,
+          phaseBUrlsAttempted: 0,
+          fiveLayerInternal: preScoreEnvelope.total,
+          layers: {
+            l1: preScoreEnvelope.l1, l2: preScoreEnvelope.l2, l3: preScoreEnvelope.l3,
+            l4: preScoreEnvelope.l4, l5: preScoreEnvelope.l5,
+          },
+          label: preGtm.label,
+          coverage: 'crawl_only_early_baseline',
+        },
+        durationMs: Date.now() - t0, mode: state.mode,
+        scores: {
+          original: originalGtmScore, current: preGtm.score,
+          target: gtmTarget, progressPct: computeProgress({ originalScore: originalGtmScore, currentScore: preGtm.score, target: gtmTarget }),
+        },
+      });
+      emit(log); iterLog.steps.push(log);
+    } catch (e) {
+      emit(makeStepLog({ iteration: iterationNumber, step: 5, status: 'failed',
+        tool: 'preScoreAdapter', why: 'early pre-score', result: { error: e?.message }, mode: state.mode }));
+      return buildFailureReturn({ runId, mode: state.mode, product,
+        orchestrationLog, iterations, failedStep: 'STEP_5',
+        error: e?.message ?? String(e), code: e?.code ?? 'SCORING_FAILED' });
+    }
+
     // STEP 4 — Adversarial Surface Testing (Phase B — D39).
     // Composes over the Phase 1 crawl: walks each crawled page's
     // surface with a real headless browser (Browserless or local
@@ -1280,84 +1342,56 @@ export async function runOrchestration(args = {}) {
 
     await state.checkpoint(onCheckpoint, { lastStep: 4, iteration: iterationNumber });
 
-    // STEP 5 — Five-Layer Scoring (Pre-Fix).
-    // DISPATCH 6: pass githubRepoUrl + token (when available) so the
-    // producer enriches the monitor prompt with real source code. On
-    // iteration 1, token is null until STEP 8 mints it — the producer
-    // gracefully falls back to URL-only scoring in that case. From
-    // iteration 2 onward (or post-rework where token persists), the
-    // enriched path runs and pre-scores reflect real code signal.
+    // STEP 5 — Five-Layer Scoring (Phase B/B1 enrichment).
     //
-    // DISPATCH 24: crawlReport is now passed through to produceMonitorText
-    // so scoring can leverage the real multi-page crawl (titles, headings,
-    // links, forms, error states) rather than the producer's independent
-    // single-URL fetch. The producer currently ignores fields it doesn't
-    // destructure, so the wire is in place pending the producer-side
-    // enhancement that consumes it.
-    let preScoreEnvelope;
+    // The early baseline above is the timeout-safe score. When the slower
+    // analyzers complete, recompute only the canonical GTM score with
+    // their normalized findings and emit an enriched STEP 5 log. This
+    // preserves the old comprehensive signal without making the user wait
+    // for it before seeing a real score.
     try {
       const t0 = Date.now();
-      const monitor = await _produceMonitorText({
-        url: currentUrl, productId, runId,
-        githubRepoUrl: githubRepoUrl || undefined,
-        token: token || undefined,
-        crawlReport: crawlOutput,
-      });
-      preScoreEnvelope = await _computeScore({
-        productId, url: currentUrl, runId, monitorText: monitor.monitorText,
-      });
-      if (originalScore === null) originalScore = preScoreEnvelope.total;
-      // DISPATCH 28 — canonical §7.6 GTM Readiness score from the
-      // structured crawl (pre-fix). This is THE gating signal at
-      // STEP 12; Five-Layer remains internal telemetry only.
-      // D39: union Phase A crawl findings with Phase B adversarial-
-      // surface findings (state.phaseBFindings captured in STEP 4).
-      // PHASE B1: prefer the normalized multi-engine pipeline output
-      // (Phase B + Lighthouse + axe-core + runtime diagnostics) when
-      // available — falls back to raw Phase B if the pipeline produced
-      // nothing (e.g. all extra engines errored gracefully).
       const _multiEngineFindings = (Array.isArray(state.pipelineFindings) && state.pipelineFindings.length > 0)
         ? state.pipelineFindings
         : (state.phaseBFindings ?? null);
-      const preGtm = _scoreCrawlOutput(crawlOutput, _multiEngineFindings);
-      // D41 T5 — whole-product comparison: surface-only Phase A vs
-      // comprehensive Phase A + multi-page Phase B. Skip the extra
-      // call when Phase B contributed nothing — the two scores are
-      // identical and the redundant call wastes a Supabase round-trip.
-      const preGtmSurfaceOnly = (Array.isArray(_multiEngineFindings) && _multiEngineFindings.length > 0)
-        ? _scoreCrawlOutput(crawlOutput, null)
-        : preGtm;
-      if (originalGtmScore === null) originalGtmScore = preGtm.score;
-      iterLog.preGtm = preGtm;
-      iterLog.preGtmSurfaceOnly = preGtmSurfaceOnly;
-      const log = makeStepLog({
-        iteration: iterationNumber, step: 5, status: 'complete',
-        tool: 'gtmReadinessScorer (§7.6) + monitorTextProducer (internal)',
-        why: 'establish canonical GTM Readiness score before fixes — measures improvement',
-        result: {
-          gtmScore: preGtm.score,
-          gtmBand: preGtm.band,
-          gtmCounts: preGtm.counts,
-          // D41 T5 — surface-only vs comprehensive-Phase-B breakdown.
-          surfaceOnlyGtmScore: preGtmSurfaceOnly.score,
-          surfaceOnlyGtmCounts: preGtmSurfaceOnly.counts,
-          phaseBContribution: preGtmSurfaceOnly.score - preGtm.score,
-          phaseBPagesProbed: state.phaseBPagesProbed ?? 0,
-          phaseBUrlsAttempted: state.phaseBUrlsAttempted ?? 0,
-          fiveLayerInternal: preScoreEnvelope.total,
-          layers: {
-            l1: preScoreEnvelope.l1, l2: preScoreEnvelope.l2, l3: preScoreEnvelope.l3,
-            l4: preScoreEnvelope.l4, l5: preScoreEnvelope.l5,
+      if (Array.isArray(_multiEngineFindings) && _multiEngineFindings.length > 0) {
+        const preGtm = _scoreCrawlOutput(crawlOutput, _multiEngineFindings);
+        // D41 T5 — whole-product comparison: surface-only Phase A vs
+        // comprehensive Phase A + multi-page Phase B.
+        const preGtmSurfaceOnly = _scoreCrawlOutput(crawlOutput, null);
+        if (originalGtmScore === null) originalGtmScore = preGtm.score;
+        iterLog.preGtm = preGtm;
+        iterLog.preGtmSurfaceOnly = preGtmSurfaceOnly;
+        const log = makeStepLog({
+          iteration: iterationNumber, step: 5, status: 'complete',
+          tool: 'gtmReadinessScorer (§7.6) + Phase B/B1 enrichment',
+          why: 'enrich canonical GTM Readiness score with completed browser/evaluator findings',
+          result: {
+            gtmScore: preGtm.score,
+            gtmBand: preGtm.band,
+            gtmCounts: preGtm.counts,
+            // D41 T5 — surface-only vs comprehensive-Phase-B breakdown.
+            surfaceOnlyGtmScore: preGtmSurfaceOnly.score,
+            surfaceOnlyGtmCounts: preGtmSurfaceOnly.counts,
+            phaseBContribution: preGtmSurfaceOnly.score - preGtm.score,
+            phaseBPagesProbed: state.phaseBPagesProbed ?? 0,
+            phaseBUrlsAttempted: state.phaseBUrlsAttempted ?? 0,
+            fiveLayerInternal: preScoreEnvelope.total,
+            layers: {
+              l1: preScoreEnvelope.l1, l2: preScoreEnvelope.l2, l3: preScoreEnvelope.l3,
+              l4: preScoreEnvelope.l4, l5: preScoreEnvelope.l5,
+            },
+            label: preGtm.label,
+            coverage: 'crawl_plus_phase_b_b1',
           },
-          label: preGtm.label,
-        },
-        durationMs: Date.now() - t0, mode: state.mode,
-        scores: {
-          original: originalGtmScore, current: preGtm.score,
-          target: gtmTarget, progressPct: computeProgress({ originalScore: originalGtmScore, currentScore: preGtm.score, target: gtmTarget }),
-        },
-      });
-      emit(log); iterLog.steps.push(log);
+          durationMs: Date.now() - t0, mode: state.mode,
+          scores: {
+            original: originalGtmScore, current: preGtm.score,
+            target: gtmTarget, progressPct: computeProgress({ originalScore: originalGtmScore, currentScore: preGtm.score, target: gtmTarget }),
+          },
+        });
+        emit(log); iterLog.steps.push(log);
+      }
     } catch (e) {
       emit(makeStepLog({ iteration: iterationNumber, step: 5, status: 'failed',
         tool: 'preScoreAdapter', why: 'pre-score', result: { error: e?.message }, mode: state.mode }));

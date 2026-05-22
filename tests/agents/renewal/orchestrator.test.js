@@ -391,6 +391,30 @@ describe('runOrchestration — callbacks', () => {
       expect(i1.delta).toBe(20);
     } finally { clearVercelEnv(); }
   });
+
+  it('emits a baseline STEP 5 score before slow Phase B probing starts', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [60], postScoreSequence: [72] });
+      deps.probeAllPages = vi.fn(async () => {
+        expect(steps.some((log) => log.step === 5 && log.result?.coverage === 'crawl_only_early_baseline')).toBe(true);
+        return { ok: true, pagesProbed: 1, findings: [], summary: null };
+      });
+
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'early-score-before-probe', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        onStep: (log) => steps.push(log),
+      });
+
+      const firstStep5Index = steps.findIndex((log) => log.step === 5);
+      const firstStep4Index = steps.findIndex((log) => log.step === 4);
+      expect(firstStep5Index).toBeGreaterThan(-1);
+      expect(firstStep4Index).toBeGreaterThan(-1);
+      expect(firstStep5Index).toBeLessThan(firstStep4Index);
+    } finally { clearVercelEnv(); }
+  });
 });
 
 // ── Failure handling ────────────────────────────────────────────────────────
