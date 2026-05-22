@@ -225,6 +225,13 @@ export default function FlowAIDashboard() {
     return Math.min(100, Math.round((latestScore.total / gtmTarget) * 100));
   }, [latestScore.total, gtmTarget]);
 
+  const finalRawScore = typeof finalResult?.rawScore === 'number'
+    ? finalResult.rawScore
+    : (typeof finalResult?.finalScore === 'number' ? finalResult.finalScore : 0);
+  const finalTrustScore = typeof finalResult?.effectiveTrustScore === 'number'
+    ? finalResult.effectiveTrustScore
+    : finalRawScore;
+
   // ── SSE consumer ─────────────────────────────────────────────────────────
   async function launch() {
     if (isRunning) return;
@@ -649,8 +656,9 @@ export default function FlowAIDashboard() {
                 <p className="text-2xl font-bold">{finalResult.originalScore ?? 0}<span className="text-xs text-slate-500">/100</span></p>
               </div>
               <div className="rounded-md bg-slate-900/60 px-3 py-2">
-                <p className="text-[10px] text-slate-500 uppercase">Final score</p>
-                <p className="text-2xl font-bold text-emerald-400">{finalResult.finalScore ?? 0}<span className="text-xs text-slate-500">/100</span></p>
+                <p className="text-[10px] text-slate-500 uppercase">Trust Score</p>
+                <p className="text-2xl font-bold text-emerald-400">{finalTrustScore.toFixed(1)}<span className="text-xs text-slate-500">/100</span></p>
+                <p className="text-[10px] text-slate-500">raw {finalRawScore.toFixed(1)}</p>
               </div>
               <div className="rounded-md bg-slate-900/60 px-3 py-2">
                 <p className="text-[10px] text-slate-500 uppercase">Total improvement</p>

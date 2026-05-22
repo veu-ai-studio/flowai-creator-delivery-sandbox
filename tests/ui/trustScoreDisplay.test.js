@@ -16,9 +16,11 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const COMPONENT_PATH = resolve(__dirname, '../../src/components/RunConstructionPanel.jsx');
 const HANDLER_PATH   = resolve(__dirname, '../../src/api/run-construction.js');
+const DASHBOARD_PATH = resolve(__dirname, '../../src/pages/FlowAIDashboard.jsx');
 
 const componentSrc = readFileSync(COMPONENT_PATH, 'utf8');
 const handlerSrc   = readFileSync(HANDLER_PATH, 'utf8');
+const dashboardSrc = readFileSync(DASHBOARD_PATH, 'utf8');
 
 describe('UI trust score display (DISPATCH U1 ITEM 2)', () => {
   it('SSE handler forwards effectiveTrustScore on the final event', () => {
@@ -39,6 +41,12 @@ describe('UI trust score display (DISPATCH U1 ITEM 2)', () => {
   it('result card renders raw score + coverage as secondary context', () => {
     expect(componentSrc).toMatch(/raw\s*\{?rawScore\.toFixed/);
     expect(componentSrc).toMatch(/coverage\s*\{?scoredDims\}\s*\/\s*\{?totalDims/);
+  });
+
+  it('/flowai dashboard reads effectiveTrustScore as the completion-card headline', () => {
+    expect(dashboardSrc).toMatch(/finalResult\?\.effectiveTrustScore/);
+    expect(dashboardSrc).toMatch(/finalTrustScore\.toFixed/);
+    expect(dashboardSrc).toMatch(/raw\s*\{finalRawScore\.toFixed/);
   });
 
   it('SSE handler forwards universal-mode fields for the U1 result card', () => {

@@ -229,6 +229,10 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
         })),
         getInstallationToken: vi.fn(async () => ({ token: 'ghs', expiresAt: '' })),
         appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+        runEvaluationPipeline: vi.fn(async () => ({
+          ok: true, findings: [], stats: {}, perEvaluator: {}, errors: {},
+          deepBrowserAnalysis: null, fixProposals: [],
+        })),
         probeAdversarialSurface,
       };
       const result = await runOrchestration({
@@ -277,6 +281,10 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
         scoreCrawlOutput: vi.fn(() => ({ score: 100, counts: { critical: 0, high: 0, medium: 0, low: 0 }, band: 'showcase-ready', label: 'x', penalty: 0, formula: 'x', issues: [] })),
         getInstallationToken: vi.fn(async () => ({ token: 'ghs', expiresAt: '' })),
         appendGovernanceEntry: vi.fn(async () => ({ written: true })),
+        runEvaluationPipeline: vi.fn(async () => ({
+          ok: true, findings: [], stats: {}, perEvaluator: {}, errors: {},
+          deepBrowserAnalysis: null, fixProposals: [],
+        })),
         probeAdversarialSurface,
       };
       const result = await runOrchestration({

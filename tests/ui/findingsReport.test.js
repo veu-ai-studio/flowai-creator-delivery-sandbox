@@ -21,4 +21,9 @@ describe('FindingsReport', () => {
     expect(componentSrc).toContain('Copy fix');
     expect(componentSrc).toContain('flowai-findings-report.json');
   });
+
+  it('shows a degraded deep-browser-analysis message instead of disappearing', () => {
+    expect(componentSrc).toContain('Deep browser analysis unavailable');
+    expect(componentSrc).toMatch(/deep\.ok\s*===\s*false/);
+  });
 });

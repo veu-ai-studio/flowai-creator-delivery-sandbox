@@ -24,9 +24,9 @@ describe('buildBrowserlessWssUrl', () => {
     if (SAVED.BROWSERLESS_WSS_BASE !== undefined) process.env.BROWSERLESS_WSS_BASE = SAVED.BROWSERLESS_WSS_BASE;
   });
 
-  it('defaults to the Browserless V2 production-sfo /chromium endpoint', () => {
+  it('defaults to the Browserless V2 production-sfo CDP endpoint', () => {
     const url = buildBrowserlessWssUrl('TOKEN123');
-    expect(url).toBe('wss://production-sfo.browserless.io/chromium?token=TOKEN123');
+    expect(url).toBe('wss://production-sfo.browserless.io?token=TOKEN123');
   });
 
   it('honors BROWSERLESS_WSS_URL (canonical V2 knob)', () => {
@@ -56,7 +56,7 @@ describe('buildBrowserlessWssUrl', () => {
 
   it('URL-encodes the token so reserved characters do not break the query string', () => {
     const url = buildBrowserlessWssUrl('tok+with/reserved=chars');
-    expect(url).toBe('wss://production-sfo.browserless.io/chromium?token=tok%2Bwith%2Freserved%3Dchars');
+    expect(url).toBe('wss://production-sfo.browserless.io?token=tok%2Bwith%2Freserved%3Dchars');
   });
 
   it('throws on empty or non-string apiKey', () => {

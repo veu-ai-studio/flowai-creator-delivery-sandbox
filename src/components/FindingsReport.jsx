@@ -81,6 +81,15 @@ export default function FindingsReport({ deepBrowserAnalysis, fixProposals, find
         </div>
       )}
 
+      {deep && deep.ok === false && (
+        <div className="rounded border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] flex gap-2">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            Deep browser analysis unavailable: {deep.error || deep.summary?.reason || 'Playwright/Browserless did not provide a page.'}
+          </span>
+        </div>
+      )}
+
       <div className="grid md:grid-cols-3 gap-2 text-[10px]">
         <div className="rounded border border-border/60 p-2">
           <div className="font-semibold text-foreground">Console</div>

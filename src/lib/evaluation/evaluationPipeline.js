@@ -348,6 +348,27 @@ export async function runEvaluationPipeline({ url, page, options = {} } = {}) {
         if (enabled.has('deep-browser-analysis')) {
           findingsByEvaluator['deep-browser-analysis'] = [];
           perEvaluator['deep-browser-analysis'] = 0;
+          evaluatorMetrics['deep-browser-analysis'] = {
+            ok: false,
+            error: safeError,
+            summary: {
+              status: 'unavailable',
+              reason: safeError,
+              consoleCount: 0,
+              networkCount: 0,
+              scriptCount: 0,
+              stylesheetCount: 0,
+            },
+            frameworkDetection: {
+              framework: 'unknown',
+              confidence: 'LOW',
+              evidence: ['Playwright page unavailable; deep browser analysis could not run.'],
+            },
+            assetInventory: {},
+            consoleFindings: [],
+            networkFindings: [],
+            accessibilityFindings: null,
+          };
           safeEmit(onStep, { type: 'step', log: { kind: 'evaluator_complete', evaluator: 'deep-browser-analysis', findingsCount: 0, ok: false, error: safeError } });
         }
         return;

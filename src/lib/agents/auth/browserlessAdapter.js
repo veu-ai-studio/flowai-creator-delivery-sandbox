@@ -44,12 +44,12 @@
 /**
  * Build the Browserless WSS endpoint URL from an API key.
  *
- * Browserless BaaS V2 endpoint (docs verified 2026-05-21):
- *   wss://production-sfo.browserless.io/chromium?token=<KEY>
+ * Browserless BaaS V2 endpoint (docs verified 2026-05-22):
+ *   wss://production-sfo.browserless.io?token=<KEY>
  *
- * The /chromium path is the V2 open-source-build endpoint (per
- * docs.browserless.io/baas/start — "Recommended for most automation
- * tasks"). The V1 cloud at chrome.browserless.io has been retired.
+ * The root path is the documented CDP default and is equivalent to
+ * /chromium. Callers can still opt into /chromium, /chrome, or stealth
+ * paths through BROWSERLESS_WSS_URL.
  *
  * Env-var precedence (highest first):
  *   1. BROWSERLESS_WSS_URL  — full URL with optional path, no token
@@ -57,7 +57,7 @@
  *      Browserless shows on the dashboard for V2 BaaS).
  *   2. BROWSERLESS_WSS_BASE — legacy alias; kept for back-compat
  *      with any existing env files that already set it.
- *   3. default: wss://production-sfo.browserless.io/chromium
+ *   3. default: wss://production-sfo.browserless.io
  *
  * The token is appended as a `?token=` query parameter. Header-form
  * (Authorization: Bearer …) is NOT used because Playwright's
@@ -73,7 +73,7 @@ export function buildBrowserlessWssUrl(apiKey) {
   }
   const base = process.env.BROWSERLESS_WSS_URL
     || process.env.BROWSERLESS_WSS_BASE
-    || 'wss://production-sfo.browserless.io/chromium';
+    || 'wss://production-sfo.browserless.io';
   const sep = base.includes('?') ? '&' : '?';
   return `${base}${sep}token=${encodeURIComponent(apiKey)}`;
 }
