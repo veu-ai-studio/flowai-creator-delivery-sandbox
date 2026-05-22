@@ -29,6 +29,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import FindingsReport from '@/components/FindingsReport';
+import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
 
 // ── Tiny inline-SVG icon set ───────────────────────────────────────────────
 
@@ -247,6 +248,9 @@ export default function FlowAIDashboard() {
     productDescription: productDescription.trim() || null,
     pastedContent: pastedContent.trim() || null,
   }), [inputMethod, url, productDescription, pastedContent]);
+  const registeredProductNote = useMemo(() => (
+    findRegisteredProductConfigForUrl(inputPayload.url)?.systemNote ?? null
+  ), [inputPayload.url]);
   const canLaunch = inputMethod === 'url'
     ? true
     : inputMethod === 'describe'
@@ -466,6 +470,12 @@ export default function FlowAIDashboard() {
                 className="w-full rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50"
               />
               <p className="text-[11px] text-slate-500 mt-1">Leave blank to let FlowAI use the default registered product.</p>
+            </div>
+          )}
+
+          {registeredProductNote && (
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              {registeredProductNote}
             </div>
           )}
 

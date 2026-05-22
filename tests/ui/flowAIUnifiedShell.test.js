@@ -40,4 +40,10 @@ describe('FlowAI unified operating system shell', () => {
     expect(dashboardSrc).toMatch(/Paste Content/);
     expect(dashboardSrc).toMatch(/input:\s*inputPayload/);
   });
+
+  it('surfaces registered product system notes inside the FlowAI run UI', () => {
+    expect(dashboardSrc).toMatch(/findRegisteredProductConfigForUrl/);
+    expect(dashboardSrc).toMatch(/registeredProductNote/);
+    expect(dashboardSrc).toMatch(/\{registeredProductNote\}/);
+  });
 });
