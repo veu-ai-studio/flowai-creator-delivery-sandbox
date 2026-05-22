@@ -1208,6 +1208,8 @@ export async function runOrchestration(args = {}) {
       state.pipelineFindings = Array.isArray(pipelineOutput?.findings) ? pipelineOutput.findings : [];
       state.pipelineStats = pipelineOutput?.stats ?? null;
       state.pipelineErrors = pipelineOutput?.errors ?? {};
+      state.deepBrowserAnalysis = pipelineOutput?.deepBrowserAnalysis ?? null;
+      state.fixProposals = Array.isArray(pipelineOutput?.fixProposals) ? pipelineOutput.fixProposals : [];
       try {
         const baselineSnapshot = await _captureBaselineSnapshot({
           url: currentUrl,
@@ -1246,6 +1248,7 @@ export async function runOrchestration(args = {}) {
         why: 'fan-out to Lighthouse + axe-core + runtimeDiagnostics; normalize + dedupe',
         result: {
           combinedFindings: state.pipelineFindings.length,
+          domFixProposals: state.fixProposals.length,
           perEvaluator: pipelineOutput?.perEvaluator ?? {},
           stats: pipelineOutput?.stats ?? null,
           errors: pipelineOutput?.errors ?? {},
@@ -1257,6 +1260,8 @@ export async function runOrchestration(args = {}) {
       state.pipelineFindings = [];
       state.pipelineStats = null;
       state.pipelineErrors = { _: (e?.message ?? String(e)).slice(0, 200) };
+      state.deepBrowserAnalysis = null;
+      state.fixProposals = [];
       emit(makeStepLog({
         iteration: iterationNumber, step: 4, status: 'degraded',
         tool: 'evaluationPipeline (Phase B1)',
@@ -2851,6 +2856,8 @@ export async function runOrchestration(args = {}) {
         autoFixAvailable: !state.universalMode,
         findingsCount,
         findingsSeverity,
+        deepBrowserAnalysis: state.deepBrowserAnalysis ?? null,
+        fixProposals: Array.isArray(state.fixProposals) ? state.fixProposals : [],
         skippedSteps: Array.isArray(state.skippedSteps) ? state.skippedSteps : [],
         // PHASE B2 — rule-based remediation summary (classifier counts,
         // budget application, conflicts). Null when remediation didn't
@@ -2926,6 +2933,8 @@ export async function runOrchestration(args = {}) {
     registerCTA: !!state.universalMode,
     findingsCount,
     findingsSeverity,
+    deepBrowserAnalysis: state.deepBrowserAnalysis ?? null,
+    fixProposals: Array.isArray(state.fixProposals) ? state.fixProposals : [],
     skippedSteps: Array.isArray(state.skippedSteps) ? state.skippedSteps : [],
     // PHASE B2 — rule-based remediation summary on the result envelope.
     remediationSummary: state.remediationSummary ?? null,

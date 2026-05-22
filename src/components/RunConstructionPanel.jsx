@@ -22,6 +22,7 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import FindingsReport from '@/components/FindingsReport';
 import {
   Loader2, CheckCircle2, XCircle, AlertTriangle,
   ExternalLink, ChevronRight, RotateCcw,
@@ -368,6 +369,12 @@ function ResultCard({ final, runId, inputUrl }) {
             />
           : <ResultUrlSection previewUrl={final.previewUrl} inputUrl={inputUrl} exitReason={final.exitReason} />
         }
+        <FindingsReport
+          deepBrowserAnalysis={final.deepBrowserAnalysis}
+          fixProposals={final.fixProposals}
+          findingsCount={final.findingsCount}
+          findingsSeverity={final.findingsSeverity}
+        />
         {final.prUrl && (
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground">PR:</span>

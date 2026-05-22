@@ -40,8 +40,8 @@ export const DEFAULT_BUDGET = Object.freeze({
  */
 export const TIER_EVALUATORS = Object.freeze({
   [TIER.TIER_1]: Object.freeze(['phase-b', 'runtime']),
-  [TIER.TIER_2]: Object.freeze(['phase-b', 'runtime', 'axe', 'lighthouse']),
-  [TIER.TIER_3]: Object.freeze(['phase-b', 'runtime', 'axe', 'lighthouse']),
+  [TIER.TIER_2]: Object.freeze(['phase-b', 'runtime', 'axe', 'lighthouse', 'deep-browser-analysis']),
+  [TIER.TIER_3]: Object.freeze(['phase-b', 'runtime', 'axe', 'lighthouse', 'deep-browser-analysis']),
 });
 
 /**

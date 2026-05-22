@@ -4,7 +4,7 @@
 // include `generated_by` so universal-mode consumers can attribute
 // evidence to a specific evaluator. Allowed enum:
 //   lighthouse | axe-core | runtime-diagnostics | crawler |
-//   phase-b-playwright | unattributed
+//   phase-b-playwright | deep-browser-analysis | unattributed
 // Findings with missing / invalid source are NOT dropped and NOT
 // heuristically inferred — they are labeled 'unattributed'.
 
@@ -13,7 +13,7 @@ import { normalizeFindings } from '../../src/lib/evaluation/findingNormalizer.js
 
 const ALLOWED_GENERATED_BY = [
   'lighthouse', 'axe-core', 'runtime-diagnostics',
-  'crawler', 'phase-b-playwright', 'unattributed',
+  'crawler', 'phase-b-playwright', 'deep-browser-analysis', 'unattributed',
 ];
 
 describe('finding provenance — generated_by (DISPATCH U1)', () => {
@@ -80,7 +80,7 @@ describe('finding provenance — unattributed coercion', () => {
     }
   });
 
-  it('generated_by on every finding always belongs to the allowed enum (no values outside the 6 allowed strings)', () => {
+  it('generated_by on every finding always belongs to the allowed enum', () => {
     const mixed = normalizeFindings({
       'lighthouse': [
         { category: 'lh:meta', severity: 'medium', location: 'https://x',

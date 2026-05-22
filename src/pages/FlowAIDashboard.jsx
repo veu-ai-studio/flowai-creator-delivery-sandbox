@@ -28,6 +28,7 @@
 // default) is fully functional end-to-end.
 
 import { useState, useRef, useEffect, useMemo } from 'react';
+import FindingsReport from '@/components/FindingsReport';
 
 // ── Tiny inline-SVG icon set ───────────────────────────────────────────────
 
@@ -674,6 +675,13 @@ export default function FlowAIDashboard() {
                 </a>
               )}
             </div>
+
+            <FindingsReport
+              deepBrowserAnalysis={finalResult.deepBrowserAnalysis}
+              fixProposals={finalResult.fixProposals}
+              findingsCount={finalResult.findingsCount}
+              findingsSeverity={finalResult.findingsSeverity}
+            />
 
             <details className="bg-slate-900/60 rounded-md">
               <summary className="px-3 py-2 text-sm cursor-pointer hover:bg-slate-900">Full orchestration log ({stepLogs.length} entries)</summary>

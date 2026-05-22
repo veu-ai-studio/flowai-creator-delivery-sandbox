@@ -46,6 +46,7 @@ const DEFAULT_WEIGHTS = Object.freeze({
   'phase-b-playwright': 1.0,
   'axe-core':           0.95,
   'runtime-diagnostics': 0.9,
+  'deep-browser-analysis': 0.85,
   'lighthouse':          0.7,
   'crawler':             0.7,
   'unattributed':        0.5,
@@ -62,6 +63,7 @@ export const ALLOWED_SOURCES = Object.freeze(new Set([
   'lighthouse',
   'axe-core',
   'runtime-diagnostics',
+  'deep-browser-analysis',
   'crawler',
   'phase-b-playwright',
   'unattributed',
@@ -120,6 +122,7 @@ function normalizeOne(raw, sourceTag) {
   const evaluatorVersion = raw.evaluatorVersion ?? '1.0';
   const confidence = clamp01(raw.confidence ?? 0.7);
   const evidenceType = raw.evidenceType ?? raw.category ?? 'unspecified';
+  const evidenceLevel = raw.evidenceLevel ?? 'INFERRED';
   const category = raw.category ?? raw.rule ?? raw.audit ?? 'uncategorized';
   const location = raw.location ?? raw.url ?? raw.target ?? '';
   const dimension = raw.dimension ?? 'functional_completeness';
@@ -148,6 +151,7 @@ function normalizeOne(raw, sourceTag) {
     }],
     confidence,
     evidenceType,
+    evidenceLevel,
   });
 }
 
@@ -187,6 +191,7 @@ function mergeTwo(a, b) {
     sources,
     confidence,
     evidenceType: a.evidenceType,
+    evidenceLevel: a.evidenceLevel ?? b.evidenceLevel ?? 'INFERRED',
   });
 }
 

@@ -251,6 +251,9 @@ export default async function handler(req, res) {
     findingsCount: typeof result?.findingsCount === 'number' ? result.findingsCount : null,
     findingsSeverity: result?.findingsSeverity && typeof result.findingsSeverity === 'object'
       ? result.findingsSeverity : null,
+    deepBrowserAnalysis: result?.deepBrowserAnalysis && typeof result.deepBrowserAnalysis === 'object'
+      ? result.deepBrowserAnalysis : null,
+    fixProposals: Array.isArray(result?.fixProposals) ? result.fixProposals : [],
     skippedSteps: Array.isArray(result?.skippedSteps) ? result.skippedSteps : [],
     runId,
   });
