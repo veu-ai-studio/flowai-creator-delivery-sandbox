@@ -26,6 +26,68 @@
 const WEIGHTS = Object.freeze({ critical: 10, high: 5, medium: 2, low: 0.5 });
 
 const ZERO_COUNTS = Object.freeze({ critical: 0, high: 0, medium: 0, low: 0 });
+const CEO95_INFERRED_CONFIDENCE = 0.6;
+
+const CEO95_LAYER_CATALOG = Object.freeze({
+  l1: Object.freeze({
+    label: 'Functional',
+    criteria: Object.freeze([
+      Object.freeze({ id: 'zero_runtime_console_errors', bucket: 'measured', label: 'Zero runtime/console errors', issueCategories: Object.freeze(['runtime-error', 'console-error']) }),
+      Object.freeze({ id: 'interactive_elements_respond', bucket: 'measured', label: 'All interactive elements respond', issueCategories: Object.freeze(['non-responsive-interactive', 'tap-target-too-small']) }),
+      Object.freeze({ id: 'no_unhandled_exceptions', bucket: 'measured', label: 'No unhandled exceptions', issueCategories: Object.freeze(['unhandled-exception', 'engine-error']) }),
+      Object.freeze({ id: 'no_dead_cards_or_broken_modals', bucket: 'measured', label: 'No dead cards or broken modals', issueCategories: Object.freeze(['dead-card', 'broken-modal']) }),
+      Object.freeze({ id: 'features_functional_dom_traversal', bucket: 'inferred', label: 'All features functional based on DOM traversal' }),
+      Object.freeze({ id: 'feature_completeness_vs_spec', bucket: 'requires_human', label: 'Feature completeness vs product spec' }),
+    ]),
+  }),
+  l2: Object.freeze({
+    label: 'Operational',
+    criteria: Object.freeze([
+      Object.freeze({ id: 'no_401_or_failed_network', bucket: 'measured', label: 'No 401s or failed network requests', issueCategories: Object.freeze(['auth-gate-leak', 'network-failure', 'network.http_401']) }),
+      Object.freeze({ id: 'assets_load_correctly', bucket: 'measured', label: 'Assets load correctly', issueCategories: Object.freeze(['console-error-404', 'missing-asset', 'asset-load-failure']) }),
+      Object.freeze({ id: 'api_endpoints_respond', bucket: 'measured', label: 'API endpoints respond', issueCategories: Object.freeze(['api-failure', 'network-failure']) }),
+      Object.freeze({ id: 'load_time_under_3s_lcp', bucket: 'inferred', label: 'Load time < 3s LCP when Lighthouse/load timing is available', issueCategories: Object.freeze(['slow-route']) }),
+      Object.freeze({ id: 'edge_case_crash_behavior', bucket: 'requires_human', label: 'Crash behavior under edge-case use' }),
+    ]),
+  }),
+  l3: Object.freeze({
+    label: 'Financial',
+    criteria: Object.freeze([
+      Object.freeze({ id: 'pricing_page_exists', bucket: 'measured', label: 'Pricing page exists and renders' }),
+      Object.freeze({ id: 'lead_capture_functional', bucket: 'measured', label: 'Lead capture form functional', issueCategories: Object.freeze(['broken-form', 'form-submit-failure']) }),
+      Object.freeze({ id: 'no_dead_end_funnels', bucket: 'measured', label: 'No dead-end funnels; CTAs resolve', issueCategories: Object.freeze(['broken-link', 'network-failure']) }),
+      Object.freeze({ id: 'checkout_flow_exists', bucket: 'inferred', label: 'Checkout flow exists by DOM path detection' }),
+      Object.freeze({ id: 'pricing_accuracy', bucket: 'requires_human', label: 'Pricing accuracy' }),
+      Object.freeze({ id: 'stripe_payment_processes', bucket: 'requires_human', label: 'Stripe/payment actually processes' }),
+      Object.freeze({ id: 'revenue_path_completeness', bucket: 'requires_human', label: 'Revenue path completeness vs business model' }),
+    ]),
+  }),
+  l4: Object.freeze({
+    label: 'Business',
+    criteria: Object.freeze([
+      Object.freeze({ id: 'no_orphaned_pages', bucket: 'measured', label: 'No orphaned pages; nav links resolve', issueCategories: Object.freeze(['broken-link', 'network-failure']) }),
+      Object.freeze({ id: 'mobile_viewport_renders', bucket: 'measured', label: 'Mobile viewport renders and responsive meta exists', issueCategories: Object.freeze(['missing-viewport-meta']) }),
+      Object.freeze({ id: 'accessibility_basics', bucket: 'measured', label: 'Accessibility basics met', issueCategories: Object.freeze(['accessibility-headings', 'missing-aria-label', 'image-missing-alt', 'color-contrast-violation']) }),
+      Object.freeze({ id: 'cta_clarity', bucket: 'inferred', label: 'CTA clarity by button/link text heuristics' }),
+      Object.freeze({ id: 'information_hierarchy', bucket: 'inferred', label: 'Information hierarchy by heading structure' }),
+      Object.freeze({ id: 'ux_effectiveness', bucket: 'requires_human', label: 'UX effectiveness judgment' }),
+      Object.freeze({ id: 'conversion_optimization', bucket: 'requires_human', label: 'Conversion optimization' }),
+    ]),
+  }),
+  l5: Object.freeze({
+    label: 'GTM',
+    criteria: Object.freeze([
+      Object.freeze({ id: 'seo_basics', bucket: 'measured', label: 'SEO basics: meta tags, OG, sitemap exists', issueCategories: Object.freeze(['missing-meta-description', 'missing-title', 'missing-og', 'missing-sitemap']) }),
+      Object.freeze({ id: 'demo_path_navigable', bucket: 'measured', label: 'Demo path navigable end to end', issueCategories: Object.freeze(['broken-modal', 'dead-card', 'network-failure']) }),
+      Object.freeze({ id: 'marketing_site_renders', bucket: 'measured', label: 'Marketing site renders' }),
+      Object.freeze({ id: 'typo_detection', bucket: 'inferred', label: 'Typo detection confidence-scored', issueCategories: Object.freeze(['typo', 'copy-typo']) }),
+      Object.freeze({ id: 'grammar_check', bucket: 'inferred', label: 'Grammar check heuristic', issueCategories: Object.freeze(['grammar-issue']) }),
+      Object.freeze({ id: 'copy_quality_tone', bucket: 'requires_human', label: 'Copy quality and tone' }),
+      Object.freeze({ id: 'brand_consistency', bucket: 'requires_human', label: 'Brand consistency' }),
+      Object.freeze({ id: 'ai_synthetic_typo_detection', bucket: 'requires_human', label: 'AI-synthetic typo detection needs LLM review' }),
+    ]),
+  }),
+});
 
 function isPlainSeverity(s) {
   return s === 'critical' || s === 'high' || s === 'medium' || s === 'low';
@@ -165,6 +227,231 @@ function makeIssue(severity, category, location, evidence) {
   return Object.freeze({ severity, category, location, evidence });
 }
 
+function normalizeText(value) {
+  return typeof value === 'string' ? value.toLowerCase() : '';
+}
+
+function allPageText(crawlOutput) {
+  const pages = Array.isArray(crawlOutput?.pages) ? crawlOutput.pages : [];
+  return pages.map((p) => `${p?.url ?? ''} ${p?.title ?? ''} ${p?.text ?? ''}`).join('\n').toLowerCase();
+}
+
+function issueMatches(issue, categories = []) {
+  if (!issue || typeof issue !== 'object') return false;
+  const category = normalizeText(issue.category);
+  const evidence = normalizeText(issue.evidence);
+  const location = normalizeText(issue.location);
+  return categories.some((c) => {
+    const needle = normalizeText(c);
+    return category === needle || category.includes(needle) || evidence.includes(needle) || location.includes(needle);
+  });
+}
+
+function hasIssue(issues, categories = []) {
+  if (!Array.isArray(issues) || categories.length === 0) return false;
+  return issues.some((issue) => issueMatches(issue, categories));
+}
+
+function hasSuccessfulPage(crawlOutput) {
+  const pages = Array.isArray(crawlOutput?.pages) ? crawlOutput.pages : [];
+  return pages.some((p) => {
+    const statusOk = typeof p?.statusCode !== 'number' || (p.statusCode >= 200 && p.statusCode < 400);
+    const hasText = typeof p?.text === 'string' && p.text.trim().length > 0;
+    return statusOk && hasText;
+  });
+}
+
+function pageHasKeyword(crawlOutput, re) {
+  return re.test(allPageText(crawlOutput));
+}
+
+function hasLeadCaptureSignal(crawlOutput) {
+  const text = allPageText(crawlOutput);
+  if (/\b(contact|book a demo|get started|join waitlist|sign up|subscribe|request demo)\b/i.test(text)) return true;
+  const pages = Array.isArray(crawlOutput?.pages) ? crawlOutput.pages : [];
+  return pages.some((p) => {
+    const interactives = Array.isArray(p?.interactives) ? p.interactives : [];
+    return interactives.some((item) => /\b(form|email|submit|demo|contact)\b/i.test(JSON.stringify(item ?? '')));
+  });
+}
+
+function hasCtaSignal(crawlOutput) {
+  return pageHasKeyword(crawlOutput, /\b(get started|start|try|demo|book|contact|sign up|subscribe|buy|pricing|learn more)\b/i);
+}
+
+function hasHeadingHierarchy(crawlOutput) {
+  const pages = Array.isArray(crawlOutput?.pages) ? crawlOutput.pages : [];
+  return pages.some((p) => {
+    const headings = Array.isArray(p?.headings) ? p.headings : [];
+    return headings.some((h) => (
+      (typeof h === 'string' && /^h1\b/i.test(h)) ||
+      (h && typeof h === 'object' && (h.tag === 'h1' || h.level === 1))
+    ));
+  });
+}
+
+function hasSeoSignal(crawlOutput, issues) {
+  if (hasIssue(issues, ['missing-meta-description', 'missing-title', 'missing-og', 'missing-sitemap'])) return false;
+  const text = allPageText(crawlOutput);
+  const pages = Array.isArray(crawlOutput?.pages) ? crawlOutput.pages : [];
+  const hasSitemapReference = /sitemap\.xml/i.test(JSON.stringify(crawlOutput ?? {}));
+  return pages.length > 0 && (text.length > 0 || hasSitemapReference);
+}
+
+function evaluateCriterion({ criterion, crawlOutput, issues }) {
+  const issueFailed = Array.isArray(criterion.issueCategories)
+    ? hasIssue(issues, criterion.issueCategories)
+    : false;
+  let passed = !issueFailed;
+  let evidence = issueFailed ? 'matching finding present' : 'no matching finding observed';
+
+  switch (criterion.id) {
+    case 'features_functional_dom_traversal':
+      passed = hasSuccessfulPage(crawlOutput) && !hasIssue(issues, ['dead-card', 'broken-modal', 'engine-error']);
+      evidence = passed ? 'DOM traversal completed without mapped feature blockers' : 'DOM traversal lacks enough clean feature signal';
+      break;
+    case 'load_time_under_3s_lcp':
+      passed = !hasIssue(issues, ['slow-route']);
+      evidence = passed ? 'no slow-route finding observed' : 'slow-route finding observed';
+      break;
+    case 'pricing_page_exists':
+      passed = pageHasKeyword(crawlOutput, /\b(pricing|price|plan|plans|\$|per month|subscription)\b/i);
+      evidence = passed ? 'pricing signal found in crawled pages' : 'pricing signal not found in crawled pages';
+      break;
+    case 'lead_capture_functional':
+      passed = hasLeadCaptureSignal(crawlOutput) && !issueFailed;
+      evidence = passed ? 'lead-capture CTA/form signal found and no form failure observed' : 'lead-capture signal missing or broken';
+      break;
+    case 'checkout_flow_exists':
+      passed = pageHasKeyword(crawlOutput, /\b(checkout|stripe|buy now|subscribe|payment|cart)\b/i);
+      evidence = passed ? 'checkout/payment path signal found' : 'checkout/payment path signal not found';
+      break;
+    case 'mobile_viewport_renders':
+      evidence = passed ? 'no missing viewport finding observed' : 'missing viewport finding observed';
+      break;
+    case 'cta_clarity':
+      passed = hasCtaSignal(crawlOutput);
+      evidence = passed ? 'clear CTA text found' : 'clear CTA text not found';
+      break;
+    case 'information_hierarchy':
+      passed = hasHeadingHierarchy(crawlOutput);
+      evidence = passed ? 'heading hierarchy signal found' : 'heading hierarchy signal missing';
+      break;
+    case 'seo_basics':
+      passed = hasSeoSignal(crawlOutput, issues);
+      evidence = passed ? 'no SEO basics finding observed and crawl rendered content' : 'SEO basics signal missing or finding present';
+      break;
+    case 'marketing_site_renders':
+      passed = hasSuccessfulPage(crawlOutput);
+      evidence = passed ? 'at least one rendered page with text content' : 'no rendered marketing page with text content';
+      break;
+    case 'typo_detection':
+    case 'grammar_check':
+      evidence = issueFailed ? 'copy finding present' : 'no heuristic copy finding observed';
+      break;
+    default:
+      if (criterion.bucket === 'requires_human') {
+        passed = false;
+        evidence = 'requires human, credentialed, or registered-repo verification';
+      }
+      break;
+  }
+
+  return { passed, evidence, confidence: criterion.bucket === 'inferred' ? CEO95_INFERRED_CONFIDENCE : 1 };
+}
+
+export function computeCeo95Criteria({ crawlOutput = null, issues = [] } = {}) {
+  const layers = {};
+  const layerScores = {};
+  const potentialLayerScores = {};
+  const blockedLayerScores = {};
+  const summary = {
+    measurableNow: { passed: 0, total: 0 },
+    inferredWithConfidence: { passed: 0, total: 0 },
+    notYetMeasurable: { total: 0 },
+  };
+
+  for (const [layerKey, layer] of Object.entries(CEO95_LAYER_CATALOG)) {
+    const criteria = [];
+    const weight = 20 / layer.criteria.length;
+    let verifiedPoints = 0;
+    let inferredPoints = 0;
+    let blockedPoints = 0;
+
+    for (const criterion of layer.criteria) {
+      const result = evaluateCriterion({ criterion, crawlOutput, issues });
+      let pointsAwarded = 0;
+      let potentialPoints = 0;
+      let blocked = 0;
+
+      if (criterion.bucket === 'measured') {
+        summary.measurableNow.total += 1;
+        if (result.passed) {
+          summary.measurableNow.passed += 1;
+          pointsAwarded = weight;
+          verifiedPoints += weight;
+        }
+      } else if (criterion.bucket === 'inferred') {
+        summary.inferredWithConfidence.total += 1;
+        if (result.passed) {
+          summary.inferredWithConfidence.passed += 1;
+          potentialPoints = weight * CEO95_INFERRED_CONFIDENCE;
+          inferredPoints += potentialPoints;
+        }
+      } else {
+        summary.notYetMeasurable.total += 1;
+        blocked = weight;
+        blockedPoints += weight;
+      }
+
+      criteria.push(Object.freeze({
+        id: criterion.id,
+        label: criterion.label,
+        bucket: criterion.bucket,
+        passed: result.passed,
+        confidence: result.confidence,
+        pointsAwarded: Number(pointsAwarded.toFixed(2)),
+        potentialPoints: Number(potentialPoints.toFixed(2)),
+        blockedPoints: Number(blocked.toFixed(2)),
+        evidence: result.evidence,
+      }));
+    }
+
+    const verified = Number(verifiedPoints.toFixed(2));
+    const inferred = Number(inferredPoints.toFixed(2));
+    const blocked = Number(blockedPoints.toFixed(2));
+    layers[layerKey] = Object.freeze({
+      label: layer.label,
+      maxPoints: 20,
+      verifiedPoints: verified,
+      inferredPoints: inferred,
+      blockedPoints: blocked,
+      criteria: Object.freeze(criteria),
+    });
+    layerScores[layerKey] = verified;
+    potentialLayerScores[layerKey] = Number((verified + inferred).toFixed(2));
+    blockedLayerScores[layerKey] = blocked;
+  }
+
+  const verifiedScore = Number(Object.values(layerScores).reduce((sum, v) => sum + v, 0).toFixed(2));
+  const potentialScore = Number(Object.values(potentialLayerScores).reduce((sum, v) => sum + v, 0).toFixed(2));
+  const blockedScore = Number(Object.values(blockedLayerScores).reduce((sum, v) => sum + v, 0).toFixed(2));
+
+  return Object.freeze({
+    version: 'ceo-95-criteria.v1',
+    verifiedScore,
+    potentialScore,
+    blockedScore,
+    layerScores: Object.freeze(layerScores),
+    potentialLayerScores: Object.freeze(potentialLayerScores),
+    blockedLayerScores: Object.freeze(blockedLayerScores),
+    layers: Object.freeze(layers),
+    summary: Object.freeze(summary),
+    scoringRule: 'Measured criteria count toward verifiedScore; inferred criteria count only toward potentialScore with confidence; requires_human criteria are blocked until verified.',
+    true95Requirement: 'A true 95/100 requires measured, inferred, and human-required criteria to be verified.',
+  });
+}
+
 function deriveErrorIssues(crawlOutput) {
   const issues = [];
   const errs = Array.isArray(crawlOutput?.errors) ? crawlOutput.errors : [];
@@ -292,7 +579,17 @@ export function scoreCrawlOutput(crawlOutput, extraFindings = null) {
   ) : [];
   const issues = [...phaseAIssues, ...phaseBIssues];
   const verdict = computeGtmReadiness({ issues });
-  return { ...verdict, issues, phaseACount: phaseAIssues.length, phaseBCount: phaseBIssues.length };
+  const ceo95Criteria = computeCeo95Criteria({ crawlOutput, issues });
+  return {
+    ...verdict,
+    issues,
+    phaseACount: phaseAIssues.length,
+    phaseBCount: phaseBIssues.length,
+    ceo95Criteria,
+    verifiedScore: ceo95Criteria.verifiedScore,
+    potentialScore: ceo95Criteria.potentialScore,
+    blockedScore: ceo95Criteria.blockedScore,
+  };
 }
 
 export const __internals = Object.freeze({
@@ -307,4 +604,6 @@ export const __internals = Object.freeze({
   deriveErrorIssues,
   derivePageIssues,
   deriveBrokenLinkIssues,
+  CEO95_LAYER_CATALOG,
+  evaluateCriterion,
 });

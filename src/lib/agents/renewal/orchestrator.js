@@ -1217,6 +1217,7 @@ export async function runOrchestration(args = {}) {
           gtmScore: preGtm.score,
           gtmBand: preGtm.band,
           gtmCounts: preGtm.counts,
+          ceo95Criteria: preGtm.ceo95Criteria ?? null,
           surfaceOnlyGtmScore: preGtm.score,
           surfaceOnlyGtmCounts: preGtm.counts,
           phaseBContribution: 0,
@@ -1495,6 +1496,7 @@ export async function runOrchestration(args = {}) {
             gtmScore: preGtm.score,
             gtmBand: preGtm.band,
             gtmCounts: preGtm.counts,
+            ceo95Criteria: preGtm.ceo95Criteria ?? null,
             // D41 T5 — surface-only vs comprehensive-Phase-B breakdown.
             surfaceOnlyGtmScore: preGtmSurfaceOnly.score,
             surfaceOnlyGtmCounts: preGtmSurfaceOnly.counts,
@@ -2588,6 +2590,7 @@ export async function runOrchestration(args = {}) {
           gtmScore: postGtm.score,
           gtmBand: postGtm.band,
           gtmCounts: postGtm.counts,
+          ceo95Criteria: postGtm.ceo95Criteria ?? null,
           surfaceOnlyGtmScore: postGtmSurfaceOnly.score,
           surfaceOnlyGtmCounts: postGtmSurfaceOnly.counts,
           phaseBContribution: (postGtmSurfaceOnly.score ?? postGtm.score) - postGtm.score,
@@ -2725,6 +2728,7 @@ export async function runOrchestration(args = {}) {
           gtmScore: postGtm.score,
           gtmBand: postGtm.band,
           gtmCounts: postGtm.counts,
+          ceo95Criteria: postGtm.ceo95Criteria ?? null,
           surfaceOnlyGtmScore: postGtmSurfaceOnly.score,
           surfaceOnlyGtmCounts: postGtmSurfaceOnly.counts,
           phaseBContribution: postGtmSurfaceOnly.score - postGtm.score,
@@ -3219,6 +3223,7 @@ export async function runOrchestration(args = {}) {
         gtmReady: canonicalGtmReady,
         previewUrl: finalPreviewUrl,
         prUrl: pr?.prHtmlUrl ?? null,
+        ceo95Criteria: lastPostGtm?.ceo95Criteria ?? null,
         // W6 INTEGRATION — STEP 4: CA-18 §2 honest disclosure.
         dimensions_contributing: dimensionsContributing,
         // CAPABILITY-WEIGHTED SCORING — finalScore above is the raw
@@ -3288,6 +3293,7 @@ export async function runOrchestration(args = {}) {
     gtmReady: canonicalGtmReady,
     gtmBand: finalGtmBand,
     gtmCounts: lastPostGtm?.counts ?? null,
+    ceo95Criteria: lastPostGtm?.ceo95Criteria ?? null,
     exitReason,
     originalScore: originalGtmScore ?? 0,
     finalScore: finalGtmScore,

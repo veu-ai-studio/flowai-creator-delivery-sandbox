@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeGtmReadiness,
+  computeCeo95Criteria,
   countSeverities,
   deriveIssuesFromCrawl,
   scoreCrawlOutput,
@@ -317,5 +318,80 @@ describe('scoreCrawlOutput — end-to-end convenience', () => {
     expect(out.score).toBe(76);
     expect(out.band).toBe('demo-ready');
     expect(out.counts).toEqual({ critical: 1, high: 2, medium: 2, low: 0 });
+  });
+});
+
+describe('CEO-defined 95/100 criteria provenance', () => {
+  it('separates measured, inferred, and human-required criteria without fake precision', () => {
+    const criteria = computeCeo95Criteria({
+      crawlOutput: {
+        pages: [
+          {
+            url: 'https://product.example/pricing',
+            statusCode: 200,
+            loadTimeMs: 1200,
+            headings: [{ tag: 'h1', text: 'Pricing' }],
+            text: 'Pricing plans. Book a demo. Get started. Subscribe with Stripe checkout.',
+            interactives: [{ role: 'button', text: 'Book a demo' }],
+          },
+        ],
+        errors: [],
+        brokenLinks: [],
+      },
+      issues: [],
+    });
+
+    expect(criteria.version).toBe('ceo-95-criteria.v1');
+    expect(criteria.verifiedScore).toBeGreaterThan(0);
+    expect(criteria.potentialScore).toBeGreaterThan(criteria.verifiedScore);
+    expect(criteria.blockedScore).toBeGreaterThan(0);
+    expect(criteria.summary.measurableNow.total).toBeGreaterThan(0);
+    expect(criteria.summary.inferredWithConfidence.total).toBeGreaterThan(0);
+    expect(criteria.summary.notYetMeasurable.total).toBeGreaterThan(0);
+    expect(criteria.layers.l3.criteria.find((c) => c.id === 'pricing_accuracy')).toMatchObject({
+      bucket: 'requires_human',
+      pointsAwarded: 0,
+    });
+  });
+
+  it('deducts measured criteria when matching findings are present', () => {
+    const clean = computeCeo95Criteria({
+      crawlOutput: {
+        pages: [{ url: 'https://product.example/', statusCode: 200, headings: [{ tag: 'h1', text: 'Home' }], text: 'Get started' }],
+        errors: [],
+        brokenLinks: [],
+      },
+      issues: [],
+    });
+    const withConsoleError = computeCeo95Criteria({
+      crawlOutput: {
+        pages: [{ url: 'https://product.example/', statusCode: 200, headings: [{ tag: 'h1', text: 'Home' }], text: 'Get started' }],
+        errors: [],
+        brokenLinks: [],
+      },
+      issues: [{ severity: 'medium', category: 'console-error', location: 'https://product.example/', evidence: 'TypeError' }],
+    });
+
+    expect(withConsoleError.layers.l1.verifiedPoints).toBeLessThan(clean.layers.l1.verifiedPoints);
+    expect(withConsoleError.layers.l1.criteria.find((c) => c.id === 'zero_runtime_console_errors')).toMatchObject({
+      bucket: 'measured',
+      passed: false,
+      pointsAwarded: 0,
+    });
+  });
+
+  it('attaches CEO-95 score provenance to crawl scoring output', () => {
+    const out = scoreCrawlOutput({
+      pages: [{ url: 'https://x/pricing', statusCode: 200, headings: [{ tag: 'h1', text: 'Pricing' }], text: 'Pricing. Contact us. Get started.' }],
+      errors: [],
+      brokenLinks: [],
+    });
+
+    expect(out.ceo95Criteria).toMatchObject({
+      version: 'ceo-95-criteria.v1',
+      verifiedScore: out.verifiedScore,
+      potentialScore: out.potentialScore,
+      blockedScore: out.blockedScore,
+    });
   });
 });

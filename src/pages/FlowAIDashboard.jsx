@@ -213,16 +213,20 @@ export default function FlowAIDashboard() {
       if (l && (l.step === 5 || l.step === 11) && l.result && typeof l.result === 'object') {
         const r = l.result;
         const hasScore = typeof r.gtmScore === 'number'
+          || typeof r.ceo95Criteria?.verifiedScore === 'number'
           || typeof r.fiveLayerInternal === 'number'
           || typeof r.preScore === 'number'
           || typeof r.postScore === 'number';
         if (hasScore) {
+          const ceo95Layers = r.ceo95Criteria?.layerScores && typeof r.ceo95Criteria.layerScores === 'object'
+            ? r.ceo95Criteria.layerScores
+            : null;
           return {
             // §7.6 canonical score is the headline number; Five-Layer
             // internal total is the fallback for runs that only carry
             // telemetry data.
-            total: r.gtmScore ?? r.postScore ?? r.preScore ?? r.fiveLayerInternal ?? 0,
-            ...(r.layers && typeof r.layers === 'object' ? r.layers : {}),
+            total: r.ceo95Criteria?.verifiedScore ?? r.gtmScore ?? r.postScore ?? r.preScore ?? r.fiveLayerInternal ?? 0,
+            ...(ceo95Layers ?? (r.layers && typeof r.layers === 'object' ? r.layers : {})),
           };
         }
       }
@@ -794,6 +798,26 @@ export default function FlowAIDashboard() {
                 </p>
               </div>
             </div>
+
+            {finalResult.ceo95Criteria && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <div className="rounded-md bg-slate-900/60 px-3 py-2">
+                  <p className="text-[10px] text-slate-500 uppercase">Verified CEO-95 score</p>
+                  <p className="text-2xl font-bold text-emerald-400">{finalResult.ceo95Criteria.verifiedScore}<span className="text-xs text-slate-500">/100</span></p>
+                  <p className="text-[10px] text-slate-500">measured criteria only</p>
+                </div>
+                <div className="rounded-md bg-slate-900/60 px-3 py-2">
+                  <p className="text-[10px] text-slate-500 uppercase">Potential score</p>
+                  <p className="text-2xl font-bold text-blue-300">{finalResult.ceo95Criteria.potentialScore}<span className="text-xs text-slate-500">/100</span></p>
+                  <p className="text-[10px] text-slate-500">measured + inferred confidence</p>
+                </div>
+                <div className="rounded-md bg-slate-900/60 px-3 py-2">
+                  <p className="text-[10px] text-slate-500 uppercase">Blocked verification</p>
+                  <p className="text-2xl font-bold text-amber-300">{finalResult.ceo95Criteria.blockedScore}<span className="text-xs text-slate-500"> pts</span></p>
+                  <p className="text-[10px] text-slate-500">human/repo/payment proof required</p>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2">
               {finalResult.previewUrl && (
