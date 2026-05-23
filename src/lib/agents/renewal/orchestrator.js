@@ -2336,57 +2336,75 @@ export async function runOrchestration(args = {}) {
     const postFixUrl = (deployDegraded || !previewUrl) ? currentUrl : previewUrl;
     let postFixEvaluationOutput = null;
     let postFixSnapshot = null;
-    try {
-      const t0 = Date.now();
-      postFixEvaluationOutput = await _runEvaluationPipeline({
-        url: postFixUrl,
-        options: {
-          phaseBFindings: [],
-          onStep: (evt) => {
-            try {
-              emit(makeStepLog({
-                iteration: iterationNumber, step: 11,
-                status: evt?.log?.ok === false ? 'degraded' : 'complete',
-                tool: `evaluationPipeline:${evt?.log?.evaluator ?? 'unknown'} (PHASE C post-fix)`,
-                why: 'Phase C post-fix evaluator complete signal',
-                result: evt?.log ?? null,
-                mode: state.mode,
-              }));
-            } catch { /* swallow */ }
-          },
-        },
-      });
-      postFixSnapshot = await _capturePostFixSnapshot({
-        url: postFixUrl,
-        evaluationResult: postFixEvaluationOutput,
-        runEvaluationPipeline: _runEvaluationPipeline,
-      });
-      state.transformationPostFix = postFixSnapshot;
-      emit(makeStepLog({
-        iteration: iterationNumber, step: 11, status: postFixEvaluationOutput?.ok ? 'complete' : 'degraded',
-        tool: 'verification.capturePostFixSnapshot (PHASE C)',
-        why: 'capture after snapshot using the same evaluator pipeline against deployed preview',
-        result: {
-          url: postFixSnapshot.url,
-          lighthouseScores: postFixSnapshot.lighthouseScores,
-          axeViolations: postFixSnapshot.axeViolations,
-          runtimeErrors: postFixSnapshot.runtimeErrors,
-          consoleErrors: postFixSnapshot.consoleErrors,
-          totalFindings: postFixSnapshot.totalFindings,
-          errors: postFixEvaluationOutput?.errors ?? {},
-        },
-        durationMs: Date.now() - t0, mode: state.mode,
-      }));
-    } catch (snapshotErr) {
-      postFixSnapshot = null;
+    const shouldVerifyPostFixDelta = !!previewUrl && !deployDegraded;
+    if (!shouldVerifyPostFixDelta) {
       state.transformationPostFix = null;
       emit(makeStepLog({
-        iteration: iterationNumber, step: 11, status: 'degraded',
+        iteration: iterationNumber, step: 11, status: 'skipped',
         tool: 'verification.capturePostFixSnapshot (PHASE C)',
-        why: 'post-fix delta snapshot failed; continuing with existing scoring path',
-        result: { error: (snapshotErr?.message ?? String(snapshotErr)).slice(0, 200) },
+        why: 'skip transformation delta when no patched preview deployment exists',
+        result: {
+          skipped: 'no_post_fix_preview',
+          previewUrl: previewUrl ?? null,
+          deployDegraded,
+          universalMode: !!state.universalMode,
+        },
         mode: state.mode,
       }));
+    } else {
+      try {
+        const t0 = Date.now();
+        postFixEvaluationOutput = await _runEvaluationPipeline({
+          url: postFixUrl,
+          options: {
+            phaseBFindings: [],
+            ...evaluationRuntimeOptions,
+            onStep: (evt) => {
+              try {
+                emit(makeStepLog({
+                  iteration: iterationNumber, step: 11,
+                  status: evt?.log?.ok === false ? 'degraded' : 'complete',
+                  tool: `evaluationPipeline:${evt?.log?.evaluator ?? 'unknown'} (PHASE C post-fix)`,
+                  why: 'Phase C post-fix evaluator complete signal',
+                  result: evt?.log ?? null,
+                  mode: state.mode,
+                }));
+              } catch { /* swallow */ }
+            },
+          },
+        });
+        postFixSnapshot = await _capturePostFixSnapshot({
+          url: postFixUrl,
+          evaluationResult: postFixEvaluationOutput,
+          runEvaluationPipeline: _runEvaluationPipeline,
+        });
+        state.transformationPostFix = postFixSnapshot;
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 11, status: postFixEvaluationOutput?.ok ? 'complete' : 'degraded',
+          tool: 'verification.capturePostFixSnapshot (PHASE C)',
+          why: 'capture after snapshot using the same evaluator pipeline against deployed preview',
+          result: {
+            url: postFixSnapshot.url,
+            lighthouseScores: postFixSnapshot.lighthouseScores,
+            axeViolations: postFixSnapshot.axeViolations,
+            runtimeErrors: postFixSnapshot.runtimeErrors,
+            consoleErrors: postFixSnapshot.consoleErrors,
+            totalFindings: postFixSnapshot.totalFindings,
+            errors: postFixEvaluationOutput?.errors ?? {},
+          },
+          durationMs: Date.now() - t0, mode: state.mode,
+        }));
+      } catch (snapshotErr) {
+        postFixSnapshot = null;
+        state.transformationPostFix = null;
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 11, status: 'degraded',
+          tool: 'verification.capturePostFixSnapshot (PHASE C)',
+          why: 'post-fix delta snapshot failed; continuing with existing scoring path',
+          result: { error: (snapshotErr?.message ?? String(snapshotErr)).slice(0, 200) },
+          mode: state.mode,
+        }));
+      }
     }
 
     // STEP 11 — Five-Layer Scoring (Post-Fix).

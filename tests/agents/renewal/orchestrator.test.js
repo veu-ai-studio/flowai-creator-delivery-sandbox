@@ -1120,7 +1120,9 @@ describe('orchestrator — STEP 10 Vercel failure non-fatal (DISPATCH 29)', () =
       // STEP 11 ran (post-score computed).
       const step11Logs = result.orchestrationLog.filter((l) => l.step === 11);
       expect(step11Logs.length).toBeGreaterThan(0);
-      expect(step11Logs[0].status).toBe('complete');
+      const scorerLog = step11Logs.find((l) => typeof l.tool === 'string' && l.tool.includes('post-fix re-crawl'));
+      expect(scorerLog).toBeDefined();
+      expect(scorerLog.status).toBe('complete');
     } finally { clearVercelEnv(); }
   });
 });
@@ -2177,6 +2179,33 @@ describe('orchestrator — UNIVERSAL mode (DISPATCH U1)', () => {
     expect(result.runMode).toBe('UNIVERSAL');
     expect(result.findingsCount).toBe(3);
     expect(result.findingsSeverity).toEqual({ critical: 0, high: 1, medium: 1, low: 1 });
+  });
+
+  it('skips Phase C post-fix snapshot when UNIVERSAL mode has no patched preview', async () => {
+    const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
+    base.discoverProduct = vi.fn(async () => null);
+    base.capturePostFixSnapshot = vi.fn(async () => {
+      throw new Error('post-fix snapshot should not run without a preview');
+    });
+    const stepLogs = [];
+
+    const result = await runOrchestration({
+      url: 'https://unknown-example.com',
+      mode: 'auto',
+      gtmTarget: 95,
+      maxIterations: 1,
+      deps: base,
+      onStep: (log) => stepLogs.push(log),
+    });
+
+    expect(result.runMode).toBe('UNIVERSAL');
+    expect(base.capturePostFixSnapshot).not.toHaveBeenCalled();
+    expect(stepLogs.some((log) => (
+      log.step === 11
+      && log.status === 'skipped'
+      && log.tool === 'verification.capturePostFixSnapshot (PHASE C)'
+      && log.result?.skipped === 'no_post_fix_preview'
+    ))).toBe(true);
   });
 
   it('logs every skipped deployment step in governance with autoFixSkippedReason=UNIVERSAL_NO_REPO_ACCESS', async () => {
