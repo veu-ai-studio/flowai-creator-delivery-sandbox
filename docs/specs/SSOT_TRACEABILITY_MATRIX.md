@@ -1,9 +1,9 @@
 # SSOT Claim-to-Runtime Traceability Matrix
 
-**Generated:** 2026-05-21T22:26:03Z
-**HEAD commit:** `158a427293f2987b287759af0b3503f7bb7d4a98`
+**Generated:** 2026-05-22T21:55:00Z
+**HEAD commit:** `733c9ba`
 **Branch:** `flowai-v0.1`
-**Production commit:** `158a427293f2987b287759af0b3503f7bb7d4a98` (observed via `GET /api/version` on `flowai-mil59ba8z-veu-ai-studio.vercel.app` at 2026-05-21T22:26:03Z - production currently matches the matrix HEAD commit; runtime exposes commit identity honestly via `/api/version`)
+**Production commit:** `733c9ba` target for W07-complete deployment (FlowAI first clean run observed after W07 fixes; runtime still exposes commit identity honestly via `/api/version`)
 **Governance status:** `PROPOSED_GOVERNANCE`
 **Panel artifact:** `UNAVAILABLE` (no traceability-matrix Panel ratification artifact found in `docs/panel-consultations/`)
 **Companion sidecar:** [`SSOT_TRACEABILITY_MATRIX.sidecar.json`](./SSOT_TRACEABILITY_MATRIX.sidecar.json)
@@ -123,6 +123,47 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 
 ---
 
+## §4.1 W07 completion update
+
+**SSOT vision completion estimate:** approximately **55%** complete, upgraded from the prior approximately **35%** estimate. This is still an honest partial state: FlowAI can now see, score, report, and recommend against a live product, but U6/U7 are required before it can complete the operator-approved act-and-verify loop.
+
+### Complete after W07
+
+| Capability | Status | Evidence |
+|---|---|---|
+| U3 - Deep runtime engineering analysis | COMPLETE | Multi-engine runtime path emits console/network/runtime/accessibility findings in Engineering Findings Report. |
+| U4 - Registered repo source mapping | COMPLETE | Product registry and source-mapping pipeline resolve registered product repo metadata and produce source-map envelopes. |
+| U5 - Source-mapped recommendation generator | COMPLETE | `src/lib/sourceMapping/sourceMappedFixGenerator.js`; recommendations render in Engineering Findings Report with `recommend_only` authority. |
+| VEU portfolio registration | COMPLETE | All 5 products registered: SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife. |
+| Pipeline timeout fixes | COMPLETE | Commits `125228f`, `96382b8`, `99fe759`, `1d24be6`, `3e08a7d`, `733c9ba`. |
+| Engineering Findings Report rendering | COMPLETE | Live FlowAI result card shows findings, severity counts, and U5 source-mapped recommendations. |
+| First clean live run on `saigeplatform.com` | COMPLETE | Live run produced real findings: 401 resource load, broken modal, dead card, network HTTP 401. |
+
+### In progress after W07
+
+| Capability | Status | Next action |
+|---|---|---|
+| U6 - PR + test + rollback workflow | IN PROGRESS | Build operator-approved PR workflow generator; never auto-merge; include rollback reference. |
+| U7 - Production verification + SSOT upgrade | IN PROGRESS | Build live post-deploy verifier that returns SSOT update content for Codex to commit. |
+
+### Pending after W07
+
+| Capability | Status | Next action |
+|---|---|---|
+| `saigeplatform.com` v2 | PENDING | Use FlowAI findings to drive SAIGE v2 remediation plan and implementation. |
+| FlowAI custom domain | PENDING | Configure canonical `flowai.veuaistudio.com` references while keeping `flowai-dun.vercel.app` functional until DNS is live. |
+
+### W08 locked sequencing
+
+1. SSOT traceability update.
+2. SAIGE v2 remediation brief.
+3. U6 PR workflow generator.
+4. U7 production verifier.
+5. FlowAI canonical production domain.
+6. Safe performance upgrade for longer score-goal runs.
+
+---
+
 ## §5 — Companion files
 
 | File | Purpose |
@@ -142,4 +183,4 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 
 ---
 
-*End of SSOT Traceability Matrix v1. Last advance: 2026-05-21 from HEAD `158a427` — `CA18-AUDIT-TRAIL` advanced to `VERIFIED`; `CA18-DEPLOY-TRUTH` advanced from `NOT_IMPLEMENTED` to `PARTIAL`. No product code changes accompany this document.*
+*End of SSOT Traceability Matrix v1. Last advance: 2026-05-22 from HEAD `733c9ba` - W07 completed first clean FlowAI run on `saigeplatform.com`, U3/U4/U5 live capability, Engineering Findings Report rendering, and timeout-stabilized universal-mode pipeline. U6/U7 remain in progress.*
