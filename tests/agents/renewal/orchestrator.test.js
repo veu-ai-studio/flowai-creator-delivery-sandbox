@@ -523,6 +523,16 @@ describe('orchestrator - GitHub operator token mode', () => {
       canWrite: true,
       reason: 'read_write_confirmed',
     });
+    expect(result.finalScore).toBe(60);
+    expect(result.totalDelta).toBe(0);
+    expect(stepLogs.find((log) => (
+      log.step === 11
+      && log.tool === 'gtmReadinessScorer (§7.6) + no-preview reuse'
+    ))?.result).toMatchObject({
+      reusedPreFixScore: true,
+      operatorMode: 'github_connected',
+      universalMode: false,
+    });
     expect(stepLogs.find((log) => log.step === 7 && log.tool.startsWith('fixGenerator'))?.status).not.toBe('skipped');
     expect(stepLogs.find((log) => log.step === 9 && log.tool.startsWith('githubBranchWriter'))?.status).toBe('complete');
     expect(deps.createRenewalBranch).toHaveBeenCalledWith(expect.objectContaining({
@@ -1227,7 +1237,7 @@ describe('orchestrator — STEP 10 Vercel failure non-fatal (DISPATCH 29)', () =
     } finally { clearVercelEnv(); }
   });
 
-  it('PATH A: degraded deploy still emits STEP 11 score against original URL', async () => {
+  it('PATH A: degraded deploy reuses the pre-fix score instead of fabricating a post-fix delta', async () => {
     withVercelEnv();
     try {
       const deployBranchPreview = vi.fn(async () => { throw new Error('build_error'); });
@@ -1239,12 +1249,16 @@ describe('orchestrator — STEP 10 Vercel failure non-fatal (DISPATCH 29)', () =
         url: null, mode: 'auto', runId: 'd29-step10-2', supabase: null,
         environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
       });
-      // STEP 11 ran (post-score computed).
+      // No patched preview exists, so STEP 11 reuses the pre-fix score
+      // rather than claiming a measured post-fix result.
       const step11Logs = result.orchestrationLog.filter((l) => l.step === 11);
       expect(step11Logs.length).toBeGreaterThan(0);
-      const scorerLog = step11Logs.find((l) => typeof l.tool === 'string' && l.tool.includes('post-fix re-crawl'));
+      const scorerLog = step11Logs.find((l) => typeof l.tool === 'string' && l.tool.includes('no-preview reuse'));
       expect(scorerLog).toBeDefined();
       expect(scorerLog.status).toBe('complete');
+      expect(scorerLog.result.reusedPreFixScore).toBe(true);
+      expect(result.finalScore).toBe(result.originalScore);
+      expect(result.totalDelta).toBe(0);
     } finally { clearVercelEnv(); }
   });
 });

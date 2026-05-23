@@ -2572,7 +2572,7 @@ export async function runOrchestration(args = {}) {
     // here too — same rationale as STEP 5 above. The post-fix score
     // benefits from the same crawl signal.
     let postScoreEnvelope;
-    if (state.universalMode && !previewUrl) {
+    if (!previewUrl) {
       postScoreEnvelope = preScoreEnvelope;
       lastPostScore = postScoreEnvelope.total;
       const postGtm = iterLog.preGtm ?? _scoreCrawlOutput(crawlOutput, state.phaseBFindings ?? null);
@@ -2583,7 +2583,7 @@ export async function runOrchestration(args = {}) {
       const log = makeStepLog({
         iteration: iterationNumber, step: 11, status: 'complete',
         tool: 'gtmReadinessScorer (§7.6) + no-preview reuse',
-        why: 'universal mode has no patched preview; reuse pre-fix score and finalize without redundant post-fix scoring',
+        why: 'no patched preview exists; reuse pre-fix score and finalize without fabricated post-fix scoring',
         result: {
           gtmScore: postGtm.score,
           gtmBand: postGtm.band,
@@ -2598,6 +2598,8 @@ export async function runOrchestration(args = {}) {
           postFixPhaseBSummary: null,
           postFixPhaseBFindingsCount: Array.isArray(state.phaseBFindings) ? state.phaseBFindings.length : 0,
           fiveLayerInternal: postScoreEnvelope.total,
+          universalMode: !!state.universalMode,
+          operatorMode: state.operatorMode ?? null,
           layers: {
             l1: postScoreEnvelope.l1, l2: postScoreEnvelope.l2, l3: postScoreEnvelope.l3,
             l4: postScoreEnvelope.l4, l5: postScoreEnvelope.l5,
