@@ -2,11 +2,10 @@ export const REGISTERED_PRODUCT_CONFIG = Object.freeze([
   Object.freeze({
     name: 'SAIGE',
     domain: 'saigeplatform.com',
-    repo: 'https://github.com/victor2081new-cloud/saige',
+    repo: 'https://github.com/veu-ai-studio/saige',
     branch: 'main',
     status: 'registered',
-    note: 'repo contains zip only - source mapping limited until codebase extracted',
-    systemNote: 'SAIGE repo registered. Full source codebase available at github.com/victor2081new-cloud/saige (main). U5 fix generation enabled.',
+    systemNote: 'SAIGE repo registered. Full source codebase available at github.com/veu-ai-studio/saige (main). U5/U6 fix generation enabled.',
   }),
   Object.freeze({
     name: 'RelTwin',

@@ -1,8 +1,7 @@
 -- Migration 0025 - register SAIGE source repository
 --
 -- Registry entry only. Agent-layer behavior remains product-agnostic.
--- The SAIGE repo currently contains saige-github-upload.zip only, so U4/U5
--- source mapping remains limited until the codebase is extracted to repo root.
+-- SAIGE now lives under the VEU AI Studio organization with full source.
 
 insert into public.product_registry (
   product_id,
@@ -15,7 +14,7 @@ insert into public.product_registry (
 ) values (
   'saige',
   'veu-ai-studio',
-  'https://github.com/victor2081new-cloud/saige',
+  'https://github.com/veu-ai-studio/saige',
   'https://saigeplatform.com',
   'prd',
   true,

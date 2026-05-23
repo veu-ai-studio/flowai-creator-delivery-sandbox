@@ -2,7 +2,7 @@
 
 **Product:** SAIGE  
 **Live URL:** https://saigeplatform.com  
-**Repo:** https://github.com/victor2081new-cloud/saige (`main`)  
+**Repo:** https://github.com/veu-ai-studio/saige (`main`)
 **Source of evidence:** FlowAI W07 clean run against `saigeplatform.com`  
 **Document status:** Recommendation only. No SAIGE source changes are made by this brief.
 
@@ -104,7 +104,7 @@ The highest-leverage remediation path is to fix the authorization failure first.
 
 Because this brief is generated from FlowAI runtime findings, the next SAIGE engineering pass should confirm exact files before editing:
 
-1. Clone or open `github.com/victor2081new-cloud/saige` at `main`.
+1. Clone or open `github.com/veu-ai-studio/saige` at `main`.
 2. Search for the failing 401 URL or endpoint path from browser Network logs.
 3. Search modal/card trigger text from FlowAI's finding evidence.
 4. Map each finding to exact file path and line number.
@@ -119,4 +119,3 @@ Because this brief is generated from FlowAI runtime findings, the next SAIGE eng
 - Modal trigger opens visible content or presents an honest disabled/locked state.
 - Card click either performs an action or is no longer styled as interactive.
 - FlowAI re-run shows `network.http_401`, 401 `console-error`, `broken-modal`, and `dead-card` resolved or downgraded with evidence.
-

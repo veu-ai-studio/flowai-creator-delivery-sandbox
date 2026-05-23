@@ -50,6 +50,7 @@ import {
   sourcePathForFinding,
 } from '../../sourceMapping/registeredRepoSourceMapper.js';
 import { generateSourceMappedFixProposals } from '../../sourceMapping/sourceMappedFixGenerator.js';
+import { findRegisteredProductConfigForUrl } from '../../products/registeredProductConfig.js';
 import { captureBaselineSnapshot } from '../../verification/baselineSnapshot.js';
 import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
 import { calculateTransformationDelta } from '../../verification/deltaCalculator.js';
@@ -188,6 +189,36 @@ function synthesizePathBProduct({ url, runId, detectedRepoUrl = null }) {
     // PATH B defaults per DISPATCH 24 spec.
     ...PATH_B_DEFAULT_CONFIG,
   };
+}
+
+function productIdFromRegisteredConfig(config) {
+  const source = config?.name || config?.domain || 'registered-product';
+  return sanitizeHostname(source).replace(/-/g, '') || 'registeredproduct';
+}
+
+function synthesizeOperatorConnectedProduct({ url, config }) {
+  return Object.freeze({
+    product_id: productIdFromRegisteredConfig(config),
+    org_id: 'veu-ai-studio',
+    github_repo_url: config.repo,
+    product_url: url,
+    self_renewal_enabled: true,
+    environment: 'prd',
+    self_renewal_branch: config.branch || 'main',
+    __operatorConnected: true,
+    __sourceUrl: url,
+    ...PATH_B_DEFAULT_CONFIG,
+  });
+}
+
+function resolveGithubOperatorToken(deps = {}) {
+  if (typeof deps.githubOperatorToken === 'string' && deps.githubOperatorToken.length > 0) {
+    return deps.githubOperatorToken;
+  }
+  if (typeof process?.env?.GITHUB_OPERATOR_TOKEN === 'string' && process.env.GITHUB_OPERATOR_TOKEN.length > 0) {
+    return process.env.GITHUB_OPERATOR_TOKEN;
+  }
+  return null;
 }
 
 /**
@@ -461,6 +492,8 @@ export async function runOrchestration(args = {}) {
   const onCheckpoint = typeof args.onCheckpoint === 'function' ? args.onCheckpoint : () => {};
   const onIteration = typeof args.onIteration === 'function' ? args.onIteration : () => {};
   const deps = args.deps || {};
+  const githubOperatorToken = resolveGithubOperatorToken(deps);
+  const operatorMode = githubOperatorToken ? 'github_connected' : 'universal';
 
   // Dep resolution (mockable for tests).
   const _discoverProduct        = deps.discoverProduct        || discoverProduct;
@@ -522,6 +555,7 @@ export async function runOrchestration(args = {}) {
   };
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
+  state.operatorMode = operatorMode;
   const orchestrationLog = [];
   const iterations = [];
 
@@ -532,6 +566,19 @@ export async function runOrchestration(args = {}) {
     orchestrationLog.push(log);
     try { onStep(log); } catch { /* swallow */ }
   };
+
+  emit(makeStepLog({
+    iteration: 0, step: 0, status: 'complete',
+    tool: 'GitHub operator credential mode',
+    why: 'select repo-write capability mode from GITHUB_OPERATOR_TOKEN availability',
+    result: {
+      kind: 'operator_mode',
+      operator_mode: operatorMode,
+      githubOperatorTokenPresent: !!githubOperatorToken,
+      tokenRedacted: true,
+    },
+    mode: state.mode,
+  }));
 
   // ── W6 INTEGRATION — STEP 3a Tool Intelligence wiring (CA-18 §6) ──────────
   //
@@ -637,6 +684,15 @@ export async function runOrchestration(args = {}) {
   try {
     const t0 = Date.now();
     product = await _discoverProduct({ url: args.url, supabase, runId });
+    const registeredOperatorProduct = githubOperatorToken && typeof args.url === 'string'
+      ? findRegisteredProductConfigForUrl(args.url)
+      : null;
+    if (registeredOperatorProduct && (!product || product.__pathB === true)) {
+      product = synthesizeOperatorConnectedProduct({
+        url: args.url,
+        config: registeredOperatorProduct,
+      });
+    }
     if (!product) {
       // DISPATCH U1 ITEM 3 — when discoverProduct returns null but the
       // caller supplied a URL, synthesize a minimal universal-mode
@@ -707,8 +763,10 @@ export async function runOrchestration(args = {}) {
         : {
             path: 'PATH A (known)',
             runMode: state.runMode,
+            operator_mode: state.operatorMode,
             productId: product.product_id,
             githubRepoUrl: product.github_repo_url,
+            operatorConnected: product.__operatorConnected === true,
           },
       durationMs: Date.now() - t0, mode: state.mode,
     }));
@@ -1441,8 +1499,14 @@ export async function runOrchestration(args = {}) {
       const parsed = parseGithubRepoUrl(githubRepoUrl);
       if (parsed) {
         try {
-          const minted = await _getInstallationToken();
-          token = minted.token;
+          let credentialSource = 'github_app_installation';
+          if (githubOperatorToken) {
+            token = githubOperatorToken;
+            credentialSource = 'GITHUB_OPERATOR_TOKEN';
+          } else {
+            const minted = await _getInstallationToken();
+            token = minted.token;
+          }
           const treeResult = await _fetchRepoFileList({
             owner: parsed.owner, repo: parsed.repo, ref: productBranch, token,
           });
@@ -1455,6 +1519,8 @@ export async function runOrchestration(args = {}) {
               filesCount: treeResult.files.length,
               sha: treeResult.sha ?? null,
               truncated: !!treeResult.truncated,
+              credentialSource,
+              tokenRedacted: true,
             };
             if (treeResult.files.length > 0) repoFileList = treeResult.files;
           } else {
@@ -1701,18 +1767,29 @@ export async function runOrchestration(args = {}) {
         const t0 = Date.now();
         let mintedNow = false;
         let expiresAt = null;
+        let credentialSource = token === githubOperatorToken && githubOperatorToken
+          ? 'GITHUB_OPERATOR_TOKEN'
+          : 'github_app_installation';
         if (!token) {
-          const minted = await _getInstallationToken();
-          token = minted.token;
-          expiresAt = minted.expiresAt;
-          mintedNow = true;
+          if (githubOperatorToken) {
+            token = githubOperatorToken;
+            credentialSource = 'GITHUB_OPERATOR_TOKEN';
+          } else {
+            const minted = await _getInstallationToken();
+            token = minted.token;
+            expiresAt = minted.expiresAt;
+            mintedNow = true;
+          }
         }
         const log = makeStepLog({
           iteration: iterationNumber, step: 8, status: 'complete',
-          tool: 'githubApp.js',
-          why: 'short-lived installation token (~9 min) for branch + PR writes',
+          tool: credentialSource === 'GITHUB_OPERATOR_TOKEN' ? 'GITHUB_OPERATOR_TOKEN' : 'githubApp.js',
+          why: 'repo-write credential for branch + PR writes',
           result: {
             tokenAcquired: true,
+            operator_mode: state.operatorMode,
+            credentialSource,
+            tokenRedacted: true,
             expiresAt,
             reusedFromHoist: !mintedNow,
           },
@@ -2269,6 +2346,30 @@ export async function runOrchestration(args = {}) {
             });
             emit(log); iterLog.steps.push(log);
           }
+        } else if (
+          state.operatorMode === 'github_connected'
+          && (!process.env.VERCEL_TOKEN
+            || !process.env.VERCEL_ORG_ID
+            || !resolveVercelProjectId(productId, process.env, product))
+        ) {
+          previewUrl = null;
+          deployDegraded = false;
+          const skipDetail = 'GitHub operator token connected; Vercel preview deploy requires separate Vercel credentials/project mapping';
+          emit(makeStepLog({
+            iteration: iterationNumber, step: 10, status: 'skipped',
+            tool: 'vercelBranchDeploy.js (PATH A operator branch deploy)',
+            why: 'preview deploy step (skipped - Vercel credential/project not available)',
+            result: {
+              skipped: skipDetail,
+              autoFixSkippedReason: 'VERCEL_PREVIEW_TOKEN_REQUIRED',
+              operator_mode: state.operatorMode,
+            },
+            durationMs: Date.now() - t0, mode: state.mode,
+          }));
+          state.skippedSteps.push({
+            iteration: iterationNumber, step: 10, tool: 'vercelBranchDeploy.js',
+            autoFixSkippedReason: 'VERCEL_PREVIEW_TOKEN_REQUIRED', detail: skipDetail,
+          });
         } else {
           // PATH A — operator branch deploy. No graceful-timeout wrapper here;
           // PATH A keeps the existing fail-fast semantic since operators expect
@@ -2909,6 +3010,28 @@ export async function runOrchestration(args = {}) {
       },
       mode: state.mode, canInterrupt: false,
     }));
+  } else if (
+    lastIter.branchName
+    && token
+    && state.operatorMode === 'github_connected'
+    && args.operatorApproval?.approved !== true
+  ) {
+    emit(makeStepLog({
+      iteration: iterations.length, step: 13, status: 'skipped',
+      tool: 'githubPrWriter.js (operator approval gate)',
+      why: 'human review gate - operator approval required before PR creation',
+      result: {
+        skipped: 'operator_approval_required',
+        autoFixSkippedReason: 'OPERATOR_APPROVAL_REQUIRED',
+        operator_mode: state.operatorMode,
+        branchName: lastIter.branchName,
+      },
+      mode: state.mode, canInterrupt: false,
+    }));
+    state.skippedSteps.push({
+      iteration: iterations.length, step: 13, tool: 'githubPrWriter.js',
+      autoFixSkippedReason: 'OPERATOR_APPROVAL_REQUIRED', detail: 'operatorApproval.approved must be true before PR creation',
+    });
   } else if (lastIter.branchName && token) {
     try {
       const t0 = Date.now();
@@ -3763,6 +3886,9 @@ export const __internals = Object.freeze({
   computeProgress,
   latestMeasuredScore,
   discoverProduct,
+  productIdFromRegisteredConfig,
+  synthesizeOperatorConnectedProduct,
+  resolveGithubOperatorToken,
   derivePrioritizedIssuesFromScore,
   prioritizeIssuesWithClaude,
   fetchRepoFileList,

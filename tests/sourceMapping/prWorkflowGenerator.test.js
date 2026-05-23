@@ -13,7 +13,7 @@ const RECOMMENDATION = Object.freeze({
 });
 
 const REPO_CONFIG = Object.freeze({
-  repo: 'https://github.com/victor2081new-cloud/saige',
+  repo: 'https://github.com/veu-ai-studio/saige',
   branch: 'main',
   testCommand: 'npm run test',
 });
@@ -64,7 +64,7 @@ describe('prWorkflowGenerator (U6)', () => {
 
     expect(workflow.authority).toBe('operator_approved');
     expect(workflow.blocked).toBe(false);
-    expect(workflow.prUrl).toContain('https://github.com/victor2081new-cloud/saige/compare/');
+    expect(workflow.prUrl).toContain('https://github.com/veu-ai-studio/saige/compare/');
     expect(workflow.prUrl).toContain('?expand=1');
     expect(workflow.testStatus).toMatchObject({
       status: 'pending',
@@ -79,6 +79,49 @@ describe('prWorkflowGenerator (U6)', () => {
     });
     expect(workflow.workflow.find((step) => step.step === 'rollback_on_failure')).toMatchObject({
       status: 'ready',
+    });
+  });
+
+  it('surfaces GitHub-connected token mode without leaking the token', () => {
+    const workflow = generatePrWorkflow({
+      recommendation: RECOMMENDATION,
+      repoConfig: REPO_CONFIG,
+      operatorApproval: { approved: true, approvedBy: 'victor' },
+      githubOperatorToken: 'gho_secret_operator_token',
+    });
+
+    expect(workflow.operatorMode).toBe('github_connected');
+    expect(workflow.credential).toEqual({
+      tokenEnvVar: 'GITHUB_OPERATOR_TOKEN',
+      tokenPresent: true,
+      tokenRedacted: true,
+    });
+    expect(JSON.stringify(workflow)).not.toContain('gho_secret_operator_token');
+    expect(workflow.workflow.find((step) => step.step === 'create_branch')).toMatchObject({
+      usesToken: true,
+      tokenEnvVar: 'GITHUB_OPERATOR_TOKEN',
+    });
+    expect(workflow.workflow.find((step) => step.step === 'open_pr')).toMatchObject({
+      usesToken: true,
+      tokenEnvVar: 'GITHUB_OPERATOR_TOKEN',
+    });
+    expect(workflow.rollbackRef.requiresTokenEnvVar).toBe('GITHUB_OPERATOR_TOKEN');
+  });
+
+  it('keeps PR creation blocked in connected mode until operator approval is explicit', () => {
+    const workflow = generatePrWorkflow({
+      recommendation: RECOMMENDATION,
+      repoConfig: REPO_CONFIG,
+      operatorApproval: { approved: false },
+      operatorTokenPresent: true,
+    });
+
+    expect(workflow.operatorMode).toBe('github_connected');
+    expect(workflow.authority).toBe('operator_approval_required');
+    expect(workflow.prUrl).toBeNull();
+    expect(workflow.workflow.find((step) => step.step === 'open_pr')).toMatchObject({
+      status: 'blocked',
+      usesToken: true,
     });
   });
 

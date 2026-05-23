@@ -9,6 +9,7 @@
 const APPROVED_AUTHORITY = 'operator_approved';
 const BLOCKED_AUTHORITY = 'operator_approval_required';
 const DEFAULT_TEST_COMMAND = 'npm test';
+const OPERATOR_TOKEN_ENV = 'GITHUB_OPERATOR_TOKEN';
 
 function stableId(input) {
   const s = JSON.stringify(input ?? {});
@@ -72,6 +73,7 @@ function makeRollbackRef({ branchName, repoConfig, recommendation }) {
     branchName,
     findingId: recommendation?.findingId ?? recommendation?.id ?? null,
     command: `git push origin ${repoConfig.branch}:${branchName} --force-with-lease`,
+    requiresTokenEnvVar: OPERATOR_TOKEN_ENV,
     oneClickLabel: 'Rollback PR branch to base',
   });
 }
@@ -86,9 +88,14 @@ export function generatePrWorkflow({
   recommendation,
   repoConfig,
   operatorApproval,
+  githubOperatorToken,
+  operatorTokenPresent,
 } = {}) {
   const normalizedRepo = normalizeRepoConfig(repoConfig);
   const approved = operatorApproval?.approved === true;
+  const tokenPresent = operatorTokenPresent === true
+    || (typeof githubOperatorToken === 'string' && githubOperatorToken.length > 0);
+  const operatorMode = tokenPresent ? 'github_connected' : 'universal';
   const branchName = makeBranchName({ recommendation, repoConfig: normalizedRepo });
   const rollbackRef = makeRollbackRef({ branchName, repoConfig: normalizedRepo, recommendation });
   const missing = [];
@@ -108,6 +115,12 @@ export function generatePrWorkflow({
 
   return Object.freeze({
     kind: 'u6_pr_test_rollback_workflow',
+    operatorMode,
+    credential: Object.freeze({
+      tokenEnvVar: OPERATOR_TOKEN_ENV,
+      tokenPresent,
+      tokenRedacted: true,
+    }),
     authority: approved ? APPROVED_AUTHORITY : BLOCKED_AUTHORITY,
     approval: Object.freeze({
       approved,
@@ -131,18 +144,24 @@ export function generatePrWorkflow({
         status: blocked ? 'blocked' : 'ready',
         branchName,
         baseBranch: normalizedRepo.branch,
+        usesToken: tokenPresent,
+        tokenEnvVar: OPERATOR_TOKEN_ENV,
       }),
       Object.freeze({
         step: 'apply_recommendation',
         status: blocked ? 'blocked' : 'ready',
         filePath: recommendation?.filePath ?? null,
         authority: approved ? APPROVED_AUTHORITY : BLOCKED_AUTHORITY,
+        usesToken: tokenPresent,
+        tokenEnvVar: OPERATOR_TOKEN_ENV,
       }),
       Object.freeze({
         step: 'open_pr',
         status: blocked ? 'blocked' : 'ready',
         prUrl,
         autoMerge: false,
+        usesToken: tokenPresent,
+        tokenEnvVar: OPERATOR_TOKEN_ENV,
       }),
       Object.freeze({
         step: 'run_tests',
@@ -162,6 +181,7 @@ export const __internals = Object.freeze({
   APPROVED_AUTHORITY,
   BLOCKED_AUTHORITY,
   DEFAULT_TEST_COMMAND,
+  OPERATOR_TOKEN_ENV,
   stableId,
   slug,
   normalizeRepoConfig,

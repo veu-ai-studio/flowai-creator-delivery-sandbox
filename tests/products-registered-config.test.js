@@ -9,6 +9,7 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORTFOLIO_MIGRATION = resolve(__dirname, '../supabase/migrations/0026_product_registry_veu_portfolio.sql');
+const REPO_WRITE_URL_MIGRATION = resolve(__dirname, '../supabase/migrations/0027_product_registry_repo_write_urls.sql');
 
 describe('registered product config', () => {
   const portfolio = [
@@ -42,28 +43,26 @@ describe('registered product config', () => {
     },
   ];
 
-  it('registers SAIGE with source mapping limitation metadata', () => {
+  it('registers SAIGE with VEU repo write metadata', () => {
     const saige = REGISTERED_PRODUCT_CONFIG.find((product) => product.name === 'SAIGE');
     expect(saige).toMatchObject({
       domain: 'saigeplatform.com',
-      repo: 'https://github.com/victor2081new-cloud/saige',
+      repo: 'https://github.com/veu-ai-studio/saige',
       branch: 'main',
       status: 'registered',
-      note: 'repo contains zip only - source mapping limited until codebase extracted',
     });
     expect(saige.systemNote).toContain('SAIGE repo registered');
-    expect(saige.systemNote).toContain('github.com/victor2081new-cloud/saige (main)');
-    expect(saige.systemNote).toContain('U5 fix generation enabled');
+    expect(saige.systemNote).toContain('github.com/veu-ai-studio/saige (main)');
+    expect(saige.systemNote).toContain('U5/U6 fix generation enabled');
   });
 
   it('registers the full five-product portfolio without changing SAIGE', () => {
     expect(REGISTERED_PRODUCT_CONFIG).toHaveLength(5);
     expect(REGISTERED_PRODUCT_CONFIG.find((product) => product.name === 'SAIGE')).toMatchObject({
       domain: 'saigeplatform.com',
-      repo: 'https://github.com/victor2081new-cloud/saige',
+      repo: 'https://github.com/veu-ai-studio/saige',
       branch: 'main',
       status: 'registered',
-      note: 'repo contains zip only - source mapping limited until codebase extracted',
     });
     for (const product of portfolio) {
       expect(REGISTERED_PRODUCT_CONFIG.find((entry) => entry.name === product.name)).toEqual(product);
@@ -95,5 +94,19 @@ describe('registered product config', () => {
       expect(sql).toContain("'main'");
     }
     expect(sql).not.toContain('SAIGE repo registered');
+  });
+
+  it('confirms repo write URLs for the full five-product portfolio', () => {
+    const sql = readFileSync(REPO_WRITE_URL_MIGRATION, 'utf8');
+    const expectedRepos = [
+      'https://github.com/veu-ai-studio/saige',
+      ...portfolio.map((product) => product.repo),
+    ];
+    for (const repo of expectedRepos) {
+      expect(sql).toContain(repo);
+    }
+    for (const productId of ['saige', 'reltwin', 'reachsms', 'pressai', 'mypreglife']) {
+      expect(sql).toContain(`'${productId}'`);
+    }
   });
 });

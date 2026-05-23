@@ -446,6 +446,69 @@ describe('runOrchestration — callbacks', () => {
   });
 });
 
+describe('orchestrator - GitHub operator token mode', () => {
+  it('uses GITHUB_OPERATOR_TOKEN for registered products without bypassing PR approval', async () => {
+    clearVercelEnv();
+    const stepLogs = [];
+    const deps = happyDeps({ preScoreSequence: [60], postScoreSequence: [72] });
+    deps.githubOperatorToken = 'gho_operator_secret';
+    deps.discoverProduct = vi.fn(async () => null);
+    deps.fetchRepoFileList = vi.fn(async () => ({
+      files: ['README.md', 'package.json', 'src/App.jsx'],
+      truncated: false,
+      sha: 'sha_tree',
+      error: null,
+    }));
+    deps.fetchFileContent = vi.fn(async ({ filePath }) => (
+      filePath === 'package.json'
+        ? JSON.stringify({ dependencies: { react: '^18.0.0' } })
+        : 'original-content'
+    ));
+    deps.parseCheckContent = vi.fn(async () => ({ ok: true }));
+
+    const result = await runOrchestration({
+      url: 'https://saigeplatform.com',
+      mode: 'auto',
+      gtmTarget: 95,
+      maxIterations: 1,
+      issue: {
+        filePath: 'README.md',
+        issue: 'Fix broken header modal button',
+        fix: 'Wire modal trigger to the existing dialog.',
+        severity: 'medium',
+      },
+      deps,
+      onStep: (log) => stepLogs.push(log),
+    });
+
+    expect(result.runMode).toBe('PATH_A');
+    expect(result.product.github_repo_url).toBe('https://github.com/veu-ai-studio/saige');
+    expect(stepLogs.find((log) => log.result?.kind === 'operator_mode')?.result).toMatchObject({
+      operator_mode: 'github_connected',
+      githubOperatorTokenPresent: true,
+      tokenRedacted: true,
+    });
+    expect(stepLogs.find((log) => log.step === 8)?.result).toMatchObject({
+      credentialSource: 'GITHUB_OPERATOR_TOKEN',
+      operator_mode: 'github_connected',
+      tokenRedacted: true,
+    });
+    expect(stepLogs.find((log) => log.step === 7 && log.tool.startsWith('fixGenerator'))?.status).not.toBe('skipped');
+    expect(stepLogs.find((log) => log.step === 9 && log.tool.startsWith('githubBranchWriter'))?.status).toBe('complete');
+    expect(deps.createRenewalBranch).toHaveBeenCalledWith(expect.objectContaining({
+      owner: 'veu-ai-studio',
+      repo: 'saige',
+      token: 'gho_operator_secret',
+    }));
+    expect(deps.createRenewalPr).not.toHaveBeenCalled();
+    expect(stepLogs.find((log) => log.step === 13)?.result).toMatchObject({
+      autoFixSkippedReason: 'OPERATOR_APPROVAL_REQUIRED',
+      operator_mode: 'github_connected',
+    });
+    expect(JSON.stringify(stepLogs)).not.toContain('gho_operator_secret');
+  });
+});
+
 // ── Failure handling ────────────────────────────────────────────────────────
 
 describe('runOrchestration — failure handling', () => {
