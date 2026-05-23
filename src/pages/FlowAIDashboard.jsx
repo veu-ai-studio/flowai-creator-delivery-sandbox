@@ -30,6 +30,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import FindingsReport from '@/components/FindingsReport';
 import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
+import { normalizeIterationHistoryRow } from '@/lib/ui/iterationHistory';
 
 // ── Tiny inline-SVG icon set ───────────────────────────────────────────────
 
@@ -336,7 +337,7 @@ export default function FlowAIDashboard() {
           } else if (payload?.type === 'step') {
             setStepLogs((prev) => [...prev, payload.log]);
           } else if (payload?.type === 'iteration') {
-            setIterations((prev) => [...prev, payload.iteration]);
+            setIterations((prev) => [...prev, normalizeIterationHistoryRow(payload.iteration)]);
           } else if (payload?.type === 'final') {
             setFinalResult(payload.result);
             if (payload.result?.runId && !runId) setRunId(payload.result.runId);
@@ -688,6 +689,7 @@ export default function FlowAIDashboard() {
                 <p className="text-xs text-slate-500 py-6 text-center">no completed iterations yet</p>
               )}
               {iterations.length > 0 && (
+                <>
                 <table className="w-full text-sm">
                   <thead className="text-[10px] uppercase text-slate-500 border-b border-slate-800">
                     <tr>
@@ -708,7 +710,10 @@ export default function FlowAIDashboard() {
                             {' '}{it.number ?? i + 1}
                           </td>
                           <td className="px-2 py-2 text-right text-xs">{it.preScore ?? '—'}</td>
-                          <td className="px-2 py-2 text-right text-xs">{it.postScore ?? '—'}</td>
+                          <td className="px-2 py-2 text-right text-xs" title={it.scoreReuseNote ?? ''}>
+                            {it.postScore ?? '—'}
+                            {it.noPreviewScoreReuse && <span className="ml-1 text-[9px] text-slate-500">*</span>}
+                          </td>
                           <td className={`px-2 py-2 text-right text-xs font-bold ${it.delta >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                             {it.delta >= 0 ? '+' : ''}{it.delta ?? '—'}
                           </td>
@@ -729,6 +734,12 @@ export default function FlowAIDashboard() {
                     ))}
                   </tbody>
                 </table>
+                {iterations.some((it) => it.noPreviewScoreReuse) && (
+                  <p className="mt-2 text-[10px] text-slate-500">
+                    * No preview available; post score reused from baseline.
+                  </p>
+                )}
+                </>
               )}
             </div>
           </div>
