@@ -2,6 +2,14 @@
 
 Portfolio governance platform built by VEU AI Studio.
 
+## Codex Windows Standing Directive
+
+Before self-dispatching or implementing FlowAI work, Codex Windows must read:
+
+`docs/governance/CODEX_WINDOWS_STANDING_DIRECTIVE.md`
+
+That directive defines autonomy, approval boundaries, verification requirements, and reporting standards for the FlowAI project.
+
 ## Local development
 
 ```bash
