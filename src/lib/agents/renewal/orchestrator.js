@@ -2418,8 +2418,48 @@ export async function runOrchestration(args = {}) {
     // here too — same rationale as STEP 5 above. The post-fix score
     // benefits from the same crawl signal.
     let postScoreEnvelope;
-    try {
-      const t0 = Date.now();
+    if (state.universalMode && !previewUrl) {
+      postScoreEnvelope = preScoreEnvelope;
+      lastPostScore = postScoreEnvelope.total;
+      const postGtm = iterLog.preGtm ?? _scoreCrawlOutput(crawlOutput, state.phaseBFindings ?? null);
+      const postGtmSurfaceOnly = iterLog.preGtmSurfaceOnly ?? postGtm;
+      lastPostGtm = postGtm;
+      iterLog.postGtm = postGtm;
+      iterLog.postGtmSurfaceOnly = postGtmSurfaceOnly;
+      const log = makeStepLog({
+        iteration: iterationNumber, step: 11, status: 'complete',
+        tool: 'gtmReadinessScorer (§7.6) + no-preview reuse',
+        why: 'universal mode has no patched preview; reuse pre-fix score and finalize without redundant post-fix scoring',
+        result: {
+          gtmScore: postGtm.score,
+          gtmBand: postGtm.band,
+          gtmCounts: postGtm.counts,
+          surfaceOnlyGtmScore: postGtmSurfaceOnly.score,
+          surfaceOnlyGtmCounts: postGtmSurfaceOnly.counts,
+          phaseBContribution: (postGtmSurfaceOnly.score ?? postGtm.score) - postGtm.score,
+          phaseBPagesProbed: state.phaseBPagesProbed ?? 0,
+          phaseBUrlsAttempted: state.phaseBUrlsAttempted ?? 0,
+          postFixPhaseBPagesProbed: 0,
+          postFixPhaseBUrlsAttempted: 0,
+          postFixPhaseBSummary: null,
+          postFixPhaseBFindingsCount: Array.isArray(state.phaseBFindings) ? state.phaseBFindings.length : 0,
+          fiveLayerInternal: postScoreEnvelope.total,
+          layers: {
+            l1: postScoreEnvelope.l1, l2: postScoreEnvelope.l2, l3: postScoreEnvelope.l3,
+            l4: postScoreEnvelope.l4, l5: postScoreEnvelope.l5,
+          },
+          reusedPreFixScore: true,
+        },
+        durationMs: 0, mode: state.mode,
+        scores: {
+          original: originalGtmScore, current: postGtm.score,
+          target: gtmTarget, progressPct: computeProgress({ originalScore: originalGtmScore, currentScore: postGtm.score, target: gtmTarget }),
+        },
+      });
+      emit(log); iterLog.steps.push(log);
+    } else {
+      try {
+        const t0 = Date.now();
       // DISPATCH 26: on deploy-degraded (PATH B timeout/error), `postFixUrl`
       // falls back to the original URL so STEP 11 still has something to
       // score. On the happy path postFixUrl === previewUrl.
@@ -2606,6 +2646,7 @@ export async function runOrchestration(args = {}) {
       return buildFailureReturn({ runId, mode: state.mode, product,
         orchestrationLog, iterations, failedStep: 'STEP_11',
         error: e?.message ?? String(e), code: e?.code ?? 'SCORING_FAILED' });
+    }
     }
     await state.checkpoint(onCheckpoint, { lastStep: 11, iteration: iterationNumber });
 

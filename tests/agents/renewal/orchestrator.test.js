@@ -2200,11 +2200,18 @@ describe('orchestrator — UNIVERSAL mode (DISPATCH U1)', () => {
 
     expect(result.runMode).toBe('UNIVERSAL');
     expect(base.capturePostFixSnapshot).not.toHaveBeenCalled();
+    expect(base.computeScore).toHaveBeenCalledTimes(1);
     expect(stepLogs.some((log) => (
       log.step === 11
       && log.status === 'skipped'
       && log.tool === 'verification.capturePostFixSnapshot (PHASE C)'
       && log.result?.skipped === 'no_post_fix_preview'
+    ))).toBe(true);
+    expect(stepLogs.some((log) => (
+      log.step === 11
+      && log.status === 'complete'
+      && log.tool === 'gtmReadinessScorer (§7.6) + no-preview reuse'
+      && log.result?.reusedPreFixScore === true
     ))).toBe(true);
   });
 
