@@ -30,6 +30,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import FindingsReport from '@/components/FindingsReport';
 import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
+import { extractBranchPrVisibility } from '@/lib/ui/branchVisibility';
 import { normalizeIterationHistoryRow } from '@/lib/ui/iterationHistory';
 
 // ── Tiny inline-SVG icon set ───────────────────────────────────────────────
@@ -261,6 +262,12 @@ export default function FlowAIDashboard() {
   const registeredProductNote = useMemo(() => (
     findRegisteredProductConfigForUrl(inputPayload.url)?.systemNote ?? null
   ), [inputPayload.url]);
+  const branchPrVisibility = useMemo(() => (
+    extractBranchPrVisibility({
+      finalResult,
+      repoConfig: findRegisteredProductConfigForUrl(inputPayload.url),
+    })
+  ), [finalResult, inputPayload.url]);
   const canLaunch = inputMethod === 'url'
     ? true
     : inputMethod === 'describe'
@@ -802,7 +809,38 @@ export default function FlowAIDashboard() {
                   <Icon.External className="w-3.5 h-3.5" />Open GitHub PR
                 </a>
               )}
+              {branchPrVisibility?.branchUrl && (
+                <a href={branchPrVisibility.branchUrl} target="_blank" rel="noreferrer"
+                   className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5">
+                  <Icon.External className="w-3.5 h-3.5" />Open branch
+                </a>
+              )}
+              {branchPrVisibility?.compareUrl && !branchPrVisibility.prUrl && (
+                <a href={branchPrVisibility.compareUrl} target="_blank" rel="noreferrer"
+                   className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5">
+                  <Icon.External className="w-3.5 h-3.5" />Open compare
+                </a>
+              )}
             </div>
+
+            {branchPrVisibility && (
+              <div className="rounded-md border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500">Registered repair branch</p>
+                    <p className="font-mono text-slate-200 break-all">{branchPrVisibility.branchName}</p>
+                  </div>
+                  <span className="rounded border border-blue-500/40 bg-blue-500/10 px-2 py-1 text-[10px] font-bold uppercase text-blue-300">
+                    {branchPrVisibility.statusLabel}
+                  </span>
+                </div>
+                {branchPrVisibility.approvalRequired && (
+                  <p className="mt-2 text-slate-400">
+                    GitHub branch was created. Operator approval is required before FlowAI opens a PR; no auto-merge will occur.
+                  </p>
+                )}
+              </div>
+            )}
 
             <FindingsReport
               deepBrowserAnalysis={finalResult.deepBrowserAnalysis}
