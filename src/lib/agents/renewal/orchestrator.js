@@ -28,6 +28,7 @@ import { computeScore } from './preScoreAdapter.js';
 import { scoreCrawlOutput } from './gtmReadinessScorer.js';
 import { generateFix, __internals as fixGenInternals } from './fixGenerator.js';
 import { createRenewalBranch, commitFileToBranch } from './githubBranchWriter.js';
+import { probeGithubOperatorRepoAccess } from './githubOperatorRepoProbe.js';
 import { deployBranchPreview } from './vercelBranchDeploy.js';
 import { evaluateDelta } from './deltaPolicy.js';
 import { createRenewalPr } from './githubPrWriter.js';
@@ -508,6 +509,7 @@ export async function runOrchestration(args = {}) {
   const _fetchFileContent       = deps.fetchFileContent       || fetchFileContent;
   const _createRenewalBranch    = deps.createRenewalBranch    || createRenewalBranch;
   const _commitFileToBranch     = deps.commitFileToBranch     || commitFileToBranch;
+  const _probeGithubOperatorRepoAccess = deps.probeGithubOperatorRepoAccess || probeGithubOperatorRepoAccess;
   const _deployBranchPreview    = deps.deployBranchPreview    || deployBranchPreview;
   const _evaluateDelta          = deps.evaluateDelta          || evaluateDelta;
   const _createRenewalPr        = deps.createRenewalPr        || createRenewalPr;
@@ -796,6 +798,50 @@ export async function runOrchestration(args = {}) {
   // map only as fallback. Generic onboarding: add a registry row +
   // product_url → engine runs end-to-end; no code change required.
   const initialUrl = args.url || resolveLiveUrl(productId, product) || githubRepoUrl;
+
+  if (githubOperatorToken && githubRepoUrl) {
+    const parsed = parseGithubRepoUrl(githubRepoUrl);
+    if (parsed) {
+      try {
+        const t0 = Date.now();
+        const access = await _probeGithubOperatorRepoAccess({
+          owner: parsed.owner,
+          repo: parsed.repo,
+          branch: productBranch,
+          token: githubOperatorToken,
+        });
+        state.operatorRepoAccess = access;
+        emit(makeStepLog({
+          iteration: 0, step: 1,
+          status: access?.ok ? 'complete' : 'degraded',
+          tool: 'githubOperatorRepoProbe.js',
+          why: 'verify GITHUB_OPERATOR_TOKEN can read/write the registered product repo without exposing secrets',
+          result: access,
+          durationMs: Date.now() - t0, mode: state.mode,
+        }));
+      } catch (e) {
+        state.operatorRepoAccess = Object.freeze({
+          kind: 'github_operator_repo_probe',
+          ok: false,
+          canRead: false,
+          canWrite: false,
+          tokenPresent: true,
+          tokenRedacted: true,
+          owner: parsed.owner,
+          repo: parsed.repo,
+          branch: productBranch,
+          reason: (e?.message ?? String(e)).slice(0, 160),
+        });
+        emit(makeStepLog({
+          iteration: 0, step: 1, status: 'degraded',
+          tool: 'githubOperatorRepoProbe.js',
+          why: 'verify GITHUB_OPERATOR_TOKEN can read/write the registered product repo without exposing secrets',
+          result: state.operatorRepoAccess,
+          mode: state.mode,
+        }));
+      }
+    }
+  }
 
   // D40 generic-engine — auto-create the product_ssot row on first
   // Self-Renewal run if absent. Replaces the per-product migration
@@ -3192,6 +3238,8 @@ export async function runOrchestration(args = {}) {
         runMode: state.runMode ?? null,
         universalMode: !!state.universalMode,
         autoFixAvailable: !state.universalMode,
+        operatorMode: state.operatorMode ?? null,
+        operatorRepoAccess: state.operatorRepoAccess ?? null,
         findingsCount,
         findingsSeverity,
         deepBrowserAnalysis: state.deepBrowserAnalysis ?? null,
@@ -3272,6 +3320,8 @@ export async function runOrchestration(args = {}) {
     universalMode: !!state.universalMode,
     autoFixAvailable: !state.universalMode,
     registerCTA: !!state.universalMode,
+    operatorMode: state.operatorMode ?? null,
+    operatorRepoAccess: state.operatorRepoAccess ?? null,
     findingsCount,
     findingsSeverity,
     deepBrowserAnalysis: state.deepBrowserAnalysis ?? null,
@@ -3892,6 +3942,7 @@ export const __internals = Object.freeze({
   derivePrioritizedIssuesFromScore,
   prioritizeIssuesWithClaude,
   fetchRepoFileList,
+  probeGithubOperatorRepoAccess,
   buildPrBody,
   OrchestrationState,
 });

@@ -248,6 +248,9 @@ export default async function handler(req, res) {
     universalMode: typeof result?.universalMode === 'boolean' ? result.universalMode : false,
     autoFixAvailable: typeof result?.autoFixAvailable === 'boolean' ? result.autoFixAvailable : true,
     registerCTA: typeof result?.registerCTA === 'boolean' ? result.registerCTA : false,
+    operatorMode: typeof result?.operatorMode === 'string' ? result.operatorMode : null,
+    operatorRepoAccess: result?.operatorRepoAccess && typeof result.operatorRepoAccess === 'object'
+      ? result.operatorRepoAccess : null,
     findingsCount: typeof result?.findingsCount === 'number' ? result.findingsCount : null,
     findingsSeverity: result?.findingsSeverity && typeof result.findingsSeverity === 'object'
       ? result.findingsSeverity : null,

@@ -453,6 +453,19 @@ describe('orchestrator - GitHub operator token mode', () => {
     const deps = happyDeps({ preScoreSequence: [60], postScoreSequence: [72] });
     deps.githubOperatorToken = 'gho_operator_secret';
     deps.discoverProduct = vi.fn(async () => null);
+    deps.probeGithubOperatorRepoAccess = vi.fn(async () => ({
+      kind: 'github_operator_repo_probe',
+      ok: true,
+      canRead: true,
+      canWrite: true,
+      tokenPresent: true,
+      tokenRedacted: true,
+      owner: 'veu-ai-studio',
+      repo: 'saige',
+      branch: 'main',
+      permissions: { pull: true, push: true, maintain: false, admin: false },
+      reason: 'read_write_confirmed',
+    }));
     deps.fetchRepoFileList = vi.fn(async () => ({
       files: ['README.md', 'package.json', 'src/App.jsx'],
       truncated: false,
@@ -492,6 +505,23 @@ describe('orchestrator - GitHub operator token mode', () => {
       credentialSource: 'GITHUB_OPERATOR_TOKEN',
       operator_mode: 'github_connected',
       tokenRedacted: true,
+    });
+    expect(deps.probeGithubOperatorRepoAccess).toHaveBeenCalledWith(expect.objectContaining({
+      owner: 'veu-ai-studio',
+      repo: 'saige',
+      branch: 'main',
+      token: 'gho_operator_secret',
+    }));
+    expect(stepLogs.find((log) => log.tool === 'githubOperatorRepoProbe.js')?.result).toMatchObject({
+      ok: true,
+      canRead: true,
+      canWrite: true,
+      tokenRedacted: true,
+    });
+    expect(result.operatorRepoAccess).toMatchObject({
+      ok: true,
+      canWrite: true,
+      reason: 'read_write_confirmed',
     });
     expect(stepLogs.find((log) => log.step === 7 && log.tool.startsWith('fixGenerator'))?.status).not.toBe('skipped');
     expect(stepLogs.find((log) => log.step === 9 && log.tool.startsWith('githubBranchWriter'))?.status).toBe('complete');
