@@ -7,14 +7,21 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const sidebarSrc = readFileSync(resolve(__dirname, '../../src/components/layout/Sidebar.jsx'), 'utf8');
 const dashboardSrc = readFileSync(resolve(__dirname, '../../src/pages/FlowAIDashboard.jsx'), 'utf8');
 const appSrc = readFileSync(resolve(__dirname, '../../src/App.jsx'), 'utf8');
+const appLayoutSrc = readFileSync(resolve(__dirname, '../../src/components/layout/AppLayout.jsx'), 'utf8');
+const universalNavSrc = readFileSync(resolve(__dirname, '../../src/components/shared/UniversalNav.jsx'), 'utf8');
 
 describe('FlowAI unified operating system shell', () => {
   it('routes workspace into the single FlowAI run surface', () => {
-    expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<Navigate to="\/flowai" replace/);
+    expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<FlowAIDashboard \/>/);
   });
 
   it('exposes the canonical sidebar sections and labels', () => {
     expect(sidebarSrc).toMatch(/Product-Agnostic AI Operating System/);
+    expect(sidebarSrc).toMatch(/title:\s*"NAVIGATION"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Home"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Workspace"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Landing Page"/);
+    expect(sidebarSrc).toMatch(/>Back</);
     expect(sidebarSrc).toMatch(/title:\s*"LAUNCH"/);
     expect(sidebarSrc).toMatch(/label:\s*"New Run"/);
     expect(sidebarSrc).toMatch(/title:\s*"PORTFOLIO"/);
@@ -39,6 +46,14 @@ describe('FlowAI unified operating system shell', () => {
     expect(dashboardSrc).toMatch(/Describe Product/);
     expect(dashboardSrc).toMatch(/Paste Content/);
     expect(dashboardSrc).toMatch(/input:\s*inputPayload/);
+  });
+
+  it('connects app-layout pages with global Back, Home, Workspace, and Landing controls', () => {
+    expect(appLayoutSrc).toMatch(/<UniversalNav className="hidden lg:flex" \/>/);
+    expect(universalNavSrc).toContain("navigate('/dashboard')");
+    expect(universalNavSrc).toContain("navigate('/workspace')");
+    expect(universalNavSrc).toContain("navigate('/landing')");
+    expect(universalNavSrc).toContain('navigate(-1)');
   });
 
   it('surfaces registered product system notes inside the FlowAI run UI', () => {

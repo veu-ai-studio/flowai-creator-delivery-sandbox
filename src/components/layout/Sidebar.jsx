@@ -2,16 +2,42 @@ import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Tooltip from "@/components/ui/Tooltip";
 import {
+  ArrowLeft,
   BarChart3,
   Boxes,
   ClipboardList,
   FolderKanban,
+  Globe,
+  Home,
   Rocket,
   SlidersHorizontal,
   Zap,
 } from "lucide-react";
 
 const navSections = [
+  {
+    title: "NAVIGATION",
+    items: [
+      {
+        label: "Home",
+        path: "/dashboard",
+        icon: Home,
+        tooltip: "Return to the FlowAI home dashboard.",
+      },
+      {
+        label: "Workspace",
+        path: "/workspace",
+        icon: Zap,
+        tooltip: "Open the unified FlowAI workspace and run surface.",
+      },
+      {
+        label: "Landing Page",
+        path: "/landing",
+        icon: Globe,
+        tooltip: "Open the public-facing FlowAI landing page.",
+      },
+    ],
+  },
   {
     title: "LAUNCH",
     items: [
@@ -130,6 +156,16 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-5">
+        <Tooltip content="Go back to the previous page">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex w-full items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <span className="truncate">Back</span>
+          </button>
+        </Tooltip>
         {navSections.map((section) => <NavSection key={section.title} {...section} />)}
       </nav>
 

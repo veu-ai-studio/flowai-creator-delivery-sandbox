@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Menu, X } from "lucide-react";
 import ActiveJobsPanel from "@/components/jobs/ActiveJobsPanel";
 import IPFooter from "@/components/shared/IPFooter";
+import UniversalNav from "@/components/shared/UniversalNav";
 import { installRightClickProtection, installDevToolsDetection } from "@/lib/contentProtection";
 import FlowAIHealthBadge from "@/components/layout/FlowAIHealthBadge";
 
@@ -97,6 +98,7 @@ export default function AppLayout() {
           <div className="flex-1" />
 
           <FlowAIHealthBadge />
+          <UniversalNav className="hidden lg:flex" />
 
           {/* Search */}
           <Button variant="outline" size="sm" onClick={() => setSearchOpen(true)} className="gap-2 text-xs h-8 shrink-0">

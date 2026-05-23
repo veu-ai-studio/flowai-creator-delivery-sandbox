@@ -174,7 +174,7 @@ const AuthenticatedApp = () => {
         {/* NEW ROUTES — UX-C */}
         <Route path="/dashboard" element={<MainDashboard />} />
         <Route path="/configuration" element={<Configuration />} />
-        <Route path="/workspace" element={<Navigate to="/flowai" replace />} />
+        <Route path="/workspace" element={<FlowAIDashboard />} />
         <Route path="/my-products" element={<MyCreations />} />
         <Route path="/auto-runner" element={<RequireAuth><AutoRunner /></RequireAuth>} />
         <Route path="/renewal" element={<Renewal />} />
