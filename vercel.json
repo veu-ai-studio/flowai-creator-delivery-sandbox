@@ -9,6 +9,11 @@
       "maxDuration": 300
     }
   },
+  "env": {
+    "FLOWAI_CANONICAL_DOMAIN": "flowai.veuaistudio.com",
+    "FLOWAI_CANONICAL_URL": "https://flowai.veuaistudio.com",
+    "FLOWAI_LEGACY_URL": "https://flowai-dun.vercel.app"
+  },
   "crons": [
     {
       "path": "/api/cron/branch-cleanup",
