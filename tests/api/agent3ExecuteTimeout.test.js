@@ -21,6 +21,15 @@ describe('Agent 3 execute timeout handling', () => {
     expect(executeSrc).toContain('buildSseSoftTimeoutResult');
   });
 
+  it('uses a bounded production fast lane for SSE analysis stages', () => {
+    expect(__test.SSE_PHASE_B_OVERALL_BUDGET_MS).toBe(45_000);
+    expect(__test.SSE_PHASE_B_PER_PAGE_BUDGET_MS).toBe(20_000);
+    expect(__test.SSE_PHASE_B_MAX_INTERACTIVES).toBe(20);
+    expect(__test.SSE_EVALUATION_TIER).toBe('TIER_1');
+    expect(executeSrc).toContain('phaseBOverallBudgetMs: SSE_PHASE_B_OVERALL_BUDGET_MS');
+    expect(executeSrc).toContain('evaluationTier: SSE_EVALUATION_TIER');
+  });
+
   it('builds a partial final result from the latest streamed score', () => {
     const partial = __test.buildSseSoftTimeoutResult({
       runId: 'run-1',

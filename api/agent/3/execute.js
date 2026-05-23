@@ -42,6 +42,10 @@ import { getServerMessageBus } from '../../_lib/messageBus.js';
 const SYNC_TIMEOUT_MS = 25_000;
 const SSE_SOFT_TIMEOUT_MS = 240_000;
 const SSE_HEARTBEAT_MS = 15_000;
+const SSE_PHASE_B_OVERALL_BUDGET_MS = 45_000;
+const SSE_PHASE_B_PER_PAGE_BUDGET_MS = 20_000;
+const SSE_PHASE_B_MAX_INTERACTIVES = 20;
+const SSE_EVALUATION_TIER = 'TIER_1';
 const ALLOWED_MODES = new Set(['recommend_only', 'fork_and_fix']);
 
 export default async function handler(req, res) {
@@ -399,6 +403,12 @@ async function runSseOrchestration(req, res, body) {
       url, mode, runId, supabase,
       environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
       gtmTarget, maxIterations,
+      phaseBOverallBudgetMs: SSE_PHASE_B_OVERALL_BUDGET_MS,
+      phaseBPerPageBudgetMs: SSE_PHASE_B_PER_PAGE_BUDGET_MS,
+      phaseBMaxInteractives: SSE_PHASE_B_MAX_INTERACTIVES,
+      evaluationTier: SSE_EVALUATION_TIER,
+      evaluationGotoTimeoutMs: 15_000,
+      evaluationPostNavWaitMs: 500,
       onStep: (log) => {
         stepLogs.push(log);
         sendEvent({ type: 'step', log });
@@ -515,5 +525,9 @@ export const __test = Object.freeze({
   SYNC_TIMEOUT_MS,
   SSE_SOFT_TIMEOUT_MS,
   SSE_HEARTBEAT_MS,
+  SSE_PHASE_B_OVERALL_BUDGET_MS,
+  SSE_PHASE_B_PER_PAGE_BUDGET_MS,
+  SSE_PHASE_B_MAX_INTERACTIVES,
+  SSE_EVALUATION_TIER,
   ALLOWED_MODES,
 });

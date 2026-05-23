@@ -508,6 +508,17 @@ export async function runOrchestration(args = {}) {
   const _runRegressionGate = deps.runRegressionGate || runRegressionGate;
   const _mapFindingsToSource = deps.mapFindingsToSource || mapFindingsToSource;
   const _generateSourceMappedFixProposals = deps.generateSourceMappedFixProposals || generateSourceMappedFixProposals;
+  const phaseBBudget = {
+    probeBudgetMs: Number.isFinite(args.phaseBProbeBudgetMs) ? args.phaseBProbeBudgetMs : undefined,
+    overallBudgetMs: Number.isFinite(args.phaseBOverallBudgetMs) ? args.phaseBOverallBudgetMs : undefined,
+    perPageBudgetMs: Number.isFinite(args.phaseBPerPageBudgetMs) ? args.phaseBPerPageBudgetMs : undefined,
+    maxInteractives: Number.isFinite(args.phaseBMaxInteractives) ? args.phaseBMaxInteractives : undefined,
+  };
+  const evaluationRuntimeOptions = {
+    evaluationTier: typeof args.evaluationTier === 'string' ? args.evaluationTier : undefined,
+    gotoTimeoutMs: Number.isFinite(args.evaluationGotoTimeoutMs) ? args.evaluationGotoTimeoutMs : undefined,
+    postNavWaitMs: Number.isFinite(args.evaluationPostNavWaitMs) ? args.evaluationPostNavWaitMs : undefined,
+  };
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   const orchestrationLog = [];
@@ -1176,8 +1187,10 @@ export async function runOrchestration(args = {}) {
         // D43 Lever b — defaults bumped ×1.5 in adversarialSurface.js
         // (DEFAULT_PROBE_BUDGET_MS 180_000 → 270_000); the orchestrator
         // override remains opt-in via state.phaseBProbeBudgetMs.
-        probeBudgetMs: state.phaseBProbeBudgetMs ?? undefined,
-        overallBudgetMs: state.phaseBOverallBudgetMs ?? undefined,
+        probeBudgetMs: state.phaseBProbeBudgetMs ?? phaseBBudget.probeBudgetMs,
+        overallBudgetMs: state.phaseBOverallBudgetMs ?? phaseBBudget.overallBudgetMs,
+        perPageBudgetMs: state.phaseBPerPageBudgetMs ?? phaseBBudget.perPageBudgetMs,
+        maxInteractives: state.phaseBMaxInteractives ?? phaseBBudget.maxInteractives,
         // D41 T4 — authenticated traversal: storageState plumbed from
         // runOrchestration args (set by ENTRY-007 / external auth flow).
         storageState: args.storageState ?? state.storageState ?? undefined,
@@ -1258,6 +1271,7 @@ export async function runOrchestration(args = {}) {
         url: currentUrl,
         options: {
           phaseBFindings,
+          ...evaluationRuntimeOptions,
           onStep: (evt) => {
             // Forward each evaluator_complete to the SSE stream so the
             // UI can render per-evaluator progress.
@@ -2452,8 +2466,10 @@ export async function runOrchestration(args = {}) {
               urls: postFixUrls,
               opts: {
                 // D43 Lever b — defaults bumped in adversarialSurface.js.
-                probeBudgetMs: state.phaseBProbeBudgetMs ?? undefined,
-                overallBudgetMs: state.phaseBOverallBudgetMs ?? undefined,
+                probeBudgetMs: state.phaseBProbeBudgetMs ?? phaseBBudget.probeBudgetMs,
+                overallBudgetMs: state.phaseBOverallBudgetMs ?? phaseBBudget.overallBudgetMs,
+                perPageBudgetMs: state.phaseBPerPageBudgetMs ?? phaseBBudget.perPageBudgetMs,
+                maxInteractives: state.phaseBMaxInteractives ?? phaseBBudget.maxInteractives,
                 storageState: args.storageState ?? state.storageState ?? undefined,
                 seedsByUrl: postFixSeedsByUrl,
                 maxModals: 10, maxForms: 10,
