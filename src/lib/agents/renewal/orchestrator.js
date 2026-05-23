@@ -2867,7 +2867,9 @@ export async function runOrchestration(args = {}) {
     noImprovementStreak = delta <= 0 ? noImprovementStreak + 1 : 0;
 
     // Continue: next iteration scores against this iteration's preview URL.
-    currentUrl = previewUrl;
+    // Universal/evaluation-only runs do not always produce a preview; keep
+    // the last valid URL instead of poisoning the next iteration with null.
+    currentUrl = previewUrl || currentUrl;
     iterationNumber += 1;
   }
 
@@ -3718,12 +3720,35 @@ function buildDimensionsContributing({ preScoreEnvelope, lastPostScore, original
   ];
 }
 
+function latestMeasuredScore({ orchestrationLog = [], iterations = [] } = {}) {
+  for (let i = iterations.length - 1; i >= 0; i -= 1) {
+    const iter = iterations[i];
+    const score = iter?.postScore ?? iter?.preScore;
+    if (typeof score === 'number' && Number.isFinite(score)) return score;
+  }
+  for (let i = orchestrationLog.length - 1; i >= 0; i -= 1) {
+    const result = orchestrationLog[i]?.result;
+    const score = result?.gtmScore
+      ?? result?.postScore
+      ?? result?.preScore
+      ?? result?.fiveLayerInternal
+      ?? result?.bundleScore
+      ?? result?.baselineScore;
+    if (typeof score === 'number' && Number.isFinite(score)) return score;
+  }
+  return 0;
+}
+
 function buildFailureReturn({ runId, mode, product, orchestrationLog, iterations, failedStep, error, code }) {
+  const measuredScore = latestMeasuredScore({ orchestrationLog, iterations });
   return Object.freeze({
     ok: false,
     gtmReady: false,
     exitReason: 'STEP_FAILED',
-    originalScore: 0, finalScore: 0, totalDelta: 0,
+    originalScore: measuredScore, finalScore: measuredScore, totalDelta: 0,
+    rawScore: measuredScore,
+    effectiveTrustScore: measuredScore,
+    partial: measuredScore > 0,
     iterationsCompleted: iterations.length,
     previewUrl: null, prUrl: null, prNumber: null,
     orchestrationLog, iterations,
@@ -3736,6 +3761,7 @@ export const __internals = Object.freeze({
   STEP_NAMES,
   makeStepLog,
   computeProgress,
+  latestMeasuredScore,
   discoverProduct,
   derivePrioritizedIssuesFromScore,
   prioritizeIssuesWithClaude,

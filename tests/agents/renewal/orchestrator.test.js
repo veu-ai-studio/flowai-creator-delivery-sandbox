@@ -415,6 +415,35 @@ describe('runOrchestration — callbacks', () => {
       expect(firstStep5Index).toBeLessThan(firstStep4Index);
     } finally { clearVercelEnv(); }
   });
+
+  it('keeps the original URL across universal-mode iterations when no preview exists', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({
+        preScoreSequence: [59, 59],
+        postScoreSequence: [59, 59],
+      });
+      deps.discoverProduct = vi.fn(async () => null);
+      const result = await runOrchestration({
+        url: 'https://saigeplatform.com', mode: 'auto', runId: 'run-universal-url', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 2, deps,
+      });
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      expect(result.finalScore).toBe(59);
+      expect(deps.produceMonitorText.mock.calls.every(([arg]) => arg.url === 'https://saigeplatform.com')).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('preserves the last measured score on STEP_FAILED partial results', () => {
+    const score = __internals.latestMeasuredScore({
+      iterations: [{ preScore: 59, postScore: 59 }],
+      orchestrationLog: [
+        { step: 5, result: { gtmScore: 59 } },
+        { step: 5, status: 'failed', result: { error: 'later failure' } },
+      ],
+    });
+    expect(score).toBe(59);
+  });
 });
 
 // ── Failure handling ────────────────────────────────────────────────────────
