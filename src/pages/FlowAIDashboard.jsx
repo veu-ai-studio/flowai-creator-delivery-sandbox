@@ -32,6 +32,12 @@ import FindingsReport from '@/components/FindingsReport';
 import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
 import { extractBranchPrVisibility } from '@/lib/ui/branchVisibility';
 import { normalizeIterationHistoryRow } from '@/lib/ui/iterationHistory';
+import {
+  replaceFlowAIRunId,
+  runVerdictFromResult,
+  updateFlowAIRun,
+  upsertFlowAIRun,
+} from '@/lib/flowaiRunStore';
 
 // ── Tiny inline-SVG icon set ───────────────────────────────────────────────
 
@@ -278,13 +284,31 @@ export default function FlowAIDashboard() {
       ? Boolean(inputPayload.productDescription)
       : Boolean(inputPayload.pastedContent);
 
+  function productLabelForRun() {
+    const registered = findRegisteredProductConfigForUrl(inputPayload.url);
+    if (registered?.name) return registered.name;
+    if (inputPayload.url) return inputPayload.url.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+    if (inputPayload.productDescription) return 'Described product';
+    return 'Pasted content';
+  }
+
   // ── SSE consumer ─────────────────────────────────────────────────────────
   async function launch() {
-    if (isRunning) return;
     if (!canLaunch) {
       setErrorMsg('Add a product description or pasted content before launching this run.');
       return;
     }
+    const localRunId = `local_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    let trackedRunId = localRunId;
+    upsertFlowAIRun({
+      id: localRunId,
+      runId: localRunId,
+      product: productLabelForRun(),
+      productUrl: inputPayload.url,
+      startTime: new Date().toISOString(),
+      status: 'running',
+      progressLabel: 'Starting FlowAI run',
+    });
     setIsRunning(true);
     setIsPaused(false); setControlApplied(null);
     setStepLogs([]); setIterations([]); setFinalResult(null);
@@ -316,12 +340,24 @@ export default function FlowAIDashboard() {
       });
     } catch (e) {
       setErrorMsg(`Network error: ${e?.message ?? String(e)}`);
+      updateFlowAIRun(trackedRunId, {
+        status: 'failed',
+        endTime: new Date().toISOString(),
+        verdict: 'NETWORK_ERROR',
+        progressLabel: `Network error: ${e?.message ?? String(e)}`,
+      });
       setIsRunning(false);
       return;
     }
 
     if (!response.ok || !response.body) {
       setErrorMsg(`Server error: HTTP ${response.status}`);
+      updateFlowAIRun(trackedRunId, {
+        status: 'failed',
+        endTime: new Date().toISOString(),
+        verdict: `HTTP_${response.status}`,
+        progressLabel: `Server error: HTTP ${response.status}`,
+      });
       setIsRunning(false);
       return;
     }
@@ -345,13 +381,32 @@ export default function FlowAIDashboard() {
           try { payload = JSON.parse(data); } catch { continue; }
           if (payload?.type === 'start') {
             setRunId(payload.runId || null);
+            if (payload.runId) {
+              replaceFlowAIRunId(trackedRunId, payload.runId);
+              trackedRunId = payload.runId;
+            }
           } else if (payload?.type === 'step') {
             setStepLogs((prev) => [...prev, payload.log]);
+            updateFlowAIRun(trackedRunId, {
+              status: 'running',
+              progressLabel: payload.log?.stepName ?? payload.log?.tool ?? `Step ${payload.log?.step ?? ''}`,
+              stepCount: payload.log?.step ?? undefined,
+            });
           } else if (payload?.type === 'iteration') {
             setIterations((prev) => [...prev, normalizeIterationHistoryRow(payload.iteration)]);
           } else if (payload?.type === 'final') {
             setFinalResult(payload.result);
             if (payload.result?.runId && !runId) setRunId(payload.result.runId);
+            const branchStep = [...(payload.result?.orchestrationLog ?? [])].reverse()
+              .find((log) => log?.step === 9 && log?.result?.branchName);
+            updateFlowAIRun(trackedRunId, {
+              status: payload.result?.ok === false ? 'failed' : 'completed',
+              endTime: new Date().toISOString(),
+              score: payload.result?.ceo95Criteria?.verifiedScore ?? payload.result?.effectiveTrustScore ?? payload.result?.finalScore ?? null,
+              verdict: runVerdictFromResult(payload.result),
+              branchCreated: branchStep?.result?.branchName ?? null,
+              progressLabel: payload.result?.exitReason ?? 'Completed',
+            });
           } else if (payload?.type === 'control_applied') {
             // Server acknowledged our control command applied to the running
             // state. Reflect mode changes locally so the UI stays in sync.
@@ -365,12 +420,24 @@ export default function FlowAIDashboard() {
             if (payload.command === 'resume') setIsPaused(false);
           } else if (payload?.type === 'error') {
             setErrorMsg(`${payload.error}${payload.code ? ` (${payload.code})` : ''}`);
+            updateFlowAIRun(trackedRunId, {
+              status: 'failed',
+              endTime: new Date().toISOString(),
+              verdict: payload.code ?? 'ERROR',
+              progressLabel: payload.error ?? 'Run failed',
+            });
           }
         }
       }
     } catch (e) {
       if (e?.name !== 'AbortError') {
         setErrorMsg(`Stream error: ${e?.message ?? String(e)}`);
+        updateFlowAIRun(trackedRunId, {
+          status: 'failed',
+          endTime: new Date().toISOString(),
+          verdict: 'STREAM_ERROR',
+          progressLabel: e?.message ?? 'Stream error',
+        });
       }
     } finally {
       setIsRunning(false);
@@ -468,7 +535,6 @@ export default function FlowAIDashboard() {
                 key={item.key}
                 type="button"
                 onClick={() => setInputMethod(item.key)}
-                disabled={isRunning}
                 className={`rounded-md border px-3 py-2 text-left transition disabled:opacity-50 ${
                   inputMethod === item.key
                     ? 'border-emerald-500 bg-emerald-500/5'
@@ -486,7 +552,6 @@ export default function FlowAIDashboard() {
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Product URL</label>
               <input
                 type="text" value={url} onChange={(e) => setUrl(e.target.value)}
-                disabled={isRunning}
                 placeholder="https://saigeplatform.com"
                 className="w-full rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50"
               />
@@ -506,7 +571,6 @@ export default function FlowAIDashboard() {
               <textarea
                 value={productDescription}
                 onChange={(e) => setProductDescription(e.target.value)}
-                disabled={isRunning}
                 placeholder="Describe the product, target user, main workflow, known issues, and what you want FlowAI to evaluate."
                 className="w-full min-h-28 rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50 resize-y"
               />
@@ -519,7 +583,6 @@ export default function FlowAIDashboard() {
               <textarea
                 value={pastedContent}
                 onChange={(e) => setPastedContent(e.target.value)}
-                disabled={isRunning}
                 placeholder="Paste page copy, console output, bug notes, screenshot observations, or exported content for FlowAI to include in the run context."
                 className="w-full min-h-28 rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50 resize-y"
               />
@@ -535,9 +598,9 @@ export default function FlowAIDashboard() {
                 { v: 'manual', t: 'Manual', d: 'Pause at every step; user drives' },
               ].map(({ v, t, d }) => (
                 <label key={v}
-                       className={`rounded-md border px-3 py-2 cursor-pointer ${mode === v ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-700 hover:border-slate-600'} ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                       className={`rounded-md border px-3 py-2 cursor-pointer ${mode === v ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-700 hover:border-slate-600'}`}>
                   <input type="radio" name="mode" value={v} checked={mode === v}
-                         disabled={isRunning} onChange={() => setMode(v)} className="sr-only" />
+                         onChange={() => setMode(v)} className="sr-only" />
                   <div className="text-sm font-semibold">{t}</div>
                   <div className="text-[11px] text-slate-400 mt-0.5">{d}</div>
                 </label>
@@ -550,7 +613,7 @@ export default function FlowAIDashboard() {
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
                 GTM Target: <span className="text-emerald-400">{gtmTarget}/100</span>
               </label>
-              <input type="range" min="50" max="100" value={gtmTarget} disabled={isRunning}
+              <input type="range" min="50" max="100" value={gtmTarget}
                      onChange={(e) => setGtmTarget(Number(e.target.value))}
                      className="w-full accent-emerald-500" />
               <div className="flex justify-between text-[10px] text-slate-500 mt-0.5"><span>50</span><span>100</span></div>
@@ -559,7 +622,7 @@ export default function FlowAIDashboard() {
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
                 Iteration Budget: <span className="text-emerald-400">{maxIterations}</span>
               </label>
-              <input type="range" min="10" max="1000" step="10" value={maxIterations} disabled={isRunning}
+              <input type="range" min="10" max="1000" step="10" value={maxIterations}
                      onChange={(e) => setMaxIterations(Number(e.target.value))}
                      className="w-full accent-emerald-500" />
               <div className="flex justify-between text-[10px] text-slate-500 mt-0.5"><span>10</span><span>1000</span></div>
@@ -567,10 +630,10 @@ export default function FlowAIDashboard() {
           </div>
 
           <button
-            type="button" onClick={launch} disabled={isRunning || !canLaunch}
+            type="button" onClick={launch} disabled={!canLaunch}
             className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
             <Icon.Rocket className="w-5 h-5" />
-            {isRunning ? 'RUNNING…' : 'START NEW RUN'}
+            {isRunning ? 'START ANOTHER RUN' : 'START NEW RUN'}
           </button>
 
           {errorMsg && (

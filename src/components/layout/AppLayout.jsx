@@ -11,6 +11,7 @@ import IPFooter from "@/components/shared/IPFooter";
 import UniversalNav from "@/components/shared/UniversalNav";
 import { installRightClickProtection, installDevToolsDetection } from "@/lib/contentProtection";
 import FlowAIHealthBadge from "@/components/layout/FlowAIHealthBadge";
+import ActiveRunIndicator from "@/components/layout/ActiveRunIndicator";
 
 export default function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -98,6 +99,7 @@ export default function AppLayout() {
           <div className="flex-1" />
 
           <FlowAIHealthBadge />
+          <ActiveRunIndicator />
           <UniversalNav className="hidden lg:flex" />
 
           {/* Search */}

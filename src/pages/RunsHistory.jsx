@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { listFlowAIRuns, subscribeFlowAIRuns } from '@/lib/flowaiRunStore';
 
 const STATUS_CFG = {
   running:   { label: 'Running',      color: 'text-blue-400',     bg: 'bg-blue-400/10',     icon: Loader2 },
@@ -23,6 +24,7 @@ const VERDICT_CFG = {
 };
 
 function extractVerdict(session) {
+  if (session.verdict) return session.verdict;
   const stepResults = session.step_results || {};
   const monitorResult = stepResults.monitor?.full_output || '';
   const upper = monitorResult.toUpperCase();
@@ -32,6 +34,30 @@ function extractVerdict(session) {
   return null;
 }
 
+function mapFlowAIRun(run) {
+  return {
+    id: run.id,
+    _type: 'flowai',
+    product_name: run.product,
+    product_url: run.productUrl,
+    started_at: run.startTime,
+    ended_at: run.endTime,
+    overall_status: run.status,
+    score: run.score,
+    verdict: run.verdict,
+    run_id: run.runId,
+    branch_created: run.branchCreated,
+    progress_label: run.progressLabel,
+    step_results: {
+      flowai: {
+        summary: run.progressLabel,
+        score: run.score,
+        branchCreated: run.branchCreated,
+      },
+    },
+  };
+}
+
 function RunRow({ session, onClick, isExpanded }) {
   const status = session.overall_status || 'completed';
   const cfg = STATUS_CFG[status] || STATUS_CFG.completed;
@@ -39,6 +65,8 @@ function RunRow({ session, onClick, isExpanded }) {
   const verdict = extractVerdict(session);
   const verdictCfg = verdict ? VERDICT_CFG[verdict] : null;
   const stepCount = Object.values(session.step_results || {}).filter(Boolean).length;
+  const scoreLabel = typeof session.score === 'number' ? `${session.score}/100` : '-';
+  const endedLabel = session.ended_at ? format(new Date(session.ended_at), 'MMM d, HH:mm') : '-';
 
   return (
     <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
@@ -50,7 +78,9 @@ function RunRow({ session, onClick, isExpanded }) {
         <StatusIcon className={`h-3.5 w-3.5 shrink-0 ${cfg.color} ${status === 'running' ? 'animate-spin' : ''}`} />
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground truncate">{session.product_name || 'Unknown'}</p>
-          <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{session.product_url || '—'}</p>
+          <p className="text-[10px] text-muted-foreground truncate max-w-[240px]">
+            {session.product_url || '-'}{typeof session.score === 'number' ? ` - ${scoreLabel}` : ''}
+          </p>
         </div>
         <div className="hidden sm:block text-[10px] text-muted-foreground w-28 shrink-0">
           {session.started_at ? format(new Date(session.started_at), 'MMM d, HH:mm') : '—'}
@@ -76,6 +106,21 @@ function RunRow({ session, onClick, isExpanded }) {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden bg-secondary/10 border-t border-border/30">
             <div className="px-5 py-4 space-y-3">
+              {session._type === 'flowai' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                  {[
+                    { label: 'Run ID', value: session.run_id || session.id },
+                    { label: 'Ended', value: endedLabel },
+                    { label: 'Score', value: scoreLabel },
+                    { label: 'Branch Created', value: session.branch_created || '-' },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-lg border border-border bg-card p-2">
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase">{item.label}</p>
+                      <p className="mt-0.5 truncate text-[10px] text-foreground">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Step Results</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {['research', 'design', 'build', 'qa_audit', 'deploy', 'govern', 'gtm', 'monitor'].map(key => {
@@ -108,11 +153,13 @@ export default function RunsHistory() {
 
   useEffect(() => {
     const load = async () => {
+      const flowai = listFlowAIRuns().map(mapFlowAIRun);
       const [auto, guided] = await Promise.all([
         base44.entities.AutoSession.list('-started_at', 100).catch(() => []),
         base44.entities.GuidedSession.list('-last_active_at', 100).catch(() => []),
       ]);
       const all = [
+        ...flowai,
         ...auto.map(s => ({ ...s, _type: 'auto' })),
         ...guided.map(s => ({ ...s, _type: 'guided' })),
       ].sort((a, b) => new Date(b.started_at || b.created_date || 0) - new Date(a.started_at || a.created_date || 0));
@@ -120,6 +167,15 @@ export default function RunsHistory() {
       setLoading(false);
     };
     load();
+    return subscribeFlowAIRuns((runs) => {
+      setSessions((prev) => {
+        const nonFlowAI = prev.filter((session) => session._type !== 'flowai');
+        return [
+          ...runs.map(mapFlowAIRun),
+          ...nonFlowAI,
+        ].sort((a, b) => new Date(b.started_at || b.created_date || 0) - new Date(a.started_at || a.created_date || 0));
+      });
+    });
   }, []);
 
   const filtered = sessions.filter(s => {
@@ -198,8 +254,8 @@ export default function RunsHistory() {
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Play className="h-8 w-8 text-muted-foreground/30" />
             <p className="text-sm font-semibold text-muted-foreground">No runs found</p>
-            <p className="text-xs text-muted-foreground/60">Start a session from Workspace or Auto Runner.</p>
-            <Button size="sm" onClick={() => navigate('/')} className="gap-1.5 mt-1">
+            <p className="text-xs text-muted-foreground/60">Start a FlowAI run from the unified run surface.</p>
+            <Button size="sm" onClick={() => navigate('/flowai')} className="gap-1.5 mt-1">
               <Zap className="h-3.5 w-3.5" /> Go to Workspace
             </Button>
           </div>

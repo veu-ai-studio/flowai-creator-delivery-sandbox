@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Tooltip from "@/components/ui/Tooltip";
 import {
@@ -13,6 +13,7 @@ import {
   SlidersHorizontal,
   Zap,
 } from "lucide-react";
+import { listActiveFlowAIRuns, subscribeFlowAIRuns } from "@/lib/flowaiRunStore";
 
 const navSections = [
   {
@@ -127,6 +128,7 @@ function NavSection({ title, items }) {
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const [activeRuns, setActiveRuns] = useState(() => listActiveFlowAIRuns());
 
   useEffect(() => {
     const handler = (e) => {
@@ -138,6 +140,8 @@ export default function Sidebar() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [navigate]);
+
+  useEffect(() => subscribeFlowAIRuns(() => setActiveRuns(listActiveFlowAIRuns())), []);
 
   return (
     <aside className="w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto">
@@ -156,6 +160,20 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-5">
+        {activeRuns.length > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate('/runs')}
+            className="flex w-full items-center justify-between gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/15"
+            title={activeRuns.map((run) => `${run.product}: ${run.progressLabel}`).join('\n')}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <span aria-hidden="true">🟢</span>
+              <span className="truncate">{activeRuns.length} Running</span>
+            </span>
+            <span className="text-[10px] text-emerald-200">View</span>
+          </button>
+        )}
         <Tooltip content="Go back to the previous page">
           <button
             type="button"
