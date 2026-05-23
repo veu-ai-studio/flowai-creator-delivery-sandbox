@@ -168,7 +168,7 @@ export default function FlowAIDashboard() {
   const [pastedContent, setPastedContent] = useState('');
   const [mode, setMode] = useState('auto');
   const [gtmTarget, setGtmTarget] = useState(95);
-  const [maxIterations, setMaxIterations] = useState(10);
+  const [maxIterations, setMaxIterations] = useState(100);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -545,12 +545,12 @@ export default function FlowAIDashboard() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-                Max Iterations: <span className="text-emerald-400">{maxIterations}</span>
+                Iteration Budget: <span className="text-emerald-400">{maxIterations}</span>
               </label>
-              <input type="range" min="1" max="10" value={maxIterations} disabled={isRunning}
+              <input type="range" min="10" max="1000" step="10" value={maxIterations} disabled={isRunning}
                      onChange={(e) => setMaxIterations(Number(e.target.value))}
                      className="w-full accent-emerald-500" />
-              <div className="flex justify-between text-[10px] text-slate-500 mt-0.5"><span>1</span><span>10</span></div>
+              <div className="flex justify-between text-[10px] text-slate-500 mt-0.5"><span>10</span><span>1000</span></div>
             </div>
           </div>
 
@@ -576,7 +576,7 @@ export default function FlowAIDashboard() {
               <div>
                 <p className="text-xs text-slate-400 uppercase tracking-wide">Live Progress</p>
                 <p className="text-lg font-semibold mt-0.5">
-                  Iteration {currentIterationNumber} of {maxIterations}
+                  Iteration {currentIterationNumber} of up to {maxIterations}
                   <span className="text-slate-400 font-normal text-sm ml-2">— Score: {latestScore.total ?? 0} → {gtmTarget} target</span>
                 </p>
               </div>

@@ -10,21 +10,24 @@ const vercelConfig = JSON.parse(readFileSync(resolve(__dirname, '../../vercel.js
 
 describe('Agent 3 execute timeout handling', () => {
   it('configures Vercel maxDuration at the platform maximum for execute', () => {
-    expect(vercelConfig.functions['api/agent/3/execute.js'].maxDuration).toBe(300);
+    expect(vercelConfig.functions['api/agent/3/execute.js'].maxDuration).toBe(800);
   });
 
   it('keeps the SSE soft timeout below the Vercel hard timeout with buffer', () => {
-    expect(__test.SSE_SOFT_TIMEOUT_MS).toBe(240_000);
-    expect(__test.SSE_SOFT_TIMEOUT_MS).toBeLessThan(250_000);
+    expect(__test.VERCEL_EXECUTE_HARD_TIMEOUT_MS).toBe(800_000);
+    expect(__test.SSE_SOFT_TIMEOUT_MS).toBe(770_000);
+    expect(__test.SSE_SOFT_TIMEOUT_MS).toBeLessThan(__test.VERCEL_EXECUTE_HARD_TIMEOUT_MS);
     expect(executeSrc).toContain("type: 'heartbeat'");
     expect(executeSrc).toContain("type: 'timeout'");
     expect(executeSrc).toContain('buildSseSoftTimeoutResult');
   });
 
-  it('uses a bounded production fast lane for SSE analysis stages', () => {
-    expect(__test.SSE_PHASE_B_OVERALL_BUDGET_MS).toBe(45_000);
-    expect(__test.SSE_PHASE_B_PER_PAGE_BUDGET_MS).toBe(20_000);
-    expect(__test.SSE_PHASE_B_MAX_INTERACTIVES).toBe(20);
+  it('uses an expanded production lane for SSE analysis stages', () => {
+    expect(__test.SSE_PHASE_B_OVERALL_BUDGET_MS).toBe(180_000);
+    expect(__test.SSE_PHASE_B_PER_PAGE_BUDGET_MS).toBe(45_000);
+    expect(__test.SSE_PHASE_B_MAX_INTERACTIVES).toBe(120);
+    expect(__test.SSE_DEFAULT_MAX_ITERATIONS).toBe(1000);
+    expect(__test.SSE_MAX_ITERATIONS_HARD_CAP).toBe(1000);
     expect(__test.SSE_EVALUATION_TIER).toBe('TIER_1');
     expect(executeSrc).toContain('phaseBOverallBudgetMs: SSE_PHASE_B_OVERALL_BUDGET_MS');
     expect(executeSrc).toContain('evaluationTier: SSE_EVALUATION_TIER');

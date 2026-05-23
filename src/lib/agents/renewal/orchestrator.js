@@ -13,8 +13,8 @@
  *
  * Exit conditions (outer loop):
  *   - postScore.total >= gtmTarget                → GTM_READY
- *   - iterationNumber >= maxIterations            → MAX_ITERATIONS
- *   - delta <= 0 (no improvement this iteration)  → NO_IMPROVEMENT
+ *   - iterationNumber >= maxIterations            → MAX_ITERATIONS (explicit operator/failsafe cap)
+ *   - 3 consecutive delta <= 0 iterations         → NO_IMPROVEMENT
  *   - user called stop() before next iteration    → USER_STOPPED
  *   - any step throws unrecoverably               → STEP_FAILED
  */
@@ -63,7 +63,8 @@ import {
 import { randomUUID } from 'node:crypto';
 
 export const GTM_READY_SCORE = 95;
-export const DEFAULT_MAX_ITERATIONS = 10;
+export const DEFAULT_MAX_ITERATIONS = 1000;
+export const NO_IMPROVEMENT_STREAK_LIMIT = 3;
 export const STEP_NAMES = Object.freeze([
   'Product Discovery',
   'Rate Cap + Runaway Check',
@@ -430,7 +431,7 @@ class OrchestrationState {
  * @param {object|null} [args.supabase]
  * @param {string} [args.environment='prd']
  * @param {number} [args.gtmTarget=95]
- * @param {number} [args.maxIterations=10]
+ * @param {number} [args.maxIterations=1000]
  * @param {(log) => void} [args.onStep]
  * @param {(state) => void} [args.onCheckpoint]
  * @param {(iter) => void} [args.onIteration]
@@ -906,7 +907,7 @@ export async function runOrchestration(args = {}) {
     } catch { /* lookup failure is non-fatal — proceed with normal run */ }
   }
 
-  // ── OUTER LOOP: repeat until GTM-ready / max iter / no improvement / stop ─
+  // ── OUTER LOOP: repeat until GTM-ready / failsafe cap / convergence / stop ─
   let iterationNumber = 1;
   let currentUrl = initialUrl;
   let originalScore = null;
@@ -928,6 +929,7 @@ export async function runOrchestration(args = {}) {
   let finalPreviewUrl = state.universalMode ? null : (initialUrl ?? null);
   let pr = null;
   let exitReason = 'UNKNOWN';
+  let noImprovementStreak = 0;
   let token = null;
 
   // ── W6 INTEGRATION — STEP 5: Multi-page BFS crawl (CA-18 §5) ───────────────
@@ -946,8 +948,8 @@ export async function runOrchestration(args = {}) {
   if (initialUrl && /^https?:\/\//i.test(initialUrl)) {
     try {
       const _multiPageCrawler = deps.crawlSite || (await import('../../crawl/multiPageCrawler.js')).crawlSite;
-      const _maxPages = Number.isFinite(args.crawlMaxPages) ? args.crawlMaxPages : 250;
-      const _maxDepth = Number.isFinite(args.crawlMaxDepth) ? args.crawlMaxDepth : 4;
+      const _maxPages = Number.isFinite(args.crawlMaxPages) ? args.crawlMaxPages : 2000;
+      const _maxDepth = Number.isFinite(args.crawlMaxDepth) ? args.crawlMaxDepth : 8;
       const crawlSiteResult = await _multiPageCrawler(initialUrl, {
         maxPages: _maxPages,
         maxDepth: _maxDepth,
@@ -1036,8 +1038,8 @@ export async function runOrchestration(args = {}) {
       const t0 = Date.now();
       crawlOutput = await _conductStructuredCrawl({
         url: currentUrl,
-        maxPages: 50,
-        depth: 5,
+        maxPages: Number.isFinite(args.structuredCrawlMaxPages) ? args.structuredCrawlMaxPages : 2000,
+        depth: Number.isFinite(args.structuredCrawlDepth) ? args.structuredCrawlDepth : 8,
         productId,
         runId,
         // D43 Lever a — authenticated traversal: forward storageState
@@ -2487,11 +2489,15 @@ export async function runOrchestration(args = {}) {
       if (!deployDegraded && previewUrl) {
         try {
           // D43 — match the pre-fix crawl's maxPages/depth so the
-          // re-probe covers the same surface (D42 had maxPages:10
-          // which produced postFixPhaseBPagesProbed:1, defeating the
-          // re-probe's purpose).
+          // re-probe covers the same surface. W08 raises the default
+          // surface budget so production verification is no longer
+          // artificially capped at a handful of pages.
           postFixCrawlOutput = await _conductStructuredCrawl({
-            url: postFixUrl, maxPages: 50, depth: 5, productId, runId,
+            url: postFixUrl,
+            maxPages: Number.isFinite(args.structuredCrawlMaxPages) ? args.structuredCrawlMaxPages : 2000,
+            depth: Number.isFinite(args.structuredCrawlDepth) ? args.structuredCrawlDepth : 8,
+            productId,
+            runId,
             storageState: args.storageState ?? state.storageState ?? undefined,
           });
         } catch {
@@ -2820,10 +2826,10 @@ export async function runOrchestration(args = {}) {
       && !weighted.meetsMinimumCoverage
     ) {
       iterExit = 'INSUFFICIENT_DIMENSION_COVERAGE';
+    } else if (delta <= 0 && noImprovementStreak + 1 >= NO_IMPROVEMENT_STREAK_LIMIT) {
+      iterExit = 'NO_IMPROVEMENT';
     } else if (iterationNumber >= maxIterations) {
       iterExit = 'MAX_ITERATIONS';
-    } else if (delta <= 0) {
-      iterExit = 'NO_IMPROVEMENT';
     }
     const decisionLog = makeStepLog({
       iteration: iterationNumber, step: 12,
@@ -2839,6 +2845,8 @@ export async function runOrchestration(args = {}) {
         fiveLayerPost: postScoreEnvelope.total,        // internal telemetry
         gtmReady: iterLog.gtmReady,
         exitTrigger: iterExit,
+        noImprovementStreak: delta <= 0 ? noImprovementStreak + 1 : 0,
+        noImprovementStreakLimit: NO_IMPROVEMENT_STREAK_LIMIT,
         action: decision.action,
       },
       mode: state.mode,
@@ -2856,6 +2864,7 @@ export async function runOrchestration(args = {}) {
       break outerLoop;
     }
     if (state._stopRequested) { exitReason = 'USER_STOPPED'; break outerLoop; }
+    noImprovementStreak = delta <= 0 ? noImprovementStreak + 1 : 0;
 
     // Continue: next iteration scores against this iteration's preview URL.
     currentUrl = previewUrl;

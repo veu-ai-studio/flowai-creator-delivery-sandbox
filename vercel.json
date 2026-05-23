@@ -6,7 +6,7 @@
   ],
   "functions": {
     "api/agent/3/execute.js": {
-      "maxDuration": 300
+      "maxDuration": 800
     }
   },
   "env": {

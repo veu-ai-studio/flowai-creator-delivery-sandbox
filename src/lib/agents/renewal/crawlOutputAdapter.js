@@ -49,8 +49,8 @@
 import { Agent21AggressiveCrawlConductor } from '../agents/Agent21AggressiveCrawlConductor.js';
 import { aggressiveCrawl } from '../../../../api/_lib/crawler.js';
 
-const DEFAULT_MAX_PAGES = 50;
-const DEFAULT_DEPTH = 5;
+const DEFAULT_MAX_PAGES = 2000;
+const DEFAULT_DEPTH = 8;
 
 // Heuristic regexes. Run against bodyText (lowercase-normalised) +
 // against script src attributes scraped from the page. Bounded set so
@@ -288,8 +288,8 @@ function emptyEnvelope({ errors = [], depth = 0 } = {}) {
  *
  * @param {object} args
  * @param {string} args.url
- * @param {number} [args.maxPages=50]
- * @param {number} [args.depth=5]
+ * @param {number} [args.maxPages=2000]
+ * @param {number} [args.depth=8]
  * @param {string} [args.productId]
  * @param {string} [args.runId]
  * @param {object} [args.opts]

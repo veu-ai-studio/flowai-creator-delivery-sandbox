@@ -40,11 +40,14 @@ import verificationAdapters from '../../../src/lib/agents/verificationAdapters.j
 import { getServerMessageBus } from '../../_lib/messageBus.js';
 
 const SYNC_TIMEOUT_MS = 25_000;
-const SSE_SOFT_TIMEOUT_MS = 240_000;
+const VERCEL_EXECUTE_HARD_TIMEOUT_MS = 800_000;
+const SSE_SOFT_TIMEOUT_MS = VERCEL_EXECUTE_HARD_TIMEOUT_MS - 30_000;
 const SSE_HEARTBEAT_MS = 15_000;
-const SSE_PHASE_B_OVERALL_BUDGET_MS = 45_000;
-const SSE_PHASE_B_PER_PAGE_BUDGET_MS = 20_000;
-const SSE_PHASE_B_MAX_INTERACTIVES = 20;
+const SSE_PHASE_B_OVERALL_BUDGET_MS = 180_000;
+const SSE_PHASE_B_PER_PAGE_BUDGET_MS = 45_000;
+const SSE_PHASE_B_MAX_INTERACTIVES = 120;
+const SSE_DEFAULT_MAX_ITERATIONS = 1000;
+const SSE_MAX_ITERATIONS_HARD_CAP = 1000;
 const SSE_EVALUATION_TIER = 'TIER_1';
 const ALLOWED_MODES = new Set(['recommend_only', 'fork_and_fix']);
 
@@ -322,7 +325,7 @@ async function runSseOrchestration(req, res, body) {
   const url = typeof body.url === 'string' && body.url.length > 0 ? body.url : null;
   const mode = ['auto', 'guided', 'manual'].includes(body.mode) ? body.mode : 'auto';
   const maxIterations = Number.isFinite(body.maxIterations) && body.maxIterations > 0
-    ? Math.min(body.maxIterations, 50) : 10;
+    ? Math.min(body.maxIterations, SSE_MAX_ITERATIONS_HARD_CAP) : SSE_DEFAULT_MAX_ITERATIONS;
   const gtmTarget = Number.isFinite(body.gtmTarget) && body.gtmTarget >= 0 && body.gtmTarget <= 100
     ? body.gtmTarget : 95;
   const runId = typeof body.runId === 'string' && body.runId.length > 0
@@ -524,10 +527,13 @@ export const __test = Object.freeze({
   scoreFromStepLogs,
   SYNC_TIMEOUT_MS,
   SSE_SOFT_TIMEOUT_MS,
+  VERCEL_EXECUTE_HARD_TIMEOUT_MS,
   SSE_HEARTBEAT_MS,
   SSE_PHASE_B_OVERALL_BUDGET_MS,
   SSE_PHASE_B_PER_PAGE_BUDGET_MS,
   SSE_PHASE_B_MAX_INTERACTIVES,
+  SSE_DEFAULT_MAX_ITERATIONS,
+  SSE_MAX_ITERATIONS_HARD_CAP,
   SSE_EVALUATION_TIER,
   ALLOWED_MODES,
 });

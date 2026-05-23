@@ -244,7 +244,7 @@ describe('runOrchestration — AUTO mode', () => {
     } finally { clearVercelEnv(); }
   });
 
-  it('NO_IMPROVEMENT exits early when delta = 0', async () => {
+  it('NO_IMPROVEMENT exits after 3 consecutive flat iterations', async () => {
     withVercelEnv();
     try {
       const deps = happyDeps({
@@ -257,7 +257,7 @@ describe('runOrchestration — AUTO mode', () => {
       });
       expect(result.gtmReady).toBe(false);
       expect(result.exitReason).toBe('NO_IMPROVEMENT');
-      expect(result.iterationsCompleted).toBe(2);
+      expect(result.iterationsCompleted).toBe(4);
     } finally { clearVercelEnv(); }
   });
 });
