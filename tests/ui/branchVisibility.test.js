@@ -14,6 +14,10 @@ describe('branch and PR visibility', () => {
     const visibility = extractBranchPrVisibility({
       finalResult: {
         prUrl: null,
+        upgradeTargets: {
+          upgradeRepo: 'https://github.com/veu-ai-studio/saige-v2',
+          upgradeBranch: 'main',
+        },
         product: {
           repo: 'https://github.com/veu-ai-studio/saige',
           branch: 'main',
@@ -34,8 +38,8 @@ describe('branch and PR visibility', () => {
 
     expect(visibility).toMatchObject({
       branchName: 'flowai/renewal-run123-iter2',
-      branchUrl: 'https://github.com/veu-ai-studio/saige/tree/flowai/renewal-run123-iter2',
-      compareUrl: 'https://github.com/veu-ai-studio/saige/compare/main...flowai/renewal-run123-iter2?expand=1',
+      branchUrl: 'https://github.com/veu-ai-studio/saige-v2/tree/flowai/renewal-run123-iter2',
+      compareUrl: 'https://github.com/veu-ai-studio/saige-v2/compare/main...flowai/renewal-run123-iter2?expand=1',
       prUrl: null,
       approvalRequired: true,
       statusLabel: 'Branch ready - approval required',

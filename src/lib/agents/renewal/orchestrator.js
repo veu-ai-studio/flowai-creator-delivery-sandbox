@@ -52,6 +52,7 @@ import {
 } from '../../sourceMapping/registeredRepoSourceMapper.js';
 import { generateSourceMappedFixProposals } from '../../sourceMapping/sourceMappedFixGenerator.js';
 import { findRegisteredProductConfigForUrl } from '../../products/registeredProductConfig.js';
+import { applyUpgradeTargetsToProduct, resolveProductUpgradeTargets } from '../../products/upgradeTargetResolver.js';
 import { captureBaselineSnapshot } from '../../verification/baselineSnapshot.js';
 import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
 import { calculateTransformationDelta } from '../../verification/deltaCalculator.js';
@@ -201,11 +202,18 @@ function synthesizeOperatorConnectedProduct({ url, config }) {
   return Object.freeze({
     product_id: productIdFromRegisteredConfig(config),
     org_id: 'veu-ai-studio',
-    github_repo_url: config.repo,
-    product_url: url,
+    github_repo_url: config.upgrade_repo ?? config.repo,
+    product_url: config.upgrade_url ?? url,
+    original_repo: config.original_repo ?? config.repo,
+    original_url: config.original_url ?? url,
+    original_status: config.original_status ?? 'read_only_baseline',
+    upgrade_repo: config.upgrade_repo ?? config.repo,
+    upgrade_url: config.upgrade_url ?? url,
+    upgrade_status: config.upgrade_status ?? 'active_upgrade_target',
+    upgrade_architecture: config.upgrade_architecture ?? 'fork_based_upgrade',
     self_renewal_enabled: true,
     environment: 'prd',
-    self_renewal_branch: config.branch || 'main',
+    self_renewal_branch: config.upgrade_branch ?? config.branch ?? 'main',
     __operatorConnected: true,
     __sourceUrl: url,
     ...PATH_B_DEFAULT_CONFIG,
@@ -733,6 +741,9 @@ export async function runOrchestration(args = {}) {
       }
     }
     pathB = product.__pathB === true;
+    if (!pathB) {
+      product = applyUpgradeTargetsToProduct(product);
+    }
     // DISPATCH U1 ITEM 3 — universal mode = unknown URL with no
     // detected GitHub repo. This is THE primary use case per CA-18 §1
     // ("Operator submits any URL"). Universal mode runs the full
@@ -768,6 +779,9 @@ export async function runOrchestration(args = {}) {
             operator_mode: state.operatorMode,
             productId: product.product_id,
             githubRepoUrl: product.github_repo_url,
+            originalRepo: product.original_repo ?? null,
+            upgradeRepo: product.upgrade_repo ?? product.github_repo_url,
+            upgradeArchitecture: product.upgrade_architecture ?? null,
             operatorConnected: product.__operatorConnected === true,
           },
       durationMs: Date.now() - t0, mode: state.mode,
@@ -779,17 +793,15 @@ export async function runOrchestration(args = {}) {
   }
 
   const productId = product.product_id;
-  const githubRepoUrl = product.github_repo_url;
+  const upgradeTargets = resolveProductUpgradeTargets(product);
+  const githubRepoUrl = upgradeTargets.upgradeRepo;
   // DISPATCH 34 T2 — per-product branch-of-record (product-agnostic).
   // product_registry.self_renewal_branch (migration 0019) carries the
   // branch the orchestrator should target for Trees API + Contents
   // API + commit operations. Defaults to 'main' for any product whose
   // row lacks the column (back-compat with environments where 0019
   // hasn't been applied yet). PATH B has no registry row → uses 'main'.
-  const productBranch = (typeof product.self_renewal_branch === 'string'
-    && product.self_renewal_branch.length > 0)
-    ? product.self_renewal_branch
-    : 'main';
+  const productBranch = upgradeTargets.upgradeBranch;
   // Prefer the explicit URL caller passed in; otherwise the LIVE deployed
   // URL (NOT the GitHub repo URL, which 404s on direct fetch). Falling
   // back to the repo URL is a last resort and almost certainly fails.
@@ -798,6 +810,16 @@ export async function runOrchestration(args = {}) {
   // map only as fallback. Generic onboarding: add a registry row +
   // product_url → engine runs end-to-end; no code change required.
   const initialUrl = args.url || resolveLiveUrl(productId, product) || githubRepoUrl;
+
+  if (!pathB) {
+    emit(makeStepLog({
+      iteration: 0, step: 1, status: 'complete',
+      tool: 'upgradeTargetResolver.js',
+      why: 'enforce fork-based upgrade architecture: original repo is read-only, writes target upgrade repo',
+      result: upgradeTargets,
+      durationMs: 0, mode: state.mode,
+    }));
+  }
 
   if (githubOperatorToken && githubRepoUrl) {
     const parsed = parseGithubRepoUrl(githubRepoUrl);
@@ -815,7 +837,7 @@ export async function runOrchestration(args = {}) {
           iteration: 0, step: 1,
           status: access?.ok ? 'complete' : 'degraded',
           tool: 'githubOperatorRepoProbe.js',
-          why: 'verify GITHUB_OPERATOR_TOKEN can read/write the registered product repo without exposing secrets',
+          why: 'verify GITHUB_OPERATOR_TOKEN can read/write the active upgrade repo without exposing secrets',
           result: access,
           durationMs: Date.now() - t0, mode: state.mode,
         }));
@@ -835,7 +857,7 @@ export async function runOrchestration(args = {}) {
         emit(makeStepLog({
           iteration: 0, step: 1, status: 'degraded',
           tool: 'githubOperatorRepoProbe.js',
-          why: 'verify GITHUB_OPERATOR_TOKEN can read/write the registered product repo without exposing secrets',
+          why: 'verify GITHUB_OPERATOR_TOKEN can read/write the active upgrade repo without exposing secrets',
           result: state.operatorRepoAccess,
           mode: state.mode,
         }));
@@ -2267,8 +2289,14 @@ export async function runOrchestration(args = {}) {
         const log = makeStepLog({
           iteration: iterationNumber, step: 9, status: 'complete',
           tool: 'githubBranchWriter.js (createRenewalBranch + commitFileToBranch)',
-          why: 'all fixes on isolated branch for review + rollback',
-          result: { branchName, filesCommitted: fileChanges.length },
+          why: 'all fixes on isolated upgrade-repo branch for review; original repo remains read-only rollback',
+          result: {
+            branchName,
+            filesCommitted: fileChanges.length,
+            writeRepo: githubRepoUrl,
+            originalRepo: upgradeTargets.originalRepo,
+            originalReadOnly: true,
+          },
           durationMs: Date.now() - t0, mode: state.mode,
         });
         emit(log); iterLog.steps.push(log);
@@ -3264,6 +3292,7 @@ export async function runOrchestration(args = {}) {
         sourceMapping: state.sourceMapping ?? null,
         sourceMappedFixProposals: Array.isArray(state.sourceMappedFixProposals)
           ? state.sourceMappedFixProposals : [],
+        upgradeTargets,
         transformationDelta: state.transformationDelta ?? null,
         at: new Date().toISOString(),
       },
@@ -3340,6 +3369,7 @@ export async function runOrchestration(args = {}) {
     sourceMapping: state.sourceMapping ?? null,
     sourceMappedFixProposals: Array.isArray(state.sourceMappedFixProposals)
       ? state.sourceMappedFixProposals : [],
+    upgradeTargets,
     transformationDelta: state.transformationDelta ?? null,
     orchestrationLog,
     iterations,

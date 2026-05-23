@@ -461,7 +461,7 @@ describe('orchestrator - GitHub operator token mode', () => {
       tokenPresent: true,
       tokenRedacted: true,
       owner: 'veu-ai-studio',
-      repo: 'saige',
+      repo: 'saige-v2',
       branch: 'main',
       permissions: { pull: true, push: true, maintain: false, admin: false },
       reason: 'read_write_confirmed',
@@ -495,7 +495,14 @@ describe('orchestrator - GitHub operator token mode', () => {
     });
 
     expect(result.runMode).toBe('PATH_A');
-    expect(result.product.github_repo_url).toBe('https://github.com/veu-ai-studio/saige');
+    expect(result.product.github_repo_url).toBe('https://github.com/veu-ai-studio/saige-v2');
+    expect(result.product.original_repo).toBe('https://github.com/veu-ai-studio/saige');
+    expect(result.upgradeTargets).toMatchObject({
+      originalRepo: 'https://github.com/veu-ai-studio/saige',
+      upgradeRepo: 'https://github.com/veu-ai-studio/saige-v2',
+      writesOriginalRepo: false,
+      originalReadOnly: true,
+    });
     expect(stepLogs.find((log) => log.result?.kind === 'operator_mode')?.result).toMatchObject({
       operator_mode: 'github_connected',
       githubOperatorTokenPresent: true,
@@ -508,7 +515,7 @@ describe('orchestrator - GitHub operator token mode', () => {
     });
     expect(deps.probeGithubOperatorRepoAccess).toHaveBeenCalledWith(expect.objectContaining({
       owner: 'veu-ai-studio',
-      repo: 'saige',
+      repo: 'saige-v2',
       branch: 'main',
       token: 'gho_operator_secret',
     }));
@@ -537,7 +544,7 @@ describe('orchestrator - GitHub operator token mode', () => {
     expect(stepLogs.find((log) => log.step === 9 && log.tool.startsWith('githubBranchWriter'))?.status).toBe('complete');
     expect(deps.createRenewalBranch).toHaveBeenCalledWith(expect.objectContaining({
       owner: 'veu-ai-studio',
-      repo: 'saige',
+      repo: 'saige-v2',
       token: 'gho_operator_secret',
     }));
     expect(deps.createRenewalPr).not.toHaveBeenCalled();

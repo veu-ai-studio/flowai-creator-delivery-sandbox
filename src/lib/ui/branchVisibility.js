@@ -58,12 +58,24 @@ export function extractBranchPrVisibility({ finalResult, repoConfig } = {}) {
   if (!finalResult || typeof finalResult !== 'object') return null;
 
   const repoUrl = cleanGithubRepoUrl(
-    finalResult?.product?.repo
+    finalResult?.upgradeTargets?.upgradeRepo
+    ?? finalResult?.product?.upgrade_repo
+    ?? finalResult?.product?.upgradeRepo
+    ?? finalResult?.product?.repo
     ?? finalResult?.product?.repoUrl
+    ?? repoConfig?.upgrade_repo
+    ?? repoConfig?.upgradeRepo
     ?? repoConfig?.repo
     ?? repoConfig?.repoUrl,
   );
-  const baseBranch = finalResult?.product?.branch ?? repoConfig?.branch ?? 'main';
+  const baseBranch = finalResult?.upgradeTargets?.upgradeBranch
+    ?? finalResult?.product?.upgrade_branch
+    ?? finalResult?.product?.upgradeBranch
+    ?? finalResult?.product?.branch
+    ?? repoConfig?.upgrade_branch
+    ?? repoConfig?.upgradeBranch
+    ?? repoConfig?.branch
+    ?? 'main';
   const branch = latestBranchCreation(finalResult.iterations, finalResult.orchestrationLog);
 
   if (!repoUrl || !branch?.branchName) return null;

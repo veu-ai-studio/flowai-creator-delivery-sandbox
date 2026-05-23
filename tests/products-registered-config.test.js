@@ -47,20 +47,29 @@ describe('registered product config', () => {
     const saige = REGISTERED_PRODUCT_CONFIG.find((product) => product.name === 'SAIGE');
     expect(saige).toMatchObject({
       domain: 'saigeplatform.com',
-      repo: 'https://github.com/veu-ai-studio/saige',
+      repo: 'https://github.com/veu-ai-studio/saige-v2',
+      original_repo: 'https://github.com/veu-ai-studio/saige',
+      original_url: 'https://saige-platform.vercel.app',
+      original_status: 'frozen_read_only',
+      upgrade_repo: 'https://github.com/veu-ai-studio/saige-v2',
+      upgrade_url: 'https://saigeplatform.com',
+      upgrade_status: 'active_upgrade_target',
+      upgrade_architecture: 'fork_based_upgrade',
       branch: 'main',
       status: 'registered',
     });
-    expect(saige.systemNote).toContain('SAIGE repo registered');
-    expect(saige.systemNote).toContain('github.com/veu-ai-studio/saige (main)');
-    expect(saige.systemNote).toContain('U5/U6 fix generation enabled');
+    expect(saige.systemNote).toContain('SAIGE upgrade architecture active');
+    expect(saige.systemNote).toContain('github.com/veu-ai-studio/saige is read-only');
+    expect(saige.systemNote).toContain('github.com/veu-ai-studio/saige-v2 is the FlowAI upgrade target');
   });
 
   it('registers the full five-product portfolio without changing SAIGE', () => {
     expect(REGISTERED_PRODUCT_CONFIG).toHaveLength(5);
     expect(REGISTERED_PRODUCT_CONFIG.find((product) => product.name === 'SAIGE')).toMatchObject({
       domain: 'saigeplatform.com',
-      repo: 'https://github.com/veu-ai-studio/saige',
+      repo: 'https://github.com/veu-ai-studio/saige-v2',
+      original_repo: 'https://github.com/veu-ai-studio/saige',
+      upgrade_repo: 'https://github.com/veu-ai-studio/saige-v2',
       branch: 'main',
       status: 'registered',
     });
@@ -108,5 +117,15 @@ describe('registered product config', () => {
     for (const productId of ['saige', 'reltwin', 'reachsms', 'pressai', 'mypreglife']) {
       expect(sql).toContain(`'${productId}'`);
     }
+  });
+
+  it('adds fork-based upgrade target metadata for SAIGE', () => {
+    const sql = readFileSync(resolve(__dirname, '../supabase/migrations/0028_product_registry_fork_upgrade_targets.sql'), 'utf8');
+    expect(sql).toContain('original_repo');
+    expect(sql).toContain('upgrade_repo');
+    expect(sql).toContain('https://github.com/veu-ai-studio/saige');
+    expect(sql).toContain('https://github.com/veu-ai-studio/saige-v2');
+    expect(sql).toContain('frozen_read_only');
+    expect(sql).toContain('active_upgrade_target');
   });
 });
