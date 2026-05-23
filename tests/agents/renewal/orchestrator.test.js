@@ -2215,6 +2215,61 @@ describe('orchestrator — UNIVERSAL mode (DISPATCH U1)', () => {
     ))).toBe(true);
   });
 
+  it('uses the enriched pre-fix score as baseline for no-preview UNIVERSAL runs', async () => {
+    const base = happyDeps();
+    base.discoverProduct = vi.fn(async () => null);
+    base.runEvaluationPipeline = vi.fn(async () => ({
+      ok: true,
+      findings: [{ severity: 'high', category: 'console-error-404' }],
+      stats: { perEvaluator: { 'runtime-diagnostics': 1 }, evaluatorMetrics: {} },
+      perEvaluator: { 'runtime-diagnostics': 1 },
+      errors: {},
+    }));
+    const scoreCrawlOutput = vi.fn()
+      .mockReturnValueOnce({
+        score: 78,
+        counts: { critical: 0, high: 0, medium: 0, low: 0 },
+        band: 'demo-ready',
+        label: 'early',
+        penalty: 22,
+        formula: 'early',
+        issues: [],
+      })
+      .mockReturnValueOnce({
+        score: 64,
+        counts: { critical: 0, high: 1, medium: 0, low: 0 },
+        band: 'internal-only',
+        label: 'enriched',
+        penalty: 36,
+        formula: 'enriched',
+        issues: [{ severity: 'high', category: 'console-error-404' }],
+      })
+      .mockReturnValueOnce({
+        score: 78,
+        counts: { critical: 0, high: 0, medium: 0, low: 0 },
+        band: 'demo-ready',
+        label: 'surface',
+        penalty: 22,
+        formula: 'surface',
+        issues: [],
+      });
+    base.scoreCrawlOutput = scoreCrawlOutput;
+
+    const result = await runOrchestration({
+      url: 'https://unknown-example.com',
+      mode: 'auto',
+      gtmTarget: 95,
+      maxIterations: 1,
+      deps: base,
+    });
+
+    expect(result.runMode).toBe('UNIVERSAL');
+    expect(result.originalScore).toBe(64);
+    expect(result.finalScore).toBe(64);
+    expect(result.rawScore).toBe(64);
+    expect(result.totalDelta).toBe(0);
+  });
+
   it('logs every skipped deployment step in governance with autoFixSkippedReason=UNIVERSAL_NO_REPO_ACCESS', async () => {
     const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
     base.discoverProduct = vi.fn(async () => null);

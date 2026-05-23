@@ -1373,7 +1373,12 @@ export async function runOrchestration(args = {}) {
         // D41 T5 — whole-product comparison: surface-only Phase A vs
         // comprehensive Phase A + multi-page Phase B.
         const preGtmSurfaceOnly = _scoreCrawlOutput(crawlOutput, null);
-        if (originalGtmScore === null) originalGtmScore = preGtm.score;
+        // The early baseline is a timeout-safe provisional score. Once
+        // the first enriched evaluator score exists, it becomes the
+        // canonical run baseline so evaluation-only/no-fix runs do not
+        // report a fake negative delta against the provisional score.
+        if (iterationNumber === 1) originalGtmScore = preGtm.score;
+        else if (originalGtmScore === null) originalGtmScore = preGtm.score;
         iterLog.preGtm = preGtm;
         iterLog.preGtmSurfaceOnly = preGtmSurfaceOnly;
         const log = makeStepLog({

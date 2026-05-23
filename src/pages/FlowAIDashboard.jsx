@@ -761,7 +761,7 @@ export default function FlowAIDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
               <div className="rounded-md bg-slate-900/60 px-3 py-2">
                 <p className="text-[10px] text-slate-500 uppercase">Raw score</p>
-                <p className="text-2xl font-bold">{finalResult.originalScore ?? 0}<span className="text-xs text-slate-500">/100</span></p>
+                <p className="text-2xl font-bold">{finalRawScore}<span className="text-xs text-slate-500">/100</span></p>
                 <p className="text-[10px] text-slate-500">raw evaluator output - see Trust Score</p>
               </div>
               <div className="rounded-md bg-slate-900/60 px-3 py-2">
