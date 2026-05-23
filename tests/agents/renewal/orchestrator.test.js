@@ -27,6 +27,8 @@ function withVercelEnv() {
 }
 function clearVercelEnv() {
   for (const k of Object.keys(VERCEL_ENV)) delete process.env[k];
+  delete process.env.GITHUB_OPERATOR_TOKEN;
+  delete process.env.GITHUB_PAT;
 }
 
 function makeScoreEnvelope(total) {
@@ -447,6 +449,16 @@ describe('runOrchestration — callbacks', () => {
 });
 
 describe('orchestrator - GitHub operator token mode', () => {
+  it('accepts production GITHUB_PAT as a GitHub operator token fallback', () => {
+    clearVercelEnv();
+    process.env.GITHUB_PAT = 'ghp_existing_production_pat';
+    try {
+      expect(__internals.resolveGithubOperatorToken()).toBe('ghp_existing_production_pat');
+    } finally {
+      clearVercelEnv();
+    }
+  });
+
   it('uses GITHUB_OPERATOR_TOKEN for registered products without bypassing PR approval', async () => {
     clearVercelEnv();
     const stepLogs = [];

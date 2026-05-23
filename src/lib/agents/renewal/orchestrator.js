@@ -227,6 +227,9 @@ function resolveGithubOperatorToken(deps = {}) {
   if (typeof process?.env?.GITHUB_OPERATOR_TOKEN === 'string' && process.env.GITHUB_OPERATOR_TOKEN.length > 0) {
     return process.env.GITHUB_OPERATOR_TOKEN;
   }
+  if (typeof process?.env?.GITHUB_PAT === 'string' && process.env.GITHUB_PAT.length > 0) {
+    return process.env.GITHUB_PAT;
+  }
   return null;
 }
 
