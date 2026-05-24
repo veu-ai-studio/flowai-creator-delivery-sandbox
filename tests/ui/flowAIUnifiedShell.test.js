@@ -55,7 +55,7 @@ describe('FlowAI unified operating system shell', () => {
     expect(dashboardSrc).toMatch(/REGISTERED_PRODUCT_CONFIG/);
     expect(dashboardSrc).not.toMatch(/setInputMethod/);
     expect(dashboardSrc).toMatch(/method:\s*'combined'/);
-    expect(dashboardSrc).toMatch(/input:\s*inputPayload/);
+    expect(dashboardSrc).toMatch(/attachments:\s*attachmentsPayload/);
   });
 
   it('connects app-layout pages with global Back, Home, Workspace, and Landing controls', () => {

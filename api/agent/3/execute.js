@@ -38,6 +38,7 @@ import { Agent3SelfRenewalExecutor } from '../../../src/lib/agents/agents/Agent3
 import * as remediationEngine from '../../_lib/remediationEngine.js';
 import verificationAdapters from '../../../src/lib/agents/verificationAdapters.js';
 import { getServerMessageBus } from '../../_lib/messageBus.js';
+import { normalizeFlowAIInput } from '../../../src/lib/flowai/unifiedRunInput.js';
 
 const SYNC_TIMEOUT_MS = 25_000;
 const VERCEL_EXECUTE_HARD_TIMEOUT_MS = 800_000;
@@ -331,10 +332,17 @@ async function runSseOrchestration(req, res, body) {
   const runId = typeof body.runId === 'string' && body.runId.length > 0
     ? body.runId
     : `sse_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const runInput = normalizeFlowAIInput(body.input ?? body, { url, mode });
 
   sendEvent({
     type: 'start',
     runId, url, mode, maxIterations, gtmTarget,
+    inputSummary: {
+      url: runInput.receivedInputs.url,
+      description: runInput.receivedInputs.description,
+      attachments: runInput.attachments.length,
+      conceptMode: runInput.conceptMode,
+    },
     at: new Date().toISOString(),
   });
 
@@ -404,6 +412,7 @@ async function runSseOrchestration(req, res, body) {
 
     const orchestrationPromise = runOrchestration({
       url, mode, runId, supabase,
+      input: runInput,
       environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
       gtmTarget, maxIterations,
       phaseBOverallBudgetMs: SSE_PHASE_B_OVERALL_BUDGET_MS,

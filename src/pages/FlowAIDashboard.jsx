@@ -394,7 +394,11 @@ export default function FlowAIDashboard() {
           mode,
           maxIterations,
           gtmTarget,
-          input: inputPayload,
+          input: {
+            ...inputPayload,
+            description: inputPayload.productDescription,
+            attachments: attachmentsPayload,
+          },
         }),
         signal: ac.signal,
       });
@@ -633,6 +637,11 @@ export default function FlowAIDashboard() {
     setPastedContent((current) => `${current}${chunks.join('')}`.trim());
     setPasteExpanded(true);
   }
+
+  const attachmentsPayload = useMemo(() => {
+    if (!pastedContent.trim()) return [];
+    return [{ type: 'notes', content: pastedContent.trim(), name: 'pasted-context.txt' }];
+  }, [pastedContent]);
 
   // Cleanup the in-flight stream if the page unmounts.
   useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
