@@ -8,7 +8,8 @@ describe('upgrade target resolver', () => {
       original_repo: 'https://github.com/veu-ai-studio/saige',
       original_url: 'https://saige-platform.vercel.app',
       upgrade_repo: 'https://github.com/veu-ai-studio/saige-v2',
-      upgrade_url: 'https://saigeplatform.com',
+      upgrade_url: 'https://saige-v2.vercel.app',
+      deployment_status: 'deployed',
       upgrade_branch: 'main',
     });
 
@@ -17,7 +18,7 @@ describe('upgrade target resolver', () => {
       originalRepo: 'https://github.com/veu-ai-studio/saige',
       originalUrl: 'https://saige-platform.vercel.app',
       upgradeRepo: 'https://github.com/veu-ai-studio/saige-v2',
-      upgradeUrl: 'https://saigeplatform.com',
+      upgradeUrl: 'https://saige-v2.vercel.app',
       upgradeBranch: 'main',
       writesOriginalRepo: false,
       originalReadOnly: true,

@@ -149,6 +149,9 @@ function normalizeHref(value) {
 
 function upgradeDeliveryMessage(result = {}) {
   if (result.upgradeDeployed) return 'Live upgraded deployment is ready.';
+  if (result.upgradeDeployStatus === 'repo_available') {
+    return 'Upgrade repo is available; no verified deployment URL is stored.';
+  }
   if (result.upgradeDeployReason === 'VERCEL_PREVIEW_TOKEN_REQUIRED') {
     return 'Upgrade deployed: No - Vercel token required.';
   }
@@ -320,9 +323,18 @@ export default function FlowAIDashboard() {
       ?? repoConfig?.original_url
       ?? inputPayload.url
       ?? null;
+    const registryDeployedUrl = repoConfig?.deployment_status === 'deployed'
+      ? (repoConfig?.deployment_url ?? repoConfig?.upgrade_url ?? null)
+      : null;
+    const registryRepoUrl = repoConfig?.upgrade_repo ?? repoConfig?.upgrade_repo_url ?? null;
     const upgradedUrl = finalResult?.upgradedUrl
       ?? finalResult?.previewUrl
+      ?? registryDeployedUrl
+      ?? registryRepoUrl
       ?? null;
+    const upgradeDeployStatus = finalResult?.upgradeDeployStatus
+      ?? (registryDeployedUrl ? 'deployed' : (registryRepoUrl ? 'repo_available' : null));
+    const upgradeDeployed = finalResult?.upgradeDeployed ?? Boolean(registryDeployedUrl);
     return {
       originalUrl,
       upgradedUrl,
@@ -330,7 +342,10 @@ export default function FlowAIDashboard() {
       upgradedHref: normalizeHref(upgradedUrl),
       message: finalResult ? upgradeDeliveryMessage({
         ...finalResult,
-        upgradeDeployed: finalResult.upgradeDeployed ?? Boolean(upgradedUrl),
+        upgradeDeployed,
+        upgradeDeployStatus,
+        upgradeDeployReason: finalResult.upgradeDeployReason
+          ?? (upgradeDeployStatus === 'repo_available' ? 'UPGRADE_REPO_AVAILABLE' : null),
       }) : null,
     };
   }, [finalResult, inputPayload.url]);
@@ -509,7 +524,7 @@ export default function FlowAIDashboard() {
               verdict: runVerdictFromResult(payload.result),
               branchCreated: branchStep?.result?.branchName ?? null,
               originalUrl: payload.result?.originalUrl ?? inputPayload.url ?? null,
-              upgradedUrl: payload.result?.upgradedUrl ?? payload.result?.previewUrl ?? null,
+              upgradedUrl: payload.result?.upgradedUrl ?? payload.result?.previewUrl ?? finalDelivery.upgradedUrl ?? null,
               upgradeDeployStatus: payload.result?.upgradeDeployStatus ?? null,
               upgradeDeployReason: payload.result?.upgradeDeployReason ?? null,
               progressLabel: payload.result?.exitReason ?? 'Completed',

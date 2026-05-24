@@ -10,6 +10,7 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORTFOLIO_MIGRATION = resolve(__dirname, '../supabase/migrations/0026_product_registry_veu_portfolio.sql');
 const REPO_WRITE_URL_MIGRATION = resolve(__dirname, '../supabase/migrations/0027_product_registry_repo_write_urls.sql');
+const SAIGE_UPGRADE_URL_MIGRATION = resolve(__dirname, '../supabase/migrations/0030_product_registry_saige_upgrade_url.sql');
 
 describe('registered product config', () => {
   const portfolio = [
@@ -52,8 +53,11 @@ describe('registered product config', () => {
       original_url: 'https://saige-platform.vercel.app',
       original_status: 'frozen_read_only',
       upgrade_repo: 'https://github.com/veu-ai-studio/saige-v2',
-      upgrade_url: 'https://saigeplatform.com',
+      upgrade_url: 'https://saige-v2.vercel.app',
       upgrade_status: 'active_upgrade_target',
+      upgrade_repo_status: 'provisioned',
+      deployment_url: 'https://saige-v2.vercel.app',
+      deployment_status: 'deployed',
       upgrade_architecture: 'fork_based_upgrade',
       branch: 'main',
       status: 'registered',
@@ -127,5 +131,12 @@ describe('registered product config', () => {
     expect(sql).toContain('https://github.com/veu-ai-studio/saige-v2');
     expect(sql).toContain('frozen_read_only');
     expect(sql).toContain('active_upgrade_target');
+  });
+
+  it('backfills the verified SAIGE v2 deployment URL', () => {
+    const sql = readFileSync(SAIGE_UPGRADE_URL_MIGRATION, 'utf8');
+    expect(sql).toContain('https://saige-v2.vercel.app');
+    expect(sql).toContain("deployment_status = 'deployed'");
+    expect(sql).toContain("upgrade_repo_status = 'provisioned'");
   });
 });

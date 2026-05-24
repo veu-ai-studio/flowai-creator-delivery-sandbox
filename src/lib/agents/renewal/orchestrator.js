@@ -135,6 +135,10 @@ function resolveOriginalProductUrl({ product, initialUrl } = {}) {
     ?? null;
 }
 
+function firstNonEmptyString(...values) {
+  return values.find((value) => typeof value === 'string' && value.trim().length > 0) ?? null;
+}
+
 function resolveDeliveredUpgradeUrl({ iterations = [] } = {}) {
   for (let i = iterations.length - 1; i >= 0; i -= 1) {
     const previewUrl = iterations[i]?.previewUrl;
@@ -143,19 +147,71 @@ function resolveDeliveredUpgradeUrl({ iterations = [] } = {}) {
   return null;
 }
 
+function resolveProductUpgradeFallback(product = {}) {
+  const deploymentUrl = firstNonEmptyString(
+    product?.deployment_url,
+    product?.deploymentUrl,
+    product?.upgrade_url,
+    product?.upgradeUrl,
+  );
+  if (deploymentUrl && product?.deployment_status === 'deployed') {
+    return Object.freeze({
+      url: deploymentUrl,
+      kind: 'deployment',
+      status: 'deployed',
+      reason: null,
+      detail: null,
+    });
+  }
+
+  const repoUrl = firstNonEmptyString(
+    product?.upgrade_repo_url,
+    product?.upgrade_repo,
+    product?.upgradeRepo,
+    product?.write_repo,
+    product?.writeRepo,
+  );
+  if (repoUrl) {
+    return Object.freeze({
+      url: repoUrl,
+      kind: 'repo',
+      status: 'repo_available',
+      reason: 'UPGRADE_REPO_AVAILABLE',
+      detail: 'Upgrade repo exists, but no verified deployment URL is stored.',
+    });
+  }
+
+  return Object.freeze({
+    url: null,
+    kind: 'missing',
+    status: 'not_deployed',
+    reason: null,
+    detail: null,
+  });
+}
+
 function buildUpgradeDeliveryEnvelope({ product, initialUrl, iterations = [], skippedSteps = [] } = {}) {
   const originalUrl = resolveOriginalProductUrl({ product, initialUrl });
-  const upgradedUrl = resolveDeliveredUpgradeUrl({ iterations });
+  const deliveredUrl = resolveDeliveredUpgradeUrl({ iterations });
+  const fallback = resolveProductUpgradeFallback(product);
+  const upgradedUrl = deliveredUrl ?? fallback.url;
   const deploySkip = Array.isArray(skippedSteps)
     ? [...skippedSteps].reverse().find((step) => Number(step?.step) === 10 && step?.autoFixSkippedReason)
     : null;
+  const upgradeDeployed = Boolean(deliveredUrl) || fallback.status === 'deployed';
   return Object.freeze({
     originalUrl,
     upgradedUrl,
-    upgradeDeployed: Boolean(upgradedUrl),
-    upgradeDeployStatus: upgradedUrl ? 'deployed' : (deploySkip ? 'blocked' : 'not_deployed'),
-    upgradeDeployReason: upgradedUrl ? null : (deploySkip?.autoFixSkippedReason ?? null),
-    upgradeDeployDetail: upgradedUrl ? null : (deploySkip?.detail ?? null),
+    upgradeDeployed,
+    upgradeDeployStatus: upgradedUrl
+      ? (upgradeDeployed ? 'deployed' : fallback.status)
+      : (deploySkip ? 'blocked' : 'not_deployed'),
+    upgradeDeployReason: upgradeDeployed
+      ? null
+      : (fallback.reason ?? deploySkip?.autoFixSkippedReason ?? null),
+    upgradeDeployDetail: upgradeDeployed
+      ? null
+      : (fallback.detail ?? deploySkip?.detail ?? null),
   });
 }
 
@@ -4539,6 +4595,10 @@ export const __internals = Object.freeze({
   STEP_NAMES,
   makeStepLog,
   computeProgress,
+  firstNonEmptyString,
+  resolveDeliveredUpgradeUrl,
+  resolveProductUpgradeFallback,
+  buildUpgradeDeliveryEnvelope,
   siteSizeFromCrawl,
   buildPipelineEffortProfile,
   latestMeasuredScore,
