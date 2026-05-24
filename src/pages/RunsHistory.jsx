@@ -51,6 +51,7 @@ function mapFlowAIRun(run) {
     branch_created: run.branchCreated,
     progress_label: run.progressLabel,
     step_results: run.stepResults || {},
+    step_count: run.stepCount,
   };
 }
 
@@ -60,7 +61,9 @@ function RunRow({ session, onClick, isExpanded }) {
   const StatusIcon = cfg.icon;
   const verdict = extractVerdict(session);
   const verdictCfg = verdict ? VERDICT_CFG[verdict] : null;
-  const stepCount = Object.values(session.step_results || {}).filter(Boolean).length;
+  const stepCount = Number.isFinite(session.step_count)
+    ? session.step_count
+    : Object.values(session.step_results || {}).filter(Boolean).length;
   const scoreLabel = typeof session.score === 'number' ? `${session.score}/100` : '-';
   const endedLabel = session.ended_at ? format(new Date(session.ended_at), 'MMM d, HH:mm') : '-';
 

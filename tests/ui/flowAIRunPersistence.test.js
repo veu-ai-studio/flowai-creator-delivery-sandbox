@@ -81,6 +81,30 @@ describe('FlowAI run persistence and active indicator', () => {
     ]);
   });
 
+  it('backfills legacy runs that only persisted a numeric step count', async () => {
+    installWindowStorage();
+    const store = await import('../../src/lib/flowaiRunStore.js');
+    store.upsertFlowAIRun({
+      id: 'run-legacy',
+      runId: 'run-legacy',
+      product: 'SAIGE',
+      status: 'completed',
+      startTime: '2026-05-24T00:00:00.000Z',
+      stepCount: 5,
+    });
+
+    const [run] = store.listFlowAIRuns();
+    expect(run.stepCount).toBe(5);
+    expect(Object.keys(run.stepResults)).toEqual([
+      'research',
+      'design',
+      'build',
+      'qa_audit',
+      'deploy',
+    ]);
+    expect(run.stepResults.research.summary).toContain('Legacy run progress backfilled');
+  });
+
   it('reconciles stale running runs into timed_out so they do not stay active forever', async () => {
     installWindowStorage();
     const store = await import('../../src/lib/flowaiRunStore.js');

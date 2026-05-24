@@ -55,6 +55,26 @@ function normalizeStepResults(stepResults) {
   }, {});
 }
 
+function backfillLegacyStepResults(stepResults, stepCount) {
+  const normalized = normalizeStepResults(stepResults);
+  if (Object.keys(normalized).length > 0) return normalized;
+  const count = Math.max(0, Math.min(FLOWAI_MACRO_STEPS.length, Number(stepCount) || 0));
+  if (count === 0) return normalized;
+  return FLOWAI_MACRO_STEPS.slice(0, count).reduce((acc, key, index) => {
+    if (!acc[key]) {
+      acc[key] = {
+        summary: 'Legacy run progress backfilled from stored step count',
+        status: 'complete',
+        orchestrationStep: null,
+        tool: null,
+        at: null,
+        legacyStepIndex: index + 1,
+      };
+    }
+    return acc;
+  }, { ...normalized });
+}
+
 function countCompletedMacroSteps(stepResults) {
   const normalized = normalizeStepResults(stepResults);
   return FLOWAI_MACRO_STEPS.filter((key) => Boolean(normalized[key])).length;
@@ -132,6 +152,7 @@ function writeRuns(runs) {
 }
 
 function normalizeRun(run) {
+  const stepResults = backfillLegacyStepResults(run.stepResults, run.stepCount);
   return {
     id: run.id ?? run.runId ?? `local_${Date.now()}`,
     runId: run.runId ?? run.id ?? null,
@@ -144,10 +165,10 @@ function normalizeRun(run) {
     verdict: run.verdict ?? null,
     branchCreated: run.branchCreated ?? null,
     progressLabel: run.progressLabel ?? 'Starting',
-    stepResults: normalizeStepResults(run.stepResults),
+    stepResults,
     stepCount: Number.isFinite(run.stepCount)
       ? run.stepCount
-      : countCompletedMacroSteps(run.stepResults),
+      : countCompletedMacroSteps(stepResults),
     lastHeartbeatAt: run.lastHeartbeatAt ?? run.startTime ?? nowIso(),
     branchUrl: run.branchUrl ?? null,
     compareUrl: run.compareUrl ?? null,
