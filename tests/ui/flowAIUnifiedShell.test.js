@@ -27,12 +27,12 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toMatch(/label:\s*"Workspace"/);
     expect(sidebarSrc).toMatch(/label:\s*"Landing Page"/);
     expect(sidebarSrc).toMatch(/>Back</);
-    expect(sidebarSrc).toMatch(/title:\s*"LAUNCH"/);
+    expect(sidebarSrc).toMatch(/title:\s*"CONFIGURATION"/);
     expect(sidebarSrc).toMatch(/label:\s*"New Run"/);
     expect(sidebarSrc).toMatch(/title:\s*"PORTFOLIO"/);
     expect(sidebarSrc).toMatch(/label:\s*"Portfolio Dashboard"/);
     expect(sidebarSrc).toMatch(/label:\s*"Product Registry"/);
-    expect(sidebarSrc).toMatch(/label:\s*"Run History"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Session History"/);
     expect(sidebarSrc).toMatch(/title:\s*"CONFIGURATION"/);
     expect(sidebarSrc).toMatch(/label:\s*"My Products"/);
     expect(sidebarSrc).toMatch(/label:\s*"Objective & Settings"/);
@@ -66,6 +66,29 @@ describe('FlowAI unified operating system shell', () => {
     expect(universalNavSrc).toContain("navigate('/workspace')");
     expect(universalNavSrc).toContain("navigate('/landing')");
     expect(universalNavSrc).toContain('navigate(-1)');
+  });
+
+  it('keeps the FlowAI run page inside AppLayout with visible 8-step run progress', () => {
+    expect(appSrc).toMatch(/<Route element=\{<AppLayout \/>\}>[\s\S]*path="\/flowai"\s+element=\{<FlowAIDashboard \/>/);
+    expect(dashboardSrc).toContain('PipelineProgressTracker');
+    expect(dashboardSrc).toContain('8-Step Pipeline');
+    expect(dashboardSrc).toContain('Research');
+    expect(dashboardSrc).toContain('Design');
+    expect(dashboardSrc).toContain('Build');
+    expect(dashboardSrc).toContain('Quality Audit');
+    expect(dashboardSrc).toContain('Deploy');
+    expect(dashboardSrc).toContain('Self-Renewal');
+    expect(dashboardSrc).toContain('GTM');
+    expect(dashboardSrc).toContain('Monitor');
+    expect(dashboardSrc).toContain('Running...');
+    expect(dashboardSrc).toContain('Failed');
+    expect(dashboardSrc).toContain('Complete');
+  });
+
+  it('does not abort an active run when sidebar navigation unmounts the run page', () => {
+    expect(dashboardSrc).toContain('async function stop()');
+    expect(dashboardSrc).toContain('if (abortRef.current) abortRef.current.abort();');
+    expect(dashboardSrc).not.toContain('useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);');
   });
 
   it('surfaces registered product system notes inside the FlowAI run UI', () => {

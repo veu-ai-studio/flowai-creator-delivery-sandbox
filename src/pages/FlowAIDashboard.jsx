@@ -142,6 +142,17 @@ const STATUS_STYLE = {
   running:  'bg-blue-500/10 text-blue-400 border-blue-500/30 animate-pulse',
 };
 
+const FLOWAI_STEP_LABELS = Object.freeze({
+  research: 'Research',
+  design: 'Design',
+  build: 'Build',
+  qa_audit: 'Quality Audit',
+  deploy: 'Deploy',
+  self_renewal: 'Self-Renewal',
+  gtm: 'GTM',
+  monitor: 'Monitor',
+});
+
 function normalizeHref(value) {
   if (typeof value !== 'string' || value.length === 0) return null;
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
@@ -191,6 +202,138 @@ function StepRow({ log, expanded, onToggle }) {
 }
 
 // ── Main page ──────────────────────────────────────────────────────────────
+
+function getMacroStepFromLog(log = {}) {
+  const patch = buildFlowAIStepPatchFromLog(log);
+  return Object.keys(patch.stepResults ?? {})[0] ?? null;
+}
+
+function normalizeTrackerStatus(status) {
+  if (status === 'failed' || status === 'error') return 'failed';
+  if (status === 'running') return 'running';
+  if (status === 'skipped') return 'skipped';
+  return 'complete';
+}
+
+function getPipelineStepStates({ logs, isRunning, finalResult, errorMsg }) {
+  const states = FLOWAI_MACRO_STEPS.reduce((acc, key) => {
+    acc[key] = 'pending';
+    return acc;
+  }, {});
+  let lastMacroStep = null;
+  let lastStatus = null;
+
+  for (const log of logs) {
+    const macroStep = getMacroStepFromLog(log);
+    if (!macroStep) continue;
+    lastMacroStep = macroStep;
+    lastStatus = normalizeTrackerStatus(log.status);
+    if (lastStatus === 'failed') {
+      states[macroStep] = 'failed';
+    } else if (lastStatus === 'running') {
+      states[macroStep] = 'running';
+    } else if (states[macroStep] !== 'failed') {
+      states[macroStep] = lastStatus === 'skipped' ? 'skipped' : 'complete';
+    }
+  }
+
+  const terminalFailed = Boolean(errorMsg || finalResult?.ok === false);
+  if (terminalFailed && lastMacroStep && states[lastMacroStep] !== 'failed') {
+    states[lastMacroStep] = 'failed';
+  }
+
+  let activeStep = null;
+  if (isRunning) {
+    if (!lastMacroStep) {
+      activeStep = FLOWAI_MACRO_STEPS[0];
+    } else if (lastStatus === 'running') {
+      activeStep = lastMacroStep;
+    } else {
+      const nextIndex = Math.min(
+        FLOWAI_MACRO_STEPS.length - 1,
+        FLOWAI_MACRO_STEPS.indexOf(lastMacroStep) + 1,
+      );
+      activeStep = FLOWAI_MACRO_STEPS[nextIndex];
+    }
+    if (states[activeStep] === 'pending' || states[activeStep] === 'complete') {
+      states[activeStep] = 'running';
+    }
+  }
+
+  return { states, activeStep };
+}
+
+function PipelineProgressTracker({ logs, isRunning, finalResult, errorMsg }) {
+  const { states, activeStep } = getPipelineStepStates({ logs, isRunning, finalResult, errorMsg });
+  const completedCount = FLOWAI_MACRO_STEPS.filter((key) => states[key] === 'complete' || states[key] === 'skipped').length;
+  const failedCount = FLOWAI_MACRO_STEPS.filter((key) => states[key] === 'failed').length;
+  const runState = failedCount > 0 || errorMsg || finalResult?.ok === false
+    ? 'Failed'
+    : isRunning
+      ? 'Running'
+      : finalResult
+        ? 'Complete'
+        : 'Ready';
+  const stateClass = runState === 'Failed'
+    ? 'border-red-500/40 bg-red-500/10 text-red-300'
+    : runState === 'Running'
+      ? 'border-blue-500/40 bg-blue-500/10 text-blue-300'
+      : runState === 'Complete'
+        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+        : 'border-slate-700 bg-slate-900/70 text-slate-300';
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <p className="text-xs text-slate-400 uppercase tracking-wide">8-Step Pipeline</p>
+          <p className="text-sm text-slate-300 mt-1">
+            {completedCount}/8 complete
+            {activeStep && <span className="text-slate-500"> · Active: {FLOWAI_STEP_LABELS[activeStep]}</span>}
+          </p>
+        </div>
+        <div className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase tracking-wide flex items-center gap-2 ${stateClass}`}>
+          {isRunning && <span className="h-2 w-2 rounded-full bg-blue-300 animate-ping" />}
+          {runState === 'Running' ? 'Running...' : runState}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        {FLOWAI_MACRO_STEPS.map((key, index) => {
+          const status = states[key];
+          const isActive = key === activeStep;
+          const classes = status === 'failed'
+            ? 'border-red-500/60 bg-red-500/10 text-red-200'
+            : status === 'running'
+              ? 'border-blue-500/70 bg-blue-500/10 text-blue-200 shadow-[0_0_0_1px_rgba(59,130,246,0.35)]'
+              : status === 'complete'
+                ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200'
+                : status === 'skipped'
+                  ? 'border-slate-600 bg-slate-800/70 text-slate-300'
+                  : 'border-slate-800 bg-slate-900/70 text-slate-500';
+          const label = status === 'failed'
+            ? 'Failed'
+            : status === 'running'
+              ? 'Running'
+              : status === 'complete'
+                ? 'Complete'
+                : status === 'skipped'
+                  ? 'Skipped'
+                  : 'Pending';
+          return (
+            <div key={key} className={`rounded-lg border px-3 py-3 ${classes} ${isActive ? 'ring-2 ring-blue-400/50' : ''}`}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-current/70">Step {index + 1}</span>
+                <span className="text-[10px] font-bold uppercase">{label}</span>
+              </div>
+              <p className="mt-1 text-sm font-semibold">{FLOWAI_STEP_LABELS[key]}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function FlowAIDashboard() {
   // ── Form inputs ──────────────────────────────────────────────────────────
@@ -680,9 +823,6 @@ export default function FlowAIDashboard() {
     return [{ type: 'notes', content: pastedContent.trim(), name: 'pasted-context.txt' }];
   }, [pastedContent]);
 
-  // Cleanup the in-flight stream if the page unmounts.
-  useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
-
   const gtmReady = finalResult?.gtmReady === true;
 
   return (
@@ -842,7 +982,7 @@ export default function FlowAIDashboard() {
         </div>
 
         {/* ── Live progress panel ──────────────────────────────────────── */}
-        {(isRunning || stepLogs.length > 0) && (
+        {(isRunning || stepLogs.length > 0 || errorMsg || finalResult) && (
           <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-4">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
@@ -896,6 +1036,13 @@ export default function FlowAIDashboard() {
                 <span className="text-slate-500 ml-auto">{new Date(controlApplied.at).toLocaleTimeString()}</span>
               </div>
             )}
+
+            <PipelineProgressTracker
+              logs={stepLogs}
+              isRunning={isRunning}
+              finalResult={finalResult}
+              errorMsg={errorMsg}
+            />
 
             {/* Score progress bar */}
             <div>
