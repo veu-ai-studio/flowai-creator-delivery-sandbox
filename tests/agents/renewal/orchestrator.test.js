@@ -1000,6 +1000,40 @@ describe('runOrchestration — failure handling', () => {
       expect(deps.createRenewalBranch).not.toHaveBeenCalled();
     } finally { clearVercelEnv(); }
   });
+
+  it('emits all 10 dimensions_contributing entries with explicit known gaps', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [78], postScoreSequence: [82] });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'dimension-completeness', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+      expect(result.ok).toBe(true);
+      expect(result.dimensions_contributing).toHaveLength(10);
+      expect(result.dimensions_contributing.map((d) => d.dimension)).toEqual([
+        'syntax',
+        'duplication',
+        'ui_ux',
+        'functional_completeness',
+        'bugs_errors_detector',
+        'performance',
+        'accessibility',
+        'security',
+        'privacy_jurisdiction',
+        'legal_jurisdiction',
+      ]);
+      for (const dimension of ['security', 'privacy_jurisdiction', 'legal_jurisdiction']) {
+        expect(result.dimensions_contributing.find((d) => d.dimension === dimension)).toMatchObject({
+          scored: false,
+          evidence: 'KNOWN_GAP_NOT_IMPLEMENTED',
+        });
+      }
+      expect(result.scoredDimensions).toBe(
+        result.dimensions_contributing.filter((d) => d.scored === true).length,
+      );
+    } finally { clearVercelEnv(); }
+  });
 });
 
 // ── Multi-file commit behaviour ─────────────────────────────────────────────

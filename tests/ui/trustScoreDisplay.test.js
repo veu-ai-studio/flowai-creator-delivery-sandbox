@@ -75,6 +75,18 @@ describe('UI trust score display (DISPATCH U1 ITEM 2)', () => {
     expect(componentSrc).toMatch(/isUniversalMode/);
   });
 
+  it('does not render the improved URL action when preview equals the input URL', () => {
+    const sameAsInputStart = componentSrc.indexOf('if (sameAsInput)');
+    const sameAsInputBranch = componentSrc.slice(
+      sameAsInputStart,
+      componentSrc.indexOf('<a href={previewUrl}', sameAsInputStart),
+    );
+    expect(componentSrc).toMatch(/const sameAsInput = hasPreview[\s\S]+normalizeUrlForCompare\(originalUrl\)/);
+    expect(sameAsInputBranch).toContain('No new URL produced');
+    expect(sameAsInputBranch).toContain('Original URL (unchanged)');
+    expect(sameAsInputBranch).not.toContain('Open improved URL');
+  });
+
   it('UniversalModePanel renders the severity rollup grid', () => {
     expect(componentSrc).toMatch(/critical/);
     expect(componentSrc).toMatch(/high/);

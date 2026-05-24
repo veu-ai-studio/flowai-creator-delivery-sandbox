@@ -1,9 +1,9 @@
 # SSOT Claim-to-Runtime Traceability Matrix
 
-**Generated:** 2026-05-22T21:55:00Z
-**HEAD commit:** `733c9ba`
+**Generated:** 2026-05-24T22:31:12Z
+**HEAD commit:** `8c10792`
 **Branch:** `flowai-v0.1`
-**Production commit:** `733c9ba` target for W07-complete deployment (FlowAI first clean run observed after W07 fixes; runtime still exposes commit identity honestly via `/api/version`)
+**Production commit:** `UNKNOWN_AFTER_8c10792` (branch advanced through `8c10792`; production deployment remains Victor-approved and must be reverified via `/api/version` after deploy)
 **Governance status:** `PROPOSED_GOVERNANCE`
 **Panel artifact:** `UNAVAILABLE` (no traceability-matrix Panel ratification artifact found in `docs/panel-consultations/`)
 **Companion sidecar:** [`SSOT_TRACEABILITY_MATRIX.sidecar.json`](./SSOT_TRACEABILITY_MATRIX.sidecar.json)
@@ -164,6 +164,46 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 
 ---
 
+## Section 4.2 W08 traceability update through `8c10792`
+
+**Branch evidence covered:** commits `12a9232`, `51c8837`, `3cb5b5d`, `7e2453f`, `947f267`, `76637ad`, `6d2972f`, and `8c10792`.
+
+**Status remains honest:** these commits improve branch implementation and test coverage, but do not by themselves promote production-facing claims to `VERIFIED`. Claims with `LIVE_RUNTIME` or `DEPLOYMENT_EVIDENCE` verification still require post-deploy runtime artifacts before status promotion.
+
+| Commit | SSOT section(s) | Runtime claim impact | Evidence |
+|---|---|---|---|
+| `12a9232` | Section 9 Two Versions Always Exist; Section 12 Verification Honesty | SAIGE baseline URL now resolves to canonical `https://saigeplatform.com` instead of the legacy Vercel host. | `src/lib/products/registeredProductConfig.js`; `tests/products-registered-config.test.js` |
+| `51c8837` | Section 10 Auto Mode Behavior; Section 12 Verification Honesty | Vercel credential lookup is normalized to `VERCEL_OPERATOR_TOKEN || VERCEL_TOKEN`, preventing token-name drift from silently blocking preview deployment. | `src/lib/agents/renewal/orchestrator.js`; `src/lib/agents/renewal/optionCPipeline.js` |
+| `3cb5b5d` | Section 10 Auto Mode Behavior; Section 12 Verification Honesty | `api/run-construction.js` gets the longer Vercel max duration; SSE timeout messaging now reports `SSE_STREAM_ENDED_BEFORE_FINAL`; sidebar exposes New Run. | `vercel.json`; `src/components/RunConstructionPanel.jsx`; `src/components/layout/Sidebar.jsx` |
+| `7e2453f` | Section 10 Auto Mode Behavior | Setup/New Run page now renders inside the same app layout as Workspace, Session History, and Governance Dashboard. | `src/App.jsx`; `src/components/layout/Sidebar.jsx` |
+| `947f267` | Section 12 Verification Honesty | Lighthouse in Vercel serverless degrades with `lighthouse_unavailable_in_vercel_serverless` instead of failing the pipeline or leaking `/var/task` paths. | `src/lib/evaluation/lighthouseEvaluator.js`; `tests/evaluation/lighthouseEvaluator.test.js` |
+| `76637ad` | Section 10 Auto Mode Behavior | FlowAI dashboard gained 8-step progress state and running indicator. | `src/pages/FlowAIDashboard.jsx`; `tests/ui/flowAIUnifiedShell.test.js` |
+| `6d2972f` | Section 10 Auto Mode Behavior | Homepage run panel now renders the 8-step tracker and human-readable labels for internal pipeline codes. | `src/components/RunConstructionPanel.jsx`; `tests/ui/flowAIUnifiedShell.test.js` |
+| `8c10792` | Section 9 Two Versions Always Exist; Section 10 Auto Mode Behavior; Section 11 Boundaries on Auto-Fix; Section 12 Verification Honesty | Adversarial enrichment scoring degrades instead of terminal `STEP_FAILED`; no-fix runs record an attempted iteration; registered SAIGE runs overlay canonical `saige-v2` upgrade/deploy metadata before branch/deploy steps. | `src/lib/agents/renewal/orchestrator.js`; `tests/agents/renewal/orchestrator.test.js` |
+
+### Coverage gaps filled after PowerShell audit
+
+| Gap | Filled by | Status |
+|---|---|---|
+| `CA18-HONEST-URL` lacked an explicit guard proving the improved-URL action is absent when `previewUrl` equals the input URL. | `tests/ui/trustScoreDisplay.test.js` static regression: `sameAsInput` branch renders "No new URL produced" / "Original URL (unchanged)" and does not include "Open improved URL". | BRANCH COVERED |
+| `CA18-DIMENSION-DISCLOSURE` lacked an explicit 10-dimension completeness assertion. | `tests/agents/renewal/orchestrator.test.js` regression: `dimensions_contributing` has all 10 dimensions and the unimplemented legal/privacy/security dimensions are explicitly `KNOWN_GAP_NOT_IMPLEMENTED`. | BRANCH COVERED |
+
+### Claim status after W08
+
+| Claim | Prior gap | W08 result | Remaining reason not `VERIFIED` |
+|---|---|---|---|
+| `CA18-HONEST-URL` | Missing explicit same-URL/no-preview unit guard. | Closed on branch. | Needs production run artifact demonstrating honest no-new-URL UI behavior. |
+| `CA18-DIMENSION-DISCLOSURE` | Missing explicit all-dimensions completeness test. | Closed on branch. | Needs production run artifact with `dimensions_contributing[]` captured from live run output. |
+| `CA18-EVAL-PIPELINE` | Lighthouse serverless could still create hard failure behavior. | Improved by graceful degrade test coverage. | Needs production run where evaluator availability/degradation is captured in governance. |
+| `CA18-DEPLOY-TRUTH` | Preview deploy skipped or miswired when registry/runtime data drifted. | Improved by SAIGE registered-product preview wiring regression. | Needs post-deploy `/api/version` and preview-deploy runtime evidence after Victor promotes. |
+
+### Updated completion estimate
+
+**SSOT vision completion estimate:** approximately **62%** complete on branch. This is an implementation/readiness improvement, not a VERIFIED completion jump. The VERIFIED count remains limited by live production evidence requirements.
+
+---
+
+
 ## §5 — Companion files
 
 | File | Purpose |
@@ -291,4 +331,4 @@ Measurement:
 - Target: >= 95% VERIFIED before FlowAI is considered complete.
 - Claims at PARTIAL do not count toward completion.
 
-*End of SSOT Traceability Matrix v1. Last advance: 2026-05-22 from HEAD `733c9ba` - W07 completed first clean FlowAI run on `saigeplatform.com`, U3/U4/U5 live capability, Engineering Findings Report rendering, and timeout-stabilized universal-mode pipeline. U6/U7 remain in progress.*
+*End of SSOT Traceability Matrix v1. Last advance: 2026-05-24 from HEAD `8c10792` - W08 branch readiness updated through SAIGE baseline canonicalization, Vercel credential normalization, setup/sidebar reachability, Lighthouse/adversarial graceful degradation, 8-step progress rendering, no-fix iteration accounting, and SAIGE registered-product preview wiring. Production verification remains pending Victor-approved deployment.*

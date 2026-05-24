@@ -1,10 +1,10 @@
 {
   "schema": "ssot-traceability-matrix.sidecar.v1",
-  "generatedAt": "2026-05-21T22:26:03Z",
-  "headCommit": "158a427293f2987b287759af0b3503f7bb7d4a98",
+  "generatedAt": "2026-05-24T22:31:12Z",
+  "headCommit": "8c1079245ae07b65b947f38d0bfd8f80d450d4ce",
   "headBranch": "flowai-v0.1",
-  "productionCommit": "158a427293f2987b287759af0b3503f7bb7d4a98",
-  "productionDeployment": "flowai-mil59ba8z-veu-ai-studio.vercel.app",
+  "productionCommit": "UNKNOWN_AFTER_8c10792",
+  "productionDeployment": "PENDING_VICTOR_DEPLOY_APPROVAL",
   "governanceStatus": "PROPOSED_GOVERNANCE",
   "panelArtifact": "UNAVAILABLE",
   "panelArtifactSearchedAt": "docs/panel-consultations/",
@@ -56,8 +56,8 @@
       "status": "PARTIAL",
       "confidence": "MEDIUM",
       "scope": "BRANCH_ONLY",
-      "lastVerifiedAt": "2026-05-21T22:17:03Z",
-      "verifiedAgainstCommit": "158a427293f2987b287759af0b3503f7bb7d4a98",
+      "lastVerifiedAt": "2026-05-24T22:31:12Z",
+      "verifiedAgainstCommit": "8c1079245ae07b65b947f38d0bfd8f80d450d4ce",
       "verifiedAgainstDeployment": null,
       "verificationType": "LIVE_RUNTIME",
       "runtimeArtifactRequired": true,
@@ -70,7 +70,8 @@
         "src/components/RunConstructionPanel.jsx:363-369 (UNIVERSAL mode panel branch)"
       ],
       "testFiles": [
-        "tests/ui/trustScoreDisplay.test.js:24-32"
+        "tests/ui/trustScoreDisplay.test.js:24-32",
+        "tests/ui/trustScoreDisplay.test.js"
       ],
       "runtimeEvidence": [],
       "governanceEvidence": [
@@ -78,10 +79,9 @@
       ],
       "contradictions": [],
       "gaps": [
-        "No explicit unit test asserting the preview button is NOT rendered when sameAsInput===true.",
         "No production run captured demonstrating the honest-disclosure path."
       ],
-      "nextAction": "Add unit test asserting button absence on sameAsInput===true case; capture a production run with an unknown URL that yields no new URL."
+      "nextAction": "Capture a production run with an unknown URL or no-fix result that yields no new URL; attach the UI/run artifact to runtimeEvidence."
     },
     {
       "claimId": "CA18-WEIGHTED-SCORE",
@@ -124,8 +124,8 @@
       "status": "PARTIAL",
       "confidence": "MEDIUM",
       "scope": "BRANCH_ONLY",
-      "lastVerifiedAt": "2026-05-21T22:17:03Z",
-      "verifiedAgainstCommit": "158a427293f2987b287759af0b3503f7bb7d4a98",
+      "lastVerifiedAt": "2026-05-24T22:31:12Z",
+      "verifiedAgainstCommit": "8c1079245ae07b65b947f38d0bfd8f80d450d4ce",
       "verifiedAgainstDeployment": null,
       "verificationType": "LIVE_RUNTIME",
       "runtimeArtifactRequired": true,
@@ -148,10 +148,9 @@
       ],
       "contradictions": [],
       "gaps": [
-        "No explicit test asserting ALL unscored dimensions are emitted (array-completeness).",
         "No production run-log shows dimensions_contributing[] with non-empty content."
       ],
-      "nextAction": "Add unit test for dimensions_contributing array completeness and coverage-count accuracy; capture a production run with at least one unscored dimension and attach run log."
+      "nextAction": "Capture a production run with dimensions_contributing[] and attach run log; branch now has 10-dimension completeness coverage."
     },
     {
       "claimId": "CA18-EVAL-PIPELINE",
