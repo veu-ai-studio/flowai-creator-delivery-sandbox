@@ -226,4 +226,69 @@ SSOT rather than maintaining independent rule copies.
 
 ---
 
+## `§9` — Two Versions Always Exist
+
+For every product FlowAI upgrades:
+- ORIGINAL: frozen, never modified by FlowAI, rollback target.
+- UPGRADE: {product}-v2 repo, receives all FlowAI improvements.
+- CEO approves final replacement of original with upgrade.
+- Both versions must remain accessible at all times.
+- FlowAI reads original for baseline comparison only.
+
+## `§10` — Auto Mode Behavior
+
+- Auto: provision upgrade repos, deploy previews, iterate.
+  No user prompts. User should never leave FlowAI to manage
+  infrastructure during an Auto run.
+- Guided: pause at checkpoints for user confirmation.
+- Manual: user controls every step.
+- Active runs must be visible from any FlowAI page.
+- Run history must persist across sessions.
+
+## `§11` — Boundaries on Auto-Fix
+
+FlowAI must NOT auto-fix:
+- Platform SDK clients or internal configuration files.
+- Authentication or authorization escalation.
+- Database schema changes.
+- Third-party API credential modifications.
+- Any change that broadens or narrows access control.
+
+When a root issue falls in these categories, classify as
+PLATFORM_BOUNDARY_BLOCKED and report to operator.
+Do not generate a patch. Do not create a branch.
+
+FlowAI CAN auto-fix:
+- Application-layer UI/UX components.
+- CSS, styling, layout improvements.
+- Navigation and content structure.
+- SEO, accessibility, grammar, typos.
+- New standalone components replacing platform widgets.
+- Business logic independent of platform SDK.
+
+## `§12` — Verification Honesty
+
+FlowAI must never inflate scores or fabricate improvement.
+- VERIFIED: only when live production evidence confirms fix works.
+- PARTIAL: built and tested but not verified in production.
+- NOT_MEASURED: requires human judgment or credentials
+  FlowAI does not have.
+- Scores must reflect real measured state, never aspirational.
+- If score does not improve after fixes, report honestly.
+- No fabricated URLs, PRs, branches, metrics, or evidence.
+
+## `§13` — SSOT Completion Target
+
+The final shipped version of FlowAI must achieve 95% or higher
+compliance with this SSOT document. Codex builds toward SSOT
+in chunks. Each chunk must be traceable to a specific SSOT
+section. No chunk may cause retrogression or drift from
+previously verified SSOT claims.
+
+Measurement:
+- Total SSOT claims tracked in this matrix.
+- Claims at VERIFIED status / total claims = completion %.
+- Target: >= 95% VERIFIED before FlowAI is considered complete.
+- Claims at PARTIAL do not count toward completion.
+
 *End of SSOT Traceability Matrix v1. Last advance: 2026-05-22 from HEAD `733c9ba` - W07 completed first clean FlowAI run on `saigeplatform.com`, U3/U4/U5 live capability, Engineering Findings Report rendering, and timeout-stabilized universal-mode pipeline. U6/U7 remain in progress.*
