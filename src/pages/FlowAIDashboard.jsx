@@ -139,6 +139,22 @@ const STATUS_STYLE = {
   running:  'bg-blue-500/10 text-blue-400 border-blue-500/30 animate-pulse',
 };
 
+function normalizeHref(value) {
+  if (typeof value !== 'string' || value.length === 0) return null;
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
+
+function upgradeDeliveryMessage(result = {}) {
+  if (result.upgradeDeployed) return 'Live upgraded deployment is ready.';
+  if (result.upgradeDeployReason === 'VERCEL_PREVIEW_TOKEN_REQUIRED') {
+    return 'Upgrade deployed: No - Vercel token required.';
+  }
+  if (result.upgradeDeployReason) {
+    return `Upgrade deployed: No - ${String(result.upgradeDeployReason).replace(/_/g, ' ').toLowerCase()}.`;
+  }
+  return 'Upgrade deployed: No - no patched deployment was produced.';
+}
+
 function StepRow({ log, expanded, onToggle }) {
   const cls = STATUS_STYLE[log.status] || STATUS_STYLE.complete;
   return (
@@ -271,6 +287,26 @@ export default function FlowAIDashboard() {
     productDescription: productDescription.trim() || null,
     pastedContent: pastedContent.trim() || null,
   }), [inputMethod, url, productDescription, pastedContent]);
+  const finalDelivery = useMemo(() => {
+    const repoConfig = findRegisteredProductConfigForUrl(inputPayload.url);
+    const originalUrl = finalResult?.originalUrl
+      ?? repoConfig?.original_url
+      ?? inputPayload.url
+      ?? null;
+    const upgradedUrl = finalResult?.upgradedUrl
+      ?? finalResult?.previewUrl
+      ?? null;
+    return {
+      originalUrl,
+      upgradedUrl,
+      originalHref: normalizeHref(originalUrl),
+      upgradedHref: normalizeHref(upgradedUrl),
+      message: finalResult ? upgradeDeliveryMessage({
+        ...finalResult,
+        upgradeDeployed: finalResult.upgradeDeployed ?? Boolean(upgradedUrl),
+      }) : null,
+    };
+  }, [finalResult, inputPayload.url]);
   const registeredProductNote = useMemo(() => (
     findRegisteredProductConfigForUrl(inputPayload.url)?.systemNote ?? null
   ), [inputPayload.url]);
@@ -948,6 +984,45 @@ export default function FlowAIDashboard() {
                 </div>
               </div>
             )}
+
+            <div className="rounded-md border border-slate-700 bg-slate-950/60 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wide">Delivered URLs</p>
+                  <p className="text-sm text-slate-300">{finalDelivery.message}</p>
+                </div>
+                {finalDelivery.originalHref && finalDelivery.upgradedHref && (
+                  <a
+                    href={`/workspace?original=${encodeURIComponent(finalDelivery.originalHref)}&upgraded=${encodeURIComponent(finalDelivery.upgradedHref)}`}
+                    className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5"
+                  >
+                    <Icon.External className="w-3.5 h-3.5" />Compare
+                  </a>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div className="rounded-md bg-slate-900/70 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase text-slate-500">Original Product</p>
+                  {finalDelivery.originalHref ? (
+                    <a href={finalDelivery.originalHref} target="_blank" rel="noreferrer" className="mt-1 block break-all text-blue-300 hover:text-blue-200">
+                      {finalDelivery.originalUrl}
+                    </a>
+                  ) : (
+                    <p className="mt-1 text-slate-500">No original URL captured.</p>
+                  )}
+                </div>
+                <div className="rounded-md bg-slate-900/70 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase text-slate-500">Upgraded Version</p>
+                  {finalDelivery.upgradedHref ? (
+                    <a href={finalDelivery.upgradedHref} target="_blank" rel="noreferrer" className="mt-1 block break-all text-emerald-300 hover:text-emerald-200">
+                      {finalDelivery.upgradedUrl}
+                    </a>
+                  ) : (
+                    <p className="mt-1 text-amber-300">{finalDelivery.message}</p>
+                  )}
+                </div>
+              </div>
+            </div>
 
             <div className="flex flex-wrap gap-2">
               {finalResult.previewUrl && (

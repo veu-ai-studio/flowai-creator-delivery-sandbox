@@ -22,4 +22,11 @@ describe('CEO-95 scoring display', () => {
     expect(dashboardSource).toContain('Requires human');
     expect(dashboardSource).toContain('requires_human criteria score 0 until verified');
   });
+
+  it('surfaces original and upgraded URLs as the FlowAI deliverable', () => {
+    expect(dashboardSource).toContain('Delivered URLs');
+    expect(dashboardSource).toContain('Original Product');
+    expect(dashboardSource).toContain('Upgraded Version');
+    expect(dashboardSource).toContain('Upgrade deployed: No - Vercel token required.');
+  });
 });

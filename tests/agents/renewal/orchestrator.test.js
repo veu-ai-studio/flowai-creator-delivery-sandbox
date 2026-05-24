@@ -203,6 +203,10 @@ describe('runOrchestration — AUTO mode', () => {
       expect(result.finalScore).toBe(96);
       expect(result.totalDelta).toBe(46);
       expect(result.previewUrl).toMatch(/vercel\.app/);
+      expect(result.originalUrl).toBeTruthy();
+      expect(result.upgradedUrl).toBe(result.previewUrl);
+      expect(result.upgradeDeployed).toBe(true);
+      expect(result.upgradeDeployStatus).toBe('deployed');
       expect(result.prUrl).toMatch(/github\.com.*\/pull\/42/);
     } finally { clearVercelEnv(); }
   });

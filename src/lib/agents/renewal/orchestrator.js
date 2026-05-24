@@ -113,6 +113,38 @@ function computeProgress({ originalScore, currentScore, target }) {
   return Math.min(100, Math.round((moved / span) * 100));
 }
 
+function resolveOriginalProductUrl({ product, initialUrl } = {}) {
+  return product?.original_url
+    ?? product?.__sourceUrl
+    ?? product?.product_url
+    ?? initialUrl
+    ?? null;
+}
+
+function resolveDeliveredUpgradeUrl({ iterations = [] } = {}) {
+  for (let i = iterations.length - 1; i >= 0; i -= 1) {
+    const previewUrl = iterations[i]?.previewUrl;
+    if (typeof previewUrl === 'string' && previewUrl.length > 0) return previewUrl;
+  }
+  return null;
+}
+
+function buildUpgradeDeliveryEnvelope({ product, initialUrl, iterations = [], skippedSteps = [] } = {}) {
+  const originalUrl = resolveOriginalProductUrl({ product, initialUrl });
+  const upgradedUrl = resolveDeliveredUpgradeUrl({ iterations });
+  const deploySkip = Array.isArray(skippedSteps)
+    ? [...skippedSteps].reverse().find((step) => Number(step?.step) === 10 && step?.autoFixSkippedReason)
+    : null;
+  return Object.freeze({
+    originalUrl,
+    upgradedUrl,
+    upgradeDeployed: Boolean(upgradedUrl),
+    upgradeDeployStatus: upgradedUrl ? 'deployed' : (deploySkip ? 'blocked' : 'not_deployed'),
+    upgradeDeployReason: upgradedUrl ? null : (deploySkip?.autoFixSkippedReason ?? null),
+    upgradeDeployDetail: upgradedUrl ? null : (deploySkip?.detail ?? null),
+  });
+}
+
 /**
  * Resolve the live (deployed) URL for a product. D40 generic-engine
  * refactor: PRIMARY source is the product_registry row's product_url
@@ -1017,6 +1049,12 @@ export async function runOrchestration(args = {}) {
           fiveLayerFinalScore: 0,
           iterationsCompleted: 0,
           previewUrl: null,
+          ...buildUpgradeDeliveryEnvelope({
+            product,
+            initialUrl,
+            iterations: [],
+            skippedSteps: state.skippedSteps,
+          }),
           prUrl: null,
           prNumber: null,
           orchestrationLog,
@@ -3336,6 +3374,12 @@ export async function runOrchestration(args = {}) {
   });
   const finalGate = decideGtmGate({ weighted: finalWeighted, gtmTarget });
   const canonicalGtmReady = finalGate.gtmReady && finalGtmCriticalCount === 0;
+  const upgradeDelivery = buildUpgradeDeliveryEnvelope({
+    product,
+    initialUrl,
+    iterations,
+    skippedSteps: state.skippedSteps,
+  });
   // Promote INSUFFICIENT_DIMENSION_COVERAGE into exitReason when the
   // run ended without a clean GTM exit AND the only blocker was the
   // coverage floor. Keeps GTM_READY and other terminal reasons intact.
@@ -3369,6 +3413,7 @@ export async function runOrchestration(args = {}) {
         iterationsCompleted: iterations.length,
         gtmReady: canonicalGtmReady,
         previewUrl: finalPreviewUrl,
+        ...upgradeDelivery,
         prUrl: pr?.prHtmlUrl ?? null,
         ceo95Criteria: lastPostGtm?.ceo95Criteria ?? null,
         // W6 INTEGRATION — STEP 4: CA-18 §2 honest disclosure.
@@ -3452,6 +3497,7 @@ export async function runOrchestration(args = {}) {
     fiveLayerFinalScore: lastPostScore ?? originalScore ?? 0,
     iterationsCompleted: iterations.length,
     previewUrl: finalPreviewUrl,
+    ...upgradeDelivery,
     prUrl: pr?.prHtmlUrl ?? null,
     prNumber: pr?.prNumber ?? null,
     // W6 INTEGRATION — STEP 4: CA-18 §2 honest disclosure on result envelope.
