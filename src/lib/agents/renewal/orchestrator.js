@@ -3028,7 +3028,7 @@ export async function runOrchestration(args = {}) {
           }
         } else if (
           state.operatorMode === 'github_connected'
-          && (!process.env.VERCEL_TOKEN
+          && (!(process.env.VERCEL_OPERATOR_TOKEN || process.env.VERCEL_TOKEN)
             || !process.env.VERCEL_ORG_ID
             || !resolveVercelProjectId(productId, process.env, product))
         ) {
@@ -3062,9 +3062,9 @@ export async function runOrchestration(args = {}) {
             throw new Error(`no Vercel project ID for ${productId} (env VERCEL_PROJECT_ID_${productId.toUpperCase()})`);
           }
           const orgId = process.env.VERCEL_ORG_ID;
-          const vercelToken = process.env.VERCEL_TOKEN;
+          const vercelToken = process.env.VERCEL_OPERATOR_TOKEN || process.env.VERCEL_TOKEN;
           if (!orgId || !vercelToken) {
-            throw new Error('VERCEL_ORG_ID or VERCEL_TOKEN missing from env');
+            throw new Error('VERCEL_ORG_ID or VERCEL_OPERATOR_TOKEN/VERCEL_TOKEN missing from env');
           }
           const deployment = await _deployBranchPreview({
             projectId, orgId, owner, repo, branchName, token: vercelToken,

@@ -633,9 +633,9 @@ export async function runOptionC(args) {
       throw Object.assign(new Error('STEP_G: VERCEL_ORG_ID is not set'),
         { code: 'VERCEL_ORG_ID_MISSING' });
     }
-    const vercelToken = process.env.VERCEL_TOKEN;
+    const vercelToken = process.env.VERCEL_OPERATOR_TOKEN || process.env.VERCEL_TOKEN;
     if (!vercelToken) {
-      throw Object.assign(new Error('STEP_G: VERCEL_TOKEN is not set'),
+      throw Object.assign(new Error('STEP_G: VERCEL_OPERATOR_TOKEN/VERCEL_TOKEN is not set'),
         { code: 'VERCEL_TOKEN_MISSING' });
     }
     const deployment = await _deployBranchPreview({
