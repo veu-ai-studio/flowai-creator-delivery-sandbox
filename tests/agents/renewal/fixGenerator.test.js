@@ -341,6 +341,33 @@ describe('generateFix — FIX_GENERATION_FAILED', () => {
       expect(e.message).toMatch(/ANTHROPIC_API_KEY is required/);
     }
   });
+
+  it('rejects invalid JSON when strict structured response is required', async () => {
+    const fetchMock = mockOk(FIXED_CONTENT);
+    await expect(generateFix({
+      ...HAPPY_ARGS,
+      opts: { apiKey: API_KEY, fetch: fetchMock, requireStructured: true },
+    })).rejects.toMatchObject({
+      code: 'FIX_GENERATION_FAILED',
+      validationReason: 'invalid_json',
+    });
+  });
+
+  it('rejects low-confidence structured responses when strict mode is required', async () => {
+    const fetchMock = mockOk(JSON.stringify({
+      scoringDimension: 'L5',
+      confidence: 60,
+      rationale: 'This might improve visible polish.',
+      fixedContent: FIXED_CONTENT,
+    }));
+    await expect(generateFix({
+      ...HAPPY_ARGS,
+      opts: { apiKey: API_KEY, fetch: fetchMock, requireStructured: true },
+    })).rejects.toMatchObject({
+      code: 'FIX_GENERATION_FAILED',
+      validationReason: 'LOW_CONFIDENCE_REQUIRES_HUMAN_REVIEW',
+    });
+  });
 });
 
 describe('generateFix — arg validation', () => {

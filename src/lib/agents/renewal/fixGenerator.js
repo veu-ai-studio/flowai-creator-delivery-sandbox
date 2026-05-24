@@ -426,6 +426,7 @@ function buildLLMFileReplacementPrompt({
     'Return ONLY strict JSON. No markdown. No code fences. No prose outside JSON.',
     '{',
     '  "scoringDimension": "L1|L2|L3|L4|L5",',
+    '  "confidence": 0-100,',
     '  "rationale": "1-2 sentences explaining why this complete replacement should improve the score",',
     '  "fixedContent": "COMPLETE replacement file content, escaped as a JSON string"',
     '}',
@@ -438,7 +439,7 @@ function buildLLMFileReplacementPrompt({
 
 function parseStructuredFixResponse(text) {
   if (typeof text !== 'string' || !text.trim()) {
-    return { fixedContent: '', scoringDimension: null, rationale: null, structured: false };
+    return { fixedContent: '', scoringDimension: null, rationale: null, confidence: null, structured: false };
   }
   const trimmed = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
   try {
@@ -448,11 +449,12 @@ function parseStructuredFixResponse(text) {
         fixedContent: parsed.fixedContent,
         scoringDimension: typeof parsed.scoringDimension === 'string' ? parsed.scoringDimension : null,
         rationale: typeof parsed.rationale === 'string' ? parsed.rationale : null,
+        confidence: Number.isFinite(parsed.confidence) ? parsed.confidence : null,
         structured: true,
       };
     }
   } catch { /* raw complete-file fallback for legacy tests and older prompts */ }
-  return { fixedContent: text, scoringDimension: null, rationale: null, structured: false };
+  return { fixedContent: text, scoringDimension: null, rationale: null, confidence: null, structured: false };
 }
 
 /**
@@ -682,12 +684,20 @@ export async function generateFix(args) {
     fixedContent = structured.fixedContent;
     var scoringDimension = structured.scoringDimension;
     var rationale = structured.rationale;
+    var confidence = structured.confidence;
     var structuredResponse = structured.structured;
+    if (opts.requireStructured && !structuredResponse) {
+      validation = { ok: false, reason: 'invalid_json' };
+    } else if (opts.requireStructured && (!rationale || !rationale.trim())) {
+      validation = { ok: false, reason: 'missing_rationale' };
+    } else if (opts.requireStructured && Number.isFinite(confidence) && confidence < 70) {
+      validation = { ok: false, reason: 'LOW_CONFIDENCE_REQUIRES_HUMAN_REVIEW' };
+    }
     parsed = c.parsed;
     stopReason = c.stopReason;
-    validation = stopReason === 'max_tokens'
+    validation = validation ?? (stopReason === 'max_tokens'
       ? { ok: false, reason: 'truncated_max_tokens' }
-      : await validateFixedContent(fixedContent, args.fileContent, args.filePath);
+      : await validateFixedContent(fixedContent, args.fileContent, args.filePath));
   }
 
   // Retry once with the explicit prompt if first attempt fails validation.
@@ -734,13 +744,22 @@ export async function generateFix(args) {
       fixedContent = retryStructured.fixedContent;
       scoringDimension = retryStructured.scoringDimension;
       rationale = retryStructured.rationale;
+      confidence = retryStructured.confidence;
       structuredResponse = retryStructured.structured;
       parsed = retryResult.parsed;
       stopReason = retryResult.stopReason;
       attempts = 2;
-      validation = stopReason === 'max_tokens'
-        ? { ok: false, reason: 'truncated_max_tokens' }
-        : await validateFixedContent(fixedContent, args.fileContent, args.filePath);
+      if (opts.requireStructured && !structuredResponse) {
+        validation = { ok: false, reason: 'invalid_json' };
+      } else if (opts.requireStructured && (!rationale || !rationale.trim())) {
+        validation = { ok: false, reason: 'missing_rationale' };
+      } else if (opts.requireStructured && Number.isFinite(confidence) && confidence < 70) {
+        validation = { ok: false, reason: 'LOW_CONFIDENCE_REQUIRES_HUMAN_REVIEW' };
+      } else {
+        validation = stopReason === 'max_tokens'
+          ? { ok: false, reason: 'truncated_max_tokens' }
+          : await validateFixedContent(fixedContent, args.fileContent, args.filePath);
+      }
     }
   }
 
@@ -769,6 +788,7 @@ export async function generateFix(args) {
     mode,
     scoringDimension: scoringDimension ?? null,
     rationale: rationale ?? null,
+    confidence: confidence ?? null,
     structuredResponse: structuredResponse ?? false,
     diffStats,  // null for full-mode; { hunks, linesAdded, linesRemoved, changeRatio, totalLines } for diff-mode
   };

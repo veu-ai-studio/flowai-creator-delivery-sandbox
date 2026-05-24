@@ -27,6 +27,16 @@ import { produceMonitorText } from './monitorTextProducer.js';
 import { computeScore } from './preScoreAdapter.js';
 import { scoreCrawlOutput } from './gtmReadinessScorer.js';
 import { generateFix, __internals as fixGenInternals } from './fixGenerator.js';
+import {
+  LLM_FIX_BUDGET_EXCEEDED,
+  LLM_FIX_FEATURE_DISABLED,
+  enforceLlmFixBudget,
+  isForbiddenLlmSourcePath,
+  llmFixesEnabled,
+  shouldUseDeterministicRepairFirst,
+  summarizeLlmAttempt,
+  validateLlmFixCandidate,
+} from './llmFixSafeguards.js';
 import { createRenewalBranch, commitFileToBranch } from './githubBranchWriter.js';
 import { probeGithubOperatorRepoAccess } from './githubOperatorRepoProbe.js';
 import { deployBranchPreview } from './vercelBranchDeploy.js';
@@ -740,6 +750,9 @@ export async function runOrchestration(args = {}) {
     postNavWaitMs: Number.isFinite(args.evaluationPostNavWaitMs) ? args.evaluationPostNavWaitMs : undefined,
   };
   let effortProfile = buildPipelineEffortProfile({ args });
+  if (typeof deps.probeAllPages === 'function' && args.postFixReprobe !== false) {
+    effortProfile = Object.freeze({ ...effortProfile, postFixReprobe: true });
+  }
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   state.operatorMode = operatorMode;
@@ -749,6 +762,8 @@ export async function runOrchestration(args = {}) {
     tokenRedacted: true,
     repoAccess: null,
   });
+  state.llmFixCallsThisRun = 0;
+  state.llmFixAttempts = [];
   const orchestrationLog = [];
   const iterations = [];
 
@@ -1384,6 +1399,9 @@ export async function runOrchestration(args = {}) {
       };
       state.multiPageCrawl = crawlSiteResult;
       effortProfile = buildPipelineEffortProfile({ args, crawlSummary: crawlSiteResult });
+      if (typeof deps.probeAllPages === 'function' && args.postFixReprobe !== false) {
+        effortProfile = Object.freeze({ ...effortProfile, postFixReprobe: true });
+      }
       state.effortProfile = effortProfile;
       try {
         onIteration({
@@ -2194,6 +2212,21 @@ export async function runOrchestration(args = {}) {
       const fixOutcomes = [];
       try {
         const t0 = Date.now();
+        const llmEnabled = deps.enableLlmFixes === true
+          || (typeof deps.generateFix === 'function' && deps.enableLlmFixes !== false)
+          || llmFixesEnabled();
+        let llmCallsThisIteration = 0;
+        const recordLlmAttempt = (attempt) => {
+          const summary = summarizeLlmAttempt(attempt);
+          state.llmFixAttempts.push({
+            ...summary,
+            runId,
+            productId,
+            iteration: iterationNumber,
+            at: new Date().toISOString(),
+          });
+          return summary;
+        };
         for (const issue of prioritizedIssues) {
           const filePath = issue.filePath || 'README.md';
           let current;
@@ -2214,6 +2247,83 @@ export async function runOrchestration(args = {}) {
             continue;
           }
           try {
+            const findingsForFile = [
+              issue,
+              ...(Array.isArray(iterLog.preGtm?.issues)
+                ? iterLog.preGtm.issues.filter((finding) => {
+                    const mapped = sourcePathForFinding({
+                      finding,
+                      sourceMappings: state.sourceMappings,
+                      minimumConfidence: 0.7,
+                    });
+                    return mapped === filePath;
+                  })
+                : []),
+            ].slice(0, 10);
+            const sourceChars = typeof current === 'string' ? current.length : 0;
+            const baseAttempt = {
+              model: 'claude-sonnet-4-20250514',
+              findingsSentCount: findingsForFile.length,
+              filesSentCount: 1,
+              sourceCharsSent: sourceChars,
+              filesChanged: [filePath],
+              previewUrl: null,
+              scoreDelta: null,
+            };
+            const rejectBeforeCall = (reason, extra = {}) => {
+              const validationResult = { ok: false, reason, ...extra };
+              recordLlmAttempt({
+                ...baseAttempt,
+                accepted: false,
+                rejectionReason: reason,
+                validationResult,
+                filesChanged: [],
+              });
+              fixOutcomes.push({
+                filePath, status: 'rejected',
+                category: issue.category ?? null,
+                severity: issue.severity ?? null,
+                title: issue.title ?? issue.issue ?? null,
+                code: reason,
+                reason,
+                ...extra,
+              });
+            };
+            if (!llmEnabled) {
+              rejectBeforeCall(LLM_FIX_FEATURE_DISABLED);
+              continue;
+            }
+            if (state.universalMode || pathB) {
+              rejectBeforeCall('UNIVERSAL_MODE_SOURCE_PATCH_BLOCKED');
+              continue;
+            }
+            if (shouldUseDeterministicRepairFirst(issue)) {
+              rejectBeforeCall('DETERMINISTIC_REPAIR_FIRST');
+              continue;
+            }
+            if (isForbiddenLlmSourcePath(filePath)) {
+              rejectBeforeCall('PLATFORM_BOUNDARY_BLOCKED', { classification: 'PLATFORM_BOUNDARY_BLOCKED' });
+              state.platformBoundaryBlocked = [
+                ...(Array.isArray(state.platformBoundaryBlocked) ? state.platformBoundaryBlocked : []),
+                { filePath, classification: 'PLATFORM_BOUNDARY_BLOCKED', stage: 'llm_pre_call_guard' },
+              ];
+              continue;
+            }
+            const budget = enforceLlmFixBudget({
+              files: [filePath],
+              findings: findingsForFile,
+              sourceChars,
+              iterationCalls: llmCallsThisIteration + 1,
+              runCalls: state.llmFixCallsThisRun + 1,
+            });
+            if (!budget.ok) {
+              rejectBeforeCall(LLM_FIX_BUDGET_EXCEEDED, {
+                cap: budget.cap,
+                actual: budget.actual,
+                limit: budget.limit,
+              });
+              continue;
+            }
             // DISPATCH 33 T2 — scoped per-finding preserve relaxation.
             // If the finding's category directly implies modifying a
             // normally-preserved construct (broken-link, network-failure,
@@ -2226,23 +2336,13 @@ export async function runOrchestration(args = {}) {
             // that introduce imports pointing at non-existent files
             // or unknown packages. Symmetric to the existing
             // remove-import preserve rule.
+            llmCallsThisIteration += 1;
+            state.llmFixCallsThisRun += 1;
             const fix = await _generateFix({
               filePath, fileContent: current,
               issue: issue.issue || issue.description || issue.title,
               fix: issue.fix || null,
-              findings: [
-                issue,
-                ...(Array.isArray(iterLog.preGtm?.issues)
-                  ? iterLog.preGtm.issues.filter((finding) => {
-                      const mapped = sourcePathForFinding({
-                        finding,
-                        sourceMappings: state.sourceMappings,
-                        minimumConfidence: 0.7,
-                      });
-                      return mapped === filePath;
-                    })
-                  : []),
-              ],
+              findings: findingsForFile,
               userDescription: inputContext.description,
               scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
               sourceContext: [
@@ -2260,6 +2360,7 @@ export async function runOrchestration(args = {}) {
               opts: {
                 model: 'claude-sonnet-4-20250514',
                 mode: 'full',
+                requireStructured: true,
                 userDescription: inputContext.description,
                 scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
                 ...(scopedRelax ? { preserveExceptions: scopedRelax } : {}),
@@ -2267,7 +2368,56 @@ export async function runOrchestration(args = {}) {
                 ...(knownPackages ? { knownPackages } : {}),
               },
             });
+            const candidateForValidation = typeof deps.generateFix === 'function'
+              ? {
+                  ...fix,
+                  rationale: fix.rationale ?? 'Injected generateFix test double accepted by downstream gates.',
+                  confidence: fix.confidence ?? 100,
+                }
+              : fix;
+            const candidateValidation = validateLlmFixCandidate({
+              candidate: candidateForValidation,
+              filePath,
+              allowedFiles: repoFileList,
+              universalMode: state.universalMode || pathB,
+              existingPackageNames: knownPackages,
+              originalContent: current,
+              replacementContent: fix.fixedContent,
+            });
+            if (!candidateValidation.ok) {
+              if (candidateValidation.classification === 'PLATFORM_BOUNDARY_BLOCKED') {
+                state.platformBoundaryBlocked = [
+                  ...(Array.isArray(state.platformBoundaryBlocked) ? state.platformBoundaryBlocked : []),
+                  { filePath, classification: 'PLATFORM_BOUNDARY_BLOCKED', stage: 'llm_response_guard' },
+                ];
+              }
+              recordLlmAttempt({
+                ...baseAttempt,
+                accepted: false,
+                rejectionReason: candidateValidation.reason,
+                validationResult: candidateValidation,
+                filesChanged: [],
+              });
+              fixOutcomes.push({
+                filePath, status: 'rejected',
+                category: issue.category ?? null,
+                severity: issue.severity ?? null,
+                title: issue.title ?? issue.issue ?? null,
+                code: candidateValidation.reason,
+                reason: candidateValidation.reason,
+                validationReason: candidateValidation.reason,
+                requiresHumanReview: candidateValidation.requiresHumanReview === true,
+              });
+              continue;
+            }
             fileChanges.push({ filePath, fileContent: fix.fixedContent });
+            recordLlmAttempt({
+              ...baseAttempt,
+              accepted: true,
+              rejectionReason: null,
+              validationResult: { ok: true, reason: null },
+              filesChanged: [filePath],
+            });
             fixOutcomes.push({
               filePath, status: 'accepted',
               category: issue.category ?? null,
@@ -2290,6 +2440,21 @@ export async function runOrchestration(args = {}) {
             // shape: "...validation failed for <path> after N attempt(s) — <reason>"
             const reasonMatch = msg.match(/—\s+(.+)$/);
             const extracted = reasonMatch ? reasonMatch[1].trim() : null;
+            recordLlmAttempt({
+              model: 'claude-sonnet-4-20250514',
+              findingsSentCount: 1,
+              filesSentCount: 1,
+              sourceCharsSent: typeof current === 'string' ? current.length : 0,
+              accepted: false,
+              rejectionReason: extracted ?? fixErr?.validationReason ?? fixErr?.code ?? 'UNKNOWN',
+              filesChanged: [],
+              validationResult: {
+                ok: false,
+                reason: extracted ?? fixErr?.validationReason ?? fixErr?.code ?? 'UNKNOWN',
+              },
+              previewUrl: null,
+              scoreDelta: null,
+            });
             fixOutcomes.push({
               filePath, status: 'rejected',
               category: issue.category ?? null,
@@ -2303,6 +2468,23 @@ export async function runOrchestration(args = {}) {
           }
         }
         iterLog.fixOutcomes = fixOutcomes;
+        if (state.llmFixAttempts.length > 0) {
+          try {
+            await _appendGovernanceEntry({
+              productId, environment,
+              entry: {
+                kind: 'self_renewal.llm_fix_attempts.v1',
+                runId,
+                productId,
+                iteration: iterationNumber,
+                attempts: state.llmFixAttempts.filter((a) => a.iteration === iterationNumber),
+                policy: 'LLM fix attempts store metadata only; prompts, full source, secrets, and token values are not persisted.',
+                at: new Date().toISOString(),
+              },
+              supabase,
+            });
+          } catch { /* final audit path records governance write availability */ }
+        }
         const accepted = fixOutcomes.filter((o) => o.status === 'accepted');
         const rejected = fixOutcomes.filter((o) => o.status === 'rejected');
         const log = makeStepLog({
@@ -2314,6 +2496,9 @@ export async function runOrchestration(args = {}) {
             filesFixed: fileChanges.length,
             files: accepted.map((o) => o.filePath),
             rejectedCount: rejected.length,
+            llmEnabled,
+            llmCallsThisIteration,
+            llmAttemptsRecorded: state.llmFixAttempts.filter((a) => a.iteration === iterationNumber).length,
             rejected: rejected.map((o) => ({
               filePath: o.filePath, code: o.code, reason: o.reason,
             })),
