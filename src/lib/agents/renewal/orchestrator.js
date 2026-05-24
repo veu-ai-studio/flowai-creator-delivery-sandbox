@@ -71,6 +71,17 @@ import { randomUUID } from 'node:crypto';
 export const GTM_READY_SCORE = 95;
 export const DEFAULT_MAX_ITERATIONS = 1000;
 export const NO_IMPROVEMENT_STREAK_LIMIT = 3;
+export const SMALL_SITE_PAGE_LIMIT = 10;
+export const SMALL_SITE_EFFORT_PROFILE = Object.freeze({
+  crawlMaxPages: 10,
+  crawlDepth: 3,
+  phaseBMaxPages: 5,
+  phaseBProbeBudgetMs: 60_000,
+  phaseBOverallBudgetMs: 90_000,
+  phaseBPerPageBudgetMs: 18_000,
+  phaseBMaxInteractives: 8,
+  postFixReprobe: false,
+});
 export const STEP_NAMES = Object.freeze([
   'Product Discovery',
   'Rate Cap + Runaway Check',
@@ -145,6 +156,56 @@ function buildUpgradeDeliveryEnvelope({ product, initialUrl, iterations = [], sk
     upgradeDeployStatus: upgradedUrl ? 'deployed' : (deploySkip ? 'blocked' : 'not_deployed'),
     upgradeDeployReason: upgradedUrl ? null : (deploySkip?.autoFixSkippedReason ?? null),
     upgradeDeployDetail: upgradedUrl ? null : (deploySkip?.detail ?? null),
+  });
+}
+
+function siteSizeFromCrawl(crawlLike = {}) {
+  const candidates = [
+    crawlLike.pagesActuallyCrawled,
+    crawlLike.pagesCrawled,
+    Array.isArray(crawlLike.pages) ? crawlLike.pages.length : null,
+    crawlLike.pagesDiscovered,
+  ].filter((value) => Number.isFinite(value) && value > 0);
+  return candidates.length > 0 ? Math.min(...candidates) : null;
+}
+
+function buildPipelineEffortProfile({ args = {}, crawlSummary = null } = {}) {
+  const detectedPages = siteSizeFromCrawl(crawlSummary ?? {});
+  const smallSite = Number.isFinite(detectedPages) && detectedPages <= SMALL_SITE_PAGE_LIMIT;
+  const profile = smallSite ? SMALL_SITE_EFFORT_PROFILE : {};
+  return Object.freeze({
+    detectedPages,
+    smallSite,
+    crawlMaxPages: Number.isFinite(args.crawlMaxPages)
+      ? args.crawlMaxPages
+      : (smallSite ? Math.max(detectedPages, profile.crawlMaxPages) : 50),
+    crawlDepth: Number.isFinite(args.crawlMaxDepth)
+      ? args.crawlMaxDepth
+      : (smallSite ? profile.crawlDepth : 5),
+    structuredCrawlMaxPages: Number.isFinite(args.structuredCrawlMaxPages)
+      ? args.structuredCrawlMaxPages
+      : (smallSite ? Math.max(detectedPages, profile.crawlMaxPages) : 50),
+    structuredCrawlDepth: Number.isFinite(args.structuredCrawlDepth)
+      ? args.structuredCrawlDepth
+      : (smallSite ? profile.crawlDepth : 5),
+    phaseBMaxPages: Number.isFinite(args.phaseBMaxPages)
+      ? args.phaseBMaxPages
+      : (smallSite ? profile.phaseBMaxPages : 25),
+    phaseBProbeBudgetMs: Number.isFinite(args.phaseBProbeBudgetMs)
+      ? args.phaseBProbeBudgetMs
+      : (smallSite ? profile.phaseBProbeBudgetMs : undefined),
+    phaseBOverallBudgetMs: Number.isFinite(args.phaseBOverallBudgetMs)
+      ? args.phaseBOverallBudgetMs
+      : (smallSite ? profile.phaseBOverallBudgetMs : undefined),
+    phaseBPerPageBudgetMs: Number.isFinite(args.phaseBPerPageBudgetMs)
+      ? args.phaseBPerPageBudgetMs
+      : (smallSite ? profile.phaseBPerPageBudgetMs : undefined),
+    phaseBMaxInteractives: Number.isFinite(args.phaseBMaxInteractives)
+      ? args.phaseBMaxInteractives
+      : (smallSite ? profile.phaseBMaxInteractives : undefined),
+    postFixReprobe: typeof args.postFixReprobe === 'boolean'
+      ? args.postFixReprobe
+      : (smallSite ? profile.postFixReprobe : true),
   });
 }
 
@@ -605,6 +666,7 @@ export async function runOrchestration(args = {}) {
     gotoTimeoutMs: Number.isFinite(args.evaluationGotoTimeoutMs) ? args.evaluationGotoTimeoutMs : undefined,
     postNavWaitMs: Number.isFinite(args.evaluationPostNavWaitMs) ? args.evaluationPostNavWaitMs : undefined,
   };
+  let effortProfile = buildPipelineEffortProfile({ args });
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   state.operatorMode = operatorMode;
@@ -1199,11 +1261,9 @@ export async function runOrchestration(args = {}) {
   if (initialUrl && /^https?:\/\//i.test(initialUrl)) {
     try {
       const _multiPageCrawler = deps.crawlSite || (await import('../../crawl/multiPageCrawler.js')).crawlSite;
-      const _maxPages = Number.isFinite(args.crawlMaxPages) ? args.crawlMaxPages : 2000;
-      const _maxDepth = Number.isFinite(args.crawlMaxDepth) ? args.crawlMaxDepth : 8;
       const crawlSiteResult = await _multiPageCrawler(initialUrl, {
-        maxPages: _maxPages,
-        maxDepth: _maxDepth,
+        maxPages: effortProfile.crawlMaxPages,
+        maxDepth: effortProfile.crawlDepth,
         sameOriginOnly: true,
         respectRobotsTxt: args.respectRobotsTxt !== false,
         onPage: ({ pageIndex, totalDiscovered, url: pageUrl, status: pageStatus, findings: pageFindings }) => {
@@ -1245,6 +1305,8 @@ export async function runOrchestration(args = {}) {
         pagesDiscoveredLabel: 'URLs seen in the link graph',
       };
       state.multiPageCrawl = crawlSiteResult;
+      effortProfile = buildPipelineEffortProfile({ args, crawlSummary: crawlSiteResult });
+      state.effortProfile = effortProfile;
       try {
         onIteration({
           number: 0,
@@ -1260,6 +1322,7 @@ export async function runOrchestration(args = {}) {
           kind: 'crawl_complete',
           ...multiPageCrawlSummary,
           aggregatedFindings: crawlSiteResult.findings.length,
+          effortProfile,
         },
         mode: state.mode,
       }));
@@ -1289,8 +1352,8 @@ export async function runOrchestration(args = {}) {
       const t0 = Date.now();
       crawlOutput = await _conductStructuredCrawl({
         url: currentUrl,
-        maxPages: Number.isFinite(args.structuredCrawlMaxPages) ? args.structuredCrawlMaxPages : 2000,
-        depth: Number.isFinite(args.structuredCrawlDepth) ? args.structuredCrawlDepth : 8,
+        maxPages: effortProfile.structuredCrawlMaxPages,
+        depth: effortProfile.structuredCrawlDepth,
         productId,
         runId,
         // D43 Lever a — authenticated traversal: forward storageState
@@ -1420,7 +1483,8 @@ export async function runOrchestration(args = {}) {
       const crawledUrls = Array.isArray(crawlOutput?.pages)
         ? crawlOutput.pages.map((p) => (typeof p?.url === 'string' ? p.url : null)).filter(Boolean)
         : [];
-      const urls = (crawledUrls.length > 0) ? Array.from(new Set(crawledUrls)) : [currentUrl];
+      const allUrls = (crawledUrls.length > 0) ? Array.from(new Set(crawledUrls)) : [currentUrl];
+      const urls = allUrls.slice(0, effortProfile.phaseBMaxPages);
       phaseBUrlsAttempted = urls.length;
 
       // D43 Lever c — per-URL interactive seeds from the crawl. When
@@ -1441,10 +1505,10 @@ export async function runOrchestration(args = {}) {
         // D43 Lever b — defaults bumped ×1.5 in adversarialSurface.js
         // (DEFAULT_PROBE_BUDGET_MS 180_000 → 270_000); the orchestrator
         // override remains opt-in via state.phaseBProbeBudgetMs.
-        probeBudgetMs: state.phaseBProbeBudgetMs ?? phaseBBudget.probeBudgetMs,
-        overallBudgetMs: state.phaseBOverallBudgetMs ?? phaseBBudget.overallBudgetMs,
-        perPageBudgetMs: state.phaseBPerPageBudgetMs ?? phaseBBudget.perPageBudgetMs,
-        maxInteractives: state.phaseBMaxInteractives ?? phaseBBudget.maxInteractives,
+        probeBudgetMs: state.phaseBProbeBudgetMs ?? effortProfile.phaseBProbeBudgetMs ?? phaseBBudget.probeBudgetMs,
+        overallBudgetMs: state.phaseBOverallBudgetMs ?? effortProfile.phaseBOverallBudgetMs ?? phaseBBudget.overallBudgetMs,
+        perPageBudgetMs: state.phaseBPerPageBudgetMs ?? effortProfile.phaseBPerPageBudgetMs ?? phaseBBudget.perPageBudgetMs,
+        maxInteractives: state.phaseBMaxInteractives ?? effortProfile.phaseBMaxInteractives ?? phaseBBudget.maxInteractives,
         // D41 T4 — authenticated traversal: storageState plumbed from
         // runOrchestration args (set by ENTRY-007 / external auth flow).
         storageState: args.storageState ?? state.storageState ?? undefined,
@@ -1475,6 +1539,8 @@ export async function runOrchestration(args = {}) {
           reason: probe?.reason ?? null,
           pagesProbed: phaseBPagesProbed,
           urlsAttempted: phaseBUrlsAttempted,
+          urlsDiscovered: allUrls.length,
+          effortProfile,
           findingsCount: phaseBFindings.length,
           summary: phaseBSummary,
         },
@@ -2915,8 +2981,8 @@ export async function runOrchestration(args = {}) {
           // artificially capped at a handful of pages.
           postFixCrawlOutput = await _conductStructuredCrawl({
             url: postFixUrl,
-            maxPages: Number.isFinite(args.structuredCrawlMaxPages) ? args.structuredCrawlMaxPages : 2000,
-            depth: Number.isFinite(args.structuredCrawlDepth) ? args.structuredCrawlDepth : 8,
+            maxPages: effortProfile.structuredCrawlMaxPages,
+            depth: effortProfile.structuredCrawlDepth,
             productId,
             runId,
             storageState: args.storageState ?? state.storageState ?? undefined,
@@ -2937,13 +3003,13 @@ export async function runOrchestration(args = {}) {
       let postFixPagesProbed = 0;
       let postFixUrlsAttempted = 0;
       const _probeAllPagesPost = deps.probeAllPages || probeAllPages;
-      if (!deployDegraded && previewUrl && Array.isArray(postFixCrawlOutput?.pages) && postFixCrawlOutput.pages.length > 0) {
+      if (effortProfile.postFixReprobe && !deployDegraded && previewUrl && Array.isArray(postFixCrawlOutput?.pages) && postFixCrawlOutput.pages.length > 0) {
         try {
           const postFixUrls = Array.from(new Set(
             postFixCrawlOutput.pages
               .map((p) => (typeof p?.url === 'string' ? p.url : null))
               .filter(Boolean),
-          ));
+          )).slice(0, effortProfile.phaseBMaxPages);
           if (postFixUrls.length > 0) {
             // D43 Lever c — seed re-probe from the post-fix crawl too.
             const postFixSeedsByUrl = {};
@@ -2956,10 +3022,10 @@ export async function runOrchestration(args = {}) {
               urls: postFixUrls,
               opts: {
                 // D43 Lever b — defaults bumped in adversarialSurface.js.
-                probeBudgetMs: state.phaseBProbeBudgetMs ?? phaseBBudget.probeBudgetMs,
-                overallBudgetMs: state.phaseBOverallBudgetMs ?? phaseBBudget.overallBudgetMs,
-                perPageBudgetMs: state.phaseBPerPageBudgetMs ?? phaseBBudget.perPageBudgetMs,
-                maxInteractives: state.phaseBMaxInteractives ?? phaseBBudget.maxInteractives,
+                probeBudgetMs: state.phaseBProbeBudgetMs ?? effortProfile.phaseBProbeBudgetMs ?? phaseBBudget.probeBudgetMs,
+                overallBudgetMs: state.phaseBOverallBudgetMs ?? effortProfile.phaseBOverallBudgetMs ?? phaseBBudget.overallBudgetMs,
+                perPageBudgetMs: state.phaseBPerPageBudgetMs ?? effortProfile.phaseBPerPageBudgetMs ?? phaseBBudget.perPageBudgetMs,
+                maxInteractives: state.phaseBMaxInteractives ?? effortProfile.phaseBMaxInteractives ?? phaseBBudget.maxInteractives,
                 storageState: args.storageState ?? state.storageState ?? undefined,
                 seedsByUrl: postFixSeedsByUrl,
                 maxModals: 10, maxForms: 10,
@@ -4473,6 +4539,8 @@ export const __internals = Object.freeze({
   STEP_NAMES,
   makeStepLog,
   computeProgress,
+  siteSizeFromCrawl,
+  buildPipelineEffortProfile,
   latestMeasuredScore,
   discoverProduct,
   productIdFromRegisteredConfig,
