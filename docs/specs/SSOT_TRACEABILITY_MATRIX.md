@@ -183,4 +183,47 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 
 ---
 
+## §7 — Platform Decoupling Rule (CEO-Directed)
+
+Status: ACTIVE — applies to all FlowAI v2 upgrade runs.
+
+When FlowAI processes any URL built on any development platform
+(Base44, Wix, Webflow, Bubble, Squarespace, or ANY platform),
+the v2 upgrade must progressively decouple from that platform.
+
+### Rules
+
+1. Flag platform dependencies as migration items.
+2. Replace platform functions with direct implementations in v2.
+3. NEVER patch platform internals (e.g. base44Client.js, SDK configs).
+4. v2 repos become standalone products, not platform wrappers.
+5. Original platform-based product stays frozen as rollback.
+
+### Excluded Files (never modify in v2 upgrades)
+
+- base44Client.js or equivalent platform SDK client
+- Platform authentication/auth configuration
+- Platform routing internals
+- Any file that is auto-generated or managed by the platform
+
+### What FlowAI CAN Fix in v2
+
+- Application-layer UI/UX components
+- New standalone components replacing platform widgets
+- CSS/styling improvements
+- Navigation and content structure
+- SEO, accessibility, grammar, typos
+- Business logic independent of platform SDK
+
+## §8 — SSOT as Single Canonical Reference
+
+This document (SSOT_TRACEABILITY_MATRIX.md) is the single
+canonical source for all FlowAI product, engineering, and
+governance rules. No rules should be duplicated across
+multiple governance documents. All other documents
+(standing directive, governance docs) must reference this
+SSOT rather than maintaining independent rule copies.
+
+---
+
 *End of SSOT Traceability Matrix v1. Last advance: 2026-05-22 from HEAD `733c9ba` - W07 completed first clean FlowAI run on `saigeplatform.com`, U3/U4/U5 live capability, Engineering Findings Report rendering, and timeout-stabilized universal-mode pipeline. U6/U7 remain in progress.*
