@@ -17,6 +17,7 @@ describe('FlowAI run persistence and active indicator', () => {
     expect(dashboardSource).toContain('updateFlowAIRun');
     expect(dashboardSource).toContain('runVerdictFromResult');
     expect(dashboardSource).toContain('START ANOTHER RUN');
+    expect(dashboardSource).toContain('Running... ${liveMacroStepCount}/8 steps');
     expect(dashboardSource).not.toContain('if (isRunning) return;');
   });
 

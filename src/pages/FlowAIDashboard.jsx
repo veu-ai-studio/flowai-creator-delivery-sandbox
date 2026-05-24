@@ -34,6 +34,7 @@ import { extractBranchPrVisibility } from '@/lib/ui/branchVisibility';
 import { normalizeIterationHistoryRow } from '@/lib/ui/iterationHistory';
 import {
   FLOWAI_RUN_HEARTBEAT_TIMEOUT_MS,
+  FLOWAI_MACRO_STEPS,
   buildFlowAIStepPatchFromLog,
   listFlowAIRuns,
   replaceFlowAIRunId,
@@ -270,6 +271,15 @@ export default function FlowAIDashboard() {
     const last = stepLogs[stepLogs.length - 1];
     return last?.iteration > 0 ? last.iteration : iterations.length || 0;
   }, [stepLogs, iterations.length]);
+
+  const liveMacroStepCount = useMemo(() => {
+    const keys = new Set();
+    for (const log of stepLogs) {
+      const patch = buildFlowAIStepPatchFromLog(log);
+      for (const key of Object.keys(patch.stepResults ?? {})) keys.add(key);
+    }
+    return FLOWAI_MACRO_STEPS.filter((key) => keys.has(key)).length;
+  }, [stepLogs]);
 
   const progressPct = useMemo(() => {
     if (!latestScore.total) return 0;
@@ -771,10 +781,10 @@ export default function FlowAIDashboard() {
           </div>
 
           <button
-            type="button" onClick={launch} disabled={!canLaunch}
+            type="button" onClick={launch} disabled={isRunning || !canLaunch}
             className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
-            <Icon.Rocket className="w-5 h-5" />
-            {isRunning ? 'START ANOTHER RUN' : 'START NEW RUN'}
+            {isRunning ? <Icon.Refresh className="w-5 h-5 animate-spin" /> : <Icon.Rocket className="w-5 h-5" />}
+            {isRunning ? `Running... ${liveMacroStepCount}/8 steps` : finalResult ? 'START ANOTHER RUN' : 'START NEW RUN'}
           </button>
 
           {errorMsg && (

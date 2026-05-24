@@ -80,7 +80,7 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
           onChange={e => { setUrl(e.target.value); setFetchStatus(null); }}
           onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); setUrl(t); setFetchStatus(null); }}
           onClick={e => { e.stopPropagation(); onActivate(); }}
-          placeholder="https://saigedemo.com"
+          placeholder="Enter your product URL..."
           className="h-9 text-sm flex-1"
         />
         <Button
@@ -568,22 +568,17 @@ export default function LandingPage() {
               <span className="text-[10px] text-muted-foreground">v0.1 · VEU AI Studio personnel + licensed pilots</span>
             </div>
             <p className="text-sm text-foreground leading-relaxed">
-              <span className="font-semibold text-foreground">FlowAI</span> is VEU AI Studio's internal
-              governance assessment engine. Point it at a product (a live URL, a written description,
-              or pasted content/screenshots) and it runs an 8-step execution pipeline — Research,
-              Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — producing
-              per-step findings and a final Clearance verdict scored against a 50-point governance
-              threshold.
+              <span className="font-semibold text-foreground">FlowAI</span> is a universal product
+              upgrade engine. Give it a product URL, description, or supporting context and it runs
+              the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal,
+              Go-to-Market, Monitor — toward the CEO-defined 95/100 target.
             </p>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              <span className="font-semibold text-foreground">What you get:</span> a per-step report
-              (one section per pipeline step) plus a Monitor summary with the numerical Clearance
-              score, the verdict band (Showcase-ready 45–50 · Demo-ready 30–44 · Internal-only
-              15–29 · Not-ready 0–14), and the specific findings driving the score.
-              <span className="font-semibold text-foreground"> What this is not:</span> a customer-
-              facing SaaS, a certified compliance product, or a tool with external case studies.
-              It is an internal engine in active development; outputs are honest assessments, not
-              marketing-grade demos.
+              <span className="font-semibold text-foreground">What you get:</span> a per-step report,
+              honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands:
+              Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24.
+              Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead
+              of inflating the score.
             </p>
           </div>
         </motion.section>
