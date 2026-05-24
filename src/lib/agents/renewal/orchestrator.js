@@ -3769,6 +3769,12 @@ function detectsDiagnosticSuppression(before, after) {
   return false;
 }
 
+function detectsAuthGateEscalation(before, after) {
+  if (typeof before !== 'string' || typeof after !== 'string') return false;
+  return /\brequiresAuth\s*:\s*false\b/.test(before)
+    && /\brequiresAuth\s*:\s*true\b/.test(after);
+}
+
 function evaluateRepairIntegrity({
   fileChanges = [],
   fixOutcomes = [],
@@ -3813,6 +3819,15 @@ function evaluateRepairIntegrity({
         filePath: f.filePath,
         reason: 'diagnostic_suppression_not_fix',
         detail: 'Patch downgrades/removes error diagnostics without proving the underlying issue is resolved.',
+      });
+      continue;
+    }
+    if (detectsAuthGateEscalation(before, f.fileContent)) {
+      rejectedPaths.add(f.filePath);
+      rejected.push({
+        filePath: f.filePath,
+        reason: 'auth_gate_escalation_requires_operator_approval',
+        detail: 'Patch changes requiresAuth from false to true; public access/auth-gate changes require explicit operator approval.',
       });
       continue;
     }

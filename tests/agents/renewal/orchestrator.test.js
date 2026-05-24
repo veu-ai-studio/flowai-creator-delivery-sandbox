@@ -575,6 +575,33 @@ describe('orchestrator - repair integrity gate', () => {
     expect(verdict.accepted).toHaveLength(0);
     expect(verdict.rejected[0].reason).toBe('unverified_route_rewrite');
   });
+
+  it('rejects auth-gate escalation without operator approval', () => {
+    const verdict = __internals.evaluateRepairIntegrity({
+      fileChanges: [{
+        filePath: 'src/api/base44Client.js',
+        fileContent: 'export const base44 = createClient({ requiresAuth: true });\n',
+      }],
+      fixOutcomes: [{
+        filePath: 'src/api/base44Client.js',
+        status: 'accepted',
+        severity: 'high',
+        category: 'network:http_401',
+      }],
+      prioritizedIssues: [{
+        filePath: 'src/api/base44Client.js',
+        severity: 'high',
+        category: 'network:http_401',
+        title: 'Suppress 401 on unauthenticated root load',
+      }],
+      originalContentByPath: new Map([
+        ['src/api/base44Client.js', 'export const base44 = createClient({ requiresAuth: false });\n'],
+      ]),
+    });
+
+    expect(verdict.accepted).toHaveLength(0);
+    expect(verdict.rejected[0].reason).toBe('auth_gate_escalation_requires_operator_approval');
+  });
 });
 
 describe('orchestrator - GitHub operator token mode', () => {
