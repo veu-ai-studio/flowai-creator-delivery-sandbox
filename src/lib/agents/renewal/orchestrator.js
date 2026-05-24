@@ -1790,6 +1790,7 @@ export async function runOrchestration(args = {}) {
     let repo = null;
     const branchName = `flowai/renewal-${runId}-iter${iterationNumber}`;
     const fileChanges = []; // { filePath, fileContent (new) } — PATH A only
+    const originalContentByPath = new Map(); // filePath -> fetched baseline content for safety gates
     if (pathB) {
       // DISPATCH U1 ITEM 3 — annotate each skipped step with
       // autoFixSkippedReason so the governance trail (and the UI's
@@ -1902,9 +1903,15 @@ export async function runOrchestration(args = {}) {
           let current;
           try {
             current = await _fetchFileContent({ owner, repo, filePath, ref: productBranch, token });
+            if (typeof current === 'string' && !originalContentByPath.has(filePath)) {
+              originalContentByPath.set(filePath, current);
+            }
           } catch (fetchErr) {
             fixOutcomes.push({
               filePath, status: 'rejected',
+              category: issue.category ?? null,
+              severity: issue.severity ?? null,
+              title: issue.title ?? issue.issue ?? null,
               reason: 'file_fetch_failed',
               detail: (fetchErr?.message ?? String(fetchErr)).slice(0, 160),
             });
@@ -1938,6 +1945,9 @@ export async function runOrchestration(args = {}) {
             fileChanges.push({ filePath, fileContent: fix.fixedContent });
             fixOutcomes.push({
               filePath, status: 'accepted',
+              category: issue.category ?? null,
+              severity: issue.severity ?? null,
+              title: issue.title ?? issue.issue ?? null,
               mode: fix.mode ?? 'full',
               attempts: fix.attempts ?? 1,
               diffStats: fix.diffStats ?? null,
@@ -1954,6 +1964,9 @@ export async function runOrchestration(args = {}) {
             const extracted = reasonMatch ? reasonMatch[1].trim() : null;
             fixOutcomes.push({
               filePath, status: 'rejected',
+              category: issue.category ?? null,
+              severity: issue.severity ?? null,
+              title: issue.title ?? issue.issue ?? null,
               code: fixErr?.code ?? 'UNKNOWN',
               reason: extracted ?? msg.slice(0, 160),
               validationReason: fixErr?.validationReason ?? null,
@@ -2216,6 +2229,49 @@ export async function runOrchestration(args = {}) {
 
       if (fileChanges.length === 0) {
         exitReason = 'NO_FIXES_GENERATED';
+        break;
+      }
+
+      // W08 SAIGE-v2 integrity gate — reject hollow or regressive fix
+      // bundles before branch creation. This catches "fixes" that merely
+      // hide diagnostics (console.error -> console.warn), rewrite product
+      // routes without direct verified route evidence, or proceed with
+      // secondary UI edits after the primary high-risk root cause failed.
+      {
+        const t0 = Date.now();
+        const integrity = evaluateRepairIntegrity({
+          fileChanges,
+          fixOutcomes: iterLog.fixOutcomes,
+          prioritizedIssues,
+          originalContentByPath,
+        });
+        fileChanges.length = 0;
+        for (const f of integrity.accepted) fileChanges.push(f);
+        if (Array.isArray(iterLog.fixOutcomes)) {
+          iterLog.fixOutcomes.push(...integrity.rejected.map((r) => ({
+            filePath: r.filePath,
+            status: 'rejected',
+            code: 'REPAIR_INTEGRITY_REJECTED',
+            reason: r.reason,
+          })));
+        }
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 7,
+          status: integrity.rejected.length === 0 ? 'complete' : 'degraded',
+          tool: 'repairIntegrityGate.js',
+          why: 'reject hollow or regressive generated fixes before branch creation',
+          result: {
+            filesIn: integrity.filesIn,
+            filesPassed: integrity.accepted.length,
+            filesRejected: integrity.rejected.length,
+            rejected: integrity.rejected,
+          },
+          durationMs: Date.now() - t0, mode: state.mode,
+        }));
+      }
+
+      if (fileChanges.length === 0) {
+        exitReason = 'NO_SAFE_FIXES_GENERATED';
         break;
       }
 
@@ -3654,6 +3710,135 @@ function deriveScopedRelaxation(issue) {
   };
 }
 
+function severityRank(value) {
+  const s = String(value ?? '').toLowerCase();
+  if (s === 'critical') return 4;
+  if (s === 'high') return 3;
+  if (s === 'medium') return 2;
+  if (s === 'low') return 1;
+  return 0;
+}
+
+function isRootCauseCategory(value) {
+  const s = String(value ?? '').toLowerCase();
+  return s.includes('401')
+    || s.includes('network')
+    || s.includes('console')
+    || s.includes('runtime')
+    || s.includes('auth')
+    || s.includes('modal')
+    || s.includes('dead-card')
+    || s.includes('broken');
+}
+
+function extractRouteLiterals(text) {
+  if (typeof text !== 'string') return new Set();
+  const out = new Set();
+  const re = /(?:navigate\(\s*|href=|to=|window\.location(?:\.href)?\s*=|['"`])(['"`])(\/[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]{2,})\1/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const route = m[2];
+    if (route && !route.startsWith('//')) out.add(route);
+  }
+  return out;
+}
+
+function routeChangeAllowed(issue) {
+  const cat = String(issue?.category ?? '').toLowerCase();
+  const blob = [
+    issue?.title,
+    issue?.issue,
+    issue?.description,
+    issue?.evidence,
+    issue?.location,
+    issue?.fix,
+  ].filter(Boolean).join(' ').toLowerCase();
+  return (cat.includes('broken-link') || cat.includes('404') || cat.includes('route'))
+    && /(broken|404|not found|dead link|route)/.test(blob);
+}
+
+function detectsDiagnosticSuppression(before, after) {
+  if (typeof before !== 'string' || typeof after !== 'string') return false;
+  const beforeErrors = (before.match(/\bconsole\.error\s*\(/g) ?? []).length;
+  const afterErrors = (after.match(/\bconsole\.error\s*\(/g) ?? []).length;
+  const beforeWarns = (before.match(/\bconsole\.warn\s*\(/g) ?? []).length;
+  const afterWarns = (after.match(/\bconsole\.warn\s*\(/g) ?? []).length;
+  if (afterErrors < beforeErrors && afterWarns > beforeWarns) return true;
+  if (/ErrorBoundary|error boundary|caught error/i.test(before + after)
+      && afterErrors < beforeErrors) return true;
+  return false;
+}
+
+function evaluateRepairIntegrity({
+  fileChanges = [],
+  fixOutcomes = [],
+  prioritizedIssues = [],
+  originalContentByPath = new Map(),
+} = {}) {
+  const filesIn = fileChanges.length;
+  const rejected = [];
+  const rejectedPaths = new Set();
+  const acceptedOutcomes = (Array.isArray(fixOutcomes) ? fixOutcomes : [])
+    .filter((o) => o?.status === 'accepted');
+  const outcomeByPath = new Map(acceptedOutcomes.map((o) => [o.filePath, o]));
+
+  const topIssue = Array.isArray(prioritizedIssues) ? prioritizedIssues[0] : null;
+  const topPath = topIssue?.filePath || null;
+  const topOutcome = topPath
+    ? (Array.isArray(fixOutcomes) ? fixOutcomes : []).find((o) => o?.filePath === topPath)
+    : null;
+  const topWasRejected = !!topPath && topOutcome?.status === 'rejected';
+  const topIsRootCause = severityRank(topIssue?.severity) >= 3 || isRootCauseCategory(topIssue?.category)
+    || isRootCauseCategory(topIssue?.title) || isRootCauseCategory(topIssue?.issue);
+
+  if (topWasRejected && topIsRootCause && fileChanges.some((f) => f.filePath !== topPath)) {
+    for (const f of fileChanges) {
+      if (f.filePath !== topPath) {
+        rejectedPaths.add(f.filePath);
+        rejected.push({
+          filePath: f.filePath,
+          reason: 'primary_root_cause_unfixed',
+          detail: `Primary issue file ${topPath} was rejected; refusing secondary-only repair bundle.`,
+        });
+      }
+    }
+  }
+
+  for (const f of fileChanges) {
+    if (!f?.filePath || typeof f.fileContent !== 'string' || rejectedPaths.has(f.filePath)) continue;
+    const before = originalContentByPath.get(f.filePath);
+    if (detectsDiagnosticSuppression(before, f.fileContent)) {
+      rejectedPaths.add(f.filePath);
+      rejected.push({
+        filePath: f.filePath,
+        reason: 'diagnostic_suppression_not_fix',
+        detail: 'Patch downgrades/removes error diagnostics without proving the underlying issue is resolved.',
+      });
+      continue;
+    }
+
+    const outcome = outcomeByPath.get(f.filePath);
+    const beforeRoutes = extractRouteLiterals(before);
+    const afterRoutes = extractRouteLiterals(f.fileContent);
+    const removed = [...beforeRoutes].filter((r) => !afterRoutes.has(r));
+    const added = [...afterRoutes].filter((r) => !beforeRoutes.has(r));
+    if ((removed.length > 0 || added.length > 0) && !routeChangeAllowed(outcome)) {
+      rejectedPaths.add(f.filePath);
+      rejected.push({
+        filePath: f.filePath,
+        reason: 'unverified_route_rewrite',
+        detail: `Route literals changed without direct broken-route evidence: removed ${removed.join(',') || '-'}; added ${added.join(',') || '-'}.`,
+      });
+    }
+  }
+
+  return {
+    filesIn,
+    accepted: fileChanges.filter((f) => !rejectedPaths.has(f.filePath)),
+    rejected,
+  };
+}
+
 function derivePrioritizedIssuesFromScore(scoreEnvelope, product, suppliedIssue) {
   if (suppliedIssue && typeof suppliedIssue === 'object') return [suppliedIssue];
   // Phase A: find the weakest layer + propose a README-level brand/clarity fix.
@@ -3983,6 +4168,7 @@ export const __internals = Object.freeze({
   synthesizeOperatorConnectedProduct,
   resolveGithubOperatorToken,
   derivePrioritizedIssuesFromScore,
+  evaluateRepairIntegrity,
   prioritizeIssuesWithClaude,
   fetchRepoFileList,
   probeGithubOperatorRepoAccess,

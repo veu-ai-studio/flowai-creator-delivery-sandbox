@@ -448,6 +448,135 @@ describe('runOrchestration — callbacks', () => {
   });
 });
 
+describe('orchestrator - repair integrity gate', () => {
+  it('rejects diagnostic suppression before branch creation', async () => {
+    withVercelEnv();
+    try {
+      const base = happyDeps({ preScoreSequence: [59], postScoreSequence: [60] });
+      const generateFix = vi.fn(async () => ({
+        fixedContent: [
+          'export default function ErrorBoundary() {',
+          '  console.warn("Non-fatal caught error");',
+          '  return null;',
+          '}',
+          '',
+        ].join('\n'),
+        model: 'claude',
+        promptTokens: 10,
+        completionTokens: 5,
+        attempts: 1,
+        mode: 'diff',
+        diffStats: { hunks: 1, linesAdded: 1, linesRemoved: 1, changeRatio: 0.1, totalLines: 5 },
+      }));
+      const fetchFileContent = vi.fn(async () => [
+        'export default function ErrorBoundary() {',
+        '  console.error("Error caught by boundary");',
+        '  return null;',
+        '}',
+        '',
+      ].join('\n'));
+      const result = await runOrchestration({
+        url: null,
+        mode: 'auto',
+        runId: 'repair-integrity-1',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps: { ...base, fetchFileContent, generateFix },
+        issue: {
+          filePath: 'src/components/shared/ErrorBoundary.jsx',
+          issue: 'Suppress 401 console error',
+          fix: 'Do not hide diagnostics',
+          severity: 'high',
+          title: 'Root console error',
+          category: 'console-error',
+        },
+      });
+
+      const gate = result.orchestrationLog.find((l) => l.tool === 'repairIntegrityGate.js');
+      expect(gate).toBeDefined();
+      expect(gate.status).toBe('degraded');
+      expect(gate.result.filesRejected).toBe(1);
+      expect(gate.result.rejected[0].reason).toBe('diagnostic_suppression_not_fix');
+      expect(result.exitReason).toBe('NO_SAFE_FIXES_GENERATED');
+      expect(base.createRenewalBranch).not.toHaveBeenCalled();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('rejects secondary-only bundles when the primary high-risk root cause failed', () => {
+    const verdict = __internals.evaluateRepairIntegrity({
+      fileChanges: [
+        { filePath: 'src/components/shared/ErrorBoundary.jsx', fileContent: 'export default function E() {}\n' },
+        { filePath: 'src/components/layout/GlobalNavigationHeader.jsx', fileContent: 'export default function N() {}\n' },
+      ],
+      fixOutcomes: [
+        {
+          filePath: 'src/api/base44Client.js',
+          status: 'rejected',
+          severity: 'high',
+          category: 'network:http_401',
+          reason: 'diff_change_ratio_exceeded',
+        },
+        {
+          filePath: 'src/components/shared/ErrorBoundary.jsx',
+          status: 'accepted',
+          severity: 'medium',
+          category: 'console-error',
+        },
+        {
+          filePath: 'src/components/layout/GlobalNavigationHeader.jsx',
+          status: 'accepted',
+          severity: 'medium',
+          category: 'broken-modal',
+        },
+      ],
+      prioritizedIssues: [
+        { filePath: 'src/api/base44Client.js', severity: 'high', category: 'network:http_401', title: 'Suppress 401' },
+        { filePath: 'src/components/shared/ErrorBoundary.jsx', severity: 'medium', category: 'console-error' },
+        { filePath: 'src/components/layout/GlobalNavigationHeader.jsx', severity: 'medium', category: 'broken-modal' },
+      ],
+      originalContentByPath: new Map([
+        ['src/components/shared/ErrorBoundary.jsx', 'export default function E() {}\n'],
+        ['src/components/layout/GlobalNavigationHeader.jsx', 'export default function N() {}\n'],
+      ]),
+    });
+
+    expect(verdict.accepted).toHaveLength(0);
+    expect(verdict.rejected.map((r) => r.reason)).toEqual([
+      'primary_root_cause_unfixed',
+      'primary_root_cause_unfixed',
+    ]);
+  });
+
+  it('rejects unverified route rewrites', () => {
+    const verdict = __internals.evaluateRepairIntegrity({
+      fileChanges: [{
+        filePath: 'src/components/layout/GlobalNavigationHeader.jsx',
+        fileContent: 'button.onclick = () => navigate("/enterprise-demo");\n',
+      }],
+      fixOutcomes: [{
+        filePath: 'src/components/layout/GlobalNavigationHeader.jsx',
+        status: 'accepted',
+        severity: 'medium',
+        category: 'broken-modal',
+      }],
+      prioritizedIssues: [{
+        filePath: 'src/components/layout/GlobalNavigationHeader.jsx',
+        severity: 'medium',
+        category: 'broken-modal',
+        title: 'Fix broken header modal',
+      }],
+      originalContentByPath: new Map([
+        ['src/components/layout/GlobalNavigationHeader.jsx', 'button.onclick = () => navigate("/demo");\n'],
+      ]),
+    });
+
+    expect(verdict.accepted).toHaveLength(0);
+    expect(verdict.rejected[0].reason).toBe('unverified_route_rewrite');
+  });
+});
+
 describe('orchestrator - GitHub operator token mode', () => {
   it('accepts production GITHUB_PAT as a GitHub operator token fallback', () => {
     clearVercelEnv();
