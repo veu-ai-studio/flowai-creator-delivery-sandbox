@@ -14,7 +14,7 @@
  *   fields are also truncated to MAX_EVIDENCE_CHARS so a malicious
  *   long-evidence finding cannot consume the full prompt budget.
  *
- * Model selection: `claude-sonnet-4-6` is the final fallback per
+ * Model selection: `claude-sonnet-4-20250514` is the fix-generation model per
  * Cluster F. The Cluster F primary cascade is consulted via opts.model
  * when wired by the orchestrator; absent that, this module uses the
  * fallback directly. (Per session rules: never hardcode "the" model
@@ -31,7 +31,7 @@ import { buildDiffPrompt, applyAndValidate as applyAndValidateDiff } from './dif
 
 const ANTHROPIC_API_BASE = 'https://api.anthropic.com';
 const ANTHROPIC_API_VERSION = '2023-06-01';
-const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-6';
+const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-20250514';
 // DISPATCH 29: bumped from 4096 → 16384 because real fix-target files
 // (BillingSubscriptionManager.jsx, HomeScreen.jsx) clocked in at >4K
 // tokens and Claude truncated mid-statement, producing files like
@@ -41,6 +41,15 @@ const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-6';
 // fits the largest renewal-target files in the MyPregLife repo.
 const DEFAULT_MAX_TOKENS = 16384;
 const MAX_EVIDENCE_CHARS = 500;
+const DEFAULT_SCORING_CRITERIA = [
+  'CEO target: 95/100 verified product quality.',
+  'L1 Functionality: user journeys work end-to-end without broken UI, runtime errors, dead controls, or failed core flows.',
+  'L2 Operational: app is reliable, observable, performant enough for normal use, and avoids avoidable network/runtime failures.',
+  'L3 Financial: product experience supports revenue capture, conversion, onboarding clarity, and credible monetization paths.',
+  'L4 Business: positioning, information architecture, trust signals, and workflows match the intended audience and business goal.',
+  'L5 GTM/UI: product is demo-ready, responsive, accessible, typo-free, navigable, and polished on customer-facing surfaces.',
+  'Scoring honesty: measured criteria earn full points, inferred criteria earn partial points, and human-required criteria stay unclaimed.',
+].join('\n');
 
 // Prompt-injection patterns per Panel condition C. Conservative — only
 // removes text that looks like an instruction-override attempt; benign
@@ -342,6 +351,8 @@ function buildPrompt({ filePath, fileContent, sanitisedFindings }) {
       if (f.message)  parts.push(`  Message: ${f.message}`);
       if (f.description) parts.push(`  Description: ${f.description}`);
       if (f.evidence) parts.push(`  Evidence: ${f.evidence}`);
+      if (f.fix) parts.push(`  Prior recommendation: ${f.fix}`);
+      if (f.proposedFix) parts.push(`  Prior recommendation: ${f.proposedFix}`);
       if (f.recommendation) parts.push(`  Recommendation: ${f.recommendation}`);
       return parts.join('\n');
     })
@@ -358,6 +369,90 @@ function buildPrompt({ filePath, fileContent, sanitisedFindings }) {
     fileContent +
     `\n${MINIMAL_CHANGE_GUARDRAILS}`
   );
+}
+
+function buildLLMFileReplacementPrompt({
+  filePath,
+  fileContent,
+  sanitisedFindings,
+  userDescription,
+  scoringCriteria,
+  sourceContext,
+}) {
+  const findingsText = sanitisedFindings
+    .map((f, i) => {
+      const parts = [`Finding ${i + 1}:`];
+      if (f.id || f.findingId) parts.push(`  ID: ${f.id ?? f.findingId}`);
+      if (f.severity) parts.push(`  Severity: ${f.severity}`);
+      if (f.category) parts.push(`  Category: ${f.category}`);
+      if (f.location || f.url || f.pageUrl) parts.push(`  Location: ${f.location ?? f.url ?? f.pageUrl}`);
+      if (f.scoringDimension) parts.push(`  Scoring dimension: ${f.scoringDimension}`);
+      if (f.message) parts.push(`  Message: ${f.message}`);
+      if (f.title) parts.push(`  Title: ${f.title}`);
+      if (f.issue) parts.push(`  Issue: ${f.issue}`);
+      if (f.description) parts.push(`  Description: ${f.description}`);
+      if (f.evidence) parts.push(`  Evidence: ${f.evidence}`);
+      if (f.recommendation) parts.push(`  Recommendation: ${f.recommendation}`);
+      return parts.join('\n');
+    })
+    .join('\n\n');
+  return [
+    'You are FlowAI\'s senior product-upgrade engineer. Generate a real app-layer product improvement, not a cosmetic patch.',
+    '',
+    'INPUTS YOU MUST USE:',
+    `- Source file path: ${filePath}`,
+    `- User request: ${sanitiseAndTruncate(userDescription ?? '', 2000) || '(none supplied)'}`,
+    '- Findings:',
+    findingsText || '(none supplied)',
+    '- Scoring criteria:',
+    scoringCriteria || DEFAULT_SCORING_CRITERIA,
+    '- Additional source context:',
+    typeof sourceContext === 'string' && sourceContext.trim()
+      ? sanitiseAndTruncate(sourceContext, 4000)
+      : '(none supplied)',
+    '',
+    'WHAT TO GENERATE:',
+    '- A complete replacement for the entire file below.',
+    '- Fixes that can genuinely improve L1-L5 scoring: components, layout, navigation, content, copy, CSS, responsive design, accessibility, and business/GTM clarity.',
+    '- Prefer coherent product experience improvements over tiny defensive error-handler edits.',
+    '- Preserve imports/exports/public interfaces unless a safe app-layer improvement requires changing them.',
+    '- Do not add dependencies unless already present in the source.',
+    '',
+    'SSOT §11 PLATFORM BOUNDARY:',
+    '- Do NOT modify Base44 SDK clients, auth/authorization gates, requiresAuth, platform config, database schema, credentials, or third-party secrets.',
+    '- If the only possible fix is platform/auth/internal, return the original file unchanged and set rationale to PLATFORM_BOUNDARY_BLOCKED.',
+    '',
+    'RESPONSE FORMAT:',
+    'Return ONLY strict JSON. No markdown. No code fences. No prose outside JSON.',
+    '{',
+    '  "scoringDimension": "L1|L2|L3|L4|L5",',
+    '  "rationale": "1-2 sentences explaining why this complete replacement should improve the score",',
+    '  "fixedContent": "COMPLETE replacement file content, escaped as a JSON string"',
+    '}',
+    '',
+    `BEGIN CURRENT FILE: ${filePath}`,
+    fileContent,
+    'END CURRENT FILE',
+  ].join('\n');
+}
+
+function parseStructuredFixResponse(text) {
+  if (typeof text !== 'string' || !text.trim()) {
+    return { fixedContent: '', scoringDimension: null, rationale: null, structured: false };
+  }
+  const trimmed = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed && typeof parsed === 'object' && typeof parsed.fixedContent === 'string') {
+      return {
+        fixedContent: parsed.fixedContent,
+        scoringDimension: typeof parsed.scoringDimension === 'string' ? parsed.scoringDimension : null,
+        rationale: typeof parsed.rationale === 'string' ? parsed.rationale : null,
+        structured: true,
+      };
+    }
+  } catch { /* raw complete-file fallback for legacy tests and older prompts */ }
+  return { fixedContent: text, scoringDimension: null, rationale: null, structured: false };
 }
 
 /**
@@ -434,18 +529,12 @@ export async function generateFix(args) {
       'generateFix: fetch is not available on globalThis and no opts.fetch was provided. Node 18+ required.');
   }
 
-  // DISPATCH 32 T2: diff-mode is the default for precise-instruction
-  // fixes. The model returns a unified-diff (not a full file), which
-  // is parsed + validated against the preserve rules (no touching of
-  // import/export/fetch/route/URL lines outside the targeted change,
-  // bounded change-ratio) before applying to the original content.
-  // Set opts.mode = 'full' to use the legacy full-file regeneration
-  // path. Findings-based callers (no `fix` string) always use the
-  // legacy path since the diff prompt is built around a precise-fix
-  // instruction.
-  const mode = typeof opts.mode === 'string' && opts.mode === 'full'
-    ? 'full'
-    : (hasPreciseInstruction ? 'diff' : 'full');
+  // Full-file replacement is the default. Earlier dispatches defaulted
+  // precise instructions to diff-mode, which kept changes too narrow and
+  // repeatedly produced cosmetic patches. FlowAI's core path now asks
+  // Claude for a scoring-aware complete file replacement. Diff-mode
+  // remains available only when a caller explicitly requests it.
+  const mode = opts.mode === 'diff' ? 'diff' : 'full';
 
   // Build the appropriate prompt based on mode + which input shape.
   let prompt;
@@ -456,20 +545,23 @@ export async function generateFix(args) {
       issue: sanitiseAndTruncate(args.issue, 1000),
       fix: sanitiseAndTruncate(args.fix, 2000),
     });
-  } else if (hasPreciseInstruction) {
-    prompt = buildPreciseInstructionPrompt({
-      filePath: args.filePath,
-      fileContent: args.fileContent,
-      issue: sanitiseAndTruncate(args.issue, 1000),
-      fix: sanitiseAndTruncate(args.fix, 2000),
-      retry: false,
-    });
   } else {
     const sanitisedFindings = sanitiseFindings(args.findings);
-    prompt = buildPrompt({
+    const findingsForPrompt = hasFindings
+      ? sanitisedFindings
+      : [{
+          severity: args.severity ?? 'medium',
+          category: args.category ?? null,
+          issue: sanitiseAndTruncate(args.issue, 1000),
+          recommendation: sanitiseAndTruncate(args.fix, 2000),
+        }];
+    prompt = buildLLMFileReplacementPrompt({
       filePath: args.filePath,
       fileContent: args.fileContent,
-      sanitisedFindings,
+      sanitisedFindings: findingsForPrompt,
+      userDescription: opts.userDescription ?? args.userDescription ?? '',
+      scoringCriteria: opts.scoringCriteria ?? args.scoringCriteria ?? DEFAULT_SCORING_CRITERIA,
+      sourceContext: opts.sourceContext ?? args.sourceContext ?? '',
     });
   }
 
@@ -586,7 +678,11 @@ export async function generateFix(args) {
     }
   } else {
     const c = await callClaude(prompt);
-    fixedContent = c.text;
+    const structured = parseStructuredFixResponse(c.text);
+    fixedContent = structured.fixedContent;
+    var scoringDimension = structured.scoringDimension;
+    var rationale = structured.rationale;
+    var structuredResponse = structured.structured;
     parsed = c.parsed;
     stopReason = c.stopReason;
     validation = stopReason === 'max_tokens'
@@ -617,18 +713,28 @@ export async function generateFix(args) {
     } else {
       let retryPrompt;
       if (hasPreciseInstruction) {
-        retryPrompt = buildPreciseInstructionPrompt({
+        retryPrompt = `${buildLLMFileReplacementPrompt({
           filePath: args.filePath,
           fileContent: args.fileContent,
-          issue: sanitiseAndTruncate(args.issue, 1000),
-          fix: sanitiseAndTruncate(args.fix, 2000),
-          retry: true,
-        });
+          sanitisedFindings: [{
+            severity: args.severity ?? 'medium',
+            category: args.category ?? null,
+            issue: sanitiseAndTruncate(args.issue, 1000),
+            recommendation: sanitiseAndTruncate(args.fix, 2000),
+          }],
+          userDescription: opts.userDescription ?? args.userDescription ?? '',
+          scoringCriteria: opts.scoringCriteria ?? args.scoringCriteria ?? DEFAULT_SCORING_CRITERIA,
+          sourceContext: opts.sourceContext ?? args.sourceContext ?? '',
+        })}\n\nPREVIOUS RESPONSE REJECTED: ${validation.reason}. Return valid strict JSON with a complete, non-truncated fixedContent string.`;
       } else {
-        retryPrompt = `${prompt}\n\nPREVIOUS ATTEMPT FAILED (${validation.reason}). Return ONLY the COMPLETE fixed file from first line to last. The response MUST be meaningfully different from the input. Do NOT echo the input unchanged. Do NOT truncate. Do NOT use markdown code fences.`;
+        retryPrompt = `${prompt}\n\nPREVIOUS ATTEMPT FAILED (${validation.reason}). Return ONLY strict JSON with scoringDimension, rationale, and COMPLETE fixedContent from first line to last. The fixedContent MUST be meaningfully different from the input. Do NOT echo the input unchanged. Do NOT truncate.`;
       }
       const retryResult = await callClaude(retryPrompt);
-      fixedContent = retryResult.text;
+      const retryStructured = parseStructuredFixResponse(retryResult.text);
+      fixedContent = retryStructured.fixedContent;
+      scoringDimension = retryStructured.scoringDimension;
+      rationale = retryStructured.rationale;
+      structuredResponse = retryStructured.structured;
       parsed = retryResult.parsed;
       stopReason = retryResult.stopReason;
       attempts = 2;
@@ -661,15 +767,21 @@ export async function generateFix(args) {
     completionTokens: parsed?.usage?.output_tokens ?? 0,
     attempts,
     mode,
+    scoringDimension: scoringDimension ?? null,
+    rationale: rationale ?? null,
+    structuredResponse: structuredResponse ?? false,
     diffStats,  // null for full-mode; { hunks, linesAdded, linesRemoved, changeRatio, totalLines } for diff-mode
   };
 }
 
 export const __internals = Object.freeze({
   buildPrompt,
+  buildLLMFileReplacementPrompt,
+  parseStructuredFixResponse,
   ANTHROPIC_API_BASE,
   ANTHROPIC_API_VERSION,
   FINAL_FALLBACK_MODEL,
+  DEFAULT_SCORING_CRITERIA,
   DEFAULT_MAX_TOKENS,
   MAX_EVIDENCE_CHARS,
   INJECTION_PATTERNS,

@@ -1846,7 +1846,7 @@ describe('orchestrator — visible diff-rejection reasons (DISPATCH 33 T1)', () 
       // isn't pushed because NO_FIXES_GENERATED short-circuits before
       // STEP 12 — operator sees the rejection via the log entry).
       const step7 = result.orchestrationLog.find((l) =>
-        l.step === 7 && /fixGenerator\.js \(Claude API; diff-mode/.test(l.tool),
+        l.step === 7 && /fixGenerator\.js \(Claude Sonnet 4; full-file replacement/.test(l.tool),
       );
       expect(step7).toBeDefined();
       expect(step7.status).toBe('degraded');

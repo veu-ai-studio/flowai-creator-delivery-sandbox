@@ -2230,9 +2230,38 @@ export async function runOrchestration(args = {}) {
               filePath, fileContent: current,
               issue: issue.issue || issue.description || issue.title,
               fix: issue.fix || null,
-              findings: [issue],
+              findings: [
+                issue,
+                ...(Array.isArray(iterLog.preGtm?.issues)
+                  ? iterLog.preGtm.issues.filter((finding) => {
+                      const mapped = sourcePathForFinding({
+                        finding,
+                        sourceMappings: state.sourceMappings,
+                        minimumConfidence: 0.7,
+                      });
+                      return mapped === filePath;
+                    })
+                  : []),
+              ],
+              userDescription: inputContext.description,
+              scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
+              sourceContext: [
+                `Product: ${product?.product_id ?? productId}`,
+                `Original URL: ${initialUrl ?? currentUrl}`,
+                `Current score: ${preScoreEnvelope?.total ?? 'unknown'}/100`,
+                `User objectives: ${userObjectives.map((objective) => objective.text).join('; ') || '(none)'}`,
+                `Source mapped proposals: ${(state.sourceMappedFixProposals ?? [])
+                  .filter((proposal) => proposal?.filePath === filePath)
+                  .map((proposal) => proposal.proposedFix)
+                  .filter(Boolean)
+                  .join('; ') || '(none)'}`,
+              ].join('\n'),
               productId, runId,
               opts: {
+                model: 'claude-sonnet-4-20250514',
+                mode: 'full',
+                userDescription: inputContext.description,
+                scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
                 ...(scopedRelax ? { preserveExceptions: scopedRelax } : {}),
                 ...(repoFileList ? { fileInventory: repoFileList } : {}),
                 ...(knownPackages ? { knownPackages } : {}),
@@ -2246,6 +2275,9 @@ export async function runOrchestration(args = {}) {
               title: issue.title ?? issue.issue ?? null,
               mode: fix.mode ?? 'full',
               attempts: fix.attempts ?? 1,
+              scoringDimension: fix.scoringDimension ?? null,
+              rationale: fix.rationale ?? null,
+              structuredResponse: fix.structuredResponse ?? false,
               diffStats: fix.diffStats ?? null,
             });
           } catch (fixErr) {
@@ -2276,8 +2308,8 @@ export async function runOrchestration(args = {}) {
         const log = makeStepLog({
           iteration: iterationNumber, step: 7,
           status: fileChanges.length > 0 ? 'complete' : (rejected.length > 0 ? 'degraded' : 'skipped'),
-          tool: 'fixGenerator.js (Claude API; diff-mode default per D32 T2)',
-          why: 'generate concrete fixes for prioritized issues',
+          tool: 'fixGenerator.js (Claude Sonnet 4; full-file replacement)',
+          why: 'generate scoring-aware complete file replacements from findings, user description, source, and 95/100 criteria',
           result: {
             filesFixed: fileChanges.length,
             files: accepted.map((o) => o.filePath),
@@ -2287,6 +2319,8 @@ export async function runOrchestration(args = {}) {
             })),
             accepted: accepted.map((o) => ({
               filePath: o.filePath, mode: o.mode,
+              scoringDimension: o.scoringDimension,
+              rationale: o.rationale,
               hunks: o.diffStats?.hunks ?? null,
               changeRatio: o.diffStats?.changeRatio ?? null,
             })),

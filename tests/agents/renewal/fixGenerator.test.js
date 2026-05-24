@@ -36,7 +36,7 @@ const HAPPY_ARGS = Object.freeze({
   runId: 'run_abc123',
 });
 
-function mockOk(text, usage = { input_tokens: 100, output_tokens: 50 }, model = 'claude-sonnet-4-6') {
+function mockOk(text, usage = { input_tokens: 100, output_tokens: 50 }, model = 'claude-sonnet-4-20250514') {
   return vi.fn(async (_url, init) => ({
     ok: true,
     status: 200,
@@ -158,7 +158,7 @@ describe('generateFix — happy path', () => {
       opts: { apiKey: API_KEY, fetch: fetchMock },
     });
     expect(result.fixedContent).toBe(FIXED_CONTENT);
-    expect(result.model).toBe('claude-sonnet-4-6');
+    expect(result.model).toBe('claude-sonnet-4-20250514');
     expect(result.promptTokens).toBe(100);
     expect(result.completionTokens).toBe(50);
   });
@@ -177,11 +177,12 @@ describe('generateFix — happy path', () => {
     expect(init.headers['anthropic-version']).toBe('2023-06-01');
     expect(init.headers['content-type']).toBe('application/json');
     const body = JSON.parse(init.body);
-    expect(body.model).toBe('claude-sonnet-4-6');
+    expect(body.model).toBe('claude-sonnet-4-20250514');
     expect(body.max_tokens).toBe(16384);
     expect(body.messages).toHaveLength(1);
     expect(body.messages[0].role).toBe('user');
-    expect(body.messages[0].content).toContain('File: src/components/Home.jsx');
+    expect(body.messages[0].content).toContain('Source file path: src/components/Home.jsx');
+    expect(body.messages[0].content).toContain('95/100 verified product quality');
   });
 
   it('opts.model overrides the default', async () => {
@@ -386,9 +387,10 @@ describe('generateFix — arg validation', () => {
     });
     expect(result.fixedContent).toBe(FIXED_CONTENT);
     expect(result.attempts).toBe(1);
-    // Verify the precise-instruction prompt is sent (contains "Make exactly this change")
+    // Verify the LLM-powered full-file prompt is sent.
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.messages[0].content).toMatch(/Make exactly this change/);
+    expect(body.messages[0].content).toMatch(/Generate a real app-layer product improvement/);
+    expect(body.messages[0].content).toMatch(/Recommendation: Replace the literal/);
   });
 
   it('rejects (issue without fix) shape — both fields required for precise path', async () => {
@@ -445,7 +447,7 @@ describe('generateFix — validation + retry (DISPATCH 23)', () => {
     // Second call should use the retry prompt with explicit "PREVIOUS ATTEMPT FAILED"
     // or "BEGIN FILE" markers (precise-instruction retry shape).
     const secondPrompt = JSON.parse(fetchMock.mock.calls[1][1].body).messages[0].content;
-    expect(secondPrompt).toMatch(/BEGIN FILE|previous response was rejected/i);
+    expect(secondPrompt).toMatch(/BEGIN CURRENT FILE|previous response rejected/i);
   });
 
   it('throws FIX_NO_CHANGE after retry still returns identical', async () => {
@@ -873,9 +875,9 @@ describe('MINIMAL_CHANGE_GUARDRAILS — D30 prompt hardening', () => {
     });
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     const sentPrompt = body.messages[0].content;
-    expect(sentPrompt).toMatch(/MINIMAL-CHANGE GUARDRAILS/);
-    expect(sentPrompt).toMatch(/MyPregLife/);
-    expect(sentPrompt).toMatch(/88.*83/);
+    expect(sentPrompt).toMatch(/SSOT §11 PLATFORM BOUNDARY/);
+    expect(sentPrompt).toMatch(/complete replacement for the entire file/);
+    expect(sentPrompt).toMatch(/strict JSON/);
   });
 });
 
@@ -908,7 +910,40 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
     }));
   }
 
-  it('default mode is "diff" when (issue + fix) is supplied', async () => {
+  it('default mode is full-file replacement when (issue + fix) is supplied', async () => {
+    const replacement = ORIG.replace('Old placeholder text.', 'New polished text.');
+    const fetchMock = vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        content: [{ type: 'text', text: JSON.stringify({
+          scoringDimension: 'L5',
+          rationale: 'Improves customer-facing copy polish.',
+          fixedContent: replacement,
+        }) }],
+        usage: { input_tokens: 100, output_tokens: 80 },
+        stop_reason: 'end_turn',
+        model: 'claude-sonnet-4-20250514',
+      }),
+      text: async () => '{}',
+    }));
+    const r = await generateFix({
+      filePath: 'src/X.jsx', fileContent: ORIG,
+      issue: 'replace placeholder', fix: 'update copy to be polished',
+      productId: 'flowai', runId: 'd32-1',
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', userDescription: 'Improve the homepage copy' },
+    });
+    expect(r.mode).toBe('full');
+    expect(r.fixedContent).toContain('<p>New polished text.</p>');
+    expect(r.scoringDimension).toBe('L5');
+    expect(r.rationale).toMatch(/copy polish/);
+    expect(r.structuredResponse).toBe(true);
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].content;
+    expect(sent).toMatch(/strict JSON/);
+    expect(sent).toMatch(/95\/100/);
+    expect(sent).toMatch(/User request: Improve the homepage copy/);
+  });
+
+  it('explicit opts.mode = "diff" uses diff-mode', async () => {
     const fetchMock = diffFetch([
       '@@ -6,1 +6,1 @@',
       '-      <p>Old placeholder text.</p>',
@@ -918,7 +953,7 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
       filePath: 'src/X.jsx', fileContent: ORIG,
       issue: 'replace placeholder', fix: 'update copy to be polished',
       productId: 'flowai', runId: 'd32-1',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'diff' },
     });
     expect(r.mode).toBe('diff');
     expect(r.fixedContent).toContain('<p>New polished text.</p>');
@@ -931,7 +966,7 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
     expect(sent).toMatch(/Return ONLY a unified diff/);
   });
 
-  it('explicit opts.mode = "full" bypasses diff-mode', async () => {
+  it('explicit opts.mode = "full" keeps full-file replacement', async () => {
     const fetchMock = vi.fn(async () => ({
       ok: true, status: 200,
       json: async () => ({
@@ -963,7 +998,7 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
       filePath: 'src/X.jsx', fileContent: ORIG,
       issue: 'I', fix: 'F',
       productId: 'flowai', runId: 'd32-3',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'diff' },
     })).rejects.toMatchObject({
       code: 'FIX_GENERATION_FAILED',
       message: expect.stringMatching(/diff_preserve_violation:import/),
@@ -986,7 +1021,7 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
       filePath: 'src/X.jsx', fileContent: file,
       issue: 'I', fix: 'F',
       productId: 'flowai', runId: 'd32-4',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'diff' },
     })).rejects.toMatchObject({
       code: 'FIX_GENERATION_FAILED',
       message: expect.stringMatching(/diff_preserve_violation:fetch_call/),
@@ -1003,7 +1038,7 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
       filePath: 'src/X.js', fileContent: file,
       issue: 'I', fix: 'F',
       productId: 'flowai', runId: 'd32-5',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', maxChangeRatio: 0.25 },
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'diff', maxChangeRatio: 0.25 },
     })).rejects.toMatchObject({
       code: 'FIX_GENERATION_FAILED',
       message: expect.stringMatching(/diff_change_ratio_exceeded/),
@@ -1020,7 +1055,7 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
       filePath: 'src/X.jsx', fileContent: ORIG,
       issue: 'I', fix: 'F',
       productId: 'flowai', runId: 'd32-6',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'diff' },
     })).rejects.toMatchObject({
       code: 'FIX_GENERATION_FAILED',
       message: expect.stringMatching(/diff_hunk_does_not_apply/),
@@ -1033,7 +1068,7 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
       filePath: 'src/X.jsx', fileContent: ORIG,
       issue: 'I', fix: 'F',
       productId: 'flowai', runId: 'd32-7',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'diff' },
     })).rejects.toMatchObject({
       code: 'FIX_GENERATION_EMPTY',
     });
@@ -1061,7 +1096,7 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
       filePath: 'src/X.jsx', fileContent: ORIG,
       issue: 'I', fix: 'F',
       productId: 'flowai', runId: 'd32-8',
-      opts: { fetch: fetchMock, apiKey: 'sk-ant-test' },
+      opts: { fetch: fetchMock, apiKey: 'sk-ant-test', mode: 'diff' },
     });
     expect(r.attempts).toBe(2);
     expect(r.mode).toBe('diff');
