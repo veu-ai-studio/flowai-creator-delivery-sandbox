@@ -9,6 +9,7 @@ import {
   History, ShieldCheck, Archive, Loader2, X, CheckCircle2, Play
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { productUpgradeReadiness } from '@/lib/products/portfolioReadiness';
 
 const VEU_SEED = [
   { name: 'SAIGE',       slug: 'saige',       live_url: 'https://saigeplatform.com',       description: 'Sustainability reporting for universities', org: 'VEU AI Studio', status: 'active' },
@@ -204,6 +205,9 @@ export default function ProductRegistry() {
                   <th className="text-left px-4 py-3 font-semibold">Slug</th>
                   <th className="text-left px-4 py-3 font-semibold">Org</th>
                   <th className="text-left px-4 py-3 font-semibold">Status</th>
+                  <th className="text-left px-4 py-3 font-semibold">Upgrade Repo</th>
+                  <th className="text-left px-4 py-3 font-semibold">Deployment</th>
+                  <th className="text-left px-4 py-3 font-semibold">Ready</th>
                   <th className="text-left px-4 py-3 font-semibold">Last Run</th>
                   <th className="text-right px-4 py-3 font-semibold">Demo Score</th>
                   <th className="text-right px-5 py-3 font-semibold">Actions</th>
@@ -215,6 +219,7 @@ export default function ProductRegistry() {
                   const cl = clearanceMap[p.name];
                   const reg = registryMap[p.name];
                   const cleared = cl?.overall_status === 'cleared';
+                  const readiness = productUpgradeReadiness(p, reg);
                   return (
                     <tr
                       key={p.slug}
@@ -233,6 +238,37 @@ export default function ProductRegistry() {
                       <td className="px-4 py-3 text-muted-foreground">{p.org || '—'}</td>
                       <td className="px-4 py-3">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${st.color} ${st.bg} ${st.border}`}>{st.label}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${
+                          readiness.state.upgrade_repo_status === 'provisioned'
+                            ? 'text-emerald-400 bg-emerald-400/10 border-emerald-500/30'
+                            : readiness.state.upgrade_repo_status === 'access_blocked'
+                              ? 'text-red-400 bg-red-500/10 border-red-500/30'
+                              : 'text-muted-foreground bg-secondary border-border'
+                        }`}>
+                          {readiness.upgradeRepoLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${
+                          readiness.state.deployment_status === 'deployed'
+                            ? 'text-emerald-400 bg-emerald-400/10 border-emerald-500/30'
+                            : readiness.state.deployment_status === 'access_blocked'
+                              ? 'text-red-400 bg-red-500/10 border-red-500/30'
+                              : 'text-muted-foreground bg-secondary border-border'
+                        }`}>
+                          {readiness.deploymentLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${
+                          readiness.ready
+                            ? 'text-emerald-400 bg-emerald-400/10 border-emerald-500/30'
+                            : 'text-muted-foreground bg-secondary border-border'
+                        }`}>
+                          {readiness.readyLabel}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {reg?.last_run_at ? formatDistanceToNow(new Date(reg.last_run_at), { addSuffix: true }) : '—'}

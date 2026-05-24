@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { listProducts, createProduct, normalizeScore, deriveSlug } from '@/lib/products/registry';
+import { productUpgradeReadiness, summarizePortfolioUpgradeReadiness } from '@/lib/products/portfolioReadiness';
 
 // UX-2 / Phase B — product-agnostic Portfolio Dashboard.
 // All product cards come from /api/products (org_id-scoped via auth context).
@@ -144,7 +145,16 @@ export default function PortfolioDashboard() {
       status: p.status || 'draft',
       last_score: normalizeScore(p.last_audit_score),
       last_run_at: p.last_audit_at || p.updated_at || null,
+      original_repo_url: p.original_repo_url,
+      original_url: p.original_url || p.url,
+      upgrade_repo_url: p.upgrade_repo_url || p.upgrade_repo,
+      upgrade_url: p.upgrade_url,
+      deployment_url: p.deployment_url,
+      canonical_url: p.canonical_url,
+      upgrade_repo_status: p.upgrade_repo_status || p.upgrade_status,
+      deployment_status: p.deployment_status,
     }));
+    const upgradeSummary = summarizePortfolioUpgradeReadiness(enriched);
 
     // ClearanceRecord is keyed by product_name today (UX-2.b will rekey on
     // product_id once the join contract lands).
@@ -157,6 +167,7 @@ export default function PortfolioDashboard() {
       total: enriched.length,
       activeRuns: runs.length,
       demoReady: clearance.filter(r => r.overall_status === 'cleared').length,
+      upgradeReady: upgradeSummary.readyCount,
       cost: null,
     });
     setLoadState('ok');
@@ -212,12 +223,49 @@ export default function PortfolioDashboard() {
 
       {/* Hero Stats */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard icon={Layers} label="Total Products" value={stats.total} sub="Registered in portfolio" />
         <StatCard icon={Activity} label="Active Runs" value={stats.activeRuns} sub="Last 24 hours" color="text-blue-400" bg="bg-blue-400/10" />
         <StatCard icon={ShieldCheck} label="Demo-Ready" value={stats.demoReady} sub="Cleared for launch" color="text-emerald-400" bg="bg-emerald-400/10" />
+        <StatCard icon={ShieldCheck} label="Upgrade Ready" value={stats.upgradeReady ?? 0} sub="Repo + deployment" color="text-cyan-400" bg="bg-cyan-400/10" />
         <StatCard icon={DollarSign} label="Total Cost (30d)" value={stats.cost != null ? `$${stats.cost}` : '—'} sub="Across all products" color="text-amber-400" bg="bg-amber-400/10" />
       </motion.div>
+
+      {loadState === 'ok' && products.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+          className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3 border-b border-border">
+            <h2 className="text-sm font-bold text-foreground">Portfolio Upgrade Readiness</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border text-muted-foreground bg-secondary/20">
+                  <th className="text-left px-5 py-3 font-semibold">Product</th>
+                  <th className="text-left px-4 py-3 font-semibold">Upgrade Repo</th>
+                  <th className="text-left px-4 py-3 font-semibold">Deployment</th>
+                  <th className="text-left px-4 py-3 font-semibold">Ready</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product) => {
+                  const readiness = productUpgradeReadiness(product);
+                  return (
+                    <tr key={`readiness-${product.id}`} className="border-b border-border/50 last:border-0">
+                      <td className="px-5 py-3 font-semibold text-foreground">{product.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{readiness.upgradeRepoLabel}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{readiness.deploymentLabel}</td>
+                      <td className={`px-4 py-3 font-bold ${readiness.ready ? 'text-emerald-400' : 'text-muted-foreground'}`}>
+                        {readiness.readyLabel}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      )}
 
       {/* Product Grid — three states: loading | error | ok (with empty + populated sub-states) */}
       {loadState === 'loading' ? (
