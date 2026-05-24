@@ -55,6 +55,7 @@ import { findRegisteredProductConfigForUrl } from '../../products/registeredProd
 import { applyUpgradeTargetsToProduct, resolveProductUpgradeTargets } from '../../products/upgradeTargetResolver.js';
 import { normalizeFlowAIInput, parseUserObjectives, summarizeFlowAIInputContext } from '../../flowai/unifiedRunInput.js';
 import { buildFlowAIInputStepMatrix } from '../../flowai/inputStepMatrix.js';
+import { provisionUpgradeTarget } from '../../provisioning/upgradeTargetProvisioner.js';
 import { captureBaselineSnapshot } from '../../verification/baselineSnapshot.js';
 import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
 import { calculateTransformationDelta } from '../../verification/deltaCalculator.js';
@@ -870,6 +871,20 @@ export async function runOrchestration(args = {}) {
       tool: 'upgradeTargetResolver.js',
       why: 'enforce fork-based upgrade architecture: original repo is read-only, writes target upgrade repo',
       result: upgradeTargets,
+      durationMs: 0, mode: state.mode,
+    }));
+    const provisioning = await provisionUpgradeTarget({
+      product,
+      mode: state.mode,
+      env: process.env,
+      opts: {},
+    });
+    state.upgradeProvisioning = provisioning;
+    emit(makeStepLog({
+      iteration: 0, step: 5, status: provisioning.ok ? 'complete' : 'degraded',
+      tool: 'upgradeTargetProvisioner.js',
+      why: 'SSOT §9/§10 - determine whether upgrade repo and deployment can be auto-provisioned without touching the original',
+      result: provisioning,
       durationMs: 0, mode: state.mode,
     }));
   }
@@ -3483,6 +3498,7 @@ export async function runOrchestration(args = {}) {
         platformBoundaryBlocked: Array.isArray(state.platformBoundaryBlocked)
           ? state.platformBoundaryBlocked : [],
         upgradeTargets,
+        upgradeProvisioning: state.upgradeProvisioning ?? null,
         transformationDelta: state.transformationDelta ?? null,
         at: new Date().toISOString(),
       },
@@ -3566,6 +3582,7 @@ export async function runOrchestration(args = {}) {
     platformBoundaryBlocked: Array.isArray(state.platformBoundaryBlocked)
       ? state.platformBoundaryBlocked : [],
     upgradeTargets,
+    upgradeProvisioning: state.upgradeProvisioning ?? null,
     transformationDelta: state.transformationDelta ?? null,
     orchestrationLog,
     iterations,
