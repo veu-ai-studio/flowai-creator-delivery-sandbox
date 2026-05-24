@@ -26,6 +26,56 @@ const CATEGORY_DIMENSION = Object.freeze({
 });
 
 const CATEGORY_KEYS = Object.freeze(['performance', 'accessibility', 'best-practices', 'seo']);
+const VERCEL_LIGHTHOUSE_UNAVAILABLE_REASON = 'lighthouse_unavailable_in_vercel_serverless';
+const LIGHTHOUSE_ASSET_CANDIDATES = Object.freeze([
+  ['report', 'flow-report', 'assets', 'standalone-flow-template.html'],
+  ['report', 'generator', 'flow-report', 'assets', 'standalone-flow-template.html'],
+]);
+
+function nullScores(categories = CATEGORY_KEYS) {
+  return Object.fromEntries(categories.map((category) => [category, null]));
+}
+
+function isVercelServerless() {
+  return typeof process !== 'undefined' && process.env?.VERCEL === '1';
+}
+
+function isLighthouseAssetError(message) {
+  const s = typeof message === 'string' ? message : String(message ?? '');
+  return /ENOENT/i.test(s) && /lighthouse[\\/].*(flow-report[\\/]assets|report[\\/]generator)/i.test(s);
+}
+
+function sanitizeLighthouseError(message) {
+  if (isLighthouseAssetError(message)) return VERCEL_LIGHTHOUSE_UNAVAILABLE_REASON;
+  return (typeof message === 'string' ? message : String(message ?? 'unknown')).slice(0, 200);
+}
+
+async function lighthouseAssetsAvailable({ deps } = {}) {
+  if (typeof deps?.lighthouseAssetsAvailable === 'boolean') return deps.lighthouseAssetsAvailable;
+  if (typeof deps?.assetExists === 'function') return !!(await deps.assetExists());
+
+  try {
+    const [{ createRequire }, { access }, path] = await Promise.all([
+      import('node:module'),
+      import('node:fs/promises'),
+      import('node:path'),
+    ]);
+    const require = createRequire(import.meta.url);
+    const packageJson = require.resolve('lighthouse/package.json');
+    const packageRoot = path.dirname(packageJson);
+    for (const candidate of LIGHTHOUSE_ASSET_CANDIDATES) {
+      try {
+        await access(path.join(packageRoot, ...candidate));
+        return true;
+      } catch {
+        // Try the next known Lighthouse asset location.
+      }
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Map a Lighthouse audit's numeric score (0..1, 1=pass) to a calibrated
@@ -97,7 +147,17 @@ export async function runLighthouseEvaluator(url, opts = {}) {
     : [...CATEGORY_KEYS];
 
   if (typeof url !== 'string' || !url.trim()) {
-    return { ok: false, findings: [], error: 'url_required' };
+    return { ok: false, findings: [], scores: nullScores(categories), error: 'url_required' };
+  }
+
+  if (isVercelServerless() && !(await lighthouseAssetsAvailable({ deps: opts.deps }))) {
+    return {
+      ok: false,
+      findings: [],
+      scores: nullScores(categories),
+      error: VERCEL_LIGHTHOUSE_UNAVAILABLE_REASON,
+      reason: VERCEL_LIGHTHOUSE_UNAVAILABLE_REASON,
+    };
   }
 
   // Lazy-import so the renewal orchestrator doesn't pay the
@@ -108,7 +168,7 @@ export async function runLighthouseEvaluator(url, opts = {}) {
     lighthouseModule = opts.deps?.lighthouse || (await import('lighthouse'));
     chromeLauncher = opts.deps?.chromeLauncher || (await import('chrome-launcher'));
   } catch (e) {
-    return { ok: false, findings: [], error: `import_failed:${e?.message ?? String(e)}` };
+    return { ok: false, findings: [], scores: nullScores(categories), error: `import_failed:${sanitizeLighthouseError(e?.message ?? String(e))}` };
   }
   const lighthouse = lighthouseModule.default ?? lighthouseModule;
 
@@ -118,7 +178,7 @@ export async function runLighthouseEvaluator(url, opts = {}) {
       chromeFlags: ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
     });
   } catch (e) {
-    return { ok: false, findings: [], error: `chrome_launch_failed:${(e?.message ?? String(e)).slice(0, 160)}` };
+    return { ok: false, findings: [], scores: nullScores(categories), error: `chrome_launch_failed:${sanitizeLighthouseError(e?.message ?? String(e))}` };
   }
 
   // DISPATCH U1 ITEM 1 — suppress HTML report generation so Vercel
@@ -165,13 +225,14 @@ export async function runLighthouseEvaluator(url, opts = {}) {
     return {
       ok: false,
       findings: [],
-      error: (lighthouseErr?.message ?? String(lighthouseErr)).slice(0, 200),
+      scores: nullScores(categories),
+      error: sanitizeLighthouseError(lighthouseErr?.message ?? String(lighthouseErr)),
     };
   }
 
   const lhr = result?.lhr;
   if (!lhr || typeof lhr !== 'object') {
-    return { ok: false, findings: [], error: 'no_lhr_in_result' };
+    return { ok: false, findings: [], scores: nullScores(categories), error: 'no_lhr_in_result' };
   }
   const audits = lhr.audits || {};
   const categoryRefs = lhr.categories || {};
@@ -204,4 +265,9 @@ export async function runLighthouseEvaluator(url, opts = {}) {
 
 export const __internals = Object.freeze({
   CATEGORY_DIMENSION, CATEGORY_KEYS, severityFromAuditScore,
+  VERCEL_LIGHTHOUSE_UNAVAILABLE_REASON,
+  isLighthouseAssetError,
+  sanitizeLighthouseError,
+  lighthouseAssetsAvailable,
+  nullScores,
 });

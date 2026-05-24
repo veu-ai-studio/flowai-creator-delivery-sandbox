@@ -35,6 +35,39 @@ const FAKE_LHR = Object.freeze({
 });
 
 describe('Lighthouse evaluator — JSON-only output (DISPATCH U1 ITEM 1)', () => {
+  it('degrades before import/launch when Vercel serverless is missing Lighthouse assets', async () => {
+    const oldVercel = process.env.VERCEL;
+    process.env.VERCEL = '1';
+    const lighthouse = vi.fn(async () => ({ lhr: FAKE_LHR }));
+    const chromeLauncher = chromeLauncherStub();
+    try {
+      const result = await runLighthouseEvaluator('https://example.com', {
+        deps: {
+          lighthouse,
+          chromeLauncher,
+          lighthouseAssetsAvailable: false,
+        },
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        findings: [],
+        error: 'lighthouse_unavailable_in_vercel_serverless',
+        reason: 'lighthouse_unavailable_in_vercel_serverless',
+      });
+      expect(result.scores).toEqual({
+        performance: null,
+        accessibility: null,
+        'best-practices': null,
+        seo: null,
+      });
+      expect(lighthouse).not.toHaveBeenCalled();
+      expect(chromeLauncher.launch).not.toHaveBeenCalled();
+    } finally {
+      if (oldVercel === undefined) delete process.env.VERCEL;
+      else process.env.VERCEL = oldVercel;
+    }
+  });
+
   it('passes output:["json"] (array form) to suppress HTML report generation', async () => {
     let capturedOpts = null;
     const lighthouse = vi.fn(async (_url, opts) => {
@@ -76,7 +109,13 @@ describe('Lighthouse evaluator — JSON-only output (DISPATCH U1 ITEM 1)', () =>
     });
     expect(result.ok).toBe(false);
     expect(result.findings).toEqual([]);
-    expect(typeof result.error).toBe('string');
-    expect(result.error).toMatch(/ENOENT/);
+    expect(result.scores).toEqual({
+      performance: null,
+      accessibility: null,
+      'best-practices': null,
+      seo: null,
+    });
+    expect(result.error).toBe('lighthouse_unavailable_in_vercel_serverless');
+    expect(result.error).not.toContain('/var/task');
   });
 });
