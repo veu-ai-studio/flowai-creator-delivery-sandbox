@@ -6,7 +6,7 @@ export const REGISTERED_PRODUCT_CONFIG = Object.freeze([
     branch: 'main',
     status: 'registered',
     original_repo: 'https://github.com/veu-ai-studio/saige',
-    original_url: 'https://saige-platform.vercel.app',
+    original_url: 'https://saigeplatform.com',
     original_status: 'frozen_read_only',
     upgrade_repo: 'https://github.com/veu-ai-studio/saige-v2',
     upgrade_url: 'https://saige-v2.vercel.app',

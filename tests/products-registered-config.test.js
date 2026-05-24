@@ -50,7 +50,7 @@ describe('registered product config', () => {
       domain: 'saigeplatform.com',
       repo: 'https://github.com/veu-ai-studio/saige-v2',
       original_repo: 'https://github.com/veu-ai-studio/saige',
-      original_url: 'https://saige-platform.vercel.app',
+      original_url: 'https://saigeplatform.com',
       original_status: 'frozen_read_only',
       upgrade_repo: 'https://github.com/veu-ai-studio/saige-v2',
       upgrade_url: 'https://saige-v2.vercel.app',
