@@ -29,7 +29,7 @@ const navSections = [
         label: "Workspace",
         path: "/workspace",
         icon: Zap,
-        tooltip: "Open the unified FlowAI workspace and run surface.",
+        tooltip: "Open the 8-step FlowAI pipeline workspace.",
       },
       {
         label: "Landing Page",
@@ -189,7 +189,7 @@ export default function Sidebar() {
 
       <div className="p-4 mx-3 mb-4 rounded-md bg-secondary/50 border border-border sticky bottom-0">
         <p className="text-xs font-semibold text-foreground">FlowAI Engine v0.1</p>
-        <p className="text-[10px] text-muted-foreground mt-0.5">One OS. One run surface.</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">One OS. Upgraded URLs.</p>
       </div>
     </aside>
   );

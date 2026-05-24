@@ -6,13 +6,18 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const sidebarSrc = readFileSync(resolve(__dirname, '../../src/components/layout/Sidebar.jsx'), 'utf8');
 const dashboardSrc = readFileSync(resolve(__dirname, '../../src/pages/FlowAIDashboard.jsx'), 'utf8');
+const workspaceSrc = readFileSync(resolve(__dirname, '../../src/pages/Workspace.jsx'), 'utf8');
 const appSrc = readFileSync(resolve(__dirname, '../../src/App.jsx'), 'utf8');
 const appLayoutSrc = readFileSync(resolve(__dirname, '../../src/components/layout/AppLayout.jsx'), 'utf8');
 const universalNavSrc = readFileSync(resolve(__dirname, '../../src/components/shared/UniversalNav.jsx'), 'utf8');
 
 describe('FlowAI unified operating system shell', () => {
-  it('routes workspace into the single FlowAI run surface', () => {
-    expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<FlowAIDashboard \/>/);
+  it('splits New Run and Workspace into distinct routes', () => {
+    expect(appSrc).toMatch(/path="\/flowai"\s+element=\{<FlowAIDashboard \/>/);
+    expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<Workspace \/>/);
+    expect(workspaceSrc).toContain('8-step upgrade pipeline');
+    expect(workspaceSrc).toContain('Original Product');
+    expect(workspaceSrc).toContain('Upgraded Version');
   });
 
   it('exposes the canonical sidebar sections and labels', () => {

@@ -93,6 +93,7 @@ import LiveDemo from './pages/LiveDemo';
 import EnterpriseDemo from './pages/EnterpriseDemo';
 import BaseAgentTest from './pages/BaseAgentTest';
 import FlowAIDashboard from './pages/FlowAIDashboard';
+import Workspace from './pages/Workspace';
 import Login from './pages/Login';
 import RequireAuth from '@/components/RequireAuth';
 
@@ -174,7 +175,7 @@ const AuthenticatedApp = () => {
         {/* NEW ROUTES — UX-C */}
         <Route path="/dashboard" element={<MainDashboard />} />
         <Route path="/configuration" element={<Configuration />} />
-        <Route path="/workspace" element={<FlowAIDashboard />} />
+        <Route path="/workspace" element={<Workspace />} />
         <Route path="/my-products" element={<MyCreations />} />
         <Route path="/auto-runner" element={<RequireAuth><AutoRunner /></RequireAuth>} />
         <Route path="/renewal" element={<Renewal />} />

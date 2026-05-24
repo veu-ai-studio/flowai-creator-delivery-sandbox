@@ -12,7 +12,6 @@ const REDIRECTS = [
   { from: '/old-dashboard',      to: '/dashboard',     id: 6 },
   { from: '/autonomous-engine',  to: '/auto-runner',   id: 7 },
   { from: '/creator-studio',     to: '/configuration', id: 8 },
-  { from: '/workspace',          to: '/flowai',        id: 9 },
 ];
 
 function rec(f) {

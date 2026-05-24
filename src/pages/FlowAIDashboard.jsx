@@ -464,6 +464,10 @@ export default function FlowAIDashboard() {
               score: payload.result?.ceo95Criteria?.verifiedScore ?? payload.result?.effectiveTrustScore ?? payload.result?.finalScore ?? null,
               verdict: runVerdictFromResult(payload.result),
               branchCreated: branchStep?.result?.branchName ?? null,
+              originalUrl: payload.result?.originalUrl ?? inputPayload.url ?? null,
+              upgradedUrl: payload.result?.upgradedUrl ?? payload.result?.previewUrl ?? null,
+              upgradeDeployStatus: payload.result?.upgradeDeployStatus ?? null,
+              upgradeDeployReason: payload.result?.upgradeDeployReason ?? null,
               progressLabel: payload.result?.exitReason ?? 'Completed',
               lastHeartbeatAt: new Date().toISOString(),
             });
