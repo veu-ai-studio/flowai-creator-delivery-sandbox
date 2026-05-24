@@ -53,6 +53,8 @@ import {
 import { generateSourceMappedFixProposals } from '../../sourceMapping/sourceMappedFixGenerator.js';
 import { findRegisteredProductConfigForUrl } from '../../products/registeredProductConfig.js';
 import { applyUpgradeTargetsToProduct, resolveProductUpgradeTargets } from '../../products/upgradeTargetResolver.js';
+import { normalizeFlowAIInput, parseUserObjectives, summarizeFlowAIInputContext } from '../../flowai/unifiedRunInput.js';
+import { buildFlowAIInputStepMatrix } from '../../flowai/inputStepMatrix.js';
 import { captureBaselineSnapshot } from '../../verification/baselineSnapshot.js';
 import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
 import { calculateTransformationDelta } from '../../verification/deltaCalculator.js';
@@ -532,6 +534,10 @@ export async function runOrchestration(args = {}) {
   const runId = args.runId || randomUUID();
   const supabase = args.supabase ?? null;
   const environment = args.environment ?? 'prd';
+  const inputContext = normalizeFlowAIInput(args.input ?? {}, { url: args.url, mode });
+  const inputSummary = summarizeFlowAIInputContext(inputContext);
+  const userObjectives = parseUserObjectives(inputContext.description);
+  const inputStepMatrix = buildFlowAIInputStepMatrix({ inputContext, mode });
   const onStep = typeof args.onStep === 'function' ? args.onStep : () => {};
   const onCheckpoint = typeof args.onCheckpoint === 'function' ? args.onCheckpoint : () => {};
   const onIteration = typeof args.onIteration === 'function' ? args.onIteration : () => {};
@@ -621,6 +627,18 @@ export async function runOrchestration(args = {}) {
       operator_mode: operatorMode,
       githubOperatorTokenPresent: !!githubOperatorToken,
       tokenRedacted: true,
+    },
+    mode: state.mode,
+  }));
+
+  emit(makeStepLog({
+    iteration: 0, step: 0, status: 'complete',
+    tool: 'FlowAI unified input context',
+    why: 'SSOT §10/§12 - every 8-step run receives the same URL, description, and attachment context with explicit usage accounting',
+    result: {
+      inputSummary,
+      inputStepMatrix,
+      userObjectives,
     },
     mode: state.mode,
   }));
@@ -1049,6 +1067,9 @@ export async function runOrchestration(args = {}) {
           fiveLayerFinalScore: 0,
           iterationsCompleted: 0,
           previewUrl: null,
+          inputSummary,
+          inputStepMatrix,
+          userObjectives,
           ...buildUpgradeDeliveryEnvelope({
             product,
             initialUrl,
@@ -3403,6 +3424,9 @@ export async function runOrchestration(args = {}) {
       entry: {
         kind: 'self_renewal.orchestration_complete.v1',
         runId, productId, mode, exitReason,
+        inputSummary,
+        inputStepMatrix,
+        userObjectives,
         originalScore: originalGtmScore,                  // canonical §7.6
         finalScore: finalGtmScore,                        // canonical §7.6
         finalGtmBand,
@@ -3489,6 +3513,9 @@ export async function runOrchestration(args = {}) {
     gtmBand: finalGtmBand,
     gtmCounts: lastPostGtm?.counts ?? null,
     ceo95Criteria: lastPostGtm?.ceo95Criteria ?? null,
+    inputSummary,
+    inputStepMatrix,
+    userObjectives,
     exitReason,
     originalScore: originalGtmScore ?? 0,
     finalScore: finalGtmScore,
