@@ -697,7 +697,7 @@ export async function runOrchestration(args = {}) {
   try {
     const t0 = Date.now();
     product = await _discoverProduct({ url: args.url, supabase, runId });
-    const registeredOperatorProduct = githubOperatorToken && typeof args.url === 'string'
+    const registeredOperatorProduct = typeof args.url === 'string'
       ? findRegisteredProductConfigForUrl(args.url)
       : null;
     if (registeredOperatorProduct && (!product || product.__pathB === true)) {
@@ -1573,12 +1573,13 @@ export async function runOrchestration(args = {}) {
       if (parsed) {
         try {
           let credentialSource = 'github_app_installation';
-          if (githubOperatorToken) {
+          if (githubOperatorToken && state.operatorRepoAccess?.ok !== false) {
             token = githubOperatorToken;
             credentialSource = 'GITHUB_OPERATOR_TOKEN';
           } else {
-            const minted = await _getInstallationToken();
+            const minted = await _getInstallationToken({ pat: '' });
             token = minted.token;
+            credentialSource = minted.source === 'pat' ? 'GITHUB_PAT' : 'github_app_installation';
           }
           const treeResult = await _fetchRepoFileList({
             owner: parsed.owner, repo: parsed.repo, ref: productBranch, token,
@@ -1844,13 +1845,14 @@ export async function runOrchestration(args = {}) {
           ? 'GITHUB_OPERATOR_TOKEN'
           : 'github_app_installation';
         if (!token) {
-          if (githubOperatorToken) {
+          if (githubOperatorToken && state.operatorRepoAccess?.ok !== false) {
             token = githubOperatorToken;
             credentialSource = 'GITHUB_OPERATOR_TOKEN';
           } else {
-            const minted = await _getInstallationToken();
+            const minted = await _getInstallationToken({ pat: '' });
             token = minted.token;
             expiresAt = minted.expiresAt;
+            credentialSource = minted.source === 'pat' ? 'GITHUB_PAT' : 'github_app_installation';
             mintedNow = true;
           }
         }

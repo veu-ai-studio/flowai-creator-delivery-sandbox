@@ -459,6 +459,70 @@ describe('orchestrator - GitHub operator token mode', () => {
     }
   });
 
+  it('falls back to GitHub App credentials when the operator PAT cannot see the upgrade repo', async () => {
+    clearVercelEnv();
+    process.env.GITHUB_PAT = 'ghp_repo_blind_pat';
+    const stepLogs = [];
+    const deps = happyDeps({ preScoreSequence: [60], postScoreSequence: [72] });
+    deps.discoverProduct = vi.fn(async () => null);
+    deps.probeGithubOperatorRepoAccess = vi.fn(async () => ({
+      kind: 'github_operator_repo_probe',
+      ok: false,
+      canRead: false,
+      canWrite: false,
+      tokenPresent: true,
+      tokenRedacted: true,
+      owner: 'veu-ai-studio',
+      repo: 'saige-v2',
+      branch: 'main',
+      reason: 'github_404',
+      status: 404,
+    }));
+    deps.getInstallationToken = vi.fn(async () => ({
+      token: 'app_installation_token',
+      expiresAt: '2026-05-24T01:00:00.000Z',
+      source: 'github_app_installation',
+    }));
+    deps.fetchRepoFileList = vi.fn(async ({ token }) => ({
+      files: ['package.json', 'src/App.jsx'],
+      truncated: false,
+      sha: token,
+      error: null,
+    }));
+    deps.fetchFileContent = vi.fn(async ({ filePath }) => (
+      filePath === 'package.json'
+        ? JSON.stringify({ dependencies: { react: '^18.0.0' } })
+        : 'original-content'
+    ));
+    deps.parseCheckContent = vi.fn(async () => ({ ok: true }));
+
+    try {
+      const result = await runOrchestration({
+        url: 'https://saigeplatform.com',
+        mode: 'auto',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+        onStep: (log) => stepLogs.push(log),
+      });
+
+      expect(result.runMode).toBe('PATH_A');
+      expect(deps.getInstallationToken).toHaveBeenCalledWith({ pat: '' });
+      expect(deps.fetchRepoFileList).toHaveBeenCalledWith(expect.objectContaining({
+        owner: 'veu-ai-studio',
+        repo: 'saige-v2',
+        token: 'app_installation_token',
+      }));
+      expect(stepLogs.find((log) => log.step === 8)?.result).toMatchObject({
+        credentialSource: 'github_app_installation',
+        tokenRedacted: true,
+      });
+      expect(JSON.stringify(stepLogs)).not.toContain('ghp_repo_blind_pat');
+    } finally {
+      clearVercelEnv();
+    }
+  });
+
   it('uses GITHUB_OPERATOR_TOKEN for registered products without bypassing PR approval', async () => {
     clearVercelEnv();
     const stepLogs = [];
