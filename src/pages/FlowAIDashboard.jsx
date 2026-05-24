@@ -33,6 +33,8 @@ import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProd
 import { extractBranchPrVisibility } from '@/lib/ui/branchVisibility';
 import { normalizeIterationHistoryRow } from '@/lib/ui/iterationHistory';
 import {
+  FLOWAI_RUN_HEARTBEAT_TIMEOUT_MS,
+  buildFlowAIStepPatchFromLog,
   replaceFlowAIRunId,
   runVerdictFromResult,
   updateFlowAIRun,
@@ -365,9 +367,20 @@ export default function FlowAIDashboard() {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let terminalReceived = false;
+    const readWithHeartbeatTimeout = () => Promise.race([
+      reader.read(),
+      new Promise((_, reject) => {
+        window.setTimeout(() => {
+          const err = new Error('SSE heartbeat timeout: no stream event received before timeout');
+          err.name = 'SSEHeartbeatTimeout';
+          reject(err);
+        }, FLOWAI_RUN_HEARTBEAT_TIMEOUT_MS);
+      }),
+    ]);
     try {
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await readWithHeartbeatTimeout();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const frames = buffer.split('\n\n');
@@ -385,16 +398,26 @@ export default function FlowAIDashboard() {
               replaceFlowAIRunId(trackedRunId, payload.runId);
               trackedRunId = payload.runId;
             }
+            updateFlowAIRun(trackedRunId, {
+              status: 'running',
+              lastHeartbeatAt: new Date().toISOString(),
+              progressLabel: 'FlowAI run started',
+            });
           } else if (payload?.type === 'step') {
             setStepLogs((prev) => [...prev, payload.log]);
             updateFlowAIRun(trackedRunId, {
               status: 'running',
-              progressLabel: payload.log?.stepName ?? payload.log?.tool ?? `Step ${payload.log?.step ?? ''}`,
-              stepCount: payload.log?.step ?? undefined,
+              ...buildFlowAIStepPatchFromLog(payload.log),
             });
           } else if (payload?.type === 'iteration') {
             setIterations((prev) => [...prev, normalizeIterationHistoryRow(payload.iteration)]);
+            updateFlowAIRun(trackedRunId, {
+              status: 'running',
+              lastHeartbeatAt: new Date().toISOString(),
+              progressLabel: `Iteration ${payload.iteration?.number ?? ''} complete`,
+            });
           } else if (payload?.type === 'final') {
+            terminalReceived = true;
             setFinalResult(payload.result);
             if (payload.result?.runId && !runId) setRunId(payload.result.runId);
             const branchStep = [...(payload.result?.orchestrationLog ?? [])].reverse()
@@ -406,6 +429,7 @@ export default function FlowAIDashboard() {
               verdict: runVerdictFromResult(payload.result),
               branchCreated: branchStep?.result?.branchName ?? null,
               progressLabel: payload.result?.exitReason ?? 'Completed',
+              lastHeartbeatAt: new Date().toISOString(),
             });
           } else if (payload?.type === 'control_applied') {
             // Server acknowledged our control command applied to the running
@@ -419,23 +443,33 @@ export default function FlowAIDashboard() {
             setIsPaused(payload.command === 'pause');
             if (payload.command === 'resume') setIsPaused(false);
           } else if (payload?.type === 'error') {
+            terminalReceived = true;
             setErrorMsg(`${payload.error}${payload.code ? ` (${payload.code})` : ''}`);
             updateFlowAIRun(trackedRunId, {
               status: 'failed',
               endTime: new Date().toISOString(),
               verdict: payload.code ?? 'ERROR',
               progressLabel: payload.error ?? 'Run failed',
+              lastHeartbeatAt: new Date().toISOString(),
             });
           }
         }
+      }
+      if (!terminalReceived) {
+        updateFlowAIRun(trackedRunId, {
+          status: 'timed_out',
+          endTime: new Date().toISOString(),
+          verdict: 'SSE_STREAM_ENDED',
+          progressLabel: 'SSE stream ended before final result',
+        });
       }
     } catch (e) {
       if (e?.name !== 'AbortError') {
         setErrorMsg(`Stream error: ${e?.message ?? String(e)}`);
         updateFlowAIRun(trackedRunId, {
-          status: 'failed',
+          status: e?.name === 'SSEHeartbeatTimeout' ? 'timed_out' : 'failed',
           endTime: new Date().toISOString(),
-          verdict: 'STREAM_ERROR',
+          verdict: e?.name === 'SSEHeartbeatTimeout' ? 'SSE_HEARTBEAT_TIMEOUT' : 'STREAM_ERROR',
           progressLabel: e?.message ?? 'Stream error',
         });
       }
@@ -477,6 +511,14 @@ export default function FlowAIDashboard() {
   // orchestrator running to completion in the background.
   async function stop() {
     if (runId) await sendControl('stop');
+    if (runId) {
+      updateFlowAIRun(runId, {
+        status: 'stopped',
+        endTime: new Date().toISOString(),
+        verdict: 'USER_STOPPED',
+        progressLabel: 'Stopped by operator',
+      });
+    }
     if (abortRef.current) abortRef.current.abort();
   }
 
@@ -863,21 +905,46 @@ export default function FlowAIDashboard() {
             </div>
 
             {finalResult.ceo95Criteria && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                <div className="rounded-md bg-slate-900/60 px-3 py-2">
-                  <p className="text-[10px] text-slate-500 uppercase">Verified CEO-95 score</p>
-                  <p className="text-2xl font-bold text-emerald-400">{finalResult.ceo95Criteria.verifiedScore}<span className="text-xs text-slate-500">/100</span></p>
-                  <p className="text-[10px] text-slate-500">measured criteria only</p>
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                  <div className="rounded-md bg-slate-900/60 px-3 py-2">
+                    <p className="text-[10px] text-slate-500 uppercase">Verified CEO-95 score</p>
+                    <p className="text-2xl font-bold text-emerald-400">{finalResult.ceo95Criteria.verifiedScore}<span className="text-xs text-slate-500">/100</span></p>
+                    <p className="text-[10px] text-slate-500">measured criteria only</p>
+                  </div>
+                  <div className="rounded-md bg-slate-900/60 px-3 py-2">
+                    <p className="text-[10px] text-slate-500 uppercase">Potential score</p>
+                    <p className="text-2xl font-bold text-blue-300">{finalResult.ceo95Criteria.potentialScore}<span className="text-xs text-slate-500">/100</span></p>
+                    <p className="text-[10px] text-slate-500">measured + inferred confidence</p>
+                  </div>
+                  <div className="rounded-md bg-slate-900/60 px-3 py-2">
+                    <p className="text-[10px] text-slate-500 uppercase">Blocked verification</p>
+                    <p className="text-2xl font-bold text-amber-300">{finalResult.ceo95Criteria.blockedScore}<span className="text-xs text-slate-500"> pts</span></p>
+                    <p className="text-[10px] text-slate-500">requires_human criteria score 0 until verified</p>
+                  </div>
                 </div>
-                <div className="rounded-md bg-slate-900/60 px-3 py-2">
-                  <p className="text-[10px] text-slate-500 uppercase">Potential score</p>
-                  <p className="text-2xl font-bold text-blue-300">{finalResult.ceo95Criteria.potentialScore}<span className="text-xs text-slate-500">/100</span></p>
-                  <p className="text-[10px] text-slate-500">measured + inferred confidence</p>
-                </div>
-                <div className="rounded-md bg-slate-900/60 px-3 py-2">
-                  <p className="text-[10px] text-slate-500 uppercase">Blocked verification</p>
-                  <p className="text-2xl font-bold text-amber-300">{finalResult.ceo95Criteria.blockedScore}<span className="text-xs text-slate-500"> pts</span></p>
-                  <p className="text-[10px] text-slate-500">human/repo/payment proof required</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                  <div className="rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase text-emerald-300">Measured criteria</p>
+                    <p className="mt-1 text-slate-200">
+                      {finalResult.ceo95Criteria.summary?.measured?.passed ?? 0}/{finalResult.ceo95Criteria.summary?.measured?.total ?? 0} passed
+                    </p>
+                    <p className="text-[10px] text-slate-500">Full points only when runtime evidence passes.</p>
+                  </div>
+                  <div className="rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase text-blue-300">Inferred criteria</p>
+                    <p className="mt-1 text-slate-200">
+                      {finalResult.ceo95Criteria.summary?.inferredWithConfidence?.passed ?? 0}/{finalResult.ceo95Criteria.summary?.inferredWithConfidence?.total ?? 0} confidence-passed
+                    </p>
+                    <p className="text-[10px] text-slate-500">Partial confidence only; never counted as verified.</p>
+                  </div>
+                  <div className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase text-amber-300">Requires human</p>
+                    <p className="mt-1 text-slate-200">
+                      {finalResult.ceo95Criteria.summary?.requiresHuman?.total ?? 0} blocked checks
+                    </p>
+                    <p className="text-[10px] text-slate-500">Scored as 0 until operator evidence exists.</p>
+                  </div>
                 </div>
               </div>
             )}

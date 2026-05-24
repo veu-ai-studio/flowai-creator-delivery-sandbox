@@ -17,6 +17,9 @@ describe('CEO-95 scoring display', () => {
     expect(dashboardSource).toContain('Verified CEO-95 score');
     expect(dashboardSource).toContain('Potential score');
     expect(dashboardSource).toContain('Blocked verification');
-    expect(dashboardSource).toContain('human/repo/payment proof required');
+    expect(dashboardSource).toContain('Measured criteria');
+    expect(dashboardSource).toContain('Inferred criteria');
+    expect(dashboardSource).toContain('Requires human');
+    expect(dashboardSource).toContain('requires_human criteria score 0 until verified');
   });
 });

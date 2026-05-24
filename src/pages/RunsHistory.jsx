@@ -8,12 +8,14 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { listFlowAIRuns, subscribeFlowAIRuns } from '@/lib/flowaiRunStore';
+import { FLOWAI_MACRO_STEPS, listFlowAIRuns, subscribeFlowAIRuns } from '@/lib/flowaiRunStore';
 
 const STATUS_CFG = {
   running:   { label: 'Running',      color: 'text-blue-400',     bg: 'bg-blue-400/10',     icon: Loader2 },
   completed: { label: 'Completed',    color: 'text-emerald-400',  bg: 'bg-emerald-400/10',  icon: CheckCircle2 },
   failed:    { label: 'Failed',       color: 'text-red-400',      bg: 'bg-red-400/10',      icon: XCircle },
+  timed_out: { label: 'Timed out',     color: 'text-amber-400',    bg: 'bg-amber-400/10',    icon: AlertTriangle },
+  stopped:   { label: 'Stopped',       color: 'text-slate-400',    bg: 'bg-slate-400/10',    icon: XCircle },
   paused:    { label: 'Paused',       color: 'text-amber-400',    bg: 'bg-amber-400/10',    icon: AlertTriangle },
 };
 
@@ -48,13 +50,7 @@ function mapFlowAIRun(run) {
     run_id: run.runId,
     branch_created: run.branchCreated,
     progress_label: run.progressLabel,
-    step_results: {
-      flowai: {
-        summary: run.progressLabel,
-        score: run.score,
-        branchCreated: run.branchCreated,
-      },
-    },
+    step_results: run.stepResults || {},
   };
 }
 
@@ -123,7 +119,7 @@ function RunRow({ session, onClick, isExpanded }) {
               )}
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Step Results</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {['research', 'design', 'build', 'qa_audit', 'deploy', 'govern', 'gtm', 'monitor'].map(key => {
+                {FLOWAI_MACRO_STEPS.map(key => {
                   const result = session.step_results?.[key];
                   return (
                     <div key={key} className={`rounded-lg border p-2 ${result ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-border bg-card'}`}>
@@ -191,6 +187,7 @@ export default function RunsHistory() {
     running: sessions.filter(s => s.overall_status === 'running').length,
     completed: sessions.filter(s => s.overall_status === 'completed').length,
     failed: sessions.filter(s => s.overall_status === 'failed').length,
+    timedOut: sessions.filter(s => s.overall_status === 'timed_out').length,
   };
 
   return (
@@ -231,6 +228,8 @@ export default function RunsHistory() {
           <option value="running">Running</option>
           <option value="completed">Completed</option>
           <option value="failed">Failed</option>
+          <option value="timed_out">Timed out</option>
+          <option value="stopped">Stopped</option>
           <option value="paused">Paused</option>
         </select>
       </div>
