@@ -55,6 +55,8 @@ describe('FlowAI unified operating system shell', () => {
     expect(dashboardSrc).toMatch(/REGISTERED_PRODUCT_CONFIG/);
     expect(dashboardSrc).not.toMatch(/setInputMethod/);
     expect(dashboardSrc).toMatch(/method:\s*'combined'/);
+    expect(dashboardSrc).toMatch(/description:\s*inputPayload\.productDescription/);
+    expect(dashboardSrc).toMatch(/productDescription:\s*inputPayload\.productDescription/);
     expect(dashboardSrc).toMatch(/attachments:\s*attachmentsPayload/);
   });
 

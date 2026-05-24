@@ -15,6 +15,7 @@ export const REGISTERED_PRODUCT_CONFIG = Object.freeze([
     deployment_url: 'https://saige-v2.vercel.app',
     deployment_status: 'deployed',
     upgrade_architecture: 'fork_based_upgrade',
+    self_renewal_max_per_day: 1000,
     systemNote: 'SAIGE upgrade architecture active. OLD repo github.com/veu-ai-studio/saige is read-only rollback/baseline. NEW repo github.com/veu-ai-studio/saige-v2 is the FlowAI upgrade target for U5/U6 fixes.',
   }),
   Object.freeze({

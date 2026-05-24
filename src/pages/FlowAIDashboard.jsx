@@ -424,6 +424,10 @@ export default function FlowAIDashboard() {
         },
         body: JSON.stringify({
           url: inputPayload.url,
+          description: inputPayload.productDescription,
+          productDescription: inputPayload.productDescription,
+          attachments: attachmentsPayload,
+          pastedContent: inputPayload.pastedContent,
           mode,
           maxIterations,
           gtmTarget,

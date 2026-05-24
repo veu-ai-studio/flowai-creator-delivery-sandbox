@@ -332,7 +332,7 @@ async function runSseOrchestration(req, res, body) {
   const runId = typeof body.runId === 'string' && body.runId.length > 0
     ? body.runId
     : `sse_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-  const runInput = normalizeFlowAIInput(body.input ?? body, { url, mode });
+  const runInput = buildSseRunInput(body, { url, mode });
 
   sendEvent({
     type: 'start',
@@ -528,10 +528,33 @@ function buildSseSoftTimeoutResult({
   };
 }
 
+function buildSseRunInput(body = {}, fallback = {}) {
+  const nested = body.input && typeof body.input === 'object' ? body.input : {};
+  return normalizeFlowAIInput({
+    ...body,
+    ...nested,
+    url: nested.url ?? body.url ?? fallback.url ?? null,
+    mode: nested.mode ?? body.mode ?? fallback.mode ?? 'auto',
+    description: nested.description
+      ?? body.description
+      ?? nested.productDescription
+      ?? body.productDescription
+      ?? null,
+    productDescription: nested.productDescription
+      ?? body.productDescription
+      ?? nested.description
+      ?? body.description
+      ?? null,
+    attachments: nested.attachments ?? body.attachments ?? [],
+    pastedContent: nested.pastedContent ?? body.pastedContent ?? null,
+  }, fallback);
+}
+
 export const __test = Object.freeze({
   resolveAuthContext,
   buildExecutor,
   runSseOrchestration,
+  buildSseRunInput,
   buildSseSoftTimeoutResult,
   scoreFromStepLogs,
   SYNC_TIMEOUT_MS,

@@ -155,7 +155,7 @@ export async function readProductPolicy({ productId, supabase }) {
     selfRenewalNegativeDeltaPolicy: 'ALWAYS_OPEN',
     selfRenewalMinimumDelta: 0,
     selfRenewalSubstantialThreshold: 5,
-    selfRenewalMaxPerDay: 50,
+    selfRenewalMaxPerDay: 1000,
     selfRenewalRunawayThreshold: 3,
   });
   if (!supabase || typeof supabase.from !== 'function') return DEFAULTS;

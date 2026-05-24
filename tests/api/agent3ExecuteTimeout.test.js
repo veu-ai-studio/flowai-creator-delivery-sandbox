@@ -33,6 +33,23 @@ describe('Agent 3 execute timeout handling', () => {
     expect(executeSrc).toContain('evaluationTier: SSE_EVALUATION_TIER');
   });
 
+  it('normalizes description from the FlowAI form into the SSE run input', () => {
+    const runInput = __test.buildSseRunInput({
+      url: 'https://saigeplatform.com',
+      description: 'Fix navigation and improve mobile layout',
+      input: {
+        method: 'combined',
+        url: 'https://saigeplatform.com',
+        productDescription: 'Fix navigation and improve mobile layout',
+        attachments: [{ type: 'notes', content: 'console warning' }],
+      },
+    }, { url: 'https://saigeplatform.com', mode: 'auto' });
+
+    expect(runInput.description).toBe('Fix navigation and improve mobile layout');
+    expect(runInput.receivedInputs.description).toBe(true);
+    expect(runInput.attachments).toHaveLength(1);
+  });
+
   it('builds a partial final result from the latest streamed score', () => {
     const partial = __test.buildSseSoftTimeoutResult({
       runId: 'run-1',

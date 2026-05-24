@@ -252,7 +252,7 @@ describe('readProductPolicy', () => {
     expect(r.selfRenewalNegativeDeltaPolicy).toBe('ALWAYS_OPEN');
     expect(r.selfRenewalMinimumDelta).toBe(0);
     expect(r.selfRenewalSubstantialThreshold).toBe(5);
-    expect(r.selfRenewalMaxPerDay).toBe(50);
+    expect(r.selfRenewalMaxPerDay).toBe(1000);
   });
 
   it('reads from supabase when available', async () => {

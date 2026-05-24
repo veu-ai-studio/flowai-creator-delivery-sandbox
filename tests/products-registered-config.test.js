@@ -59,6 +59,7 @@ describe('registered product config', () => {
       deployment_url: 'https://saige-v2.vercel.app',
       deployment_status: 'deployed',
       upgrade_architecture: 'fork_based_upgrade',
+      self_renewal_max_per_day: 1000,
       branch: 'main',
       status: 'registered',
     });
@@ -138,5 +139,12 @@ describe('registered product config', () => {
     expect(sql).toContain('https://saige-v2.vercel.app');
     expect(sql).toContain("deployment_status = 'deployed'");
     expect(sql).toContain("upgrade_repo_status = 'provisioned'");
+  });
+
+  it('raises registered product daily run caps for development testing', () => {
+    const sql = readFileSync(resolve(__dirname, '../supabase/migrations/0031_product_registry_daily_cap_1000.sql'), 'utf8');
+    expect(sql).toContain('set default 1000');
+    expect(sql).toContain('self_renewal_max_per_day = 1000');
+    expect(sql).toContain('self_renewal_max_per_day < 1000');
   });
 });

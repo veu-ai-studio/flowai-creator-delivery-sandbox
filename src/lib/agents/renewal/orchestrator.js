@@ -319,6 +319,7 @@ const PATH_B_DEFAULT_CONFIG = Object.freeze({
   self_renewal_substantial_threshold: 5,
   self_renewal_negative_delta_policy: 'ALWAYS_OPEN',
 });
+export const REGISTERED_OPERATOR_DAILY_RUN_CAP = 1000;
 
 function sanitizeHostname(hostname) {
   if (typeof hostname !== 'string' || hostname.length === 0) return 'unknown';
@@ -352,6 +353,7 @@ function productIdFromRegisteredConfig(config) {
 
 function synthesizeOperatorConnectedProduct({ url, config }) {
   return Object.freeze({
+    ...PATH_B_DEFAULT_CONFIG,
     product_id: productIdFromRegisteredConfig(config),
     org_id: 'veu-ai-studio',
     github_repo_url: config.upgrade_repo ?? config.repo,
@@ -364,12 +366,27 @@ function synthesizeOperatorConnectedProduct({ url, config }) {
     upgrade_status: config.upgrade_status ?? 'active_upgrade_target',
     upgrade_architecture: config.upgrade_architecture ?? 'fork_based_upgrade',
     self_renewal_enabled: true,
+    self_renewal_max_per_day: Math.max(
+      Number.isFinite(config.self_renewal_max_per_day) ? config.self_renewal_max_per_day : 0,
+      REGISTERED_OPERATOR_DAILY_RUN_CAP,
+    ),
     environment: 'prd',
     self_renewal_branch: config.upgrade_branch ?? config.branch ?? 'main',
     __operatorConnected: true,
     __sourceUrl: url,
-    ...PATH_B_DEFAULT_CONFIG,
   });
+}
+
+function effectiveRateCapForRun({ policy, product, operatorContext } = {}) {
+  const configuredCap = Number.isFinite(policy?.selfRenewalMaxPerDay)
+    ? policy.selfRenewalMaxPerDay
+    : null;
+  const registeredOperatorRun = product?.__operatorConnected === true
+    && operatorContext?.githubOperatorTokenPresent === true;
+  if (registeredOperatorRun) {
+    return Math.max(configuredCap ?? 0, REGISTERED_OPERATOR_DAILY_RUN_CAP);
+  }
+  return configuredCap;
 }
 
 function resolveGithubOperatorToken(deps = {}) {
@@ -1130,7 +1147,12 @@ export async function runOrchestration(args = {}) {
   try {
     const t0 = Date.now();
     if (supabase && typeof supabase.from === 'function' && policy) {
-      await _checkRateCap({ productId, maxPerDay: policy.selfRenewalMaxPerDay, supabase });
+      const maxPerDay = effectiveRateCapForRun({
+        policy,
+        product,
+        operatorContext: state.operatorContext,
+      });
+      await _checkRateCap({ productId, maxPerDay, supabase });
       await _checkRunawayDetector({ productId, runawayThreshold: policy.selfRenewalRunawayThreshold, supabase });
     }
     emit(makeStepLog({
@@ -4605,6 +4627,7 @@ export const __internals = Object.freeze({
   discoverProduct,
   productIdFromRegisteredConfig,
   synthesizeOperatorConnectedProduct,
+  effectiveRateCapForRun,
   resolveGithubOperatorToken,
   derivePrioritizedIssuesFromScore,
   classifyPlatformBoundaryChange,
