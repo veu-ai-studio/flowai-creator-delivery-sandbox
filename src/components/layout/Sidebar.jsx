@@ -70,7 +70,7 @@ const navSections = [
     items: [
       {
         label: "New Run",
-        path: "/flowai",
+        path: "/",
         icon: Rocket,
         tooltip: "Start a FlowAI run from a URL, product description, pasted content, or screenshot context.",
       },
@@ -156,7 +156,7 @@ export default function Sidebar() {
     const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
         e.preventDefault();
-        navigate("/flowai");
+        navigate("/");
       }
     };
     window.addEventListener("keydown", handler);

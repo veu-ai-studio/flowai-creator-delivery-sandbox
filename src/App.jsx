@@ -121,6 +121,7 @@ const AuthenticatedApp = () => {
     <ErrorBoundary>
     <Routes>
       <Route element={<AppLayout />}>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/flowai" element={<FlowAIDashboard />} />
         <Route path="/old-dashboard" element={<Dashboard />} />
 
@@ -212,7 +213,6 @@ const AuthenticatedApp = () => {
         <Route path="/creator-studio" element={<Navigate to="/configuration" replace />} />
         <Route path="/my-creations" element={<MyCreations />} />
       </Route>
-      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/landing" element={<MarketingPage />} />
       {/* GTM Demo Tiers — public, no AppLayout */}
