@@ -30,6 +30,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import FindingsReport from '@/components/FindingsReport';
 import { REGISTERED_PRODUCT_CONFIG, findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
+import { summarizeAttachmentCounts, summarizeObjectiveTracking } from '@/lib/flowai/objectiveTracking';
 import { extractBranchPrVisibility } from '@/lib/ui/branchVisibility';
 import { normalizeIterationHistoryRow } from '@/lib/ui/iterationHistory';
 import {
@@ -342,6 +343,23 @@ export default function FlowAIDashboard() {
       repoConfig: findRegisteredProductConfigForUrl(inputPayload.url),
     })
   ), [finalResult, inputPayload.url]);
+  const objectiveTracking = useMemo(() => summarizeObjectiveTracking({
+    userObjectives: finalResult?.userObjectives,
+    sourceMappedFixProposals: finalResult?.sourceMappedFixProposals,
+  }), [finalResult]);
+  const attachmentSummary = useMemo(() => summarizeAttachmentCounts(finalResult?.inputSummary), [finalResult]);
+  const completedMacroSteps = useMemo(() => {
+    const logs = stepLogs.length > 0
+      ? stepLogs
+      : (Array.isArray(finalResult?.orchestrationLog) ? finalResult.orchestrationLog : []);
+    const keys = new Set();
+    for (const log of logs) {
+      const patch = buildFlowAIStepPatchFromLog(log);
+      for (const key of Object.keys(patch.stepResults ?? {})) keys.add(key);
+    }
+    const counted = FLOWAI_MACRO_STEPS.filter((key) => keys.has(key)).length;
+    return counted || liveMacroStepCount;
+  }, [finalResult, liveMacroStepCount, stepLogs]);
   const canLaunch = Boolean(inputPayload.url || inputPayload.productDescription || inputPayload.pastedContent);
 
   function productLabelForRun() {
@@ -1020,6 +1038,54 @@ export default function FlowAIDashboard() {
                   {(finalResult.totalDelta ?? 0) >= 0 ? '+' : ''}{finalResult.totalDelta ?? 0}
                 </p>
               </div>
+            </div>
+
+            <div className="rounded-md border border-slate-700 bg-slate-950/60 p-4 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-500">User requested</p>
+                  <p className="mt-1 text-slate-200">{finalResult.inputSummary?.descriptionPresent ? finalResult.userObjectives?.map((item) => item.text).join('; ') : 'No description supplied'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-500">8-step progress</p>
+                  <p className="mt-1 text-slate-200">{completedMacroSteps}/8 complete</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-500">Attachments processed</p>
+                  <p className="mt-1 text-slate-200">
+                    {finalResult.inputSummary?.attachmentCount ?? 0}
+                    {attachmentSummary ? ` (${attachmentSummary})` : ''}
+                  </p>
+                </div>
+              </div>
+              {objectiveTracking.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-slate-500">Objectives</p>
+                  <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {objectiveTracking.map((objective) => (
+                      <div key={objective.id} className="rounded border border-slate-700 bg-slate-900/70 px-3 py-2 text-xs">
+                        <span className={objective.status === 'met' ? 'text-emerald-300' : 'text-amber-300'}>
+                          {objective.status === 'met' ? '[done]' : '[pending]'}
+                        </span>
+                        <span className="ml-2 text-slate-200">{objective.text}</span>
+                        <p className="mt-1 text-[10px] text-slate-500">{objective.evidence}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {Array.isArray(finalResult.platformBoundaryBlocked) && finalResult.platformBoundaryBlocked.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase text-amber-300">Platform blocked</p>
+                  <div className="mt-2 space-y-1">
+                    {finalResult.platformBoundaryBlocked.map((item, index) => (
+                      <p key={`${item.filePath ?? 'blocked'}-${index}`} className="text-xs text-amber-200">
+                        {item.filePath ?? 'platform file'} ({item.classification ?? 'PLATFORM_BOUNDARY_BLOCKED'})
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {finalResult.ceo95Criteria && (
