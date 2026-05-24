@@ -6,6 +6,7 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const sidebarSrc = readFileSync(resolve(__dirname, '../../src/components/layout/Sidebar.jsx'), 'utf8');
 const dashboardSrc = readFileSync(resolve(__dirname, '../../src/pages/FlowAIDashboard.jsx'), 'utf8');
+const runConstructionPanelSrc = readFileSync(resolve(__dirname, '../../src/components/RunConstructionPanel.jsx'), 'utf8');
 const workspaceSrc = readFileSync(resolve(__dirname, '../../src/pages/Workspace.jsx'), 'utf8');
 const appSrc = readFileSync(resolve(__dirname, '../../src/App.jsx'), 'utf8');
 const appLayoutSrc = readFileSync(resolve(__dirname, '../../src/components/layout/AppLayout.jsx'), 'utf8');
@@ -83,6 +84,22 @@ describe('FlowAI unified operating system shell', () => {
     expect(dashboardSrc).toContain('Running...');
     expect(dashboardSrc).toContain('Failed');
     expect(dashboardSrc).toContain('Complete');
+  });
+
+  it('renders 8-step progress and readable log labels in the homepage run panel', () => {
+    expect(runConstructionPanelSrc).toContain('PipelineProgressTracker');
+    expect(runConstructionPanelSrc).toContain('MACRO_STEPS');
+    expect(runConstructionPanelSrc).toContain('Research');
+    expect(runConstructionPanelSrc).toContain('Design');
+    expect(runConstructionPanelSrc).toContain('Build');
+    expect(runConstructionPanelSrc).toContain('Quality Audit');
+    expect(runConstructionPanelSrc).toContain('Deploy');
+    expect(runConstructionPanelSrc).toContain('Self-Renewal');
+    expect(runConstructionPanelSrc).toContain('GTM');
+    expect(runConstructionPanelSrc).toContain('Monitor');
+    expect(runConstructionPanelSrc).toContain('Running...');
+    expect(runConstructionPanelSrc).toContain('Named Step');
+    expect(runConstructionPanelSrc).toContain('Five-Layer Scoring');
   });
 
   it('does not abort an active run when sidebar navigation unmounts the run page', () => {

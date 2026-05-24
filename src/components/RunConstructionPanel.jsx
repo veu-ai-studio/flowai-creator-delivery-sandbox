@@ -33,6 +33,162 @@ const KNOWN_GAP_DIMENSIONS = new Set([
   'security', 'privacy_jurisdiction', 'legal_jurisdiction',
 ]);
 
+const MACRO_STEPS = Object.freeze([
+  { key: 'research', label: 'Research' },
+  { key: 'design', label: 'Design' },
+  { key: 'build', label: 'Build' },
+  { key: 'qa_audit', label: 'Quality Audit' },
+  { key: 'deploy', label: 'Deploy' },
+  { key: 'self_renewal', label: 'Self-Renewal' },
+  { key: 'gtm', label: 'GTM' },
+  { key: 'monitor', label: 'Monitor' },
+]);
+
+const ORCHESTRATOR_STEP_TO_MACRO = Object.freeze({
+  1: 'research',
+  2: 'research',
+  3: 'research',
+  4: 'qa_audit',
+  5: 'qa_audit',
+  6: 'design',
+  7: 'build',
+  8: 'self_renewal',
+  9: 'self_renewal',
+  10: 'deploy',
+  11: 'qa_audit',
+  12: 'gtm',
+  13: 'self_renewal',
+  14: 'monitor',
+});
+
+const ORCHESTRATOR_STEP_LABELS = Object.freeze({
+  0: 'Run Setup',
+  1: 'Product Discovery',
+  2: 'Policy Checks',
+  3: 'Deep Crawl',
+  4: 'Quality Audit',
+  5: 'Five-Layer Scoring',
+  6: 'Issue Prioritization',
+  7: 'Fix Generation',
+  8: 'Credential Acquisition',
+  9: 'Branch Creation',
+  10: 'Preview Deploy',
+  11: 'Post-Fix Scoring',
+  12: 'GTM Decision',
+  13: 'PR Creation',
+  14: 'Audit Record',
+});
+
+function macroStepForLog(log = {}) {
+  const n = Number(log.step);
+  if (!Number.isFinite(n)) return null;
+  return ORCHESTRATOR_STEP_TO_MACRO[Math.floor(n)] ?? null;
+}
+
+function internalStepLabel(log = {}) {
+  if (typeof log.stepName === 'string' && log.stepName.trim()) return log.stepName;
+  const n = Number(log.step);
+  if (Number.isFinite(n) && ORCHESTRATOR_STEP_LABELS[Math.floor(n)]) {
+    return ORCHESTRATOR_STEP_LABELS[Math.floor(n)];
+  }
+  if (typeof log.tool === 'string' && log.tool.trim()) return log.tool;
+  return 'Pipeline Step';
+}
+
+function buildMacroProgress({ events = [], status, final, errorMsg }) {
+  const states = Object.fromEntries(MACRO_STEPS.map((step) => [step.key, 'pending']));
+  let lastMacro = null;
+  let lastLogStatus = null;
+
+  for (const event of events) {
+    const log = event?.log ?? {};
+    const macro = macroStepForLog(log);
+    if (!macro) continue;
+    lastMacro = macro;
+    lastLogStatus = log.status;
+    if (log.status === 'failed') {
+      states[macro] = 'failed';
+    } else if (states[macro] !== 'failed') {
+      states[macro] = 'complete';
+    }
+  }
+
+  const failed = status === 'error' || Boolean(errorMsg) || final?.ok === false;
+  if (failed && lastMacro) states[lastMacro] = 'failed';
+
+  let active = null;
+  if (status === 'running') {
+    if (!lastMacro) {
+      active = MACRO_STEPS[0].key;
+    } else if (lastLogStatus === 'failed') {
+      active = lastMacro;
+    } else {
+      const currentIndex = MACRO_STEPS.findIndex((step) => step.key === lastMacro);
+      active = MACRO_STEPS[Math.min(MACRO_STEPS.length - 1, currentIndex + 1)]?.key ?? lastMacro;
+    }
+    if (states[active] !== 'failed') states[active] = 'running';
+  }
+
+  return { states, active };
+}
+
+function PipelineProgressTracker({ events, status, final, errorMsg }) {
+  const { states, active } = buildMacroProgress({ events, status, final, errorMsg });
+  return (
+    <div className="rounded-lg border border-border bg-background/40 p-3 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">8-step progress</p>
+          <p className="text-[11px] text-foreground">
+            {status === 'running' && active
+              ? `Active: ${MACRO_STEPS.find((step) => step.key === active)?.label}`
+              : status === 'done'
+                ? 'Complete'
+                : status === 'error'
+                  ? 'Failed'
+                  : 'Ready'}
+          </p>
+        </div>
+        {status === 'running' && (
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Running...
+          </div>
+        )}
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
+        {MACRO_STEPS.map((step, index) => {
+          const stepStatus = states[step.key];
+          const activeStep = step.key === active;
+          const classes = stepStatus === 'failed'
+            ? 'border-red-500/50 bg-red-500/10 text-red-400'
+            : activeStep || stepStatus === 'running'
+              ? 'border-primary/60 bg-primary/10 text-primary ring-1 ring-primary/30'
+              : stepStatus === 'complete'
+                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400'
+                : 'border-border bg-muted/20 text-muted-foreground';
+          const icon = stepStatus === 'failed'
+            ? <XCircle className="h-3.5 w-3.5" />
+            : activeStep || stepStatus === 'running'
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              : stepStatus === 'complete'
+                ? <CheckCircle2 className="h-3.5 w-3.5" />
+                : <span className="h-3.5 w-3.5 rounded-full border border-current/30" />;
+          return (
+            <div key={step.key} className={`rounded-md border px-2.5 py-2 min-h-[64px] ${classes}`}>
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[9px] font-bold uppercase tracking-wide opacity-70">{index + 1}</span>
+                {icon}
+              </div>
+              <p className="mt-1 text-[11px] font-semibold leading-tight">{step.label}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function StepRow({ event }) {
   const log = event.log || {};
   // DISPATCH U1 ITEM 3 — universal-mode deployment steps are honest in
@@ -50,11 +206,14 @@ function StepRow({ event }) {
   const score = log.scores?.current;
   const scoreDelta = typeof score === 'number' && typeof log.scores?.original === 'number'
     ? score - log.scores.original : null;
+  const readableStep = internalStepLabel(log);
+  const macroLabel = MACRO_STEPS.find((step) => step.key === macroStepForLog(log))?.label;
 
   if (isUniversalSkip) {
     return (
-      <div className="flex items-center gap-2 py-1 text-[10px] text-muted-foreground/70 border-b border-border/20 last:border-0">
+      <div className="grid grid-cols-[auto_minmax(72px,0.7fr)_minmax(0,1fr)] items-center gap-2 py-1 text-[10px] text-muted-foreground/70 border-b border-border/20 last:border-0">
         <span className="h-2 w-2 rounded-full bg-muted-foreground/30 shrink-0" />
+        <span className="font-mono truncate">[r{log.iteration ?? '?'}][S{log.step ?? '?'}]</span>
         <span className="font-mono truncate">
           [S{log.step ?? '?'}] {log.stepName || log.tool || 'step'} — deployment skipped (universal mode)
         </span>
@@ -63,14 +222,21 @@ function StepRow({ event }) {
   }
 
   return (
-    <div className="flex items-start gap-2 py-1.5 text-[11px] border-b border-border/30 last:border-0">
+    <div className="grid grid-cols-[auto_minmax(70px,0.55fr)_minmax(150px,0.9fr)_minmax(0,1.5fr)] items-start gap-2 py-1.5 text-[11px] border-b border-border/30 last:border-0">
       <span className="mt-0.5 shrink-0">{statusIcon}</span>
+      <span className="font-mono text-muted-foreground">
+        [r{log.iteration ?? '?'}][S{log.step ?? '?'}]
+      </span>
+      <div className="min-w-0">
+        <div className="font-semibold text-foreground truncate">{readableStep}</div>
+        {macroLabel && <div className="text-[10px] text-muted-foreground truncate">{macroLabel}</div>}
+      </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-foreground">
-            [I{log.iteration ?? '?'}][S{log.step ?? '?'}] {log.stepName || log.kind || 'step'}
-          </span>
           <span className="text-muted-foreground">— {log.status || 'running'}</span>
+          {(log.tool || log.kind) && (
+            <span className="text-muted-foreground truncate max-w-[260px]">{log.tool || log.kind}</span>
+          )}
           {typeof score === 'number' && (
             <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
               {score.toFixed(1)}/100
@@ -87,6 +253,9 @@ function StepRow({ event }) {
             </span>
           )}
         </div>
+        {log.why && (
+          <div className="text-muted-foreground text-[10px] mt-0.5 truncate">{log.why}</div>
+        )}
         {log.result?.error && (
           <div className="text-red-400 text-[10px] mt-0.5 truncate">{String(log.result.error).slice(0, 160)}</div>
         )}
@@ -541,7 +710,15 @@ export default function RunConstructionPanel({ url, mode = 'FOREGROUND', onClose
     <div className="rounded-xl border border-primary/40 bg-primary/5 p-5 space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground">Run FlowAI on this URL</p>
+          <p className="text-sm font-bold text-foreground flex items-center gap-2">
+            Run FlowAI on this URL
+            {status === 'running' && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Running...
+              </span>
+            )}
+          </p>
           <p className="text-[11px] text-muted-foreground truncate font-mono">{url}</p>
         </div>
         {status === 'idle' && (
@@ -577,13 +754,22 @@ export default function RunConstructionPanel({ url, mode = 'FOREGROUND', onClose
       )}
 
       {status !== 'idle' && (
-        <div className="rounded-lg border border-border bg-card max-h-96 overflow-y-auto p-3 space-y-0">
+        <div className="space-y-3">
+          <PipelineProgressTracker events={steps} status={status} final={final} errorMsg={errorMsg} />
+          <div className="rounded-lg border border-border bg-card max-h-96 overflow-y-auto p-3 space-y-0">
+            <div className="grid grid-cols-[auto_minmax(70px,0.55fr)_minmax(150px,0.9fr)_minmax(0,1.5fr)] gap-2 border-b border-border/50 pb-2 mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <span>Status</span>
+              <span>Code</span>
+              <span>Named Step</span>
+              <span>Details</span>
+            </div>
           {steps.length === 0 && status === 'running' && (
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground py-2">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Connecting to /api/run-construction…
             </div>
           )}
           {steps.map((ev, i) => <StepRow key={i} event={ev} />)}
+          </div>
         </div>
       )}
 
