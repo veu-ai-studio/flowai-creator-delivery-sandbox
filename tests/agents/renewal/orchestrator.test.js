@@ -449,6 +449,75 @@ describe('runOrchestration — callbacks', () => {
 });
 
 describe('orchestrator - repair integrity gate', () => {
+  it('classifies Base44/platform files as PLATFORM_BOUNDARY_BLOCKED', () => {
+    expect(__internals.classifyPlatformBoundaryChange({
+      filePath: 'src/api/base44Client.js',
+    })).toMatchObject({
+      blocked: true,
+      classification: 'PLATFORM_BOUNDARY_BLOCKED',
+      reason: 'base44_client_internal',
+    });
+
+    expect(__internals.classifyPlatformBoundaryChange({
+      filePath: 'node_modules/@base44/sdk/index.js',
+    })).toMatchObject({
+      blocked: true,
+      classification: 'PLATFORM_BOUNDARY_BLOCKED',
+      reason: 'base44_sdk_internal',
+    });
+
+    expect(__internals.classifyPlatformBoundaryChange({
+      filePath: 'src/components/SaigeHero.jsx',
+    })).toMatchObject({ blocked: false });
+  });
+
+  it('filters prioritized platform-boundary findings before branch creation', async () => {
+    withVercelEnv();
+    try {
+      const base = happyDeps({ preScoreSequence: [59], postScoreSequence: [59] });
+      const governanceEntries = [];
+      base.appendGovernanceEntry = vi.fn(async ({ entry }) => {
+        governanceEntries.push(entry);
+        return { written: true };
+      });
+      const result = await runOrchestration({
+        url: null,
+        mode: 'auto',
+        runId: 'platform-boundary-prioritized',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps: base,
+        issue: {
+          filePath: 'src/api/base44Client.js',
+          issue: '401 on unauthenticated root load',
+          fix: 'Change Base44 auth config',
+          severity: 'high',
+          title: 'Base44 auth gate',
+          category: 'network:http_401',
+        },
+      });
+
+      expect(result.exitReason).toBe('PLATFORM_BOUNDARY_BLOCKED');
+      expect(result.platformBoundaryBlocked).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          filePath: 'src/api/base44Client.js',
+          classification: 'PLATFORM_BOUNDARY_BLOCKED',
+          reason: 'base44_client_internal',
+          stage: 'prioritization',
+        }),
+      ]));
+      expect(base.generateFix).not.toHaveBeenCalled();
+      expect(base.createRenewalBranch).not.toHaveBeenCalled();
+      const complete = governanceEntries.find((e) => e?.kind === 'self_renewal.orchestration_complete.v1');
+      expect(complete?.platformBoundaryBlocked?.[0]).toMatchObject({
+        classification: 'PLATFORM_BOUNDARY_BLOCKED',
+        reason: 'base44_client_internal',
+      });
+    } finally { clearVercelEnv(); }
+  });
+
   it('rejects diagnostic suppression before branch creation', async () => {
     withVercelEnv();
     try {
@@ -576,7 +645,7 @@ describe('orchestrator - repair integrity gate', () => {
     expect(verdict.rejected[0].reason).toBe('unverified_route_rewrite');
   });
 
-  it('rejects auth-gate escalation without operator approval', () => {
+  it('rejects Base44 client changes as platform-boundary blocked', () => {
     const verdict = __internals.evaluateRepairIntegrity({
       fileChanges: [{
         filePath: 'src/api/base44Client.js',
@@ -600,7 +669,40 @@ describe('orchestrator - repair integrity gate', () => {
     });
 
     expect(verdict.accepted).toHaveLength(0);
-    expect(verdict.rejected[0].reason).toBe('auth_gate_escalation_requires_operator_approval');
+    expect(verdict.rejected[0]).toMatchObject({
+      classification: 'PLATFORM_BOUNDARY_BLOCKED',
+      reason: 'base44_client_internal',
+    });
+  });
+
+  it('rejects requiresAuth changes without operator approval', () => {
+    const verdict = __internals.evaluateRepairIntegrity({
+      fileChanges: [{
+        filePath: 'src/config/platformAuth.js',
+        fileContent: 'export const base44 = createClient({ requiresAuth: true });\n',
+      }],
+      fixOutcomes: [{
+        filePath: 'src/config/platformAuth.js',
+        status: 'accepted',
+        severity: 'high',
+        category: 'network:http_401',
+      }],
+      prioritizedIssues: [{
+        filePath: 'src/config/platformAuth.js',
+        severity: 'high',
+        category: 'network:http_401',
+        title: 'Suppress 401 on unauthenticated root load',
+      }],
+      originalContentByPath: new Map([
+        ['src/config/platformAuth.js', 'export const base44 = createClient({ requiresAuth: false });\n'],
+      ]),
+    });
+
+    expect(verdict.accepted).toHaveLength(0);
+    expect(verdict.rejected[0]).toMatchObject({
+      classification: 'PLATFORM_BOUNDARY_BLOCKED',
+      reason: 'requiresAuth_change',
+    });
   });
 });
 

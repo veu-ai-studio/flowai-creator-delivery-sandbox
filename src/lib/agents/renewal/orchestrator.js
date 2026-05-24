@@ -1676,10 +1676,24 @@ export async function runOrchestration(args = {}) {
       const recommendationFindings = Array.isArray(state.pipelineFindings) && state.pipelineFindings.length > 0
         ? state.pipelineFindings
         : (Array.isArray(iterLog.preGtm?.issues) ? iterLog.preGtm.issues : []);
-      state.sourceMappedFixProposals = await _generateSourceMappedFixProposals({
+      const generatedProposals = await _generateSourceMappedFixProposals({
         findings: recommendationFindings,
         sourceMapping: state.sourceMapping,
       });
+      const proposalBoundary = filterPlatformBoundaryFindings(generatedProposals, {
+        pathSelector: (p) => p?.filePath ?? p?.targetFilePath ?? p?.selectedFilePath ?? p?.path,
+      });
+      state.sourceMappedFixProposals = proposalBoundary.allowed;
+      if (proposalBoundary.blocked.length > 0) {
+        state.platformBoundaryBlocked = [
+          ...(Array.isArray(state.platformBoundaryBlocked) ? state.platformBoundaryBlocked : []),
+          ...proposalBoundary.blocked.map((b) => ({
+            ...b,
+            stage: 'source_mapped_recommendation',
+            classification: 'PLATFORM_BOUNDARY_BLOCKED',
+          })),
+        ];
+      }
       emit(makeStepLog({
         iteration: iterationNumber, step: 6,
         status: state.sourceMappedFixProposals.length > 0 ? 'complete' : 'degraded',
@@ -1688,6 +1702,8 @@ export async function runOrchestration(args = {}) {
         result: {
           kind: 'source_mapped_recommendations',
           proposals: state.sourceMappedFixProposals.length,
+          platformBoundaryBlocked: proposalBoundary.blocked.length,
+          blocked: proposalBoundary.blocked,
           recommendOnly: true,
           lowConfidence: state.sourceMappedFixProposals.filter((p) => p.confidence === 'LOW').length,
         },
@@ -1748,6 +1764,18 @@ export async function runOrchestration(args = {}) {
             : issue;
         });
       }
+      const issueBoundary = filterPlatformBoundaryFindings(prioritizedIssues);
+      prioritizedIssues = issueBoundary.allowed;
+      if (issueBoundary.blocked.length > 0) {
+        state.platformBoundaryBlocked = [
+          ...(Array.isArray(state.platformBoundaryBlocked) ? state.platformBoundaryBlocked : []),
+          ...issueBoundary.blocked.map((b) => ({
+            ...b,
+            stage: 'prioritization',
+            classification: 'PLATFORM_BOUNDARY_BLOCKED',
+          })),
+        ];
+      }
       const log = makeStepLog({
         iteration: iterationNumber, step: 6, status: 'complete',
         tool: claudeIssues
@@ -1760,6 +1788,8 @@ export async function runOrchestration(args = {}) {
           issueCount: prioritizedIssues.length,
           topIssue: prioritizedIssues[0]?.title ?? prioritizedIssues[0]?.issue,
           files: prioritizedIssues.map((i) => i.filePath).filter(Boolean),
+          platformBoundaryBlocked: issueBoundary.blocked.length,
+          blockedPlatformFindings: issueBoundary.blocked,
           source: claudeIssues ? 'claude' : 'heuristic',
           repoFileListSize: repoFileList ? repoFileList.length : 0,
         },
@@ -2228,7 +2258,9 @@ export async function runOrchestration(args = {}) {
       }
 
       if (fileChanges.length === 0) {
-        exitReason = 'NO_FIXES_GENERATED';
+        exitReason = (Array.isArray(state.platformBoundaryBlocked) && state.platformBoundaryBlocked.length > 0)
+          ? 'PLATFORM_BOUNDARY_BLOCKED'
+          : 'NO_FIXES_GENERATED';
         break;
       }
 
@@ -2268,10 +2300,36 @@ export async function runOrchestration(args = {}) {
           },
           durationMs: Date.now() - t0, mode: state.mode,
         }));
+        const platformRejected = integrity.rejected
+          .filter((r) => r.classification === 'PLATFORM_BOUNDARY_BLOCKED');
+        if (platformRejected.length > 0) {
+          state.platformBoundaryBlocked = [
+            ...(Array.isArray(state.platformBoundaryBlocked) ? state.platformBoundaryBlocked : []),
+            ...platformRejected.map((r) => ({ ...r, stage: 'repair_integrity_gate' })),
+          ];
+          try {
+            await _appendGovernanceEntry({
+              productId, environment,
+              entry: {
+                kind: 'self_renewal.platform_boundary_blocked.v1',
+                runId,
+                productId,
+                iteration: iterationNumber,
+                classification: 'PLATFORM_BOUNDARY_BLOCKED',
+                blocked: platformRejected,
+                policy: 'FlowAI must not patch Base44/platform/auth internals; app-layer fixes only.',
+                at: new Date().toISOString(),
+              },
+              supabase,
+            });
+          } catch { /* governance write failure is captured by final audit path */ }
+        }
       }
 
       if (fileChanges.length === 0) {
-        exitReason = 'NO_SAFE_FIXES_GENERATED';
+        exitReason = (Array.isArray(state.platformBoundaryBlocked) && state.platformBoundaryBlocked.length > 0)
+          ? 'PLATFORM_BOUNDARY_BLOCKED'
+          : 'NO_SAFE_FIXES_GENERATED';
         break;
       }
 
@@ -3353,6 +3411,8 @@ export async function runOrchestration(args = {}) {
         sourceMapping: state.sourceMapping ?? null,
         sourceMappedFixProposals: Array.isArray(state.sourceMappedFixProposals)
           ? state.sourceMappedFixProposals : [],
+        platformBoundaryBlocked: Array.isArray(state.platformBoundaryBlocked)
+          ? state.platformBoundaryBlocked : [],
         upgradeTargets,
         transformationDelta: state.transformationDelta ?? null,
         at: new Date().toISOString(),
@@ -3430,6 +3490,8 @@ export async function runOrchestration(args = {}) {
     sourceMapping: state.sourceMapping ?? null,
     sourceMappedFixProposals: Array.isArray(state.sourceMappedFixProposals)
       ? state.sourceMappedFixProposals : [],
+    platformBoundaryBlocked: Array.isArray(state.platformBoundaryBlocked)
+      ? state.platformBoundaryBlocked : [],
     upgradeTargets,
     transformationDelta: state.transformationDelta ?? null,
     orchestrationLog,
@@ -3775,6 +3837,86 @@ function detectsAuthGateEscalation(before, after) {
     && /\brequiresAuth\s*:\s*true\b/.test(after);
 }
 
+const PLATFORM_BOUNDARY_PATTERNS = Object.freeze([
+  {
+    id: 'base44_client',
+    reason: 'base44_client_internal',
+    test: (path) => path === 'src/api/base44Client.js',
+  },
+  {
+    id: 'base44_sdk_internal',
+    reason: 'base44_sdk_internal',
+    test: (path) => path.startsWith('node_modules/@base44/')
+      || path.startsWith('@base44/')
+      || path.includes('/@base44/')
+      || path.startsWith('base44/')
+      || path.includes('/base44/sdk/'),
+  },
+]);
+
+function normalizeRepoPath(path) {
+  if (typeof path !== 'string') return '';
+  return path.replace(/\\/g, '/').replace(/^\.?\//, '').trim();
+}
+
+function classifyPlatformBoundaryChange({ filePath, before = null, after = null } = {}) {
+  const normalized = normalizeRepoPath(filePath);
+  for (const pattern of PLATFORM_BOUNDARY_PATTERNS) {
+    if (pattern.test(normalized)) {
+      return Object.freeze({
+        blocked: true,
+        classification: 'PLATFORM_BOUNDARY_BLOCKED',
+        reason: pattern.reason,
+        policy: pattern.id,
+        filePath: normalized,
+        detail: 'FlowAI must not patch Base44/platform internals; route this to platform governance instead of branch creation.',
+      });
+    }
+  }
+  if (
+    typeof before === 'string'
+    && typeof after === 'string'
+    && before !== after
+    && (/\brequiresAuth\s*:/.test(before) || /\brequiresAuth\s*:/.test(after))
+  ) {
+    return Object.freeze({
+      blocked: true,
+      classification: 'PLATFORM_BOUNDARY_BLOCKED',
+      reason: 'requiresAuth_change',
+      policy: 'requiresAuth',
+      filePath: normalized,
+      detail: 'requiresAuth changes alter platform auth boundaries and require explicit operator governance.',
+    });
+  }
+  return Object.freeze({ blocked: false, filePath: normalized });
+}
+
+function filterPlatformBoundaryFindings(items = [], { pathSelector } = {}) {
+  const allowed = [];
+  const blocked = [];
+  const getPath = typeof pathSelector === 'function'
+    ? pathSelector
+    : (item) => item?.filePath ?? item?.path;
+  for (const item of Array.isArray(items) ? items : []) {
+    const filePath = getPath(item);
+    const verdict = classifyPlatformBoundaryChange({ filePath });
+    if (verdict.blocked) {
+      blocked.push({
+        filePath: verdict.filePath,
+        classification: verdict.classification,
+        reason: verdict.reason,
+        detail: verdict.detail,
+        title: item?.title ?? item?.issue ?? item?.category ?? null,
+        severity: item?.severity ?? null,
+        category: item?.category ?? null,
+      });
+    } else {
+      allowed.push(item);
+    }
+  }
+  return { allowed, blocked };
+}
+
 function evaluateRepairIntegrity({
   fileChanges = [],
   fixOutcomes = [],
@@ -3813,6 +3955,21 @@ function evaluateRepairIntegrity({
   for (const f of fileChanges) {
     if (!f?.filePath || typeof f.fileContent !== 'string' || rejectedPaths.has(f.filePath)) continue;
     const before = originalContentByPath.get(f.filePath);
+    const platformBoundary = classifyPlatformBoundaryChange({
+      filePath: f.filePath,
+      before,
+      after: f.fileContent,
+    });
+    if (platformBoundary.blocked) {
+      rejectedPaths.add(f.filePath);
+      rejected.push({
+        filePath: f.filePath,
+        classification: platformBoundary.classification,
+        reason: platformBoundary.reason,
+        detail: platformBoundary.detail,
+      });
+      continue;
+    }
     if (detectsDiagnosticSuppression(before, f.fileContent)) {
       rejectedPaths.add(f.filePath);
       rejected.push({
@@ -3826,7 +3983,8 @@ function evaluateRepairIntegrity({
       rejectedPaths.add(f.filePath);
       rejected.push({
         filePath: f.filePath,
-        reason: 'auth_gate_escalation_requires_operator_approval',
+        classification: 'PLATFORM_BOUNDARY_BLOCKED',
+        reason: 'requiresAuth_change',
         detail: 'Patch changes requiresAuth from false to true; public access/auth-gate changes require explicit operator approval.',
       });
       continue;
@@ -4183,6 +4341,8 @@ export const __internals = Object.freeze({
   synthesizeOperatorConnectedProduct,
   resolveGithubOperatorToken,
   derivePrioritizedIssuesFromScore,
+  classifyPlatformBoundaryChange,
+  filterPlatformBoundaryFindings,
   evaluateRepairIntegrity,
   prioritizeIssuesWithClaude,
   fetchRepoFileList,
