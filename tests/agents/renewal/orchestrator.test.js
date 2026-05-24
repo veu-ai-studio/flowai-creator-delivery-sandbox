@@ -938,6 +938,68 @@ describe('runOrchestration — failure handling', () => {
       expect(result.failedStep).toBe('STEP_5');
     } finally { clearVercelEnv(); }
   });
+
+  it('degrades Phase B enriched scoring failures instead of failing the run', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [78], postScoreSequence: [80] });
+      deps.runEvaluationPipeline = vi.fn(async () => ({
+        ok: true,
+        findings: [{ severity: 'medium', category: 'axe:image-alt', location: 'https://x' }],
+        stats: { perEvaluator: { 'axe-core': 1 }, perEvaluatorRaw: { 'axe-core': 1 } },
+        perEvaluator: { 'axe-core': 1 },
+        errors: {},
+      }));
+      let calls = 0;
+      deps.scoreCrawlOutput = vi.fn(() => {
+        calls += 1;
+        if (calls === 2) throw Object.assign(new Error('malformed Phase B finding'), { code: 'BAD_PHASE_B' });
+        return {
+          score: calls >= 4 ? 80 : 78,
+          counts: { critical: 0, high: 0, medium: 1, low: 0 },
+          band: 'demo-ready',
+          label: 'synthetic',
+          penalty: 22,
+          formula: 'synthetic',
+          issues: [{ severity: 'medium', category: 'axe:image-alt', filePath: 'README.md' }],
+        };
+      });
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'phase-b-score-degrade', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+      expect(result.ok).toBe(true);
+      expect(result.failedStep).toBeUndefined();
+      const degraded = result.orchestrationLog.find((l) =>
+        l.step === 5 && l.status === 'degraded' && l.result?.reason === 'phase_b_enrichment_scoring_failed');
+      expect(degraded).toBeDefined();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('records an attempted iteration when no safe fixes are generated', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [78], postScoreSequence: [78] });
+      deps.enableLlmFixes = false;
+      deps.runRemediation = vi.fn(async () => ({
+        ok: true,
+        patches: [],
+        summary: { totalFindings: 0, eligible: 0, fixesAttempted: 0, fixesSucceeded: 0 },
+        conflicts: [],
+        deferred: [],
+        escalated: [],
+      }));
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'no-fix-recorded', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+      expect(result.ok).toBe(true);
+      expect(result.exitReason).toBe('NO_FIXES_GENERATED');
+      expect(result.iterationsCompleted).toBe(1);
+      expect(result.iterations[0].noFixReason).toBe('NO_FIXES_GENERATED');
+      expect(deps.createRenewalBranch).not.toHaveBeenCalled();
+    } finally { clearVercelEnv(); }
+  });
 });
 
 // ── Multi-file commit behaviour ─────────────────────────────────────────────
@@ -1605,6 +1667,72 @@ describe('orchestrator — STEP 10 Vercel failure non-fatal (DISPATCH 29)', () =
       expect(result.finalScore).toBe(result.originalScore);
       expect(result.totalDelta).toBe(0);
     } finally { clearVercelEnv(); }
+  });
+
+  it('registered SAIGE URL overlays stale discovery rows with upgrade repo and Vercel operator preview credentials', async () => {
+    process.env.VERCEL_PROJECT_ID_SAIGE = 'prj_saige';
+    process.env.VERCEL_ORG_ID = 'team_fake';
+    process.env.VERCEL_OPERATOR_TOKEN = 'vercel_operator_fake';
+    try {
+      const deps = happyDeps({ preScoreSequence: [78], postScoreSequence: [82] });
+      deps.discoverProduct = vi.fn(async () => ({
+        product_id: 'saige',
+        org_id: 'veu-ai-studio',
+        github_repo_url: 'https://github.com/veu-ai-studio/saige',
+        product_url: 'https://saige-platform.vercel.app',
+        self_renewal_enabled: true,
+      }));
+      deps.githubOperatorToken = 'gho_operator_secret';
+      deps.probeGithubOperatorRepoAccess = vi.fn(async () => ({
+        ok: true,
+        canRead: true,
+        canWrite: true,
+        tokenPresent: true,
+        tokenRedacted: true,
+        owner: 'veu-ai-studio',
+        repo: 'saige-v2',
+        branch: 'main',
+        reason: 'read_write_confirmed',
+      }));
+      deps.fetchRepoFileList = vi.fn(async () => ({
+        files: ['README.md', 'package.json'],
+        sha: 'tree-sha',
+      }));
+      deps.fetchFileContent = vi.fn(async ({ filePath }) =>
+        filePath === 'package.json'
+          ? JSON.stringify({ dependencies: {}, devDependencies: {} })
+          : 'original-content');
+
+      const result = await runOrchestration({
+        url: 'https://saigeplatform.com',
+        mode: 'auto',
+        runId: 'saige-preview-wiring',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.product.github_repo_url).toBe('https://github.com/veu-ai-studio/saige-v2');
+      expect(result.originalUrl).toBe('https://saigeplatform.com');
+      expect(deps.createRenewalBranch).toHaveBeenCalledWith(expect.objectContaining({
+        owner: 'veu-ai-studio',
+        repo: 'saige-v2',
+      }));
+      expect(deps.deployBranchPreview).toHaveBeenCalledWith(expect.objectContaining({
+        projectId: 'prj_saige',
+        orgId: 'team_fake',
+        owner: 'veu-ai-studio',
+        repo: 'saige-v2',
+        token: 'vercel_operator_fake',
+      }));
+    } finally {
+      delete process.env.VERCEL_PROJECT_ID_SAIGE;
+      delete process.env.VERCEL_ORG_ID;
+      delete process.env.VERCEL_OPERATOR_TOKEN;
+    }
   });
 });
 

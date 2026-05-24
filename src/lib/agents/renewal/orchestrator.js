@@ -387,6 +387,39 @@ function synthesizeOperatorConnectedProduct({ url, config }) {
   });
 }
 
+function mergeRegisteredOperatorConfig({ product = {}, url, config }) {
+  const synthesized = synthesizeOperatorConnectedProduct({ url, config });
+  const configuredCap = Number.isFinite(product.self_renewal_max_per_day)
+    ? product.self_renewal_max_per_day
+    : 0;
+  return Object.freeze({
+    ...product,
+    original_repo: config.original_repo ?? product.original_repo ?? product.repo,
+    original_url: config.original_url ?? product.original_url ?? url,
+    original_status: config.original_status ?? product.original_status ?? 'read_only_baseline',
+    upgrade_repo: config.upgrade_repo ?? config.repo ?? product.upgrade_repo ?? product.github_repo_url,
+    upgrade_url: config.upgrade_url ?? product.upgrade_url ?? product.deployment_url,
+    upgrade_status: config.upgrade_status ?? product.upgrade_status ?? 'active_upgrade_target',
+    upgrade_repo_status: config.upgrade_repo_status ?? product.upgrade_repo_status,
+    deployment_url: config.deployment_url ?? product.deployment_url ?? config.upgrade_url,
+    deployment_status: config.deployment_status ?? product.deployment_status,
+    upgrade_architecture: config.upgrade_architecture ?? product.upgrade_architecture ?? 'fork_based_upgrade',
+    github_repo_url: config.upgrade_repo ?? config.repo ?? product.upgrade_repo ?? product.github_repo_url,
+    self_renewal_enabled: true,
+    self_renewal_branch: config.upgrade_branch ?? config.branch ?? product.self_renewal_branch ?? product.branch ?? 'main',
+    self_renewal_max_per_day: Math.max(
+      configuredCap,
+      Number.isFinite(config.self_renewal_max_per_day) ? config.self_renewal_max_per_day : 0,
+      REGISTERED_OPERATOR_DAILY_RUN_CAP,
+    ),
+    product_id: product.product_id ?? synthesized.product_id,
+    org_id: product.org_id ?? synthesized.org_id,
+    environment: product.environment ?? 'prd',
+    __operatorConnected: true,
+    __sourceUrl: url,
+  });
+}
+
 function effectiveRateCapForRun({ policy, product, operatorContext } = {}) {
   const configuredCap = Number.isFinite(policy?.selfRenewalMaxPerDay)
     ? policy.selfRenewalMaxPerDay
@@ -909,6 +942,12 @@ export async function runOrchestration(args = {}) {
       : null;
     if (registeredOperatorProduct && (!product || product.__pathB === true)) {
       product = synthesizeOperatorConnectedProduct({
+        url: args.url,
+        config: registeredOperatorProduct,
+      });
+    } else if (registeredOperatorProduct && product) {
+      product = mergeRegisteredOperatorConfig({
+        product,
         url: args.url,
         config: registeredOperatorProduct,
       });
@@ -1829,11 +1868,24 @@ export async function runOrchestration(args = {}) {
         emit(log); iterLog.steps.push(log);
       }
     } catch (e) {
-      emit(makeStepLog({ iteration: iterationNumber, step: 5, status: 'failed',
-        tool: 'preScoreAdapter', why: 'pre-score', result: { error: e?.message }, mode: state.mode }));
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_5',
-        error: e?.message ?? String(e), code: e?.code ?? 'SCORING_FAILED' });
+      const degradedLog = makeStepLog({
+        iteration: iterationNumber, step: 5, status: 'degraded',
+        tool: 'gtmReadinessScorer (§7.6) + Phase B/B1 enrichment',
+        why: 'Phase B/B1 enriched scoring failed; continuing with the timeout-safe pre-fix baseline',
+        result: {
+          degraded: true,
+          reason: 'phase_b_enrichment_scoring_failed',
+          error: (e?.message ?? String(e)).slice(0, 240),
+          code: e?.code ?? 'SCORING_ENRICHMENT_FAILED',
+          fallbackScore: originalGtmScore ?? null,
+        },
+        mode: state.mode,
+      });
+      emit(degradedLog); iterLog.steps.push(degradedLog);
+      state.pipelineErrors = {
+        ...(state.pipelineErrors && typeof state.pipelineErrors === 'object' ? state.pipelineErrors : {}),
+        scoring_enrichment: (e?.message ?? String(e)).slice(0, 200),
+      };
     }
     await state.checkpoint(onCheckpoint, { lastStep: 5, iteration: iterationNumber });
 
@@ -2105,6 +2157,55 @@ export async function runOrchestration(args = {}) {
     const branchName = `flowai/renewal-${runId}-iter${iterationNumber}`;
     const fileChanges = []; // { filePath, fileContent (new) } — PATH A only
     const originalContentByPath = new Map(); // filePath -> fetched baseline content for safety gates
+    const recordNoFixIteration = async ({ reason, detail, remediationOutput = null }) => {
+      const preGtmForIter = iterLog.preGtm ?? {
+        score: originalGtmScore ?? preScoreEnvelope?.total ?? 0,
+        counts: { critical: 0, high: 0, medium: 0, low: 0 },
+        band: 'unknown',
+      };
+      lastPostGtm = preGtmForIter;
+      lastPostScore = preScoreEnvelope?.total ?? originalScore ?? null;
+      iterLog.preScore = preGtmForIter.score;
+      iterLog.postScore = preGtmForIter.score;
+      iterLog.fiveLayerPre = preScoreEnvelope?.total ?? null;
+      iterLog.fiveLayerPost = preScoreEnvelope?.total ?? null;
+      iterLog.delta = 0;
+      iterLog.totalImprovement = preGtmForIter.score - (originalGtmScore ?? preGtmForIter.score);
+      iterLog.gtmReady = false;
+      iterLog.branchName = null;
+      iterLog.previewUrl = null;
+      iterLog.decision = reason;
+      iterLog.path = pathB ? 'B' : 'A';
+      iterLog.noFixReason = reason;
+      iterLog.remediationSummary = remediationOutput?.summary ?? state.remediationSummary ?? null;
+      const log = makeStepLog({
+        iteration: iterationNumber, step: 12, status: 'complete',
+        tool: 'repair-loop transition guard',
+        why: 'record attempted iteration even when no safe commit-ready fixes survived',
+        result: {
+          exitTrigger: reason,
+          detail,
+          prioritizedIssues: Array.isArray(prioritizedIssues) ? prioritizedIssues.length : 0,
+          fixOutcomes: Array.isArray(iterLog.fixOutcomes) ? iterLog.fixOutcomes.length : 0,
+          remediationSummary: iterLog.remediationSummary,
+        },
+        mode: state.mode,
+        scores: {
+          original: originalGtmScore,
+          current: preGtmForIter.score,
+          target: gtmTarget,
+          progressPct: computeProgress({
+            originalScore: originalGtmScore,
+            currentScore: preGtmForIter.score,
+            target: gtmTarget,
+          }),
+        },
+      });
+      emit(log); iterLog.steps.push(log);
+      iterations.push(iterLog);
+      try { onIteration({ ...iterLog }); } catch { /* swallow */ }
+      await state.checkpoint(onCheckpoint, { lastStep: 12, iteration: iterationNumber, decision: reason });
+    };
     if (pathB) {
       // DISPATCH U1 ITEM 3 — annotate each skipped step with
       // autoFixSkippedReason so the governance trail (and the UI's
@@ -2746,6 +2847,11 @@ export async function runOrchestration(args = {}) {
         exitReason = (Array.isArray(state.platformBoundaryBlocked) && state.platformBoundaryBlocked.length > 0)
           ? 'PLATFORM_BOUNDARY_BLOCKED'
           : 'NO_FIXES_GENERATED';
+        await recordNoFixIteration({
+          reason: exitReason,
+          detail: 'Step 7 ran but no deterministic, construction, remediation, or LLM fix produced a safe commit-ready file.',
+          remediationOutput,
+        });
         break;
       }
 
@@ -2815,6 +2921,11 @@ export async function runOrchestration(args = {}) {
         exitReason = (Array.isArray(state.platformBoundaryBlocked) && state.platformBoundaryBlocked.length > 0)
           ? 'PLATFORM_BOUNDARY_BLOCKED'
           : 'NO_SAFE_FIXES_GENERATED';
+        await recordNoFixIteration({
+          reason: exitReason,
+          detail: 'Repair integrity gate rejected every generated change before branch creation.',
+          remediationOutput,
+        });
         break;
       }
 
@@ -2866,6 +2977,11 @@ export async function runOrchestration(args = {}) {
       // and let the outer loop decide whether to iterate again.
       if (fileChanges.length === 0) {
         exitReason = 'NO_FIXES_GENERATED';
+        await recordNoFixIteration({
+          reason: exitReason,
+          detail: 'Pre-deploy parse gate rejected every generated change before branch creation.',
+          remediationOutput,
+        });
         break;
       }
 
