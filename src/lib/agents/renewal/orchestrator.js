@@ -608,6 +608,12 @@ export async function runOrchestration(args = {}) {
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   state.operatorMode = operatorMode;
+  state.operatorContext = Object.freeze({
+    operator_mode: operatorMode,
+    githubOperatorTokenPresent: !!githubOperatorToken,
+    tokenRedacted: true,
+    repoAccess: null,
+  });
   const orchestrationLog = [];
   const iterations = [];
 
@@ -901,6 +907,14 @@ export async function runOrchestration(args = {}) {
           token: githubOperatorToken,
         });
         state.operatorRepoAccess = access;
+        state.operatorContext = Object.freeze({
+          ...state.operatorContext,
+          repoAccess: access,
+          owner: parsed.owner,
+          repo: parsed.repo,
+          branch: productBranch,
+          validated: access?.canRead === true,
+        });
         emit(makeStepLog({
           iteration: 0, step: 1,
           status: access?.ok ? 'complete' : 'degraded',
@@ -922,6 +936,14 @@ export async function runOrchestration(args = {}) {
           branch: productBranch,
           reason: (e?.message ?? String(e)).slice(0, 160),
         });
+        state.operatorContext = Object.freeze({
+          ...state.operatorContext,
+          repoAccess: state.operatorRepoAccess,
+          owner: parsed.owner,
+          repo: parsed.repo,
+          branch: productBranch,
+          validated: false,
+        });
         emit(makeStepLog({
           iteration: 0, step: 1, status: 'degraded',
           tool: 'githubOperatorRepoProbe.js',
@@ -938,6 +960,32 @@ export async function runOrchestration(args = {}) {
   // pattern (0018 flowai, 0020 mypreglife). New products onboard
   // with just a product_registry row + product_url; the engine
   // self-provisions the audit-trail substrate.
+  if (pathB && githubRepoUrl && state.operatorContext?.validated === true) {
+    product = applyUpgradeTargetsToProduct({
+      ...product,
+      __pathB: false,
+      __operatorConnected: true,
+      __operatorContext: state.operatorContext,
+    });
+    pathB = false;
+    state.universalMode = false;
+    state.runMode = 'PATH_A';
+    emit(makeStepLog({
+      iteration: 0, step: 1, status: 'complete',
+      tool: 'operator context promotion',
+      why: 'persist validated operator GitHub context across downstream build, branch, deploy, and PR steps',
+      result: {
+        operator_mode: state.operatorMode,
+        runMode: state.runMode,
+        githubRepoUrl,
+        canRead: state.operatorRepoAccess?.canRead === true,
+        canWrite: state.operatorRepoAccess?.canWrite === true,
+      },
+      durationMs: 0,
+      mode: state.mode,
+    }));
+  }
+
   try {
     const ssotProvision = await _ensureProductSsotRow({
       productId, environment, supabase,
