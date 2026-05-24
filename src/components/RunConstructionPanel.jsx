@@ -592,7 +592,7 @@ export default function RunConstructionPanel({ url, mode = 'FOREGROUND', onClose
           <div className="flex items-center gap-2 text-red-400 font-semibold text-xs mb-1">
             <XCircle className="h-4 w-4" /> Run failed
           </div>
-          <p className="text-[11px] text-foreground/90 font-mono break-all">{errorMsg || 'Unknown error'}</p>
+          <p className="text-[11px] text-foreground/90 font-mono break-all">{errorMsg || 'SSE_STREAM_ENDED_BEFORE_FINAL - run may have timed out'}</p>
         </div>
       )}
 

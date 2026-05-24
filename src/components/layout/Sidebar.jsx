@@ -4,12 +4,15 @@ import Tooltip from "@/components/ui/Tooltip";
 import {
   ArrowLeft,
   BarChart3,
+  BookOpen,
   Boxes,
   ClipboardList,
   FolderKanban,
   Globe,
   Home,
+  History,
   Rocket,
+  ShieldCheck,
   SlidersHorizontal,
   Zap,
 } from "lucide-react";
@@ -40,17 +43,6 @@ const navSections = [
     ],
   },
   {
-    title: "LAUNCH",
-    items: [
-      {
-        label: "New Run",
-        path: "/flowai",
-        icon: Rocket,
-        tooltip: "Start a FlowAI run from a URL, product description, pasted content, or screenshot context.",
-      },
-    ],
-  },
-  {
     title: "PORTFOLIO",
     items: [
       {
@@ -66,7 +58,7 @@ const navSections = [
         tooltip: "Registered products, repository mapping, ownership, and operational status.",
       },
       {
-        label: "Run History",
+        label: "Session History",
         path: "/runs",
         icon: ClipboardList,
         tooltip: "Previous FlowAI runs across products, statuses, and dates.",
@@ -77,10 +69,40 @@ const navSections = [
     title: "CONFIGURATION",
     items: [
       {
+        label: "New Run",
+        path: "/flowai",
+        icon: Rocket,
+        tooltip: "Start a FlowAI run from a URL, product description, pasted content, or screenshot context.",
+      },
+      {
         label: "My Products",
         path: "/my-products",
         icon: Boxes,
         tooltip: "Products created or managed through FlowAI.",
+      },
+      {
+        label: "Session History",
+        path: "/runs",
+        icon: History,
+        tooltip: "Review previous FlowAI sessions and run outcomes.",
+      },
+      {
+        label: "Clearance Protocol",
+        path: "/clearance",
+        icon: ShieldCheck,
+        tooltip: "Run product clearance before promotion or release.",
+      },
+      {
+        label: "Governance Dashboard",
+        path: "/governance",
+        icon: BarChart3,
+        tooltip: "Review governance evidence, decisions, and audit status.",
+      },
+      {
+        label: "Release Notes",
+        path: "/release-notes",
+        icon: BookOpen,
+        tooltip: "Review FlowAI release history and shipped changes.",
       },
       {
         label: "Objective & Settings",

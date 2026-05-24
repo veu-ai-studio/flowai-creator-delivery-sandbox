@@ -7,6 +7,9 @@
   "functions": {
     "api/agent/3/execute.js": {
       "maxDuration": 800
+    },
+    "api/run-construction.js": {
+      "maxDuration": 800
     }
   },
   "env": {
