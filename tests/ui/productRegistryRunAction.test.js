@@ -30,7 +30,7 @@ describe('ProductRegistry run action', () => {
   it('prefills the FlowAI New Run URL from Product Registry query params', () => {
     expect(dashboardSrc).toContain('new URLSearchParams(window.location.search)');
     expect(dashboardSrc).toContain("params.get('url')");
-    expect(dashboardSrc).toContain("setInputMethod('url')");
     expect(dashboardSrc).toContain('setUrl(selectedUrl)');
+    expect(dashboardSrc).toContain("method: 'combined'");
   });
 });

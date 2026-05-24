@@ -50,6 +50,11 @@ describe('FlowAI unified operating system shell', () => {
     expect(dashboardSrc).toMatch(/Enter URL/);
     expect(dashboardSrc).toMatch(/Describe Product/);
     expect(dashboardSrc).toMatch(/Paste Content/);
+    expect(dashboardSrc).toMatch(/Test Fetch/);
+    expect(dashboardSrc).toMatch(/Attach files/);
+    expect(dashboardSrc).toMatch(/REGISTERED_PRODUCT_CONFIG/);
+    expect(dashboardSrc).not.toMatch(/setInputMethod/);
+    expect(dashboardSrc).toMatch(/method:\s*'combined'/);
     expect(dashboardSrc).toMatch(/input:\s*inputPayload/);
   });
 

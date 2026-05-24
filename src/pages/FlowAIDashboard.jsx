@@ -29,12 +29,13 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import FindingsReport from '@/components/FindingsReport';
-import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
+import { REGISTERED_PRODUCT_CONFIG, findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
 import { extractBranchPrVisibility } from '@/lib/ui/branchVisibility';
 import { normalizeIterationHistoryRow } from '@/lib/ui/iterationHistory';
 import {
   FLOWAI_RUN_HEARTBEAT_TIMEOUT_MS,
   buildFlowAIStepPatchFromLog,
+  listFlowAIRuns,
   replaceFlowAIRunId,
   runVerdictFromResult,
   updateFlowAIRun,
@@ -188,10 +189,11 @@ function StepRow({ log, expanded, onToggle }) {
 
 export default function FlowAIDashboard() {
   // ── Form inputs ──────────────────────────────────────────────────────────
-  const [inputMethod, setInputMethod] = useState('url');
   const [url, setUrl] = useState('');
   const [productDescription, setProductDescription] = useState('');
   const [pastedContent, setPastedContent] = useState('');
+  const [pasteExpanded, setPasteExpanded] = useState(false);
+  const [fetchStatus, setFetchStatus] = useState(null);
   const [mode, setMode] = useState('auto');
   const [gtmTarget, setGtmTarget] = useState(95);
   const [maxIterations, setMaxIterations] = useState(100);
@@ -200,7 +202,6 @@ export default function FlowAIDashboard() {
     const params = new URLSearchParams(window.location.search);
     const selectedUrl = params.get('url');
     if (selectedUrl) {
-      setInputMethod('url');
       setUrl(selectedUrl);
     }
   }, []);
@@ -282,11 +283,26 @@ export default function FlowAIDashboard() {
     ? finalResult.effectiveTrustScore
     : finalRawScore;
   const inputPayload = useMemo(() => ({
-    method: inputMethod,
+    method: 'combined',
     url: url.trim() || null,
     productDescription: productDescription.trim() || null,
     pastedContent: pastedContent.trim() || null,
-  }), [inputMethod, url, productDescription, pastedContent]);
+  }), [url, productDescription, pastedContent]);
+  const urlSuggestions = useMemo(() => {
+    const registered = REGISTERED_PRODUCT_CONFIG
+      .map((product) => ({
+        label: product.name,
+        value: product.upgrade_url ?? product.original_url ?? product.domain,
+      }))
+      .filter((item) => item.value);
+    const recent = listFlowAIRuns()
+      .map((run) => run.originalUrl ?? run.productUrl)
+      .filter(Boolean)
+      .slice(0, 8)
+      .map((value) => ({ label: 'Recent', value }));
+    return [...registered, ...recent].filter((item, index, arr) =>
+      arr.findIndex((other) => other.value === item.value) === index);
+  }, []);
   const finalDelivery = useMemo(() => {
     const repoConfig = findRegisteredProductConfigForUrl(inputPayload.url);
     const originalUrl = finalResult?.originalUrl
@@ -316,11 +332,7 @@ export default function FlowAIDashboard() {
       repoConfig: findRegisteredProductConfigForUrl(inputPayload.url),
     })
   ), [finalResult, inputPayload.url]);
-  const canLaunch = inputMethod === 'url'
-    ? true
-    : inputMethod === 'describe'
-      ? Boolean(inputPayload.productDescription)
-      : Boolean(inputPayload.pastedContent);
+  const canLaunch = Boolean(inputPayload.url || inputPayload.productDescription || inputPayload.pastedContent);
 
   function productLabelForRun() {
     const registered = findRegisteredProductConfigForUrl(inputPayload.url);
@@ -574,6 +586,44 @@ export default function FlowAIDashboard() {
     if (isRunning && runId) await sendControl('switchMode', next);
   }
 
+  async function testFetchUrl() {
+    if (!inputPayload.url) {
+      setFetchStatus({ ok: false, message: 'Enter a URL before testing fetch.' });
+      return;
+    }
+    setFetchStatus({ ok: null, message: 'Testing fetch...' });
+    try {
+      const response = await fetch('/api/fetch-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: inputPayload.url, force: 'simple-fetch' }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (response.ok && body.ok) {
+        setFetchStatus({ ok: true, message: `Fetch passed${body.title ? `: ${body.title}` : ''}` });
+      } else {
+        setFetchStatus({ ok: false, message: body.reason || body.error || `Fetch returned HTTP ${response.status}` });
+      }
+    } catch (error) {
+      setFetchStatus({ ok: false, message: error?.message ?? 'Fetch test failed' });
+    }
+  }
+
+  async function appendFilesToContext(files) {
+    const entries = Array.from(files ?? []);
+    if (entries.length === 0) return;
+    const chunks = [];
+    for (const file of entries) {
+      if (file.type?.startsWith('text/') || /\.(txt|md|json|log|csv)$/i.test(file.name)) {
+        chunks.push(`\n\n[File: ${file.name}]\n${await file.text()}`);
+      } else {
+        chunks.push(`\n\n[Attached file: ${file.name} (${file.type || 'unknown type'})]`);
+      }
+    }
+    setPastedContent((current) => `${current}${chunks.join('')}`.trim());
+    setPasteExpanded(true);
+  }
+
   // Cleanup the in-flight stream if the page unmounts.
   useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);
 
@@ -607,69 +657,78 @@ export default function FlowAIDashboard() {
             <p className="text-lg font-semibold mt-0.5">Analyze any product from one operating surface</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            {[
-              { key: 'url', label: 'Enter URL', desc: 'Live product analysis' },
-              { key: 'describe', label: 'Describe Product', desc: 'Text brief or concept' },
-              { key: 'paste', label: 'Paste Content', desc: 'Copy, notes, screenshots' },
-            ].map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => setInputMethod(item.key)}
-                className={`rounded-md border px-3 py-2 text-left transition disabled:opacity-50 ${
-                  inputMethod === item.key
-                    ? 'border-emerald-500 bg-emerald-500/5'
-                    : 'border-slate-700 hover:border-slate-600'
-                }`}
-              >
-                <span className="block text-sm font-semibold">{item.label}</span>
-                <span className="block text-[11px] text-slate-400 mt-0.5">{item.desc}</span>
-              </button>
-            ))}
-          </div>
-
-          {inputMethod === 'url' && (
+          <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Product URL</label>
+              <div className="flex items-center justify-between gap-3 mb-1">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide">Enter URL</label>
+                <button type="button" onClick={testFetchUrl}
+                        className="rounded border border-slate-700 px-2 py-1 text-[11px] font-semibold text-slate-200 hover:border-emerald-500 hover:text-emerald-300">
+                  Test Fetch
+                </button>
+              </div>
               <input
                 type="text" value={url} onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://saigeplatform.com"
+                list="flowai-url-suggestions"
+                placeholder="Enter your product URL or select a registered product..."
                 className="w-full rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50"
               />
-              <p className="text-[11px] text-slate-500 mt-1">Leave blank to let FlowAI use the default registered product.</p>
+              <datalist id="flowai-url-suggestions">
+                {urlSuggestions.map((item) => (
+                  <option key={item.value} value={item.value}>{item.label}</option>
+                ))}
+              </datalist>
+              {fetchStatus && (
+                <p className={`text-[11px] mt-1 ${fetchStatus.ok ? 'text-emerald-300' : fetchStatus.ok === false ? 'text-amber-300' : 'text-slate-400'}`}>
+                  {fetchStatus.message}
+                </p>
+              )}
             </div>
-          )}
 
-          {registeredProductNote && (
-            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-              {registeredProductNote}
-            </div>
-          )}
+            {registeredProductNote && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                {registeredProductNote}
+              </div>
+            )}
 
-          {inputMethod === 'describe' && (
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Product Description</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Describe Product</label>
               <textarea
                 value={productDescription}
                 onChange={(e) => setProductDescription(e.target.value)}
-                placeholder="Describe the product, target user, main workflow, known issues, and what you want FlowAI to evaluate."
+                placeholder="What changes do you want? e.g. Fix navigation, improve mobile layout, add pricing page, fix all bugs..."
                 className="w-full min-h-28 rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50 resize-y"
               />
             </div>
-          )}
 
-          {inputMethod === 'paste' && (
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Pasted Content Or Screenshot Context</label>
-              <textarea
-                value={pastedContent}
-                onChange={(e) => setPastedContent(e.target.value)}
-                placeholder="Paste page copy, console output, bug notes, screenshot observations, or exported content for FlowAI to include in the run context."
-                className="w-full min-h-28 rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50 resize-y"
-              />
+              <button type="button" onClick={() => setPasteExpanded((value) => !value)}
+                      className="flex w-full items-center justify-between rounded-md border border-slate-700 px-3 py-2 text-left text-sm font-semibold text-slate-200 hover:border-slate-600">
+                <span>Paste Content</span>
+                <span className="text-[11px] text-slate-400">{pasteExpanded ? 'Hide' : 'Add context'}</span>
+              </button>
+              {pasteExpanded && (
+                <div
+                  className="mt-2 rounded-md border border-dashed border-slate-700 p-3"
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    appendFilesToContext(event.dataTransfer.files);
+                  }}
+                >
+                  <textarea
+                    value={pastedContent}
+                    onChange={(e) => setPastedContent(e.target.value)}
+                    placeholder="Paste screenshots, bug reports, console output, or design notes..."
+                    className="w-full min-h-28 rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 disabled:opacity-50 resize-y"
+                  />
+                  <label className="mt-2 inline-flex cursor-pointer items-center rounded border border-slate-700 px-2 py-1 text-[11px] font-semibold text-slate-300 hover:border-emerald-500 hover:text-emerald-300">
+                    Attach files
+                    <input type="file" multiple className="sr-only" onChange={(event) => appendFilesToContext(event.target.files)} />
+                  </label>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Mode</label>
