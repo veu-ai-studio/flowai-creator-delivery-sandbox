@@ -71,6 +71,7 @@ import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
 import { calculateTransformationDelta } from '../../verification/deltaCalculator.js';
 import { classifyPatchEffects } from '../../verification/patchEffectClassifier.js';
 import { runRegressionGate } from '../../verification/regressionGate.js';
+import { runMigration } from '../../migration/migrationOrchestrator.js';
 import {
   computeCapabilityWeightedScore,
   decideGtmGate,
@@ -659,7 +660,7 @@ class OrchestrationState {
   }
   stop() { this._stopRequested = true; if (this._resumeResolver) this._resumeResolver(); }
   switchMode(newMode) {
-    if (!['auto', 'guided', 'manual'].includes(newMode)) return false;
+    if (!['auto', 'guided', 'manual', 'migration'].includes(newMode)) return false;
     this.mode = newMode;
     if (this._resumeResolver) this._resumeResolver();
     return true;
@@ -682,7 +683,7 @@ class OrchestrationState {
 /**
  * @param {object} args
  * @param {string|null} args.url       — any URL; null → pick from product_registry
- * @param {'auto'|'guided'|'manual'} [args.mode='auto']
+ * @param {'auto'|'guided'|'manual'|'migration'} [args.mode='auto']
  * @param {string} [args.runId]        — UUID; auto-generated if absent
  * @param {object|null} [args.supabase]
  * @param {string} [args.environment='prd']
@@ -721,6 +722,29 @@ export async function runOrchestration(args = {}) {
   const onCheckpoint = typeof args.onCheckpoint === 'function' ? args.onCheckpoint : () => {};
   const onIteration = typeof args.onIteration === 'function' ? args.onIteration : () => {};
   const deps = args.deps || {};
+  if (mode === 'migration' && !isMigrationModeExecutionEnabled(deps.env || process.env)) {
+    return {
+      runId,
+      mode,
+      runMode: 'MIGRATION_DISABLED',
+      universalMode: false,
+      autoFixAvailable: false,
+      registerCTA: false,
+      gtmReady: false,
+      exitReason: 'MIGRATION_MODE_DISABLED',
+      originalScore: 0,
+      finalScore: 0,
+      totalDelta: 0,
+      iterationsCompleted: 0,
+      iterations: [],
+      orchestrationLog: [],
+      previewUrl: null,
+      prUrl: null,
+      skippedSteps: [],
+      migrationModeDisabled: true,
+      migrationMessage: 'Migration Mode requires operator enablement. Contact your admin.',
+    };
+  }
   const githubOperatorToken = resolveGithubOperatorToken(deps);
   const operatorMode = githubOperatorToken ? 'github_connected' : 'universal';
 
@@ -770,6 +794,7 @@ export async function runOrchestration(args = {}) {
   const _calculateTransformationDelta = deps.calculateTransformationDelta || calculateTransformationDelta;
   const _classifyPatchEffects = deps.classifyPatchEffects || classifyPatchEffects;
   const _runRegressionGate = deps.runRegressionGate || runRegressionGate;
+  const _runMigration = deps.runMigration || runMigration;
   const _mapFindingsToSource = deps.mapFindingsToSource || mapFindingsToSource;
   const _generateSourceMappedFixProposals = deps.generateSourceMappedFixProposals || generateSourceMappedFixProposals;
   const phaseBBudget = {
@@ -1117,6 +1142,142 @@ export async function runOrchestration(args = {}) {
       result: provisioning,
       durationMs: 0, mode: state.mode,
     }));
+  }
+
+  if (state.mode === 'migration') {
+    const migrationConfig = args.migration || deps.migration || {};
+    const missing = [];
+    const sourceRepoPath = migrationConfig.sourceRepoPath || deps.sourceRepoPath;
+    const targetRepoPath = migrationConfig.targetRepoPath || deps.targetRepoPath;
+    const verifyBuild = migrationConfig.verifyBuild || deps.verifyBuild;
+    const verifyLint = migrationConfig.verifyLint || deps.verifyLint;
+    const runFocusedTests = migrationConfig.runFocusedTests || deps.runFocusedTests;
+    const readFile = migrationConfig.readFile || deps.readFile;
+    const writeFile = migrationConfig.writeFile || deps.writeFile;
+    const restoreFile = migrationConfig.restoreFile || deps.restoreFile;
+
+    if (!sourceRepoPath) missing.push('sourceRepoPath');
+    if (!targetRepoPath) missing.push('targetRepoPath');
+    if (typeof verifyBuild !== 'function') missing.push('verifyBuild');
+    if (typeof verifyLint !== 'function') missing.push('verifyLint');
+    if (typeof runFocusedTests !== 'function') missing.push('runFocusedTests');
+    if (typeof readFile !== 'function') missing.push('readFile');
+    if (typeof writeFile !== 'function') missing.push('writeFile');
+    if (typeof restoreFile !== 'function') missing.push('restoreFile');
+
+    if (missing.length > 0) {
+      const migration = {
+        status: 'MIGRATION_CONFIGURATION_REQUIRED',
+        filesMigrated: 0,
+        dependenciesRemoved: [],
+        blockers: missing.map((field) => ({ field, reason: 'missing_migration_hook' })),
+      };
+      emit(makeStepLog({
+        iteration: 0, step: 7, status: 'blocked',
+        tool: 'migrationOrchestrator.js',
+        why: 'Migration Mode is enabled, but repo paths and verification hooks must be injected before writes are allowed',
+        result: migration,
+        durationMs: 0, mode: state.mode,
+      }));
+      try {
+        await _appendGovernanceEntry({
+          productId,
+          environment,
+          entry: {
+            kind: 'self_renewal.migration_run.v1',
+            runId,
+            productId,
+            mode: state.mode,
+            status: migration.status,
+            missing,
+            at: new Date().toISOString(),
+          },
+          supabase,
+        });
+      } catch { /* final audit path records governance write availability */ }
+      return {
+        runId,
+        mode: state.mode,
+        runMode: 'MIGRATION',
+        universalMode: false,
+        autoFixAvailable: false,
+        registerCTA: false,
+        gtmReady: false,
+        exitReason: 'MIGRATION_CONFIGURATION_REQUIRED',
+        originalScore: 0,
+        finalScore: 0,
+        totalDelta: 0,
+        iterationsCompleted: 0,
+        iterations,
+        orchestrationLog,
+        previewUrl: null,
+        prUrl: null,
+        skippedSteps: state.skippedSteps,
+        migration,
+      };
+    }
+
+    const t0 = Date.now();
+    const migrationSummary = await _runMigration({
+      sourceRepoPath,
+      targetRepoPath,
+      verifyBuild,
+      verifyLint,
+      runFocusedTests,
+      readFile,
+      writeFile,
+      restoreFile,
+    });
+    const migration = {
+      status: 'MIGRATION_IN_PROGRESS',
+      ...migrationSummary,
+      filesMigrated: migrationSummary.migrated,
+      upgradeUrl: upgradeTargets.deploymentUrl || upgradeTargets.upgradeUrl || null,
+    };
+    emit(makeStepLog({
+      iteration: 0, step: 7, status: migrationSummary.blocked > 0 ? 'degraded' : 'complete',
+      tool: 'migrationOrchestrator.js',
+      why: 'Migration Mode converts platform-bound dependencies in the upgrade repo; original repo remains read-only rollback',
+      result: migration,
+      durationMs: Date.now() - t0, mode: state.mode,
+    }));
+    try {
+      await _appendGovernanceEntry({
+        productId,
+        environment,
+        entry: {
+          kind: 'self_renewal.migration_run.v1',
+          runId,
+          productId,
+          mode: state.mode,
+          status: migration.status,
+          summary: migrationSummary,
+          upgradeUrl: migration.upgradeUrl,
+          at: new Date().toISOString(),
+        },
+        supabase,
+      });
+    } catch { /* final audit path records governance write availability */ }
+    return {
+      runId,
+      mode: state.mode,
+      runMode: 'MIGRATION',
+      universalMode: false,
+      autoFixAvailable: false,
+      registerCTA: false,
+      gtmReady: false,
+      exitReason: 'MIGRATION_IN_PROGRESS',
+      originalScore: 0,
+      finalScore: 0,
+      totalDelta: 0,
+      iterationsCompleted: migrationSummary.migrated > 0 ? 1 : 0,
+      iterations,
+      orchestrationLog,
+      previewUrl: migration.upgradeUrl,
+      prUrl: null,
+      skippedSteps: state.skippedSteps,
+      migration,
+    };
   }
 
   if (githubOperatorToken && githubRepoUrl) {
@@ -4505,6 +4666,10 @@ const PLATFORM_BOUNDARY_PATTERNS = Object.freeze([
       || path.includes('/base44/sdk/'),
   },
 ]);
+
+export function isMigrationModeExecutionEnabled(env = process.env) {
+  return String(env?.FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
+}
 
 function normalizeRepoPath(path) {
   if (typeof path !== 'string') return '';

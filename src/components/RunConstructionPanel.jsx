@@ -597,6 +597,7 @@ function ResultCard({ final, runId, inputUrl }) {
         )}
         <DeltaTable transformationDelta={final.transformationDelta} />
         <SourceMappingSummary sourceMapping={final.sourceMapping} />
+        <MigrationSummary migration={final.migration} message={final.migrationMessage} />
         <div className="flex items-center gap-2 text-xs pt-1">
           <span className="text-muted-foreground">Iterations: {final.iterationsCompleted ?? 0}</span>
           <a href={`/governance/${recordId}`}
@@ -605,6 +606,57 @@ function ResultCard({ final, runId, inputUrl }) {
           </a>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MigrationSummary({ migration, message }) {
+  if (!migration && !message) return null;
+  const dependenciesRemoved = Array.isArray(migration?.dependenciesRemoved)
+    ? migration.dependenciesRemoved : [];
+  const blockers = Array.isArray(migration?.blockers) ? migration.blockers : [];
+  return (
+    <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-3 space-y-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded">
+          MIGRATION MODE
+        </span>
+        <span className="text-[10px] text-muted-foreground font-mono">
+          {migration?.status || 'MIGRATION_MODE_DISABLED'}
+        </span>
+      </div>
+      {message && <p className="text-[11px] text-amber-300">{message}</p>}
+      {migration && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+          <div>
+            <p className="text-muted-foreground">Files migrated</p>
+            <p className="text-foreground font-semibold">{migration.filesMigrated ?? migration.migrated ?? 0}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Dependencies removed</p>
+            <p className="text-foreground font-semibold">{dependenciesRemoved.length}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Upgrade URL</p>
+            {migration.upgradeUrl
+              ? <a href={migration.upgradeUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                  Open <ExternalLink className="h-3 w-3" />
+                </a>
+              : <p className="text-muted-foreground">Not created yet</p>
+            }
+          </div>
+        </div>
+      )}
+      {blockers.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Blockers</p>
+          {blockers.slice(0, 4).map((blocker, index) => (
+            <p key={`${blocker.file || blocker.field || index}-${index}`} className="text-[11px] text-muted-foreground font-mono">
+              {blocker.file || blocker.field || 'migration'}: {blocker.reason}
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

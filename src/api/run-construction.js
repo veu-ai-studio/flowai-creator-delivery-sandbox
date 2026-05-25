@@ -12,7 +12,7 @@
 //
 // Contract:
 //   POST /api/run-construction
-//   Body: { url: string, mode: 'FOREGROUND'|'BACKGROUND'|'GUIDED' }
+//   Body: { url: string, mode: 'FOREGROUND'|'BACKGROUND'|'GUIDED'|'MIGRATION' }
 //
 //   Always responds as Server-Sent Events. Stream events:
 //     - { type: 'start',  runId, url, mode, gtmTarget, at }
@@ -49,10 +49,14 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { rateLimit } from './_lib/rateLimit.js';
 
-const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED']);
+const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION']);
 const GTM_TARGET = 95;
 const RATE_LIMIT_CAPACITY = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function migrationModeEnabled() {
+  return String(process.env.FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
+}
 
 export default async function handler(req, res) {
   // CORS / preflight.
@@ -133,6 +137,30 @@ export default async function handler(req, res) {
   // to PATH B; we skip the registry upsert and report governanceRecordId
   // as the runId so the SSE consumer still has a correlation handle.
   const runId = randomUUID();
+  if (mode === 'MIGRATION' && !migrationModeEnabled()) {
+    send({
+      type: 'start',
+      runId, url, mode, gtmTarget: GTM_TARGET,
+      supabase: 'not_used',
+      at: new Date().toISOString(),
+    });
+    send({
+      type: 'final',
+      previewUrl: null,
+      finalScore: 0,
+      governanceRecordId: runId,
+      gtmReady: false,
+      exitReason: 'MIGRATION_MODE_DISABLED',
+      iterationsCompleted: 0,
+      prUrl: null,
+      runMode: 'MIGRATION_DISABLED',
+      migrationModeDisabled: true,
+      migrationMessage: 'Migration Mode requires operator enablement. Contact your admin.',
+      runId,
+    });
+    return done();
+  }
+
   const supabase = await loadSupabaseClient();
 
   send({
@@ -172,7 +200,9 @@ export default async function handler(req, res) {
     return done();
   }
 
-  const orchestratorMode = mode === 'GUIDED' ? 'guided' : 'auto';
+  const orchestratorMode = mode === 'GUIDED' ? 'guided'
+    : mode === 'MIGRATION' ? 'migration'
+    : 'auto';
 
   // If we have a registry row keyed by URL hash, hand the orchestrator a
   // discoverProduct override so it uses our row directly (no second
@@ -264,6 +294,11 @@ export default async function handler(req, res) {
     transformationDelta: result?.transformationDelta && typeof result.transformationDelta === 'object'
       ? result.transformationDelta : null,
     skippedSteps: Array.isArray(result?.skippedSteps) ? result.skippedSteps : [],
+    migration: result?.migration && typeof result.migration === 'object'
+      ? result.migration : null,
+    migrationModeDisabled: result?.migrationModeDisabled === true,
+    migrationMessage: typeof result?.migrationMessage === 'string'
+      ? result.migrationMessage : null,
     runId,
   });
   return done();

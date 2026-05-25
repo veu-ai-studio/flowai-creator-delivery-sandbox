@@ -30,4 +30,12 @@ describe('FlowAI positioning copy', () => {
     expect(landingSource).toContain('VITE_FLOWAI_ENABLE_MIGRATION_MODE');
     expect(landingSource).toContain("mode={isMigrationMode ? 'MIGRATION' : 'FOREGROUND'}");
   });
+
+  it('renders migration summaries in run results', () => {
+    const runPanelSource = readFileSync(new URL('../../src/components/RunConstructionPanel.jsx', import.meta.url), 'utf8');
+    expect(runPanelSource).toContain('MIGRATION MODE');
+    expect(runPanelSource).toContain('Files migrated');
+    expect(runPanelSource).toContain('Dependencies removed');
+    expect(runPanelSource).toContain('Upgrade URL');
+  });
 });
