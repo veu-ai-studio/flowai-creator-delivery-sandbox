@@ -54,6 +54,7 @@ import { promisify } from 'node:util';
 import { rateLimit } from './_lib/rateLimit.js';
 import { getMigrationModeFlag } from '../lib/runtimeFeatureFlags.js';
 import { findRegisteredProductConfigForUrl } from '../lib/products/registeredProductConfig.js';
+import { createGithubMigrationHooks } from '../lib/migration/githubMigrationHooks.js';
 
 const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION']);
 const GTM_TARGET = 95;
@@ -231,6 +232,7 @@ export default async function handler(req, res) {
       url,
       product: registryRow,
       env: process.env,
+      runId,
     });
     if (!migrationHooks.ok) {
       send({
@@ -508,106 +510,16 @@ async function runRepoCommand({ cwd, command, args, timeoutMs }) {
   }
 }
 
-function repoNameFromUrl(repoUrl) {
-  try {
-    const parsed = new URL(repoUrl);
-    return parsed.pathname
-      .replace(/\.git$/i, '')
-      .split('/')
-      .filter(Boolean)
-      .slice(-2)
-      .join('-') || 'repo';
-  } catch {
-    return 'repo';
-  }
-}
-
-function isGithubRepoUrl(value) {
-  try {
-    const parsed = new URL(String(value || ''));
-    return parsed.protocol === 'https:' && parsed.hostname.toLowerCase() === 'github.com';
-  } catch {
-    return false;
-  }
-}
-
 function looksLikeUpgradeRepo(value) {
   return /(?:^|[-_/])v2(?:\.git)?$/i.test(String(value || '').trim());
-}
-
-function authenticatedGithubCloneUrl(repoUrl, env) {
-  const token = firstNonEmpty(env?.GITHUB_OPERATOR_TOKEN, env?.GITHUB_PAT, env?.GITHUB_TOKEN);
-  if (!token || !isGithubRepoUrl(repoUrl)) return repoUrl;
-  const parsed = new URL(repoUrl);
-  parsed.username = 'x-access-token';
-  parsed.password = token;
-  return parsed.toString();
-}
-
-async function cloneRepoToTempPath({ repoUrl, role, env = process.env }) {
-  if (!isGithubRepoUrl(repoUrl)) {
-    return {
-      ok: false,
-      blocker: {
-        field: role === 'source' ? 'sourceRepoPath' : 'targetRepoPath',
-        reason: 'unsupported_repo_url',
-        message: `Unsupported ${role} repo URL for migration hooks`,
-      },
-    };
-  }
-
-  const repoHash = createHash('sha256').update(`${role}:${repoUrl}`).digest('hex').slice(0, 10);
-  const root = path.join('/tmp', 'flowai-migration', `${Date.now()}-${repoHash}`);
-  const repoPath = path.join(root, role, repoNameFromUrl(repoUrl));
-  await fs.rm(root, { recursive: true, force: true }).catch(() => {});
-  await fs.mkdir(path.dirname(repoPath), { recursive: true });
-
-  const cloneUrl = authenticatedGithubCloneUrl(repoUrl, env);
-  const result = await runRepoCommand({
-    cwd: path.dirname(repoPath),
-    command: 'git',
-    args: ['clone', '--depth', '1', cloneUrl, repoPath],
-    timeoutMs: Number(env.FLOWAI_MIGRATION_CLONE_TIMEOUT_MS || 120000),
-  });
-  if (!result.ok) {
-    return {
-      ok: false,
-      blocker: {
-        field: role === 'source' ? 'sourceRepoPath' : 'targetRepoPath',
-        reason: 'repo_clone_failed',
-        message: `Unable to prepare ${role} repo working tree for migration`,
-        output: redactedOutput(result.output),
-      },
-    };
-  }
-  return { ok: true, repoPath };
-}
-
-async function resolveMigrationRepoPath({
-  configuredPath,
-  repoUrl,
-  role,
-  env,
-  cloneRepo,
-}) {
-  if (configuredPath) return { ok: true, repoPath: configuredPath };
-  if (!repoUrl) {
-    return {
-      ok: false,
-      blocker: {
-        field: role === 'source' ? 'sourceRepoPath' : 'targetRepoPath',
-        reason: 'missing_migration_hook',
-      },
-    };
-  }
-  return cloneRepo({ repoUrl, role, env });
 }
 
 async function createMigrationRuntimeHooks({
   url,
   product,
   env = process.env,
-  cloneRepo = cloneRepoToTempPath,
+  runId,
+  githubHooks = createGithubMigrationHooks,
 } = {}) {
   const registeredProduct = findRegisteredProductConfigForUrl(url);
   const productConfig = { ...(registeredProduct || {}), ...(product || {}) };
@@ -661,28 +573,31 @@ async function createMigrationRuntimeHooks({
   );
   const blockers = [];
 
-  const sourceResolution = await resolveMigrationRepoPath({
-    configuredPath: configuredSourceRepoPath,
-    repoUrl: sourceRepoUrl,
-    role: 'source',
-    env,
-    cloneRepo,
-  });
-  const targetResolution = await resolveMigrationRepoPath({
-    configuredPath: configuredTargetRepoPath,
-    repoUrl: targetRepoUrl,
-    role: 'target',
-    env,
-    cloneRepo,
-  });
+  if (!configuredSourceRepoPath || !configuredTargetRepoPath) {
+    const token = firstNonEmpty(env?.GITHUB_OPERATOR_TOKEN, env?.GITHUB_PAT, env?.GITHUB_TOKEN);
+    const githubResult = await githubHooks({
+      sourceRepoUrl,
+      targetRepoUrl,
+      productName: productConfig.name || productConfig.product_id || hostFromUrl(url),
+      runId,
+      token,
+      fetchImpl: globalThis.fetch,
+    });
+    if (!githubResult.ok) {
+      return {
+        ok: false,
+        blockers: githubResult.blockers,
+        message: githubResult.message || githubResult.blockers?.find((blocker) => blocker.message)?.message,
+      };
+    }
+    return githubResult;
+  }
 
-  if (!sourceResolution.ok) blockers.push(sourceResolution.blocker);
-  if (!targetResolution.ok) blockers.push(targetResolution.blocker);
-  const sourceRepoPath = sourceResolution.repoPath;
-  const targetRepoPath = targetResolution.repoPath;
+  const sourceRepoPath = configuredSourceRepoPath;
+  const targetRepoPath = configuredTargetRepoPath;
 
-  if (sourceResolution.ok && !sourceRepoPath) blockers.push({ field: 'sourceRepoPath', reason: 'missing_migration_hook' });
-  if (targetResolution.ok && !targetRepoPath) blockers.push({ field: 'targetRepoPath', reason: 'missing_migration_hook' });
+  if (!sourceRepoPath) blockers.push({ field: 'sourceRepoPath', reason: 'missing_migration_hook' });
+  if (!targetRepoPath) blockers.push({ field: 'targetRepoPath', reason: 'missing_migration_hook' });
   if (sourceRepoPath && targetRepoPath && path.resolve(sourceRepoPath) === path.resolve(targetRepoPath)) {
     blockers.push({ field: 'targetRepoPath', reason: 'target_repo_must_differ_from_source_repo' });
   }

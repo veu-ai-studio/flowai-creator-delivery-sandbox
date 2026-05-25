@@ -53,31 +53,68 @@ describe('run-construction Migration Mode hook wiring', () => {
     });
   });
 
-  it('resolves SAIGE source and target repos from the registered product config', async () => {
-    const cloned = [];
+  it('resolves SAIGE source and target repos from the registered product config through GitHub hooks', async () => {
+    const calls = [];
     const result = await __test.createMigrationRuntimeHooks({
       url: 'https://saigeplatform.com',
-      env: {},
-      cloneRepo: async ({ repoUrl, role }) => {
-        cloned.push({ repoUrl, role });
+      env: { GITHUB_OPERATOR_TOKEN: 'test-token' },
+      runId: 'run-123456789',
+      githubHooks: async (args) => {
+        calls.push(args);
         return {
           ok: true,
-          repoPath: role === 'source' ? sourceRepoPath : targetRepoPath,
+          deps: {
+            sourceRepoPath: 'github://veu-ai-studio/saige',
+            targetRepoPath: 'github://veu-ai-studio/saige-v2/flowai/migration-saige-1-run12345',
+            sourceRepoUrl: args.sourceRepoUrl,
+            targetRepoUrl: args.targetRepoUrl,
+            migrationBranch: 'flowai/migration-saige-1-run12345',
+            targetRepoFullName: 'veu-ai-studio/saige-v2',
+            scanFiles: async () => [],
+            readFile: async () => '',
+            writeFile: async () => {},
+            restoreFile: async () => {},
+            verifyBuild: async () => ({ ok: false, reason: 'GITHUB_ACTIONS_CHECK_NOT_WIRED' }),
+            verifyLint: async () => ({ ok: false, reason: 'GITHUB_ACTIONS_CHECK_NOT_WIRED' }),
+            runFocusedTests: async () => ({ ok: false, passed: 0, reason: 'GITHUB_ACTIONS_CHECK_NOT_WIRED' }),
+          },
         };
       },
     });
 
     expect(result.ok).toBe(true);
-    expect(cloned).toEqual([
-      { repoUrl: 'https://github.com/veu-ai-studio/saige', role: 'source' },
-      { repoUrl: 'https://github.com/veu-ai-studio/saige-v2', role: 'target' },
-    ]);
-    expect(result.deps).toMatchObject({
-      sourceRepoPath: path.resolve(sourceRepoPath),
-      targetRepoPath: path.resolve(targetRepoPath),
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
       sourceRepoUrl: 'https://github.com/veu-ai-studio/saige',
       targetRepoUrl: 'https://github.com/veu-ai-studio/saige-v2',
+      productName: 'SAIGE',
+      runId: 'run-123456789',
+      token: 'test-token',
     });
+    expect(result.deps).toMatchObject({
+      sourceRepoPath: 'github://veu-ai-studio/saige',
+      targetRepoPath: 'github://veu-ai-studio/saige-v2/flowai/migration-saige-1-run12345',
+      sourceRepoUrl: 'https://github.com/veu-ai-studio/saige',
+      targetRepoUrl: 'https://github.com/veu-ai-studio/saige-v2',
+      migrationBranch: 'flowai/migration-saige-1-run12345',
+      targetRepoFullName: 'veu-ai-studio/saige-v2',
+    });
+  });
+
+  it('returns GITHUB_AUTH_REQUIRED instead of repo_clone_failed when GitHub token is missing', async () => {
+    const result = await __test.createMigrationRuntimeHooks({
+      url: 'https://saigeplatform.com',
+      env: {},
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toBe('GITHUB_AUTH_REQUIRED');
+    expect(result.blockers).toContainEqual({
+      field: 'github',
+      reason: 'GITHUB_AUTH_REQUIRED',
+      message: 'GITHUB_OPERATOR_TOKEN is required for GitHub-backed Migration Mode',
+    });
+    expect(JSON.stringify(result)).not.toContain('repo_clone_failed');
   });
 
   it('wires all production hooks from env paths', async () => {

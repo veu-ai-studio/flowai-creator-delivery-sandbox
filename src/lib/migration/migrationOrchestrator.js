@@ -38,27 +38,30 @@ function createPlan(manifest) {
     .sort((left, right) => right.dependencyCount - left.dependencyCount || left.file.localeCompare(right.file));
 }
 
-function targetFilePath(targetRepoPath, relativeFile) {
+function targetFilePath(targetRepoPath, relativeFile, virtualRepo = false) {
+  if (virtualRepo) return normalizeSlash(relativeFile);
   return path.resolve(targetRepoPath, relativeFile);
 }
 
-async function readTargetFile({ targetRepoPath, readFile, relativeFile }) {
-  const fullPath = targetFilePath(targetRepoPath, relativeFile);
+async function readTargetFile({ targetRepoPath, readFile, relativeFile, virtualRepo }) {
+  const fullPath = targetFilePath(targetRepoPath, relativeFile, virtualRepo);
   return readFile(fullPath, 'utf8');
 }
 
-async function restoreTargetFile({ targetRepoPath, restoreFile, relativeFile }) {
-  const fullPath = targetFilePath(targetRepoPath, relativeFile);
+async function restoreTargetFile({ targetRepoPath, restoreFile, relativeFile, virtualRepo }) {
+  const fullPath = targetFilePath(targetRepoPath, relativeFile, virtualRepo);
   await restoreFile(fullPath);
 }
 
-async function writeTargetFile({ targetRepoPath, sourceRepoPath, writeFile, relativeFile, content }) {
-  const fullPath = targetFilePath(targetRepoPath, relativeFile);
-  if (!isPathInside(targetRepoPath, fullPath)) {
-    throw new Error(`MIGRATION_BLOCKED: target path escapes targetRepoPath (${relativeFile})`);
-  }
-  if (sourceRepoPath && isPathInside(sourceRepoPath, fullPath)) {
-    throw new Error(`MIGRATION_BLOCKED: attempted source repo write (${relativeFile})`);
+async function writeTargetFile({ targetRepoPath, sourceRepoPath, writeFile, relativeFile, content, virtualRepo }) {
+  const fullPath = targetFilePath(targetRepoPath, relativeFile, virtualRepo);
+  if (!virtualRepo) {
+    if (!isPathInside(targetRepoPath, fullPath)) {
+      throw new Error(`MIGRATION_BLOCKED: target path escapes targetRepoPath (${relativeFile})`);
+    }
+    if (sourceRepoPath && isPathInside(sourceRepoPath, fullPath)) {
+      throw new Error(`MIGRATION_BLOCKED: attempted source repo write (${relativeFile})`);
+    }
   }
   await writeFile(fullPath, content);
 }
@@ -76,6 +79,7 @@ export async function runMigration({
   readFile,
   writeFile,
   restoreFile,
+  scanFiles,
 } = {}) {
   if (!sourceRepoPath || !targetRepoPath) {
     throw new Error('sourceRepoPath and targetRepoPath are required');
@@ -84,7 +88,11 @@ export async function runMigration({
     throw new Error('readFile, writeFile, and restoreFile hooks are required');
   }
 
-  const manifest = await scanPlatformDependencies({ repoPath: targetRepoPath, readFile });
+  const virtualRepo = typeof scanFiles === 'function';
+  const files = virtualRepo ? await scanFiles() : null;
+  const manifest = await scanPlatformDependencies(virtualRepo
+    ? { files, readFile }
+    : { repoPath: targetRepoPath, readFile });
   const plan = createPlan(manifest);
   const summary = {
     totalFiles: plan.length,
@@ -98,7 +106,7 @@ export async function runMigration({
   };
 
   for (const planItem of plan) {
-    const originalContent = await readTargetFile({ targetRepoPath, readFile, relativeFile: planItem.file });
+    const originalContent = await readTargetFile({ targetRepoPath, readFile, relativeFile: planItem.file, virtualRepo });
     const [replacement] = generateDirectReplacements({
       manifest: planItem.findings,
       files: [{ file: planItem.file, content: originalContent }],
@@ -119,13 +127,14 @@ export async function runMigration({
       writeFile,
       relativeFile: planItem.file,
       content: replacement.replacementContent,
+      virtualRepo,
     });
 
     const buildResult = await verifyBuild({ file: planItem.file });
     const lintResult = buildResult?.ok ? await verifyLint({ file: planItem.file }) : { ok: false, output: 'build failed' };
 
     if (!buildResult?.ok || !lintResult?.ok) {
-      await restoreTargetFile({ targetRepoPath, restoreFile, relativeFile: planItem.file });
+      await restoreTargetFile({ targetRepoPath, restoreFile, relativeFile: planItem.file, virtualRepo });
       summary.blocked += 1;
       summary.buildPassed = summary.buildPassed && Boolean(buildResult?.ok);
       summary.blockers.push({

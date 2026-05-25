@@ -141,4 +141,30 @@ describe('migrationOrchestrator', () => {
     });
     expect(hooks.writeFile).not.toHaveBeenCalled();
   });
+
+  it('supports virtual repo files from GitHub-backed hooks', async () => {
+    const files = [{ file: 'src/app.js' }];
+    const writes = [];
+    const summary = await runMigration({
+      sourceRepoPath: 'github://veu-ai-studio/saige',
+      targetRepoPath: 'github://veu-ai-studio/saige-v2/flowai/migration-saige-1-run12345',
+      scanFiles: vi.fn(async () => files),
+      readFile: vi.fn(async (filePath) => {
+        expect(filePath).toBe('src/app.js');
+        return "import sdk from '@base44/sdk';\n";
+      }),
+      writeFile: vi.fn(async (filePath, content) => {
+        writes.push({ filePath, content });
+      }),
+      restoreFile: vi.fn(),
+      verifyBuild: vi.fn(async () => ({ ok: true, output: '' })),
+      verifyLint: vi.fn(async () => ({ ok: true, output: '' })),
+      runFocusedTests: vi.fn(async () => ({ ok: true, passed: 1 })),
+    });
+
+    expect(summary.migrated).toBe(1);
+    expect(writes).toHaveLength(1);
+    expect(writes[0].filePath).toBe('src/app.js');
+    expect(writes[0].content).toContain('createStandalonePlatformClient');
+  });
 });
