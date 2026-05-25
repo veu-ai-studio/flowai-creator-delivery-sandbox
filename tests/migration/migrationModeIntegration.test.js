@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { runOrchestration } from '../../src/lib/agents/renewal/orchestrator.js';
+import { resetRuntimeFeatureFlagsForTests } from '../../src/lib/runtimeFeatureFlags.js';
 
 const orchestratorSource = readFileSync(
   new URL('../../src/lib/agents/renewal/orchestrator.js', import.meta.url),
@@ -25,6 +26,10 @@ function migrationProduct() {
 }
 
 describe('Migration Mode pipeline integration', () => {
+  beforeEach(() => {
+    resetRuntimeFeatureFlagsForTests();
+  });
+
   it('returns MIGRATION_MODE_DISABLED before pipeline steps when the feature flag is off', async () => {
     const onStep = vi.fn();
     const result = await runOrchestration({
@@ -84,7 +89,8 @@ describe('Migration Mode pipeline integration', () => {
   });
 
   it('keeps the migration platform-boundary transition isolated to migration mode', () => {
-    expect(orchestratorSource).toContain("if (mode === 'migration' && !isMigrationModeExecutionEnabled");
+    expect(orchestratorSource).toContain("const migrationFlag = mode === 'migration'");
+    expect(orchestratorSource).toContain("if (mode === 'migration' && !migrationFlag.enabled)");
     expect(orchestratorSource).toContain("if (state.mode === 'migration')");
     expect(orchestratorSource).not.toContain("state.mode !== 'migration' &&");
   });

@@ -12,6 +12,7 @@ import {
 import { saveSessionConfig } from './Configuration';
 import UniversalNav from '@/components/shared/UniversalNav';
 import RunConstructionPanel from '@/components/RunConstructionPanel';
+import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
 
 const SPEECH_SUPPORTED = typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -30,7 +31,6 @@ const OBJECTIVES = [
 const DEPTHS = ['Quick', 'Standard', 'Deep'];
 const MIGRATION_MODE_ENABLED_FOR_UI =
   String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
-const VERCEL_MIGRATION_ENV_URL = 'https://vercel.com/veu-ai-studio/flowai/settings/environment-variables';
 const FLOWAI_OPERATOR_NAME = import.meta.env?.VITE_FLOWAI_OPERATOR_NAME || 'FlowAI operator';
 const FLOWAI_OPERATOR_EMAIL = import.meta.env?.VITE_FLOWAI_OPERATOR_EMAIL || '';
 
@@ -42,6 +42,23 @@ Current known issues:
 Live URL (optional): 
 Login email (optional — for authenticated testing): 
 Login password (optional — for authenticated testing): `;
+
+function detectMigrationPlatformHint({ url = '', description = '', productConfig = null } = {}) {
+  const haystack = `${url}\n${description}\n${productConfig?.systemNote || ''}`.toLowerCase();
+  if (haystack.includes('base44')) return 'Base44';
+  if (haystack.includes('wix')) return 'Wix';
+  if (haystack.includes('webflow')) return 'Webflow';
+  if (haystack.includes('bubble')) return 'Bubble';
+  if (haystack.includes('wordpress') || haystack.includes('wp-json')) return 'WordPress';
+  return productConfig ? 'Pending source scan' : 'Enter a URL to detect';
+}
+
+function estimateMigrationFiles(productConfig) {
+  if (!productConfig) return 'Pending registry match';
+  if (productConfig.platform_dependency_files) return String(productConfig.platform_dependency_files);
+  if (productConfig.name === 'SAIGE') return '273 flagged platform-dependent files';
+  return 'Pending source scan';
+}
 
 // Crawler quality dot indicator
 function CrawlerQualityDot({ quality }) {
@@ -64,6 +81,164 @@ function CrawlerQualityDot({ quality }) {
 }
 
 // ─── CARD A — URL ─────────────────────────────────────────────────────────────
+function FocusedMigrationSetup({
+  urlInput,
+  setUrlInput,
+  description,
+  setDescription,
+  setActiveCard,
+  setMode,
+  runPanelUrl,
+  setRunPanelUrl,
+  migrationModeEnabled,
+  migrationFlagBusy,
+  migrationFlagError,
+  setMigrationModeRuntimeFlag,
+  userIsOperator,
+  operatorContact,
+  detectedPlatform,
+  upgradeTarget,
+  estimatedFiles,
+}) {
+  return (
+    <div className="min-h-screen bg-background text-foreground font-inter">
+      <header className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-20">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
+              <GitBranch className="h-4 w-4 text-cyan-300" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-foreground leading-tight">Migrate a Product</div>
+              <div className="text-[10px] text-muted-foreground leading-tight">Platform dependency migration setup.</div>
+            </div>
+          </div>
+          <UniversalNav className="ml-2" />
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+        {runPanelUrl ? (
+          <RunConstructionPanel
+            url={runPanelUrl}
+            mode="MIGRATION"
+            onClose={() => setRunPanelUrl(null)}
+          />
+        ) : (
+          <>
+            <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-xl border border-border bg-card p-5 space-y-4">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Step 1 - Select Your Product</p>
+                <h1 className="mt-1 text-lg font-bold text-foreground">Which product do you want to migrate?</h1>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <Input
+                  value={urlInput}
+                  onChange={(e) => { setUrlInput(e.target.value); setActiveCard('A'); }}
+                  placeholder="Which product do you want to migrate?"
+                  className="h-10 text-sm"
+                />
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Optional: describe migration goals, known platform dependencies, or constraints..."
+                  rows={4}
+                  className="w-full text-sm bg-background border border-input rounded-md px-3 py-2 resize-none text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+            </motion.section>
+
+            {urlInput.trim() && (
+              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-border bg-card p-5 space-y-4">
+                <div>
+                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Step 2 - Migration Details</p>
+                  <h2 className="mt-1 text-base font-bold text-foreground">Migration plan preview</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg border border-border bg-background/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Platform detected</p>
+                    <p className="mt-1 text-foreground font-semibold">{detectedPlatform}</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Upgrade repo target</p>
+                    <p className="mt-1 text-foreground font-semibold break-all">{upgradeTarget}</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Estimated files to migrate</p>
+                    <p className="mt-1 text-foreground font-semibold">{estimatedFiles}</p>
+                  </div>
+                  <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-300">Rollback</p>
+                    <p className="mt-1 text-emerald-100 font-semibold">Original stays frozen as rollback.</p>
+                  </div>
+                </div>
+              </motion.section>
+            )}
+
+            <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-xl border border-primary/30 bg-primary/5 p-5 space-y-4">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Step 3 - Confirm and Start</p>
+                <h2 className="mt-1 text-base font-bold text-foreground">Migration execution</h2>
+              </div>
+
+              {migrationModeEnabled ? (
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">Migration Mode enabled.</span> FlowAI will migrate only the upgrade target.
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setMigrationModeRuntimeFlag(false)}
+                      disabled={migrationFlagBusy}
+                    >
+                      {migrationFlagBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Disable
+                    </Button>
+                    <Button
+                      onClick={() => { setMode('migration'); setActiveCard('A'); setRunPanelUrl(urlInput.trim()); }}
+                      disabled={!urlInput.trim()}
+                      className="gap-2"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      Start Migration
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
+                  <p className="text-sm font-semibold text-amber-100">Migration Mode is currently disabled.</p>
+                  {userIsOperator ? (
+                    <Button
+                      type="button"
+                      onClick={() => setMigrationModeRuntimeFlag(true)}
+                      disabled={migrationFlagBusy}
+                      className="gap-2"
+                    >
+                      {migrationFlagBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitBranch className="h-4 w-4" />}
+                      Enable Migration Mode
+                    </Button>
+                  ) : (
+                    <p className="text-xs text-amber-100 leading-relaxed">
+                      Migration Mode requires operator activation. Contact {operatorContact} to enable it.
+                    </p>
+                  )}
+                </div>
+              )}
+              {migrationFlagError && (
+                <p className="text-xs text-red-300">{migrationFlagError}</p>
+              )}
+            </motion.section>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, onTestFetch, testing, crawlerQuality }) {
   return (
     <div
@@ -344,12 +519,20 @@ export default function LandingPage() {
   }, []);
 
   const [operatorReadiness, setOperatorReadiness] = useState(null);
-  const [showMigrationEnableInstructions, setShowMigrationEnableInstructions] = useState(false);
+  const [migrationModeEnabled, setMigrationModeEnabled] = useState(MIGRATION_MODE_ENABLED_FOR_UI);
+  const [migrationFlagBusy, setMigrationFlagBusy] = useState(false);
+  const [migrationFlagError, setMigrationFlagError] = useState('');
   useEffect(() => {
     fetch('/api/operator-readiness', { headers: { Accept: 'application/json' } })
       .then((res) => res.ok ? res.json() : null)
       .then((data) => setOperatorReadiness(data))
       .catch(() => setOperatorReadiness(null));
+    fetch('/api/operator/migration-mode', { headers: { Accept: 'application/json' } })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (typeof data?.enabled === 'boolean') setMigrationModeEnabled(data.enabled);
+      })
+      .catch(() => {});
   }, []);
 
   // Products for Card B
@@ -472,6 +655,29 @@ export default function LandingPage() {
     setObjListening(true);
   };
 
+  const setMigrationModeRuntimeFlag = async (enabled) => {
+    setMigrationFlagBusy(true);
+    setMigrationFlagError('');
+    try {
+      const response = await fetch(enabled
+        ? '/api/operator/enable-migration-mode'
+        : '/api/operator/disable-migration-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'include',
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.ok !== true) {
+        throw new Error(data?.error || data?.message || `Request failed with ${response.status}`);
+      }
+      setMigrationModeEnabled(Boolean(data.enabled));
+    } catch (error) {
+      setMigrationFlagError(error?.message || 'Unable to update Migration Mode.');
+    } finally {
+      setMigrationFlagBusy(false);
+    }
+  };
+
   // ── Valid input check ──
   const hasValidInput =
     (activeCard === 'A' && !!urlInput.trim()) ||
@@ -543,7 +749,18 @@ export default function LandingPage() {
 
   const isConstructionEnginePath = activeCard === 'A' && (mode === 'auto' || mode === 'migration') && !!urlInput.trim();
   const isMigrationMode = mode === 'migration';
-  const isMigrationLaunchBlocked = isMigrationMode && !MIGRATION_MODE_ENABLED_FOR_UI;
+  const isFocusedMigrationSetup = new URLSearchParams(location.search).get('mode') === 'migration';
+  const isMigrationLaunchBlocked = isMigrationMode && !migrationModeEnabled;
+  const migrationProductConfig = isFocusedMigrationSetup
+    ? findRegisteredProductConfigForUrl(urlInput.trim())
+    : null;
+  const detectedPlatform = isFocusedMigrationSetup
+    ? detectMigrationPlatformHint({ url: urlInput, description, productConfig: migrationProductConfig })
+    : '';
+  const upgradeTarget = migrationProductConfig?.upgrade_repo
+    || migrationProductConfig?.repo
+    || 'Registered upgrade repo resolves after product match';
+  const estimatedFiles = estimateMigrationFiles(migrationProductConfig);
   const operatorEmailMatches = FLOWAI_OPERATOR_EMAIL
     && userEmail
     && FLOWAI_OPERATOR_EMAIL.toLowerCase() === userEmail.toLowerCase();
@@ -555,6 +772,29 @@ export default function LandingPage() {
     : FLOWAI_OPERATOR_NAME !== 'FlowAI operator'
       ? FLOWAI_OPERATOR_NAME
       : 'your FlowAI operator';
+  if (isFocusedMigrationSetup) {
+    return (
+      <FocusedMigrationSetup
+        urlInput={urlInput}
+        setUrlInput={setUrlInput}
+        description={description}
+        setDescription={setDescription}
+        setActiveCard={setActiveCard}
+        setMode={setMode}
+        runPanelUrl={runPanelUrl}
+        setRunPanelUrl={setRunPanelUrl}
+        migrationModeEnabled={migrationModeEnabled}
+        migrationFlagBusy={migrationFlagBusy}
+        migrationFlagError={migrationFlagError}
+        setMigrationModeRuntimeFlag={setMigrationModeRuntimeFlag}
+        userIsOperator={userIsOperator}
+        operatorContact={operatorContact}
+        detectedPlatform={detectedPlatform}
+        upgradeTarget={upgradeTarget}
+        estimatedFiles={estimatedFiles}
+      />
+    );
+  }
   const launchLabel = isConstructionEnginePath
     ? 'Run FlowAI on this URL →'
     : mode === 'auto'
@@ -802,7 +1042,7 @@ export default function LandingPage() {
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 FlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.
               </p>
-              {MIGRATION_MODE_ENABLED_FOR_UI ? (
+              {migrationModeEnabled ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px]">
                   <div className="rounded-md border border-border bg-background/60 p-2">
                     <p className="font-semibold text-foreground">Plan</p>
@@ -826,26 +1066,15 @@ export default function LandingPage() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShowMigrationEnableInstructions(true);
+                          setMigrationModeRuntimeFlag(true);
                         }}
+                        disabled={migrationFlagBusy}
                         className="inline-flex items-center rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-[11px] font-bold text-amber-100 hover:bg-amber-400/15"
                       >
+                        {migrationFlagBusy && <Loader2 className="h-3 w-3 animate-spin mr-1.5" />}
                         Enable Migration Mode
                       </button>
-                      {showMigrationEnableInstructions && (
-                        <p className="text-[11px] text-amber-100 leading-relaxed">
-                          To enable, go to Vercel Environment Variables and set <span className="font-mono">FLOWAI_ENABLE_MIGRATION_MODE=true</span>, then redeploy.{' '}
-                          <a
-                            href={VERCEL_MIGRATION_ENV_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="underline underline-offset-2 hover:text-foreground"
-                          >
-                            Open Vercel settings
-                          </a>
-                        </p>
-                      )}
+                      {migrationFlagError && <p className="text-[11px] text-red-300">{migrationFlagError}</p>}
                     </>
                   ) : (
                     <p className="text-[11px] text-amber-200 leading-relaxed">
@@ -891,7 +1120,7 @@ export default function LandingPage() {
               </div>
               {isMigrationLaunchBlocked && (
                 <div className="text-[11px] text-amber-300 text-right">
-                  Migration Mode is disabled until <span className="font-mono">FLOWAI_ENABLE_MIGRATION_MODE=true</span> is set in Vercel and redeployed.
+                  Migration Mode is currently disabled. Use the focused migration setup to enable it.
                 </div>
               )}
               {/* Secondary legacy link: only shown when the construction-

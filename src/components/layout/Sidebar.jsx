@@ -85,7 +85,7 @@ const navSections = [
         icon: GitBranch,
         tooltip: "Open Migration Mode setup for platform dependency migration.",
         disabled: !MIGRATION_MODE_ENABLED_FOR_UI,
-        disabledMessage: "Set FLOWAI_ENABLE_MIGRATION_MODE=true in Vercel.",
+        disabledMessage: "Migration Mode requires operator enablement.",
         activeWhen: ({ pathname, searchParams }) => pathname === "/" && searchParams.get("mode") === "migration",
       },
       {
@@ -140,34 +140,22 @@ function isActivePath(location, item) {
 function NavItem({ label, path, icon: Icon, tooltip, disabled, disabledMessage, activeWhen }) {
   const location = useLocation();
   const active = isActivePath(location, { path, activeWhen });
-  if (disabled) {
-    const disabledInner = (
-      <div
-        className={`flex flex-col gap-1 px-3 py-2 rounded-md text-sm font-medium ${
-          active ? "bg-primary/10 text-primary" : "text-muted-foreground"
-        } opacity-80 cursor-not-allowed`}
-        aria-disabled="true"
-      >
-        <span className="flex items-center gap-3">
-          <Icon className="h-4 w-4 shrink-0" />
-          <span className="truncate">{label}</span>
-        </span>
-        {disabledMessage && <span className="pl-7 text-[10px] leading-tight text-amber-300">{disabledMessage}</span>}
-      </div>
-    );
-    return tooltip ? <Tooltip content={tooltip} className="block">{disabledInner}</Tooltip> : disabledInner;
-  }
   const inner = (
     <Link
       to={path}
-      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+      className={`flex flex-col gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
         active
           ? "bg-primary/10 text-primary"
+          : disabled
+          ? "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
       }`}
     >
-      <Icon className="h-4 w-4 shrink-0" />
-      <span className="truncate">{label}</span>
+      <span className="flex items-center gap-3">
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="truncate">{label}</span>
+      </span>
+      {disabled && disabledMessage && <span className="pl-7 text-[10px] leading-tight text-amber-300">{disabledMessage}</span>}
     </Link>
   );
   return tooltip ? <Tooltip content={tooltip} className="block">{inner}</Tooltip> : inner;

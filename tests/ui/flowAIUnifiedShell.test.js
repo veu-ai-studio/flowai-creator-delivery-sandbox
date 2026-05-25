@@ -31,7 +31,7 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toMatch(/title:\s*"CONFIGURATION"/);
     expect(sidebarSrc).toMatch(/label:\s*"New Run"/);
     expect(sidebarSrc).toMatch(/label:\s*"Migrate a Product"/);
-    expect(sidebarSrc).toContain('Set FLOWAI_ENABLE_MIGRATION_MODE=true in Vercel.');
+    expect(sidebarSrc).toContain('Migration Mode requires operator enablement.');
     expect(sidebarSrc).toMatch(/title:\s*"PORTFOLIO"/);
     expect(sidebarSrc).toMatch(/label:\s*"Portfolio Dashboard"/);
     expect(sidebarSrc).toMatch(/label:\s*"Product Registry"/);
@@ -49,8 +49,11 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toContain('path: "/?mode=migration"');
     expect(landingSrc).toContain("params.get('mode') === 'migration'");
     expect(landingSrc).toContain("setMode('migration')");
-    expect(landingSrc).toContain('operationModeRef.current?.scrollIntoView');
-    expect(landingSrc).toContain("isMigrationMode ? 'Migrate a Product' : 'New Run'");
+    expect(landingSrc).toContain('isFocusedMigrationSetup');
+    expect(landingSrc).toContain('Step 1 - Select Your Product');
+    expect(landingSrc).toContain('Which product do you want to migrate?');
+    expect(landingSrc).toContain('Step 2 - Migration Details');
+    expect(landingSrc).toContain('Step 3 - Confirm and Start');
   });
 
   it('does not keep the old split launch/workspace navigation labels in the sidebar', () => {

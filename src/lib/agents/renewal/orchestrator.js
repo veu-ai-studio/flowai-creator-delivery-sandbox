@@ -56,6 +56,7 @@ import { probeAdversarialSurface, probeAllPages } from './adversarialSurface.js'
 import { remediate as remediationEngine } from '../../../../api/_lib/remediationEngine.js';
 import { runEvaluationPipeline } from '../../evaluation/evaluationPipeline.js';
 import { runRemediation } from '../../remediation/runRemediation.js';
+import { getMigrationModeFlag } from '../../runtimeFeatureFlags.js';
 import {
   mapFindingsToSource,
   sourcePathForFinding,
@@ -722,7 +723,10 @@ export async function runOrchestration(args = {}) {
   const onCheckpoint = typeof args.onCheckpoint === 'function' ? args.onCheckpoint : () => {};
   const onIteration = typeof args.onIteration === 'function' ? args.onIteration : () => {};
   const deps = args.deps || {};
-  if (mode === 'migration' && !isMigrationModeExecutionEnabled(deps.env || process.env)) {
+  const migrationFlag = mode === 'migration'
+    ? await isMigrationModeExecutionEnabled(deps.env || process.env)
+    : { enabled: false, source: 'not_checked' };
+  if (mode === 'migration' && !migrationFlag.enabled) {
     return {
       runId,
       mode,
@@ -742,7 +746,8 @@ export async function runOrchestration(args = {}) {
       prUrl: null,
       skippedSteps: [],
       migrationModeDisabled: true,
-      migrationMessage: 'Migration Mode requires operator enablement. Contact your admin.',
+      migrationMessage: 'Migration Mode is currently disabled.',
+      migrationFlagSource: migrationFlag.source,
     };
   }
   const githubOperatorToken = resolveGithubOperatorToken(deps);
@@ -4667,8 +4672,8 @@ const PLATFORM_BOUNDARY_PATTERNS = Object.freeze([
   },
 ]);
 
-export function isMigrationModeExecutionEnabled(env = process.env) {
-  return String(env?.FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
+export async function isMigrationModeExecutionEnabled(env = process.env) {
+  return getMigrationModeFlag({ env });
 }
 
 function normalizeRepoPath(path) {

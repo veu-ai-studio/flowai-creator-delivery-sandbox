@@ -48,15 +48,12 @@
 
 import { createHash, randomUUID } from 'node:crypto';
 import { rateLimit } from './_lib/rateLimit.js';
+import { getMigrationModeFlag } from '../lib/runtimeFeatureFlags.js';
 
 const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION']);
 const GTM_TARGET = 95;
 const RATE_LIMIT_CAPACITY = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-
-function migrationModeEnabled() {
-  return String(process.env.FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
-}
 
 export default async function handler(req, res) {
   // CORS / preflight.
@@ -137,7 +134,11 @@ export default async function handler(req, res) {
   // to PATH B; we skip the registry upsert and report governanceRecordId
   // as the runId so the SSE consumer still has a correlation handle.
   const runId = randomUUID();
-  if (mode === 'MIGRATION' && !migrationModeEnabled()) {
+  const migrationFlag = mode === 'MIGRATION'
+    ? await getMigrationModeFlag()
+    : { enabled: false, source: 'not_checked' };
+
+  if (mode === 'MIGRATION' && !migrationFlag.enabled) {
     send({
       type: 'start',
       runId, url, mode, gtmTarget: GTM_TARGET,
@@ -155,7 +156,8 @@ export default async function handler(req, res) {
       prUrl: null,
       runMode: 'MIGRATION_DISABLED',
       migrationModeDisabled: true,
-      migrationMessage: 'Migration Mode requires operator enablement. Contact your admin.',
+      migrationMessage: 'Migration Mode is currently disabled.',
+      migrationFlagSource: migrationFlag.source,
       runId,
     });
     return done();

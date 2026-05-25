@@ -28,13 +28,14 @@ describe('FlowAI positioning copy', () => {
     expect(landingSource).toContain('FlowAI detects platform dependencies and migrates the product to a standalone v2');
     expect(landingSource).toContain('Migration Mode is currently disabled.');
     expect(landingSource).toContain('Enable Migration Mode');
-    expect(landingSource).toContain('FLOWAI_ENABLE_MIGRATION_MODE=true');
-    expect(landingSource).toContain('https://vercel.com/veu-ai-studio/flowai/settings/environment-variables');
+    expect(landingSource).toContain('/api/operator/enable-migration-mode');
+    expect(landingSource).toContain('/api/operator/disable-migration-mode');
     expect(landingSource).toContain('Migration Mode requires operator activation.');
     expect(landingSource).not.toContain('Contact your admin.');
     expect(landingSource).toContain('VITE_FLOWAI_ENABLE_MIGRATION_MODE');
     expect(landingSource).toContain("mode={isMigrationMode ? 'MIGRATION' : 'FOREGROUND'}");
-    expect(landingSource).toMatch(/MIGRATION_MODE_ENABLED_FOR_UI \? \(/);
+    expect(landingSource).toContain('migrationModeEnabled ? (');
+    expect(landingSource).toContain('Start Migration');
   });
 
   it('renders migration summaries in run results', () => {
