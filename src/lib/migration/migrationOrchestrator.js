@@ -2,6 +2,7 @@ import path from 'node:path';
 import { scanPlatformDependencies } from './platformDependencyMapper.js';
 import { generateDirectReplacements } from './directReplacementGenerator.js';
 import { pickSafeErrorFields } from './safeErrorFields.js';
+import { classifyMigrationWriteTarget } from './migrationWriteAllowlist.js';
 
 function normalizeSlash(value) {
   return String(value || '').replace(/\\/g, '/');
@@ -107,6 +108,16 @@ export async function runMigration({
   };
 
   for (const planItem of plan) {
+    const writeTarget = classifyMigrationWriteTarget(planItem.file);
+    if (!writeTarget.allowed) {
+      summary.skipped += 1;
+      summary.blockers.push({
+        file: planItem.file,
+        reason: writeTarget.reason,
+      });
+      continue;
+    }
+
     const originalContent = await readTargetFile({ targetRepoPath, readFile, relativeFile: planItem.file, virtualRepo });
     const [replacement] = generateDirectReplacements({
       manifest: planItem.findings,
