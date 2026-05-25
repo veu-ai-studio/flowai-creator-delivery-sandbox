@@ -1160,6 +1160,7 @@ export async function runOrchestration(args = {}) {
     const readFile = migrationConfig.readFile || deps.readFile;
     const writeFile = migrationConfig.writeFile || deps.writeFile;
     const restoreFile = migrationConfig.restoreFile || deps.restoreFile;
+    const scanFiles = migrationConfig.scanFiles || deps.scanFiles;
 
     if (!sourceRepoPath) missing.push('sourceRepoPath');
     if (!targetRepoPath) missing.push('targetRepoPath');
@@ -1232,6 +1233,7 @@ export async function runOrchestration(args = {}) {
       readFile,
       writeFile,
       restoreFile,
+      scanFiles,
     });
     const migration = {
       status: 'MIGRATION_IN_PROGRESS',

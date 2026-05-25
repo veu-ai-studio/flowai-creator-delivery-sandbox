@@ -452,6 +452,54 @@ describe('runOrchestration — callbacks', () => {
   });
 });
 
+describe('runOrchestration — Migration Mode hook forwarding', () => {
+  it('forwards scanFiles to runMigration for github-backed virtual repos', async () => {
+    const deps = happyDeps();
+    const scanFiles = vi.fn(async () => [{ path: 'src/App.jsx' }]);
+    const runMigrationArgs = [];
+    deps.env = { FLOWAI_ENABLE_MIGRATION_MODE: 'true' };
+    deps.sourceRepoPath = 'github://veu-ai-studio/saige';
+    deps.targetRepoPath = 'github://veu-ai-studio/saige-v2/flowai/migration-saige-1-run12345';
+    deps.scanFiles = scanFiles;
+    deps.readFile = vi.fn(async () => "import sdk from '@base44/sdk';\n");
+    deps.writeFile = vi.fn(async () => {});
+    deps.restoreFile = vi.fn(async () => {});
+    deps.verifyBuild = vi.fn(async () => ({ ok: true, output: '' }));
+    deps.verifyLint = vi.fn(async () => ({ ok: true, output: '' }));
+    deps.runFocusedTests = vi.fn(async () => ({ ok: true, passed: 1 }));
+    deps.runMigration = vi.fn(async (args) => {
+      runMigrationArgs.push(args);
+      expect(args.sourceRepoPath).toBe('github://veu-ai-studio/saige');
+      expect(args.targetRepoPath).toBe('github://veu-ai-studio/saige-v2/flowai/migration-saige-1-run12345');
+      expect(args.scanFiles).toBe(scanFiles);
+      return {
+        totalFiles: 1,
+        migrated: 1,
+        skipped: 0,
+        blocked: 0,
+        dependenciesRemoved: ['src/App.jsx:1:SDK_IMPORT:base44'],
+        blockers: [],
+        buildPassed: true,
+        testsPassed: true,
+      };
+    });
+
+    const result = await runOrchestration({
+      url: 'https://saigeplatform.com',
+      mode: 'migration',
+      runId: 'run-migration-scanfiles',
+      supabase: null,
+      environment: 'prd',
+      deps,
+    });
+
+    expect(result.exitReason).toBe('MIGRATION_IN_PROGRESS');
+    expect(result.migration.filesMigrated).toBe(1);
+    expect(deps.runMigration).toHaveBeenCalledTimes(1);
+    expect(runMigrationArgs[0].scanFiles).toBe(scanFiles);
+  });
+});
+
 describe('orchestrator - repair integrity gate', () => {
   it('classifies Base44/platform files as PLATFORM_BOUNDARY_BLOCKED', () => {
     expect(__internals.classifyPlatformBoundaryChange({

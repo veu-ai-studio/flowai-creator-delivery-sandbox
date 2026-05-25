@@ -152,6 +152,22 @@ describe('platformDependencyMapper', () => {
     expect(manifest[0].platform).toBe('base44');
   });
 
+  it('normalizes virtual file entries that use path instead of file', async () => {
+    const manifest = await scanPlatformDependencies({
+      files: [{
+        path: 'src/App.jsx',
+        content: "import sdk from '@base44/sdk';\n",
+      }],
+    });
+
+    expect(manifest).toHaveLength(1);
+    expect(manifest[0]).toMatchObject({
+      file: 'src/App.jsx',
+      platform: 'base44',
+      type: 'SDK_IMPORT',
+    });
+  });
+
   it('returns correct platform strings for every known platform', () => {
     expect(detectPlatform('@base44/sdk')).toBe('base44');
     expect(detectPlatform('wix-data')).toBe('wix');
