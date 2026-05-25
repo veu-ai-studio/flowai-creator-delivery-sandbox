@@ -76,6 +76,14 @@ function isDegradedVerificationOnly(result) {
   return result?.degraded === true && result?.reason === 'GITHUB_ACTIONS_CHECK_NOT_WIRED';
 }
 
+function skippedFile({ file, reason, message }) {
+  return {
+    file,
+    reason,
+    ...(message ? { message } : {}),
+  };
+}
+
 export async function runMigration({
   sourceRepoPath,
   targetRepoPath,
@@ -106,6 +114,8 @@ export async function runMigration({
     skipped: 0,
     blocked: 0,
     dependenciesRemoved: [],
+    skippedFiles: [],
+    verification: [],
     blockers: [],
     buildPassed: true,
     testsPassed: false,
@@ -115,10 +125,7 @@ export async function runMigration({
     const writeTarget = classifyMigrationWriteTarget(planItem.file);
     if (!writeTarget.allowed) {
       summary.skipped += 1;
-      summary.blockers.push({
-        file: planItem.file,
-        reason: writeTarget.reason,
-      });
+      summary.skippedFiles.push(skippedFile({ file: planItem.file, reason: writeTarget.reason }));
       continue;
     }
 
@@ -130,10 +137,10 @@ export async function runMigration({
 
     if (!replacement || replacement.requiresHumanReview || replacement.replacementContent === null) {
       summary.skipped += 1;
-      summary.blockers.push({
+      summary.skippedFiles.push(skippedFile({
         file: planItem.file,
         reason: replacement?.reason || 'REQUIRES_HUMAN_REVIEW',
-      });
+      }));
       continue;
     }
 
@@ -188,7 +195,7 @@ export async function runMigration({
 
     summary.migrated += 1;
     if (buildDegraded || lintDegraded) {
-      summary.blockers.push({
+      summary.verification.push({
         file: planItem.file,
         reason: 'VERIFICATION_DEGRADED',
         message: 'GITHUB_ACTIONS_CHECK_NOT_WIRED',

@@ -1235,11 +1235,24 @@ export async function runOrchestration(args = {}) {
       restoreFile,
       scanFiles,
     });
+    const migrationVerification = Array.isArray(migrationSummary.verification) ? migrationSummary.verification : [];
+    const degradedVerificationOnly = migrationSummary.migrated > 0
+      && migrationSummary.blocked === 0
+      && migrationVerification.some((item) => item?.reason === 'VERIFICATION_DEGRADED');
+    const migrationStatus = degradedVerificationOnly
+      ? 'MIGRATION_COMPLETED_VERIFICATION_DEGRADED'
+      : migrationSummary.blocked > 0
+        ? 'MIGRATION_BLOCKED'
+        : migrationSummary.migrated > 0
+          ? 'MIGRATION_COMPLETED'
+          : 'MIGRATION_NO_WRITES_APPLIED';
     const migration = {
-      status: 'MIGRATION_IN_PROGRESS',
+      status: migrationStatus,
       ...migrationSummary,
       filesMigrated: migrationSummary.migrated,
       upgradeUrl: upgradeTargets.deploymentUrl || upgradeTargets.upgradeUrl || null,
+      upgradeUrlLabel: 'Current upgrade URL',
+      previewCreated: false,
     };
     emit(makeStepLog({
       iteration: 0, step: 7, status: migrationSummary.blocked > 0 ? 'degraded' : 'complete',
@@ -1273,9 +1286,9 @@ export async function runOrchestration(args = {}) {
       autoFixAvailable: false,
       registerCTA: false,
       gtmReady: false,
-      exitReason: 'MIGRATION_IN_PROGRESS',
-      originalScore: 0,
-      finalScore: 0,
+      exitReason: migrationStatus,
+      originalScore: null,
+      finalScore: null,
       totalDelta: 0,
       iterationsCompleted: migrationSummary.migrated > 0 ? 1 : 0,
       iterations,

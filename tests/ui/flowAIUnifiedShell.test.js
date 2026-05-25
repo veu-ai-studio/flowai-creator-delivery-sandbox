@@ -215,6 +215,15 @@ describe('FlowAI unified operating system shell', () => {
     expect(runConstructionPanelSrc).not.toContain('blocker.token');
   });
 
+  it('renders Migration Mode completion semantics without fake scoring or preview labels', () => {
+    expect(runConstructionPanelSrc).toContain('MIGRATION COMPLETE - VERIFICATION DEGRADED');
+    expect(runConstructionPanelSrc).toContain("Trust Score: {hasRealScore ? trustScore.toFixed(1) : 'Not scored yet'}");
+    expect(runConstructionPanelSrc).toContain('Open current upgrade URL');
+    expect(runConstructionPanelSrc).toContain('Skipped by allowlist');
+    expect(runConstructionPanelSrc).toContain('const skippedFiles = Array.isArray(migration?.skippedFiles)');
+    expect(runConstructionPanelSrc).toContain('const verification = Array.isArray(migration?.verification)');
+  });
+
   it('auto-starts focused Migration runs without the redundant Run FlowAI confirmation', () => {
     const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
     expect(runConstructionPanelSrc).toContain('autoStart = false');

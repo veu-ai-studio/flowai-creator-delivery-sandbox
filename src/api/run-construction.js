@@ -294,7 +294,9 @@ export default async function handler(req, res) {
   send({
     type: 'final',
     previewUrl: result?.previewUrl ?? null,
-    finalScore: result?.finalScore ?? 0,
+    finalScore: result?.runMode === 'MIGRATION' && result?.finalScore == null
+      ? null
+      : result?.finalScore ?? 0,
     governanceRecordId: runId,
     gtmReady: !!result?.gtmReady,
     exitReason: result?.exitReason ?? 'UNKNOWN',

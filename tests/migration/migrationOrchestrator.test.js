@@ -135,7 +135,9 @@ describe('migrationOrchestrator', () => {
       skipped: 1,
       blocked: 0,
       dependenciesRemoved: [],
-      blockers: [{ file: 'src/pages/secureRoute.js', reason: 'AUTH_GATE_REQUIRES_HUMAN_REVIEW' }],
+      skippedFiles: [{ file: 'src/pages/secureRoute.js', reason: 'AUTH_GATE_REQUIRES_HUMAN_REVIEW' }],
+      verification: [],
+      blockers: [],
       buildPassed: true,
       testsPassed: true,
     });
@@ -172,7 +174,7 @@ describe('migrationOrchestrator', () => {
     expect(summary.totalFiles).toBe(1);
     expect(summary.migrated).toBe(0);
     expect(summary.skipped).toBe(1);
-    expect(summary.blockers).toContainEqual({
+    expect(summary.skippedFiles).toContainEqual({
       file: 'package.json',
       reason: 'PACKAGE_OR_LOCKFILE',
     });
@@ -192,7 +194,7 @@ describe('migrationOrchestrator', () => {
     expect(summary.totalFiles).toBe(1);
     expect(summary.migrated).toBe(0);
     expect(summary.skipped).toBe(1);
-    expect(summary.blockers).toContainEqual({
+    expect(summary.skippedFiles).toContainEqual({
       file: 'src/lib/AuthContext.jsx',
       reason: 'AUTH_SESSION_PROVIDER_FILE',
     });
@@ -318,7 +320,7 @@ describe('migrationOrchestrator', () => {
     expect(summary.migrated).toBe(1);
     expect(summary.blocked).toBe(0);
     expect(summary.testsPassed).toBe(false);
-    expect(summary.blockers).toContainEqual({
+    expect(summary.verification).toContainEqual({
       file: 'src/pages/app.js',
       reason: 'VERIFICATION_DEGRADED',
       message: 'GITHUB_ACTIONS_CHECK_NOT_WIRED',
@@ -370,7 +372,7 @@ describe('migrationOrchestrator', () => {
         skipped: 1,
         blocked: 0,
       });
-      expect(summary.blockers).toContainEqual({ file, reason });
+      expect(summary.skippedFiles).toContainEqual({ file, reason });
     }
     expect(writeFile).not.toHaveBeenCalled();
     expect(verifyBuild).not.toHaveBeenCalled();

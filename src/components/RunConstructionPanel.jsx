@@ -414,7 +414,7 @@ function normalizeUrlForCompare(value) {
   }
 }
 
-function ResultUrlSection({ previewUrl, inputUrl, exitReason }) {
+function ResultUrlSection({ previewUrl, inputUrl, exitReason, isMigrationResult = false, previewCreated = false }) {
   const hasPreview = typeof previewUrl === 'string' && previewUrl.length > 0;
   const originalUrl = typeof inputUrl === 'string' ? inputUrl : '';
   const sameAsInput = hasPreview && normalizeUrlForCompare(previewUrl) === normalizeUrlForCompare(originalUrl);
@@ -455,7 +455,7 @@ function ResultUrlSection({ previewUrl, inputUrl, exitReason }) {
     <div className="space-y-1.5 text-xs">
       <a href={previewUrl} target="_blank" rel="noopener noreferrer"
         className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-primary-foreground font-semibold hover:bg-primary/90">
-        Open improved URL <ExternalLink className="h-3 w-3" />
+        {isMigrationResult && !previewCreated ? 'Open current upgrade URL' : 'Open improved URL'} <ExternalLink className="h-3 w-3" />
       </a>
       {originalUrl && (
         <p className="break-all">
@@ -541,6 +541,7 @@ function InsufficientCoverageBanner({ scored, total, minimum }) {
 
 function ResultCard({ final, runId, inputUrl }) {
   const ready = final.gtmReady === true;
+  const isMigrationResult = final.runMode === 'MIGRATION' || Boolean(final.migration?.status);
   const rawScore = typeof final.rawScore === 'number' ? final.rawScore
     : (typeof final.finalScore === 'number' ? final.finalScore : 0);
   const trustScore = typeof final.effectiveTrustScore === 'number'
@@ -555,6 +556,8 @@ function ResultCard({ final, runId, inputUrl }) {
   const isHonestGate = final.exitReason === 'HONEST_GATE_REFUSAL_ALREADY_PASSING';
   const isInsufficientCoverage = final.exitReason === 'INSUFFICIENT_DIMENSION_COVERAGE';
   const isUniversalMode = final.universalMode === true || final.runMode === 'UNIVERSAL';
+  const migrationCompletedDegraded = final.exitReason === 'MIGRATION_COMPLETED_VERIFICATION_DEGRADED';
+  const hasRealScore = !isMigrationResult && typeof trustScore === 'number' && Number.isFinite(trustScore);
 
   return (
     <div className="space-y-3">
@@ -565,6 +568,7 @@ function ResultCard({ final, runId, inputUrl }) {
       <div className={`rounded-xl border p-5 space-y-3 ${
         isHonestGate ? 'border-amber-500/40 bg-amber-500/5'
         : isInsufficientCoverage ? 'border-amber-500/40 bg-amber-500/5'
+        : migrationCompletedDegraded ? 'border-cyan-500/40 bg-cyan-500/5'
         : ready ? 'border-emerald-500/40 bg-emerald-500/5'
         : 'border-border bg-card'
       }`}>
@@ -573,6 +577,8 @@ function ResultCard({ final, runId, inputUrl }) {
             ? <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">HONEST GATE — ALREADY PASSING</span>
             : isInsufficientCoverage
               ? <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">INSUFFICIENT COVERAGE</span>
+              : migrationCompletedDegraded
+                ? <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded">MIGRATION COMPLETE - VERIFICATION DEGRADED</span>
               : ready
                 ? <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">GTM-READY</span>
                 : <span className="text-[10px] font-bold text-muted-foreground bg-muted/30 px-2 py-0.5 rounded">NOT GTM-READY</span>
@@ -580,9 +586,9 @@ function ResultCard({ final, runId, inputUrl }) {
           <span className="text-[10px] text-muted-foreground">exitReason: <span className="font-mono text-foreground">{final.exitReason || 'UNKNOWN'}</span></span>
           <div className="ml-auto text-right">
             <div className="text-xl font-bold text-foreground leading-none">
-              Trust Score: {trustScore.toFixed(1)}<span className="text-muted-foreground text-sm">/100</span>
+              Trust Score: {hasRealScore ? trustScore.toFixed(1) : 'Not scored yet'}{hasRealScore && <span className="text-muted-foreground text-sm">/100</span>}
             </div>
-            {hasCoverageData && (
+            {hasCoverageData && hasRealScore && (
               <div className="text-[10px] text-muted-foreground mt-1 font-mono">
                 raw {rawScore.toFixed(1)} · coverage {scoredDims}/{totalDims}
               </div>
@@ -595,7 +601,13 @@ function ResultCard({ final, runId, inputUrl }) {
               findingsSeverity={final.findingsSeverity}
               inputUrl={inputUrl}
             />
-          : <ResultUrlSection previewUrl={final.previewUrl} inputUrl={inputUrl} exitReason={final.exitReason} />
+          : <ResultUrlSection
+              previewUrl={final.previewUrl}
+              inputUrl={inputUrl}
+              exitReason={final.exitReason}
+              isMigrationResult={isMigrationResult}
+              previewCreated={final.migration?.previewCreated === true}
+            />
         }
         <FindingsReport
           deepBrowserAnalysis={final.deepBrowserAnalysis}
@@ -633,6 +645,8 @@ function MigrationSummary({ migration, message }) {
   const dependenciesRemoved = Array.isArray(migration?.dependenciesRemoved)
     ? migration.dependenciesRemoved : [];
   const blockers = Array.isArray(migration?.blockers) ? migration.blockers : [];
+  const skippedFiles = Array.isArray(migration?.skippedFiles) ? migration.skippedFiles : [];
+  const verification = Array.isArray(migration?.verification) ? migration.verification : [];
   const renderGithubErrors = (errors) => {
     if (!Array.isArray(errors) || errors.length === 0) return null;
     return (
@@ -670,11 +684,31 @@ function MigrationSummary({ migration, message }) {
             <p className="text-muted-foreground">Upgrade URL</p>
             {migration.upgradeUrl
               ? <a href={migration.upgradeUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
-                  Open <ExternalLink className="h-3 w-3" />
+                  {migration.previewCreated === true ? 'Open preview' : 'Open current'} <ExternalLink className="h-3 w-3" />
                 </a>
               : <p className="text-muted-foreground">Not created yet</p>
             }
           </div>
+        </div>
+      )}
+      {verification.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Verification</p>
+          {verification.slice(0, 4).map((item, index) => (
+            <div key={`${item.file || index}-${index}`} className="text-[11px] text-muted-foreground font-mono rounded border border-cyan-500/20 bg-cyan-500/5 p-2">
+              {item.file || 'migration'}: {item.reason}{item.message ? ` - ${item.message}` : ''}
+            </div>
+          ))}
+        </div>
+      )}
+      {skippedFiles.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Skipped by allowlist</p>
+          {skippedFiles.slice(0, 4).map((item, index) => (
+            <div key={`${item.file || index}-${index}`} className="text-[11px] text-muted-foreground font-mono rounded border border-border/60 bg-background/40 p-2">
+              {item.file || 'migration'}: {item.reason}
+            </div>
+          ))}
         </div>
       )}
       {blockers.length > 0 && (
