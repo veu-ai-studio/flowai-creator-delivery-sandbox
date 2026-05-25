@@ -70,24 +70,29 @@ const navSections = [
     ],
   },
   {
-    title: "CONFIGURATION",
+    title: "FLOW HUB",
     items: [
       {
-        label: "New Run",
+        label: "Production",
         path: "/",
         icon: Rocket,
-        tooltip: "Start a FlowAI run from a URL, product description, pasted content, or screenshot context.",
+        tooltip: "Start the standard FlowAI product upgrade/run flow.",
         activeWhen: ({ pathname, searchParams }) => pathname === "/" && searchParams.get("mode") !== "migration",
       },
       {
-        label: "Migrate a Product",
+        label: "Migration",
         path: "/?mode=migration",
         icon: GitBranch,
-        tooltip: "Open Migration Mode setup for platform dependency migration.",
+        tooltip: "Open Flow Hub Migration setup for platform dependency migration.",
         disabled: !MIGRATION_MODE_ENABLED_FOR_UI,
         disabledMessage: "Migration Mode requires operator enablement.",
         activeWhen: ({ pathname, searchParams }) => pathname === "/" && searchParams.get("mode") === "migration",
       },
+    ],
+  },
+  {
+    title: "CONFIGURATION",
+    items: [
       {
         label: "My Products",
         path: "/my-products",

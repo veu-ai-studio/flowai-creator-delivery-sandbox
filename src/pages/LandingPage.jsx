@@ -109,8 +109,8 @@ function FocusedMigrationSetup({
               <GitBranch className="h-4 w-4 text-cyan-300" />
             </div>
             <div>
-              <div className="text-sm font-bold text-foreground leading-tight">Migrate a Product</div>
-              <div className="text-[10px] text-muted-foreground leading-tight">Platform dependency migration setup.</div>
+              <div className="text-sm font-bold text-foreground leading-tight">Flow Hub — Migration</div>
+              <div className="text-[10px] text-muted-foreground leading-tight">Flow Hub platform dependency migration setup.</div>
             </div>
           </div>
           <UniversalNav className="ml-2" />
@@ -814,9 +814,9 @@ export default function LandingPage() {
               <Zap className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <div className="text-sm font-bold text-foreground leading-tight">{isMigrationMode ? 'Migrate a Product' : 'New Run'}</div>
+              <div className="text-sm font-bold text-foreground leading-tight">{isMigrationMode ? 'Flow Hub — Migration' : 'Flow Hub — Production'}</div>
               <div className="text-[10px] text-muted-foreground leading-tight">
-                {isMigrationMode ? 'Standalone v2 migration setup.' : 'Start an upgraded product run.'}
+                {isMigrationMode ? 'Standalone v2 migration setup.' : 'Start the standard product upgrade flow.'}
               </div>
             </div>
           </div>
@@ -1120,7 +1120,7 @@ export default function LandingPage() {
               </div>
               {isMigrationLaunchBlocked && (
                 <div className="text-[11px] text-amber-300 text-right">
-                  Migration Mode is currently disabled. Use the focused migration setup to enable it.
+                  Migration Mode is currently disabled. Use Flow Hub Migration to enable it.
                 </div>
               )}
               {/* Secondary legacy link: only shown when the construction-

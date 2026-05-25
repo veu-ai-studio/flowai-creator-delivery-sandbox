@@ -8,7 +8,7 @@ const registrySrc = readFileSync(resolve(__dirname, '../../src/pages/ProductRegi
 const dashboardSrc = readFileSync(resolve(__dirname, '../../src/pages/FlowAIDashboard.jsx'), 'utf8');
 
 describe('ProductRegistry run action', () => {
-  it('adds a primary Run action that navigates to unified New Run with selected product params', () => {
+  it('adds a primary Run action that navigates to Flow Hub Production with selected product params', () => {
     expect(registrySrc).toContain('const runProduct = (product) =>');
     expect(registrySrc).toContain("params.set('url', targetUrl)");
     expect(registrySrc).toContain("params.set('product', product.name)");
@@ -27,7 +27,7 @@ describe('ProductRegistry run action', () => {
     expect(registrySrc).toContain('stopAction(event, () => archiveProduct(p.slug))');
   });
 
-  it('prefills the FlowAI New Run URL from Product Registry query params', () => {
+  it('prefills the FlowAI Production URL from Product Registry query params', () => {
     expect(dashboardSrc).toContain('new URLSearchParams(window.location.search)');
     expect(dashboardSrc).toContain("params.get('url')");
     expect(dashboardSrc).toContain('setUrl(selectedUrl)');

@@ -13,7 +13,7 @@ const appLayoutSrc = readFileSync(resolve(__dirname, '../../src/components/layou
 const universalNavSrc = readFileSync(resolve(__dirname, '../../src/components/shared/UniversalNav.jsx'), 'utf8');
 
 describe('FlowAI unified operating system shell', () => {
-  it('splits New Run and Workspace into distinct routes', () => {
+  it('splits Flow Hub Production and Workspace into distinct routes', () => {
     expect(appSrc).toMatch(/path="\/flowai"\s+element=\{<FlowAIDashboard \/>/);
     expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<Workspace \/>/);
     expect(workspaceSrc).toContain('8-step upgrade pipeline');
@@ -28,9 +28,12 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toMatch(/label:\s*"Workspace"/);
     expect(sidebarSrc).toMatch(/label:\s*"Landing Page"/);
     expect(sidebarSrc).toMatch(/>Back</);
+    expect(sidebarSrc).toMatch(/title:\s*"FLOW HUB"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Production"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Migration"/);
+    expect(sidebarSrc).not.toMatch(/label:\s*"New Run"/);
+    expect(sidebarSrc).not.toMatch(/label:\s*"Migrate a Product"/);
     expect(sidebarSrc).toMatch(/title:\s*"CONFIGURATION"/);
-    expect(sidebarSrc).toMatch(/label:\s*"New Run"/);
-    expect(sidebarSrc).toMatch(/label:\s*"Migrate a Product"/);
     expect(sidebarSrc).toContain('Migration Mode requires operator enablement.');
     expect(sidebarSrc).toMatch(/title:\s*"PORTFOLIO"/);
     expect(sidebarSrc).toMatch(/label:\s*"Portfolio Dashboard"/);
@@ -41,14 +44,17 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toMatch(/label:\s*"Objective & Settings"/);
   });
 
-  it('treats New Run and migration setup as first-class sidebar destinations', () => {
+  it('treats Flow Hub Production and Migration as first-class sidebar destinations', () => {
     const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
     expect(sidebarSrc).toContain('activeWhen');
     expect(sidebarSrc).toContain('searchParams.get("mode") !== "migration"');
     expect(sidebarSrc).toContain('searchParams.get("mode") === "migration"');
+    expect(sidebarSrc).toContain('path: "/"');
     expect(sidebarSrc).toContain('path: "/?mode=migration"');
     expect(landingSrc).toContain("params.get('mode') === 'migration'");
     expect(landingSrc).toContain("setMode('migration')");
+    expect(landingSrc).toContain('Flow Hub — Production');
+    expect(landingSrc).toContain('Flow Hub — Migration');
     expect(landingSrc).toContain('isFocusedMigrationSetup');
     expect(landingSrc).toContain('Step 1 - Select Your Product');
     expect(landingSrc).toContain('Which product do you want to migrate?');
@@ -64,7 +70,7 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).not.toMatch(/MANUAL OPERATIONS/);
   });
 
-  it('combines URL, description, and pasted content in New Run', () => {
+  it('combines URL, description, and pasted content in Flow Hub Production', () => {
     expect(dashboardSrc).toMatch(/Enter URL/);
     expect(dashboardSrc).toMatch(/Describe Product/);
     expect(dashboardSrc).toMatch(/Paste Content/);
