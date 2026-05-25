@@ -179,6 +179,26 @@ describe('migrationOrchestrator', () => {
     expect(hooks.writeFile).not.toHaveBeenCalled();
   });
 
+  it('does not write auth context files during direct migration', async () => {
+    await writeFixture('src/lib/AuthContext.jsx', "import sdk from '@base44/sdk';\nexport const AuthContext = null;\n");
+    const hooks = createHooks();
+
+    const summary = await runMigration({
+      sourceRepoPath,
+      targetRepoPath,
+      ...hooks,
+    });
+
+    expect(summary.totalFiles).toBe(1);
+    expect(summary.migrated).toBe(0);
+    expect(summary.skipped).toBe(1);
+    expect(summary.blockers).toContainEqual({
+      file: 'src/lib/AuthContext.jsx',
+      reason: 'FORBIDDEN_PATH',
+    });
+    expect(hooks.writeFile).not.toHaveBeenCalled();
+  });
+
   it('supports virtual repo files from GitHub-backed hooks', async () => {
     const files = [{ file: 'src/app.js' }];
     const writes = [];

@@ -1,5 +1,10 @@
 const DEFAULT_CONFIDENCE_THRESHOLD = 0.8;
 const DEPENDENCY_MANIFEST_NAMES = new Set(['package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml']);
+const AUTH_BOUNDARY_FILE_PATTERNS = [
+  /(^|\/)auth[^/]*\.(jsx?|tsx?)$/i,
+  /(^|\/)[^/]*auth(context|provider|guard|gate|client|service|session)[^/]*\.(jsx?|tsx?)$/i,
+  /(^|\/)(session|user|account)(context|provider)[^/]*\.(jsx?|tsx?)$/i,
+];
 
 function normalizeSlash(value) {
   return String(value || '').replace(/\\/g, '/');
@@ -13,6 +18,7 @@ function isForbiddenPath(file) {
     normalized.includes('/migrations/') ||
     normalized.includes('/auth/') ||
     normalized.includes('/authorization/') ||
+    AUTH_BOUNDARY_FILE_PATTERNS.some((pattern) => pattern.test(normalized)) ||
     normalized.endsWith('schema.prisma') ||
     normalized.endsWith('schema.sql') ||
     normalized.endsWith('database.schema.js') ||

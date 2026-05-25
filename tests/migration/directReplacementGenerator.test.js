@@ -111,6 +111,17 @@ describe('directReplacementGenerator', () => {
     expect(result.reason).toBe('FORBIDDEN_PATH');
   });
 
+  it('rejects auth boundary component files even when they are not in an auth directory', () => {
+    const [result] = generateDirectReplacements({
+      manifest: [{ ...baseFinding, file: 'src/lib/AuthContext.jsx', match: "import sdk from '@base44/sdk';" }],
+      files: [{ file: 'src/lib/AuthContext.jsx', content: "import sdk from '@base44/sdk';\nexport const AuthContext = null;\n" }],
+    });
+
+    expect(result.requiresHumanReview).toBe(true);
+    expect(result.replacementContent).toBeNull();
+    expect(result.reason).toBe('FORBIDDEN_PATH');
+  });
+
   it('requires human review for package manifests instead of auto-writing dependency changes', () => {
     const [result] = generateDirectReplacements({
       manifest: [{ ...baseFinding, file: 'package.json', match: '@base44/sdk' }],
