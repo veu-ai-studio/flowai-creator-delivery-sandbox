@@ -47,13 +47,19 @@
 //   returned as runId for SSE-consumer correlation).
 
 import { createHash, randomUUID } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { promisify } from 'node:util';
 import { rateLimit } from './_lib/rateLimit.js';
 import { getMigrationModeFlag } from '../lib/runtimeFeatureFlags.js';
+import { findRegisteredProductConfigForUrl } from '../lib/products/registeredProductConfig.js';
 
 const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION']);
 const GTM_TARGET = 95;
 const RATE_LIMIT_CAPACITY = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const execFileAsync = promisify(execFile);
 
 export default async function handler(req, res) {
   // CORS / preflight.
@@ -219,6 +225,36 @@ export default async function handler(req, res) {
   }
   if (typeof createOriginPageResolver === 'function') {
     deps.createOriginPageResolver = createOriginPageResolver;
+  }
+  if (orchestratorMode === 'migration') {
+    const migrationHooks = await createMigrationRuntimeHooks({
+      url,
+      product: registryRow,
+      env: process.env,
+    });
+    if (!migrationHooks.ok) {
+      send({
+        type: 'final',
+        previewUrl: null,
+        finalScore: 0,
+        governanceRecordId: runId,
+        gtmReady: false,
+        exitReason: 'MIGRATION_CONFIGURATION_REQUIRED',
+        iterationsCompleted: 0,
+        prUrl: null,
+        runMode: 'MIGRATION',
+        migration: {
+          status: 'MIGRATION_CONFIGURATION_REQUIRED',
+          filesMigrated: 0,
+          dependenciesRemoved: [],
+          blockers: migrationHooks.blockers,
+        },
+        migrationMessage: 'Migration Mode requires source/target repo paths and verification hooks before writes are allowed.',
+        runId,
+      });
+      return done();
+    }
+    Object.assign(deps, migrationHooks.deps);
   }
 
   let result;
@@ -389,9 +425,199 @@ export async function ensureProductRegistryRow({ url, supabase }) {
   return { ...data, __created: true };
 }
 
+function firstNonEmpty(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
+function envKeyPart(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/^HTTPS?:\/\//, '')
+    .replace(/^WWW\./, '')
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function hostFromUrl(value) {
+  try {
+    return new URL(String(value || '').startsWith('http') ? value : `https://${value}`).hostname;
+  } catch {
+    return '';
+  }
+}
+
+function migrationEnvValue(env, baseName, product, url) {
+  const keys = new Set([
+    envKeyPart(product?.product_id),
+    envKeyPart(product?.name),
+    envKeyPart(product?.domain),
+    envKeyPart(hostFromUrl(product?.product_url || product?.original_url || url)),
+  ]);
+  for (const key of keys) {
+    if (!key) continue;
+    const value = env?.[`${baseName}_${key}`];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return firstNonEmpty(env?.[baseName]);
+}
+
+function isPathInside(parentPath, candidatePath) {
+  const parent = path.resolve(parentPath);
+  const candidate = path.resolve(candidatePath);
+  const relative = path.relative(parent, candidate);
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+async function directoryExists(directoryPath) {
+  try {
+    return (await fs.stat(directoryPath)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function commandName(name) {
+  return process.platform === 'win32' ? `${name}.cmd` : name;
+}
+
+function redactedOutput(value) {
+  return String(value || '')
+    .replace(/(ghp_|github_pat_|vercel_[A-Za-z0-9_]*|sk-[A-Za-z0-9_-]+)/g, '[REDACTED]')
+    .slice(-8000);
+}
+
+async function runRepoCommand({ cwd, command, args, timeoutMs }) {
+  try {
+    const { stdout, stderr } = await execFileAsync(commandName(command), args, {
+      cwd,
+      timeout: timeoutMs,
+      maxBuffer: 1024 * 1024,
+      windowsHide: true,
+    });
+    return { ok: true, output: redactedOutput(`${stdout || ''}${stderr || ''}`) };
+  } catch (error) {
+    return {
+      ok: false,
+      output: redactedOutput(`${error?.stdout || ''}${error?.stderr || ''}${error?.message || ''}`),
+    };
+  }
+}
+
+async function createMigrationRuntimeHooks({ url, product, env = process.env } = {}) {
+  const registeredProduct = findRegisteredProductConfigForUrl(url);
+  const productConfig = { ...(registeredProduct || {}), ...(product || {}) };
+  const sourceRepoPath = firstNonEmpty(
+    productConfig.migration_source_repo_path,
+    productConfig.source_repo_path,
+    productConfig.original_repo_path,
+    migrationEnvValue(env, 'FLOWAI_MIGRATION_SOURCE_REPO_PATH', productConfig, url),
+  );
+  const targetRepoPath = firstNonEmpty(
+    productConfig.migration_target_repo_path,
+    productConfig.target_repo_path,
+    productConfig.upgrade_repo_path,
+    migrationEnvValue(env, 'FLOWAI_MIGRATION_TARGET_REPO_PATH', productConfig, url),
+  );
+  const blockers = [];
+
+  if (!sourceRepoPath) blockers.push({ field: 'sourceRepoPath', reason: 'missing_migration_hook' });
+  if (!targetRepoPath) blockers.push({ field: 'targetRepoPath', reason: 'missing_migration_hook' });
+  if (sourceRepoPath && targetRepoPath && path.resolve(sourceRepoPath) === path.resolve(targetRepoPath)) {
+    blockers.push({ field: 'targetRepoPath', reason: 'target_repo_must_differ_from_source_repo' });
+  }
+  if (sourceRepoPath && targetRepoPath && isPathInside(sourceRepoPath, targetRepoPath)) {
+    blockers.push({ field: 'targetRepoPath', reason: 'target_repo_must_not_be_inside_source_repo' });
+  }
+  if (sourceRepoPath && !(await directoryExists(sourceRepoPath))) {
+    blockers.push({ field: 'sourceRepoPath', reason: 'repo_path_not_found' });
+  }
+  if (targetRepoPath && !(await directoryExists(targetRepoPath))) {
+    blockers.push({ field: 'targetRepoPath', reason: 'repo_path_not_found' });
+  }
+
+  if (blockers.length > 0) {
+    return { ok: false, blockers };
+  }
+
+  const resolvedSource = path.resolve(sourceRepoPath);
+  const resolvedTarget = path.resolve(targetRepoPath);
+  const restoreSnapshots = new Map();
+  const verifyTimeoutMs = Number(env.FLOWAI_MIGRATION_VERIFY_TIMEOUT_MS || 120000);
+
+  const resolveTargetPath = (filePath) => {
+    const resolved = path.resolve(filePath);
+    if (isPathInside(resolvedSource, resolved)) {
+      throw new Error('MIGRATION_BLOCKED: attempted source repo write');
+    }
+    if (!isPathInside(resolvedTarget, resolved)) {
+      throw new Error('MIGRATION_BLOCKED: target path escapes targetRepoPath');
+    }
+    return resolved;
+  };
+
+  const deps = {
+    sourceRepoPath: resolvedSource,
+    targetRepoPath: resolvedTarget,
+    readFile: async (filePath, encoding = 'utf8') => {
+      const resolved = resolveTargetPath(filePath);
+      return fs.readFile(resolved, encoding);
+    },
+    writeFile: async (filePath, content) => {
+      const resolved = resolveTargetPath(filePath);
+      if (!restoreSnapshots.has(resolved)) {
+        restoreSnapshots.set(resolved, await fs.readFile(resolved, 'utf8').catch(() => null));
+      }
+      await fs.mkdir(path.dirname(resolved), { recursive: true });
+      await fs.writeFile(resolved, content, 'utf8');
+    },
+    restoreFile: async (filePath) => {
+      const resolved = resolveTargetPath(filePath);
+      if (!restoreSnapshots.has(resolved)) {
+        throw new Error('MIGRATION_BLOCKED: no last known good snapshot for restore');
+      }
+      const previous = restoreSnapshots.get(resolved);
+      if (previous === null) {
+        await fs.rm(resolved, { force: true });
+        return;
+      }
+      await fs.writeFile(resolved, previous, 'utf8');
+    },
+    verifyBuild: async () => runRepoCommand({
+      cwd: resolvedTarget,
+      command: 'npm',
+      args: ['run', 'build'],
+      timeoutMs: verifyTimeoutMs,
+    }),
+    verifyLint: async () => runRepoCommand({
+      cwd: resolvedTarget,
+      command: 'npm',
+      args: ['run', 'lint'],
+      timeoutMs: verifyTimeoutMs,
+    }),
+    runFocusedTests: async () => {
+      const result = await runRepoCommand({
+        cwd: resolvedTarget,
+        command: 'npx',
+        args: ['vitest', 'run'],
+        timeoutMs: verifyTimeoutMs,
+      });
+      const passed = Number(result.output.match(/(\d+)\s+passed/)?.[1] || 0);
+      return { ...result, passed };
+    },
+  };
+
+  return { ok: true, deps };
+}
+
 // Test seam.
 export const __test = Object.freeze({
   ALLOWED_MODES,
   GTM_TARGET,
   ensureProductRegistryRow,
+  createMigrationRuntimeHooks,
+  isPathInside,
 });
