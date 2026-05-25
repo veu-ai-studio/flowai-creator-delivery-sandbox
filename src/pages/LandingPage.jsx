@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import {
   Zap, Clock, Wrench, Link2, Pencil, Clipboard, Mic, MicOff,
   CheckCircle2, XCircle, Loader2, UploadCloud, ChevronRight,
-  Layers, History, ShieldCheck, BookOpen, BarChart3, X
+  Layers, History, ShieldCheck, BookOpen, BarChart3, X, GitBranch
 } from 'lucide-react';
 import { saveSessionConfig } from './Configuration';
 import UniversalNav from '@/components/shared/UniversalNav';
@@ -28,6 +28,8 @@ const OBJECTIVES = [
 ];
 
 const DEPTHS = ['Quick', 'Standard', 'Deep'];
+const MIGRATION_MODE_ENABLED_FOR_UI =
+  String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
 
 const DESCRIPTION_TEMPLATE = `Product Name: 
 What it does: 
@@ -497,17 +499,20 @@ export default function LandingPage() {
     // run via /api/run-construction (real SSE, real preview deploy,
     // real governance record). The legacy /auto-runner remains the
     // secondary "Advanced (legacy)" link below.
-    if (activeCard === 'A' && mode === 'auto' && urlInput.trim()) {
+    if (activeCard === 'A' && (mode === 'auto' || mode === 'migration') && urlInput.trim()) {
       setRunPanelUrl(urlInput.trim());
       return;
     }
 
     if (mode === 'auto') navigate('/auto-runner');
     else if (mode === 'guided') navigate('/guided/research');
+    else if (mode === 'migration') setRunPanelUrl(urlInput.trim());
     else navigate('/manual/research');
   };
 
-  const isConstructionEnginePath = activeCard === 'A' && mode === 'auto' && !!urlInput.trim();
+  const isConstructionEnginePath = activeCard === 'A' && (mode === 'auto' || mode === 'migration') && !!urlInput.trim();
+  const isMigrationMode = mode === 'migration';
+  const isMigrationLaunchBlocked = isMigrationMode && !MIGRATION_MODE_ENABLED_FOR_UI;
   const launchLabel = isConstructionEnginePath
     ? 'Run FlowAI on this URL →'
     : mode === 'auto'
@@ -737,6 +742,43 @@ export default function LandingPage() {
               <p className="text-[10px] text-muted-foreground">Hours to days · Full operator control</p>
             </div>
 
+            {/* Migration */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setMode('migration')}
+              onKeyDown={e => e.key === 'Enter' && setMode('migration')}
+              className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${mode === 'migration' ? 'border-cyan-500/60 bg-cyan-500/5 ring-1 ring-cyan-500/20' : 'border-border bg-card hover:border-cyan-500/30'}`}
+            >
+              <div className="flex items-center gap-2">
+                <GitBranch className={`h-4 w-4 ${mode === 'migration' ? 'text-cyan-300' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-bold ${mode === 'migration' ? 'text-cyan-300' : 'text-foreground'}`}>Migrate</span>
+                {mode === 'migration' && <span className="ml-auto text-[10px] font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                FlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px]">
+                <div className="rounded-md border border-border bg-background/60 p-2">
+                  <p className="font-semibold text-foreground">Plan</p>
+                  <p className="text-muted-foreground">File count and dependency count before execution</p>
+                </div>
+                <div className="rounded-md border border-border bg-background/60 p-2">
+                  <p className="font-semibold text-foreground">Progress</p>
+                  <p className="text-muted-foreground">Per-file migration status during execution</p>
+                </div>
+                <div className="rounded-md border border-border bg-background/60 p-2">
+                  <p className="font-semibold text-foreground">Summary</p>
+                  <p className="text-muted-foreground">Files migrated, dependencies removed, upgrade URL</p>
+                </div>
+              </div>
+              {!MIGRATION_MODE_ENABLED_FOR_UI && (
+                <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-md px-3 py-2">
+                  Migration Mode requires operator enablement. Contact your admin.
+                </p>
+              )}
+            </div>
+
           </div>
         </motion.section>
 
@@ -748,7 +790,7 @@ export default function LandingPage() {
           {runPanelUrl ? (
             <RunConstructionPanel
               url={runPanelUrl}
-              mode="FOREGROUND"
+              mode={isMigrationMode ? 'MIGRATION' : 'FOREGROUND'}
               onClose={() => setRunPanelUrl(null)}
             />
           ) : (
@@ -762,7 +804,7 @@ export default function LandingPage() {
                 </div>
                 <Button
                   onClick={launch}
-                  disabled={!hasValidInput}
+                  disabled={!hasValidInput || isMigrationLaunchBlocked}
                   size="lg"
                   className="gap-2 w-full sm:min-w-[220px] sm:w-auto text-sm font-bold min-h-[48px]"
                 >
@@ -770,6 +812,11 @@ export default function LandingPage() {
                   {launchLabel}
                 </Button>
               </div>
+              {isMigrationLaunchBlocked && (
+                <div className="text-[11px] text-amber-300 text-right">
+                  Migration Mode requires operator enablement. Contact your admin.
+                </div>
+              )}
               {/* Secondary legacy link: only shown when the construction-
                   engine path is the active primary (URL+Auto). Otherwise
                   this CTA already routes through /auto-runner. */}

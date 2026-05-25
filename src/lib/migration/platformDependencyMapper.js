@@ -209,7 +209,7 @@ export function detectPlatform(fileContent = '') {
     }
   }
 
-  return collectUnknownFindings({ file: 'unknown', content: fileContent }).length > 0 ? 'unknown' : 'unknown';
+  return 'unknown';
 }
 
 export function classifyDependency(match = '') {

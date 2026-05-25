@@ -22,4 +22,12 @@ describe('FlowAI positioning copy', () => {
     expect(landingSource).not.toContain('saigedemo.com');
     expect(landingSource).not.toContain('customer-facing SaaS');
   });
+
+  it('surfaces Migration Mode while blocking execution unless operator-enabled', () => {
+    expect(landingSource).toContain('Migrate');
+    expect(landingSource).toContain('FlowAI detects platform dependencies and migrates the product to a standalone v2');
+    expect(landingSource).toContain('Migration Mode requires operator enablement. Contact your admin.');
+    expect(landingSource).toContain('VITE_FLOWAI_ENABLE_MIGRATION_MODE');
+    expect(landingSource).toContain("mode={isMigrationMode ? 'MIGRATION' : 'FOREGROUND'}");
+  });
 });
