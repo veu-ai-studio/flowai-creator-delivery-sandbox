@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -304,6 +304,7 @@ function CardC({ active, onActivate, pastedContent, setPastedContent, uploadedFi
 // ─── MAIN LANDING PAGE ────────────────────────────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Global paste fix for all inputs on this page
   useEffect(() => {
@@ -362,10 +363,22 @@ export default function LandingPage() {
   const [customObjective, setCustomObjective] = useState('');
   const [objListening, setObjListening] = useState(false);
   const objRecRef = useRef(null);
+  const operationModeRef = useRef(null);
 
   // Mode
   const [mode, setMode] = useState('auto');
   const [depth, setDepth] = useState('Standard');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'migration') {
+      setMode('migration');
+      setActiveCard('A');
+      window.requestAnimationFrame(() => {
+        operationModeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, [location.search]);
 
   // W6 INTEGRATION — Track C: inline construction-engine run panel.
   // Shown when the user clicks "Run FlowAI" from Card A + Auto mode.
@@ -532,8 +545,10 @@ export default function LandingPage() {
               <Zap className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <div className="text-sm font-bold text-foreground leading-tight">FlowAI</div>
-              <div className="text-[10px] text-muted-foreground leading-tight">VEU AI Studio Internal Operations Platform.</div>
+              <div className="text-sm font-bold text-foreground leading-tight">{isMigrationMode ? 'Migrate a Product' : 'New Run'}</div>
+              <div className="text-[10px] text-muted-foreground leading-tight">
+                {isMigrationMode ? 'Standalone v2 migration setup.' : 'Start an upgraded product run.'}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3 text-[11px]">
@@ -667,7 +682,7 @@ export default function LandingPage() {
         </motion.section>
 
         {/* ── SECTION 4: OPERATION MODE ── */}
-        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <motion.section ref={operationModeRef} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Setup 3 of 3 — Select operation mode</p>
           <div className="grid grid-cols-1 gap-4">
 

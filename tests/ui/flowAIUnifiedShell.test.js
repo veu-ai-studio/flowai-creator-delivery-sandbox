@@ -30,6 +30,8 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toMatch(/>Back</);
     expect(sidebarSrc).toMatch(/title:\s*"CONFIGURATION"/);
     expect(sidebarSrc).toMatch(/label:\s*"New Run"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Migrate a Product"/);
+    expect(sidebarSrc).toContain('Migration Mode requires operator enablement.');
     expect(sidebarSrc).toMatch(/title:\s*"PORTFOLIO"/);
     expect(sidebarSrc).toMatch(/label:\s*"Portfolio Dashboard"/);
     expect(sidebarSrc).toMatch(/label:\s*"Product Registry"/);
@@ -37,6 +39,18 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toMatch(/title:\s*"CONFIGURATION"/);
     expect(sidebarSrc).toMatch(/label:\s*"My Products"/);
     expect(sidebarSrc).toMatch(/label:\s*"Objective & Settings"/);
+  });
+
+  it('treats New Run and migration setup as first-class sidebar destinations', () => {
+    const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
+    expect(sidebarSrc).toContain('activeWhen');
+    expect(sidebarSrc).toContain('searchParams.get("mode") !== "migration"');
+    expect(sidebarSrc).toContain('searchParams.get("mode") === "migration"');
+    expect(sidebarSrc).toContain('path: "/?mode=migration"');
+    expect(landingSrc).toContain("params.get('mode') === 'migration'");
+    expect(landingSrc).toContain("setMode('migration')");
+    expect(landingSrc).toContain('operationModeRef.current?.scrollIntoView');
+    expect(landingSrc).toContain("isMigrationMode ? 'Migrate a Product' : 'New Run'");
   });
 
   it('does not keep the old split launch/workspace navigation labels in the sidebar', () => {

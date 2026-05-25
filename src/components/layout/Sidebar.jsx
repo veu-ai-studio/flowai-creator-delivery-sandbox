@@ -9,6 +9,7 @@ import {
   ClipboardList,
   FolderKanban,
   Globe,
+  GitBranch,
   Home,
   History,
   Rocket,
@@ -17,6 +18,9 @@ import {
   Zap,
 } from "lucide-react";
 import { listActiveFlowAIRuns, subscribeFlowAIRuns } from "@/lib/flowaiRunStore";
+
+const MIGRATION_MODE_ENABLED_FOR_UI =
+  String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || "").toLowerCase() === "true";
 
 const navSections = [
   {
@@ -73,6 +77,16 @@ const navSections = [
         path: "/",
         icon: Rocket,
         tooltip: "Start a FlowAI run from a URL, product description, pasted content, or screenshot context.",
+        activeWhen: ({ pathname, searchParams }) => pathname === "/" && searchParams.get("mode") !== "migration",
+      },
+      {
+        label: "Migrate a Product",
+        path: "/?mode=migration",
+        icon: GitBranch,
+        tooltip: "Open Migration Mode setup for platform dependency migration.",
+        disabled: !MIGRATION_MODE_ENABLED_FOR_UI,
+        disabledMessage: "Migration Mode requires operator enablement.",
+        activeWhen: ({ pathname, searchParams }) => pathname === "/" && searchParams.get("mode") === "migration",
       },
       {
         label: "My Products",
@@ -114,13 +128,35 @@ const navSections = [
   },
 ];
 
-function isActivePath(locationPath, itemPath) {
-  return locationPath === itemPath || locationPath.startsWith(`${itemPath}/`);
+function isActivePath(location, item) {
+  const searchParams = new URLSearchParams(location.search);
+  if (typeof item.activeWhen === "function") {
+    return item.activeWhen({ pathname: location.pathname, searchParams });
+  }
+  const itemPath = item.path.split("?")[0];
+  return location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
 }
 
-function NavItem({ label, path, icon: Icon, tooltip }) {
+function NavItem({ label, path, icon: Icon, tooltip, disabled, disabledMessage, activeWhen }) {
   const location = useLocation();
-  const active = isActivePath(location.pathname, path);
+  const active = isActivePath(location, { path, activeWhen });
+  if (disabled) {
+    const disabledInner = (
+      <div
+        className={`flex flex-col gap-1 px-3 py-2 rounded-md text-sm font-medium ${
+          active ? "bg-primary/10 text-primary" : "text-muted-foreground"
+        } opacity-80 cursor-not-allowed`}
+        aria-disabled="true"
+      >
+        <span className="flex items-center gap-3">
+          <Icon className="h-4 w-4 shrink-0" />
+          <span className="truncate">{label}</span>
+        </span>
+        {disabledMessage && <span className="pl-7 text-[10px] leading-tight text-amber-300">{disabledMessage}</span>}
+      </div>
+    );
+    return tooltip ? <Tooltip content={tooltip} className="block">{disabledInner}</Tooltip> : disabledInner;
+  }
   const inner = (
     <Link
       to={path}
