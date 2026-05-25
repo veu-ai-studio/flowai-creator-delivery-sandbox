@@ -68,6 +68,12 @@ describe('FlowAI unified operating system shell', () => {
     expect(landingSrc).toContain('Step 3 - Confirm and Start');
   });
 
+  it('guards sidebar active-run rendering before calling map', () => {
+    expect(sidebarSrc).toContain('const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns : []');
+    expect(sidebarSrc).toContain('(Array.isArray(safeActiveRuns) ? safeActiveRuns : []).map');
+    expect(sidebarSrc).not.toContain('title={activeRuns.map');
+  });
+
   it('does not keep the old split launch/workspace navigation labels in the sidebar', () => {
     expect(sidebarSrc).not.toMatch(/Launch FlowAI/);
     expect(sidebarSrc).not.toMatch(/Renewal Workspace/);
