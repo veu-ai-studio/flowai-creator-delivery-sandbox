@@ -30,6 +30,9 @@ const OBJECTIVES = [
 const DEPTHS = ['Quick', 'Standard', 'Deep'];
 const MIGRATION_MODE_ENABLED_FOR_UI =
   String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
+const VERCEL_MIGRATION_ENV_URL = 'https://vercel.com/veu-ai-studio/flowai/settings/environment-variables';
+const FLOWAI_OPERATOR_NAME = import.meta.env?.VITE_FLOWAI_OPERATOR_NAME || 'FlowAI operator';
+const FLOWAI_OPERATOR_EMAIL = import.meta.env?.VITE_FLOWAI_OPERATOR_EMAIL || '';
 
 const DESCRIPTION_TEMPLATE = `Product Name: 
 What it does: 
@@ -330,8 +333,23 @@ export default function LandingPage() {
 
   // User info
   const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userRole, setUserRole] = useState('');
   useEffect(() => {
-    base44.auth.me().then(u => { if (u?.full_name) setUserName(u.full_name); }).catch(() => {});
+    base44.auth.me().then(u => {
+      if (u?.full_name) setUserName(u.full_name);
+      if (u?.email) setUserEmail(u.email);
+      if (u?.role) setUserRole(u.role);
+    }).catch(() => {});
+  }, []);
+
+  const [operatorReadiness, setOperatorReadiness] = useState(null);
+  const [showMigrationEnableInstructions, setShowMigrationEnableInstructions] = useState(false);
+  useEffect(() => {
+    fetch('/api/operator-readiness', { headers: { Accept: 'application/json' } })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => setOperatorReadiness(data))
+      .catch(() => setOperatorReadiness(null));
   }, []);
 
   // Products for Card B
@@ -526,6 +544,17 @@ export default function LandingPage() {
   const isConstructionEnginePath = activeCard === 'A' && (mode === 'auto' || mode === 'migration') && !!urlInput.trim();
   const isMigrationMode = mode === 'migration';
   const isMigrationLaunchBlocked = isMigrationMode && !MIGRATION_MODE_ENABLED_FOR_UI;
+  const operatorEmailMatches = FLOWAI_OPERATOR_EMAIL
+    && userEmail
+    && FLOWAI_OPERATOR_EMAIL.toLowerCase() === userEmail.toLowerCase();
+  const userIsOperator = ['admin', 'operator', 'owner'].includes(String(userRole || '').toLowerCase())
+    || operatorEmailMatches
+    || operatorReadiness?.ok === true;
+  const operatorContact = FLOWAI_OPERATOR_EMAIL
+    ? `${FLOWAI_OPERATOR_NAME} (${FLOWAI_OPERATOR_EMAIL})`
+    : FLOWAI_OPERATOR_NAME !== 'FlowAI operator'
+      ? FLOWAI_OPERATOR_NAME
+      : 'your FlowAI operator';
   const launchLabel = isConstructionEnginePath
     ? 'Run FlowAI on this URL →'
     : mode === 'auto'
@@ -773,24 +802,57 @@ export default function LandingPage() {
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 FlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px]">
-                <div className="rounded-md border border-border bg-background/60 p-2">
-                  <p className="font-semibold text-foreground">Plan</p>
-                  <p className="text-muted-foreground">File count and dependency count before execution</p>
+              {MIGRATION_MODE_ENABLED_FOR_UI ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px]">
+                  <div className="rounded-md border border-border bg-background/60 p-2">
+                    <p className="font-semibold text-foreground">Plan</p>
+                    <p className="text-muted-foreground">File count and dependency count before execution</p>
+                  </div>
+                  <div className="rounded-md border border-border bg-background/60 p-2">
+                    <p className="font-semibold text-foreground">Progress</p>
+                    <p className="text-muted-foreground">Per-file migration status during execution</p>
+                  </div>
+                  <div className="rounded-md border border-border bg-background/60 p-2">
+                    <p className="font-semibold text-foreground">Summary</p>
+                    <p className="text-muted-foreground">Files migrated, dependencies removed, upgrade URL</p>
+                  </div>
                 </div>
-                <div className="rounded-md border border-border bg-background/60 p-2">
-                  <p className="font-semibold text-foreground">Progress</p>
-                  <p className="text-muted-foreground">Per-file migration status during execution</p>
+              ) : (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                  {userIsOperator ? (
+                    <>
+                      <p className="text-[11px] font-semibold text-amber-200">Migration Mode is currently disabled.</p>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowMigrationEnableInstructions(true);
+                        }}
+                        className="inline-flex items-center rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-[11px] font-bold text-amber-100 hover:bg-amber-400/15"
+                      >
+                        Enable Migration Mode
+                      </button>
+                      {showMigrationEnableInstructions && (
+                        <p className="text-[11px] text-amber-100 leading-relaxed">
+                          To enable, go to Vercel Environment Variables and set <span className="font-mono">FLOWAI_ENABLE_MIGRATION_MODE=true</span>, then redeploy.{' '}
+                          <a
+                            href={VERCEL_MIGRATION_ENV_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="underline underline-offset-2 hover:text-foreground"
+                          >
+                            Open Vercel settings
+                          </a>
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-[11px] text-amber-200 leading-relaxed">
+                      Migration Mode requires operator activation. Contact {operatorContact} to enable it.
+                    </p>
+                  )}
                 </div>
-                <div className="rounded-md border border-border bg-background/60 p-2">
-                  <p className="font-semibold text-foreground">Summary</p>
-                  <p className="text-muted-foreground">Files migrated, dependencies removed, upgrade URL</p>
-                </div>
-              </div>
-              {!MIGRATION_MODE_ENABLED_FOR_UI && (
-                <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-md px-3 py-2">
-                  Migration Mode requires operator enablement. Contact your admin.
-                </p>
               )}
             </div>
 
@@ -829,7 +891,7 @@ export default function LandingPage() {
               </div>
               {isMigrationLaunchBlocked && (
                 <div className="text-[11px] text-amber-300 text-right">
-                  Migration Mode requires operator enablement. Contact your admin.
+                  Migration Mode is disabled until <span className="font-mono">FLOWAI_ENABLE_MIGRATION_MODE=true</span> is set in Vercel and redeployed.
                 </div>
               )}
               {/* Secondary legacy link: only shown when the construction-

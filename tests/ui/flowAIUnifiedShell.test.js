@@ -31,7 +31,7 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toMatch(/title:\s*"CONFIGURATION"/);
     expect(sidebarSrc).toMatch(/label:\s*"New Run"/);
     expect(sidebarSrc).toMatch(/label:\s*"Migrate a Product"/);
-    expect(sidebarSrc).toContain('Migration Mode requires operator enablement.');
+    expect(sidebarSrc).toContain('Set FLOWAI_ENABLE_MIGRATION_MODE=true in Vercel.');
     expect(sidebarSrc).toMatch(/title:\s*"PORTFOLIO"/);
     expect(sidebarSrc).toMatch(/label:\s*"Portfolio Dashboard"/);
     expect(sidebarSrc).toMatch(/label:\s*"Product Registry"/);

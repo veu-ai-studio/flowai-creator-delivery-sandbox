@@ -85,7 +85,7 @@ const navSections = [
         icon: GitBranch,
         tooltip: "Open Migration Mode setup for platform dependency migration.",
         disabled: !MIGRATION_MODE_ENABLED_FOR_UI,
-        disabledMessage: "Migration Mode requires operator enablement.",
+        disabledMessage: "Set FLOWAI_ENABLE_MIGRATION_MODE=true in Vercel.",
         activeWhen: ({ pathname, searchParams }) => pathname === "/" && searchParams.get("mode") === "migration",
       },
       {
