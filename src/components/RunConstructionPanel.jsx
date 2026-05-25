@@ -616,6 +616,18 @@ function MigrationSummary({ migration, message }) {
   const dependenciesRemoved = Array.isArray(migration?.dependenciesRemoved)
     ? migration.dependenciesRemoved : [];
   const blockers = Array.isArray(migration?.blockers) ? migration.blockers : [];
+  const renderGithubErrors = (errors) => {
+    if (!Array.isArray(errors) || errors.length === 0) return null;
+    return (
+      <ul className="mt-1 space-y-0.5">
+        {errors.slice(0, 3).map((error, index) => (
+          <li key={`github-error-${index}`} className="break-words">
+            {typeof error === 'string' ? error : JSON.stringify(error)}
+          </li>
+        ))}
+      </ul>
+    );
+  };
   return (
     <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-3 space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
@@ -652,9 +664,22 @@ function MigrationSummary({ migration, message }) {
         <div className="space-y-1">
           <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Blockers</p>
           {blockers.slice(0, 4).map((blocker, index) => (
-            <p key={`${blocker.file || blocker.field || index}-${index}`} className="text-[11px] text-muted-foreground font-mono">
-              {blocker.file || blocker.field || 'migration'}: {blocker.reason}
-            </p>
+            <div key={`${blocker.file || blocker.field || index}-${index}`} className="text-[11px] text-muted-foreground font-mono rounded border border-border/60 bg-background/40 p-2">
+              <p>
+                {blocker.file || blocker.field || 'migration'}: {blocker.reason}
+              </p>
+              {blocker.githubMessage && (
+                <p className="mt-1 text-amber-200 break-words">
+                  GitHub: {blocker.githubMessage}
+                </p>
+              )}
+              {(blocker.status || blocker.statusText) && (
+                <p className="mt-1 text-muted-foreground">
+                  Status: {[blocker.status, blocker.statusText].filter(Boolean).join(' ')}
+                </p>
+              )}
+              {renderGithubErrors(blocker.githubErrors)}
+            </div>
           ))}
         </div>
       )}

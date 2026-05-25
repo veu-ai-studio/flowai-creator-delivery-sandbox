@@ -2,7 +2,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { __test } from '../../src/api/run-construction.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const runConstructionSrc = readFileSync(resolve(__dirname, '../../src/api/run-construction.js'), 'utf8');
 
 describe('run-construction Migration Mode hook wiring', () => {
   let tmpRoot;
@@ -177,5 +183,12 @@ describe('run-construction Migration Mode hook wiring', () => {
       field: 'targetRepoPath',
       reason: 'target_repo_must_not_be_inside_source_repo',
     });
+  });
+
+  it('preserves only safe GitHub diagnostics on SSE error payloads', () => {
+    expect(runConstructionSrc).toContain("import { pickSafeErrorFields } from '../lib/migration/safeErrorFields.js'");
+    expect(runConstructionSrc.match(/pickSafeErrorFields\(e\)/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(runConstructionSrc).not.toContain('Authorization:');
+    expect(runConstructionSrc).not.toContain('token: e');
   });
 });

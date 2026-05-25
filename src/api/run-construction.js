@@ -55,6 +55,7 @@ import { rateLimit } from './_lib/rateLimit.js';
 import { getMigrationModeFlag } from '../lib/runtimeFeatureFlags.js';
 import { findRegisteredProductConfigForUrl } from '../lib/products/registeredProductConfig.js';
 import { createGithubMigrationHooks } from '../lib/migration/githubMigrationHooks.js';
+import { pickSafeErrorFields } from '../lib/migration/safeErrorFields.js';
 
 const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION']);
 const GTM_TARGET = 95;
@@ -205,7 +206,12 @@ export default async function handler(req, res) {
     ({ runConstruction } = await import('../lib/construction/index.js').catch(() => ({ runConstruction: null })));
     ({ createOriginPageResolver } = await import('../lib/construction/resolvers/originPageResolver.js').catch(() => ({ createOriginPageResolver: null })));
   } catch (e) {
-    send({ type: 'error', error: (e?.message ?? String(e)).slice(0, 200), code: 'ORCHESTRATOR_IMPORT_FAILED' });
+    send({
+      type: 'error',
+      error: (e?.message ?? String(e)).slice(0, 200),
+      code: 'ORCHESTRATOR_IMPORT_FAILED',
+      ...pickSafeErrorFields(e),
+    });
     return done();
   }
 
@@ -273,7 +279,12 @@ export default async function handler(req, res) {
       deps,
     });
   } catch (e) {
-    send({ type: 'error', error: (e?.message ?? String(e)).slice(0, 400), code: e?.code ?? 'ORCHESTRATION_THREW' });
+    send({
+      type: 'error',
+      error: (e?.message ?? String(e)).slice(0, 400),
+      code: e?.code ?? 'ORCHESTRATION_THREW',
+      ...pickSafeErrorFields(e),
+    });
     return done();
   }
 

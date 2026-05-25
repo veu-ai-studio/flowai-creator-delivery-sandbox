@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { scanPlatformDependencies } from './platformDependencyMapper.js';
 import { generateDirectReplacements } from './directReplacementGenerator.js';
+import { pickSafeErrorFields } from './safeErrorFields.js';
 
 function normalizeSlash(value) {
   return String(value || '').replace(/\\/g, '/');
@@ -121,14 +122,25 @@ export async function runMigration({
       continue;
     }
 
-    await writeTargetFile({
-      targetRepoPath,
-      sourceRepoPath,
-      writeFile,
-      relativeFile: planItem.file,
-      content: replacement.replacementContent,
-      virtualRepo,
-    });
+    try {
+      await writeTargetFile({
+        targetRepoPath,
+        sourceRepoPath,
+        writeFile,
+        relativeFile: planItem.file,
+        content: replacement.replacementContent,
+        virtualRepo,
+      });
+    } catch (error) {
+      summary.blocked += 1;
+      summary.blockers.push({
+        file: planItem.file,
+        reason: 'MIGRATION_BLOCKED',
+        message: error?.message || String(error),
+        ...pickSafeErrorFields(error),
+      });
+      continue;
+    }
 
     const buildResult = await verifyBuild({ file: planItem.file });
     const lintResult = buildResult?.ok ? await verifyLint({ file: planItem.file }) : { ok: false, output: 'build failed' };

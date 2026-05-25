@@ -167,4 +167,44 @@ describe('migrationOrchestrator', () => {
     expect(writes[0].filePath).toBe('src/app.js');
     expect(writes[0].content).toContain('createStandalonePlatformClient');
   });
+
+  it('converts GitHub write failures into sanitized migration blockers', async () => {
+    const summary = await runMigration({
+      sourceRepoPath: 'github://veu-ai-studio/saige',
+      targetRepoPath: 'github://veu-ai-studio/saige-v2/flowai/migration-saige-1-run12345',
+      scanFiles: vi.fn(async () => [{ file: 'src/app.js' }]),
+      readFile: vi.fn(async () => "import sdk from '@base44/sdk';\n"),
+      writeFile: vi.fn(async () => {
+        const error = new Error('Unable to write src/app.js');
+        error.code = 'GITHUB_API_ERROR';
+        error.status = 422;
+        error.statusText = 'Unprocessable Entity';
+        error.githubMessage = 'Invalid request';
+        error.githubErrors = [{ field: 'sha', code: 'missing_field' }];
+        error.Authorization = 'Bearer ghp_do_not_leak';
+        error.token = 'ghp_do_not_leak';
+        throw error;
+      }),
+      restoreFile: vi.fn(),
+      verifyBuild: vi.fn(async () => ({ ok: true, output: '' })),
+      verifyLint: vi.fn(async () => ({ ok: true, output: '' })),
+      runFocusedTests: vi.fn(async () => ({ ok: true, passed: 1 })),
+    });
+
+    expect(summary.migrated).toBe(0);
+    expect(summary.blocked).toBe(1);
+    expect(summary.blockers[0]).toMatchObject({
+      file: 'src/app.js',
+      reason: 'MIGRATION_BLOCKED',
+      code: 'GITHUB_API_ERROR',
+      status: 422,
+      statusText: 'Unprocessable Entity',
+      githubMessage: 'Invalid request',
+      githubErrors: [{ field: 'sha', code: 'missing_field' }],
+    });
+    const serialized = JSON.stringify(summary.blockers);
+    expect(serialized).not.toContain('ghp_do_not_leak');
+    expect(serialized).not.toContain('Bearer');
+    expect(serialized).not.toContain('Authorization');
+  });
 });

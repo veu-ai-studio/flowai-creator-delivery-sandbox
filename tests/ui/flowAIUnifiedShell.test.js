@@ -203,6 +203,14 @@ describe('FlowAI unified operating system shell', () => {
     expect(runConstructionPanelSrc).toContain('Five-Layer Scoring');
   });
 
+  it('renders GitHub migration diagnostics from blockers without secret fields', () => {
+    expect(runConstructionPanelSrc).toContain('blocker.githubMessage');
+    expect(runConstructionPanelSrc).toContain('blocker.githubErrors');
+    expect(runConstructionPanelSrc).toContain('GitHub: {blocker.githubMessage}');
+    expect(runConstructionPanelSrc).not.toContain('blocker.Authorization');
+    expect(runConstructionPanelSrc).not.toContain('blocker.token');
+  });
+
   it('does not abort an active run when sidebar navigation unmounts the run page', () => {
     expect(dashboardSrc).toContain('async function stop()');
     expect(dashboardSrc).toContain('if (abortRef.current) abortRef.current.abort();');
