@@ -124,6 +124,7 @@ function FocusedMigrationSetup({
           <RunConstructionPanel
             url={runPanelUrl}
             mode="MIGRATION"
+            autoStart
             onClose={() => setRunPanelUrl(null)}
             operatorSecret={operatorSecret}
             setOperatorSecret={setOperatorSecret}

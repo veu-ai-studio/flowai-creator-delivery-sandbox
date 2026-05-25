@@ -255,6 +255,7 @@ The artifact must be persisted to the governance store (`product_ssot.governance
 |---|---|---|
 | Flow Hub Migration setup | URL paste is replace-only for the focused migration URL input; placeholder is `Enter product URL - e.g. https://saigeplatform.com`; Step 3 remains visible before URL entry. | Needs browser verification on production after Victor deploys. |
 | Operator authentication recovery | Migration run errors that report authentication required now show a labeled operator-secret input and retry path without exposing or persisting the secret. | Needs browser verification that Victor can enter the secret and retry successfully in production. |
+| Migration start UX | Focused `/flow-hub/migration` starts the Migration Mode run immediately after `Start Migration`; the run panel opens already running and does not require a second `Run FlowAI` confirmation click. | Needs browser verification on production after Victor deploys. |
 
 ---
 

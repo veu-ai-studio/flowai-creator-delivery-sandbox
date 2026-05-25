@@ -20,7 +20,7 @@
 //   error     | error, code     (terminal)
 //   [DONE]    | terminator
 
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FindingsReport from '@/components/FindingsReport';
@@ -693,6 +693,7 @@ export default function RunConstructionPanel({
   onClose,
   operatorSecret = '',
   setOperatorSecret,
+  autoStart = false,
 }) {
   const [status, setStatus] = useState('idle');         // idle | running | done | error
   const [steps, setSteps] = useState([]);
@@ -701,6 +702,7 @@ export default function RunConstructionPanel({
   const [runId, setRunId] = useState(null);
   const [knownGapSeen, setKnownGapSeen] = useState(false);
   const abortRef = useRef(null);
+  const autoStartRef = useRef(false);
 
   const start = async () => {
     setStatus('running');
@@ -794,6 +796,12 @@ export default function RunConstructionPanel({
   const retry = () => start();
   const cancel = () => { abortRef.current?.abort(); };
   const authRequired = status === 'error' && /auth(entication)? required/i.test(String(errorMsg || ''));
+
+  useEffect(() => {
+    if (!autoStart || autoStartRef.current || status !== 'idle') return;
+    autoStartRef.current = true;
+    start();
+  }, [autoStart, status]);
 
   return (
     <div className="rounded-xl border border-primary/40 bg-primary/5 p-5 space-y-4">

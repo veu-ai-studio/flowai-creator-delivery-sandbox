@@ -211,6 +211,15 @@ describe('FlowAI unified operating system shell', () => {
     expect(runConstructionPanelSrc).not.toContain('blocker.token');
   });
 
+  it('auto-starts focused Migration runs without the redundant Run FlowAI confirmation', () => {
+    const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
+    expect(runConstructionPanelSrc).toContain('autoStart = false');
+    expect(runConstructionPanelSrc).toContain('autoStartRef');
+    expect(runConstructionPanelSrc).toContain('if (!autoStart || autoStartRef.current || status !==');
+    expect(landingSrc).toMatch(/mode="MIGRATION"[\s\S]*autoStart/);
+    expect(landingSrc).not.toMatch(/mode=\{isMigrationMode \? 'MIGRATION' : 'FOREGROUND'\}[\s\S]{0,160}autoStart/);
+  });
+
   it('does not abort an active run when sidebar navigation unmounts the run page', () => {
     expect(dashboardSrc).toContain('async function stop()');
     expect(dashboardSrc).toContain('if (abortRef.current) abortRef.current.abort();');
