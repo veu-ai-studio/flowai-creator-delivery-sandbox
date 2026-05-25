@@ -18,6 +18,8 @@
 //   best-practices      → 'bugs_errors_detector'
 //   seo                 → 'ui_ux'
 
+import { EVALUATOR_IDS } from './evaluatorIds.js';
+
 const CATEGORY_DIMENSION = Object.freeze({
   performance:      'performance',
   accessibility:    'accessibility',
@@ -119,6 +121,7 @@ export function normalizeLighthouseFinding({ url, category, auditId, audit }) {
     location: url,
     description,
     source: 'lighthouse',
+    evaluator_id: EVALUATOR_IDS.LIGHTHOUSE,
     evaluatorVersion: 'lh-13',
     confidence: severity === 'high' ? 0.75 : severity === 'medium' ? 0.65 : 0.55,
     evidenceType: `lh-audit:${category}`,

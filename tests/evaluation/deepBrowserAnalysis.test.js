@@ -5,6 +5,7 @@ import {
   redactEvidence,
 } from '../../src/lib/evaluation/deepBrowserAnalysis.js';
 import { evaluatorsForTier, TIER } from '../../src/lib/evaluation/evaluationBudget.js';
+import { EVALUATOR_IDS } from '../../src/lib/evaluation/evaluatorIds.js';
 
 describe('deepBrowserAnalysis', () => {
   it('redacts likely secrets from runtime evidence', () => {
@@ -44,6 +45,7 @@ describe('deepBrowserAnalysis', () => {
     ]));
     for (const finding of findings) {
       expect(finding.generated_by).toBe('deep-browser-analysis');
+      expect(finding.evaluator_id).toBe(EVALUATOR_IDS.DEEP_BROWSER);
       expect(finding.evidenceLevel).toBeTruthy();
     }
   });

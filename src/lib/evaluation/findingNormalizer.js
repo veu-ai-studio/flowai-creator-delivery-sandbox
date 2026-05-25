@@ -24,12 +24,15 @@
 //     description: string,
 //     count: number,                       // ≥1 (cluster size)
 //     occurrences: Array<{url, detail?}>,  // first N raw locations
-//     source: string|string[],             // single or merged sources
-//     sources: Array<{source, evaluatorVersion, confidence,
+//     source: string|string[],             // single or merged legacy sources
+//     evaluator_id: string|string[],       // stable evaluator provenance ids
+//     sources: Array<{source, evaluator_id, evaluatorVersion, confidence,
 //                     evidenceType, weight}>,
 //     confidence: number,                  // weighted avg
 //     evidenceType: string,
 //   }
+
+import { EVALUATOR_IDS } from './evaluatorIds.js';
 
 const SEVERITY_RANK = Object.freeze({
   critical: 100,
@@ -69,6 +72,21 @@ export const ALLOWED_SOURCES = Object.freeze(new Set([
   'unattributed',
 ]));
 
+export const SOURCE_TO_EVALUATOR_ID = Object.freeze({
+  'lighthouse': EVALUATOR_IDS.LIGHTHOUSE,
+  'axe-core': EVALUATOR_IDS.AXE_CORE,
+  'runtime-diagnostics': EVALUATOR_IDS.RUNTIME_DIAGNOSTICS,
+  'deep-browser-analysis': EVALUATOR_IDS.DEEP_BROWSER,
+  'crawler': EVALUATOR_IDS.CRAWLER,
+  'phase-b-playwright': EVALUATOR_IDS.PLAYWRIGHT,
+  'unattributed': 'unattributed',
+});
+
+const ALLOWED_EVALUATOR_IDS = Object.freeze(new Set([
+  ...Object.values(EVALUATOR_IDS),
+  'unattributed',
+]));
+
 /** Coerce a raw source value into the allowed-enum set. */
 function coerceSource(raw, sourceTag) {
   const candidate = (typeof raw === 'string' && raw.length > 0) ? raw
@@ -76,6 +94,11 @@ function coerceSource(raw, sourceTag) {
                    : null;
   if (candidate && ALLOWED_SOURCES.has(candidate)) return candidate;
   return 'unattributed';
+}
+
+function coerceEvaluatorId(raw, source) {
+  if (typeof raw === 'string' && ALLOWED_EVALUATOR_IDS.has(raw)) return raw;
+  return SOURCE_TO_EVALUATOR_ID[source] ?? 'unattributed';
 }
 
 /** Map any incoming severity string to a canonical bucket. */
@@ -119,6 +142,7 @@ function normalizeOne(raw, sourceTag) {
   // are labelled 'unattributed' — we never drop findings for missing
   // provenance and we never infer evaluator identity from context.
   const source = coerceSource(raw.source, sourceTag);
+  const evaluator_id = coerceEvaluatorId(raw.evaluator_id, source);
   const evaluatorVersion = raw.evaluatorVersion ?? '1.0';
   const confidence = clamp01(raw.confidence ?? 0.7);
   const evidenceType = raw.evidenceType ?? raw.category ?? 'unspecified';
@@ -145,8 +169,9 @@ function normalizeOne(raw, sourceTag) {
     // evidence to a specific evaluator (lighthouse | axe-core |
     // runtime-diagnostics | crawler | phase-b-playwright).
     generated_by: source,
+    evaluator_id,
     sources: [{
-      source, evaluatorVersion, confidence, evidenceType,
+      source, evaluator_id, evaluatorVersion, confidence, evidenceType,
       weight: DEFAULT_WEIGHTS[source] ?? 0.7,
     }],
     confidence,
@@ -175,6 +200,8 @@ function mergeTwo(a, b) {
   const sourceTags = Array.from(new Set([...(Array.isArray(a.source) ? a.source : [a.source]),
                                           ...(Array.isArray(b.source) ? b.source : [b.source])]));
   const mergedSource = sourceTags.length === 1 ? sourceTags[0] : sourceTags;
+  const evaluatorTags = Array.from(new Set(sources.map((s) => coerceEvaluatorId(s.evaluator_id, s.source))));
+  const mergedEvaluatorId = evaluatorTags.length === 1 ? evaluatorTags[0] : evaluatorTags;
   return Object.freeze({
     id: a.id,
     dimension: a.dimension,
@@ -188,6 +215,7 @@ function mergeTwo(a, b) {
     source: mergedSource,
     // DISPATCH U1 — see normalizeOne(); same shape on merged findings.
     generated_by: mergedSource,
+    evaluator_id: mergedEvaluatorId,
     sources,
     confidence,
     evidenceType: a.evidenceType,
@@ -292,4 +320,5 @@ export function normalizeFindings(input) {
 export const __internals = Object.freeze({
   calibrateSeverity, findingId, normalizeOne, mergeTwo,
   dedupeById, clusterByCategory, DEFAULT_WEIGHTS, SEVERITY_RANK,
+  SOURCE_TO_EVALUATOR_ID,
 });

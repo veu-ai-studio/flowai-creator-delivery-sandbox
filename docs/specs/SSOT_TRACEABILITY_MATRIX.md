@@ -197,6 +197,21 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 | `CA18-EVAL-PIPELINE` | Lighthouse serverless could still create hard failure behavior. | Improved by graceful degrade test coverage. | Needs production run where evaluator availability/degradation is captured in governance. |
 | `CA18-DEPLOY-TRUTH` | Preview deploy skipped or miswired when registry/runtime data drifted. | Improved by SAIGE registered-product preview wiring regression. | Needs post-deploy `/api/version` and preview-deploy runtime evidence after Victor promotes. |
 
+### CA18-EVAL-PIPELINE branch evidence
+
+`CA18-EVAL-PIPELINE` remains **PARTIAL** after this branch update because its verification type is `LIVE_RUNTIME`; branch tests cannot promote it to `VERIFIED`. The implementation now gives every normalized finding a stable `evaluator_id` while preserving `source`, `generated_by`, and `evaluatorVersion` for backward compatibility.
+
+| evaluator_id | Producer |
+|---|---|
+| `lighthouse` | `src/lib/evaluation/lighthouseEvaluator.js` |
+| `axe_core` | `src/lib/evaluation/axeEvaluator.js` |
+| `runtime_diagnostics` | `src/lib/evaluation/runtimeDiagnostics.js` |
+| `deep_browser` | `src/lib/evaluation/deepBrowserAnalysis.js` |
+| `playwright` | `src/lib/evaluation/evaluationPipeline.js` Phase B normalization |
+| `crawler` | `src/lib/evaluation/findingNormalizer.js` crawler-source normalization |
+
+Branch evidence: `src/lib/evaluation/evaluatorIds.js`, `src/lib/evaluation/findingNormalizer.js`, evaluator caller imports, `tests/evaluation/findingProvenance.test.js`, and `tests/evaluation/deepBrowserAnalysis.test.js`. Remaining evidence needed: a Victor-approved production run artifact showing live findings with `evaluator_id` values from the deployed pipeline.
+
 ### Updated completion estimate
 
 **SSOT vision completion estimate:** approximately **62%** complete on branch. This is an implementation/readiness improvement, not a VERIFIED completion jump. The VERIFIED count remains limited by live production evidence requirements.

@@ -160,8 +160,8 @@
       "status": "PARTIAL",
       "confidence": "LOW",
       "scope": "BRANCH_ONLY",
-      "lastVerifiedAt": "2026-05-21T22:17:03Z",
-      "verifiedAgainstCommit": "158a427293f2987b287759af0b3503f7bb7d4a98",
+      "lastVerifiedAt": "2026-05-25T00:00:00Z",
+      "verifiedAgainstCommit": "BRANCH_EVIDENCE_PENDING_COMMIT_CA18_EVAL_PIPELINE",
       "verifiedAgainstDeployment": null,
       "verificationType": "LIVE_RUNTIME",
       "runtimeArtifactRequired": true,
@@ -169,30 +169,29 @@
       "evidenceFreshness": "CURRENT",
       "isNegativeControl": false,
       "implementationFiles": [
-        "src/lib/evaluation/evaluationPipeline.js:1-40 (entry point + evaluator list)",
-        "src/lib/evaluation/evaluationPipeline.js:135-136 (axe-core + runtime-diagnostics wired)",
-        "src/lib/evaluation/evaluationPipeline.js:169-172 (Lighthouse wired)",
-        "src/lib/evaluation/findingNormalizer.js:46-60 (per-finding source + evaluatorVersion fields)"
+        "src/lib/evaluation/evaluatorIds.js (stable evaluator_id constants)",
+        "src/lib/evaluation/evaluationPipeline.js (entry point + evaluator list; phase-b-playwright emits evaluator_id='playwright')",
+        "src/lib/evaluation/lighthouseEvaluator.js (Lighthouse emits evaluator_id='lighthouse')",
+        "src/lib/evaluation/axeEvaluator.js (axe-core emits evaluator_id='axe_core')",
+        "src/lib/evaluation/runtimeDiagnostics.js (runtime diagnostics emits evaluator_id='runtime_diagnostics')",
+        "src/lib/evaluation/deepBrowserAnalysis.js (deep browser analysis emits evaluator_id='deep_browser')",
+        "src/lib/evaluation/findingNormalizer.js (normalizes and preserves evaluator_id on every finding and per-source entry)"
       ],
       "testFiles": [
         "tests/agents/renewal/adversarialSurface.test.js",
-        "tests/ui/trustScoreDisplay.test.js"
+        "tests/ui/trustScoreDisplay.test.js",
+        "tests/evaluation/findingProvenance.test.js",
+        "tests/evaluation/deepBrowserAnalysis.test.js"
       ],
       "runtimeEvidence": [],
       "governanceEvidence": [],
-      "contradictions": [
-        {
-          "claim": "evaluator provenance visible per finding",
-          "evidence": "findingNormalizer.js emits source + evaluatorVersion but no unique evaluator_id per finding",
-          "severity": "MEDIUM"
-        }
-      ],
+      "contradictions": [],
       "gaps": [
-        "Per-finding evaluator_id field is missing from findingNormalizer.js output schema.",
+        "Branch implementation now emits evaluator_id, but no production run-log has confirmed live evaluator_id coverage across all evaluators.",
         "Lighthouse and axe-core are conditionally skipped under graceful degradation; not guaranteed to run on every evaluation.",
         "No production run-log shows all four evaluators' contributions with provenance."
       ],
-      "nextAction": "Add a unique evaluator_id field to findingNormalizer.js output (separate dispatch); capture a production run that exercises all four evaluators and attach the log."
+      "nextAction": "After Victor deploys this branch, capture a production run that exercises all evaluators and attach the run log showing evaluator_id values for each normalized finding."
     },
     {
       "claimId": "CA18-DELTA-VERIFY",

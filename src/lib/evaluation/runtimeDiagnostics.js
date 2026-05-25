@@ -23,6 +23,8 @@
 //   console.error / pageerror   → 'bugs_errors_detector'
 //   requestfailed                → 'functional_completeness'
 
+import { EVALUATOR_IDS } from './evaluatorIds.js';
+
 const MAX_PER_TYPE = 60;        // cap to keep payload bounded
 const MAX_TEXT = 400;           // truncate each entry
 
@@ -64,6 +66,7 @@ function consoleFinding({ url, msg }) {
     location: url,
     description: `console.${type}: ${text}`,
     source: 'runtime-diagnostics',
+    evaluator_id: EVALUATOR_IDS.RUNTIME_DIAGNOSTICS,
     evaluatorVersion: 'rt-1',
     confidence: type === 'error' ? 0.9 : 0.75,
     evidenceType: `console-${type}`,
@@ -80,6 +83,7 @@ function pageErrorFinding({ url, error }) {
     location: url,
     description: `Uncaught exception: ${text}`,
     source: 'runtime-diagnostics',
+    evaluator_id: EVALUATOR_IDS.RUNTIME_DIAGNOSTICS,
     evaluatorVersion: 'rt-1',
     confidence: 0.95,
     evidenceType: 'uncaught-exception',
@@ -99,6 +103,7 @@ function requestFailedFinding({ pageUrl, request }) {
     location: pageUrl,
     description: `Failed ${method} ${reqUrl} (${errorText})`,
     source: 'runtime-diagnostics',
+    evaluator_id: EVALUATOR_IDS.RUNTIME_DIAGNOSTICS,
     evaluatorVersion: 'rt-1',
     confidence: 0.85,
     evidenceType: 'request-failed',
@@ -118,6 +123,7 @@ function responseStatusFinding({ pageUrl, response }) {
     location: pageUrl,
     description: `HTTP ${status} on ${reqUrl}`,
     source: 'runtime-diagnostics',
+    evaluator_id: EVALUATOR_IDS.RUNTIME_DIAGNOSTICS,
     evaluatorVersion: 'rt-1',
     confidence: 0.85,
     evidenceType: 'network-status',

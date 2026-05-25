@@ -32,6 +32,7 @@
 
 import { normalizeFindings } from './findingNormalizer.js';
 import { evaluatorsForTier, TIER } from './evaluationBudget.js';
+import { EVALUATOR_IDS } from './evaluatorIds.js';
 
 /** Emit a step event via the provided callback (best-effort, never throws). */
 function safeEmit(onStep, payload) {
@@ -49,6 +50,7 @@ function normalizeExistingPhaseBShape(phaseBFindings) {
   return phaseBFindings.map((f) => ({
     ...f,
     source: 'phase-b-playwright',
+    evaluator_id: EVALUATOR_IDS.PLAYWRIGHT,
     evaluatorVersion: 'phase-b-1',
     confidence: typeof f.confidence === 'number' ? f.confidence : 0.85,
     evidenceType: f.evidenceType ?? f.category ?? 'phase-b',

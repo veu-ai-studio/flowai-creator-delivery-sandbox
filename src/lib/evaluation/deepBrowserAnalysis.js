@@ -5,6 +5,7 @@
 // It emits bounded, redacted runtime/DOM/asset evidence only.
 
 import { createHash } from 'node:crypto';
+import { EVALUATOR_IDS } from './evaluatorIds.js';
 
 const MAX_CONSOLE = 100;
 const MAX_NETWORK = 200;
@@ -125,6 +126,7 @@ function buildFinding({ category, severity, location, description, detail, evide
     detail,
     source: 'deep-browser-analysis',
     generated_by: 'deep-browser-analysis',
+    evaluator_id: EVALUATOR_IDS.DEEP_BROWSER,
     evaluatorVersion: 'deep-browser-analysis-1',
     confidence: evidenceLevel === 'INFERRED' ? 0.45 : 0.8,
     evidenceType: category,

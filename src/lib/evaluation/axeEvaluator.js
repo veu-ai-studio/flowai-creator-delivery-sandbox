@@ -13,6 +13,8 @@
 //
 // CA-18 §2 dimension: accessibility (every axe finding maps here).
 
+import { EVALUATOR_IDS } from './evaluatorIds.js';
+
 const AXE_IMPACT_SEVERITY = Object.freeze({
   critical: 'high',     // axe 'critical' is a real-user blocker; mapped to high (we reserve 'critical' for blocker-blocker)
   serious:  'high',
@@ -39,6 +41,7 @@ export function normalizeAxeViolation({ url, violation }) {
     location: sampleSelector ? `${url}#${sampleSelector}` : url,
     description,
     source: 'axe-core',
+    evaluator_id: EVALUATOR_IDS.AXE_CORE,
     evaluatorVersion: 'axe-4',
     confidence: 0.95,
     evidenceType: `axe-impact:${violation?.impact ?? 'unknown'}`,
