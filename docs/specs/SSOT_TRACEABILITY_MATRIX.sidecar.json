@@ -379,9 +379,13 @@
       "evidenceFreshness": "CURRENT",
       "isNegativeControl": false,
       "implementationFiles": [
-        "api/version.js:49-58 (exposes VERCEL_GIT_COMMIT_SHA + branch via /api/version endpoint; runtime is honest about its identity)"
+        "api/version.js:49-58 (exposes VERCEL_GIT_COMMIT_SHA + branch via /api/version endpoint; runtime is honest about its identity)",
+        "src/lib/governance/deployTruth.js (builds deploy_truth.drift_check.v1 artifacts, classifies MATCH/DRIFT/BLOCKED, persists to Supabase governance_record or KV)",
+        "scripts/check-deploy-truth.mjs (queries production /api/version, compares to local HEAD, writes governance evidence)"
       ],
-      "testFiles": [],
+      "testFiles": [
+        "tests/governance/deployTruth.test.js"
+      ],
       "runtimeEvidence": [
         "Production GET https://flowai-dun.vercel.app/api/version observed at 2026-05-21T22:26:03Z returned commit='158a427293f2' (full: 158a427293f2987b287759af0b3503f7bb7d4a98), branch='flowai-v0.1', deployUrl='flowai-mil59ba8z-veu-ai-studio.vercel.app' — production currently matches the matrix HEAD commit"
       ],
@@ -390,11 +394,10 @@
       ],
       "contradictions": [],
       "gaps": [
-        "No active drift-detection script that compares /api/version's commit to HEAD and writes a governance entry.",
-        "No automated docs/audits/deploy-truth-<date>.md artifact is generated on each deploy/promotion.",
-        "Drift/parity is observable on demand via /api/version but not surfaced as a governance record — operators must query the endpoint manually."
+        "Automated deploy-truth checker exists on branch, but no post-deploy production artifact has been captured after Victor promotes the branch.",
+        "VERIFIED requires a persisted deploy_truth.drift_check.v1 artifact with status MATCH from production."
       ],
-      "nextAction": "Separate dispatch: implement an automated drift-detection script that queries /api/version, compares against the current branch HEAD, writes a governance entry of kind='deploy_truth.drift_check.v1', and persists a daily docs/audits/deploy-truth-YYYY-MM-DD.md artifact. VERIFIED requires that automated artifact, not just on-demand /api/version probing."
+      "nextAction": "After Victor deploys the branch, run scripts/check-deploy-truth.mjs against https://flowai-dun.vercel.app with Supabase or KV configured; attach the persisted deploy_truth.drift_check.v1 artifact to runtimeEvidence and promote only if status is MATCH."
     },
     {
       "claimId": "FALSE-CLAIM-AUTONOMOUS-DEPLOY",

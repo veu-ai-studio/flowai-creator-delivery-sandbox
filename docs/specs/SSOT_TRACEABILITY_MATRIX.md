@@ -115,7 +115,7 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 
 **Critical gaps.**
 
-1. **`CA18-DEPLOY-TRUTH` is `PARTIAL`** (claim 10, CRITICAL). `api/version.js` exposes the production commit so drift is observable on demand, but no automated drift-detection script or governance-write of drift exists — operators must query `/api/version` manually. A separate dispatch must implement the automated drift-check + governance entry.
+1. **`CA18-DEPLOY-TRUTH` is `PARTIAL`** (claim 10, CRITICAL). `api/version.js` exposes the production commit so drift is observable on demand, and commit `3825d14` was followed by a deploy-truth checker that emits a durable `deploy_truth.drift_check.v1` governance artifact. The claim remains `PARTIAL` until Victor deploys the checker and a post-deploy artifact is captured from production.
 2. **`CA18-EVAL-PIPELINE` is `PARTIAL` LOW confidence** (claim 5, HIGH). All four evaluators are wired and findings now carry the U1 `generated_by` provenance field (per `findingNormalizer.js` `coerceSource` + `ALLOWED_SOURCES` enum), but no production run-log captures all four evaluators' contributions with provenance — the gate explicitly requires runtime evidence, not just normalizer unit tests.
 3. **`CA18-REMEDIATION-SAFETY` is `PARTIAL` LOW confidence** (claim 7, HIGH). Rate-cap and remediation engine exist, but registry, explicit confidence threshold constants, and rollback invocation are not canonically documented.
 
@@ -200,6 +200,32 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 ### Updated completion estimate
 
 **SSOT vision completion estimate:** approximately **62%** complete on branch. This is an implementation/readiness improvement, not a VERIFIED completion jump. The VERIFIED count remains limited by live production evidence requirements.
+
+---
+
+## Section 4.3 W09 deploy-truth readiness after `3825d14`
+
+**Branch evidence covered:** commit `3825d14` wires production Migration Mode hooks into `/api/run-construction`; the follow-on deploy-truth work adds automated drift-check evidence generation for `CA18-DEPLOY-TRUTH`.
+
+`CA18-DEPLOY-TRUTH` remains **PARTIAL** until Victor deploys the branch and the checker records a production artifact. The implementation target is a persisted governance artifact of kind `deploy_truth.drift_check.v1` with this shape:
+
+```json
+{
+  "kind": "deploy_truth.drift_check.v1",
+  "checkedAt": "ISO-8601 timestamp",
+  "productionCommit": "commit from /api/version",
+  "localHeadCommit": "commit from git rev-parse HEAD",
+  "branch": "flowai-v0.1",
+  "status": "MATCH | DRIFT | BLOCKED",
+  "driftDetails": ["commits ahead of production when status is DRIFT"]
+}
+```
+
+The artifact must be persisted to the governance store (`product_ssot.governance_record` via Supabase, or KV fallback) rather than console output alone. `MATCH` is required before the row can advance toward `VERIFIED`; `DRIFT` and `BLOCKED` are honest evidence states that keep the claim `PARTIAL`.
+
+| Claim | W09 branch result | Remaining reason not `VERIFIED` |
+|---|---|---|
+| `CA18-DEPLOY-TRUTH` | Automated checker + governance artifact shape implemented after `3825d14`; artifact status is explicitly `MATCH`, `DRIFT`, or `BLOCKED`. | Needs Victor-approved deploy and a persisted production artifact showing production commit parity with the certified branch. |
 
 ---
 
