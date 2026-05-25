@@ -100,6 +100,40 @@ describe('platformDependencyMapper', () => {
     expect(manifest).toEqual([]);
   });
 
+  it('skips generated lockfiles even when they contain platform SDK references', async () => {
+    const manifest = await scanPlatformDependencies({
+      files: [{
+        file: 'package-lock.json',
+        content: JSON.stringify({
+          packages: {
+            'node_modules/@base44/sdk': {
+              version: '1.0.0',
+              resolved: 'https://registry.npmjs.org/@base44/sdk/-/sdk-1.0.0.tgz',
+            },
+          },
+        }),
+      }],
+    });
+
+    expect(manifest).toEqual([]);
+  });
+
+  it('still detects package manifest platform dependencies as evidence', async () => {
+    const manifest = await scanPlatformDependencies({
+      files: [{
+        file: 'package.json',
+        content: JSON.stringify({ dependencies: { '@base44/sdk': '^1.0.0' } }),
+      }],
+    });
+
+    expect(manifest).toHaveLength(1);
+    expect(manifest[0]).toMatchObject({
+      file: 'package.json',
+      platform: 'base44',
+      type: 'SDK_IMPORT',
+    });
+  });
+
   it('does not flag analytics, Sentry, Stripe, Supabase, or Clerk alone', async () => {
     const manifest = await scanPlatformDependencies({
       files: [{

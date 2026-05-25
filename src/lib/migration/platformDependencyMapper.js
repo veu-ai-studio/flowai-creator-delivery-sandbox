@@ -24,6 +24,7 @@ const STANDARD_THIRD_PARTY_PATTERNS = [
 
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'dist', 'build', 'coverage', '.next', '.vercel']);
 const SCANNABLE_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json', '.env', '.css', '.html']);
+const LOCKFILE_NAMES = new Set(['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml']);
 
 function normalizeSlash(value) {
   return String(value || '').replace(/\\/g, '/');
@@ -40,6 +41,12 @@ function isDatabaseSchemaFile(file) {
     normalized.endsWith('database.schema.js') ||
     normalized.endsWith('database.schema.ts')
   );
+}
+
+function isGeneratedLockfile(file) {
+  const normalized = normalizeSlash(file).toLowerCase();
+  const fileName = normalized.split('/').pop();
+  return LOCKFILE_NAMES.has(fileName);
 }
 
 function inferTypeFromMatch(match) {
@@ -233,7 +240,7 @@ export async function scanPlatformDependencies({ repoPath, files, readFile = fs.
       ? path.relative(repoPath, fileInput.absolutePath)
       : fileInput.file);
 
-    if (!relativeFile || isDatabaseSchemaFile(relativeFile)) {
+    if (!relativeFile || isDatabaseSchemaFile(relativeFile) || isGeneratedLockfile(relativeFile)) {
       continue;
     }
 
@@ -249,4 +256,5 @@ export async function scanPlatformDependencies({ repoPath, files, readFile = fs.
 
 export const __platformDependencyMapperInternals = {
   isDatabaseSchemaFile,
+  isGeneratedLockfile,
 };

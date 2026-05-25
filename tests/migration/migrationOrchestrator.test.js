@@ -142,6 +142,43 @@ describe('migrationOrchestrator', () => {
     expect(hooks.writeFile).not.toHaveBeenCalled();
   });
 
+  it('does not write package-lock.json when lockfile metadata references a platform SDK', async () => {
+    await writeFixture('package-lock.json', '{"packages":{"node_modules/@base44/sdk":{"version":"1.0.0"}}}\n');
+    const hooks = createHooks();
+
+    const summary = await runMigration({
+      sourceRepoPath,
+      targetRepoPath,
+      ...hooks,
+    });
+
+    expect(summary.totalFiles).toBe(0);
+    expect(summary.migrated).toBe(0);
+    expect(summary.blocked).toBe(0);
+    expect(summary.skipped).toBe(0);
+    expect(hooks.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('keeps package.json dependency changes in human review instead of auto-writing manifests', async () => {
+    await writeFixture('package.json', '{"dependencies":{"@base44/sdk":"^1.0.0"}}\n');
+    const hooks = createHooks();
+
+    const summary = await runMigration({
+      sourceRepoPath,
+      targetRepoPath,
+      ...hooks,
+    });
+
+    expect(summary.totalFiles).toBe(1);
+    expect(summary.migrated).toBe(0);
+    expect(summary.skipped).toBe(1);
+    expect(summary.blockers).toContainEqual({
+      file: 'package.json',
+      reason: 'DEPENDENCY_MANIFEST_REQUIRES_HUMAN_REVIEW',
+    });
+    expect(hooks.writeFile).not.toHaveBeenCalled();
+  });
+
   it('supports virtual repo files from GitHub-backed hooks', async () => {
     const files = [{ file: 'src/app.js' }];
     const writes = [];

@@ -1,4 +1,5 @@
 const DEFAULT_CONFIDENCE_THRESHOLD = 0.8;
+const DEPENDENCY_MANIFEST_NAMES = new Set(['package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml']);
 
 function normalizeSlash(value) {
   return String(value || '').replace(/\\/g, '/');
@@ -17,6 +18,12 @@ function isForbiddenPath(file) {
     normalized.endsWith('database.schema.js') ||
     normalized.endsWith('database.schema.ts')
   );
+}
+
+function isDependencyManifestPath(file) {
+  const normalized = normalizeSlash(file).toLowerCase();
+  const fileName = normalized.split('/').pop();
+  return DEPENDENCY_MANIFEST_NAMES.has(fileName);
 }
 
 function normalizeFiles(files = []) {
@@ -126,6 +133,11 @@ export function generateDirectReplacements({
       continue;
     }
 
+    if (isDependencyManifestPath(file)) {
+      results.push(buildReviewResult({ file, originalContent, findings, reason: 'DEPENDENCY_MANIFEST_REQUIRES_HUMAN_REVIEW' }));
+      continue;
+    }
+
     if (findings.some((finding) => finding.type === 'AUTH_GATE')) {
       results.push(buildReviewResult({ file, originalContent, findings, reason: 'AUTH_GATE_REQUIRES_HUMAN_REVIEW' }));
       continue;
@@ -156,4 +168,5 @@ export function generateDirectReplacements({
 
 export const __directReplacementGeneratorInternals = {
   isForbiddenPath,
+  isDependencyManifestPath,
 };

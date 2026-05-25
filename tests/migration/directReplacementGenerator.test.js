@@ -111,6 +111,28 @@ describe('directReplacementGenerator', () => {
     expect(result.reason).toBe('FORBIDDEN_PATH');
   });
 
+  it('requires human review for package manifests instead of auto-writing dependency changes', () => {
+    const [result] = generateDirectReplacements({
+      manifest: [{ ...baseFinding, file: 'package.json', match: '@base44/sdk' }],
+      files: [{ file: 'package.json', content: '{"dependencies":{"@base44/sdk":"^1.0.0"}}\n' }],
+    });
+
+    expect(result.requiresHumanReview).toBe(true);
+    expect(result.replacementContent).toBeNull();
+    expect(result.reason).toBe('DEPENDENCY_MANIFEST_REQUIRES_HUMAN_REVIEW');
+  });
+
+  it('requires human review for generated lockfiles instead of auto-writing them', () => {
+    const [result] = generateDirectReplacements({
+      manifest: [{ ...baseFinding, file: 'package-lock.json', match: '@base44/sdk' }],
+      files: [{ file: 'package-lock.json', content: '{"packages":{"node_modules/@base44/sdk":{}}}\n' }],
+    });
+
+    expect(result.requiresHumanReview).toBe(true);
+    expect(result.replacementContent).toBeNull();
+    expect(result.reason).toBe('DEPENDENCY_MANIFEST_REQUIRES_HUMAN_REVIEW');
+  });
+
   it('returns complete file replacements only', () => {
     const originalContent = [
       "import { base44Client } from './base44Client';",
