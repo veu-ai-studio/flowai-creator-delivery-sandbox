@@ -2940,4 +2940,46 @@ describe('orchestrator — UNIVERSAL mode (DISPATCH U1)', () => {
     // result envelope also surfaces them
     expect(result.skippedSteps.length).toBeGreaterThanOrEqual(3);
   });
+
+  it('writes redacted operator credential readiness at the start of registered-product runs', async () => {
+    withVercelEnv();
+    process.env.GITHUB_OPERATOR_TOKEN = 'ghp_do_not_leak';
+    process.env.VERCEL_OPERATOR_TOKEN = 'vercel_do_not_leak';
+    process.env.VERCEL_PROJECT_ID_SAIGE = 'prj_do_not_leak';
+    process.env.ANTHROPIC_API_KEY = 'anthropic_do_not_leak';
+    process.env.BROWSERLESS_API_KEY = 'browserless_do_not_leak';
+    process.env.SUPABASE_URL = 'https://supabase.example';
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [96] });
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'run-readiness', supabase: null,
+        environment: 'prd', gtmTarget: 65, maxIterations: 1, deps,
+      });
+
+      const readinessCall = deps.appendGovernanceEntry.mock.calls.find(([arg]) => (
+        arg?.entry?.kind === 'operator.credential_readiness.v1'
+      ));
+      expect(readinessCall).toBeTruthy();
+      const entry = readinessCall[0].entry;
+      expect(entry).toMatchObject({
+        runId: 'run-readiness',
+        productId: 'mypreglife',
+        mode: 'auto',
+        environment: 'prd',
+        ok: true,
+        credentials: {
+          GITHUB_OPERATOR_TOKEN: 'PRESENT',
+          VERCEL_OPERATOR_TOKEN: 'PRESENT',
+          VERCEL_ORG_ID: 'PRESENT',
+          VERCEL_PROJECT_ID_SAIGE: 'PRESENT',
+          ANTHROPIC_API_KEY: 'PRESENT',
+          BROWSERLESS_API_KEY: 'PRESENT',
+          SUPABASE_URL: 'PRESENT',
+        },
+      });
+      const serialized = JSON.stringify(entry);
+      expect(serialized).not.toContain('ghp_do_not_leak');
+      expect(serialized).not.toContain('vercel_do_not_leak');
+    } finally { clearVercelEnv(); }
+  });
 });

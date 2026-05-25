@@ -76,6 +76,7 @@ import {
   decideGtmGate,
   MINIMUM_SCORED_DIMENSIONS_FOR_GTM,
 } from '../../scoring/capabilityWeightedScore.js';
+import { buildOperatorCredentialReadinessGovernanceEntry } from '../../operatorCredentialReadiness.js';
 import { randomUUID } from 'node:crypto';
 
 export const GTM_READY_SCORE = 95;
@@ -1035,6 +1036,40 @@ export async function runOrchestration(args = {}) {
           },
       durationMs: Date.now() - t0, mode: state.mode,
     }));
+    if (!pathB) {
+      const readinessEntry = buildOperatorCredentialReadinessGovernanceEntry({
+        runId,
+        productId: product.product_id,
+        mode: state.mode,
+        environment,
+      });
+      try {
+        const readinessWrite = await _appendGovernanceEntry({
+          productId: product.product_id,
+          environment,
+          entry: readinessEntry,
+          supabase,
+        });
+        emit(makeStepLog({
+          iteration: 0, step: 1, status: readinessWrite?.written ? 'complete' : 'degraded',
+          tool: 'operator credential readiness',
+          why: 'preflight governance record for registered-product operator credentials',
+          result: { ...readinessEntry, write: readinessWrite },
+          durationMs: 0, mode: state.mode,
+        }));
+      } catch (readinessError) {
+        emit(makeStepLog({
+          iteration: 0, step: 1, status: 'degraded',
+          tool: 'operator credential readiness',
+          why: 'preflight governance record for registered-product operator credentials',
+          result: {
+            ...readinessEntry,
+            write: { written: false, reason: readinessError?.message ?? String(readinessError) },
+          },
+          durationMs: 0, mode: state.mode,
+        }));
+      }
+    }
   } catch (e) {
     return buildFailureReturn({ runId, mode: state.mode, product: null,
       orchestrationLog, iterations, failedStep: 'STEP_1',
