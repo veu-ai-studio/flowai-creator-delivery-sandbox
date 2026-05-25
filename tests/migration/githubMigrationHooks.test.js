@@ -50,6 +50,22 @@ function createFetchMock() {
   return { fetchImpl, calls };
 }
 
+function createFailingPutFetchMock() {
+  const { fetchImpl, calls } = createFetchMock();
+  const wrapped = vi.fn(async (url, options = {}) => {
+    const parsed = new URL(url);
+    if (options.method === 'PUT' && parsed.pathname === '/repos/veu-ai-studio/saige-v2/contents/src/App.jsx') {
+      calls.push({ url, options });
+      return jsonResponse({
+        message: 'Invalid request.\n\n"sha" was not supplied.',
+        errors: [{ resource: 'Commit', field: 'sha', code: 'missing_field' }],
+      }, 422);
+    }
+    return fetchImpl(url, options);
+  });
+  return { fetchImpl: wrapped, calls };
+}
+
 describe('githubMigrationHooks', () => {
   it('creates a target migration branch with idempotent naming metadata', async () => {
     const { fetchImpl, calls } = createFetchMock();
@@ -126,7 +142,66 @@ describe('githubMigrationHooks', () => {
     expect(JSON.parse(putCall.options.body)).toMatchObject({
       branch: 'flowai/migration-saige-1700000000000-run12345',
       content: Buffer.from('replacement').toString('base64'),
+      sha: 'file-sha',
     });
+  });
+
+  it('reuses the previously fetched file SHA in PUT body without a second read', async () => {
+    const { fetchImpl, calls } = createFetchMock();
+    const result = await createGithubMigrationHooks({
+      sourceRepoUrl: 'https://github.com/veu-ai-studio/saige',
+      targetRepoUrl: 'https://github.com/veu-ai-studio/saige-v2',
+      productName: 'SAIGE',
+      runId: 'run123456789',
+      token: 'token',
+      fetchImpl,
+      now: () => 1700000000000,
+    });
+
+    await result.deps.writeFile('src/App.jsx', 'replacement');
+    const fileReads = calls.filter((call) => (
+      call.options.method === 'GET' &&
+      new URL(call.url).pathname === '/repos/veu-ai-studio/saige-v2/contents/src/App.jsx'
+    ));
+    const putCall = calls.find((call) => call.options.method === 'PUT');
+
+    expect(fileReads).toHaveLength(1);
+    expect(JSON.parse(putCall.options.body).sha).toBe('file-sha');
+  });
+
+  it('surfaces sanitized GitHub PUT response details without leaking token values', async () => {
+    const { fetchImpl } = createFailingPutFetchMock();
+    const result = await createGithubMigrationHooks({
+      sourceRepoUrl: 'https://github.com/veu-ai-studio/saige',
+      targetRepoUrl: 'https://github.com/veu-ai-studio/saige-v2',
+      productName: 'SAIGE',
+      runId: 'run123456789',
+      token: 'ghp_secret_token_value',
+      fetchImpl,
+      now: () => 1700000000000,
+    });
+
+    let thrown;
+    try {
+      await result.deps.writeFile('src/App.jsx', 'replacement');
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toMatchObject({
+      code: 'GITHUB_API_ERROR',
+      status: 422,
+      statusText: 'Error',
+      githubMessage: 'Invalid request.\n\n"sha" was not supplied.',
+      githubErrors: [{ resource: 'Commit', field: 'sha', code: 'missing_field' }],
+    });
+    const serialized = JSON.stringify({
+      message: thrown.message,
+      fields: Object.fromEntries(Object.entries(thrown)),
+    });
+    expect(serialized).not.toContain('ghp_secret_token_value');
+    expect(serialized).not.toContain('Bearer');
+    expect(serialized).not.toContain('Authorization');
   });
 
   it('rejects path traversal and source-repo style writes', async () => {

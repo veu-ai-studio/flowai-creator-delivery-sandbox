@@ -270,6 +270,7 @@ The artifact must be persisted to the governance store (`product_ssot.governance
 | Fail-closed registry guard | Unregistered URLs return `Product not found in registry - register product before migrating`; registered products without `upgrade_repo` return `No upgrade repo configured for this product`. | Needs browser/API verification against production after deploy. |
 | Verification honesty | GitHub-backed `verifyBuild`, `verifyLint`, and `runFocusedTests` return `ok:false`, `degraded:true`, and `reason:GITHUB_ACTIONS_CHECK_NOT_WIRED` until observable GitHub Actions or preview checks are wired. | Needs production evidence showing either wired checks or honest degraded status. |
 | Virtual repo scan forwarding | The renewal orchestrator now forwards `scanFiles` from migration config/deps into `runMigration`, preventing `github://` target refs from falling back to local filesystem `scandir`; mapper normalization accepts GitHub Tree entries shaped as `{ path }`. | Needs production Migration Mode run evidence showing the GitHub Tree scan reaches the mapper without ENOENT. |
+| GitHub write diagnostics | Migration writes reuse the SHA fetched when capturing the original file snapshot, avoiding a second pre-PUT read; failed Contents API PUTs surface sanitized `status`, `statusText`, `githubMessage`, and `githubErrors` without token or Authorization leakage. | Needs production evidence from any failed write to confirm diagnostic detail appears in governance/logs without secrets. |
 
 ---
 

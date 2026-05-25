@@ -16,6 +16,15 @@ function makeError(code, message, extra = {}) {
   return error;
 }
 
+function sanitizedGithubErrorDetails(response) {
+  return {
+    status: response.status,
+    statusText: response.statusText || '',
+    githubMessage: typeof response.body?.message === 'string' ? response.body.message : null,
+    githubErrors: Array.isArray(response.body?.errors) ? response.body.errors : null,
+  };
+}
+
 function encodePath(filePath) {
   return String(filePath || '').split('/').map((part) => encodeURIComponent(part)).join('/');
 }
@@ -197,7 +206,7 @@ async function writeContentFile({ owner, repo, filePath, branchName, content, to
   });
   if (response.status !== 200 && response.status !== 201) {
     throw makeError('GITHUB_API_ERROR', `Unable to write ${safePath} to ${owner}/${repo}@${branchName}`, {
-      status: response.status,
+      ...sanitizedGithubErrorDetails(response),
     });
   }
   return response.body?.commit?.sha || null;
@@ -272,14 +281,16 @@ export async function createGithubMigrationHooks({
     })).content,
     writeFile: async (filePath, content) => {
       const safePath = validateRepoRelativePath(filePath);
+      let snapshot = snapshots.get(safePath);
       if (!snapshots.has(safePath)) {
-        snapshots.set(safePath, await readContentFile({
+        snapshot = await readContentFile({
           ...targetRepo,
           filePath: safePath,
           ref: branchName,
           token,
           fetchImpl,
-        }));
+        });
+        snapshots.set(safePath, snapshot);
       }
       return writeContentFile({
         ...targetRepo,
@@ -289,6 +300,7 @@ export async function createGithubMigrationHooks({
         token,
         fetchImpl,
         message: `FlowAI Migration update: ${safePath}`,
+        sha: snapshot.sha,
       });
     },
     restoreFile: async (filePath) => {
@@ -333,4 +345,5 @@ export const __githubMigrationHooksInternals = Object.freeze({
   listTreeFiles,
   readContentFile,
   writeContentFile,
+  sanitizedGithubErrorDetails,
 });
