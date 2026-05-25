@@ -14,6 +14,9 @@ const universalNavSrc = readFileSync(resolve(__dirname, '../../src/components/sh
 
 describe('FlowAI unified operating system shell', () => {
   it('splits Flow Hub Production and Workspace into distinct routes', () => {
+    expect(appSrc).toMatch(/path="\/"\s+element=\{<LegacyFlowHubRedirect \/>/);
+    expect(appSrc).toMatch(/path="\/flow-hub\/production"\s+element=\{<LandingPage \/>/);
+    expect(appSrc).toMatch(/path="\/flow-hub\/migration"\s+element=\{<LandingPage \/>/);
     expect(appSrc).toMatch(/path="\/flowai"\s+element=\{<FlowAIDashboard \/>/);
     expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<Workspace \/>/);
     expect(workspaceSrc).toContain('8-step upgrade pipeline');
@@ -47,11 +50,14 @@ describe('FlowAI unified operating system shell', () => {
   it('treats Flow Hub Production and Migration as first-class sidebar destinations', () => {
     const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
     expect(sidebarSrc).toContain('activeWhen');
-    expect(sidebarSrc).toContain('searchParams.get("mode") !== "migration"');
+    expect(sidebarSrc).toContain('pathname === "/flow-hub/production"');
+    expect(sidebarSrc).toContain('pathname === "/flow-hub/migration"');
     expect(sidebarSrc).toContain('searchParams.get("mode") === "migration"');
-    expect(sidebarSrc).toContain('path: "/"');
-    expect(sidebarSrc).toContain('path: "/?mode=migration"');
+    expect(sidebarSrc).toContain('path: "/flow-hub/production"');
+    expect(sidebarSrc).toContain('path: "/flow-hub/migration"');
     expect(landingSrc).toContain("params.get('mode') === 'migration'");
+    expect(landingSrc).toContain("location.pathname === '/flow-hub/migration'");
+    expect(landingSrc).toContain("location.pathname === '/flow-hub/production'");
     expect(landingSrc).toContain("setMode('migration')");
     expect(landingSrc).toContain('Flow Hub — Production');
     expect(landingSrc).toContain('Flow Hub — Migration');

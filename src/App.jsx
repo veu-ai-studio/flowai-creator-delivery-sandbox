@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { OrchestrationProvider } from '@/lib/OrchestrationContext';
@@ -97,6 +97,15 @@ import Workspace from './pages/Workspace';
 import Login from './pages/Login';
 import RequireAuth from '@/components/RequireAuth';
 
+function LegacyFlowHubRedirect() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const destination = params.get('mode') === 'migration'
+    ? '/flow-hub/migration'
+    : '/flow-hub/production';
+  return <Navigate to={destination} replace />;
+}
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
@@ -121,7 +130,9 @@ const AuthenticatedApp = () => {
     <ErrorBoundary>
     <Routes>
       <Route element={<AppLayout />}>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LegacyFlowHubRedirect />} />
+        <Route path="/flow-hub/production" element={<LandingPage />} />
+        <Route path="/flow-hub/migration" element={<LandingPage />} />
         <Route path="/flowai" element={<FlowAIDashboard />} />
         <Route path="/old-dashboard" element={<Dashboard />} />
 

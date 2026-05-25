@@ -572,14 +572,16 @@ export default function LandingPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('mode') === 'migration') {
+    if (location.pathname === '/flow-hub/migration' || params.get('mode') === 'migration') {
       setMode('migration');
       setActiveCard('A');
       window.requestAnimationFrame(() => {
         operationModeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
+    } else if (location.pathname === '/flow-hub/production') {
+      setMode((current) => current === 'migration' ? 'auto' : current);
     }
-  }, [location.search]);
+  }, [location.pathname, location.search]);
 
   // W6 INTEGRATION — Track C: inline construction-engine run panel.
   // Shown when the user clicks "Run FlowAI" from Card A + Auto mode.
@@ -749,7 +751,8 @@ export default function LandingPage() {
 
   const isConstructionEnginePath = activeCard === 'A' && (mode === 'auto' || mode === 'migration') && !!urlInput.trim();
   const isMigrationMode = mode === 'migration';
-  const isFocusedMigrationSetup = new URLSearchParams(location.search).get('mode') === 'migration';
+  const isFocusedMigrationSetup = location.pathname === '/flow-hub/migration'
+    || new URLSearchParams(location.search).get('mode') === 'migration';
   const isMigrationLaunchBlocked = isMigrationMode && !migrationModeEnabled;
   const migrationProductConfig = isFocusedMigrationSetup
     ? findRegisteredProductConfigForUrl(urlInput.trim())

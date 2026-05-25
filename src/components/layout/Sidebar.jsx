@@ -74,19 +74,20 @@ const navSections = [
     items: [
       {
         label: "Production",
-        path: "/",
+        path: "/flow-hub/production",
         icon: Rocket,
         tooltip: "Start the standard FlowAI product upgrade/run flow.",
-        activeWhen: ({ pathname, searchParams }) => pathname === "/" && searchParams.get("mode") !== "migration",
+        activeWhen: ({ pathname }) => pathname === "/flow-hub/production" || pathname === "/",
       },
       {
         label: "Migration",
-        path: "/?mode=migration",
+        path: "/flow-hub/migration",
         icon: GitBranch,
         tooltip: "Open Flow Hub Migration setup for platform dependency migration.",
         disabled: !MIGRATION_MODE_ENABLED_FOR_UI,
         disabledMessage: "Migration Mode requires operator enablement.",
-        activeWhen: ({ pathname, searchParams }) => pathname === "/" && searchParams.get("mode") === "migration",
+        activeWhen: ({ pathname, searchParams }) =>
+          pathname === "/flow-hub/migration" || (pathname === "/" && searchParams.get("mode") === "migration"),
       },
     ],
   },
