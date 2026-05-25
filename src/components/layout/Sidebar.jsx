@@ -181,7 +181,7 @@ function NavSection({ title, items }) {
 export default function Sidebar() {
   const navigate = useNavigate();
   const [activeRuns, setActiveRuns] = useState(() => listActiveFlowAIRuns());
-  const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns : [];
+  const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns.filter((run) => run && typeof run === 'object') : [];
 
   useEffect(() => {
     const handler = (e) => {
@@ -218,7 +218,7 @@ export default function Sidebar() {
             type="button"
             onClick={() => navigate('/runs')}
             className="flex w-full items-center justify-between gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/15"
-            title={(Array.isArray(safeActiveRuns) ? safeActiveRuns : []).map((run) => `${run.product}: ${run.progressLabel}`).join('\n')}
+            title={safeActiveRuns.map((run) => `${run.product}: ${run.progressLabel}`).join('\n')}
           >
             <span className="flex min-w-0 items-center gap-2">
               <span aria-hidden="true">🟢</span>

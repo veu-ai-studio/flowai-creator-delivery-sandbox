@@ -303,6 +303,7 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
 function CardB({ active, onActivate, description, setDescription, products, loadingProducts }) {
   const [listening, setListening] = useState(false);
   const recRef = useRef(null);
+  const productList = Array.isArray(products) ? products.filter((product) => product && typeof product === 'object') : [];
 
   const toggleVoice = (e) => {
     e.stopPropagation();
@@ -370,7 +371,7 @@ function CardB({ active, onActivate, description, setDescription, products, load
         )}
 
         {/* Load from My Products */}
-        {!loadingProducts && products.length > 0 && (
+        {!loadingProducts && productList.length > 0 && (
           <div className="relative group">
             <button
               onClick={e => e.stopPropagation()}
@@ -379,7 +380,7 @@ function CardB({ active, onActivate, description, setDescription, products, load
               <Layers className="h-3 w-3" /> Load from My Products ▾
             </button>
             <div className="absolute top-8 left-0 z-20 bg-card border border-border rounded-lg shadow-lg p-1 min-w-48 hidden group-hover:block">
-              {products.map(p => (
+              {productList.map(p => (
                 <button
                   key={p.id}
                   onClick={e => loadProduct(e, p)}
@@ -399,6 +400,7 @@ function CardB({ active, onActivate, description, setDescription, products, load
 // ─── CARD C — PASTE / UPLOAD ──────────────────────────────────────────────────
 function CardC({ active, onActivate, pastedContent, setPastedContent, uploadedFiles, setUploadedFiles, uploading, setUploading }) {
   const fileInputRef = useRef(null);
+  const uploadedFileList = Array.isArray(uploadedFiles) ? uploadedFiles.filter((file) => file && typeof file === 'object') : [];
 
   const handleFileDrop = async (e) => {
     e.preventDefault();
@@ -461,12 +463,12 @@ function CardC({ active, onActivate, pastedContent, setPastedContent, uploadedFi
       </div>
 
       {/* Uploaded files list */}
-      {uploadedFiles.length > 0 && (
+      {uploadedFileList.length > 0 && (
         <div className="space-y-1">
-          {uploadedFiles.map((f, i) => (
+          {uploadedFileList.map((f, i) => (
             <div key={i} className="flex items-center justify-between gap-2 text-[11px] text-emerald-400">
               <span className="truncate">{f.name}</span>
-              <button onClick={e => { e.stopPropagation(); setUploadedFiles(prev => prev.filter((_, j) => j !== i)); }}>
+              <button onClick={e => { e.stopPropagation(); setUploadedFiles(prev => (Array.isArray(prev) ? prev : []).filter((_, j) => j !== i)); }}>
                 <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
               </button>
             </div>
@@ -539,7 +541,7 @@ export default function LandingPage() {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   useEffect(() => {
-    base44.entities.CreatedProduct.list('-created_date').then(d => { setProducts(d); setLoadingProducts(false); }).catch(() => setLoadingProducts(false));
+    base44.entities.CreatedProduct.list('-created_date').then(d => { setProducts(Array.isArray(d) ? d : []); setLoadingProducts(false); }).catch(() => setLoadingProducts(false));
   }, []);
 
   // Active card (A | B | C | null)
@@ -688,6 +690,7 @@ export default function LandingPage() {
 
   // ── Launch ──
   const launch = () => {
+    const uploadedFileList = Array.isArray(uploadedFiles) ? uploadedFiles.filter((file) => file && typeof file === 'object') : [];
     const effectiveObjective = objective === 'custom'
       ? (customObjective.trim() || 'Custom objective')
       : OBJECTIVES.find(o => o.value === objective)?.label || objective;
@@ -709,9 +712,9 @@ export default function LandingPage() {
     } else if (activeCard === 'C') {
       const combinedContent = [
         pastedContent.trim(),
-        uploadedFiles.length > 0 ? `[Uploaded files: ${uploadedFiles.map(f => f.name).join(', ')}]` : '',
+        uploadedFileList.length > 0 ? `[Uploaded files: ${uploadedFileList.map(f => f.name).join(', ')}]` : '',
       ].filter(Boolean).join('\n\n');
-      inputs = [{ id: 1, type: 'description', value: combinedContent, name: 'Input A', file_urls: uploadedFiles.map(f => f.url) }];
+      inputs = [{ id: 1, type: 'description', value: combinedContent, name: 'Input A', file_urls: uploadedFileList.map(f => f.url) }];
       inputMethod = 'describe';
     }
 

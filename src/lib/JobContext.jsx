@@ -12,14 +12,16 @@ const STORAGE_KEY = 'flowai_jobs';
 
 function loadJobs() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed.filter((job) => job && typeof job === 'object') : [];
   } catch {
     return [];
   }
 }
 
 function saveJobs(jobs) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs.slice(-50))); // keep last 50
+  const safeJobs = Array.isArray(jobs) ? jobs.filter((job) => job && typeof job === 'object') : [];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(safeJobs.slice(-50))); // keep last 50
 }
 
 let _setJobs = null; // module-level setter so engines outside React can push updates
@@ -48,20 +50,20 @@ export function JobProvider({ children }) {
       startedAt: new Date().toISOString(),
       completedAt: null,
     };
-    setJobs(prev => [job, ...prev]);
+    setJobs(prev => [job, ...(Array.isArray(prev) ? prev.filter((item) => item && typeof item === 'object') : [])]);
     return job.id;
   }, []);
 
   const updateJob = useCallback((id, patch) => {
-    setJobs(prev => prev.map(j => j.id === id ? { ...j, ...patch } : j));
+    setJobs(prev => (Array.isArray(prev) ? prev.filter((item) => item && typeof item === 'object') : []).map(j => j.id === id ? { ...j, ...patch } : j));
   }, []);
 
   const removeJob = useCallback((id) => {
-    setJobs(prev => prev.filter(j => j.id !== id));
+    setJobs(prev => (Array.isArray(prev) ? prev.filter((item) => item && typeof item === 'object') : []).filter(j => j.id !== id));
   }, []);
 
   const clearCompleted = useCallback(() => {
-    setJobs(prev => prev.filter(j => j.status === 'running' || j.status === 'pending'));
+    setJobs(prev => (Array.isArray(prev) ? prev.filter((item) => item && typeof item === 'object') : []).filter(j => j.status === 'running' || j.status === 'pending'));
   }, []);
 
   return (
@@ -78,6 +80,6 @@ export function useJobs() {
 // Called by engine runners to push real-time updates without needing the hook
 export function pushJobUpdate(id, patch) {
   if (_setJobs) {
-    _setJobs(prev => prev.map(j => j.id === id ? { ...j, ...patch } : j));
+    _setJobs(prev => (Array.isArray(prev) ? prev.filter((item) => item && typeof item === 'object') : []).map(j => j.id === id ? { ...j, ...patch } : j));
   }
 }

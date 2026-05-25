@@ -11,6 +11,9 @@ const workspaceSrc = readFileSync(resolve(__dirname, '../../src/pages/Workspace.
 const appSrc = readFileSync(resolve(__dirname, '../../src/App.jsx'), 'utf8');
 const appLayoutSrc = readFileSync(resolve(__dirname, '../../src/components/layout/AppLayout.jsx'), 'utf8');
 const universalNavSrc = readFileSync(resolve(__dirname, '../../src/components/shared/UniversalNav.jsx'), 'utf8');
+const activeRunIndicatorSrc = readFileSync(resolve(__dirname, '../../src/components/layout/ActiveRunIndicator.jsx'), 'utf8');
+const activeJobsPanelSrc = readFileSync(resolve(__dirname, '../../src/components/jobs/ActiveJobsPanel.jsx'), 'utf8');
+const jobContextSrc = readFileSync(resolve(__dirname, '../../src/lib/JobContext.jsx'), 'utf8');
 
 describe('FlowAI unified operating system shell', () => {
   it('splits Flow Hub Production and Workspace into distinct routes', () => {
@@ -69,9 +72,38 @@ describe('FlowAI unified operating system shell', () => {
   });
 
   it('guards sidebar active-run rendering before calling map', () => {
-    expect(sidebarSrc).toContain('const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns : []');
-    expect(sidebarSrc).toContain('(Array.isArray(safeActiveRuns) ? safeActiveRuns : []).map');
+    expect(sidebarSrc).toContain("const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns.filter((run) => run && typeof run === 'object') : []");
+    expect(sidebarSrc).toContain('safeActiveRuns.map');
     expect(sidebarSrc).not.toContain('title={activeRuns.map');
+  });
+
+  it('guards Flow Hub route shell arrays before rendering active run and job panels', () => {
+    const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
+
+    expect(appSrc).toMatch(/path="\/flow-hub\/production"\s+element=\{<LandingPage \/>/);
+    expect(appSrc).toMatch(/path="\/flow-hub\/migration"\s+element=\{<LandingPage \/>/);
+    expect(appLayoutSrc).toContain('<ActiveRunIndicator />');
+    expect(appLayoutSrc).toContain('<ActiveJobsPanel />');
+
+    expect(sidebarSrc).toContain("Array.isArray(activeRuns) ? activeRuns.filter((run) => run && typeof run === 'object') : []");
+    expect(sidebarSrc).not.toContain('activeRuns.map');
+
+    expect(activeRunIndicatorSrc).toContain("Array.isArray(runs) ? runs.filter((run) => run && typeof run === 'object') : []");
+    expect(activeRunIndicatorSrc).not.toContain('runs.map');
+
+    expect(activeJobsPanelSrc).toContain("Array.isArray(jobs) ? jobs.filter((job) => job && typeof job === 'object') : []");
+    expect(activeJobsPanelSrc).toContain('Array.isArray(job.result?.apps) ? job.result.apps : []');
+    expect(activeJobsPanelSrc).not.toContain('jobs.map');
+    expect(activeJobsPanelSrc).not.toContain('jobs.filter(j');
+    expect(activeJobsPanelSrc).not.toContain('job.result.apps.map');
+
+    expect(jobContextSrc).toContain("Array.isArray(parsed) ? parsed.filter((job) => job && typeof job === 'object') : []");
+    expect(jobContextSrc).not.toContain('return parsed');
+
+    expect(landingSrc).toContain("Array.isArray(products) ? products.filter((product) => product && typeof product === 'object') : []");
+    expect(landingSrc).toContain("Array.isArray(uploadedFiles) ? uploadedFiles.filter((file) => file && typeof file === 'object') : []");
+    expect(landingSrc).not.toContain('products.map');
+    expect(landingSrc).not.toContain('uploadedFiles.map');
   });
 
   it('does not keep the old split launch/workspace navigation labels in the sidebar', () => {
