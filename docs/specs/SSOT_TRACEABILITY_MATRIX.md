@@ -245,6 +245,19 @@ The artifact must be persisted to the governance store (`product_ssot.governance
 ---
 
 
+## Section 4.4 W09 Migration UI branch evidence
+
+**Branch evidence covered:** the migration setup UI now keeps Step 1 and Step 3 visible on `/flow-hub/migration`, makes the product URL field the visually primary input, replaces pasted URL values instead of appending them, and surfaces an operator-secret prompt when a Migration Mode run returns `Authentication required`.
+
+**SSOT impact:** this is application-layer UI/UX and safe route behavior under Section 10 Auto Mode visibility and Section 12 Verification Honesty. It does not alter Migration Mode execution authority, platform-boundary enforcement, production deployment policy, or scoring.
+
+| Area | Branch result | Remaining reason not `VERIFIED` |
+|---|---|---|
+| Flow Hub Migration setup | URL paste is replace-only for the focused migration URL input; placeholder is `Enter product URL - e.g. https://saigeplatform.com`; Step 3 remains visible before URL entry. | Needs browser verification on production after Victor deploys. |
+| Operator authentication recovery | Migration run errors that report authentication required now show a labeled operator-secret input and retry path without exposing or persisting the secret. | Needs browser verification that Victor can enter the secret and retry successfully in production. |
+
+---
+
 ## §5 — Companion files
 
 | File | Purpose |

@@ -22,6 +22,7 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import FindingsReport from '@/components/FindingsReport';
 import {
   Loader2, CheckCircle2, XCircle, AlertTriangle,
@@ -661,7 +662,13 @@ function MigrationSummary({ migration, message }) {
   );
 }
 
-export default function RunConstructionPanel({ url, mode = 'FOREGROUND', onClose }) {
+export default function RunConstructionPanel({
+  url,
+  mode = 'FOREGROUND',
+  onClose,
+  operatorSecret = '',
+  setOperatorSecret,
+}) {
   const [status, setStatus] = useState('idle');         // idle | running | done | error
   const [steps, setSteps] = useState([]);
   const [final, setFinal] = useState(null);
@@ -683,7 +690,11 @@ export default function RunConstructionPanel({ url, mode = 'FOREGROUND', onClose
     try {
       const res = await fetch('/api/run-construction', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+          ...(operatorSecret.trim() ? { 'x-flowai-operator-secret': operatorSecret.trim() } : {}),
+        },
         body: JSON.stringify({ url, mode }),
         signal: ac.signal,
       });
@@ -757,6 +768,7 @@ export default function RunConstructionPanel({ url, mode = 'FOREGROUND', onClose
 
   const retry = () => start();
   const cancel = () => { abortRef.current?.abort(); };
+  const authRequired = status === 'error' && /auth(entication)? required/i.test(String(errorMsg || ''));
 
   return (
     <div className="rounded-xl border border-primary/40 bg-primary/5 p-5 space-y-4">
@@ -826,11 +838,30 @@ export default function RunConstructionPanel({ url, mode = 'FOREGROUND', onClose
       )}
 
       {status === 'error' && (
-        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3">
+        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 space-y-3">
           <div className="flex items-center gap-2 text-red-400 font-semibold text-xs mb-1">
             <XCircle className="h-4 w-4" /> Run failed
           </div>
           <p className="text-[11px] text-foreground/90 font-mono break-all">{errorMsg || 'SSE_STREAM_ENDED_BEFORE_FINAL - run may have timed out'}</p>
+          {authRequired && mode === 'MIGRATION' && typeof setOperatorSecret === 'function' && (
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+              <label className="block text-xs font-semibold text-amber-100" htmlFor="migration-operator-secret">
+                Operator secret
+              </label>
+              <Input
+                id="migration-operator-secret"
+                type="password"
+                value={operatorSecret}
+                onChange={(event) => setOperatorSecret(event.target.value)}
+                placeholder="Enter operator secret to continue"
+                autoComplete="off"
+                className="h-9 text-sm bg-background/80"
+              />
+              <p className="text-[11px] text-amber-100/85">
+                Enter the operator secret, then click Retry to start Migration Mode with authorization.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

@@ -42,6 +42,7 @@ describe('FlowAI positioning copy', () => {
     expect(landingSource).toContain('operatorSecret');
     expect(landingSource).toContain("'x-flowai-operator-secret'");
     expect(landingSource).toContain('Enable with Operator Secret');
+    expect(landingSource).toContain('operatorSecret={operatorSecret}');
     expect(landingSource).not.toContain('FLOWAI_OPERATOR_SECRET');
     expect(landingSource).not.toContain('VITE_FLOWAI_OPERATOR_SECRET');
     expect(landingSource).not.toMatch(/operatorSecret[\s\S]{0,240}(localStorage|sessionStorage|URLSearchParams)/);
@@ -53,5 +54,8 @@ describe('FlowAI positioning copy', () => {
     expect(runPanelSource).toContain('Files migrated');
     expect(runPanelSource).toContain('Dependencies removed');
     expect(runPanelSource).toContain('Upgrade URL');
+    expect(runPanelSource).toContain('Operator secret');
+    expect(runPanelSource).toContain("'x-flowai-operator-secret'");
+    expect(runPanelSource).toContain('authRequired && mode ===');
   });
 });

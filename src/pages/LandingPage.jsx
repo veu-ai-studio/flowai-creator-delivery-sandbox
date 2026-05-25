@@ -125,6 +125,8 @@ function FocusedMigrationSetup({
             url={runPanelUrl}
             mode="MIGRATION"
             onClose={() => setRunPanelUrl(null)}
+            operatorSecret={operatorSecret}
+            setOperatorSecret={setOperatorSecret}
           />
         ) : (
           <>
@@ -138,8 +140,18 @@ function FocusedMigrationSetup({
                 <Input
                   value={urlInput}
                   onChange={(e) => { setUrlInput(e.target.value); setActiveCard('A'); }}
-                  placeholder="Which product do you want to migrate?"
-                  className="h-10 text-sm"
+                  onPaste={(e) => {
+                    const text = e.clipboardData.getData('text/plain');
+                    if (text) {
+                      e.preventDefault();
+                      setUrlInput(text.trim());
+                      setActiveCard('A');
+                    }
+                  }}
+                  data-paste-behavior="replace"
+                  aria-label="Product URL to migrate"
+                  placeholder="Enter product URL — e.g. https://saigeplatform.com"
+                  className="h-12 text-base font-mono border-cyan-500/60 bg-cyan-500/5 ring-1 ring-cyan-500/20 placeholder:text-cyan-100/45 focus-visible:ring-cyan-400"
                 />
                 <textarea
                   value={description}
@@ -521,7 +533,8 @@ export default function LandingPage() {
             ? window.HTMLInputElement.prototype
             : window.HTMLTextAreaElement.prototype;
           const nativeInputValueSetter = Object.getOwnPropertyDescriptor(proto, 'value').set;
-          nativeInputValueSetter.call(target, target.value + text);
+          const shouldReplace = target.dataset?.pasteBehavior === 'replace';
+          nativeInputValueSetter.call(target, shouldReplace ? text : target.value + text);
           target.dispatchEvent(new Event('input', { bubbles: true }));
           target.dispatchEvent(new Event('change', { bubbles: true }));
         }

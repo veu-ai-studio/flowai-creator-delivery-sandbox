@@ -90,6 +90,10 @@ describe('FlowAI unified operating system shell', () => {
     expect(landingSrc).toContain('Upgrade repo target');
     expect(landingSrc).toContain('Estimated files');
     expect(landingSrc).toContain('Rollback');
+    expect(landingSrc).toContain('data-paste-behavior="replace"');
+    expect(landingSrc).toContain('setUrlInput(text.trim())');
+    expect(landingSrc).toContain('Enter product URL — e.g. https://saigeplatform.com');
+    expect(landingSrc).toContain('border-cyan-500/60');
   });
 
   it('keeps Flow Hub Production setup separate from focused migration setup', () => {
