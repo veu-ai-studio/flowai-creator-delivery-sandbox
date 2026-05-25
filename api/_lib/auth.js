@@ -211,6 +211,51 @@ export async function requireAuthHard(req, res) {
   return ctx;
 }
 
+export function isOperatorContext(ctx) {
+  if (!ctx?.authenticated) return false;
+  if (ctx.authMode === 'service') return true;
+  const session = ctx.clerkSession || {};
+  const candidates = [
+    session.role,
+    session.org_role,
+    session.orgRole,
+    session.publicMetadata?.role,
+    session.privateMetadata?.role,
+    session.metadata?.role,
+    session.claims?.role,
+  ].filter(Boolean);
+  return candidates.some((role) => ['admin', 'operator', 'owner'].includes(String(role).toLowerCase()));
+}
+
+function getHeader(req, name) {
+  const value = req.headers?.[name] || req.headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function hasValidOperatorSecret(req) {
+  const configured = process.env.FLOWAI_OPERATOR_SECRET;
+  if (!configured) return false;
+  const supplied = getHeader(req, 'x-flowai-operator-secret');
+  return Boolean(supplied && supplied === configured);
+}
+
+export async function requireOperatorAuth(req, res) {
+  const ctx = await getRequestContext(req);
+  if (isOperatorContext(ctx)) return ctx;
+  if (!ctx.authenticated && hasValidOperatorSecret(req)) {
+    return {
+      authenticated: true,
+      authMode: 'operator-secret',
+      orgId: resolveOrgId(req),
+      productId: resolveProductId(req),
+      userId: null,
+      clerkSession: null,
+    };
+  }
+  res.status(401).json({ error: 'Authentication required', authMode: ctx.authMode });
+  return null;
+}
+
 // Helper for endpoints that want a short-circuit version.
 export async function withContext(req, res, handler) {
   const ctx = await requireAuth(req, res);

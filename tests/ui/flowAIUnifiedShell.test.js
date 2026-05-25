@@ -71,6 +71,30 @@ describe('FlowAI unified operating system shell', () => {
     expect(landingSrc).toContain('Step 3 - Confirm and Start');
   });
 
+  it('keeps focused migration Step 2 visible before Step 3 after URL entry', () => {
+    const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
+    const step2Index = landingSrc.indexOf('Step 2 - Migration Details');
+    const step3Index = landingSrc.indexOf('Step 3 - Confirm and Start');
+
+    expect(step2Index).toBeGreaterThan(-1);
+    expect(step3Index).toBeGreaterThan(-1);
+    expect(step2Index).toBeLessThan(step3Index);
+    expect(landingSrc).toContain('{urlInput.trim() && (');
+    expect(landingSrc).toContain('Platform detected');
+    expect(landingSrc).toContain('Upgrade repo target');
+    expect(landingSrc).toContain('Estimated files');
+    expect(landingSrc).toContain('Rollback');
+  });
+
+  it('keeps Flow Hub Production setup separate from focused migration setup', () => {
+    const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
+
+    expect(landingSrc).toContain("location.pathname === '/flow-hub/production'");
+    expect(landingSrc).toContain('Start the standard product upgrade flow.');
+    expect(landingSrc).toContain('Flow Hub — Production');
+    expect(landingSrc).toContain('Enter your product URL...');
+  });
+
   it('guards sidebar active-run rendering before calling map', () => {
     expect(sidebarSrc).toContain("const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns.filter((run) => run && typeof run === 'object') : []");
     expect(sidebarSrc).toContain('safeActiveRuns.map');

@@ -96,6 +96,8 @@ function FocusedMigrationSetup({
   setMigrationModeRuntimeFlag,
   userIsOperator,
   operatorContact,
+  operatorSecret,
+  setOperatorSecret,
   detectedPlatform,
   upgradeTarget,
   estimatedFiles,
@@ -177,6 +179,7 @@ function FocusedMigrationSetup({
               </motion.section>
             )}
 
+            {urlInput.trim() && (
             <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               className="rounded-xl border border-primary/30 bg-primary/5 p-5 space-y-4">
               <div>
@@ -222,9 +225,30 @@ function FocusedMigrationSetup({
                       Enable Migration Mode
                     </Button>
                   ) : (
-                    <p className="text-xs text-amber-100 leading-relaxed">
-                      Migration Mode requires operator activation. Contact {operatorContact} to enable it.
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-xs text-amber-100 leading-relaxed">
+                        Migration Mode requires operator activation. Contact {operatorContact} to enable it.
+                      </p>
+                      <div className="space-y-2">
+                        <Input
+                          type="password"
+                          value={operatorSecret}
+                          onChange={(e) => setOperatorSecret(e.target.value)}
+                          placeholder="Emergency operator secret"
+                          autoComplete="off"
+                          className="h-9 text-xs"
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => setMigrationModeRuntimeFlag(true)}
+                          disabled={migrationFlagBusy || !operatorSecret.trim()}
+                          className="gap-2"
+                        >
+                          {migrationFlagBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitBranch className="h-4 w-4" />}
+                          Enable with Operator Secret
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
@@ -232,6 +256,7 @@ function FocusedMigrationSetup({
                 <p className="text-xs text-red-300">{migrationFlagError}</p>
               )}
             </motion.section>
+            )}
           </>
         )}
       </main>
@@ -520,15 +545,11 @@ export default function LandingPage() {
     }).catch(() => {});
   }, []);
 
-  const [operatorReadiness, setOperatorReadiness] = useState(null);
   const [migrationModeEnabled, setMigrationModeEnabled] = useState(MIGRATION_MODE_ENABLED_FOR_UI);
   const [migrationFlagBusy, setMigrationFlagBusy] = useState(false);
   const [migrationFlagError, setMigrationFlagError] = useState('');
+  const [operatorSecret, setOperatorSecret] = useState('');
   useEffect(() => {
-    fetch('/api/operator-readiness', { headers: { Accept: 'application/json' } })
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => setOperatorReadiness(data))
-      .catch(() => setOperatorReadiness(null));
     fetch('/api/operator/migration-mode', { headers: { Accept: 'application/json' } })
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
@@ -663,11 +684,13 @@ export default function LandingPage() {
     setMigrationFlagBusy(true);
     setMigrationFlagError('');
     try {
+      const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+      if (operatorSecret.trim()) headers['x-flowai-operator-secret'] = operatorSecret.trim();
       const response = await fetch(enabled
         ? '/api/operator/enable-migration-mode'
         : '/api/operator/disable-migration-mode', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers,
         credentials: 'include',
       });
       const data = await response.json().catch(() => null);
@@ -675,6 +698,7 @@ export default function LandingPage() {
         throw new Error(data?.error || data?.message || `Request failed with ${response.status}`);
       }
       setMigrationModeEnabled(Boolean(data.enabled));
+      setOperatorSecret('');
     } catch (error) {
       setMigrationFlagError(error?.message || 'Unable to update Migration Mode.');
     } finally {
@@ -771,8 +795,7 @@ export default function LandingPage() {
     && userEmail
     && FLOWAI_OPERATOR_EMAIL.toLowerCase() === userEmail.toLowerCase();
   const userIsOperator = ['admin', 'operator', 'owner'].includes(String(userRole || '').toLowerCase())
-    || operatorEmailMatches
-    || operatorReadiness?.ok === true;
+    || operatorEmailMatches;
   const operatorContact = FLOWAI_OPERATOR_EMAIL
     ? `${FLOWAI_OPERATOR_NAME} (${FLOWAI_OPERATOR_EMAIL})`
     : FLOWAI_OPERATOR_NAME !== 'FlowAI operator'
@@ -795,6 +818,8 @@ export default function LandingPage() {
         setMigrationModeRuntimeFlag={setMigrationModeRuntimeFlag}
         userIsOperator={userIsOperator}
         operatorContact={operatorContact}
+        operatorSecret={operatorSecret}
+        setOperatorSecret={setOperatorSecret}
         detectedPlatform={detectedPlatform}
         upgradeTarget={upgradeTarget}
         estimatedFiles={estimatedFiles}

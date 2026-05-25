@@ -38,6 +38,15 @@ describe('FlowAI positioning copy', () => {
     expect(landingSource).toContain('Start Migration');
   });
 
+  it('keeps the operator secret as a non-persisted emergency header only', () => {
+    expect(landingSource).toContain('operatorSecret');
+    expect(landingSource).toContain("'x-flowai-operator-secret'");
+    expect(landingSource).toContain('Enable with Operator Secret');
+    expect(landingSource).not.toContain('FLOWAI_OPERATOR_SECRET');
+    expect(landingSource).not.toContain('VITE_FLOWAI_OPERATOR_SECRET');
+    expect(landingSource).not.toMatch(/operatorSecret[\s\S]{0,240}(localStorage|sessionStorage|URLSearchParams)/);
+  });
+
   it('renders migration summaries in run results', () => {
     const runPanelSource = readFileSync(new URL('../../src/components/RunConstructionPanel.jsx', import.meta.url), 'utf8');
     expect(runPanelSource).toContain('MIGRATION MODE');

@@ -1,4 +1,4 @@
-import { requireAuthHard } from '../_lib/auth.js';
+import { requireOperatorAuth } from '../_lib/auth.js';
 import { setMigrationModeFlag } from '../../src/lib/runtimeFeatureFlags.js';
 import { withRequestLog } from '../_lib/requestLog.js';
 import { setCorsHeaders } from '../_lib/claude.js';
@@ -10,7 +10,7 @@ async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Use POST' });
 
-  const auth = await requireAuthHard(req, res);
+  const auth = await requireOperatorAuth(req, res);
   if (!auth) return;
 
   const result = await setMigrationModeFlag(false);
