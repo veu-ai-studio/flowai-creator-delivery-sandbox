@@ -179,7 +179,6 @@ function FocusedMigrationSetup({
               </motion.section>
             )}
 
-            {urlInput.trim() && (
             <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               className="rounded-xl border border-primary/30 bg-primary/5 p-5 space-y-4">
               <div>
@@ -256,7 +255,6 @@ function FocusedMigrationSetup({
                 <p className="text-xs text-red-300">{migrationFlagError}</p>
               )}
             </motion.section>
-            )}
           </>
         )}
       </main>

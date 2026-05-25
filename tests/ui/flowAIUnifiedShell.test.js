@@ -58,6 +58,9 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toContain('searchParams.get("mode") === "migration"');
     expect(sidebarSrc).toContain('path: "/flow-hub/production"');
     expect(sidebarSrc).toContain('path: "/flow-hub/migration"');
+    expect(sidebarSrc).toContain('fetch("/api/operator/migration-mode"');
+    expect(sidebarSrc).toContain('setMigrationModeEnabled(data.enabled)');
+    expect(sidebarSrc).toContain('disabled: !migrationModeEnabled');
     expect(landingSrc).toContain("params.get('mode') === 'migration'");
     expect(landingSrc).toContain("location.pathname === '/flow-hub/migration'");
     expect(landingSrc).toContain("location.pathname === '/flow-hub/production'");
@@ -71,15 +74,18 @@ describe('FlowAI unified operating system shell', () => {
     expect(landingSrc).toContain('Step 3 - Confirm and Start');
   });
 
-  it('keeps focused migration Step 2 visible before Step 3 after URL entry', () => {
+  it('keeps focused migration Step 3 visible on load and Step 2 before Step 3 after URL entry', () => {
     const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
     const step2Index = landingSrc.indexOf('Step 2 - Migration Details');
     const step3Index = landingSrc.indexOf('Step 3 - Confirm and Start');
+    const step2GuardIndex = landingSrc.indexOf('{urlInput.trim() && (');
 
     expect(step2Index).toBeGreaterThan(-1);
     expect(step3Index).toBeGreaterThan(-1);
     expect(step2Index).toBeLessThan(step3Index);
-    expect(landingSrc).toContain('{urlInput.trim() && (');
+    expect(step2GuardIndex).toBeGreaterThan(-1);
+    expect(step2GuardIndex).toBeLessThan(step2Index);
+    expect(landingSrc.slice(step2Index, step3Index)).not.toContain('{urlInput.trim() && (');
     expect(landingSrc).toContain('Platform detected');
     expect(landingSrc).toContain('Upgrade repo target');
     expect(landingSrc).toContain('Estimated files');

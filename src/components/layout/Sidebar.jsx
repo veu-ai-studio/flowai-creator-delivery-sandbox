@@ -22,7 +22,8 @@ import { listActiveFlowAIRuns, subscribeFlowAIRuns } from "@/lib/flowaiRunStore"
 const MIGRATION_MODE_ENABLED_FOR_UI =
   String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || "").toLowerCase() === "true";
 
-const navSections = [
+function getNavSections({ migrationModeEnabled = MIGRATION_MODE_ENABLED_FOR_UI } = {}) {
+  return [
   {
     title: "NAVIGATION",
     items: [
@@ -84,7 +85,7 @@ const navSections = [
         path: "/flow-hub/migration",
         icon: GitBranch,
         tooltip: "Open Flow Hub Migration setup for platform dependency migration.",
-        disabled: !MIGRATION_MODE_ENABLED_FOR_UI,
+        disabled: !migrationModeEnabled,
         disabledMessage: "Migration Mode requires operator enablement.",
         activeWhen: ({ pathname, searchParams }) =>
           pathname === "/flow-hub/migration" || (pathname === "/" && searchParams.get("mode") === "migration"),
@@ -133,6 +134,7 @@ const navSections = [
     ],
   },
 ];
+}
 
 function isActivePath(location, item) {
   const searchParams = new URLSearchParams(location.search);
@@ -181,7 +183,9 @@ function NavSection({ title, items }) {
 export default function Sidebar() {
   const navigate = useNavigate();
   const [activeRuns, setActiveRuns] = useState(() => listActiveFlowAIRuns());
+  const [migrationModeEnabled, setMigrationModeEnabled] = useState(MIGRATION_MODE_ENABLED_FOR_UI);
   const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns.filter((run) => run && typeof run === 'object') : [];
+  const navSections = getNavSections({ migrationModeEnabled });
 
   useEffect(() => {
     const handler = (e) => {
@@ -195,6 +199,19 @@ export default function Sidebar() {
   }, [navigate]);
 
   useEffect(() => subscribeFlowAIRuns(() => setActiveRuns(listActiveFlowAIRuns())), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/operator/migration-mode", { headers: { Accept: "application/json" } })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (!cancelled && typeof data?.enabled === "boolean") {
+          setMigrationModeEnabled(data.enabled);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <aside className="w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto">
