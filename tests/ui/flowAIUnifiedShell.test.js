@@ -207,6 +207,10 @@ describe('FlowAI unified operating system shell', () => {
     expect(runConstructionPanelSrc).toContain('blocker.githubMessage');
     expect(runConstructionPanelSrc).toContain('blocker.githubErrors');
     expect(runConstructionPanelSrc).toContain('GitHub: {blocker.githubMessage}');
+    expect(runConstructionPanelSrc).toContain('function formatRunError');
+    expect(runConstructionPanelSrc).toContain('GitHub status: ${status}');
+    expect(runConstructionPanelSrc).toContain('GitHub errors: ${githubErrors}');
+    expect(runConstructionPanelSrc).toContain('setErrorMsg(formatRunError(event))');
     expect(runConstructionPanelSrc).not.toContain('blocker.Authorization');
     expect(runConstructionPanelSrc).not.toContain('blocker.token');
   });

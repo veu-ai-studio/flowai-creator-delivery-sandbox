@@ -204,6 +204,36 @@ describe('githubMigrationHooks', () => {
     expect(serialized).not.toContain('Authorization');
   });
 
+  it('surfaces sanitized GitHub response details for authorization failures', async () => {
+    const fetchImpl = async () => jsonResponse({
+      message: 'Resource not accessible by personal access token',
+      documentation_url: 'https://docs.github.com/rest',
+    }, 403);
+
+    let thrown;
+    try {
+      await __githubMigrationHooksInternals.getDefaultBranch({
+        owner: 'veu-ai-studio',
+        repo: 'saige-v2',
+        token: 'ghp_secret_token_value',
+        fetchImpl,
+      });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toMatchObject({
+      code: 'GITHUB_AUTH_REQUIRED',
+      status: 403,
+      statusText: 'Error',
+      githubMessage: 'Resource not accessible by personal access token',
+    });
+    const serialized = JSON.stringify(thrown);
+    expect(serialized).not.toContain('ghp_secret_token_value');
+    expect(serialized).not.toContain('Bearer');
+    expect(serialized).not.toContain('Authorization');
+  });
+
   it('rejects path traversal and source-repo style writes', async () => {
     const { fetchImpl } = createFetchMock();
     const result = await createGithubMigrationHooks({

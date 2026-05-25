@@ -190,6 +190,23 @@ function PipelineProgressTracker({ events, status, final, errorMsg }) {
   );
 }
 
+function formatGithubErrors(errors) {
+  if (!Array.isArray(errors) || errors.length === 0) return '';
+  return errors.slice(0, 3).map((error) => (
+    typeof error === 'string' ? error : JSON.stringify(error)
+  )).join(' | ');
+}
+
+function formatRunError(event = {}) {
+  const parts = [event.error || event.code || 'unknown_error'];
+  const status = [event.status, event.statusText].filter(Boolean).join(' ');
+  if (status) parts.push(`GitHub status: ${status}`);
+  if (event.githubMessage) parts.push(`GitHub: ${event.githubMessage}`);
+  const githubErrors = formatGithubErrors(event.githubErrors);
+  if (githubErrors) parts.push(`GitHub errors: ${githubErrors}`);
+  return parts.filter(Boolean).join(' | ');
+}
+
 function StepRow({ event }) {
   const log = event.log || {};
   // DISPATCH U1 ITEM 3 — universal-mode deployment steps are honest in
@@ -771,7 +788,7 @@ export default function RunConstructionPanel({
             setFinal(event);
             setStatus('done');
           } else if (event.type === 'error') {
-            setErrorMsg(event.error || event.code || 'unknown_error');
+            setErrorMsg(formatRunError(event));
             setStatus('error');
           } else if (event.type === 'registry') {
             // Surface as informational step.

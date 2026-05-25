@@ -265,6 +265,67 @@ describe('migrationOrchestrator', () => {
     expect(serialized).not.toContain('Authorization');
   });
 
+  it('converts restore failures into sanitized blockers instead of throwing a terminal error', async () => {
+    const summary = await runMigration({
+      sourceRepoPath: 'github://veu-ai-studio/saige',
+      targetRepoPath: 'github://veu-ai-studio/saige-v2/flowai/migration-saige-1-run12345',
+      scanFiles: vi.fn(async () => [{ file: 'src/pages/app.js' }]),
+      readFile: vi.fn(async () => "import sdk from '@base44/sdk';\n"),
+      writeFile: vi.fn(async () => {}),
+      restoreFile: vi.fn(async () => {
+        const error = new Error('Unable to restore src/pages/app.js');
+        error.code = 'GITHUB_API_ERROR';
+        error.status = 403;
+        error.statusText = 'Forbidden';
+        error.githubMessage = 'Resource not accessible by personal access token';
+        throw error;
+      }),
+      verifyBuild: vi.fn(async () => ({ ok: false, output: 'build failed' })),
+      verifyLint: vi.fn(async () => ({ ok: true, output: '' })),
+      runFocusedTests: vi.fn(async () => ({ ok: true, passed: 1 })),
+    });
+
+    expect(summary.blocked).toBe(1);
+    expect(summary.blockers).toContainEqual(expect.objectContaining({
+      file: 'src/pages/app.js',
+      reason: 'RESTORE_FAILED',
+      code: 'GITHUB_API_ERROR',
+      status: 403,
+      githubMessage: 'Resource not accessible by personal access token',
+    }));
+    expect(summary.blockers).toContainEqual({ file: 'src/pages/app.js', reason: 'BUILD_FAILED' });
+  });
+
+  it('treats unavailable GitHub Actions verification as degraded evidence instead of rolling back writes', async () => {
+    const restoreFile = vi.fn();
+    const summary = await runMigration({
+      sourceRepoPath: 'github://veu-ai-studio/saige',
+      targetRepoPath: 'github://veu-ai-studio/saige-v2/flowai/migration-saige-1-run12345',
+      scanFiles: vi.fn(async () => [{ file: 'src/pages/app.js' }]),
+      readFile: vi.fn(async () => "import sdk from '@base44/sdk';\n"),
+      writeFile: vi.fn(async () => {}),
+      restoreFile,
+      verifyBuild: vi.fn(async () => ({
+        ok: false,
+        output: 'GITHUB_ACTIONS_CHECK_NOT_WIRED',
+        reason: 'GITHUB_ACTIONS_CHECK_NOT_WIRED',
+        degraded: true,
+      })),
+      verifyLint: vi.fn(async () => ({ ok: true, output: '' })),
+      runFocusedTests: vi.fn(async () => ({ ok: false, passed: 0, reason: 'GITHUB_ACTIONS_CHECK_NOT_WIRED', degraded: true })),
+    });
+
+    expect(summary.migrated).toBe(1);
+    expect(summary.blocked).toBe(0);
+    expect(summary.testsPassed).toBe(false);
+    expect(summary.blockers).toContainEqual({
+      file: 'src/pages/app.js',
+      reason: 'VERIFICATION_DEGRADED',
+      message: 'GITHUB_ACTIONS_CHECK_NOT_WIRED',
+    });
+    expect(restoreFile).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['base44 directory', 'base44/client.js', 'BASE44_DIRECTORY'],
     ['auth/session/provider file', 'src/components/AuthProvider.jsx', 'AUTH_SESSION_PROVIDER_FILE'],

@@ -25,6 +25,18 @@ function sanitizedGithubErrorDetails(response) {
   };
 }
 
+function githubErrorCode(response) {
+  return response.status === 401 || response.status === 403
+    ? 'GITHUB_AUTH_REQUIRED'
+    : 'GITHUB_API_ERROR';
+}
+
+function throwGithubError(response, message) {
+  throw makeError(githubErrorCode(response), message, {
+    ...sanitizedGithubErrorDetails(response),
+  });
+}
+
 function encodePath(filePath) {
   return String(filePath || '').split('/').map((part) => encodeURIComponent(part)).join('/');
 }
@@ -95,9 +107,6 @@ async function callGitHub({ method, pathAndQuery, token, body, fetchImpl = globa
       parsed = raw;
     }
   }
-  if (response.status === 401 || response.status === 403) {
-    throw makeError('GITHUB_AUTH_REQUIRED', `GitHub API authorization failed (${response.status})`, { status: response.status });
-  }
   return { status: response.status, statusText: response.statusText, body: parsed };
 }
 
@@ -109,7 +118,7 @@ async function getDefaultBranch({ owner, repo, token, fetchImpl }) {
     fetchImpl,
   });
   if (response.status !== 200) {
-    throw makeError('GITHUB_API_ERROR', `Unable to read repo metadata for ${owner}/${repo}`, { status: response.status });
+    throwGithubError(response, `Unable to read repo metadata for ${owner}/${repo}`);
   }
   return response.body?.default_branch || 'main';
 }
@@ -122,7 +131,7 @@ async function getBranchSha({ owner, repo, branch, token, fetchImpl }) {
     fetchImpl,
   });
   if (response.status !== 200 || !response.body?.object?.sha) {
-    throw makeError('GITHUB_API_ERROR', `Unable to read branch ${owner}/${repo}@${branch}`, { status: response.status });
+    throwGithubError(response, `Unable to read branch ${owner}/${repo}@${branch}`);
   }
   return response.body.object.sha;
 }
@@ -140,9 +149,7 @@ async function createMigrationBranch({ owner, repo, baseBranch, branchName, toke
   if (response.status === 422 && /already exists/i.test(String(response.body?.message || ''))) {
     return { branchName, baseSha: sha, alreadyExists: true };
   }
-  throw makeError('GITHUB_API_ERROR', `Unable to create migration branch ${owner}/${repo}@${branchName}`, {
-    status: response.status,
-  });
+  throwGithubError(response, `Unable to create migration branch ${owner}/${repo}@${branchName}`);
 }
 
 async function listTreeFiles({ owner, repo, ref, token, fetchImpl }) {
@@ -153,7 +160,7 @@ async function listTreeFiles({ owner, repo, ref, token, fetchImpl }) {
     fetchImpl,
   });
   if (response.status !== 200 || !Array.isArray(response.body?.tree)) {
-    throw makeError('GITHUB_API_ERROR', `Unable to list tree for ${owner}/${repo}@${ref}`, { status: response.status });
+    throwGithubError(response, `Unable to list tree for ${owner}/${repo}@${ref}`);
   }
   const files = [];
   for (const entry of response.body.tree) {
@@ -177,7 +184,7 @@ async function readContentFile({ owner, repo, filePath, ref, token, fetchImpl })
     fetchImpl,
   });
   if (response.status !== 200 || Array.isArray(response.body) || typeof response.body?.content !== 'string') {
-    throw makeError('GITHUB_API_ERROR', `Unable to read ${safePath} from ${owner}/${repo}@${ref}`, { status: response.status });
+    throwGithubError(response, `Unable to read ${safePath} from ${owner}/${repo}@${ref}`);
   }
   return {
     content: Buffer.from(response.body.content, 'base64').toString('utf8'),

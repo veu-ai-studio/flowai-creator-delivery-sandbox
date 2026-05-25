@@ -72,6 +72,10 @@ function dependenciesForFile(findings) {
   return findings.map((finding) => `${finding.file}:${finding.line}:${finding.type}:${finding.platform}`);
 }
 
+function isDegradedVerificationOnly(result) {
+  return result?.degraded === true && result?.reason === 'GITHUB_ACTIONS_CHECK_NOT_WIRED';
+}
+
 export async function runMigration({
   sourceRepoPath,
   targetRepoPath,
@@ -154,10 +158,25 @@ export async function runMigration({
     }
 
     const buildResult = await verifyBuild({ file: planItem.file });
-    const lintResult = buildResult?.ok ? await verifyLint({ file: planItem.file }) : { ok: false, output: 'build failed' };
+    const buildDegraded = isDegradedVerificationOnly(buildResult);
+    const lintResult = buildResult?.ok
+      ? await verifyLint({ file: planItem.file })
+      : buildDegraded
+        ? { ok: false, output: 'GITHUB_ACTIONS_CHECK_NOT_WIRED', reason: 'GITHUB_ACTIONS_CHECK_NOT_WIRED', degraded: true }
+        : { ok: false, output: 'build failed' };
+    const lintDegraded = isDegradedVerificationOnly(lintResult);
 
-    if (!buildResult?.ok || !lintResult?.ok) {
-      await restoreTargetFile({ targetRepoPath, restoreFile, relativeFile: planItem.file, virtualRepo });
+    if ((!buildResult?.ok && !buildDegraded) || (!lintResult?.ok && !lintDegraded)) {
+      try {
+        await restoreTargetFile({ targetRepoPath, restoreFile, relativeFile: planItem.file, virtualRepo });
+      } catch (restoreError) {
+        summary.blockers.push({
+          file: planItem.file,
+          reason: 'RESTORE_FAILED',
+          message: restoreError?.message || String(restoreError),
+          ...pickSafeErrorFields(restoreError),
+        });
+      }
       summary.blocked += 1;
       summary.buildPassed = summary.buildPassed && Boolean(buildResult?.ok);
       summary.blockers.push({
@@ -168,6 +187,13 @@ export async function runMigration({
     }
 
     summary.migrated += 1;
+    if (buildDegraded || lintDegraded) {
+      summary.blockers.push({
+        file: planItem.file,
+        reason: 'VERIFICATION_DEGRADED',
+        message: 'GITHUB_ACTIONS_CHECK_NOT_WIRED',
+      });
+    }
     summary.dependenciesRemoved.push(...dependenciesForFile(planItem.findings));
   }
 
