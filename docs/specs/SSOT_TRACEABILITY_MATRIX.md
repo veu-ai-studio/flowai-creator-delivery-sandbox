@@ -258,6 +258,19 @@ The artifact must be persisted to the governance store (`product_ssot.governance
 
 ---
 
+## Section 4.5 W09 Migration hook registry evidence
+
+**Branch evidence covered:** Migration Mode hook construction now resolves the submitted URL through `REGISTERED_PRODUCT_CONFIG` before creating runtime hooks. For SAIGE, the registered original repo (`https://github.com/veu-ai-studio/saige`) is treated as the read-only source baseline and the registered upgrade repo (`https://github.com/veu-ai-studio/saige-v2`) is treated as the only write target. The hook builder fails closed with explicit `MIGRATION_CONFIGURATION_REQUIRED` messages when a product is not registered or has no upgrade repo configured.
+
+**SSOT impact:** this strengthens Section 9 Two Versions Always Exist, Section 10 Auto Mode Behavior, Section 11 Auto-Fix Boundaries, and Section 12 Verification Honesty. The change does not bypass platform-boundary enforcement or authorize writes to original repos; it only supplies the migration orchestrator with registry-backed source/target working trees.
+
+| Area | Branch result | Remaining reason not `VERIFIED` |
+|---|---|---|
+| Registered Migration Mode repo resolution | `/api/run-construction` Migration Mode resolves `https://saigeplatform.com` to original repo `veu-ai-studio/saige` and upgrade repo `veu-ai-studio/saige-v2`, then materializes isolated runtime working trees before calling migration hooks. | Needs production Migration Mode run evidence after Victor deploys and enables the runtime flag. |
+| Fail-closed registry guard | Unregistered URLs return `Product not found in registry - register product before migrating`; registered products without `upgrade_repo` return `No upgrade repo configured for this product`. | Needs browser/API verification against production after deploy. |
+
+---
+
 ## §5 — Companion files
 
 | File | Purpose |

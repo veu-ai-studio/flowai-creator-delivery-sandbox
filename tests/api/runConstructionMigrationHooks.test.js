@@ -23,17 +23,61 @@ describe('run-construction Migration Mode hook wiring', () => {
     }
   });
 
-  it('fails closed when source and target repo paths are not configured', async () => {
+  it('fails closed when the submitted URL is not registered', async () => {
     const result = await __test.createMigrationRuntimeHooks({
       url: 'https://unregistered.example.com',
       env: {},
     });
 
     expect(result.ok).toBe(false);
-    expect(result.blockers).toEqual(expect.arrayContaining([
-      { field: 'sourceRepoPath', reason: 'missing_migration_hook' },
-      { field: 'targetRepoPath', reason: 'missing_migration_hook' },
-    ]));
+    expect(result.message).toBe('Product not found in registry - register product before migrating');
+    expect(result.blockers).toContainEqual({
+      field: 'productRegistry',
+      reason: 'product_not_found',
+      message: 'Product not found in registry - register product before migrating',
+    });
+  });
+
+  it('fails closed when a registered product has no upgrade repo configured', async () => {
+    const result = await __test.createMigrationRuntimeHooks({
+      url: 'https://reltwin.com',
+      env: {},
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.message).toBe('No upgrade repo configured for this product');
+    expect(result.blockers).toContainEqual({
+      field: 'targetRepoPath',
+      reason: 'missing_upgrade_repo',
+      message: 'No upgrade repo configured for this product',
+    });
+  });
+
+  it('resolves SAIGE source and target repos from the registered product config', async () => {
+    const cloned = [];
+    const result = await __test.createMigrationRuntimeHooks({
+      url: 'https://saigeplatform.com',
+      env: {},
+      cloneRepo: async ({ repoUrl, role }) => {
+        cloned.push({ repoUrl, role });
+        return {
+          ok: true,
+          repoPath: role === 'source' ? sourceRepoPath : targetRepoPath,
+        };
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(cloned).toEqual([
+      { repoUrl: 'https://github.com/veu-ai-studio/saige', role: 'source' },
+      { repoUrl: 'https://github.com/veu-ai-studio/saige-v2', role: 'target' },
+    ]);
+    expect(result.deps).toMatchObject({
+      sourceRepoPath: path.resolve(sourceRepoPath),
+      targetRepoPath: path.resolve(targetRepoPath),
+      sourceRepoUrl: 'https://github.com/veu-ai-studio/saige',
+      targetRepoUrl: 'https://github.com/veu-ai-studio/saige-v2',
+    });
   });
 
   it('wires all production hooks from env paths', async () => {

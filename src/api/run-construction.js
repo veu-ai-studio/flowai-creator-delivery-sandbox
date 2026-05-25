@@ -249,7 +249,7 @@ export default async function handler(req, res) {
           dependenciesRemoved: [],
           blockers: migrationHooks.blockers,
         },
-        migrationMessage: 'Migration Mode requires source/target repo paths and verification hooks before writes are allowed.',
+        migrationMessage: migrationHooks.message || 'Migration Mode requires source/target repo paths and verification hooks before writes are allowed.',
         runId,
       });
       return done();
@@ -486,7 +486,8 @@ function commandName(name) {
 
 function redactedOutput(value) {
   return String(value || '')
-    .replace(/(ghp_|github_pat_|vercel_[A-Za-z0-9_]*|sk-[A-Za-z0-9_-]+)/g, '[REDACTED]')
+    .replace(/(ghp_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+|vercel_[A-Za-z0-9_]*|sk-[A-Za-z0-9_-]+)/g, '[REDACTED]')
+    .replace(/x-access-token:[^@/\s]+@/g, 'x-access-token:[REDACTED]@')
     .slice(-8000);
 }
 
@@ -507,16 +508,152 @@ async function runRepoCommand({ cwd, command, args, timeoutMs }) {
   }
 }
 
-async function createMigrationRuntimeHooks({ url, product, env = process.env } = {}) {
+function repoNameFromUrl(repoUrl) {
+  try {
+    const parsed = new URL(repoUrl);
+    return parsed.pathname
+      .replace(/\.git$/i, '')
+      .split('/')
+      .filter(Boolean)
+      .slice(-2)
+      .join('-') || 'repo';
+  } catch {
+    return 'repo';
+  }
+}
+
+function isGithubRepoUrl(value) {
+  try {
+    const parsed = new URL(String(value || ''));
+    return parsed.protocol === 'https:' && parsed.hostname.toLowerCase() === 'github.com';
+  } catch {
+    return false;
+  }
+}
+
+function looksLikeUpgradeRepo(value) {
+  return /(?:^|[-_/])v2(?:\.git)?$/i.test(String(value || '').trim());
+}
+
+function authenticatedGithubCloneUrl(repoUrl, env) {
+  const token = firstNonEmpty(env?.GITHUB_OPERATOR_TOKEN, env?.GITHUB_PAT, env?.GITHUB_TOKEN);
+  if (!token || !isGithubRepoUrl(repoUrl)) return repoUrl;
+  const parsed = new URL(repoUrl);
+  parsed.username = 'x-access-token';
+  parsed.password = token;
+  return parsed.toString();
+}
+
+async function cloneRepoToTempPath({ repoUrl, role, env = process.env }) {
+  if (!isGithubRepoUrl(repoUrl)) {
+    return {
+      ok: false,
+      blocker: {
+        field: role === 'source' ? 'sourceRepoPath' : 'targetRepoPath',
+        reason: 'unsupported_repo_url',
+        message: `Unsupported ${role} repo URL for migration hooks`,
+      },
+    };
+  }
+
+  const repoHash = createHash('sha256').update(`${role}:${repoUrl}`).digest('hex').slice(0, 10);
+  const root = path.join('/tmp', 'flowai-migration', `${Date.now()}-${repoHash}`);
+  const repoPath = path.join(root, role, repoNameFromUrl(repoUrl));
+  await fs.rm(root, { recursive: true, force: true }).catch(() => {});
+  await fs.mkdir(path.dirname(repoPath), { recursive: true });
+
+  const cloneUrl = authenticatedGithubCloneUrl(repoUrl, env);
+  const result = await runRepoCommand({
+    cwd: path.dirname(repoPath),
+    command: 'git',
+    args: ['clone', '--depth', '1', cloneUrl, repoPath],
+    timeoutMs: Number(env.FLOWAI_MIGRATION_CLONE_TIMEOUT_MS || 120000),
+  });
+  if (!result.ok) {
+    return {
+      ok: false,
+      blocker: {
+        field: role === 'source' ? 'sourceRepoPath' : 'targetRepoPath',
+        reason: 'repo_clone_failed',
+        message: `Unable to prepare ${role} repo working tree for migration`,
+        output: redactedOutput(result.output),
+      },
+    };
+  }
+  return { ok: true, repoPath };
+}
+
+async function resolveMigrationRepoPath({
+  configuredPath,
+  repoUrl,
+  role,
+  env,
+  cloneRepo,
+}) {
+  if (configuredPath) return { ok: true, repoPath: configuredPath };
+  if (!repoUrl) {
+    return {
+      ok: false,
+      blocker: {
+        field: role === 'source' ? 'sourceRepoPath' : 'targetRepoPath',
+        reason: 'missing_migration_hook',
+      },
+    };
+  }
+  return cloneRepo({ repoUrl, role, env });
+}
+
+async function createMigrationRuntimeHooks({
+  url,
+  product,
+  env = process.env,
+  cloneRepo = cloneRepoToTempPath,
+} = {}) {
   const registeredProduct = findRegisteredProductConfigForUrl(url);
   const productConfig = { ...(registeredProduct || {}), ...(product || {}) };
-  const sourceRepoPath = firstNonEmpty(
+
+  if (!registeredProduct) {
+    return {
+      ok: false,
+      message: 'Product not found in registry - register product before migrating',
+      blockers: [{
+        field: 'productRegistry',
+        reason: 'product_not_found',
+        message: 'Product not found in registry - register product before migrating',
+      }],
+    };
+  }
+
+  const sourceRepoUrl = firstNonEmpty(
+    productConfig.original_repo,
+    productConfig.source_repo,
+    productConfig.repo,
+  );
+  const targetRepoUrl = firstNonEmpty(
+    productConfig.upgrade_repo,
+    productConfig.target_repo,
+    looksLikeUpgradeRepo(productConfig.repo) ? productConfig.repo : null,
+  );
+
+  if (!targetRepoUrl) {
+    return {
+      ok: false,
+      message: 'No upgrade repo configured for this product',
+      blockers: [{
+        field: 'targetRepoPath',
+        reason: 'missing_upgrade_repo',
+        message: 'No upgrade repo configured for this product',
+      }],
+    };
+  }
+
+  const configuredSourceRepoPath = firstNonEmpty(
     productConfig.migration_source_repo_path,
     productConfig.source_repo_path,
     productConfig.original_repo_path,
     migrationEnvValue(env, 'FLOWAI_MIGRATION_SOURCE_REPO_PATH', productConfig, url),
   );
-  const targetRepoPath = firstNonEmpty(
+  const configuredTargetRepoPath = firstNonEmpty(
     productConfig.migration_target_repo_path,
     productConfig.target_repo_path,
     productConfig.upgrade_repo_path,
@@ -524,8 +661,28 @@ async function createMigrationRuntimeHooks({ url, product, env = process.env } =
   );
   const blockers = [];
 
-  if (!sourceRepoPath) blockers.push({ field: 'sourceRepoPath', reason: 'missing_migration_hook' });
-  if (!targetRepoPath) blockers.push({ field: 'targetRepoPath', reason: 'missing_migration_hook' });
+  const sourceResolution = await resolveMigrationRepoPath({
+    configuredPath: configuredSourceRepoPath,
+    repoUrl: sourceRepoUrl,
+    role: 'source',
+    env,
+    cloneRepo,
+  });
+  const targetResolution = await resolveMigrationRepoPath({
+    configuredPath: configuredTargetRepoPath,
+    repoUrl: targetRepoUrl,
+    role: 'target',
+    env,
+    cloneRepo,
+  });
+
+  if (!sourceResolution.ok) blockers.push(sourceResolution.blocker);
+  if (!targetResolution.ok) blockers.push(targetResolution.blocker);
+  const sourceRepoPath = sourceResolution.repoPath;
+  const targetRepoPath = targetResolution.repoPath;
+
+  if (sourceResolution.ok && !sourceRepoPath) blockers.push({ field: 'sourceRepoPath', reason: 'missing_migration_hook' });
+  if (targetResolution.ok && !targetRepoPath) blockers.push({ field: 'targetRepoPath', reason: 'missing_migration_hook' });
   if (sourceRepoPath && targetRepoPath && path.resolve(sourceRepoPath) === path.resolve(targetRepoPath)) {
     blockers.push({ field: 'targetRepoPath', reason: 'target_repo_must_differ_from_source_repo' });
   }
@@ -540,7 +697,7 @@ async function createMigrationRuntimeHooks({ url, product, env = process.env } =
   }
 
   if (blockers.length > 0) {
-    return { ok: false, blockers };
+    return { ok: false, blockers, message: blockers.find((blocker) => blocker.message)?.message };
   }
 
   const resolvedSource = path.resolve(sourceRepoPath);
@@ -562,6 +719,8 @@ async function createMigrationRuntimeHooks({ url, product, env = process.env } =
   const deps = {
     sourceRepoPath: resolvedSource,
     targetRepoPath: resolvedTarget,
+    sourceRepoUrl,
+    targetRepoUrl,
     readFile: async (filePath, encoding = 'utf8') => {
       const resolved = resolveTargetPath(filePath);
       return fs.readFile(resolved, encoding);
