@@ -92,22 +92,22 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 | 7 | `CA18-REMEDIATION-SAFETY` | `PARTIAL` | `LOW` | `HIGH` | `BRANCH_ONLY` | `LIVE_RUNTIME` | true | false |
 | 8 | `CA18-UNIVERSAL-LIMIT` | `PARTIAL` | `HIGH` | `CRITICAL` | `BRANCH_ONLY` | `LIVE_RUNTIME` | true | false |
 | 9 | `CA18-AUDIT-TRAIL` | `VERIFIED` | `HIGH` | `HIGH` | `GOVERNANCE` | `GOVERNANCE_RECORD` | false | false |
-| 10 | `CA18-DEPLOY-TRUTH` | `PARTIAL` | `MEDIUM` | `CRITICAL` | `PRODUCTION` | `DEPLOYMENT_EVIDENCE` | true | false |
+| 10 | `CA18-DEPLOY-TRUTH` | `VERIFIED` | `HIGH` | `CRITICAL` | `PRODUCTION` | `DEPLOYMENT_EVIDENCE` | true | false |
 | 11 | `FALSE-CLAIM-AUTONOMOUS-DEPLOY` | `NOT_IMPLEMENTED` | `HIGH` | `CRITICAL` | `GOVERNANCE` | `MANUAL_INSPECTION` | false | **true** |
 
 ---
 
 ## §4 — Honest summary
 
-- `VERIFIED`: **1** (claim 9 — `CA18-AUDIT-TRAIL`)
-- `PARTIAL`: **9** (claims 1–8 + claim 10)
+- `VERIFIED`: **2** (claim 9 — `CA18-AUDIT-TRAIL`; claim 10 — `CA18-DEPLOY-TRUTH`)
+- `PARTIAL`: **8** (claims 1–8)
 - `STUBBED`: **0**
 - `SIMULATED`: **0**
 - `NOT_IMPLEMENTED`: **1** (claim 11 — negative control, intentional)
 - `DEFERRED`: **0**
 - `UNKNOWN`: **0**
 - Negative controls: **1**
-- Critical-severity non-VERIFIED (excluding negative controls): **3** — claims 1, 8, 10
+- Critical-severity non-VERIFIED (excluding negative controls): **2** — claims 1, 8
 
 **What changed (post-U1 advance).** `CA18-AUDIT-TRAIL` (claim 9) advanced from `PARTIAL` to `VERIFIED` because U1's orchestrator + test additions now satisfy its upgrade gate verbatim: branch tests at `tests/agents/renewal/orchestrator.test.js:2115-2141` directly assert that the `self_renewal.orchestration_complete.v1` governance entry carries a `skippedSteps[]` array where every element has `step in {7, 8, 9, 13}` and `autoFixSkippedReason = 'UNIVERSAL_NO_REPO_ACCESS'`. Per the per-claim gate ("May use governance record evidence from branch tests if governance_record entries contain skippedSteps with reasons. Does not require production deployment."), branch test evidence is sufficient. `CA18-DEPLOY-TRUTH` (claim 10) advanced from `NOT_IMPLEMENTED` to `PARTIAL` because `api/version.js:49-58` exposes `VERCEL_GIT_COMMIT_SHA` + branch and was observed in production returning `158a427293f2` at 2026-05-21T22:26:03Z - runtime honestly exposes deployment identity and currently matches the matrix HEAD, but no automated governance write of drift/parity exists yet.
 
@@ -115,9 +115,10 @@ The full machine-readable per-claim record (with `implementationFiles`, `testFil
 
 **Critical gaps.**
 
-1. **`CA18-DEPLOY-TRUTH` is `PARTIAL`** (claim 10, CRITICAL). `api/version.js` exposes the production commit so drift is observable on demand, and commit `3825d14` was followed by a deploy-truth checker that emits a durable `deploy_truth.drift_check.v1` governance artifact. The claim remains `PARTIAL` until Victor deploys the checker and a post-deploy artifact is captured from production.
-2. **`CA18-EVAL-PIPELINE` is `PARTIAL` LOW confidence** (claim 5, HIGH). All four evaluators are wired and findings now carry the U1 `generated_by` provenance field (per `findingNormalizer.js` `coerceSource` + `ALLOWED_SOURCES` enum), but no production run-log captures all four evaluators' contributions with provenance — the gate explicitly requires runtime evidence, not just normalizer unit tests.
-3. **`CA18-REMEDIATION-SAFETY` is `PARTIAL` LOW confidence** (claim 7, HIGH). Rate-cap and remediation engine exist, but registry, explicit confidence threshold constants, and rollback invocation are not canonically documented.
+1. **`CA18-URL-ANY` is `PARTIAL`** (claim 1, CRITICAL). The branch path exists, but no production arbitrary unregistered URL diagnosis-only artifact has proven the live UNIVERSAL-mode entry.
+2. **`CA18-UNIVERSAL-LIMIT` is `PARTIAL`** (claim 8, CRITICAL). Branch behavior blocks commits/PR/deploy in UNIVERSAL mode, but no production unknown-URL artifact proves no external mutation occurred.
+3. **`CA18-EVAL-PIPELINE` is `PARTIAL` LOW confidence** (claim 5, HIGH). All four evaluators are wired and findings now carry provenance, but no production run-log captures all evaluator contributions with `evaluator_id`, `evaluatorVersion`, and `source`.
+4. **`CA18-REMEDIATION-SAFETY` is `PARTIAL` LOW confidence** (claim 7, HIGH). Rate-cap and remediation engine exist, but canonical confidence thresholds, rollback policy, and production remediation evidence remain incomplete.
 
 **Negative control fires correctly.** Claim 11 (`FALSE-CLAIM-AUTONOMOUS-DEPLOY`) records as `NOT_IMPLEMENTED` with `isNegativeControl: true` and HIGH confidence. The grep+citation in `src/lib/agents/renewal/githubPrWriter.js:11-12` proves the `/merge` string appears only in comments documenting the prohibition. This row demonstrates the matrix correctly rejects false-capability claims.
 
@@ -361,6 +362,34 @@ Evidence interpretation: the production run shows measurable improvement from mi
 ### Phase 4 Task 1 claim-status guard
 
 The following claim statuses remain unchanged in Task 1: `CA18-URL-ANY`, `CA18-HONEST-URL`, `CA18-WEIGHTED-SCORE`, `CA18-DIMENSION-DISCLOSURE`, `CA18-EVAL-PIPELINE`, `CA18-DELTA-VERIFY`, `CA18-REMEDIATION-SAFETY`, `CA18-UNIVERSAL-LIMIT`, and `CA18-DEPLOY-TRUTH`. Task 2 must decide whether any of these facts satisfy the specific gates for status promotion.
+
+---
+
+## Section 4.8 Phase 4 Task 2 CA18 evidence map after `fcc442a`
+
+**Task 2 scope:** this section evaluates the production facts recorded in Section 4.7 against the explicit gates in Section 2.5. Status promotion is made only where the gate is fully satisfied by production or governance evidence.
+
+### Task 2 status decision
+
+Only `CA18-DEPLOY-TRUTH` advances from `PARTIAL` to `VERIFIED`. The promotion is supported by production `/api/version` returning `307fc1f1fca1a62a3973495ac69ff0abe2b1df55`, `/api/deploy-truth-check` returning `deploy_truth.drift_check.v1` with `status:MATCH`, and durable Supabase persistence in row `4a0e7a81-283b-4ea2-8c01-96a955ebc718`.
+
+All other CA18 claims remain `PARTIAL` because their gates require runtime artifacts that the two production runs did not yet produce. Migration success is evidence of progress, not proof of full product-upgrade completion, GTM readiness, post-fix scoring, preview deployment, or universal-mode mutation boundaries.
+
+| Claim | Task 2 classification | Evidence observed | Missing evidence / exact artifact needed |
+|---|---|---|---|
+| `CA18-URL-ANY` | Still `PARTIAL` | Registered-product runs worked against SAIGE URLs. | Production arbitrary unregistered URL diagnosis-only run showing UNIVERSAL mode entry and captured run artifact. |
+| `CA18-HONEST-URL` | Still `PARTIAL` | Migration result semantics now distinguish current upgrade URL from preview/improved URL and hide unscored trust scores. | Production artifact explicitly proving same-url/no-preview honesty and no fabricated improved URL in a no-preview result. |
+| `CA18-WEIGHTED-SCORE` | Still `PARTIAL` | SAIGE v2 run produced a visible score of `35.5/100` and baseline comparison `25.8/100`. | Production governance/run artifact containing both `rawScore` and `effectiveTrustScore` from the live scoring payload. |
+| `CA18-DIMENSION-DISCLOSURE` | Still `PARTIAL` | SAIGE v2 run produced scoring and source mapping. | Production run artifact proving all 10 dimensions were captured and disclosed through `dimensions_contributing[]`. |
+| `CA18-EVAL-PIPELINE` | Still `PARTIAL` | Branch implementation carries stable `evaluator_id`; production run reached pre-fix scoring/source mapping. | Production artifact showing `evaluator_id`, `evaluatorVersion`, and `source` for all live evaluator invocations. |
+| `CA18-DELTA-VERIFY` | Still `PARTIAL` | Migration-only score delta was observed: `25.8 → 35.5 (+9.7)`. | Successful build/fix iteration with baseline snapshot, post-fix snapshot, and computed delta artifact. |
+| `CA18-REMEDIATION-SAFETY` | Still `PARTIAL` | Production SAIGE v2 recommendations remained `recommend_only`; migration writes were allowlist-scoped. | Artifact/code evidence proving canonical confidence thresholds, rollback policy, and production remediation decision trail. |
+| `CA18-UNIVERSAL-LIMIT` | Still `PARTIAL` | Registered-product migration wrote only to `veu-ai-studio/saige-v2` migration branch; original repo untouched remains operator-reported pending durable diff/log artifact. | Production unknown-URL boundary artifact proving no branch, PR, commit, or deploy occurred in UNIVERSAL mode. |
+| `CA18-DEPLOY-TRUTH` | `VERIFIED` | `deploy_truth.drift_check.v1` returned `MATCH` for production commit `307fc1f1fca1a62a3973495ac69ff0abe2b1df55` and was persisted via Supabase row `4a0e7a81-283b-4ea2-8c01-96a955ebc718`. | None for current deployment; rerun after each Victor-approved production deploy. |
+
+### Task 2 no-status-inflation note
+
+The Run A Migration Mode facts and Run B SAIGE v2 Production Mode facts remain valuable evidence, but they do not satisfy the gates for GTM readiness, completed remediation, preview deployment, post-fix verification, weighted score disclosure, or universal-mode boundary proof. Those claims remain `PARTIAL` until the exact artifacts listed above exist.
 
 ---
 

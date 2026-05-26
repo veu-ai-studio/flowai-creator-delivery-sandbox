@@ -1,10 +1,10 @@
 {
   "schema": "ssot-traceability-matrix.sidecar.v1",
-  "generatedAt": "2026-05-24T22:31:12Z",
-  "headCommit": "8c1079245ae07b65b947f38d0bfd8f80d450d4ce",
+  "generatedAt": "2026-05-26T02:20:00Z",
+  "headCommit": "fcc442a",
   "headBranch": "flowai-v0.1",
-  "productionCommit": "UNKNOWN_AFTER_8c10792",
-  "productionDeployment": "PENDING_VICTOR_DEPLOY_APPROVAL",
+  "productionCommit": "307fc1f1fca1a62a3973495ac69ff0abe2b1df55",
+  "productionDeployment": "flowai-hx6q51uy3-veu-ai-studio.vercel.app",
   "governanceStatus": "PROPOSED_GOVERNANCE",
   "panelArtifact": "UNAVAILABLE",
   "panelArtifactSearchedAt": "docs/panel-consultations/",
@@ -366,12 +366,12 @@
       "ssotSource": "docs/CANONICAL_REFERENCE.md §CA-18 deployment-truth principle",
       "claimText": "Deployed product matches certified branch; production commit equals HEAD or drift is disclosed.",
       "runtimeExpectation": "A verification path queries the production deployment (Vercel API) for its current commit SHA and compares to HEAD; drift surfaced in governance record.",
-      "status": "PARTIAL",
-      "confidence": "MEDIUM",
+      "status": "VERIFIED",
+      "confidence": "HIGH",
       "scope": "PRODUCTION",
-      "lastVerifiedAt": "2026-05-21T22:26:03Z",
-      "verifiedAgainstCommit": "158a427293f2987b287759af0b3503f7bb7d4a98",
-      "verifiedAgainstDeployment": "flowai-mil59ba8z-veu-ai-studio.vercel.app",
+      "lastVerifiedAt": "2026-05-26T01:39:28.260Z",
+      "verifiedAgainstCommit": "307fc1f1fca1a62a3973495ac69ff0abe2b1df55",
+      "verifiedAgainstDeployment": "flowai-hx6q51uy3-veu-ai-studio.vercel.app",
       "verificationType": "DEPLOYMENT_EVIDENCE",
       "runtimeArtifactRequired": true,
       "operationalSeverity": "CRITICAL",
@@ -386,17 +386,16 @@
         "tests/governance/deployTruth.test.js"
       ],
       "runtimeEvidence": [
-        "Production GET https://flowai-dun.vercel.app/api/version observed at 2026-05-21T22:26:03Z returned commit='158a427293f2' (full: 158a427293f2987b287759af0b3503f7bb7d4a98), branch='flowai-v0.1', deployUrl='flowai-mil59ba8z-veu-ai-studio.vercel.app' — production currently matches the matrix HEAD commit"
+        "Production GET https://flowai-dun.vercel.app/api/version returned full commit '307fc1f1fca1a62a3973495ac69ff0abe2b1df55' for branch 'flowai-v0.1'.",
+        "Production GET https://flowai-dun.vercel.app/api/deploy-truth-check returned deploy_truth.drift_check.v1 with status MATCH, checkedAt '2026-05-26T01:39:28.260Z', productionCommit/localHeadCommit '307fc1f1fca1a62a3973495ac69ff0abe2b1df55', productionDeployment 'flowai-hx6q51uy3-veu-ai-studio.vercel.app', and productionEnvironment 'production'."
       ],
       "governanceEvidence": [
-        "docs/CANONICAL_REFERENCE.md §CA-18 deployment-truth principle"
+        "docs/CANONICAL_REFERENCE.md §CA-18 deployment-truth principle",
+        "Supabase product_ssot.governance_record row id '4a0e7a81-283b-4ea2-8c01-96a955ebc718' persisted deploy_truth.drift_check.v1 with status MATCH."
       ],
       "contradictions": [],
-      "gaps": [
-        "Automated deploy-truth checker exists on branch, but no post-deploy production artifact has been captured after Victor promotes the branch.",
-        "VERIFIED requires a persisted deploy_truth.drift_check.v1 artifact with status MATCH from production."
-      ],
-      "nextAction": "After Victor deploys the branch, run scripts/check-deploy-truth.mjs against https://flowai-dun.vercel.app with Supabase or KV configured; attach the persisted deploy_truth.drift_check.v1 artifact to runtimeEvidence and promote only if status is MATCH."
+      "gaps": [],
+      "nextAction": "Rerun deploy-truth checker after every Victor-approved production deploy; mark DRIFT or BLOCKED if future artifact no longer matches."
     },
     {
       "claimId": "FALSE-CLAIM-AUTONOMOUS-DEPLOY",
