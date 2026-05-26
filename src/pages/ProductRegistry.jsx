@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { productUpgradeReadiness } from '@/lib/products/portfolioReadiness';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 const VEU_SEED = [
   { name: 'SAIGE',       slug: 'saige',       live_url: 'https://saigeplatform.com',       description: 'Sustainability reporting for universities', org: 'VEU AI Studio', status: 'active' },
@@ -98,20 +99,20 @@ export default function ProductRegistry() {
     setLoading(true);
     const [apiProducts, clearance, registry] = await Promise.all([
       fetch('/api/products').then(r => r.ok ? r.json() : []).catch(() => []),
-      base44.entities.ClearanceRecord.list('-created_date').catch(() => []),
-      base44.entities.ProductRegistry.list('-created_date').catch(() => []),
+      resolveArray(base44.entities.ClearanceRecord.list('-created_date')),
+      resolveArray(base44.entities.ProductRegistry.list('-created_date')),
     ]);
 
     const cl = {};
-    clearance.forEach(r => { cl[r.product_name] = r; });
+    asArray(clearance).forEach(r => { cl[r.product_name] = r; });
     setClearanceMap(cl);
 
     const rm = {};
-    registry.forEach(r => { rm[r.product_name || r.label] = r; });
+    asArray(registry).forEach(r => { rm[r.product_name || r.label] = r; });
     setRegistryMap(rm);
 
     // Use API products if any, otherwise seed with VEU defaults
-    const list = Array.isArray(apiProducts) && apiProducts.length > 0 ? apiProducts : VEU_SEED;
+    const list = asArray(apiProducts).length > 0 ? asArray(apiProducts) : VEU_SEED;
     setProducts(list);
     setLoading(false);
   };
@@ -146,7 +147,8 @@ export default function ProductRegistry() {
     } catch {}
   };
 
-  const filtered = products.filter(p => {
+  const safeProducts = asArray(products);
+  const filtered = safeProducts.filter(p => {
     const matchSearch = !search.trim() ||
       p.name?.toLowerCase().includes(search.toLowerCase()) ||
       p.slug?.toLowerCase().includes(search.toLowerCase()) ||

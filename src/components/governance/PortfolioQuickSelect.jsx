@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { ChevronDown, Plus, Clock, Search, Loader2, Star } from 'lucide-react';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 // Pre-loaded VEU AI Studio products — shown even before DB loads
 const PRESET_PRODUCTS = [
@@ -44,17 +45,18 @@ export default function PortfolioQuickSelect({ onAdd, onEvalGoalSuggestion }) {
     setLoading(true);
     try {
       const [registry, sessions] = await Promise.all([
-        base44.entities.ProductRegistry.list('-created_date').catch(() => []),
-        base44.entities.GovernanceSession.list('-created_date', 20).catch(() => []),
+        resolveArray(base44.entities.ProductRegistry.list('-created_date')),
+        resolveArray(base44.entities.GovernanceSession.list('-created_date', 20)),
       ]);
 
       // Merge registry into presets (update scores)
+      const safeRegistry = asArray(registry);
       const merged = PRESET_PRODUCTS.map(p => {
-        const found = registry.find(r => r.url === p.url);
+        const found = safeRegistry.find(r => r.url === p.url);
         return found ? { ...p, last_score: found.last_score } : p;
       });
       // Add any extra registry items not in presets
-      registry.forEach(r => {
+      safeRegistry.forEach(r => {
         if (!merged.find(m => m.url === r.url)) {
           merged.push({ id: r.id, label: r.label || r.url, url: r.url, is_spa: r.url.includes('base44.app'), last_score: r.last_score });
         }
@@ -64,8 +66,8 @@ export default function PortfolioQuickSelect({ onAdd, onEvalGoalSuggestion }) {
       // Collect recent URLs from sessions
       const seen = new Set();
       const recent = [];
-      sessions.forEach(s => {
-        (s.urls || []).forEach(u => {
+      asArray(sessions).forEach(s => {
+        asArray(s.urls).forEach(u => {
           if (!seen.has(u.url)) { seen.add(u.url); recent.push(u.url); }
         });
       });
@@ -95,7 +97,7 @@ export default function PortfolioQuickSelect({ onAdd, onEvalGoalSuggestion }) {
     setOpen(false);
   };
 
-  const filtered = portfolioItems.filter(p =>
+  const filtered = asArray(portfolioItems).filter(p =>
     !search || p.label.toLowerCase().includes(search.toLowerCase()) || p.url.toLowerCase().includes(search.toLowerCase())
   );
 

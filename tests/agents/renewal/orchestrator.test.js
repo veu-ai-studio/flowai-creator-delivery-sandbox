@@ -493,7 +493,7 @@ describe('runOrchestration — Migration Mode hook forwarding', () => {
       deps,
     });
 
-    expect(result.exitReason).toBe('MIGRATION_IN_PROGRESS');
+    expect(result.exitReason).toBe('MIGRATION_COMPLETED');
     expect(result.migration.filesMigrated).toBe(1);
     expect(deps.runMigration).toHaveBeenCalledTimes(1);
     expect(runMigrationArgs[0].scanFiles).toBe(scanFiles);

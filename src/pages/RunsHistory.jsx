@@ -9,6 +9,7 @@ import {
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { FLOWAI_MACRO_STEPS, listFlowAIRuns, subscribeFlowAIRuns } from '@/lib/flowaiRunStore';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 const STATUS_CFG = {
   running:   { label: 'Running',      color: 'text-blue-400',     bg: 'bg-blue-400/10',     icon: Loader2 },
@@ -151,33 +152,44 @@ export default function RunsHistory() {
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
     const load = async () => {
-      const flowai = listFlowAIRuns().map(mapFlowAIRun);
-      const [auto, guided] = await Promise.all([
-        base44.entities.AutoSession.list('-started_at', 100).catch(() => []),
-        base44.entities.GuidedSession.list('-last_active_at', 100).catch(() => []),
-      ]);
-      const all = [
-        ...flowai,
-        ...auto.map(s => ({ ...s, _type: 'auto' })),
-        ...guided.map(s => ({ ...s, _type: 'guided' })),
-      ].sort((a, b) => new Date(b.started_at || b.created_date || 0) - new Date(a.started_at || a.created_date || 0));
-      setSessions(all);
-      setLoading(false);
+      setLoading(true);
+      try {
+        const flowai = asArray(listFlowAIRuns()).map(mapFlowAIRun);
+        const [auto, guided] = await Promise.all([
+          resolveArray(base44.entities.AutoSession.list('-started_at', 100)),
+          resolveArray(base44.entities.GuidedSession.list('-last_active_at', 100)),
+        ]);
+        if (cancelled) return;
+        const all = [
+          ...flowai,
+          ...auto.map(s => ({ ...s, _type: 'auto' })),
+          ...guided.map(s => ({ ...s, _type: 'guided' })),
+        ].sort((a, b) => new Date(b.started_at || b.created_date || 0) - new Date(a.started_at || a.created_date || 0));
+        setSessions(all);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     load();
-    return subscribeFlowAIRuns((runs) => {
+    const unsubscribe = subscribeFlowAIRuns((runs) => {
       setSessions((prev) => {
-        const nonFlowAI = prev.filter((session) => session._type !== 'flowai');
+        const nonFlowAI = asArray(prev).filter((session) => session._type !== 'flowai');
         return [
-          ...runs.map(mapFlowAIRun),
+          ...asArray(runs).map(mapFlowAIRun),
           ...nonFlowAI,
         ].sort((a, b) => new Date(b.started_at || b.created_date || 0) - new Date(a.started_at || a.created_date || 0));
       });
     });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
-  const filtered = sessions.filter(s => {
+  const safeSessions = asArray(sessions);
+  const filtered = safeSessions.filter(s => {
     const matchSearch = !search.trim() ||
       (s.product_name || '').toLowerCase().includes(search.toLowerCase()) ||
       (s.product_url || '').toLowerCase().includes(search.toLowerCase());
@@ -186,11 +198,11 @@ export default function RunsHistory() {
   });
 
   const stats = {
-    total: sessions.length,
-    running: sessions.filter(s => s.overall_status === 'running').length,
-    completed: sessions.filter(s => s.overall_status === 'completed').length,
-    failed: sessions.filter(s => s.overall_status === 'failed').length,
-    timedOut: sessions.filter(s => s.overall_status === 'timed_out').length,
+    total: safeSessions.length,
+    running: safeSessions.filter(s => s.overall_status === 'running').length,
+    completed: safeSessions.filter(s => s.overall_status === 'completed').length,
+    failed: safeSessions.filter(s => s.overall_status === 'failed').length,
+    timedOut: safeSessions.filter(s => s.overall_status === 'timed_out').length,
   };
 
   return (

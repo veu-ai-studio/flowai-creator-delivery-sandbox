@@ -35,7 +35,8 @@ describe('UI trust score display (DISPATCH U1 ITEM 2)', () => {
   });
 
   it('result card renders "Trust Score:" as the primary metric label', () => {
-    expect(componentSrc).toMatch(/Trust Score:\s*\{?trustScore/);
+    expect(componentSrc).toMatch(/Trust Score:\s*\{hasRealScore\s*\?\s*trustScore/);
+    expect(componentSrc).toContain("'Not scored yet'");
   });
 
   it('result card renders raw score + coverage as secondary context', () => {

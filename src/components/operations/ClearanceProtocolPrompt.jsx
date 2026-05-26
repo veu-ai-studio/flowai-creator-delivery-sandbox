@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { asArray } from '@/lib/uiDataGuards';
 
 export default function ClearanceProtocolPrompt({ sessionConfig }) {
   const navigate = useNavigate();
@@ -11,11 +12,12 @@ export default function ClearanceProtocolPrompt({ sessionConfig }) {
     // Store session context so Clearance page can pre-populate
     try {
       const existing = JSON.parse(sessionStorage.getItem('flowai_session_config') || '{}');
+      const inputs = asArray(sessionConfig?.inputs);
       sessionStorage.setItem('flowai_session_config', JSON.stringify({
         ...existing,
         clearance_prefill: {
-          product_name: sessionConfig?.inputs?.[0]?.name || 'Product',
-          product_url: sessionConfig?.inputs?.find(i => i.type === 'url')?.value || '',
+          product_name: inputs[0]?.name || 'Product',
+          product_url: inputs.find(i => i.type === 'url')?.value || '',
           objective: sessionConfig?.objective || '',
         }
       }));

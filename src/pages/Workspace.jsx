@@ -6,6 +6,7 @@ import {
   listFlowAIRuns,
   subscribeFlowAIRuns,
 } from '@/lib/flowaiRunStore';
+import { asArray } from '@/lib/uiDataGuards';
 
 const STEP_LABELS = {
   research: 'Research',
@@ -82,7 +83,8 @@ export default function Workspace() {
   useEffect(() => subscribeFlowAIRuns(setRuns), []);
 
   const activeRun = useMemo(() => {
-    return runs.find((run) => run.status === 'running' || run.status === 'paused') ?? runs[0] ?? null;
+    const safeRuns = asArray(runs);
+    return safeRuns.find((run) => run.status === 'running' || run.status === 'paused') ?? safeRuns[0] ?? null;
   }, [runs]);
 
   const originalUrl = searchParams.get('original') ?? activeRun?.originalUrl ?? activeRun?.productUrl ?? null;

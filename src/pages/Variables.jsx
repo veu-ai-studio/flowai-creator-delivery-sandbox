@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Variable, Plus, Trash2, Pencil, Check, Copy, Search, Loader2, GitBranch, AlertTriangle, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { asArray, resolveArray } from "@/lib/uiDataGuards";
 
 /**
  * Global Variable Management page.
@@ -25,18 +26,19 @@ export default function Variables() {
   const [newVal, setNewVal] = useState("");
 
   useEffect(() => {
-    base44.entities.SavedFlow.list("-updated_date", 200)
+    resolveArray(base44.entities.SavedFlow.list("-updated_date", 200))
       .then((data) => { setFlows(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
-  const flowsWithVars = flows.filter((f) => (f.variables || []).length > 0);
-  const totalVars = flows.reduce((sum, f) => sum + (f.variables?.length || 0), 0);
+  const safeFlows = asArray(flows);
+  const flowsWithVars = safeFlows.filter((f) => asArray(f.variables).length > 0);
+  const totalVars = safeFlows.reduce((sum, f) => sum + asArray(f.variables).length, 0);
 
   // Global aggregated vars across all flows (for overview)
   const globalVarMap = {};
-  flows.forEach((f) => {
-    (f.variables || []).forEach((v) => {
+  safeFlows.forEach((f) => {
+    asArray(f.variables).forEach((v) => {
       if (!globalVarMap[v.key]) globalVarMap[v.key] = { key: v.key, flows: [] };
       globalVarMap[v.key].flows.push({ flowId: f.id, flowName: f.name, value: v.value });
     });
@@ -56,7 +58,7 @@ export default function Variables() {
   // Start editing a flow's variables
   const startEdit = (flow) => {
     setEditingFlowId(flow.id);
-    setEditDraft(JSON.parse(JSON.stringify(flow.variables || [])));
+    setEditDraft(JSON.parse(JSON.stringify(asArray(flow.variables))));
     setNewKey("");
     setNewVal("");
   };
@@ -85,19 +87,19 @@ export default function Variables() {
 
   const saveEdit = async () => {
     setSaving(true);
-    const flow = flows.find((f) => f.id === editingFlowId);
+    const flow = safeFlows.find((f) => f.id === editingFlowId);
     if (!flow) { setSaving(false); return; }
     await base44.entities.SavedFlow.update(editingFlowId, { variables: editDraft });
-    setFlows((prev) => prev.map((f) => f.id === editingFlowId ? { ...f, variables: editDraft } : f));
+    setFlows((prev) => asArray(prev).map((f) => f.id === editingFlowId ? { ...f, variables: editDraft } : f));
     setSaving(false);
     setEditingFlowId(null);
     setEditDraft([]);
   };
 
   // Filter displayed flows
-  const filteredFlows = flows.filter((f) =>
-    (f.variables || []).length > 0 &&
-    (!search || (f.variables || []).some((v) => v.key.toLowerCase().includes(search.toLowerCase())))
+  const filteredFlows = safeFlows.filter((f) =>
+    asArray(f.variables).length > 0 &&
+    (!search || asArray(f.variables).some((v) => v.key.toLowerCase().includes(search.toLowerCase())))
   );
 
   return (
@@ -120,7 +122,7 @@ export default function Variables() {
         transition={{ delay: 0.1 }}
       >
         {[
-          { label: "Total Flows", value: flows.length, icon: GitBranch },
+          { label: "Total Flows", value: safeFlows.length, icon: GitBranch },
           { label: "Flows with Variables", value: flowsWithVars.length, icon: Tag },
           { label: "Total Variables", value: totalVars, icon: Variable },
         ].map(({ label, value, icon: Icon }) => (
@@ -192,18 +194,18 @@ export default function Variables() {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : flows.length === 0 ? (
+        ) : safeFlows.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card/50 min-h-[200px] flex items-center justify-center">
             <p className="text-sm text-muted-foreground">No saved flows yet. Create flows to manage variables.</p>
           </div>
         ) : (
           <div className="space-y-3">
             <AnimatePresence>
-              {flows
-                .filter((f) => !search || (f.variables || []).some((v) => v.key.toLowerCase().includes(search.toLowerCase())))
+              {safeFlows
+                .filter((f) => !search || asArray(f.variables).some((v) => v.key.toLowerCase().includes(search.toLowerCase())))
                 .map((flow) => {
                   const isEditing = editingFlowId === flow.id;
-                  const vars = isEditing ? editDraft : (flow.variables || []);
+                  const vars = isEditing ? asArray(editDraft) : asArray(flow.variables);
 
                   return (
                     <motion.div

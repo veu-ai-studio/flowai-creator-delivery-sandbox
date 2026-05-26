@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import {
   SlidersHorizontal, ListChecks, Pencil, Link2, Layers, Target,
   Zap, Clock, Wrench, Loader2, ChevronRight, Mic, MicOff, Plus, Check, X
@@ -89,14 +90,15 @@ export default function Configuration() {
   }, [modeParam]);
 
   useEffect(() => {
-    base44.entities.CreatedProduct.list('-created_date').then(data => {
+    resolveArray(base44.entities.CreatedProduct.list('-created_date')).then(data => {
       setProducts(data);
       if (data[0]) setSelectedProductId(data[0].id);
       setLoadingProducts(false);
     }).catch(() => setLoadingProducts(false));
   }, []);
 
-  const selectedProduct = products.find(p => p.id === selectedProductId);
+  const safeProducts = asArray(products);
+  const selectedProduct = safeProducts.find(p => p.id === selectedProductId);
 
   // Inline product creation
   const saveNewProduct = async () => {
@@ -109,7 +111,7 @@ export default function Configuration() {
       creation_mode: 'describe',
       created_at: new Date().toISOString(),
     });
-    const updated = [...products, created];
+    const updated = [...safeProducts, created];
     setProducts(updated);
     setSelectedProductId(created.id);
     setNewProductName('');
@@ -246,13 +248,13 @@ export default function Configuration() {
 
         {loadingProducts ? (
           <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /><span className="text-xs text-muted-foreground">Loading products…</span></div>
-        ) : products.length === 0 && !showCreateForm ? (
+        ) : safeProducts.length === 0 && !showCreateForm ? (
           <div className="rounded-lg border border-dashed border-border p-4 text-center">
             <p className="text-xs text-muted-foreground">No products yet. Click <span className="text-primary font-semibold">Create New Product</span> above to add one.</p>
           </div>
-        ) : products.length > 0 ? (
+        ) : safeProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {products.map(p => (
+            {safeProducts.map(p => (
               <button key={p.id} onClick={() => setSelectedProductId(p.id)}
                 className={`rounded-lg border p-3 text-left transition-all ${selectedProductId === p.id ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/30'}`}>
                 <div className="flex items-center gap-2">

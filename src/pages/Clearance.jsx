@@ -12,6 +12,7 @@ import ClearanceWizard from '@/components/clearance/ClearanceWizard';
 import ClearanceStatusDashboard from '@/components/clearance/ClearanceStatusDashboard';
 import ClearanceProgressTimeline from '@/components/clearance/ClearanceProgressTimeline';
 import { logAction } from '@/lib/auditLogger';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 const VEU_PRODUCTS = [
   { product_name: 'SAIGE',       base44_url: 'https://saige.base44.app',       custom_domain: 'saigeplatform.com',       target_audience: 'University sustainability directors, utility executives', category: 'Sustainability' },
@@ -52,15 +53,15 @@ export default function Clearance() {
   const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
-    base44.entities.ClearanceRecord.list('-created_date').then(recs => {
+    resolveArray(base44.entities.ClearanceRecord.list('-created_date')).then(recs => {
       const map = {};
-      recs.forEach(r => { map[r.product_name] = r; });
+      asArray(recs).forEach(r => { map[r.product_name] = r; });
       setRecords(map);
     });
     base44.auth.me().then(u => { if (u?.email) setUserEmail(u.email); }).catch(() => {});
   }, []);
 
-  const allProducts = [...VEU_PRODUCTS, ...customProducts];
+  const allProducts = [...VEU_PRODUCTS, ...asArray(customProducts)];
 
   // ── Filtered & searched products ──────────────────────────────────────────
   const filteredProducts = allProducts.filter(p => {

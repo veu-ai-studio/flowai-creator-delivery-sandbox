@@ -11,6 +11,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { listProducts, createProduct, normalizeScore, deriveSlug } from '@/lib/products/registry';
 import { productUpgradeReadiness, summarizePortfolioUpgradeReadiness } from '@/lib/products/portfolioReadiness';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 // UX-2 / Phase B — product-agnostic Portfolio Dashboard.
 // All product cards come from /api/products (org_id-scoped via auth context).
@@ -122,8 +123,8 @@ export default function PortfolioDashboard() {
 
     const [productsResult, clearance, runs] = await Promise.all([
       listProducts({ sort: '-updated_at' }),
-      base44.entities.ClearanceRecord.list('-created_date').catch(() => []),
-      base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 50).catch(() => []),
+      resolveArray(base44.entities.ClearanceRecord.list('-created_date')),
+      resolveArray(base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 50)),
     ]);
 
     if (!productsResult.ok) {
@@ -133,7 +134,7 @@ export default function PortfolioDashboard() {
       return;
     }
 
-    const items = productsResult.items;
+    const items = asArray(productsResult.items);
     // Map server shape onto UI fields. Score normalization at the read
     // boundary (registry.normalizeScore is the canonical rescale).
     const enriched = items.map(p => ({
@@ -159,14 +160,14 @@ export default function PortfolioDashboard() {
     // ClearanceRecord is keyed by product_name today (UX-2.b will rekey on
     // product_id once the join contract lands).
     const clMap = {};
-    clearance.forEach(r => { clMap[r.product_name] = r; });
+    asArray(clearance).forEach(r => { clMap[r.product_name] = r; });
     setClearanceRecords(clMap);
 
     setProducts(enriched);
     setStats({
       total: enriched.length,
-      activeRuns: runs.length,
-      demoReady: clearance.filter(r => r.overall_status === 'cleared').length,
+      activeRuns: asArray(runs).length,
+      demoReady: asArray(clearance).filter(r => r.overall_status === 'cleared').length,
       upgradeReady: upgradeSummary.readyCount,
       cost: null,
     });

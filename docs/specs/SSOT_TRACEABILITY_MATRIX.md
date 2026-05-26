@@ -279,6 +279,19 @@ The artifact must be persisted to the governance store (`product_ssot.governance
 
 ---
 
+## Section 4.6 W09 sidebar route stability evidence
+
+**Branch evidence covered:** sidebar-reachable pages now normalize API/entity results at component boundaries before calling array methods such as `.find`, `.filter`, `.map`, `.forEach`, and `.reduce`. Pipeline Run History (`/runs`) wraps Base44 history calls with bounded `resolveArray(...)` fallbacks and a `finally` loading release so malformed or hung entity calls render an honest empty state instead of an infinite spinner.
+
+**SSOT impact:** this supports Section 10 Auto Mode visibility ("Active runs must be visible from any FlowAI page" and "Run history must persist across sessions") and Section 12 Verification Honesty by keeping route failures and empty/malformed runtime data from being misrepresented as a permanent loading state or generic rendering crash. This is application-layer UI/data-boundary hardening only; it does not change platform internals, scoring, migration authority, or production deployment policy.
+
+| Area | Branch result | Remaining reason not `VERIFIED` |
+|---|---|---|
+| Sidebar route render safety | `src/lib/uiDataGuards.js` adds `asArray`, `asObject`, and `resolveArray`; sidebar-linked pages and shared panels now use those guards before array operations on API/entity/local-storage data. | Needs browser verification on production after Victor deploys, including clicking every sidebar entry. |
+| Pipeline Run History loading | `/runs` uses bounded Base44 calls, array normalization, cancellation cleanup, and `finally`-based `setLoading(false)` so history cannot spin indefinitely when AutoSession/GuidedSession calls hang or return malformed payloads. | Needs production browser verification that Pipeline Run History reaches an empty or populated state rather than spinning forever. |
+
+---
+
 ## §5 — Companion files
 
 | File | Purpose |

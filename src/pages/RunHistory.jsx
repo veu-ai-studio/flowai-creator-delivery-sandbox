@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
+import { asArray, resolveArray } from "@/lib/uiDataGuards";
 
 const STATUS_STYLES = {
   success: { icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20" },
@@ -117,13 +118,16 @@ export default function RunHistory() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [runsData, flowsData] = await Promise.all([
-      base44.entities.FlowRun.list("-created_date", 500).catch(() => []),
-      base44.entities.SavedFlow.list("-updated_date", 200).catch(() => []),
-    ]);
-    setRuns(runsData);
-    setFlows(flowsData);
-    setLoading(false);
+    try {
+      const [runsData, flowsData] = await Promise.all([
+        resolveArray(base44.entities.FlowRun.list("-created_date", 500)),
+        resolveArray(base44.entities.SavedFlow.list("-updated_date", 200)),
+      ]);
+      setRuns(runsData);
+      setFlows(flowsData);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -135,7 +139,7 @@ export default function RunHistory() {
 
   const handleRerun = async (run) => {
     // Find the saved flow and navigate to run it
-    const flow = flows.find((f) => f.id === run.flow_id);
+    const flow = asArray(flows).find((f) => f.id === run.flow_id);
     if (flow) {
       navigate("/run-flow", {
         state: { nodes: flow.nodes, edges: flow.edges, variables: flow.variables || [], flowName: flow.name, flowId: flow.id },
@@ -145,10 +149,11 @@ export default function RunHistory() {
 
   // Stats
   const stats = useMemo(() => {
-    const total = runs.length;
-    const successes = runs.filter((r) => r.status === "success").length;
-    const errors = runs.filter((r) => r.status === "error").length;
-    const durations = runs.filter((r) => r.duration_ms != null).map((r) => r.duration_ms);
+    const safeRuns = asArray(runs);
+    const total = safeRuns.length;
+    const successes = safeRuns.filter((r) => r.status === "success").length;
+    const errors = safeRuns.filter((r) => r.status === "error").length;
+    const durations = safeRuns.filter((r) => r.duration_ms != null).map((r) => r.duration_ms);
     const avgDuration = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
     const successRate = total ? Math.round((successes / total) * 100) : 0;
     return { total, successes, errors, avgDuration, successRate };
@@ -157,13 +162,13 @@ export default function RunHistory() {
   // Unique flow names for filter
   const uniqueFlows = useMemo(() => {
     const map = {};
-    runs.forEach((r) => { if (r.flow_id && r.flow_name) map[r.flow_id] = r.flow_name; });
+    asArray(runs).forEach((r) => { if (r.flow_id && r.flow_name) map[r.flow_id] = r.flow_name; });
     return Object.entries(map).map(([id, name]) => ({ id, name }));
   }, [runs]);
 
   // Filtering
   const filtered = useMemo(() => {
-    return runs.filter((r) => {
+    return asArray(runs).filter((r) => {
       if (filterStatus !== "all" && r.status !== filterStatus) return false;
       if (filterFlow !== "all" && r.flow_id !== filterFlow) return false;
       if (search && !r.flow_name?.toLowerCase().includes(search.toLowerCase())) return false;
@@ -172,6 +177,7 @@ export default function RunHistory() {
   }, [runs, filterStatus, filterFlow, search]);
 
   const statuses = ["all", "success", "error", "partial"];
+  const safeRuns = asArray(runs);
 
   return (
     <div className="p-8 lg:p-10 max-w-4xl space-y-6">
@@ -182,7 +188,7 @@ export default function RunHistory() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Flow History</h1>
           </div>
           <p className="mt-1 text-muted-foreground text-sm">
-            {runs.length} run{runs.length !== 1 ? "s" : ""} recorded
+            {safeRuns.length} run{safeRuns.length !== 1 ? "s" : ""} recorded
           </p>
         </div>
         <Button variant="ghost" size="sm" className="gap-2" onClick={fetchData} disabled={loading}>
@@ -192,7 +198,7 @@ export default function RunHistory() {
       </motion.div>
 
       {/* Stats cards */}
-      {!loading && runs.length > 0 && (
+      {!loading && safeRuns.length > 0 && (
         <motion.div
           className="grid grid-cols-2 sm:grid-cols-4 gap-3"
           initial={{ opacity: 0, y: 10 }}
@@ -232,7 +238,7 @@ export default function RunHistory() {
             >
               {s}
               {s !== "all" && (
-                <span className="ml-1.5 opacity-60">({runs.filter((r) => r.status === s).length})</span>
+                <span className="ml-1.5 opacity-60">({safeRuns.filter((r) => r.status === s).length})</span>
               )}
             </button>
           ))}

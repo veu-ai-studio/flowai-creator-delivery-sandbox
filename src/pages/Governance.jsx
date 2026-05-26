@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 const SETTINGS_KEY = 'flowai_governance_settings';
 const DEFAULT_SETTINGS = {
@@ -91,26 +92,26 @@ export default function Governance() {
     setLoading(true);
     const [[reviewJobs, approvalJobs], t, a, p, s] = await Promise.all([
       Promise.all([
-        base44.entities.Job.filter({ status: 'awaiting-review' }, '-created_date', 20).catch(() => []),
-        base44.entities.Job.filter({ status: 'awaiting-approval' }, '-created_date', 20).catch(() => []),
+        resolveArray(base44.entities.Job.filter({ status: 'awaiting-review' }, '-created_date', 20)),
+        resolveArray(base44.entities.Job.filter({ status: 'awaiting-approval' }, '-created_date', 20)),
       ]),
-      base44.entities.TestReport.list('-created_date', 20).catch(() => []),
-      base44.entities.QAAuditReport.list('-created_date', 20).catch(() => []),
-      base44.entities.ProductRegistry.list('-created_date').catch(() => []),
-      base44.entities.GovernanceSession.list('-created_date', 30).catch(() => []),
+      resolveArray(base44.entities.TestReport.list('-created_date', 20)),
+      resolveArray(base44.entities.QAAuditReport.list('-created_date', 20)),
+      resolveArray(base44.entities.ProductRegistry.list('-created_date')),
+      resolveArray(base44.entities.GovernanceSession.list('-created_date', 30)),
     ]);
     // Deduplicate by id
     const seen = new Set();
-    const allJobs = [...reviewJobs, ...approvalJobs].filter(j => {
+    const allJobs = [...asArray(reviewJobs), ...asArray(approvalJobs)].filter(j => {
       if (seen.has(j.id)) return false;
       seen.add(j.id);
       return true;
     }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     setJobs(allJobs);
-    setTestReports(t);
-    setAuditReports(a);
-    setPortfolio(p);
-    setCompletedSessions(s);
+    setTestReports(asArray(t));
+    setAuditReports(asArray(a));
+    setPortfolio(asArray(p));
+    setCompletedSessions(asArray(s));
     setLoading(false);
   };
 
@@ -121,7 +122,7 @@ export default function Governance() {
     // Also persist to database for cross-device durability
     const user = await base44.auth.me().catch(() => null);
     if (user?.email) {
-      const existing = await base44.entities.GovernanceSettings.filter({ user_email: user.email }, '-created_date', 1).catch(() => []);
+      const existing = await resolveArray(base44.entities.GovernanceSettings.filter({ user_email: user.email }, '-created_date', 1));
       if (existing[0]) {
         await base44.entities.GovernanceSettings.update(existing[0].id, { ...govSettings, user_email: user.email }).catch(() => {});
       } else {

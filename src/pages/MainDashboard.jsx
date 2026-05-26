@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import PlatformHealthWidget from '@/components/dashboard/PlatformHealthWidget';
 import { formatDistanceToNow } from 'date-fns';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 function Panel({ title, children, className = '' }) {
   return (
@@ -42,8 +43,8 @@ export default function MainDashboard() {
   // Fetch only active (in_progress / running) sessions
   const fetchSessions = async () => {
     const [autoS, guidedS] = await Promise.all([
-      base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 10).catch(() => []),
-      base44.entities.GuidedSession.filter({ overall_status: 'in_progress' }, '-last_active_at', 10).catch(() => []),
+      resolveArray(base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 10)),
+      resolveArray(base44.entities.GuidedSession.filter({ overall_status: 'in_progress' }, '-last_active_at', 10)),
     ]);
     setAutoSessions(autoS);
     setGuidedSessions(guidedS);
@@ -52,20 +53,20 @@ export default function MainDashboard() {
   useEffect(() => {
     const load = async () => {
       const [prods, clearance, jobs, testReports, audits] = await Promise.all([
-        base44.entities.ProductRegistry.list('-last_run_at', 20).catch(() => []),
-        base44.entities.ClearanceRecord.list('-created_date').catch(() => []),
-        base44.entities.Job.filter({ status: 'awaiting-review' }, '-created_date', 10).catch(() => []),
-        base44.entities.TestReport.list('-created_date', 5).catch(() => []),
-        base44.entities.QAAuditReport.list('-created_date', 5).catch(() => []),
+        resolveArray(base44.entities.ProductRegistry.list('-last_run_at', 20)),
+        resolveArray(base44.entities.ClearanceRecord.list('-created_date')),
+        resolveArray(base44.entities.Job.filter({ status: 'awaiting-review' }, '-created_date', 10)),
+        resolveArray(base44.entities.TestReport.list('-created_date', 5)),
+        resolveArray(base44.entities.QAAuditReport.list('-created_date', 5)),
       ]);
       setPortfolio(prods);
       const clMap = {};
-      clearance.forEach(r => { clMap[r.product_name] = r; });
+      asArray(clearance).forEach(r => { clMap[r.product_name] = r; });
       setClearanceRecords(clMap);
       setPendingJobs(jobs);
       const activity = [
-        ...testReports.map(r => ({ type: 'Test', desc: `Self-test: ${r.target_url}`, score: `${r.test_score_percentage}%`, date: r.created_date })),
-        ...audits.map(r => ({ type: 'Audit', desc: `Audit: ${r.url || 'unknown'}`, score: r.scores?.overall ? `${r.scores.overall}/10` : '—', date: r.created_date })),
+        ...asArray(testReports).map(r => ({ type: 'Test', desc: `Self-test: ${r.target_url}`, score: `${r.test_score_percentage}%`, date: r.created_date })),
+        ...asArray(audits).map(r => ({ type: 'Audit', desc: `Audit: ${r.url || 'unknown'}`, score: r.scores?.overall ? `${r.scores.overall}/10` : '—', date: r.created_date })),
       ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 10);
       setRecentActivity(activity);
       await fetchSessions();
