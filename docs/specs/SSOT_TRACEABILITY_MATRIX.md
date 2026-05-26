@@ -409,6 +409,18 @@ The Run A Migration Mode facts and Run B SAIGE v2 Production Mode facts remain v
 
 ---
 
+## Section 4.10 Fresh Build Task 1 branch evidence - Feature Extractor scaffold
+
+**Branch evidence covered:** Fresh Build Task 1 defines the Feature Extractor schema, constants, validation contract, and scaffold extractor. This is a contract-only branch scaffold. It does not crawl live URLs, call Browserless or Playwright, modify the existing pipeline, or expose Fresh Build in production.
+
+| claimId | Status | Scope | Description | Branch evidence | Remaining gate |
+|---|---|---|---|---|---|
+| `FRESHBUILD-FEATURE-EXTRACTOR` | `PARTIAL` | `BRANCH_ONLY` | Feature Extractor schema and contract defined; live crawl not yet wired. | `src/lib/freshBuild/featureExtractor.js`, `src/lib/freshBuild/types/featureInventory.js`, `src/lib/freshBuild/constants.js`, and `tests/freshBuild/featureExtractor.test.js`. | Wire live crawling in a later task, keep `FLOWAI_ENABLE_FRESH_BUILD` off by default until Victor enables it, and capture runtime evidence before any production-facing status promotion. |
+
+**Claim status impact:** no CA18 status promotion and no sidecar count change. This branch-only Fresh Build scaffold claim records new workstream progress while the canonical CA18 runtime claims remain governed by the existing sidecar rows.
+
+---
+
 ## §5 — Companion files
 
 | File | Purpose |
