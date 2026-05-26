@@ -609,6 +609,7 @@ function ResultCard({ final, runId, inputUrl }) {
               previewCreated={final.migration?.previewCreated === true}
             />
         }
+        <StepFailureDiagnostics final={final} />
         <FindingsReport
           deepBrowserAnalysis={final.deepBrowserAnalysis}
           fixProposals={final.fixProposals}
@@ -636,6 +637,46 @@ function ResultCard({ final, runId, inputUrl }) {
           </a>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StepFailureDiagnostics({ final }) {
+  if (final?.exitReason !== 'STEP_FAILED') return null;
+  const githubErrors = formatGithubErrors(final.githubErrors);
+  return (
+    <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 space-y-1.5">
+      <div className="flex items-center gap-2 text-red-300 font-semibold text-xs">
+        <XCircle className="h-4 w-4" /> Production Mode step failed
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] font-mono">
+        <div>
+          <p className="text-muted-foreground">Step</p>
+          <p className="text-foreground">{final.failedStep || 'UNKNOWN'}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Code</p>
+          <p className="text-foreground">{final.code || 'UNKNOWN'}</p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Status</p>
+          <p className="text-foreground">{[final.status, final.statusText].filter(Boolean).join(' ') || 'n/a'}</p>
+        </div>
+      </div>
+      {final.error && (
+        <p className="text-[11px] text-foreground/90 font-mono break-words">{final.error}</p>
+      )}
+      {final.githubMessage && (
+        <p className="text-[11px] text-amber-200 font-mono break-words">GitHub: {final.githubMessage}</p>
+      )}
+      {githubErrors && (
+        <p className="text-[11px] text-amber-200 font-mono break-words">GitHub errors: {githubErrors}</p>
+      )}
+      {final.failureArtifact?.written && (
+        <p className="text-[10px] text-muted-foreground font-mono">
+          Governance artifact: self_renewal.step_failed.v1 persisted
+        </p>
+      )}
     </div>
   );
 }

@@ -393,6 +393,22 @@ The Run A Migration Mode facts and Run B SAIGE v2 Production Mode facts remain v
 
 ---
 
+## Section 4.9 Phase 5 Task 1 branch evidence - Production Mode failure observability
+
+**Branch evidence covered:** Phase 5 Task 1 adds observability for Production Mode `STEP_FAILED` results. This is a FlowAI infrastructure change only; it does not modify SAIGE product files and does not promote any CA18 claim to `VERIFIED` by itself.
+
+| Capability | Branch result | Remaining production gate |
+|---|---|---|
+| Terminal SSE diagnostics | `/api/run-construction` now forwards `failedStep`, `error`, `code`, and allowlisted safe diagnostics (`status`, `statusText`, `githubMessage`, `githubErrors`) when the orchestrator returns `exitReason: STEP_FAILED`. | Needs Victor deploy and a SAIGE v2 Production Mode run showing the exact Build failure reason in the final SSE payload. |
+| GitHub write diagnostics | Production Mode `githubBranchWriter.js` now attaches sanitized GitHub API response details to branch/ref/content failures without exposing tokens or Authorization headers, matching the Migration Mode diagnostic posture. | Needs a live failed write or successful rerun proving actionable GitHub diagnostics are visible without secret leakage. |
+| Failure governance artifact | The orchestrator now attempts to persist `self_renewal.step_failed.v1` for returned step failures with `runId`, URL, product, mode, `failedStep`, `errorCode`, safe diagnostics, timestamp, and commit context. | Needs production governance evidence for a real `STEP_FAILED` run. |
+| SAIGE v2 registered-product context | `REGISTERED_PRODUCT_CONFIG` now treats `saige-v2.vercel.app` as a SAIGE alias while preserving original repo `veu-ai-studio/saige` as read-only baseline and upgrade repo `veu-ai-studio/saige-v2` as the write target. | Needs rerun against `https://saige-v2.vercel.app` to confirm the alias resolves to registered-product Production Mode context. |
+| UI diagnostic display | The run panel now renders Production Mode `STEP_FAILED` fields from the final payload, including GitHub status/message/errors when present. | Needs browser-visible confirmation after deploy. |
+
+**Claim status impact:** no status promotion. The change creates the missing evidence path needed for later review of `CA18-DELTA-VERIFY`, `CA18-REMEDIATION-SAFETY`, `CA18-HONEST-URL`, and `CA18-EVAL-PIPELINE`, but those claims remain `PARTIAL` until their production artifacts exist.
+
+---
+
 ## §5 — Companion files
 
 | File | Purpose |

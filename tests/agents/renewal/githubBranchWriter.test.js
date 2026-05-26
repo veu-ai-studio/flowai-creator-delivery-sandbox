@@ -438,6 +438,41 @@ describe('commitFileToBranch — error paths', () => {
       expect.unreachable('should have thrown');
     } catch (e) {
       expect(e.code).toBe('GITHUB_AUTH_FAILED');
+      expect(e.status).toBe(403);
+      expect(e.statusText).toBe('Forbidden');
+      expect(e.githubMessage).toBe('Resource not accessible by integration');
+      expect(JSON.stringify(e)).not.toContain(TOKEN);
+      expect(JSON.stringify(e)).not.toContain('Authorization');
+    }
+  });
+
+  it('surfaces sanitized GitHub PUT validation errors', async () => {
+    const fetchMock = sequencedFetch([
+      { status: 200, body: { sha: FILE_SHA_2, path: COMMIT_FILE_ARGS.filePath, type: 'file' } },
+      {
+        status: 422,
+        statusText: 'Unprocessable Entity',
+        body: {
+          message: 'Invalid request.',
+          errors: [{ resource: 'Commit', field: 'sha', code: 'missing_field' }],
+        },
+      },
+    ]);
+    try {
+      await commitFileToBranch({ ...COMMIT_FILE_ARGS, opts: { fetch: fetchMock } });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e).toMatchObject({
+        code: 'GITHUB_API_ERROR',
+        status: 422,
+        statusText: 'Unprocessable Entity',
+        githubMessage: 'Invalid request.',
+        githubErrors: [{ resource: 'Commit', field: 'sha', code: 'missing_field' }],
+      });
+      const serialized = JSON.stringify(e);
+      expect(serialized).not.toContain(TOKEN);
+      expect(serialized).not.toContain('Bearer');
+      expect(serialized).not.toContain('Authorization');
     }
   });
 

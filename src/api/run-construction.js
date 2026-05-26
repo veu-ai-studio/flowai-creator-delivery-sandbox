@@ -291,8 +291,19 @@ export default async function handler(req, res) {
   // governanceRecordId: per orchestrator STEP 14, appendGovernanceEntry
   // writes a single entry per run, correlatable by runId. We surface
   // runId (governance_record entries don't carry their own id field).
+  const stepFailedDiagnostics = result?.exitReason === 'STEP_FAILED'
+    ? {
+        failedStep: typeof result?.failedStep === 'string' ? result.failedStep : null,
+        error: typeof result?.error === 'string' ? result.error : null,
+        code: typeof result?.code === 'string' ? result.code : null,
+        ...pickSafeErrorFields(result),
+        failureArtifact: result?.failureArtifact && typeof result.failureArtifact === 'object'
+          ? result.failureArtifact : null,
+      }
+    : {};
   send({
     type: 'final',
+    ok: result?.ok === true,
     previewUrl: result?.previewUrl ?? null,
     finalScore: result?.runMode === 'MIGRATION' && result?.finalScore == null
       ? null
@@ -300,6 +311,7 @@ export default async function handler(req, res) {
     governanceRecordId: runId,
     gtmReady: !!result?.gtmReady,
     exitReason: result?.exitReason ?? 'UNKNOWN',
+    ...stepFailedDiagnostics,
     iterationsCompleted: result?.iterationsCompleted ?? 0,
     prUrl: result?.prUrl ?? null,
     // W6 INTEGRATION — STEP 4: CA-18 §2 honest disclosure forwarded

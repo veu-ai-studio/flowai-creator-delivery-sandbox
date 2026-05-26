@@ -191,4 +191,11 @@ describe('run-construction Migration Mode hook wiring', () => {
     expect(runConstructionSrc).not.toContain('Authorization:');
     expect(runConstructionSrc).not.toContain('token: e');
   });
+
+  it('preserves STEP_FAILED diagnostics on final SSE payloads', () => {
+    expect(runConstructionSrc).toContain("result?.exitReason === 'STEP_FAILED'");
+    expect(runConstructionSrc).toContain('failedStep: typeof result?.failedStep');
+    expect(runConstructionSrc).toContain('failureArtifact: result?.failureArtifact');
+    expect(runConstructionSrc).toContain('...stepFailedDiagnostics');
+  });
 });

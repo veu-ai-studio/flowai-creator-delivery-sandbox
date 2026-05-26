@@ -70,6 +70,18 @@ function makeError(code, message, extra = {}) {
   return err;
 }
 
+function sanitizedGithubDetails(response = {}) {
+  const body = response.body;
+  const githubMessage = typeof body?.message === 'string' ? body.message : null;
+  const githubErrors = Array.isArray(body?.errors) ? body.errors : null;
+  return {
+    status: response.status,
+    statusText: response.statusText,
+    ...(githubMessage ? { githubMessage } : {}),
+    ...(githubErrors ? { githubErrors } : {}),
+  };
+}
+
 /**
  * Call the GitHub API with the installation token. Centralised so the
  * Authorization header is built in exactly one place and the token can
@@ -141,7 +153,7 @@ async function getBranchSha(owner, repo, branch, token, opts) {
   throw makeError(
     classifyStatus(res.status, 'GITHUB_API_ERROR'),
     `githubBranchWriter: GET ref ${res.status} ${res.statusText} for ${owner}/${repo}@${branch}`,
-    { status: res.status },
+    sanitizedGithubDetails(res),
   );
 }
 
@@ -169,12 +181,12 @@ async function createBranch(owner, repo, branchName, sha, token, opts) {
     }
     throw makeError('GITHUB_API_ERROR',
       `githubBranchWriter: POST git/refs 422 — ${msg || 'unprocessable entity'}`,
-      { status: 422 });
+      sanitizedGithubDetails(res));
   }
   throw makeError(
     classifyStatus(res.status, 'GITHUB_API_ERROR'),
     `githubBranchWriter: POST git/refs ${res.status} ${res.statusText} for ${owner}/${repo} branch="${branchName}"`,
-    { status: res.status },
+    sanitizedGithubDetails(res),
   );
 }
 
@@ -214,7 +226,7 @@ async function getFileSha(owner, repo, filePath, ref, token, opts) {
   throw makeError(
     classifyStatus(res.status, 'GITHUB_API_ERROR'),
     `githubBranchWriter: GET contents ${res.status} ${res.statusText} for "${filePath}"`,
-    { status: res.status },
+    sanitizedGithubDetails(res),
   );
 }
 
@@ -259,7 +271,7 @@ async function putFileContent(owner, repo, filePath, branch, content, sha, messa
   throw makeError(
     classifyStatus(res.status, 'GITHUB_API_ERROR'),
     `githubBranchWriter: PUT contents ${res.status} ${res.statusText} for "${filePath}"`,
-    { status: res.status },
+    sanitizedGithubDetails(res),
   );
 }
 
@@ -384,6 +396,7 @@ export const __internals = Object.freeze({
   FLOWAI_COMMITTER,
   classifyStatus,
   makeError,
+  sanitizedGithubDetails,
   callGitHub,
   getBranchSha,
   createBranch,

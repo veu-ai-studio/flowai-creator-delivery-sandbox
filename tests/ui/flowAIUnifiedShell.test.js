@@ -215,6 +215,17 @@ describe('FlowAI unified operating system shell', () => {
     expect(runConstructionPanelSrc).not.toContain('blocker.token');
   });
 
+  it('renders Production Mode STEP_FAILED diagnostics from final payloads', () => {
+    expect(runConstructionPanelSrc).toContain('function StepFailureDiagnostics');
+    expect(runConstructionPanelSrc).toContain("final?.exitReason !== 'STEP_FAILED'");
+    expect(runConstructionPanelSrc).toContain('Production Mode step failed');
+    expect(runConstructionPanelSrc).toContain("{final.failedStep || 'UNKNOWN'}");
+    expect(runConstructionPanelSrc).toContain("{final.code || 'UNKNOWN'}");
+    expect(runConstructionPanelSrc).toContain('GitHub: {final.githubMessage}');
+    expect(runConstructionPanelSrc).not.toContain('final.Authorization');
+    expect(runConstructionPanelSrc).not.toContain('final.token');
+  });
+
   it('renders Migration Mode completion semantics without fake scoring or preview labels', () => {
     expect(runConstructionPanelSrc).toContain('MIGRATION COMPLETE - VERIFICATION DEGRADED');
     expect(runConstructionPanelSrc).toContain("Trust Score: {hasRealScore ? trustScore.toFixed(1) : 'Not scored yet'}");

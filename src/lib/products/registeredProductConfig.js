@@ -2,6 +2,7 @@ export const REGISTERED_PRODUCT_CONFIG = Object.freeze([
   Object.freeze({
     name: 'SAIGE',
     domain: 'saigeplatform.com',
+    aliases: ['saige-v2.vercel.app'],
     repo: 'https://github.com/veu-ai-studio/saige-v2',
     branch: 'main',
     status: 'registered',
@@ -56,6 +57,10 @@ export function findRegisteredProductConfigForUrl(url) {
   } catch {
     host = url.toLowerCase();
   }
-  return REGISTERED_PRODUCT_CONFIG.find((product) =>
-    host === product.domain || host.endsWith(`.${product.domain}`)) || null;
+  return REGISTERED_PRODUCT_CONFIG.find((product) => {
+    const domains = [product.domain, ...(Array.isArray(product.aliases) ? product.aliases : [])]
+      .filter((domain) => typeof domain === 'string' && domain.trim())
+      .map((domain) => domain.toLowerCase());
+    return domains.some((domain) => host === domain || host.endsWith(`.${domain}`));
+  }) || null;
 }

@@ -450,6 +450,64 @@ describe('runOrchestration — callbacks', () => {
     });
     expect(score).toBe(59);
   });
+
+  it('persists safe STEP_FAILED diagnostics for Production Mode branch write failures', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [72] });
+      const githubError = new Error('Unable to write src/App.jsx');
+      githubError.code = 'GITHUB_API_ERROR';
+      githubError.status = 422;
+      githubError.statusText = 'Unprocessable Entity';
+      githubError.githubMessage = 'Invalid request.';
+      githubError.githubErrors = [{ resource: 'Commit', field: 'sha', code: 'missing_field' }];
+      deps.createRenewalBranch = vi.fn(async () => { throw githubError; });
+      const governanceEntries = [];
+      deps.appendGovernanceEntry = vi.fn(async ({ entry }) => {
+        governanceEntries.push(entry);
+        return { written: true };
+      });
+
+      const result = await runOrchestration({
+        url: 'https://saigeplatform.com',
+        mode: 'auto',
+        runId: 'run-step-failed-diagnostics',
+        supabase: {},
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+      });
+
+      expect(result.exitReason).toBe('STEP_FAILED');
+      expect(result.failedStep).toBe('STEP_9');
+      expect(result.code).toBe('GITHUB_API_ERROR');
+      expect(result.status).toBe(422);
+      expect(result.statusText).toBe('Unprocessable Entity');
+      expect(result.githubMessage).toBe('Invalid request.');
+      expect(result.githubErrors).toEqual([{ resource: 'Commit', field: 'sha', code: 'missing_field' }]);
+      expect(result.failureArtifact).toMatchObject({ written: true });
+      const failureEntry = governanceEntries.find((entry) => entry.kind === 'self_renewal.step_failed.v1');
+      expect(failureEntry).toMatchObject({
+        runId: 'run-step-failed-diagnostics',
+        productId: 'mypreglife',
+        mode: 'auto',
+        failedStep: 'STEP_9',
+        errorCode: 'GITHUB_API_ERROR',
+        message: 'Unable to write src/App.jsx',
+        diagnostics: {
+          code: 'GITHUB_API_ERROR',
+          status: 422,
+          statusText: 'Unprocessable Entity',
+          githubMessage: 'Invalid request.',
+          githubErrors: [{ resource: 'Commit', field: 'sha', code: 'missing_field' }],
+        },
+      });
+      const serialized = JSON.stringify({ result, failureEntry });
+      expect(serialized).not.toContain('Bearer');
+      expect(serialized).not.toContain('Authorization');
+    } finally { clearVercelEnv(); }
+  });
 });
 
 describe('runOrchestration — Migration Mode hook forwarding', () => {

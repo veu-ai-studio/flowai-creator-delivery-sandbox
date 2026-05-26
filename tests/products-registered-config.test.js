@@ -48,6 +48,7 @@ describe('registered product config', () => {
     const saige = REGISTERED_PRODUCT_CONFIG.find((product) => product.name === 'SAIGE');
     expect(saige).toMatchObject({
       domain: 'saigeplatform.com',
+      aliases: ['saige-v2.vercel.app'],
       repo: 'https://github.com/veu-ai-studio/saige-v2',
       original_repo: 'https://github.com/veu-ai-studio/saige',
       original_url: 'https://saigeplatform.com',
@@ -86,6 +87,7 @@ describe('registered product config', () => {
   it('matches SAIGE URLs by host only', () => {
     expect(findRegisteredProductConfigForUrl('https://saigeplatform.com')?.name).toBe('SAIGE');
     expect(findRegisteredProductConfigForUrl('www.saigeplatform.com')?.name).toBe('SAIGE');
+    expect(findRegisteredProductConfigForUrl('https://saige-v2.vercel.app')?.name).toBe('SAIGE');
     expect(findRegisteredProductConfigForUrl('https://example.com')).toBeNull();
   });
 

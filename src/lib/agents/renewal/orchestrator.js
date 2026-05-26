@@ -203,6 +203,15 @@ function resolveProductUpgradeFallback(product = {}) {
   });
 }
 
+function pickSafeDiagnosticFields(value = {}) {
+  const safe = {};
+  for (const field of ['code', 'status', 'statusText', 'githubMessage', 'githubErrors']) {
+    const entry = value?.[field];
+    if (entry !== undefined && entry !== null) safe[field] = entry;
+  }
+  return safe;
+}
+
 function buildUpgradeDeliveryEnvelope({ product, initialUrl, iterations = [], skippedSteps = [] } = {}) {
   const originalUrl = resolveOriginalProductUrl({ product, initialUrl });
   const deliveredUrl = resolveDeliveredUpgradeUrl({ iterations });
@@ -839,6 +848,64 @@ export async function runOrchestration(args = {}) {
     try { onStep(log); } catch { /* swallow */ }
   };
 
+  const persistStepFailure = async ({ product: failureProduct, failedStep, error, code, diagnostics }) => {
+    const productIdForFailure = failureProduct?.product_id ?? null;
+    if (!productIdForFailure || typeof _appendGovernanceEntry !== 'function') {
+      return { written: false, reason: 'no_product_context' };
+    }
+    const safeDiagnostics = pickSafeDiagnosticFields(diagnostics);
+    try {
+      return await _appendGovernanceEntry({
+        productId: productIdForFailure,
+        environment,
+        entry: {
+          kind: 'self_renewal.step_failed.v1',
+          runId,
+          productId: productIdForFailure,
+          url: inputContext.url ?? args.url ?? null,
+          product: failureProduct?.name ?? failureProduct?.product_name ?? failureProduct?.product_id ?? null,
+          mode: state.mode,
+          failedStep,
+          errorCode: code ?? safeDiagnostics.code ?? 'UNKNOWN',
+          message: typeof error === 'string' ? error.slice(0, 500) : null,
+          diagnostics: safeDiagnostics,
+          commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+          branch: process.env.VERCEL_GIT_COMMIT_REF ?? process.env.VERCEL_GIT_COMMIT_BRANCH ?? null,
+          at: new Date().toISOString(),
+        },
+        supabase,
+      });
+    } catch (failureArtifactError) {
+      return {
+        written: false,
+        reason: failureArtifactError?.message ?? String(failureArtifactError),
+      };
+    }
+  };
+
+  const failStep = async ({ product: failureProduct, failedStep, error, code, diagnostics }) => {
+    const safeDiagnostics = pickSafeDiagnosticFields(diagnostics);
+    const failureArtifact = await persistStepFailure({
+      product: failureProduct,
+      failedStep,
+      error,
+      code,
+      diagnostics: { ...safeDiagnostics, code },
+    });
+    return buildFailureReturn({
+      runId,
+      mode: state.mode,
+      product: failureProduct,
+      orchestrationLog,
+      iterations,
+      failedStep,
+      error,
+      code,
+      diagnostics: { ...safeDiagnostics, code },
+      failureArtifact,
+    });
+  };
+
   emit(makeStepLog({
     iteration: 0, step: 0, status: 'complete',
     tool: 'GitHub operator credential mode',
@@ -1013,8 +1080,8 @@ export async function runOrchestration(args = {}) {
           durationMs: Date.now() - t0, mode: state.mode, canInterrupt: false,
         });
         emit(failLog);
-        return buildFailureReturn({
-          runId, mode: state.mode, product: null, orchestrationLog, iterations,
+        return failStep({
+          product: null,
           failedStep: 'STEP_1', error: 'no_url_supplied_and_no_enabled_product',
           code: 'PRODUCT_NOT_FOUND',
         });
@@ -1101,9 +1168,8 @@ export async function runOrchestration(args = {}) {
       }
     }
   } catch (e) {
-    return buildFailureReturn({ runId, mode: state.mode, product: null,
-      orchestrationLog, iterations, failedStep: 'STEP_1',
-      error: e?.message ?? String(e), code: e?.code ?? 'UNKNOWN' });
+    return failStep({ product: null, failedStep: 'STEP_1',
+      error: e?.message ?? String(e), code: e?.code ?? 'UNKNOWN', diagnostics: e });
   }
 
   const productId = product.product_id;
@@ -1438,9 +1504,8 @@ export async function runOrchestration(args = {}) {
       tool: 'rateCap.js', why: 'verify daily rate cap',
       result: { error: e?.message }, mode: state.mode,
     }));
-    return buildFailureReturn({ runId, mode: state.mode, product,
-      orchestrationLog, iterations, failedStep: 'STEP_2',
-      error: e?.message ?? String(e), code: e?.code ?? 'RATE_LIMIT' });
+    return failStep({ product, failedStep: 'STEP_2',
+      error: e?.message ?? String(e), code: e?.code ?? 'RATE_LIMIT', diagnostics: e });
   }
 
   // D41 T4 — authenticated traversal preparation.
@@ -1738,9 +1803,8 @@ export async function runOrchestration(args = {}) {
     } catch (e) {
       emit(makeStepLog({ iteration: iterationNumber, step: 3, status: 'failed',
         tool: 'Agent #21 → crawlOutputAdapter', why: 'deep crawl', result: { error: e?.message }, mode: state.mode }));
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_3',
-        error: e?.message ?? String(e), code: e?.code ?? 'CRAWL_FAILED' });
+      return failStep({ product, failedStep: 'STEP_3',
+        error: e?.message ?? String(e), code: e?.code ?? 'CRAWL_FAILED', diagnostics: e });
     }
     await state.checkpoint(onCheckpoint, { lastStep: 3, iteration: iterationNumber });
 
@@ -1802,9 +1866,8 @@ export async function runOrchestration(args = {}) {
     } catch (e) {
       emit(makeStepLog({ iteration: iterationNumber, step: 5, status: 'failed',
         tool: 'preScoreAdapter', why: 'early pre-score', result: { error: e?.message }, mode: state.mode }));
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_5',
-        error: e?.message ?? String(e), code: e?.code ?? 'SCORING_FAILED' });
+      return failStep({ product, failedStep: 'STEP_5',
+        error: e?.message ?? String(e), code: e?.code ?? 'SCORING_FAILED', diagnostics: e });
     }
 
     // STEP 4 — Adversarial Surface Testing (Phase B — D39).
@@ -2351,9 +2414,8 @@ export async function runOrchestration(args = {}) {
     } catch (e) {
       emit(makeStepLog({ iteration: iterationNumber, step: 6, status: 'failed',
         tool: 'prioritization', why: 'rank issues', result: { error: e?.message }, mode: state.mode }));
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_6',
-        error: e?.message ?? String(e), code: 'PRIORITIZATION_FAILED' });
+      return failStep({ product, failedStep: 'STEP_6',
+        error: e?.message ?? String(e), code: 'PRIORITIZATION_FAILED', diagnostics: e });
     }
     await state.checkpoint(onCheckpoint, { lastStep: 6, iteration: iterationNumber });
 
@@ -2506,15 +2568,13 @@ export async function runOrchestration(args = {}) {
       } catch (e) {
         emit(makeStepLog({ iteration: iterationNumber, step: 8, status: 'failed',
           tool: 'githubApp', why: 'mint token', result: { error: e?.message }, mode: state.mode }));
-        return buildFailureReturn({ runId, mode: state.mode, product,
-          orchestrationLog, iterations, failedStep: 'STEP_8',
-          error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_AUTH_FAILED' });
+        return failStep({ product, failedStep: 'STEP_8',
+          error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_AUTH_FAILED', diagnostics: e });
       }
 
       const repoParsed = parseGithubRepoUrl(githubRepoUrl);
       if (!repoParsed) {
-        return buildFailureReturn({ runId, mode: state.mode, product,
-          orchestrationLog, iterations, failedStep: 'STEP_7',
+        return failStep({ product, failedStep: 'STEP_7',
           error: `unparseable githubRepoUrl: ${githubRepoUrl}`, code: 'BAD_REPO_URL' });
       }
       owner = repoParsed.owner;
@@ -2831,9 +2891,8 @@ export async function runOrchestration(args = {}) {
         });
         emit(log); iterLog.steps.push(log);
       } catch (e) {
-        return buildFailureReturn({ runId, mode: state.mode, product,
-          orchestrationLog, iterations, failedStep: 'STEP_7',
-          error: e?.message ?? String(e), code: e?.code ?? 'FIX_GENERATION_FAILED' });
+        return failStep({ product, failedStep: 'STEP_7',
+          error: e?.message ?? String(e), code: e?.code ?? 'FIX_GENERATION_FAILED', diagnostics: e });
       }
       await state.checkpoint(onCheckpoint, { lastStep: 7, iteration: iterationNumber });
 
@@ -3237,9 +3296,8 @@ export async function runOrchestration(args = {}) {
         });
         emit(log); iterLog.steps.push(log);
       } catch (e) {
-        return buildFailureReturn({ runId, mode: state.mode, product,
-          orchestrationLog, iterations, failedStep: 'STEP_9',
-          error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_API_ERROR' });
+        return failStep({ product, failedStep: 'STEP_9',
+          error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_API_ERROR', diagnostics: e });
       }
     }
 
@@ -3771,9 +3829,8 @@ export async function runOrchestration(args = {}) {
         }));
       }
     } catch (e) {
-      return buildFailureReturn({ runId, mode: state.mode, product,
-        orchestrationLog, iterations, failedStep: 'STEP_11',
-        error: e?.message ?? String(e), code: e?.code ?? 'SCORING_FAILED' });
+      return failStep({ product, failedStep: 'STEP_11',
+        error: e?.message ?? String(e), code: e?.code ?? 'SCORING_FAILED', diagnostics: e });
     }
     }
     await state.checkpoint(onCheckpoint, { lastStep: 11, iteration: iterationNumber });
@@ -5150,8 +5207,9 @@ function latestMeasuredScore({ orchestrationLog = [], iterations = [] } = {}) {
   return 0;
 }
 
-function buildFailureReturn({ runId, mode, product, orchestrationLog, iterations, failedStep, error, code }) {
+function buildFailureReturn({ runId, mode, product, orchestrationLog, iterations, failedStep, error, code, diagnostics, failureArtifact }) {
   const measuredScore = latestMeasuredScore({ orchestrationLog, iterations });
+  const safeDiagnostics = pickSafeDiagnosticFields(diagnostics);
   return Object.freeze({
     ok: false,
     gtmReady: false,
@@ -5165,6 +5223,8 @@ function buildFailureReturn({ runId, mode, product, orchestrationLog, iterations
     orchestrationLog, iterations,
     product, runId, mode,
     failedStep, error, code,
+    ...safeDiagnostics,
+    failureArtifact: failureArtifact ?? null,
   });
 }
 
