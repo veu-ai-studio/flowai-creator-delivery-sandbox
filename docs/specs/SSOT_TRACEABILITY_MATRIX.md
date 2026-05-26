@@ -311,6 +311,59 @@ Persistence evidence: `PERSISTED` via Supabase (`product_ssot.governance_record`
 
 ---
 
+## Section 4.7 Phase 4 production evidence facts after `f06db63`
+
+**Task 1 scope:** this section records production facts only. It does **not** promote or demote any CA18 claim status. Claim-status decisions are reserved for the Task 2 evidence-map review and must follow the gates in Section 2.5.
+
+**Evidence HEAD:** `f06db63` (`docs: record deploy truth production evidence for 307fc1f`). Production runtime was confirmed on FlowAI commit `307fc1f1fca1a62a3973495ac69ff0abe2b1df55`; deploy truth returned `MATCH` and durable Supabase persistence in row `4a0e7a81-283b-4ea2-8c01-96a955ebc718`.
+
+### Run A — Migration Mode against `https://saigeplatform.com`
+
+Production-observed Migration Mode facts:
+
+| Field | Production evidence |
+|---|---|
+| Run type | Migration Mode against original SAIGE canonical URL `https://saigeplatform.com` |
+| Exit reason | `MIGRATION_COMPLETED_VERIFICATION_DEGRADED` |
+| Files migrated | `267` |
+| Dependencies removed | `267` |
+| Trust Score | Not scored yet; migration success was not treated as a scored GTM/product-upgrade completion |
+| Skipped allowlist files | `README.md`, `SAIGE_ARCHITECTURE.md`, `src/lib/app-params.js`, `src/lib/AuthContext.jsx` |
+| Verification status | Degraded with `GITHUB_ACTIONS_CHECK_NOT_WIRED` |
+| Write target | `veu-ai-studio/saige-v2` migration branch only |
+| Original repo | Reported operator evidence says original repo remained untouched; durable branch diff/log artifact still needed before promoting this as verified evidence |
+| `base44/` directory | Reported operator evidence says `base44/` remained untouched; durable branch diff/log artifact still needed |
+
+Evidence interpretation: this supports Migration Mode readiness and remediation/delta evidence, but the no-status-inflation rule applies. A completed migration pass does **not** verify GTM readiness, full standalone build readiness, or the full fix-loop execution.
+
+### Run B — Production Mode against `https://saige-v2.vercel.app`
+
+Production-observed SAIGE v2 run facts:
+
+| Field | Production evidence |
+|---|---|
+| Tested URL | `https://saige-v2.vercel.app` |
+| Run state | Reached Build `STEP_FAILED` after pre-fix scoring and source mapping |
+| Platform boundary | `PLATFORM_BOUNDARY_BLOCKED` was no longer the run blocker |
+| Trust Score | `35.5/100` |
+| Prior baseline score | `25.8/100` on `https://saigeplatform.com` |
+| Migration-only score delta | `+9.7` points |
+| GTM early score | `70.5/100` before browser evaluation completed |
+| Exit reason | `STEP_FAILED` at Build step |
+| Preview URL | None generated |
+| Iterations | `0`; no fixes applied |
+| Source-mapped findings | `10/10` mapped to real files |
+| Recommendation authority | All recommendations remained `recommend_only` |
+| Build status | Incomplete; SAIGE v2 is not yet proven as a fully standalone deployable build |
+
+Evidence interpretation: the production run shows measurable improvement from migration alone and proves source mapping can resolve SAIGE v2 findings without the previous platform-boundary blocker. It does **not** prove successful build, preview deployment, post-fix scoring, GTM readiness, or a completed remediation iteration.
+
+### Phase 4 Task 1 claim-status guard
+
+The following claim statuses remain unchanged in Task 1: `CA18-URL-ANY`, `CA18-HONEST-URL`, `CA18-WEIGHTED-SCORE`, `CA18-DIMENSION-DISCLOSURE`, `CA18-EVAL-PIPELINE`, `CA18-DELTA-VERIFY`, `CA18-REMEDIATION-SAFETY`, `CA18-UNIVERSAL-LIMIT`, and `CA18-DEPLOY-TRUTH`. Task 2 must decide whether any of these facts satisfy the specific gates for status promotion.
+
+---
+
 ## §5 — Companion files
 
 | File | Purpose |
