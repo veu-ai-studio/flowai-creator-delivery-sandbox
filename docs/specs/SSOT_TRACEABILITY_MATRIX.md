@@ -3,7 +3,7 @@
 **Generated:** 2026-05-24T22:31:12Z
 **HEAD commit:** `8c10792`
 **Branch:** `flowai-v0.1`
-**Production commit:** `UNKNOWN_AFTER_8c10792` (branch advanced through `8c10792`; production deployment remains Victor-approved and must be reverified via `/api/version` after deploy)
+**Production commit:** `307fc1f1fca1a62a3973495ac69ff0abe2b1df55` (verified via production `/api/version` and `deploy_truth.drift_check.v1` on 2026-05-26T01:39:28.260Z)
 **Governance status:** `PROPOSED_GOVERNANCE`
 **Panel artifact:** `UNAVAILABLE` (no traceability-matrix Panel ratification artifact found in `docs/panel-consultations/`)
 **Companion sidecar:** [`SSOT_TRACEABILITY_MATRIX.sidecar.json`](./SSOT_TRACEABILITY_MATRIX.sidecar.json)
@@ -241,6 +241,25 @@ The artifact must be persisted to the governance store (`product_ssot.governance
 | Claim | W09 branch result | Remaining reason not `VERIFIED` |
 |---|---|---|
 | `CA18-DEPLOY-TRUTH` | Automated checker + governance artifact shape implemented after `3825d14`; artifact status is explicitly `MATCH`, `DRIFT`, or `BLOCKED`. | Needs Victor-approved deploy and a persisted production artifact showing production commit parity with the certified branch. |
+
+### CA18-DEPLOY-TRUTH production artifact after `307fc1f`
+
+Production `/api/version` returned short commit `307fc1f1fca1` and full commit `307fc1f1fca1a62a3973495ac69ff0abe2b1df55` for branch `flowai-v0.1`. Production `/api/deploy-truth-check` returned a persisted `deploy_truth.drift_check.v1` artifact:
+
+```json
+{
+  "kind": "deploy_truth.drift_check.v1",
+  "checkedAt": "2026-05-26T01:39:28.260Z",
+  "productionCommit": "307fc1f1fca1a62a3973495ac69ff0abe2b1df55",
+  "localHeadCommit": "307fc1f1fca1a62a3973495ac69ff0abe2b1df55",
+  "branch": "flowai-v0.1",
+  "status": "MATCH",
+  "productionDeployment": "flowai-hx6q51uy3-veu-ai-studio.vercel.app",
+  "productionEnvironment": "production"
+}
+```
+
+Persistence evidence: `PERSISTED` via Supabase (`product_ssot.governance_record`), row id `4a0e7a81-283b-4ea2-8c01-96a955ebc718`. This makes `CA18-DEPLOY-TRUTH` a VERIFIED candidate for Task 2 claim-status review; no status promotion is made in Task 0.
 
 ---
 
