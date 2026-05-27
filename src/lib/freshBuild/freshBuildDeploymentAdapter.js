@@ -349,7 +349,35 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     };
   }
 
-  const deployment = await deployPreviewImpl(vercelArgs);
+  let deployment;
+  try {
+    deployment = await deployPreviewImpl(vercelArgs);
+  } catch (error) {
+    return {
+      ok: false,
+      status: 'WRITTEN_DEPLOY_FAILED',
+      reason: error?.code || 'DEPLOY_ERROR',
+      message: error?.message || 'Generated codebase was written to upgrade repo branch, but Vercel deployment failed',
+      owner: repoTarget.owner,
+      repo: repoTarget.repo,
+      branchName: targetBranch,
+      baseBranch,
+      filesWritten: commitResult.filesWritten,
+      commitSha: commitResult.commitSha,
+      branchUrl: commitResult.branchUrl,
+      previewUrl: null,
+      deploymentId: error?.deploymentId || null,
+      failureStage: 'vercel_deploy',
+      failure: {
+        stage: 'vercel_deploy',
+        code: error?.code || 'DEPLOY_ERROR',
+        message: error?.message || 'Generated codebase was written to upgrade repo branch, but Vercel deployment failed',
+        deploymentId: error?.deploymentId || null,
+        readyState: error?.readyState || null,
+        attempts: Number.isFinite(error?.attempts) ? error.attempts : null,
+      },
+    };
+  }
   return {
     ok: true,
     status: 'WRITTEN_AND_DEPLOYED',

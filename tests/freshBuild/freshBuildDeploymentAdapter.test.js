@@ -244,6 +244,57 @@ describe('Fresh Build deployment adapter', () => {
     }));
   });
 
+  it('returns write evidence when Vercel deployment fails after branch write', async () => {
+    const githubClient = {
+      createCommit: vi.fn(async () => ({
+        commitSha: 'ghi789',
+        filesWritten: 3,
+        branchUrl: 'https://github.com/veu-ai-studio/saige-v2/tree/flowai/fresh-build-run-deploy-error',
+      })),
+    };
+    const deployError = new Error('vercelBranchDeploy: deployment dpl_failed entered readyState=ERROR');
+    deployError.code = 'DEPLOY_ERROR';
+    deployError.deploymentId = 'dpl_failed';
+    deployError.readyState = 'ERROR';
+    deployError.attempts = 3;
+    const deployPreviewImpl = vi.fn(async () => { throw deployError; });
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase(),
+      productName: 'SAIGE',
+      runId: 'run-deploy-error',
+      productConfig: {
+        name: 'SAIGE',
+        original_repo: 'https://github.com/veu-ai-studio/saige',
+        upgrade_repo: 'https://github.com/veu-ai-studio/saige-v2',
+        vercel_project_id: 'prj_123',
+        vercel_org_id: 'team_123',
+      },
+      env: { VERCEL_TOKEN: 'standard-token' },
+      githubClient,
+      deployPreviewImpl,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 'WRITTEN_DEPLOY_FAILED',
+      reason: 'DEPLOY_ERROR',
+      filesWritten: 3,
+      commitSha: 'ghi789',
+      branchUrl: 'https://github.com/veu-ai-studio/saige-v2/tree/flowai/fresh-build-run-deploy-error',
+      previewUrl: null,
+      deploymentId: 'dpl_failed',
+      failureStage: 'vercel_deploy',
+      failure: {
+        stage: 'vercel_deploy',
+        code: 'DEPLOY_ERROR',
+        deploymentId: 'dpl_failed',
+        readyState: 'ERROR',
+        attempts: 3,
+      },
+    });
+  });
+
   it('returns deployment configuration required after a successful safe branch write when Vercel is not configured', async () => {
     const githubClient = {
       createCommit: vi.fn(async () => ({

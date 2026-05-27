@@ -85,6 +85,17 @@ function buildEvidence(featureInventory, designSpec, generatedCodebase, writeRes
   };
 }
 
+function safeFailure(error, stage = 'deployment_adapter') {
+  return {
+    stage,
+    code: error?.code || error?.reason || 'FRESH_BUILD_STAGE_FAILED',
+    message: String(error?.message || error?.reason || 'Fresh Build stage failed').slice(0, 400),
+    deploymentId: error?.deploymentId || null,
+    readyState: error?.readyState || null,
+    attempts: Number.isFinite(error?.attempts) ? error.attempts : null,
+  };
+}
+
 export async function runFreshBuild(input = {}, options = {}) {
   const url = requireHttpUrl(input.url || input.productUrl);
   const env = options.env || globalThis.process?.env || {};
@@ -182,27 +193,54 @@ export async function runFreshBuild(input = {}, options = {}) {
   }
 
   await emit(onStep, 'upgrade_repo_write', 'started', { now });
-  const writeResult = await writeGeneratedCodebase({
-    url,
-    runId,
-    productName: input.productName || options.productName,
-    productConfig: input.productConfig || options.productConfig || null,
-    generatedCodebase,
-    env,
-    now,
-  });
+  let writeResult;
+  try {
+    writeResult = await writeGeneratedCodebase({
+      url,
+      runId,
+      productName: input.productName || options.productName,
+      productConfig: input.productConfig || options.productConfig || null,
+      generatedCodebase,
+      env,
+      now,
+    });
+  } catch (error) {
+    writeResult = error?.writeResult || {
+      ok: false,
+      status: 'WRITE_FAILED',
+      reason: error?.code || 'DEPLOYMENT_ADAPTER_THREW',
+      message: error?.message || 'Fresh Build deployment adapter failed',
+      previewUrl: null,
+      failureStage: error?.failureStage || 'deployment_adapter',
+      failure: safeFailure(error, error?.failureStage || 'deployment_adapter'),
+    };
+  }
   await emit(onStep, 'upgrade_repo_write', writeResult?.ok ? 'completed' : 'skipped', {
     status: writeResult?.status || null,
     reason: writeResult?.reason || null,
     filesWritten: writeResult?.filesWritten || 0,
+    failureStage: writeResult?.failureStage || writeResult?.failure?.stage || null,
     previewUrl: writeResult?.previewUrl || null,
     now,
   });
 
+  const failure = writeResult?.failure || (writeResult?.ok ? null : {
+    stage: writeResult?.failureStage || 'deployment_adapter',
+    code: writeResult?.reason || 'DEPLOYMENT_ADAPTER_NOT_CONFIGURED',
+    message: writeResult?.message || 'Fresh Build deployment adapter did not complete',
+    deploymentId: writeResult?.deploymentId || null,
+    readyState: writeResult?.readyState || null,
+    attempts: Number.isFinite(writeResult?.attempts) ? writeResult.attempts : null,
+  });
+  const status = writeResult?.ok
+    ? 'READY'
+    : writeResult?.status === 'WRITE_FAILED' ? 'failed' : 'partial';
   return {
     ok: writeResult?.ok === true,
-    status: writeResult?.ok ? 'READY' : 'READY_FOR_DEPLOYMENT_ADAPTER',
+    status,
     reason: writeResult?.ok ? null : (writeResult?.reason || 'DEPLOYMENT_ADAPTER_NOT_CONFIGURED'),
+    failureStage: failure?.stage || null,
+    failure,
     mode: FRESH_BUILD_MODE,
     runId,
     url,
@@ -224,4 +262,5 @@ export async function runFreshBuild(input = {}, options = {}) {
 export const __test = Object.freeze({
   buildEvidence,
   buildDesignEvidence,
+  safeFailure,
 });

@@ -228,6 +228,73 @@ describe('freshBuild Orchestrator', () => {
     expect(writeGeneratedCodebase).not.toHaveBeenCalled();
   });
 
+  it('returns partial evidence when deployment fails after branch write', async () => {
+    const deployError = new Error('vercelBranchDeploy: deployment dpl_123 entered readyState=ERROR');
+    deployError.code = 'DEPLOY_ERROR';
+    deployError.writeResult = {
+      ok: false,
+      status: 'WRITTEN_DEPLOY_FAILED',
+      reason: 'DEPLOY_ERROR',
+      message: deployError.message,
+      filesWritten: 2,
+      branchUrl: 'https://github.com/acme/example-v2/tree/flowai/fresh-build-run-3',
+      commitSha: 'abc123',
+      previewUrl: null,
+      deploymentId: 'dpl_123',
+      failureStage: 'vercel_deploy',
+      failure: {
+        stage: 'vercel_deploy',
+        code: 'DEPLOY_ERROR',
+        message: deployError.message,
+        deploymentId: 'dpl_123',
+        readyState: 'ERROR',
+        attempts: 3,
+      },
+    };
+
+    const result = await runFreshBuild({
+      url: 'https://example.com',
+      runId: 'run-3',
+      productName: 'Example Product',
+      productConfig: { name: 'Example Product', upgrade_repo: 'https://github.com/acme/example-v2' },
+    }, {
+      env: { FLOWAI_ENABLE_FRESH_BUILD: 'true' },
+      extractFeatures: vi.fn(async () => mockFeatureInventory()),
+      synthesizeDesign: vi.fn(async () => mockDesignSpec()),
+      generateCodebase: vi.fn(async () => mockGeneratedCodebase()),
+      writeGeneratedCodebase: vi.fn(async () => { throw deployError; }),
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 'partial',
+      reason: 'DEPLOY_ERROR',
+      failureStage: 'vercel_deploy',
+      previewUrl: null,
+      writeResult: {
+        branchUrl: 'https://github.com/acme/example-v2/tree/flowai/fresh-build-run-3',
+        deploymentId: 'dpl_123',
+      },
+      failure: {
+        stage: 'vercel_deploy',
+        code: 'DEPLOY_ERROR',
+        deploymentId: 'dpl_123',
+      },
+      evidence: {
+        generatedFileCount: 2,
+        platformDependenciesCount: 0,
+        writeStatus: 'WRITTEN_DEPLOY_FAILED',
+        designEvidence: {
+          primaryColors: ['#111827', '#2563eb', '#f97316', '#10b981', '#f8fafc'],
+          fontFamilies: ['Inter', 'Arial', 'Roboto', 'System UI', 'Georgia'],
+        },
+      },
+    });
+    expect(JSON.stringify(result.evidence)).not.toContain('visualSystem');
+    expect(JSON.stringify(result.evidence)).not.toContain('typography');
+    expect(JSON.stringify(result.evidence)).not.toContain('<html');
+  });
+
   it('adds FRESH_BUILD as a parallel API/UI mode without removing existing modes', () => {
     expect(RUN_CONSTRUCTION_TEST.ALLOWED_MODES).toEqual(new Set([
       'FOREGROUND',
@@ -247,6 +314,10 @@ describe('freshBuild Orchestrator', () => {
     const runConstructionSource = readFileSync(new URL('../../src/api/run-construction.js', import.meta.url), 'utf8');
 
     expect(runConstructionSource).toContain('designEvidence: freshBuildResult?.evidence?.designEvidence || null');
+    expect(runConstructionSource).toContain('status: freshBuildFinalStatus(freshBuildResult)');
+    expect(runConstructionSource).toContain('failureStage: freshBuildResult?.failureStage');
+    expect(runConstructionSource).toContain('deploymentId: freshBuildResult?.writeResult?.deploymentId');
+    expect(runConstructionSource).toContain("status: 'failed'");
     expect(runConstructionSource).not.toContain('html: freshBuildResult');
     expect(runConstructionSource).not.toContain('designSpec: freshBuildResult?.designSpec');
   });

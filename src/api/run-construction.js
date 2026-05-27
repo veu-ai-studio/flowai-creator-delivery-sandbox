@@ -63,6 +63,23 @@ const RATE_LIMIT_CAPACITY = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const execFileAsync = promisify(execFile);
 
+function freshBuildFinalStatus(result) {
+  if (result?.ok === true) return 'succeeded';
+  if (result?.status === 'failed' || result?.status === 'BLOCKED') return 'failed';
+  return 'partial';
+}
+
+function freshBuildFailureFromError(error, stage = 'fresh_build') {
+  return {
+    stage,
+    code: error?.code ?? 'FRESH_BUILD_THREW',
+    message: String(error?.message ?? error ?? 'Fresh Build failed').slice(0, 400),
+    deploymentId: error?.deploymentId || null,
+    readyState: error?.readyState || null,
+    attempts: Number.isFinite(error?.attempts) ? error.attempts : null,
+  };
+}
+
 export default async function handler(req, res) {
   // CORS / preflight.
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -228,11 +245,17 @@ export default async function handler(req, res) {
       send({
         type: 'final',
         ok: freshBuildResult?.ok === true,
+        status: freshBuildFinalStatus(freshBuildResult),
         previewUrl: freshBuildResult?.previewUrl ?? null,
         finalScore: null,
         governanceRecordId: runId,
         gtmReady: false,
         exitReason: freshBuildResult?.reason || freshBuildResult?.status || 'FRESH_BUILD_COMPLETE',
+        failureStage: freshBuildResult?.failureStage || freshBuildResult?.failure?.stage || null,
+        failure: freshBuildResult?.failure || null,
+        code: freshBuildResult?.failure?.code || freshBuildResult?.reason || null,
+        error: freshBuildResult?.failure?.message || null,
+        deploymentId: freshBuildResult?.writeResult?.deploymentId || freshBuildResult?.failure?.deploymentId || null,
         iterationsCompleted: 0,
         prUrl: freshBuildResult?.writeResult?.prUrl ?? null,
         runMode: 'FRESH_BUILD',
@@ -244,11 +267,41 @@ export default async function handler(req, res) {
           designEvidence: freshBuildResult?.evidence?.designEvidence || null,
           platformDependencies: freshBuildResult?.platformDependencies || [],
           writeResult: freshBuildResult?.writeResult || null,
+          failure: freshBuildResult?.failure || null,
         },
         runId,
       });
       return done();
     } catch (e) {
+      send({
+        type: 'final',
+        ok: false,
+        status: 'failed',
+        previewUrl: null,
+        finalScore: null,
+        governanceRecordId: runId,
+        gtmReady: false,
+        exitReason: e?.code ?? 'FRESH_BUILD_THREW',
+        failureStage: e?.failureStage || 'fresh_build',
+        failure: freshBuildFailureFromError(e, e?.failureStage || 'fresh_build'),
+        code: e?.code ?? 'FRESH_BUILD_THREW',
+        error: (e?.message ?? String(e)).slice(0, 400),
+        deploymentId: e?.deploymentId || null,
+        iterationsCompleted: 0,
+        prUrl: null,
+        runMode: 'FRESH_BUILD',
+        freshBuild: {
+          status: 'failed',
+          reason: e?.code ?? 'FRESH_BUILD_THREW',
+          featureFlag: 'FLOWAI_ENABLE_FRESH_BUILD',
+          evidence: null,
+          designEvidence: null,
+          platformDependencies: [],
+          writeResult: null,
+          failure: freshBuildFailureFromError(e, e?.failureStage || 'fresh_build'),
+        },
+        runId,
+      });
       send({
         type: 'error',
         error: (e?.message ?? String(e)).slice(0, 400),
@@ -780,4 +833,6 @@ export const __test = Object.freeze({
   ensureProductRegistryRow,
   createMigrationRuntimeHooks,
   isPathInside,
+  freshBuildFinalStatus,
+  freshBuildFailureFromError,
 });
