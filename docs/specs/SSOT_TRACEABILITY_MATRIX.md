@@ -167,7 +167,7 @@ Recommended sequence: Workflow 4 → Workflow 1 or 2.
 Fresh Build is an engine — not a fifth workflow. It powers Workflow 1 SUB-1B and Workflow 2 SUB-2B once mature. Feature flag: `FLOWAI_ENABLE_FRESH_BUILD=false`.
 
 Three modules:
-- Feature Extractor: URL → feature inventory — EXPERIMENTAL/SCAFFOLD — committed at c718bf8
+- Feature Extractor: URL → feature inventory — EXPERIMENTAL/LIVE-CRAWL WIRED — feature flag OFF; deterministic tests use mocked crawler/Browserless
 - Design Synthesizer: URL → design spec — ROADMAP
 - Codebase Generator: inventory + spec → platform-free codebase — ROADMAP
 
@@ -392,7 +392,7 @@ Current state as of W09 (2026-05-26). This is the *current capability state*, no
 - `CA18-REMEDIATION-SAFETY` — Canonical thresholds + rollback policy artifact; source-mapped blocked-vs-incomplete category collapse fixed on branch pending production governance artifact — PARTIAL
 - `CA18-UNIVERSAL-LIMIT` — Unregistered URL — no branch/PR/deploy — PARTIAL
 - `FALSE-CLAIM-AUTONOMOUS-DEPLOY` — Negative control: autonomous production deploy is PROHIBITED — NOT_IMPLEMENTED
-- `FRESHBUILD-FEATURE-EXTRACTOR` — Feature Extractor schema and contract: **PARTIAL evidence (branch commit at c718bf8 exists) of an EXPERIMENTAL capability (feature flag OFF by default)**. PARTIAL+EXPERIMENTAL is a coherent compound state — see "Coherent compound states" note in Status Label Definitions. Excluded from the §11.1 Gate B 95% completion denominator until sidecar/checker updated by ratified amendment — PARTIAL
+- `FRESHBUILD-FEATURE-EXTRACTOR` — Feature Extractor schema, contract, and live-crawl wiring: **PARTIAL evidence of an EXPERIMENTAL capability (feature flag OFF by default)**. Deterministic coverage uses mocked crawler/Browserless; production Fresh Build remains disabled until Victor enables the feature flag. PARTIAL+EXPERIMENTAL is a coherent compound state — see "Coherent compound states" note in Status Label Definitions. Excluded from the §11.1 Gate B 95% completion denominator until sidecar/checker updated by ratified amendment — PARTIAL
 
 SSOT completion against Gate B 95% target: **2 / 11 release-critical Layer-1 claims VERIFIED = 18%**. FRESHBUILD-FEATURE-EXTRACTOR excluded from denominator. This 18% is the current capability state, not a blocker against Gate A SSOT ratification.
 
@@ -407,7 +407,7 @@ SSOT completion against Gate B 95% target: **2 / 11 release-critical Layer-1 cla
 - Workflow 3 TYPE-3A: ROADMAP
 - Workflow 3 TYPE-3B: ROADMAP
 - Workflow 4 Migration: CURRENT/IN_PROGRESS
-- Fresh Build Feature Extractor: EXPERIMENTAL/SCAFFOLD
+- Fresh Build Feature Extractor: EXPERIMENTAL/LIVE-CRAWL WIRED
 - Fresh Build Design Synthesizer: ROADMAP
 - Fresh Build Codebase Generator: ROADMAP
 - Multi-modal inputs: ROADMAP
