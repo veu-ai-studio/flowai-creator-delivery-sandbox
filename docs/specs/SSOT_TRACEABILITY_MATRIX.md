@@ -501,6 +501,7 @@ Step 6 — Windows Codex Commit — updates all four canonical files in one comm
 - User intent layer (Faithful/Improved/Migration) - deferred to Phase 4
 - Fresh Build module interface contracts - documented in `docs/specs/FRESH_BUILD_ENGINE_CONTRACTS.md` during Phase 3A local validation
 - Security/tenant boundary design - deferred to Phase 8 pre-task
+- Fresh Build overlay-write strategy leaves platform residue when generated files do not replace every stale platform config. Quick fix in the Phase 3B Task C commit is comprehensive config generation. Longer-term: consider orphan-branch or clean-write strategy.
 - Phase scope: 1=foundation, 2=Workflow 1, 3=Fresh Build, 4=Workflow 2+intents, 5=Workflow 3, 6=agents, 7=Orchestra, 8=Domain 2/3
 
 ## DOCUMENT CONTROL

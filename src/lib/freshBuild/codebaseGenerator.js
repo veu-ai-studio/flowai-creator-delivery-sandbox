@@ -365,6 +365,34 @@ function buildPackageJson(productName) {
   }, null, 2));
 }
 
+function buildViteConfig() {
+  return createFile('vite.config.js', `
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+});
+`);
+}
+
+function buildGitignore() {
+  return createFile('.gitignore', `
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+.vite
+.vercel
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+`);
+}
+
 function buildReadme(productName, featureInventory) {
   const description = safeText(featureInventory?.pages?.[0]?.primaryContent, 'Generated platform-free product.');
   return createFile('README.md', `
@@ -440,6 +468,8 @@ function buildGeneratedFiles(featureInventory, designSpec, productName) {
 
   return [
     buildPackageJson(productName),
+    buildViteConfig(),
+    buildGitignore(),
     createFile('index.html', `
 <!doctype html>
 <html lang="en">

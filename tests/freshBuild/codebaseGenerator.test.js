@@ -180,17 +180,47 @@ describe('freshBuild Codebase Generator', () => {
     expect(validateGeneratedCodebase(codebase)).toEqual({ ok: true, errors: [] });
     expect(codebase.files.map((file) => file.path)).toEqual(expect.arrayContaining([
       'package.json',
+      'vite.config.js',
+      'vercel.json',
+      'postcss.config.js',
+      'tailwind.config.js',
       'index.html',
+      '.gitignore',
       'src/main.jsx',
       'src/App.jsx',
       'src/index.css',
-      'tailwind.config.js',
-      'postcss.config.js',
-      'vercel.json',
       'README.md',
       'src/pages/HomePage.jsx',
       'src/pages/Pricing.jsx',
     ]));
+  });
+
+  it('emits clean build-critical root config files that pass safety validation', () => {
+    const codebase = generateCodebase(mockFeatureInventory(), mockDesignSpec(), { productName: 'Example Product' });
+    const filesByPath = new Map(codebase.files.map((file) => [file.path, file]));
+    const requiredConfigPaths = [
+      'package.json',
+      'vite.config.js',
+      'vercel.json',
+      'postcss.config.js',
+      'tailwind.config.js',
+      'index.html',
+      '.gitignore',
+    ];
+
+    expect([...filesByPath.keys()]).toEqual(expect.arrayContaining(requiredConfigPaths));
+    for (const configPath of requiredConfigPaths) {
+      const file = filesByPath.get(configPath);
+      expect(file.content.trim().length).toBeGreaterThan(0);
+      expect(validateGeneratedCodebase({ ...codebase, files: [file] })).toEqual({ ok: true, errors: [] });
+      expect(file.content).not.toMatch(/@base44|base44Client|platform-sdk|sdk-client/i);
+    }
+
+    const viteConfig = filesByPath.get('vite.config.js').content;
+    expect(viteConfig).toContain("import { defineConfig } from 'vite';");
+    expect(viteConfig).toContain("import react from '@vitejs/plugin-react';");
+    expect(viteConfig).not.toMatch(/@base44\/vite-plugin|base44\(/i);
+    expect(codebase.platformDependencies).toEqual([]);
   });
 
   it('builds Tailwind config from DesignSpec colors', () => {
