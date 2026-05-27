@@ -169,7 +169,7 @@ Fresh Build is an engine — not a fifth workflow. It powers Workflow 1 SUB-1B a
 Three modules:
 - Feature Extractor: URL → feature inventory — EXPERIMENTAL/LIVE-CRAWL WIRED — feature flag OFF; deterministic tests use mocked crawler/Browserless
 - Design Synthesizer: URL → design spec — EXPERIMENTAL/LOCAL VALIDATION — feature flag OFF; deterministic tests use mocked crawler/Browserless
-- Codebase Generator: inventory + spec → platform-free codebase — ROADMAP
+- Codebase Generator: inventory + spec → platform-free codebase — EXPERIMENTAL/LOCAL VALIDATION — safety gates tested; feature flag OFF
 
 Fresh Build is Phase 6 work. It does not affect any current workflow. When complete it replaces the upgrade-repo patch approach in Workflow 1 SUB-1B and powers Workflow 2 SUB-2B.
 
@@ -409,7 +409,7 @@ SSOT completion against Gate B 95% target: **2 / 11 release-critical Layer-1 cla
 - Workflow 4 Migration: CURRENT/IN_PROGRESS
 - Fresh Build Feature Extractor: EXPERIMENTAL/LIVE-CRAWL WIRED
 - Fresh Build Design Synthesizer: EXPERIMENTAL/LOCAL VALIDATION
-- Fresh Build Codebase Generator: ROADMAP
+- Fresh Build Codebase Generator: EXPERIMENTAL/LOCAL VALIDATION
 - Multi-modal inputs: ROADMAP
 - Multiple URL input and synthesis: ROADMAP
 - Orchestra AUTOMATIC selection: ROADMAP
