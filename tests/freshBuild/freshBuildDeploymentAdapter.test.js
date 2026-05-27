@@ -158,6 +158,92 @@ describe('Fresh Build deployment adapter', () => {
     }));
   });
 
+  it('resolves Vercel args from existing operator envs without Fresh Build-specific env vars', async () => {
+    const githubClient = {
+      createCommit: vi.fn(async () => ({
+        commitSha: 'abc123',
+        filesWritten: 3,
+        branchUrl: 'https://github.com/veu-ai-studio/saige-v2/tree/flowai/fresh-build-run-operator-envs',
+      })),
+    };
+    const deployPreviewImpl = vi.fn(async () => ({
+      deploymentId: 'dep_operator',
+      previewUrl: 'https://saige-v2-operator-envs.vercel.app',
+    }));
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase(),
+      productName: 'SAIGE',
+      runId: 'run-operator-envs',
+      productConfig: {
+        name: 'SAIGE',
+        original_repo: 'https://github.com/veu-ai-studio/saige',
+        upgrade_repo: 'https://github.com/veu-ai-studio/saige-v2',
+      },
+      env: {
+        VERCEL_OPERATOR_TOKEN: 'operator-token',
+        VERCEL_PROJECT_ID_SAIGE: 'prj_saige_existing',
+        VERCEL_ORG_ID: 'team_existing',
+      },
+      githubClient,
+      deployPreviewImpl,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'WRITTEN_AND_DEPLOYED',
+      previewUrl: 'https://saige-v2-operator-envs.vercel.app',
+    });
+    expect(deployPreviewImpl).toHaveBeenCalledWith(expect.objectContaining({
+      projectId: 'prj_saige_existing',
+      orgId: 'team_existing',
+      token: 'operator-token',
+    }));
+  });
+
+  it('falls back to standard Vercel envs for products without per-product project envs', async () => {
+    const githubClient = {
+      createCommit: vi.fn(async () => ({
+        commitSha: 'def456',
+        filesWritten: 3,
+        branchUrl: 'https://github.com/veu-ai-studio/generic-v2/tree/flowai/fresh-build-run-standard-envs',
+      })),
+    };
+    const deployPreviewImpl = vi.fn(async () => ({
+      deploymentId: 'dep_standard',
+      previewUrl: 'https://generic-v2-standard-envs.vercel.app',
+    }));
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase(),
+      productName: 'Generic Product',
+      runId: 'run-standard-envs',
+      productConfig: {
+        name: 'Generic Product',
+        original_repo: 'https://github.com/veu-ai-studio/generic',
+        upgrade_repo: 'https://github.com/veu-ai-studio/generic-v2',
+      },
+      env: {
+        VERCEL_TOKEN: 'standard-token',
+        VERCEL_PROJECT_ID: 'prj_standard',
+        VERCEL_TEAM_ID: 'team_standard',
+      },
+      githubClient,
+      deployPreviewImpl,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'WRITTEN_AND_DEPLOYED',
+      previewUrl: 'https://generic-v2-standard-envs.vercel.app',
+    });
+    expect(deployPreviewImpl).toHaveBeenCalledWith(expect.objectContaining({
+      projectId: 'prj_standard',
+      orgId: 'team_standard',
+      token: 'standard-token',
+    }));
+  });
+
   it('returns deployment configuration required after a successful safe branch write when Vercel is not configured', async () => {
     const githubClient = {
       createCommit: vi.fn(async () => ({

@@ -25,6 +25,36 @@ function safeSlug(value, fallback = 'fresh-build') {
   return slug || fallback;
 }
 
+function envSuffix(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function productEnvSuffixes(...values) {
+  const suffixes = [];
+  const add = (value) => {
+    const suffix = envSuffix(value);
+    if (suffix && !suffixes.includes(suffix)) suffixes.push(suffix);
+    const withoutVersion = suffix.replace(/_V\d+$/i, '');
+    if (withoutVersion && withoutVersion !== suffix && !suffixes.includes(withoutVersion)) {
+      suffixes.push(withoutVersion);
+    }
+  };
+  values.forEach(add);
+  return suffixes;
+}
+
+function firstProductEnv(env, prefix, suffixes) {
+  for (const suffix of suffixes) {
+    const value = firstNonEmpty(env?.[`${prefix}${suffix}`]);
+    if (value) return value;
+  }
+  return '';
+}
+
 export function parseGitHubRepoUrl(value) {
   const text = nonEmptyString(value).replace(/\.git$/i, '');
   if (!text) return null;
@@ -203,12 +233,14 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
   };
 }
 
-function resolveVercelArgs({ productConfig, env, owner, repo, branchName }) {
+function resolveVercelArgs({ productConfig, env, owner, repo, branchName, productName }) {
+  const suffixes = productEnvSuffixes(productName, productConfig?.name, repo);
   return {
     projectId: firstNonEmpty(
       productConfig?.vercel_project_id,
       productConfig?.vercelProjectId,
       env?.FLOWAI_FRESH_BUILD_VERCEL_PROJECT_ID,
+      firstProductEnv(env, 'VERCEL_PROJECT_ID_', suffixes),
       env?.VERCEL_PROJECT_ID,
     ),
     orgId: firstNonEmpty(
@@ -218,7 +250,13 @@ function resolveVercelArgs({ productConfig, env, owner, repo, branchName }) {
       env?.VERCEL_ORG_ID,
       env?.VERCEL_TEAM_ID,
     ),
-    token: firstNonEmpty(env?.VERCEL_TOKEN),
+    token: firstNonEmpty(
+      productConfig?.vercel_token,
+      productConfig?.vercelToken,
+      env?.FLOWAI_FRESH_BUILD_VERCEL_TOKEN,
+      env?.VERCEL_OPERATOR_TOKEN,
+      env?.VERCEL_TOKEN,
+    ),
     owner,
     repo,
     branchName,
@@ -292,6 +330,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     owner: repoTarget.owner,
     repo: repoTarget.repo,
     branchName: targetBranch,
+    productName: productName || productConfig?.name || repoTarget.repo,
   });
   if (!vercelArgs.projectId || !vercelArgs.orgId || !vercelArgs.token) {
     return {
@@ -332,5 +371,6 @@ export const __test = Object.freeze({
   firstNonEmpty,
   sameRepo,
   makeBranchName,
+  productEnvSuffixes,
   resolveVercelArgs,
 });

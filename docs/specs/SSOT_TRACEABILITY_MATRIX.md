@@ -172,6 +172,7 @@ Three modules:
 - Codebase Generator: inventory + spec → platform-free codebase — EXPERIMENTAL/LOCAL VALIDATION — safety gates tested; feature flag OFF
 - Fresh Build Orchestrator: Feature Extractor → Design Synthesizer → Codebase Generator → upgrade-repo write seam — EXPERIMENTAL/PARALLEL MODE WIRED — feature flag OFF; existing ASSESS/PATCH/MIGRATE paths unchanged
 - Fresh Build Deployment Adapter: generated codebase → authorized upgrade repo branch → Vercel preview URL — EXPERIMENTAL/LOCAL VALIDATION — rejects original repo and main/master writes without Victor approval
+- Fresh Build Vercel Config Resolution: deployment adapter resolves product config, Fresh Build env, per-product Vercel project env, and standard Vercel operator envs — EXPERIMENTAL/LOCAL VALIDATION
 - Fresh Build Crawler Handoff: multiPageCrawler preserves bounded rendered `html`/`bodyText` for Fresh Build consumers — EXPERIMENTAL/LOCAL VALIDATION — prevents empty component/design extraction on JS-rendered apps
 - Fresh Build SSE Evidence: run-construction exposes bounded DesignSpec summaries only — EXPERIMENTAL/LOCAL VALIDATION — no full HTML or full DesignSpec streamed
 
@@ -416,6 +417,7 @@ SSOT completion against Gate B 95% target: **2 / 11 release-critical Layer-1 cla
 - Fresh Build Codebase Generator: EXPERIMENTAL/LOCAL VALIDATION
 - Fresh Build Orchestrator: EXPERIMENTAL/PARALLEL MODE WIRED
 - Fresh Build Deployment Adapter: EXPERIMENTAL/LOCAL VALIDATION
+- Fresh Build Vercel Config Resolution: EXPERIMENTAL/LOCAL VALIDATION
 - Fresh Build Crawler Handoff: EXPERIMENTAL/LOCAL VALIDATION
 - Fresh Build SSE Evidence: EXPERIMENTAL/LOCAL VALIDATION
 - Multi-modal inputs: ROADMAP

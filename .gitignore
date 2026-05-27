@@ -52,5 +52,6 @@ playwright-report/
 supabase/.temp/
 test-output.txt
 docs/w03-turns/
+flowai-fresh-build-*
 # Stray UTF-8 file literally named "←" (U+2190)
 "\342\206\220"
