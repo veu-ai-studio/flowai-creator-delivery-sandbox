@@ -400,6 +400,7 @@ SSOT completion against Gate B 95% target: **2 / 11 release-critical Layer-1 cla
 
 - Workflow 1 SUB-1A analysis/scoring: CURRENT
 - Workflow 1 SUB-1A source-mapped fix proposals: IN_PROGRESS
+- SSOT Axis A/B vocabulary adapters: IN_PROGRESS — branch implementation maps internal runtime values to SSOT governance vocabulary without changing API/runtime enums; production verification pending
 - Workflow 1 SUB-1B: IN_PROGRESS
 - Workflow 2 SUB-2A: IN_PROGRESS
 - Workflow 2 SUB-2B: ROADMAP

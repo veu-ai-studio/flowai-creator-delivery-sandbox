@@ -66,6 +66,7 @@ import { findRegisteredProductConfigForUrl } from '../../products/registeredProd
 import { applyUpgradeTargetsToProduct, resolveProductUpgradeTargets } from '../../products/upgradeTargetResolver.js';
 import { normalizeFlowAIInput, parseUserObjectives, summarizeFlowAIInputContext } from '../../flowai/unifiedRunInput.js';
 import { buildFlowAIInputStepMatrix } from '../../flowai/inputStepMatrix.js';
+import { buildSsotVocabularyContext, toSsotOrchestraExecutionMode } from '../../flowai/ssotVocabularyAdapters.js';
 import { provisionUpgradeTarget } from '../../provisioning/upgradeTargetProvisioner.js';
 import { captureBaselineSnapshot } from '../../verification/baselineSnapshot.js';
 import { capturePostFixSnapshot } from '../../verification/postFixSnapshot.js';
@@ -828,6 +829,10 @@ export async function runOrchestration(args = {}) {
   }
 
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
+  const ssotVocabulary = buildSsotVocabularyContext({
+    orchestraMode: state.mode,
+    systemOperationLevel: args.systemOperationLevel ?? args.agenticMode ?? null,
+  });
   state.operatorMode = operatorMode;
   state.operatorContext = Object.freeze({
     operator_mode: operatorMode,
@@ -865,6 +870,7 @@ export async function runOrchestration(args = {}) {
           url: inputContext.url ?? args.url ?? null,
           product: failureProduct?.name ?? failureProduct?.product_name ?? failureProduct?.product_id ?? null,
           mode: state.mode,
+          ssotVocabulary,
           failedStep,
           errorCode: code ?? safeDiagnostics.code ?? 'UNKNOWN',
           message: typeof error === 'string' ? error.slice(0, 500) : null,
@@ -945,12 +951,11 @@ export async function runOrchestration(args = {}) {
   // per governance_record write — far above the acceptance bar of ≥1.
   let toolIntelligenceService = null;
   let toolIntelligenceAttachReason = 'not_attached';
-  let toolIntelligenceMode = 'AUTOMATIC';
+  const ssotOrchestraExecutionMode = toSsotOrchestraExecutionMode(state.mode) ?? 'AUTOMATIC';
+  const toolIntelligenceServiceMode = ssotOrchestraExecutionMode === 'MANUAL-ORCHESTRA'
+    ? 'MANUAL'
+    : ssotOrchestraExecutionMode;
   try {
-    const _modeUpper = String(args.mode ?? 'auto').toUpperCase();
-    toolIntelligenceMode = _modeUpper === 'GUIDED' ? 'GUIDED'
-      : _modeUpper === 'MANUAL' ? 'MANUAL'
-      : 'AUTOMATIC';
     if (supabase && typeof supabase.from === 'function') {
       const _toolIntelModule = await import('../../tools/ToolIntelligenceService.js');
       toolIntelligenceService = _toolIntelModule.createToolIntelligenceService({ client: supabase });
@@ -959,7 +964,12 @@ export async function runOrchestration(args = {}) {
         iteration: 0, step: 0, status: 'complete',
         tool: 'ToolIntelligenceService (lazy-imported)',
         why: 'CA-18 §6 — record per-step tool selection for governance trail',
-        result: { kind: 'tool_intel_attached', mode: toolIntelligenceMode },
+        result: {
+          kind: 'tool_intel_attached',
+          mode: ssotOrchestraExecutionMode,
+          internalMode: state.mode,
+          ssotVocabulary,
+        },
         mode: state.mode,
       }));
     } else {
@@ -992,8 +1002,8 @@ export async function runOrchestration(args = {}) {
     let written = 0;
     for (const stepKey of STEP_KEYS) {
       try {
-        const selection = await toolIntelligenceService.getTopTool(stepKey, undefined, toolIntelligenceMode);
-        const selected = toolIntelligenceMode === 'GUIDED'
+        const selection = await toolIntelligenceService.getTopTool(stepKey, undefined, toolIntelligenceServiceMode);
+        const selected = toolIntelligenceServiceMode === 'GUIDED'
           ? (Array.isArray(selection) ? selection.map((p) => p.platform_name) : null)
           : (selection && typeof selection.platform_name === 'string' ? selection.platform_name : null);
         const result = await _appendGovernanceEntry({
@@ -1003,7 +1013,9 @@ export async function runOrchestration(args = {}) {
             runId,
             productId: product?.product_id,
             stepKey,
-            mode: toolIntelligenceMode,
+            mode: ssotOrchestraExecutionMode,
+            internalMode: state.mode,
+            ssotVocabulary,
             selected,
             at: new Date().toISOString(),
           },
@@ -1140,18 +1152,22 @@ export async function runOrchestration(args = {}) {
         mode: state.mode,
         environment,
       });
+      const readinessEntryWithSsotVocabulary = Object.freeze({
+        ...readinessEntry,
+        ssotVocabulary,
+      });
       try {
         const readinessWrite = await _appendGovernanceEntry({
           productId: product.product_id,
           environment,
-          entry: readinessEntry,
+          entry: readinessEntryWithSsotVocabulary,
           supabase,
         });
         emit(makeStepLog({
           iteration: 0, step: 1, status: readinessWrite?.written ? 'complete' : 'degraded',
           tool: 'operator credential readiness',
           why: 'preflight governance record for registered-product operator credentials',
-          result: { ...readinessEntry, write: readinessWrite },
+          result: { ...readinessEntryWithSsotVocabulary, write: readinessWrite },
           durationMs: 0, mode: state.mode,
         }));
       } catch (readinessError) {
@@ -1260,6 +1276,7 @@ export async function runOrchestration(args = {}) {
             runId,
             productId,
             mode: state.mode,
+            ssotVocabulary,
             status: migration.status,
             missing,
             at: new Date().toISOString(),
@@ -4164,7 +4181,9 @@ export async function runOrchestration(args = {}) {
       kind: 'tool_intel_selections_written',
       written: toolSelectionsResult.written ?? 0,
       attachReason: toolIntelligenceAttachReason,
-      mode: toolIntelligenceMode,
+      mode: ssotOrchestraExecutionMode,
+      internalMode: state.mode,
+      ssotVocabulary,
     },
     mode: state.mode,
   }));
@@ -4251,6 +4270,7 @@ export async function runOrchestration(args = {}) {
       entry: {
         kind: 'self_renewal.orchestration_complete.v1',
         runId, productId, mode, exitReason,
+        ssotVocabulary,
         inputSummary,
         inputStepMatrix,
         userObjectives,

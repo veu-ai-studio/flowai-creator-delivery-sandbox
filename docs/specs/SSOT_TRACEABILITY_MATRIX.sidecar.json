@@ -347,11 +347,13 @@
         "src/lib/agents/renewal/orchestrator.js:1487-1494 (autoFixSkippedReason on skip)",
         "src/lib/agents/renewal/orchestrator.js:2638-2653 (universal-mode skip block builds skippedSteps[] with autoFixSkippedReason)",
         "src/lib/agents/renewal/orchestrator.js:2828-2829 (governance entry includes universalMode + autoFixAvailable)",
-        "src/lib/agents/renewal/deltaPolicy.js:1-66 (HARD INVARIANT line 20: ALWAYS returns auditEntry)"
+        "src/lib/agents/renewal/deltaPolicy.js:1-66 (HARD INVARIANT line 20: ALWAYS returns auditEntry)",
+        "src/lib/flowai/ssotVocabularyAdapters.js (SSOT Axis A/B vocabulary adapter layer for governance metadata)"
       ],
       "testFiles": [
         "tests/agents/renewal/orchestrator.test.js:2115-2141 (U1 — asserts governance entry kind=self_renewal.orchestration_complete.v1 carries skippedSteps[] with autoFixSkippedReason='UNIVERSAL_NO_REPO_ACCESS' for canonical steps 7, 8, 9, 13)",
-        "tests/agents/renewal/deltaPolicy.test.js:1-106 (delta policy HARD INVARIANT — always returns auditEntry)"
+        "tests/agents/renewal/deltaPolicy.test.js:1-106 (delta policy HARD INVARIANT — always returns auditEntry)",
+        "tests/flowai/ssotVocabularyAdapters.test.js (Axis A/B SSOT vocabulary round-trip adapters)"
       ],
       "runtimeEvidence": [],
       "governanceEvidence": [
@@ -362,7 +364,8 @@
       "contradictions": [],
       "gaps": [
         "No canonical schema document for governance_record envelope shape (separate dispatch — does not gate VERIFIED per CA18-AUDIT-TRAIL upgrade rule).",
-        "No production governance_record export captured as STRETCH evidence (gate explicitly allows branch test evidence for this claim)."
+        "No production governance_record export captured as STRETCH evidence (gate explicitly allows branch test evidence for this claim).",
+        "SSOT vocabulary adapters added on branch; next production run should capture ssotVocabulary metadata in governance records."
       ],
       "nextAction": "Maintain branch-test coverage; capture a production governance_record export and attach to governanceEvidence as STRETCH evidence for CURRENT runtime confirmation. Author a canonical governance_record schema doc in a separate dispatch."
     },
