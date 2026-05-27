@@ -40,7 +40,20 @@ export const DEFAULTS = Object.freeze({
   perPageTimeoutMs: 15_000,
   politenessDelayMs: 400,
   totalWallClockMs: 25 * 60 * 1000,  // 25 min hard ceiling
+  maxStoredHtmlBytes: 250_000,
+  maxStoredBodyTextBytes: 50_000,
 });
+
+function boundedText(value, maxBytes) {
+  if (typeof value !== 'string' || !value) return '';
+  const max = Number.isFinite(maxBytes) && maxBytes > 0 ? maxBytes : value.length;
+  if (Buffer.byteLength(value, 'utf8') <= max) return value;
+  let out = value.slice(0, max);
+  while (Buffer.byteLength(out, 'utf8') > max) {
+    out = out.slice(0, -1);
+  }
+  return out;
+}
 
 // Tiny robots.txt parser. We only need the User-agent: * Disallow: rules
 // for the same origin; we don't honor Allow/Sitemap/Crawl-delay (out of
@@ -177,6 +190,8 @@ export async function crawlSite(rootUrl, opts = {}) {
   const perPageTimeoutMs = Number.isFinite(opts.perPageTimeoutMs) ? opts.perPageTimeoutMs : DEFAULTS.perPageTimeoutMs;
   const politenessDelayMs = Number.isFinite(opts.politenessDelayMs) ? opts.politenessDelayMs : DEFAULTS.politenessDelayMs;
   const totalWallClockMs = Number.isFinite(opts.totalWallClockMs) ? opts.totalWallClockMs : DEFAULTS.totalWallClockMs;
+  const maxStoredHtmlBytes = Number.isFinite(opts.maxStoredHtmlBytes) ? opts.maxStoredHtmlBytes : DEFAULTS.maxStoredHtmlBytes;
+  const maxStoredBodyTextBytes = Number.isFinite(opts.maxStoredBodyTextBytes) ? opts.maxStoredBodyTextBytes : DEFAULTS.maxStoredBodyTextBytes;
   const onPage = typeof opts.onPage === 'function' ? opts.onPage : null;
   const signal = opts.signal ?? null;
   const _crawlOne = opts.crawlImpl || crawlOnePage;     // test override
@@ -266,8 +281,12 @@ export async function crawlSite(rootUrl, opts = {}) {
     }
 
     const status = pageResult?.ok ? 'fetched' : 'fetch_error';
-    const html = pageResult?.html || pageResult?.bodyText || '';
+    const renderedHtml = typeof pageResult?.html === 'string' ? pageResult.html : '';
+    const renderedBodyText = typeof pageResult?.bodyText === 'string' ? pageResult.bodyText : '';
+    const html = renderedHtml || renderedBodyText;
     const contentLength = typeof html === 'string' ? html.length : 0;
+    const storedHtml = boundedText(renderedHtml, maxStoredHtmlBytes);
+    const storedBodyText = boundedText(renderedBodyText, maxStoredBodyTextBytes);
     const pageFindings = deriveFindingsForPage({ url, html, status: pageResult?.status, contentLength });
 
     const record = {
@@ -276,6 +295,14 @@ export async function crawlSite(rootUrl, opts = {}) {
       method: pageResult?.method ?? null,
       httpStatus: pageResult?.status ?? null,
       title: pageResult?.title ?? null,
+      html: storedHtml,
+      bodyText: storedBodyText,
+      contentTruncated: {
+        html: Boolean(renderedHtml && storedHtml.length < renderedHtml.length),
+        bodyText: Boolean(renderedBodyText && storedBodyText.length < renderedBodyText.length),
+        maxStoredHtmlBytes,
+        maxStoredBodyTextBytes,
+      },
       contentLength,
       findings: pageFindings,
     };
@@ -343,4 +370,5 @@ export const __internals = Object.freeze({
   parseRobotsTxt,
   extractInternalLinks,
   deriveFindingsForPage,
+  boundedText,
 });

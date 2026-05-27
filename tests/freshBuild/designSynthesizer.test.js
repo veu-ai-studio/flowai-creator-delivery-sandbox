@@ -198,6 +198,47 @@ describe('freshBuild Design Synthesizer', () => {
     });
   });
 
+  it('extracts color and font values from rendered DOM carried by the crawler', async () => {
+    const spec = await synthesizeDesign('https://example.com', {
+      crawlSiteImpl: async () => mockCrawlReport({
+        pages: [{
+          url: 'https://example.com',
+          depth: 0,
+          status: 'fetched',
+          method: 'browserless',
+          httpStatus: 200,
+          title: 'Rendered App',
+          html: `
+            <html>
+              <head>
+                <style>
+                  body { font-family: Inter, Arial, sans-serif; background: #f8fafc; color: #111827; }
+                  .cta { background: #2563eb; font-size: 18px; font-weight: 700; }
+                </style>
+              </head>
+              <body><main><section class="hero"><h1>Rendered app</h1><button class="cta">Start</button></section></main></body>
+            </html>
+          `,
+          bodyText: 'Rendered app Start',
+          contentLength: 800,
+          findings: [],
+        }],
+      }),
+    });
+
+    expect(spec.visualSystem.primaryColors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ hex: '#f8fafc' }),
+      expect.objectContaining({ hex: '#111827' }),
+      expect.objectContaining({ hex: '#2563eb' }),
+    ]));
+    expect(spec.typography.fontFamilies).toEqual(expect.arrayContaining([
+      expect.objectContaining({ family: expect.stringContaining('Inter') }),
+    ]));
+    expect(spec.typography.fontSizes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: '18px' }),
+    ]));
+  });
+
   it('marks undetectable values UNKNOWN instead of inventing them', async () => {
     const spec = await synthesizeDesign('https://example.com', {
       crawlSiteImpl: async () => mockCrawlReport({

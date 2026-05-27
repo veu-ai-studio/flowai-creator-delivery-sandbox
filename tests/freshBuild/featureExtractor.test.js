@@ -135,6 +135,42 @@ describe('freshBuild Feature Extractor', () => {
     ]));
   });
 
+  it('detects components from rendered React-style crawler page records', async () => {
+    const inventory = await extractFeatures('https://example.com', {
+      crawlSiteImpl: async () => mockCrawlReport({
+        pages: [{
+          url: 'https://example.com',
+          depth: 0,
+          status: 'fetched',
+          method: 'browserless',
+          httpStatus: 200,
+          title: 'Rendered App',
+          html: `
+            <html>
+              <body>
+                <div id="root">
+                  <nav><a href="/dashboard">Dashboard</a></nav>
+                  <main>
+                    <section class="hero"><h1>Rendered React product</h1></section>
+                    <button>Start build</button>
+                  </main>
+                </div>
+              </body>
+            </html>
+          `,
+          bodyText: 'Rendered React product Start build',
+          contentLength: 420,
+          findings: [],
+        }],
+      }),
+    });
+
+    expect(inventory.components.map((component) => component.type)).toEqual(
+      expect.arrayContaining(['nav', 'hero', 'button']),
+    );
+    expect(inventory.metadata.totalComponentsIdentified).toBeGreaterThanOrEqual(3);
+  });
+
   it('marks auth-gated pages AUTH_REQUIRED instead of fabricating content', async () => {
     const inventory = await extractFeatures('https://example.com', {
       crawlSiteImpl: async () => mockCrawlReport(),
