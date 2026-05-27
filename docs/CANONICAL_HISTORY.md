@@ -2053,5 +2053,12 @@ ENTRY 002 — 2026-05-14 — CA-3 promotion to canonical SSOT
 
 END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 2026-05-19)
 
+## 2026-05-26 - SSOT v2.3 RATIFIED
 
+- **Authority:** CEO Victor Udo, FNSE, PhD.
+- **Disposition:** SSOT v2.3 RATIFIED as canonical. Supersedes all prior SSOT versions and amendments CA-18 through CA-20D.
+- **Build program:** Eight-phase FlowAI Master Build Dispatch authorized.
+- **Head basis:** c718bf8 on branch flowai-v0.1.
+- **Canonical files updated:** docs/specs/SSOT_TRACEABILITY_MATRIX.md, docs/specs/SSOT_TRACEABILITY_MATRIX.sidecar.json, docs/CANONICAL_REFERENCE.md, docs/CANONICAL_HISTORY.md.
+- **Scope:** Document-only foundation commit; no production code changes.
 

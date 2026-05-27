@@ -1,11 +1,11 @@
 {
   "schema": "ssot-traceability-matrix.sidecar.v1",
-  "generatedAt": "2026-05-26T02:20:00Z",
-  "headCommit": "fcc442a",
+  "generatedAt": "2026-05-26T00:00:00-04:00",
+  "headCommit": "c718bf8",
   "headBranch": "flowai-v0.1",
   "productionCommit": "307fc1f1fca1a62a3973495ac69ff0abe2b1df55",
   "productionDeployment": "flowai-hx6q51uy3-veu-ai-studio.vercel.app",
-  "governanceStatus": "PROPOSED_GOVERNANCE",
+  "governanceStatus": "RATIFIED",
   "panelArtifact": "UNAVAILABLE",
   "panelArtifactSearchedAt": "docs/panel-consultations/",
   "claims": [
@@ -426,5 +426,9 @@
       ],
       "nextAction": "Maintain the static-grep assertion that '/merge' never appears in executable paths of githubPrWriter.js; preserve as a regression guard."
     }
-  ]
+  ],
+  "version": "2.3",
+  "status": "RATIFIED",
+  "ratifiedAt": "2026-05-26",
+  "ratifiedBy": "Victor Udo, FNSE, PhD - CEO, VEU AI Studio"
 }

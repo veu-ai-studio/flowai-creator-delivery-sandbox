@@ -1,6 +1,6 @@
-# FlowAI SSOT — W04-Rev-2.1 (DRAFT — applies 4 W6-Panel-cited minor amendments to Rev-2)
+# FlowAI Canonical Reference - SSOT v2.3 RATIFIED
 
-Version: **W04-Rev-2.1** | Date: 2026-05-14 | Status: **CANONICAL — ratified by CEO 2026-05-14**
+Version: **v2.3 RATIFIED** | Date: 2026-05-26 | Status: **CANONICAL - ratified by CEO Victor Udo, FNSE, PhD 2026-05-26** | HEAD: `c718bf8`
 Supersedes: `docs/SSOT_W04_REV2_DRAFT.md`
 Rev-2 → Rev-2.1 changeset (4 W6-Panel-cited minor amendments):
 - (a) §17: footnote disambiguating UX-C sidebar labels from canonical axis labels in §8/§8a
