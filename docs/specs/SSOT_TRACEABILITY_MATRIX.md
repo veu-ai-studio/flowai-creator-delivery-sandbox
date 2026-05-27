@@ -489,7 +489,7 @@ Step 6 — Windows Codex Commit — updates all four canonical files in one comm
 ## PART 16 - KNOWN GAPS FOR v2.4 CYCLE
 
 - User intent layer (Faithful/Improved/Migration) - deferred to Phase 4
-- Fresh Build module interface contracts - deferred to Phase 3
+- Fresh Build module interface contracts - documented in `docs/specs/FRESH_BUILD_ENGINE_CONTRACTS.md` during Phase 3A local validation
 - Security/tenant boundary design - deferred to Phase 8 pre-task
 - Phase scope: 1=foundation, 2=Workflow 1, 3=Fresh Build, 4=Workflow 2+intents, 5=Workflow 3, 6=agents, 7=Orchestra, 8=Domain 2/3
 
