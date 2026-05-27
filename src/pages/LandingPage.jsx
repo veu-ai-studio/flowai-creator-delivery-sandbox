@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import {
   Zap, Clock, Wrench, Link2, Pencil, Clipboard, Mic, MicOff,
   CheckCircle2, XCircle, Loader2, UploadCloud, ChevronRight,
-  Layers, History, ShieldCheck, BookOpen, BarChart3, X, GitBranch
+  Layers, History, ShieldCheck, BookOpen, BarChart3, X, GitBranch, Sparkles
 } from 'lucide-react';
 import { saveSessionConfig } from './Configuration';
 import RunConstructionPanel from '@/components/RunConstructionPanel';
@@ -30,6 +30,8 @@ const OBJECTIVES = [
 const DEPTHS = ['Quick', 'Standard', 'Deep'];
 const MIGRATION_MODE_ENABLED_FOR_UI =
   String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
+const FRESH_BUILD_ENABLED_FOR_UI =
+  String(import.meta.env?.VITE_FLOWAI_ENABLE_FRESH_BUILD || '').toLowerCase() === 'true';
 const FLOWAI_OPERATOR_NAME = import.meta.env?.VITE_FLOWAI_OPERATOR_NAME || 'FlowAI operator';
 const FLOWAI_OPERATOR_EMAIL = import.meta.env?.VITE_FLOWAI_OPERATOR_EMAIL || '';
 
@@ -775,22 +777,24 @@ export default function LandingPage() {
     // run via /api/run-construction (real SSE, real preview deploy,
     // real governance record). The legacy /auto-runner remains the
     // secondary "Advanced (legacy)" link below.
-    if (activeCard === 'A' && (mode === 'auto' || mode === 'migration') && urlInput.trim()) {
+    if (activeCard === 'A' && (mode === 'auto' || mode === 'migration' || mode === 'fresh_build') && urlInput.trim()) {
       setRunPanelUrl(urlInput.trim());
       return;
     }
 
     if (mode === 'auto') navigate('/auto-runner');
     else if (mode === 'guided') navigate('/guided/research');
-    else if (mode === 'migration') setRunPanelUrl(urlInput.trim());
+    else if (mode === 'migration' || mode === 'fresh_build') setRunPanelUrl(urlInput.trim());
     else navigate('/manual/research');
   };
 
-  const isConstructionEnginePath = activeCard === 'A' && (mode === 'auto' || mode === 'migration') && !!urlInput.trim();
+  const isConstructionEnginePath = activeCard === 'A' && (mode === 'auto' || mode === 'migration' || mode === 'fresh_build') && !!urlInput.trim();
   const isMigrationMode = mode === 'migration';
+  const isFreshBuildMode = mode === 'fresh_build';
   const isFocusedMigrationSetup = location.pathname === '/flow-hub/migration'
     || new URLSearchParams(location.search).get('mode') === 'migration';
   const isMigrationLaunchBlocked = isMigrationMode && !migrationModeEnabled;
+  const isFreshBuildLaunchBlocked = isFreshBuildMode && !FRESH_BUILD_ENABLED_FOR_UI;
   const migrationProductConfig = isFocusedMigrationSetup
     ? findRegisteredProductConfigForUrl(urlInput.trim())
     : null;
@@ -1066,6 +1070,39 @@ export default function LandingPage() {
               <p className="text-[10px] text-muted-foreground">Hours to days · Full operator control</p>
             </div>
 
+            {/* Fresh Build */}
+            <div
+              role="button"
+              tabIndex={FRESH_BUILD_ENABLED_FOR_UI ? 0 : -1}
+              aria-disabled={!FRESH_BUILD_ENABLED_FOR_UI}
+              onClick={() => FRESH_BUILD_ENABLED_FOR_UI && setMode('fresh_build')}
+              onKeyDown={e => e.key === 'Enter' && FRESH_BUILD_ENABLED_FOR_UI && setMode('fresh_build')}
+              className={`rounded-xl border p-5 text-left space-y-3 transition-all ${
+                mode === 'fresh_build'
+                  ? 'border-fuchsia-500/60 bg-fuchsia-500/5 ring-1 ring-fuchsia-500/20'
+                  : FRESH_BUILD_ENABLED_FOR_UI
+                    ? 'border-border bg-card hover:border-fuchsia-500/30 cursor-pointer'
+                    : 'border-border bg-card/70 opacity-70 cursor-not-allowed'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className={`h-4 w-4 ${mode === 'fresh_build' ? 'text-fuchsia-300' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-bold ${mode === 'fresh_build' ? 'text-fuchsia-300' : 'text-foreground'}`}>Fresh Build</span>
+                <span className="ml-auto text-[10px] font-bold text-fuchsia-200 bg-fuchsia-500/10 border border-fuchsia-500/20 px-2 py-0.5 rounded-full">
+                  EXPERIMENTAL
+                </span>
+                {mode === 'fresh_build' && <span className="text-[10px] font-bold text-fuchsia-300 bg-fuchsia-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                FlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.
+              </p>
+              <div className="rounded-md border border-fuchsia-500/20 bg-fuchsia-500/5 p-3 text-[11px] text-muted-foreground leading-relaxed">
+                {FRESH_BUILD_ENABLED_FOR_UI
+                  ? 'Fresh Build is enabled for this environment. Existing modes remain unchanged.'
+                  : 'Fresh Build is off by default. Victor must enable FLOWAI_ENABLE_FRESH_BUILD before execution.'}
+              </div>
+            </div>
+
             {/* Migration */}
             <div
               role="button"
@@ -1136,7 +1173,7 @@ export default function LandingPage() {
           {runPanelUrl ? (
             <RunConstructionPanel
               url={runPanelUrl}
-              mode={isMigrationMode ? 'MIGRATION' : 'FOREGROUND'}
+              mode={isMigrationMode ? 'MIGRATION' : isFreshBuildMode ? 'FRESH_BUILD' : 'FOREGROUND'}
               onClose={() => setRunPanelUrl(null)}
             />
           ) : (
@@ -1150,7 +1187,7 @@ export default function LandingPage() {
                 </div>
                 <Button
                   onClick={launch}
-                  disabled={!hasValidInput || isMigrationLaunchBlocked}
+                  disabled={!hasValidInput || isMigrationLaunchBlocked || isFreshBuildLaunchBlocked}
                   size="lg"
                   className="gap-2 w-full sm:min-w-[220px] sm:w-auto text-sm font-bold min-h-[48px]"
                 >
@@ -1161,6 +1198,11 @@ export default function LandingPage() {
               {isMigrationLaunchBlocked && (
                 <div className="text-[11px] text-amber-300 text-right">
                   Migration Mode is currently disabled. Use Flow Hub Migration to enable it.
+                </div>
+              )}
+              {isFreshBuildLaunchBlocked && (
+                <div className="text-[11px] text-fuchsia-200 text-right">
+                  Fresh Build is currently disabled. Victor must enable FLOWAI_ENABLE_FRESH_BUILD.
                 </div>
               )}
               {/* Secondary legacy link: only shown when the construction-

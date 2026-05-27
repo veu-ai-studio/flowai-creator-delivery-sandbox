@@ -12,7 +12,7 @@
 //
 // Contract:
 //   POST /api/run-construction
-//   Body: { url: string, mode: 'FOREGROUND'|'BACKGROUND'|'GUIDED'|'MIGRATION' }
+//   Body: { url: string, mode: 'FOREGROUND'|'BACKGROUND'|'GUIDED'|'MIGRATION'|'FRESH_BUILD' }
 //
 //   Always responds as Server-Sent Events. Stream events:
 //     - { type: 'start',  runId, url, mode, gtmTarget, at }
@@ -57,7 +57,7 @@ import { findRegisteredProductConfigForUrl } from '../lib/products/registeredPro
 import { createGithubMigrationHooks } from '../lib/migration/githubMigrationHooks.js';
 import { pickSafeErrorFields } from '../lib/migration/safeErrorFields.js';
 
-const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION']);
+const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION', 'FRESH_BUILD']);
 const GTM_TARGET = 95;
 const RATE_LIMIT_CAPACITY = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -198,6 +198,66 @@ export default async function handler(req, res) {
   }
 
   // ── Orchestrator invocation ──────────────────────────────────────────────
+  if (mode === 'FRESH_BUILD') {
+    let runFreshBuild;
+    try {
+      ({ runFreshBuild } = await import('../lib/freshBuild/freshBuildOrchestrator.js'));
+    } catch (e) {
+      send({
+        type: 'error',
+        error: (e?.message ?? String(e)).slice(0, 200),
+        code: 'FRESH_BUILD_IMPORT_FAILED',
+        ...pickSafeErrorFields(e),
+      });
+      return done();
+    }
+
+    try {
+      const productConfig = findRegisteredProductConfigForUrl(url);
+      const freshBuildResult = await runFreshBuild({
+        url,
+        runId,
+        productName: productConfig?.name || registryRow?.product_name || registryRow?.product_id || null,
+        productConfig: productConfig || registryRow || null,
+      }, {
+        env: process.env,
+        runId,
+        onStep: (log) => send({ type: 'step', log }),
+      });
+
+      send({
+        type: 'final',
+        ok: freshBuildResult?.ok === true,
+        previewUrl: freshBuildResult?.previewUrl ?? null,
+        finalScore: null,
+        governanceRecordId: runId,
+        gtmReady: false,
+        exitReason: freshBuildResult?.reason || freshBuildResult?.status || 'FRESH_BUILD_COMPLETE',
+        iterationsCompleted: 0,
+        prUrl: freshBuildResult?.writeResult?.prUrl ?? null,
+        runMode: 'FRESH_BUILD',
+        freshBuild: {
+          status: freshBuildResult?.status || null,
+          reason: freshBuildResult?.reason || null,
+          featureFlag: freshBuildResult?.featureFlag || 'FLOWAI_ENABLE_FRESH_BUILD',
+          evidence: freshBuildResult?.evidence || null,
+          platformDependencies: freshBuildResult?.platformDependencies || [],
+          writeResult: freshBuildResult?.writeResult || null,
+        },
+        runId,
+      });
+      return done();
+    } catch (e) {
+      send({
+        type: 'error',
+        error: (e?.message ?? String(e)).slice(0, 400),
+        code: e?.code ?? 'FRESH_BUILD_THREW',
+        ...pickSafeErrorFields(e),
+      });
+      return done();
+    }
+  }
+
   let runOrchestration;
   let runConstruction;
   let createOriginPageResolver;
