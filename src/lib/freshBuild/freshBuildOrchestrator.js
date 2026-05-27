@@ -25,6 +25,36 @@ function countObjectKeys(value) {
   return value && typeof value === 'object' ? Object.keys(value).length : 0;
 }
 
+function summarizeTokenList(items, mapper, max = 5) {
+  return (Array.isArray(items) ? items : [])
+    .map(mapper)
+    .filter((item) => item && item !== 'UNKNOWN')
+    .slice(0, max);
+}
+
+function buildDesignEvidence(designSpec) {
+  return {
+    primaryColors: summarizeTokenList(
+      designSpec?.visualSystem?.primaryColors,
+      (color) => color?.hex,
+    ),
+    fontFamilies: summarizeTokenList(
+      designSpec?.typography?.fontFamilies,
+      (font) => font?.family,
+    ),
+    fontSizes: summarizeTokenList(
+      designSpec?.typography?.fontSizes,
+      (fontSize) => fontSize?.value,
+    ),
+    extractionConfidence: typeof designSpec?.metadata?.confidence === 'number'
+      ? designSpec.metadata.confidence
+      : null,
+    componentVisualCount: Array.isArray(designSpec?.components)
+      ? designSpec.components.length
+      : 0,
+  };
+}
+
 async function emit(onStep, stage, status, details = {}) {
   if (typeof onStep !== 'function') return;
   const { now, ...rest } = details;
@@ -43,6 +73,7 @@ function buildEvidence(featureInventory, designSpec, generatedCodebase, writeRes
     featureInventoryFieldCount: countObjectKeys(featureInventory),
     designSpecId: designSpec?.id || null,
     designSpecFieldCount: countObjectKeys(designSpec),
+    designEvidence: buildDesignEvidence(designSpec),
     generatedFileCount: Array.isArray(generatedCodebase?.files)
       ? generatedCodebase.files.length
       : 0,
@@ -192,4 +223,5 @@ export async function runFreshBuild(input = {}, options = {}) {
 
 export const __test = Object.freeze({
   buildEvidence,
+  buildDesignEvidence,
 });

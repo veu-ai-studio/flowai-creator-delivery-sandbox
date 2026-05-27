@@ -241,6 +241,7 @@ export default async function handler(req, res) {
           reason: freshBuildResult?.reason || null,
           featureFlag: freshBuildResult?.featureFlag || 'FLOWAI_ENABLE_FRESH_BUILD',
           evidence: freshBuildResult?.evidence || null,
+          designEvidence: freshBuildResult?.evidence?.designEvidence || null,
           platformDependencies: freshBuildResult?.platformDependencies || [],
           writeResult: freshBuildResult?.writeResult || null,
         },

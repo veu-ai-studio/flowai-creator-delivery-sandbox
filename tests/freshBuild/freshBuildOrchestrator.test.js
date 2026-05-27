@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { __test as RUN_CONSTRUCTION_TEST } from '../../src/api/run-construction.js';
-import { FRESH_BUILD_MODE, runFreshBuild } from '../../src/lib/freshBuild/freshBuildOrchestrator.js';
+import {
+  FRESH_BUILD_MODE,
+  __test as FRESH_BUILD_ORCHESTRATOR_TEST,
+  runFreshBuild,
+} from '../../src/lib/freshBuild/freshBuildOrchestrator.js';
 import { isFreshBuildEnabled } from '../../src/lib/freshBuild/constants.js';
 
 const landingSource = readFileSync(new URL('../../src/pages/LandingPage.jsx', import.meta.url), 'utf8');
@@ -21,8 +25,39 @@ function mockDesignSpec() {
   return {
     id: 'design-1',
     url: 'https://example.com',
-    components: [{ id: 'hero-1', visualStyle: 'filled' }],
-    metadata: { extractionMethod: 'test' },
+    visualSystem: {
+      primaryColors: [
+        { hex: '#111827' },
+        { hex: '#2563eb' },
+        { hex: '#f97316' },
+        { hex: '#10b981' },
+        { hex: '#f8fafc' },
+        { hex: '#ef4444' },
+      ],
+    },
+    typography: {
+      fontFamilies: [
+        { family: 'Inter' },
+        { family: 'Arial' },
+        { family: 'Roboto' },
+        { family: 'System UI' },
+        { family: 'Georgia' },
+        { family: 'Courier New' },
+      ],
+      fontSizes: [
+        { value: '12px' },
+        { value: '14px' },
+        { value: '16px' },
+        { value: '20px' },
+        { value: '32px' },
+        { value: '48px' },
+      ],
+    },
+    components: [
+      { id: 'hero-1', visualStyle: 'filled' },
+      { id: 'card-1', visualStyle: 'outlined' },
+    ],
+    metadata: { extractionMethod: 'test', confidence: 0.82 },
   };
 }
 
@@ -141,8 +176,32 @@ describe('freshBuild Orchestrator', () => {
         generatedFileCount: 2,
         platformDependenciesCount: 0,
         writeStatus: 'WRITTEN',
+        designEvidence: {
+          primaryColors: ['#111827', '#2563eb', '#f97316', '#10b981', '#f8fafc'],
+          fontFamilies: ['Inter', 'Arial', 'Roboto', 'System UI', 'Georgia'],
+          fontSizes: ['12px', '14px', '16px', '20px', '32px'],
+          extractionConfidence: 0.82,
+          componentVisualCount: 2,
+        },
       },
     });
+  });
+
+  it('builds bounded Fresh Build design evidence for SSE without full design payloads', () => {
+    const designEvidence = FRESH_BUILD_ORCHESTRATOR_TEST.buildDesignEvidence(mockDesignSpec());
+
+    expect(designEvidence).toEqual({
+      primaryColors: ['#111827', '#2563eb', '#f97316', '#10b981', '#f8fafc'],
+      fontFamilies: ['Inter', 'Arial', 'Roboto', 'System UI', 'Georgia'],
+      fontSizes: ['12px', '14px', '16px', '20px', '32px'],
+      extractionConfidence: 0.82,
+      componentVisualCount: 2,
+    });
+    expect(designEvidence.primaryColors).toHaveLength(5);
+    expect(designEvidence.fontFamilies).toHaveLength(5);
+    expect(designEvidence.fontSizes).toHaveLength(5);
+    expect(JSON.stringify(designEvidence)).not.toContain('visualSystem');
+    expect(JSON.stringify(designEvidence)).not.toContain('typography');
   });
 
   it('does not write generated files when code generation is blocked', async () => {
@@ -182,5 +241,13 @@ describe('freshBuild Orchestrator', () => {
     expect(landingSource).toContain("mode === 'auto' || mode === 'migration' || mode === 'fresh_build'");
     expect(landingSource).toContain("mode={isMigrationMode ? 'MIGRATION' : isFreshBuildMode ? 'FRESH_BUILD' : 'FOREGROUND'}");
     expect(landingSource).toContain("setMode('migration')");
+  });
+
+  it('exposes Fresh Build design evidence in the final SSE result shape', () => {
+    const runConstructionSource = readFileSync(new URL('../../src/api/run-construction.js', import.meta.url), 'utf8');
+
+    expect(runConstructionSource).toContain('designEvidence: freshBuildResult?.evidence?.designEvidence || null');
+    expect(runConstructionSource).not.toContain('html: freshBuildResult');
+    expect(runConstructionSource).not.toContain('designSpec: freshBuildResult?.designSpec');
   });
 });
