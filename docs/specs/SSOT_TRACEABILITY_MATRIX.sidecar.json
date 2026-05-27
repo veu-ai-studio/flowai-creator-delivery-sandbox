@@ -251,10 +251,14 @@
         "src/lib/remediation/runRemediation.js (remediation engine)",
         "src/lib/agents/renewal/rateCap.js (rate / budget cap)",
         "src/lib/agents/renewal/orchestrator.js:24 (checkRateCap import)",
-        "src/lib/agents/renewal/orchestrator.js:45 (remediationEngine import)"
+        "src/lib/agents/renewal/orchestrator.js:45 (remediationEngine import)",
+        "src/lib/sourceMapping/classifyFileBoundary.js (source-mapped blocked vs incomplete classifier)",
+        "src/lib/sourceMapping/sourceMappingConstants.js (MIN_SOURCE_MAP_CONFIDENCE = 0.65)",
+        "src/lib/sourceMapping/sourceMappedFixGenerator.js (source-map field preservation and status precedence)"
       ],
       "testFiles": [
-        "tests/agents/renewal/orchestrator.test.js (rate-cap mocks)"
+        "tests/agents/renewal/orchestrator.test.js (rate-cap mocks)",
+        "tests/sourceMapping/sourceMappedFixGenerator.test.js (source-map handoff status precedence)"
       ],
       "runtimeEvidence": [],
       "governanceEvidence": [],
@@ -279,6 +283,7 @@
         "Remediation registry is implicit, not codified as a named structure.",
         "Confidence threshold constants are not surfaced.",
         "Rollback invocation policy lacks canonical documentation.",
+        "Source-mapped blocked-vs-incomplete category collapse is fixed on branch but still requires production governance artifact before VERIFIED promotion.",
         "No production run-log shows remediation decision + budget check + rollback path."
       ],
       "nextAction": "Document the remediation registry (which fix categories are auto vs. manual); add explicit named confidence-threshold constants; document rollback invocation rules; capture a production remediation run with full audit trail."

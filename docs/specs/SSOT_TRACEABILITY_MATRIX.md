@@ -389,7 +389,7 @@ Current state as of W09 (2026-05-26). This is the *current capability state*, no
 - `CA18-DIMENSION-DISCLOSURE` — All 10 dimensions in production artifact — PARTIAL
 - `CA18-EVAL-PIPELINE` — evaluator_id + provenance in live run — PARTIAL
 - `CA18-DELTA-VERIFY` — Before/after snapshot + computed delta — PARTIAL
-- `CA18-REMEDIATION-SAFETY` — Canonical thresholds + rollback policy artifact — PARTIAL
+- `CA18-REMEDIATION-SAFETY` — Canonical thresholds + rollback policy artifact; source-mapped blocked-vs-incomplete category collapse fixed on branch pending production governance artifact — PARTIAL
 - `CA18-UNIVERSAL-LIMIT` — Unregistered URL — no branch/PR/deploy — PARTIAL
 - `FALSE-CLAIM-AUTONOMOUS-DEPLOY` — Negative control: autonomous production deploy is PROHIBITED — NOT_IMPLEMENTED
 - `FRESHBUILD-FEATURE-EXTRACTOR` — Feature Extractor schema and contract: **PARTIAL evidence (branch commit at c718bf8 exists) of an EXPERIMENTAL capability (feature flag OFF by default)**. PARTIAL+EXPERIMENTAL is a coherent compound state — see "Coherent compound states" note in Status Label Definitions. Excluded from the §11.1 Gate B 95% completion denominator until sidecar/checker updated by ratified amendment — PARTIAL

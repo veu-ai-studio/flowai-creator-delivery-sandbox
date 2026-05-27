@@ -2294,6 +2294,18 @@ export async function runOrchestration(args = {}) {
       const generatedProposals = await _generateSourceMappedFixProposals({
         findings: recommendationFindings,
         sourceMapping: state.sourceMapping,
+        fileContentProvider: async (filePath) => {
+          if (pathB || !token || !githubRepoUrl) return null;
+          const parsed = parseGithubRepoUrl(githubRepoUrl);
+          if (!parsed) return null;
+          return _fetchFileContent({
+            owner: parsed.owner,
+            repo: parsed.repo,
+            filePath,
+            ref: productBranch,
+            token,
+          });
+        },
       });
       const proposalBoundary = filterPlatformBoundaryFindings(generatedProposals, {
         pathSelector: (p) => p?.filePath ?? p?.targetFilePath ?? p?.selectedFilePath ?? p?.path,

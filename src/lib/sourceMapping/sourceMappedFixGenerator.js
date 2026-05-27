@@ -5,6 +5,12 @@
 
 'use strict';
 
+import { classifyFileBoundary } from './classifyFileBoundary.js';
+import {
+  MIN_SOURCE_MAP_CONFIDENCE,
+  SOURCE_MAPPING_STATUSES,
+} from './sourceMappingConstants.js';
+
 const AUTHORITY = 'recommend_only';
 const LOW_DEGRADED_REASON = 'source_map_incomplete';
 const LOW_DEGRADED_FIX = 'inspect registered repo/source map before patching';
@@ -23,6 +29,17 @@ function getMappings(sourceMapping) {
   return [];
 }
 
+function candidateConfidence(candidate) {
+  const n = Number(candidate?.confidence ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function topCandidate(mapping) {
+  if (!Array.isArray(mapping?.candidates) || mapping.candidates.length === 0) return null;
+  return [...mapping.candidates]
+    .sort((a, b) => candidateConfidence(b) - candidateConfidence(a))[0] ?? null;
+}
+
 function findMappingForFinding(finding, sourceMapping) {
   const mappings = getMappings(sourceMapping);
   const id = findingKey(finding);
@@ -34,19 +51,84 @@ function findMappingForFinding(finding, sourceMapping) {
     || (m.category === category && !location));
 }
 
-function degradedProposal(finding, reason = LOW_DEGRADED_REASON) {
+function selectedPathForMapping(mapping) {
+  const candidate = topCandidate(mapping);
+  return candidate?.filePath
+    ?? mapping?.selectedFilePath
+    ?? mapping?.filePath
+    ?? null;
+}
+
+function sourceMapConfidenceForMapping(mapping, selectedFilePath = null) {
+  const candidate = topCandidate(mapping);
+  const confidence = candidate?.filePath === selectedFilePath
+    ? candidate?.confidence
+    : (mapping?.confidence ?? candidate?.confidence);
+  const n = Number(confidence ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function sourceMapMetadata(mapping, selectedFilePath = null) {
+  const candidate = topCandidate(mapping);
+  return Object.freeze({
+    selectedFilePath,
+    sourceMapConfidence: sourceMapConfidenceForMapping(mapping, selectedFilePath),
+    sourceMapReason: mapping?.reason ?? candidate?.reason ?? null,
+    sourceMapCandidates: Array.isArray(mapping?.candidates) ? mapping.candidates : [],
+    sourceMapSignals: candidate?.signals ?? mapping?.signals ?? null,
+    mappingStrategyVersion: mapping?.mappingStrategyVersion ?? null,
+  });
+}
+
+function degradedProposal(finding, reason = LOW_DEGRADED_REASON, mapping = null, selectedFilePath = null) {
   return Object.freeze({
     findingId: findingKey(finding),
     category: finding?.category ?? null,
     severity: finding?.severity ?? null,
     filePath: null,
+    selectedFilePath,
     lineNumber: null,
     currentSnippet: null,
     proposedFix: LOW_DEGRADED_FIX,
     confidence: 'LOW',
     authority: AUTHORITY,
+    status: SOURCE_MAPPING_STATUSES.SOURCE_MAP_INCOMPLETE,
+    classification: SOURCE_MAPPING_STATUSES.SOURCE_MAP_INCOMPLETE,
     reason,
     sourceMapComplete: false,
+    ...sourceMapMetadata(mapping, selectedFilePath),
+  });
+}
+
+function nonActionableProposal({
+  finding,
+  mapping,
+  selectedFilePath,
+  boundary,
+  reason,
+  status,
+}) {
+  return Object.freeze({
+    findingId: findingKey(finding),
+    category: finding?.category ?? null,
+    severity: finding?.severity ?? null,
+    filePath: selectedFilePath,
+    selectedFilePath,
+    lineNumber: mapping?.lineNumber ?? finding?.lineNumber ?? finding?.line ?? null,
+    currentSnippet: null,
+    proposedFix: status === SOURCE_MAPPING_STATUSES.PLATFORM_BOUNDARY_BLOCKED
+      ? `Do not patch ${selectedFilePath}; platform-boundary file requires migration or human review.`
+      : `Do not auto-patch ${selectedFilePath}; human review is required before any source change.`,
+    confidence: confidenceFromMapping(mapping),
+    authority: AUTHORITY,
+    status,
+    classification: status,
+    reason: reason ?? boundary?.reason ?? status,
+    sourceMapComplete: true,
+    actionable: false,
+    boundaryReason: boundary?.reason ?? null,
+    allowlistReason: boundary?.allowlistReason ?? null,
+    ...sourceMapMetadata(mapping, selectedFilePath),
   });
 }
 
@@ -129,10 +211,46 @@ export async function generateSourceMappedFixProposals({
 
   for (const finding of list) {
     const mapping = findMappingForFinding(finding, sourceMapping);
-    const filePath = mapping?.selectedFilePath ?? mapping?.filePath ?? null;
+    const filePath = selectedPathForMapping(mapping);
     const mapped = mapping?.mapped === true && typeof filePath === 'string' && filePath.length > 0;
     if (!mapped) {
-      out.push(degradedProposal(finding));
+      out.push(degradedProposal(finding, LOW_DEGRADED_REASON, mapping, filePath));
+      continue;
+    }
+
+    const boundary = classifyFileBoundary(filePath);
+    if (boundary.status === SOURCE_MAPPING_STATUSES.PLATFORM_BOUNDARY_BLOCKED) {
+      out.push(nonActionableProposal({
+        finding,
+        mapping,
+        selectedFilePath: boundary.file,
+        boundary,
+        status: SOURCE_MAPPING_STATUSES.PLATFORM_BOUNDARY_BLOCKED,
+      }));
+      continue;
+    }
+
+    if (boundary.status === SOURCE_MAPPING_STATUSES.HUMAN_REVIEW_REQUIRED) {
+      out.push(nonActionableProposal({
+        finding,
+        mapping,
+        selectedFilePath: boundary.file,
+        boundary,
+        status: SOURCE_MAPPING_STATUSES.HUMAN_REVIEW_REQUIRED,
+      }));
+      continue;
+    }
+
+    const numericConfidence = sourceMapConfidenceForMapping(mapping, boundary.file);
+    if (numericConfidence < MIN_SOURCE_MAP_CONFIDENCE) {
+      out.push(nonActionableProposal({
+        finding,
+        mapping,
+        selectedFilePath: boundary.file,
+        boundary,
+        status: SOURCE_MAPPING_STATUSES.HUMAN_REVIEW_REQUIRED,
+        reason: 'LOW_SOURCE_MAP_CONFIDENCE',
+      }));
       continue;
     }
 
@@ -146,7 +264,18 @@ export async function generateSourceMappedFixProposals({
     if (!snippet) {
       const content = await readFileContent(fileContentProvider, filePath, finding, mapping);
       if (typeof content !== 'string' || !content.length) {
-        out.push(degradedProposal(finding));
+        out.push(degradedProposal(finding, LOW_DEGRADED_REASON, mapping, filePath));
+        continue;
+      }
+      const contentBoundary = classifyFileBoundary(filePath, { sourceText: content });
+      if (contentBoundary.status === SOURCE_MAPPING_STATUSES.PLATFORM_BOUNDARY_BLOCKED) {
+        out.push(nonActionableProposal({
+          finding,
+          mapping,
+          selectedFilePath: contentBoundary.file,
+          boundary: contentBoundary,
+          status: SOURCE_MAPPING_STATUSES.PLATFORM_BOUNDARY_BLOCKED,
+        }));
         continue;
       }
       const located = snippetAtLine(content, lineNumber ?? 1);
@@ -155,7 +284,7 @@ export async function generateSourceMappedFixProposals({
     }
 
     if (!snippet || !lineNumber) {
-      out.push(degradedProposal(finding));
+      out.push(degradedProposal(finding, LOW_DEGRADED_REASON, mapping, filePath));
       continue;
     }
 
@@ -164,6 +293,7 @@ export async function generateSourceMappedFixProposals({
       category: finding?.category ?? null,
       severity: finding?.severity ?? null,
       filePath,
+      selectedFilePath: filePath,
       lineNumber,
       currentSnippet: snippet,
       proposedFix: typeof mapping?.proposedFix === 'string' && mapping.proposedFix
@@ -171,8 +301,12 @@ export async function generateSourceMappedFixProposals({
         : fixTextForFinding(finding, filePath),
       confidence: confidenceFromMapping(mapping),
       authority: AUTHORITY,
+      status: SOURCE_MAPPING_STATUSES.ACTIONABLE,
+      classification: SOURCE_MAPPING_STATUSES.ACTIONABLE,
       reason: mapping?.reason ?? 'source_mapped_recommendation',
       sourceMapComplete: true,
+      actionable: true,
+      ...sourceMapMetadata(mapping, filePath),
     }));
   }
 
@@ -183,7 +317,11 @@ export const __internals = Object.freeze({
   AUTHORITY,
   LOW_DEGRADED_REASON,
   LOW_DEGRADED_FIX,
+  MIN_SOURCE_MAP_CONFIDENCE,
   findMappingForFinding,
+  selectedPathForMapping,
+  topCandidate,
+  sourceMapConfidenceForMapping,
   snippetAtLine,
   confidenceFromMapping,
   degradedProposal,
