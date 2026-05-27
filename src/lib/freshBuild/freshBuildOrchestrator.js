@@ -2,6 +2,7 @@ import { extractFeatures } from './featureExtractor.js';
 import { synthesizeDesign } from './designSynthesizer.js';
 import { generateCodebase } from './codebaseGenerator.js';
 import { FRESH_BUILD_VERSION, isFreshBuildEnabled } from './constants.js';
+import { writeGeneratedCodebaseToUpgradeRepo } from './freshBuildDeploymentAdapter.js';
 
 export const FRESH_BUILD_MODE = 'FRESH_BUILD';
 
@@ -34,16 +35,6 @@ async function emit(onStep, stage, status, details = {}) {
     at: isoTimestamp(now),
     ...rest,
   });
-}
-
-async function defaultWriteGeneratedCodebase() {
-  return {
-    ok: false,
-    status: 'SKIPPED',
-    reason: 'DEPLOYMENT_ADAPTER_NOT_CONFIGURED',
-    previewUrl: null,
-    filesWritten: 0,
-  };
 }
 
 function buildEvidence(featureInventory, designSpec, generatedCodebase, writeResult) {
@@ -95,7 +86,7 @@ export async function runFreshBuild(input = {}, options = {}) {
   const extract = options.extractFeatures || extractFeatures;
   const synthesize = options.synthesizeDesign || synthesizeDesign;
   const generate = options.generateCodebase || generateCodebase;
-  const writeGeneratedCodebase = options.writeGeneratedCodebase || defaultWriteGeneratedCodebase;
+  const writeGeneratedCodebase = options.writeGeneratedCodebase || writeGeneratedCodebaseToUpgradeRepo;
 
   await emit(onStep, 'feature_extractor', 'started', { now });
   const featureInventory = await extract(url, {
@@ -200,6 +191,5 @@ export async function runFreshBuild(input = {}, options = {}) {
 }
 
 export const __test = Object.freeze({
-  defaultWriteGeneratedCodebase,
   buildEvidence,
 });

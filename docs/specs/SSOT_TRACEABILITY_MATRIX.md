@@ -171,6 +171,7 @@ Three modules:
 - Design Synthesizer: URL → design spec — EXPERIMENTAL/LOCAL VALIDATION — feature flag OFF; deterministic tests use mocked crawler/Browserless
 - Codebase Generator: inventory + spec → platform-free codebase — EXPERIMENTAL/LOCAL VALIDATION — safety gates tested; feature flag OFF
 - Fresh Build Orchestrator: Feature Extractor → Design Synthesizer → Codebase Generator → upgrade-repo write seam — EXPERIMENTAL/PARALLEL MODE WIRED — feature flag OFF; existing ASSESS/PATCH/MIGRATE paths unchanged
+- Fresh Build Deployment Adapter: generated codebase → authorized upgrade repo branch → Vercel preview URL — EXPERIMENTAL/LOCAL VALIDATION — rejects original repo and main/master writes without Victor approval
 
 Fresh Build is Phase 6 work. It does not affect any current workflow. When complete it replaces the upgrade-repo patch approach in Workflow 1 SUB-1B and powers Workflow 2 SUB-2B.
 
@@ -412,6 +413,7 @@ SSOT completion against Gate B 95% target: **2 / 11 release-critical Layer-1 cla
 - Fresh Build Design Synthesizer: EXPERIMENTAL/LOCAL VALIDATION
 - Fresh Build Codebase Generator: EXPERIMENTAL/LOCAL VALIDATION
 - Fresh Build Orchestrator: EXPERIMENTAL/PARALLEL MODE WIRED
+- Fresh Build Deployment Adapter: EXPERIMENTAL/LOCAL VALIDATION
 - Multi-modal inputs: ROADMAP
 - Multiple URL input and synthesis: ROADMAP
 - Orchestra AUTOMATIC selection: ROADMAP
