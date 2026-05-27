@@ -10,7 +10,6 @@ import {
   Layers, History, ShieldCheck, BookOpen, BarChart3, X, GitBranch
 } from 'lucide-react';
 import { saveSessionConfig } from './Configuration';
-import UniversalNav from '@/components/shared/UniversalNav';
 import RunConstructionPanel from '@/components/RunConstructionPanel';
 import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
 
@@ -115,7 +114,6 @@ function FocusedMigrationSetup({
               <div className="text-[10px] text-muted-foreground leading-tight">Flow Hub platform dependency migration setup.</div>
             </div>
           </div>
-          <UniversalNav className="ml-2" />
         </div>
       </header>
 
@@ -875,7 +873,6 @@ export default function LandingPage() {
                 <span className="text-foreground font-semibold">{userName}</span>
               </>
             )}
-            <UniversalNav className="ml-2" />
           </div>
         </div>
         <div className="max-w-6xl mx-auto px-6 pb-2">
