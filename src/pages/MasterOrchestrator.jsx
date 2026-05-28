@@ -9,6 +9,7 @@ import ModeSelector from '@/components/orchestrator/ModeSelector';
 import StepTimeline, { STEPS } from '@/components/orchestrator/StepTimeline';
 import StepResultCard from '@/components/orchestrator/StepResultCard';
 import FinalOutputPanel from '@/components/orchestrator/FinalOutputPanel';
+import PlatformRecommendationPanel from '@/components/orchestrator/PlatformRecommendationPanel';
 
 const PIPELINE_STEPS = STEPS.map(s => s.id);
 
@@ -128,6 +129,8 @@ export default function MasterOrchestrator() {
           </div>
         </div>
       </motion.div>
+
+      <PlatformRecommendationPanel />
 
       {/* Input */}
       <AnimatePresence>
