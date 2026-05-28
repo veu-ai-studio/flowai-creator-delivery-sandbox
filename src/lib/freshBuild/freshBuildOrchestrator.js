@@ -2,9 +2,22 @@ import { extractFeatures } from './featureExtractor.js';
 import { synthesizeDesign } from './designSynthesizer.js';
 import { generateCodebase } from './codebaseGenerator.js';
 import { FRESH_BUILD_VERSION, isFreshBuildEnabled } from './constants.js';
-import { writeGeneratedCodebaseToUpgradeRepo } from './freshBuildDeploymentAdapter.js';
+import {
+  PREVIEW_ACCESS_STATUS,
+  writeGeneratedCodebaseToUpgradeRepo,
+} from './freshBuildDeploymentAdapter.js';
+import { runEvaluationPipeline } from '../evaluation/evaluationPipeline.js';
+import { scoreCrawlOutput } from '../agents/renewal/gtmReadinessScorer.js';
 
 export const FRESH_BUILD_MODE = 'FRESH_BUILD';
+export const SCORE_STATUS = Object.freeze({
+  NOT_ATTEMPTED: 'SCORE_NOT_ATTEMPTED',
+  CAPTURED: 'SCORE_CAPTURED',
+  BLOCKED_PREVIEW_AUTH: 'SCORE_BLOCKED_PREVIEW_AUTH',
+  BLOCKED_PREVIEW_ACCESS: 'SCORE_BLOCKED_PREVIEW_ACCESS',
+  NOT_CONFIGURED: 'SCORE_NOT_CONFIGURED',
+  FAILED: 'SCORE_FAILED',
+});
 
 function requireHttpUrl(url) {
   if (typeof url !== 'string' || !url.trim()) {
@@ -67,7 +80,7 @@ async function emit(onStep, stage, status, details = {}) {
   });
 }
 
-function buildEvidence(featureInventory, designSpec, generatedCodebase, writeResult) {
+function buildEvidence(featureInventory, designSpec, generatedCodebase, writeResult, scoreResult = null) {
   return {
     featureInventoryId: featureInventory?.id || null,
     featureInventoryFieldCount: countObjectKeys(featureInventory),
@@ -82,7 +95,145 @@ function buildEvidence(featureInventory, designSpec, generatedCodebase, writeRes
       : null,
     writeStatus: writeResult?.status || null,
     previewUrl: writeResult?.previewUrl || null,
+    deploymentId: writeResult?.deploymentId || null,
+    previewAccessStatus: writeResult?.previewAccessStatus || null,
+    previewAccess: writeResult?.previewAccess || null,
+    scoreStatus: scoreResult?.scoreStatus || SCORE_STATUS.NOT_ATTEMPTED,
+    baselineScore: typeof scoreResult?.baselineScore === 'number' ? scoreResult.baselineScore : null,
+    finalScore: typeof scoreResult?.finalScore === 'number' ? scoreResult.finalScore : null,
+    scoreDelta: typeof scoreResult?.scoreDelta === 'number' ? scoreResult.scoreDelta : null,
   };
+}
+
+function numericScore(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value?.total === 'number' && Number.isFinite(value.total)) return value.total;
+  if (typeof value?.score === 'number' && Number.isFinite(value.score)) return value.score;
+  if (typeof value?.finalScore === 'number' && Number.isFinite(value.finalScore)) return value.finalScore;
+  return null;
+}
+
+async function evaluateUrlScore({ url, runId, evaluationOptions = {}, onStep } = {}) {
+  const evaluation = await runEvaluationPipeline({
+    url,
+    options: {
+      evaluationTier: evaluationOptions.evaluationTier || 'TIER_1',
+      ...(evaluationOptions.options || {}),
+      onStep,
+    },
+  });
+  if (!evaluation?.ok) {
+    const errors = evaluation?.errors && typeof evaluation.errors === 'object'
+      ? Object.keys(evaluation.errors).join(',')
+      : 'evaluation_failed';
+    throw new Error(`Fresh Build score evaluation failed for ${url}: ${errors}`);
+  }
+  const score = scoreCrawlOutput({}, evaluation.findings || []);
+  return {
+    score: score.score,
+    findingsCount: Array.isArray(evaluation.findings) ? evaluation.findings.length : 0,
+    runId,
+  };
+}
+
+async function defaultScoreFreshBuildPreview({
+  baselineUrl,
+  previewUrl,
+  runId,
+  evaluationOptions,
+  onStep,
+} = {}) {
+  const [baseline, final] = await Promise.all([
+    evaluateUrlScore({ url: baselineUrl, runId, evaluationOptions, onStep }),
+    evaluateUrlScore({ url: previewUrl, runId, evaluationOptions, onStep }),
+  ]);
+  return {
+    baselineScore: baseline.score,
+    finalScore: final.score,
+    baselineFindingsCount: baseline.findingsCount,
+    finalFindingsCount: final.findingsCount,
+  };
+}
+
+async function captureFreshBuildScore({
+  url,
+  previewUrl,
+  runId,
+  writeResult,
+  scoreFreshBuildPreview,
+  evaluationOptions = {},
+  onStep,
+  now,
+}) {
+  const previewAccessStatus = writeResult?.previewAccessStatus || null;
+  if (previewAccessStatus === PREVIEW_ACCESS_STATUS.AUTH_REQUIRED) {
+    return {
+      scoreStatus: SCORE_STATUS.BLOCKED_PREVIEW_AUTH,
+      baselineScore: null,
+      finalScore: null,
+      scoreDelta: null,
+    };
+  }
+  if (previewAccessStatus !== PREVIEW_ACCESS_STATUS.BROWSER_CLEAR) {
+    return {
+      scoreStatus: SCORE_STATUS.BLOCKED_PREVIEW_ACCESS,
+      baselineScore: null,
+      finalScore: null,
+      scoreDelta: null,
+    };
+  }
+  const scoreImpl = typeof scoreFreshBuildPreview === 'function'
+    ? scoreFreshBuildPreview
+    : defaultScoreFreshBuildPreview;
+  if (typeof scoreImpl !== 'function') {
+    return {
+      scoreStatus: SCORE_STATUS.NOT_CONFIGURED,
+      baselineScore: null,
+      finalScore: null,
+      scoreDelta: null,
+    };
+  }
+
+  await emit(onStep, 'score_capture', 'started', {
+    previewAccessStatus,
+    previewUrl,
+    now,
+  });
+  try {
+    const score = await scoreImpl({
+      baselineUrl: url,
+      previewUrl,
+      runId,
+      previewAccessStatus,
+      evaluationOptions,
+      onStep,
+    });
+    const baselineScore = numericScore(score?.baselineScore ?? score?.baseline);
+    const finalScore = numericScore(score?.finalScore ?? score?.final);
+    if (baselineScore === null || finalScore === null) {
+      return {
+        scoreStatus: SCORE_STATUS.FAILED,
+        baselineScore: null,
+        finalScore: null,
+        scoreDelta: null,
+        error: 'SCORE_RESULT_INCOMPLETE',
+      };
+    }
+    return {
+      scoreStatus: SCORE_STATUS.CAPTURED,
+      baselineScore,
+      finalScore,
+      scoreDelta: finalScore - baselineScore,
+    };
+  } catch (error) {
+    return {
+      scoreStatus: SCORE_STATUS.FAILED,
+      baselineScore: null,
+      finalScore: null,
+      scoreDelta: null,
+      error: String(error?.message ?? error).slice(0, 200),
+    };
+  }
 }
 
 function safeFailure(error, stage = 'deployment_adapter') {
@@ -113,6 +264,11 @@ export async function runFreshBuild(input = {}, options = {}) {
       url,
       featureFlag: 'FLOWAI_ENABLE_FRESH_BUILD',
       previewUrl: null,
+      previewAccessStatus: null,
+      scoreStatus: SCORE_STATUS.NOT_ATTEMPTED,
+      baselineScore: null,
+      finalScore: null,
+      scoreDelta: null,
       generatedCodebase: null,
       platformDependencies: [],
       metadata: {
@@ -183,6 +339,11 @@ export async function runFreshBuild(input = {}, options = {}) {
       generatedCodebase,
       platformDependencies: generatedCodebase.platformDependencies || [],
       previewUrl: null,
+      previewAccessStatus: null,
+      scoreStatus: SCORE_STATUS.NOT_ATTEMPTED,
+      baselineScore: null,
+      finalScore: null,
+      scoreDelta: null,
       evidence: buildEvidence(featureInventory, designSpec, generatedCodebase, null),
       metadata: {
         version: FRESH_BUILD_VERSION,
@@ -221,6 +382,27 @@ export async function runFreshBuild(input = {}, options = {}) {
     filesWritten: writeResult?.filesWritten || 0,
     failureStage: writeResult?.failureStage || writeResult?.failure?.stage || null,
     previewUrl: writeResult?.previewUrl || null,
+    deploymentId: writeResult?.deploymentId || null,
+    previewAccessStatus: writeResult?.previewAccessStatus || null,
+    now,
+  });
+
+  const scoreResult = await captureFreshBuildScore({
+    url,
+    previewUrl: writeResult?.previewUrl || null,
+    runId,
+    writeResult,
+    scoreFreshBuildPreview: options.scoreFreshBuildPreview,
+    evaluationOptions: options.evaluationOptions,
+    onStep,
+    now,
+  });
+  await emit(onStep, 'score_capture', scoreResult.scoreStatus === SCORE_STATUS.CAPTURED ? 'completed' : 'blocked', {
+    scoreStatus: scoreResult.scoreStatus,
+    previewAccessStatus: writeResult?.previewAccessStatus || null,
+    baselineScore: scoreResult.baselineScore,
+    finalScore: scoreResult.finalScore,
+    scoreDelta: scoreResult.scoreDelta,
     now,
   });
 
@@ -249,8 +431,14 @@ export async function runFreshBuild(input = {}, options = {}) {
     generatedCodebase,
     writeResult,
     previewUrl: writeResult?.previewUrl || null,
+    previewAccessStatus: writeResult?.previewAccessStatus || null,
+    previewAccess: writeResult?.previewAccess || null,
+    scoreStatus: scoreResult.scoreStatus,
+    baselineScore: scoreResult.baselineScore,
+    finalScore: scoreResult.finalScore,
+    scoreDelta: scoreResult.scoreDelta,
     platformDependencies: generatedCodebase.platformDependencies || [],
-    evidence: buildEvidence(featureInventory, designSpec, generatedCodebase, writeResult),
+    evidence: buildEvidence(featureInventory, designSpec, generatedCodebase, writeResult, scoreResult),
     metadata: {
       version: FRESH_BUILD_VERSION,
       featureFlagEnabled: true,

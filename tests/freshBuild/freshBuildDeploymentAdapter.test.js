@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  probePreviewAccess,
   parseGitHubRepoUrl,
   writeGeneratedCodebaseToUpgradeRepo,
 } from '../../src/lib/freshBuild/freshBuildDeploymentAdapter.js';
@@ -15,6 +16,16 @@ function generatedCodebase(overrides = {}) {
     platformDependencies: [],
     ...overrides,
   };
+}
+
+function browserClearProbe() {
+  return vi.fn(async ({ previewUrl, deploymentId }) => ({
+    previewUrl,
+    deploymentId,
+    previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+    httpStatus: 200,
+    reason: null,
+  }));
 }
 
 describe('Fresh Build deployment adapter', () => {
@@ -107,6 +118,7 @@ describe('Fresh Build deployment adapter', () => {
       previewUrl: 'https://saige-v2-fresh-build.vercel.app',
       inspectorUrl: 'https://vercel.com/inspect/dep_123',
     }));
+    const probePreviewAccessImpl = browserClearProbe();
 
     const result = await writeGeneratedCodebaseToUpgradeRepo({
       generatedCodebase: generatedCodebase(),
@@ -124,6 +136,7 @@ describe('Fresh Build deployment adapter', () => {
       now: '2026-05-26T00:00:00.000Z',
       githubClient,
       deployPreviewImpl,
+      probePreviewAccessImpl,
     });
 
     expect(result).toMatchObject({
@@ -137,6 +150,7 @@ describe('Fresh Build deployment adapter', () => {
       commitSha: 'abc123',
       deploymentId: 'dep_123',
       previewUrl: 'https://saige-v2-fresh-build.vercel.app',
+      previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
     });
     expect(githubClient.createCommit).toHaveBeenCalledWith(expect.objectContaining({
       owner: 'veu-ai-studio',
@@ -156,6 +170,10 @@ describe('Fresh Build deployment adapter', () => {
       branchName: 'flowai/fresh-build-saige-run-1',
       token: 'vercel-token',
     }));
+    expect(probePreviewAccessImpl).toHaveBeenCalledWith(expect.objectContaining({
+      previewUrl: 'https://saige-v2-fresh-build.vercel.app',
+      deploymentId: 'dep_123',
+    }));
   });
 
   it('resolves Vercel args from existing operator envs without Fresh Build-specific env vars', async () => {
@@ -170,6 +188,7 @@ describe('Fresh Build deployment adapter', () => {
       deploymentId: 'dep_operator',
       previewUrl: 'https://saige-v2-operator-envs.vercel.app',
     }));
+    const probePreviewAccessImpl = browserClearProbe();
 
     const result = await writeGeneratedCodebaseToUpgradeRepo({
       generatedCodebase: generatedCodebase(),
@@ -187,6 +206,7 @@ describe('Fresh Build deployment adapter', () => {
       },
       githubClient,
       deployPreviewImpl,
+      probePreviewAccessImpl,
     });
 
     expect(result).toMatchObject({
@@ -213,6 +233,7 @@ describe('Fresh Build deployment adapter', () => {
       deploymentId: 'dep_standard',
       previewUrl: 'https://generic-v2-standard-envs.vercel.app',
     }));
+    const probePreviewAccessImpl = browserClearProbe();
 
     const result = await writeGeneratedCodebaseToUpgradeRepo({
       generatedCodebase: generatedCodebase(),
@@ -230,6 +251,7 @@ describe('Fresh Build deployment adapter', () => {
       },
       githubClient,
       deployPreviewImpl,
+      probePreviewAccessImpl,
     });
 
     expect(result).toMatchObject({
@@ -293,6 +315,83 @@ describe('Fresh Build deployment adapter', () => {
         attempts: 3,
       },
     });
+  });
+
+  it('does not count a Vercel-auth protected preview as browser-clear', async () => {
+    const githubClient = {
+      createCommit: vi.fn(async () => ({
+        commitSha: 'auth123',
+        filesWritten: 3,
+        branchUrl: 'https://github.com/veu-ai-studio/saige-v2/tree/flowai/fresh-build-run-auth',
+      })),
+    };
+    const deployPreviewImpl = vi.fn(async () => ({
+      deploymentId: 'dep_auth',
+      previewUrl: 'https://saige-v2-auth.vercel.app',
+    }));
+    const probePreviewAccessImpl = vi.fn(async ({ previewUrl, deploymentId }) => ({
+      previewUrl,
+      deploymentId,
+      previewAccessStatus: 'PREVIEW_AUTH_REQUIRED',
+      httpStatus: 401,
+      reason: 'VERCEL_AUTH_REQUIRED',
+    }));
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase(),
+      productName: 'SAIGE',
+      runId: 'run-auth',
+      productConfig: {
+        name: 'SAIGE',
+        original_repo: 'https://github.com/veu-ai-studio/saige',
+        upgrade_repo: 'https://github.com/veu-ai-studio/saige-v2',
+        vercel_project_id: 'prj_123',
+        vercel_org_id: 'team_123',
+      },
+      env: { VERCEL_TOKEN: 'standard-token' },
+      githubClient,
+      deployPreviewImpl,
+      probePreviewAccessImpl,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 'WRITTEN_PREVIEW_NOT_BROWSER_CLEAR',
+      reason: 'PREVIEW_AUTH_REQUIRED',
+      deploymentId: 'dep_auth',
+      previewUrl: 'https://saige-v2-auth.vercel.app',
+      previewAccessStatus: 'PREVIEW_AUTH_REQUIRED',
+      previewAccess: {
+        httpStatus: 401,
+        reason: 'VERCEL_AUTH_REQUIRED',
+      },
+    });
+  });
+
+  it('classifies HTTP 401 preview probes as PREVIEW_AUTH_REQUIRED without reading HTML', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      status: 401,
+      headers: { get: (name) => name.toLowerCase() === 'set-cookie' ? '_vercel_sso_nonce=1' : null },
+      text: vi.fn(),
+    }));
+
+    const result = await probePreviewAccess({
+      previewUrl: 'saige-v2-auth.vercel.app',
+      deploymentId: 'dep_auth',
+      fetchImpl,
+    });
+
+    expect(result).toMatchObject({
+      previewUrl: 'https://saige-v2-auth.vercel.app',
+      deploymentId: 'dep_auth',
+      previewAccessStatus: 'PREVIEW_AUTH_REQUIRED',
+      httpStatus: 401,
+      reason: 'VERCEL_AUTH_REQUIRED',
+    });
+    expect(fetchImpl).toHaveBeenCalledWith('https://saige-v2-auth.vercel.app', expect.objectContaining({
+      method: 'GET',
+      redirect: 'manual',
+    }));
   });
 
   it('returns deployment configuration required after a successful safe branch write when Vercel is not configured', async () => {

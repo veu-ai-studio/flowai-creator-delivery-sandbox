@@ -464,6 +464,25 @@ live URL, platformDependencies=0,
 original repo untouched, artifact captured.
 GATE VERDICT: PHASE 3B COMPLETE or NEEDS_REVISION
 ═══════════════════════════════════════════════
+
+Phase 3B revision behavior:
+
+Fresh Build preview evidence must distinguish a real deployment from a
+browser-clear live URL. A Vercel-auth protected preview (HTTP 401/403,
+Vercel SSO, or equivalent login redirect) is recorded as
+PREVIEW_AUTH_REQUIRED or PREVIEW_NOT_BROWSER_CLEAR and must not satisfy
+the browsable-live-URL exit criterion.
+
+Fresh Build score evidence must be explicit. After preview creation,
+scoring is attempted only when previewAccessStatus is
+PREVIEW_BROWSER_CLEAR. Browser-clear previews must record baselineScore,
+finalScore, and scoreDelta. Auth-protected previews must record
+scoreStatus=SCORE_BLOCKED_PREVIEW_AUTH; FlowAI must not fabricate scores
+or leave finalScore silently null.
+
+Phase 3B remains NEEDS_REVISION until a browser-clear preview and
+before/after score delta are captured and Victor approves the output.
+
 VICTOR + CLAUDE CHAT TEST 3B:
 Browse the Fresh Build live URL together.
 Compare to original saige-v2.

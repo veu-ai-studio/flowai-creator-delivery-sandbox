@@ -137,9 +137,21 @@ describe('freshBuild Orchestrator', () => {
         ok: true,
         status: 'WRITTEN',
         filesWritten: 2,
+        deploymentId: 'dep_2',
         previewUrl: 'https://fresh-build-preview.vercel.app',
+        previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+        previewAccess: {
+          previewUrl: 'https://fresh-build-preview.vercel.app',
+          deploymentId: 'dep_2',
+          previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+          httpStatus: 200,
+        },
       };
     });
+    const scoreFreshBuildPreview = vi.fn(async () => ({
+      baselineScore: 72,
+      finalScore: 86,
+    }));
 
     const result = await runFreshBuild({
       url: 'https://example.com',
@@ -153,6 +165,7 @@ describe('freshBuild Orchestrator', () => {
       synthesizeDesign,
       generateCodebase,
       writeGeneratedCodebase,
+      scoreFreshBuildPreview,
     });
 
     expect(calls).toEqual(['extract', 'design', 'generate', 'write']);
@@ -171,11 +184,21 @@ describe('freshBuild Orchestrator', () => {
       ok: true,
       status: 'READY',
       previewUrl: 'https://fresh-build-preview.vercel.app',
+      previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+      scoreStatus: 'SCORE_CAPTURED',
+      baselineScore: 72,
+      finalScore: 86,
+      scoreDelta: 14,
       platformDependencies: [],
       evidence: {
         generatedFileCount: 2,
         platformDependenciesCount: 0,
         writeStatus: 'WRITTEN',
+        previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+        scoreStatus: 'SCORE_CAPTURED',
+        baselineScore: 72,
+        finalScore: 86,
+        scoreDelta: 14,
         designEvidence: {
           primaryColors: ['#111827', '#2563eb', '#f97316', '#10b981', '#f8fafc'],
           fontFamilies: ['Inter', 'Arial', 'Roboto', 'System UI', 'Georgia'],
@@ -185,6 +208,12 @@ describe('freshBuild Orchestrator', () => {
         },
       },
     });
+    expect(scoreFreshBuildPreview).toHaveBeenCalledWith(expect.objectContaining({
+      baselineUrl: 'https://example.com',
+      previewUrl: 'https://fresh-build-preview.vercel.app',
+      runId: 'run-2',
+      previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+    }));
   });
 
   it('builds bounded Fresh Build design evidence for SSE without full design payloads', () => {
@@ -295,6 +324,61 @@ describe('freshBuild Orchestrator', () => {
     expect(JSON.stringify(result.evidence)).not.toContain('<html');
   });
 
+  it('blocks scoring honestly when the preview requires Vercel auth', async () => {
+    const scoreFreshBuildPreview = vi.fn();
+
+    const result = await runFreshBuild({
+      url: 'https://example.com',
+      runId: 'run-auth',
+      productName: 'Example Product',
+      productConfig: { name: 'Example Product', upgrade_repo: 'https://github.com/acme/example-v2' },
+    }, {
+      env: { FLOWAI_ENABLE_FRESH_BUILD: 'true' },
+      extractFeatures: vi.fn(async () => mockFeatureInventory()),
+      synthesizeDesign: vi.fn(async () => mockDesignSpec()),
+      generateCodebase: vi.fn(async () => mockGeneratedCodebase()),
+      writeGeneratedCodebase: vi.fn(async () => ({
+        ok: false,
+        status: 'WRITTEN_PREVIEW_NOT_BROWSER_CLEAR',
+        reason: 'PREVIEW_AUTH_REQUIRED',
+        filesWritten: 2,
+        branchUrl: 'https://github.com/acme/example-v2/tree/flowai/fresh-build-run-auth',
+        commitSha: 'auth123',
+        deploymentId: 'dep_auth',
+        previewUrl: 'https://fresh-build-auth.vercel.app',
+        previewAccessStatus: 'PREVIEW_AUTH_REQUIRED',
+        previewAccess: {
+          previewUrl: 'https://fresh-build-auth.vercel.app',
+          deploymentId: 'dep_auth',
+          previewAccessStatus: 'PREVIEW_AUTH_REQUIRED',
+          httpStatus: 401,
+          reason: 'VERCEL_AUTH_REQUIRED',
+        },
+      })),
+      scoreFreshBuildPreview,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 'partial',
+      reason: 'PREVIEW_AUTH_REQUIRED',
+      previewUrl: 'https://fresh-build-auth.vercel.app',
+      previewAccessStatus: 'PREVIEW_AUTH_REQUIRED',
+      scoreStatus: 'SCORE_BLOCKED_PREVIEW_AUTH',
+      baselineScore: null,
+      finalScore: null,
+      scoreDelta: null,
+      evidence: {
+        previewAccessStatus: 'PREVIEW_AUTH_REQUIRED',
+        scoreStatus: 'SCORE_BLOCKED_PREVIEW_AUTH',
+        baselineScore: null,
+        finalScore: null,
+        scoreDelta: null,
+      },
+    });
+    expect(scoreFreshBuildPreview).not.toHaveBeenCalled();
+  });
+
   it('adds FRESH_BUILD as a parallel API/UI mode without removing existing modes', () => {
     expect(RUN_CONSTRUCTION_TEST.ALLOWED_MODES).toEqual(new Set([
       'FOREGROUND',
@@ -314,6 +398,10 @@ describe('freshBuild Orchestrator', () => {
     const runConstructionSource = readFileSync(new URL('../../src/api/run-construction.js', import.meta.url), 'utf8');
 
     expect(runConstructionSource).toContain('designEvidence: freshBuildResult?.evidence?.designEvidence || null');
+    expect(runConstructionSource).toContain('previewAccessStatus: freshBuildResult?.previewAccessStatus ?? null');
+    expect(runConstructionSource).toContain('scoreStatus: freshBuildResult?.scoreStatus ?? null');
+    expect(runConstructionSource).toContain('baselineScore: typeof freshBuildResult?.baselineScore');
+    expect(runConstructionSource).toContain('scoreDelta: typeof freshBuildResult?.scoreDelta');
     expect(runConstructionSource).toContain('status: freshBuildFinalStatus(freshBuildResult)');
     expect(runConstructionSource).toContain('failureStage: freshBuildResult?.failureStage');
     expect(runConstructionSource).toContain('deploymentId: freshBuildResult?.writeResult?.deploymentId');

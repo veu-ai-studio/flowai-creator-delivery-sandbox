@@ -3,6 +3,12 @@ import { deployBranchPreview } from '../agents/renewal/vercelBranchDeploy.js';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const MAIN_BRANCHES = new Set(['main', 'master']);
+export const PREVIEW_ACCESS_STATUS = Object.freeze({
+  BROWSER_CLEAR: 'PREVIEW_BROWSER_CLEAR',
+  AUTH_REQUIRED: 'PREVIEW_AUTH_REQUIRED',
+  NOT_BROWSER_CLEAR: 'PREVIEW_NOT_BROWSER_CLEAR',
+  UNKNOWN: 'PREVIEW_ACCESS_UNKNOWN',
+});
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : '';
@@ -129,6 +135,99 @@ function makeGitHubError(code, message, extra = {}) {
   error.code = code;
   Object.assign(error, extra);
   return error;
+}
+
+function normalizePreviewUrl(value) {
+  const text = nonEmptyString(value);
+  if (!text) return '';
+  return /^https?:\/\//i.test(text) ? text : `https://${text}`;
+}
+
+function previewProbeHeaders() {
+  return {
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'User-Agent': 'FlowAI-FreshBuild-PreviewProbe/1.0',
+  };
+}
+
+function classifyPreviewResponse(response) {
+  const status = Number(response?.status);
+  const location = typeof response?.headers?.get === 'function'
+    ? response.headers.get('location')
+    : null;
+  const wwwAuthenticate = typeof response?.headers?.get === 'function'
+    ? response.headers.get('www-authenticate')
+    : null;
+  const setCookie = typeof response?.headers?.get === 'function'
+    ? response.headers.get('set-cookie')
+    : null;
+  const server = typeof response?.headers?.get === 'function'
+    ? response.headers.get('server')
+    : null;
+  const authSignal = [location, wwwAuthenticate, setCookie]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (status === 401 || status === 403 || authSignal.includes('vercel_sso') || authSignal.includes('/login')) {
+    return PREVIEW_ACCESS_STATUS.AUTH_REQUIRED;
+  }
+  if (status >= 200 && status < 400) return PREVIEW_ACCESS_STATUS.BROWSER_CLEAR;
+  if (status > 0) return PREVIEW_ACCESS_STATUS.NOT_BROWSER_CLEAR;
+  return server ? PREVIEW_ACCESS_STATUS.NOT_BROWSER_CLEAR : PREVIEW_ACCESS_STATUS.UNKNOWN;
+}
+
+export async function probePreviewAccess({ previewUrl, deploymentId = null, fetchImpl = globalThis.fetch } = {}) {
+  const normalizedUrl = normalizePreviewUrl(previewUrl);
+  if (!normalizedUrl) {
+    return {
+      previewUrl: null,
+      deploymentId,
+      previewAccessStatus: PREVIEW_ACCESS_STATUS.NOT_BROWSER_CLEAR,
+      httpStatus: null,
+      reason: 'PREVIEW_URL_MISSING',
+    };
+  }
+  if (typeof fetchImpl !== 'function') {
+    return {
+      previewUrl: normalizedUrl,
+      deploymentId,
+      previewAccessStatus: PREVIEW_ACCESS_STATUS.UNKNOWN,
+      httpStatus: null,
+      reason: 'FETCH_UNAVAILABLE',
+    };
+  }
+
+  let response;
+  try {
+    response = await fetchImpl(normalizedUrl, {
+      method: 'GET',
+      redirect: 'manual',
+      headers: previewProbeHeaders(),
+    });
+  } catch (error) {
+    return {
+      previewUrl: normalizedUrl,
+      deploymentId,
+      previewAccessStatus: PREVIEW_ACCESS_STATUS.NOT_BROWSER_CLEAR,
+      httpStatus: null,
+      reason: 'PREVIEW_PROBE_FAILED',
+      message: String(error?.message ?? error).slice(0, 200),
+    };
+  }
+
+  const previewAccessStatus = classifyPreviewResponse(response);
+  return {
+    previewUrl: normalizedUrl,
+    deploymentId,
+    previewAccessStatus,
+    httpStatus: Number.isFinite(response.status) ? response.status : null,
+    reason: previewAccessStatus === PREVIEW_ACCESS_STATUS.AUTH_REQUIRED
+      ? 'VERCEL_AUTH_REQUIRED'
+      : previewAccessStatus === PREVIEW_ACCESS_STATUS.BROWSER_CLEAR
+        ? null
+        : 'PREVIEW_NOT_BROWSER_CLEAR',
+  };
 }
 
 async function githubRequest({ fetchImpl, token, method, path, body }) {
@@ -273,6 +372,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   now,
   githubClient,
   deployPreviewImpl = deployBranchPreview,
+  probePreviewAccessImpl = probePreviewAccess,
   allowMainBranch = false,
 } = {}) {
   const validation = validateGeneratedCodebase(generatedCodebase);
@@ -350,8 +450,14 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   }
 
   let deployment;
+  let previewAccess = null;
   try {
     deployment = await deployPreviewImpl(vercelArgs);
+    previewAccess = await probePreviewAccessImpl({
+      previewUrl: deployment?.previewUrl || null,
+      deploymentId: deployment?.deploymentId || null,
+      fetchImpl: globalThis.fetch,
+    });
   } catch (error) {
     return {
       ok: false,
@@ -367,6 +473,8 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       branchUrl: commitResult.branchUrl,
       previewUrl: null,
       deploymentId: error?.deploymentId || null,
+      previewAccessStatus: error?.previewAccessStatus || null,
+      previewAccess: error?.previewAccess || null,
       failureStage: 'vercel_deploy',
       failure: {
         stage: 'vercel_deploy',
@@ -379,8 +487,13 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     };
   }
   return {
-    ok: true,
-    status: 'WRITTEN_AND_DEPLOYED',
+    ok: previewAccess?.previewAccessStatus === PREVIEW_ACCESS_STATUS.BROWSER_CLEAR,
+    status: previewAccess?.previewAccessStatus === PREVIEW_ACCESS_STATUS.BROWSER_CLEAR
+      ? 'WRITTEN_AND_DEPLOYED'
+      : 'WRITTEN_PREVIEW_NOT_BROWSER_CLEAR',
+    reason: previewAccess?.previewAccessStatus === PREVIEW_ACCESS_STATUS.BROWSER_CLEAR
+      ? null
+      : previewAccess?.previewAccessStatus || PREVIEW_ACCESS_STATUS.UNKNOWN,
     owner: repoTarget.owner,
     repo: repoTarget.repo,
     branchName: targetBranch,
@@ -391,6 +504,8 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     deploymentId: deployment?.deploymentId || null,
     previewUrl: deployment?.previewUrl || null,
     inspectorUrl: deployment?.inspectorUrl || null,
+    previewAccessStatus: previewAccess?.previewAccessStatus || PREVIEW_ACCESS_STATUS.UNKNOWN,
+    previewAccess,
   };
 }
 
@@ -401,4 +516,6 @@ export const __test = Object.freeze({
   makeBranchName,
   productEnvSuffixes,
   resolveVercelArgs,
+  normalizePreviewUrl,
+  classifyPreviewResponse,
 });
