@@ -2062,3 +2062,11 @@ END OF INVENTORY — FlowAI v0.1 — 2026-05-10 (SSOT promotion log extended 202
 - **Canonical files updated:** docs/specs/SSOT_TRACEABILITY_MATRIX.md, docs/specs/SSOT_TRACEABILITY_MATRIX.sidecar.json, docs/CANONICAL_REFERENCE.md, docs/CANONICAL_HISTORY.md.
 - **Scope:** Document-only foundation commit; no production code changes.
 
+
+## 2026-05-27 - Automated Operating Dispatch v1.2 prerequisite
+
+- **Authority:** CEO direction to reduce drift and make Codex Window the primary build driver.
+- **Operating principle:** Claude observes. Codex drives. Victor decides.
+- **Artifacts added:** `docs/governance/AUTOMATED_OPERATING_DISPATCH.md`, `docs/specs/task-verification-manifest.json`, and `scripts/verify-task.mjs`.
+- **Verification model:** `verify-task.mjs` reads the task manifest, checks commit file scope, protected files, required patterns, tests, build, lint, SSOT checker, and working tree state.
+- **Adoption status:** Advisory for the first three task-driven cycles; PowerShell remains authoritative during the advisory window and for high-risk commits. The first adoption task is explicitly marked PowerShell-authoritative so the verifier can be committed without claiming authority over itself before the advisory cycle completes.
