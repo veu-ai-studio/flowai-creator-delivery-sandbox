@@ -440,6 +440,46 @@ SSOT completion against Gate B 95% target: **2 / 11 release-critical Layer-1 cla
 - saige-v2 score: 35.5/100 (+9.7 from migration)
 - GTM early score saige-v2: 70.5/100
 
+### 12.4 Orchestrator Framework v0.1 Matrix Reflection
+
+Scope: Layer 2 capability reflection only. This entry does not promote any Layer 1 CA18 claim to VERIFIED.
+
+Governing SSOT reframe: commit `2d1af7b` (`docs: reframe FlowAI SSOT as orchestrator`), which records FlowAI as a human-run orchestrator OS rather than a standalone build engine.
+
+Implementation evidence:
+- Code commit: `228dcdf` (`feat: add orchestrator framework registry`)
+- Manifest commit: `0d51cf0` (`docs: add verifier manifest for orchestrator framework v0.1`)
+- Branch: `flowai/orchestrator-framework-v0-1-audit-clean`
+- Push status at reflection time: NOT PUSHED
+
+PowerShell re-audit result against SSOT `2d1af7b` and dispatch v4: PASS.
+
+Verified audit points:
+- `src/api/base44Client.js` untouched by code commit `228dcdf`.
+- No `docs/` files changed by code commit `228dcdf`; manifest is isolated in `0d51cf0`.
+- Lane separation honored: Codex Window implemented `src/`; PowerShell audited and wrote only docs manifest/matrix entries.
+- Registry access modes align with SSOT enum: `api`, `github`, `browser`, `human-relayed`.
+- Base44 registry entry remains `human-relayed`; no autonomous Base44 API control is claimed.
+- Auto mode exposes `modeMaturity: ENVISIONED`; selection skeleton is built, but live multi-platform execution remains ENVISIONED.
+- Scoring adapter does not fabricate readiness: no scorer returns `SCORE_BLOCKED_STUB`, and real scores require an injected callable scorer result.
+- Go-to-Market and all market exposure remain gated by score >=95 and evidence status `VERIFIED`.
+- Live-call envelopes are disabled by default (`liveEnabled=false`) and expose only credential reference names, not secret values.
+
+Maturity reflection:
+- Orchestrator registry/routing/modes: BUILT/TESTED. Evidence: automated tests in `tests/orchestratorFramework.test.js`; verifier task `orchestrator-framework-v0.1` passed against `228dcdf`.
+- Honest-stub scorer: PARTIAL. Evidence: scoring adapter and tests prove non-fabrication and hard market gate, but real scorer integration is not yet implemented.
+- Live multi-platform execution: ENVISIONED. Evidence: registry and live-call envelopes are present, but `liveEnabled=false` for all initial platforms.
+- 95% iteration loop end-to-end: ENVISIONED. Evidence: gate adapter exists, but durable browser/production/real-data loop evidence has not been captured.
+
+Verification commands:
+- `npx vitest run` - PASS, 3081 passed, 3 skipped.
+- `npm run build` - PASS.
+- `npm run lint` - PASS with existing flat-config warnings only.
+- `node scripts/check-ssot-traceability.mjs` - PASS.
+- `node scripts/verify-task.mjs --task orchestrator-framework-v0.1 --commit 228dcdf` - PASS.
+
+Next gate: v0.2 scoring loop remains blocked until Victor decides push/merge for v0.1 after Claude consistency review and this matrix reflection.
+
 ## PART 13 — THREE SERVICE DOMAINS
 
 These are mission and business-model commitments. The traceability matrix tracks the engineering capabilities required to deliver each domain as separate rows — not these statements themselves. FlowAI is one product with one codebase serving all three domains through differentiated pricing tiers.
