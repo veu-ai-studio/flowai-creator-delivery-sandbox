@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input';
 import {
   Zap, Clock, Wrench, Link2, Pencil, Clipboard, Mic, MicOff,
   CheckCircle2, XCircle, Loader2, UploadCloud, ChevronRight,
-  Layers, Users, History, ShieldCheck, BookOpen, BarChart3, X
+  Layers, History, ShieldCheck, BookOpen, BarChart3, X, GitBranch, Sparkles
 } from 'lucide-react';
 import { saveSessionConfig } from './Configuration';
-import UniversalNav from '@/components/shared/UniversalNav';
+import RunConstructionPanel from '@/components/RunConstructionPanel';
+import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
 
 const SPEECH_SUPPORTED = typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -27,6 +28,12 @@ const OBJECTIVES = [
 ];
 
 const DEPTHS = ['Quick', 'Standard', 'Deep'];
+const MIGRATION_MODE_ENABLED_FOR_UI =
+  String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
+const FRESH_BUILD_ENABLED_FOR_UI =
+  String(import.meta.env?.VITE_FLOWAI_ENABLE_FRESH_BUILD || '').toLowerCase() === 'true';
+const FLOWAI_OPERATOR_NAME = import.meta.env?.VITE_FLOWAI_OPERATOR_NAME || 'FlowAI operator';
+const FLOWAI_OPERATOR_EMAIL = import.meta.env?.VITE_FLOWAI_OPERATOR_EMAIL || '';
 
 const DESCRIPTION_TEMPLATE = `Product Name: 
 What it does: 
@@ -37,13 +44,34 @@ Live URL (optional):
 Login email (optional — for authenticated testing): 
 Login password (optional — for authenticated testing): `;
 
+function detectMigrationPlatformHint({ url = '', description = '', productConfig = null } = {}) {
+  const haystack = `${url}\n${description}\n${productConfig?.systemNote || ''}`.toLowerCase();
+  if (haystack.includes('base44')) return 'Base44';
+  if (haystack.includes('wix')) return 'Wix';
+  if (haystack.includes('webflow')) return 'Webflow';
+  if (haystack.includes('bubble')) return 'Bubble';
+  if (haystack.includes('wordpress') || haystack.includes('wp-json')) return 'WordPress';
+  return productConfig ? 'Pending source scan' : 'Enter a URL to detect';
+}
+
+function estimateMigrationFiles(productConfig) {
+  if (!productConfig) return 'Pending registry match';
+  if (productConfig.platform_dependency_files) return String(productConfig.platform_dependency_files);
+  if (productConfig.name === 'SAIGE') return '273 flagged platform-dependent files';
+  return 'Pending source scan';
+}
+
 // Crawler quality dot indicator
 function CrawlerQualityDot({ quality }) {
-  const cfg = {
+  const MAP = {
     full:  { color: 'bg-emerald-400', label: 'Full browser crawl' },
     basic: { color: 'bg-amber-400',   label: 'Basic crawl' },
     none:  { color: 'bg-muted-foreground/40', label: 'No crawl data' },
-  }[quality || 'none'];
+  };
+  // Defense-in-depth: any unknown quality value (e.g. a backend that
+  // emits a fresh tier name we don't yet render) falls back to the
+  // 'none' tile instead of crashing the page with "undefined.label".
+  const cfg = MAP[quality || 'none'] || MAP.none;
   return (
     <span title={`Crawler quality: ${cfg.label}`}
       className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
@@ -54,6 +82,199 @@ function CrawlerQualityDot({ quality }) {
 }
 
 // ─── CARD A — URL ─────────────────────────────────────────────────────────────
+function FocusedMigrationSetup({
+  urlInput,
+  setUrlInput,
+  description,
+  setDescription,
+  setActiveCard,
+  setMode,
+  runPanelUrl,
+  setRunPanelUrl,
+  migrationModeEnabled,
+  migrationFlagBusy,
+  migrationFlagError,
+  setMigrationModeRuntimeFlag,
+  userIsOperator,
+  operatorContact,
+  operatorSecret,
+  setOperatorSecret,
+  detectedPlatform,
+  upgradeTarget,
+  estimatedFiles,
+}) {
+  return (
+    <div className="min-h-screen bg-background text-foreground font-inter">
+      <header className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-20">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
+              <GitBranch className="h-4 w-4 text-cyan-300" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-foreground leading-tight">Flow Hub — Migration</div>
+              <div className="text-[10px] text-muted-foreground leading-tight">Flow Hub platform dependency migration setup.</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+        {runPanelUrl ? (
+          <RunConstructionPanel
+            url={runPanelUrl}
+            mode="MIGRATION"
+            autoStart
+            onClose={() => setRunPanelUrl(null)}
+            operatorSecret={operatorSecret}
+            setOperatorSecret={setOperatorSecret}
+          />
+        ) : (
+          <>
+            <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-xl border border-border bg-card p-5 space-y-4">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Step 1 - Select Your Product</p>
+                <h1 className="mt-1 text-lg font-bold text-foreground">Which product do you want to migrate?</h1>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <Input
+                  value={urlInput}
+                  onChange={(e) => { setUrlInput(e.target.value); setActiveCard('A'); }}
+                  onPaste={(e) => {
+                    const text = e.clipboardData.getData('text/plain');
+                    if (text) {
+                      e.preventDefault();
+                      setUrlInput(text.trim());
+                      setActiveCard('A');
+                    }
+                  }}
+                  data-paste-behavior="replace"
+                  aria-label="Product URL to migrate"
+                  placeholder="Enter product URL — e.g. https://saigeplatform.com"
+                  className="h-12 text-base font-mono border-cyan-500/60 bg-cyan-500/5 ring-1 ring-cyan-500/20 placeholder:text-cyan-100/45 focus-visible:ring-cyan-400"
+                />
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Optional: describe migration goals, known platform dependencies, or constraints..."
+                  rows={4}
+                  className="w-full text-sm bg-background border border-input rounded-md px-3 py-2 resize-none text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+            </motion.section>
+
+            {urlInput.trim() && (
+              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-border bg-card p-5 space-y-4">
+                <div>
+                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Step 2 - Migration Details</p>
+                  <h2 className="mt-1 text-base font-bold text-foreground">Migration plan preview</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg border border-border bg-background/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Platform detected</p>
+                    <p className="mt-1 text-foreground font-semibold">{detectedPlatform}</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Upgrade repo target</p>
+                    <p className="mt-1 text-foreground font-semibold break-all">{upgradeTarget}</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background/60 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Estimated files to migrate</p>
+                    <p className="mt-1 text-foreground font-semibold">{estimatedFiles}</p>
+                  </div>
+                  <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-300">Rollback</p>
+                    <p className="mt-1 text-emerald-100 font-semibold">Original stays frozen as rollback.</p>
+                  </div>
+                </div>
+              </motion.section>
+            )}
+
+            <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-xl border border-primary/30 bg-primary/5 p-5 space-y-4">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">Step 3 - Confirm and Start</p>
+                <h2 className="mt-1 text-base font-bold text-foreground">Migration execution</h2>
+              </div>
+
+              {migrationModeEnabled ? (
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">Migration Mode enabled.</span> FlowAI will migrate only the upgrade target.
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setMigrationModeRuntimeFlag(false)}
+                      disabled={migrationFlagBusy}
+                    >
+                      {migrationFlagBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Disable
+                    </Button>
+                    <Button
+                      onClick={() => { setMode('migration'); setActiveCard('A'); setRunPanelUrl(urlInput.trim()); }}
+                      disabled={!urlInput.trim()}
+                      className="gap-2"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      Start Migration
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
+                  <p className="text-sm font-semibold text-amber-100">Migration Mode is currently disabled.</p>
+                  {userIsOperator ? (
+                    <Button
+                      type="button"
+                      onClick={() => setMigrationModeRuntimeFlag(true)}
+                      disabled={migrationFlagBusy}
+                      className="gap-2"
+                    >
+                      {migrationFlagBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitBranch className="h-4 w-4" />}
+                      Enable Migration Mode
+                    </Button>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs text-amber-100 leading-relaxed">
+                        Migration Mode requires operator activation. Contact {operatorContact} to enable it.
+                      </p>
+                      <div className="space-y-2">
+                        <Input
+                          type="password"
+                          value={operatorSecret}
+                          onChange={(e) => setOperatorSecret(e.target.value)}
+                          placeholder="Emergency operator secret"
+                          autoComplete="off"
+                          className="h-9 text-xs"
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => setMigrationModeRuntimeFlag(true)}
+                          disabled={migrationFlagBusy || !operatorSecret.trim()}
+                          className="gap-2"
+                        >
+                          {migrationFlagBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitBranch className="h-4 w-4" />}
+                          Enable with Operator Secret
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {migrationFlagError && (
+                <p className="text-xs text-red-300">{migrationFlagError}</p>
+              )}
+            </motion.section>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, onTestFetch, testing, crawlerQuality }) {
   return (
     <div
@@ -75,7 +296,7 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
           onChange={e => { setUrl(e.target.value); setFetchStatus(null); }}
           onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); setUrl(t); setFetchStatus(null); }}
           onClick={e => { e.stopPropagation(); onActivate(); }}
-          placeholder="https://saigedemo.com"
+          placeholder="Enter your product URL..."
           className="h-9 text-sm flex-1"
         />
         <Button
@@ -118,6 +339,7 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
 function CardB({ active, onActivate, description, setDescription, products, loadingProducts }) {
   const [listening, setListening] = useState(false);
   const recRef = useRef(null);
+  const productList = Array.isArray(products) ? products.filter((product) => product && typeof product === 'object') : [];
 
   const toggleVoice = (e) => {
     e.stopPropagation();
@@ -185,7 +407,7 @@ function CardB({ active, onActivate, description, setDescription, products, load
         )}
 
         {/* Load from My Products */}
-        {!loadingProducts && products.length > 0 && (
+        {!loadingProducts && productList.length > 0 && (
           <div className="relative group">
             <button
               onClick={e => e.stopPropagation()}
@@ -194,7 +416,7 @@ function CardB({ active, onActivate, description, setDescription, products, load
               <Layers className="h-3 w-3" /> Load from My Products ▾
             </button>
             <div className="absolute top-8 left-0 z-20 bg-card border border-border rounded-lg shadow-lg p-1 min-w-48 hidden group-hover:block">
-              {products.map(p => (
+              {productList.map(p => (
                 <button
                   key={p.id}
                   onClick={e => loadProduct(e, p)}
@@ -214,6 +436,7 @@ function CardB({ active, onActivate, description, setDescription, products, load
 // ─── CARD C — PASTE / UPLOAD ──────────────────────────────────────────────────
 function CardC({ active, onActivate, pastedContent, setPastedContent, uploadedFiles, setUploadedFiles, uploading, setUploading }) {
   const fileInputRef = useRef(null);
+  const uploadedFileList = Array.isArray(uploadedFiles) ? uploadedFiles.filter((file) => file && typeof file === 'object') : [];
 
   const handleFileDrop = async (e) => {
     e.preventDefault();
@@ -276,12 +499,12 @@ function CardC({ active, onActivate, pastedContent, setPastedContent, uploadedFi
       </div>
 
       {/* Uploaded files list */}
-      {uploadedFiles.length > 0 && (
+      {uploadedFileList.length > 0 && (
         <div className="space-y-1">
-          {uploadedFiles.map((f, i) => (
+          {uploadedFileList.map((f, i) => (
             <div key={i} className="flex items-center justify-between gap-2 text-[11px] text-emerald-400">
               <span className="truncate">{f.name}</span>
-              <button onClick={e => { e.stopPropagation(); setUploadedFiles(prev => prev.filter((_, j) => j !== i)); }}>
+              <button onClick={e => { e.stopPropagation(); setUploadedFiles(prev => (Array.isArray(prev) ? prev : []).filter((_, j) => j !== i)); }}>
                 <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
               </button>
             </div>
@@ -297,6 +520,7 @@ function CardC({ active, onActivate, pastedContent, setPastedContent, uploadedFi
 // ─── MAIN LANDING PAGE ────────────────────────────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Global paste fix for all inputs on this page
   useEffect(() => {
@@ -310,7 +534,8 @@ export default function LandingPage() {
             ? window.HTMLInputElement.prototype
             : window.HTMLTextAreaElement.prototype;
           const nativeInputValueSetter = Object.getOwnPropertyDescriptor(proto, 'value').set;
-          nativeInputValueSetter.call(target, target.value + text);
+          const shouldReplace = target.dataset?.pasteBehavior === 'replace';
+          nativeInputValueSetter.call(target, shouldReplace ? text : target.value + text);
           target.dispatchEvent(new Event('input', { bubbles: true }));
           target.dispatchEvent(new Event('change', { bubbles: true }));
         }
@@ -322,15 +547,34 @@ export default function LandingPage() {
 
   // User info
   const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userRole, setUserRole] = useState('');
   useEffect(() => {
-    base44.auth.me().then(u => { if (u?.full_name) setUserName(u.full_name); }).catch(() => {});
+    base44.auth.me().then(u => {
+      if (u?.full_name) setUserName(u.full_name);
+      if (u?.email) setUserEmail(u.email);
+      if (u?.role) setUserRole(u.role);
+    }).catch(() => {});
+  }, []);
+
+  const [migrationModeEnabled, setMigrationModeEnabled] = useState(MIGRATION_MODE_ENABLED_FOR_UI);
+  const [migrationFlagBusy, setMigrationFlagBusy] = useState(false);
+  const [migrationFlagError, setMigrationFlagError] = useState('');
+  const [operatorSecret, setOperatorSecret] = useState('');
+  useEffect(() => {
+    fetch('/api/operator/migration-mode', { headers: { Accept: 'application/json' } })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (typeof data?.enabled === 'boolean') setMigrationModeEnabled(data.enabled);
+      })
+      .catch(() => {});
   }, []);
 
   // Products for Card B
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   useEffect(() => {
-    base44.entities.CreatedProduct.list('-created_date').then(d => { setProducts(d); setLoadingProducts(false); }).catch(() => setLoadingProducts(false));
+    base44.entities.CreatedProduct.list('-created_date').then(d => { setProducts(Array.isArray(d) ? d : []); setLoadingProducts(false); }).catch(() => setLoadingProducts(false));
   }, []);
 
   // Active card (A | B | C | null)
@@ -355,48 +599,73 @@ export default function LandingPage() {
   const [customObjective, setCustomObjective] = useState('');
   const [objListening, setObjListening] = useState(false);
   const objRecRef = useRef(null);
+  const operationModeRef = useRef(null);
 
   // Mode
   const [mode, setMode] = useState('auto');
   const [depth, setDepth] = useState('Standard');
 
-  // ── Test Fetch (Card A) ──
-  const PROXY = 'https://attached-assets-victor2081new.replit.app';
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (location.pathname === '/flow-hub/migration' || params.get('mode') === 'migration') {
+      setMode('migration');
+      setActiveCard('A');
+      window.requestAnimationFrame(() => {
+        operationModeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    } else if (location.pathname === '/flow-hub/production') {
+      setMode((current) => current === 'migration' ? 'auto' : current);
+    }
+  }, [location.pathname, location.search]);
 
+  // W6 INTEGRATION — Track C: inline construction-engine run panel.
+  // Shown when the user clicks "Run FlowAI" from Card A + Auto mode.
+  // The legacy /auto-runner path is still available as the secondary
+  // "Advanced (legacy)" link.
+  const [runPanelUrl, setRunPanelUrl] = useState(null);
+
+  // ── Test Fetch (Card A) ──
+  // Routes through FlowAI's own /api/research-url (Browserless-backed, full
+  // JS rendering). Previously called a dead Replit proxy that returned null
+  // `bodyText` for any SPA, baking the literal string "Body: null" into
+  // sessionStorage's pageContext and propagating it through every pipeline
+  // step prompt downstream.
   const testFetch = async () => {
     if (!urlInput.trim()) return;
     setTesting(true);
     setFetchStatus(null);
     try {
-      const response = await fetch(`${PROXY}/fetch`, {
+      const response = await fetch('/api/research-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: urlInput.trim() }),
       });
-      const data = await response.json();
-      if (data.title || data.bodyText) {
-        const pageContext = `Title: ${data.title}\nMeta: ${data.metaDescription}\nHeadings: ${data.headings?.map(h => h.text).join(' | ')}\nBody: ${data.bodyText}`;
+      if (!response.ok) {
+        setFetchStatus('fail');
+        setCrawlerQuality(null);
+        setTesting(false);
+        return;
+      }
+      const data = await response.json().catch(() => null);
+      const page = data?.page || {};
+      const hasContent = data?.ok === true && (page.title || page.bodyTextSnippet);
+      if (hasContent) {
+        const headings = Array.isArray(page.headings)
+          ? page.headings.map((h) => (typeof h === 'string' ? h : (h?.text || ''))).filter(Boolean).join(' | ')
+          : '';
+        const pageContext = `Title: ${page.title || ''}\nMeta: ${page.metaDescription || ''}\nHeadings: ${headings}\nBody: ${page.bodyTextSnippet || ''}`;
         try {
           const existing = JSON.parse(sessionStorage.getItem('flowai_session_config') || '{}');
           sessionStorage.setItem('flowai_session_config', JSON.stringify({ ...existing, pageContext }));
         } catch {}
         setFetchStatus('ok');
-        // Read crawler_quality from /api/research-url if available
-        try {
-          const rRes = await fetch('/api/research-url', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: urlInput.trim() }),
-          });
-          if (rRes.ok) {
-            const rData = await rRes.json();
-            setCrawlerQuality(rData.crawler_quality || 'basic');
-          } else {
-            setCrawlerQuality('basic');
-          }
-        } catch {
-          setCrawlerQuality('basic');
-        }
+        // crawlerQuality values are constrained to { 'full' | 'basic' | 'none' | null } —
+        // the CrawlerQualityDot lookup table only knows those keys. Browserless
+        // (jsRendered:true) → 'full'. Static fetch (simple-fetch) → 'basic'.
+        setCrawlerQuality(
+          data.crawler_quality
+          || (data.method === 'browserless' || data.jsRendered ? 'full' : 'basic')
+        );
       } else {
         setFetchStatus('fail');
         setCrawlerQuality(null);
@@ -423,6 +692,32 @@ export default function LandingPage() {
     setObjListening(true);
   };
 
+  const setMigrationModeRuntimeFlag = async (enabled) => {
+    setMigrationFlagBusy(true);
+    setMigrationFlagError('');
+    try {
+      const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+      if (operatorSecret.trim()) headers['x-flowai-operator-secret'] = operatorSecret.trim();
+      const response = await fetch(enabled
+        ? '/api/operator/enable-migration-mode'
+        : '/api/operator/disable-migration-mode', {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.ok !== true) {
+        throw new Error(data?.error || data?.message || `Request failed with ${response.status}`);
+      }
+      setMigrationModeEnabled(Boolean(data.enabled));
+      setOperatorSecret('');
+    } catch (error) {
+      setMigrationFlagError(error?.message || 'Unable to update Migration Mode.');
+    } finally {
+      setMigrationFlagBusy(false);
+    }
+  };
+
   // ── Valid input check ──
   const hasValidInput =
     (activeCard === 'A' && !!urlInput.trim()) ||
@@ -431,6 +726,7 @@ export default function LandingPage() {
 
   // ── Launch ──
   const launch = () => {
+    const uploadedFileList = Array.isArray(uploadedFiles) ? uploadedFiles.filter((file) => file && typeof file === 'object') : [];
     const effectiveObjective = objective === 'custom'
       ? (customObjective.trim() || 'Custom objective')
       : OBJECTIVES.find(o => o.value === objective)?.label || objective;
@@ -452,9 +748,9 @@ export default function LandingPage() {
     } else if (activeCard === 'C') {
       const combinedContent = [
         pastedContent.trim(),
-        uploadedFiles.length > 0 ? `[Uploaded files: ${uploadedFiles.map(f => f.name).join(', ')}]` : '',
+        uploadedFileList.length > 0 ? `[Uploaded files: ${uploadedFileList.map(f => f.name).join(', ')}]` : '',
       ].filter(Boolean).join('\n\n');
-      inputs = [{ id: 1, type: 'description', value: combinedContent, name: 'Input A', file_urls: uploadedFiles.map(f => f.url) }];
+      inputs = [{ id: 1, type: 'description', value: combinedContent, name: 'Input A', file_urls: uploadedFileList.map(f => f.url) }];
       inputMethod = 'describe';
     }
 
@@ -476,12 +772,77 @@ export default function LandingPage() {
 
     saveSessionConfig(config);
 
+    // W6 INTEGRATION — Track C: when the user picks Card A (live URL)
+    // + Auto mode, the primary path is the inline construction-engine
+    // run via /api/run-construction (real SSE, real preview deploy,
+    // real governance record). The legacy /auto-runner remains the
+    // secondary "Advanced (legacy)" link below.
+    if (activeCard === 'A' && (mode === 'auto' || mode === 'migration' || mode === 'fresh_build') && urlInput.trim()) {
+      setRunPanelUrl(urlInput.trim());
+      return;
+    }
+
     if (mode === 'auto') navigate('/auto-runner');
     else if (mode === 'guided') navigate('/guided/research');
+    else if (mode === 'migration' || mode === 'fresh_build') setRunPanelUrl(urlInput.trim());
     else navigate('/manual/research');
   };
 
-  const launchLabel = mode === 'auto'
+  const isConstructionEnginePath = activeCard === 'A' && (mode === 'auto' || mode === 'migration' || mode === 'fresh_build') && !!urlInput.trim();
+  const isMigrationMode = mode === 'migration';
+  const isFreshBuildMode = mode === 'fresh_build';
+  const isFocusedMigrationSetup = location.pathname === '/flow-hub/migration'
+    || new URLSearchParams(location.search).get('mode') === 'migration';
+  const isMigrationLaunchBlocked = isMigrationMode && !migrationModeEnabled;
+  const isFreshBuildLaunchBlocked = isFreshBuildMode && !FRESH_BUILD_ENABLED_FOR_UI;
+  const migrationProductConfig = isFocusedMigrationSetup
+    ? findRegisteredProductConfigForUrl(urlInput.trim())
+    : null;
+  const detectedPlatform = isFocusedMigrationSetup
+    ? detectMigrationPlatformHint({ url: urlInput, description, productConfig: migrationProductConfig })
+    : '';
+  const upgradeTarget = migrationProductConfig?.upgrade_repo
+    || migrationProductConfig?.repo
+    || 'Registered upgrade repo resolves after product match';
+  const estimatedFiles = estimateMigrationFiles(migrationProductConfig);
+  const operatorEmailMatches = FLOWAI_OPERATOR_EMAIL
+    && userEmail
+    && FLOWAI_OPERATOR_EMAIL.toLowerCase() === userEmail.toLowerCase();
+  const userIsOperator = ['admin', 'operator', 'owner'].includes(String(userRole || '').toLowerCase())
+    || operatorEmailMatches;
+  const operatorContact = FLOWAI_OPERATOR_EMAIL
+    ? `${FLOWAI_OPERATOR_NAME} (${FLOWAI_OPERATOR_EMAIL})`
+    : FLOWAI_OPERATOR_NAME !== 'FlowAI operator'
+      ? FLOWAI_OPERATOR_NAME
+      : 'your FlowAI operator';
+  if (isFocusedMigrationSetup) {
+    return (
+      <FocusedMigrationSetup
+        urlInput={urlInput}
+        setUrlInput={setUrlInput}
+        description={description}
+        setDescription={setDescription}
+        setActiveCard={setActiveCard}
+        setMode={setMode}
+        runPanelUrl={runPanelUrl}
+        setRunPanelUrl={setRunPanelUrl}
+        migrationModeEnabled={migrationModeEnabled}
+        migrationFlagBusy={migrationFlagBusy}
+        migrationFlagError={migrationFlagError}
+        setMigrationModeRuntimeFlag={setMigrationModeRuntimeFlag}
+        userIsOperator={userIsOperator}
+        operatorContact={operatorContact}
+        operatorSecret={operatorSecret}
+        setOperatorSecret={setOperatorSecret}
+        detectedPlatform={detectedPlatform}
+        upgradeTarget={upgradeTarget}
+        estimatedFiles={estimatedFiles}
+      />
+    );
+  }
+  const launchLabel = isConstructionEnginePath
+    ? 'Run FlowAI on this URL →'
+    : mode === 'auto'
     ? 'Launch Auto Run →'
     : mode === 'guided'
     ? 'Start Guided Session →'
@@ -498,8 +859,10 @@ export default function LandingPage() {
               <Zap className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <div className="text-sm font-bold text-foreground leading-tight">FlowAI</div>
-              <div className="text-[10px] text-muted-foreground leading-tight">VEU AI Studio Internal Operations Platform.</div>
+              <div className="text-sm font-bold text-foreground leading-tight">{isMigrationMode ? 'Flow Hub — Migration' : 'Flow Hub — Production'}</div>
+              <div className="text-[10px] text-muted-foreground leading-tight">
+                {isMigrationMode ? 'Standalone v2 migration setup.' : 'Start the standard product upgrade flow.'}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3 text-[11px]">
@@ -514,7 +877,6 @@ export default function LandingPage() {
                 <span className="text-foreground font-semibold">{userName}</span>
               </>
             )}
-            <UniversalNav className="ml-2" />
           </div>
         </div>
         <div className="max-w-6xl mx-auto px-6 pb-2">
@@ -524,9 +886,44 @@ export default function LandingPage() {
 
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
 
+        {/* ── SECTION 0: HONEST VALUE PROPOSITION + RELEASE-STATE DISCLOSURE ── */}
+        {/* Plain, accurate description of what this tool actually does.
+            No marketing inflation, no fabricated certifications. The
+            release-state badge sets visitor expectations immediately
+            because the public URL otherwise looks like a SaaS landing
+            page. */}
+        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">
+                Pre-release · Internal use only
+              </span>
+              <span className="text-[10px] text-muted-foreground">v0.1 · VEU AI Studio personnel + licensed pilots</span>
+            </div>
+            <p className="text-sm text-foreground leading-relaxed">
+              <span className="font-semibold text-foreground">FlowAI</span> is a universal product
+              upgrade engine. Give it a product URL, description, or supporting context and it runs
+              the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal,
+              Go-to-Market, Monitor — toward the CEO-defined 95/100 target.
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              <span className="font-semibold text-foreground">What you get:</span> a per-step report,
+              honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands:
+              Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24.
+              Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead
+              of inflating the score.
+            </p>
+          </div>
+        </motion.section>
+
         {/* ── SECTION 2: THREE INPUT CARDS ── */}
         <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Step 1 — Select Your Input</p>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">
+            Setup 1 of 3 — Select your input
+            <span className="ml-2 font-normal normal-case tracking-normal text-muted-foreground/70">
+              (one of three setup steps; the 8-step pipeline runs after launch)
+            </span>
+          </p>
           <div className="grid grid-cols-1 gap-4">
             <CardA
               active={activeCard === 'A'}
@@ -562,7 +959,7 @@ export default function LandingPage() {
 
         {/* ── SECTION 3: OBJECTIVE ── */}
         <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Step 2 — What do you want to accomplish?</p>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Setup 2 of 3 — What do you want to accomplish?</p>
           <div className="rounded-xl border border-border bg-card p-4 space-y-3">
             <select
               value={objective}
@@ -598,8 +995,8 @@ export default function LandingPage() {
         </motion.section>
 
         {/* ── SECTION 4: OPERATION MODE ── */}
-        <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Step 3 — Select Operation Mode</p>
+        <motion.section ref={operationModeRef} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">Setup 3 of 3 — Select operation mode</p>
           <div className="grid grid-cols-1 gap-4">
 
             {/* Auto */}
@@ -615,7 +1012,11 @@ export default function LandingPage() {
                 <span className={`text-sm font-bold ${mode === 'auto' ? 'text-primary' : 'text-foreground'}`}>Auto</span>
                 {mode === 'auto' && <span className="ml-auto text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">SELECTED</span>}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">FlowAI executes all 8 steps automatically. You review the final report.</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                FlowAI executes all 8 pipeline steps automatically — Research → Design → Build →
+                Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the
+                final report with the Clearance score and per-step findings.
+              </p>
               <div className="space-y-1.5" onClick={e => e.stopPropagation()}>
                 <p className="text-[10px] font-semibold text-muted-foreground">Analysis Depth</p>
                 <div className="flex gap-1.5">
@@ -645,8 +1046,11 @@ export default function LandingPage() {
                 <span className={`text-sm font-bold ${mode === 'guided' ? 'text-amber-400' : 'text-foreground'}`}>Guided</span>
                 {mode === 'guided' && <span className="ml-auto text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
               </div>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">FlowAI proposes each step. You approve, modify, or skip before execution.</p>
-              <p className="text-[10px] text-muted-foreground">Minutes to hours · 8 approval gates</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                FlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or
+                skip each one before it executes.
+              </p>
+              <p className="text-[10px] text-muted-foreground">Minutes to hours · 8 approval gates across the execution pipeline</p>
             </div>
 
             {/* Manual */}
@@ -666,28 +1070,157 @@ export default function LandingPage() {
               <p className="text-[10px] text-muted-foreground">Hours to days · Full operator control</p>
             </div>
 
+            {/* Fresh Build */}
+            <div
+              role="button"
+              tabIndex={FRESH_BUILD_ENABLED_FOR_UI ? 0 : -1}
+              aria-disabled={!FRESH_BUILD_ENABLED_FOR_UI}
+              onClick={() => FRESH_BUILD_ENABLED_FOR_UI && setMode('fresh_build')}
+              onKeyDown={e => e.key === 'Enter' && FRESH_BUILD_ENABLED_FOR_UI && setMode('fresh_build')}
+              className={`rounded-xl border p-5 text-left space-y-3 transition-all ${
+                mode === 'fresh_build'
+                  ? 'border-fuchsia-500/60 bg-fuchsia-500/5 ring-1 ring-fuchsia-500/20'
+                  : FRESH_BUILD_ENABLED_FOR_UI
+                    ? 'border-border bg-card hover:border-fuchsia-500/30 cursor-pointer'
+                    : 'border-border bg-card/70 opacity-70 cursor-not-allowed'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className={`h-4 w-4 ${mode === 'fresh_build' ? 'text-fuchsia-300' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-bold ${mode === 'fresh_build' ? 'text-fuchsia-300' : 'text-foreground'}`}>Fresh Build</span>
+                <span className="ml-auto text-[10px] font-bold text-fuchsia-200 bg-fuchsia-500/10 border border-fuchsia-500/20 px-2 py-0.5 rounded-full">
+                  EXPERIMENTAL
+                </span>
+                {mode === 'fresh_build' && <span className="text-[10px] font-bold text-fuchsia-300 bg-fuchsia-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                FlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.
+              </p>
+              <div className="rounded-md border border-fuchsia-500/20 bg-fuchsia-500/5 p-3 text-[11px] text-muted-foreground leading-relaxed">
+                {FRESH_BUILD_ENABLED_FOR_UI
+                  ? 'Fresh Build is enabled for this environment. Existing modes remain unchanged.'
+                  : 'Fresh Build is off by default. Victor must enable FLOWAI_ENABLE_FRESH_BUILD before execution.'}
+              </div>
+            </div>
+
+            {/* Migration */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setMode('migration')}
+              onKeyDown={e => e.key === 'Enter' && setMode('migration')}
+              className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${mode === 'migration' ? 'border-cyan-500/60 bg-cyan-500/5 ring-1 ring-cyan-500/20' : 'border-border bg-card hover:border-cyan-500/30'}`}
+            >
+              <div className="flex items-center gap-2">
+                <GitBranch className={`h-4 w-4 ${mode === 'migration' ? 'text-cyan-300' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-bold ${mode === 'migration' ? 'text-cyan-300' : 'text-foreground'}`}>Migrate</span>
+                {mode === 'migration' && <span className="ml-auto text-[10px] font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                FlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.
+              </p>
+              {migrationModeEnabled ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px]">
+                  <div className="rounded-md border border-border bg-background/60 p-2">
+                    <p className="font-semibold text-foreground">Plan</p>
+                    <p className="text-muted-foreground">File count and dependency count before execution</p>
+                  </div>
+                  <div className="rounded-md border border-border bg-background/60 p-2">
+                    <p className="font-semibold text-foreground">Progress</p>
+                    <p className="text-muted-foreground">Per-file migration status during execution</p>
+                  </div>
+                  <div className="rounded-md border border-border bg-background/60 p-2">
+                    <p className="font-semibold text-foreground">Summary</p>
+                    <p className="text-muted-foreground">Files migrated, dependencies removed, upgrade URL</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                  {userIsOperator ? (
+                    <>
+                      <p className="text-[11px] font-semibold text-amber-200">Migration Mode is currently disabled.</p>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMigrationModeRuntimeFlag(true);
+                        }}
+                        disabled={migrationFlagBusy}
+                        className="inline-flex items-center rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-[11px] font-bold text-amber-100 hover:bg-amber-400/15"
+                      >
+                        {migrationFlagBusy && <Loader2 className="h-3 w-3 animate-spin mr-1.5" />}
+                        Enable Migration Mode
+                      </button>
+                      {migrationFlagError && <p className="text-[11px] text-red-300">{migrationFlagError}</p>}
+                    </>
+                  ) : (
+                    <p className="text-[11px] text-amber-200 leading-relaxed">
+                      Migration Mode requires operator activation. Contact {operatorContact} to enable it.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
           </div>
         </motion.section>
 
         {/* ── SECTION 5: LAUNCH ── */}
         <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-muted-foreground">
-              {hasValidInput
-                ? <span className="text-foreground font-semibold">Ready — {activeCard === 'A' ? 'URL' : activeCard === 'B' ? 'Description' : 'Pasted content'} loaded · {OBJECTIVES.find(o => o.value === objective)?.label}</span>
-                : <span>Select an input above to enable launch</span>
-              }
+          {/* W6 INTEGRATION — Track C: when the construction-engine
+              path is active, the launch card is replaced inline by
+              the streaming run panel after click. */}
+          {runPanelUrl ? (
+            <RunConstructionPanel
+              url={runPanelUrl}
+              mode={isMigrationMode ? 'MIGRATION' : isFreshBuildMode ? 'FRESH_BUILD' : 'FOREGROUND'}
+              onClose={() => setRunPanelUrl(null)}
+            />
+          ) : (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-sm text-muted-foreground">
+                  {hasValidInput
+                    ? <span className="text-foreground font-semibold">Ready — {activeCard === 'A' ? 'URL' : activeCard === 'B' ? 'Description' : 'Pasted content'} loaded · {OBJECTIVES.find(o => o.value === objective)?.label}</span>
+                    : <span>Select an input above to enable launch</span>
+                  }
+                </div>
+                <Button
+                  onClick={launch}
+                  disabled={!hasValidInput || isMigrationLaunchBlocked || isFreshBuildLaunchBlocked}
+                  size="lg"
+                  className="gap-2 w-full sm:min-w-[220px] sm:w-auto text-sm font-bold min-h-[48px]"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  {launchLabel}
+                </Button>
+              </div>
+              {isMigrationLaunchBlocked && (
+                <div className="text-[11px] text-amber-300 text-right">
+                  Migration Mode is currently disabled. Use Flow Hub Migration to enable it.
+                </div>
+              )}
+              {isFreshBuildLaunchBlocked && (
+                <div className="text-[11px] text-fuchsia-200 text-right">
+                  Fresh Build is currently disabled. Victor must enable FLOWAI_ENABLE_FRESH_BUILD.
+                </div>
+              )}
+              {/* Secondary legacy link: only shown when the construction-
+                  engine path is the active primary (URL+Auto). Otherwise
+                  this CTA already routes through /auto-runner. */}
+              {isConstructionEnginePath && (
+                <div className="text-[11px] text-muted-foreground text-right">
+                  Need the legacy multi-step pipeline?{' '}
+                  <button
+                    onClick={() => navigate('/auto-runner')}
+                    className="underline underline-offset-2 hover:text-foreground transition-colors"
+                  >
+                    Advanced (legacy) →
+                  </button>
+                </div>
+              )}
             </div>
-            <Button
-              onClick={launch}
-              disabled={!hasValidInput}
-              size="lg"
-              className="gap-2 w-full sm:min-w-[220px] sm:w-auto text-sm font-bold min-h-[48px]"
-            >
-              <ChevronRight className="h-4 w-4" />
-              {launchLabel}
-            </Button>
-          </div>
+          )}
         </motion.section>
 
         {/* ── SECTION 6: QUICK ACCESS PANEL ── */}
@@ -715,12 +1248,37 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t border-border py-6 px-6 mt-8">
-        <div className="max-w-6xl mx-auto text-center text-[11px] text-muted-foreground space-y-1">
-          <div>FlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio</div>
-          <div>
-            <button onClick={() => navigate('/landing')} className="text-[11px] text-primary hover:text-primary/80 transition-colors">
+        <div className="max-w-6xl mx-auto text-center text-[11px] text-muted-foreground space-y-2">
+          <div>FlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio · Patent pending</div>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <button
+              onClick={() => navigate('/privacy-policy')}
+              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+            >
+              Privacy Policy
+            </button>
+            <span className="text-muted-foreground/40">·</span>
+            <button
+              onClick={() => navigate('/terms-of-use')}
+              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+            >
+              Terms of Use
+            </button>
+            <span className="text-muted-foreground/40">·</span>
+            <button
+              onClick={() => navigate('/landing')}
+              className="text-[11px] text-primary hover:text-primary/80 transition-colors"
+            >
               About FlowAI →
             </button>
+          </div>
+          {/* Honest release-state disclosure — no fabricated certifications,
+              no customer testimonials, no compliance claims FlowAI doesn't hold. */}
+          <div className="text-[10px] text-muted-foreground/70 leading-relaxed pt-2">
+            FlowAI is a pre-release internal engine. It does <span className="font-semibold">not</span>{' '}
+            hold SOC 2, ISO 27001, or any third-party compliance certification at this time, and
+            there are no external customer case studies published. Use is limited to VEU AI Studio
+            personnel and licensed pilots until those gates are cleared.
           </div>
         </div>
       </footer>

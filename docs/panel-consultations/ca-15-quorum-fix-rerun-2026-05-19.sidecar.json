@@ -1,0 +1,1425 @@
+{
+  "schema": "quorum-fix.sidecar.v1",
+  "code": "CA-15",
+  "commit": "b953388",
+  "bundle_size": 32370,
+  "startedAt": "2026-05-19T04:30:49.897Z",
+  "finishedAt": "2026-05-19T04:34:06.720Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 9,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 32370
+  },
+  "tally": {
+    "engagedTotal": 8,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 1,
+    "perQuestion": {
+      "CA-15-A-Q1": {
+        "CA15AQ1-RATIFY": 1,
+        "CA15AQ1-FEWER": 0,
+        "CA15AQ1-MORE": 1,
+        "CA15AQ1-DIFF": 1,
+        "REJECT": 5,
+        "unmatched": 0
+      },
+      "CA-15-A-Q2": {
+        "CA15AQ2-RATIFY": 1,
+        "CA15AQ2-SUBORD": 4,
+        "CA15AQ2-SEPARATE": 0,
+        "CA15AQ2-MODIFY": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-15-A-Q3": {
+        "CA15AQ3-RATIFY": 1,
+        "CA15AQ3-FIXED": 0,
+        "CA15AQ3-ADMIN": 4,
+        "CA15AQ3-MODIFY": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-15-B-Q1": {
+        "CA15BQ1-RATIFY": 1,
+        "CA15BQ1-OPTIONAL": 2,
+        "CA15BQ1-REJECT": 0,
+        "CA15BQ1-MODIFY": 1,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "CA-15-B-Q2": {
+        "CA15BQ2-RATIFY": 2,
+        "CA15BQ2-DROP_RE": 3,
+        "CA15BQ2-DROP_ATT": 0,
+        "CA15BQ2-EXPAND": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-15-B-Q3": {
+        "CA15BQ3-RATIFY": 1,
+        "CA15BQ3-EXPAND": 2,
+        "CA15BQ3-REJECT": 0,
+        "CA15BQ3-MODIFY": 0,
+        "REJECT": 5,
+        "unmatched": 0
+      },
+      "CA-15-C-Q1": {
+        "CA15CQ1-RATIFY": 2,
+        "CA15CQ1-FLOOR_ONLY": 2,
+        "CA15CQ1-NORTH_ONLY": 0,
+        "CA15CQ1-MODIFY": 1,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-15-C-Q2": {
+        "CA15CQ2-RATIFY": 2,
+        "CA15CQ2-HIGHER": 0,
+        "CA15CQ2-LOWER": 0,
+        "CA15CQ2-CONFIG": 2,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "CA-15-C-Q3": {
+        "CA15CQ3-RATIFY": 1,
+        "CA15CQ3-BLOCK": 3,
+        "CA15CQ3-AUTO_RECAPTURE": 0,
+        "CA15CQ3-MODIFY": 1,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-15-D-Q1": {
+        "CA15DQ1-RATIFY": 2,
+        "CA15DQ1-CONTINUOUS": 0,
+        "CA15DQ1-ADVISORY": 3,
+        "CA15DQ1-MODIFY": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-15-D-Q2": {
+        "CA15DQ2-RATIFY": 1,
+        "CA15DQ2-PARTIAL": 2,
+        "CA15DQ2-REJECT": 0,
+        "CA15DQ2-MODIFY": 1,
+        "REJECT": 4,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 31,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Axis overlap creates double-counting",
+        "detail": "CA-15-A defines a UI/UX axis in the 7-axis rubric that is 'distinct from §10.1 UI/UX' but both feed into §7.6 scoring with equal weight. This creates a double-counting problem where UI/UX issues get scored twice under different rubrics, artificially inflating their impact on the final score."
+      },
+      {
+        "slot": 1,
+        "title": "Purpose capture timing creates race condition",
+        "detail": "CA-15-B requires purpose capture 'before any optimization cycle runs' but §7.5 ProductSSOT updates are atomic with output per §7. This creates a race where the first run must both capture purpose AND produce output atomically, but purpose capture requires crawling/inference that may fail, blocking all output."
+      },
+      {
+        "slot": 1,
+        "title": "Conformance gate invalidation too aggressive",
+        "detail": "CA-15-D invalidates CEO sign-off on EVERY CA promotion, not just CAs that affect conformance testing. This means unrelated amendments (e.g., fixing a typo in §28) force re-validation of all products, creating unnecessary operational burden and potential service disruption."
+      },
+      {
+        "slot": 1,
+        "title": "Legal/privacy axes lack jurisdictional clarity",
+        "detail": "CA-15-A axes 5-6 detect 'legal exposure' and 'privacy gaps' but the conformance criteria only mention 'jurisdictional inference per §1.1'. The §1.1 market definitions don't provide sufficient granularity for legal compliance detection across 190+ jurisdictions with conflicting requirements."
+      },
+      {
+        "slot": 2,
+        "title": "Complexity of Multi-Dimensional Audit",
+        "detail": "The introduction of a 7-axis canonical rubric in §10.1.1 adds significant complexity to the audit process. Each axis requires precise conformance-test acceptance criteria, which may lead to increased false positives or negatives, especially in subjective areas like UI/UX and 'Other'."
+      },
+      {
+        "slot": 2,
+        "title": "Purpose Capture Ambiguity",
+        "detail": "The proposal in CA-15-B for capturing purpose into ProductSSOT lacks clarity on how 'inferred' and 'synthesized' modes will accurately reflect the operator's intent. This could lead to misalignment between the product's actual purpose and its recorded purpose, especially if LLM inference is inaccurate."
+      },
+      {
+        "slot": 2,
+        "title": "SSOT-Conformance Gate Rigidity",
+        "detail": "The end-stage SSOT-conformance gate in CA-15-D may introduce rigidity by blocking product deployment until conformance is achieved. This could delay time-sensitive releases and does not account for scenarios where full conformance is impractical or unnecessary."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case the 7-axis Multi-Dimensional Quality Audit causes unintended consequences, such as false positives or negatives, which could lead to incorrect optimization decisions. This is particularly concerning in §10.1.1 where the audit findings are folded into the §7.6 GTM Readiness scoring formula."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "The proposal does not specify how the 7-axis Multi-Dimensional Quality Audit will be tested for accuracy and reliability, particularly for the 'other' axis which is extensible and may introduce variability in findings. This lack of testing could lead to inconsistent results and undermine the effectiveness of the audit."
+      },
+      {
+        "slot": 3,
+        "title": "Operator Overload",
+        "detail": "The introduction of the purpose_record block in ProductSSOT and the requirement for operators to capture purpose statements may lead to operator overload, particularly if the purpose statements are complex or require significant time and effort to craft. This could lead to decreased productivity and increased errors."
+      },
+      {
+        "slot": 4,
+        "title": "Complexity of Multi-Dimensional Quality Audit",
+        "detail": "The 7-axis canonical Quality Audit rubric introduces significant complexity. The mechanism for folding these findings into §7.6 GTM Readiness scoring may lead to confusion and potential misinterpretation of results. The conformance-test acceptance criterion for the 7-axis audit is too stringent and may not be achievable in practical scenarios."
+      },
+      {
+        "slot": 4,
+        "title": "Ambiguity in Purpose Capture Modes",
+        "detail": "The three canonical purpose capture modes (described, inferred, synthesized) are not clearly defined. The inferred mode, which relies on LLM inference from page content, may introduce inaccuracies and biases. The synthesized mode, which combines multiple inputs, may lead to conflicting or unclear purpose statements."
+      },
+      {
+        "slot": 4,
+        "title": "SSOT-Conformance Gate Overhead",
+        "detail": "The SSOT-Conformance Gate as an end-stage hard gate may introduce significant overhead and delay in the deployment pipeline. The requirement for CEO re-sign off on every CA promotion could become a bottleneck, especially in environments with frequent updates and promotions."
+      },
+      {
+        "slot": 5,
+        "title": "Complexity Overload",
+        "detail": "The addition of a 7-axis Multi-Dimensional Quality Audit (CA-15-A) significantly increases the complexity of the system, potentially leading to maintenance challenges and increased risk of errors."
+      },
+      {
+        "slot": 5,
+        "title": "Purpose Capture Ambiguity",
+        "detail": "The purpose capture mechanism (CA-15-B) relies heavily on LLM inference and synthesis, which may introduce inaccuracies and misalignments with the operator's actual intent."
+      },
+      {
+        "slot": 5,
+        "title": "SSOT-Conformance Gate Overhead",
+        "detail": "The end-stage SSOT-Conformance Gate (CA-15-D) adds an additional layer of testing, which may introduce delays and increase the operational burden on the system."
+      },
+      {
+        "slot": 6,
+        "title": "Overly complex quality audit",
+        "detail": "The 7-axis Multi-Dimensional Quality Audit in CA-15-A seems overly complex and potentially subjective. The conformance test acceptance criteria for each axis rely on precision/recall thresholds against labeled corpora, which may be difficult to create and maintain, especially for axes like 'UI/UX' and 'Other'."
+      },
+      {
+        "slot": 6,
+        "title": "Purpose capture ambiguity",
+        "detail": "The purpose capture modes in CA-15-B, particularly 'inferred' and 'synthesized', rely heavily on LLM inference, which can be unreliable and lead to inaccurate or biased purpose statements. The lack of clear guidelines for LLM synthesis could result in inconsistent and unpredictable purpose capture."
+      },
+      {
+        "slot": 6,
+        "title": "SSOT-conformance gate risk",
+        "detail": "The SSOT-conformance gate in CA-15-D, while intended to ensure adherence to the SSOT, could become a bottleneck in the development process. The requirement for CEO re-sign-off on every CA promotion could create delays and hinder agility, especially if the CEO is unavailable or has limited bandwidth."
+      },
+      {
+        "slot": 6,
+        "title": "Extensibility axis 'Other' vague",
+        "detail": "The 'Other' axis in the Multi-Dimensional Quality Audit (CA-15-A) is a catch-all that lacks clear definition. While intended for extensibility, it could become a dumping ground for subjective or irrelevant findings, undermining the overall rigor of the audit."
+      },
+      {
+        "slot": 6,
+        "title": "Purpose drift handling unclear",
+        "detail": "The handling of `PURPOSE_DRIFT` in CA-15-C is unclear. Exiting with `NO_IMPROVEMENT` and an annotation seems insufficient. A significant drift in purpose should trigger a more proactive response, such as requiring operator intervention or automatically re-running the purpose capture process."
+      },
+      {
+        "slot": 8,
+        "title": "Axis set mismatches question",
+        "detail": "CA-15-A-Q1 asks to ratify a 7-axis rubric with UX, API, Data, Auth, Perf, Accessibility, Observability, but the proposal text defines axes as redundancy, grammar, syntax, UI/UX-content, legal, privacy, and other. That mismatch makes the amendment internally inconsistent with its own acceptance criterion and untestable as written."
+      },
+      {
+        "slot": 8,
+        "title": "Duplicate scoring semantics",
+        "detail": "CA-15-A folds the new audit into §7.6 with the same score formula and equal footing with existing detectors, but it also says the axes are content-quality and separately says they are advisory in the legal axis. The proposal does not define how conflicts are resolved when content-quality findings, Phase A findings, and Phase B findings all overlap, so the same defect can be double-counted or suppressed depending on implementation choice."
+      },
+      {
+        "slot": 8,
+        "title": "Purpose capture risks false intent",
+        "detail": "CA-15-B lets the system infer or synthesize a product's purpose from crawls or multiple sources and then stores that as canonical ProductSSOT state. That creates a high risk of ossifying a model hallucination or a marketing page's incidental text as the product's real objective, especially when the operator never supplied a precise purpose statement."
+      },
+      {
+        "slot": 8,
+        "title": "Drift gate can deadlock runs",
+        "detail": "CA-15-C's PURPOSE_DRIFT semantics can exit NO_IMPROVEMENT with explicit drift annotation when the purpose changes, but it does not require a fresh operator approval path or a bounded fallback. A product whose legitimate scope changes during renewal could repeatedly fail the exit gate even after successful technical remediation, turning an optimization loop into a deadlock."
+      },
+      {
+        "slot": 8,
+        "title": "CEO re-sign every CA is brittle",
+        "detail": "CA-15-D-Q2 makes CEO sign-off invalid on every CA promotion, even promotions that do not affect the specific conformance gate. This couples ordinary governance churn to a single human approver and can stall the entire pipeline over unrelated amendments, creating an availability bottleneck rather than a control mechanism."
+      },
+      {
+        "slot": 9,
+        "title": "Purpose Capture Ambiguity",
+        "detail": "The three canonical purpose-capture modes (§7.5 `purpose_record`) may lead to inconsistent purpose statements. The 'inferred' mode relies on LLM inference, which may not always accurately capture the operator's intent."
+      },
+      {
+        "slot": 9,
+        "title": "SSOT-Conformance Gate Timing",
+        "detail": "The §27 SSOT-Conformance Gate is placed at the end-stage, which may allow non-conformant changes to propagate through the pipeline. It should be considered to run this gate at every §11 step."
+      },
+      {
+        "slot": 10,
+        "title": "§10.1.1 rubric overlaps §10.1",
+        "detail": "The 7-axis Multi-Dimensional Quality Audit in §10.1.1 redefines UI/UX as content/copy quality while §10.1 already scores build-quality UI/UX; no conflict-resolution rule is stated for when the same finding appears under both, and the folding formula in §7.6 simply unions them without deduplication."
+      },
+      {
+        "slot": 10,
+        "title": "purpose_record schema truncated",
+        "detail": "§7.5 adds purpose_record as the 7th block with a JSON schema that ends mid-array at fulfillment_signals; no validation, required-field, or atomic-write rule is provided, unlike the explicit atomicity guarantee for delta_log in the same section."
+      },
+      {
+        "slot": 10,
+        "title": "§27 gate depends on parked CAs",
+        "detail": "CA-15-D makes the end-stage SSOT-conformance test a hard gate, yet the proposal repeatedly cross-references parked CA-13 and CA-14 entries that are explicitly NOT in §18.4; no fallback or version-pin is defined if those amendments remain unratified."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-15-A-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "5 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 5
+    },
+    "CA-15-A-Q2": {
+      "verdict": "PLURALITY_CA15AQ2-SUBORD",
+      "detail": "4 of 8 on CA15AQ2-SUBORD (below 7/10 quorum)",
+      "topKey": "CA15AQ2-SUBORD",
+      "topCount": 4
+    },
+    "CA-15-A-Q3": {
+      "verdict": "PLURALITY_CA15AQ3-ADMIN",
+      "detail": "4 of 8 on CA15AQ3-ADMIN (below 7/10 quorum)",
+      "topKey": "CA15AQ3-ADMIN",
+      "topCount": 4
+    },
+    "CA-15-B-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 4
+    },
+    "CA-15-B-Q2": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between CA15BQ2-DROP_RE / REJECT",
+      "topKey": "CA15BQ2-DROP_RE",
+      "topCount": 3
+    },
+    "CA-15-B-Q3": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "5 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 5
+    },
+    "CA-15-C-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "3 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 3
+    },
+    "CA-15-C-Q2": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 4
+    },
+    "CA-15-C-Q3": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between CA15CQ3-BLOCK / REJECT",
+      "topKey": "CA15CQ3-BLOCK",
+      "topCount": 3
+    },
+    "CA-15-D-Q1": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between CA15DQ1-ADVISORY / REJECT",
+      "topKey": "CA15DQ1-ADVISORY",
+      "topCount": 3
+    },
+    "CA-15-D-Q2": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.17045454545454544,
+    "alignedCount": 15,
+    "totalPossible": 88,
+    "draftedQs": [
+      "CA-15-A-Q1",
+      "CA-15-A-Q2",
+      "CA-15-A-Q3",
+      "CA-15-B-Q1",
+      "CA-15-B-Q2",
+      "CA-15-B-Q3",
+      "CA-15-C-Q1",
+      "CA-15-C-Q2",
+      "CA-15-C-Q3",
+      "CA-15-D-Q1",
+      "CA-15-D-Q2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 17.0 %, distinct objections 31"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Axis overlap creates double-counting",
+            "detail": "CA-15-A defines a UI/UX axis in the 7-axis rubric that is 'distinct from §10.1 UI/UX' but both feed into §7.6 scoring with equal weight. This creates a double-counting problem where UI/UX issues get scored twice under different rubrics, artificially inflating their impact on the final score."
+          },
+          {
+            "title": "Purpose capture timing creates race condition",
+            "detail": "CA-15-B requires purpose capture 'before any optimization cycle runs' but §7.5 ProductSSOT updates are atomic with output per §7. This creates a race where the first run must both capture purpose AND produce output atomically, but purpose capture requires crawling/inference that may fail, blocking all output."
+          },
+          {
+            "title": "Conformance gate invalidation too aggressive",
+            "detail": "CA-15-D invalidates CEO sign-off on EVERY CA promotion, not just CAs that affect conformance testing. This means unrelated amendments (e.g., fixing a typo in §28) force re-validation of all products, creating unnecessary operational burden and potential service disruption."
+          },
+          {
+            "title": "Legal/privacy axes lack jurisdictional clarity",
+            "detail": "CA-15-A axes 5-6 detect 'legal exposure' and 'privacy gaps' but the conformance criteria only mention 'jurisdictional inference per §1.1'. The §1.1 market definitions don't provide sufficient granularity for legal compliance detection across 190+ jurisdictions with conflicting requirements."
+          }
+        ],
+        "worse_than_status_quo": "The 7-axis quality audit with equal weighting in §7.6 means a product with perfect functionality but minor grammar issues could score lower than a broken product with perfect grammar, incentivizing surface polish over core functionality.",
+        "precedent": "Google's Panda algorithm update (2011) initially over-weighted content quality signals like grammar and readability, causing high-quality technical documentation sites to rank below content farms with better prose, until they rebalanced the signals."
+      },
+      "rejection_steelman": "This proposal should be deferred until CA-13 and CA-14 are resolved, as it builds scoring mechanisms on top of an unstable foundation. The 75-vs-95 threshold debate in CA-13 directly impacts how these quality axes are weighted, and CA-14's Phase A/B distinction affects when quality audits run. Building a 7-axis rubric before establishing the basic scoring threshold and phase gates risks significant rework and creates more parked amendments.",
+      "votes": {
+        "CA-15-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposed 7 axes have unclear boundaries (UX vs Accessibility overlap) and the 'Observability' axis is undefined in the proposal, making conformance testing impossible."
+        },
+        "CA-15-A-Q2": {
+          "key": "CA15AQ2-SUBORD",
+          "pick_text": "Subordinate to Five-Layer — Multi-Dim rubric becomes telemetry feeding §7.6 score, not equal footing.",
+          "rationale": "Equal footing creates the double-counting problem identified in objection 1; subordination allows the rubric to inform without distorting the score."
+        },
+        "CA-15-A-Q3": {
+          "key": "CA15AQ3-ADMIN",
+          "pick_text": "Knob exists but admin-role only (operator cannot disable axes).",
+          "rationale": "Allowing operators to disable quality axes defeats the purpose of standardized quality assessment; admin-only preserves override capability for exceptional cases."
+        },
+        "CA-15-B-Q1": {
+          "key": "CA15BQ1-OPTIONAL",
+          "pick_text": "Ratify but optional — `purpose_record` exists but is not required.",
+          "rationale": "Making purpose_record required creates the race condition identified in objection 2; optional allows gradual adoption without blocking core functionality."
+        },
+        "CA-15-B-Q2": {
+          "key": "CA15BQ2-DROP_RE",
+          "pick_text": "Ratify 2 — drop reverse-engineered (risk of poisoning SSOT with wrong inferred intent).",
+          "rationale": "Reverse-engineering purpose from crawled content is unreliable and risks encoding incorrect assumptions into the canonical record."
+        },
+        "CA-15-B-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject regex — placeholder detection belongs in linter, not canonical.",
+          "rationale": "Hard-coding specific placeholder patterns in the canonical spec creates maintenance burden; this validation belongs in tooling layer."
+        },
+        "CA-15-C-Q1": {
+          "key": "CA15CQ1-FLOOR_ONLY",
+          "pick_text": "Floor only — keep numeric threshold, drop purpose-fulfillment exit.",
+          "rationale": "Purpose-fulfillment scoring is too subjective and untestable compared to numeric thresholds; mixing subjective and objective gates weakens the entire system."
+        },
+        "CA-15-C-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal never defines how purpose_fulfillment_score is calculated, making any threshold meaningless."
+        },
+        "CA-15-C-Q3": {
+          "key": "CA15CQ3-BLOCK",
+          "pick_text": "Block instead — PURPOSE_DRIFT halts the run, requires operator re-capture.",
+          "rationale": "Silently continuing with drifted purpose risks optimizing toward outdated goals; explicit operator intervention ensures alignment."
+        },
+        "CA-15-D-Q1": {
+          "key": "CA15DQ1-ADVISORY",
+          "pick_text": "Downgrade §27 to advisory — surfaces conformance issues but does not block.",
+          "rationale": "Hard-gating on SSOT conformance when the SSOT itself is rapidly evolving (10+ CAs pending) creates deadlock; advisory mode provides value without blocking progress."
+        },
+        "CA-15-D-Q2": {
+          "key": "CA15DQ2-PARTIAL",
+          "pick_text": "Partial — CEO sign-off invalidates only on CA promotions affecting §27.",
+          "rationale": "Blanket invalidation on every CA creates the operational burden identified in objection 3; scoped invalidation balances compliance with practicality."
+        }
+      },
+      "overallNotes": "The proposal attempts to address real gaps but introduces more complexity than it resolves, particularly around overlapping quality dimensions and undefined scoring mechanisms.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity of Multi-Dimensional Audit",
+            "detail": "The introduction of a 7-axis canonical rubric in §10.1.1 adds significant complexity to the audit process. Each axis requires precise conformance-test acceptance criteria, which may lead to increased false positives or negatives, especially in subjective areas like UI/UX and 'Other'."
+          },
+          {
+            "title": "Purpose Capture Ambiguity",
+            "detail": "The proposal in CA-15-B for capturing purpose into ProductSSOT lacks clarity on how 'inferred' and 'synthesized' modes will accurately reflect the operator's intent. This could lead to misalignment between the product's actual purpose and its recorded purpose, especially if LLM inference is inaccurate."
+          },
+          {
+            "title": "SSOT-Conformance Gate Rigidity",
+            "detail": "The end-stage SSOT-conformance gate in CA-15-D may introduce rigidity by blocking product deployment until conformance is achieved. This could delay time-sensitive releases and does not account for scenarios where full conformance is impractical or unnecessary."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to increased audit times and potential deployment delays due to the complexity and rigidity of the new audit and conformance processes, potentially stalling product iterations.",
+        "precedent": "The introduction of complex audit systems in software development, such as the OWASP ASVS, has sometimes led to increased overhead and slower release cycles without proportional security benefits."
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and rigidity into the FlowAI process, which could lead to increased operational overhead and potential delays in product deployment. The lack of clarity in purpose capture methods and the rigid SSOT-conformance gate may not align with the dynamic needs of product development and could hinder innovation.",
+      "votes": {
+        "CA-15-A-Q1": {
+          "key": "CA15AQ1-MORE",
+          "pick_text": "Expand to 9+ axes — add SecurityPosture and Internationalization.",
+          "rationale": "Security and internationalization are critical dimensions that should be explicitly audited to ensure comprehensive quality assessment."
+        },
+        "CA-15-A-Q2": {
+          "key": "CA15AQ2-SUBORD",
+          "pick_text": "Subordinate to Five-Layer — Multi-Dim rubric becomes telemetry feeding §7.6 score, not equal footing.",
+          "rationale": "The Multi-Dim rubric should inform the existing Five-Layer model rather than compete with it, to maintain a coherent scoring system."
+        },
+        "CA-15-A-Q3": {
+          "key": "CA15AQ3-ADMIN",
+          "pick_text": "Knob exists but admin-role only (operator cannot disable axes).",
+          "rationale": "Allowing only admins to disable axes ensures that critical quality dimensions are not overlooked by operators seeking to bypass thorough audits."
+        },
+        "CA-15-B-Q1": {
+          "key": "CA15BQ1-MODIFY",
+          "pick_text": "Modify block placement / shape.",
+          "rationale": "The purpose_record should be integrated in a way that ensures clarity and alignment with the operator's intent, possibly requiring a more flexible schema."
+        },
+        "CA-15-B-Q2": {
+          "key": "CA15BQ2-DROP_RE",
+          "pick_text": "Ratify 2 — drop reverse-engineered (risk of poisoning SSOT with wrong inferred intent).",
+          "rationale": "Reverse-engineering intent from existing products is prone to errors and could lead to incorrect purpose capture."
+        },
+        "CA-15-B-Q3": {
+          "key": "CA15BQ3-EXPAND",
+          "pick_text": "Expand regex — add more placeholder patterns (e.g. \"PLACEHOLDER\", \"XXX\", \"TBD\").",
+          "rationale": "Expanding the regex ensures that all common placeholder patterns are caught, preventing incomplete purpose statements."
+        },
+        "CA-15-C-Q1": {
+          "key": "CA15CQ1-FLOOR_ONLY",
+          "pick_text": "Floor only — keep numeric threshold, drop purpose-fulfillment exit.",
+          "rationale": "A numeric threshold provides a clear, objective measure of quality, whereas purpose-fulfillment is subjective and harder to quantify."
+        },
+        "CA-15-C-Q2": {
+          "key": "CA15CQ2-CONFIG",
+          "pick_text": "Make per-product configurable; 0.7 is default.",
+          "rationale": "Allowing configuration per product provides flexibility to accommodate different product requirements and contexts."
+        },
+        "CA-15-C-Q3": {
+          "key": "CA15CQ3-BLOCK",
+          "pick_text": "Block instead — PURPOSE_DRIFT halts the run, requires operator re-capture.",
+          "rationale": "Halting the run ensures that any drift in purpose is addressed immediately, maintaining alignment with the operator's intent."
+        },
+        "CA-15-D-Q1": {
+          "key": "CA15DQ1-ADVISORY",
+          "pick_text": "Downgrade §27 to advisory — surfaces conformance issues but does not block.",
+          "rationale": "An advisory role allows for flexibility in addressing conformance issues without blocking product deployment."
+        },
+        "CA-15-D-Q2": {
+          "key": "CA15DQ2-PARTIAL",
+          "pick_text": "Partial — CEO sign-off invalidates only on CA promotions affecting §27.",
+          "rationale": "Limiting invalidation to changes affecting §27 ensures that CEO oversight is focused on significant changes without unnecessary re-signing."
+        }
+      },
+      "overallNotes": "The proposal's complexity and rigidity could hinder agile development practices, necessitating careful consideration of its implementation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the 7-axis Multi-Dimensional Quality Audit causes unintended consequences, such as false positives or negatives, which could lead to incorrect optimization decisions. This is particularly concerning in §10.1.1 where the audit findings are folded into the §7.6 GTM Readiness scoring formula."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not specify how the 7-axis Multi-Dimensional Quality Audit will be tested for accuracy and reliability, particularly for the 'other' axis which is extensible and may introduce variability in findings. This lack of testing could lead to inconsistent results and undermine the effectiveness of the audit."
+          },
+          {
+            "title": "Operator Overload",
+            "detail": "The introduction of the purpose_record block in ProductSSOT and the requirement for operators to capture purpose statements may lead to operator overload, particularly if the purpose statements are complex or require significant time and effort to craft. This could lead to decreased productivity and increased errors."
+          }
+        ],
+        "worse_than_status_quo": "The proposal may make the system worse than the status quo if the 7-axis Multi-Dimensional Quality Audit is not properly calibrated, leading to incorrect optimization decisions and decreased system performance. Additionally, the introduction of the purpose_record block may introduce additional complexity and overhead, potentially leading to decreased operator productivity and increased errors.",
+        "precedent": "A similar design caused problems in the past, such as the introduction of a new quality metric that was not properly validated, leading to incorrect optimization decisions and decreased system performance. For example, the 'New Coke' debacle in the 1980s, where a new formula was introduced without proper testing, leading to widespread customer dissatisfaction and a subsequent reversion to the original formula."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it introduces significant complexity and potential risks without providing sufficient evidence of its effectiveness or mitigations for potential negative consequences. The lack of a clear rollback strategy, insufficient testing, and potential for operator overload are significant concerns that need to be addressed before implementing the 7-axis Multi-Dimensional Quality Audit and the purpose_record block in ProductSSOT.",
+      "votes": {
+        "CA-15-A-Q1": {
+          "key": "CA15AQ1-RATIFY",
+          "pick_text": "Ratify 7-axis rubric as drafted",
+          "rationale": "The 7-axis rubric provides a comprehensive framework for evaluating product quality, and ratifying it as drafted will provide a clear and consistent standard for optimization decisions."
+        },
+        "CA-15-A-Q2": {
+          "key": "CA15AQ2-RATIFY",
+          "pick_text": "Ratify — fold into §7.6 with equal footing; 7-axis is canonical alongside Five-Layer",
+          "rationale": "Folding the 7-axis rubric into §7.6 with equal footing will provide a more comprehensive and accurate evaluation of product quality, and will help to ensure that optimization decisions are based on a complete and nuanced understanding of the product."
+        },
+        "CA-15-A-Q3": {
+          "key": "CA15AQ3-RATIFY",
+          "pick_text": "Ratify — operators may enable/disable axes per product via ProductRegistry.qualityAxes",
+          "rationale": "Providing operators with the ability to enable or disable axes per product will allow for more flexibility and customization in the optimization process, and will help to ensure that the 7-axis rubric is used in a way that is tailored to the specific needs of each product."
+        },
+        "CA-15-B-Q1": {
+          "key": "CA15BQ1-RATIFY",
+          "pick_text": "Ratify — `purpose_record` is the 7th canonical block; required for every product",
+          "rationale": "Requiring a purpose statement for every product will help to ensure that optimization decisions are based on a clear understanding of the product's purpose and goals, and will provide a more comprehensive and accurate evaluation of product quality."
+        },
+        "CA-15-B-Q2": {
+          "key": "CA15BQ2-RATIFY",
+          "pick_text": "Ratify all 3 modes as drafted",
+          "rationale": "The three canonical purpose-capture modes provide a comprehensive framework for capturing purpose statements, and ratifying them as drafted will provide a clear and consistent standard for optimization decisions."
+        },
+        "CA-15-B-Q3": {
+          "key": "CA15BQ3-RATIFY",
+          "pick_text": "Ratify regex as drafted",
+          "rationale": "The placeholder rejection regex provides a clear and consistent standard for rejecting placeholder purpose statements, and will help to ensure that purpose statements are accurate and meaningful."
+        },
+        "CA-15-C-Q1": {
+          "key": "CA15CQ1-RATIFY",
+          "pick_text": "Ratify two-step exit as drafted",
+          "rationale": "The two-step exit provides a clear and consistent standard for optimization decisions, and will help to ensure that products are optimized based on a comprehensive and nuanced understanding of their purpose and quality."
+        },
+        "CA-15-C-Q2": {
+          "key": "CA15CQ2-RATIFY",
+          "pick_text": "Ratify 0.7 default",
+          "rationale": "The default threshold of 0.7 provides a clear and consistent standard for optimization decisions, and will help to ensure that products are optimized based on a comprehensive and nuanced understanding of their purpose and quality."
+        },
+        "CA-15-C-Q3": {
+          "key": "CA15CQ3-RATIFY",
+          "pick_text": "Ratify PURPOSE_DRIFT as drafted — exits NO_IMPROVEMENT with explicit drift annotation",
+          "rationale": "The PURPOSE_DRIFT exit semantics provide a clear and consistent standard for handling changes in purpose statements, and will help to ensure that optimization decisions are based on a comprehensive and nuanced understanding of the product's purpose and quality."
+        },
+        "CA-15-D-Q1": {
+          "key": "CA15DQ1-RATIFY",
+          "pick_text": "Ratify §27 as drafted — end-stage SSOT-conformance test is a hard gate",
+          "rationale": "The end-stage SSOT-conformance test provides a clear and consistent standard for ensuring that products are optimized and conform to the SSOT, and will help to ensure that optimization decisions are based on a comprehensive and nuanced understanding of the product's purpose and quality."
+        },
+        "CA-15-D-Q2": {
+          "key": "CA15DQ2-RATIFY",
+          "pick_text": "Ratify — CEO sign-off invalidates on every CA promotion; must re-sign",
+          "rationale": "Requiring CEO sign-off on every CA promotion will help to ensure that optimization decisions are based on a comprehensive and nuanced understanding of the product's purpose and quality, and will provide a clear and consistent standard for ensuring that products are optimized and conform to the SSOT."
+        }
+      },
+      "overallNotes": "The proposal introduces significant complexity and potential risks, and requires careful consideration and testing to ensure that it is effective and does not introduce unintended consequences. The lack of a clear rollback strategy, insufficient testing, and potential for operator overload are significant concerns that need to be addressed.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity of Multi-Dimensional Quality Audit",
+            "detail": "The 7-axis canonical Quality Audit rubric introduces significant complexity. The mechanism for folding these findings into §7.6 GTM Readiness scoring may lead to confusion and potential misinterpretation of results. The conformance-test acceptance criterion for the 7-axis audit is too stringent and may not be achievable in practical scenarios."
+          },
+          {
+            "title": "Ambiguity in Purpose Capture Modes",
+            "detail": "The three canonical purpose capture modes (described, inferred, synthesized) are not clearly defined. The inferred mode, which relies on LLM inference from page content, may introduce inaccuracies and biases. The synthesized mode, which combines multiple inputs, may lead to conflicting or unclear purpose statements."
+          },
+          {
+            "title": "SSOT-Conformance Gate Overhead",
+            "detail": "The SSOT-Conformance Gate as an end-stage hard gate may introduce significant overhead and delay in the deployment pipeline. The requirement for CEO re-sign off on every CA promotion could become a bottleneck, especially in environments with frequent updates and promotions."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of the 7-axis Quality Audit rubric may lead to an overload of findings, making it difficult for operators to prioritize and address critical issues, ultimately degrading the overall quality of the product.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it introduces unnecessary complexity and potential bottlenecks in the deployment pipeline. The 7-axis Quality Audit rubric and the SSOT-Conformance Gate may lead to an overload of findings and delays, respectively, which could degrade the overall quality and efficiency of the system.",
+      "votes": {
+        "CA-15-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The 7-axis rubric is too complex and may not be achievable in practical scenarios."
+        },
+        "CA-15-A-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Folding the 7-axis rubric into §7.6 may lead to confusion and misinterpretation of results."
+        },
+        "CA-15-A-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The per-axis enable/disable knob may introduce inconsistencies and make the audit process less transparent."
+        },
+        "CA-15-B-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The purpose_record block may introduce ambiguities and inaccuracies in purpose capture."
+        },
+        "CA-15-B-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The three canonical purpose capture modes are not clearly defined and may lead to conflicting or unclear purpose statements."
+        },
+        "CA-15-B-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The placeholder rejection regex may not be comprehensive enough to detect all placeholder texts."
+        },
+        "CA-15-C-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The two-step exit semantics may introduce complexity and potential delays in the deployment pipeline."
+        },
+        "CA-15-C-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The default threshold for purpose_fulfillment_score may not be appropriate for all products and scenarios."
+        },
+        "CA-15-C-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The PURPOSE_DRIFT exit semantics may introduce ambiguities and potential delays in the deployment pipeline."
+        },
+        "CA-15-D-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The SSOT-Conformance Gate may introduce significant overhead and delay in the deployment pipeline."
+        },
+        "CA-15-D-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The requirement for CEO re-sign off on every CA promotion could become a bottleneck, especially in environments with frequent updates and promotions."
+        }
+      },
+      "overallNotes": "The proposal introduces significant complexity and potential bottlenecks in the deployment pipeline, which may degrade the overall quality and efficiency of the system.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity Overload",
+            "detail": "The addition of a 7-axis Multi-Dimensional Quality Audit (CA-15-A) significantly increases the complexity of the system, potentially leading to maintenance challenges and increased risk of errors."
+          },
+          {
+            "title": "Purpose Capture Ambiguity",
+            "detail": "The purpose capture mechanism (CA-15-B) relies heavily on LLM inference and synthesis, which may introduce inaccuracies and misalignments with the operator's actual intent."
+          },
+          {
+            "title": "SSOT-Conformance Gate Overhead",
+            "detail": "The end-stage SSOT-Conformance Gate (CA-15-D) adds an additional layer of testing, which may introduce delays and increase the operational burden on the system."
+          }
+        ],
+        "worse_than_status_quo": "The increased complexity and additional layers of testing may lead to slower iteration cycles and reduced system responsiveness to changes.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal introduces significant new complexity and additional testing layers that may outweigh the benefits, potentially leading to a worse-than-status-quo scenario where the system becomes less responsive and more error-prone.",
+      "votes": {
+        "CA-15-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposed 7-axis rubric is overly complex and may introduce maintenance challenges."
+        },
+        "CA-15-A-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Folding the 7-axis rubric into §7.6 may further complicate the system and introduce inconsistencies."
+        },
+        "CA-15-A-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The per-axis enable/disable knob introduces additional complexity without clear benefits."
+        },
+        "CA-15-B-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Adding `purpose_record` as a canonical block may introduce inaccuracies and misalignments."
+        },
+        "CA-15-B-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The three canonical purpose-capture modes may introduce errors and misalignments."
+        },
+        "CA-15-B-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The placeholder rejection regex may introduce false positives and negatives."
+        },
+        "CA-15-C-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The two-step exit semantics may introduce confusion and inconsistencies."
+        },
+        "CA-15-C-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The default threshold of 0.7 for `purpose_fulfillment_score` is arbitrary and may not be appropriate for all products."
+        },
+        "CA-15-C-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The `PURPOSE_DRIFT` exit semantics may introduce unnecessary halts and re-captures."
+        },
+        "CA-15-D-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The end-stage SSOT-Conformance Gate may introduce delays and increase operational burden."
+        },
+        "CA-15-D-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The CEO sign-off invalidation on every CA promotion may introduce unnecessary overhead and delays."
+        }
+      },
+      "overallNotes": "The proposal introduces significant new complexity and additional testing layers that may outweigh the benefits.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly complex quality audit",
+            "detail": "The 7-axis Multi-Dimensional Quality Audit in CA-15-A seems overly complex and potentially subjective. The conformance test acceptance criteria for each axis rely on precision/recall thresholds against labeled corpora, which may be difficult to create and maintain, especially for axes like 'UI/UX' and 'Other'."
+          },
+          {
+            "title": "Purpose capture ambiguity",
+            "detail": "The purpose capture modes in CA-15-B, particularly 'inferred' and 'synthesized', rely heavily on LLM inference, which can be unreliable and lead to inaccurate or biased purpose statements. The lack of clear guidelines for LLM synthesis could result in inconsistent and unpredictable purpose capture."
+          },
+          {
+            "title": "SSOT-conformance gate risk",
+            "detail": "The SSOT-conformance gate in CA-15-D, while intended to ensure adherence to the SSOT, could become a bottleneck in the development process. The requirement for CEO re-sign-off on every CA promotion could create delays and hinder agility, especially if the CEO is unavailable or has limited bandwidth."
+          },
+          {
+            "title": "Extensibility axis 'Other' vague",
+            "detail": "The 'Other' axis in the Multi-Dimensional Quality Audit (CA-15-A) is a catch-all that lacks clear definition. While intended for extensibility, it could become a dumping ground for subjective or irrelevant findings, undermining the overall rigor of the audit."
+          },
+          {
+            "title": "Purpose drift handling unclear",
+            "detail": "The handling of `PURPOSE_DRIFT` in CA-15-C is unclear. Exiting with `NO_IMPROVEMENT` and an annotation seems insufficient. A significant drift in purpose should trigger a more proactive response, such as requiring operator intervention or automatically re-running the purpose capture process."
+          }
+        ],
+        "worse_than_status_quo": "The SSOT-conformance gate (CA-15-D) with mandatory CEO re-sign-off on every CA promotion could create a significant bottleneck, slowing down development and deployment cycles. This could lead to frustration among developers and operators, and ultimately reduce the overall efficiency of the FlowAI system.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal introduces significant complexity with the multi-dimensional quality audit and purpose capture mechanisms. The reliance on LLMs for purpose inference and the potential for bottlenecks with the SSOT-conformance gate raise concerns about the practicality and maintainability of the proposed changes. Deferring this proposal would allow for further refinement and validation of these concepts before implementation.",
+      "votes": {
+        "CA-15-A-Q1": {
+          "key": "CA15AQ1-DIFF",
+          "pick_text": "Adopt different axis set entirely (specify in rationale).",
+          "rationale": "A more focused set of axes, such as UX, API, Data, Auth, Perf, Accessibility, and Observability, would provide a more actionable and measurable assessment of quality. This aligns better with the existing 5-dimension scoring engine and avoids the subjectivity of axes like 'Grammar' and 'Syntax'."
+        },
+        "CA-15-A-Q2": {
+          "key": "CA15AQ2-SUBORD",
+          "pick_text": "Subordinate to Five-Layer — Multi-Dim rubric becomes telemetry feeding §7.6 score, not equal footing.",
+          "rationale": "The Multi-Dim rubric should inform the §7.6 score but not be on equal footing. The Five-Layer framework represents core system qualities, while the Multi-Dim rubric captures more subjective content-related aspects. Treating them as separate inputs allows for a more nuanced understanding of overall quality."
+        },
+        "CA-15-A-Q3": {
+          "key": "CA15AQ3-ADMIN",
+          "pick_text": "Knob exists but admin-role only (operator cannot disable axes).",
+          "rationale": "Per-axis enable/disable knobs should be restricted to admin roles to maintain consistency and prevent operators from inadvertently disabling critical quality checks. This ensures that all products undergo a baseline level of quality assessment."
+        },
+        "CA-15-B-Q1": {
+          "key": "CA15BQ1-OPTIONAL",
+          "pick_text": "Ratify but optional — `purpose_record` exists but is not required.",
+          "rationale": "While capturing the purpose of a product is valuable, making the `purpose_record` mandatory for every product may be too restrictive. Allowing it to be optional provides flexibility for cases where the purpose is self-evident or not easily captured."
+        },
+        "CA-15-B-Q2": {
+          "key": "CA15BQ2-DROP_RE",
+          "pick_text": "Ratify 2 — drop reverse-engineered (risk of poisoning SSOT with wrong inferred intent).",
+          "rationale": "The 'reverse-engineered' purpose capture mode carries a significant risk of poisoning the SSOT with inaccurate or biased intent. Dropping this mode reduces the potential for misrepresenting the true purpose of a product."
+        },
+        "CA-15-B-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject regex — placeholder detection belongs in linter, not canonical.",
+          "rationale": "Placeholder detection is better suited for a linter or code quality tool, rather than being enforced as part of the canonical SSOT schema. This keeps the SSOT focused on core purpose capture and avoids adding unnecessary complexity."
+        },
+        "CA-15-C-Q1": {
+          "key": "CA15CQ1-RATIFY",
+          "pick_text": "Ratify two-step exit as drafted.",
+          "rationale": "The two-step exit, combining a numeric floor with purpose-fulfillment as the north-star, provides a balanced approach to optimization. It ensures a minimum level of quality while also aligning the product with its intended purpose."
+        },
+        "CA-15-C-Q2": {
+          "key": "CA15CQ2-RATIFY",
+          "pick_text": "Ratify 0.7 default.",
+          "rationale": "A default threshold of 0.7 for the `purpose_fulfillment_score` strikes a reasonable balance between rigor and flexibility. It provides a starting point for evaluating purpose fulfillment without being overly restrictive."
+        },
+        "CA-15-C-Q3": {
+          "key": "CA15CQ3-BLOCK",
+          "pick_text": "Block instead — PURPOSE_DRIFT halts the run, requires operator re-capture.",
+          "rationale": "A significant drift in purpose should halt the run and require operator intervention to re-capture the purpose. This ensures that the optimization process is aligned with the current intent of the product."
+        },
+        "CA-15-D-Q1": {
+          "key": "CA15DQ1-ADVISORY",
+          "pick_text": "Downgrade §27 to advisory — surfaces conformance issues but does not block.",
+          "rationale": "The SSOT-conformance gate should be downgraded to advisory to avoid creating a bottleneck in the development process. Surfacing conformance issues without blocking allows for continuous improvement without hindering agility."
+        },
+        "CA-15-D-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — CEO sign-off is per-product, not per-CA-promotion.",
+          "rationale": "CEO sign-off should be per-product, not per-CA-promotion, to avoid unnecessary delays and administrative overhead. Requiring CEO re-sign-off on every CA promotion is overly burdensome and does not provide significant additional value."
+        }
+      },
+      "overallNotes": "This proposal introduces several complex mechanisms that require careful consideration. While the goals of improving quality and aligning with purpose are commendable, the potential for bottlenecks and the reliance on subjective assessments raise concerns about the practicality and maintainability of the proposed changes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": true,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Axis set mismatches question",
+            "detail": "CA-15-A-Q1 asks to ratify a 7-axis rubric with UX, API, Data, Auth, Perf, Accessibility, Observability, but the proposal text defines axes as redundancy, grammar, syntax, UI/UX-content, legal, privacy, and other. That mismatch makes the amendment internally inconsistent with its own acceptance criterion and untestable as written."
+          },
+          {
+            "title": "Duplicate scoring semantics",
+            "detail": "CA-15-A folds the new audit into §7.6 with the same score formula and equal footing with existing detectors, but it also says the axes are content-quality and separately says they are advisory in the legal axis. The proposal does not define how conflicts are resolved when content-quality findings, Phase A findings, and Phase B findings all overlap, so the same defect can be double-counted or suppressed depending on implementation choice."
+          },
+          {
+            "title": "Purpose capture risks false intent",
+            "detail": "CA-15-B lets the system infer or synthesize a product's purpose from crawls or multiple sources and then stores that as canonical ProductSSOT state. That creates a high risk of ossifying a model hallucination or a marketing page's incidental text as the product's real objective, especially when the operator never supplied a precise purpose statement."
+          },
+          {
+            "title": "Drift gate can deadlock runs",
+            "detail": "CA-15-C's PURPOSE_DRIFT semantics can exit NO_IMPROVEMENT with explicit drift annotation when the purpose changes, but it does not require a fresh operator approval path or a bounded fallback. A product whose legitimate scope changes during renewal could repeatedly fail the exit gate even after successful technical remediation, turning an optimization loop into a deadlock."
+          },
+          {
+            "title": "CEO re-sign every CA is brittle",
+            "detail": "CA-15-D-Q2 makes CEO sign-off invalid on every CA promotion, even promotions that do not affect the specific conformance gate. This couples ordinary governance churn to a single human approver and can stall the entire pipeline over unrelated amendments, creating an availability bottleneck rather than a control mechanism."
+          }
+        ],
+        "worse_than_status_quo": "If purpose is auto-inferred from a clone's landing page and then used to judge future renewals, the system can lock onto the wrong intent and repeatedly 'optimize' toward the wrong outcome. Compared with the status quo of operator-stated or minimally modeled intent, this can make good products look noncompliant and block beneficial changes.",
+        "precedent": "OpenAI Structured Outputs and many JSON-schema tool-calling systems have shown that forcing structure does not prevent semantic errors; malformed or mis-modeled intent still gets serialized cleanly. More directly, the long-running problem of 'garbage in, garbage out' in intake forms and knowledge bases applies here: canonical storage of inferred intent often hardens mistakes instead of correcting them."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring CA-15 is that it expands the canonical SSOT surface before the existing governance model has a stable, unambiguous way to validate it. The amendment introduces new canonical data, new scoring dimensions, and new blocking gates simultaneously, but does not fully specify precedence, conflict resolution, or rollback when the new signals disagree. Deferring until the axis list, purpose-capture authority, and drift-handling semantics are reconciled would reduce the risk of locking the pipeline into a brittle or self-contradictory standard.",
+      "votes": {
+        "CA-15-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The listed options are for a different axis set than the amendment text: the question names UX, API, Data, Auth, Perf, Accessibility, Observability, while the draft defines redundancy, grammar, syntax, UI/UX-content, legal, privacy, and other. Because the option set does not match the proposal, none can be accepted as specified."
+        },
+        "CA-15-A-Q2": {
+          "key": "CA15AQ2-SUBORD",
+          "pick_text": "Subordinate to Five-Layer — Multi-Dim rubric becomes telemetry feeding §7.6 score, not equal footing.",
+          "rationale": "Equal-footing folding invites double-counting and makes the score harder to interpret when §10, §6, and Phase B all report overlapping defects. Subordination preserves the rubric as useful telemetry without letting it become a second, partially redundant gate."
+        },
+        "CA-15-A-Q3": {
+          "key": "CA15AQ3-ADMIN",
+          "pick_text": "Knob exists but admin-role only (operator cannot disable axes).",
+          "rationale": "Per-axis disabling by operators would let submitters selectively suppress hard-to-satisfy findings and game the score. Restricting the control to admin roles keeps auditability while preventing score manipulation."
+        },
+        "CA-15-B-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — purpose lives in operator-stated spec, not in ProductSSOT canonical schema.",
+          "rationale": "Purpose is a human intent statement and should remain the operator's responsibility rather than being frozen as canonical system state. Storing it canonically as a required block risks treating inferred or stale intent as authoritative."
+        },
+        "CA-15-B-Q2": {
+          "key": "CA15BQ2-RATIFY",
+          "pick_text": "Ratify all 3 modes as drafted.",
+          "rationale": "Different entry paths do need different capture modes, and the triad matches the proposal's onboarding paths. The risk is not the existence of modes but the need for stronger provenance and review around inferred or synthesized purposes."
+        },
+        "CA-15-B-Q3": {
+          "key": "CA15BQ3-EXPAND",
+          "pick_text": "Expand regex — add more placeholder patterns (e.g. \"PLACEHOLDER\", \"XXX\", \"TBD\").",
+          "rationale": "Placeholder rejection should cover the obvious variants if it is meant to protect canonical purpose text from empty defaults. The current regex is too narrow to catch common placeholder leakage."
+        },
+        "CA-15-C-Q1": {
+          "key": "CA15CQ1-MODIFY",
+          "pick_text": "Modify exit semantics.",
+          "rationale": "A pure north-star or pure floor is too rigid; the run should require purpose progress but also preserve a measurable minimum quality floor. The draft needs a clearer fallback when purpose shifts legitimately during the run."
+        },
+        "CA-15-C-Q2": {
+          "key": "CA15CQ2-CONFIG",
+          "pick_text": "Make per-product configurable; 0.7 is default.",
+          "rationale": "A universal threshold is too blunt because purpose clarity varies by product maturity and input type. Defaulting to 0.7 is acceptable only if admins can tune it per product or pipeline class."
+        },
+        "CA-15-C-Q3": {
+          "key": "CA15CQ3-MODIFY",
+          "pick_text": "Modify drift semantics.",
+          "rationale": "Pure NO_IMPROVEMENT exit on drift is too passive because it may hide a real scope change, while hard-blocking every drift can deadlock legitimate updates. The semantics should distinguish minor drift, intentional re-scope, and accidental mismatch."
+        },
+        "CA-15-D-Q1": {
+          "key": "CA15DQ1-RATIFY",
+          "pick_text": "Ratify §27 as drafted — end-stage SSOT-conformance test is a hard gate.",
+          "rationale": "An end-stage hard gate is a reasonable control point if the SSOT is truly the acceptance spec. Making it advisory would weaken the whole purpose of conformance checking."
+        },
+        "CA-15-D-Q2": {
+          "key": "CA15DQ2-MODIFY",
+          "pick_text": "Modify invalidation scope.",
+          "rationale": "Re-signing should be required only when the relevant acceptance or governance surface changes, not for every CA promotion. Narrowing invalidation avoids unnecessary human bottlenecks while preserving sign-off on materially affected controls."
+        }
+      },
+      "overallNotes": "I am voting with several deferrals/partial modifications because the draft mixes governance, scoring, and provenance changes without fully specifying precedence and provenance rules. The biggest issue is that the question set and the amendment text are not consistently aligned, which makes several items impossible to ratify as written.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly Complex Quality Audit",
+            "detail": "The 7-axis Multi-Dimensional Quality Audit (§10.1.1) introduces multiple new dimensions that may be redundant or difficult to calibrate. For example, 'UI/UX' and 'Legal' may overlap in certain cases, and the 'Other' axis is too vague."
+          },
+          {
+            "title": "Purpose Capture Ambiguity",
+            "detail": "The three canonical purpose-capture modes (§7.5 `purpose_record`) may lead to inconsistent purpose statements. The 'inferred' mode relies on LLM inference, which may not always accurately capture the operator's intent."
+          },
+          {
+            "title": "SSOT-Conformance Gate Timing",
+            "detail": "The §27 SSOT-Conformance Gate is placed at the end-stage, which may allow non-conformant changes to propagate through the pipeline. It should be considered to run this gate at every §11 step."
+          }
+        ],
+        "worse_than_status_quo": "If the Multi-Dimensional Quality Audit flags too many false positives, it could lead to an excessive number of findings, making it difficult for operators to address them, and potentially causing a decrease in overall product quality due to alert fatigue.",
+        "precedent": "The introduction of multiple audit dimensions has caused issues in other AI systems, such as the Google AI Overviews, where the complexity of the audit criteria led to unintended consequences and required significant recalibration."
+      },
+      "rejection_steelman": "The proposal introduces significant changes to the existing pipeline, including a complex new quality audit mechanism and a new purpose capture system. These changes may interact with existing components in unforeseen ways, potentially destabilizing the system. It would be prudent to defer this proposal until more thorough testing and simulation can be conducted to mitigate these risks.",
+      "votes": {
+        "CA-15-A-Q1": {
+          "key": "CA15AQ1-RATIFY",
+          "pick_text": "Ratify 7-axis rubric as drafted.",
+          "rationale": "The 7-axis rubric provides a comprehensive coverage of different quality dimensions."
+        },
+        "CA-15-A-Q2": {
+          "key": "CA15AQ2-RATIFY",
+          "pick_text": "Ratify — fold into §7.6 with equal footing; 7-axis is canonical alongside Five-Layer.",
+          "rationale": "Folding the 7-axis rubric into §7.6 with equal footing ensures that all quality dimensions are considered equally important."
+        },
+        "CA-15-A-Q3": {
+          "key": "CA15AQ3-RATIFY",
+          "pick_text": "Ratify — operators may enable/disable axes per product via ProductRegistry.qualityAxes.",
+          "rationale": "Allowing operators to enable or disable axes per product provides flexibility in managing the quality audit process."
+        },
+        "CA-15-B-Q1": {
+          "key": "CA15BQ1-RATIFY",
+          "pick_text": "Ratify — `purpose_record` is the 7th canonical block; required for every product.",
+          "rationale": "Capturing purpose is essential for understanding product intent and optimizing towards it."
+        },
+        "CA-15-B-Q2": {
+          "key": "CA15BQ2-RATIFY",
+          "pick_text": "Ratify all 3 modes as drafted.",
+          "rationale": "The three modes provide a comprehensive approach to capturing purpose, covering different scenarios."
+        },
+        "CA-15-B-Q3": {
+          "key": null,
+          "pick_text": "Expand regex — add more placeholder patterns (e.g. 'PLACEHOLDER', 'XXX', 'TBD').",
+          "rationale": "Expanding the regex to catch more placeholder patterns helps ensure that purpose statements are meaningful."
+        },
+        "CA-15-C-Q1": {
+          "key": "CA15CQ1-RATIFY",
+          "pick_text": "Ratify two-step exit as drafted.",
+          "rationale": "The two-step exit provides a balanced approach, considering both purpose-fulfillment and numeric thresholds."
+        },
+        "CA-15-C-Q2": {
+          "key": "CA15CQ2-CONFIG",
+          "pick_text": "Make per-product configurable; 0.7 is default.",
+          "rationale": "Allowing per-product configuration of the threshold provides flexibility for different product requirements."
+        },
+        "CA-15-C-Q3": {
+          "key": "CA15CQ3-RATIFY",
+          "pick_text": "Ratify PURPOSE_DRIFT as drafted — exits NO_IMPROVEMENT with explicit drift annotation.",
+          "rationale": "The drafted semantics for PURPOSE_DRIFT provide a clear and actionable response to purpose drift."
+        },
+        "CA-15-D-Q1": {
+          "key": "CA15DQ1-RATIFY",
+          "pick_text": "Ratify §27 as drafted — end-stage SSOT-conformance test is a hard gate.",
+          "rationale": "Having a hard gate at the end-stage ensures that the final output conforms to the SSOT."
+        },
+        "CA-15-D-Q2": {
+          "key": "CA15DQ2-PARTIAL",
+          "pick_text": "Partial — CEO sign-off invalidates only on CA promotions affecting §27.",
+          "rationale": "This approach balances the need for CEO oversight with the practicality of not requiring re-signoff for every CA promotion."
+        }
+      },
+      "overallNotes": "The proposal is comprehensive but introduces significant complexity; careful monitoring and potential adjustments will be necessary.",
+      "invalid_reason": "10/11 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§10.1.1 rubric overlaps §10.1",
+            "detail": "The 7-axis Multi-Dimensional Quality Audit in §10.1.1 redefines UI/UX as content/copy quality while §10.1 already scores build-quality UI/UX; no conflict-resolution rule is stated for when the same finding appears under both, and the folding formula in §7.6 simply unions them without deduplication."
+          },
+          {
+            "title": "purpose_record schema truncated",
+            "detail": "§7.5 adds purpose_record as the 7th block with a JSON schema that ends mid-array at fulfillment_signals; no validation, required-field, or atomic-write rule is provided, unlike the explicit atomicity guarantee for delta_log in the same section."
+          },
+          {
+            "title": "§27 gate depends on parked CAs",
+            "detail": "CA-15-D makes the end-stage SSOT-conformance test a hard gate, yet the proposal repeatedly cross-references parked CA-13 and CA-14 entries that are explicitly NOT in §18.4; no fallback or version-pin is defined if those amendments remain unratified."
+          }
+        ],
+        "worse_than_status_quo": "Adding per-axis disable knobs and purpose-driven exits without a mandatory human review step for disabled axes or PURPOSE_DRIFT could silently suppress critical legal/privacy findings or allow runs to exit on stale purpose text, producing lower-quality outputs than the current §7.6 surface-only scoring that at least forces every issue to a terminal decision.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal bundles four new mechanisms (7-axis rubric, purpose_record block, purpose north-star exit, and §27 gate) on top of an already complex Self-Governance Layer while several prerequisite amendments remain parked below quorum; ratifying it now risks creating an inconsistent canonical reference that later requires costly rollback or re-numbering of entries.",
+      "votes": {
+        "CA-15-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "None of the options address the overlap between the new 7-axis rubric and the existing 5-dimension engine."
+        },
+        "CA-15-A-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Equal-footing union without deduplication creates scoring conflicts not covered by any option."
+        },
+        "CA-15-A-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The knob lacks an audit or override-approval requirement that any listed option would enforce."
+        },
+        "CA-15-B-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The truncated schema and missing atomic-write rule make the block unsafe to ratify as drafted."
+        },
+        "CA-15-B-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "No option resolves the risk of incorrect inference poisoning the SSOT when source content is ambiguous."
+        },
+        "CA-15-B-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Placeholder detection should be paired with a mandatory human review step not present in any option."
+        },
+        "CA-15-C-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Purpose fulfillment as sole north-star without a numeric safety floor risks unbounded optimization loops."
+        },
+        "CA-15-C-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "0.7 is an arbitrary value with no calibration data or per-product override governance."
+        },
+        "CA-15-C-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Auto-recapture or blocking both bypass the required human-gate reconciliation stated in §10.2."
+        },
+        "CA-15-D-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Making §27 a hard gate while dependent amendments are parked creates an unresolvable conformance deadlock."
+        },
+        "CA-15-D-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Per-CA invalidation would force repeated CEO sign-off on every minor amendment, which is operationally unsustainable."
+        }
+      },
+      "overallNotes": "The proposal's independence claim is undermined by its repeated references to still-parked prior CAs.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-15-A-Q1",
+      "topic": "CA-15-A-Q1 — 7-axis canonical Quality Audit rubric (UX, API, Data, Auth, Perf, Accessibility, Observability) ratification.",
+      "options": [
+        {
+          "key": "CA15AQ1-RATIFY",
+          "text": "Ratify 7-axis rubric as drafted."
+        },
+        {
+          "key": "CA15AQ1-FEWER",
+          "text": "Reduce to 5 axes — drop Observability and Accessibility (specify reasoning)."
+        },
+        {
+          "key": "CA15AQ1-MORE",
+          "text": "Expand to 9+ axes — add SecurityPosture and Internationalization."
+        },
+        {
+          "key": "CA15AQ1-DIFF",
+          "text": "Adopt different axis set entirely (specify in rationale)."
+        }
+      ],
+      "draftedKey": "CA15AQ1-RATIFY"
+    },
+    {
+      "id": "CA-15-A-Q2",
+      "topic": "CA-15-A-Q2 — Fold 7-axis rubric into §7.6 (equal footing with Five-Layer)?",
+      "options": [
+        {
+          "key": "CA15AQ2-RATIFY",
+          "text": "Ratify — fold into §7.6 with equal footing; 7-axis is canonical alongside Five-Layer."
+        },
+        {
+          "key": "CA15AQ2-SUBORD",
+          "text": "Subordinate to Five-Layer — Multi-Dim rubric becomes telemetry feeding §7.6 score, not equal footing."
+        },
+        {
+          "key": "CA15AQ2-SEPARATE",
+          "text": "Keep separate from §7.6 — Multi-Dim Quality Audit lives in its own §27 section."
+        },
+        {
+          "key": "CA15AQ2-MODIFY",
+          "text": "Modify folding approach."
+        }
+      ],
+      "draftedKey": "CA15AQ2-RATIFY"
+    },
+    {
+      "id": "CA-15-A-Q3",
+      "topic": "CA-15-A-Q3 — Per-axis enable/disable knob per product?",
+      "options": [
+        {
+          "key": "CA15AQ3-RATIFY",
+          "text": "Ratify — operators may enable/disable axes per product via ProductRegistry.qualityAxes."
+        },
+        {
+          "key": "CA15AQ3-FIXED",
+          "text": "Reject knob — all 7 axes always-on; no per-product disable."
+        },
+        {
+          "key": "CA15AQ3-ADMIN",
+          "text": "Knob exists but admin-role only (operator cannot disable axes)."
+        },
+        {
+          "key": "CA15AQ3-MODIFY",
+          "text": "Modify knob shape."
+        }
+      ],
+      "draftedKey": "CA15AQ3-RATIFY"
+    },
+    {
+      "id": "CA-15-B-Q1",
+      "topic": "CA-15-B-Q1 — `purpose_record` as 7th canonical block in ProductSSOT (§7.5).",
+      "options": [
+        {
+          "key": "CA15BQ1-RATIFY",
+          "text": "Ratify — `purpose_record` is the 7th canonical block; required for every product."
+        },
+        {
+          "key": "CA15BQ1-OPTIONAL",
+          "text": "Ratify but optional — `purpose_record` exists but is not required."
+        },
+        {
+          "key": "CA15BQ1-REJECT",
+          "text": "Reject — purpose lives in operator-stated spec, not in ProductSSOT canonical schema."
+        },
+        {
+          "key": "CA15BQ1-MODIFY",
+          "text": "Modify block placement / shape."
+        }
+      ],
+      "draftedKey": "CA15BQ1-RATIFY"
+    },
+    {
+      "id": "CA-15-B-Q2",
+      "topic": "CA-15-B-Q2 — Three canonical purpose-capture modes (operator-stated / reverse-engineered / attested) ratified?",
+      "options": [
+        {
+          "key": "CA15BQ2-RATIFY",
+          "text": "Ratify all 3 modes as drafted."
+        },
+        {
+          "key": "CA15BQ2-DROP_RE",
+          "text": "Ratify 2 — drop reverse-engineered (risk of poisoning SSOT with wrong inferred intent)."
+        },
+        {
+          "key": "CA15BQ2-DROP_ATT",
+          "text": "Ratify 2 — drop attested (low signal vs operator-stated)."
+        },
+        {
+          "key": "CA15BQ2-EXPAND",
+          "text": "Expand — add 4th mode (e.g. CEO-decreed)."
+        }
+      ],
+      "draftedKey": "CA15BQ2-RATIFY"
+    },
+    {
+      "id": "CA-15-B-Q3",
+      "topic": "CA-15-B-Q3 — Placeholder rejection regex (reject Lorem Ipsum / TODO / FIXME in purpose_record).",
+      "options": [
+        {
+          "key": "CA15BQ3-RATIFY",
+          "text": "Ratify regex as drafted."
+        },
+        {
+          "key": "CA15BQ3-EXPAND",
+          "text": "Expand regex — add more placeholder patterns (e.g. \"PLACEHOLDER\", \"XXX\", \"TBD\")."
+        },
+        {
+          "key": "CA15BQ3-REJECT",
+          "text": "Reject regex — placeholder detection belongs in linter, not canonical."
+        },
+        {
+          "key": "CA15BQ3-MODIFY",
+          "text": "Modify regex."
+        }
+      ],
+      "draftedKey": "CA15BQ3-RATIFY"
+    },
+    {
+      "id": "CA-15-C-Q1",
+      "topic": "CA-15-C-Q1 — Floor + north-star two-step exit (purpose-fulfillment is north-star, not numeric threshold).",
+      "options": [
+        {
+          "key": "CA15CQ1-RATIFY",
+          "text": "Ratify two-step exit as drafted."
+        },
+        {
+          "key": "CA15CQ1-FLOOR_ONLY",
+          "text": "Floor only — keep numeric threshold, drop purpose-fulfillment exit."
+        },
+        {
+          "key": "CA15CQ1-NORTH_ONLY",
+          "text": "North-star only — drop numeric floor, purpose-fulfillment is sole gate."
+        },
+        {
+          "key": "CA15CQ1-MODIFY",
+          "text": "Modify exit semantics."
+        }
+      ],
+      "draftedKey": "CA15CQ1-RATIFY"
+    },
+    {
+      "id": "CA-15-C-Q2",
+      "topic": "CA-15-C-Q2 — `purpose_fulfillment_score` default threshold 0.7?",
+      "options": [
+        {
+          "key": "CA15CQ2-RATIFY",
+          "text": "Ratify 0.7 default."
+        },
+        {
+          "key": "CA15CQ2-HIGHER",
+          "text": "0.7 too low — raise to 0.8 or 0.85."
+        },
+        {
+          "key": "CA15CQ2-LOWER",
+          "text": "0.7 too high — lower to 0.6."
+        },
+        {
+          "key": "CA15CQ2-CONFIG",
+          "text": "Make per-product configurable; 0.7 is default."
+        }
+      ],
+      "draftedKey": "CA15CQ2-RATIFY"
+    },
+    {
+      "id": "CA-15-C-Q3",
+      "topic": "CA-15-C-Q3 — `PURPOSE_DRIFT` exit semantics (when purpose changes from prior capture).",
+      "options": [
+        {
+          "key": "CA15CQ3-RATIFY",
+          "text": "Ratify PURPOSE_DRIFT as drafted — exits NO_IMPROVEMENT with explicit drift annotation."
+        },
+        {
+          "key": "CA15CQ3-BLOCK",
+          "text": "Block instead — PURPOSE_DRIFT halts the run, requires operator re-capture."
+        },
+        {
+          "key": "CA15CQ3-AUTO_RECAPTURE",
+          "text": "Auto-recapture — engine re-runs purpose capture and continues."
+        },
+        {
+          "key": "CA15CQ3-MODIFY",
+          "text": "Modify drift semantics."
+        }
+      ],
+      "draftedKey": "CA15CQ3-RATIFY"
+    },
+    {
+      "id": "CA-15-D-Q1",
+      "topic": "CA-15-D-Q1 — §27 SSOT-Conformance Gate ratification (end-stage conformance test).",
+      "options": [
+        {
+          "key": "CA15DQ1-RATIFY",
+          "text": "Ratify §27 as drafted — end-stage SSOT-conformance test is a hard gate."
+        },
+        {
+          "key": "CA15DQ1-CONTINUOUS",
+          "text": "Promote §27 to continuous gate (runs at every §11 step, not just end-stage)."
+        },
+        {
+          "key": "CA15DQ1-ADVISORY",
+          "text": "Downgrade §27 to advisory — surfaces conformance issues but does not block."
+        },
+        {
+          "key": "CA15DQ1-MODIFY",
+          "text": "Modify gate semantics."
+        }
+      ],
+      "draftedKey": "CA15DQ1-RATIFY"
+    },
+    {
+      "id": "CA-15-D-Q2",
+      "topic": "CA-15-D-Q2 — CEO sign-off invalidation on every CA promotion (CA-15-D requires CEO re-sign every CA cycle).",
+      "options": [
+        {
+          "key": "CA15DQ2-RATIFY",
+          "text": "Ratify — CEO sign-off invalidates on every CA promotion; must re-sign."
+        },
+        {
+          "key": "CA15DQ2-PARTIAL",
+          "text": "Partial — CEO sign-off invalidates only on CA promotions affecting §27."
+        },
+        {
+          "key": "CA15DQ2-REJECT",
+          "text": "Reject — CEO sign-off is per-product, not per-CA-promotion."
+        },
+        {
+          "key": "CA15DQ2-MODIFY",
+          "text": "Modify invalidation scope."
+        }
+      ],
+      "draftedKey": "CA15DQ2-RATIFY"
+    }
+  ]
+}

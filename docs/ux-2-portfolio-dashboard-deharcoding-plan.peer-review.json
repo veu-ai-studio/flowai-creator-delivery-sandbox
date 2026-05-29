@@ -1,0 +1,52 @@
+{
+  "model_used": "openai/gpt-5",
+  "degraded": false,
+  "latency_ms": 666,
+  "total_ms": 41082,
+  "agreement_pct": 84,
+  "findings": {
+    "agreement_pct": 84,
+    "root_cause_addressed": "Partially. The plan identifies the systemic hardcoding pattern and replaces it in PortfolioDashboard, but it doesn’t fully explain the original motivation (e.g., demo scaffolding, API immaturity) nor introduce guardrails to prevent recurrence (lint/CI checks, shared data-access module mandate, ADR).",
+    "schema_concerns": [
+      "No provider→customer hierarchy (flat org model); likely requires adding parent_org_id or customer_orgs soon.",
+      "RLS policies are not enforced; relying on service-role and code-level filters risks cross-tenant leaks.",
+      "No uniqueness constraints per org (e.g., (org_id, url) or (org_id, name)/slug) to prevent duplicate products.",
+      "Slug deferred; later adding a persisted slug and unique index may be a breaking routing change.",
+      "Clearance keyed by product_name instead of product_id; risk of name collisions across tenants.",
+      "Divergent data domains (Supabase products vs Base44 clearance/registry) lack stable keying/join strategy.",
+      "Undefined scale/semantics for last_audit_score normalization could drift without a canonical contract.",
+      "updated_at relies on DEFAULT now() only; no trigger to auto-update on write (consistency risk over time)."
+    ],
+    "consistency_gaps": [
+      "13 other surfaces retain hardcoded VEU products (UX-3 deferred).",
+      "MainDashboard and ProductRegistryPanel continue reading Base44 while PortfolioDashboard moves to Supabase, creating split views.",
+      "Clearance, CostUsage, DataExport, DemoGenerator, etc., will remain out of sync with the canonical products list until follow-ups.",
+      "No repo-wide guardrail to block reintroduction of inline product constants (e.g., lint/AST check).",
+      "Helper (/src/lib/products/registry.js) is optional and only used by one surface initially, not enforcing uniform access."
+    ],
+    "seeding_concerns": [
+      "Manual CEO registration introduces a potentially long gap where VEU sees an empty portfolio if the step is delayed or missed.",
+      "No automated backfill from Base44 ProductRegistry to Supabase for any existing tenant data; users may perceive data loss.",
+      "Name-based linkage for Clearance records is fragile; newly registered products may not match existing records exactly.",
+      "No explicit runbook/owner for the one-shot VEU registration and orphan audit; risk of operational drift.",
+      "No pre-deploy verification to ensure org_id mapping and permissions are correct before removing hardcoded entries."
+    ],
+    "risk_blindspots": [
+      "ClearanceRecord and other Base44 entities keyed by product_name may leak or mix data across tenants without org scoping.",
+      "API/client contract shape (e.g., {items: []} vs {data: []}) isn’t locked; helper and handler may mismatch at runtime.",
+      "Lack of pagination/limits in listProducts used by a primary dashboard could degrade performance at scale.",
+      "Client-side-only slug derivation can be inconsistent over time or with special characters, breaking links or deduping.",
+      "No duplicate prevention on create (org_id, url) may result in repeated cards and downstream metric skew.",
+      "Network/500 errors may surface as an empty state, masking outages as ‘no products’.",
+      "RLS disabled means any handler bug in org_id filtering could expose cross-tenant data in production.",
+      "updated_at not auto-updating on updates may confuse users when relying on recency sorting."
+    ],
+    "scope_calibration": "right",
+    "top_3_concerns": [
+      "1. Cross-surface inconsistency persists (13 hardcoded surfaces + Base44 vs Supabase split), causing divergent truths and user confusion until follow-ups land.",
+      "2. Multi-tenancy robustness gaps (no provider→customer hierarchy, no RLS enforcement, name-keyed Clearance) risk future breaking changes and possible data leakage.",
+      "3. Seeding/onboarding relies on manual steps without a concrete runbook or automated backfill, risking a prolonged empty state for VEU and perceived data loss."
+    ],
+    "approve_to_implement": "YES_WITH_CHANGES"
+  }
+}

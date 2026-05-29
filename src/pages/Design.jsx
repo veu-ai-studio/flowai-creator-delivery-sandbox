@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Layers, Loader2, AlertCircle, CheckCircle2, ArrowRight,
-  Layout, List, Server, Plug, Cpu
+  Layout, List, Plug, Cpu
 } from 'lucide-react';
 import { useOrchestration } from '@/lib/OrchestrationContext';
 

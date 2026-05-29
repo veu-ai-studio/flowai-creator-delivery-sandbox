@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Layers, Loader2, Eye, Copy, Check, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AiDisclaimer from '@/components/gtm/AiDisclaimer';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 const MODE_LABEL = { describe: '📝 Describe & Build', clone: '🔗 Clone & Improve', synthesize: '🔀 Synthesize & Build' };
 const CLEARANCE_STYLE = {
@@ -117,10 +118,10 @@ export default function MyCreations() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    base44.entities.CreatedProduct.list('-created_date').then(data => {
+    resolveArray(base44.entities.CreatedProduct.list('-created_date')).then(data => {
       setProducts(data);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   return (
@@ -143,7 +144,7 @@ export default function MyCreations() {
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : products.length === 0 ? (
+      ) : asArray(products).length === 0 ? (
         <div className="text-center py-20">
           <Layers className="h-12 w-12 text-muted-foreground/15 mx-auto mb-3" />
           <p className="text-muted-foreground text-sm">No creations yet</p>
@@ -152,7 +153,7 @@ export default function MyCreations() {
         </div>
       ) : (
         <div className="space-y-4">
-          {products.map(p => <ProductCard key={p.id} product={p} />)}
+          {asArray(products).map(p => <ProductCard key={p.id} product={p} />)}
         </div>
       )}
     </div>

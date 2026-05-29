@@ -5,6 +5,7 @@
 import { setCorsHeaders, callClaude } from './_lib/claude.js';
 import { crawl, summarisePageForPrompt } from './_lib/crawler.js';
 import { recordCost } from './_lib/cost.js';
+import { requireAuthHard } from './_lib/auth.js';
 
 const AUDIT_LENSES = {
   demo: 'Audit specifically for prospect demo readiness. Every finding must rate DEMO RISK as SAFE / CAUTION / BLOCKER.',
@@ -17,6 +18,11 @@ export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  // S-3 fix (W4 adversarial bd2f923): auth gate BEFORE body validation so
+  // anon callers never see schema-error oracles. requireAuthHard 401s
+  // unconditionally for unauthenticated calls.
+  if (!(await requireAuthHard(req, res))) return;
 
   const { url, auditType = 'demo', pageContent: providedContent, force, sessionId } = req.body || {};
   if (typeof url !== 'string' || !url.trim()) {

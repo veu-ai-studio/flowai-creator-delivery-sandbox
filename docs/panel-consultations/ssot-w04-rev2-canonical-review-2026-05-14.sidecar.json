@@ -1,0 +1,1065 @@
+{
+  "schema": "ssot-w04-rev2-canonical-review.sidecar.v1",
+  "startedAt": "2026-05-14T19:12:06.744Z",
+  "finishedAt": "2026-05-14T19:14:17.815Z",
+  "panel_size": 10,
+  "bundle_size": 96800,
+  "liveOk": 10,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 1,
+    "primary_timeout_ms": 120000,
+    "backup_retry_timeout_ms": 150000
+  },
+  "tally": {
+    "engagedTotal": 10,
+    "tangential": 0,
+    "silent": 0,
+    "evasive": 0,
+    "perGap": {
+      "G1": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G2": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G3": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G4": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G5": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G6": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G7": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G8": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G9": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G10": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G11": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G12": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G13": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      },
+      "G14": {
+        "ADDRESSED": 10,
+        "PARTIALLY_ADDRESSED": 0,
+        "NOT_ADDRESSED": 0,
+        "other": 0
+      }
+    },
+    "q2": {
+      "ALL_MINOR_DEFER_TO_CAN": 3,
+      "MOSTLY_MINOR_SOME_BLOCKING": 7,
+      "MOSTLY_BLOCKING_SOME_MINOR": 0,
+      "ALL_BLOCKING": 0,
+      "other": 0
+    },
+    "q3": {
+      "CONSISTENT": 5,
+      "MINOR_INCONSISTENCIES": 5,
+      "MAJOR_CONFLICTS": 0,
+      "other": 0
+    },
+    "q4": {
+      "PROMOTE_AS_CANONICAL": 1,
+      "PROMOTE_WITH_MINOR_AMENDMENTS": 9,
+      "REWORK_BEFORE_PROMOTION": 0,
+      "REJECT_CURRENT_DRAFT": 0,
+      "other": 0
+    }
+  },
+  "q2_verdict": {
+    "verdict": "QUORUM_PLURALITY_MOSTLY_MINOR_SOME_BLOCKING",
+    "detail": "7 of 10 ENGAGED on MOSTLY_MINOR_SOME_BLOCKING (>= quorum 7/10, < supermajority 8/10)"
+  },
+  "q3_verdict": {
+    "verdict": "SPLIT",
+    "detail": "top tie at 5 between CONSISTENT / MINOR_INCONSISTENCIES"
+  },
+  "q4_verdict": {
+    "verdict": "SUPERMAJORITY_PROMOTE_WITH_MINOR_AMENDMENTS",
+    "detail": "9 of 10 ENGAGED on PROMOTE_WITH_MINOR_AMENDMENTS (supermajority bar 8/10)"
+  },
+  "supermajority_gate": {
+    "promote_as_canonical_count": 1,
+    "promote_combined_count": 10,
+    "promote_as_canonical_supermajority_met": false,
+    "promote_combined_supermajority_met": true
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "§3 introduces a metadata-driven architecture that resolves the §3↔§22 Product-Agnostic Rule tension by keying all product specifics to Supabase/Doppler metadata rather than code."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "§4 elevates Capability Transfer to Level 4, distinguishing it from L3 and citing live Self-Renewal and Self-Protection packages from Sprint PROTECT-1."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "§6 clarifies the resolution contract with explicit terminal decisions (Resolved, Human-gated, Documented limitation) and removes the prior absolutist wording."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "§8 and §8a rename the Orchestra Selection and System Operation axes to eliminate the 'Manual' collision (Auto/Recommended/User-Choice vs Hands-On/Reviewed/Hands-Off)."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "§10 surfaces the Self-Governance Layer (Self-Test/Audit/Protect/Heal, plus Human Gates) and ties it to Sprint 5 and HARD-1 triggers."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "§11 documents the 6-step Product Clearance Protocol with wizard, entity, and ClearanceProtocolPrompt wiring."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "§12 wires remediation modes to specific pipeline steps with severity-based routing and a build-failure backoff policy."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "§13 specifies authentication and the admin/operator/client role model with URL Whitelist and role-gated Human Gates."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "§14 defines GovernanceAuditLog topics, tamper-evident hash chaining, retention, and RLS visibility."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "§15 lists the 25-agent roster and clearly distinguishes OrchestratorHub (agent dispatch) from the Orchestra (tool adapters) with file-level references."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "§16 details deployment infrastructure: Readiness Checker, Scaffold Generator, Dual Deployment with drift detection, and Live Monitor."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "§17 defines the six-section sidebar and navigation hierarchy post-ARCH-1, including PORTFOLIO and linked pages."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "§18 formalizes the CA-n canonical amendment cycle with states, MG2 thresholds, and archive discipline referencing CANONICAL_REFERENCE §7."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "§26 updates current phase status to post-PROTECT-1 and aligns subsystem statuses with live code and specs."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "ALL_MINOR_DEFER_TO_CAN",
+        "blockingOqs": [],
+        "findings": "All 10 items in §27 are clarifications or roadmap choices that do not block SSOT promotion. The tool-count discrepancy (OQ-1), role-gate confirmation (OQ-7), and label migration (OQ-6/OQ-9) are minor source-vs-surface alignments suitable for CA-n. Larger items like the multi-LLM routing engine (OQ-4) and Ops Runner step bindings (OQ-2) are acknowledged as future work and do not undermine current canonical correctness."
+      },
+      "q3": {
+        "verdict": "MINOR_INCONSISTENCIES",
+        "newConflicts": [
+          "§20 vs §15: §20 states Self-Protection elements (e.g., Cloudflare Bot Management, watermarking) are embedded in every product while §15 marks Agent #13 Self-Protection as DORMANT.",
+          "§3 vs §22: §3 enumerates productScope values using specific product names while §22 asserts zero product-specific identifiers in code/configs, creating a surface/code naming tension.",
+          "§8/§8a vs §25.4: Axis labels are renamed in §8/§8a but Locked Rule 4 still lists 'Auto/Guided/Manual' alongside the new labels, which could create minor label duality."
+        ],
+        "findings": "The rework substantially improves consistency, but a few label and scope statements diverge. The Self-Protection claim in §20 overreaches given Agent #13’s dormant status in §15, and productScope examples in §3 sit uneasily with the strict Product-Agnostic stance in §22. These are wording/scope clarifications rather than architectural contradictions."
+      },
+      "q4": "PROMOTE_WITH_MINOR_AMENDMENTS",
+      "rationale": "Rev-2 addresses all 14 prior gaps comprehensively with clear sectioned proofs (§3–§4, §6, §8–§18, §26) and aligns with canonical sprint history in CANONICAL_REFERENCE §7. Minor inconsistencies (e.g., §20 vs §15 on Self-Protection live status; §3 vs §22 on productScope naming) can be corrected with light edits before or immediately after promotion via CA-n without altering substance. Given the completeness and internal coherence otherwise, promotion with minor amendments is warranted.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-5"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "The metadata-driven architecture is detailed in §3, resolving the tension with §14."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "Capability Transfer is added as Level 4 of orchestration in §4."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "Resolution contract is clarified in §6, specifying terminal decisions."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "Axis rename to eliminate 'Manual' collision is addressed in §8 and §8a."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "Self-Governance Layer is surfaced in §10, detailing its components and functions."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "The 6-step Product Clearance Protocol is detailed in §11."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "Remediation Modes are wired to specific pipeline steps in §12."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "Authentication and role model are detailed in §13."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "GovernanceAuditLog is surfaced in §14 with detailed logging topics."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "The 25-agent roles and OrchestratorHub-vs-Orchestra distinction are clarified in §15."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "Deployment infrastructure is detailed in §16, covering readiness, scaffold, dual-env, and live monitor."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "The 6-section sidebar and navigation hierarchy are detailed in §17."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "The CA-n Canonical Amendment cycle is defined in §18."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "Current phase status is updated in §26, reflecting post-PROTECT-1 developments."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "MOSTLY_MINOR_SOME_BLOCKING",
+        "blockingOqs": [
+          "OQ-2: Ops Runner step assignments need clarification before shipping.",
+          "OQ-3: Pre-Sprint-5 era archival status requires resolution on whether to archive or retain dead code."
+        ],
+        "findings": "Most open questions are minor and can be deferred to the CA-n cycle. However, the step assignments for Ops Runners and the archival status of the pre-Sprint-5 era are critical for future development and historical clarity, respectively."
+      },
+      "q3": {
+        "verdict": "CONSISTENT",
+        "newConflicts": [],
+        "findings": "Rev-2 maintains internal consistency across all sections, with no new conflicts introduced by the rework. The document aligns well with the canonical references and addresses previous inconsistencies."
+      },
+      "q4": "PROMOTE_WITH_MINOR_AMENDMENTS",
+      "rationale": "Rev-2 effectively addresses all 14 gaps cited in Rev-1 and maintains internal consistency. While most open questions are minor, a few require resolution before full canonical promotion. Minor amendments to address these blocking open questions will ensure a robust and comprehensive SSOT.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "The metadata-driven architecture pattern in §3 explicitly resolves the tension between per-product pricing and the product-agnostic rule."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "Capability Transfer is now defined as a distinct Level 4 of orchestration in §4, referencing its origin in Sprint PROTECT-1."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "The resolution contract in §6 is clarified with a terminal decision model (Resolved, Human-gated, Documented limitation), which is achievable."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "The ambiguous 'Manual' term is eliminated by renaming axes in §8 (User-Choice) and §8a (Hands-On), resolving the collision."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "The Self-Governance Layer from Sprint 5 is now fully detailed in a new §10, covering its core components and the four Human Gates."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "The 6-step Product Clearance Protocol from Sprint 9 is surfaced in a dedicated §11, explaining its function and integration points."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "Remediation modes are now explicitly wired to pipeline steps and issue severity in §12, providing clear operational logic."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "A new §13 details the authentication system and the admin/operator/client role model from Sprint 7.5a, including role-based gates."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "The GovernanceAuditLog from Sprint HARD-1 is comprehensively described in §14, including its topics, tamper-evidence, and retention policy."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "The 25-agent roster is listed in §15, and the crucial distinction between the OrchestratorHub and the Orchestra is clarified in §15.3."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "A new §16 details the deployment infrastructure from Sprint 6, including the Readiness Checker, Scaffold Generator, and dual-environment model."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "The canonical 6-section sidebar and its navigation hierarchy post-ARCH-1 are clearly documented in §17."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "The previously undefined CA-n cycle is now formally specified in §18, including states, thresholds, and archival discipline."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "The current phase status in §26 has been correctly updated to reflect the post-PROTECT-1 state of the system."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "MOSTLY_MINOR_SOME_BLOCKING",
+        "blockingOqs": [
+          "OQ-9: The conflict between the new canonical axis labels in §8 and the existing user-facing sidebar labels from Sprint UX-C described in §17 creates immediate ambiguity and should be resolved before promotion."
+        ],
+        "findings": "Nine of the ten open questions are minor clarifications or forward-looking roadmap items that can be deferred to the CA-n cycle without issue. However, OQ-9 flags a direct, user-facing inconsistency between the newly defined canonical terminology and the existing UI, which is significant enough to be considered blocking until a clear resolution is mandated."
+      },
+      "q3": {
+        "verdict": "MINOR_INCONSISTENCIES",
+        "newConflicts": [
+          "§8/§8a vs §17: The rework introduces new canonical names for the Orchestra Selection and System Operation axes in §8 and §8a, but §17 describes the sidebar UI using the old, conflicting names ('Guided Operations', 'Manual Operations') from Sprint UX-C, creating a naming inconsistency that is flagged but not resolved."
+        ],
+        "findings": "The draft is largely consistent, but the effort to fix the 'Manual' term collision in G4 has introduced a new inconsistency. The new axis names in §8/§8a are not reconciled with the established sidebar section names in §17, which still use the old terminology; this conflict is acknowledged in OQ-9 but remains a conflict within the document as written."
+      },
+      "q4": "PROMOTE_WITH_MINOR_AMENDMENTS",
+      "rationale": "The Rev-2 draft is a substantial improvement that successfully addresses all 14 cited gaps from the prior review, adding critical detail from the CANONICAL_REFERENCE.md. However, the resolution for G4 introduced a new naming inconsistency between the axes in §8/§8a and the UI in §17, which is flagged as OQ-9 and must be resolved via a minor amendment that either updates the UI labels or explicitly defines their distinction from the new axis names.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.5-pro"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "§3 explicitly resolves the tension via metadata-driven architecture with clear layer separation table."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "§4 adds Capability Transfer as Level 4 with full operational description and distinction from L3."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "§6 clarifies resolution contract with three terminal decisions (Resolved/Human-gated/Documented limitation)."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "§8 renames axis to Auto/Recommended/User-Choice eliminating Manual collision with §8a."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "§10 comprehensively surfaces Self-Governance Layer with 4 components and 4 Human Gates tables."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "§11 details 6-step Product Clearance Protocol with wizard, entity, prompt, and inline tool surfaces."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "§12 wires each remediation mode to specific pipeline steps with severity-based routing logic."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "§13 defines admin/operator/client roles with capabilities table and role-gate mapping."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "§14 details GovernanceAuditLog with 20+ topics, tamper-evidence, and retention policy."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "§15 lists all 25 agents with roles, provides OrchestratorHub vs Orchestra distinction table."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "§16 covers deployment infrastructure with readiness checker, scaffold generator, dual-env, and live monitor."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "§17 documents 6-section sidebar with full contents table post-ARCH-1."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "§18 defines CA-n cycle with states, threshold, archive discipline, and ratified amendments table."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "§26 updates phase status to post-PROTECT-1 with comprehensive subsystem status table."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "MOSTLY_MINOR_SOME_BLOCKING",
+        "blockingOqs": [
+          "OQ-3: Pre-Sprint-5 dead code archival decision affects codebase cleanliness",
+          "OQ-9: UI/UX label consistency between canonical axes and shipped sidebar affects user experience"
+        ],
+        "findings": "Most open questions are minor implementation details or future roadmap items suitable for CA-n cycle. However, OQ-3 (dead code archival) and OQ-9 (axis label consistency in UI) directly impact current system state and user experience, warranting resolution before canonical promotion."
+      },
+      "q3": {
+        "verdict": "MINOR_INCONSISTENCIES",
+        "newConflicts": [
+          "§8 vs §17: Orchestra axis renamed but sidebar still shows original UX-C labels",
+          "§27 OQ-1 vs Sprint 8: Tool count discrepancy (65 vs 61) acknowledged but not resolved"
+        ],
+        "findings": "Rev-2 is largely consistent, with two minor issues: the Orchestra axis rename creates a terminology gap with existing sidebar labels, and the tool count discrepancy is flagged but unresolved. Both are acknowledged in §27 Open Questions, showing awareness rather than oversight."
+      },
+      "q4": "PROMOTE_WITH_MINOR_AMENDMENTS",
+      "rationale": "Rev-2 successfully addresses all 14 Panel-cited gaps with specific sections and clear resolutions. The document is comprehensive and internally consistent, with only minor open questions that can be resolved through the CA-n amendment cycle. The two blocking items (OQ-3 and OQ-9) are implementation decisions rather than fundamental architectural issues.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "The metadata-driven architecture pattern in §3 explicitly resolves the tension between per-product pricing and the product-agnostic rule."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "Capability Transfer is now defined as a distinct Level 4 of orchestration in §4, referencing its origin in Sprint PROTECT-1."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "The resolution contract in §6 is clarified with a terminal decision model (Resolved, Human-gated, Documented limitation), which is achievable."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "The ambiguous 'Manual' term is eliminated by renaming axes in §8 (User-Choice) and §8a (Hands-On), resolving the collision."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "The Self-Governance Layer from Sprint 5 is now fully detailed in a new §10, covering its core components and the four Human Gates."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "The 6-step Product Clearance Protocol from Sprint 9 is surfaced in a dedicated §11, explaining its function and integration points."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "Remediation modes are now explicitly wired to pipeline steps and issue severity in §12, providing clear operational logic."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "A new §13 details the authentication system and the admin/operator/client role model from Sprint 7.5a, including role-based gates."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "The GovernanceAuditLog from Sprint HARD-1 is comprehensively described in §14, including its topics, tamper-evidence, and retention policy."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "The 25-agent roster is listed in §15, and the crucial distinction between the OrchestratorHub and the Orchestra is clarified in §15.3."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "A new §16 details the deployment infrastructure from Sprint 6, including the Readiness Checker, Scaffold Generator, and dual-environment model."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "The canonical 6-section sidebar and its navigation hierarchy post-ARCH-1 are clearly documented in §17."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "The previously undefined CA-n cycle is now formally specified in §18, including states, thresholds, and archival discipline."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "The current phase status in §26 has been correctly updated to reflect the post-PROTECT-1 state of the system."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "MOSTLY_MINOR_SOME_BLOCKING",
+        "blockingOqs": [
+          "OQ-9: The conflict between the new canonical axis labels in §8 and the existing user-facing sidebar labels from Sprint UX-C described in §17 creates immediate ambiguity and should be resolved before promotion."
+        ],
+        "findings": "Nine of the ten open questions are minor clarifications or forward-looking roadmap items that can be deferred to the CA-n cycle without issue. However, OQ-9 flags a direct, user-facing inconsistency between the newly defined canonical terminology and the existing UI, which is significant enough to be considered blocking until a clear resolution is mandated."
+      },
+      "q3": {
+        "verdict": "MINOR_INCONSISTENCIES",
+        "newConflicts": [
+          "§8/§8a vs §17: The rework introduces new canonical names for the Orchestra Selection and System Operation axes in §8 and §8a, but §17 describes the sidebar UI using the old, conflicting names ('Guided Operations', 'Manual Operations') from Sprint UX-C, creating a naming inconsistency that is flagged but not resolved."
+        ],
+        "findings": "The draft is largely consistent, but the effort to fix the 'Manual' term collision in G4 has introduced a new inconsistency. The new axis names in §8/§8a are not reconciled with the established sidebar section names in §17, which still use the old terminology; this conflict is acknowledged in OQ-9 but remains a conflict within the document as written."
+      },
+      "q4": "PROMOTE_WITH_MINOR_AMENDMENTS",
+      "rationale": "The Rev-2 draft is a substantial improvement that successfully addresses all 14 cited gaps from the prior review, adding critical detail from the CANONICAL_REFERENCE.md. However, the resolution for G4 introduced a new naming inconsistency between the axes in §8/§8a and the UI in §17, which is flagged as OQ-9 and must be resolved via a minor amendment that either updates the UI labels or explicitly defines their distinction from the new axis names.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.5-pro"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "Metadata-driven architecture resolves §3↔§14 tension (§3)."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "Capability Transfer added as Level 4 of orchestration (§4)."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "Resolution contract clarified (terminal decisions, no absolute) (§6)."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "Axis rename eliminates 'Manual' collision (§8 and §8a)."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "Self-Governance Layer surfaced (Self-Test/Audit/Protect/Heal + 4 Human Gates) (§10)."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "6-step Product Clearance Protocol surfaced (§11)."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "Remediation Modes wired to specific 8-step pipeline steps + severity routing (§12)."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "Authentication + role model (admin/operator/client) (§13)."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "GovernanceAuditLog surfaced (topics, tamper-evidence, retention) (§14)."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "25-agent roles + OrchestratorHub-vs-Orchestra distinction (§15)."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "Deployment infrastructure (readiness/scaffold/dual-env/drift/live monitor) (§16)."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "6-section sidebar + navigation hierarchy (§17)."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "CA-n Canonical Amendment cycle defined (§18)."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "Current phase status updated (post-PROTECT-1, not Phase 0) (§26)."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "MOSTLY_MINOR_SOME_BLOCKING",
+        "blockingOqs": [
+          "OQ-3: Acknowledgement of the pre-Sprint 5 visual flow builder paradigm and its supersession is a missing item."
+        ],
+        "findings": "Most open questions are minor and can be deferred to the CA-n cycle. However, OQ-3 is blocking because it acknowledges a significant historical context that needs to be addressed before canonical promotion."
+      },
+      "q3": {
+        "verdict": "CONSISTENT",
+        "newConflicts": [],
+        "findings": "The document is internally consistent across all 27 sections. No new conflicts were introduced by the rework."
+      },
+      "q4": "PROMOTE_WITH_MINOR_AMENDMENTS",
+      "rationale": "The draft has addressed all 14 gaps cited by the prior Rev-1 Panel review. Most open questions are minor and can be deferred to the CA-n cycle. However, OQ-3 is blocking and needs to be addressed before canonical promotion. The document is internally consistent, and no new conflicts were introduced by the rework.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §3 implements metadata-driven architecture resolving §3↔§14 tension."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §4 elevates Capability Transfer to Level 4 orchestration with install sprints."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §6 clarifies terminal decisions (Resolved/Human-gated/Documented) for issue resolution."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §8 renames Orchestra axis to Auto/Recommended/User-Choice, eliminating 'Manual' collision."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §10 surfaces Self-Governance Layer (Self-Test/Audit/Protect/Heal + 4 Human Gates)."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §11 details the 6-step Product Clearance Protocol with wizard integration."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §12 wires remediation modes to pipeline steps and severity routing."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §13 defines admin/operator/client roles and URL whitelist enforcement."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §14 details GovernanceAuditLog topics, tamper-evidence, and retention."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §15 clarifies 25-agent roles and OrchestratorHub-vs-Orchestra distinction."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §16 covers deployment infrastructure (readiness/scaffold/dual-env/drift)."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §17 documents the 6-section sidebar hierarchy post-ARCH-1."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §18 defines the CA-n amendment cycle with promotion thresholds."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §26 updates phase status to post-PROTECT-1 with agent shipping status."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "ALL_MINOR_DEFER_TO_CAN",
+        "blockingOqs": [],
+        "findings": "All 10 open questions in §27 involve reconciliations (OQ1), clarifications (OQ5/OQ7), or deferred items (OQ8/OQ10) that fit the CA-n cycle scope. None block canonical promotion as they don't invalidate core assertions."
+      },
+      "q3": {
+        "verdict": "CONSISTENT",
+        "newConflicts": [],
+        "findings": "No new conflicts introduced. Metadata architecture (§3) aligns with product-agnostic rule (§22), orchestration levels (§4) integrate with agent roster (§15), and pipeline step numbering (§9) matches code-canonical ordering. Cross-references are coherent."
+      },
+      "q4": "PROMOTE_WITH_MINOR_AMENDMENTS",
+      "rationale": "Rev-2 fully addresses all 14 gaps with explicit section citations (e.g., §10 for Self-Governance, §18 for CA-n). The 10 open questions are non-blocking and fit CA-n scope. Internal consistency is maintained across 27 sections, satisfying supermajority criteria.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §3 introduces a metadata-driven architecture to resolve the tension between §3 and §14."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §4 adds Capability Transfer as Level 4 of orchestration, addressing the gap."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §6 clarifies the resolution contract, eliminating the ambiguity."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §8 renames the 'Manual' collision, resolving the issue."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §10 surfaces the Self-Governance Layer, addressing the gap."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §11 introduces the 6-step Product Clearance Protocol, filling the gap."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §12 wires Remediation Modes to specific pipeline steps, addressing the gap."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §13 introduces authentication and role models, resolving the issue."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §14 surfaces the GovernanceAuditLog, addressing the gap."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §15 introduces the 25-agent roster, filling the gap."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §16 describes the deployment infrastructure, resolving the issue."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §17 introduces the 6-section sidebar, addressing the gap."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §18 defines the CA-n Canonical Amendment cycle, filling the gap."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 §26 updates the current phase status, resolving the issue."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "MOSTLY_MINOR_SOME_BLOCKING",
+        "blockingOqs": [
+          "OQ-4: Multi-LLM routing decision engine",
+          "OQ-5: Capability Transfer as L4 — completeness check"
+        ],
+        "findings": "Most open questions are minor and can be deferred to CA-n, but OQ-4 and OQ-5 are blocking and require resolution before promotion."
+      },
+      "q3": {
+        "verdict": "MINOR_INCONSISTENCIES",
+        "newConflicts": [
+          "§8 and §8a: minor inconsistency in axis rename",
+          "§13 and §10.2: minor inconsistency in role gates on Human Gates"
+        ],
+        "findings": "Rev-2 introduces minor inconsistencies in axis rename and role gates on Human Gates, but they do not significantly impact the overall consistency."
+      },
+      "q4": "PROMOTE_WITH_MINOR_AMENDMENTS",
+      "rationale": "Rev-2 addresses all 14 gaps and introduces minor inconsistencies, but the blocking open questions OQ-4 and OQ-5 require resolution. Promotion with minor amendments is recommended to address these issues.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "§3 introduces a metadata-driven architecture to resolve the tension between §3 and §14."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "§4 adds Capability Transfer as the fourth level of orchestration."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "§6 clarifies the resolution contract, defining terminal decisions and human-in-the-loop mechanisms."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "§8 and §8a rename the axes to eliminate the 'Manual' collision."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "§10 surfaces the Self-Governance Layer, detailing its components and human gates."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "§11 details the 6-step Product Clearance Protocol, including its wizard, entity, and inline tool."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "§12 integrates remediation modes with specific pipeline steps and per-issue invocation."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "§13 introduces the authentication and role model, defining admin, operator, and client roles."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "§14 details the GovernanceAuditLog, including topics logged, tamper-evidence, and retention policies."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "§15 provides a detailed 25-agent roster, including their statuses and interaction model."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "§16 describes the deployment infrastructure, including readiness checker, scaffold generator, dual deployment, and live monitor."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "§17 outlines the 6-section sidebar and navigation hierarchy, including universal tooltip coverage and keyboard shortcuts."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "§18 defines the CA-n canonical amendment cycle, including states, thresholds, and archive discipline."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "§26 updates the current phase status to reflect the most recent sprint, Sprint PROTECT-1."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "ALL_MINOR_DEFER_TO_CAN",
+        "blockingOqs": [],
+        "findings": "The 10 open questions in §27 are minor and can be deferred to the CA-n cycle. They do not block the canonical promotion of the current draft."
+      },
+      "q3": {
+        "verdict": "CONSISTENT",
+        "newConflicts": [],
+        "findings": "Rev-2 is internally consistent across all 27 sections. No new conflicts were introduced by the rework."
+      },
+      "q4": "PROMOTE_AS_CANONICAL",
+      "rationale": "Rev-2 addresses all 14 gaps cited by the Rev-1 Panel review, and the 10 open questions in §27 are minor and can be deferred to the CA-n cycle. The document is internally consistent and ready for canonical promotion.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:qwen/qwen-2.5-72b-instruct"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "q1": {
+        "gaps": {
+          "G1": {
+            "status": "ADDRESSED",
+            "finding": "Rev-2 resolves the §3↔§14 tension with a metadata-driven architecture pattern (§3)."
+          },
+          "G2": {
+            "status": "ADDRESSED",
+            "finding": "Capability Transfer is added as Level 4 of orchestration in §4."
+          },
+          "G3": {
+            "status": "ADDRESSED",
+            "finding": "Resolution contract clarified with terminal decisions in §6."
+          },
+          "G4": {
+            "status": "ADDRESSED",
+            "finding": "Axis rename eliminates 'Manual' collision in §8 and §8a."
+          },
+          "G5": {
+            "status": "ADDRESSED",
+            "finding": "Self-Governance Layer surfaced with components and gates in §10."
+          },
+          "G6": {
+            "status": "ADDRESSED",
+            "finding": "6-step Product Clearance Protocol surfaced in §11."
+          },
+          "G7": {
+            "status": "ADDRESSED",
+            "finding": "Remediation Modes wired to specific pipeline steps in §12."
+          },
+          "G8": {
+            "status": "ADDRESSED",
+            "finding": "Authentication and role model detailed in §13."
+          },
+          "G9": {
+            "status": "ADDRESSED",
+            "finding": "GovernanceAuditLog surfaced with topics and tamper-evidence in §14."
+          },
+          "G10": {
+            "status": "ADDRESSED",
+            "finding": "25-agent roles and OrchestratorHub-vs-Orchestra distinction clarified in §15."
+          },
+          "G11": {
+            "status": "ADDRESSED",
+            "finding": "Deployment infrastructure detailed in §16."
+          },
+          "G12": {
+            "status": "ADDRESSED",
+            "finding": "6-section sidebar and navigation hierarchy detailed in §17."
+          },
+          "G13": {
+            "status": "ADDRESSED",
+            "finding": "CA-n Canonical Amendment cycle defined in §18."
+          },
+          "G14": {
+            "status": "ADDRESSED",
+            "finding": "Current phase status updated post-PROTECT-1 in §26."
+          }
+        },
+        "addressedCount": 14,
+        "stillOpen": []
+      },
+      "q2": {
+        "verdict": "MOSTLY_MINOR_SOME_BLOCKING",
+        "blockingOqs": [
+          "OQ-2: Ops Runner step assignments need clarification for deployment.",
+          "OQ-3: Pre-Sprint-5 era archival status requires resolution.",
+          "OQ-5: Completeness of Capability Transfer as L4 needs confirmation."
+        ],
+        "findings": "Most open questions are minor and can be deferred to the CA-n cycle. However, the step assignments for Ops Runners, the archival status of the pre-Sprint-5 era, and the completeness of Capability Transfer as L4 are critical for ensuring the document's completeness and future-proofing."
+      },
+      "q3": {
+        "verdict": "CONSISTENT",
+        "newConflicts": [],
+        "findings": "Rev-2 is internally consistent across all sections. The rework has not introduced any new conflicts, and the document maintains coherence in its structure and content."
+      },
+      "q4": "PROMOTE_WITH_MINOR_AMENDMENTS",
+      "rationale": "Rev-2 addresses all 14 gaps cited in the previous review, demonstrating significant improvements. While most open questions are minor, a few require resolution to ensure the document's robustness. With minor amendments to address these blocking open questions, the document is ready for promotion as canonical.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    }
+  ],
+  "rev1_gaps": [
+    {
+      "n": 1,
+      "short": "Metadata-driven architecture resolves §3↔§14 tension",
+      "anchor": "§3"
+    },
+    {
+      "n": 2,
+      "short": "Capability Transfer added as Level 4 of orchestration",
+      "anchor": "§4"
+    },
+    {
+      "n": 3,
+      "short": "Resolution contract clarified (terminal decisions, no absolute)",
+      "anchor": "§6"
+    },
+    {
+      "n": 4,
+      "short": "Axis rename eliminates \"Manual\" collision",
+      "anchor": "§8 + §8a"
+    },
+    {
+      "n": 5,
+      "short": "Self-Governance Layer surfaced (Self-Test/Audit/Protect/Heal + 4 Human Gates)",
+      "anchor": "§10"
+    },
+    {
+      "n": 6,
+      "short": "6-step Product Clearance Protocol surfaced",
+      "anchor": "§11"
+    },
+    {
+      "n": 7,
+      "short": "Remediation Modes wired to specific 8-step pipeline steps + severity routing",
+      "anchor": "§12"
+    },
+    {
+      "n": 8,
+      "short": "Authentication + role model (admin/operator/client)",
+      "anchor": "§13"
+    },
+    {
+      "n": 9,
+      "short": "GovernanceAuditLog surfaced (topics, tamper-evidence, retention)",
+      "anchor": "§14"
+    },
+    {
+      "n": 10,
+      "short": "25-agent roles + OrchestratorHub-vs-Orchestra distinction",
+      "anchor": "§15"
+    },
+    {
+      "n": 11,
+      "short": "Deployment infrastructure (readiness/scaffold/dual-env/drift/live monitor)",
+      "anchor": "§16"
+    },
+    {
+      "n": 12,
+      "short": "6-section sidebar + navigation hierarchy",
+      "anchor": "§17"
+    },
+    {
+      "n": 13,
+      "short": "CA-n Canonical Amendment cycle defined",
+      "anchor": "§18"
+    },
+    {
+      "n": 14,
+      "short": "Current phase status updated (post-PROTECT-1, not Phase 0)",
+      "anchor": "§26"
+    }
+  ]
+}

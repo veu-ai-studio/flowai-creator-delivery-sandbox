@@ -1,11 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 import { TOOL_REGISTRY, CATEGORIES } from '@/lib/toolRegistry';
 import ToolCard from '@/components/marketplace/ToolCard';
 import ToolDetailPanel from '@/components/marketplace/ToolDetailPanel';
 import AIRecommendationPanel from '@/components/marketplace/AIRecommendationPanel';
-import { ShoppingBag, Filter, ChevronDown } from 'lucide-react';
+import { ShoppingBag, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PlatformIntelligenceMarketplace() {

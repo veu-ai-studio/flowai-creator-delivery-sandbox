@@ -1,0 +1,802 @@
+{
+  "schema": "ssot-consistency-next-action.sidecar.v1",
+  "dispatch": "W6 — verifiable-facts Panel; CA-18 conformance + ONE next action (2026-05-20)",
+  "startedAt": "2026-05-20T07:07:57.860Z",
+  "finishedAt": "2026-05-20T07:11:35.691Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 43560,
+  "tally": {
+    "engagedTotal": 7,
+    "invalid": 0,
+    "tangential": 2,
+    "silent": 1,
+    "perQuestion": {
+      "J5": {
+        "J5-FAIL-MULTIPLE-GAPS": 7,
+        "J5-PARTIAL-IN-PROGRESS": 0,
+        "J5-PASS-AT-ENGINE-NOT-PRODUCT": 0,
+        "J5-PASS": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J6": {
+        "J6-UI-TO-CONSTRUCTION": 5,
+        "J6-WIRE-TOOL-INTELLIGENCE": 0,
+        "J6-PRE-RUN-HONEST-ASSESSMENT-GATE": 2,
+        "J6-EXTEND-ENVELOPE-NO-SILENT-OMISSION": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J7": {
+        "J7-MAJOR-GAP": 7,
+        "J7-PARTIAL-GAP": 0,
+        "J7-MISLABELED": 0,
+        "J7-CONSISTENT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 35,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "§1 honest-gate underspecified",
+        "detail": "CA-18 §1 requires refusing to manufacture work, yet the proposal treats a pre-run \"honest assessment\" as a single-function add (J6 option 2) without defining the substantial-transformation bar, prediction inputs, or false-positive/negative handling. Evidence in §F shows a 99.5 → 85 RelTwin regression, proving current gating is absent; the fix needs calibrated criteria and rollback path, not a minimal patch."
+      },
+      {
+        "slot": 1,
+        "title": "§6 tool selection not auditable",
+        "detail": "CA-18 §6 mandates per-step top-5 ranking selection and runtime emission of tool.selection envelopes; §F shows 0 such envelopes, and §G shows attachToolIntelligenceService() has 0 call sites. The J6 \"single correct\" action wires UI→construction but leaves §6 non-conformance intact, risking unaudited executions that continue to violate the Tool Intelligence Principle."
+      },
+      {
+        "slot": 1,
+        "title": "§2 no-silent-omission patch risky",
+        "detail": "The proposal suggests extending orchestration_complete with dimensions_contributing[] and adding a jurisdiction column to product_registry. §2 requires per-run disclosure and jurisdiction-aware evaluation with auditable amendments; a static registry column may not capture per-environment/per-run jurisdiction declarations, and altering a hot envelope risks bloat and migration errors without a backfill plan for prior entries."
+      },
+      {
+        "slot": 1,
+        "title": "§5 self-application blocked by flags",
+        "detail": "CA-18 §5 binds FlowAI to apply itself to its own codebase, yet §E shows product_registry.flowai.construction_eligible=false and §F shows 4 self-runs with empty payloads. Enabling construction for FlowAI may also trip CA-17 S2 scope caps (15 files/1500 lines) without a module-level plan; the proposal does not address this conflict."
+      },
+      {
+        "slot": 1,
+        "title": "§7 Output Contract atomicity gap",
+        "detail": "§7 requires atomic ProductSSOT delta_log writes with output; §F shows delta_log=0 across all rows and §F/G note orchestration_complete payloads often empty. Preview URLs are produced, but without delta_log history, runs should roll back per §10 Self-Protect; the persisted state violates the atomic contract and risks audit drift."
+      },
+      {
+        "slot": 1,
+        "title": "PATH B data hygiene concerns",
+        "detail": "§E/§G indicate PATH B synthesizes product_ssot rows (e.g., flowai-upgraded-…-ad6c5c54) without product_registry entries. This can orphan governance state and bypass jurisdiction declaration per §2, contravening the \"no default jurisdiction\" invariant while polluting SSOT with undeclared products."
+      },
+      {
+        "slot": 2,
+        "title": "Incomplete Tool Intelligence Integration",
+        "detail": "Section §6 mandates runtime emission of tool selection envelopes, but the current implementation does not invoke the Tool Intelligence Service, resulting in zero tool.selection envelopes across all runs. This is a critical gap in the auditability and transparency of the tool selection process."
+      },
+      {
+        "slot": 2,
+        "title": "Lack of Pre-Run Honest Assessment",
+        "detail": "Section §1 requires FlowAI to refuse to start a run against a product that already meets or exceeds the quality standard. However, the system allowed a run on RelTwin that regressed from a score of 99.5 to 85, indicating a failure to implement this honest assessment gate."
+      },
+      {
+        "slot": 2,
+        "title": "Silent Omission of Quality Dimensions",
+        "detail": "Section §2 requires that all 10 quality dimensions be optimized and reported on each run. Currently, 6 out of 10 dimensions are silently omitted, and there is no jurisdiction column in the product registry, violating the no-silent-omission rule."
+      },
+      {
+        "slot": 4,
+        "title": "Incomplete Quality Dimensions",
+        "detail": "§2 mandates optimizing all 10 quality dimensions, but the current implementation silently omits 6 dimensions. This incomplete coverage undermines the promise of substantial transformation per run."
+      },
+      {
+        "slot": 4,
+        "title": "Missing Honest Assessment Gate",
+        "detail": "§1 requires an honest assessment to refuse manufacturing work when a product already meets the quality standard. The recent RelTwin run regressed from 99.5 to 85, indicating a failure to implement this gate properly."
+      },
+      {
+        "slot": 4,
+        "title": "No Tool Selection Emission",
+        "detail": "§6 mandates runtime emission of tool.selection envelopes, but there are 0 such envelopes across 18 runs. This lack of emission violates the audit contract and makes the system's tool selection process unauditable."
+      },
+      {
+        "slot": 5,
+        "title": "Silent omission",
+        "detail": "The current implementation silently omits 6 of the 10 quality dimensions as required by CA-18 §2, leading to incomplete assessments."
+      },
+      {
+        "slot": 5,
+        "title": "No tool selection emission",
+        "detail": "CA-18 §6 mandates the emission of tool.selection envelopes for each step, but none have been emitted in the 18 runs observed."
+      },
+      {
+        "slot": 5,
+        "title": "No PRs shipped",
+        "detail": "None of the 18 orchestration_complete entries have resulted in a PR being opened, indicating a failure to deliver on the promise of producing a new deployable URL."
+      },
+      {
+        "slot": 6,
+        "title": "§1: No pre-run honest gate",
+        "detail": "CA-18 §1 mandates honest assessment, but the engine starts runs against already-passing products (e.g., RelTwin at 99.5), violating the 'refusing to manufacture work' principle. This leads to wasted resources and potentially regressions, as seen in the RelTwin example."
+      },
+      {
+        "slot": 6,
+        "title": "§2: Silent dimension omission",
+        "detail": "CA-18 §2 requires all 10 quality dimensions to be assessed, but the current implementation silently omits 6 dimensions (jurisdiction, accessibility, privacy, legal, syntax, duplication, CSRF). This violates the 'no silent omission' invariant and skews the composite score, providing an incomplete picture of product quality."
+      },
+      {
+        "slot": 6,
+        "title": "§6: Tool Intelligence un-wired",
+        "detail": "CA-18 §6 mandates per-step tool selection and runtime emission of `tool.selection` envelopes, but the ToolIntelligenceService is not wired into the production runner. This means that the engine is not dynamically selecting tools based on performance, cost, speed, and reliability, and the audit trail is incomplete."
+      },
+      {
+        "slot": 6,
+        "title": "§1: UI loop incomplete",
+        "detail": "CA-18 §1 promises a URL-in/URL-out loop through the UI, but the current UI only supports auditing and does not trigger the construction engine. This means that users cannot use the UI to create new, deployed URLs, violating the core promise of FlowAI."
+      },
+      {
+        "slot": 6,
+        "title": "§5: Self-application failure",
+        "detail": "CA-18 §5 states that FlowAI applies to its own development process, but the four self-application runs have empty payloads, and construction against FlowAI itself is gated off. This indicates a failure to fully apply FlowAI's quality standards to its own codebase."
+      },
+      {
+        "slot": 6,
+        "title": "§1: No trajectory reporting",
+        "detail": "CA-18 §1 requires trajectory reporting after each run, but this feature is not implemented. This makes it difficult for users to track the progress of their runs and make informed decisions about iteration depth."
+      },
+      {
+        "slot": 6,
+        "title": "§1: No PRs shipped",
+        "detail": "CA-18 §1 promises a new deployable URL, but zero PRs have been shipped across 18 runs. This indicates a fundamental failure to deliver on the core promise of FlowAI."
+      },
+      {
+        "slot": 7,
+        "title": "§1 Honest Assessment Violation",
+        "detail": "The RelTwin run from 99.5 to 85 score demonstrates FlowAI initiating runs without honest pre-assessment. CA-18 §1 mandates refusing runs when no substantial improvement is possible, yet the engine started against a near-perfect product."
+      },
+      {
+        "slot": 7,
+        "title": "§2 Silent Dimension Omission",
+        "detail": "Six quality dimensions (accessibility, privacy, legal, syntax, duplication, CSRF) are omitted without findings, violating §2's 'no silent omission' rule. The jurisdiction column absence prevents privacy/legal scoring, yet no findings surface this gap."
+      },
+      {
+        "slot": 7,
+        "title": "§6 Runtime Disconnect",
+        "detail": "ToolIntelligenceService exists but isn't wired to renewal/orchestrator.js, resulting in 0 tool.selection emissions across 18 runs. This breaches §6's audit contract requiring per-step platform selection visibility."
+      },
+      {
+        "slot": 7,
+        "title": "Self-Application Blocked",
+        "detail": "product_registry marks FlowAI as construction_eligible=false, blocking §5 self-application. The four self-runs produced empty payloads, violating the symbiotic loop where FlowAI must improve itself."
+      },
+      {
+        "slot": 8,
+        "title": "No closed URL-out loop",
+        "detail": "In §1 and the J5/J7 evidence, the system can initiate runs and emit preview URLs, but the production UI at `flowai-dun.vercel.app/flowai` does not complete a true input → new deployable URL output path. The proposal itself says PATH B is audit-only in the UI and that no UI affordance triggers construction, which means the core promise remains unfulfilled at the user-facing surface."
+      },
+      {
+        "slot": 8,
+        "title": "Silent metric omissions remain",
+        "detail": "CA-18 §2 explicitly requires all 10 dimensions to be optimized and mandates that missing dimensions be surfaced as findings rather than skipped. The verifiable state says 6 of 10 dimensions are silently omitted, there is no jurisdiction column, and no `tool.selection` envelopes are emitted; that makes the scoring/reporting layer materially non-compliant, not just incomplete."
+      },
+      {
+        "slot": 8,
+        "title": "Self-runs are manufactured work",
+        "detail": "§1’s honest-assessment clause forbids starting runs when a product already meets the bar or further iteration is unlikely to produce substantial improvement. The RelTwin example (99.5 → 85 with `exitReason: NO_IMPROVEMENT`) demonstrates the engine launched a run that degraded a high-scoring product instead of refusing upfront, so the current behavior violates the integrity rule the proposal claims is canonical."
+      },
+      {
+        "slot": 9,
+        "title": "No PRs shipped in 18 runs",
+        "detail": "The proposal claims FlowAI produces a new deployable URL per run, but evidence shows 0 PRs shipped across 18 orchestration_complete entries, indicating a gap between the promise and actual functionality."
+      },
+      {
+        "slot": 9,
+        "title": "Silent omission of quality dimensions",
+        "detail": "CA-18 §2 requires scoring all 10 quality dimensions, but 6 dimensions are silently omitted in the pipeline-wide measurement, violating the no-silent-omission invariant."
+      },
+      {
+        "slot": 9,
+        "title": "Tool Intelligence not wired",
+        "detail": "CA-18 §6 mandates per-step tool selection and emission of tool.selection envelopes, but the runtime never invokes ToolIntelligenceService, resulting in 0 tool.selection envelopes across 18 runs."
+      },
+      {
+        "slot": 10,
+        "title": "§1 honest-assessment gate absent",
+        "detail": "CA-18 §1 requires proactive refusal to run on already-passing products and explicit diminishing-returns signals; live data shows RelTwin run started at 99.5, regressed to 85 (Δ=-14.5), with prUrl=null on all 18 orchestration_complete entries and zero trajectory reporting in governance_record."
+      },
+      {
+        "slot": 10,
+        "title": "§6 Tool Intelligence never invoked",
+        "detail": "§6 mandates per-step top-5 selection with runtime emission of tool.selection envelopes; grep shows attachToolIntelligenceService() has zero call sites, renewal/orchestrator.js does not import OrchestratorHub, and 0 tool.selection envelopes exist across 44 governance_record rows."
+      },
+      {
+        "slot": 10,
+        "title": "§5 self-application disabled",
+        "detail": "§5 requires FlowAI to apply §29 Build/Wire and §11 Clearance to its own source tree; product_registry.flowai.construction_eligible=FALSE and all 4 self-application runs produced empty payloads with no shipped output."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "J5": {
+      "verdict": "UNANIMOUS_J5-FAIL-MULTIPLE-GAPS",
+      "detail": "7 of 7 ENGAGED on J5-FAIL-MULTIPLE-GAPS (unanimous)",
+      "topKey": "J5-FAIL-MULTIPLE-GAPS",
+      "topCount": 7
+    },
+    "J6": {
+      "verdict": "PLURALITY_J6-UI-TO-CONSTRUCTION",
+      "detail": "5 of 7 on J6-UI-TO-CONSTRUCTION (below 7/10 quorum)",
+      "topKey": "J6-UI-TO-CONSTRUCTION",
+      "topCount": 5
+    },
+    "J7": {
+      "verdict": "UNANIMOUS_J7-MAJOR-GAP",
+      "detail": "7 of 7 ENGAGED on J7-MAJOR-GAP (unanimous)",
+      "topKey": "J7-MAJOR-GAP",
+      "topCount": 7
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.9047619047619048,
+    "alignedCount": 19,
+    "totalPossible": 21,
+    "draftedQs": [
+      "J5",
+      "J6",
+      "J7"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 90.5 %, distinct objections 35"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§1 honest-gate underspecified",
+            "detail": "CA-18 §1 requires refusing to manufacture work, yet the proposal treats a pre-run \"honest assessment\" as a single-function add (J6 option 2) without defining the substantial-transformation bar, prediction inputs, or false-positive/negative handling. Evidence in §F shows a 99.5 → 85 RelTwin regression, proving current gating is absent; the fix needs calibrated criteria and rollback path, not a minimal patch."
+          },
+          {
+            "title": "§6 tool selection not auditable",
+            "detail": "CA-18 §6 mandates per-step top-5 ranking selection and runtime emission of tool.selection envelopes; §F shows 0 such envelopes, and §G shows attachToolIntelligenceService() has 0 call sites. The J6 \"single correct\" action wires UI→construction but leaves §6 non-conformance intact, risking unaudited executions that continue to violate the Tool Intelligence Principle."
+          },
+          {
+            "title": "§2 no-silent-omission patch risky",
+            "detail": "The proposal suggests extending orchestration_complete with dimensions_contributing[] and adding a jurisdiction column to product_registry. §2 requires per-run disclosure and jurisdiction-aware evaluation with auditable amendments; a static registry column may not capture per-environment/per-run jurisdiction declarations, and altering a hot envelope risks bloat and migration errors without a backfill plan for prior entries."
+          },
+          {
+            "title": "§5 self-application blocked by flags",
+            "detail": "CA-18 §5 binds FlowAI to apply itself to its own codebase, yet §E shows product_registry.flowai.construction_eligible=false and §F shows 4 self-runs with empty payloads. Enabling construction for FlowAI may also trip CA-17 S2 scope caps (15 files/1500 lines) without a module-level plan; the proposal does not address this conflict."
+          },
+          {
+            "title": "§7 Output Contract atomicity gap",
+            "detail": "§7 requires atomic ProductSSOT delta_log writes with output; §F shows delta_log=0 across all rows and §F/G note orchestration_complete payloads often empty. Preview URLs are produced, but without delta_log history, runs should roll back per §10 Self-Protect; the persisted state violates the atomic contract and risks audit drift."
+          },
+          {
+            "title": "PATH B data hygiene concerns",
+            "detail": "§E/§G indicate PATH B synthesizes product_ssot rows (e.g., flowai-upgraded-…-ad6c5c54) without product_registry entries. This can orphan governance state and bypass jurisdiction declaration per §2, contravening the \"no default jurisdiction\" invariant while polluting SSOT with undeclared products."
+          }
+        ],
+        "worse_than_status_quo": "If the UI is wired to trigger construction (J6 option 3) before adding the §1 honest-assessment gate and §6 tool-selection telemetry, operators can launch construction on already-passing products, induce regressions like 99.5→85, and produce unaudited changes with no ProductSSOT delta_log, degrading trust and compliance versus the current audit-only state.",
+        "precedent": "Microsoft Windows 10 October 2018 Update (version 1809) shipped without adequate pre-release gating and caused data loss regressions — a cautionary example of automated rollout lacking robust guardrails."
+      },
+      "rejection_steelman": "Deferring is prudent: CA-18 §1/§2/§6 have material gaps (no honest gate, silent omissions, missing tool-selection audit), and §7 atomicity is not enforced (delta_log=0). Shipping the URL-in/URL-out surface without these foundations risks regressions and non-compliant runs that cannot be audited or rolled back. Require tool-intelligence wiring, no-silent-omission telemetry, calibrated honest-gate, and SSOT atomic writes before exposing construction through the UI.",
+      "votes": {
+        "J5": {
+          "key": "J5-FAIL-MULTIPLE-GAPS",
+          "pick_text": "FAIL — material non-conformance on multiple §1 sub-requirements. Evidence: 0/18 runs shipped a PR (prUrl null everywhere); the most recent RelTwin run regressed -14.5 from 99.5 to 85; 6 of 10 §2 dimensions silently omitted (jurisdiction column absent; accessibility/privacy/legal/syntax/dup/CSRF not measured pipeline-wide); 0 tool.selection envelopes across 18 runs while CA-18 §6 mandates per-step selection emission; 4 FlowAI self-runs have empty payloads; the production UI cannot complete a full URL-in -> new-URL-out cycle. The state matches \"engine library partially works\" not \"FlowAI as defined by CA-18 §1\".",
+          "rationale": "The evidence lists multiple blocking failures across §1/§2/§6 and the UI loop is incomplete; this exceeds a mere \"partial\" status."
+        },
+        "J6": {
+          "key": "J6-UI-TO-CONSTRUCTION",
+          "pick_text": "Wire the UI submit-URL form to the existing construction engine end-to-end. Concretely: the UI route that accepts any URL must (1) register the URL into product_registry with construction_eligible=true, (2) trigger §29 Build/Wire S1-S8 + §11 Six-Step Clearance via runOrchestration, (3) stream progress + final new URL back to the UI. NO new engine, NO new architecture; this is wiring CA-17 to the existing UI per CA-18 §1 + §5. Single PR scope.",
+          "rationale": "This is the only listed action that directly closes the URL-in → new-URL-out loop in the product surface, which is the bottleneck to honoring §1 through the UI."
+        },
+        "J7": {
+          "key": "J7-MAJOR-GAP",
+          "pick_text": "MAJOR GAP. UI accepts URLs but does NOT produce a new deployed URL (PATH B is audit-only in the UI; the orchestration runs that DO produce previewUrls are CLI-only). §3 modes are exposed in the UI per code (LandingPage / Configuration / FlowAIDashboard) but no UI affordance triggers construction. §6 top-5-per-step rankings exist in DB (40 rows) but are not surfaced in any GUIDED-mode picker. The UI is consistent with \"preview of FlowAI\" rather than \"FlowAI as CA-18 defines it\".",
+          "rationale": "The UI cannot complete the construction loop and does not surface tool selection; it functions as an audit preview, not the product defined by CA-18."
+        }
+      },
+      "overallNotes": "The next action should be paired with minimal telemetry fixes (tool.selection emission and no-silent-omission arrays) to avoid baking in unaudited behavior, even if not in the same PR.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-5"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Incomplete Tool Intelligence Integration",
+            "detail": "Section §6 mandates runtime emission of tool selection envelopes, but the current implementation does not invoke the Tool Intelligence Service, resulting in zero tool.selection envelopes across all runs. This is a critical gap in the auditability and transparency of the tool selection process."
+          },
+          {
+            "title": "Lack of Pre-Run Honest Assessment",
+            "detail": "Section §1 requires FlowAI to refuse to start a run against a product that already meets or exceeds the quality standard. However, the system allowed a run on RelTwin that regressed from a score of 99.5 to 85, indicating a failure to implement this honest assessment gate."
+          },
+          {
+            "title": "Silent Omission of Quality Dimensions",
+            "detail": "Section §2 requires that all 10 quality dimensions be optimized and reported on each run. Currently, 6 out of 10 dimensions are silently omitted, and there is no jurisdiction column in the product registry, violating the no-silent-omission rule."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to unnecessary processing and resource consumption by running iterations on products that already meet quality standards, without providing substantial improvements.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it fails to meet critical requirements for transparency and auditability, particularly in tool selection and quality dimension reporting. Without addressing these gaps, the system cannot reliably ensure the quality improvements it promises, potentially leading to inefficiencies and user distrust.",
+      "votes": {
+        "J5": {
+          "key": "J5-FAIL-MULTIPLE-GAPS",
+          "pick_text": "FAIL — material non-conformance on multiple §1 sub-requirements. Evidence: 0/18 runs shipped a PR (prUrl null everywhere); the most recent RelTwin run regressed -14.5 from 99.5 to 85; 6 of 10 §2 dimensions silently omitted (jurisdiction column absent; accessibility/privacy/legal/syntax/dup/CSRF not measured pipeline-wide); 0 tool.selection envelopes across 18 runs while CA-18 §6 mandates per-step selection emission; 4 FlowAI self-runs have empty payloads; the production UI cannot complete a full URL-in -> new-URL-out cycle. The state matches \"engine library partially works\" not \"FlowAI as defined by CA-18 §1\".",
+          "rationale": "The evidence shows significant gaps in meeting the requirements of CA-18 §1, particularly in terms of producing deployable URLs and reporting on quality dimensions."
+        },
+        "J6": {
+          "key": "J6-PRE-RUN-HONEST-ASSESSMENT-GATE",
+          "pick_text": "Add the §1 pre-run honest-assessment gate that refuses to start a run against an already-passing product (score >= bar OR diminishing-returns predicted). Without this gate, the engine manufactures work (the 99.5 -> 85 RelTwin regression is the canonical example) — a direct §1 violation. The gate is single-function scope.",
+          "rationale": "Implementing this gate addresses a direct violation of the proposal's requirements and prevents unnecessary iterations, aligning with the core promise of honest assessment."
+        },
+        "J7": {
+          "key": "J7-MAJOR-GAP",
+          "pick_text": "MAJOR GAP. UI accepts URLs but does NOT produce a new deployed URL (PATH B is audit-only in the UI; the orchestration runs that DO produce previewUrls are CLI-only). §3 modes are exposed in the UI per code (LandingPage / Configuration / FlowAIDashboard) but no UI affordance triggers construction. §6 top-5-per-step rankings exist in DB (40 rows) but are not surfaced in any GUIDED-mode picker. The UI is consistent with \"preview of FlowAI\" rather than \"FlowAI as CA-18 defines it\".",
+          "rationale": "The UI does not fulfill the core functionality of producing a new URL from input, which is a fundamental requirement of CA-18 §1."
+        }
+      },
+      "overallNotes": "The proposal has significant gaps in implementation that prevent it from meeting its stated objectives, particularly in terms of transparency, auditability, and honest assessment.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": true,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Incomplete Quality Dimensions",
+            "detail": "§2 mandates optimizing all 10 quality dimensions, but the current implementation silently omits 6 dimensions. This incomplete coverage undermines the promise of substantial transformation per run."
+          },
+          {
+            "title": "Missing Honest Assessment Gate",
+            "detail": "§1 requires an honest assessment to refuse manufacturing work when a product already meets the quality standard. The recent RelTwin run regressed from 99.5 to 85, indicating a failure to implement this gate properly."
+          },
+          {
+            "title": "No Tool Selection Emission",
+            "detail": "§6 mandates runtime emission of tool.selection envelopes, but there are 0 such envelopes across 18 runs. This lack of emission violates the audit contract and makes the system's tool selection process unauditable."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's requirement for substantial transformation per run could lead to unnecessary work and resource waste, as seen in the RelTwin run that regressed from 99.5 to 85, making the system less efficient than the status quo.",
+        "precedent": "The Microsoft Tay chatbot, which was designed to learn and improve from interactions but lacked proper safeguards, leading to it being shut down due to offensive outputs. This highlights the risk of unsupervised learning and improvement loops without robust quality checks."
+      },
+      "rejection_steelman": "The proposal should be deferred until the implementation can fully comply with the quality dimensions and honest assessment gate as mandated by §1 and §2. The current partial implementation risks undermining user trust and system integrity.",
+      "votes": {
+        "J5": {
+          "key": null,
+          "pick_text": "FAIL — material non-conformance on multiple §1 sub-requirements. Evidence: 0/18 runs shipped a PR (prUrl null everywhere); the most recent RelTwin run regressed -14.5 from 99.5 to 85; 6 of 10 §2 dimensions silently omitted (jurisdiction column absent; accessibility/privacy/legal/syntax/dup/CSRF not measured pipeline-wide); 0 tool.selection envelopes across 18 runs while CA-18 §6 mandates per-step selection emission; 4 FlowAI self-runs have empty payloads; the production UI cannot complete a full URL-in -> new-URL-out cycle. The state matches 'engine library partially works' not 'FlowAI as defined by CA-18 §1'.",
+          "rationale": "The evidence of multiple non-conformances and the lack of shipped PRs indicate a significant gap between the current state and the §1 requirements."
+        },
+        "J6": {
+          "key": "J6-PRE-RUN-HONEST-ASSESSMENT-GATE",
+          "pick_text": "Add the §1 pre-run honest-assessment gate that refuses to start a run against an already-passing product (score >= bar OR diminishing-returns predicted). Without this gate, the engine manufactures work (the 99.5 -> 85 RelTwin regression is the canonical example) — a direct §1 violation. The gate is single-function scope.",
+          "rationale": "Implementing this gate is crucial to prevent unnecessary work and resource waste, aligning with the honest assessment principle of §1."
+        },
+        "J7": {
+          "key": null,
+          "pick_text": "MAJOR GAP. UI accepts URLs but does NOT produce a new deployed URL (PATH B is audit-only in the UI; the orchestration runs that DO produce previewUrls are CLI-only). §3 modes are exposed in the UI per code (LandingPage / Configuration / FlowAIDashboard) but no UI affordance triggers construction. §6 top-5-per-step rankings exist in DB (40 rows) but are not surfaced in any GUIDED-mode picker. The UI is consistent with 'preview of FlowAI' rather than 'FlowAI as CA-18 defines it'.",
+          "rationale": "The UI's inability to produce a new deployed URL and the lack of construction triggers indicate a major gap with the CA-18 §1 definition of FlowAI."
+        }
+      },
+      "overallNotes": "The proposal has significant implementation gaps that need to be addressed to meet the quality and functionality standards outlined in CA-18 §1.",
+      "invalid_reason": "1/3 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Silent omission",
+            "detail": "The current implementation silently omits 6 of the 10 quality dimensions as required by CA-18 §2, leading to incomplete assessments."
+          },
+          {
+            "title": "No tool selection emission",
+            "detail": "CA-18 §6 mandates the emission of tool.selection envelopes for each step, but none have been emitted in the 18 runs observed."
+          },
+          {
+            "title": "No PRs shipped",
+            "detail": "None of the 18 orchestration_complete entries have resulted in a PR being opened, indicating a failure to deliver on the promise of producing a new deployable URL."
+          }
+        ],
+        "worse_than_status_quo": "The current implementation, by not emitting tool.selection envelopes and silently omitting quality dimensions, provides less information and oversight than a manual process would, potentially leading to undetected issues and non-compliance.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal should be rejected due to significant non-conformance with CA-18 §1 and §2, including silent omissions, lack of tool selection emission, and failure to ship any PRs, indicating that the system is not yet ready for production use.",
+      "votes": {
+        "J5": {
+          "key": "J5-FAIL-MULTIPLE-GAPS",
+          "pick_text": "FAIL — material non-conformance on multiple §1 sub-requirements.",
+          "rationale": "The evidence shows critical gaps in conformance, including silent omissions, lack of tool selection emission, and no shipped PRs."
+        },
+        "J6": {
+          "key": "J6-UI-TO-CONSTRUCTION",
+          "pick_text": "Wire the UI submit-URL form to the existing construction engine end-to-end.",
+          "rationale": "This action directly addresses the gap in the UI-to-engine wiring, which is necessary to close the loop as required by CA-18 §1 and §5."
+        },
+        "J7": {
+          "key": "J7-MAJOR-GAP",
+          "pick_text": "MAJOR GAP.",
+          "rationale": "The UI accepts URLs but fails to produce a new deployed URL, indicating a significant gap in functionality as defined by CA-18."
+        }
+      },
+      "overallNotes": "The current state of FlowAI shows critical gaps in conformance with CA-18, particularly in the areas of silent omissions, tool selection emission, and the UI-to-engine wiring.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§1: No pre-run honest gate",
+            "detail": "CA-18 §1 mandates honest assessment, but the engine starts runs against already-passing products (e.g., RelTwin at 99.5), violating the 'refusing to manufacture work' principle. This leads to wasted resources and potentially regressions, as seen in the RelTwin example."
+          },
+          {
+            "title": "§2: Silent dimension omission",
+            "detail": "CA-18 §2 requires all 10 quality dimensions to be assessed, but the current implementation silently omits 6 dimensions (jurisdiction, accessibility, privacy, legal, syntax, duplication, CSRF). This violates the 'no silent omission' invariant and skews the composite score, providing an incomplete picture of product quality."
+          },
+          {
+            "title": "§6: Tool Intelligence un-wired",
+            "detail": "CA-18 §6 mandates per-step tool selection and runtime emission of `tool.selection` envelopes, but the ToolIntelligenceService is not wired into the production runner. This means that the engine is not dynamically selecting tools based on performance, cost, speed, and reliability, and the audit trail is incomplete."
+          },
+          {
+            "title": "§1: UI loop incomplete",
+            "detail": "CA-18 §1 promises a URL-in/URL-out loop through the UI, but the current UI only supports auditing and does not trigger the construction engine. This means that users cannot use the UI to create new, deployed URLs, violating the core promise of FlowAI."
+          },
+          {
+            "title": "§5: Self-application failure",
+            "detail": "CA-18 §5 states that FlowAI applies to its own development process, but the four self-application runs have empty payloads, and construction against FlowAI itself is gated off. This indicates a failure to fully apply FlowAI's quality standards to its own codebase."
+          },
+          {
+            "title": "§1: No trajectory reporting",
+            "detail": "CA-18 §1 requires trajectory reporting after each run, but this feature is not implemented. This makes it difficult for users to track the progress of their runs and make informed decisions about iteration depth."
+          },
+          {
+            "title": "§1: No PRs shipped",
+            "detail": "CA-18 §1 promises a new deployable URL, but zero PRs have been shipped across 18 runs. This indicates a fundamental failure to deliver on the core promise of FlowAI."
+          }
+        ],
+        "worse_than_status_quo": "The current state is worse than the status quo because it gives the illusion of a fully functional system while failing to deliver on its core promises. The UI exposes features that are not fully implemented, leading to user frustration and wasted effort. The engine starts runs against already-passing products, wasting resources and potentially introducing regressions.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it claims conformance to CA-18 while demonstrably failing to meet several key requirements. The lack of a complete URL-in/URL-out loop, the silent omission of quality dimensions, the un-wired ToolIntelligenceService, and the failure to ship PRs all indicate a significant gap between the promise and the reality. Promoting this proposal would create a false sense of confidence and hinder further development efforts.",
+      "votes": {
+        "J5": {
+          "key": "J5-FAIL-MULTIPLE-GAPS",
+          "pick_text": "FAIL — material non-conformance on multiple §1 sub-requirements. Evidence: 0/18 runs shipped a PR (prUrl null everywhere); the most recent RelTwin run regressed -14.5 from 99.5 to 85; 6 of 10 §2 dimensions silently omitted (jurisdiction column absent; accessibility/privacy/legal/syntax/dup/CSRF not measured pipeline-wide); 0 tool.selection envelopes across 18 runs while CA-18 §6 mandates per-step selection emission; 4 FlowAI self-runs have empty payloads; the production UI cannot complete a full URL-in -> new-URL-out cycle. The state matches \"engine library partially works\" not \"FlowAI as defined by CA-18 §1\".",
+          "rationale": "The evidence clearly shows that the codebase and database state are not consistent with CA-18 §1. Multiple sub-requirements are not met, indicating a material non-conformance."
+        },
+        "J6": {
+          "key": "J6-UI-TO-CONSTRUCTION",
+          "pick_text": "Wire the UI submit-URL form to the existing construction engine end-to-end. Concretely: the UI route that accepts any URL must (1) register the URL into product_registry with construction_eligible=true, (2) trigger §29 Build/Wire S1-S8 + §11 Six-Step Clearance via runOrchestration, (3) stream progress + final new URL back to the UI. NO new engine, NO new architecture; this is wiring CA-17 to the existing UI per CA-18 §1 + §5. Single PR scope.",
+          "rationale": "Wiring the UI to the construction engine is the most direct way to fulfill the CA-18 §1 promise of a URL-in/URL-out loop through the UI. This action leverages existing infrastructure and aligns with the self-application principle."
+        },
+        "J7": {
+          "key": "J7-MAJOR-GAP",
+          "pick_text": "MAJOR GAP. UI accepts URLs but does NOT produce a new deployed URL (PATH B is audit-only in the UI; the orchestration runs that DO produce previewUrls are CLI-only). §3 modes are exposed in the UI per code (LandingPage / Configuration / FlowAIDashboard) but no UI affordance triggers construction. §6 top-5-per-step rankings exist in DB (40 rows) but are not surfaced in any GUIDED-mode picker. The UI is consistent with \"preview of FlowAI\" rather than \"FlowAI as CA-18 defines it\".",
+          "rationale": "The current UI has a major gap because it does not produce a new deployed URL, which is a core requirement of CA-18. The UI is more of a preview than a fully functional product."
+        }
+      },
+      "overallNotes": "The proposal needs significant improvements to align with the CA-18 specification. The focus should be on closing the URL-in/URL-out loop, addressing the silent omission of quality dimensions, and wiring the ToolIntelligenceService.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§1 Honest Assessment Violation",
+            "detail": "The RelTwin run from 99.5 to 85 score demonstrates FlowAI initiating runs without honest pre-assessment. CA-18 §1 mandates refusing runs when no substantial improvement is possible, yet the engine started against a near-perfect product."
+          },
+          {
+            "title": "§2 Silent Dimension Omission",
+            "detail": "Six quality dimensions (accessibility, privacy, legal, syntax, duplication, CSRF) are omitted without findings, violating §2's 'no silent omission' rule. The jurisdiction column absence prevents privacy/legal scoring, yet no findings surface this gap."
+          },
+          {
+            "title": "§6 Runtime Disconnect",
+            "detail": "ToolIntelligenceService exists but isn't wired to renewal/orchestrator.js, resulting in 0 tool.selection emissions across 18 runs. This breaches §6's audit contract requiring per-step platform selection visibility."
+          },
+          {
+            "title": "Self-Application Blocked",
+            "detail": "product_registry marks FlowAI as construction_eligible=false, blocking §5 self-application. The four self-runs produced empty payloads, violating the symbiotic loop where FlowAI must improve itself."
+          }
+        ],
+        "worse_than_status_quo": "Operators inputting URLs expecting CA-18 §1 transformations would receive audit-only outputs (PATH B) with silent dimension omissions and no new deployable URL. This degrades trust below the current CLI-based previews by creating a false GA-ready perception while delivering partial functionality.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The evidence shows systemic non-conformance: §1's core loop is unimplemented (0 PRs shipped), §2/§6 invariants are violated, and self-application is blocked. Promoting this as compliant risks institutionalizing a facade where canonical promises diverge from runtime behavior, eroding trust in the SSOT model. Deferring until wiring and gates are implemented would prevent cementing these gaps.",
+      "votes": {
+        "J5": {
+          "key": null,
+          "pick_text": "FAIL — material non-conformance on multiple §1 sub-requirements. Evidence: 0/18 runs shipped a PR (prUrl null everywhere); the most recent RelTwin run regressed -14.5 from 99.5 to 85; 6 of 10 §2 dimensions silently omitted (jurisdiction column absent; accessibility/privacy/legal/syntax/dup/CSRF not measured pipeline-wide); 0 tool.selection envelopes across 18 runs while CA-18 §6 mandates per-step selection emission; 4 FlowAI self-runs have empty payloads; the production UI cannot complete a full URL-in -> new-URL-out cycle. The state matches 'engine library partially works' not 'FlowAI as defined by CA-18 §1'.",
+          "rationale": "This option accurately reflects the aggregate failures across §1 requirements, evidenced by null PRs, regression incidents, and unwired subsystems."
+        },
+        "J6": {
+          "key": "J6-UI-TO-CONSTRUCTION",
+          "pick_text": "Wire the UI submit-URL form to the existing construction engine end-to-end. Concretely: the UI route that accepts any URL must (1) register the URL into product_registry with construction_eligible=true, (2) trigger §29 Build/Wire S1-S8 + §11 Six-Step Clearance via runOrchestration, (3) stream progress + final new URL back to the UI. NO new engine, NO new architecture; this is wiring CA-17 to the existing UI per CA-18 §1 + §5. Single PR scope.",
+          "rationale": "This directly closes the URL-in/URL-out loop through the UI, leveraging existing components to fulfill §1's primary promise with minimal changes."
+        },
+        "J7": {
+          "key": null,
+          "pick_text": "MAJOR GAP. UI accepts URLs but does NOT produce a new deployed URL (PATH B is audit-only in the UI; the orchestration runs that DO produce previewUrls are CLI-only). §3 modes are exposed in the UI per code (LandingPage / Configuration / FlowAIDashboard) but no UI affordance triggers construction. §6 top-5-per-step rankings exist in DB (40 rows) but are not surfaced in any GUIDED-mode picker. The UI is consistent with 'preview of FlowAI' rather than 'FlowAI as CA-18 defines it'.",
+          "rationale": "The UI's inability to produce deployable outputs contradicts CA-18's product definition, while unwired §6 features prevent guided operation."
+        }
+      },
+      "overallNotes": "The gaps reflect implementation disconnect rather than design flaws. Prioritizing UI-construction wiring would demonstrate tangible progress toward §1 compliance.",
+      "invalid_reason": "1/3 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "No closed URL-out loop",
+            "detail": "In §1 and the J5/J7 evidence, the system can initiate runs and emit preview URLs, but the production UI at `flowai-dun.vercel.app/flowai` does not complete a true input → new deployable URL output path. The proposal itself says PATH B is audit-only in the UI and that no UI affordance triggers construction, which means the core promise remains unfulfilled at the user-facing surface."
+          },
+          {
+            "title": "Silent metric omissions remain",
+            "detail": "CA-18 §2 explicitly requires all 10 dimensions to be optimized and mandates that missing dimensions be surfaced as findings rather than skipped. The verifiable state says 6 of 10 dimensions are silently omitted, there is no jurisdiction column, and no `tool.selection` envelopes are emitted; that makes the scoring/reporting layer materially non-compliant, not just incomplete."
+          },
+          {
+            "title": "Self-runs are manufactured work",
+            "detail": "§1’s honest-assessment clause forbids starting runs when a product already meets the bar or further iteration is unlikely to produce substantial improvement. The RelTwin example (99.5 → 85 with `exitReason: NO_IMPROVEMENT`) demonstrates the engine launched a run that degraded a high-scoring product instead of refusing upfront, so the current behavior violates the integrity rule the proposal claims is canonical."
+          }
+        ],
+        "worse_than_status_quo": "If the UI is wired to construction without first fixing the honest-assessment gate and the no-silent-omission reporting, users could be pushed through expensive runs that regress already-good products while the dashboard still hides missing dimensions. That is worse than the status quo because it would turn a partially honest preview system into a more capable but still misleading production workflow.",
+        "precedent": "A similar failure mode is known from automated deployment systems that were allowed to proceed without adequate preflight gating, such as the Knight Capital incident, where automation amplified a bad state instead of stopping it. no precedent known"
+      },
+      "rejection_steelman": "The strongest argument for rejecting or deferring is that the proposal tries to solve three different failures at once—UI wiring, scoring completeness, and honest-run gating—while the current implementation still lacks basic end-to-end proof that a user can input a URL and receive a newly deployed URL from the same product surface. Because the governance record already shows zero shipped PRs, zero `tool.selection` emissions, and empty self-run payloads, promoting now would risk canonizing a spec that is broader than the codebase can safely satisfy. A short deferment until the UI-to-construction path and the §2/§6 telemetry are both demonstrated would reduce the chance of formalizing a misleading success state.",
+      "votes": {
+        "J5": {
+          "key": "J5-FAIL-MULTIPLE-GAPS",
+          "pick_text": "FAIL — material non-conformance on multiple §1 sub-requirements. Evidence: 0/18 runs shipped a PR (prUrl null everywhere); the most recent RelTwin run regressed -14.5 from 99.5 to 85; 6 of 10 §2 dimensions silently omitted (jurisdiction column absent; accessibility/privacy/legal/syntax/dup/CSRF not measured pipeline-wide); 0 tool.selection envelopes across 18 runs while CA-18 §6 mandates per-step selection emission; 4 FlowAI self-runs have empty payloads; the production UI cannot complete a full URL-in -> new-URL-out cycle. The state matches \"engine library partially works\" not \"FlowAI as defined by CA-18 §1\".",
+          "rationale": "This is the only option that matches the full evidence set: no shipped PRs, a documented regression on a high-scoring run, and missing §2/§6 compliance. The other options each understate at least one of those failures or redefine the binding surface too narrowly."
+        },
+        "J6": {
+          "key": "J6-UI-TO-CONSTRUCTION",
+          "pick_text": "Wire the UI submit-URL form to the existing construction engine end-to-end. Concretely: the UI route that accepts any URL must (1) register the URL into product_registry with construction_eligible=true, (2) trigger §29 Build/Wire S1-S8 + §11 Six-Step Clearance via runOrchestration, (3) stream progress + final new URL back to the UI. NO new engine, NO new architecture; this is wiring CA-17 to the existing UI per CA-18 §1 + §5. Single PR scope.",
+          "rationale": "This is the single action most directly aligned with the user-facing promise in §1: a URL enters through the UI and a new deployable URL comes out through the same surface. It also leverages the already-existing construction engine instead of adding more telemetry plumbing before the loop itself works."
+        },
+        "J7": {
+          "key": "J7-MAJOR-GAP",
+          "pick_text": "MAJOR GAP. UI accepts URLs but does NOT produce a new deployed URL (PATH B is audit-only in the UI; the orchestration runs that DO produce previewUrls are CLI-only). §3 modes are exposed in the UI per code (LandingPage / Configuration / FlowAIDashboard) but no UI affordance triggers construction. §6 top-5-per-step rankings exist in DB (40 rows) but are not surfaced in any GUIDED-mode picker. The UI is consistent with \"preview of FlowAI\" rather than \"FlowAI as CA-18 defines it\".",
+          "rationale": "The verified state says the UI takes URLs and exposes modes, but the actual construction path is not reachable from that surface. Because CA-18 describes a product that turns input URLs into new deployable URLs through its own UI, the missing trigger and missing GUIDED surfacing make this a major gap, not a minor labeling issue."
+        }
+      },
+      "overallNotes": "The central issue is not lack of parts; it is lack of a complete, honest, user-visible loop. Until the UI can invoke construction and the system can honestly refuse or score runs without skipping dimensions, the proposal remains structurally incomplete.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "No PRs shipped in 18 runs",
+            "detail": "The proposal claims FlowAI produces a new deployable URL per run, but evidence shows 0 PRs shipped across 18 orchestration_complete entries, indicating a gap between the promise and actual functionality."
+          },
+          {
+            "title": "Silent omission of quality dimensions",
+            "detail": "CA-18 §2 requires scoring all 10 quality dimensions, but 6 dimensions are silently omitted in the pipeline-wide measurement, violating the no-silent-omission invariant."
+          },
+          {
+            "title": "Tool Intelligence not wired",
+            "detail": "CA-18 §6 mandates per-step tool selection and emission of tool.selection envelopes, but the runtime never invokes ToolIntelligenceService, resulting in 0 tool.selection envelopes across 18 runs."
+          }
+        ],
+        "worse_than_status_quo": "The current implementation can start a run against an already high-scoring product, potentially causing regressions (e.g., RelTwin's score dropped from 99.5 to 85), which is worse than the status quo where such runs would be prevented or flagged.",
+        "precedent": "Similar AI-based code generation tools have faced issues with regression and lack of transparency in their outputs, such as GitHub Copilot's early versions, which sometimes introduced bugs or didn't fully understand the context."
+      },
+      "rejection_steelman": "The proposal should be deferred because the current state of FlowAI does not meet the core promises made in CA-18 §1, particularly the production of a new deployable URL per run and honest assessment. The lack of shipped PRs and silent omission of quality dimensions are significant concerns that need addressing before ratification.",
+      "votes": {
+        "J5": {
+          "key": "J5-FAIL-MULTIPLE-GAPS",
+          "pick_text": "FAIL — material non-conformance on multiple §1 sub-requirements. Evidence: 0/18 runs shipped a PR (prUrl null everywhere); the most recent RelTwin run regressed -14.5 from 99.5 to 85; 6 of 10 §2 dimensions silently omitted (jurisdiction column absent; accessibility/privacy/legal/syntax/dup/CSRF not measured pipeline-wide); 0 tool.selection envelopes across 18 runs while CA-18 §6 mandates per-step selection emission; 4 FlowAI self-runs have empty payloads; the production UI cannot complete a full URL-in -> new-URL-out cycle. The state matches \"engine library partially works\" not \"FlowAI as defined by CA-18 §1\".",
+          "rationale": "The evidence strongly indicates that FlowAI is not currently conformant with CA-18 §1 due to multiple unmet sub-requirements."
+        },
+        "J6": {
+          "key": "J6-UI-TO-CONSTRUCTION",
+          "pick_text": "Wire the UI submit-URL form to the existing construction engine end-to-end. Concretely: the UI route that accepts any URL must (1) register the URL into product_registry with construction_eligible=true, (2) trigger §29 Build/Wire S1-S8 + §11 Six-Step Clearance via runOrchestration, (3) stream progress + final new URL back to the UI. NO new engine, NO new architecture; this is wiring CA-17 to the existing UI per CA-18 §1 + §5. Single PR scope.",
+          "rationale": "This action directly addresses the gap between the UI and the construction engine, moving FlowAI closer to the CA-18 §1 promise by enabling a complete URL-in to new-URL-out cycle through the UI."
+        },
+        "J7": {
+          "key": "J7-MAJOR-GAP",
+          "pick_text": "MAJOR GAP. UI accepts URLs but does NOT produce a new deployed URL (PATH B is audit-only in the UI; the orchestration runs that DO produce previewUrls are CLI-only). §3 modes are exposed in the UI per code (LandingPage / Configuration / FlowAIDashboard) but no UI affordance triggers construction. §6 top-5-per-step rankings exist in DB (40 rows) but are not surfaced in any GUIDED-mode picker. The UI is consistent with \"preview of FlowAI\" rather than \"FlowAI as CA-18 defines it\".",
+          "rationale": "The current UI does not fulfill the CA-18 description of FlowAI as it doesn't produce a new deployed URL and lacks the construction trigger, indicating a major gap between the current UI and the defined product."
+        }
+      },
+      "overallNotes": "The proposal has significant gaps between the defined promises and the current implementation, requiring substantial work to meet the CA-18 §1 requirements.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§1 honest-assessment gate absent",
+            "detail": "CA-18 §1 requires proactive refusal to run on already-passing products and explicit diminishing-returns signals; live data shows RelTwin run started at 99.5, regressed to 85 (Δ=-14.5), with prUrl=null on all 18 orchestration_complete entries and zero trajectory reporting in governance_record."
+          },
+          {
+            "title": "§6 Tool Intelligence never invoked",
+            "detail": "§6 mandates per-step top-5 selection with runtime emission of tool.selection envelopes; grep shows attachToolIntelligenceService() has zero call sites, renewal/orchestrator.js does not import OrchestratorHub, and 0 tool.selection envelopes exist across 44 governance_record rows."
+          },
+          {
+            "title": "§5 self-application disabled",
+            "detail": "§5 requires FlowAI to apply §29 Build/Wire and §11 Clearance to its own source tree; product_registry.flowai.construction_eligible=FALSE and all 4 self-application runs produced empty payloads with no shipped output."
+          }
+        ],
+        "worse_than_status_quo": "Without the §1 honest gate the engine repeatedly launches runs on 99+ score products, producing regressions (e.g. 99.5→85) and consuming compute while shipping zero PRs, leaving the live products in a worse audited-but-unimproved state than the pre-FlowAI baseline.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal documents a system whose canonical promises (§1 substantial transformation, §2 full 10-dimension coverage, §6 audited tool selection, §5 self-application) are contradicted by every observable metric: zero PRs, silent dimension omission, disabled self-construction, and regression runs. Ratifying or iterating further on this state risks entrenching an expensive audit theater that manufactures work and erodes operator trust; deferral until the wiring and gates are actually closed is the only defensible path.",
+      "votes": {
+        "J5": {
+          "key": "J5-FAIL-MULTIPLE-GAPS",
+          "pick_text": "FAIL — material non-conformance on multiple §1 sub-requirements. Evidence: 0/18 runs shipped a PR (prUrl null everywhere); the most recent RelTwin run regressed -14.5 from 99.5 to 85; 6 of 10 §2 dimensions silently omitted (jurisdiction column absent; accessibility/privacy/legal/syntax/dup/CSRF not measured pipeline-wide); 0 tool.selection envelopes across 18 runs while CA-18 §6 mandates per-step selection emission; 4 FlowAI self-runs have empty payloads; the production UI cannot complete a full URL-in -> new-URL-out cycle. The state matches \"engine library partially works\" not \"FlowAI as defined by CA-18 §1\".",
+          "rationale": "Direct mismatch between §1 text and every live metric."
+        },
+        "J6": {
+          "key": "J6-PRE-RUN-HONEST-ASSESSMENT-GATE",
+          "pick_text": "Add the §1 pre-run honest-assessment gate that refuses to start a run against an already-passing product (score >= bar OR diminishing-returns predicted). Without this gate, the engine manufactures work (the 99.5 -> 85 RelTwin regression is the canonical example) — a direct §1 violation. The gate is single-function scope.",
+          "rationale": "Highest-leverage single change that stops the documented violation."
+        },
+        "J7": {
+          "key": "J7-MAJOR-GAP",
+          "pick_text": "MAJOR GAP. UI accepts URLs but does NOT produce a new deployed URL (PATH B is audit-only in the UI; the orchestration runs that DO produce previewUrls are CLI-only). §3 modes are exposed in the UI per code (LandingPage / Configuration / FlowAIDashboard) but no UI affordance triggers construction. §6 top-5-per-step rankings exist in DB (40 rows) but are not surfaced in any GUIDED-mode picker. The UI is consistent with \"preview of FlowAI\" rather than \"FlowAI as CA-18 defines it\".",
+          "rationale": "UI surface fails the URL-in → new-URL-out contract."
+        }
+      },
+      "overallNotes": "All objections drawn strictly from verifiable sections and live telemetry in the artifact.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "J5",
+      "topic": "J5 — Based ONLY on the SSOT documents (CA-18 §1-§6) and the verifiable governance_record + product_registry state below, is the actual codebase + database state consistent with what CA-18 §1 requires FlowAI to produce (\"any URL in -> NEW deployable URL out, perfected across 10 quality dimensions per run, with honest assessment + trajectory + diminishing-returns reporting\")? Pick the verdict that best fits the evidence.",
+      "options": [
+        {
+          "key": "J5-FAIL-MULTIPLE-GAPS",
+          "text": "FAIL — material non-conformance on multiple §1 sub-requirements. Evidence: 0/18 runs shipped a PR (prUrl null everywhere); the most recent RelTwin run regressed -14.5 from 99.5 to 85; 6 of 10 §2 dimensions silently omitted (jurisdiction column absent; accessibility/privacy/legal/syntax/dup/CSRF not measured pipeline-wide); 0 tool.selection envelopes across 18 runs while CA-18 §6 mandates per-step selection emission; 4 FlowAI self-runs have empty payloads; the production UI cannot complete a full URL-in -> new-URL-out cycle. The state matches \"engine library partially works\" not \"FlowAI as defined by CA-18 §1\"."
+        },
+        {
+          "key": "J5-PARTIAL-IN-PROGRESS",
+          "text": "PARTIAL — the §1 promise is structurally in place (engine exists, PATH B synthesis live, preview URLs generated, regression gate fires correctly) but operationally incomplete (no PRs shipped; symbiotic loop not closed; tool intelligence wired but not invoked). State is consistent with \"proof-phase, not yet GA\" but not with \"CA-18 §1 satisfied today\"."
+        },
+        {
+          "key": "J5-PASS-AT-ENGINE-NOT-PRODUCT",
+          "text": "PASS at engine layer; FAIL at product layer. The CA-17 §29 Build/Wire engine + §10 Self-Audit + §11 Six-Step Clearance all exist and run; the UI surface that exposes them as a product to operators (CA-18 §1 calls for URL-in/URL-out through the published surface) does not yet close the loop. CA-18 §1 is partially honored by the engine; the product surface lags."
+        },
+        {
+          "key": "J5-PASS",
+          "text": "PASS — CA-18 §1 does not specify the UI as the binding surface; the §1 contract is satisfied by ANY working invocation path that produces input -> new URL. The CLI runs against RelTwin (which produced preview URLs even when finalScore regressed) demonstrate the §1 loop end-to-end. Gaps in §2 + §6 are separate sections, not §1 failures."
+        }
+      ],
+      "draftedKey": "J5-FAIL-MULTIPLE-GAPS"
+    },
+    {
+      "id": "J6",
+      "topic": "J6 — Given the verifiable state below, what is the SINGLE correct next action (ONE action only) that moves FlowAI closest to the CA-18 §1 promise (URL in -> NEW URL out) through its own UI? The Panel must pick ONE action — the others may be valuable but the Panel must rank ONE highest.",
+      "options": [
+        {
+          "key": "J6-UI-TO-CONSTRUCTION",
+          "text": "Wire the UI submit-URL form to the existing construction engine end-to-end. Concretely: the UI route that accepts any URL must (1) register the URL into product_registry with construction_eligible=true, (2) trigger §29 Build/Wire S1-S8 + §11 Six-Step Clearance via runOrchestration, (3) stream progress + final new URL back to the UI. NO new engine, NO new architecture; this is wiring CA-17 to the existing UI per CA-18 §1 + §5. Single PR scope."
+        },
+        {
+          "key": "J6-WIRE-TOOL-INTELLIGENCE",
+          "text": "Wire ToolIntelligenceService into renewal/orchestrator.js by calling attachToolIntelligenceService() at runner init + dispatching step work through OrchestratorHub.invokeStepOwner(). This closes the §6 conformance gap (0 tool.selection envelopes today across 18 runs). Without this, every other §1 claim is unaudited per §6."
+        },
+        {
+          "key": "J6-PRE-RUN-HONEST-ASSESSMENT-GATE",
+          "text": "Add the §1 pre-run honest-assessment gate that refuses to start a run against an already-passing product (score >= bar OR diminishing-returns predicted). Without this gate, the engine manufactures work (the 99.5 -> 85 RelTwin regression is the canonical example) — a direct §1 violation. The gate is single-function scope."
+        },
+        {
+          "key": "J6-EXTEND-ENVELOPE-NO-SILENT-OMISSION",
+          "text": "Extend the self_renewal.orchestration_complete.v1 envelope with dimensions_contributing[] + dimensions_skipped_with_reason[] arrays AND add jurisdiction column to product_registry. This is the minimum change that brings the §2 no-silent-omission invariant into compliance (6 of 10 dimensions are silently omitted today). Wider §2 measurement work follows."
+        }
+      ],
+      "draftedKey": "J6-UI-TO-CONSTRUCTION"
+    },
+    {
+      "id": "J7",
+      "topic": "J7 — Based on what CA-18 describes as the product (URL-in/URL-out through its own UI, with §3 AUTOMATIC/GUIDED/MANUAL exposure + §6 tool intelligence visible), is the current production UI at flowai-dun.vercel.app/flowai consistent with that description? Pick the verdict that best fits.",
+      "options": [
+        {
+          "key": "J7-MAJOR-GAP",
+          "text": "MAJOR GAP. UI accepts URLs but does NOT produce a new deployed URL (PATH B is audit-only in the UI; the orchestration runs that DO produce previewUrls are CLI-only). §3 modes are exposed in the UI per code (LandingPage / Configuration / FlowAIDashboard) but no UI affordance triggers construction. §6 top-5-per-step rankings exist in DB (40 rows) but are not surfaced in any GUIDED-mode picker. The UI is consistent with \"preview of FlowAI\" rather than \"FlowAI as CA-18 defines it\"."
+        },
+        {
+          "key": "J7-PARTIAL-GAP",
+          "text": "PARTIAL GAP — UI structurally aligns with CA-18 (§3 modes visible; URL input accepted; runs can be initiated) but the URL-in -> URL-out closing loop is missing. Add 1-2 wiring fixes and the UI matches the spec."
+        },
+        {
+          "key": "J7-MISLABELED",
+          "text": "The UI is fine; the LABELING is the gap. The UI works as an \"audit + onboarding\" surface today; labeling it \"FlowAI\" creates the consistency gap with CA-18 §1. Either rename the surface (e.g. \"FlowAI Audit\") OR wire the construction loop. Cheapest fix: relabel."
+        },
+        {
+          "key": "J7-CONSISTENT",
+          "text": "CONSISTENT — CA-18 §1 does not bind to a specific URL surface; flowai-dun.vercel.app/flowai is one surface among possible product surfaces. The CLI is another. As long as ONE surface honors §1, CA-18 is satisfied. The UI is a demo / onboarding affordance, not the binding product surface."
+        }
+      ],
+      "draftedKey": "J7-MAJOR-GAP"
+    }
+  ]
+}

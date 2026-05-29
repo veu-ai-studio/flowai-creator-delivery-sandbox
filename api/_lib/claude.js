@@ -82,7 +82,11 @@ export async function callClaude({
 }
 
 // Lightweight HTML → text extractor — strips tags, decodes a few entities,
-// pulls out title/meta/h1-h3, and caps body to ~12k chars.
+// pulls out title/meta/h1-h3, and caps body to ~50k chars (raised from
+// 12k under Defect A 2026-05-16: at 12k the scoring/analysis steps were
+// running on a truncated DOM, marking products "incomplete content" when
+// the real SPA had finished rendering. 50k holds the full visible text of
+// every observed real SPA; Claude's context window handles it comfortably).
 export function extractTextFromHtml(html, sourceUrl = '') {
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   const title = titleMatch ? decode(titleMatch[1]).trim() : '';
@@ -108,7 +112,7 @@ export function extractTextFromHtml(html, sourceUrl = '') {
   const bodyText = decode(stripTags(scrubbed))
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 12000);
+    .slice(0, 50000);
 
   return { url: sourceUrl, title, metaDescription, headings, bodyText };
 }

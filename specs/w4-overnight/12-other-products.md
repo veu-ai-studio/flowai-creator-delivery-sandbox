@@ -1,9 +1,9 @@
-# 12 — RelTwin / ReachSMS / MyBirthSafe backlog inventory
+# 12 — RelTwin / ReachSMS / MyPregLife backlog inventory
 
 **Generated:** 2026-05-07.
 
 There are **no per-product spec files** for RelTwin, ReachSMS, or
-MyBirthSafe in this repo. None of the three has a counterpart to PressAI's
+MyPregLife in this repo. None of the three has a counterpart to PressAI's
 `docs/audits/pressai-2026-05-05/` or SAIGE's
 `docs/audits/saige{,platform}-2026-05-05/`. The available cross-portfolio
 material is `docs/VEU_PORTFOLIO_HEALTH_2026-05-05.md`, which audits all
@@ -78,11 +78,11 @@ those plus codebase evidence of any fix.
 | RS-P0-002 | ✅ same place. | Same. |
 | **Drift to fix** | ⚠️ `veuProducts.js` still references `reachsms.base44.app`. | `src/lib/veuProducts.js:54` — should be reconciled with productDomains. |
 
-## MyBirthSafe
+## MyPregLife
 
 ### Source of truth
 
-- `src/lib/veuProducts.js:103-126` — config (claims `mybirthsafe.base44.app`).
+- `src/lib/veuProducts.js:103-126` — config (claims `mypreglife.base44.app`).
 - `api/_lib/productDomains.js:111-124` — slug, status, live_url
   (`https://safe-path.base44.app`), with `objectives` carrying a weight-2
   `PII / health-data compliance` constraint.
@@ -104,11 +104,11 @@ those plus codebase evidence of any fix.
   the registry.** Remediation either:
   - Flip `status: 'draft'` until the Base44 app is restored, or
   - Update `live_url` to the new domain (if known).
-- `src/lib/veuProducts.js:104` claims `https://mybirthsafe.base44.app` —
+- `src/lib/veuProducts.js:104` claims `https://mypreglife.base44.app` —
   again, **drift**. Different URL than productDomains.js.
 - The compliance constraint (HIPAA-equivalent) is **declared** in the
   objectives but not enforced anywhere — there's no PHI scrubber, no
-  region-locked storage, no audit policy specific to MyBirthSafe.
+  region-locked storage, no audit policy specific to MyPregLife.
 
 ### Status verdict
 
@@ -125,7 +125,7 @@ those plus codebase evidence of any fix.
 |---|---|---|---|
 | RelTwin | draft | mismatch (`reltwin.com` vs empty) | 0 of 3 |
 | ReachSMS | draft | mismatch (`reachsms.base44.app` vs empty) | 2 of 2 (registry fix done; veuProducts.js drift remains) |
-| MyBirthSafe | active | mismatch (`mybirthsafe.base44.app` vs `safe-path.base44.app`) | 0 of 3 |
+| MyPregLife | active | mismatch (`mypreglife.base44.app` vs `safe-path.base44.app`) | 0 of 3 |
 
 ## Recommended W4 actions for these three products
 
@@ -133,7 +133,7 @@ those plus codebase evidence of any fix.
    into a single source of truth. The simpler path is to delete the URL
    field from `veuProducts.js` and import `getCurrentLiveUrl(slug)` from
    `productDomains.js` everywhere it's needed.
-2. **Demote MyBirthSafe** from `active` to `draft` in
+2. **Demote MyPregLife** from `active` to `draft` in
    `productDomains.js:115` until either `safe-path.base44.app` is restored
    or a new URL is registered. Without this, every audit cycle re-flags the
    same broken URL.
@@ -145,7 +145,7 @@ those plus codebase evidence of any fix.
    `docs/audits/<product>-YYYY-MM-DD/` folder (matching the SAIGE/PressAI
    pattern), the cross-portfolio audit can be retired in favor of a faster
    product-by-product cycle.
-5. **Compliance scaffolding for MyBirthSafe** — once the app is back
+5. **Compliance scaffolding for MyPregLife** — once the app is back
    online, the HIPAA-equivalent constraint declared in `objectives[]`
    needs at minimum a privacy-policy reference, a regional-storage flag,
    and a separate audit-log namespace. None of those exist today.

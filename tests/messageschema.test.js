@@ -76,7 +76,7 @@ describe('MessageSchema required field enforcement', () => {
   });
 
   it('rejects envelope.from with out-of-range agentId', () => {
-    expect(() => validateEnvelope(baseEnvelope({ from: { agentId: 21, productScope: 'flowai' } })))
+    expect(() => validateEnvelope(baseEnvelope({ from: { agentId: 26, productScope: 'flowai' } })))
       .toThrow(/agentId invalid/);
     expect(() => validateEnvelope(baseEnvelope({ from: { agentId: 0, productScope: 'flowai' } })))
       .toThrow(/agentId invalid/);

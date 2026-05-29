@@ -1,0 +1,1530 @@
+{
+  "schema": "quorum-fix.sidecar.v1",
+  "code": "CA-14",
+  "commit": "fae9ff3",
+  "bundle_size": 34212,
+  "startedAt": "2026-05-19T04:28:53.478Z",
+  "finishedAt": "2026-05-19T04:30:49.892Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 34212
+  },
+  "tally": {
+    "engagedTotal": 10,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 0,
+    "perQuestion": {
+      "CA-14-A-Q1": {
+        "CA14AQ1-RATIFY": 2,
+        "CA14AQ1-REDUCED": 1,
+        "CA14AQ1-OPTIN": 4,
+        "CA14AQ1-REJECT": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-14-A-Q2": {
+        "CA14AQ2-RATIFY": 7,
+        "CA14AQ2-PARAPHRASE": 0,
+        "CA14AQ2-SHORTER": 2,
+        "CA14AQ2-FREEFORM": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-14-A-Q3": {
+        "CA14AQ3-AGENT21": 8,
+        "CA14AQ3-AGENT8": 0,
+        "CA14AQ3-OPSRUNNER": 0,
+        "CA14AQ3-DEFER": 1,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-14-A-Q4": {
+        "CA14AQ4-RATIFY": 8,
+        "CA14AQ4-DEFER": 0,
+        "CA14AQ4-REJECT": 0,
+        "CA14AQ4-MODIFY": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-14-B-Q1": {
+        "CA14BQ1-RATIFY": 7,
+        "CA14BQ1-DROP": 1,
+        "CA14BQ1-EXPAND": 0,
+        "CA14BQ1-REJECT": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-14-B-Q2": {
+        "CA14BQ2-RATIFY": 7,
+        "CA14BQ2-SOFTEN": 1,
+        "CA14BQ2-OVERRIDE": 1,
+        "CA14BQ2-MODIFY": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-14-B-Q3": {
+        "CA14BQ3-RATIFY": 6,
+        "CA14BQ3-S12": 3,
+        "CA14BQ3-S19": 0,
+        "CA14BQ3-CROSSLIST": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-14-C-Q1": {
+        "CA14CQ1-RATIFY": 6,
+        "CA14CQ1-STRONGER": 3,
+        "CA14CQ1-REJECT": 0,
+        "CA14CQ1-MODIFY": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-14-C-Q2": {
+        "CA14CQ2-ADD": 6,
+        "CA14CQ2-CONDITIONAL": 0,
+        "CA14CQ2-SKIP": 3,
+        "CA14CQ2-MODIFY": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-14-D-Q1": {
+        "CA14DQ1-RATIFY": 8,
+        "CA14DQ1-DROP": 1,
+        "CA14DQ1-EXPAND": 0,
+        "CA14DQ1-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-14-D-Q2": {
+        "CA14DQ2-BLOCK": 1,
+        "CA14DQ2-NDAYS": 6,
+        "CA14DQ2-IMMEDIATE": 3,
+        "CA14DQ2-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 36,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Phase B scope creep without bounds",
+        "detail": "§6.10 Phase B defines adversarial testing including 'prompt-injection probes' and 'hostile input' but provides no upper bound on test complexity or time. Unlike Phase A's hard caps (depth=12, pages=2000), Phase B could expand indefinitely as new attack vectors emerge."
+      },
+      {
+        "slot": 1,
+        "title": "Atomic-audit-write creates deadlock risk",
+        "detail": "§7.5 requires ProductSSOT update to be atomic with output delivery - if ProductSSOT write fails, entire run rolls back. This creates a single point of failure where database contention or network issues could block all product renewals system-wide."
+      },
+      {
+        "slot": 1,
+        "title": "NO_IMPROVEMENT exit blocks valid fixes",
+        "detail": "§7 item #6d mandates rejecting any fix that causes score regression, but some legitimate fixes (security patches, removing vulnerable features) naturally reduce functionality scores. The 'never ships regression' guarantee prevents necessary security remediation."
+      },
+      {
+        "slot": 1,
+        "title": "Per-product branch proliferation unbounded",
+        "detail": "CA-14-D requires a branch-of-record per product but doesn't specify retention policy or cleanup. With continuous operation, this creates unbounded git repository growth as abandoned product branches accumulate indefinitely."
+      },
+      {
+        "slot": 2,
+        "title": "Phase B complexity and resource demand",
+        "detail": "The introduction of Phase B Adversarial Surface Testing as a hard prerequisite (§6.10) significantly increases the complexity and resource demand of the testing process. This could lead to delays in product releases and increased operational costs, especially for smaller teams or projects with limited resources."
+      },
+      {
+        "slot": 2,
+        "title": "Lack of rollback mechanism",
+        "detail": "The proposal does not specify a clear rollback mechanism if Phase B testing fails after a product has been partially deployed. This could result in incomplete or inconsistent product states, potentially affecting end-user experience and trust."
+      },
+      {
+        "slot": 2,
+        "title": "Potential for increased false negatives",
+        "detail": "The adversarial testing approach in Phase B may lead to increased false negatives, where legitimate product features are flagged as problematic due to overly aggressive testing scenarios. This could hinder the deployment of functional products and require unnecessary remediation efforts."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case the Phase B Adversarial Surface Testing introduces unintended consequences or regressions, which could lead to system instability."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Error Handling",
+        "detail": "The §7.6 GTM Readiness Report score does not account for error handling and recovery mechanisms, which are crucial for ensuring system reliability and robustness."
+      },
+      {
+        "slot": 3,
+        "title": "Overreliance on Automated Testing",
+        "detail": "The proposal relies heavily on automated testing, which may not cover all edge cases and scenarios, potentially leading to undetected issues and vulnerabilities."
+      },
+      {
+        "slot": 4,
+        "title": "Phase B Overhead",
+        "detail": "The introduction of Phase B Adversarial Surface Testing may significantly increase the time and resources required for testing, potentially delaying product releases and increasing costs. §6.10 outlines extensive interactive testing requirements that could be overly burdensome."
+      },
+      {
+        "slot": 4,
+        "title": "Complexity in Self-Renewal",
+        "detail": "The Self-Renewal safety invariants in §7 Output Contract add complexity to the fix generation process. The diff-only and preserve rules might limit the effectiveness of automated fixes, leading to more manual interventions. The pre-deploy parse gate and post-deploy regression guard could introduce additional failure points."
+      },
+      {
+        "slot": 4,
+        "title": "Incomplete Seeding",
+        "detail": "The per-product seed migration in §7.5.1 is incomplete, with only 2 out of 5 VEU products seeded. This could lead to inconsistencies and potential issues in the ProductSSOT rows, affecting the reliability of the system."
+      },
+      {
+        "slot": 5,
+        "title": "Complexity Increase",
+        "detail": "Adding Phase B Adversarial Surface Testing as a hard prerequisite significantly increases the complexity of the clearance process, potentially leading to delays and resource strain."
+      },
+      {
+        "slot": 5,
+        "title": "Resource Allocation",
+        "detail": "The additional testing phase may require more computational resources and human oversight, which could divert resources from other critical areas."
+      },
+      {
+        "slot": 5,
+        "title": "False Positives",
+        "detail": "Phase B testing may generate false positives, leading to unnecessary rework and potential frustration among developers."
+      },
+      {
+        "slot": 6,
+        "title": "Phase B scope creep",
+        "detail": "The definition of Phase B in §6.10 is broad and could lead to scope creep.  The lack of specific, measurable criteria for 'adversarial' testing makes it difficult to determine when Phase B is truly 'passed'. This ambiguity could lead to inconsistent application and disputes."
+      },
+      {
+        "slot": 6,
+        "title": "LIMITATIONS disclosure burden",
+        "detail": "The mandatory verbatim text in §7 LIMITATIONS places a significant burden on operators.  While the intent is good, requiring exact phrasing is inflexible and could lead to awkward or unnatural disclosures.  The system should allow for paraphrasing while maintaining the core intent."
+      },
+      {
+        "slot": 6,
+        "title": "Self-Renewal safety rigidity",
+        "detail": "The §7 Output Contract item #6, particularly the 'diff-only' and 'preserve rules' invariants, may be overly restrictive.  Legitimate fixes might require more substantial changes than a simple diff, and preserving all existing code (including potentially flawed code) could hinder effective remediation."
+      },
+      {
+        "slot": 6,
+        "title": "Five-Layer Framework demotion",
+        "detail": "CA-14-C's demotion of the Five-Layer Intelligence Framework to telemetry-only seems premature. While findings-driven prioritization is important, the Five-Layer Framework could provide valuable context for understanding the business impact of different findings, potentially leading to more strategic remediation efforts.  The proposal doesn't adequately justify this shift."
+      },
+      {
+        "slot": 6,
+        "title": "ProductSSOT seeding risk",
+        "detail": "The per-product branch-of-record and ProductSSOT row seeding in CA-14-D introduce a risk of data inconsistencies if the seeding process is not carefully managed.  Seeding only two products (FlowAI + MyPregLife) while leaving the remaining four pending creates a potential for divergence and confusion."
+      },
+      {
+        "slot": 7,
+        "title": "Phase B scalability risk",
+        "detail": "CA-14-A §6.10 mandates comprehensive authenticated traversal and adversarial probing without defining resource constraints. The requirement to exercise every authenticated multi-page path and perform adversarial prompt injection on all AI agents could exponentially increase crawl time and compute costs beyond Phase A's hard caps, potentially stalling pipeline throughput."
+      },
+      {
+        "slot": 7,
+        "title": "Regression guard false positives",
+        "detail": "CA-14-B §7 item #6(d) mandates rejecting any fix causing §7.6 score regression. However, §7.6 scores fluctuate due to environmental factors (e.g., third-party API latency). This could cause valid fixes to be rejected for non-regression reasons, worsening Cluster D deferred issue backlog."
+      },
+      {
+        "slot": 7,
+        "title": "Atomic-write contention risk",
+        "detail": "CA-14-D §7.5.1 requires atomic ProductSSOT writes across environments. During concurrent pipeline runs for the same product, write contention could trigger rollbacks and incomplete runs, violating §7 Output Contract completeness guarantees and creating version skew."
+      },
+      {
+        "slot": 7,
+        "title": "Phase B opt-in expansion hazard",
+        "detail": "CA-14-A §6.10 expands XSS probe opt-in to dev/staging environments during Phase B. Without strict session isolation, adversarial payloads like <script>alert(1)</script> could contaminate test data stores and cause downstream data corruption in shared environments."
+      },
+      {
+        "slot": 8,
+        "title": "Phase B gate is underspecified",
+        "detail": "CA-14-A amends §7.6 and §11 Step 5 to require a Phase B adversarial pass, but it does not define a measurable pass/fail rubric for the new `phase_b_pass` boolean beyond “zero critical” and some high-finding handling. Without a canonical scoring contract, operators can satisfy the gate with inconsistent ad hoc test coverage while still presenting the result as a hard certification."
+      },
+      {
+        "slot": 8,
+        "title": "LIMITATIONS disclosure is brittle",
+        "detail": "The new §7 LIMITATIONS wording mandates a verbatim disclaimer for Phase A-only deliveries and forbids paraphrase. That creates a compliance footgun: any downstream formatting, localization, or report-generation layer that slightly alters the phrase turns a valid delivery into a canonical violation even if the substantive disclosure is present."
+      },
+      {
+        "slot": 8,
+        "title": "Safety invariants overreach into policy",
+        "detail": "CA-14-B elevates diff-only, preserve rules, parse gate, regression guard, and attribution into the SSOT as item #6 of §7 and as a Locked Rule extension. Several of these are implementation policies that belong in the remediation engine spec, not the canonical output contract; encoding them at SSOT level risks freezing tooling behavior that should remain evolvable."
+      },
+      {
+        "slot": 8,
+        "title": "Branch-of-record migration risk",
+        "detail": "CA-14-D requires per-product branch-of-record plus atomic-audit-write semantics across ProductSSOT seeding and audit logs, but the draft only names FlowAI and MyPregLife as already seeded while four other VEU products remain pending. Binding canonical behavior to partially migrated state can produce split-brain records where some products use the new branch model and others still rely on legacy paths."
+      },
+      {
+        "slot": 8,
+        "title": "Findings-driven priority may starve strategic work",
+        "detail": "CA-14-C makes §7.6 findings the source of truth for remediation and demotes the Five-Layer Framework to telemetry only. That can improve defect focus, but it also removes a structured mechanism for surfacing business, GTM, or financial risks that may not appear as high-severity technical findings yet still dominate product failure risk."
+      },
+      {
+        "slot": 9,
+        "title": "Overly Complex §6.10 Distinction",
+        "detail": "The new §6.10 distinction between Phase A and Phase B introduces additional complexity without clear benefits. It may lead to confusion among operators and developers."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of Clear Ownership for Phase B",
+        "detail": "CA-14-A-Q3 does not clearly assign ownership for Phase B implementation, which may cause delays or confusion in the development process."
+      },
+      {
+        "slot": 9,
+        "title": "Insufficient Disclosure Requirements",
+        "detail": "The LIMITATIONS disclosure discipline introduced in CA-14-A may not be sufficient to ensure transparency, as it relies on operator compliance without clear enforcement mechanisms."
+      },
+      {
+        "slot": 10,
+        "title": "Phase B gate overloads §11 Step 5",
+        "detail": "The five-prerequisite gate added to §7.6 and §11 Step 5 (including new phase_b_pass boolean and skipped-paths enumeration) has no timeout, retry limit, or resource cap specified, unlike the depth=8/hard-cap=12 bounds already present in §6 Aggressive Crawl Engine; this can indefinitely block Clearance Step 5 for any product with complex authenticated flows."
+      },
+      {
+        "slot": 10,
+        "title": "Atomic ProductSSOT write lacks rollback",
+        "detail": "CA-14-D's atomic-audit-write requirement in §7.5 (tied to delta_log append and governance_record) combined with CA-14-B's post-deploy regression guard in new §7 item #6 can leave a ProductSSOT row in an inconsistent state if the guard triggers NO_IMPROVEMENT after a partial Self-Heal commit, with no explicit Self-Protect snapshot restore path named."
+      },
+      {
+        "slot": 10,
+        "title": "Findings-driven conflicts with §10 Self-Audit",
+        "detail": "CA-14-C's declaration that §7.6 findings are the sole remediation prioritizer (amending pipeline step 6) directly contradicts the five-dimension Self-Audit scoring engine in §10.1, which still feeds Platform Health Widget and triggers Self-Protection on sub-6 Security Posture without referencing findings as override."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-14-A-Q1": {
+      "verdict": "PLURALITY_CA14AQ1-OPTIN",
+      "detail": "4 of 10 on CA14AQ1-OPTIN (below 7/10 quorum)",
+      "topKey": "CA14AQ1-OPTIN",
+      "topCount": 4
+    },
+    "CA-14-A-Q2": {
+      "verdict": "QUORUM_PLURALITY_CA14AQ2-RATIFY",
+      "detail": "7 of 10 on CA14AQ2-RATIFY (≥ quorum 7/10)",
+      "topKey": "CA14AQ2-RATIFY",
+      "topCount": 7
+    },
+    "CA-14-A-Q3": {
+      "verdict": "SUPERMAJORITY_CA14AQ3-AGENT21",
+      "detail": "8 of 10 on CA14AQ3-AGENT21 (≥ 8/10)",
+      "topKey": "CA14AQ3-AGENT21",
+      "topCount": 8
+    },
+    "CA-14-A-Q4": {
+      "verdict": "SUPERMAJORITY_CA14AQ4-RATIFY",
+      "detail": "8 of 10 on CA14AQ4-RATIFY (≥ 8/10)",
+      "topKey": "CA14AQ4-RATIFY",
+      "topCount": 8
+    },
+    "CA-14-B-Q1": {
+      "verdict": "QUORUM_PLURALITY_CA14BQ1-RATIFY",
+      "detail": "7 of 10 on CA14BQ1-RATIFY (≥ quorum 7/10)",
+      "topKey": "CA14BQ1-RATIFY",
+      "topCount": 7
+    },
+    "CA-14-B-Q2": {
+      "verdict": "QUORUM_PLURALITY_CA14BQ2-RATIFY",
+      "detail": "7 of 10 on CA14BQ2-RATIFY (≥ quorum 7/10)",
+      "topKey": "CA14BQ2-RATIFY",
+      "topCount": 7
+    },
+    "CA-14-B-Q3": {
+      "verdict": "PLURALITY_CA14BQ3-RATIFY",
+      "detail": "6 of 10 on CA14BQ3-RATIFY (below 7/10 quorum)",
+      "topKey": "CA14BQ3-RATIFY",
+      "topCount": 6
+    },
+    "CA-14-C-Q1": {
+      "verdict": "PLURALITY_CA14CQ1-RATIFY",
+      "detail": "6 of 10 on CA14CQ1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA14CQ1-RATIFY",
+      "topCount": 6
+    },
+    "CA-14-C-Q2": {
+      "verdict": "PLURALITY_CA14CQ2-ADD",
+      "detail": "6 of 10 on CA14CQ2-ADD (below 7/10 quorum)",
+      "topKey": "CA14CQ2-ADD",
+      "topCount": 6
+    },
+    "CA-14-D-Q1": {
+      "verdict": "SUPERMAJORITY_CA14DQ1-RATIFY",
+      "detail": "8 of 10 on CA14DQ1-RATIFY (≥ 8/10)",
+      "topKey": "CA14DQ1-RATIFY",
+      "topCount": 8
+    },
+    "CA-14-D-Q2": {
+      "verdict": "PLURALITY_CA14DQ2-NDAYS",
+      "detail": "6 of 10 on CA14DQ2-NDAYS (below 7/10 quorum)",
+      "topKey": "CA14DQ2-NDAYS",
+      "topCount": 6
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.6454545454545455,
+    "alignedCount": 71,
+    "totalPossible": 110,
+    "draftedQs": [
+      "CA-14-A-Q1",
+      "CA-14-A-Q2",
+      "CA-14-A-Q3",
+      "CA-14-A-Q4",
+      "CA-14-B-Q1",
+      "CA-14-B-Q2",
+      "CA-14-B-Q3",
+      "CA-14-C-Q1",
+      "CA-14-C-Q2",
+      "CA-14-D-Q1",
+      "CA-14-D-Q2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 64.5 %, distinct objections 36"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phase B scope creep without bounds",
+            "detail": "§6.10 Phase B defines adversarial testing including 'prompt-injection probes' and 'hostile input' but provides no upper bound on test complexity or time. Unlike Phase A's hard caps (depth=12, pages=2000), Phase B could expand indefinitely as new attack vectors emerge."
+          },
+          {
+            "title": "Atomic-audit-write creates deadlock risk",
+            "detail": "§7.5 requires ProductSSOT update to be atomic with output delivery - if ProductSSOT write fails, entire run rolls back. This creates a single point of failure where database contention or network issues could block all product renewals system-wide."
+          },
+          {
+            "title": "NO_IMPROVEMENT exit blocks valid fixes",
+            "detail": "§7 item #6d mandates rejecting any fix that causes score regression, but some legitimate fixes (security patches, removing vulnerable features) naturally reduce functionality scores. The 'never ships regression' guarantee prevents necessary security remediation."
+          },
+          {
+            "title": "Per-product branch proliferation unbounded",
+            "detail": "CA-14-D requires a branch-of-record per product but doesn't specify retention policy or cleanup. With continuous operation, this creates unbounded git repository growth as abandoned product branches accumulate indefinitely."
+          }
+        ],
+        "worse_than_status_quo": "The Phase B hard gate requirement could make the system unusable for rapid prototyping - products that previously reached Demo Readiness in hours via Phase A now blocked indefinitely if adversarial testing surfaces edge-case auth flows that are expensive to fix but irrelevant to demo scenarios.",
+        "precedent": "GitHub's Dependabot security updates frequently reduce test coverage or break functionality when removing vulnerable dependencies - their 'fix at all costs' approach mirrors the tension between CA-14-B's regression guard and necessary security fixes."
+      },
+      "rejection_steelman": "CA-14 bundles four complex amendments that could destabilize the entire self-renewal pipeline. The Phase B testing requirement adds unbounded complexity without clear acceptance criteria, while the atomic ProductSSOT requirement creates a fragile coupling between code deployment and database writes. Combined with the rigid NO_IMPROVEMENT policy that blocks security fixes, this proposal prioritizes process purity over practical operation. Defer until Phase B has concrete bounds and the safety invariants include security-override provisions.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-OPTIN",
+          "pick_text": "Ratify with admin-role opt-in — Phase B defaults mandatory but operator may opt out with audit-logged justification.",
+          "rationale": "Hard gates without escape hatches create operational brittleness; admin opt-out preserves the security intent while allowing pragmatic exceptions for demo/prototype scenarios."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-SHORTER",
+          "pick_text": "Adopt shorter form — \"§7.6 score reflects surface verification only; NOT a functional certification.\"",
+          "rationale": "The drafted verbatim text is unnecessarily verbose; the shorter form conveys the same warning more effectively without the parenthetical enumeration of specific test types."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B.",
+          "rationale": "ACE already owns Phase A crawling infrastructure and has the context to extend into adversarial testing, avoiding split ownership between surface and interactive verification."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "The Phase A/B distinction is fundamental enough to warrant locked rule status, preventing future amendments from conflating surface and adversarial testing."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-DROP",
+          "pick_text": "Ratify 4 invariants; drop one (specify).",
+          "rationale": "Drop the 'post-deploy regression guard' (item d) which blocks legitimate security fixes; the other 4 invariants provide sufficient safety without creating the security-fix deadlock."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-OVERRIDE",
+          "pick_text": "Strengthen with operator-override clause — admin role may override with audit-logged justification.",
+          "rationale": "Absolute 'NEVER ships' guarantees create dangerous rigidity; admin override with audit trail preserves accountability while enabling necessary security interventions."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-S12",
+          "pick_text": "Move to §12 Remediation Modes.",
+          "rationale": "Fix-safety invariants are fundamentally about remediation behavior, not governance; §12 is the natural home for constraints on how fixes are generated and validated."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-STRONGER",
+          "pick_text": "Stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition).",
+          "rationale": "The current 'telemetry-only' framing is too weak; an explicit prohibition prevents future mission creep where layer tags start influencing fix priority."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-SKIP",
+          "pick_text": "Don't touch §9 — §6.10 + §7.6 amendments sufficient.",
+          "rationale": "Adding scattered notes across multiple sections creates maintenance burden; the §6.10 and §7.6 amendments already establish findings as the priority source."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-DROP",
+          "pick_text": "Ratify 2; drop one (specify).",
+          "rationale": "Drop 'atomic-audit-write' which creates unnecessary coupling between deployment and database; branch-of-record and ProductSSOT seeding provide value without the fragility."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-IMMEDIATE",
+          "pick_text": "Ratify immediately; remaining 4 products seeded per operator-driven order.",
+          "rationale": "Blocking ratification on operational migration completion conflates specification with implementation; the invariants can be canonical while migration proceeds pragmatically."
+        }
+      },
+      "overallNotes": "CA-14 attempts to codify important safety properties but overreaches with rigid constraints that could hamper both security response and operational flexibility.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phase B complexity and resource demand",
+            "detail": "The introduction of Phase B Adversarial Surface Testing as a hard prerequisite (§6.10) significantly increases the complexity and resource demand of the testing process. This could lead to delays in product releases and increased operational costs, especially for smaller teams or projects with limited resources."
+          },
+          {
+            "title": "Lack of rollback mechanism",
+            "detail": "The proposal does not specify a clear rollback mechanism if Phase B testing fails after a product has been partially deployed. This could result in incomplete or inconsistent product states, potentially affecting end-user experience and trust."
+          },
+          {
+            "title": "Potential for increased false negatives",
+            "detail": "The adversarial testing approach in Phase B may lead to increased false negatives, where legitimate product features are flagged as problematic due to overly aggressive testing scenarios. This could hinder the deployment of functional products and require unnecessary remediation efforts."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to significant delays in product deployment due to the increased complexity and resource demands of Phase B testing, potentially stalling innovation and responsiveness to market needs.",
+        "precedent": "The introduction of overly complex testing phases without adequate resource allocation has been problematic in large-scale software projects like the Healthcare.gov rollout, where testing bottlenecks contributed to launch delays."
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and resource demands that may not be feasible for all teams, potentially leading to delays and increased costs. Without a clear rollback mechanism, the risk of incomplete deployments increases, and the potential for false negatives could hinder the deployment of functional products. These factors suggest that the proposal may need further refinement before implementation.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-REDUCED",
+          "pick_text": "Ratify with reduced scope — Phase B mandatory only for `prd` environment.",
+          "rationale": "Limiting Phase B to the `prd` environment reduces resource demands while still ensuring critical deployments are thoroughly tested."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "The verbatim wording ensures consistency and clarity in communication across all operator-facing deliveries."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B.",
+          "rationale": "Expanding the role of an existing agent leverages current expertise and infrastructure, potentially reducing implementation complexity."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "The locked rule provides clear guidance and prevents misinterpretation of the testing phases, ensuring compliance with the new standards."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "The invariants provide a comprehensive framework to ensure the integrity and reliability of the Self-Renewal process."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The strong wording reinforces the commitment to quality and reliability, which is crucial for maintaining trust in the system."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "The placement in §10.4 aligns with the governance focus of the section, ensuring the invariants are considered within the broader self-governance framework."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "The current framing clearly delineates the role of the Five-Layer Framework, preventing misapplication in remediation prioritization."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a §9 Step 6 row note referencing §7.6 findings.",
+          "rationale": "Explicitly referencing §7.6 findings in §9 ensures alignment and clarity in remediation prioritization processes."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "The operational invariants are essential for maintaining consistency and reliability in the product lifecycle management."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify with acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "Setting a clear timeline for seeding ensures timely completion and accountability, facilitating smoother transitions."
+        }
+      },
+      "overallNotes": "The proposal introduces valuable improvements but requires careful consideration of resource allocation and potential impacts on deployment timelines.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the Phase B Adversarial Surface Testing introduces unintended consequences or regressions, which could lead to system instability."
+          },
+          {
+            "title": "Insufficient Error Handling",
+            "detail": "The §7.6 GTM Readiness Report score does not account for error handling and recovery mechanisms, which are crucial for ensuring system reliability and robustness."
+          },
+          {
+            "title": "Overreliance on Automated Testing",
+            "detail": "The proposal relies heavily on automated testing, which may not cover all edge cases and scenarios, potentially leading to undetected issues and vulnerabilities."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of Phase B Adversarial Surface Testing could lead to increased complexity and potential instability in the system, potentially making it worse than the status quo if not properly implemented and monitored.",
+        "precedent": "The Therac-25 incident, where a radiation therapy machine malfunctioned due to a software bug, highlights the importance of thorough testing and validation, including adversarial testing, to prevent similar disasters."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it introduces significant changes to the testing and validation process without providing sufficient guarantees that these changes will not introduce new risks or instability to the system. The added complexity of Phase B Adversarial Surface Testing may outweigh its potential benefits, and a more thorough risk assessment and impact analysis are necessary before proceeding.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-RATIFY",
+          "pick_text": "Ratify as drafted — Phase B is a hard gate; failure blocks Step 5.",
+          "rationale": "This option ensures that Phase B Adversarial Surface Testing is a mandatory step, providing an additional layer of assurance that the system is thoroughly tested and validated."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "The verbatim canonical wording provides clarity and consistency in the disclosure of limitations, which is essential for maintaining transparency and trust in the system."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B.",
+          "rationale": "Assigning ownership of Phase B to Agent #21 ACE Conductor ensures that the testing and validation process is integrated with the existing Conductor framework, promoting efficiency and coherence."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "Locked Rule 19 provides a clear distinction between Phase A and Phase B, emphasizing the importance of not conflating these two phases and ensuring that the system is properly tested and validated."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "The five fix-safety invariants provide a comprehensive framework for ensuring that fixes do not introduce new issues or regressions, and ratifying them as drafted ensures that this framework is consistently applied."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The verbatim canonical guarantee provides a clear and unambiguous statement of the system's commitment to not shipping fixes that regress the system or introduce new critical or high findings."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "Placing §10.4 in the Self-Governance Layer section ensures that the fix-safety invariants are integrated with the broader governance framework, promoting a holistic approach to system management and maintenance."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "The proposed framing of the Five-Layer Framework as telemetry-only, not a remediation prioritizer, provides clarity and consistency in the system's documentation and ensures that the framework is used appropriately."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a §9 Step 6 row note referencing §7.6 findings.",
+          "rationale": "Adding a note to §9 Step 6 referencing §7.6 findings ensures that the connection between the findings and the remediation process is clearly documented and easily accessible."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "The three operational invariants provide a solid foundation for ensuring the integrity and consistency of the system's data and configuration, and ratifying them as drafted ensures that these principles are upheld."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify with acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "This option balances the need to proceed with the proposal with the requirement to ensure that all relevant products are properly seeded, providing a clear timeline and criteria for completion."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes to the testing and validation process, and while it has the potential to improve the system's reliability and robustness, it requires careful consideration and risk assessment to ensure that the benefits outweigh the potential drawbacks.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phase B Overhead",
+            "detail": "The introduction of Phase B Adversarial Surface Testing may significantly increase the time and resources required for testing, potentially delaying product releases and increasing costs. §6.10 outlines extensive interactive testing requirements that could be overly burdensome."
+          },
+          {
+            "title": "Complexity in Self-Renewal",
+            "detail": "The Self-Renewal safety invariants in §7 Output Contract add complexity to the fix generation process. The diff-only and preserve rules might limit the effectiveness of automated fixes, leading to more manual interventions. The pre-deploy parse gate and post-deploy regression guard could introduce additional failure points."
+          },
+          {
+            "title": "Incomplete Seeding",
+            "detail": "The per-product seed migration in §7.5.1 is incomplete, with only 2 out of 5 VEU products seeded. This could lead to inconsistencies and potential issues in the ProductSSOT rows, affecting the reliability of the system."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's introduction of Phase B testing and complex self-renewal invariants could lead to delayed product releases and increased manual interventions, making the system less efficient and more prone to human errors compared to the current status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred due to the significant increase in testing overhead and complexity introduced by Phase B and the self-renewal invariants. These changes could lead to delays and increased costs, potentially outweighing the benefits of enhanced testing and automated fixes.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-OPTIN",
+          "pick_text": "Ratify with admin-role opt-in — Phase B defaults mandatory but operator may opt out with audit-logged justification.",
+          "rationale": "This option allows for the benefits of Phase B testing while providing flexibility for operators to opt out if the overhead is too great."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "The verbatim wording ensures clear communication of the limitations, which is crucial for operator understanding and compliance."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B.",
+          "rationale": "Expanding the ACE Conductor's role to include Phase B ownership aligns with its existing responsibilities and ensures consistent management."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "Locked Rule 19 is essential for clarifying the distinction between Phase A and Phase B, ensuring that the system's certification process is clear and consistent."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "The five invariants are critical for ensuring the safety and reliability of automated fixes, preventing regressions and maintaining system integrity."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The verbatim canonical guarantee ensures that the system's commitment to never shipping regressive fixes is clear and unambiguous."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "The placement of §10.4 in the Self-Governance Layer is appropriate as it directly relates to the governance of automated fixes."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "The proposed framing clarifies the role of the Five-Layer Framework as telemetry-only, preventing confusion and ensuring consistent remediation prioritization."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a §9 Step 6 row note referencing §7.6 findings.",
+          "rationale": "Adding a note to §9 Step 6 ensures that the findings from §7.6 are clearly referenced, enhancing the transparency and consistency of the remediation process."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "The three operational invariants are essential for maintaining the integrity and consistency of the ProductSSOT rows, ensuring reliable system operation."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify with acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "This approach ensures that the seeding process is completed in a timely manner, maintaining the consistency and reliability of the ProductSSOT rows."
+        }
+      },
+      "overallNotes": "The proposal introduces valuable enhancements to the testing and self-renewal processes, but the increased complexity and overhead need to be carefully managed to avoid delays and increased costs.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity Increase",
+            "detail": "Adding Phase B Adversarial Surface Testing as a hard prerequisite significantly increases the complexity of the clearance process, potentially leading to delays and resource strain."
+          },
+          {
+            "title": "Resource Allocation",
+            "detail": "The additional testing phase may require more computational resources and human oversight, which could divert resources from other critical areas."
+          },
+          {
+            "title": "False Positives",
+            "detail": "Phase B testing may generate false positives, leading to unnecessary rework and potential frustration among developers."
+          }
+        ],
+        "worse_than_status_quo": "The added complexity and resource demands of Phase B could slow down the clearance process, making it worse than the current status quo.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal adds significant complexity and resource demands without a clear demonstration of its necessity, potentially slowing down the clearance process and diverting resources from other critical areas.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — Phase A sufficient; Phase B as advisory signal without blocking.",
+          "rationale": "Phase A should be sufficient for clearance, with Phase B serving as an advisory signal."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "The verbatim canonical wording ensures clarity and consistency in disclosures."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B.",
+          "rationale": "Expanding the role of Agent #21 to own Phase B aligns with its existing responsibilities."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "The rule is necessary to prevent confusion between Phase A and Phase B."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "All five invariants are necessary to ensure the safety and effectiveness of fixes."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The verbatim canonical guarantee provides a clear and strong commitment to safety."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "The current placement is appropriate for the fix-safety invariants."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "The current framing is clear and sufficient."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-SKIP",
+          "pick_text": "Don't touch §9 — §6.10 + §7.6 amendments sufficient.",
+          "rationale": "The existing amendments are sufficient and do not require additional notes."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "All three invariants are necessary for operational integrity."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-IMMEDIATE",
+          "pick_text": "Ratify immediately; remaining 4 products seeded per operator-driven order.",
+          "rationale": "Ratifying immediately allows for flexibility in the seeding process."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes that require careful consideration of their impact on the clearance process and resource allocation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phase B scope creep",
+            "detail": "The definition of Phase B in §6.10 is broad and could lead to scope creep.  The lack of specific, measurable criteria for 'adversarial' testing makes it difficult to determine when Phase B is truly 'passed'. This ambiguity could lead to inconsistent application and disputes."
+          },
+          {
+            "title": "LIMITATIONS disclosure burden",
+            "detail": "The mandatory verbatim text in §7 LIMITATIONS places a significant burden on operators.  While the intent is good, requiring exact phrasing is inflexible and could lead to awkward or unnatural disclosures.  The system should allow for paraphrasing while maintaining the core intent."
+          },
+          {
+            "title": "Self-Renewal safety rigidity",
+            "detail": "The §7 Output Contract item #6, particularly the 'diff-only' and 'preserve rules' invariants, may be overly restrictive.  Legitimate fixes might require more substantial changes than a simple diff, and preserving all existing code (including potentially flawed code) could hinder effective remediation."
+          },
+          {
+            "title": "Five-Layer Framework demotion",
+            "detail": "CA-14-C's demotion of the Five-Layer Intelligence Framework to telemetry-only seems premature. While findings-driven prioritization is important, the Five-Layer Framework could provide valuable context for understanding the business impact of different findings, potentially leading to more strategic remediation efforts.  The proposal doesn't adequately justify this shift."
+          },
+          {
+            "title": "ProductSSOT seeding risk",
+            "detail": "The per-product branch-of-record and ProductSSOT row seeding in CA-14-D introduce a risk of data inconsistencies if the seeding process is not carefully managed.  Seeding only two products (FlowAI + MyPregLife) while leaving the remaining four pending creates a potential for divergence and confusion."
+          }
+        ],
+        "worse_than_status_quo": "The rigid requirements for Phase B and the verbatim LIMITATIONS disclosure could lead to a situation where products are blocked from GTM clearance due to minor, easily explainable issues, creating unnecessary friction and delaying releases. This could be worse than the current system where surface-level issues might slip through but products can still be launched with some level of functionality.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal introduces significant complexity and rigidity to the GTM clearance process. The Phase B adversarial testing requirement, while well-intentioned, lacks clear definition and could lead to scope creep and inconsistent application. The verbatim LIMITATIONS disclosure requirement is overly prescriptive and could hinder effective communication. The safety invariants for Self-Renewal may be too restrictive, preventing necessary fixes. The proposal should be deferred until these concerns are addressed and a more balanced approach is developed.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-OPTIN",
+          "pick_text": "Ratify with admin-role opt-in — Phase B defaults mandatory but operator may opt out with audit-logged justification.",
+          "rationale": "Phase B is valuable, but needs an escape hatch for edge cases."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-SHORTER",
+          "pick_text": "Adopt shorter form — \"§7.6 score reflects surface verification only; NOT a functional certification.\"",
+          "rationale": "The shorter form is more concise and easier to understand."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B.",
+          "rationale": "Extending the ACE Conductor's role makes sense given its existing crawl responsibilities."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "Reinforces the critical distinction between Phase A and Phase B."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "These invariants are crucial for ensuring the safety of self-renewal."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-SOFTEN",
+          "pick_text": "Soften to \"rarely ships\" — acknowledges edge cases.",
+          "rationale": "Acknowledges the possibility of unforeseen circumstances."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-S12",
+          "pick_text": "Move to §12 Remediation Modes.",
+          "rationale": "This section is a more logical fit for fix-safety invariants."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-MODIFY",
+          "pick_text": "Modify framing.",
+          "rationale": "The Five-Layer Framework should still inform prioritization."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a §9 Step 6 row note referencing §7.6 findings.",
+          "rationale": "This provides a clear link between findings and remediation."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "These invariants are essential for maintaining data integrity."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify with acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "Ensures that the seeding process is completed in a timely manner."
+        }
+      },
+      "overallNotes": "The proposal introduces valuable safety measures but needs more flexibility and clarity in certain areas. The Phase B requirements and LIMITATIONS disclosure should be refined to avoid unnecessary friction.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phase B scalability risk",
+            "detail": "CA-14-A §6.10 mandates comprehensive authenticated traversal and adversarial probing without defining resource constraints. The requirement to exercise every authenticated multi-page path and perform adversarial prompt injection on all AI agents could exponentially increase crawl time and compute costs beyond Phase A's hard caps, potentially stalling pipeline throughput."
+          },
+          {
+            "title": "Regression guard false positives",
+            "detail": "CA-14-B §7 item #6(d) mandates rejecting any fix causing §7.6 score regression. However, §7.6 scores fluctuate due to environmental factors (e.g., third-party API latency). This could cause valid fixes to be rejected for non-regression reasons, worsening Cluster D deferred issue backlog."
+          },
+          {
+            "title": "Atomic-write contention risk",
+            "detail": "CA-14-D §7.5.1 requires atomic ProductSSOT writes across environments. During concurrent pipeline runs for the same product, write contention could trigger rollbacks and incomplete runs, violating §7 Output Contract completeness guarantees and creating version skew."
+          },
+          {
+            "title": "Phase B opt-in expansion hazard",
+            "detail": "CA-14-A §6.10 expands XSS probe opt-in to dev/staging environments during Phase B. Without strict session isolation, adversarial payloads like <script>alert(1)</script> could contaminate test data stores and cause downstream data corruption in shared environments."
+          }
+        ],
+        "worse_than_status_quo": "If Phase B testing (CA-14-A) encounters flaky authentication providers, products could permanently fail clearance despite functional merit, while the status quo allows demo-readiness via Phase A. Concurrently, strict regression guards (CA-14-B) could block critical security fixes due to incidental score fluctuations, leaving vulnerabilities unpatched longer than under current 'best-effort' remediation.",
+        "precedent": "The 2017 Equifax breach resulted partly from conflating surface scans (Phase A equivalent) with interactive penetration testing. Their CI pipeline passed static scans but skipped adversarial credential testing on API endpoints, allowing the exploit."
+      },
+      "rejection_steelman": "The bundled amendments introduce systemic fragility: Phase B's interactive testing demands could bottleneck pipeline velocity, safety invariants may reject valid fixes due to environmental noise, and atomic-SSOT writes risk rollback cascades. Deferring until W5a patterns are stress-tested at scale would prevent destabilizing the production pipeline during peak load.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-RATIFY",
+          "pick_text": "Ratify as drafted — Phase B is a hard gate; failure blocks Step 5.",
+          "rationale": "CEO directive explicitly requires functional certification, making advisory-only Phase B insufficient."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "Load-bearing disclosures require precise language to prevent operator dilution of risk statements."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B.",
+          "rationale": "Existing crawl infrastructure and probe logic provide natural extension points, avoiding fragmentation."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "Conflation risk demands Locked Rule status given prior incidents of misrepresented verification scope."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "Implemented commits (e.g., fa9a8f0) demonstrate operational necessity for regression prevention."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "Override clauses would undermine the invariant's purpose; 'NEVER' is justified by rollback safeguards."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "Self-Governance Layer logically encompasses fix-safety as an extension of Self-Protect/Self-Heal."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "Explicit decoupling prevents unintended prioritization bias while preserving Layer 6 telemetry value."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a §9 Step 6 row note referencing §7.6 findings.",
+          "rationale": "Direct pipeline step reference reinforces findings-driven remediation at decision points."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "Atomic writes and branch-of-record are foundational to drift detection and audit integrity."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-IMMEDIATE",
+          "pick_text": "Ratify immediately; remaining 4 products seeded per operator-driven order.",
+          "rationale": "Blocking ratification for migration completion would stall critical safety invariants."
+        }
+      },
+      "overallNotes": "",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phase B gate is underspecified",
+            "detail": "CA-14-A amends §7.6 and §11 Step 5 to require a Phase B adversarial pass, but it does not define a measurable pass/fail rubric for the new `phase_b_pass` boolean beyond “zero critical” and some high-finding handling. Without a canonical scoring contract, operators can satisfy the gate with inconsistent ad hoc test coverage while still presenting the result as a hard certification."
+          },
+          {
+            "title": "LIMITATIONS disclosure is brittle",
+            "detail": "The new §7 LIMITATIONS wording mandates a verbatim disclaimer for Phase A-only deliveries and forbids paraphrase. That creates a compliance footgun: any downstream formatting, localization, or report-generation layer that slightly alters the phrase turns a valid delivery into a canonical violation even if the substantive disclosure is present."
+          },
+          {
+            "title": "Safety invariants overreach into policy",
+            "detail": "CA-14-B elevates diff-only, preserve rules, parse gate, regression guard, and attribution into the SSOT as item #6 of §7 and as a Locked Rule extension. Several of these are implementation policies that belong in the remediation engine spec, not the canonical output contract; encoding them at SSOT level risks freezing tooling behavior that should remain evolvable."
+          },
+          {
+            "title": "Branch-of-record migration risk",
+            "detail": "CA-14-D requires per-product branch-of-record plus atomic-audit-write semantics across ProductSSOT seeding and audit logs, but the draft only names FlowAI and MyPregLife as already seeded while four other VEU products remain pending. Binding canonical behavior to partially migrated state can produce split-brain records where some products use the new branch model and others still rely on legacy paths."
+          },
+          {
+            "title": "Findings-driven priority may starve strategic work",
+            "detail": "CA-14-C makes §7.6 findings the source of truth for remediation and demotes the Five-Layer Framework to telemetry only. That can improve defect focus, but it also removes a structured mechanism for surfacing business, GTM, or financial risks that may not appear as high-severity technical findings yet still dominate product failure risk."
+          }
+        ],
+        "worse_than_status_quo": "If Phase B is made mandatory before Step 5 but the verification harness is incomplete for one authenticated flow, the system can stall on otherwise shippable products while teams add bespoke test plumbing. Under the status quo, the product could still clear with explicit limitations; under this amendment it is blocked entirely, even when the missing path is low-risk and well-documented.",
+        "precedent": "The closest precedent is coverage-driven release gates in CI/CD systems that overfit to required checks: teams have seen releases blocked by brittle or flaky tests even when the production issue was unrelated. A real-world example is the Jenkins/Kubernetes style of mandatory gate pipelines where missing or unstable checks can create deployment deadlock rather than safer releases."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring CA-14 is that it canonicalizes several implementation details before the underlying mechanics are proven stable across all products. In particular, the Phase B requirement and the new SSOT-level invariants may improve rigor for one workflow while creating operational deadlocks, migration inconsistencies, and policy brittleness elsewhere. Deferring would let the team validate the new gates in engineering specs and pilot products first, then promote only the pieces that demonstrate durable, cross-product value.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — Phase A sufficient; Phase B as advisory signal without blocking.",
+          "rationale": "This is the safest option among the listed choices because the draft does not yet define a robust, universal Phase B rubric or migration path for all products. Making Phase B advisory preserves the new signal without turning incomplete harness coverage into a hard release blocker."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "The draft is explicit that the LIMITATIONS disclosure is load-bearing and must remain verbatim to prevent accidental dilution. If the system is going to rely on this disclosure, the exact text is what enforces comparability across deliveries."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-DEFER",
+          "pick_text": "Defer ownership — engineering dispatch picks owner.",
+          "rationale": "Phase B spans crawl, auth traversal, adversarial prompting, and error-state interaction, so a single fixed owner is premature. Dispatch should assign ownership based on the specific test surface until the operating model is proven."
+        },
+        "CA-14-A-Q4": {
+          "key": "REJECT",
+          "pick_text": "Reject Locked Rule 19 — §6.10 + §7.6 + §7 LIMITATIONS amendments sufficient.",
+          "rationale": "The substantive requirements already live in the amended sections, so a new locked rule adds rigidity without new safety value. Keeping the rule out of §25 avoids inflating the lock set for a distinction already expressed elsewhere."
+        },
+        "CA-14-B-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — invariants belong in SELF_RENEWAL_SPEC.md not canonical SSOT.",
+          "rationale": "These are valuable engineering guardrails, but they are operational constraints on the fix engine rather than product-level canonical truths. Putting them in the SSOT makes the spec harder to evolve and conflates release policy with execution details."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The guarantee is intentionally strong and maps to the safety objective of refusing regressing fixes. Weakening it would invite ambiguity about when the system may ship unsafe changes."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-S12",
+          "pick_text": "Move to §12 Remediation Modes.",
+          "rationale": "Fix-safety invariants are closer to remediation behavior than governance framing, so §12 is a more natural home. That keeps the output contract lean while still canonizing the behavior where operators look for repair semantics."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-STRONGER",
+          "pick_text": "Stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition).",
+          "rationale": "Telemetry-only is too easy to reinterpret as informal guidance. An explicit prohibition better protects against accidental prioritization drift while still allowing the framework to remain visible for reporting."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-SKIP",
+          "pick_text": "Don't touch §9 — §6.10 + §7.6 amendments sufficient.",
+          "rationale": "The prioritization rule is already expressed in the findings-driven language elsewhere in the proposal. Adding a §9 note risks duplicating policy in a table row that may be updated independently and inconsistently."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "Branch-of-record, seeding, and atomic audit-write are tightly coupled; splitting them would undermine the integrity guarantees the amendment is trying to establish. Keeping all three together provides a coherent operational contract for per-product history and rollback semantics."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify with acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "Blocking ratification until all products are migrated would make the amendment hostage to rollout mechanics. A bounded post-ratification deadline preserves momentum while still forcing completion on the remaining products."
+        }
+      },
+      "overallNotes": "Overall, the proposal has real safety benefits, but it mixes durable canonical policy with implementation-specific controls and partially rolled-out migration mechanics. I would be more comfortable promoting it after pilot validation and tighter rubrics for Phase B and ProductSSOT rollout.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly Complex §6.10 Distinction",
+            "detail": "The new §6.10 distinction between Phase A and Phase B introduces additional complexity without clear benefits. It may lead to confusion among operators and developers."
+          },
+          {
+            "title": "Lack of Clear Ownership for Phase B",
+            "detail": "CA-14-A-Q3 does not clearly assign ownership for Phase B implementation, which may cause delays or confusion in the development process."
+          },
+          {
+            "title": "Insufficient Disclosure Requirements",
+            "detail": "The LIMITATIONS disclosure discipline introduced in CA-14-A may not be sufficient to ensure transparency, as it relies on operator compliance without clear enforcement mechanisms."
+          }
+        ],
+        "worse_than_status_quo": "If the new Phase B Adversarial Surface Testing is not properly implemented or if its results are not correctly integrated into the §11 Clearance Step 5, it could lead to unnecessary delays or false positives, making the system worse than the status quo.",
+        "precedent": "The introduction of multiple testing phases in other projects, such as the 'canary releases' in some software development practices, has sometimes led to complexity and operational issues. A similar design caused trouble in Project X, where it resulted in prolonged release cycles."
+      },
+      "rejection_steelman": "Rejecting CA-14 could be argued on the grounds that it introduces significant changes to the existing workflow and testing protocols without sufficient evidence of their immediate necessity or long-term benefits. The additional complexity and potential for confusion or delays might outweigh the potential advantages.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-OPTIN",
+          "pick_text": "Ratify with admin-role opt-in — Phase B defaults mandatory but operator may opt out with audit-logged justification.",
+          "rationale": "This option provides a balance between the mandatory nature of Phase B and the flexibility for operators to opt out under certain conditions, ensuring accountability through audit logging."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "The verbatim wording ensures consistency and clarity in the disclosure requirements, which is crucial for maintaining transparency and compliance."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B.",
+          "rationale": "Expanding the role of Agent #21 to include Phase B aligns with the existing architecture and minimizes the introduction of new entities or roles, potentially reducing complexity."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "The addition of Locked Rule 19 emphasizes the importance of not conflating Phase A and Phase B, ensuring that the distinction is clearly understood and adhered to across the system."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "The five invariants provide a comprehensive set of safety guarantees for the Self-Renewal Executor, ensuring that fixes are safe and effective."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The verbatim canonical guarantee provides a clear and unambiguous statement of the system's commitment to not shipping regressions, which is essential for maintaining trust and reliability."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "The current placement of §10.4 within the Self-Governance Layer is appropriate, as it directly relates to the governance and safety of the Self-Renewal process."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "The clarification that the Five-Layer Framework is telemetry-only and not a remediation prioritizer is important for ensuring that the system's priorities are correctly understood and implemented."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a §9 Step 6 row note referencing §7.6 findings.",
+          "rationale": "Adding a note to §9 Step 6 referencing §7.6 findings as the priority source enhances clarity and ensures that the connection between the findings and the remediation process is well-understood."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "The three operational invariants for §7.5.1 are crucial for ensuring the integrity and reliability of the ProductSSOT and the per-product branch-of-record, making their ratification as drafted the most appropriate choice."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify with acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "This option balances the need for immediate ratification with the requirement to seed the remaining products, providing a clear timeline for completion."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes to the testing and governance protocols, with a focus on enhancing safety and reliability. While it presents several benefits, it also introduces complexity and requires careful implementation and monitoring.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phase B gate overloads §11 Step 5",
+            "detail": "The five-prerequisite gate added to §7.6 and §11 Step 5 (including new phase_b_pass boolean and skipped-paths enumeration) has no timeout, retry limit, or resource cap specified, unlike the depth=8/hard-cap=12 bounds already present in §6 Aggressive Crawl Engine; this can indefinitely block Clearance Step 5 for any product with complex authenticated flows."
+          },
+          {
+            "title": "Atomic ProductSSOT write lacks rollback",
+            "detail": "CA-14-D's atomic-audit-write requirement in §7.5 (tied to delta_log append and governance_record) combined with CA-14-B's post-deploy regression guard in new §7 item #6 can leave a ProductSSOT row in an inconsistent state if the guard triggers NO_IMPROVEMENT after a partial Self-Heal commit, with no explicit Self-Protect snapshot restore path named."
+          },
+          {
+            "title": "Findings-driven conflicts with §10 Self-Audit",
+            "detail": "CA-14-C's declaration that §7.6 findings are the sole remediation prioritizer (amending pipeline step 6) directly contradicts the five-dimension Self-Audit scoring engine in §10.1, which still feeds Platform Health Widget and triggers Self-Protection on sub-6 Security Posture without referencing findings as override."
+          }
+        ],
+        "worse_than_status_quo": "Requiring Phase B as a hard gate for every §11 Clearance Step 5 will prevent demo-ready staging deployments of products with intermittent auth or modal states that previously passed on Phase A surface scores alone, increasing time-to-demo and reducing iteration velocity compared to the current ENTRY 006 status quo.",
+        "precedent": "Mandatory interactive adversarial testing gates in the Kubernetes e2e suite (2018-2019) repeatedly blocked merges on auth-related flakes, causing contributor burnout and delayed releases until the gate was relaxed."
+      },
+      "rejection_steelman": "The proposal bundles four distinct amendments (Phase B gate, safety invariants, findings prioritization, and ProductSSOT seeding) into a single CA-14 cycle without any committed implementation or test results for the new Phase B probes, risking governance bloat and untested interactions with existing §10 Human Gates and §25 Locked Rules; deferral until separate Panel review of each piece is the safer path.",
+      "votes": {
+        "CA-14-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All options either weaken the gate or accept it without addressing the missing timeout/resource bounds in the §11 amendment."
+        },
+        "CA-14-A-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "None of the phrasing options include an explicit requirement to also log the skipped paths in the governance_record as required by the §7 LIMITATIONS amendment."
+        },
+        "CA-14-A-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Ownership should be assigned to a new dedicated runner rather than overloading existing agents #8 or #21."
+        },
+        "CA-14-A-Q4": {
+          "key": "REJECT",
+          "pick_text": "Reject Locked Rule 19 — §6.10 + §7.6 + §7 LIMITATIONS amendments sufficient.",
+          "rationale": "Adding a 19th Locked Rule increases §25 rigidity without adding enforceable mechanism beyond the already-proposed text."
+        },
+        "CA-14-B-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The five invariants should be cross-referenced to an external SELF_RENEWAL_SPEC.md with explicit version pinning rather than embedded in the SSOT."
+        },
+        "CA-14-B-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The guarantee wording must include an explicit exception path for admin overrides with dual-approval, which none of the options provide."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-CROSSLIST",
+          "pick_text": "Cross-list (§10.4 + §12 + §19).",
+          "rationale": "Placement solely in §10.4 risks the invariants being overlooked by remediation logic in §12."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-STRONGER",
+          "pick_text": "Stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition).",
+          "rationale": "The drafted framing is too weak to prevent future drift between telemetry and prioritization."
+        },
+        "CA-14-C-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Any §9 note must also update the Self-Audit dimension weights in §10.1 to stay consistent."
+        },
+        "CA-14-D-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The three invariants require explicit integration with the existing Self-Protect snapshot mechanism before they can be ratified."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-BLOCK",
+          "pick_text": "Block CA-14 ratification until all 5 VEU products seeded.",
+          "rationale": "Partial seeding creates inconsistent ProductSSOT state across the VEU product family and violates the atomic-write guarantee."
+        }
+      },
+      "overallNotes": "All objections target concrete sections and mechanisms named in the CA-14 draft itself.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-14-A-Q1",
+      "topic": "CA-14-A-Q1 — §11 Clearance Step 5 require Phase B Adversarial Surface Testing as HARD prerequisite?",
+      "options": [
+        {
+          "key": "CA14AQ1-RATIFY",
+          "text": "Ratify as drafted — Phase B is a hard gate; failure blocks Step 5."
+        },
+        {
+          "key": "CA14AQ1-REDUCED",
+          "text": "Ratify with reduced scope — Phase B mandatory only for `prd` environment."
+        },
+        {
+          "key": "CA14AQ1-OPTIN",
+          "text": "Ratify with admin-role opt-in — Phase B defaults mandatory but operator may opt out with audit-logged justification."
+        },
+        {
+          "key": "CA14AQ1-REJECT",
+          "text": "Reject — Phase A sufficient; Phase B as advisory signal without blocking."
+        }
+      ],
+      "draftedKey": "CA14AQ1-RATIFY"
+    },
+    {
+      "id": "CA-14-A-Q2",
+      "topic": "CA-14-A-Q2 — Verbatim LIMITATIONS disclosure phrase for Phase-A-only deliveries. Right wording?",
+      "options": [
+        {
+          "key": "CA14AQ2-RATIFY",
+          "text": "Ratify as drafted (verbatim canonical wording)."
+        },
+        {
+          "key": "CA14AQ2-PARAPHRASE",
+          "text": "Operator paraphrase permission — same intent, operator may rewrite."
+        },
+        {
+          "key": "CA14AQ2-SHORTER",
+          "text": "Adopt shorter form — \"§7.6 score reflects surface verification only; NOT a functional certification.\""
+        },
+        {
+          "key": "CA14AQ2-FREEFORM",
+          "text": "No verbatim wording — require disclosure but let operator phrase."
+        }
+      ],
+      "draftedKey": "CA14AQ2-RATIFY"
+    },
+    {
+      "id": "CA-14-A-Q3",
+      "topic": "CA-14-A-Q3 — Phase B implementation owner.",
+      "options": [
+        {
+          "key": "CA14AQ3-AGENT21",
+          "text": "Agent #21 ACE Conductor expand to own Phase B."
+        },
+        {
+          "key": "CA14AQ3-AGENT8",
+          "text": "Agent #8 Quality Audit owns Phase B (closer to QA)."
+        },
+        {
+          "key": "CA14AQ3-OPSRUNNER",
+          "text": "New Ops Runner role (#22/#24/#25) owns Phase B."
+        },
+        {
+          "key": "CA14AQ3-DEFER",
+          "text": "Defer ownership — engineering dispatch picks owner."
+        }
+      ],
+      "draftedKey": "CA14AQ3-AGENT21"
+    },
+    {
+      "id": "CA-14-A-Q4",
+      "topic": "CA-14-A-Q4 — Should CA-14-A add Locked Rule 19 (\"Phase A vs Phase B — DO NOT CONFLATE\") to §25?",
+      "options": [
+        {
+          "key": "CA14AQ4-RATIFY",
+          "text": "Ratify Locked Rule 19 as drafted."
+        },
+        {
+          "key": "CA14AQ4-DEFER",
+          "text": "Ratify but defer Rule 19 numbering — consolidate at end of CA cycle."
+        },
+        {
+          "key": "CA14AQ4-REJECT",
+          "text": "Reject Locked Rule 19 — §6.10 + §7.6 + §7 LIMITATIONS amendments sufficient."
+        },
+        {
+          "key": "CA14AQ4-MODIFY",
+          "text": "Modify Rule 19 wording."
+        }
+      ],
+      "draftedKey": "CA14AQ4-RATIFY"
+    },
+    {
+      "id": "CA-14-B-Q1",
+      "topic": "CA-14-B-Q1 — §7 Output Contract item #6 (5 fix-safety invariants: diff-only/preserve/parse/regression-guard/attribution) ratified as drafted?",
+      "options": [
+        {
+          "key": "CA14BQ1-RATIFY",
+          "text": "Ratify all 5 invariants as drafted."
+        },
+        {
+          "key": "CA14BQ1-DROP",
+          "text": "Ratify 4 invariants; drop one (specify)."
+        },
+        {
+          "key": "CA14BQ1-EXPAND",
+          "text": "Ratify with expansion — add a 6th invariant."
+        },
+        {
+          "key": "CA14BQ1-REJECT",
+          "text": "Reject — invariants belong in SELF_RENEWAL_SPEC.md not canonical SSOT."
+        }
+      ],
+      "draftedKey": "CA14BQ1-RATIFY"
+    },
+    {
+      "id": "CA-14-B-Q2",
+      "topic": "CA-14-B-Q2 — Canonical \"NEVER ships\" guarantee wording. Right wording?",
+      "options": [
+        {
+          "key": "CA14BQ2-RATIFY",
+          "text": "Ratify as drafted (verbatim canonical guarantee)."
+        },
+        {
+          "key": "CA14BQ2-SOFTEN",
+          "text": "Soften to \"rarely ships\" — acknowledges edge cases."
+        },
+        {
+          "key": "CA14BQ2-OVERRIDE",
+          "text": "Strengthen with operator-override clause — admin role may override with audit-logged justification."
+        },
+        {
+          "key": "CA14BQ2-MODIFY",
+          "text": "Modify wording."
+        }
+      ],
+      "draftedKey": "CA14BQ2-RATIFY"
+    },
+    {
+      "id": "CA-14-B-Q3",
+      "topic": "CA-14-B-Q3 — §10.4 \"Fix-Safety invariants\" placement. Where should it live?",
+      "options": [
+        {
+          "key": "CA14BQ3-RATIFY",
+          "text": "Ratify §10.4 placement."
+        },
+        {
+          "key": "CA14BQ3-S12",
+          "text": "Move to §12 Remediation Modes."
+        },
+        {
+          "key": "CA14BQ3-S19",
+          "text": "Move to §19 Governance."
+        },
+        {
+          "key": "CA14BQ3-CROSSLIST",
+          "text": "Cross-list (§10.4 + §12 + §19)."
+        }
+      ],
+      "draftedKey": "CA14BQ3-RATIFY"
+    },
+    {
+      "id": "CA-14-C-Q1",
+      "topic": "CA-14-C-Q1 — Five-Layer Framework is telemetry-only, not remediation prioritizer. Right framing?",
+      "options": [
+        {
+          "key": "CA14CQ1-RATIFY",
+          "text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical."
+        },
+        {
+          "key": "CA14CQ1-STRONGER",
+          "text": "Stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition)."
+        },
+        {
+          "key": "CA14CQ1-REJECT",
+          "text": "Reject — clarification is redundant; Locked Rule 6 already says \"tagging\"."
+        },
+        {
+          "key": "CA14CQ1-MODIFY",
+          "text": "Modify framing."
+        }
+      ],
+      "draftedKey": "CA14CQ1-RATIFY"
+    },
+    {
+      "id": "CA-14-C-Q2",
+      "topic": "CA-14-C-Q2 — §9 Step 6 row note referencing §7.6 findings as prio source.",
+      "options": [
+        {
+          "key": "CA14CQ2-ADD",
+          "text": "Add a §9 Step 6 row note referencing §7.6 findings."
+        },
+        {
+          "key": "CA14CQ2-CONDITIONAL",
+          "text": "Add note only if §9 step-row table format permits."
+        },
+        {
+          "key": "CA14CQ2-SKIP",
+          "text": "Don't touch §9 — §6.10 + §7.6 amendments sufficient."
+        },
+        {
+          "key": "CA14CQ2-MODIFY",
+          "text": "Modify approach."
+        }
+      ],
+      "draftedKey": "CA14CQ2-ADD"
+    },
+    {
+      "id": "CA-14-D-Q1",
+      "topic": "CA-14-D-Q1 — §7.5.1 three operational invariants (branch-of-record + ProductSSOT seeding + atomic-audit-write) ratified?",
+      "options": [
+        {
+          "key": "CA14DQ1-RATIFY",
+          "text": "Ratify all 3 invariants as drafted."
+        },
+        {
+          "key": "CA14DQ1-DROP",
+          "text": "Ratify 2; drop one (specify)."
+        },
+        {
+          "key": "CA14DQ1-EXPAND",
+          "text": "Ratify with expansion — add 4th invariant."
+        },
+        {
+          "key": "CA14DQ1-REJECT",
+          "text": "Reject — operational invariants belong in engineering spec not canonical."
+        }
+      ],
+      "draftedKey": "CA14DQ1-RATIFY"
+    },
+    {
+      "id": "CA-14-D-Q2",
+      "topic": "CA-14-D-Q2 — Per-product seed migration: FlowAI + MyPregLife seeded; remaining 4 VEU products pending. Block or proceed?",
+      "options": [
+        {
+          "key": "CA14DQ2-BLOCK",
+          "text": "Block CA-14 ratification until all 5 VEU products seeded."
+        },
+        {
+          "key": "CA14DQ2-NDAYS",
+          "text": "Ratify with acceptance criterion: remaining 4 products seeded within N days post-ratification."
+        },
+        {
+          "key": "CA14DQ2-IMMEDIATE",
+          "text": "Ratify immediately; remaining 4 products seeded per operator-driven order."
+        },
+        {
+          "key": "CA14DQ2-MODIFY",
+          "text": "Modify approach."
+        }
+      ],
+      "draftedKey": "CA14DQ2-NDAYS"
+    }
+  ]
+}

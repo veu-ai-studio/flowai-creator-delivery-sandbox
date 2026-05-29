@@ -12,7 +12,7 @@
 - **Backend base URL:** https://flowai-dun.vercel.app/api
 - **Product slug to pass on every API call:** `"pressai"`
 - **Org id to pass:** `"veu-ai-studio"` (header `x-flowai-org-id` — backend defaults to this if header omitted; explicit is better)
-- **Multi-tenancy:** every backend call is scoped by `(org_id, product_id)` — same shape will work for SAIGE / MyBirthSafe later
+- **Multi-tenancy:** every backend call is scoped by `(org_id, product_id)` — same shape will work for SAIGE / MyPregLife later
 
 All API responses include `x-flowai-request-id` header — log it on the UI side for support correlation.
 

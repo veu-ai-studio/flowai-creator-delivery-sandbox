@@ -1,0 +1,673 @@
+{
+  "schema": "buildwire-v2.sidecar.v1",
+  "run": "run-1-S1-S2",
+  "bundle_size": 20942,
+  "startedAt": "2026-05-19T12:51:34.554Z",
+  "finishedAt": "2026-05-19T12:54:02.942Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 20942
+  },
+  "tally": {
+    "engagedTotal": 7,
+    "invalid": 0,
+    "tangential": 2,
+    "silent": 1,
+    "perQuestion": {
+      "J2v2-S1": {
+        "S1V2-RATIFY": 0,
+        "S1V2-USERJOURNEY": 3,
+        "S1V2-SIMPLIFY": 4,
+        "S1V2-REJECT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J2v2-S2": {
+        "S2V2-RATIFY": 1,
+        "S2V2-TIGHTER": 0,
+        "S2V2-DENSITY": 3,
+        "S2V2-PERCLASS": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 31,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Hidden-state drift detection gap",
+        "detail": "§3.1 S1-CT-4 tests for mismatched runtime-config hash but doesn't specify HOW the engine detects drift between snapshot time and fix-generator invocation time. Without a continuous monitoring mechanism, the baseline could be stale by construction time."
+      },
+      {
+        "slot": 1,
+        "title": "Density ceiling circumvention via splitting",
+        "detail": "§3.2's 150-line per-file density ceiling can be trivially circumvented by splitting dense changes across multiple files. A malicious actor could distribute a 300-line dense refactor across 2 files at 149 lines each, staying under all caps while achieving the same risky outcome."
+      },
+      {
+        "slot": 1,
+        "title": "External contract checksum brittleness",
+        "detail": "§3.1 field 10 requires sha256 of external API contracts, but third-party APIs change without notice. This will cause false-positive baseline violations when external services update their contracts, blocking legitimate construction work that has nothing to do with the external change."
+      },
+      {
+        "slot": 1,
+        "title": "Background job enumeration incompleteness",
+        "detail": "§3.1 field 9 relies on `architecture_snapshot.background_jobs[]` which is a static declaration. Dynamic jobs spawned at runtime or jobs registered via third-party libraries won't appear in this inventory, creating a false sense of completeness."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Baseline",
+        "detail": "The 10-field baseline in §3.1 S1 may not capture all critical aspects of the product's state, potentially leading to incomplete or inaccurate assessments. For instance, the baseline does not account for external dependencies or third-party services that may impact the product's functionality."
+      },
+      {
+        "slot": 3,
+        "title": "Overly Restrictive Caps",
+        "detail": "The tightened system caps in §3.2 S2 (15/1500/3/4) may be too restrictive, potentially hindering the development of complex features or large-scale refactorings. This could lead to increased technical debt or workarounds that compromise the product's maintainability."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Operator Flexibility",
+        "detail": "The explicit upper bound for redesign_implementation operator-declared scope may limit the operator's ability to adapt to changing requirements or unexpected complexities, potentially leading to delays or suboptimal solutions."
+      },
+      {
+        "slot": 4,
+        "title": "Complexity in Baseline Capture",
+        "detail": "The proposal for §3.1 S1 introduces a ten-field baseline capture, which significantly increases the complexity of the pre-construction process. This could lead to increased overhead and potential errors in capturing all required fields accurately."
+      },
+      {
+        "slot": 4,
+        "title": "Rigid Scope Constraints",
+        "detail": "The tightened system caps in §3.2 S2, particularly the density-of-change ceiling, may be too restrictive. This could hinder necessary modifications and innovations, especially in complex projects where dense changes are unavoidable."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of Flexibility in Redesign Implementation",
+        "detail": "The explicit upper bound for `redesign_implementation` operator-declared scope in §3.2 S2 limits the flexibility needed for substantial redesigns. This could prevent effective redesigns that require more extensive changes."
+      },
+      {
+        "slot": 5,
+        "title": "Baseline Complexity",
+        "detail": "The extended 10-field baseline in §3.1 S1 introduces significant complexity without clear evidence of necessity, potentially leading to maintenance challenges."
+      },
+      {
+        "slot": 5,
+        "title": "Scope Enforcement",
+        "detail": "The non-overridable nature of the tightened system caps in §3.2 S2 may stifle necessary flexibility in construction operations, hindering effective problem-solving."
+      },
+      {
+        "slot": 5,
+        "title": "Density Ceiling",
+        "detail": "The per-file density ceiling of 150 lines in §3.2 S2 could inadvertently limit legitimate refactoring efforts, leading to suboptimal code structures."
+      },
+      {
+        "slot": 6,
+        "title": "S1: Baseline scope creep",
+        "detail": "The addition of 4 new fields to the pre-construction baseline in §3.1 increases complexity and overhead.  The value of these new fields (runtime-config, feature flags, background-job inventory, external service contract checksums) may not justify the added cost and potential for false positives."
+      },
+      {
+        "slot": 6,
+        "title": "S2: Density ceiling ambiguity",
+        "detail": "The 'density-of-change ceiling' in §3.2, limiting changes to 150 lines per file, is ambiguous. It's unclear whether this applies to added lines only, modified lines only, or the sum of both. This ambiguity could lead to inconsistent enforcement."
+      },
+      {
+        "slot": 6,
+        "title": "S2: Clamping redesign scope",
+        "detail": "While capping the `redesign_implementation` scope in §3.2 is intended to prevent unbounded changes, it may hinder legitimate redesign efforts.  The system cap might be too restrictive for certain redesign tasks, forcing operators to break down larger changes into smaller, less efficient steps."
+      },
+      {
+        "slot": 6,
+        "title": "S1: External contract checksum fragility",
+        "detail": "The 'External service contract checksums' in §3.1 are fragile.  Even minor, non-breaking changes to an external API can trigger a checksum mismatch, leading to unnecessary construction aborts and developer frustration."
+      },
+      {
+        "slot": 6,
+        "title": "S2: Interaction of caps unclear",
+        "detail": "The interaction between the aggregate line count cap and the per-file density ceiling is not fully clear. A construction could theoretically violate both caps simultaneously, and it's unclear which violation takes precedence or how the system would report the error."
+      },
+      {
+        "slot": 7,
+        "title": "Volatile baseline fields",
+        "detail": "§3.1 S1's new runtime-config fingerprint and feature-flag state fields capture ephemeral values that change independently of code deployments. This creates false-positive drift detections during construction validation, aborting safe changes due to unrelated config updates."
+      },
+      {
+        "slot": 7,
+        "title": "Density ceiling rigidity",
+        "detail": "§3.2 S2's 150-line per-file density ceiling rejects necessary concentrated refactors. A single-file security patch adding 160 lines of input validation would violate the ceiling despite being safer than splitting across files, forcing fragmented implementations that increase vulnerability surface."
+      },
+      {
+        "slot": 7,
+        "title": "External contract instability",
+        "detail": "§3.1 S1's external service contract checksums assume third-party API stability. Real-world services like AWS S3 frequently update without notice, causing checksum mismatches that falsely abort constructions despite no product-side changes."
+      },
+      {
+        "slot": 7,
+        "title": "Redesign clamp side-effects",
+        "detail": "§3.2 S2 clamping redesign_implementation scope to 15 files forces complex architectural changes into artificial chunks. This creates integration gaps between phases, like security policies split from their target schemas, violating atomicity principles in §7 Output Contract."
+      },
+      {
+        "slot": 8,
+        "title": "Hidden-state scope is incomplete",
+        "detail": "§3.1 S1 adds runtime-config, feature-flag, background-job, and external-contract fingerprints, but it still does not baseline secrets, tenant-level permissions, or third-party rate-limit/state dependencies. A product can pass the 10-field baseline while remaining structurally vulnerable to environment-specific drift that is not captured by any listed hash or inventory."
+      },
+      {
+        "slot": 8,
+        "title": "Density ceiling is too blunt",
+        "detail": "§3.2 adds a 150-lines-per-file density rule, but the proposal does not define how generated code, formatting churn, vendored snapshots, or auto-generated migration files are exempted or normalized. That makes enforcement sensitive to tooling differences and encourages superficial file-splitting rather than safer design, while still missing semantically risky changes under 150 lines."
+      },
+      {
+        "slot": 8,
+        "title": "Redesign clamp can mask intent",
+        "detail": "§3.2 clamps operator-declared redesign_implementation scope to 15/1500/3/4, but the spec does not require a separate explicit approval when the requested scope is materially larger than the clamp. That means the operator may believe a broader rewrite was approved while the engine silently narrows it, creating audit ambiguity and a mismatch between intent, review, and executed work."
+      },
+      {
+        "slot": 9,
+        "title": "Overly Complex Baseline",
+        "detail": "The 10-field baseline in §3.1 S1 may be overly complex and difficult to maintain, potentially leading to errors or inconsistencies in the data."
+      },
+      {
+        "slot": 9,
+        "title": "Tightened System Caps",
+        "detail": "The v2 system caps in §3.2 S2 are tightened, but the rationale behind the specific values chosen (15/1500/3/4) is not clearly explained, potentially leading to overly restrictive limits."
+      },
+      {
+        "slot": 9,
+        "title": "Density-of-Change Ceiling",
+        "detail": "The introduction of a per-file density ceiling in §3.2 S2 may not be sufficient to prevent gameable refactors, as it only limits the number of lines added or modified per file."
+      },
+      {
+        "slot": 10,
+        "title": "S1 baseline omits Self-Protect linkage",
+        "detail": "§3.1 S1 requires 10-field baseline persisted as governance_record_entry kind 'construction_pre_baseline.v1' with S1-CT-3 immutability, yet §10.1 Self-Protect snapshot + rollback is only triggered pre-mutation and never references the baseline record, allowing a post-baseline construction failure to leave dangling immutable entries without §7.5 atomic ProductSSOT rollback."
+      },
+      {
+        "slot": 10,
+        "title": "Density ceiling trips redesign first",
+        "detail": "§3.2 S2 adds per-file 150-line density ceiling enforced before aggregate line_count_cap, but redesign_implementation class (capped at 15/1500/3/4) explicitly permits operator-steered sessions that legitimately exceed 150 lines in a single control-flow file; S2-CT-5 test only covers wire_up and never tests redesign_implementation under CA-16-B."
+      },
+      {
+        "slot": 10,
+        "title": "Non-overridable caps ignore roster lock",
+        "detail": "§3.2 declares system caps NON-OVERRIDABLE per CEO Locked Rule 13, but canonical §25 rule 2 mandates validateRosterPartition() for exactly 26 agents; a construction that adds a new runner agent ID would violate the 26-partition before any cap check, yet no cross-reference exists between construction_class declaration and roster validation."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "J2v2-S1": {
+      "verdict": "PLURALITY_S1V2-SIMPLIFY",
+      "detail": "4 of 7 on S1V2-SIMPLIFY (below 7/10 quorum)",
+      "topKey": "S1V2-SIMPLIFY",
+      "topCount": 4
+    },
+    "J2v2-S2": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between S2V2-DENSITY / REJECT",
+      "topKey": "S2V2-DENSITY",
+      "topCount": 3
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.07142857142857142,
+    "alignedCount": 1,
+    "totalPossible": 14,
+    "draftedQs": [
+      "J2v2-S1",
+      "J2v2-S2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 7.1 %, distinct objections 31"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Hidden-state drift detection gap",
+            "detail": "§3.1 S1-CT-4 tests for mismatched runtime-config hash but doesn't specify HOW the engine detects drift between snapshot time and fix-generator invocation time. Without a continuous monitoring mechanism, the baseline could be stale by construction time."
+          },
+          {
+            "title": "Density ceiling circumvention via splitting",
+            "detail": "§3.2's 150-line per-file density ceiling can be trivially circumvented by splitting dense changes across multiple files. A malicious actor could distribute a 300-line dense refactor across 2 files at 149 lines each, staying under all caps while achieving the same risky outcome."
+          },
+          {
+            "title": "External contract checksum brittleness",
+            "detail": "§3.1 field 10 requires sha256 of external API contracts, but third-party APIs change without notice. This will cause false-positive baseline violations when external services update their contracts, blocking legitimate construction work that has nothing to do with the external change."
+          },
+          {
+            "title": "Background job enumeration incompleteness",
+            "detail": "§3.1 field 9 relies on `architecture_snapshot.background_jobs[]` which is a static declaration. Dynamic jobs spawned at runtime or jobs registered via third-party libraries won't appear in this inventory, creating a false sense of completeness."
+          }
+        ],
+        "worse_than_status_quo": "The 10-field baseline requirement could make the system SLOWER than status quo by forcing re-baselining every time an external API updates its contract or a feature flag changes, even when the construction work is unrelated to those systems.",
+        "precedent": "Kubernetes faced similar issues with their admission webhook baseline validation - overly strict contract checksums caused legitimate deployments to fail when cloud provider APIs updated, leading to the introduction of 'ignorable fields' in v1.19."
+      },
+      "rejection_steelman": "The v2 proposal adds significant operational overhead with its 10-field baseline and tightened caps without demonstrating that v1's approach has caused actual production failures. The density ceiling is trivially gameable, and the external contract checksums will cause false-positive construction blocks. We should defer until we have evidence that v1's 6-field baseline has allowed harmful constructions through, rather than adding complexity based on theoretical risks.",
+      "votes": {
+        "J2v2-S1": {
+          "key": "S1V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's 6-field baseline; v2's 4 NEW hidden-state fields move to a separate \"extended baseline\" admin-opt-in (default OFF) per CA-15-A v2 dims-6+7 pattern.",
+          "rationale": "The external contract checksums and background job inventory are brittle and will cause false-positive blocks; making them opt-in allows admins to enable when needed without breaking existing workflows."
+        },
+        "J2v2-S2": {
+          "key": "S2V2-DENSITY",
+          "pick_text": "Strengthen via density-only — keep v2 system caps 15/1500/3/4 but tighten density to 100 lines/file.",
+          "rationale": "The density ceiling is the right idea but 150 lines is still too permissive for dense refactors; 100 lines better prevents circumvention while keeping the system caps at usable levels."
+        }
+      },
+      "overallNotes": "The proposal correctly identifies hidden-state risks but overengineers the solution with brittle external checksums and incomplete background job tracking.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Insufficient Baseline",
+            "detail": "The 10-field baseline in §3.1 S1 may not capture all critical aspects of the product's state, potentially leading to incomplete or inaccurate assessments. For instance, the baseline does not account for external dependencies or third-party services that may impact the product's functionality."
+          },
+          {
+            "title": "Overly Restrictive Caps",
+            "detail": "The tightened system caps in §3.2 S2 (15/1500/3/4) may be too restrictive, potentially hindering the development of complex features or large-scale refactorings. This could lead to increased technical debt or workarounds that compromise the product's maintainability."
+          },
+          {
+            "title": "Lack of Operator Flexibility",
+            "detail": "The explicit upper bound for redesign_implementation operator-declared scope may limit the operator's ability to adapt to changing requirements or unexpected complexities, potentially leading to delays or suboptimal solutions."
+          }
+        ],
+        "worse_than_status_quo": "The proposed changes may lead to a situation where the construction process becomes overly rigid and inflexible, causing more harm than good. For example, the tightened caps may force developers to create multiple small constructions instead of a single, more comprehensive one, resulting in increased overhead and decreased productivity.",
+        "precedent": "The failed implementation of a similar construction process in a previous project, which led to significant delays and cost overruns due to overly restrictive constraints and inadequate flexibility."
+      },
+      "rejection_steelman": "The proposal's emphasis on tightening caps and enforcing a more rigid construction process may ultimately hinder the development team's ability to respond to changing requirements and deliver high-quality solutions. A more balanced approach that prioritizes flexibility, adaptability, and collaboration may be more effective in achieving the desired outcomes.",
+      "votes": {
+        "J2v2-S1": {
+          "key": "S1V2-USERJOURNEY",
+          "pick_text": "Strengthen further — also require operator-declared user-journey baseline (sequence of named flows the product is expected to serve; baseline captures whether each flow is presently functional)",
+          "rationale": "This option acknowledges the importance of capturing critical aspects of the product's state while also providing a more comprehensive understanding of the product's functionality and user experience."
+        },
+        "J2v2-S2": {
+          "key": "S2V2-DENSITY",
+          "pick_text": "Strengthen via density-only — keep v2 system caps 15/1500/3/4 but tighten density to 100 lines/file",
+          "rationale": "This option strikes a balance between maintaining the proposed system caps and introducing an additional layer of control to prevent overly dense constructions, which can improve maintainability and reduce technical debt."
+        }
+      },
+      "overallNotes": "The proposal raises important questions about the balance between control, flexibility, and collaboration in the construction process. A more nuanced approach that considers the complexities and uncertainties of software development may be necessary to achieve the desired outcomes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity in Baseline Capture",
+            "detail": "The proposal for §3.1 S1 introduces a ten-field baseline capture, which significantly increases the complexity of the pre-construction process. This could lead to increased overhead and potential errors in capturing all required fields accurately."
+          },
+          {
+            "title": "Rigid Scope Constraints",
+            "detail": "The tightened system caps in §3.2 S2, particularly the density-of-change ceiling, may be too restrictive. This could hinder necessary modifications and innovations, especially in complex projects where dense changes are unavoidable."
+          },
+          {
+            "title": "Lack of Flexibility in Redesign Implementation",
+            "detail": "The explicit upper bound for `redesign_implementation` operator-declared scope in §3.2 S2 limits the flexibility needed for substantial redesigns. This could prevent effective redesigns that require more extensive changes."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's rigid scope constraints and complex baseline capture could slow down the development process and hinder necessary innovations, making the system less adaptable to changes compared to the current status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because the increased complexity in baseline capture and the rigid scope constraints could introduce significant overhead and limit the flexibility needed for effective redesigns and innovations.",
+      "votes": {
+        "J2v2-S1": {
+          "key": null,
+          "pick_text": "Simplify — keep v1's 6-field baseline; v2's 4 NEW hidden-state fields move to a separate 'extended baseline' admin-opt-in (default OFF) per CA-15-A v2 dims-6+7 pattern.",
+          "rationale": "This option reduces the complexity of the baseline capture while still allowing for extended baselines when necessary, providing a balance between simplicity and thoroughness."
+        },
+        "J2v2-S2": {
+          "key": "S2V2-DENSITY",
+          "pick_text": "Strengthen via density-only — keep v2 system caps 15/1500/3/4 but tighten density to 100 lines/file.",
+          "rationale": "This option maintains the overall system caps while tightening the density-of-change ceiling, ensuring that changes are manageable without being overly restrictive."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes that could impact the development process negatively if not carefully implemented.",
+      "invalid_reason": "1/2 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Baseline Complexity",
+            "detail": "The extended 10-field baseline in §3.1 S1 introduces significant complexity without clear evidence of necessity, potentially leading to maintenance challenges."
+          },
+          {
+            "title": "Scope Enforcement",
+            "detail": "The non-overridable nature of the tightened system caps in §3.2 S2 may stifle necessary flexibility in construction operations, hindering effective problem-solving."
+          },
+          {
+            "title": "Density Ceiling",
+            "detail": "The per-file density ceiling of 150 lines in §3.2 S2 could inadvertently limit legitimate refactoring efforts, leading to suboptimal code structures."
+          }
+        ],
+        "worse_than_status_quo": "The non-overridable system caps in §3.2 S2 could prevent critical fixes or improvements that exceed the limits, leaving products in a vulnerable state.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal introduces significant constraints and complexities without sufficient justification or evidence of their necessity, potentially hindering the effectiveness and flexibility of the build/wire engine.",
+      "votes": {
+        "J2v2-S1": {
+          "key": null,
+          "pick_text": "Simplify — keep v1's 6-field baseline; v2's 4 NEW hidden-state fields move to a separate 'extended baseline' admin-opt-in (default OFF) per CA-15-A v2 dims-6+7 pattern.",
+          "rationale": "This option balances the need for additional baseline information with the complexity and maintenance overhead it introduces."
+        },
+        "J2v2-S2": {
+          "key": "S2V2-DENSITY",
+          "pick_text": "Strengthen via density-only — keep v2 system caps 15/1500/3/4 but tighten density to 100 lines/file.",
+          "rationale": "This option maintains the overall system caps while addressing the potential issue of overly dense changes within a single file."
+        }
+      },
+      "overallNotes": "The proposal introduces valuable enhancements but requires careful consideration of the trade-offs between complexity, flexibility, and enforcement.",
+      "invalid_reason": "1/2 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "S1: Baseline scope creep",
+            "detail": "The addition of 4 new fields to the pre-construction baseline in §3.1 increases complexity and overhead.  The value of these new fields (runtime-config, feature flags, background-job inventory, external service contract checksums) may not justify the added cost and potential for false positives."
+          },
+          {
+            "title": "S2: Density ceiling ambiguity",
+            "detail": "The 'density-of-change ceiling' in §3.2, limiting changes to 150 lines per file, is ambiguous. It's unclear whether this applies to added lines only, modified lines only, or the sum of both. This ambiguity could lead to inconsistent enforcement."
+          },
+          {
+            "title": "S2: Clamping redesign scope",
+            "detail": "While capping the `redesign_implementation` scope in §3.2 is intended to prevent unbounded changes, it may hinder legitimate redesign efforts.  The system cap might be too restrictive for certain redesign tasks, forcing operators to break down larger changes into smaller, less efficient steps."
+          },
+          {
+            "title": "S1: External contract checksum fragility",
+            "detail": "The 'External service contract checksums' in §3.1 are fragile.  Even minor, non-breaking changes to an external API can trigger a checksum mismatch, leading to unnecessary construction aborts and developer frustration."
+          },
+          {
+            "title": "S2: Interaction of caps unclear",
+            "detail": "The interaction between the aggregate line count cap and the per-file density ceiling is not fully clear. A construction could theoretically violate both caps simultaneously, and it's unclear which violation takes precedence or how the system would report the error."
+          }
+        ],
+        "worse_than_status_quo": "The tightened system caps in §3.2, while intended to improve safety, could make it more difficult to implement necessary changes, leading to increased development time and potentially hindering innovation. Developers might be forced to work around the caps, resulting in less maintainable code.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity with the expanded baseline and tightened scope caps. While aiming for increased safety, these changes could hinder development velocity and create unnecessary friction. The benefits of the new features may not outweigh the added overhead and potential for false positives, making deferral a prudent choice until further data can justify the changes.",
+      "votes": {
+        "J2v2-S1": {
+          "key": "S1V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's 6-field baseline; v2's 4 NEW hidden-state fields move to a separate \"extended baseline\" admin-opt-in (default OFF) per CA-15-A v2 dims-6+7 pattern.",
+          "rationale": "This approach allows for experimentation with the new fields without imposing them on all constructions, reducing the risk of disruption and allowing for a more gradual adoption."
+        },
+        "J2v2-S2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposed caps are too restrictive and the density ceiling is poorly defined. A more nuanced approach is needed, potentially involving per-class adjustments or a more flexible density metric."
+        }
+      },
+      "overallNotes": "The proposal attempts to address valid concerns but introduces complexity and rigidity that could be counterproductive. A more incremental and data-driven approach would be preferable.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Volatile baseline fields",
+            "detail": "§3.1 S1's new runtime-config fingerprint and feature-flag state fields capture ephemeral values that change independently of code deployments. This creates false-positive drift detections during construction validation, aborting safe changes due to unrelated config updates."
+          },
+          {
+            "title": "Density ceiling rigidity",
+            "detail": "§3.2 S2's 150-line per-file density ceiling rejects necessary concentrated refactors. A single-file security patch adding 160 lines of input validation would violate the ceiling despite being safer than splitting across files, forcing fragmented implementations that increase vulnerability surface."
+          },
+          {
+            "title": "External contract instability",
+            "detail": "§3.1 S1's external service contract checksums assume third-party API stability. Real-world services like AWS S3 frequently update without notice, causing checksum mismatches that falsely abort constructions despite no product-side changes."
+          },
+          {
+            "title": "Redesign clamp side-effects",
+            "detail": "§3.2 S2 clamping redesign_implementation scope to 15 files forces complex architectural changes into artificial chunks. This creates integration gaps between phases, like security policies split from their target schemas, violating atomicity principles in §7 Output Contract."
+          }
+        ],
+        "worse_than_status_quo": "A product depending on frequently updated APIs (e.g., Stripe payments) would constantly trigger §3.1 S1's external contract checksum failures. Construction would permanently stall while v1's 6-field baseline would have allowed progress, degrading system capability below pre-v2 levels.",
+        "precedent": "The 2021 Log4j vulnerability response saw automated patches fail due to rigid scope limits similar to §3.2's density ceiling, where complex class rewrites exceeded line-count thresholds and were rejected, delaying critical fixes by 72+ hours across enterprises."
+      },
+      "rejection_steelman": "The constraints introduce disproportionate operational friction without compensating safety gains. The 10-field baseline's false-positive rate could paralyze construction pipelines, while tighter caps prevent addressing legitimate complex issues. Deferring until volatility safeguards are proven in staging would mitigate systemic disruption.",
+      "votes": {
+        "J2v2-S1": {
+          "key": "S1V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's 6-field baseline; v2's 4 NEW hidden-state fields move to a separate \"extended baseline\" admin-opt-in (default OFF) per CA-15-A v2 dims-6+7 pattern.",
+          "rationale": "Mandatory volatile fields create unmanageable false positives; opt-in preserves optionality while containing risk to consenting deployments."
+        },
+        "J2v2-S2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All options retain the problematic density ceiling without escape valves for necessary concentrated changes, violating Locked Rule 2's code-over-process hierarchy."
+        }
+      },
+      "overallNotes": "S2 caps need density override triggers (e.g., security-critical files exempted via §11 ClearanceProtocolPrompt).",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Hidden-state scope is incomplete",
+            "detail": "§3.1 S1 adds runtime-config, feature-flag, background-job, and external-contract fingerprints, but it still does not baseline secrets, tenant-level permissions, or third-party rate-limit/state dependencies. A product can pass the 10-field baseline while remaining structurally vulnerable to environment-specific drift that is not captured by any listed hash or inventory."
+          },
+          {
+            "title": "Density ceiling is too blunt",
+            "detail": "§3.2 adds a 150-lines-per-file density rule, but the proposal does not define how generated code, formatting churn, vendored snapshots, or auto-generated migration files are exempted or normalized. That makes enforcement sensitive to tooling differences and encourages superficial file-splitting rather than safer design, while still missing semantically risky changes under 150 lines."
+          },
+          {
+            "title": "Redesign clamp can mask intent",
+            "detail": "§3.2 clamps operator-declared redesign_implementation scope to 15/1500/3/4, but the spec does not require a separate explicit approval when the requested scope is materially larger than the clamp. That means the operator may believe a broader rewrite was approved while the engine silently narrows it, creating audit ambiguity and a mismatch between intent, review, and executed work."
+          }
+        ],
+        "worse_than_status_quo": "A construction that passes the new baseline and cap checks could still deploy with a broken tenant-specific feature flag, a missing secret rotation dependency, or an external API contract change that was not represented in the enumerated checksum set. Compared with the status quo, the system would appear safer and more governed while silently increasing false confidence and delaying detection until after user-facing failure.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The strongest argument for rejecting or deferring is that both S1 and S2 are trying to harden the system by adding more preconditions without proving the added signals are stable, complete, or operationally cheap. In practice, governance systems often fail when they become too dependent on brittle inventories and numeric caps, because teams work around them rather than through them, leaving the organization with more ceremony but not materially better safety.",
+      "votes": {
+        "J2v2-S1": {
+          "key": "S1V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's 6-field baseline; v2's 4 NEW hidden-state fields move to a separate \"extended baseline\" admin-opt-in (default OFF) per CA-15-A v2 dims-6+7 pattern.",
+          "rationale": "This is the best compromise because the four new fields are plausibly useful, but making them mandatory on every run risks brittleness and overfitting to infrastructure noise. An opt-in extended baseline preserves the safety value while reducing accidental failures from transient config and external dependency churn."
+        },
+        "J2v2-S2": {
+          "key": "S2V2-RATIFY",
+          "pick_text": "Ratify S2 v2 as drafted (15/1500/3/4 system caps + 150 lines/file density + redesign_implementation clamped to system cap).",
+          "rationale": "The cap tightening is directionally coherent and the density ceiling closes an obvious loophole where small file counts hide large rewrites. Although I have concerns about enforcement granularity, none of the alternative options clearly improves safety without also undermining the intended strengthen-only constraint."
+        }
+      },
+      "overallNotes": "I am voting for the least risky drafting change on S1 and the proposed tightening on S2, but only narrowly. The proposal would be stronger with explicit exemptions/normalization rules and clearer audit semantics for clamped operator scopes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly Complex Baseline",
+            "detail": "The 10-field baseline in §3.1 S1 may be overly complex and difficult to maintain, potentially leading to errors or inconsistencies in the data."
+          },
+          {
+            "title": "Tightened System Caps",
+            "detail": "The v2 system caps in §3.2 S2 are tightened, but the rationale behind the specific values chosen (15/1500/3/4) is not clearly explained, potentially leading to overly restrictive limits."
+          },
+          {
+            "title": "Density-of-Change Ceiling",
+            "detail": "The introduction of a per-file density ceiling in §3.2 S2 may not be sufficient to prevent gameable refactors, as it only limits the number of lines added or modified per file."
+          }
+        ],
+        "worse_than_status_quo": "If the new baseline and system caps are not properly calibrated, they may lead to an increase in false positives or false negatives, making the system worse than the status quo.",
+        "precedent": "The introduction of overly complex metrics in the Basel II accord led to difficulties in implementation and gaming by financial institutions."
+      },
+      "rejection_steelman": "The proposal's emphasis on strengthening the build/wire engine may lead to an overly restrictive system that is difficult to use or maintain, potentially stifling innovation and progress.",
+      "votes": {
+        "J2v2-S1": {
+          "key": "S1V2-USERJOURNEY",
+          "pick_text": "Strengthen further — also require operator-declared user-journey baseline",
+          "rationale": "The addition of a user-journey baseline would provide a more comprehensive understanding of the product's functionality and expected behavior."
+        },
+        "J2v2-S2": {
+          "key": "S2V2-DENSITY",
+          "pick_text": "Strengthen via density-only — keep v2 system caps 15/1500/3/4 but tighten density to 100 lines/file",
+          "rationale": "Tightening the density ceiling would help prevent gameable refactors without overly restricting the system's capabilities."
+        }
+      },
+      "overallNotes": "The proposal shows a good effort to strengthen the build/wire engine, but some aspects may require further refinement to achieve the right balance between safety and usability.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "S1 baseline omits Self-Protect linkage",
+            "detail": "§3.1 S1 requires 10-field baseline persisted as governance_record_entry kind 'construction_pre_baseline.v1' with S1-CT-3 immutability, yet §10.1 Self-Protect snapshot + rollback is only triggered pre-mutation and never references the baseline record, allowing a post-baseline construction failure to leave dangling immutable entries without §7.5 atomic ProductSSOT rollback."
+          },
+          {
+            "title": "Density ceiling trips redesign first",
+            "detail": "§3.2 S2 adds per-file 150-line density ceiling enforced before aggregate line_count_cap, but redesign_implementation class (capped at 15/1500/3/4) explicitly permits operator-steered sessions that legitimately exceed 150 lines in a single control-flow file; S2-CT-5 test only covers wire_up and never tests redesign_implementation under CA-16-B."
+          },
+          {
+            "title": "Non-overridable caps ignore roster lock",
+            "detail": "§3.2 declares system caps NON-OVERRIDABLE per CEO Locked Rule 13, but canonical §25 rule 2 mandates validateRosterPartition() for exactly 26 agents; a construction that adds a new runner agent ID would violate the 26-partition before any cap check, yet no cross-reference exists between construction_class declaration and roster validation."
+          }
+        ],
+        "worse_than_status_quo": "Tightened 15/1500/3/4 caps plus density ceiling can reject a 4-file security schema_migration that touches 180 lines in one RLS policy file, leaving a known critical vulnerability unpatched while status-quo manual override path (now removed) would have allowed it under human gate.",
+        "precedent": "Similar to early Kubernetes resource-quota enforcement that blocked legitimate hotfix pods during production incidents at multiple large clusters before quota exemptions were added."
+      },
+      "rejection_steelman": "The proposal hardens S1 and S2 without first proving that the existing v1 baseline and caps have produced observable regressions in any deployed product; adding four new hidden-state fields and a density ceiling increases governance surface area while the Self-Governance Layer in §10 still lacks a defined mechanism to audit whether the new invariants themselves are being gamed or are causing false-negative rejections.",
+      "votes": {
+        "J2v2-S1": {
+          "key": "S1V2-USERJOURNEY",
+          "pick_text": "Strengthen further — also require operator-declared user-journey baseline (sequence of named flows the product is expected to serve; baseline captures whether each flow is presently functional).",
+          "rationale": "The 10-field baseline still omits observable user flows that would catch regressions the new hidden-state fields are intended to prevent."
+        },
+        "J2v2-S2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All options assume the density ceiling and redesign clamp are the correct next tightening; the proposal lacks evidence that v1 caps were the binding constraint on any actual failure."
+        }
+      },
+      "overallNotes": "Objections focus exclusively on missing cross-references between new mechanisms and existing §10 / §25 canonical rules.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "J2v2-S1",
+      "topic": "J2v2-S1 — v2 extends S1 to a 10-field baseline (v1 6-field + runtime-config + feature-flag state + background-job inventory + external contract checksums). Right scope? (PANEL-RATIFIABLE — reject path present.)",
+      "options": [
+        {
+          "key": "S1V2-RATIFY",
+          "text": "Ratify S1 v2 as drafted (10-field baseline per the 4 NEW v2 hidden-state fields)."
+        },
+        {
+          "key": "S1V2-USERJOURNEY",
+          "text": "Strengthen further — also require operator-declared user-journey baseline (sequence of named flows the product is expected to serve; baseline captures whether each flow is presently functional)."
+        },
+        {
+          "key": "S1V2-SIMPLIFY",
+          "text": "Simplify — keep v1's 6-field baseline; v2's 4 NEW hidden-state fields move to a separate \"extended baseline\" admin-opt-in (default OFF) per CA-15-A v2 dims-6+7 pattern."
+        },
+        {
+          "key": "S1V2-REJECT",
+          "text": "Reject the 4 NEW fields entirely — v1's 6-field baseline is sufficient; the hidden-state failure mode is theoretical, not observed."
+        }
+      ],
+      "draftedKey": "S1V2-RATIFY"
+    },
+    {
+      "id": "J2v2-S2",
+      "topic": "J2v2-S2 — v2 tightens system caps to 15/1500/3/4 + adds per-file density ceiling 150 lines + explicit upper bound for redesign_implementation operator-declared scope. NON-OVERRIDABLE per CEO Locked Rule 13 (strengthen-only). Right caps?",
+      "options": [
+        {
+          "key": "S2V2-RATIFY",
+          "text": "Ratify S2 v2 as drafted (15/1500/3/4 system caps + 150 lines/file density + redesign_implementation clamped to system cap)."
+        },
+        {
+          "key": "S2V2-TIGHTER",
+          "text": "Strengthen further — tighten system caps to 10/1000/2/3 (half-step beyond v2 drafted) + density ceiling to 100 lines/file."
+        },
+        {
+          "key": "S2V2-DENSITY",
+          "text": "Strengthen via density-only — keep v2 system caps 15/1500/3/4 but tighten density to 100 lines/file."
+        },
+        {
+          "key": "S2V2-PERCLASS",
+          "text": "Strengthen via per-class only — keep v2 system caps + density 150, reduce per-class defaults to half (wire_up=3/100/0/2 etc.)."
+        }
+      ],
+      "draftedKey": "S2V2-RATIFY"
+    }
+  ]
+}

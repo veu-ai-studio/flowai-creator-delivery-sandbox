@@ -1,0 +1,1200 @@
+{
+  "schema": "cluster-templates-v3.sidecar.v1",
+  "startedAt": "2026-05-17T17:08:19.862Z",
+  "finishedAt": "2026-05-17T17:12:48.586Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 99452,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 1,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 99452
+  },
+  "tally": {
+    "engagedTotal": 10,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 0,
+    "perQuestion": {
+      "CL-A-v3": {
+        "CLAV3-PROMOTE": 0,
+        "CLAV3-CONDITIONS": 2,
+        "CLAV3-REVISE": 8,
+        "CLAV3-REJECT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CL-B-v3": {
+        "CLBV3-PROMOTE": 3,
+        "CLBV3-CONDITIONS": 1,
+        "CLBV3-REVISE": 4,
+        "CLBV3-REJECT": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CL-C-v2": {
+        "CLCV2-PROMOTE": 7,
+        "CLCV2-CONDITIONS": 2,
+        "CLCV2-REVISE": 0,
+        "CLCV2-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CL-D-v3": {
+        "CLDV3-PROMOTE": 2,
+        "CLDV3-CONDITIONS": 4,
+        "CLDV3-REVISE": 3,
+        "CLDV3-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CL-E-v3": {
+        "CLEV3-PROMOTE": 3,
+        "CLEV3-CONDITIONS": 2,
+        "CLEV3-REVISE": 3,
+        "CLEV3-REJECT": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CL-F-v3": {
+        "CLFV3-PROMOTE": 2,
+        "CLFV3-CONDITIONS": 3,
+        "CLFV3-REVISE": 4,
+        "CLFV3-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 37,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Advisory lock contention under partition failure",
+        "detail": "Cluster A §2.3's advisory lock pattern using `pg_try_advisory_xact_lock()` assumes single-database consistency. During network partition or Supabase region failover, multiple database instances could grant the same advisory lock independently, leading to double-spending that violates the single-ledger guarantee."
+      },
+      {
+        "slot": 1,
+        "title": "MIN aggregation masks critical stream failures",
+        "detail": "Cluster B §2.4.1's MIN-of-streams aggregation can produce misleading scores when optional streams fail. An agent with 2 required streams at 100% and 3 optional streams at 0% shows dataQualityScore=1.0, hiding that 60% of input streams are completely missing from the provenance model."
+      },
+      {
+        "slot": 1,
+        "title": "Topic proliferation exceeds MessageBus capacity",
+        "detail": "Cluster D's deferred set adds ~50 topics incrementally, but §2.1.0-Def provides no upper bound on total topic count. With 26 agents × 5 topics each = 130 topics minimum, this exceeds the original 65-topic design capacity and risks MessageBus congestion that Panel objection #21 explicitly warned against."
+      },
+      {
+        "slot": 1,
+        "title": "Tier downgrade creates quality cliff",
+        "detail": "Cluster F §2.5's automatic tier downgrade from 'high' to 'free' can silently degrade output quality by 3 tiers in 200ms. A medical product hitting budget cap could receive llama-3.3 analysis instead of claude-opus without operator awareness, violating high-stakes quality requirements."
+      },
+      {
+        "slot": 2,
+        "title": "Complexity of fallback mechanisms",
+        "detail": "The proposal introduces a complex fallback mechanism for model selection, which may lead to increased latency and operational overhead. The tier-keyed Doppler structure and fallback chain could complicate the system, especially under high concurrency."
+      },
+      {
+        "slot": 2,
+        "title": "Potential for race conditions",
+        "detail": "The advisory lock mechanism in Cluster A v3 could lead to race conditions if not properly managed. The proposal relies on advisory locks to prevent contention, but under high load, this could still result in unexpected behavior."
+      },
+      {
+        "slot": 2,
+        "title": "Authority ceiling enforcement inconsistency",
+        "detail": "Cluster E v3 proposes an advisory cache for ceiling checks, which may lead to inconsistencies if the cache is not synchronized with the authoritative source. This could result in unauthorized actions being taken if the cache is stale."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy for changes made by agents with `auto_write_internal` authority, which could lead to unintended consequences and security vulnerabilities."
+      },
+      {
+        "slot": 3,
+        "title": "Inconsistent Authority",
+        "detail": "The use of dual-authority `[recommend_only, auto_write_internal, requires_human_gate]` charter directly on Agent #26 primary and Agent #21 ACE primary breaks the established EXECUTOR_REGISTRY pattern and may lead to confusion in implementation."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Fallback",
+        "detail": "The model-budget-fallback mechanism may not be sufficient to handle all scenarios, such as when the primary model is unavailable or exceeds the per-product budget, which could lead to hard-failures or unnecessary run aborts."
+      },
+      {
+        "slot": 4,
+        "title": "Complex Budget Enforcement",
+        "detail": "The proposal introduces a two-phase reservation contract using advisory locks and SERIALIZABLE isolation levels. This complexity may lead to increased maintenance difficulties and potential bugs. The advisory lock pattern, while intended to reduce lock contention, adds another layer of complexity that could introduce new failure modes."
+      },
+      {
+        "slot": 4,
+        "title": "Potential Deadlocks",
+        "detail": "The use of SERIALIZABLE isolation levels in the settlement phase could potentially lead to deadlocks, especially under high concurrency. While the proposal mentions that deadlock detection is automatic, the handling of deadlocks is not detailed. This could lead to unpredictable behavior and increased complexity in debugging issues."
+      },
+      {
+        "slot": 4,
+        "title": "Incomplete Error Handling",
+        "detail": "The proposal does not clearly specify how errors such as 'statement_timeout' or 'STALE_LEASE' are handled in the reservation and settlement phases. Without a clear error-handling strategy, the system may behave unpredictably under failure conditions, leading to inconsistent states or data loss."
+      },
+      {
+        "slot": 5,
+        "title": "Complexity Risk",
+        "detail": "The proposal introduces significant complexity with the two-phase reservation contract and heartbeat mechanism, which may lead to increased maintenance burden and potential for bugs."
+      },
+      {
+        "slot": 5,
+        "title": "Concurrency Issues",
+        "detail": "The use of PostgreSQL advisory locks and SERIALIZABLE isolation level may not fully resolve concurrency issues, especially under high load, leading to potential race conditions."
+      },
+      {
+        "slot": 5,
+        "title": "Error Handling",
+        "detail": "The proposal lacks detailed error handling mechanisms for edge cases, such as network failures or database timeouts, which could lead to inconsistent state."
+      },
+      {
+        "slot": 5,
+        "title": "Scalability Concerns",
+        "detail": "The heartbeat extension mechanism with a cap of 10 extensions may not scale well for long-running operations, potentially leading to orphaned reservations."
+      },
+      {
+        "slot": 6,
+        "title": "Audit Log RLS concerns",
+        "detail": "§14.3 states RLS allows the owning provider org to view their productIds. If a provider has multiple products, and one is compromised, the attacker could potentially access audit logs for all of the provider's products, even if they should only have access to the compromised product."
+      },
+      {
+        "slot": 6,
+        "title": "Cost Governor retry storm",
+        "detail": "§2.3 describes a retry mechanism for advisory lock contention in the Cost Governor. If contention is high, multiple agents could be stuck in a retry loop, potentially exacerbating the contention and leading to a denial-of-service scenario."
+      },
+      {
+        "slot": 6,
+        "title": "Data Quality Gate clamping",
+        "detail": "§2.3 describes clamping out-of-bounds operator overrides for data quality thresholds. Silently clamping the values could lead to unexpected behavior and make it difficult for operators to understand why their configurations are not being applied as intended. The WARN log may not be sufficient."
+      },
+      {
+        "slot": 6,
+        "title": "Model Fallback SLA enforcement",
+        "detail": "Cluster F §2.5.1 defines a latency SLA for tier downgrades, but the enforcement mechanism is unclear. How will the system ensure that the 200ms p99 SLA is met, and what happens if it is violated? Is there a monitoring system in place?"
+      },
+      {
+        "slot": 6,
+        "title": "Executor registration drift",
+        "detail": "The GovernanceAuditLog tracks `executor_registered.v1` events, but there's no mention of drift detection beyond the nightly cron. If an executor is deregistered or modified outside of the nightly cron, the system might not detect the change immediately, leading to inconsistencies."
+      },
+      {
+        "slot": 7,
+        "title": "Complexity of Cost Governor Integration",
+        "detail": "The two-phase reservation contract in Cluster A (§2.3) introduces significant complexity, especially with the advisory lock and lease token mechanism. This could lead to subtle bugs and operational issues if not implemented correctly."
+      },
+      {
+        "slot": 7,
+        "title": "Data Quality Gate Overhead",
+        "detail": "The data quality gate in Cluster B (§2.4.1) introduces a MIN-of-streams aggregation that could add significant computational overhead, especially for agents that consume multiple streams. This could impact performance and scalability."
+      },
+      {
+        "slot": 7,
+        "title": "Authority-Ceiling Integration Complexity",
+        "detail": "The authority-ceiling integration in Cluster E (§2.5) introduces a complex flow involving multiple layers of checks and fallbacks. This complexity could lead to operational issues and make the system harder to maintain and debug."
+      },
+      {
+        "slot": 8,
+        "title": "Advisory-lock starvation risk",
+        "detail": "Cluster A §2.3 replaces row-lock contention with `pg_try_advisory_xact_lock(hashtext(productId || ':' || costPool))`, but it does not define fairness, queueing, or starvation bounds when a hot product/costPool is under constant load. The 3-retry backoff can still systematically fail bursty workloads, turning transient contention into repeated false budget rejections rather than a serialized wait."
+      },
+      {
+        "slot": 8,
+        "title": "Heartbeat cap can kill long jobs",
+        "detail": "Cluster A §2.3.2 hard-caps reservations at 10 heartbeats / 10 minutes, yet several agents can plausibly exceed that wall-clock under upstream latency, human-gate wait, or large crawl/benchmark runs. Because reaper reclamation invalidates the lease token, a healthy long-running dispatch can be forced into `STALE_LEASE` and then double-counted or aborted mid-operation without a recovery protocol."
+      },
+      {
+        "slot": 8,
+        "title": "Data quality MIN is too brittle",
+        "detail": "Cluster B §2.4.1 makes the dataQualityScore the minimum of required streams, which means a single missing auxiliary-but-required-by-design stream collapses the entire agent to 0.0 even if other streams are complete. That is safer than weighted average, but the spec gives no graduated remediation path for a noncritical required stream, so operators will get hard halts in cases where the status quo would have produced a usable partial result."
+      },
+      {
+        "slot": 8,
+        "title": "Registry-weight coupling can deadlock",
+        "detail": "Cluster B §2.4.2 and §2.4.4 move stream weights into a canonical registry and reject missing entries at runtime, but the proposal does not specify a migration order for new streams, nor a compatibility shim for agents shipping code before registry amendments. In practice, this can create an impossible deploy sequence where code waits on registry entries while CI blocks registry entries that are not yet referenced, or vice versa."
+      },
+      {
+        "slot": 8,
+        "title": "Topic ceiling fragments rollouts",
+        "detail": "Cluster D §2.1.0-Def imposes a 5-new-topic ceiling per ship commit, yet the deferred topic table contains agents with far more than five new topics and also includes renames plus twin-emissions. The spec gives no atomicity rule for consumer-side migration when a rename is split across multiple commits, so downstream listeners can be left consuming half-migrated topic sets."
+      },
+      {
+        "slot": 8,
+        "title": "Ceiling check split-brain",
+        "detail": "Cluster E §2.1 and §2.5 place an advisory cache in the agent plus an authoritative `BaseAgent.guard()` check, but the document does not define the failure behavior when the cache says `recommend_only` and the authoritative check later says `supervised` or vice versa. That can produce inconsistent operator-visible errors and race windows where the agent begins side effects before the second check completes."
+      },
+      {
+        "slot": 9,
+        "title": "Complex Cost Reservation Logic",
+        "detail": "Cluster A §2.3 introduces a complex two-phase reservation contract with advisory locks and SERIALIZABLE isolation. This complexity may lead to unforeseen concurrency issues or performance bottlenecks under high load."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of Clear Rollback Strategy",
+        "detail": "Cluster E §2.6 discusses reverting to the EXECUTOR_REGISTRY sibling pattern for dual-authority primary agents. However, the proposal lacks a clear rollback strategy for changes made by agents with auto_write_internal authority."
+      },
+      {
+        "slot": 9,
+        "title": "Overly Restrictive Topic Ceiling",
+        "detail": "Cluster D §2.1.0-Def introduces a hard ceiling of 5 new topics per agent ship commit. This may be too restrictive for agents with legitimate needs for more topics, potentially causing unnecessary delays or complications."
+      },
+      {
+        "slot": 10,
+        "title": "Advisory lock + SERIALIZABLE in §2.3",
+        "detail": "Cluster A §2.3.1 mandates pg_try_advisory_xact_lock per (productId, costPool) followed by SERIALIZABLE settlement; this creates a new contention surface on Supabase serverless where cold starts already exceed the 5000ms statement_timeout, directly contradicting the claimed TOCTOU-free improvement over v2 UPDATE...WHERE."
+      },
+      {
+        "slot": 10,
+        "title": "5-topic ceiling in Cluster D §2.1.0-Def",
+        "detail": "The hard per-agent ship-commit limit of 5 new topics forces Agent #11 and #26 (each carrying 6+ CA-9-B topics) to split across commits, yet no migration-harness or MessageSchema validator update is specified to handle partial topic registration during the split window."
+      },
+      {
+        "slot": 10,
+        "title": "CEO Option A conflicts with §15.1 roster",
+        "detail": "Cluster E v3 E0 re-arbitrates Agent #26 to route through a new orchestra-research-executor sibling, but the canonical roster table in the attached CANONICAL_REFERENCE §15.1 still lists #26 as primary with auto_write_internal authority and contains no EXECUTOR_REGISTRY delta entry."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CL-A-v3": {
+      "verdict": "SUPERMAJORITY_CLAV3-REVISE",
+      "detail": "8 of 10 on CLAV3-REVISE (≥ 8/10)",
+      "topKey": "CLAV3-REVISE",
+      "topCount": 8
+    },
+    "CL-B-v3": {
+      "verdict": "PLURALITY_CLBV3-REVISE",
+      "detail": "4 of 10 on CLBV3-REVISE (below 7/10 quorum)",
+      "topKey": "CLBV3-REVISE",
+      "topCount": 4
+    },
+    "CL-C-v2": {
+      "verdict": "QUORUM_PLURALITY_CLCV2-PROMOTE",
+      "detail": "7 of 10 on CLCV2-PROMOTE (≥ quorum 7/10)",
+      "topKey": "CLCV2-PROMOTE",
+      "topCount": 7
+    },
+    "CL-D-v3": {
+      "verdict": "PLURALITY_CLDV3-CONDITIONS",
+      "detail": "4 of 10 on CLDV3-CONDITIONS (below 7/10 quorum)",
+      "topKey": "CLDV3-CONDITIONS",
+      "topCount": 4
+    },
+    "CL-E-v3": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between CLEV3-PROMOTE / CLEV3-REVISE",
+      "topKey": "CLEV3-PROMOTE",
+      "topCount": 3
+    },
+    "CL-F-v3": {
+      "verdict": "PLURALITY_CLFV3-REVISE",
+      "detail": "4 of 10 on CLFV3-REVISE (below 7/10 quorum)",
+      "topKey": "CLFV3-REVISE",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.2833333333333333,
+    "alignedCount": 17,
+    "totalPossible": 60,
+    "draftedQs": [
+      "CL-A-v3",
+      "CL-B-v3",
+      "CL-C-v2",
+      "CL-D-v3",
+      "CL-E-v3",
+      "CL-F-v3"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 28.3 %, distinct objections 37"
+  },
+  "ratification": {
+    "status": "NOT_RATIFIED",
+    "headline": "4 of 6 template(s) lack clear majority on PROMOTE.",
+    "conditions": [
+      {
+        "qId": "CL-B-v3",
+        "verdict": "PLURALITY_CLBV3-REVISE",
+        "draftedKey": "CLBV3-PROMOTE",
+        "detail": "4 of 10 on CLBV3-REVISE (below 7/10 quorum)"
+      },
+      {
+        "qId": "CL-D-v3",
+        "verdict": "PLURALITY_CLDV3-CONDITIONS",
+        "draftedKey": "CLDV3-PROMOTE",
+        "detail": "4 of 10 on CLDV3-CONDITIONS (below 7/10 quorum)"
+      },
+      {
+        "qId": "CL-E-v3",
+        "verdict": "SPLIT",
+        "draftedKey": "CLEV3-PROMOTE",
+        "detail": "top tie at 3 between CLEV3-PROMOTE / CLEV3-REVISE"
+      },
+      {
+        "qId": "CL-F-v3",
+        "verdict": "PLURALITY_CLFV3-REVISE",
+        "draftedKey": "CLFV3-PROMOTE",
+        "detail": "4 of 10 on CLFV3-REVISE (below 7/10 quorum)"
+      }
+    ],
+    "alternativeWins": [
+      {
+        "qId": "CL-A-v3",
+        "newPosition": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+        "verdict": "SUPERMAJORITY_CLAV3-REVISE"
+      }
+    ]
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Advisory lock contention under partition failure",
+            "detail": "Cluster A §2.3's advisory lock pattern using `pg_try_advisory_xact_lock()` assumes single-database consistency. During network partition or Supabase region failover, multiple database instances could grant the same advisory lock independently, leading to double-spending that violates the single-ledger guarantee."
+          },
+          {
+            "title": "MIN aggregation masks critical stream failures",
+            "detail": "Cluster B §2.4.1's MIN-of-streams aggregation can produce misleading scores when optional streams fail. An agent with 2 required streams at 100% and 3 optional streams at 0% shows dataQualityScore=1.0, hiding that 60% of input streams are completely missing from the provenance model."
+          },
+          {
+            "title": "Topic proliferation exceeds MessageBus capacity",
+            "detail": "Cluster D's deferred set adds ~50 topics incrementally, but §2.1.0-Def provides no upper bound on total topic count. With 26 agents × 5 topics each = 130 topics minimum, this exceeds the original 65-topic design capacity and risks MessageBus congestion that Panel objection #21 explicitly warned against."
+          },
+          {
+            "title": "Tier downgrade creates quality cliff",
+            "detail": "Cluster F §2.5's automatic tier downgrade from 'high' to 'free' can silently degrade output quality by 3 tiers in 200ms. A medical product hitting budget cap could receive llama-3.3 analysis instead of claude-opus without operator awareness, violating high-stakes quality requirements."
+          }
+        ],
+        "worse_than_status_quo": "The v3 advisory lock pattern in Cluster A creates a false sense of atomicity that's actually weaker than explicit row-locking, as it depends on PostgreSQL session semantics that break under Supabase's serverless connection pooling model.",
+        "precedent": "GitHub's advisory lock implementation for Actions job deduplication failed catastrophically in 2021 when their Postgres proxy layer began recycling connections mid-transaction, causing duplicate workflow runs that consumed 10x expected compute resources."
+      },
+      "rejection_steelman": "These templates add 200+ pages of specification complexity to solve problems that arise from the fundamental architectural choice of 26 distributed agents. A simpler architecture with 5-8 consolidated services would eliminate most cross-agent coordination issues without requiring advisory locks, MIN aggregations, tier downgrades, or 130+ MessageBus topics. The specification complexity itself becomes a source of implementation bugs and operational surprises.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The advisory lock pattern assumes single-database consistency but Supabase's multi-region architecture can grant the same lock in multiple regions during split-brain scenarios, violating the atomicity guarantee."
+        },
+        "CL-B-v3": {
+          "key": "CLBV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The MIN aggregation over required streams only (excluding optional streams) creates a blind spot where agents operate with incomplete data visibility, contradicting the stated goal of preventing downstream consumers from misreading partial coverage."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "Pattern P3 agents that throw WRONG_MODE_FOR_EXECUTOR need explicit error propagation paths through AutoRunner to avoid silent failures when invoked in Mode 1."
+        },
+        "CL-D-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — v3 reveals the cluster problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture.",
+          "rationale": "The 5-topic-per-commit ceiling is arbitrary theater that doesn't address the core issue: 130+ topics fundamentally exceeds MessageBus design capacity and will cause congestion regardless of how they're batched."
+        },
+        "CL-E-v3": {
+          "key": "CLEV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The CEO re-arbitration to Option A cleanly resolves the dual-authority confusion, but the 30-second cache TTL for ceiling lookups could allow 30 seconds of unauthorized actions after an operator lowers a ceiling."
+        },
+        "CL-F-v3": {
+          "key": "CLFV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The 200ms p99 latency SLA for tier downgrade is specified but the async fallback path in §2.5.1 is truncated mid-sentence, leaving the critical high-load degradation path unspecified."
+        }
+      },
+      "overallNotes": "The templates exhibit specification bloat trying to coordinate 26 autonomous agents through increasingly complex protocols instead of addressing the root cause: too many independent decision-makers.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity of fallback mechanisms",
+            "detail": "The proposal introduces a complex fallback mechanism for model selection, which may lead to increased latency and operational overhead. The tier-keyed Doppler structure and fallback chain could complicate the system, especially under high concurrency."
+          },
+          {
+            "title": "Potential for race conditions",
+            "detail": "The advisory lock mechanism in Cluster A v3 could lead to race conditions if not properly managed. The proposal relies on advisory locks to prevent contention, but under high load, this could still result in unexpected behavior."
+          },
+          {
+            "title": "Authority ceiling enforcement inconsistency",
+            "detail": "Cluster E v3 proposes an advisory cache for ceiling checks, which may lead to inconsistencies if the cache is not synchronized with the authoritative source. This could result in unauthorized actions being taken if the cache is stale."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to increased latency and operational complexity, making the system less responsive and harder to manage compared to the current simpler setup.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and potential for race conditions and inconsistencies, which could outweigh the benefits of the new mechanisms. The fallback and advisory systems may lead to operational overhead and latency issues, making the system less efficient and harder to manage. It may be prudent to defer the proposal until these concerns are addressed and a simpler, more robust solution is found.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The advisory lock mechanism could lead to race conditions under high load, which needs to be addressed before promotion."
+        },
+        "CL-B-v3": {
+          "key": "CLBV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "While the main conditions are addressed, the complexity of the provenance model may require further monitoring."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly addresses prior Panel conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "The mode-conditional behavior is well-defined and addresses previous concerns."
+        },
+        "CL-D-v3": {
+          "key": "CLDV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The 5-topic ceiling is a good control, but the load-test gate should be monitored for performance under stress."
+        },
+        "CL-E-v3": {
+          "key": "CLEV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The advisory cache for ceiling checks could lead to inconsistencies if not properly synchronized with the authoritative source."
+        },
+        "CL-F-v3": {
+          "key": "CLFV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The latency SLA is a good step, but the complexity of the fallback mechanism should be monitored for operational overhead."
+        }
+      },
+      "overallNotes": "The proposal introduces several complex mechanisms that may require careful monitoring and revision to ensure they do not negatively impact system performance and manageability.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy for changes made by agents with `auto_write_internal` authority, which could lead to unintended consequences and security vulnerabilities."
+          },
+          {
+            "title": "Inconsistent Authority",
+            "detail": "The use of dual-authority `[recommend_only, auto_write_internal, requires_human_gate]` charter directly on Agent #26 primary and Agent #21 ACE primary breaks the established EXECUTOR_REGISTRY pattern and may lead to confusion in implementation."
+          },
+          {
+            "title": "Insufficient Fallback",
+            "detail": "The model-budget-fallback mechanism may not be sufficient to handle all scenarios, such as when the primary model is unavailable or exceeds the per-product budget, which could lead to hard-failures or unnecessary run aborts."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's lack of a clear rollback strategy and inconsistent authority could lead to a worse system than the status quo, where unintended changes are made without proper oversight or control.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal's complexity and potential for unintended consequences, combined with the lack of a clear rollback strategy and inconsistent authority, make it difficult to justify promoting it as canonical. A more comprehensive and well-thought-out approach is needed to address the identified issues.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS",
+          "rationale": "The template addresses the main conditions, but residual issues need to be tracked by the engineering dispatch."
+        },
+        "CL-B-v3": {
+          "key": "CLBV3-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "The template cleanly addresses prior Panel conditions for Cluster B."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "The template cleanly addresses prior Panel conditions for Cluster C."
+        },
+        "CL-D-v3": {
+          "key": "CLDV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS",
+          "rationale": "The template addresses the main conditions, but residual issues need to be tracked by the engineering dispatch."
+        },
+        "CL-E-v3": {
+          "key": "CLEV3-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "The template cleanly addresses prior Panel conditions for Cluster E."
+        },
+        "CL-F-v3": {
+          "key": "CLFV3-REVISE",
+          "pick_text": "REVISE",
+          "rationale": "One or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion."
+        }
+      },
+      "overallNotes": "The proposal requires careful consideration of the potential risks and unintended consequences, and a more comprehensive approach is needed to address the identified issues.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complex Budget Enforcement",
+            "detail": "The proposal introduces a two-phase reservation contract using advisory locks and SERIALIZABLE isolation levels. This complexity may lead to increased maintenance difficulties and potential bugs. The advisory lock pattern, while intended to reduce lock contention, adds another layer of complexity that could introduce new failure modes."
+          },
+          {
+            "title": "Potential Deadlocks",
+            "detail": "The use of SERIALIZABLE isolation levels in the settlement phase could potentially lead to deadlocks, especially under high concurrency. While the proposal mentions that deadlock detection is automatic, the handling of deadlocks is not detailed. This could lead to unpredictable behavior and increased complexity in debugging issues."
+          },
+          {
+            "title": "Incomplete Error Handling",
+            "detail": "The proposal does not clearly specify how errors such as 'statement_timeout' or 'STALE_LEASE' are handled in the reservation and settlement phases. Without a clear error-handling strategy, the system may behave unpredictably under failure conditions, leading to inconsistent states or data loss."
+          }
+        ],
+        "worse_than_status_quo": "In scenarios where the budget enforcement mechanism fails due to complexity or deadlocks, the system may enter an inconsistent state, leading to unpredictable behavior and potential data loss. This is worse than the current status quo where budget enforcement is simpler and more predictable.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity with the two-phase reservation contract and SERIALIZABLE isolation levels. This complexity may lead to increased maintenance difficulties, potential deadlocks, and unpredictable behavior under failure conditions. Given these risks, it may be prudent to defer the proposal until these issues are fully addressed and a more robust error-handling strategy is in place.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The proposal introduces complex budget enforcement mechanisms that may lead to maintenance difficulties and potential deadlocks. These issues need to be addressed before promotion."
+        },
+        "CL-B-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal does not adequately address the conditions for Cluster B, and the introduced complexity may lead to unpredictable behavior."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "While the proposal addresses the main conditions, there are residual issues related to error handling and potential deadlocks that need to be tracked."
+        },
+        "CL-D-v3": {
+          "key": "CLDV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The proposal introduces new defects related to error handling and potential deadlocks that need to be fixed before promotion."
+        },
+        "CL-E-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal does not adequately address the conditions for Cluster E, and the introduced complexity may lead to unpredictable behavior."
+        },
+        "CL-F-v3": {
+          "key": "CLFV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The proposal introduces new defects related to error handling and potential deadlocks that need to be fixed before promotion."
+        }
+      },
+      "overallNotes": "The proposal introduces significant complexity with the two-phase reservation contract and SERIALIZABLE isolation levels. This complexity may lead to increased maintenance difficulties, potential deadlocks, and unpredictable behavior under failure conditions. Given these risks, it may be prudent to defer the proposal until these issues are fully addressed and a more robust error-handling strategy is in place.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity Risk",
+            "detail": "The proposal introduces significant complexity with the two-phase reservation contract and heartbeat mechanism, which may lead to increased maintenance burden and potential for bugs."
+          },
+          {
+            "title": "Concurrency Issues",
+            "detail": "The use of PostgreSQL advisory locks and SERIALIZABLE isolation level may not fully resolve concurrency issues, especially under high load, leading to potential race conditions."
+          },
+          {
+            "title": "Error Handling",
+            "detail": "The proposal lacks detailed error handling mechanisms for edge cases, such as network failures or database timeouts, which could lead to inconsistent state."
+          },
+          {
+            "title": "Scalability Concerns",
+            "detail": "The heartbeat extension mechanism with a cap of 10 extensions may not scale well for long-running operations, potentially leading to orphaned reservations."
+          }
+        ],
+        "worse_than_status_quo": "If the advisory lock mechanism fails under high concurrency, it could lead to more frequent budget enforcement failures than the current system, causing increased operational overhead.",
+        "precedent": "The use of advisory locks in PostgreSQL has been known to cause issues in high-concurrency environments, as seen in various database management systems where lock contention led to performance degradation."
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and potential points of failure without a clear demonstration of improved performance or reliability over the current system. The added complexity may outweigh the benefits, especially considering the potential for concurrency issues and the lack of detailed error handling.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The proposal introduces complexity and potential concurrency issues that need further review and testing."
+        },
+        "CL-B-v3": {
+          "key": "CLBV3-PROMOTE",
+          "pick_text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster B; template is ready to ship as canonical resolution.",
+          "rationale": "The proposal effectively addresses the data quality gate issues with clear metrics and fail-loud semantics."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly addresses prior Panel conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "The mode-conditional behavior template provides clear specifications for agent behavior across different modes."
+        },
+        "CL-D-v3": {
+          "key": "CLDV3-PROMOTE",
+          "pick_text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster D; template is ready to ship as canonical resolution.",
+          "rationale": "The audit-log topic schema extension effectively manages topic sprawl and ensures consistency across agents."
+        },
+        "CL-E-v3": {
+          "key": "CLEV3-PROMOTE",
+          "pick_text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster E; template is ready to ship as canonical resolution.",
+          "rationale": "The authority-ceiling integration proposal provides a clear and enforceable mechanism for authority checks."
+        },
+        "CL-F-v3": {
+          "key": "CLFV3-PROMOTE",
+          "pick_text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster F; template is ready to ship as canonical resolution.",
+          "rationale": "The model-budget fallback mechanism effectively handles model unavailability and rate limits."
+        }
+      },
+      "overallNotes": "The proposals generally address the identified issues, but Cluster A requires further review due to introduced complexity.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Audit Log RLS concerns",
+            "detail": "§14.3 states RLS allows the owning provider org to view their productIds. If a provider has multiple products, and one is compromised, the attacker could potentially access audit logs for all of the provider's products, even if they should only have access to the compromised product."
+          },
+          {
+            "title": "Cost Governor retry storm",
+            "detail": "§2.3 describes a retry mechanism for advisory lock contention in the Cost Governor. If contention is high, multiple agents could be stuck in a retry loop, potentially exacerbating the contention and leading to a denial-of-service scenario."
+          },
+          {
+            "title": "Data Quality Gate clamping",
+            "detail": "§2.3 describes clamping out-of-bounds operator overrides for data quality thresholds. Silently clamping the values could lead to unexpected behavior and make it difficult for operators to understand why their configurations are not being applied as intended. The WARN log may not be sufficient."
+          },
+          {
+            "title": "Model Fallback SLA enforcement",
+            "detail": "Cluster F §2.5.1 defines a latency SLA for tier downgrades, but the enforcement mechanism is unclear. How will the system ensure that the 200ms p99 SLA is met, and what happens if it is violated? Is there a monitoring system in place?"
+          },
+          {
+            "title": "Executor registration drift",
+            "detail": "The GovernanceAuditLog tracks `executor_registered.v1` events, but there's no mention of drift detection beyond the nightly cron. If an executor is deregistered or modified outside of the nightly cron, the system might not detect the change immediately, leading to inconsistencies."
+          }
+        ],
+        "worse_than_status_quo": "If the advisory lock in Cluster A's Cost Governor becomes highly contended, the retry mechanism could lead to a denial-of-service scenario, making the system less reliable than the status quo where agents might simply fail individually.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "While the proposal addresses several important issues, the complexity of the interactions between different clusters and agents introduces new risks. The advisory lock retry mechanism in Cluster A could lead to denial-of-service, and the silent clamping of data quality thresholds in Cluster B could lead to unexpected behavior. The lack of a clear enforcement mechanism for the model fallback SLA in Cluster F is also concerning. Deferring the proposal would allow for further testing and refinement to mitigate these risks.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The retry mechanism for advisory lock contention could lead to a denial-of-service scenario. This needs to be addressed before promotion."
+        },
+        "CL-B-v3": {
+          "key": "CLBV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "Silently clamping out-of-bounds operator overrides could lead to unexpected behavior. A more transparent approach is needed."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly addresses prior Panel conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "No objections raised that would block promotion."
+        },
+        "CL-D-v3": {
+          "key": "CLDV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The audit log RLS needs careful review to ensure proper isolation between products within the same provider org."
+        },
+        "CL-E-v3": {
+          "key": "CLEV3-PROMOTE",
+          "pick_text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster E; template is ready to ship as canonical resolution.",
+          "rationale": "No objections raised that would block promotion."
+        },
+        "CL-F-v3": {
+          "key": "CLFV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The enforcement mechanism for the model fallback latency SLA is unclear and needs to be defined."
+        }
+      },
+      "overallNotes": "The proposal is complex and introduces several new mechanisms. Thorough testing and monitoring will be crucial to ensure its stability and reliability.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity of Cost Governor Integration",
+            "detail": "The two-phase reservation contract in Cluster A (§2.3) introduces significant complexity, especially with the advisory lock and lease token mechanism. This could lead to subtle bugs and operational issues if not implemented correctly."
+          },
+          {
+            "title": "Data Quality Gate Overhead",
+            "detail": "The data quality gate in Cluster B (§2.4.1) introduces a MIN-of-streams aggregation that could add significant computational overhead, especially for agents that consume multiple streams. This could impact performance and scalability."
+          },
+          {
+            "title": "Authority-Ceiling Integration Complexity",
+            "detail": "The authority-ceiling integration in Cluster E (§2.5) introduces a complex flow involving multiple layers of checks and fallbacks. This complexity could lead to operational issues and make the system harder to maintain and debug."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of the two-phase reservation contract in Cluster A could introduce race conditions and deadlocks that are not present in the current system, leading to operational instability and increased downtime.",
+        "precedent": "The introduction of complex reservation and locking mechanisms in distributed systems has historically led to issues such as deadlocks and race conditions, as seen in the early implementations of distributed databases like MySQL and PostgreSQL."
+      },
+      "rejection_steelman": "The proposed changes, while addressing important issues, introduce significant complexity and potential operational risks. The two-phase reservation contract in Cluster A, the MIN-of-streams aggregation in Cluster B, and the multi-layer authority-ceiling checks in Cluster E could lead to subtle bugs, performance issues, and increased maintenance overhead. A simpler, more robust approach might be necessary to ensure the system remains stable and maintainable.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The two-phase reservation contract introduces significant complexity and potential race conditions that need to be thoroughly tested and validated."
+        },
+        "CL-B-v3": {
+          "key": "CLBV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The MIN-of-streams aggregation could introduce significant computational overhead and performance issues, especially for agents consuming multiple streams."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly addresses prior Panel conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "The mode-conditional behavior is well-defined and does not introduce significant complexity or operational risks."
+        },
+        "CL-D-v3": {
+          "key": "CLDV3-PROMOTE",
+          "pick_text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster D; template is ready to ship as canonical resolution.",
+          "rationale": "The audit-log topic schema is well-structured and addresses the key concerns raised by the Panel."
+        },
+        "CL-E-v3": {
+          "key": "CLEV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The authority-ceiling integration introduces a complex flow with multiple layers of checks and fallbacks, which could lead to operational issues and increased maintenance overhead."
+        },
+        "CL-F-v3": {
+          "key": "CLFV3-PROMOTE",
+          "pick_text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster F; template is ready to ship as canonical resolution.",
+          "rationale": "The model-budget fallback mechanism is well-defined and addresses the key concerns raised by the Panel."
+        }
+      },
+      "overallNotes": "The proposals address important issues but introduce significant complexity in some areas. Thorough testing and validation are essential to ensure the system remains stable and maintainable.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:qwen/qwen-2.5-72b-instruct"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Advisory-lock starvation risk",
+            "detail": "Cluster A §2.3 replaces row-lock contention with `pg_try_advisory_xact_lock(hashtext(productId || ':' || costPool))`, but it does not define fairness, queueing, or starvation bounds when a hot product/costPool is under constant load. The 3-retry backoff can still systematically fail bursty workloads, turning transient contention into repeated false budget rejections rather than a serialized wait."
+          },
+          {
+            "title": "Heartbeat cap can kill long jobs",
+            "detail": "Cluster A §2.3.2 hard-caps reservations at 10 heartbeats / 10 minutes, yet several agents can plausibly exceed that wall-clock under upstream latency, human-gate wait, or large crawl/benchmark runs. Because reaper reclamation invalidates the lease token, a healthy long-running dispatch can be forced into `STALE_LEASE` and then double-counted or aborted mid-operation without a recovery protocol."
+          },
+          {
+            "title": "Data quality MIN is too brittle",
+            "detail": "Cluster B §2.4.1 makes the dataQualityScore the minimum of required streams, which means a single missing auxiliary-but-required-by-design stream collapses the entire agent to 0.0 even if other streams are complete. That is safer than weighted average, but the spec gives no graduated remediation path for a noncritical required stream, so operators will get hard halts in cases where the status quo would have produced a usable partial result."
+          },
+          {
+            "title": "Registry-weight coupling can deadlock",
+            "detail": "Cluster B §2.4.2 and §2.4.4 move stream weights into a canonical registry and reject missing entries at runtime, but the proposal does not specify a migration order for new streams, nor a compatibility shim for agents shipping code before registry amendments. In practice, this can create an impossible deploy sequence where code waits on registry entries while CI blocks registry entries that are not yet referenced, or vice versa."
+          },
+          {
+            "title": "Topic ceiling fragments rollouts",
+            "detail": "Cluster D §2.1.0-Def imposes a 5-new-topic ceiling per ship commit, yet the deferred topic table contains agents with far more than five new topics and also includes renames plus twin-emissions. The spec gives no atomicity rule for consumer-side migration when a rename is split across multiple commits, so downstream listeners can be left consuming half-migrated topic sets."
+          },
+          {
+            "title": "Ceiling check split-brain",
+            "detail": "Cluster E §2.1 and §2.5 place an advisory cache in the agent plus an authoritative `BaseAgent.guard()` check, but the document does not define the failure behavior when the cache says `recommend_only` and the authoritative check later says `supervised` or vice versa. That can produce inconsistent operator-visible errors and race windows where the agent begins side effects before the second check completes."
+          }
+        ],
+        "worse_than_status_quo": "A product with one hot cost pool and a moderately slow upstream model could repeatedly miss advisory-lock acquisition, hit the 3-retry limit, and emit budget rejections even though the budget is healthy. Compared with the status quo, which may have been noisy but permissive, the proposal can convert temporary contention into systematic service denial.",
+        "precedent": "Real-world precedent: PostgreSQL advisory-lock based coordination is famously easy to misuse in high-concurrency systems; many teams have reported starvation and accidental deadlock-like throughput collapse when using try-lock + retry patterns instead of queued work. A broader precedent is distributed lease systems like Kubernetes leader-election, where overly strict lease renewal windows have caused healthy workers to be ejected during brief pauses."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring this package is that it tries to canonicalize too many cross-cutting concerns at once, and several of the new “solutions” create fresh coordination risks that are only visible under load. If the governing goal is reliability, a narrower architecture with one enforcement locus per concern and explicit migration machinery would be easier to reason about, easier to test, and less likely to strand agents during rollout. In particular, the hard caps, dual-path checks, and registry-gated validation all increase the chance that a partially upgraded system behaves worse than the current fragmented one.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "A1/A2/A4 are addressed, but the advisory-lock + retry design introduces starvation and false-rejection behavior under load, which is a new defect rather than a clean fix. The proposal also lacks explicit fairness or queueing semantics for hot budget pools."
+        },
+        "CL-B-v3": {
+          "key": "CLBV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "B1–B4 are mostly covered, but the hard MIN-of-streams halt semantics are brittle and the registry migration path is undefined. Runtime rejection on missing weights without a staged compatibility strategy is a deploy-blocking defect."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly addresses prior Panel conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "The template gives a usable P1/P2/P3 pattern taxonomy, clear mode behavior blocks, and runtime/schema validation. While there are some integration ambiguities elsewhere, Cluster C itself is sufficiently specified for canonical use."
+        },
+        "CL-D-v3": {
+          "key": "CLDV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The 5-topic ceiling and staged P0 patch address the topic-sprawl concern, but the spec does not define safe multi-commit migration for renames and twin-emissions. That leaves consumers exposed to half-migrated schemas."
+        },
+        "CL-E-v3": {
+          "key": "CLEV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The split-brain between advisory cache and authoritative guard is not fully resolved, and the transition from primary-agent dual authority to executor siblings is not accompanied by a precise failure-order contract. The missing ordering semantics make runtime behavior under ceiling changes ambiguous."
+        },
+        "CL-F-v3": {
+          "key": "CLFV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The latency SLA acceptance criterion is a real improvement because it turns a vague concern into a measurable bar. Non-blocking follow-ups remain needed for provider-latency exclusions and the async-downgrade fallback path, but those are implementation-tracking issues rather than reasons to block the template outright."
+        }
+      },
+      "overallNotes": "I voted conservatively where the spec introduces new coordination failure modes, and more favorably where the template mostly resolves the prior ambiguity. The largest concern across clusters is that several “canonical” mechanisms become brittle under partial rollout or high concurrency.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complex Cost Reservation Logic",
+            "detail": "Cluster A §2.3 introduces a complex two-phase reservation contract with advisory locks and SERIALIZABLE isolation. This complexity may lead to unforeseen concurrency issues or performance bottlenecks under high load."
+          },
+          {
+            "title": "Lack of Clear Rollback Strategy",
+            "detail": "Cluster E §2.6 discusses reverting to the EXECUTOR_REGISTRY sibling pattern for dual-authority primary agents. However, the proposal lacks a clear rollback strategy for changes made by agents with auto_write_internal authority."
+          },
+          {
+            "title": "Overly Restrictive Topic Ceiling",
+            "detail": "Cluster D §2.1.0-Def introduces a hard ceiling of 5 new topics per agent ship commit. This may be too restrictive for agents with legitimate needs for more topics, potentially causing unnecessary delays or complications."
+          }
+        ],
+        "worse_than_status_quo": "If the complex cost reservation logic in Cluster A §2.3 fails, it could lead to a situation where budget enforcement is inconsistent or fails entirely, potentially resulting in significant cost overruns or service disruptions, making the system worse than the status quo.",
+        "precedent": "The use of advisory locks in PostgreSQL for cost reservation is similar to designs used in other high-concurrency financial systems, such as those described in the PostgreSQL documentation for handling concurrent updates. However, the specific implementation details and the combination with SERIALIZABLE isolation may still pose unique risks."
+      },
+      "rejection_steelman": "The strongest argument for rejecting or deferring the proposal is that the introduced complexity, particularly in Cluster A and Cluster E, may lead to unforeseen issues or performance problems. The lack of a clear rollback strategy for certain changes also poses significant operational risk.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS",
+          "rationale": "While v3 addresses prior conditions, the complexity of the cost reservation logic may require additional monitoring and potential adjustments post-promotion."
+        },
+        "CL-B-v3": {
+          "key": "CLBV3-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "v3 cleanly addresses prior Panel conditions for Cluster B, introducing a robust data quality gate mechanism."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "v2 cleanly addresses prior Panel conditions for Cluster C, providing a clear mode-conditional behavior specification."
+        },
+        "CL-D-v3": {
+          "key": "CLDV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS",
+          "rationale": "While v3 addresses the main conditions, the 5-topic ceiling per agent ship commit may need to be revisited based on operational feedback."
+        },
+        "CL-E-v3": {
+          "key": "CLEV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS",
+          "rationale": "v3 addresses the main conditions, but the lack of a clear rollback strategy for changes made by agents with auto_write_internal authority is a residual issue."
+        },
+        "CL-F-v3": {
+          "key": "CLFV3-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS",
+          "rationale": "The introduction of a latency SLA is a positive step, but ensuring that implementations meet this SLA under load will be crucial."
+        }
+      },
+      "overallNotes": "The proposal addresses several critical issues but introduces complexity and potential operational risks that need careful monitoring and possible future adjustments.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Advisory lock + SERIALIZABLE in §2.3",
+            "detail": "Cluster A §2.3.1 mandates pg_try_advisory_xact_lock per (productId, costPool) followed by SERIALIZABLE settlement; this creates a new contention surface on Supabase serverless where cold starts already exceed the 5000ms statement_timeout, directly contradicting the claimed TOCTOU-free improvement over v2 UPDATE...WHERE."
+          },
+          {
+            "title": "5-topic ceiling in Cluster D §2.1.0-Def",
+            "detail": "The hard per-agent ship-commit limit of 5 new topics forces Agent #11 and #26 (each carrying 6+ CA-9-B topics) to split across commits, yet no migration-harness or MessageSchema validator update is specified to handle partial topic registration during the split window."
+          },
+          {
+            "title": "CEO Option A conflicts with §15.1 roster",
+            "detail": "Cluster E v3 E0 re-arbitrates Agent #26 to route through a new orchestra-research-executor sibling, but the canonical roster table in the attached CANONICAL_REFERENCE §15.1 still lists #26 as primary with auto_write_internal authority and contains no EXECUTOR_REGISTRY delta entry."
+          }
+        ],
+        "worse_than_status_quo": "The two-phase reservation contract plus mandatory heartbeat extensions and 10-heartbeat cap will cause long-running Mode 3A benchmark runs (Agent #15) to hit STALE_LEASE or HEARTBEAT_CAP_EXCEEDED far more often than the prior per-agent budget checks, turning previously successful runs into repeated aborts.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal layers multiple interlocking mechanisms (advisory locks, MIN-of-streams provenance, 5-topic ceilings, dual-authority re-routing) whose combined operational surface is larger than the original fragmentation risks they purport to solve; deferring until a single integrated prototype demonstrates net reduction in failure modes would be the safer engineering path.",
+      "votes": {
+        "CL-A-v3": {
+          "key": "CLAV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "SERIALIZABLE + advisory lock interaction under Supabase cold-start latency is untested and risks new abort storms."
+        },
+        "CL-B-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Runtime weight validation in BaseAgent.guard() is underspecified for multi-stream agents and lacks a fallback when §14.1 registry is unreachable."
+        },
+        "CL-C-v2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Mode propagation rules still leave P1 agents without a canonical way to surface pipelineMode for cross-cluster cost attribution."
+        },
+        "CL-D-v3": {
+          "key": "CLDV3-REVISE",
+          "pick_text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "5-topic ceiling lacks an exception path for agents whose charter legitimately requires >5 topics at first ship."
+        },
+        "CL-E-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "CEO Option A roster delta is not reflected in the attached canonical §15.1 table, creating an immediate inconsistency."
+        },
+        "CL-F-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "200 ms p99 SLA is stated without any measurement harness or acceptance test definition in the template."
+        }
+      },
+      "overallNotes": "Multiple cross-cluster references to §14.1 and §15.1 are already stale relative to the attached CANONICAL_REFERENCE excerpt.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CL-A-v3",
+      "topic": "Cluster A v3 — Cost Governor Integration. Conditions addressed: A1–A5 (advisory lock, lease token, SERIALIZABLE, statement_timeout extension, ordering). Is the template ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLAV3-PROMOTE",
+          "text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster A; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLAV3-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLAV3-REVISE",
+          "text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLAV3-REJECT",
+          "text": "REJECT — v3 reveals the cluster problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture."
+        }
+      ],
+      "draftedKey": "CLAV3-PROMOTE"
+    },
+    {
+      "id": "CL-B-v3",
+      "topic": "Cluster B v3 — Data Quality Gate. Conditions addressed: B1–B4 (canonical weight registry, MIN-of-streams, provenance, runtime validation). Is the template ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLBV3-PROMOTE",
+          "text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster B; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLBV3-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLBV3-REVISE",
+          "text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLBV3-REJECT",
+          "text": "REJECT — v3 reveals the cluster problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture."
+        }
+      ],
+      "draftedKey": "CLBV3-PROMOTE"
+    },
+    {
+      "id": "CL-C-v2",
+      "topic": "Cluster C v2 — Mode-Conditional Behavior. Conditions addressed: (no v3; v2 ratified QUORUM_PLURALITY_PROMOTE 7/10 in Dispatch #18). Is the template ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLCV2-PROMOTE",
+          "text": "PROMOTE — v2 cleanly addresses prior Panel conditions for Cluster C; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLCV2-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v2 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLCV2-REVISE",
+          "text": "REVISE — one or more prior conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLCV2-REJECT",
+          "text": "REJECT — v2 reveals the cluster problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture."
+        }
+      ],
+      "draftedKey": "CLCV2-PROMOTE"
+    },
+    {
+      "id": "CL-D-v3",
+      "topic": "Cluster D v3 — Audit-Log Topic Schema. Conditions addressed: D1–D3 (hash mirror, 5-topic ceiling, load-test gate). Is the template ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLDV3-PROMOTE",
+          "text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster D; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLDV3-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLDV3-REVISE",
+          "text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLDV3-REJECT",
+          "text": "REJECT — v3 reveals the cluster problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture."
+        }
+      ],
+      "draftedKey": "CLDV3-PROMOTE"
+    },
+    {
+      "id": "CL-E-v3",
+      "topic": "Cluster E v3 — Authority-Ceiling Integration. Conditions addressed: E0–E3 (CEO CA-9-Q4 Option A, §15.1 roster delta, split-brain resolution, async-cache-with-fallback). Is the template ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLEV3-PROMOTE",
+          "text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster E; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLEV3-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLEV3-REVISE",
+          "text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLEV3-REJECT",
+          "text": "REJECT — v3 reveals the cluster problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture."
+        }
+      ],
+      "draftedKey": "CLEV3-PROMOTE"
+    },
+    {
+      "id": "CL-F-v3",
+      "topic": "Cluster F v3 — Model-Budget Fallback. Conditions addressed: F1 (latency SLA acceptance criterion). Is the template ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLFV3-PROMOTE",
+          "text": "PROMOTE — v3 cleanly addresses prior Panel conditions for Cluster F; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLFV3-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v3 addresses the main conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLFV3-REVISE",
+          "text": "REVISE — one or more prior conditions is incompletely addressed, or v3 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLFV3-REJECT",
+          "text": "REJECT — v3 reveals the cluster problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture."
+        }
+      ],
+      "draftedKey": "CLFV3-PROMOTE"
+    }
+  ],
+  "templates": [
+    {
+      "file": "CLUSTER_A_COST_GOVERNOR_INTEGRATION.md",
+      "cluster": "A",
+      "label": "Cost Governor Integration",
+      "ver": "v3",
+      "conditions": "A1–A5 (advisory lock, lease token, SERIALIZABLE, statement_timeout extension, ordering)"
+    },
+    {
+      "file": "CLUSTER_B_DATA_QUALITY_GATE.md",
+      "cluster": "B",
+      "label": "Data Quality Gate",
+      "ver": "v3",
+      "conditions": "B1–B4 (canonical weight registry, MIN-of-streams, provenance, runtime validation)"
+    },
+    {
+      "file": "CLUSTER_C_MODE_CONDITIONAL_BEHAVIOR.md",
+      "cluster": "C",
+      "label": "Mode-Conditional Behavior",
+      "ver": "v2",
+      "conditions": "(no v3; v2 ratified QUORUM_PLURALITY_PROMOTE 7/10 in Dispatch #18)"
+    },
+    {
+      "file": "CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md",
+      "cluster": "D",
+      "label": "Audit-Log Topic Schema",
+      "ver": "v3",
+      "conditions": "D1–D3 (hash mirror, 5-topic ceiling, load-test gate)"
+    },
+    {
+      "file": "CLUSTER_E_AUTHORITY_CEILING_INTEGRATION.md",
+      "cluster": "E",
+      "label": "Authority-Ceiling Integration",
+      "ver": "v3",
+      "conditions": "E0–E3 (CEO CA-9-Q4 Option A, §15.1 roster delta, split-brain resolution, async-cache-with-fallback)"
+    },
+    {
+      "file": "CLUSTER_F_MODEL_BUDGET_FALLBACK.md",
+      "cluster": "F",
+      "label": "Model-Budget Fallback",
+      "ver": "v3",
+      "conditions": "F1 (latency SLA acceptance criterion)"
+    }
+  ]
+}

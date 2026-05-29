@@ -1,0 +1,831 @@
+{
+  "schema": "ca16-v2-rerun.sidecar.v1",
+  "subbatch": "sub-batch-2",
+  "bundle_size": 26867,
+  "startedAt": "2026-05-19T12:41:25.030Z",
+  "finishedAt": "2026-05-19T12:43:01.532Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 26867
+  },
+  "tally": {
+    "engagedTotal": 6,
+    "invalid": 1,
+    "tangential": 1,
+    "silent": 2,
+    "perQuestion": {
+      "CA-16-B-v2-Q1": {
+        "CA16BV2Q1-RATIFY": 3,
+        "CA16BV2Q1-PLACEHOLDER": 0,
+        "CA16BV2Q1-COMMIT29": 0,
+        "CA16BV2Q1-DEFERALL": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-16-B-v2-Q2": {
+        "CA16BV2Q2-RATIFY": 1,
+        "CA16BV2Q2-STRONGER": 0,
+        "CA16BV2Q2-REJECT": 0,
+        "CA16BV2Q2-DEFER": 0,
+        "REJECT": 5,
+        "unmatched": 0
+      },
+      "CA-16-C-v2-Q1": {
+        "CA16CV2Q1-RATIFY": 2,
+        "CA16CV2Q1-MERGE5": 1,
+        "CA16CV2Q1-SPLIT7": 0,
+        "CA16CV2Q1-DEFER": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-16-C-v2-Q2": {
+        "CA16CV2Q2-RATIFY": 2,
+        "CA16CV2Q2-FLOOR090": 0,
+        "CA16CV2Q2-LOOSER": 3,
+        "CA16CV2Q2-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-16-C-v2-Q3": {
+        "CA16CV2Q3-RATIFY": 4,
+        "CA16CV2Q3-CO_OWN": 0,
+        "CA16CV2Q3-NEW27": 0,
+        "CA16CV2Q3-DEFER": 1,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 25,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Cost object underspecified",
+        "detail": "The §7 item #8 cost object defines risk_tier and blast_radius as enums but provides no canonical values or severity mapping. Without standardized enum values, different agents will interpret 'high' risk differently, leading to inconsistent recommendation filtering."
+      },
+      {
+        "slot": 1,
+        "title": "Rollback procedure unenforceable",
+        "detail": "The rollback.revert_procedure is a free-text string with no schema validation or step structure. CA16A-v2-CT-3 only triggers warnings for non-revertable accepted recs, but doesn't prevent operators from accepting recommendations with empty or nonsensical revert procedures."
+      },
+      {
+        "slot": 1,
+        "title": "Deferred recommendations zombie problem",
+        "detail": "§7 item #8 states deferred recommendations 're-surface automatically' after defer window, but provides no mechanism to prevent infinite defer cycles. An operator could defer the same recommendation every 14 days forever, creating zombie recommendations that consume dashboard space without resolution."
+      },
+      {
+        "slot": 1,
+        "title": "Multi-format confidence floor arbitrary",
+        "detail": "CA-16-C-v2-Q2's 0.85 confidence floor for target classification has no empirical basis provided. The proposal doesn't cite any testing data showing why 0.85 prevents misclassification better than 0.80 or 0.90, making this a magic number that will require constant tuning."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback mechanism in case the Redesign/Build Environment section number is deferred to engineering dispatch and later found to be incorrect. This could lead to inconsistencies in the canonical reference. (§29 numbering DEFERRED)"
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Validation",
+        "detail": "The minimal canonical envelope for proactive recommendations does not include sufficient validation rules, which could lead to incorrect or incomplete data being stored. (§7 Proactive Recommendations envelope)"
+      },
+      {
+        "slot": 3,
+        "title": "Overly Broad Classification",
+        "detail": "The 6-class Multi-Format taxonomy may be too broad, potentially leading to incorrect classification of targets. A more granular approach may be necessary to ensure accurate classification. (CA-16-C v2 Q1)"
+      },
+      {
+        "slot": 4,
+        "title": "Over-complication of defer-window",
+        "detail": "The introduction of a per-product defer-window for recommendations adds unnecessary complexity. Operators will struggle to manage varying defer-windows across multiple products, leading to inconsistencies. §7 item #8 + §3 admin config."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of rollback mechanism",
+        "detail": "The proposal introduces a rollback object but does not specify a clear mechanism for rolling back accepted recommendations. This could lead to situations where accepted recommendations cause issues but cannot be easily reverted. §7 item #8."
+      },
+      {
+        "slot": 4,
+        "title": "Inadequate cost estimation",
+        "detail": "The cost object includes an effort_hours_estimate, but there is no guidance on how this estimate is derived. Without a standardized method for cost estimation, the field becomes subjective and unreliable. §7 item #8."
+      },
+      {
+        "slot": 4,
+        "title": "Vague operator-steerable rebuild wording",
+        "detail": "The wording for 'operator-steerable rebuild' is too vague and does not provide a concrete workflow for operators. This lack of clarity could lead to misinterpretations and inconsistent implementations. §CA-16-B v2 Q2."
+      },
+      {
+        "slot": 5,
+        "title": "Insufficient Testing",
+        "detail": "The proposal does not provide adequate details on the testing strategy for the new features, particularly for the stricter classifier and the new agent roles."
+      },
+      {
+        "slot": 5,
+        "title": "Ambiguity in Rollback Mechanism",
+        "detail": "The rollback mechanism for accepted recommendations is not clearly defined, which could lead to difficulties in reverting changes if necessary."
+      },
+      {
+        "slot": 5,
+        "title": "Lack of Clear Criteria for Defer-Window",
+        "detail": "The per-product defer-window lacks clear criteria for its application, which could lead to inconsistent use across different products."
+      },
+      {
+        "slot": 6,
+        "title": "Cost object underspecified",
+        "detail": "The `cost` object in the Proactive Recommendations envelope (§7) only includes `effort_hours_estimate`, `risk_tier`, and `blast_radius`. It lacks a field for monetary cost, which is a crucial factor in evaluating recommendations."
+      },
+      {
+        "slot": 6,
+        "title": "Rollback procedure ambiguity",
+        "detail": "The `rollback.revert_procedure` field in §7 is optional and human-readable. This lacks the precision needed for automated or semi-automated rollback, potentially leading to inconsistent or unreliable rollback processes."
+      },
+      {
+        "slot": 6,
+        "title": "Classifier confidence floor fragility",
+        "detail": "The stricter classifier in CA-16-C-Q2, with a confidence floor of 0.85, might be too rigid. Small variations in input data could cause frequent `target_class_ambiguous` findings, overwhelming operators with dispute resolution tasks."
+      },
+      {
+        "slot": 6,
+        "title": "Agent ownership rigidity",
+        "detail": "Assigning Agent #21 as the sole owner of Multi-Format target classification (CA-16-C-Q3) creates a single point of failure. If Agent #21 malfunctions or becomes outdated, the entire classification process is compromised."
+      },
+      {
+        "slot": 7,
+        "title": "Crawl hard caps bypass risk",
+        "detail": "The crawl scope (§6) allows engineering to override hard caps via Doppler variables without documented approval steps. This creates an uncontrolled vector for resource exhaustion attacks if malicious actors gain access to environment configuration. The absence of runtime monitoring for crawl depth/page overrides could lead to denial-of-service on SUT infrastructure."
+      },
+      {
+        "slot": 7,
+        "title": "Rollback procedure gaps",
+        "detail": "The proactive recommendations rollback object (§7 item #8) permits `revertable: false` entries without mandatory justification or admin confirmation override. This violates FlowAI's reversibility principle (CA-14-B) by allowing irreversible changes via recommendations. The validation CT-3 only triggers a weak warning, insufficient for high-blast-radius changes."
+      },
+      {
+        "slot": 7,
+        "title": "Cost estimation ambiguity",
+        "detail": "The new cost.effort_hours_estimate field lacks validation rules or estimation methodology requirements. Agents could emit arbitrary values (e.g., 0-hour estimates for complex features), misleading operators during disposition. This undermines the cost-benefit analysis intended by slot #14's objection resolution."
+      },
+      {
+        "slot": 7,
+        "title": "Classifier severity inflation",
+        "detail": "The stricter Multi-Format classifier (§C-Q2) emits ambiguous class findings at 'high' severity unconditionally. For low-risk hybrid targets (e.g., PWAs with minor rendering quirks), this could flood operators with false-positive high-severity tickets, diluting attention from genuine critical defects."
+      },
+      {
+        "slot": 10,
+        "title": "Minimal envelope lacks validation",
+        "detail": "In CA-16-A v2 §7 Proactive Recommendations, the added cost and rollback objects reference conformance tests CA16A-v2-CT-2 and CT-3 but provide no enforcement mechanism for risk_tier or revertable fields beyond a single admin warning, allowing inconsistent ProductSSOT rows across environments."
+      },
+      {
+        "slot": 10,
+        "title": "Section deferral creates ambiguity",
+        "detail": "CA-16-B-Q1 v2 defers Redesign/Build Environment section number to engineering dispatch while still referencing RB-Env scope in canonical text, conflicting with the §18.4 entry-time decision process already defined in the FlowAI CANONICAL REFERENCE §7.5 ProductSSOT update contract."
+      },
+      {
+        "slot": 10,
+        "title": "Stricter classifier floods findings",
+        "detail": "CA-16-C-v2-Q2 mandates 0.85 confidence floor emitting target_class_ambiguous at high severity for the 6-class taxonomy in §6, yet the Aggressive Crawling contract in §6 has no corresponding update to its deliberate error-state triggers or network log capture to handle the resulting volume."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-16-B-v2-Q1": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between CA16BV2Q1-RATIFY / REJECT",
+      "topKey": "CA16BV2Q1-RATIFY",
+      "topCount": 3
+    },
+    "CA-16-B-v2-Q2": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "5 of 6 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 5
+    },
+    "CA-16-C-v2-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "3 of 6 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 3
+    },
+    "CA-16-C-v2-Q2": {
+      "verdict": "PLURALITY_CA16CV2Q2-LOOSER",
+      "detail": "3 of 6 on CA16CV2Q2-LOOSER (below 7/10 quorum)",
+      "topKey": "CA16CV2Q2-LOOSER",
+      "topCount": 3
+    },
+    "CA-16-C-v2-Q3": {
+      "verdict": "PLURALITY_CA16CV2Q3-RATIFY",
+      "detail": "4 of 6 on CA16CV2Q3-RATIFY (below 7/10 quorum)",
+      "topKey": "CA16CV2Q3-RATIFY",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.4,
+    "alignedCount": 12,
+    "totalPossible": 30,
+    "draftedQs": [
+      "CA-16-B-v2-Q1",
+      "CA-16-B-v2-Q2",
+      "CA-16-C-v2-Q1",
+      "CA-16-C-v2-Q2",
+      "CA-16-C-v2-Q3"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 40.0 %, distinct objections 25"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Cost object underspecified",
+            "detail": "The §7 item #8 cost object defines risk_tier and blast_radius as enums but provides no canonical values or severity mapping. Without standardized enum values, different agents will interpret 'high' risk differently, leading to inconsistent recommendation filtering."
+          },
+          {
+            "title": "Rollback procedure unenforceable",
+            "detail": "The rollback.revert_procedure is a free-text string with no schema validation or step structure. CA16A-v2-CT-3 only triggers warnings for non-revertable accepted recs, but doesn't prevent operators from accepting recommendations with empty or nonsensical revert procedures."
+          },
+          {
+            "title": "Deferred recommendations zombie problem",
+            "detail": "§7 item #8 states deferred recommendations 're-surface automatically' after defer window, but provides no mechanism to prevent infinite defer cycles. An operator could defer the same recommendation every 14 days forever, creating zombie recommendations that consume dashboard space without resolution."
+          },
+          {
+            "title": "Multi-format confidence floor arbitrary",
+            "detail": "CA-16-C-v2-Q2's 0.85 confidence floor for target classification has no empirical basis provided. The proposal doesn't cite any testing data showing why 0.85 prevents misclassification better than 0.80 or 0.90, making this a magic number that will require constant tuning."
+          }
+        ],
+        "worse_than_status_quo": "The elimination of recommendations from §11 Clearance flow (CA-16-A-Q2 v2) creates a parallel governance track where critical improvements could be permanently ignored, whereas status quo at least forces operators to explicitly review all system outputs in a single flow.",
+        "precedent": "Kubernetes' admission webhooks started as optional side-channel validators but eventually had to be integrated into the main admission flow because critical security policies were being bypassed when operators forgot to check the separate webhook dashboard."
+      },
+      "rejection_steelman": "The proposal fragments governance by creating a separate recommendation track outside §11 Clearance, adds two new fields (cost/rollback) without standardized validation schemas, and introduces arbitrary confidence thresholds without empirical justification. Deferring both the recommendation schema details and RB-Env section numbering to engineering dispatch undermines the SSOT's purpose of providing canonical specifications, essentially making this amendment a placeholder that adds complexity without concrete implementation guidance.",
+      "votes": {
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (section number = engineering decision).",
+          "rationale": "While deferring numbering weakens canonical specificity, it's preferable to committing to a number for an underspecified surface that multiple reviewers flagged as not ready."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording is too vague; needs concrete operator workflow spec in canonical.",
+          "rationale": "The 'operator-steerable rebuild' provides no concrete steps, approval gates, or rollback mechanisms, making it impossible to implement consistently across products."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — defer canonical taxonomy until ≥1 product per class is in ProductSSOT.",
+          "rationale": "Committing to 6 classes without any products actually using native_app or agentic_ai categories creates empty taxonomy slots that may never match real-world usage patterns."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-LOOSER",
+          "pick_text": "Ratify with looser floor — 0.75; ambiguity emits at `medium`.",
+          "rationale": "The 0.85 floor will generate excessive false-positive high-severity findings for hybrid formats like PWAs; 0.75 with medium severity provides more operational headroom while still flagging ambiguity."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "Agent #21 ACE Conductor already has CA-14-A-Q3 cleared ownership scope for orchestration tasks; target classification is a natural extension of its existing charter."
+        }
+      },
+      "overallNotes": "The v2 revisions address some objections but create new problems by fragmenting governance and deferring too much to engineering dispatch.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback mechanism in case the Redesign/Build Environment section number is deferred to engineering dispatch and later found to be incorrect. This could lead to inconsistencies in the canonical reference. (§29 numbering DEFERRED)"
+          },
+          {
+            "title": "Insufficient Validation",
+            "detail": "The minimal canonical envelope for proactive recommendations does not include sufficient validation rules, which could lead to incorrect or incomplete data being stored. (§7 Proactive Recommendations envelope)"
+          },
+          {
+            "title": "Overly Broad Classification",
+            "detail": "The 6-class Multi-Format taxonomy may be too broad, potentially leading to incorrect classification of targets. A more granular approach may be necessary to ensure accurate classification. (CA-16-C v2 Q1)"
+          }
+        ],
+        "worse_than_status_quo": "If the proposal is implemented without sufficient validation and rollback mechanisms, it could lead to a decrease in data quality and an increase in errors, making the system worse than the status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it does not provide sufficient guarantees about the quality and consistency of the data stored in the canonical reference. The lack of a clear rollback mechanism and insufficient validation rules could lead to errors and inconsistencies that would be difficult to correct.",
+      "votes": {
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (section number = engineering decision).",
+          "rationale": "This option allows for flexibility in the section numbering while still providing a clear direction for the engineering team."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording is too vague; needs concrete operator workflow spec in canonical.",
+          "rationale": "The current wording is too vague and does not provide sufficient guidance for operators, which could lead to confusion and errors."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (6 classes).",
+          "rationale": "The 6-class taxonomy provides a good balance between granularity and simplicity, and it is better to start with a more detailed approach and refine it later if necessary."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`).",
+          "rationale": "The stricter classifier provides a good balance between accuracy and robustness, and the 0.85 confidence floor is a reasonable threshold for emitting `target_class_ambiguous` findings."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "Agent #21 is already responsible for related tasks, and it makes sense to assign ownership of Multi-Format target classification to the same agent for consistency and efficiency."
+        }
+      },
+      "overallNotes": "The proposal has some good ideas, but it needs more refinement and attention to detail to ensure that it does not introduce errors or inconsistencies into the system.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Over-complication of defer-window",
+            "detail": "The introduction of a per-product defer-window for recommendations adds unnecessary complexity. Operators will struggle to manage varying defer-windows across multiple products, leading to inconsistencies. §7 item #8 + §3 admin config."
+          },
+          {
+            "title": "Lack of rollback mechanism",
+            "detail": "The proposal introduces a rollback object but does not specify a clear mechanism for rolling back accepted recommendations. This could lead to situations where accepted recommendations cause issues but cannot be easily reverted. §7 item #8."
+          },
+          {
+            "title": "Inadequate cost estimation",
+            "detail": "The cost object includes an effort_hours_estimate, but there is no guidance on how this estimate is derived. Without a standardized method for cost estimation, the field becomes subjective and unreliable. §7 item #8."
+          },
+          {
+            "title": "Vague operator-steerable rebuild wording",
+            "detail": "The wording for 'operator-steerable rebuild' is too vague and does not provide a concrete workflow for operators. This lack of clarity could lead to misinterpretations and inconsistent implementations. §CA-16-B v2 Q2."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of a per-product defer-window will create a management overhead for operators, leading to inconsistencies and potential mismanagement of recommendations, making the system worse than the current status quo where a fixed window is applied uniformly.",
+        "precedent": "The introduction of complex configurable settings in systems like Kubernetes has led to management overhead and inconsistencies, as operators struggle to manage varying configurations across different clusters."
+      },
+      "rejection_steelman": "The proposal should be deferred until a more comprehensive and clear mechanism for cost estimation and rollback is provided. The current vagueness and complexity introduced by the per-product defer-window and lack of rollback mechanism could lead to significant issues in implementation and management.",
+      "votes": {
+        "CA-16-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — RB-Env should not be canonical yet; defer whole surface to later CA-N.",
+          "rationale": "The Redesign/Build Environment is not ready for canonical commitment due to the lack of a clear rollback mechanism and the complexity introduced by the per-product defer-window."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording is too vague; needs concrete operator workflow spec in canonical.",
+          "rationale": "The current wording for 'operator-steerable rebuild' is too vague and does not provide a concrete workflow for operators, leading to potential misinterpretations."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-MERGE5",
+          "pick_text": "Ratify with one merge — web + mobile_app merge into web_or_pwa (5-class).",
+          "rationale": "Merging web and mobile_app into a single class would simplify the taxonomy and make it more manageable."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-LOOSER",
+          "pick_text": "Ratify with looser floor — 0.75; ambiguity emits at `medium`.",
+          "rationale": "A looser confidence floor of 0.75 with ambiguity emitting at 'medium' would provide a balance between strictness and practicality."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "Agent #21 is well-positioned to own the Multi-Format target classification, given its existing capabilities and scope."
+        }
+      },
+      "overallNotes": "The proposal introduces several complexities and vague wordings that need to be addressed before ratification.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not provide adequate details on the testing strategy for the new features, particularly for the stricter classifier and the new agent roles."
+          },
+          {
+            "title": "Ambiguity in Rollback Mechanism",
+            "detail": "The rollback mechanism for accepted recommendations is not clearly defined, which could lead to difficulties in reverting changes if necessary."
+          },
+          {
+            "title": "Lack of Clear Criteria for Defer-Window",
+            "detail": "The per-product defer-window lacks clear criteria for its application, which could lead to inconsistent use across different products."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of stricter classification rules without sufficient testing could lead to more false positives, disrupting the current workflow more than the status quo.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal introduces significant changes without sufficient testing and clear criteria, which could lead to operational disruptions and difficulties in managing the new features.",
+      "votes": {
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (section number = engineering decision).",
+          "rationale": "Deferring the section number allows for flexibility in implementation."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "CA16BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (carry-forward).",
+          "rationale": "The current wording is sufficient and does not require changes."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (6 classes).",
+          "rationale": "The current taxonomy is comprehensive and does not need changes."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`).",
+          "rationale": "The stricter classifier provides better accuracy and reduces ambiguity."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "Agent #21 is already designated for this role and should continue to own it."
+        }
+      },
+      "overallNotes": "The proposal requires more detailed testing plans and clearer criteria for new features to ensure smooth implementation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Cost object underspecified",
+            "detail": "The `cost` object in the Proactive Recommendations envelope (§7) only includes `effort_hours_estimate`, `risk_tier`, and `blast_radius`. It lacks a field for monetary cost, which is a crucial factor in evaluating recommendations."
+          },
+          {
+            "title": "Rollback procedure ambiguity",
+            "detail": "The `rollback.revert_procedure` field in §7 is optional and human-readable. This lacks the precision needed for automated or semi-automated rollback, potentially leading to inconsistent or unreliable rollback processes."
+          },
+          {
+            "title": "Classifier confidence floor fragility",
+            "detail": "The stricter classifier in CA-16-C-Q2, with a confidence floor of 0.85, might be too rigid. Small variations in input data could cause frequent `target_class_ambiguous` findings, overwhelming operators with dispute resolution tasks."
+          },
+          {
+            "title": "Agent ownership rigidity",
+            "detail": "Assigning Agent #21 as the sole owner of Multi-Format target classification (CA-16-C-Q3) creates a single point of failure. If Agent #21 malfunctions or becomes outdated, the entire classification process is compromised."
+          }
+        ],
+        "worse_than_status_quo": "The stricter classifier (0.85 confidence floor) could lead to a flood of `target_class_ambiguous` findings, overwhelming operators and making the system less usable than the status quo where it silently falls back to `generic_url`.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal introduces several changes that, while aiming to improve the system, are either underspecified or potentially too rigid. The underspecified cost object and rollback procedure could lead to inconsistent implementation, while the stricter classifier and agent ownership could create operational bottlenecks and single points of failure. Deferring the entire proposal would allow for further refinement and address these concerns before introducing potentially disruptive changes.",
+      "votes": {
+        "CA-16-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — RB-Env should not be canonical yet; defer whole surface to later CA-N.",
+          "rationale": "Given the concerns about rollback and scope creep, it's premature to make the Redesign/Build Environment canonical. Deferring the entire surface allows for more thorough planning and risk assessment."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording is too vague; needs concrete operator workflow spec in canonical.",
+          "rationale": "The \"operator-steerable rebuild\" wording lacks concrete details about the operator workflow. A more specific workflow specification is needed to ensure consistent and reliable operation."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — defer canonical taxonomy until ≥1 product per class is in ProductSSOT.",
+          "rationale": "It's premature to ratify the taxonomy before having sufficient real-world examples in ProductSSOT. Deferring until there's at least one product per class ensures the taxonomy is grounded in practical use cases."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-LOOSER",
+          "pick_text": "Ratify with looser floor — 0.75; ambiguity emits at `medium`.",
+          "rationale": "A 0.85 confidence floor is too strict and will likely lead to an overwhelming number of ambiguous classifications. A 0.75 floor, with ambiguity emitting at `medium`, strikes a better balance between accuracy and manageability."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — a separate new Agent #27 should own classification.",
+          "rationale": "Creating a new agent dedicated to multi-format classification allows for a more focused and specialized approach. This avoids overloading Agent #21 with additional responsibilities and potentially diluting its primary function."
+        }
+      },
+      "overallNotes": "The proposal needs more refinement before being ratified. The cost object, rollback procedure, classifier confidence floor, and agent ownership all require further consideration.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Crawl hard caps bypass risk",
+            "detail": "The crawl scope (§6) allows engineering to override hard caps via Doppler variables without documented approval steps. This creates an uncontrolled vector for resource exhaustion attacks if malicious actors gain access to environment configuration. The absence of runtime monitoring for crawl depth/page overrides could lead to denial-of-service on SUT infrastructure."
+          },
+          {
+            "title": "Rollback procedure gaps",
+            "detail": "The proactive recommendations rollback object (§7 item #8) permits `revertable: false` entries without mandatory justification or admin confirmation override. This violates FlowAI's reversibility principle (CA-14-B) by allowing irreversible changes via recommendations. The validation CT-3 only triggers a weak warning, insufficient for high-blast-radius changes."
+          },
+          {
+            "title": "Cost estimation ambiguity",
+            "detail": "The new cost.effort_hours_estimate field lacks validation rules or estimation methodology requirements. Agents could emit arbitrary values (e.g., 0-hour estimates for complex features), misleading operators during disposition. This undermines the cost-benefit analysis intended by slot #14's objection resolution."
+          },
+          {
+            "title": "Classifier severity inflation",
+            "detail": "The stricter Multi-Format classifier (§C-Q2) emits ambiguous class findings at 'high' severity unconditionally. For low-risk hybrid targets (e.g., PWAs with minor rendering quirks), this could flood operators with false-positive high-severity tickets, diluting attention from genuine critical defects."
+          }
+        ],
+        "worse_than_status_quo": "Operators accepting non-revertable recommendations with underestimated cost fields could deploy high-risk changes during peak traffic. With no enforced rollback procedure and ambiguous risk_tier classifications, a flawed accessibility 'improvement' might break core checkout flows. Unlike pre-v2 manual deployments, the automated RB-Env could propagate this system-wide before detection, causing revenue loss exceeding status-quo outage windows.",
+        "precedent": "Amazon's 2021 Prime Day pre-deployment crawl overload incident: aggressive automated crawling with configurable depth caps triggered cascading failures in internal services after a team overrode safety limits, resembling the Doppler bypass risk in §6."
+      },
+      "rejection_steelman": "This proposal introduces multiple high-risk surfaces without adequate safeguards: irreversible recommendations could be accepted via ambiguous cost fields, crawl overrides enable infrastructure attacks, and the strict classifier creates alert fatigue. Deferring schema details to engineering invites inconsistent implementations. Given these unmitigated risks, rejecting v2 to mandate stronger reversibility guards and crawl override audits would prevent systemic fragility.",
+      "votes": {
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (section number = engineering decision).",
+          "rationale": "Deferring section numbering avoids premature commitment while allowing implementation flexibility, satisfying the core objection about scope rigidity."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": null,
+          "pick_text": "Ratify with stronger admin-gating wording — 'operator initiates; admin approves'.",
+          "rationale": "The v1 wording lacks explicit approval mechanics; adding admin gate addresses slot #24's underspecification concern while preserving operator workflow."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "CA16CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (6 classes).",
+          "rationale": "The taxonomy covers observed product diversity; merging web/mobile_app would lose native-app distinction critical for engine selection."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`).",
+          "rationale": "0.85 balances strictness with practicality; reducing severity to medium would undermine ambiguity urgency per slot #17 objections."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns).",
+          "rationale": "Agent #21's existing Phase B ownership provides coherence; creating a new agent would violate CA-14-A-Q3 invariants without justification."
+        }
+      },
+      "overallNotes": "Critical vulnerabilities in rollback and cost fields require immediate engineering dispatch constraints to prevent irreversible harm.",
+      "invalid_reason": "4/5 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "INVALID",
+      "adversarial": {
+        "valid": false,
+        "reason": "precedent missing"
+      },
+      "rejection_steelman": "The proposal makes significant changes to the handling of proactive recommendations and multi-format targets without sufficient testing and validation mechanisms in place. Rejecting or deferring the proposal would allow for more thorough testing and refinement of these features before they are canonicalized.",
+      "votes": {
+        "CA-16-B-v2-Q1": {
+          "key": "CA16BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (section number = engineering decision)",
+          "rationale": "Deferring the section number to engineering dispatch allows for flexibility and does not lock in a potentially suboptimal section number."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "CA16BV2Q2-STRONGER",
+          "pick_text": "Ratify with stronger admin-gating wording — \"operator initiates; admin approves\"",
+          "rationale": "Adding stronger admin-gating wording provides clearer guidance on the workflow and ensures that rebuilds are properly authorized and reviewed."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The 6-class taxonomy may not be ideal, but merging or splitting classes could have unintended consequences. A more nuanced approach to classification may be needed."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "CA16CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`)",
+          "rationale": "A stricter confidence floor and explicit handling of ambiguity are necessary to ensure that classifications are reliable and that potential issues are flagged appropriately."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (Agent #21 owns)",
+          "rationale": "Agent #21 is already assigned to own Multi-Format target detection and classification per CA-14-A-Q3 ENTRY 015. Retaining this ownership ensures continuity and coherence in the system's design."
+        }
+      },
+      "overallNotes": "The proposal requires careful consideration of testing and validation mechanisms for new features.",
+      "invalid_reason": "adversarial pass: precedent missing",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Minimal envelope lacks validation",
+            "detail": "In CA-16-A v2 §7 Proactive Recommendations, the added cost and rollback objects reference conformance tests CA16A-v2-CT-2 and CT-3 but provide no enforcement mechanism for risk_tier or revertable fields beyond a single admin warning, allowing inconsistent ProductSSOT rows across environments."
+          },
+          {
+            "title": "Section deferral creates ambiguity",
+            "detail": "CA-16-B-Q1 v2 defers Redesign/Build Environment section number to engineering dispatch while still referencing RB-Env scope in canonical text, conflicting with the §18.4 entry-time decision process already defined in the FlowAI CANONICAL REFERENCE §7.5 ProductSSOT update contract."
+          },
+          {
+            "title": "Stricter classifier floods findings",
+            "detail": "CA-16-C-v2-Q2 mandates 0.85 confidence floor emitting target_class_ambiguous at high severity for the 6-class taxonomy in §6, yet the Aggressive Crawling contract in §6 has no corresponding update to its deliberate error-state triggers or network log capture to handle the resulting volume."
+          }
+        ],
+        "worse_than_status_quo": "Per-product defer-window in product_registry allows operators to set 365-day bounds, causing proactive recommendations to vanish from dashboards longer than the prior fixed 14-day window and reducing visibility of improvements compared to the v1 status quo.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "Repeated deferral of full schema invariants, section numbering, and ownership details to engineering dispatch fragments the SSOT's role as a stable living document, risking divergent implementations that the atomic ProductSSOT delta_log and Self-Renewal safety-invariants in §7 cannot reliably police.",
+      "votes": {
+        "CA-16-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — RB-Env should not be canonical yet; defer whole surface to later CA-N.",
+          "rationale": "Deferral of section number without full scope ratification leaves integration points underspecified relative to existing §7 output contract."
+        },
+        "CA-16-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — wording is too vague; needs concrete operator workflow spec in canonical.",
+          "rationale": "Current operator-steerable rebuild language provides no workflow details that would satisfy the per-fix attribution requirement in §7.6."
+        },
+        "CA-16-C-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — defer canonical taxonomy until ≥1 product per class is in ProductSSOT.",
+          "rationale": "The 6-class taxonomy lacks coverage testing against the depth-bounded spider limits defined in the Aggressive Crawling contract."
+        },
+        "CA-16-C-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — restore v1 silent fallback to `generic_url`.",
+          "rationale": "0.85 floor with high-severity emission risks overwhelming the network log capture and error-state triggers without corresponding capacity adjustments."
+        },
+        "CA-16-C-v2-Q3": {
+          "key": "CA16CV2Q3-DEFER",
+          "pick_text": "Defer — ownership belongs in agent registry, not canonical SSOT spec.",
+          "rationale": "Assigning Agent #21 ownership here bypasses the roster update process shown in §15.1 and the BaseAgent.guard() dual-authority pattern."
+        }
+      },
+      "overallNotes": "Multiple deferrals concentrate risk in downstream engineering dispatches without rollback safeguards.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-16-B-v2-Q1",
+      "topic": "CA-16-B v2 Q1 — Does Panel ratify deferring the Redesign/Build Environment section number to engineering dispatch?",
+      "options": [
+        {
+          "key": "CA16BV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted (section number = engineering decision)."
+        },
+        {
+          "key": "CA16BV2Q1-PLACEHOLDER",
+          "text": "Ratify with placeholder §29-DRAFT in v2; engineering finalizes at promotion."
+        },
+        {
+          "key": "CA16BV2Q1-COMMIT29",
+          "text": "Reject — commit to §29 in v2; renumbering is cosmetic non-issue."
+        },
+        {
+          "key": "CA16BV2Q1-DEFERALL",
+          "text": "Reject — RB-Env should not be canonical yet; defer whole surface to later CA-N."
+        }
+      ],
+      "draftedKey": "CA16BV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-16-B-v2-Q2",
+      "topic": "CA-16-B v2 Q2 — Does Panel ratify the v2 \"operator-steerable rebuild\" wording (same as v1)?",
+      "options": [
+        {
+          "key": "CA16BV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted (carry-forward)."
+        },
+        {
+          "key": "CA16BV2Q2-STRONGER",
+          "text": "Ratify with stronger admin-gating wording — \"operator initiates; admin approves\"."
+        },
+        {
+          "key": "CA16BV2Q2-REJECT",
+          "text": "Reject — wording is too vague; needs concrete operator workflow spec in canonical."
+        },
+        {
+          "key": "CA16BV2Q2-DEFER",
+          "text": "Defer to engineering dispatch entirely."
+        }
+      ],
+      "draftedKey": "CA16BV2Q2-RATIFY"
+    },
+    {
+      "id": "CA-16-C-v2-Q1",
+      "topic": "CA-16-C v2 Q1 — Does Panel ratify the 6-class Multi-Format taxonomy (web / mobile_app / native_app / saas / agentic_ai / generic_url)?",
+      "options": [
+        {
+          "key": "CA16CV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted (6 classes)."
+        },
+        {
+          "key": "CA16CV2Q1-MERGE5",
+          "text": "Ratify with one merge — web + mobile_app merge into web_or_pwa (5-class)."
+        },
+        {
+          "key": "CA16CV2Q1-SPLIT7",
+          "text": "Ratify with one split — agentic_ai splits into agentic_ai_chat + agentic_ai_api (7-class)."
+        },
+        {
+          "key": "CA16CV2Q1-DEFER",
+          "text": "Reject — defer canonical taxonomy until ≥1 product per class is in ProductSSOT."
+        }
+      ],
+      "draftedKey": "CA16CV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-16-C-v2-Q2",
+      "topic": "CA-16-C v2 Q2 — Does Panel ratify the stricter classifier (confidence floor 0.85; sub-floor ambiguity emits `target_class_ambiguous.v1` at `high`)?",
+      "options": [
+        {
+          "key": "CA16CV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted (0.85 floor; ambiguity emits `high`)."
+        },
+        {
+          "key": "CA16CV2Q2-FLOOR090",
+          "text": "Ratify with stricter floor — 0.90 (not 0.85)."
+        },
+        {
+          "key": "CA16CV2Q2-LOOSER",
+          "text": "Ratify with looser floor — 0.75; ambiguity emits at `medium`."
+        },
+        {
+          "key": "CA16CV2Q2-REJECT",
+          "text": "Reject — restore v1 silent fallback to `generic_url`."
+        }
+      ],
+      "draftedKey": "CA16CV2Q2-RATIFY"
+    },
+    {
+      "id": "CA-16-C-v2-Q3",
+      "topic": "CA-16-C v2 Q3 — Does Panel ratify Agent #21 ACE Conductor as owner of Multi-Format target classification?",
+      "options": [
+        {
+          "key": "CA16CV2Q3-RATIFY",
+          "text": "Ratify v2 as drafted (Agent #21 owns)."
+        },
+        {
+          "key": "CA16CV2Q3-CO_OWN",
+          "text": "Ratify with co-ownership — Agent #21 + Agent #26 jointly own."
+        },
+        {
+          "key": "CA16CV2Q3-NEW27",
+          "text": "Reject — a separate new Agent #27 should own classification."
+        },
+        {
+          "key": "CA16CV2Q3-DEFER",
+          "text": "Defer — ownership belongs in agent registry, not canonical SSOT spec."
+        }
+      ],
+      "draftedKey": "CA16CV2Q3-RATIFY"
+    }
+  ]
+}

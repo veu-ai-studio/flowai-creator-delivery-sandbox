@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { CheckCircle2, AlertCircle, ChevronRight, TrendingUp, DollarSign, Zap, Shield } from 'lucide-react';
+import { CheckCircle2, TrendingUp, DollarSign, Zap } from 'lucide-react';
 
 function ConfidenceBar({ value }) {
   const color = value >= 75 ? 'bg-emerald-500' : value >= 50 ? 'bg-amber-500' : 'bg-red-500';

@@ -171,7 +171,7 @@ export default function InvestorStudio() {
    - PressAI: AI publishing for authors and publishers
    - ReachSMS: SMS community engagement for nonprofits
    - RelTwin: relationship intelligence for coaches and HR
-   - MyBirthSafe: maternal health tracking for Africa
+   - MyPregLife: maternal health tracking for Africa
 
 CRITICAL — CITATIONS FOR ALL DATA: For every statistic, percentage, benchmark, market size figure, or data point you include, provide a source citation in parentheses immediately after the figure. Use real, verifiable sources — EPA, AASHE, WHO, McKinsey, Gartner, IDC, Nielsen, industry associations, government databases, or peer-reviewed research. Format as: [statistic] (Source: [Organization], [Year]). Never invent statistics. If you cannot cite a real source, do not include that figure.
 
@@ -185,7 +185,7 @@ Return JSON with keys: hero_html, thesis_html, products_html (each containing pl
     const section2 = await base44.integrations.Core.InvokeLLM({
       prompt: `You are FlowAI's portfolio page generator. Generate ONLY sections 4-6 for the VEU AI Studio portfolio page.
 
-4. MARKET OPPORTUNITY — Combined TAM across all five markets (SAIGE, PressAI, ReachSMS, RelTwin, MyBirthSafe) with specific, sourced data
+4. MARKET OPPORTUNITY — Combined TAM across all five markets (SAIGE, PressAI, ReachSMS, RelTwin, MyPregLife) with specific, sourced data
 
 5. COMPETITIVE ADVANTAGE — Why VEU AI Studio's domain expertise, African market knowledge, and FlowAI infrastructure create an insurmountable moat
 

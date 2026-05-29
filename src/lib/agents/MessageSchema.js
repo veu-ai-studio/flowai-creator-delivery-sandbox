@@ -13,7 +13,12 @@
 const ENVELOPE_VERSION = '1.0.0';
 
 const VALID_PRODUCT_SCOPES = new Set([
-  'flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mybirthsafe',
+  'flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mypreglife',
+  // System-only scope reserved for the FlowAI self-adversarial test
+  // suite (docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md §11.8).
+  // Mirrors the BaseAgent PRODUCT_SCOPES.TEST entry. Test rows are
+  // cleaned up between runs by scripts/cleanup-test-tenant.mjs.
+  '_test',
 ]);
 
 const TOPICS = Object.freeze({
@@ -28,6 +33,10 @@ const TOPICS = Object.freeze({
   // --- Agent #3 Self-Renewal ---
   '3.renewal.candidate.v1':             'Self-renewal proposes an update',
   '3.renewal.applied.v1':               'Renewal applied to a product surface',
+  '3.renewal.initiated.v1':             'Renewal job started (sync endpoint or Inngest async)',
+  '3.renewal.completed.v1':             'Renewal job finished — terminal success envelope',
+  '3.renewal.failed.v1':                'Renewal job finished — terminal failure envelope',
+  '3.renewal.status.v1':                'Renewal job in-flight progress (phase, percent, hint)',
 
   // --- Agent #4 Provider Onboarding (FlowAI-only) ---
   '4.provider.onboarded.v1':            'New solution provider activated',
@@ -169,7 +178,7 @@ function validateEnvelope(env) {
   }
   if (!env.from || typeof env.from !== 'object') throw new Error('envelope.from must be object');
   _required(env.from, ['agentId', 'productScope']);
-  if (!Number.isInteger(env.from.agentId) || env.from.agentId < 1 || env.from.agentId > 20) {
+  if (!Number.isInteger(env.from.agentId) || env.from.agentId < 1 || env.from.agentId > 25) {
     if (env.from.agentId !== 'system' && env.from.agentId !== 'portfolio') {
       throw new Error(`envelope.from.agentId invalid: ${env.from.agentId}`);
     }

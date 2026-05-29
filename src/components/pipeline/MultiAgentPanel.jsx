@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Brain, Loader2, Play, CheckCircle2, XCircle, ChevronDown, ChevronRight, Zap
+  Brain, Loader2, Play, CheckCircle2, ChevronDown, ChevronRight, Zap
 } from 'lucide-react';
 
 const AGENT_CONFIGS = [

@@ -1,0 +1,1091 @@
+{
+  "schema": "v3-repanel-consolidated.sidecar.v1",
+  "startedAt": "2026-05-19T13:23:22.728Z",
+  "finishedAt": "2026-05-19T13:30:59.902Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "results": [
+    {
+      "code": "CA-13-v3",
+      "commit": "d396bd2",
+      "bundle_size": 34165,
+      "tally": {
+        "engagedTotal": 8,
+        "invalid": 0,
+        "tangential": 1,
+        "silent": 1,
+        "perQuestion": {
+          "CA-13-A-v3-Q1": {
+            "CA13AV3Q1-RATIFY": 0,
+            "CA13AV3Q1-TIGHTER": 2,
+            "CA13AV3Q1-RUNGATED": 2,
+            "CA13AV3Q1-REJECT": 0,
+            "REJECT": 4,
+            "unmatched": 0
+          },
+          "CA-13-A-v3-Q2": {
+            "CA13AV3Q2-RATIFY": 0,
+            "CA13AV3Q2-COHERENCE": 2,
+            "CA13AV3Q2-AUDIT": 1,
+            "CA13AV3Q2-REJECT": 0,
+            "REJECT": 5,
+            "unmatched": 0
+          },
+          "CA-13-A-v3-Q3": {
+            "CA13AV3Q3-RATIFY": 0,
+            "CA13AV3Q3-ADMINUI": 1,
+            "CA13AV3Q3-NOTABLE": 3,
+            "CA13AV3Q3-REJECT": 0,
+            "REJECT": 4,
+            "unmatched": 0
+          },
+          "CA-13-B-v3-Q1": {
+            "CA13BV3Q1-RATIFY": 0,
+            "CA13BV3Q1-INLINE": 1,
+            "CA13BV3Q1-BUNDLE": 0,
+            "CA13BV3Q1-REJECT": 0,
+            "REJECT": 7,
+            "unmatched": 0
+          },
+          "CA-13-B-v3-Q2": {
+            "CA13BV3Q2-RATIFY": 0,
+            "CA13BV3Q2-MEMBERSHIP": 5,
+            "CA13BV3Q2-AGENTID": 0,
+            "CA13BV3Q2-REJECT": 0,
+            "REJECT": 3,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 31,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Migration cutover creates deployment freeze",
+            "detail": "§7.6.2 blocks ALL products from using the new ≥95 bar until 100% of legacy ClearanceRecords are migrated. This creates a system-wide deployment freeze where no product can ship at the new standard until every legacy product is addressed, potentially blocking critical updates for weeks."
+          },
+          {
+            "slot": 1,
+            "title": "Admin bottleneck for routine operations",
+            "detail": "§7.6.1 requires admin role for ANY sub-95 deployment, even temporary staging deployments or emergency hotfixes. The 80-char rationale requirement and governance_record audit trail create friction that could delay critical fixes when the single admin is unavailable."
+          },
+          {
+            "slot": 1,
+            "title": "Expiry cliff creates operational chaos",
+            "detail": "§7.6.1 hard-expires overrides at 14 days OR next pipeline run, whichever is first. A product at 94 score suddenly fails Step 5 mid-deployment cycle with no warning, requiring emergency admin re-authorization even if nothing changed about the product's actual quality."
+          },
+          {
+            "slot": 1,
+            "title": "No escape hatch for systemic scoring bugs",
+            "detail": "If the §7.6 scoring engine has a bug that artificially deflates scores across all products, the admin must issue individual expiring overrides for EVERY affected product every 14 days. There's no provision for a temporary system-wide scoring adjustment during bug fixes."
+          },
+          {
+            "slot": 2,
+            "title": "Admin-only override risks abuse",
+            "detail": "The admin-only expiring override mechanism in §7.6.1 could be abused by admins to bypass the ≥95 GTM bar frequently, undermining the integrity of the standard. Without strict oversight or additional checks, this could lead to a culture of complacency where the override becomes the norm rather than the exception."
+          },
+          {
+            "slot": 2,
+            "title": "Migration path complexity",
+            "detail": "The ClearanceRecord migration path outlined in §7.6.2 is complex and may introduce significant operational overhead. The requirement for re-evaluation and potential re-categorization of existing records could lead to delays and errors, especially if the migration script encounters unforeseen issues."
+          },
+          {
+            "slot": 2,
+            "title": "Lack of operator involvement",
+            "detail": "By removing the operator-configurable knob and making the override admin-only, the proposal excludes operators from the decision-making process regarding GTM readiness. This could lead to frustration and disengagement from operators who feel they have valuable insights into product readiness."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback plan in case the new ≥95 canonical bar causes unintended consequences, such as a significant decrease in product deployments. This could lead to a situation where the system is worse than the status quo, as operators may struggle to meet the new bar."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not specify how the new admin-only expiring override mechanism will be tested to ensure it works correctly and does not introduce new bugs or security vulnerabilities. This lack of testing could lead to issues down the line, such as overrides not expiring correctly or being used in unintended ways."
+          },
+          {
+            "slot": 3,
+            "title": "Potential for Abuse",
+            "detail": "The admin-only expiring override mechanism could be abused by admins to consistently deploy products with low scores, undermining the purpose of the ≥95 canonical bar. There is no clear mechanism in place to prevent or detect such abuse, which could lead to a degradation of the system's overall quality."
+          },
+          {
+            "slot": 4,
+            "title": "Override Mechanism Complexity",
+            "detail": "The admin-only expiring override mechanism in §7.6.1 introduces significant complexity. The multiple rules for expiry and use, along with the need for detailed audit trails, could lead to implementation errors and increased maintenance burden."
+          },
+          {
+            "slot": 4,
+            "title": "Migration Path Risk",
+            "detail": "The migration path for ClearanceRecord entities in §7.6.2 requires a complete inventory and re-evaluation of all existing entities. This process is time-consuming and risky, as any errors in re-evaluation could lead to incorrect status assignments and potential compliance issues."
+          },
+          {
+            "slot": 4,
+            "title": "Conflation Invariant Redundancy",
+            "detail": "The mandatory invariant in §19.0 that states 'These are NEVER conflated in any operator-facing surface' is redundant with existing governance mechanisms in §10. This redundancy adds unnecessary complexity and could lead to confusion among operators."
+          },
+          {
+            "slot": 5,
+            "title": "Migration Complexity",
+            "detail": "The migration path for ClearanceRecord entities is complex and may introduce errors or delays in the system."
+          },
+          {
+            "slot": 5,
+            "title": "Admin Override Abuse",
+            "detail": "The admin-only expiring override mechanism could be abused by admins to bypass the ≥95 bar without proper justification."
+          },
+          {
+            "slot": 5,
+            "title": "Near-GTM Band Elimination",
+            "detail": "Eliminating the Near-GTM 90–94 conditional band without a fallback clause may be too rigid and could lead to unnecessary delays in product deployment."
+          },
+          {
+            "slot": 6,
+            "title": "Migration cutover deadlock risk",
+            "detail": "§7.6.2 cutover gate requires 100% of pending ClearanceRecord entities to resolve to (a)/(b)/(c) before the ≥95 bar activates. But there is no mechanism preventing NEW ClearanceRecord entities from being created during the migration window — a product created mid-migration would be tagged `migration_pending` and could block cutover indefinitely if the engineering team cannot resolve all legacy entities. The cutover envelope `ca13v3_cutover_complete.v1` may never fire, leaving the system permanently on the old 75-bar standard."
+          },
+          {
+            "slot": 6,
+            "title": "Override renewal loop — permanent sub-95 deployment",
+            "detail": "§7.6.1 grants admin authority to issue a fresh override after expiry with no cooldown, no spending limit, and no escalation requirement. An admin can issue a 30-day override for a product at score 75, then immediately issue another 30-day override when the first expires, in perpetuity. The audit trail records each grant individually but nowhere does the spec cap the number of sequential overrides per product. This transforms the 'admin-only expiring override' into a de facto permanent escape hatch — the exact structural problem the CEO decision was meant to eliminate."
+          },
+          {
+            "slot": 6,
+            "title": "Rationale quality gate is unenforceable",
+            "detail": "§7.6.1 requires `rationale: string ≥ 80 chars; cannot match canonical stop-words set` but the stop-words list is not defined in the proposal, no validation logic is specified, and there is no human-review gate on rationale quality. An admin can write 'This is necessary for business reasons to proceed with deployment' (80+ chars, no obvious stop-words) and pass the envelope write. The spec provides no automated quality check and no escalation trigger for low-quality rationales, making the ≥80-char requirement a pure formality."
+          },
+          {
+            "slot": 6,
+            "title": "Override floor rejection creates operational cliff",
+            "detail": "CA13A-v3-CT-3 specifies that `override_floor: 50` is REJECTED (not clamped). If an admin misconfigures the floor value and the override is rejected, the product falls immediately to the canonical ≥95 bar with no grace period. Unlike the migration path (which has a structured three-outcome resolution), there is no fallback mechanism for a rejected override envelope — the product simply fails Step 5 with no admin recourse documented in the spec. This creates a hard operational cliff where a single typo in an admin-issued override can halt deployment entirely."
+          },
+          {
+            "slot": 6,
+            "title": "Migration outcome (c) creates legacy underclass incentive",
+            "detail": "§7.6.2 outcome (c) allows admin annotation of ClearanceRecord as `legacy_pre_ca13v3` — these entities do not count toward any new §7.6 metrics. This creates a perverse incentive: any product that cannot score ≥95 can be re-categorized as legacy, removing it from the metric denominator entirely. The spec does not define who can apply outcome (c), what threshold triggers it, or whether there is a cap on legacy-archived entities. A product that scores 76 can be archived as legacy indefinitely, defeating the purpose of the ≥95 bar."
+          },
+          {
+            "slot": 7,
+            "title": "Migration script failure risk",
+            "detail": "§7.6.2 migration path lacks rollback mechanisms for failed re-evaluations. If the migration script encounters corrupted ClearanceRecord data during inventory pass, it could cascade failures across multiple products without recovery options. The conformance test CA13A-v3-CT-6 doesn't cover partial-failure states."
+          },
+          {
+            "slot": 7,
+            "title": "Override expiry race condition",
+            "detail": "§7.6.1 expiry rule 1 (next pipeline run) creates deployment race conditions. If two pipeline runs trigger simultaneously for the same product, override expiration timing becomes unpredictable. Audit envelope emission lacks atomicity guarantees with pipeline execution states."
+          },
+          {
+            "slot": 7,
+            "title": "Guard() cross-reference gap",
+            "detail": "B-Q1 EXECUTOR_REGISTRY cross-reference doesn't resolve Slot 10 #34's concern about BaseAgent.guard() argument validation. The spec doesn't mandate how authorityNeeded sets are populated for Agent #26's dual-authority requirement per CA-9-Q4(b)."
+          },
+          {
+            "slot": 7,
+            "title": "Legacy categorization loophole",
+            "detail": "§7.6.2 outcome (c) lets admins bypass migration via legacy_archived status without score verification. This creates an audit trail gap where pre-CA13v3 products avoid scrutiny indefinitely under the new standard."
+          },
+          {
+            "slot": 8,
+            "title": "Override loophole persists",
+            "detail": "In §7.6.1 the proposal replaces the operator-config knob with an admin-only expiring override, but it still preserves a discretionary sub-95 escape hatch. Because admins can re-issue overrides repeatedly, the effective threshold can remain below 95 indefinitely, just with more ceremony and audit logging."
+          },
+          {
+            "slot": 8,
+            "title": "Migration cutover is under-specified",
+            "detail": "§7.6.2 says the ≥95 bar takes effect only after 100% of legacy ClearanceRecords resolve, but it does not specify a bounded enforcement path for stuck or abandoned records. A single unresolved or disputed legacy row could block cutover forever, or force ad hoc legacy-archiving decisions that weaken the standard."
+          },
+          {
+            "slot": 8,
+            "title": "Dual-bar UI confusion risk",
+            "detail": "§19.0 adds a mandatory anti-conflation invariant and surface-labeling, yet the artifact still allows both the Self-Audit 95/95 threshold and the GTM bar to coexist in operator-facing surfaces. Without a single authoritative display contract, operators may misread one score as satisfying the other, especially during migration when old and new ClearanceRecords coexist."
+          },
+          {
+            "slot": 10,
+            "title": "Migration cutover stalls entire bar",
+            "detail": "§7.6.2 requires 100% ClearanceRecord resolution (a/b/c outcomes) before emitting ca13v3_cutover_complete.v1 and activating the ≥95 bar. No timeout, partial-cutover path, or fallback for products lacking recent pipeline runs is defined, so a single stuck legacy record freezes the canonical threshold indefinitely."
+          },
+          {
+            "slot": 10,
+            "title": "Expiring override window too wide",
+            "detail": "§7.6.1 allows admin to set expires_at up to granted_at+30 days and ties one expiry trigger to 'next pipeline run,' which may be weeks away. This creates a controllable multi-week sub-95 deployment window with only governance_record_entry audit, weaker than the v2 operator knob it replaces."
+          },
+          {
+            "slot": 10,
+            "title": "Conformance tests lack enforcement spec",
+            "detail": "CA13A-v3-CT-1 through CT-8 define role checks and rejection envelopes, yet §15.1 and BaseAgent.guard() cross-references in CA-13-B-v3-Q1 never map these new gtm_bar_admin_override.v1 kinds into the EXECUTOR_REGISTRY or ScoreEvaluator.js decision matrix."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "CA-13-A-v3-Q1": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 4
+        },
+        "CA-13-A-v3-Q2": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "5 of 8 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 5
+        },
+        "CA-13-A-v3-Q3": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "4 of 8 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 4
+        },
+        "CA-13-B-v3-Q1": {
+          "verdict": "QUORUM_PLURALITY_REJECT",
+          "detail": "7 of 8 on REJECT (≥ quorum 7/10)",
+          "topKey": "REJECT",
+          "topCount": 7
+        },
+        "CA-13-B-v3-Q2": {
+          "verdict": "PLURALITY_CA13BV3Q2-MEMBERSHIP",
+          "detail": "5 of 8 on CA13BV3Q2-MEMBERSHIP (below 7/10 quorum)",
+          "topKey": "CA13BV3Q2-MEMBERSHIP",
+          "topCount": 5
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0,
+        "alignedCount": 0,
+        "totalPossible": 40,
+        "draftedQs": [
+          "CA-13-A-v3-Q1",
+          "CA-13-A-v3-Q2",
+          "CA-13-A-v3-Q3",
+          "CA-13-B-v3-Q1",
+          "CA-13-B-v3-Q2"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 0.0 %, distinct objections 31"
+      },
+      "questions": [
+        {
+          "id": "CA-13-A-v3-Q1",
+          "topic": "CA-13-A v3 Q1 — Does Panel ratify the CA-13 v3 spine (per CEO Locked Rule 13 option-(i)): canonical §7.6 GTM bar = ≥95; sub-95 only via admin-only expiring override (14-day default, [1,30] bounds, no silent clamping); ClearanceRecord migration path is implementation prerequisite for cutover?",
+          "options": [
+            {
+              "key": "CA13AV3Q1-RATIFY",
+              "text": "Ratify v3 as drafted (≥95 canonical + admin-only expiring override + 14-day default, [1,30] hard bounds + migration prerequisite per §7.6.2)."
+            },
+            {
+              "key": "CA13AV3Q1-TIGHTER",
+              "text": "Strengthen — expiry default 7 days (not 14), hard bounds [1,14]; rationale-quality validation requires ≥120 chars (not 80)."
+            },
+            {
+              "key": "CA13AV3Q1-RUNGATED",
+              "text": "Strengthen — override expires at next pipeline run ONLY (no N-day default; override expires the moment next run executes)."
+            },
+            {
+              "key": "CA13AV3Q1-REJECT",
+              "text": "Reject the spine — return to v2 operator-config knob with bounds raised to [80,100] (Slot 2 FLOOR80 variant)."
+            }
+          ],
+          "draftedKey": "CA13AV3Q1-RATIFY"
+        },
+        {
+          "id": "CA-13-A-v3-Q2",
+          "topic": "CA-13-A v3 Q2 — Does Panel ratify elimination of 90–94 Near-GTM conditional band with NO fallback clause? Admin-only expiring override (Q1) is the single controlled sub-95 exception.",
+          "options": [
+            {
+              "key": "CA13AV3Q2-RATIFY",
+              "text": "Ratify v3 as drafted (Near-GTM band eliminated; no fallback clause)."
+            },
+            {
+              "key": "CA13AV3Q2-COHERENCE",
+              "text": "Strengthen — append \"Any future Panel proposal to re-introduce sub-95 conditional path is a candidate for CEO-Locked-Rule-13 dispositional veto by default, given the admin-only expiring override per §7.6.1.\""
+            },
+            {
+              "key": "CA13AV3Q2-AUDIT",
+              "text": "Strengthen toward audit — every §11 Step 5 evaluation consulting an override emits additional `step5_override_consulted.v1` envelope alongside `gtm_bar_admin_override_used.v1`."
+            },
+            {
+              "key": "CA13AV3Q2-REJECT",
+              "text": "Reject — restore v2 fallback clause as safety valve; v3 removal too rigid."
+            }
+          ],
+          "draftedKey": "CA13AV3Q2-RATIFY"
+        },
+        {
+          "id": "CA-13-A-v3-Q3",
+          "topic": "CA-13-A v3 Q3 — Does Panel ratify §19.0 STRONGER variant: append mandatory invariant \"These are NEVER conflated in any operator-facing surface\" + UI surface enforcement?",
+          "options": [
+            {
+              "key": "CA13AV3Q3-RATIFY",
+              "text": "Ratify v3 as drafted (mandatory anti-conflation invariant + per-surface labeling + dual-display audit envelope)."
+            },
+            {
+              "key": "CA13AV3Q3-ADMINUI",
+              "text": "Strengthen further — also require admin role for any UI surface displaying BOTH bars simultaneously (operator role cannot author dashboards mixing the two)."
+            },
+            {
+              "key": "CA13AV3Q3-NOTABLE",
+              "text": "Ratify but with redundancy fix — keep the invariant but DELETE §19.0 paragraph table (invariant alone suffices; §10 governance-mechanisms table already covers it)."
+            },
+            {
+              "key": "CA13AV3Q3-REJECT",
+              "text": "Reject — §19.0 paragraph + invariant is redundant with §10; remove §19.0 entirely."
+            }
+          ],
+          "draftedKey": "CA13AV3Q3-RATIFY"
+        },
+        {
+          "id": "CA-13-B-v3-Q1",
+          "topic": "CA-13-B v3 Q1 — Does Panel ratify v3 §15-intro + §15.1 rows 21/26 wording (v2 carried) PLUS explicit EXECUTOR_REGISTRY + BaseAgent.guard() enforcement-spec cross-reference?",
+          "options": [
+            {
+              "key": "CA13BV3Q1-RATIFY",
+              "text": "Ratify v3 as drafted (wording carried + 3-bullet enforcement-spec cross-reference)."
+            },
+            {
+              "key": "CA13BV3Q1-INLINE",
+              "text": "Strengthen — also inline schema snippet of BaseAgent.guard() arguments directly in §15-intro text, not just cross-reference."
+            },
+            {
+              "key": "CA13BV3Q1-BUNDLE",
+              "text": "Strengthen — bundle §15.5 sibling row-table populate INTO CA-13-B v3 ratification (lands EXECUTOR_REGISTRY entries alongside wording)."
+            },
+            {
+              "key": "CA13BV3Q1-REJECT",
+              "text": "Reject — wording remains too vague without actual §15.5 sibling row-table populate; defer entire CA-13-B until that engineering dispatch ships."
+            }
+          ],
+          "draftedKey": "CA13BV3Q1-RATIFY"
+        },
+        {
+          "id": "CA-13-B-v3-Q2",
+          "topic": "CA-13-B v3 Q2 — Does Panel ratify v3 capability-keyed sibling naming `crawl-write-executor` + `orchestra-admission-executor`?",
+          "options": [
+            {
+              "key": "CA13BV3Q2-RATIFY",
+              "text": "Ratify v3 primary as drafted (`crawl-write-executor` + `orchestra-admission-executor`)."
+            },
+            {
+              "key": "CA13BV3Q2-MEMBERSHIP",
+              "text": "Ratify with `membership` rename — Agent #26 sibling becomes `orchestra-membership-executor`; Agent #21 stays `crawl-write-executor`."
+            },
+            {
+              "key": "CA13BV3Q2-AGENTID",
+              "text": "Adopt agentId-keyed — `agent-21-executor` + `agent-26-executor` (preserves traceability at cost of capability-clarity)."
+            },
+            {
+              "key": "CA13BV3Q2-REJECT",
+              "text": "Reject — restore v1 agent-short-name-keyed naming."
+            }
+          ],
+          "draftedKey": "CA13BV3Q2-RATIFY"
+        }
+      ]
+    },
+    {
+      "code": "CA-15-v3",
+      "commit": "c5b050f",
+      "bundle_size": 32029,
+      "tally": {
+        "engagedTotal": 10,
+        "invalid": 0,
+        "tangential": 0,
+        "silent": 0,
+        "perQuestion": {
+          "CA-15-C-v3-Q1": {
+            "CA15CV3Q1-RATIFY": 2,
+            "CA15CV3Q1-OPTIN": 0,
+            "CA15CV3Q1-3CONSEC": 0,
+            "CA15CV3Q1-REJECT": 0,
+            "REJECT": 8,
+            "unmatched": 0
+          },
+          "CA-15-C-v3-Q3": {
+            "CA15CV3Q3-RATIFY": 1,
+            "CA15CV3Q3-EMPIRICAL": 3,
+            "CA15CV3Q3-CRITICAL_BLOCK": 2,
+            "CA15CV3Q3-REJECT": 0,
+            "REJECT": 4,
+            "unmatched": 0
+          },
+          "CA-15-D-v3-Q1": {
+            "CA15DV3Q1-RATIFY": 3,
+            "CA15DV3Q1-HYBRID": 3,
+            "CA15DV3Q1-STRICTER": 1,
+            "CA15DV3Q1-REJECT": 0,
+            "REJECT": 3,
+            "unmatched": 0
+          },
+          "CA-15-D-v3-Q2": {
+            "CA15DV3Q2-RATIFY": 2,
+            "CA15DV3Q2-BROADER": 4,
+            "CA15DV3Q2-NARROWER": 1,
+            "CA15DV3Q2-REJECT": 0,
+            "REJECT": 3,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 34,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Drift detection without purpose field",
+            "detail": "§28-bis.1 PURPOSE_DRIFT detection relies on 'operator-maintained purpose-notes file' outside ProductSSOT, but CA-15-B v3 removes all purpose information from canonical state. This creates an undefined reference - drift detection cannot function without a canonical purpose baseline to compare against."
+          },
+          {
+            "slot": 1,
+            "title": "Governance directory scope gameable",
+            "detail": "CA-15-D-Q2's `src/lib/governance/**` scope for CEO re-sign is trivially circumvented by moving critical governance logic to adjacent directories like `src/lib/scoring/` or `src/lib/clearance/`. The directory-based trigger creates a false security boundary that sophisticated actors can route around."
+          },
+          {
+            "slot": 1,
+            "title": "Phase B pass underspecified",
+            "detail": "§28-bis exit condition #5 requires 'Phase B pass per CA-14-A canonical + Agent #21 Phase B charter' but the canonical reference excerpt provides no definition of Phase B pass criteria. This creates an undefined exit gate that could block loop termination indefinitely."
+          },
+          {
+            "slot": 1,
+            "title": "Tooling-only enforcement toothless",
+            "detail": "§10.1 moves content_quality + accessibility to `scripts/lint-*.mjs` tooling that 'emit as PR-warnings only' without participating in §7.6 score or Quality Audit. This relegates critical quality dimensions to ignorable warnings, allowing degraded outputs to achieve GTM clearance."
+          },
+          {
+            "slot": 2,
+            "title": "No LLM purpose check",
+            "detail": "In §3, the proposal removes the LLM-judged purpose-alignment check from the Purpose-Driven Optimization loop exit conditions. This could lead to situations where the product's purpose is not adequately aligned with its development, potentially resulting in misaligned outputs."
+          },
+          {
+            "slot": 2,
+            "title": "Hard blocking gate inflexibility",
+            "detail": "In §4, reverting to a hard blocking gate for §27 may introduce rigidity, preventing necessary flexibility in handling conformance issues. This could delay product releases unnecessarily if minor issues are treated with the same severity as major ones."
+          },
+          {
+            "slot": 2,
+            "title": "Purpose information exclusion",
+            "detail": "In §2, the complete exclusion of purpose information from ProductSSOT could lead to a lack of structured documentation of product intent, making it harder for operators to maintain a clear understanding of the product's goals and evolution."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the changes introduced by CA-15-C v3 cause unintended consequences. This is a concern because the changes affect the Purpose-Driven Optimization loop and the §7.6 score calculation, which are critical components of the system. Specifically, §28-bis does not outline a rollback plan in case the numeric-floor-only exit conditions cause the loop to exit prematurely."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Threshold Justification",
+            "detail": "The proposal introduces heuristic-bootstrap thresholds for PURPOSE_DRIFT detection (20% and 50% token-delta) without providing sufficient empirical justification or explanation for these specific values. This lack of justification raises concerns about the effectiveness and potential impact of these thresholds on the system. §28-bis.1 does not provide a clear rationale for these thresholds, which could lead to unintended consequences."
+          },
+          {
+            "slot": 3,
+            "title": "Potential for Operator Confusion",
+            "detail": "The removal of the `product_purpose` field from ProductSSOT and the introduction of operator-maintained purpose notes could lead to operator confusion and inconsistencies in purpose tracking. This is because operators may not understand the implications of maintaining purpose notes outside of ProductSSOT, and the system does not provide clear guidance on how to handle purpose changes. §15-B v3 does not address this potential issue, which could lead to errors and inconsistencies in the system."
+          },
+          {
+            "slot": 4,
+            "title": "Complexity in Self-Renewal Executor",
+            "detail": "The Self-Renewal Executor's diff-only rule in §6 might create difficulties in maintaining code quality. Large rewrites are forbidden, which could limit the ability to address complex issues effectively."
+          },
+          {
+            "slot": 4,
+            "title": "Ambiguity in Purpose Drift",
+            "detail": "The tiered PURPOSE_DRIFT annotation in §28-bis.1 might lead to ambiguity in handling drift. The heuristic-bootstrap thresholds could be inaccurate, leading to incorrect drift classifications."
+          },
+          {
+            "slot": 4,
+            "title": "Overlap in Quality Audit Dimensions",
+            "detail": "The UI/UX dimension in §10.1 overlaps with the Content Quality checks, leading to potential double-reporting and confusion in the quality audit process."
+          },
+          {
+            "slot": 5,
+            "title": "Tooling-only checks",
+            "detail": "Relocating content quality and accessibility checks to tooling may lead to these checks being overlooked or ignored by operators, reducing overall system quality."
+          },
+          {
+            "slot": 5,
+            "title": "No purpose in SSOT",
+            "detail": "Removing purpose information from ProductSSOT may lead to a lack of clarity and direction for the product, making it harder to align development efforts with business goals."
+          },
+          {
+            "slot": 5,
+            "title": "Hard blocking gate",
+            "detail": "Reverting §27 to a hard blocking gate may cause delays in the clearance process, as operators will be required to resolve all conformance issues before proceeding."
+          },
+          {
+            "slot": 6,
+            "title": "Drift threshold fragility",
+            "detail": "The 20%/50% token-delta thresholds for PURPOSE_DRIFT are heuristic and lack empirical justification (§28-bis.1). This could lead to false positives or negatives, undermining the drift detection mechanism and potentially causing unnecessary alerts or missed critical deviations."
+          },
+          {
+            "slot": 6,
+            "title": "Hard blocking gate override",
+            "detail": "Even with the §27 revert to a hard blocking gate, the admin override per §19 still exists (CA-15-D-Q1). This undermines the purpose of the hard blocking gate, as an admin can bypass conformance failures, potentially leading to the deployment of non-conforming code."
+          },
+          {
+            "slot": 6,
+            "title": "Limited CEO re-sign scope",
+            "detail": "The CEO re-sign trigger scope is limited to `src/lib/governance/**` (CA-15-D-Q2). This may not be sufficient to capture all relevant changes that could impact governance, as other directories or files could also contain code that affects governance policies or processes."
+          },
+          {
+            "slot": 6,
+            "title": "Lack of LLM purpose check",
+            "detail": "The proposal removes LLM-judged purpose-alignment checks from the loop exit (CA-15-C-Q1). While the rationale is to avoid shadow metrics, this could lead to the system optimizing for numeric scores without ensuring that the product actually fulfills its intended purpose."
+          },
+          {
+            "slot": 7,
+            "title": "Arbitrary drift thresholds",
+            "detail": "§28-bis.1's token-change drift tiers (20%/50%) lack empirical justification. These thresholds were admitted as heuristic-bootstrap in the changelog table yet will trigger critical production freezes. No validation exists for token-delta accurately reflecting purpose drift severity."
+          },
+          {
+            "slot": 7,
+            "title": "Governance directory over-scoping",
+            "detail": "CA-15-D-v3-Q2 triggers CEO re-sign for ANY change in entire `src/lib/governance/` directory. This includes non-substantive files like comments or configs, creating operational friction. The broad scope contradicts the locked rule of CEO paste-only automation."
+          },
+          {
+            "slot": 7,
+            "title": "Purpose traceability gap",
+            "detail": "Removing purpose from ProductSSOT (§2) eliminates canonical purpose tracking while retaining PURPOSE_DRIFT checks. Drift detection now relies on external operator notes with no validation mechanism, creating inconsistency between the removed field and retained drift semantics."
+          },
+          {
+            "slot": 7,
+            "title": "Hard gate override vulnerability",
+            "detail": "§27 revert to hard blocking gate (D-Q1) retains §19 admin override path. This creates a loophole where operators can bypass conformance checks under pressure, undermining the very enforcement the revert aims to strengthen."
+          },
+          {
+            "slot": 8,
+            "title": "§28-bis is misnamed",
+            "detail": "The proposed loop keeps the label “Purpose-Driven Optimization” while explicitly removing any purpose-alignment check from §28-bis. That creates a semantic mismatch between the mechanism and its title, which will confuse operators and future maintainers about what the loop is actually optimizing."
+          },
+          {
+            "slot": 8,
+            "title": "Tiered drift is untethered",
+            "detail": "§28-bis.1 uses shingle-based token-delta heuristics on operator-maintained notes outside ProductSSOT, but gives no normalization rules for copied text, formatting changes, or multi-document notes. The 20%/50% thresholds are admitted as heuristic-bootstrap, so the same content could oscillate between minor and major drift without a stable canonical interpretation."
+          },
+          {
+            "slot": 8,
+            "title": "Hard block plus override conflict",
+            "detail": "§27 is reverted to a hard blocking gate, but the drafted text also preserves an admin override path via §19-equivalent override language in CA-15-D-Q1. That combination is internally inconsistent: if conformance failure blocks clearance, an override becomes a hidden bypass unless the scope and audit conditions are precisely bounded."
+          },
+          {
+            "slot": 8,
+            "title": "External purpose notes are brittle",
+            "detail": "Removing purpose information from ProductSSOT and pushing it into operator notes/README files makes the core governance state non-atomic and non-auditable. The draft then depends on those external notes for drift detection, so a missing, stale, or renamed note can silently disable a central governance signal without any canonical record of the failure."
+          },
+          {
+            "slot": 9,
+            "title": "Unclear §7.6 score impact",
+            "detail": "The proposal removes `product_purpose` field but retains §7.6 score calculation. It's unclear how this score will be affected without purpose information (§2)."
+          },
+          {
+            "slot": 9,
+            "title": "Drift detection risks",
+            "detail": "The tiered PURPOSE_DRIFT annotation (§28-bis.1) uses heuristic thresholds (20%/50%). These may not be effective in practice, potentially leading to incorrect drift classification."
+          },
+          {
+            "slot": 9,
+            "title": "§27 revert implications",
+            "detail": "Reverting §27 to a hard blocking gate (§4) may cause operational delays if conformance issues arise frequently. The impact on operator workflow is not clearly assessed."
+          },
+          {
+            "slot": 10,
+            "title": "§27 hard blocking gate deadlock risk",
+            "detail": "CA-15-D v3 reverts §27 to HARD BLOCKING GATE over entire src/lib/governance/ directory; a single medium-severity conformance entry now blocks §11 Step 6 clearance with no automatic bypass except §19 95/95 override, creating potential infinite loop when operator notes drift is detected outside ProductSSOT."
+          },
+          {
+            "slot": 10,
+            "title": "PURPOSE_DRIFT heuristic thresholds",
+            "detail": "§28-bis.1 defines 20%/50% token-delta tiers on operator-notes files that CA-15-B v3 explicitly places outside canonical SSOT; no validation mechanism exists for shingle-based diff accuracy and thresholds are labeled heuristic-bootstrap without telemetry accumulation path."
+          },
+          {
+            "slot": 10,
+            "title": "Tooling lints decoupled from scoring",
+            "detail": "CA-15-A v3 moves content_quality + accessibility to scripts/lint-*.mjs emitting only PR warnings; this decouples them from §7.6 formula and §10.1 5-dimension Self-Audit, yet §10.1 still claims 95/95 governance threshold without updated integration spec."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "CA-15-C-v3-Q1": {
+          "verdict": "SUPERMAJORITY_REJECT",
+          "detail": "8 of 10 on REJECT (≥ 8/10)",
+          "topKey": "REJECT",
+          "topCount": 8
+        },
+        "CA-15-C-v3-Q3": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "4 of 10 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 4
+        },
+        "CA-15-D-v3-Q1": {
+          "verdict": "SPLIT",
+          "detail": "top tie at 3 between CA15DV3Q1-RATIFY / CA15DV3Q1-HYBRID / REJECT",
+          "topKey": "CA15DV3Q1-RATIFY",
+          "topCount": 3
+        },
+        "CA-15-D-v3-Q2": {
+          "verdict": "PLURALITY_CA15DV3Q2-BROADER",
+          "detail": "4 of 10 on CA15DV3Q2-BROADER (below 7/10 quorum)",
+          "topKey": "CA15DV3Q2-BROADER",
+          "topCount": 4
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0.2,
+        "alignedCount": 8,
+        "totalPossible": 40,
+        "draftedQs": [
+          "CA-15-C-v3-Q1",
+          "CA-15-C-v3-Q3",
+          "CA-15-D-v3-Q1",
+          "CA-15-D-v3-Q2"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 20.0 %, distinct objections 34"
+      },
+      "questions": [
+        {
+          "id": "CA-15-C-v3-Q1",
+          "topic": "CA-15-C v3 Q1 — Does Panel ratify Purpose-Driven Optimization loop exits on numeric §7.6 floor + zero critical + Self-Renewal terminal + LIMITATIONS + Phase B pass — NO LLM-judged purpose-alignment check?",
+          "options": [
+            {
+              "key": "CA15CV3Q1-RATIFY",
+              "text": "Ratify v3 as drafted (5 numeric exit conditions; no LLM check)."
+            },
+            {
+              "key": "CA15CV3Q1-OPTIN",
+              "text": "Strengthen — re-introduce LLM-judged purpose-alignment as 6th OPTIONAL exit condition gated by `product_registry.llm_purpose_check_enabled` (default false; admin-only opt-in)."
+            },
+            {
+              "key": "CA15CV3Q1-3CONSEC",
+              "text": "Strengthen — exit condition #1 stricter: §7.6 score floor moves from \"≥`gtm_ready_bar_override`\" to \"≥ for THREE consecutive iterations\"."
+            },
+            {
+              "key": "CA15CV3Q1-REJECT",
+              "text": "Reject — LLM-judged purpose check is structurally required for a Purpose-Driven loop; without it, rename §28-bis to \"Numeric-Floor Optimization Loop\" and remove \"Purpose-Driven\" framing."
+            }
+          ],
+          "draftedKey": "CA15CV3Q1-RATIFY"
+        },
+        {
+          "id": "CA-15-C-v3-Q3",
+          "topic": "CA-15-C v3 Q3 — Does Panel ratify drift as tiered annotation (minor 20% / major 50% / critical >50%-or-clear) that never deadlocks the loop?",
+          "options": [
+            {
+              "key": "CA15CV3Q3-RATIFY",
+              "text": "Ratify v3 as drafted (tier thresholds 20% / 50% heuristic-bootstrap; loop never deadlocks; critical freezes Self-Renewal fix-generation only)."
+            },
+            {
+              "key": "CA15CV3Q3-EMPIRICAL",
+              "text": "Strengthen empirically — defer concrete thresholds to a successor CA-N once 90 days of drift telemetry are accumulated; v3 ships with single annotation kind and no tiering."
+            },
+            {
+              "key": "CA15CV3Q3-CRITICAL_BLOCK",
+              "text": "Strengthen tier rules — critical drift ALSO blocks loop exit (not just fix-generation); operator must explicitly re-approve before loop can exit."
+            },
+            {
+              "key": "CA15CV3Q3-REJECT",
+              "text": "Reject — drift detection lives in operator-notes tooling outside FlowAI canonical (consistent with CA-15-B v3 removal of purpose from ProductSSOT)."
+            }
+          ],
+          "draftedKey": "CA15CV3Q3-RATIFY"
+        },
+        {
+          "id": "CA-15-D-v3-Q1",
+          "topic": "CA-15-D v3 Q1 — Does Panel ratify §27 reverts to HARD BLOCKING GATE (v1 form) as primary, with hybrid (advisory non-critical / blocking critical) noted as alternative?",
+          "options": [
+            {
+              "key": "CA15DV3Q1-RATIFY",
+              "text": "Ratify v3 primary as drafted (§27 hard blocking gate; failure blocks §11 Step 6 until conformance achieved; admin override per §19 95/95-override rule)."
+            },
+            {
+              "key": "CA15DV3Q1-HYBRID",
+              "text": "Ratify the noted hybrid — §27 blocks on critical/high severity findings; surfaces medium/low as advisory + admin dashboard alarm without blocking."
+            },
+            {
+              "key": "CA15DV3Q1-STRICTER",
+              "text": "Strengthen further — §27 hard blocking AND no admin override path (remove §19-equivalent override; conformance failure cannot be bypassed)."
+            },
+            {
+              "key": "CA15DV3Q1-REJECT",
+              "text": "Reject the revert — preserve v2 advisory framing despite v2 verdict; rationale Panel may supply."
+            }
+          ],
+          "draftedKey": "CA15DV3Q1-RATIFY"
+        },
+        {
+          "id": "CA-15-D-v3-Q2",
+          "topic": "CA-15-D v3 Q2 — Does Panel ratify CEO re-sign triggered ONLY for CAs touching files under `src/lib/governance/**` (concrete directory; replaces v2 not-yet-written `docs/governance/CONFORMANCE_SCOPE.md`)?",
+          "options": [
+            {
+              "key": "CA15DV3Q2-RATIFY",
+              "text": "Ratify v3 as drafted (entire `src/lib/governance/` directory is scope; CI grep at promotion-commit time)."
+            },
+            {
+              "key": "CA15DV3Q2-BROADER",
+              "text": "Strengthen broader — scope = `src/lib/governance/**` AND `src/lib/conformance/**` AND any `*.sql` migration files."
+            },
+            {
+              "key": "CA15DV3Q2-NARROWER",
+              "text": "Strengthen narrower — scope = ONLY ScoreEvaluator.js + ClearanceProtocol.ts + CanonicalKinds.ts (3 canonical files)."
+            },
+            {
+              "key": "CA15DV3Q2-REJECT",
+              "text": "Reject the v3 scope — restore v2 `docs/governance/CONFORMANCE_SCOPE.md` documentation-file scope despite v2 verdict."
+            }
+          ],
+          "draftedKey": "CA15DV3Q2-RATIFY"
+        }
+      ]
+    },
+    {
+      "code": "CA-16-A-v3",
+      "commit": "e8bb7d4",
+      "bundle_size": 32341,
+      "tally": {
+        "engagedTotal": 9,
+        "invalid": 1,
+        "tangential": 0,
+        "silent": 0,
+        "perQuestion": {
+          "CA-16-A-v3-Q1": {
+            "CA16AV3Q1-RATIFY": 2,
+            "CA16AV3Q1-SUMMARY": 2,
+            "CA16AV3Q1-LINKED": 0,
+            "CA16AV3Q1-REJECT": 0,
+            "REJECT": 5,
+            "unmatched": 0
+          },
+          "CA-16-A-v3-Q2": {
+            "CA16AV3Q2-RATIFY": 2,
+            "CA16AV3Q2-STEP65": 3,
+            "CA16AV3Q2-DASHONLY": 2,
+            "CA16AV3Q2-REJECT": 0,
+            "REJECT": 2,
+            "unmatched": 0
+          },
+          "CA-16-A-v3-Q3": {
+            "CA16AV3Q3-RATIFY": 2,
+            "CA16AV3Q3-TWOADMIN": 2,
+            "CA16AV3Q3-DEFERRED": 0,
+            "CA16AV3Q3-REJECT": 0,
+            "REJECT": 5,
+            "unmatched": 0
+          },
+          "CA-16-A-v3-Q4": {
+            "CA16AV3Q4-RATIFY": 2,
+            "CA16AV3Q4-ADMIN30": 1,
+            "CA16AV3Q4-TIGHTER": 5,
+            "CA16AV3Q4-REJECT": 0,
+            "REJECT": 1,
+            "unmatched": 0
+          }
+        },
+        "distinctObjections": 30,
+        "allObjections": [
+          {
+            "slot": 1,
+            "title": "Governance bypass via tooling-only recs",
+            "detail": "§2 moves proactive recommendations entirely outside canonical SSOT into tooling/dashboard. This creates an ungoverned shadow system where critical product improvements can be surfaced, accepted, and implemented without any canonical audit trail, violating §14 GovernanceAuditLog's tamper-evident principle."
+          },
+          {
+            "slot": 1,
+            "title": "ClearanceRecord reference creates false security",
+            "detail": "§3's lightweight `last_seen_clearance_record_id` reference is one-way and non-blocking. A product can accumulate 100+ critical recommendations after clearance, yet still show as 'cleared' because the reference provides no backward linkage or clearance invalidation mechanism."
+          },
+          {
+            "slot": 1,
+            "title": "REOPEN state enables recommendation laundering",
+            "detail": "§4's new `reopened` state allows previously rejected recommendations to re-enter the queue with only single-admin approval. Combined with the lack of canonical audit trail, this enables cycling rejected recommendations through reopen→reject loops to bypass governance oversight."
+          },
+          {
+            "slot": 1,
+            "title": "Defer window bounds incompatible with sprint cycles",
+            "detail": "§5's [7, 90] defer window with 14-day default creates a mismatch with FlowAI's sprint cycles. A 90-day deferral spans multiple §28 symbiotic loop iterations, allowing critical recommendations to remain hidden across product evolution cycles."
+          },
+          {
+            "slot": 3,
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the changes made to the canonical §7 item #8 proactive_recommendation envelope cause issues. This is a concern because the changes are significant and may have unintended consequences. Specifically, the section §7 — Output Contract does not mention any rollback plan."
+          },
+          {
+            "slot": 3,
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not provide sufficient information about the testing that will be done to ensure that the changes to the recs living outside §11 Clearance with lightweight `last_seen_clearance_record_id` reference do not introduce any bugs or issues. This is a concern because the changes may affect the functionality of the system. The section §3 — CA-16-A v3 — Recs OUTSIDE §11 + lightweight ClearanceRecord reference does not mention any testing plans."
+          },
+          {
+            "slot": 3,
+            "title": "Security Risks",
+            "detail": "The proposal does not adequately address potential security risks associated with the addition of a `reopened` lifecycle state. This is a concern because the new state may introduce vulnerabilities that could be exploited by attackers. The section §4 — CA-16-A v3 — Lifecycle: ADD REOPEN state does not discuss security risks."
+          },
+          {
+            "slot": 4,
+            "title": "Schema Ownership Ambiguity",
+            "detail": "The proposal drops the canonical envelope for proactive recommendations, leaving schema ownership entirely to engineering (§2). This could lead to inconsistencies and lack of governance over the recommendations schema, which is critical for maintaining data integrity."
+          },
+          {
+            "slot": 4,
+            "title": "Clearance Reference Complexity",
+            "detail": "The lightweight ClearanceRecord reference (§3) adds complexity to the system. The one-way reference and the need to update it on every rec-surface event could introduce synchronization issues and potential data inconsistencies."
+          },
+          {
+            "slot": 4,
+            "title": "Lifecycle State Overhead",
+            "detail": "Adding a 'reopened' lifecycle state (§4) increases the complexity of the lifecycle management. The admin-gated reopening with a required rationale could introduce delays and overhead, especially if multiple admins are involved in the approval process."
+          },
+          {
+            "slot": 5,
+            "title": "Tooling-only risk",
+            "detail": "Moving proactive recommendations entirely to tooling/dashboard without a canonical envelope may lead to a lack of governance and oversight, as there is no formal record or audit trail for these recommendations within the canonical SSOT."
+          },
+          {
+            "slot": 5,
+            "title": "Lightweight reference limitation",
+            "detail": "The lightweight `last_seen_clearance_record_id` reference, while addressing traceability concerns, does not provide a strong enough linkage to ensure that recommendations are properly managed and reviewed in the context of product clearance."
+          },
+          {
+            "slot": 5,
+            "title": "Defer-window bounds",
+            "detail": "The defer-window bounds `[7, 90]` may still be too broad, potentially allowing recommendations to be deferred for an extended period, which could hinder the timely improvement of products."
+          },
+          {
+            "slot": 6,
+            "title": "Loss of auditability",
+            "detail": "Moving proactive recommendations entirely out of the canonical SSOT (§2) means losing a tamper-evident, hash-chained audit log for these recommendations. The dashboard's audit trail is not guaranteed to have the same level of integrity or accessibility as the GovernanceAuditLog (§14)."
+          },
+          {
+            "slot": 6,
+            "title": "ClearanceRecord reference fragility",
+            "detail": "The lightweight `last_seen_clearance_record_id` reference (§3) is fragile. If a ClearanceRecord is deleted or becomes inaccessible for any reason, the link is broken, and the historical context of the recommendation is lost. There's no mechanism to ensure the continued availability of the referenced ClearanceRecord."
+          },
+          {
+            "slot": 6,
+            "title": "REOPEN state rationale enforcement",
+            "detail": "While the REOPEN state (§4) requires a rationale, the check against stop-words is insufficient to guarantee meaningful rationales.  Admins could easily circumvent this with slightly modified stop-words or other meaningless text, defeating the purpose of the requirement."
+          },
+          {
+            "slot": 6,
+            "title": "ADMIN30 hybrid complexity",
+            "detail": "The ADMIN30 hybrid defer-window option adds unnecessary complexity (§5). Having different deferral limits for operators and admins introduces potential confusion and inconsistencies in how recommendations are handled. It also requires additional logic to enforce the role-based limits."
+          },
+          {
+            "slot": 7,
+            "title": "No canonical audit trail",
+            "detail": "By moving recommendations entirely to tooling/dashboard without governance_record_entry kind, we lose tamper-evident tracking of recommendation lifecycle changes. This violates §14's audit trail principles for governance-critical actions like deferrals/rejections."
+          },
+          {
+            "slot": 7,
+            "title": "Reopen state bypasses governance",
+            "detail": "The 'reopened' state allows admins to resurrect rejected recommendations with minimal (80-char) rationale. This creates a loophole where critical rejections could be repeatedly revived without Panel-grade scrutiny, violating W03 self-audit principles."
+          },
+          {
+            "slot": 7,
+            "title": "Deferral window suppression risk",
+            "detail": "90-day deferral maximum (3 sprint cycles) allows recommendations to be suppressed across multiple §28 symbiotic loop iterations. This could let accumulating technical debt evade detection until post-clearance deployment."
+          },
+          {
+            "slot": 8,
+            "title": "No canonical linkage drift",
+            "detail": "§2 drops the canonical proactive recommendation envelope entirely, but §3 then adds a lightweight `last_seen_clearance_record_id` reference. That creates a split-brain design where recs are “outside canon” yet still depend on canonical clearance state, with no authoritative lifecycle ownership or backfill rules if the reference is stale or missing."
+          },
+          {
+            "slot": 8,
+            "title": "Reopen state bypass risk",
+            "detail": "§4 adds `reopened` with admin-only authority and ≥80-char rationale, but there is no deduplication, cooldown, or maximum reopen count. A rejected rec can be reopened repeatedly to launder previously rejected ideas back into the active queue, especially if rationale length becomes a compliance ritual rather than substantive review."
+          },
+          {
+            "slot": 8,
+            "title": "Deferred window too rigid",
+            "detail": "§5 hard-bounds defer windows to [7, 90] and rejects out-of-bounds rather than clamping. That can break legitimate fast-follow or long-horizon products; the proposal provides no escape hatch for products with release trains shorter than a week or enterprise validation cycles longer than 90 days."
+          },
+          {
+            "slot": 8,
+            "title": "Tooling-only schema is brittle",
+            "detail": "The recommendation schema is moved to `scripts/types/proactive-recs.d.ts` and dashboard polling, but there is no canonical audit-log envelope and no enforced versioning contract. If tooling and dashboard deploy out of sync, operators can see recommendations that the audit trail cannot reconstruct, undermining forensic traceability."
+          },
+          {
+            "slot": 9,
+            "title": "Lack of Canonical Schema",
+            "detail": "The proposal drops the canonical envelope for proactive recommendations entirely (§2), moving it to tooling/dashboard. This creates a risk of divergence between the tooling schema and the actual implementation."
+          },
+          {
+            "slot": 9,
+            "title": "Insufficient ClearanceRecord Linkage",
+            "detail": "The lightweight `last_seen_clearance_record_id` reference (§3) is non-gating and may not provide sufficient traceability. It relies on tooling to populate this field correctly, which could be a single point of failure."
+          },
+          {
+            "slot": 9,
+            "title": "Reopen State Vulnerability",
+            "detail": "The `reopened` lifecycle state (§4) is admin-gated but lacks additional safeguards. A single admin can reopen a rejected recommendation, potentially leading to abuse or inconsistent decision-making."
+          },
+          {
+            "slot": 10,
+            "title": "§3 reference is non-enforcing",
+            "detail": "§3 explicitly states the `last_seen_clearance_record_id` is a one-way informational reference only, with conformance test CA16A-v3-CT-2 requiring zero reads of any proactive_recommendation table in §11 Step 5/6 paths, so recommendations can be surfaced and then ignored without ever touching ProductSSOT delta_log or ClearanceRecord."
+          },
+          {
+            "slot": 10,
+            "title": "REOPEN creates admin bottleneck",
+            "detail": "§4 restricts reopened transitions to admin role plus ≥80-char rationale, yet the same section allows operator-initiated acceptance and deferral; this asymmetry can stall revival of rejected recommendations that later become relevant under the §28 symbiotic loop."
+          },
+          {
+            "slot": 10,
+            "title": "90-day defer still spans loops",
+            "detail": "§5 sets upper bound of 90 days (default 14) while citing Slot 10's concern that 365 days violates §28 feedback; 90 days still covers multiple pipeline iterations and can suppress recs across ProductSSOT updates without any canonical expiry trigger."
+          }
+        ]
+      },
+      "per_question_verdicts": {
+        "CA-16-A-v3-Q1": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "5 of 9 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 5
+        },
+        "CA-16-A-v3-Q2": {
+          "verdict": "PLURALITY_CA16AV3Q2-STEP65",
+          "detail": "3 of 9 on CA16AV3Q2-STEP65 (below 7/10 quorum)",
+          "topKey": "CA16AV3Q2-STEP65",
+          "topCount": 3
+        },
+        "CA-16-A-v3-Q3": {
+          "verdict": "PLURALITY_REJECT",
+          "detail": "5 of 9 on REJECT (below 7/10 quorum)",
+          "topKey": "REJECT",
+          "topCount": 5
+        },
+        "CA-16-A-v3-Q4": {
+          "verdict": "PLURALITY_CA16AV3Q4-TIGHTER",
+          "detail": "5 of 9 on CA16AV3Q4-TIGHTER (below 7/10 quorum)",
+          "topKey": "CA16AV3Q4-TIGHTER",
+          "topCount": 5
+        }
+      },
+      "dissent_floor": {
+        "triggered": false,
+        "alignedPct": 0.2222222222222222,
+        "alignedCount": 8,
+        "totalPossible": 36,
+        "draftedQs": [
+          "CA-16-A-v3-Q1",
+          "CA-16-A-v3-Q2",
+          "CA-16-A-v3-Q3",
+          "CA-16-A-v3-Q4"
+        ],
+        "alignmentBar": 0.8,
+        "objectionFloor": 5,
+        "reason": "alignment 22.2 %, distinct objections 30"
+      },
+      "questions": [
+        {
+          "id": "CA-16-A-v3-Q1",
+          "topic": "CA-16-A v3 Q1 — Does Panel ratify DROP of the canonical §7 item #8 proactive_recommendation envelope entirely? Recs surface ONLY via tooling/dashboard.",
+          "options": [
+            {
+              "key": "CA16AV3Q1-RATIFY",
+              "text": "Ratify v3 as drafted (canonical envelope DROPPED; recs in tooling + admin dashboard; engineering owns schema in `scripts/types/proactive-recs.d.ts`)."
+            },
+            {
+              "key": "CA16AV3Q1-SUMMARY",
+              "text": "Ratify with stricter tooling discipline — tooling MUST emit `governance_record_entry kind:proactive_rec_summary.v1` ONCE PER DAY summarizing queue state; summary IS canonical-audit-trail-accessible."
+            },
+            {
+              "key": "CA16AV3Q1-LINKED",
+              "text": "Ratify the drop BUT promote the lightweight ClearanceRecord reference into canonical: any tooling surfacing recs MUST populate `last_seen_clearance_record_id`; canonical SSOT enforces linkage."
+            },
+            {
+              "key": "CA16AV3Q1-REJECT",
+              "text": "Reject the v3 drop — return to v2 minimal-envelope canonical position; defer engineering schema to successor CA-N."
+            }
+          ],
+          "draftedKey": "CA16AV3Q1-RATIFY"
+        },
+        {
+          "id": "CA-16-A-v3-Q2",
+          "topic": "CA-16-A v3 Q2 — Does Panel ratify recs living OUTSIDE §11 Clearance with lightweight `last_seen_clearance_record_id` reference (non-gating; informational only)?",
+          "options": [
+            {
+              "key": "CA16AV3Q2-RATIFY",
+              "text": "Ratify v3 as drafted (recs OUTSIDE §11; lightweight ClearanceRecord reference; recs never block clearance)."
+            },
+            {
+              "key": "CA16AV3Q2-STEP65",
+              "text": "Strengthen — adopt Step 6.5 post-Deploy surface as the canonical home for recs (Slot 1 STEP65 variant); reference becomes a Step 6.5 attribute."
+            },
+            {
+              "key": "CA16AV3Q2-DASHONLY",
+              "text": "Ratify drop the reference — recs live ENTIRELY outside any canonical linkage; no `last_seen_clearance_record_id` field; pure side-channel."
+            },
+            {
+              "key": "CA16AV3Q2-REJECT",
+              "text": "Reject — restore §11.5 Step 1.5 Proactive Recommendation Review per v1."
+            }
+          ],
+          "draftedKey": "CA16AV3Q2-RATIFY"
+        },
+        {
+          "id": "CA-16-A-v3-Q3",
+          "topic": "CA-16-A v3 Q3 — Does Panel ratify addition of a `reopened` lifecycle state (admin-gated; rationale ≥80 chars; ONLY transitions from `rejected`)?",
+          "options": [
+            {
+              "key": "CA16AV3Q3-RATIFY",
+              "text": "Ratify v3 as drafted (6-state lifecycle including REOPEN; admin-only; ≥80-char rationale; rejected→reopened→open transition path)."
+            },
+            {
+              "key": "CA16AV3Q3-TWOADMIN",
+              "text": "Strengthen — REOPEN requires TWO admin sign-offs (different admins; second confirms within 24h); prevents single-admin reopen-spam failure."
+            },
+            {
+              "key": "CA16AV3Q3-DEFERRED",
+              "text": "Ratify but broaden eligibility — `deferred` recommendations also reopenable (currently rejected-only); allows admin to manually resurface a deferred rec."
+            },
+            {
+              "key": "CA16AV3Q3-REJECT",
+              "text": "Reject the REOPEN state — 5-state lifecycle is sufficient; rejected recs that become relevant later should resurface as new `open` entries with fresh `id`."
+            }
+          ],
+          "draftedKey": "CA16AV3Q3-RATIFY"
+        },
+        {
+          "id": "CA-16-A-v3-Q4",
+          "topic": "CA-16-A v3 Q4 — Does Panel ratify defer-window bounds `[7, 90]` (primary; default 14) with out-of-bounds REJECTED not clamped?",
+          "options": [
+            {
+              "key": "CA16AV3Q4-RATIFY",
+              "text": "Ratify v3 primary as drafted ([7, 90] bounds; default 14; out-of-bounds rejected)."
+            },
+            {
+              "key": "CA16AV3Q4-ADMIN30",
+              "text": "Ratify the ADMIN30 hybrid alternative — operator role may set up to 30 days; admin role may extend to 90 days with rationale ≥80 chars."
+            },
+            {
+              "key": "CA16AV3Q4-TIGHTER",
+              "text": "Tighter — bounds [7, 60] (instead of [7, 90]); 90 days approaches one sprint cycle and may suppress recs across §28 symbiotic-loop iterations."
+            },
+            {
+              "key": "CA16AV3Q4-REJECT",
+              "text": "Reject — restore v2 [1, 365] bounds despite Panel verdict."
+            }
+          ],
+          "draftedKey": "CA16AV3Q4-RATIFY"
+        }
+      ]
+    }
+  ]
+}

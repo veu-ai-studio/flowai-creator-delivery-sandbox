@@ -9,6 +9,7 @@ import ModeSelector from '@/components/orchestrator/ModeSelector';
 import StepTimeline, { STEPS } from '@/components/orchestrator/StepTimeline';
 import StepResultCard from '@/components/orchestrator/StepResultCard';
 import FinalOutputPanel from '@/components/orchestrator/FinalOutputPanel';
+import PlatformRecommendationPanel from '@/components/orchestrator/PlatformRecommendationPanel';
 
 const PIPELINE_STEPS = STEPS.map(s => s.id);
 
@@ -25,6 +26,11 @@ export default function MasterOrchestrator() {
 
   // Accumulated context passed between steps
   const [context, setContext] = useState({});
+  const [scorerOutput] = useState({
+    gtmFlag: 'INSUFFICIENT_EVIDENCE',
+    productScore: null,
+    flowaiSelfScore: { verified: false, verified_pct: null, reason: 'FlowAI self-score not yet instrumented' },
+  });
 
   const setStepStatus = (step, status) =>
     setStepStatuses(prev => ({ ...prev, [step]: status }));
@@ -128,6 +134,23 @@ export default function MasterOrchestrator() {
           </div>
         </div>
       </motion.div>
+
+      <PlatformRecommendationPanel />
+
+      <div className="grid gap-3 rounded-lg border border-border bg-card/70 p-3 md:grid-cols-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Product Score</p>
+          <p className="mt-1 text-sm font-bold text-foreground">{scorerOutput.productScore ?? 'Not scored'}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">FlowAI Self-Score</p>
+          <p className="mt-1 text-sm font-bold text-foreground">{scorerOutput.flowaiSelfScore.verified_pct ?? 'Stubbed'}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">GTM Gate</p>
+          <p className="mt-1 text-sm font-bold text-foreground">{scorerOutput.gtmFlag}</p>
+        </div>
+      </div>
 
       {/* Input */}
       <AnimatePresence>

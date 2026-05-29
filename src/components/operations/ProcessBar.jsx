@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { CheckCircle2, Clock, ChevronRight } from 'lucide-react';
+import { CheckCircle2, ChevronRight } from 'lucide-react';
 
 const STEPS = [
   { key: 'research',  label: 'Research',      path: '/guided/research' },

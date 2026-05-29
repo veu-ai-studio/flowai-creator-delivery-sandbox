@@ -2,10 +2,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RefreshCw, Shield, Copy, Check, Zap, Loader2, ChevronRight, Package } from 'lucide-react';
+import { RefreshCw, Shield, Copy, Check, Zap, Loader2, Package } from 'lucide-react';
 
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);

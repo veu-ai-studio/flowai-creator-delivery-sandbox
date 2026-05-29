@@ -1,0 +1,896 @@
+{
+  "schema": "v3-repanel.sidecar.v1",
+  "code": "CA-15-v3",
+  "commit": "c5b050f",
+  "bundle_size": 32029,
+  "startedAt": "2026-05-19T13:27:08.163Z",
+  "finishedAt": "2026-05-19T13:29:32.947Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 32029
+  },
+  "tally": {
+    "engagedTotal": 10,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 0,
+    "perQuestion": {
+      "CA-15-C-v3-Q1": {
+        "CA15CV3Q1-RATIFY": 2,
+        "CA15CV3Q1-OPTIN": 0,
+        "CA15CV3Q1-3CONSEC": 0,
+        "CA15CV3Q1-REJECT": 0,
+        "REJECT": 8,
+        "unmatched": 0
+      },
+      "CA-15-C-v3-Q3": {
+        "CA15CV3Q3-RATIFY": 1,
+        "CA15CV3Q3-EMPIRICAL": 3,
+        "CA15CV3Q3-CRITICAL_BLOCK": 2,
+        "CA15CV3Q3-REJECT": 0,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "CA-15-D-v3-Q1": {
+        "CA15DV3Q1-RATIFY": 3,
+        "CA15DV3Q1-HYBRID": 3,
+        "CA15DV3Q1-STRICTER": 1,
+        "CA15DV3Q1-REJECT": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-15-D-v3-Q2": {
+        "CA15DV3Q2-RATIFY": 2,
+        "CA15DV3Q2-BROADER": 4,
+        "CA15DV3Q2-NARROWER": 1,
+        "CA15DV3Q2-REJECT": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 34,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Drift detection without purpose field",
+        "detail": "§28-bis.1 PURPOSE_DRIFT detection relies on 'operator-maintained purpose-notes file' outside ProductSSOT, but CA-15-B v3 removes all purpose information from canonical state. This creates an undefined reference - drift detection cannot function without a canonical purpose baseline to compare against."
+      },
+      {
+        "slot": 1,
+        "title": "Governance directory scope gameable",
+        "detail": "CA-15-D-Q2's `src/lib/governance/**` scope for CEO re-sign is trivially circumvented by moving critical governance logic to adjacent directories like `src/lib/scoring/` or `src/lib/clearance/`. The directory-based trigger creates a false security boundary that sophisticated actors can route around."
+      },
+      {
+        "slot": 1,
+        "title": "Phase B pass underspecified",
+        "detail": "§28-bis exit condition #5 requires 'Phase B pass per CA-14-A canonical + Agent #21 Phase B charter' but the canonical reference excerpt provides no definition of Phase B pass criteria. This creates an undefined exit gate that could block loop termination indefinitely."
+      },
+      {
+        "slot": 1,
+        "title": "Tooling-only enforcement toothless",
+        "detail": "§10.1 moves content_quality + accessibility to `scripts/lint-*.mjs` tooling that 'emit as PR-warnings only' without participating in §7.6 score or Quality Audit. This relegates critical quality dimensions to ignorable warnings, allowing degraded outputs to achieve GTM clearance."
+      },
+      {
+        "slot": 2,
+        "title": "No LLM purpose check",
+        "detail": "In §3, the proposal removes the LLM-judged purpose-alignment check from the Purpose-Driven Optimization loop exit conditions. This could lead to situations where the product's purpose is not adequately aligned with its development, potentially resulting in misaligned outputs."
+      },
+      {
+        "slot": 2,
+        "title": "Hard blocking gate inflexibility",
+        "detail": "In §4, reverting to a hard blocking gate for §27 may introduce rigidity, preventing necessary flexibility in handling conformance issues. This could delay product releases unnecessarily if minor issues are treated with the same severity as major ones."
+      },
+      {
+        "slot": 2,
+        "title": "Purpose information exclusion",
+        "detail": "In §2, the complete exclusion of purpose information from ProductSSOT could lead to a lack of structured documentation of product intent, making it harder for operators to maintain a clear understanding of the product's goals and evolution."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case the changes introduced by CA-15-C v3 cause unintended consequences. This is a concern because the changes affect the Purpose-Driven Optimization loop and the §7.6 score calculation, which are critical components of the system. Specifically, §28-bis does not outline a rollback plan in case the numeric-floor-only exit conditions cause the loop to exit prematurely."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Threshold Justification",
+        "detail": "The proposal introduces heuristic-bootstrap thresholds for PURPOSE_DRIFT detection (20% and 50% token-delta) without providing sufficient empirical justification or explanation for these specific values. This lack of justification raises concerns about the effectiveness and potential impact of these thresholds on the system. §28-bis.1 does not provide a clear rationale for these thresholds, which could lead to unintended consequences."
+      },
+      {
+        "slot": 3,
+        "title": "Potential for Operator Confusion",
+        "detail": "The removal of the `product_purpose` field from ProductSSOT and the introduction of operator-maintained purpose notes could lead to operator confusion and inconsistencies in purpose tracking. This is because operators may not understand the implications of maintaining purpose notes outside of ProductSSOT, and the system does not provide clear guidance on how to handle purpose changes. §15-B v3 does not address this potential issue, which could lead to errors and inconsistencies in the system."
+      },
+      {
+        "slot": 4,
+        "title": "Complexity in Self-Renewal Executor",
+        "detail": "The Self-Renewal Executor's diff-only rule in §6 might create difficulties in maintaining code quality. Large rewrites are forbidden, which could limit the ability to address complex issues effectively."
+      },
+      {
+        "slot": 4,
+        "title": "Ambiguity in Purpose Drift",
+        "detail": "The tiered PURPOSE_DRIFT annotation in §28-bis.1 might lead to ambiguity in handling drift. The heuristic-bootstrap thresholds could be inaccurate, leading to incorrect drift classifications."
+      },
+      {
+        "slot": 4,
+        "title": "Overlap in Quality Audit Dimensions",
+        "detail": "The UI/UX dimension in §10.1 overlaps with the Content Quality checks, leading to potential double-reporting and confusion in the quality audit process."
+      },
+      {
+        "slot": 5,
+        "title": "Tooling-only checks",
+        "detail": "Relocating content quality and accessibility checks to tooling may lead to these checks being overlooked or ignored by operators, reducing overall system quality."
+      },
+      {
+        "slot": 5,
+        "title": "No purpose in SSOT",
+        "detail": "Removing purpose information from ProductSSOT may lead to a lack of clarity and direction for the product, making it harder to align development efforts with business goals."
+      },
+      {
+        "slot": 5,
+        "title": "Hard blocking gate",
+        "detail": "Reverting §27 to a hard blocking gate may cause delays in the clearance process, as operators will be required to resolve all conformance issues before proceeding."
+      },
+      {
+        "slot": 6,
+        "title": "Drift threshold fragility",
+        "detail": "The 20%/50% token-delta thresholds for PURPOSE_DRIFT are heuristic and lack empirical justification (§28-bis.1). This could lead to false positives or negatives, undermining the drift detection mechanism and potentially causing unnecessary alerts or missed critical deviations."
+      },
+      {
+        "slot": 6,
+        "title": "Hard blocking gate override",
+        "detail": "Even with the §27 revert to a hard blocking gate, the admin override per §19 still exists (CA-15-D-Q1). This undermines the purpose of the hard blocking gate, as an admin can bypass conformance failures, potentially leading to the deployment of non-conforming code."
+      },
+      {
+        "slot": 6,
+        "title": "Limited CEO re-sign scope",
+        "detail": "The CEO re-sign trigger scope is limited to `src/lib/governance/**` (CA-15-D-Q2). This may not be sufficient to capture all relevant changes that could impact governance, as other directories or files could also contain code that affects governance policies or processes."
+      },
+      {
+        "slot": 6,
+        "title": "Lack of LLM purpose check",
+        "detail": "The proposal removes LLM-judged purpose-alignment checks from the loop exit (CA-15-C-Q1). While the rationale is to avoid shadow metrics, this could lead to the system optimizing for numeric scores without ensuring that the product actually fulfills its intended purpose."
+      },
+      {
+        "slot": 7,
+        "title": "Arbitrary drift thresholds",
+        "detail": "§28-bis.1's token-change drift tiers (20%/50%) lack empirical justification. These thresholds were admitted as heuristic-bootstrap in the changelog table yet will trigger critical production freezes. No validation exists for token-delta accurately reflecting purpose drift severity."
+      },
+      {
+        "slot": 7,
+        "title": "Governance directory over-scoping",
+        "detail": "CA-15-D-v3-Q2 triggers CEO re-sign for ANY change in entire `src/lib/governance/` directory. This includes non-substantive files like comments or configs, creating operational friction. The broad scope contradicts the locked rule of CEO paste-only automation."
+      },
+      {
+        "slot": 7,
+        "title": "Purpose traceability gap",
+        "detail": "Removing purpose from ProductSSOT (§2) eliminates canonical purpose tracking while retaining PURPOSE_DRIFT checks. Drift detection now relies on external operator notes with no validation mechanism, creating inconsistency between the removed field and retained drift semantics."
+      },
+      {
+        "slot": 7,
+        "title": "Hard gate override vulnerability",
+        "detail": "§27 revert to hard blocking gate (D-Q1) retains §19 admin override path. This creates a loophole where operators can bypass conformance checks under pressure, undermining the very enforcement the revert aims to strengthen."
+      },
+      {
+        "slot": 8,
+        "title": "§28-bis is misnamed",
+        "detail": "The proposed loop keeps the label “Purpose-Driven Optimization” while explicitly removing any purpose-alignment check from §28-bis. That creates a semantic mismatch between the mechanism and its title, which will confuse operators and future maintainers about what the loop is actually optimizing."
+      },
+      {
+        "slot": 8,
+        "title": "Tiered drift is untethered",
+        "detail": "§28-bis.1 uses shingle-based token-delta heuristics on operator-maintained notes outside ProductSSOT, but gives no normalization rules for copied text, formatting changes, or multi-document notes. The 20%/50% thresholds are admitted as heuristic-bootstrap, so the same content could oscillate between minor and major drift without a stable canonical interpretation."
+      },
+      {
+        "slot": 8,
+        "title": "Hard block plus override conflict",
+        "detail": "§27 is reverted to a hard blocking gate, but the drafted text also preserves an admin override path via §19-equivalent override language in CA-15-D-Q1. That combination is internally inconsistent: if conformance failure blocks clearance, an override becomes a hidden bypass unless the scope and audit conditions are precisely bounded."
+      },
+      {
+        "slot": 8,
+        "title": "External purpose notes are brittle",
+        "detail": "Removing purpose information from ProductSSOT and pushing it into operator notes/README files makes the core governance state non-atomic and non-auditable. The draft then depends on those external notes for drift detection, so a missing, stale, or renamed note can silently disable a central governance signal without any canonical record of the failure."
+      },
+      {
+        "slot": 9,
+        "title": "Unclear §7.6 score impact",
+        "detail": "The proposal removes `product_purpose` field but retains §7.6 score calculation. It's unclear how this score will be affected without purpose information (§2)."
+      },
+      {
+        "slot": 9,
+        "title": "Drift detection risks",
+        "detail": "The tiered PURPOSE_DRIFT annotation (§28-bis.1) uses heuristic thresholds (20%/50%). These may not be effective in practice, potentially leading to incorrect drift classification."
+      },
+      {
+        "slot": 9,
+        "title": "§27 revert implications",
+        "detail": "Reverting §27 to a hard blocking gate (§4) may cause operational delays if conformance issues arise frequently. The impact on operator workflow is not clearly assessed."
+      },
+      {
+        "slot": 10,
+        "title": "§27 hard blocking gate deadlock risk",
+        "detail": "CA-15-D v3 reverts §27 to HARD BLOCKING GATE over entire src/lib/governance/ directory; a single medium-severity conformance entry now blocks §11 Step 6 clearance with no automatic bypass except §19 95/95 override, creating potential infinite loop when operator notes drift is detected outside ProductSSOT."
+      },
+      {
+        "slot": 10,
+        "title": "PURPOSE_DRIFT heuristic thresholds",
+        "detail": "§28-bis.1 defines 20%/50% token-delta tiers on operator-notes files that CA-15-B v3 explicitly places outside canonical SSOT; no validation mechanism exists for shingle-based diff accuracy and thresholds are labeled heuristic-bootstrap without telemetry accumulation path."
+      },
+      {
+        "slot": 10,
+        "title": "Tooling lints decoupled from scoring",
+        "detail": "CA-15-A v3 moves content_quality + accessibility to scripts/lint-*.mjs emitting only PR warnings; this decouples them from §7.6 formula and §10.1 5-dimension Self-Audit, yet §10.1 still claims 95/95 governance threshold without updated integration spec."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-15-C-v3-Q1": {
+      "verdict": "SUPERMAJORITY_REJECT",
+      "detail": "8 of 10 on REJECT (≥ 8/10)",
+      "topKey": "REJECT",
+      "topCount": 8
+    },
+    "CA-15-C-v3-Q3": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "4 of 10 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 4
+    },
+    "CA-15-D-v3-Q1": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between CA15DV3Q1-RATIFY / CA15DV3Q1-HYBRID / REJECT",
+      "topKey": "CA15DV3Q1-RATIFY",
+      "topCount": 3
+    },
+    "CA-15-D-v3-Q2": {
+      "verdict": "PLURALITY_CA15DV3Q2-BROADER",
+      "detail": "4 of 10 on CA15DV3Q2-BROADER (below 7/10 quorum)",
+      "topKey": "CA15DV3Q2-BROADER",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.2,
+    "alignedCount": 8,
+    "totalPossible": 40,
+    "draftedQs": [
+      "CA-15-C-v3-Q1",
+      "CA-15-C-v3-Q3",
+      "CA-15-D-v3-Q1",
+      "CA-15-D-v3-Q2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 20.0 %, distinct objections 34"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Drift detection without purpose field",
+            "detail": "§28-bis.1 PURPOSE_DRIFT detection relies on 'operator-maintained purpose-notes file' outside ProductSSOT, but CA-15-B v3 removes all purpose information from canonical state. This creates an undefined reference - drift detection cannot function without a canonical purpose baseline to compare against."
+          },
+          {
+            "title": "Governance directory scope gameable",
+            "detail": "CA-15-D-Q2's `src/lib/governance/**` scope for CEO re-sign is trivially circumvented by moving critical governance logic to adjacent directories like `src/lib/scoring/` or `src/lib/clearance/`. The directory-based trigger creates a false security boundary that sophisticated actors can route around."
+          },
+          {
+            "title": "Phase B pass underspecified",
+            "detail": "§28-bis exit condition #5 requires 'Phase B pass per CA-14-A canonical + Agent #21 Phase B charter' but the canonical reference excerpt provides no definition of Phase B pass criteria. This creates an undefined exit gate that could block loop termination indefinitely."
+          },
+          {
+            "title": "Tooling-only enforcement toothless",
+            "detail": "§10.1 moves content_quality + accessibility to `scripts/lint-*.mjs` tooling that 'emit as PR-warnings only' without participating in §7.6 score or Quality Audit. This relegates critical quality dimensions to ignorable warnings, allowing degraded outputs to achieve GTM clearance."
+          }
+        ],
+        "worse_than_status_quo": "The v3 proposal's removal of purpose from ProductSSOT while retaining PURPOSE_DRIFT detection creates a phantom monitoring system that references non-existent canonical state, making drift detection non-functional while appearing operational.",
+        "precedent": "The Node.js left-pad incident demonstrated how critical functionality placed in non-canonical locations (npm registry vs core) can suddenly disappear, breaking dependent systems - similar to how operator-notes purpose files could vanish without ProductSSOT protection."
+      },
+      "rejection_steelman": "The proposal should be rejected because it creates three structural incoherencies: (1) PURPOSE_DRIFT detection without canonical purpose storage is architecturally unsound, (2) moving quality checks to warning-only tooling abandons enforcement rigor, and (3) the governance directory scope for CEO re-sign is trivially circumventable. These flaws compound to create a system that appears to have safeguards but lacks actual enforcement teeth.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — LLM-judged purpose check is structurally required for a Purpose-Driven loop; without it, rename §28-bis to \"Numeric-Floor Optimization Loop\" and remove \"Purpose-Driven\" framing.",
+          "rationale": "A 'Purpose-Driven Optimization Loop' that contains no purpose evaluation is semantically incoherent; the loop should be honestly named for what it measures."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — drift detection lives in operator-notes tooling outside FlowAI canonical (consistent with CA-15-B v3 removal of purpose from ProductSSOT).",
+          "rationale": "Since CA-15-B v3 removes purpose from ProductSSOT entirely, drift detection should follow the same pattern and move to tooling rather than remaining in canonical SSOT."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "CA15DV3Q1-HYBRID",
+          "pick_text": "Ratify the noted hybrid — §27 blocks on critical/high severity findings; surfaces medium/low as advisory + admin dashboard alarm without blocking.",
+          "rationale": "The hybrid approach balances enforcement for severe issues while avoiding pipeline blockage on minor conformance deviations, providing graduated response."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "CA15DV3Q2-BROADER",
+          "pick_text": "Strengthen broader — scope = `src/lib/governance/**` AND `src/lib/conformance/**` AND any `*.sql` migration files.",
+          "rationale": "The broader scope closes the circumvention loophole identified in objection #2 by capturing governance logic regardless of directory placement."
+        }
+      },
+      "overallNotes": "The v3 proposal's attempt to remove purpose while retaining drift detection creates fundamental architectural incoherence that should be resolved before ratification.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "No LLM purpose check",
+            "detail": "In §3, the proposal removes the LLM-judged purpose-alignment check from the Purpose-Driven Optimization loop exit conditions. This could lead to situations where the product's purpose is not adequately aligned with its development, potentially resulting in misaligned outputs."
+          },
+          {
+            "title": "Hard blocking gate inflexibility",
+            "detail": "In §4, reverting to a hard blocking gate for §27 may introduce rigidity, preventing necessary flexibility in handling conformance issues. This could delay product releases unnecessarily if minor issues are treated with the same severity as major ones."
+          },
+          {
+            "title": "Purpose information exclusion",
+            "detail": "In §2, the complete exclusion of purpose information from ProductSSOT could lead to a lack of structured documentation of product intent, making it harder for operators to maintain a clear understanding of the product's goals and evolution."
+          }
+        ],
+        "worse_than_status_quo": "The removal of the LLM-judged purpose-alignment check could lead to products being developed that do not align with their intended purpose, potentially resulting in wasted resources and misaligned product features.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal's removal of the LLM-judged purpose-alignment check from the optimization loop exit conditions could lead to products that do not align with their intended purpose, potentially resulting in wasted resources and misaligned product features. Additionally, reverting to a hard blocking gate for §27 may introduce unnecessary rigidity, delaying product releases for minor issues.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — LLM-judged purpose check is structurally required for a Purpose-Driven loop; without it, rename §28-bis to \"Numeric-Floor Optimization Loop\" and remove \"Purpose-Driven\" framing.",
+          "rationale": "The absence of an LLM-judged purpose check undermines the purpose-driven nature of the loop, potentially leading to misaligned product development."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "CA15CV3Q3-CRITICAL_BLOCK",
+          "pick_text": "Strengthen tier rules — critical drift ALSO blocks loop exit (not just fix-generation); operator must explicitly re-approve before loop can exit.",
+          "rationale": "Ensuring that critical drift blocks loop exit as well as fix-generation would prevent products from progressing with significant misalignments."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "CA15DV3Q1-HYBRID",
+          "pick_text": "Ratify the noted hybrid — §27 blocks on critical/high severity findings; surfaces medium/low as advisory + admin dashboard alarm without blocking.",
+          "rationale": "A hybrid approach provides necessary flexibility, allowing minor issues to be addressed without blocking progress while still enforcing strict measures for critical issues."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "CA15DV3Q2-BROADER",
+          "pick_text": "Strengthen broader — scope = `src/lib/governance/**` AND `src/lib/conformance/**` AND any `*.sql` migration files.",
+          "rationale": "A broader scope ensures comprehensive oversight and governance, reducing the risk of untracked changes affecting critical governance and conformance areas."
+        }
+      },
+      "overallNotes": "The proposal's removal of purpose checks and rigid gating could lead to misaligned product development and unnecessary delays.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case the changes introduced by CA-15-C v3 cause unintended consequences. This is a concern because the changes affect the Purpose-Driven Optimization loop and the §7.6 score calculation, which are critical components of the system. Specifically, §28-bis does not outline a rollback plan in case the numeric-floor-only exit conditions cause the loop to exit prematurely."
+          },
+          {
+            "title": "Insufficient Threshold Justification",
+            "detail": "The proposal introduces heuristic-bootstrap thresholds for PURPOSE_DRIFT detection (20% and 50% token-delta) without providing sufficient empirical justification or explanation for these specific values. This lack of justification raises concerns about the effectiveness and potential impact of these thresholds on the system. §28-bis.1 does not provide a clear rationale for these thresholds, which could lead to unintended consequences."
+          },
+          {
+            "title": "Potential for Operator Confusion",
+            "detail": "The removal of the `product_purpose` field from ProductSSOT and the introduction of operator-maintained purpose notes could lead to operator confusion and inconsistencies in purpose tracking. This is because operators may not understand the implications of maintaining purpose notes outside of ProductSSOT, and the system does not provide clear guidance on how to handle purpose changes. §15-B v3 does not address this potential issue, which could lead to errors and inconsistencies in the system."
+          }
+        ],
+        "worse_than_status_quo": "If the changes introduced by CA-15-C v3 cause the Purpose-Driven Optimization loop to exit prematurely or incorrectly, it could lead to a worse-than-status-quo scenario where the system produces suboptimal or incorrect results. This could happen if the numeric-floor-only exit conditions are not sufficient to ensure the loop's correctness, or if the PURPOSE_DRIFT detection thresholds are not effective in preventing purpose drift.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal's changes to the Purpose-Driven Optimization loop and the §7.6 score calculation could have unintended consequences on the system's overall performance and correctness. The lack of a clear rollback strategy, insufficient justification for the PURPOSE_DRIFT detection thresholds, and potential for operator confusion all contribute to the risk of the proposal making the system worse than the status quo. Therefore, it is reasonable to reject or defer the proposal until these concerns are addressed.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "CA15CV3Q1-RATIFY",
+          "pick_text": "Ratify v3 as drafted (5 numeric exit conditions; no LLM check)",
+          "rationale": "The proposal's removal of the LLM-judged purpose-alignment check is a reasonable simplification of the loop's exit conditions, and the numeric-floor-only exit conditions provide a clear and objective criteria for loop exit."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "CA15CV3Q3-CRITICAL_BLOCK",
+          "pick_text": "Strengthen tier rules — critical drift ALSO blocks loop exit (not just fix-generation); operator must explicitly re-approve before loop can exit",
+          "rationale": "This option strengthens the drift detection mechanism by blocking loop exit on critical drift, which ensures that the system does not produce suboptimal results due to significant purpose drift."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "CA15DV3Q1-RATIFY",
+          "pick_text": "Ratify v3 primary as drafted (§27 hard blocking gate; failure blocks §11 Step 6 until conformance achieved; admin override per §19 95/95-override rule)",
+          "rationale": "The proposal's revert to a hard blocking gate for §27 provides a clear and consistent conformance enforcement mechanism, and the admin override rule provides a necessary exception handling mechanism."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "CA15DV3Q2-RATIFY",
+          "pick_text": "Ratify v3 as drafted (entire `src/lib/governance/` directory is scope; CI grep at promotion-commit time)",
+          "rationale": "The proposal's scope for CEO re-sign is reasonable and consistent with the system's governance requirements, and the CI grep at promotion-commit time provides an additional check to ensure conformance."
+        }
+      },
+      "overallNotes": "The proposal requires careful consideration of the potential risks and unintended consequences of the changes introduced by CA-15-C v3. The reviewer recommends that the proposal be carefully evaluated and tested to ensure that the changes do not compromise the system's performance, correctness, or conformance.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity in Self-Renewal Executor",
+            "detail": "The Self-Renewal Executor's diff-only rule in §6 might create difficulties in maintaining code quality. Large rewrites are forbidden, which could limit the ability to address complex issues effectively."
+          },
+          {
+            "title": "Ambiguity in Purpose Drift",
+            "detail": "The tiered PURPOSE_DRIFT annotation in §28-bis.1 might lead to ambiguity in handling drift. The heuristic-bootstrap thresholds could be inaccurate, leading to incorrect drift classifications."
+          },
+          {
+            "title": "Overlap in Quality Audit Dimensions",
+            "detail": "The UI/UX dimension in §10.1 overlaps with the Content Quality checks, leading to potential double-reporting and confusion in the quality audit process."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's reversion to a hard blocking gate in §27 could lead to increased downtime and delays in the pipeline, as any conformance issue would block the process entirely, which is worse than the current advisory system that allows for more flexibility.",
+        "precedent": "The failure of similar hard blocking mechanisms in continuous integration systems, such as Jenkins, where strict blocking gates led to significant pipeline delays and reduced productivity. no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces rigid blocking mechanisms and complex rules that could hinder the flexibility and efficiency of the current system. The reversion to a hard blocking gate in §27 could lead to significant delays and downtime, which is counterproductive to the goal of continuous improvement and efficiency.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposed exit conditions are too rigid and do not account for the dynamic nature of purpose-driven optimization."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The tiered drift annotation could lead to ambiguity and inaccurate classifications, which is not acceptable."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The reversion to a hard blocking gate could lead to significant delays and downtime, which is worse than the current advisory system."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The scope for CEO re-sign is too broad and could lead to unnecessary overhead and delays in the approval process."
+        }
+      },
+      "overallNotes": "The proposal introduces several complex and rigid mechanisms that could hinder the flexibility and efficiency of the current system. The reversion to a hard blocking gate and the tiered drift annotation are particularly concerning and could lead to significant issues in practice.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Tooling-only checks",
+            "detail": "Relocating content quality and accessibility checks to tooling may lead to these checks being overlooked or ignored by operators, reducing overall system quality."
+          },
+          {
+            "title": "No purpose in SSOT",
+            "detail": "Removing purpose information from ProductSSOT may lead to a lack of clarity and direction for the product, making it harder to align development efforts with business goals."
+          },
+          {
+            "title": "Hard blocking gate",
+            "detail": "Reverting §27 to a hard blocking gate may cause delays in the clearance process, as operators will be required to resolve all conformance issues before proceeding."
+          }
+        ],
+        "worse_than_status_quo": "The removal of purpose information from ProductSSOT may result in a lack of direction and clarity for product development, potentially leading to misaligned efforts and reduced overall quality.",
+        "precedent": "No precedent known."
+      },
+      "rejection_steelman": "The proposal may lead to a reduction in overall system quality due to the relocation of important checks to tooling and the removal of purpose information from ProductSSOT. Additionally, the hard blocking gate may cause delays in the clearance process.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The removal of the LLM-judged purpose-alignment check may lead to a lack of direction and clarity for the Purpose-Driven Optimization loop."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The tiered drift annotation may not provide enough enforcement to ensure purpose alignment, and the lack of a blocking mechanism for critical drift may lead to unresolved issues."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The hard blocking gate may cause delays in the clearance process, and the lack of a stronger enforcement mechanism may lead to unresolved conformance issues."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The scope of the CEO re-sign trigger may be too broad or too narrow, potentially leading to either unnecessary delays or insufficient enforcement of conformance issues."
+        }
+      },
+      "overallNotes": "The proposal may benefit from a more balanced approach that maintains important checks within the system and provides clearer direction for product development.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Drift threshold fragility",
+            "detail": "The 20%/50% token-delta thresholds for PURPOSE_DRIFT are heuristic and lack empirical justification (§28-bis.1). This could lead to false positives or negatives, undermining the drift detection mechanism and potentially causing unnecessary alerts or missed critical deviations."
+          },
+          {
+            "title": "Hard blocking gate override",
+            "detail": "Even with the §27 revert to a hard blocking gate, the admin override per §19 still exists (CA-15-D-Q1). This undermines the purpose of the hard blocking gate, as an admin can bypass conformance failures, potentially leading to the deployment of non-conforming code."
+          },
+          {
+            "title": "Limited CEO re-sign scope",
+            "detail": "The CEO re-sign trigger scope is limited to `src/lib/governance/**` (CA-15-D-Q2). This may not be sufficient to capture all relevant changes that could impact governance, as other directories or files could also contain code that affects governance policies or processes."
+          },
+          {
+            "title": "Lack of LLM purpose check",
+            "detail": "The proposal removes LLM-judged purpose-alignment checks from the loop exit (CA-15-C-Q1). While the rationale is to avoid shadow metrics, this could lead to the system optimizing for numeric scores without ensuring that the product actually fulfills its intended purpose."
+          }
+        ],
+        "worse_than_status_quo": "Reverting to a hard blocking gate with an admin override creates a false sense of security. Operators might assume that the system is enforcing conformance, while in reality, an admin can bypass the gate, potentially leading to the deployment of non-conforming code and undermining trust in the system.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal, while addressing some previous concerns, still has significant weaknesses. The reliance on heuristic drift thresholds, the presence of an admin override for the hard blocking gate, and the limited scope of the CEO re-sign trigger all pose risks to the system's integrity and effectiveness. Deferring this proposal would allow for further refinement and mitigation of these risks, ensuring a more robust and reliable governance process.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — LLM-judged purpose check is structurally required for a Purpose-Driven loop; without it, rename §28-bis to \"Numeric-Floor Optimization Loop\" and remove \"Purpose-Driven\" framing.",
+          "rationale": "Without an LLM-judged purpose check, the loop is not truly purpose-driven. It's optimizing for numbers, not actual purpose fulfillment."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "CA15CV3Q3-EMPIRICAL",
+          "pick_text": "Strengthen empirically — defer concrete thresholds to a successor CA-N once 90 days of drift telemetry are accumulated; v3 ships with single annotation kind and no tiering.",
+          "rationale": "The current thresholds are arbitrary. Waiting for empirical data will lead to more accurate and useful drift detection."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "CA15DV3Q1-STRICTER",
+          "pick_text": "Strengthen further — §27 hard blocking AND no admin override path (remove §19-equivalent override; conformance failure cannot be bypassed).",
+          "rationale": "The admin override undermines the entire point of a hard blocking gate. Removing it ensures true conformance."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "CA15DV3Q2-BROADER",
+          "pick_text": "Strengthen broader — scope = `src/lib/governance/**` AND `src/lib/conformance/**` AND any `*.sql` migration files.",
+          "rationale": "The current scope is too narrow. Including conformance files and SQL migrations ensures a more comprehensive governance check."
+        }
+      },
+      "overallNotes": "The proposal needs further refinement to address the identified weaknesses and ensure a robust and reliable governance process.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Arbitrary drift thresholds",
+            "detail": "§28-bis.1's token-change drift tiers (20%/50%) lack empirical justification. These thresholds were admitted as heuristic-bootstrap in the changelog table yet will trigger critical production freezes. No validation exists for token-delta accurately reflecting purpose drift severity."
+          },
+          {
+            "title": "Governance directory over-scoping",
+            "detail": "CA-15-D-v3-Q2 triggers CEO re-sign for ANY change in entire `src/lib/governance/` directory. This includes non-substantive files like comments or configs, creating operational friction. The broad scope contradicts the locked rule of CEO paste-only automation."
+          },
+          {
+            "title": "Purpose traceability gap",
+            "detail": "Removing purpose from ProductSSOT (§2) eliminates canonical purpose tracking while retaining PURPOSE_DRIFT checks. Drift detection now relies on external operator notes with no validation mechanism, creating inconsistency between the removed field and retained drift semantics."
+          },
+          {
+            "title": "Hard gate override vulnerability",
+            "detail": "§27 revert to hard blocking gate (D-Q1) retains §19 admin override path. This creates a loophole where operators can bypass conformance checks under pressure, undermining the very enforcement the revert aims to strengthen."
+          }
+        ],
+        "worse_than_status_quo": "A critical PURPOSE_DRIFT annotation freezes Self-Renewal fixes while the numeric exit loop continues. This could permanently strand products with passing technical scores but frozen fix-capacity if drift resolution requires fixes the system is blocked from generating.",
+        "precedent": "Google Health's shutdown due to purpose/feature drift without automated governance checks, leading to misaligned product evolution and eventual abandonment despite technical functionality."
+      },
+      "rejection_steelman": "The proposal creates systemic inconsistencies: it removes purpose from canonical state but retains purpose-driven mechanics, enforces heuristic drift thresholds without validation, and reverts to rigid blocking gates while leaving override loopholes. These unresolved tensions introduce more operational risk than the status quo's known limitations, warranting deferral until coherent design emerges.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — LLM-judged purpose check is structurally required for a Purpose-Driven loop; without it, rename §28-bis to 'Numeric-Floor Optimization Loop' and remove 'Purpose-Driven' framing.",
+          "rationale": "Retaining 'Purpose-Driven' branding while removing purpose alignment checks is fundamentally misleading and undermines the loop's conceptual integrity."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "CA15CV3Q3-EMPIRICAL",
+          "pick_text": "Strengthen empirically — defer concrete thresholds to a successor CA-N once 90 days of drift telemetry are accumulated; v3 ships with single annotation kind and no tiering.",
+          "rationale": "Heuristic thresholds without empirical basis pose unacceptable risk; deferring tiering until evidence exists maintains drift awareness without arbitrary production impacts."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "CA15DV3Q1-HYBRID",
+          "pick_text": "Ratify the noted hybrid — §27 blocks on critical/high severity findings; surfaces medium/low as advisory + admin dashboard alarm without blocking.",
+          "rationale": "Hybrid model balances enforcement for critical issues while avoiding operational deadlock from minor non-conformances, addressing Slot 6's objection without full revert risks."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "CA15DV3Q2-NARROWER",
+          "pick_text": "Strengthen narrower — scope = ONLY ScoreEvaluator.js + ClearanceProtocol.ts + CanonicalKinds.ts (3 canonical files)",
+          "rationale": "Over-broad directory scope creates signature fatigue; focusing on core governance files maintains rigor while eliminating noise from peripheral changes."
+        }
+      },
+      "overallNotes": "The v3 deletions create as many problems as they solve; purpose mechanics require holistic redesign rather than piecewise removal.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§28-bis is misnamed",
+            "detail": "The proposed loop keeps the label “Purpose-Driven Optimization” while explicitly removing any purpose-alignment check from §28-bis. That creates a semantic mismatch between the mechanism and its title, which will confuse operators and future maintainers about what the loop is actually optimizing."
+          },
+          {
+            "title": "Tiered drift is untethered",
+            "detail": "§28-bis.1 uses shingle-based token-delta heuristics on operator-maintained notes outside ProductSSOT, but gives no normalization rules for copied text, formatting changes, or multi-document notes. The 20%/50% thresholds are admitted as heuristic-bootstrap, so the same content could oscillate between minor and major drift without a stable canonical interpretation."
+          },
+          {
+            "title": "Hard block plus override conflict",
+            "detail": "§27 is reverted to a hard blocking gate, but the drafted text also preserves an admin override path via §19-equivalent override language in CA-15-D-Q1. That combination is internally inconsistent: if conformance failure blocks clearance, an override becomes a hidden bypass unless the scope and audit conditions are precisely bounded."
+          },
+          {
+            "title": "External purpose notes are brittle",
+            "detail": "Removing purpose information from ProductSSOT and pushing it into operator notes/README files makes the core governance state non-atomic and non-auditable. The draft then depends on those external notes for drift detection, so a missing, stale, or renamed note can silently disable a central governance signal without any canonical record of the failure."
+          }
+        ],
+        "worse_than_status_quo": "If the operator edits the purpose note format, moves the file, or copies content between notes, the drift detector may fire spurious critical freezes while the canonical SSOT still looks healthy. The system then loses fix-generation capacity on a heuristic artifact, making operations worse than the status quo where purpose was at least explicitly represented in one place.",
+        "precedent": "GitHub Actions / CI pipelines have repeatedly suffered from brittle path-based and text-heuristic gating, where renamed files or formatting-only changes cause false failures or missed checks; a similar class of issue is common in lint-and-policy systems that depend on external notes instead of canonical state."
+      },
+      "rejection_steelman": "The strongest reason to reject or defer is that v3 trades away canonicality for modularity without proving the new split is safe. Purpose is removed from ProductSSOT, yet drift and optimization still depend on external notes, so the governance model becomes harder to audit and easier to game. In addition, §27’s hard-blocking semantics remain underspecified relative to overrides, making the conformance gate more likely to create ambiguous operator behavior than to improve safety.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal’s own framing is inconsistent: it keeps “Purpose-Driven” language while removing any purpose check, so none of the options resolves the naming/spec mismatch. I would want either a renamed loop or a real purpose-alignment mechanism, not the current hybrid."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The tiering is heuristic-only and anchored to operator notes outside canonical SSOT, which is too brittle to ratify as specified. A satisfactory option would need normalization rules, file-scope guarantees, and a clear source of truth for drift measurement."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The options still leave the hard-block vs override relationship ambiguous, and the draft text does not fully specify when an override is allowed or forbidden. Without a crisp no-bypass rule or a narrowly scoped exception model, I cannot endorse any listed choice."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The scope is broader than a small canonical file set, but still underdefined for transitive dependencies, migrations, and generated conformance artifacts. I would reject until the proposal specifies whether indirect changes in adjacent governance code also trigger re-sign."
+        }
+      },
+      "overallNotes": "This draft improves clarity in a few places, but it still externalizes too much governance state and leaves several enforcement boundaries ambiguous. The result is a higher false-positive / false-negative risk than the status quo.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unclear §7.6 score impact",
+            "detail": "The proposal removes `product_purpose` field but retains §7.6 score calculation. It's unclear how this score will be affected without purpose information (§2)."
+          },
+          {
+            "title": "Drift detection risks",
+            "detail": "The tiered PURPOSE_DRIFT annotation (§28-bis.1) uses heuristic thresholds (20%/50%). These may not be effective in practice, potentially leading to incorrect drift classification."
+          },
+          {
+            "title": "§27 revert implications",
+            "detail": "Reverting §27 to a hard blocking gate (§4) may cause operational delays if conformance issues arise frequently. The impact on operator workflow is not clearly assessed."
+          }
+        ],
+        "worse_than_status_quo": "If the §7.6 score becomes less reliable without purpose information, the system may produce lower quality outputs or fail to detect critical issues, making it worse than the status quo.",
+        "precedent": "Similar design changes in other AI systems have led to unforeseen consequences, such as decreased output quality or increased operational friction (e.g., Microsoft's Tay AI incident)."
+      },
+      "rejection_steelman": "The proposal makes significant changes to the system's operation, such as removing purpose information and reverting §27 to a hard blocking gate. These changes may introduce unforeseen risks or operational challenges that could outweigh their benefits.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The options do not adequately address the concerns around the removal of LLM-judged purpose-alignment check."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "CA15CV3Q3-EMPIRICAL",
+          "pick_text": "Strengthen empirically — defer concrete thresholds to a successor CA-N once 90 days of drift telemetry are accumulated; v3 ships with single annotation kind and no tiering.",
+          "rationale": "This approach allows for data-driven decision making on drift detection thresholds."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "CA15DV3Q1-RATIFY",
+          "pick_text": "Ratify v3 primary as drafted (§27 hard blocking gate; failure blocks §11 Step 6 until conformance achieved; admin override per §19 95/95-override rule).",
+          "rationale": "This maintains a strong conformance check while allowing for necessary overrides."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "CA15DV3Q2-BROADER",
+          "pick_text": "Strengthen broader — scope = `src/lib/governance/**` AND `src/lib/conformance/**` AND any `*.sql` migration files.",
+          "rationale": "This broader scope ensures that all relevant governance and conformance changes trigger CEO re-sign."
+        }
+      },
+      "overallNotes": "The proposal requires careful consideration of its implications on system operation and output quality.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§27 hard blocking gate deadlock risk",
+            "detail": "CA-15-D v3 reverts §27 to HARD BLOCKING GATE over entire src/lib/governance/ directory; a single medium-severity conformance entry now blocks §11 Step 6 clearance with no automatic bypass except §19 95/95 override, creating potential infinite loop when operator notes drift is detected outside ProductSSOT."
+          },
+          {
+            "title": "PURPOSE_DRIFT heuristic thresholds",
+            "detail": "§28-bis.1 defines 20%/50% token-delta tiers on operator-notes files that CA-15-B v3 explicitly places outside canonical SSOT; no validation mechanism exists for shingle-based diff accuracy and thresholds are labeled heuristic-bootstrap without telemetry accumulation path."
+          },
+          {
+            "title": "Tooling lints decoupled from scoring",
+            "detail": "CA-15-A v3 moves content_quality + accessibility to scripts/lint-*.mjs emitting only PR warnings; this decouples them from §7.6 formula and §10.1 5-dimension Self-Audit, yet §10.1 still claims 95/95 governance threshold without updated integration spec."
+          }
+        ],
+        "worse_than_status_quo": "Hard-blocking §27 on non-critical findings plus external purpose notes will cause more stalled clearance runs than the prior advisory framing, increasing operator override frequency and eroding the 95/95 invariant faster than the status-quo advisory model.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal removes purpose from ProductSSOT and extends hard blocking to a broad directory while relying on unvalidated external heuristics; this combination risks both under-specification of intent tracking and over-blocking of legitimate runs, making deferral until a unified conformance + purpose model is specified the safer path.",
+      "votes": {
+        "CA-15-C-v3-Q1": {
+          "key": "CA15CV3Q1-RATIFY",
+          "pick_text": "Ratify v3 as drafted (5 numeric exit conditions; no LLM check).",
+          "rationale": "Numeric-floor exit avoids introducing new LLM-judged surface that could itself regress under the §7.6 guard."
+        },
+        "CA-15-C-v3-Q3": {
+          "key": "CA15CV3Q3-RATIFY",
+          "pick_text": "Ratify v3 as drafted (tier thresholds 20% / 50% heuristic-bootstrap; loop never deadlocks; critical freezes Self-Renewal fix-generation only).",
+          "rationale": "Tiered non-deadlocking annotation preserves loop progress while surfacing drift for operator review."
+        },
+        "CA-15-D-v3-Q1": {
+          "key": "CA15DV3Q1-RATIFY",
+          "pick_text": "Ratify v3 primary as drafted (§27 hard blocking gate; failure blocks §11 Step 6 until conformance achieved; admin override per §19 95/95-override rule).",
+          "rationale": "Restoring blocking semantics directly addresses the v2 plurality rejection of advisory-only enforcement."
+        },
+        "CA-15-D-v3-Q2": {
+          "key": "CA15DV3Q2-RATIFY",
+          "pick_text": "Ratify v3 as drafted (entire `src/lib/governance/` directory is scope; CI grep at promotion-commit time).",
+          "rationale": "Concrete existing directory removes the circular dependency on the not-yet-written CONFORMANCE_SCOPE.md."
+        }
+      },
+      "overallNotes": "All four ratify choices preserve the v3 convergence reductions while restoring enforcement strength where previously rejected.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-15-C-v3-Q1",
+      "topic": "CA-15-C v3 Q1 — Does Panel ratify Purpose-Driven Optimization loop exits on numeric §7.6 floor + zero critical + Self-Renewal terminal + LIMITATIONS + Phase B pass — NO LLM-judged purpose-alignment check?",
+      "options": [
+        {
+          "key": "CA15CV3Q1-RATIFY",
+          "text": "Ratify v3 as drafted (5 numeric exit conditions; no LLM check)."
+        },
+        {
+          "key": "CA15CV3Q1-OPTIN",
+          "text": "Strengthen — re-introduce LLM-judged purpose-alignment as 6th OPTIONAL exit condition gated by `product_registry.llm_purpose_check_enabled` (default false; admin-only opt-in)."
+        },
+        {
+          "key": "CA15CV3Q1-3CONSEC",
+          "text": "Strengthen — exit condition #1 stricter: §7.6 score floor moves from \"≥`gtm_ready_bar_override`\" to \"≥ for THREE consecutive iterations\"."
+        },
+        {
+          "key": "CA15CV3Q1-REJECT",
+          "text": "Reject — LLM-judged purpose check is structurally required for a Purpose-Driven loop; without it, rename §28-bis to \"Numeric-Floor Optimization Loop\" and remove \"Purpose-Driven\" framing."
+        }
+      ],
+      "draftedKey": "CA15CV3Q1-RATIFY"
+    },
+    {
+      "id": "CA-15-C-v3-Q3",
+      "topic": "CA-15-C v3 Q3 — Does Panel ratify drift as tiered annotation (minor 20% / major 50% / critical >50%-or-clear) that never deadlocks the loop?",
+      "options": [
+        {
+          "key": "CA15CV3Q3-RATIFY",
+          "text": "Ratify v3 as drafted (tier thresholds 20% / 50% heuristic-bootstrap; loop never deadlocks; critical freezes Self-Renewal fix-generation only)."
+        },
+        {
+          "key": "CA15CV3Q3-EMPIRICAL",
+          "text": "Strengthen empirically — defer concrete thresholds to a successor CA-N once 90 days of drift telemetry are accumulated; v3 ships with single annotation kind and no tiering."
+        },
+        {
+          "key": "CA15CV3Q3-CRITICAL_BLOCK",
+          "text": "Strengthen tier rules — critical drift ALSO blocks loop exit (not just fix-generation); operator must explicitly re-approve before loop can exit."
+        },
+        {
+          "key": "CA15CV3Q3-REJECT",
+          "text": "Reject — drift detection lives in operator-notes tooling outside FlowAI canonical (consistent with CA-15-B v3 removal of purpose from ProductSSOT)."
+        }
+      ],
+      "draftedKey": "CA15CV3Q3-RATIFY"
+    },
+    {
+      "id": "CA-15-D-v3-Q1",
+      "topic": "CA-15-D v3 Q1 — Does Panel ratify §27 reverts to HARD BLOCKING GATE (v1 form) as primary, with hybrid (advisory non-critical / blocking critical) noted as alternative?",
+      "options": [
+        {
+          "key": "CA15DV3Q1-RATIFY",
+          "text": "Ratify v3 primary as drafted (§27 hard blocking gate; failure blocks §11 Step 6 until conformance achieved; admin override per §19 95/95-override rule)."
+        },
+        {
+          "key": "CA15DV3Q1-HYBRID",
+          "text": "Ratify the noted hybrid — §27 blocks on critical/high severity findings; surfaces medium/low as advisory + admin dashboard alarm without blocking."
+        },
+        {
+          "key": "CA15DV3Q1-STRICTER",
+          "text": "Strengthen further — §27 hard blocking AND no admin override path (remove §19-equivalent override; conformance failure cannot be bypassed)."
+        },
+        {
+          "key": "CA15DV3Q1-REJECT",
+          "text": "Reject the revert — preserve v2 advisory framing despite v2 verdict; rationale Panel may supply."
+        }
+      ],
+      "draftedKey": "CA15DV3Q1-RATIFY"
+    },
+    {
+      "id": "CA-15-D-v3-Q2",
+      "topic": "CA-15-D v3 Q2 — Does Panel ratify CEO re-sign triggered ONLY for CAs touching files under `src/lib/governance/**` (concrete directory; replaces v2 not-yet-written `docs/governance/CONFORMANCE_SCOPE.md`)?",
+      "options": [
+        {
+          "key": "CA15DV3Q2-RATIFY",
+          "text": "Ratify v3 as drafted (entire `src/lib/governance/` directory is scope; CI grep at promotion-commit time)."
+        },
+        {
+          "key": "CA15DV3Q2-BROADER",
+          "text": "Strengthen broader — scope = `src/lib/governance/**` AND `src/lib/conformance/**` AND any `*.sql` migration files."
+        },
+        {
+          "key": "CA15DV3Q2-NARROWER",
+          "text": "Strengthen narrower — scope = ONLY ScoreEvaluator.js + ClearanceProtocol.ts + CanonicalKinds.ts (3 canonical files)."
+        },
+        {
+          "key": "CA15DV3Q2-REJECT",
+          "text": "Reject the v3 scope — restore v2 `docs/governance/CONFORMANCE_SCOPE.md` documentation-file scope despite v2 verdict."
+        }
+      ],
+      "draftedKey": "CA15DV3Q2-RATIFY"
+    }
+  ]
+}

@@ -5,20 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Tooltip from '@/components/ui/Tooltip';
 import {
-  ShieldCheck, Plus, X, Play, RotateCcw, ChevronRight,
+  ShieldCheck, Plus, X, Play, RotateCcw,
   Search, CheckSquare, Square, Bell, BellOff, BarChart3
 } from 'lucide-react';
 import ClearanceWizard from '@/components/clearance/ClearanceWizard';
 import ClearanceStatusDashboard from '@/components/clearance/ClearanceStatusDashboard';
 import ClearanceProgressTimeline from '@/components/clearance/ClearanceProgressTimeline';
 import { logAction } from '@/lib/auditLogger';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 const VEU_PRODUCTS = [
   { product_name: 'SAIGE',       base44_url: 'https://saige.base44.app',       custom_domain: 'saigeplatform.com',       target_audience: 'University sustainability directors, utility executives', category: 'Sustainability' },
   { product_name: 'PressAI',     base44_url: 'https://pressai.base44.app',     custom_domain: 'ourpublishingai.com',     target_audience: 'Authors and publishers', category: 'Publishing' },
   { product_name: 'ReachSMS',    base44_url: 'https://reachsms.base44.app',    custom_domain: 'ourcommunitiesai.com',    target_audience: 'Nonprofit community organizations', category: 'Community' },
   { product_name: 'RelTwin',     base44_url: 'https://reltwin.com',            custom_domain: 'reltwin.com',             target_audience: 'Coaches and HR professionals', category: 'Relationships' },
-  { product_name: 'MyBirthSafe', base44_url: 'https://mybirthsafe.base44.app', custom_domain: 'preglife.com',            target_audience: 'Pregnant women in Nigeria and Africa', category: 'Health' },
+  { product_name: 'MyPregLife', base44_url: 'https://mypreglife.base44.app', custom_domain: 'preglife.com',            target_audience: 'Pregnant women in Nigeria and Africa', category: 'Health' },
 ];
 
 const STATUS_STYLE = {
@@ -52,15 +53,15 @@ export default function Clearance() {
   const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
-    base44.entities.ClearanceRecord.list('-created_date').then(recs => {
+    resolveArray(base44.entities.ClearanceRecord.list('-created_date')).then(recs => {
       const map = {};
-      recs.forEach(r => { map[r.product_name] = r; });
+      asArray(recs).forEach(r => { map[r.product_name] = r; });
       setRecords(map);
     });
     base44.auth.me().then(u => { if (u?.email) setUserEmail(u.email); }).catch(() => {});
   }, []);
 
-  const allProducts = [...VEU_PRODUCTS, ...customProducts];
+  const allProducts = [...VEU_PRODUCTS, ...asArray(customProducts)];
 
   // ── Filtered & searched products ──────────────────────────────────────────
   const filteredProducts = allProducts.filter(p => {

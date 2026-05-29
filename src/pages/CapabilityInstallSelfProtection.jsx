@@ -21,7 +21,7 @@ const PRODUCTS = [
   { name: 'PressAI',     url: 'ourpublishingai.com',         email: 'pressai@veuaistudio.com',     color: 'border-purple-500/30 bg-purple-500/5' },
   { name: 'RelTwin',     url: 'reltwin.com',                 email: 'reltwin@veuaistudio.com',     color: 'border-emerald-500/30 bg-emerald-500/5' },
   { name: 'ReachSMS',    url: 'ourcommunitiesai.com',        email: 'reachsms@veuaistudio.com',    color: 'border-amber-500/30 bg-amber-500/5' },
-  { name: 'MyBirthSafe', url: 'safe-path.base44.app',        email: 'mybirthsafe@veuaistudio.com', color: 'border-red-500/30 bg-red-500/5' },
+  { name: 'MyPregLife', url: 'safe-path.base44.app',        email: 'mypreglife@veuaistudio.com', color: 'border-red-500/30 bg-red-500/5' },
 ];
 
 function buildSprint(product) {

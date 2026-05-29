@@ -1,0 +1,41 @@
+{
+  "version": "readiness.v1",
+  "criteria": [
+    {
+      "id": "rdy.functional",
+      "weight": 30,
+      "label": "Functional correctness",
+      "description": "Target passes its test suite. For agents: plan/act under representative inputs produces expected outputs. For products: end-to-end user journeys complete."
+    },
+    {
+      "id": "rdy.failure_handling",
+      "weight": 20,
+      "label": "Failure mode handling",
+      "description": "Injected failures (dependency timeouts, malformed inputs, auth failures, rate limits) are handled without data corruption or silent drops. Recovery paths produce auditable output."
+    },
+    {
+      "id": "rdy.performance",
+      "weight": 15,
+      "label": "Performance under realistic load",
+      "description": "p50 and p95 latency within target SLA. Resource usage bounded. No regressions from prior measured baseline."
+    },
+    {
+      "id": "rdy.observability",
+      "weight": 15,
+      "label": "Observability sufficient for ops",
+      "description": "Metrics emitted to #10 Monitor. Errors are structured. A new operator can diagnose a failure from logs alone."
+    },
+    {
+      "id": "rdy.documentation",
+      "weight": 10,
+      "label": "Documentation present and accurate",
+      "description": "Charter is published. Inputs/outputs documented. Known limitations listed. A consumer agent can integrate without reading source."
+    },
+    {
+      "id": "rdy.dependencies",
+      "weight": 10,
+      "label": "Dependencies declared and healthy",
+      "description": "All W1 credentials and W3 marketplace tools the agent claims to need are present, authenticated, and responding."
+    }
+  ]
+}

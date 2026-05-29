@@ -1,0 +1,128 @@
+// ARCHIVED 2026-05-13: Base44 retired from Slot 8. Base44 remains FlowAI's editing/UI platform; conflicts with Panel-reviewer role. Replaced by Lovable.dev. Restore from git history if needed.
+//
+// scripts/setup-base44-session.mjs
+//
+// ONE-TIME interactive setup for Slot 8 (Base44 chat headless adapter).
+//
+// What this does:
+//   1. Launches a visible (headless: false) Chromium window.
+//   2. Navigates to app.base44.com.
+//   3. Waits for you to sign in manually and land on the chat screen.
+//   4. On Enter in this terminal, saves the browser context's
+//      storageState JSON to
+//      %USERPROFILE%\.flowai\base44-storage-state.json
+//      (creates ~/.flowai if missing).
+//   5. Closes the browser.
+//
+// Why:
+//   Base44 has no public chat API. Slot 8 reuses your authenticated
+//   session by loading this storageState file. Future panel runs use
+//   the saved state without prompting until it expires (typically
+//   7–30 days for Base44).
+//
+// To re-run setup: just run this script again — it overwrites the file.
+//
+// Constraints:
+//   - This is the ONLY script that may use headless: false.
+//   - Never log credentials, cookies, or storageState contents.
+//   - On any failure, leave the existing storageState file (if any)
+//     untouched.
+
+import { existsSync } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
+import { createInterface } from 'node:readline';
+import {
+  DEFAULT_STORAGE_STATE_PATH,
+  ensureStorageStateParentDir,
+} from './lib/headless/base44-chat.mjs';
+
+const SETUP_URL = 'https://app.base44.com';
+
+function waitForEnter(promptText) {
+  return new Promise((resolve) => {
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: false,
+    });
+    process.stdout.write(promptText);
+    rl.once('line', () => {
+      rl.close();
+      resolve();
+    });
+  });
+}
+
+async function main() {
+  const target =
+    process.env.BASE44_STORAGE_STATE_PATH || DEFAULT_STORAGE_STATE_PATH;
+
+  process.stdout.write(
+    `setup-base44-session: storageState will be saved to:\n  ${target}\n`,
+  );
+  if (existsSync(target)) {
+    process.stdout.write(
+      '  (an existing storageState file is present and will be overwritten ' +
+      'on success)\n',
+    );
+  }
+
+  let chromium;
+  try {
+    ({ chromium } = await import('playwright'));
+  } catch (e) {
+    process.stderr.write(
+      `setup-base44-session: failed to import playwright — ${e?.message ?? e}\n`,
+    );
+    process.exit(1);
+  }
+
+  process.stdout.write(
+    '\nLaunching a visible Chromium window. Sign into Base44 and navigate ' +
+    'to your chat screen.\n',
+  );
+
+  const browser = await chromium.launch({ headless: false });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+  });
+  const page = await context.newPage();
+  await page.goto(SETUP_URL, { waitUntil: 'domcontentloaded' });
+
+  await waitForEnter(
+    'Log into Base44 in the browser window. Press Enter in this terminal ' +
+    "when you're logged in and at the chat screen: ",
+  );
+
+  // Save state.
+  try {
+    await ensureStorageStateParentDir(target);
+    // Playwright's storageState() returns a JSON-serializable object that
+    // contains cookies + origins + localStorage. Persist via writeFile so
+    // we control the path (Playwright's storageState({path}) overload also
+    // works but writeFile is more explicit for the directory contract).
+    const state = await context.storageState();
+    await writeFile(target, JSON.stringify(state, null, 2) + '\n', {
+      encoding: 'utf8',
+    });
+    process.stdout.write(
+      '\nStorage state saved. Slot 8 should now be able to authenticate. ' +
+      'Run scripts/run-panel-smoke.mjs to verify.\n',
+    );
+  } catch (e) {
+    process.stderr.write(
+      `setup-base44-session: failed to save storageState — ${e?.message ?? e}\n`,
+    );
+    process.exitCode = 1;
+  } finally {
+    await context.close().catch(() => { /* ignore */ });
+    await browser.close().catch(() => { /* ignore */ });
+  }
+}
+
+main().catch((e) => {
+  process.stderr.write(
+    `setup-base44-session: unexpected error — ${e?.message ?? e}\n`,
+  );
+  process.exit(1);
+});

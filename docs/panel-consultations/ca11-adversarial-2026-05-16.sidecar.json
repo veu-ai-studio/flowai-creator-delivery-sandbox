@@ -1,0 +1,1012 @@
+{
+  "schema": "ca11-adversarial.sidecar.v1",
+  "startedAt": "2026-05-16T04:41:54.308Z",
+  "finishedAt": "2026-05-16T04:44:43.388Z",
+  "panel_audit": {
+    "providerCounts": {
+      "openai": 1,
+      "anthropic": 1,
+      "google": 1,
+      "mistralai": 1,
+      "cohere": 1,
+      "minimax": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "meta-llama": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 1,
+    "slots": 10
+  },
+  "panel_size": 10,
+  "bundle_size": 146754,
+  "liveOk": 9,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 9,
+    "backups_applied": 1,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000
+  },
+  "tally": {
+    "engagedTotal": 8,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 2,
+    "perQuestion": {
+      "Q1": {
+        "Q1-3": 3,
+        "Q1-5": 2,
+        "Q1-VAR": 3,
+        "Q1-NONE": 0,
+        "unmatched": 0
+      },
+      "Q2": {
+        "Q2-UPFRONT": 4,
+        "Q2-ADAPTIVE": 1,
+        "Q2-HYBRID": 3,
+        "Q2-STATIC": 0,
+        "unmatched": 0
+      },
+      "Q3": {
+        "Q3-POS": 0,
+        "Q3-NEG": 4,
+        "Q3-GUARDS": 4,
+        "Q3-UNKNOWN": 0,
+        "unmatched": 0
+      },
+      "Q4": {
+        "Q4-AUTO": 5,
+        "Q4-FROZEN": 1,
+        "Q4-PANEL": 2,
+        "Q4-NOTCAN": 0,
+        "unmatched": 0
+      },
+      "Q5": {
+        "Q5-COST": 1,
+        "Q5-NONDET": 1,
+        "Q5-SPARSE": 6,
+        "Q5-COMPLEX": 0,
+        "unmatched": 0
+      },
+      "Q6": {
+        "Q6-PROMOTE": 0,
+        "Q6-REDUCED": 2,
+        "Q6-DEFER": 5,
+        "Q6-REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 22,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Fallback chain thundering herd",
+        "detail": "CA-11-A.4 caps fallback at 3 hops but with 26 agents × avg 5 tools × parallel runs, a widespread outage of a primary tool like anthropic-api could trigger 100+ simultaneous fallback attempts to secondary tools, overwhelming them and cascading failures."
+      },
+      {
+        "slot": 1,
+        "title": "Per-agent scoring data sparsity",
+        "detail": "CA-11-D.3 tracks scores per (agent, adapter, capability) triple, but many agent-tool combinations will see <10 invocations/month, making the 0.6×performance weight in Locked Rule 18 statistically meaningless and causing erratic tool selection behavior."
+      },
+      {
+        "slot": 1,
+        "title": "CEO constraint explosion complexity",
+        "detail": "CA-11-E allows per-product per-agent constraints with both allowedTools and blockedTools arrays, creating 2^n possible constraint states that can silently conflict across products, making debugging tool selection failures a combinatorial nightmare."
+      },
+      {
+        "slot": 3,
+        "title": "Per-Agent Scoring Creates Data Sparsity",
+        "detail": "CA-11-D.3's proposal to track performance scores per (agent, adapter, capability) triple will lead to extreme data sparsity. An agent may only invoke a specific tool for a niche capability a few times, making the resulting performance score statistically volatile and unreliable for ranking, potentially causing unstable and suboptimal tool selection."
+      },
+      {
+        "slot": 3,
+        "title": "Fallback Chains Obscure True Invocation Cost",
+        "detail": "The fallback mechanism in CA-11-A.4, while capped at 3 hops, can lead to significant cost blowouts. If an agent's top-ranked tool is cheap but flaky, it may frequently fall back to a more expensive second- or third-choice tool, rapidly consuming the product's per-run budget (§7.6) on a single step without a clear per-invocation cost governor."
+      },
+      {
+        "slot": 3,
+        "title": "ToolMenus Introduce Significant \"Spec Debt\"",
+        "detail": "CA-11-B introduces numerous new, unwired Orchestra adapters (Sentry, Datadog, Netlify, etc.) across the 26 ToolMenus. This creates significant 'spec debt' by canonizing aspirational tools, misrepresenting the system's current capabilities, and bloating the agent charters with placeholders that have no clear implementation path or capacity estimate, contrary to the already-deferred adapters in §8.1."
+      },
+      {
+        "slot": 4,
+        "title": "Unclear Tool Selection Timing",
+        "detail": "CA-11-A.3 does not specify the exact timing of tool selection within the agent's lifecycle. It is unclear whether the tool is selected at the beginning of the step or dynamically during the execution. This ambiguity could lead to inconsistent behavior across different agents and steps."
+      },
+      {
+        "slot": 4,
+        "title": "Potential Cost Overruns",
+        "detail": "The fallback mechanism in CA-11-A.4 could lead to significant cost overruns if the primary tool fails and the fallback tools are more expensive. There is no specified budget or cost control mechanism to prevent this."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of Detail on CEO Constraints",
+        "detail": "CA-11-E introduces CEO constraints but does not provide detailed scenarios or examples of how these constraints might be applied and resolved in practice. This lack of detail could lead to misunderstandings and misapplications of the constraints."
+      },
+      {
+        "slot": 7,
+        "title": "Fallback chain fragility",
+        "detail": "CA-11-A.4 caps fallback at 3 hops without considering cumulative error propagation. In complex agents like #21 (Aggressive Crawl), consecutive retryable errors across tools could exhaust fallbacks mid-crawl, truncating critical interactions like modal probing or AI-agent validation. Unlike current OrchestratorHub's global error budget, per-agent chains lack cross-step resilience."
+      },
+      {
+        "slot": 7,
+        "title": "Per-agent score sparsity",
+        "detail": "CA-11-D.3's per-agent performance scoring will suffer data sparsity for dormant/niche agents (e.g., #20 Environmental Impacts). With infrequent invocations, ranking formulas will rely on stale/bootstrap data, causing tool misselection. Current global Orchestra scoring aggregates all invocations, providing statistically robust rankings."
+      },
+      {
+        "slot": 7,
+        "title": "Constraint-induced capability gaps",
+        "detail": "CA-11-E CEO constraints could create capability holes when allowedTools/blockedTools mismatch required contextTypes. If Agent #7 Design is blocked from v0/Lovable but Bolt.new lacks 'design' capability, the agent becomes non-functional. Current routing lacks such product-specific veto points."
+      },
+      {
+        "slot": 7,
+        "title": "ToolMenu validator rigidity",
+        "detail": "CA-11-C.2's ≥3-tool minimum forces artificial entries for niche agents like #16 Productivity. This violates 'best-in-industry' principle by including subpar tools (e.g., PostHog for HR signals) solely to satisfy validator, degrading output quality versus today's capability-driven routing."
+      },
+      {
+        "slot": 8,
+        "title": "Constraint layer can dead-end",
+        "detail": "CA-11-E.4 allows `allowedTools` and `blockedTools` to combine into an empty candidate set, and CA-11-A.3 then throws `RegistryError`. That means a stale ProductRegistry edit can hard-fail an agent before any fallback, even when the underlying global Orchestra still has viable adapters."
+      },
+      {
+        "slot": 8,
+        "title": "Per-agent scores will starve",
+        "detail": "CA-11-D.3 introduces rolling outcome scores per `(agent, adapter, capability)` triple, but most agents only have a handful of invocations today. For dormant or low-frequency agents like #16 or #20, the ranking will be driven by sparse bootstraps and noisy first impressions, making the ToolMenu look precise while actually being underfit."
+      },
+      {
+        "slot": 8,
+        "title": "Selection path increases nondeterminism",
+        "detail": "CA-11-A.4 combines per-invocation re-ranking, dynamic fallback, and mode-dependent user choice. Even with a 3-hop cap, the same agent/action can traverse different tools across retries due to latency and retryable errors, which weakens reproducibility relative to the current centralized OrchestratorHub routing."
+      },
+      {
+        "slot": 9,
+        "title": "Insufficient fallback handling",
+        "detail": "CA-11-A.4's fallback chain is capped at min(toolMenu.length, 3), which may not be sufficient for agents with fewer than 3 tools. This could lead to premature exhaustion and failure."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of real-time adaptivity",
+        "detail": "CA-11-A.3's selectTool() method does not re-rank tools during fallback, potentially leading to suboptimal tool selection if the initial ranking is inaccurate or if runtime conditions change."
+      },
+      {
+        "slot": 9,
+        "title": "Overly rigid ToolMenu structure",
+        "detail": "CA-11-B's flat ToolMenu for cross-step agents may not be suitable for all use cases, as different steps may require different tools. A stepKey-conditional ToolMenu could provide more flexibility."
+      },
+      {
+        "slot": 10,
+        "title": "CA-11-A.4 fallback cap",
+        "detail": "The min(toolMenu.length, 3) cap in dispatchWithFallback still permits thundering-herd rate-limit cascades when three high-cost adapters (e.g. claude-code + openai-codex + devin) share the same upstream provider; no global back-pressure exists unlike the current OrchestratorHub."
+      },
+      {
+        "slot": 10,
+        "title": "CA-11-B.10 TBD placeholders",
+        "detail": "Agents #22–#25 are listed with literal 'TBD' ToolMenus yet CA-11-C.2 validator will reject any roster entry having fewer than three concrete entries at promotion time, creating an immediate schema violation on first load."
+      },
+      {
+        "slot": 10,
+        "title": "CA-11-D.3 score table bypass",
+        "detail": "The new flowai_agent_tool_outcome table writes per-(agent,adapter) scores without the prevHash / hash_chain_pointer discipline required by §14.2 GovernanceAuditLog, breaking the tamper-evidence invariant for all future tool-selection decisions."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "Q1": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between Q1-3 / Q1-VAR",
+      "topKey": "Q1-3",
+      "topCount": 3
+    },
+    "Q2": {
+      "verdict": "PLURALITY_Q2-UPFRONT",
+      "detail": "4 of 8 on Q2-UPFRONT (below 7/10 quorum)",
+      "topKey": "Q2-UPFRONT",
+      "topCount": 4
+    },
+    "Q3": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 4 between Q3-NEG / Q3-GUARDS",
+      "topKey": "Q3-NEG",
+      "topCount": 4
+    },
+    "Q4": {
+      "verdict": "PLURALITY_Q4-AUTO",
+      "detail": "5 of 8 on Q4-AUTO (below 7/10 quorum)",
+      "topKey": "Q4-AUTO",
+      "topCount": 5
+    },
+    "Q5": {
+      "verdict": "PLURALITY_Q5-SPARSE",
+      "detail": "6 of 8 on Q5-SPARSE (below 7/10 quorum)",
+      "topKey": "Q5-SPARSE",
+      "topCount": 6
+    },
+    "Q6": {
+      "verdict": "PLURALITY_Q6-DEFER",
+      "detail": "5 of 8 on Q6-DEFER (below 7/10 quorum)",
+      "topKey": "Q6-DEFER",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "reason": "alignment 30.0 %, distinct objections 22",
+    "alignedPct": 0.3,
+    "alignedCount": 12,
+    "totalPossible": 40
+  },
+  "consultation_valid": true,
+  "strongest_rejection_argument": {
+    "slot": 3,
+    "model": "openrouter:google/gemini-2.5-pro",
+    "text": "CA-11 introduces a significant layer of complexity and non-determinism into a system where 20 of 26 agents are still dormant and core stability is paramount. The current centralized routing is simple, predictable, and auditable. Deferring this proposal would allow engineering to focus on the higher-priority work of graduating dormant agents and hardening production infrastructure, ensuring the system is stable before we optimize it with a feature that fundamentally increases its operational complexity and surface area for emergent failures."
+  },
+  "shuffled_options": {
+    "Q1": [
+      {
+        "key": "Q1-3",
+        "text": "3 tools"
+      },
+      {
+        "key": "Q1-5",
+        "text": "5 tools"
+      },
+      {
+        "key": "Q1-VAR",
+        "text": "Variable by agent mode"
+      },
+      {
+        "key": "Q1-NONE",
+        "text": "No minimum (let it emerge)"
+      }
+    ],
+    "Q2": [
+      {
+        "key": "Q2-HYBRID",
+        "text": "Hybrid"
+      },
+      {
+        "key": "Q2-STATIC",
+        "text": "Tool choice should not be dynamic at all"
+      },
+      {
+        "key": "Q2-ADAPTIVE",
+        "text": "Adaptively at each invocation"
+      },
+      {
+        "key": "Q2-UPFRONT",
+        "text": "Once per step, ranked upfront"
+      }
+    ],
+    "Q3": [
+      {
+        "key": "Q3-NEG",
+        "text": "Net negative, centralized is safer"
+      },
+      {
+        "key": "Q3-UNKNOWN",
+        "text": "Cannot determine from spec"
+      },
+      {
+        "key": "Q3-GUARDS",
+        "text": "Depends on guardrails not yet specified"
+      },
+      {
+        "key": "Q3-POS",
+        "text": "Net positive, ship it"
+      }
+    ],
+    "Q4": [
+      {
+        "key": "Q4-PANEL",
+        "text": "Panel-reviewed every change"
+      },
+      {
+        "key": "Q4-AUTO",
+        "text": "Auto-updated quarterly by agents"
+      },
+      {
+        "key": "Q4-NOTCAN",
+        "text": "Tool list should not be canonical at all"
+      },
+      {
+        "key": "Q4-FROZEN",
+        "text": "Frozen, manual changes only"
+      }
+    ],
+    "Q5": [
+      {
+        "key": "Q5-COST",
+        "text": "Cost blowout from fallback chains"
+      },
+      {
+        "key": "Q5-SPARSE",
+        "text": "Per-agent scoring data sparsity"
+      },
+      {
+        "key": "Q5-COMPLEX",
+        "text": "Complexity exceeding maintenance capacity"
+      },
+      {
+        "key": "Q5-NONDET",
+        "text": "Non-determinism / unreproducible runs"
+      }
+    ],
+    "Q6": [
+      {
+        "key": "Q6-PROMOTE",
+        "text": "Promote all 5 sub-amendments"
+      },
+      {
+        "key": "Q6-DEFER",
+        "text": "Defer pending a prototype/spike"
+      },
+      {
+        "key": "Q6-REDUCED",
+        "text": "Promote a reduced subset"
+      },
+      {
+        "key": "Q6-REJECT",
+        "text": "Reject — concept is unsound as specified"
+      }
+    ]
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Fallback chain thundering herd",
+            "detail": "CA-11-A.4 caps fallback at 3 hops but with 26 agents × avg 5 tools × parallel runs, a widespread outage of a primary tool like anthropic-api could trigger 100+ simultaneous fallback attempts to secondary tools, overwhelming them and cascading failures."
+          },
+          {
+            "title": "Per-agent scoring data sparsity",
+            "detail": "CA-11-D.3 tracks scores per (agent, adapter, capability) triple, but many agent-tool combinations will see <10 invocations/month, making the 0.6×performance weight in Locked Rule 18 statistically meaningless and causing erratic tool selection behavior."
+          },
+          {
+            "title": "CEO constraint explosion complexity",
+            "detail": "CA-11-E allows per-product per-agent constraints with both allowedTools and blockedTools arrays, creating 2^n possible constraint states that can silently conflict across products, making debugging tool selection failures a combinatorial nightmare."
+          }
+        ],
+        "worse_than_status_quo": "Today's centralized OrchestratorHub routing has a single point of control for tool selection logic; CA-11 distributes this across 26 agents with independent ToolMenus, making it impossible to enforce system-wide policies like 'never use AWS-based tools for EU customers' without touching all 26 agent definitions.",
+        "precedent": "Kubernetes' early scheduler design allowed each pod to specify its own node affinity rules, leading to the 'scheduler hot loops' problem where conflicting constraints caused pods to be repeatedly scheduled and evicted, consuming massive cluster resources until they added centralized admission control."
+      },
+      "rejection_steelman": "CA-11 introduces 26 independent tool selection engines (one per agent) with sparse performance data, creating non-deterministic behavior that will make production issues unreproducible. The complexity of debugging why Agent #17 picked tool X instead of Y for tenant Z requires correlating per-agent scores, CEO constraints, and fallback chains across multiple tables, making the system unmaintainable for the engineering team size implied by the 13 W-day estimate.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-5",
+          "pick_text": "5 tools",
+          "rationale": "With fallback chains capped at 3 hops, having 5 tools provides redundancy without encouraging lazy 'kitchen sink' tool lists that increase complexity."
+        },
+        "Q2": {
+          "key": "Q2-UPFRONT",
+          "pick_text": "Once per step, ranked upfront",
+          "rationale": "Adaptive re-ranking during fallback would make debugging non-deterministic failures nearly impossible, violating the principle of reproducible runs."
+        },
+        "Q3": {
+          "key": "Q3-NEG",
+          "pick_text": "Net negative, centralized is safer",
+          "rationale": "The distributed tool selection across 26 agents creates 26 potential failure points versus one, and the sparse scoring data will produce erratic behavior."
+        },
+        "Q4": {
+          "key": "Q4-PANEL",
+          "pick_text": "Panel-reviewed every change",
+          "rationale": "Given the security implications of auto-admitting new tools to agent ToolMenus, human review is essential to prevent supply chain attacks."
+        },
+        "Q5": {
+          "key": "Q5-SPARSE",
+          "pick_text": "Per-agent scoring data sparsity",
+          "rationale": "With 26 agents × ~5 tools × multiple capabilities, most combinations will have insufficient invocation history to produce statistically valid performance scores."
+        },
+        "Q6": {
+          "key": "Q6-DEFER",
+          "pick_text": "Defer pending a prototype/spike",
+          "rationale": "The 13 W-day estimate vastly underestimates the complexity of making 26 independent tool selection engines work reliably; a spike would reveal the true scope."
+        }
+      },
+      "overallNotes": "CA-11's distributed tool selection model fundamentally conflicts with FlowAI's need for deterministic, auditable behavior in production systems serving multiple tenants.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Fallback chain thundering herd",
+            "detail": "CA-11-A.4 caps fallback at 3 hops but with 26 agents × avg 5 tools × parallel runs, a widespread outage of a primary tool like anthropic-api could trigger 100+ simultaneous fallback attempts to secondary tools, overwhelming them and cascading failures."
+          },
+          {
+            "title": "Per-agent scoring data sparsity",
+            "detail": "CA-11-D.3 tracks scores per (agent, adapter, capability) triple, but many agent-tool combinations will see <10 invocations/month, making the 0.6×performance weight in Locked Rule 18 statistically meaningless and causing erratic tool selection behavior."
+          },
+          {
+            "title": "CEO constraint explosion complexity",
+            "detail": "CA-11-E allows per-product per-agent constraints with both allowedTools and blockedTools arrays, creating 2^n possible constraint states that can silently conflict across the 26 agents, making debugging tool selection failures a combinatorial nightmare."
+          }
+        ],
+        "worse_than_status_quo": "Today's centralized OrchestratorHub routing has a single point of control for tool selection; CA-11 distributes this across 26 independent ToolMenus that can drift out of sync, creating scenarios where Agent #3 and Agent #21 select different tools for the same 'crawl' action, producing inconsistent results.",
+        "precedent": "Kubernetes' early scheduler design allowed each pod to specify its own node affinity rules, leading to the 'scheduler hot loops' problem where conflicting constraints caused pods to be repeatedly scheduled and evicted, consuming massive cluster resources until they added the PodDisruptionBudget controller."
+      },
+      "rejection_steelman": "CA-11 introduces 26 independent tool selection paths with sparse performance data, creating non-deterministic behavior that will make FlowAI runs unreproducible. The complexity of debugging why Agent #17 selected tool X instead of Y when constrained by product-specific overrides across a 3-hop fallback chain exceeds the maintenance capacity of the current team structure, and the distributed nature prevents the centralized monitoring and circuit-breaking that OrchestratorHub currently provides.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-5",
+          "pick_text": "5 tools",
+          "rationale": "With fallback chains capped at 3 hops, having 5 tools ensures redundancy even after constraints eliminate some options, while 3 tools is too close to the fallback limit."
+        },
+        "Q2": {
+          "key": "Q2-HYBRID",
+          "pick_text": "Hybrid",
+          "rationale": "Pre-step ranking provides determinism but re-ranking on observed failures prevents repeatedly hitting a degraded service during the same run."
+        },
+        "Q3": {
+          "key": "Q3-NEG",
+          "pick_text": "Net negative, centralized is safer",
+          "rationale": "The distributed tool selection creates 26 independent failure modes and prevents centralized circuit-breaking when a tool provider has an outage."
+        },
+        "Q4": {
+          "key": "Q4-AUTO",
+          "pick_text": "Auto-updated quarterly by agents",
+          "rationale": "Manual updates can't keep pace with the tool landscape, but Panel review of every change would create bottlenecks; quarterly automation with audit trails balances these concerns."
+        },
+        "Q5": {
+          "key": "Q5-SPARSE",
+          "pick_text": "Per-agent scoring data sparsity",
+          "rationale": "Many agent-tool pairs will see <10 invocations/month, making the performance score statistically meaningless and causing erratic selection behavior that compounds over time."
+        },
+        "Q6": {
+          "key": "Q6-DEFER",
+          "pick_text": "Defer pending a prototype/spike",
+          "rationale": "The interaction between 26 ToolMenus, CEO constraints, fallback chains, and sparse scoring data needs empirical validation before committing to this architecture."
+        }
+      },
+      "overallNotes": "CA-11's distributed tool selection model has merit but needs stronger guardrails around data sparsity and constraint complexity before promotion.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Per-Agent Scoring Creates Data Sparsity",
+            "detail": "CA-11-D.3's proposal to track performance scores per (agent, adapter, capability) triple will lead to extreme data sparsity. An agent may only invoke a specific tool for a niche capability a few times, making the resulting performance score statistically volatile and unreliable for ranking, potentially causing unstable and suboptimal tool selection."
+          },
+          {
+            "title": "Fallback Chains Obscure True Invocation Cost",
+            "detail": "The fallback mechanism in CA-11-A.4, while capped at 3 hops, can lead to significant cost blowouts. If an agent's top-ranked tool is cheap but flaky, it may frequently fall back to a more expensive second- or third-choice tool, rapidly consuming the product's per-run budget (§7.6) on a single step without a clear per-invocation cost governor."
+          },
+          {
+            "title": "ToolMenus Introduce Significant \"Spec Debt\"",
+            "detail": "CA-11-B introduces numerous new, unwired Orchestra adapters (Sentry, Datadog, Netlify, etc.) across the 26 ToolMenus. This creates significant 'spec debt' by canonizing aspirational tools, misrepresenting the system's current capabilities, and bloating the agent charters with placeholders that have no clear implementation path or capacity estimate, contrary to the already-deferred adapters in §8.1."
+          }
+        ],
+        "worse_than_status_quo": "A critical agent like Agent #3 (Self-Renewal) could, due to sparse and volatile per-agent scoring data, demote its reliable primary tool and switch to a less-tested or deferred tool for a critical `code-patch` operation. This introduces a subtle, hard-to-detect bug into a product, making the system less safe and predictable than the current stable, auditable, centralized routing from OrchestratorHub.",
+        "precedent": "The transition from monoliths to microservices architectures demonstrates this risk; the promise of local component autonomy often leads to a 'distributed monolith' with chaotic, emergent runtime dependencies. Systems like service meshes (e.g., Istio) were created specifically to rein in this complexity, proving that such decentralized orchestration requires a heavy, complex control plane to be viable, which CA-11 lacks."
+      },
+      "rejection_steelman": "CA-11 introduces a significant layer of complexity and non-determinism into a system where 20 of 26 agents are still dormant and core stability is paramount. The current centralized routing is simple, predictable, and auditable. Deferring this proposal would allow engineering to focus on the higher-priority work of graduating dormant agents and hardening production infrastructure, ensuring the system is stable before we optimize it with a feature that fundamentally increases its operational complexity and surface area for emergent failures.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-3",
+          "pick_text": "3 tools",
+          "rationale": "While the number is less important than the flawed scoring mechanism, 3 provides a minimal balance of redundancy and focus without exacerbating the data sparsity problem as much as a higher number would."
+        },
+        "Q2": {
+          "key": "Q2-UPFRONT",
+          "pick_text": "Once per step, ranked upfront",
+          "rationale": "This approach is the most deterministic and auditable, mitigating some of the risks of non-reproducible runs. Real-time adaptive ranking would amplify the instability caused by sparse performance data."
+        },
+        "Q3": {
+          "key": "Q3-NEG",
+          "pick_text": "Net negative, centralized is safer",
+          "rationale": "The proposal introduces multiple vectors for unpredictable, emergent behavior (volatile scoring, fallback cascades) that make the system less safe and auditable than the current predictable, centralized model."
+        },
+        "Q4": {
+          "key": "Q4-AUTO",
+          "pick_text": "Auto-updated quarterly by agents",
+          "rationale": "This aligns with FlowAI's ethos of self-renewal and automation (e.g., Agent #26), but it carries the risk of introducing instability if the update process isn't rigorously monitored and gated."
+        },
+        "Q5": {
+          "key": "Q5-SPARSE",
+          "pick_text": "Per-agent scoring data sparsity",
+          "rationale": "This is the most fundamental and unmitigated flaw in the proposed mechanism; many other risks, like non-determinism and poor tool selection, are direct consequences of building a ranking system on statistically insignificant data."
+        },
+        "Q6": {
+          "key": "Q6-DEFER",
+          "pick_text": "Defer pending a prototype/spike",
+          "rationale": "The concept introduces significant architectural risk and complexity. A targeted prototype is necessary to empirically validate the scoring model's stability and the fallback chain's cost implications before committing the entire system to this change."
+        }
+      },
+      "overallNotes": "CA-11 is a major architectural shift that prioritizes local optimization at the cost of global stability and predictability. The core mechanism of per-agent scoring is fundamentally flawed due to data sparsity, and the proposal should be deferred until a prototype can prove its viability.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.5-pro"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unclear Tool Selection Timing",
+            "detail": "CA-11-A.3 does not specify the exact timing of tool selection within the agent's lifecycle. It is unclear whether the tool is selected at the beginning of the step or dynamically during the execution. This ambiguity could lead to inconsistent behavior across different agents and steps."
+          },
+          {
+            "title": "Potential Cost Overruns",
+            "detail": "The fallback mechanism in CA-11-A.4 could lead to significant cost overruns if the primary tool fails and the fallback tools are more expensive. There is no specified budget or cost control mechanism to prevent this."
+          },
+          {
+            "title": "Lack of Detail on CEO Constraints",
+            "detail": "CA-11-E introduces CEO constraints but does not provide detailed scenarios or examples of how these constraints might be applied and resolved in practice. This lack of detail could lead to misunderstandings and misapplications of the constraints."
+          }
+        ],
+        "worse_than_status_quo": "In scenarios where the primary tool fails and the fallback tools are significantly more expensive, CA-11 could lead to uncontrolled cost overruns, making it worse than the current centralized OrchestratorHub routing which has predictable costs.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "CA-11 introduces significant complexity and potential cost risks without clear benefits over the current centralized routing. The lack of detailed scenarios for CEO constraints and the ambiguity in tool selection timing could lead to unintended consequences and inconsistent behavior.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-VAR",
+          "pick_text": "Variable by agent mode",
+          "rationale": "Different agents have different requirements and risks, so a variable minimum based on the agent's mode would be most appropriate."
+        },
+        "Q2": {
+          "key": "Q2-HYBRID",
+          "pick_text": "Hybrid",
+          "rationale": "A hybrid approach allows for initial upfront ranking while still adapting to real-time failures, providing a balance between planning and flexibility."
+        },
+        "Q3": {
+          "key": "Q3-GUARDS",
+          "pick_text": "Depends on guardrails not yet specified",
+          "rationale": "The risk and value depend heavily on the guardrails and controls put in place, which are not sufficiently detailed in the current spec."
+        },
+        "Q4": {
+          "key": "Q4-AUTO",
+          "pick_text": "Auto-updated quarterly by agents",
+          "rationale": "Automatic updates ensure the tool list stays current with the industry landscape, reducing the manual overhead and potential for outdated information."
+        },
+        "Q5": {
+          "key": "Q5-COST",
+          "pick_text": "Cost blowout from fallback chains",
+          "rationale": "The most significant unmitigated risk is the potential for cost overruns due to fallback chains, as there is no specified budget or cost control mechanism."
+        },
+        "Q6": {
+          "key": "Q6-DEFER",
+          "pick_text": "Defer pending a prototype/spike",
+          "rationale": "The specification has several ambiguities and potential risks that need to be addressed before it can be safely promoted. A prototype or spike would help resolve these uncertainties."
+        }
+      },
+      "overallNotes": "",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:cohere/command-r-plus-08-2024"
+    },
+    {
+      "slot": 6,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": true,
+      "parseFailure": false,
+      "modelTag": "openrouter:minimax/minimax-m2.7"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Fallback chain fragility",
+            "detail": "CA-11-A.4 caps fallback at 3 hops without considering cumulative error propagation. In complex agents like #21 (Aggressive Crawl), consecutive retryable errors across tools could exhaust fallbacks mid-crawl, truncating critical interactions like modal probing or AI-agent validation. Unlike current OrchestratorHub's global error budget, per-agent chains lack cross-step resilience."
+          },
+          {
+            "title": "Per-agent score sparsity",
+            "detail": "CA-11-D.3's per-agent performance scoring will suffer data sparsity for dormant/niche agents (e.g., #20 Environmental Impacts). With infrequent invocations, ranking formulas will rely on stale/bootstrap data, causing tool misselection. Current global Orchestra scoring aggregates all invocations, providing statistically robust rankings."
+          },
+          {
+            "title": "Constraint-induced capability gaps",
+            "detail": "CA-11-E CEO constraints could create capability holes when allowedTools/blockedTools mismatch required contextTypes. If Agent #7 Design is blocked from v0/Lovable but Bolt.new lacks 'design' capability, the agent becomes non-functional. Current routing lacks such product-specific veto points."
+          },
+          {
+            "title": "ToolMenu validator rigidity",
+            "detail": "CA-11-C.2's ≥3-tool minimum forces artificial entries for niche agents like #16 Productivity. This violates 'best-in-industry' principle by including subpar tools (e.g., PostHog for HR signals) solely to satisfy validator, degrading output quality versus today's capability-driven routing."
+          }
+        ],
+        "worse_than_status_quo": "In a multi-tenant environment, a CEO constraint blocking Claude Code for Agent #2 (Code Builder) on product A would force lower-ranked tools. When combined with a Playwright outage during Agent #21's crawl, the 3-hop fallback cap would fail the entire run. Currently, OrchestratorHub would reroute to Browserless + Anthropic globally, completing the crawl.",
+        "precedent": "Google's Borg cell isolation failures in 2015, where per-service scheduling constraints created resource deadlocks that global schedulers would have avoided, mirroring CA-11's risk of tool-selection silos causing systemic fragility."
+      },
+      "rejection_steelman": "CA-11's decentralization fragments FlowAI's core orchestration intelligence, introducing per-agent failure modes without proportional benefit. The current global Orchestra already supports agent-specific preferences via capability matrices. Adding 69 new audit topics and per-agent scoring would bloat the codebase for marginal gains, violating Locked Rule 3's governance simplicity. Defer until post-Layer 4 hardening.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-3",
+          "pick_text": "3 tools",
+          "rationale": "Balances redundancy with practicality; niche agents (e.g., #16) can include lower-ranked tools without mandating unrealistic breadth."
+        },
+        "Q2": {
+          "key": "Q2-UPFRONT",
+          "pick_text": "Once per step, ranked upfront",
+          "rationale": "Adaptive re-ranking mid-step would introduce nondeterminism and break audit trails; pre-step selection aligns with FlowAI's step-boundary governance model."
+        },
+        "Q3": {
+          "key": "Q3-GUARDS",
+          "pick_text": "Depends on guardrails not yet specified",
+          "rationale": "While conceptually aligned with autonomy goals, the spec lacks circuit-breakers for constraint-induced deadlocks and sparse-data fallbacks."
+        },
+        "Q4": {
+          "key": "Q4-AUTO",
+          "pick_text": "Auto-updated quarterly by agents",
+          "rationale": "Aligns with Orchestra self-expansion mechanics (§8.1) and reduces Panel overhead, while quarterly cadence prevents drift."
+        },
+        "Q5": {
+          "key": "Q5-SPARSE",
+          "pick_text": "Per-agent scoring data sparsity",
+          "rationale": "Agents with low invocation rates (e.g., #19 Technological Evolution) will produce unreliable rankings, leading to pathological tool selection that global scoring avoids."
+        },
+        "Q6": {
+          "key": "Q6-REDUCED",
+          "pick_text": "Promote a reduced subset",
+          "rationale": "Core mechanism (CA-11-A/C) is viable, but tool lists (B) and CEO constraints (E) need more tenant-isolation safeguards before full promotion."
+        }
+      },
+      "overallNotes": "Objections center on fragmentation risks; if promoted, implement cross-agent fallback pools and sparse-data alarms.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Constraint layer can dead-end",
+            "detail": "CA-11-E.4 allows `allowedTools` and `blockedTools` to combine into an empty candidate set, and CA-11-A.3 then throws `RegistryError`. That means a stale ProductRegistry edit can hard-fail an agent before any fallback, even when the underlying global Orchestra still has viable adapters."
+          },
+          {
+            "title": "Per-agent scores will starve",
+            "detail": "CA-11-D.3 introduces rolling outcome scores per `(agent, adapter, capability)` triple, but most agents only have a handful of invocations today. For dormant or low-frequency agents like #16 or #20, the ranking will be driven by sparse bootstraps and noisy first impressions, making the ToolMenu look precise while actually being underfit."
+          },
+          {
+            "title": "Selection path increases nondeterminism",
+            "detail": "CA-11-A.4 combines per-invocation re-ranking, dynamic fallback, and mode-dependent user choice. Even with a 3-hop cap, the same agent/action can traverse different tools across retries due to latency and retryable errors, which weakens reproducibility relative to the current centralized OrchestratorHub routing."
+          }
+        ],
+        "worse_than_status_quo": "A bad CEO constraint or sparse per-agent score can cause a previously working agent run to fail early with `all_tools_exhausted` or an empty candidate set, while the current centralized OrchestratorHub would have simply routed to the best available global adapter. In that case CA-11 turns a recoverable run into a blocked run, reducing throughput and increasing operator intervention.",
+        "precedent": "Kubernetes admission controllers and policy engines like OPA/Gatekeeper have repeatedly shown that distributed policy plus per-workload constraints can create surprising dead-ends when policy is over-constrained; the system becomes harder to reason about than a centralized scheduler. Similar operational friction also appears in feature-flag platforms when layered allow/block rules conflict and silently exclude all variants."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring CA-11 is that it formalizes a large, cross-cutting control plane before the empirical data exists to justify it. Centralized OrchestratorHub routing is simpler, more deterministic, and easier to debug; CA-11 adds schema bloat, per-agent score tables, and a new class of failure modes without proving that current global ranking is insufficient. A prudent panel could ask for a prototype on one or two agents first, then promote only the parts that show measurable reliability gains.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-3",
+          "pick_text": "3 tools",
+          "rationale": "This is the smallest threshold that still gives genuine fallback coverage while keeping the schema and validator burden manageable. It also matches the draft’s own minimum and avoids overfitting niche agents to arbitrary larger menus."
+        },
+        "Q2": {
+          "key": "Q2-UPFRONT",
+          "pick_text": "Once per step, ranked upfront",
+          "rationale": "This best preserves auditability and makes fallback behavior explainable. Fully adaptive selection at each invocation would amplify non-determinism and complicate incident review."
+        },
+        "Q3": {
+          "key": "Q3-GUARDS",
+          "pick_text": "Depends on guardrails not yet specified",
+          "rationale": "The spec adds useful flexibility, but the safety case depends on constraint precedence, rollback semantics, and how sparse per-agent scoring is handled. Without those guardrails, it is not safe to call the change net positive or net negative."
+        },
+        "Q4": {
+          "key": "Q4-FROZEN",
+          "pick_text": "Frozen, manual changes only",
+          "rationale": "Canonical tool lists should not churn automatically because the ranking inputs are already dynamic. Freezing the lists reduces review overhead and prevents quarterly drift from becoming a hidden source of behavior changes."
+        },
+        "Q5": {
+          "key": "Q5-NONDET",
+          "pick_text": "Non-determinism / unreproducible runs",
+          "rationale": "The fallback chain and per-agent re-ranking create the most immediate operational risk. Cost can be capped, and sparsity can be bootstrapped, but run-to-run variance will make debugging and audit trails materially harder."
+        },
+        "Q6": {
+          "key": "Q6-DEFER",
+          "pick_text": "Defer pending a prototype/spike",
+          "rationale": "CA-11 is broad enough that a targeted prototype would expose whether per-agent ToolMenus genuinely improve outcomes over centralized routing. Deferral avoids locking in a complicated control plane before the maintenance and reproducibility costs are measured."
+        }
+      },
+      "overallNotes": "My vote is conservative because CA-11 introduces a second ranking plane plus policy overlays that can fail in ways the current system does not. The most defensible next step is a limited spike, not full canonical promotion.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Insufficient fallback handling",
+            "detail": "CA-11-A.4's fallback chain is capped at min(toolMenu.length, 3), which may not be sufficient for agents with fewer than 3 tools. This could lead to premature exhaustion and failure."
+          },
+          {
+            "title": "Lack of real-time adaptivity",
+            "detail": "CA-11-A.3's selectTool() method does not re-rank tools during fallback, potentially leading to suboptimal tool selection if the initial ranking is inaccurate or if runtime conditions change."
+          },
+          {
+            "title": "Overly rigid ToolMenu structure",
+            "detail": "CA-11-B's flat ToolMenu for cross-step agents may not be suitable for all use cases, as different steps may require different tools. A stepKey-conditional ToolMenu could provide more flexibility."
+          }
+        ],
+        "worse_than_status_quo": "If CA-11's per-agent self-orchestration introduces significant complexity and the fallback chain is frequently exhausted, it could lead to more failures than the current centralized OrchestratorHub routing, making FlowAI worse than the status quo.",
+        "precedent": "The 'every-component-self-orchestrates' design in the Kubernetes project initially caused trouble due to increased complexity and debugging challenges, but was eventually stabilized with robust guardrails and testing."
+      },
+      "rejection_steelman": "CA-11 introduces significant complexity with per-agent self-orchestration and ToolMenus, which may exceed the current maintenance capacity of the FlowAI team. The added flexibility could lead to non-determinism and unreproducible runs if not properly guarded.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-VAR",
+          "pick_text": "Variable by agent mode",
+          "rationale": "Different agents have different requirements; always-on agents may need more tools for redundancy, while step-owner agents might be fine with fewer."
+        },
+        "Q2": {
+          "key": "Q2-HYBRID",
+          "pick_text": "Hybrid",
+          "rationale": "A hybrid approach that ranks tools upfront but re-ranks remaining candidates on retryable failures could balance determinism with adaptivity."
+        },
+        "Q3": {
+          "key": "Q3-GUARDS",
+          "pick_text": "Depends on guardrails not yet specified",
+          "rationale": "The value of per-agent self-orchestration depends on the effectiveness of guardrails such as testing, monitoring, and constraint mechanisms."
+        },
+        "Q4": {
+          "key": "Q4-AUTO",
+          "pick_text": "Auto-updated quarterly by agents",
+          "rationale": "Automated quarterly updates by agents like #26, #11, and #15 could keep the tool lists current without overwhelming the Panel, while maintaining an audit trail."
+        },
+        "Q5": {
+          "key": "Q5-SPARSE",
+          "pick_text": "Per-agent scoring data sparsity",
+          "rationale": "With many agents and tools, some agents may not have enough invocation data to accurately rank their tools, potentially leading to suboptimal choices."
+        },
+        "Q6": {
+          "key": "Q6-REDUCED",
+          "pick_text": "Promote a reduced subset",
+          "rationale": "Promoting the core mechanism (CA-11-A, C, D) while deferring the tool lists (B) and CEO constraints (E) could allow for initial deployment and testing before fully committing to the new design."
+        }
+      },
+      "overallNotes": "CA-11 introduces a significant change to FlowAI's orchestration model, and while it offers potential benefits, it also carries substantial risks that need careful mitigation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "CA-11-A.4 fallback cap",
+            "detail": "The min(toolMenu.length, 3) cap in dispatchWithFallback still permits thundering-herd rate-limit cascades when three high-cost adapters (e.g. claude-code + openai-codex + devin) share the same upstream provider; no global back-pressure exists unlike the current OrchestratorHub."
+          },
+          {
+            "title": "CA-11-B.10 TBD placeholders",
+            "detail": "Agents #22–#25 are listed with literal 'TBD' ToolMenus yet CA-11-C.2 validator will reject any roster entry having fewer than three concrete entries at promotion time, creating an immediate schema violation on first load."
+          },
+          {
+            "title": "CA-11-D.3 score table bypass",
+            "detail": "The new flowai_agent_tool_outcome table writes per-(agent,adapter) scores without the prevHash / hash_chain_pointer discipline required by §14.2 GovernanceAuditLog, breaking the tamper-evidence invariant for all future tool-selection decisions."
+          }
+        ],
+        "worse_than_status_quo": "A single mis-ranked adapter inside Agent #3's ToolMenu can silently lower Self-Renewal success rate across every product while the central OrchestratorHub's global visibility and single audit surface would have flagged the regression within one nightly cycle.",
+        "precedent": "The 2023 AutoGPT 'agent swarm' rollout where decentralized per-agent tool selection produced repeated 429 storms and untraceable cost overruns that only became visible after the central dispatcher was restored."
+      },
+      "rejection_steelman": "CA-11 fragments the single audited choke-point that OrchestratorHub currently provides into 26 independent ranking surfaces; the added per-agent state, new Supabase table, and dispatch wrapper increase both maintenance surface area and the blast radius of any single adapter compromise, while the claimed per-agent performance gains remain unproven in production. Deferring until a working spike demonstrates measurable improvement over the existing hub is the lower-risk path.",
+      "votes": {
+        "Q1": {
+          "key": "Q1-VAR",
+          "pick_text": "Variable by agent mode",
+          "rationale": "A flat minimum of three ignores the documented reality that several cross-step agents still lack concrete ToolMenus."
+        },
+        "Q2": {
+          "key": "Q2-ADAPTIVE",
+          "pick_text": "Adaptively at each invocation",
+          "rationale": "Static pre-step ranking cannot react to the per-run latency and cost signals that the fallback chain is explicitly intended to observe."
+        },
+        "Q3": {
+          "key": "Q3-NEG",
+          "pick_text": "Net negative, centralized is safer",
+          "rationale": "The added per-agent surfaces remove the single point of global visibility and audit that the current OrchestratorHub supplies."
+        },
+        "Q4": {
+          "key": "Q4-PANEL",
+          "pick_text": "Panel-reviewed every change",
+          "rationale": "Quarterly auto-updates would silently alter production behavior without the engagement filter required by Locked Rule 17."
+        },
+        "Q5": {
+          "key": "Q5-SPARSE",
+          "pick_text": "Per-agent scoring data sparsity",
+          "rationale": "Most agents will have far fewer than 30 invocations per (agent,adapter,capability) triple, rendering the new per-agent rank scores statistically unreliable."
+        },
+        "Q6": {
+          "key": "Q6-REJECT",
+          "pick_text": "Reject — concept is unsound as specified",
+          "rationale": "The design trades a single audited routing surface for 26 independent ones without demonstrated net reliability gains."
+        }
+      },
+      "overallNotes": "All objections are drawn directly from CA-11-A through CA-11-E sections; the rejection case prioritizes preservation of the existing central audit surface.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q1",
+      "topic": "Minimum ToolMenu size per agent",
+      "options": [
+        {
+          "key": "Q1-3",
+          "text": "3 tools"
+        },
+        {
+          "key": "Q1-5",
+          "text": "5 tools"
+        },
+        {
+          "key": "Q1-VAR",
+          "text": "Variable by agent mode"
+        },
+        {
+          "key": "Q1-NONE",
+          "text": "No minimum (let it emerge)"
+        }
+      ],
+      "draftedKey": "Q1-3"
+    },
+    {
+      "id": "Q2",
+      "topic": "When is the tool chosen",
+      "options": [
+        {
+          "key": "Q2-UPFRONT",
+          "text": "Once per step, ranked upfront"
+        },
+        {
+          "key": "Q2-ADAPTIVE",
+          "text": "Adaptively at each invocation"
+        },
+        {
+          "key": "Q2-HYBRID",
+          "text": "Hybrid"
+        },
+        {
+          "key": "Q2-STATIC",
+          "text": "Tool choice should not be dynamic at all"
+        }
+      ],
+      "draftedKey": "Q2-UPFRONT"
+    },
+    {
+      "id": "Q3",
+      "topic": "Does per-agent self-orchestration add more risk than value vs central OrchestratorHub routing",
+      "options": [
+        {
+          "key": "Q3-POS",
+          "text": "Net positive, ship it"
+        },
+        {
+          "key": "Q3-NEG",
+          "text": "Net negative, centralized is safer"
+        },
+        {
+          "key": "Q3-GUARDS",
+          "text": "Depends on guardrails not yet specified"
+        },
+        {
+          "key": "Q3-UNKNOWN",
+          "text": "Cannot determine from spec"
+        }
+      ],
+      "draftedKey": "Q3-POS"
+    },
+    {
+      "id": "Q4",
+      "topic": "Tool list maintenance model",
+      "options": [
+        {
+          "key": "Q4-AUTO",
+          "text": "Auto-updated quarterly by agents"
+        },
+        {
+          "key": "Q4-FROZEN",
+          "text": "Frozen, manual changes only"
+        },
+        {
+          "key": "Q4-PANEL",
+          "text": "Panel-reviewed every change"
+        },
+        {
+          "key": "Q4-NOTCAN",
+          "text": "Tool list should not be canonical at all"
+        }
+      ],
+      "draftedKey": "Q4-AUTO"
+    },
+    {
+      "id": "Q5",
+      "topic": "Biggest unmitigated risk in CA-11",
+      "options": [
+        {
+          "key": "Q5-COST",
+          "text": "Cost blowout from fallback chains"
+        },
+        {
+          "key": "Q5-NONDET",
+          "text": "Non-determinism / unreproducible runs"
+        },
+        {
+          "key": "Q5-SPARSE",
+          "text": "Per-agent scoring data sparsity"
+        },
+        {
+          "key": "Q5-COMPLEX",
+          "text": "Complexity exceeding maintenance capacity"
+        }
+      ],
+      "draftedKey": null
+    },
+    {
+      "id": "Q6",
+      "topic": "Disposition",
+      "options": [
+        {
+          "key": "Q6-PROMOTE",
+          "text": "Promote all 5 sub-amendments"
+        },
+        {
+          "key": "Q6-REDUCED",
+          "text": "Promote a reduced subset"
+        },
+        {
+          "key": "Q6-DEFER",
+          "text": "Defer pending a prototype/spike"
+        },
+        {
+          "key": "Q6-REJECT",
+          "text": "Reject — concept is unsound as specified"
+        }
+      ],
+      "draftedKey": "Q6-PROMOTE"
+    }
+  ]
+}

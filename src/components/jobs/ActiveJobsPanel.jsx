@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useJobs } from '@/lib/JobContext';
 import {
-  Loader2, CheckCircle2, AlertCircle, ChevronDown, ChevronUp,
-  X, Trash2, Zap, Sparkles, Shield, Clock
+  Loader2, ChevronDown, ChevronUp,
+  X, Trash2, Zap, Sparkles, Shield
 } from 'lucide-react';
 
 const TYPE_ICON = {
@@ -24,6 +24,7 @@ function JobRow({ job, onRemove }) {
   const cfg = STATUS_CFG[job.status] || STATUS_CFG.pending;
   const Icon = TYPE_ICON[job.type] || Zap;
   const hasResult = job.status === 'completed' && job.result;
+  const resultApps = Array.isArray(job.result?.apps) ? job.result.apps : [];
   const elapsed = job.completedAt
     ? `${Math.round((new Date(job.completedAt) - new Date(job.startedAt)) / 1000)}s`
     : job.status === 'running' ? 'Running…' : '';
@@ -82,7 +83,7 @@ function JobRow({ job, onRemove }) {
               <p className="text-emerald-400 font-bold">
                 {job.result.summary.passed}/{job.result.summary.total} Apps Passed
               </p>
-              {job.result.apps?.map((a, i) => (
+              {resultApps.map((a, i) => (
                 <p key={i} className={a.passed ? 'text-emerald-400' : 'text-red-400'}>
                   {a.passed ? '✓' : '✗'} {a.appName} {a.passed && a.finalUrl ? `— ${a.finalUrl}` : a.error || ''}
                 </p>
@@ -121,10 +122,11 @@ function JobRow({ job, onRemove }) {
 export default function ActiveJobsPanel() {
   const { jobs, removeJob, clearCompleted } = useJobs();
   const [open, setOpen] = useState(true);
+  const safeJobs = Array.isArray(jobs) ? jobs.filter((job) => job && typeof job === 'object') : [];
 
-  const runningJobs = jobs.filter(j => j.status === 'running' || j.status === 'pending');
-  const doneJobs = jobs.filter(j => j.status === 'completed' || j.status === 'failed');
-  const total = jobs.length;
+  const runningJobs = safeJobs.filter(j => j.status === 'running' || j.status === 'pending');
+  const doneJobs = safeJobs.filter(j => j.status === 'completed' || j.status === 'failed');
+  const total = safeJobs.length;
 
   if (total === 0) return null;
 
@@ -180,7 +182,7 @@ export default function ActiveJobsPanel() {
               className="overflow-hidden"
             >
               <div className="p-3 space-y-2 max-h-96 overflow-y-auto">
-                {jobs.map(job => (
+                {safeJobs.map(job => (
                   <JobRow key={job.id} job={job} onRemove={removeJob} />
                 ))}
               </div>

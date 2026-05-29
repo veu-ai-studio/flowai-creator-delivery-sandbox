@@ -18,7 +18,7 @@
 - `SUBKEY_RE = /^[a-zA-Z0-9_-]+$/`
 - `VALID_FLOWAI_ENVS = new Set(['prod', 'staging'])`
 - `VALID_PRODUCT_ENVS = new Set(['prod', 'staging', 'demo', 'live-demo', 'sales-demo'])`
-- `VALID_PRODUCT_PROJECTS = new Set(['flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mybirthsafe'])`
+- `VALID_PRODUCT_PROJECTS = new Set(['flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mypreglife'])`
 
 ### Class members
 - Constructor opts: `project`, `environment`, `dopplerClient?`, `expectedKeys?`, `envFallback?`, `clock?`, `logger?`

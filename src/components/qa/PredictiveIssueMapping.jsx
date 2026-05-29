@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Zap, TrendingDown, AlertTriangle } from 'lucide-react';
+import { Loader2, Zap } from 'lucide-react';
 
 export default function PredictiveIssueMapping({ url, currentResults }) {
   const [predictions, setPredictions] = useState([]);

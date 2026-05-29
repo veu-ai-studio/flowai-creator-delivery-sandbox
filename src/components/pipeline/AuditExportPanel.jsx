@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { FileDown, Loader2, CheckCircle2, FileText, Code2, RefreshCw } from 'lucide-react';
+import { FileDown, Loader2, FileText, Code2, RefreshCw } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
 function buildMarkdown(run) {

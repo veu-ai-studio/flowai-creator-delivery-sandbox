@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { OrchestrationProvider } from '@/lib/OrchestrationContext';
@@ -62,6 +62,7 @@ import Clearance from './pages/Clearance';
 import CreatorStudio from './pages/CreatorStudio';
 import MyCreations from './pages/MyCreations';
 import AutoRunner from './pages/AutoRunner';
+import Renewal from './pages/Renewal';
 import GuidedStep from './pages/GuidedStep';
 import ManualStep from './pages/ManualStep';
 import MainDashboard from './pages/MainDashboard';
@@ -91,6 +92,23 @@ import DemoSandbox from './pages/DemoSandbox';
 import LiveDemo from './pages/LiveDemo';
 import EnterpriseDemo from './pages/EnterpriseDemo';
 import BaseAgentTest from './pages/BaseAgentTest';
+import FlowAIDashboard from './pages/FlowAIDashboard';
+import ForgeResearchForm from './pages/ForgeResearchForm';
+import ForgeDesignForm from './pages/ForgeDesignForm';
+import ForgeBuildForm from './pages/ForgeBuildForm';
+import ForgeAuditForm from './pages/ForgeAuditForm';
+import Workspace from './pages/Workspace';
+import Login from './pages/Login';
+import RequireAuth from '@/components/RequireAuth';
+
+function LegacyFlowHubRedirect() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const destination = params.get('mode') === 'migration'
+    ? '/flow-hub/migration'
+    : '/flow-hub/production';
+  return <Navigate to={destination} replace />;
+}
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -116,6 +134,14 @@ const AuthenticatedApp = () => {
     <ErrorBoundary>
     <Routes>
       <Route element={<AppLayout />}>
+        <Route path="/" element={<LegacyFlowHubRedirect />} />
+        <Route path="/flow-hub/production" element={<LandingPage />} />
+        <Route path="/flow-hub/migration" element={<LandingPage />} />
+        <Route path="/flowai" element={<FlowAIDashboard />} />
+        <Route path="/forge/research" element={<ForgeResearchForm />} />
+        <Route path="/forge/design" element={<ForgeDesignForm />} />
+        <Route path="/forge/build" element={<ForgeBuildForm />} />
+        <Route path="/forge/quality-audit" element={<ForgeAuditForm />} />
         <Route path="/old-dashboard" element={<Dashboard />} />
 
         <Route path="/flow-designer" element={<FlowDesigner />} />
@@ -148,7 +174,10 @@ const AuthenticatedApp = () => {
         <Route path="/gtm-engine" element={<GTMEngine />} />
         <Route path="/self-protection" element={<SelfProtection />} />
         <Route path="/self-healing" element={<SelfHealing />} />
-        <Route path="/governance" element={<Governance />} />
+        {/* TRACK-E PR4 — magic-link auth required for governance and the
+            autonomous runner. RequireAuth honors VITE_AUTH_BYPASS=1 so the
+            CEO demo path stays open until full enforcement flips on. */}
+        <Route path="/governance" element={<RequireAuth><Governance /></RequireAuth>} />
         <Route path="/domain-manager" element={<DomainManager />} />
         <Route path="/brand-system" element={<BrandSystem />} />
         <Route path="/white-label" element={<WhiteLabel />} />
@@ -166,9 +195,10 @@ const AuthenticatedApp = () => {
         {/* NEW ROUTES — UX-C */}
         <Route path="/dashboard" element={<MainDashboard />} />
         <Route path="/configuration" element={<Configuration />} />
-        <Route path="/workspace" element={<Navigate to="/configuration" replace />} />
+        <Route path="/workspace" element={<Workspace />} />
         <Route path="/my-products" element={<MyCreations />} />
-        <Route path="/auto-runner" element={<AutoRunner />} />
+        <Route path="/auto-runner" element={<RequireAuth><AutoRunner /></RequireAuth>} />
+        <Route path="/renewal" element={<Renewal />} />
         <Route path="/guided/:step" element={<GuidedStep />} />
         <Route path="/manual/:step" element={<ManualStep />} />
         <Route path="/onboarding" element={<Onboarding />} />
@@ -202,7 +232,7 @@ const AuthenticatedApp = () => {
         <Route path="/creator-studio" element={<Navigate to="/configuration" replace />} />
         <Route path="/my-creations" element={<MyCreations />} />
       </Route>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
       <Route path="/landing" element={<MarketingPage />} />
       {/* GTM Demo Tiers — public, no AppLayout */}
       <Route path="/veuaas" element={<VEUaaSMarketing />} />

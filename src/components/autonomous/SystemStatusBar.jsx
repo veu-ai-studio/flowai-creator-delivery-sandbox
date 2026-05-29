@@ -1,4 +1,4 @@
-import { Shield, CheckCircle2, AlertTriangle, Wrench, TrendingUp, ArrowUpCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Wrench, TrendingUp, ArrowUpCircle, XCircle, Loader2 } from 'lucide-react';
 
 const STATUS_MAP = {
   healthy:         { label: 'Healthy',         color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', Icon: CheckCircle2 },

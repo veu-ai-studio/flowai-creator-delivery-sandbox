@@ -29,6 +29,7 @@ import { createRun, getRun, getSnapshot, updateRun } from '../_lib/configRegistr
 import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
 import { logger } from '../_lib/logger.js';
 import { withRequestLog } from '../_lib/requestLog.js';
+import { requireAuthHard } from '../_lib/auth.js';
 
 const DEFAULT_ORG = 'veu-ai-studio';
 
@@ -46,6 +47,11 @@ function estimateEta(agent, payload) {
 async function orchestratorRunHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+
+  // S-3 fix (W4 adversarial bd2f923): auth gate BEFORE any body / query
+  // handling so anon callers cannot poll for run status either. Covers
+  // both GET (polling/pull-resume) and POST (dispatch) paths.
+  if (!(await requireAuthHard(req, res))) return;
 
   // ── GET path: status polling + pull-resume ─────────────────────────
   // On Vercel Node serverless, the function is killed once res.end() is

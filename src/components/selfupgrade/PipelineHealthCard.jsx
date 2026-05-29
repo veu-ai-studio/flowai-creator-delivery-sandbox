@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Minus, CheckCircle2, XCircle, Zap, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Zap } from 'lucide-react';
 
 function StatBlock({ label, value, sub, trend, color }) {
   const TrendIcon = trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus;

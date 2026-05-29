@@ -126,7 +126,7 @@ const RELEASES = [
     items: [
       'Six-step clearance wizard — Governance, Readiness, White-Label, Data Export, Demo, Sign-Off',
       'ClearanceRecord entity tracking step-by-step clearance progress',
-      'All five VEU AI Studio products pre-loaded: SAIGE, PressAI, ReachSMS, RelTwin, MyBirthSafe',
+      'All five VEU AI Studio products pre-loaded: SAIGE, PressAI, ReachSMS, RelTwin, MyPregLife',
       'Step indicators with emoji status, overall clearance status badges',
       'Clearance wizard with AI-generated checklists per step',
       'Custom product support — add any product to the clearance protocol',

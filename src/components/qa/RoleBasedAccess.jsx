@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Shield, Plus, Trash2, Check, Lock, Eye, Edit3, Settings } from 'lucide-react';
+import { asArray } from '@/lib/uiDataGuards';
 
 const ROLES = {
   admin: {
@@ -53,7 +54,7 @@ export default function RoleBasedAccess() {
         setCurrentUser(user);
         // Load saved members from local storage (no dedicated entity needed)
         const saved = localStorage.getItem('qa_rbac_members');
-        if (saved) setMembers(JSON.parse(saved));
+        if (saved) setMembers(asArray(JSON.parse(saved)));
         else {
           // Seed with current user as admin
           const initial = [{ email: user.email, role: 'admin', name: user.full_name || user.email }];
@@ -74,7 +75,7 @@ export default function RoleBasedAccess() {
 
   const handleAddMember = () => {
     if (!newEmail.trim()) return;
-    const updated = [...members, { email: newEmail.trim(), role: newRole, name: newEmail.trim() }];
+    const updated = [...safeMembers, { email: newEmail.trim(), role: newRole, name: newEmail.trim() }];
     saveMembers(updated);
     setNewEmail('');
     setSaved(true);
@@ -83,14 +84,15 @@ export default function RoleBasedAccess() {
 
   const handleRemoveMember = (email) => {
     if (email === currentUser?.email) return; // can't remove yourself
-    saveMembers(members.filter(m => m.email !== email));
+    saveMembers(safeMembers.filter(m => m.email !== email));
   };
 
   const handleRoleChange = (email, newRoleVal) => {
-    saveMembers(members.map(m => m.email === email ? { ...m, role: newRoleVal } : m));
+    saveMembers(safeMembers.map(m => m.email === email ? { ...m, role: newRoleVal } : m));
   };
 
-  const currentUserRole = members.find(m => m.email === currentUser?.email)?.role || 'viewer';
+  const safeMembers = asArray(members);
+  const currentUserRole = safeMembers.find(m => m.email === currentUser?.email)?.role || 'viewer';
   const currentPerms = ROLES[currentUserRole]?.permissions || [];
 
   return (
@@ -138,9 +140,9 @@ export default function RoleBasedAccess() {
 
       {/* Team members */}
       <div className="space-y-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team Members ({members.length})</p>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Team Members ({safeMembers.length})</p>
         <div className="space-y-2">
-          {members.map((member) => {
+          {safeMembers.map((member) => {
             const roleInfo = ROLES[member.role];
             const RoleIcon = roleInfo?.icon || Lock;
             return (

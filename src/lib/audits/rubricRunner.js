@@ -1,27 +1,39 @@
 /**
- * rubricRunner — Loads rubric definitions and applies them to a subject.
+ * rubricRunner — Loads rubric definitions and per-criterion evaluators.
  * ---------------------------------------------------------------------------
  * Owner:       /src/lib/audits/rubricRunner.js   (W3 territory)
  *
+ * Versions supported:
+ *   - governance.v1, readiness.v1            — primary rubrics
+ *   - governance.meta.v1, readiness.meta.v1  — meta rubrics (auditor-of-auditor)
+ *
  * loadRubric(version)     -> rubric object
- *   Tries src/lib/audits/rubrics/<version>.json first, then meta/<version>.json,
- *   then falls back to the canonical W2 rubrics from ScoreEvaluator.js.
+ *   Reads JSON from disk; falls back to the canonical W2 rubrics for primary
+ *   versions. Validates that every criterion has id + positive weight summing
+ *   to 100.
  *
  * loadEvaluators(version) -> { [criterionId]: async (target, ctx) => result }
- *   Returns stub evaluators that produce score=100 with placeholder evidence.
- *   W3 follow-up replaces each stub with a real per-criterion evaluator.
+ *   Dynamically imports every file under src/lib/audits/criteria/<axis>/.
  *
- * applyRubric(rubric, evaluators, target, ctx) -> { criteriaResults, score, passes }
- *   Pure function for test harnesses. The wire-up to ScoreEvaluator lives in
- *   scoringEngine.js — this helper is for tests and ad-hoc inspection.
+ * applyRubric(rubric, evaluators, target, ctx) -> aggregate envelope
+ *   Handles three evaluator outcomes per the 2026-05-13 CEO dispositions on
+ *   the W3 stub replacement plan:
+ *     - measured:   numeric score in [0, 100] (status='measured' implicit)
+ *     - deferred:   score=null, status='deferred', reason='deferred-pending-*'
+ *     - no_evidence: score=null, status='no_evidence' (data sources reachable
+ *                    but window contained nothing to score; per Flag 4
+ *                    disposition this is NOT a 100, NOT a 0)
+ *   measured_score is the weighted average over `measured` only, normalised
+ *   to the measured-weight denominator (Slot 2 formula). measurement_coverage
+ *   reports the fraction of total rubric weight that was actually measured.
  * ---------------------------------------------------------------------------
  */
 
 'use strict';
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   GOVERNANCE_RUBRIC_V1,
   READINESS_RUBRIC_V1,
@@ -30,14 +42,21 @@ import {
 const CLEARANCE_THRESHOLD = 95;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const RUBRICS_DIR = resolve(__dirname, 'rubrics');
+const RUBRICS_DIR  = resolve(__dirname, 'rubrics');
+const CRITERIA_DIR = resolve(__dirname, 'criteria');
 
 const _rubricFileMap = Object.freeze({
-  'governance.v1': 'governance.json',
-  'readiness.v1':  'readiness.json',
-  'governance.meta.v1': 'meta/governance-meta.json',
-  'readiness.meta.v1':  'meta/readiness-meta.json',
+  'governance.v1':       ['governance.json',          'primary/governance-primary.json'],
+  'readiness.v1':        ['readiness.json',           'primary/readiness-primary.json'],
+  'governance.meta.v1':  ['meta/governance-meta.json'],
+  'readiness.meta.v1':   ['meta/readiness-meta.json'],
 });
+
+function _axisFromVersion(version) {
+  if (version === 'governance.v1' || version === 'governance.meta.v1') return 'governance';
+  if (version === 'readiness.v1'  || version === 'readiness.meta.v1')  return 'readiness';
+  throw new Error(`rubricRunner: cannot derive axis from version "${version}"`);
+}
 
 function _readJsonIfExists(absPath) {
   if (!existsSync(absPath)) return null;
@@ -46,23 +65,6 @@ function _readJsonIfExists(absPath) {
   } catch (err) {
     throw new Error(`rubricRunner: malformed JSON at ${absPath}: ${err?.message ?? err}`);
   }
-}
-
-export function loadRubric(version) {
-  if (typeof version !== 'string' || !version) {
-    throw new Error('rubricRunner.loadRubric: version (string) required');
-  }
-  const fileRel = _rubricFileMap[version];
-  if (fileRel) {
-    const fromDisk = _readJsonIfExists(resolve(RUBRICS_DIR, fileRel));
-    if (fromDisk) {
-      _validateRubricShape(fromDisk, version);
-      return Object.freeze(fromDisk);
-    }
-  }
-  if (version === 'governance.v1' || version === 'governance.meta.v1') return GOVERNANCE_RUBRIC_V1;
-  if (version === 'readiness.v1'  || version === 'readiness.meta.v1')  return READINESS_RUBRIC_V1;
-  throw new Error(`rubricRunner.loadRubric: unknown rubric version "${version}"`);
 }
 
 function _validateRubricShape(rubric, version) {
@@ -90,27 +92,58 @@ function _validateRubricShape(rubric, version) {
   }
 }
 
-export function loadEvaluators(version) {
-  const rubric = loadRubric(version);
+export function loadRubric(version) {
+  if (typeof version !== 'string' || !version) {
+    throw new Error('rubricRunner.loadRubric: version (string) required');
+  }
+  const candidates = _rubricFileMap[version];
+  if (candidates) {
+    for (const rel of candidates) {
+      const fromDisk = _readJsonIfExists(resolve(RUBRICS_DIR, rel));
+      if (fromDisk) {
+        _validateRubricShape(fromDisk, version);
+        return Object.freeze(fromDisk);
+      }
+    }
+  }
+  if (version === 'governance.v1' || version === 'governance.meta.v1') return GOVERNANCE_RUBRIC_V1;
+  if (version === 'readiness.v1'  || version === 'readiness.meta.v1')  return READINESS_RUBRIC_V1;
+  throw new Error(`rubricRunner.loadRubric: unknown rubric version "${version}"`);
+}
+
+export async function loadEvaluators(version) {
+  const axis = _axisFromVersion(version);
+  const dir  = resolve(CRITERIA_DIR, axis);
+  if (!existsSync(dir)) {
+    throw new Error(`rubricRunner.loadEvaluators: criterion dir missing for axis "${axis}" (expected ${dir})`);
+  }
+  const files = readdirSync(dir).filter(f => f.endsWith('.js'));
   const map = {};
-  for (const c of rubric.criteria) {
-    map[c.id] = _stubEvaluator(c.id, version);
+  for (const file of files) {
+    const abs = resolve(dir, file);
+    const mod = await import(pathToFileURL(abs).href);
+    const id = mod.ID;
+    const fn = mod.default;
+    if (typeof id !== 'string' || !id) {
+      throw new Error(`rubricRunner.loadEvaluators: ${file} must export named "ID"`);
+    }
+    if (typeof fn !== 'function') {
+      throw new Error(`rubricRunner.loadEvaluators: ${file} must export a default async function`);
+    }
+    map[id] = fn;
   }
   return map;
 }
 
-function _stubEvaluator(criterionId, version) {
-  return async (target /* , ctx */) => ({
-    id: criterionId,
-    score: 100,
-    evidence: [{
-      kind: 'stub_evaluator',
-      criterion: criterionId,
-      rubricVersion: version,
-      target: { type: target?.type ?? 'unknown', id: String(target?.id ?? '') },
-    }],
-    notes: `Stub evaluator for "${criterionId}" (rubric ${version}).`,
-  });
+function _classify(result) {
+  if (!result || typeof result !== 'object') return 'invalid';
+  if (typeof result.score === 'number' && Number.isFinite(result.score)) {
+    if (result.score < 0 || result.score > 100) return 'invalid';
+    return 'measured';
+  }
+  if (result.score === null && result.status === 'deferred') return 'deferred';
+  if (result.score === null) return 'no_evidence';
+  return 'invalid';
 }
 
 export async function applyRubric(rubric, evaluators, target, ctx = {}) {
@@ -118,25 +151,68 @@ export async function applyRubric(rubric, evaluators, target, ctx = {}) {
   if (!evaluators || typeof evaluators !== 'object') {
     throw new Error('rubricRunner.applyRubric: evaluators map required');
   }
-  const criteriaResults = [];
+
+  const measured   = [];
+  const deferred   = [];
+  const noEvidence = [];
+  const invalid    = [];
+
+  let measuredWeight = 0;
+  const totalWeight  = 100; // validated above
+
   for (const c of rubric.criteria) {
     const fn = evaluators[c.id];
     if (typeof fn !== 'function') {
       throw new Error(`rubricRunner.applyRubric: missing evaluator for "${c.id}"`);
     }
-    criteriaResults.push(await fn(target, ctx));
+    const result = await fn(target, ctx);
+    const kind = _classify(result);
+    if (kind === 'measured') {
+      measured.push(result);
+      measuredWeight += c.weight;
+    } else if (kind === 'deferred') {
+      deferred.push(result);
+    } else if (kind === 'no_evidence') {
+      noEvidence.push(result);
+    } else {
+      invalid.push({ id: c.id, result });
+    }
   }
-  const score = criteriaResults.reduce((sum, r) => {
-    const weight = rubric.criteria.find(c => c.id === r.id).weight;
-    return sum + (r.score * weight) / 100;
-  }, 0);
-  const rounded = Math.round(score * 100) / 100;
+
+  if (invalid.length > 0) {
+    const ids = invalid.map(i => i.id).join(', ');
+    throw new Error(`rubricRunner.applyRubric: invalid evaluator results for: ${ids}`);
+  }
+
+  let measuredScore = 0;
+  if (measuredWeight > 0) {
+    const weighted = measured.reduce((sum, r) => {
+      const w = rubric.criteria.find(c => c.id === r.id).weight;
+      return sum + r.score * w;
+    }, 0);
+    measuredScore = weighted / measuredWeight;
+  }
+  const rounded = Math.round(measuredScore * 100) / 100;
+  const coverage = measuredWeight / totalWeight;
+  const coverageRounded = Math.round(coverage * 1000) / 1000;
+
+  // criteriaResults retains backwards-compat shape — measured first, then
+  // deferred, then no_evidence, in original criterion order grouping.
+  const criteriaResults = Object.freeze([...measured, ...deferred, ...noEvidence]);
+
   return Object.freeze({
     rubricVersion: rubric.version,
-    criteriaResults: Object.freeze(criteriaResults),
+    criteriaResults,
+    measured: Object.freeze(measured),
+    deferred: Object.freeze(deferred),
+    noEvidence: Object.freeze(noEvidence),
     score: rounded,
-    passes: rounded >= CLEARANCE_THRESHOLD,
+    measuredWeight,
+    totalWeight,
+    measurementCoverage: coverageRounded,
+    passes: measuredWeight > 0 && rounded >= CLEARANCE_THRESHOLD,
     threshold: CLEARANCE_THRESHOLD,
+    failures: Object.freeze(measured.filter(r => r.score < CLEARANCE_THRESHOLD)),
   });
 }
 

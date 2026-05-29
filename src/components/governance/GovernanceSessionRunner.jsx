@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useSession } from '@/lib/SessionContext';
 import { Button } from '@/components/ui/button';
-import { Loader2, Shield, CheckCircle2, ChevronRight, AlertTriangle, Zap } from 'lucide-react';
+import { Loader2, CheckCircle2, ChevronRight, Zap } from 'lucide-react';
 import SelfTestRunner from './SelfTestRunner';
 import Gate1Review from './Gate1Review';
 import Gate2Approval from './Gate2Approval';

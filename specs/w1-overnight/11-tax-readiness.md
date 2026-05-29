@@ -78,7 +78,7 @@ Mapped against typical SaaS-with-marketplace tax obligations.
 
 ### 4.5 International (Africa-first product positioning)
 
-`api/_lib/productDomains.js` lists MyBirthSafe (Africa-focused) and `src/lib/toolRegistry.js` lists Africa-tier payment vendors (Paystack, Flutterwave, Termii, Africa's Talking).
+`api/_lib/productDomains.js` lists MyPregLife (Africa-focused) and `src/lib/toolRegistry.js` lists Africa-tier payment vendors (Paystack, Flutterwave, Termii, Africa's Talking).
 
 | Item | Status |
 |---|---|

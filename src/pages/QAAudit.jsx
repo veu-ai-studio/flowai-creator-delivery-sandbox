@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAgenticMode, AGENTIC_MODES } from '@/lib/OrchestrationContext';
 import { base44 } from '@/api/base44Client';
@@ -22,7 +22,6 @@ import TeamCollaborationPanel from '@/components/qa/TeamCollaborationPanel';
 import IssuePrioritization from '@/components/qa/IssuePrioritization';
 import CompetitiveAnalysis from '@/components/qa/CompetitiveAnalysis';
 import AutomationDashboard from '@/components/qa/AutomationDashboard';
-import IterationModeSelector from '@/components/qa/IterationModeSelector';
 import RunHistoryPanel from '@/components/qa/RunHistoryPanel';
 import ImprovementSummary from '@/components/qa/ImprovementSummary';
 import InteractiveAuditDashboard from '@/components/qa/InteractiveAuditDashboard';

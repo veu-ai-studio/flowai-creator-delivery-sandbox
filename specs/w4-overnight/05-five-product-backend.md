@@ -1,7 +1,7 @@
 # 05 — Five-product backend inventory
 
 **Generated:** 2026-05-07. **Products audited:** SAIGE, RelTwin, ReachSMS,
-PressAI, MyBirthSafe.
+PressAI, MyPregLife.
 
 ## Method
 
@@ -23,7 +23,7 @@ The single source of truth for the five-product registry:
 | `pressai` | PressAI | active | `https://ourpublishingai.com` | (TBD) | (none) |
 | `reachsms` | ReachSMS | **draft** | (empty — Victor TBD) | (TBD) | (none) |
 | `reltwin` | RelTwin | **draft** | (empty — Victor TBD) | (TBD) | (none) |
-| `mybirthsafe` | MyBirthSafe | active | `https://safe-path.base44.app` | (TBD) | (none) |
+| `mypreglife` | MyPregLife | active | `https://safe-path.base44.app` | (TBD) | (none) |
 
 Helpers exported: `getProductDomainConfig(slug)`, `getCurrentLiveUrl(slug)`,
 `getTargetUrl(slug)`, `getLegacyDomains(slug)`, `resolveLegacyDomain(host)`,
@@ -97,16 +97,16 @@ This duplication is a known cleanup item but the slugs match.
 - **Routes used:** none active.
 - **Stub / missing:** same as ReachSMS — config exists, no flow exercised.
 
-### MyBirthSafe (`mybirthsafe`)
+### MyPregLife (`mypreglife`)
 
 - **Status:** active.
 - **Live URL (productDomains):** `https://safe-path.base44.app`.
-- **Live URL (veuProducts):** `https://mybirthsafe.base44.app` (mismatch — flag).
-- **Backend code that mentions MyBirthSafe specifically:** config entries only.
+- **Live URL (veuProducts):** `https://mypreglife.base44.app` (mismatch — flag).
+- **Backend code that mentions MyPregLife specifically:** config entries only.
 - **Constraints:** `objectives` carry a `constraint: PII / health-data
   compliance (HIPAA-equivalent jurisdictional rules)` with weight 2 — used to
   bias audit prompts toward privacy.
-- **Stub / missing:** no MyBirthSafe-specific code path in `api/` other than
+- **Stub / missing:** no MyPregLife-specific code path in `api/` other than
   the seed and audit-prompt routing.
 
 ## Cross-product summary
@@ -127,10 +127,10 @@ This duplication is a known cleanup item but the slugs match.
 
 ### What's missing per product
 
-| Concern | SAIGE | PressAI | ReachSMS | RelTwin | MyBirthSafe |
+| Concern | SAIGE | PressAI | ReachSMS | RelTwin | MyPregLife |
 |---|---|---|---|---|---|
 | Live URL set | ✅ | ✅ | ❌ | ❌ | ✅ |
-| URL parity between `productDomains.js` and `veuProducts.js` | partial (`saigedemo.com` vs `saige.base44.app`) | **mismatch** (`ourpublishingai.com` vs `pressai1.base44.app`) | n/a (draft) | **mismatch** (`reltwin.com` vs empty) | **mismatch** (`safe-path.base44.app` vs `mybirthsafe.base44.app`) |
+| URL parity between `productDomains.js` and `veuProducts.js` | partial (`saigedemo.com` vs `saige.base44.app`) | **mismatch** (`ourpublishingai.com` vs `pressai1.base44.app`) | n/a (draft) | **mismatch** (`reltwin.com` vs empty) | **mismatch** (`safe-path.base44.app` vs `mypreglife.base44.app`) |
 | Auth UI shipped (Base44) | TBD | TBD | TBD | TBD | TBD |
 | Lead-capture UI wired (correct path) | partial — UI POSTs `/api/leads` (404) | partial (same) | n/a | n/a | TBD |
 | Stripe billing | n/a | **stubbed** alert | n/a | n/a | n/a |

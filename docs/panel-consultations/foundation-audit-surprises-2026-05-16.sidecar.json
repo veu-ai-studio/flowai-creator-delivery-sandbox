@@ -1,0 +1,1002 @@
+{
+  "schema": "foundation-audit-surprises.sidecar.v1",
+  "startedAt": "2026-05-17T00:38:27.864Z",
+  "finishedAt": "2026-05-17T00:40:51.824Z",
+  "panel_audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "cohere": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "panel_size": 10,
+  "bundle_size": 97996,
+  "liveOk": 10,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 1,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 97996
+  },
+  "tally": {
+    "engagedTotal": 10,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 0,
+    "perQuestion": {
+      "FA-Q1": {
+        "FAQ1-PARTIAL": 10,
+        "FAQ1-CODE": 0,
+        "FAQ1-NEW": 0,
+        "FAQ1-OTHER": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "FA-Q2": {
+        "FAQ2-P0": 10,
+        "FAQ2-INTERIM": 0,
+        "FAQ2-REMOVE": 0,
+        "FAQ2-OTHER": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "FA-Q3": {
+        "FAQ3-50": 0,
+        "FAQ3-9595": 5,
+        "FAQ3-BOTH": 2,
+        "FAQ3-REDESIGN": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "FA-Q4": {
+        "FAQ4-P0": 10,
+        "FAQ4-P1": 0,
+        "FAQ4-P2": 0,
+        "FAQ4-REJECT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 34,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Phantom atomicity enforcement",
+        "detail": "§7 Output Contract item #5 declares ProductSSOT writes as 'atomic with the rest of the output contract' with mandatory rollback on failure, but P0-5 confirms zero rollback code exists. Every pipeline run today violates this atomicity guarantee silently, creating a false sense of data integrity."
+      },
+      {
+        "slot": 1,
+        "title": "MessageBus architectural split-brain",
+        "detail": "The real MessageBus.ts has backpressure, TTL, and overflow handling, but api/research-url.js uses a no-op stub that silently drops all 65 canonical topics. This creates two parallel realities where agents think they're communicating but messages vanish into void."
+      },
+      {
+        "slot": 1,
+        "title": "Dual scoring paths create audit ambiguity",
+        "detail": "ScoreEvaluator.js implements 95/95 threshold per §10 Self-Governance, while AutoRunner uses /50 Monitor scoring. P2-3 confirms the 95/95 path 'isn't shown to the operator' — operators see /50 scores while SSOT declares 95/95 as canonical, creating clearance-gate confusion."
+      },
+      {
+        "slot": 1,
+        "title": "Agent status taxonomy breakdown",
+        "detail": "Agent #4 is marked SHIPPED-GREEN in §15.1 but P2-10 reveals Stripe Connect isn't wired and deployment shows 'No products registered yet'. The status categories don't distinguish between 'code complete' and 'operationally deployed', making the roster misleading."
+      },
+      {
+        "slot": 2,
+        "title": "ProductSSOT Unbuilt",
+        "detail": "Section §7.5 describes the ProductSSOT entity as a critical component of the system, yet it is entirely unbuilt. This absence undermines the atomicity of the output contract and the symbiotic feedback loop described in §28, leading to incomplete runs that do not adhere to the SSOT's requirements."
+      },
+      {
+        "slot": 2,
+        "title": "MessageBus Stub",
+        "detail": "The MessageBus is implemented in src/lib/agents/MessageBus.ts, but api/research-url.js uses a no-op stub. This prevents agents from communicating effectively in production, which is crucial for the integration and operation of multiple agents as described in §15.2."
+      },
+      {
+        "slot": 2,
+        "title": "GTM Readiness Report Missing",
+        "detail": "Section §7.6 outlines a GTM Readiness Report scoring formula that is not implemented in the codebase. This missing component means that the demo-readiness gate in §11 Clearance Step 5 cannot function as intended, potentially allowing unready products to pass clearance."
+      },
+      {
+        "slot": 3,
+        "title": "Unbuilt ProductSSOT",
+        "detail": "The ProductSSOT entity is entirely unbuilt, which means that every pipeline run silently bypasses it, making the §7 Output Contract item #5 mandatory and atomic. This is a critical component that is missing, and its absence affects the entire system."
+      },
+      {
+        "slot": 3,
+        "title": "MessageBus wiring gap",
+        "detail": "The MessageBus is implemented, but it is not wired into the api/research-url.js, which means that agents cannot communicate in production today. This is a significant gap that needs to be addressed."
+      },
+      {
+        "slot": 3,
+        "title": "Dual QA scoring paths",
+        "detail": "There are two separate code paths for QA scoring, one in ScoreEvaluator.js and another in the AutoRunner /50 Monitor. These paths do not reconcile, and it is unclear which one is canonical. This could lead to inconsistencies and errors in the system."
+      },
+      {
+        "slot": 4,
+        "title": "Unclear roles in §3",
+        "detail": "The roles and responsibilities within the Commercial Model + Metadata-Driven Architecture section are unclear. The distinction between providers and end-customers, and their respective roles in the metadata-driven architecture, is not well-defined."
+      },
+      {
+        "slot": 4,
+        "title": "Incomplete Agent #4 status",
+        "detail": "There is a contradiction in the status of Agent #4 Provider Onboarding. The SSOT §15.1 marks it as SHIPPED-GREEN, but the deployment status is listed as DORMANT. This discrepancy needs to be addressed to ensure clarity and consistency."
+      },
+      {
+        "slot": 4,
+        "title": "MessageBus wiring gap",
+        "detail": "The MessageBus is fully implemented in MessageBus.ts but is used as a no-op stub in api/research-url.js. This means that the 4 ACE topics are never fired, leading to potential communication issues between agents."
+      },
+      {
+        "slot": 5,
+        "title": "Unclear integration of Agent #4",
+        "detail": "The SSOT §15.1 row 4 states Agent #4 is SHIPPED-GREEN, but the deployment status is DORMANT. This contradiction needs to be addressed. The agent's status should be clearly defined as either PARTIAL or a new status category should be created."
+      },
+      {
+        "slot": 5,
+        "title": "Incomplete MessageBus wiring",
+        "detail": "The MessageBus is fully implemented in MessageBus.ts but is used as a no-op stub in api/research-url.js. This means that the 4 ACE topics never fire, which is a critical gap. The MessageBus should be properly wired into api/research-url.js to ensure that agents can communicate effectively."
+      },
+      {
+        "slot": 5,
+        "title": "Dual QA scoring paths",
+        "detail": "There are two separate QA scoring paths: ScoreEvaluator.js uses a 95/95 threshold, while AutoRunner uses a /50 Monitor path. These paths do not reconcile and serve different purposes, which can lead to confusion and inconsistencies in the scoring process."
+      },
+      {
+        "slot": 5,
+        "title": "ProductSSOT entity unbuilt",
+        "detail": "The ProductSSOT entity is entirely unbuilt, which is a critical gap. The §7 Output Contract item #5 is mandatory and atomic, meaning every pipeline run should write to ProductSSOT. Without this, the integrity of the pipeline runs is compromised."
+      },
+      {
+        "slot": 6,
+        "title": "Executor Registry complexity",
+        "detail": "The EXECUTOR_REGISTRY (§15.5) adds significant complexity by splitting agent charters and requiring cross-linking between AGENT_REGISTRY and EXECUTOR_REGISTRY. This split charter approach increases cognitive load and potential for inconsistencies."
+      },
+      {
+        "slot": 6,
+        "title": "Symbiotic Loop cost concerns",
+        "detail": "The Symbiotic Feed-Back Loop (§28) relies on reading and writing the ProductSSOT on every run, which could introduce significant overhead and cost, especially with aggressive crawls and large ProductSSOT sizes. The cost optimization of crawl scope narrowing may not offset the read/write costs."
+      },
+      {
+        "slot": 6,
+        "title": "Admin override risks",
+        "detail": "Treating admin overrides as CEO-equivalent directives (§28.3) introduces a risk of inconsistent or incorrect behavior if admins make poorly informed decisions. The override mechanism could bypass automated checks and lead to regressions or security vulnerabilities."
+      },
+      {
+        "slot": 6,
+        "title": "GTM Readiness score gaming",
+        "detail": "The GTM Readiness Report scoring formula (§7.6) is susceptible to gaming.  The fixed weights for severity and visibility could be exploited to artificially inflate the score without addressing underlying issues."
+      },
+      {
+        "slot": 7,
+        "title": "ProductSSOT unbuilt",
+        "detail": "The audit identifies §7.5 ProductSSOT as entirely unbuilt despite being mandatory for atomic output contracts. No code exists in src/lib/productSSOT or API routes, violating §7 Output Contract item #5. This breaks §28 symbiotic loop pre-run reads and §11 Clearance Step 5 enforcement."
+      },
+      {
+        "slot": 7,
+        "title": "GTM scoring fiction",
+        "detail": "§7.6 GTM Readiness scoring formula (100 - 10*crit - 5*high etc.) exists only in docs. Production uses legacy /50 Monitor scoring (Defect B fix), making §11 Step 5 prerequisite #2 unenforceable. This creates false demo-readiness signals for products with critical issues."
+      },
+      {
+        "slot": 7,
+        "title": "MessageBus stubs mislead",
+        "detail": "Agent #21 (Aggressive Crawl) uses no-op MessageBus stubs in api/research-url.js while src/lib/agents/MessageBus.ts implements real pub/sub. This means 4 ENTRY 006 topics (21.crawl.completed.v1 etc.) never fire, breaking CA-9-C customer feedback loops and Agent #26 auto-admission."
+      },
+      {
+        "slot": 7,
+        "title": "ExecutorRegistry cross-link gap",
+        "detail": "§15.5 Mitigation M1 (AGENT_REGISTRY ↔ EXECUTOR_REGISTRY cross-validation) is unimplemented. validateExecutors() lacks referential checks, risking orphaned executors. This violates CA-7.3 and could cause runtime failures when primary agents reference nonexistent executors."
+      },
+      {
+        "slot": 8,
+        "title": "No durable bus wiring",
+        "detail": "FA-Q2 and `api/research-url.js` show the handler instantiates an in-memory no-op `messageBus`/`auditLog`, while `MessageBus.ts` itself is explicitly non-durable and single-process only. That means the new Agent #21/ACE topics can appear to exist in code but still vanish at process boundaries, so production observability and inter-agent coordination remain fictional."
+      },
+      {
+        "slot": 8,
+        "title": "Score paths conflict semantically",
+        "detail": "FA-Q3 exposes two live scoring regimes: `ScoreEvaluator.js` enforces a 95/95 governance/readiness rubric, while the Monitor path still computes a separate /50 aggregate. The proposal says not to reconcile them, but that creates two canonical-looking truths for clearance, which is dangerous because operators will not know which score is authoritative in a blocking decision."
+      },
+      {
+        "slot": 8,
+        "title": "ProductSSOT atomicity is impossible",
+        "detail": "FA-Q4 and §7.5 require an atomic ProductSSOT write for every output, yet the artifact shows no code surface for ProductSSOT and no write path in the pipeline. Making the run rollback depend on an unimplemented table turns normal renewals into a partial-failure trap: the system can produce a live URL but fail the contractual write and still not have a real rollback mechanism."
+      },
+      {
+        "slot": 9,
+        "title": "ProductSSOT Unimplemented",
+        "detail": "§7.5 defines ProductSSOT entity, but it's entirely unbuilt (§P0-2). Every pipeline run silently completes without the mandatory atomic write (§7 Output Contract item #5)."
+      },
+      {
+        "slot": 9,
+        "title": "GTM Readiness Report Unbuilt",
+        "detail": "§7.6 defines the canonical demo-readiness scoring formula, but no production code computes it (§P0-3). §11 Clearance Step 5 prerequisite #2 relies on this score."
+      },
+      {
+        "slot": 9,
+        "title": "Agent #21 MessageBus Topic Emission Unbuilt",
+        "detail": "Agent #21 Aggressive Crawl Conductor charter includes producing `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1` topics, but `api/research-url.js` uses a no-op stub for MessageBus (§P1-4)."
+      },
+      {
+        "slot": 10,
+        "title": "§7.5 ProductSSOT entity UNBUILT",
+        "detail": "§7 Output Contract item #5 and §7.5 mandate atomic delta_log writes to ProductSSOT on every pipeline run with full rollback on failure; api/renew.js, AutoRunner.jsx and all agents have zero read/write code or tables, so every run silently bypasses the contract."
+      },
+      {
+        "slot": 10,
+        "title": "Agent #4 status contradiction",
+        "detail": "§15.1 row 4 marks Agent #4 SHIPPED-GREEN (commit 5006431) while §3 explicitly states 'DORMANT today' for Stripe Connect revenue tracking; no deployed webhook or Connect flow exists per audit, violating the commercial model."
+      },
+      {
+        "slot": 10,
+        "title": "MessageBus no-op stub in production path",
+        "detail": "MessageBus.ts implements real pub/sub with 65 topics and freeze semantics, yet api/research-url.js:30-31 instantiates Agent21 with {publish: async()=>{}, subscribe:()=>{}} so none of 21.crawl.completed.v1, 21.issues.detected.v1 or 21.gtm.readiness.v1 ever fire."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "FA-Q1": {
+      "verdict": "UNANIMOUS_FAQ1-PARTIAL",
+      "detail": "10 of 10 ENGAGED on FAQ1-PARTIAL (unanimous)",
+      "topKey": "FAQ1-PARTIAL",
+      "topCount": 10
+    },
+    "FA-Q2": {
+      "verdict": "UNANIMOUS_FAQ2-P0",
+      "detail": "10 of 10 ENGAGED on FAQ2-P0 (unanimous)",
+      "topKey": "FAQ2-P0",
+      "topCount": 10
+    },
+    "FA-Q3": {
+      "verdict": "PLURALITY_FAQ3-9595",
+      "detail": "5 of 10 on FAQ3-9595 (below 7/10 quorum)",
+      "topKey": "FAQ3-9595",
+      "topCount": 5
+    },
+    "FA-Q4": {
+      "verdict": "UNANIMOUS_FAQ4-P0",
+      "detail": "10 of 10 ENGAGED on FAQ4-P0 (unanimous)",
+      "topKey": "FAQ4-P0",
+      "topCount": 10
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0,
+    "alignedCount": 0,
+    "totalPossible": 0,
+    "draftedQs": [],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "0 ENGAGED or 0 drafted questions — no votes to evaluate"
+  },
+  "consultation_valid": true,
+  "strongest_rejection_argument": {
+    "slot": 8,
+    "model": "openrouter:perplexity/sonar",
+    "text": "The strongest case for rejecting or deferring is that the proposal mixes three independent canonicalization efforts—Agent #21 wiring, scoring authority, and ProductSSOT persistence—without first resolving the foundational storage and contract layer. If ProductSSOT is absent and the bus is a stub, then formalizing new clearance behavior risks freezing a misleading architecture in place and increasing operational complexity before the system can actually honor its own atomicity and audit promises. Deferral would let the team implement the storage and event backbone first, then reconcile the divergent scoring paths with real telemetry."
+  },
+  "shuffled_options": {
+    "FA-Q1": [
+      {
+        "key": "FAQ1-NEW",
+        "text": "Create a new DEPLOYED-INCOMPLETE status category distinct from SHIPPED-GREEN and DORMANT."
+      },
+      {
+        "key": "FAQ1-OTHER",
+        "text": "REJECT framing — wrong question; different fix needed (specify in rationale)."
+      },
+      {
+        "key": "FAQ1-PARTIAL",
+        "text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated."
+      },
+      {
+        "key": "FAQ1-CODE",
+        "text": "Keep SHIPPED-GREEN — code definition is canonical; deployment state is an ops concern, not a canonical-status concern."
+      }
+    ],
+    "FA-Q2": [
+      {
+        "key": "FAQ2-OTHER",
+        "text": "REJECT framing — wrong question; different fix needed."
+      },
+      {
+        "key": "FAQ2-P0",
+        "text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today."
+      },
+      {
+        "key": "FAQ2-INTERIM",
+        "text": "Accept the stub as acceptable interim — MessageBus wiring is Phase 3+ work; current single-page assessment does not need it."
+      },
+      {
+        "key": "FAQ2-REMOVE",
+        "text": "Remove the no-op stub entirely — make MessageBus absence explicit (every call site explicitly imports the real bus or fails fast) rather than silent."
+      }
+    ],
+    "FA-Q3": [
+      {
+        "key": "FAQ3-REDESIGN",
+        "text": "REJECT — requires architectural redesign before either can be canonical; surface the misalignment to CEO before any fix."
+      },
+      {
+        "key": "FAQ3-9595",
+        "text": "Canonicalize ScoreEvaluator.js 95/95; migrate Monitor to use it — 95/95 is the SSOT-named threshold."
+      },
+      {
+        "key": "FAQ3-BOTH",
+        "text": "Keep both — they serve different purposes (95/95 = governance audit gate; /50 = demo readiness score)."
+      },
+      {
+        "key": "FAQ3-50",
+        "text": "Canonicalize the /50 Monitor path; retire ScoreEvaluator.js — the session's integrity work is built on /50."
+      }
+    ],
+    "FA-Q4": [
+      {
+        "key": "FAQ4-P1",
+        "text": "P1 — build ProductSSOT after Phase 3 (auth gives it richer data to store; pre-auth ProductSSOT is content-poor)."
+      },
+      {
+        "key": "FAQ4-P2",
+        "text": "P2 — build ProductSSOT as part of agent wave infrastructure (agents and ProductSSOT ship together, neither without the other)."
+      },
+      {
+        "key": "FAQ4-P0",
+        "text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction)."
+      },
+      {
+        "key": "FAQ4-REJECT",
+        "text": "REJECT — SSOT §7.5 should be revised to make ProductSSOT optional not mandatory; current §7 atomicity contract is over-spec'd for the use case."
+      }
+    ]
+  },
+  "seed": "foundation-audit-surprises-2026-05-16",
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phantom atomicity enforcement",
+            "detail": "§7 Output Contract item #5 declares ProductSSOT writes as 'atomic with the rest of the output contract' with mandatory rollback on failure, but P0-5 confirms zero rollback code exists. Every pipeline run today violates this atomicity guarantee silently, creating a false sense of data integrity."
+          },
+          {
+            "title": "MessageBus architectural split-brain",
+            "detail": "The real MessageBus.ts has backpressure, TTL, and overflow handling, but api/research-url.js uses a no-op stub that silently drops all 65 canonical topics. This creates two parallel realities where agents think they're communicating but messages vanish into void."
+          },
+          {
+            "title": "Dual scoring paths create audit ambiguity",
+            "detail": "ScoreEvaluator.js implements 95/95 threshold per §10 Self-Governance, while AutoRunner uses /50 Monitor scoring. P2-3 confirms the 95/95 path 'isn't shown to the operator' — operators see /50 scores while SSOT declares 95/95 as canonical, creating clearance-gate confusion."
+          },
+          {
+            "title": "Agent status taxonomy breakdown",
+            "detail": "Agent #4 is marked SHIPPED-GREEN in §15.1 but P2-10 reveals Stripe Connect isn't wired and deployment shows 'No products registered yet'. The status categories don't distinguish between 'code complete' and 'operationally deployed', making the roster misleading."
+          }
+        ],
+        "worse_than_status_quo": "The current state creates a Potemkin village where critical infrastructure (ProductSSOT, MessageBus, 95/95 scoring) appears operational in the SSOT but is actually missing or stubbed out, leading operators to make decisions based on phantom guarantees that could cause data loss or compliance failures in production.",
+        "precedent": "The Healthcare.gov launch in 2013 suffered from similar issues where subsystems appeared complete in documentation but critical integration points were stubbed or missing, leading to cascading failures when real users hit the system."
+      },
+      "rejection_steelman": "This audit reveals systemic architectural debt where foundational components are specified but unbuilt, creating a house of cards. Proceeding with agent waves or Phase 3 auth traversal on this foundation risks compounding technical debt exponentially. The project should halt new feature work and dedicate 2-4 sprints to closing P0/P1 gaps before any forward progress, as building on phantom infrastructure will make eventual remediation 10x more expensive.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "PARTIAL accurately captures the reality that code exists but deployment prerequisites (Stripe keys, webhooks) are missing, providing clearer operational status than the binary SHIPPED/DORMANT distinction."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "The MessageBus is the foundational inter-agent communication layer; using no-op stubs creates silent failures where agents believe they're coordinating but messages disappear, blocking the entire agent ecosystem."
+        },
+        "FA-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — requires architectural redesign before either can be canonical; surface the misalignment to CEO before any fix.",
+          "rationale": "Two parallel scoring systems with different scales, thresholds, and purposes create irreconcilable confusion about what 'clearance' means; this fundamental architectural split needs executive decision before any technical fix."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "ProductSSOT is the canonical source of truth that agents read and write; without it, the §28 symbiotic loop is broken and every agent operates on stale or missing context, making the entire orchestration unreliable."
+        }
+      },
+      "overallNotes": "The audit exposes a pattern of 'sounds-done-isn't' where critical infrastructure exists only in specification while production runs on stubs and workarounds.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "ProductSSOT Unbuilt",
+            "detail": "Section §7.5 describes the ProductSSOT entity as a critical component of the system, yet it is entirely unbuilt. This absence undermines the atomicity of the output contract and the symbiotic feedback loop described in §28, leading to incomplete runs that do not adhere to the SSOT's requirements."
+          },
+          {
+            "title": "MessageBus Stub",
+            "detail": "The MessageBus is implemented in src/lib/agents/MessageBus.ts, but api/research-url.js uses a no-op stub. This prevents agents from communicating effectively in production, which is crucial for the integration and operation of multiple agents as described in §15.2."
+          },
+          {
+            "title": "GTM Readiness Report Missing",
+            "detail": "Section §7.6 outlines a GTM Readiness Report scoring formula that is not implemented in the codebase. This missing component means that the demo-readiness gate in §11 Clearance Step 5 cannot function as intended, potentially allowing unready products to pass clearance."
+          }
+        ],
+        "worse_than_status_quo": "The absence of the ProductSSOT and GTM Readiness Report means that the system cannot enforce its own clearance and readiness gates, potentially allowing incomplete or faulty products to be deployed, which could damage the platform's reputation and reliability.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because critical components like the ProductSSOT and GTM Readiness Report are unbuilt, undermining the system's ability to enforce its own contracts and readiness gates. Without these components, the system cannot reliably ensure product quality and compliance with its own standards, posing a risk to operational integrity and stakeholder trust.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "The contradiction between the SSOT and deployment status indicates that the agent is not fully operational, warranting a PARTIAL classification."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "The lack of real MessageBus wiring is a critical gap that prevents agent communication, which is essential for the system's intended operation."
+        },
+        "FA-Q3": {
+          "key": "FAQ3-9595",
+          "pick_text": "Canonicalize ScoreEvaluator.js 95/95; migrate Monitor to use it — 95/95 is the SSOT-named threshold.",
+          "rationale": "The 95/95 threshold is explicitly named in the SSOT as the governance audit gate, making it the appropriate canonical choice."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "The ProductSSOT is a foundational component for ensuring atomicity and compliance with the output contract, and should be prioritized."
+        }
+      },
+      "overallNotes": "The proposal's current state lacks critical components necessary for its intended operation, posing significant risks to system integrity and reliability.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unbuilt ProductSSOT",
+            "detail": "The ProductSSOT entity is entirely unbuilt, which means that every pipeline run silently bypasses it, making the §7 Output Contract item #5 mandatory and atomic. This is a critical component that is missing, and its absence affects the entire system."
+          },
+          {
+            "title": "MessageBus wiring gap",
+            "detail": "The MessageBus is implemented, but it is not wired into the api/research-url.js, which means that agents cannot communicate in production today. This is a significant gap that needs to be addressed."
+          },
+          {
+            "title": "Dual QA scoring paths",
+            "detail": "There are two separate code paths for QA scoring, one in ScoreEvaluator.js and another in the AutoRunner /50 Monitor. These paths do not reconcile, and it is unclear which one is canonical. This could lead to inconsistencies and errors in the system."
+          }
+        ],
+        "worse_than_status_quo": "If the proposal is implemented without addressing the unbuilt ProductSSOT, it could lead to a situation where the system is less reliable and more prone to errors than the current status quo. The lack of a functional ProductSSOT could cause pipeline runs to silently bypass critical checks, leading to undetected issues and potential security vulnerabilities.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred until the critical gaps, such as the unbuilt ProductSSOT and the MessageBus wiring gap, are addressed. The dual QA scoring paths also need to be reconciled to ensure consistency and accuracy in the system. Implementing the proposal without addressing these issues could lead to a less reliable and more error-prone system than the current status quo.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "This option acknowledges that the code for Agent #4 exists, but its deployment is incomplete. Updating the SSOT §15.1 status row to reflect this would provide a more accurate representation of the system's state."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "This option prioritizes the wiring of the MessageBus into api/research-url.js, which is essential for agent communication in production. This should be addressed as a high-priority task to ensure the system functions as intended."
+        },
+        "FA-Q3": {
+          "key": "FAQ3-9595",
+          "pick_text": "Canonicalize ScoreEvaluator.js 95/95; migrate Monitor to use it — 95/95 is the SSOT-named threshold.",
+          "rationale": "This option chooses to canonicalize the ScoreEvaluator.js 95/95 path and migrate the Monitor to use it. This ensures consistency and accuracy in the system, as the 95/95 threshold is the SSOT-named threshold."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "This option prioritizes the building of the ProductSSOT before any agent wave begins. This is essential to ensure that the system has a functional and reliable way to store and manage product data, which is critical for the §7 Output Contract item #5."
+        }
+      },
+      "overallNotes": "The proposal has several critical gaps that need to be addressed before it can be considered for implementation. The unbuilt ProductSSOT, MessageBus wiring gap, and dual QA scoring paths are significant issues that could lead to a less reliable and more error-prone system if not addressed.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unclear roles in §3",
+            "detail": "The roles and responsibilities within the Commercial Model + Metadata-Driven Architecture section are unclear. The distinction between providers and end-customers, and their respective roles in the metadata-driven architecture, is not well-defined."
+          },
+          {
+            "title": "Incomplete Agent #4 status",
+            "detail": "There is a contradiction in the status of Agent #4 Provider Onboarding. The SSOT §15.1 marks it as SHIPPED-GREEN, but the deployment status is listed as DORMANT. This discrepancy needs to be addressed to ensure clarity and consistency."
+          },
+          {
+            "title": "MessageBus wiring gap",
+            "detail": "The MessageBus is fully implemented in MessageBus.ts but is used as a no-op stub in api/research-url.js. This means that the 4 ACE topics are never fired, leading to potential communication issues between agents."
+          },
+          {
+            "title": "Dual QA scoring paths",
+            "detail": "There are two separate code paths for scoring in ScoreEvaluator.js (95/95) and AutoRunner /50 Monitor. These paths do not reconcile, leading to confusion and potential inconsistencies in the scoring process."
+          }
+        ],
+        "worse_than_status_quo": "The proposal to build the ProductSSOT entity after Phase 3 could make the system worse than the status quo. Without the ProductSSOT, every pipeline run silently bypasses the mandatory atomic write, leading to potential data integrity issues and inconsistencies in the output contract.",
+        "precedent": "In a similar scenario, a large enterprise attempted to implement a metadata-driven architecture without a clear distinction between roles and responsibilities. This led to significant confusion and delays in the implementation process, ultimately resulting in a costly redesign of the system. no precedent known."
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces significant inconsistencies and gaps in the current system. The unclear roles in the Commercial Model, the contradictory status of Agent #4, the MessageBus wiring gap, and the dual QA scoring paths all highlight critical issues that need to be addressed before the proposal can be considered for implementation.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "This option acknowledges the current state of Agent #4 and provides a clear path forward for addressing the discrepancy."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "This option ensures that the MessageBus is properly integrated, allowing for effective communication between agents in production."
+        },
+        "FA-Q3": {
+          "key": "FAQ3-9595",
+          "pick_text": "Canonicalize ScoreEvaluator.js 95/95; migrate Monitor to use it — 95/95 is the SSOT-named threshold.",
+          "rationale": "This option aligns the scoring process with the SSOT-named threshold, ensuring consistency and clarity in the scoring process."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "This option ensures that the ProductSSOT is built before any agent wave begins, addressing the mandatory atomic write requirement and ensuring data integrity."
+        }
+      },
+      "overallNotes": "The proposal has several critical issues that need to be addressed before it can be considered for implementation. The adversarial pass highlights these issues and provides a strong case for rejection or deferral.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unclear integration of Agent #4",
+            "detail": "The SSOT §15.1 row 4 states Agent #4 is SHIPPED-GREEN, but the deployment status is DORMANT. This contradiction needs to be addressed. The agent's status should be clearly defined as either PARTIAL or a new status category should be created."
+          },
+          {
+            "title": "Incomplete MessageBus wiring",
+            "detail": "The MessageBus is fully implemented in MessageBus.ts but is used as a no-op stub in api/research-url.js. This means that the 4 ACE topics never fire, which is a critical gap. The MessageBus should be properly wired into api/research-url.js to ensure that agents can communicate effectively."
+          },
+          {
+            "title": "Dual QA scoring paths",
+            "detail": "There are two separate QA scoring paths: ScoreEvaluator.js uses a 95/95 threshold, while AutoRunner uses a /50 Monitor path. These paths do not reconcile and serve different purposes, which can lead to confusion and inconsistencies in the scoring process."
+          },
+          {
+            "title": "ProductSSOT entity unbuilt",
+            "detail": "The ProductSSOT entity is entirely unbuilt, which is a critical gap. The §7 Output Contract item #5 is mandatory and atomic, meaning every pipeline run should write to ProductSSOT. Without this, the integrity of the pipeline runs is compromised."
+          }
+        ],
+        "worse_than_status_quo": "If the ProductSSOT entity remains unbuilt, the system will continue to bypass critical atomic writes, leading to inconsistent and unreliable pipeline runs. This makes the system worse than the status quo, where at least the runs were consistent within their limited scope.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred until the critical gaps are addressed. The integration of Agent #4 needs to be clearly defined, the MessageBus needs to be properly wired, the dual QA scoring paths need to be reconciled, and the ProductSSOT entity needs to be built to ensure the integrity of the pipeline runs.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "This option acknowledges the current state of Agent #4 and updates the SSOT to reflect the partial deployment status accurately."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "This is a critical fix that ensures agents can communicate effectively in production, addressing the current gap in MessageBus wiring."
+        },
+        "FA-Q3": {
+          "key": "FAQ3-BOTH",
+          "pick_text": "Keep both — they serve different purposes (95/95 = governance audit gate; /50 = demo readiness score).",
+          "rationale": "Both scoring paths serve different purposes and are necessary for the system's governance and readiness assessments."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "Building the ProductSSOT entity is crucial for ensuring the atomicity of pipeline runs and should be prioritized before any agent wave begins."
+        }
+      },
+      "overallNotes": "The proposal has several critical gaps that need to be addressed to ensure the system's integrity and reliability. The integration of Agent #4, MessageBus wiring, dual QA scoring paths, and the unbuilt ProductSSOT entity are all areas that require immediate attention.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Executor Registry complexity",
+            "detail": "The EXECUTOR_REGISTRY (§15.5) adds significant complexity by splitting agent charters and requiring cross-linking between AGENT_REGISTRY and EXECUTOR_REGISTRY. This split charter approach increases cognitive load and potential for inconsistencies.",
+            "section": "§15.5"
+          },
+          {
+            "title": "Symbiotic Loop cost concerns",
+            "detail": "The Symbiotic Feed-Back Loop (§28) relies on reading and writing the ProductSSOT on every run, which could introduce significant overhead and cost, especially with aggressive crawls and large ProductSSOT sizes. The cost optimization of crawl scope narrowing may not offset the read/write costs.",
+            "section": "§28"
+          },
+          {
+            "title": "Admin override risks",
+            "detail": "Treating admin overrides as CEO-equivalent directives (§28.3) introduces a risk of inconsistent or incorrect behavior if admins make poorly informed decisions. The override mechanism could bypass automated checks and lead to regressions or security vulnerabilities.",
+            "section": "§28.3"
+          },
+          {
+            "title": "GTM Readiness score gaming",
+            "detail": "The GTM Readiness Report scoring formula (§7.6) is susceptible to gaming.  The fixed weights for severity and visibility could be exploited to artificially inflate the score without addressing underlying issues.",
+            "section": "§7.6"
+          }
+        ],
+        "worse_than_status_quo": "If the ProductSSOT implementation (P0-2) is rushed and contains bugs, the atomic write requirement (§7 Output Contract item #5) could lead to frequent pipeline rollbacks, making the system less reliable than the current state where runs complete silently without ProductSSOT updates.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity with the Executor Registry and the Symbiotic Feed-Back Loop, while also leaving several critical components unbuilt. The risk of introducing bugs and inconsistencies outweighs the potential benefits, making it prudent to defer the proposal until a more comprehensive and robust design can be implemented.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "This accurately reflects the state of Agent #4. SHIPPED-GREEN implies full functionality, which isn't the case."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "The MessageBus is the core communication mechanism. Without it, the agents are effectively isolated, negating the benefits of the agent-based architecture."
+        },
+        "FA-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — requires architectural redesign before either can be canonical; surface the misalignment to CEO before any fix.",
+          "rationale": "Having two separate scoring paths creates confusion and undermines the integrity of the QA process. A clear, unified approach is needed."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "The ProductSSOT is fundamental to the symbiotic loop and the atomicity guarantees. It should be built before relying on agents to write to it."
+        }
+      },
+      "overallNotes": "The proposal attempts to address several gaps but introduces significant complexity and leaves key components unbuilt. A more incremental and focused approach may be more effective.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "ProductSSOT unbuilt",
+            "detail": "The audit identifies §7.5 ProductSSOT as entirely unbuilt despite being mandatory for atomic output contracts. No code exists in src/lib/productSSOT or API routes, violating §7 Output Contract item #5. This breaks §28 symbiotic loop pre-run reads and §11 Clearance Step 5 enforcement."
+          },
+          {
+            "title": "GTM scoring fiction",
+            "detail": "§7.6 GTM Readiness scoring formula (100 - 10*crit - 5*high etc.) exists only in docs. Production uses legacy /50 Monitor scoring (Defect B fix), making §11 Step 5 prerequisite #2 unenforceable. This creates false demo-readiness signals for products with critical issues."
+          },
+          {
+            "title": "MessageBus stubs mislead",
+            "detail": "Agent #21 (Aggressive Crawl) uses no-op MessageBus stubs in api/research-url.js while src/lib/agents/MessageBus.ts implements real pub/sub. This means 4 ENTRY 006 topics (21.crawl.completed.v1 etc.) never fire, breaking CA-9-C customer feedback loops and Agent #26 auto-admission."
+          },
+          {
+            "title": "ExecutorRegistry cross-link gap",
+            "detail": "§15.5 Mitigation M1 (AGENT_REGISTRY ↔ EXECUTOR_REGISTRY cross-validation) is unimplemented. validateExecutors() lacks referential checks, risking orphaned executors. This violates CA-7.3 and could cause runtime failures when primary agents reference nonexistent executors."
+          }
+        ],
+        "worse_than_status_quo": "If implemented without fixing P0-3, products with critical XSS issues could achieve 'Showcase-ready' scores because the legacy /50 scoring inflates results, whereas the status quo at least surfaces raw vulnerability counts. This could lead to demoing compromised products to prospects, causing reputational damage.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal should be rejected because it documents gaps without providing remediation timelines or resource allocation. The 25 unresolved items (including 5 P0 blockers) reveal systemic architectural debt that cannot be patched incrementally. Deferring to a comprehensive rebuild of the agent-orchestration substrate would be safer than attempting to fix these interconnected gaps piecemeal.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "The SHIPPED-GREEN label misrepresents reality; PARTIAL accurately reflects coded-but-not-deployed state while preserving the charter's validity."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "The stub creates illusion of functionality; real MessageBus is implemented and must be connected to enable Agent #10/#26 message flows."
+        },
+        "FA-Q3": {
+          "key": "FAQ3-BOTH",
+          "pick_text": "Keep both — they serve different purposes (95/95 = governance audit gate; /50 = demo readiness score).",
+          "rationale": "ScoreEvaluator's 95/95 governs agent clearance while /50 measures product demo health; reconciling them prematurely would conflate distinct concerns."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "ProductSSOT is foundational to §7 output contracts and §28 symbiotic loops; deferring it would cascade inaccuracies through all agent operations."
+        }
+      },
+      "overallNotes": "The audit excellently exposes 'sounds-done-isn't' gaps but lacks severity-weighted sequencing. P0-2 (ProductSSOT) and P0-4 (Agent #21 wiring) should precede P0-1 (auth traversal) to avoid building on unstable substrate.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "No durable bus wiring",
+            "detail": "FA-Q2 and `api/research-url.js` show the handler instantiates an in-memory no-op `messageBus`/`auditLog`, while `MessageBus.ts` itself is explicitly non-durable and single-process only. That means the new Agent #21/ACE topics can appear to exist in code but still vanish at process boundaries, so production observability and inter-agent coordination remain fictional."
+          },
+          {
+            "title": "Score paths conflict semantically",
+            "detail": "FA-Q3 exposes two live scoring regimes: `ScoreEvaluator.js` enforces a 95/95 governance/readiness rubric, while the Monitor path still computes a separate /50 aggregate. The proposal says not to reconcile them, but that creates two canonical-looking truths for clearance, which is dangerous because operators will not know which score is authoritative in a blocking decision."
+          },
+          {
+            "title": "ProductSSOT atomicity is impossible",
+            "detail": "FA-Q4 and §7.5 require an atomic ProductSSOT write for every output, yet the artifact shows no code surface for ProductSSOT and no write path in the pipeline. Making the run rollback depend on an unimplemented table turns normal renewals into a partial-failure trap: the system can produce a live URL but fail the contractual write and still not have a real rollback mechanism."
+          }
+        ],
+        "worse_than_status_quo": "If Agent #21 starts emitting crawl findings into a no-op bus while clearance continues to read the /50 Monitor path, operators can get a green-ish demo score without the critical issues ever reaching downstream consumers. That is worse than the status quo because it gives a false sense of integration and may let broken products pass review with no auditable signal trail.",
+        "precedent": "The React `setState` race / lost update class of bugs is a real-world analogue: in-memory, non-atomic coordination produced states that looked valid locally but were inconsistent across observers. More directly, many message-queue systems have suffered from \"appears published but never consumed\" failures when teams treated ephemeral or stubbed buses as production plumbing."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring is that the proposal mixes three independent canonicalization efforts—Agent #21 wiring, scoring authority, and ProductSSOT persistence—without first resolving the foundational storage and contract layer. If ProductSSOT is absent and the bus is a stub, then formalizing new clearance behavior risks freezing a misleading architecture in place and increasing operational complexity before the system can actually honor its own atomicity and audit promises. Deferral would let the team implement the storage and event backbone first, then reconcile the divergent scoring paths with real telemetry.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "The artifact itself describes a contradiction between SSOT and deployment reality, so a split between shipped code and incomplete rollout is the most precise status. This preserves the distinction between implementation existence and operational readiness."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "The handler currently injects a stub, so the new topics are effectively dead even though the bus implementation exists. Given Agent #21 and clearance dependencies, wiring the real bus is a blocking foundation task, not a later optimization."
+        },
+        "FA-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — requires architectural redesign before either can be canonical; surface the misalignment to CEO before any fix.",
+          "rationale": "The two scores serve different control planes and the artifact explicitly refuses to reconcile them. Until one authority model is chosen, picking either score as canonical would institutionalize ambiguity in clearance gating."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "The SSOT makes ProductSSOT mandatory and atomic, and multiple sections depend on it for read-before-run and write-after-run behavior. If it doesn't exist, the contract cannot be satisfied and every downstream agent-wave feature is built on an unenforceable premise."
+        }
+      },
+      "overallNotes": "The proposal reads like a diagnostic inventory, but it also implicitly legitimizes several incomplete seams as if they were operational. The biggest risk is not any single missing feature; it's that multiple partially-wired subsystems together create a convincing but false narrative of end-to-end control.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "ProductSSOT Unimplemented",
+            "detail": "§7.5 defines ProductSSOT entity, but it's entirely unbuilt (§P0-2). Every pipeline run silently completes without the mandatory atomic write (§7 Output Contract item #5)."
+          },
+          {
+            "title": "GTM Readiness Report Unbuilt",
+            "detail": "§7.6 defines the canonical demo-readiness scoring formula, but no production code computes it (§P0-3). §11 Clearance Step 5 prerequisite #2 relies on this score."
+          },
+          {
+            "title": "Agent #21 MessageBus Topic Emission Unbuilt",
+            "detail": "Agent #21 Aggressive Crawl Conductor charter includes producing `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1` topics, but `api/research-url.js` uses a no-op stub for MessageBus (§P1-4)."
+          }
+        ],
+        "worse_than_status_quo": "The proposal makes the system worse than the status quo by introducing a mandatory §7 Output Contract item #5 (atomic ProductSSOT write) that is not implemented, causing every pipeline run to silently bypass it.",
+        "precedent": "Similar design caused problems in projects where critical components were left unimplemented or stubbed, leading to silent failures or data inconsistencies."
+      },
+      "rejection_steelman": "The proposal should be deferred because it includes several critical unimplemented components (ProductSSOT, GTM Readiness Report, Agent #21 MessageBus topic emission) that are essential to the proposed functionality and reliability of the system.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "The SSOT §15.1 status row for Agent #4 should reflect the actual deployment state to avoid confusion."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "The no-op stub for MessageBus in `api/research-url.js` prevents agents from communicating in production, which is critical for the system's functionality."
+        },
+        "FA-Q3": {
+          "key": "FAQ3-9595",
+          "pick_text": "Canonicalize ScoreEvaluator.js 95/95; migrate Monitor to use it — 95/95 is the SSOT-named threshold.",
+          "rationale": "The 95/95 threshold is defined in the SSOT as the canonical governance audit gate, so ScoreEvaluator.js should be used consistently."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "ProductSSOT is essential for §7 Output Contract item #5 atomicity, and its absence makes the current implementation non-compliant with the SSOT."
+        }
+      },
+      "overallNotes": "The proposal has several critical gaps that need to be addressed before it can be considered viable.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§7.5 ProductSSOT entity UNBUILT",
+            "detail": "§7 Output Contract item #5 and §7.5 mandate atomic delta_log writes to ProductSSOT on every pipeline run with full rollback on failure; api/renew.js, AutoRunner.jsx and all agents have zero read/write code or tables, so every run silently bypasses the contract."
+          },
+          {
+            "title": "Agent #4 status contradiction",
+            "detail": "§15.1 row 4 marks Agent #4 SHIPPED-GREEN (commit 5006431) while §3 explicitly states 'DORMANT today' for Stripe Connect revenue tracking; no deployed webhook or Connect flow exists per audit, violating the commercial model."
+          },
+          {
+            "title": "MessageBus no-op stub in production path",
+            "detail": "MessageBus.ts implements real pub/sub with 65 topics and freeze semantics, yet api/research-url.js:30-31 instantiates Agent21 with {publish: async()=>{}, subscribe:()=>{}} so none of 21.crawl.completed.v1, 21.issues.detected.v1 or 21.gtm.readiness.v1 ever fire."
+          }
+        ],
+        "worse_than_status_quo": "Without ProductSSOT atomic writes, every renewal run now produces a live URL while silently skipping the mandatory governance_record and delta_log entries that §11 Step 5 and §28 symbiotic loop depend on, creating a permanently incomplete audit trail worse than the pre-SSOT state where outputs were at least acknowledged as partial.",
+        "precedent": "Kubernetes CRDs defined in etcd with no controller implementation produced dangling resources and unrecoverable state drift in production clusters (see 2018-2020 custom-resource adoption failures at multiple operators)."
+      },
+      "rejection_steelman": "The proposal ratifies an expansive 26-agent SSOT with mandatory atomic ProductSSOT writes, 65 MessageBus topics, 95/95 scoring gates and symbiotic loops while 20 agents remain DORMANT, ProductSSOT has zero code surface, and critical paths use no-op stubs; this creates a binding contract that cannot be met without a full re-implementation, risking systemic rollback failures and unenforceable clearance gates that deferral would avoid.",
+      "votes": {
+        "FA-Q1": {
+          "key": "FAQ1-PARTIAL",
+          "pick_text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated.",
+          "rationale": "Directly resolves the §3 vs §15.1 contradiction without inventing new status categories or ignoring deployment reality."
+        },
+        "FA-Q2": {
+          "key": "FAQ2-P0",
+          "pick_text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today.",
+          "rationale": "The stub blocks all 21.* and cross-agent topics required by §15.2 and §28; treating it as Phase 3+ leaves the canonical contract unenforceable."
+        },
+        "FA-Q3": {
+          "key": "FAQ3-9595",
+          "pick_text": "Canonicalize ScoreEvaluator.js 95/95; migrate Monitor to use it — 95/95 is the SSOT-named threshold.",
+          "rationale": "§7.6 and §11 Step 5 explicitly require the 100-point issue-count formula and 95/95 governance gate; keeping the legacy /50 path violates the ratified rubric."
+        },
+        "FA-Q4": {
+          "key": "FAQ4-P0",
+          "pick_text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction).",
+          "rationale": "§7 item #5 makes the write atomic and mandatory for every run; deferring it renders the entire Output Contract and Clearance Protocol inoperative."
+        }
+      },
+      "overallNotes": "All P0 gaps must be closed before any further agent or SSOT ratification; current state makes the canonical reference actively misleading.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "FA-Q1",
+      "topic": "Agent #4 Provider Onboarding status contradiction (SSOT §15.1 SHIPPED-GREEN vs deployment DORMANT per audit)",
+      "options": [
+        {
+          "key": "FAQ1-PARTIAL",
+          "text": "Reclassify Agent #4 as PARTIAL — code exists but deployment is incomplete; SSOT §15.1 status row updated."
+        },
+        {
+          "key": "FAQ1-CODE",
+          "text": "Keep SHIPPED-GREEN — code definition is canonical; deployment state is an ops concern, not a canonical-status concern."
+        },
+        {
+          "key": "FAQ1-NEW",
+          "text": "Create a new DEPLOYED-INCOMPLETE status category distinct from SHIPPED-GREEN and DORMANT."
+        },
+        {
+          "key": "FAQ1-OTHER",
+          "text": "REJECT framing — wrong question; different fix needed (specify in rationale)."
+        }
+      ],
+      "draftedKey": null
+    },
+    {
+      "id": "FA-Q2",
+      "topic": "MessageBus wiring gap (MessageBus.ts real + implemented; api/research-url.js uses no-op stub; 4 ACE topics never fire)",
+      "options": [
+        {
+          "key": "FAQ2-P0",
+          "text": "Wire MessageBus into api/research-url.js as P0 — no-op stub means agents cannot communicate in production today."
+        },
+        {
+          "key": "FAQ2-INTERIM",
+          "text": "Accept the stub as acceptable interim — MessageBus wiring is Phase 3+ work; current single-page assessment does not need it."
+        },
+        {
+          "key": "FAQ2-REMOVE",
+          "text": "Remove the no-op stub entirely — make MessageBus absence explicit (every call site explicitly imports the real bus or fails fast) rather than silent."
+        },
+        {
+          "key": "FAQ2-OTHER",
+          "text": "REJECT framing — wrong question; different fix needed."
+        }
+      ],
+      "draftedKey": null
+    },
+    {
+      "id": "FA-Q3",
+      "topic": "Dual QA scoring paths — ScoreEvaluator.js 95/95 vs AutoRunner /50 Monitor (two separate code paths, do not reconcile)",
+      "options": [
+        {
+          "key": "FAQ3-50",
+          "text": "Canonicalize the /50 Monitor path; retire ScoreEvaluator.js — the session's integrity work is built on /50."
+        },
+        {
+          "key": "FAQ3-9595",
+          "text": "Canonicalize ScoreEvaluator.js 95/95; migrate Monitor to use it — 95/95 is the SSOT-named threshold."
+        },
+        {
+          "key": "FAQ3-BOTH",
+          "text": "Keep both — they serve different purposes (95/95 = governance audit gate; /50 = demo readiness score)."
+        },
+        {
+          "key": "FAQ3-REDESIGN",
+          "text": "REJECT — requires architectural redesign before either can be canonical; surface the misalignment to CEO before any fix."
+        }
+      ],
+      "draftedKey": null
+    },
+    {
+      "id": "FA-Q4",
+      "topic": "ProductSSOT entity entirely unbuilt — §7 Output Contract item #5 mandatory + atomic; every pipeline run silently bypasses it",
+      "options": [
+        {
+          "key": "FAQ4-P0",
+          "text": "P0 — build ProductSSOT before any agent wave begins (agents write to it; without it, §7 atomicity is fiction)."
+        },
+        {
+          "key": "FAQ4-P1",
+          "text": "P1 — build ProductSSOT after Phase 3 (auth gives it richer data to store; pre-auth ProductSSOT is content-poor)."
+        },
+        {
+          "key": "FAQ4-P2",
+          "text": "P2 — build ProductSSOT as part of agent wave infrastructure (agents and ProductSSOT ship together, neither without the other)."
+        },
+        {
+          "key": "FAQ4-REJECT",
+          "text": "REJECT — SSOT §7.5 should be revised to make ProductSSOT optional not mandatory; current §7 atomicity contract is over-spec'd for the use case."
+        }
+      ],
+      "draftedKey": null
+    }
+  ]
+}

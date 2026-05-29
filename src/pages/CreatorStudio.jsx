@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Link2, Layers, Loader2, Copy, Check, AlertCircle, Plus, X, Zap } from 'lucide-react';
+import { Pencil, Link2, Layers, Loader2, Copy, Check, Plus, X, Zap } from 'lucide-react';
 import AiDisclaimer from '@/components/gtm/AiDisclaimer';
 import RegisterProductModal from '@/components/creator/RegisterProductModal';
 

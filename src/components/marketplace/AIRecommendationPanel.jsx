@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Sparkles, Plus, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const VEU_PRODUCTS = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyBirthSafe'];
+const VEU_PRODUCTS = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyPregLife'];
 const STAGES = ['Research', 'Design', 'Build', 'Deploy', 'Scale'];
 const MARKETS = ['Nigeria/Africa', 'US', 'Global'];
 const BUDGETS = ['Free only', 'Under $100/month', 'Under $500/month', 'Enterprise'];

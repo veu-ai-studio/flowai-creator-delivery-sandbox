@@ -1,0 +1,1539 @@
+{
+  "schema": "v2-repanel.sidecar.v1",
+  "code": "CA-15-v2",
+  "commit": "746bb7e",
+  "bundle_size": 32681,
+  "startedAt": "2026-05-19T12:09:38.559Z",
+  "finishedAt": "2026-05-19T12:12:35.799Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 32681
+  },
+  "tally": {
+    "engagedTotal": 9,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 0,
+    "perQuestion": {
+      "CA-15-A-v2-Q1": {
+        "CA15AV2Q1-RATIFY": 2,
+        "CA15AV2Q1-TIGHTER": 0,
+        "CA15AV2Q1-BROADER": 1,
+        "CA15AV2Q1-REJECT": 0,
+        "REJECT": 6,
+        "unmatched": 0
+      },
+      "CA-15-A-v2-Q2": {
+        "CA15AV2Q2-RATIFY": 4,
+        "CA15AV2Q2-STRICTER": 1,
+        "CA15AV2Q2-PARTIAL": 0,
+        "CA15AV2Q2-REJECT": 0,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "CA-15-A-v2-Q3": {
+        "CA15AV2Q3-RATIFY": 4,
+        "CA15AV2Q3-OPERATOR": 0,
+        "CA15AV2Q3-REJECT": 0,
+        "CA15AV2Q3-DEFER": 1,
+        "REJECT": 4,
+        "unmatched": 0
+      },
+      "CA-15-B-v2-Q1": {
+        "CA15BV2Q1-RATIFY": 4,
+        "CA15BV2Q1-REQUIRED": 0,
+        "CA15BV2Q1-7THBLOCK": 0,
+        "CA15BV2Q1-REJECT": 0,
+        "REJECT": 5,
+        "unmatched": 0
+      },
+      "CA-15-B-v2-Q2": {
+        "CA15BV2Q2-RATIFY": 7,
+        "CA15BV2Q2-INFERRED_HINT": 0,
+        "CA15BV2Q2-REJECT": 0,
+        "CA15BV2Q2-TOOLING": 1,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-15-B-v2-Q3": {
+        "CA15BV2Q3-RATIFY": 7,
+        "CA15BV2Q3-DIM6": 0,
+        "CA15BV2Q3-REJECT": 0,
+        "CA15BV2Q3-DEFER": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-15-C-v2-Q1": {
+        "CA15CV2Q1-RATIFY": 6,
+        "CA15CV2Q1-PURPOSENN": 0,
+        "CA15CV2Q1-LLM_SOFT": 0,
+        "CA15CV2Q1-REJECT": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-15-C-v2-Q2": {
+        "CA15CV2Q2-RATIFY": 7,
+        "CA15CV2Q2-PARAMETER": 0,
+        "CA15CV2Q2-KEEP07": 0,
+        "CA15CV2Q2-LLM_VERIFY": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-15-C-v2-Q3": {
+        "CA15CV2Q3-RATIFY": 6,
+        "CA15CV2Q3-STRICTER": 0,
+        "CA15CV2Q3-LOOSER": 0,
+        "CA15CV2Q3-REJECT": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-15-D-v2-Q1": {
+        "CA15DV2Q1-RATIFY": 4,
+        "CA15DV2Q1-CRITESC": 0,
+        "CA15DV2Q1-DASHBOARD": 0,
+        "CA15DV2Q1-REJECT": 0,
+        "REJECT": 5,
+        "unmatched": 0
+      },
+      "CA-15-D-v2-Q2": {
+        "CA15DV2Q2-RATIFY": 5,
+        "CA15DV2Q2-BROADER": 1,
+        "CA15DV2Q2-NARROWER": 0,
+        "CA15DV2Q2-REJECT": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 37,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Telemetry-only dims create shadow metrics",
+        "detail": "§10.1 dims 6-7 emit telemetry that operators will inevitably use for decisions despite being excluded from §7.6 score. This creates a shadow metric system where content_quality_finding and accessibility_finding accumulate in dashboards but have no canonical interpretation or threshold."
+      },
+      {
+        "slot": 1,
+        "title": "Purpose field atomicity gap",
+        "detail": "CA-15-B-v2 adds product_purpose as optional free-form text on product_registry but provides no atomic-write guarantee. Unlike the 6 canonical blocks protected by CA-14-D-Q1, this field could be partially written or corrupted without triggering rollback."
+      },
+      {
+        "slot": 1,
+        "title": "Drift tier thresholds undefined",
+        "detail": "CA-15-C-v2-Q3 mentions 20%/50% token-change thresholds in options but the proposal text never defines how PURPOSE_DRIFT_MINOR/MAJOR/CRITICAL are calculated. Without concrete thresholds, operators cannot predict when drift notifications will trigger."
+      },
+      {
+        "slot": 1,
+        "title": "CONFORMANCE_SCOPE.md creates circular dependency",
+        "detail": "CA-15-D-v2 delegates CEO re-sign triggers to docs/governance/CONFORMANCE_SCOPE.md which doesn't exist yet. This file must list which files trigger re-sign, but editing CONFORMANCE_SCOPE.md itself could require re-sign, creating an infinite regress."
+      },
+      {
+        "slot": 2,
+        "title": "Admin-only opt-in complexity",
+        "detail": "The proposal introduces an admin-only opt-in mechanism for dimensions 6 and 7 in §10.1, which could complicate the configuration process and limit flexibility for operators who may need these dimensions without admin intervention."
+      },
+      {
+        "slot": 2,
+        "title": "Telemetry-only findings risk",
+        "detail": "By making content_quality and accessibility findings telemetry-only, the proposal risks underemphasizing these important aspects, potentially allowing products with poor content quality or accessibility to pass audits without sufficient scrutiny."
+      },
+      {
+        "slot": 2,
+        "title": "Purpose information ambiguity",
+        "detail": "The removal of the `purpose_record` block and reliance on an optional free-form `product_purpose` field could lead to inconsistencies in how purpose information is captured and used, as there is no structured schema or validation."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Validation",
+        "detail": "The proposal does not provide sufficient validation for the `product_purpose` field, which could lead to inconsistent or misleading data. Specifically, §7.5 does not define any validation rules for this field."
+      },
+      {
+        "slot": 3,
+        "title": "Inconsistent Scoring",
+        "detail": "The §7.6 score formula does not account for content quality and accessibility findings, which could result in an incomplete or inaccurate assessment of the product's quality. This is evident in the §7.6 score formula, which only considers crit, high, med, and low findings."
+      },
+      {
+        "slot": 3,
+        "title": "Overreliance on Admin Opt-in",
+        "detail": "The proposal relies heavily on admin opt-in for dims 6 and 7, which may not be sufficient to ensure that these dimensions are properly considered. This is a concern because the admin opt-in mechanism is not clearly defined in §10.1."
+      },
+      {
+        "slot": 4,
+        "title": "Complexity of admin-opt-in mechanism",
+        "detail": "The admin-opt-in mechanism for extending the quality dimensions in §10.1 introduces unnecessary complexity. It requires admin intervention for enabling dimensions that could be beneficial for all products. This might lead to inconsistent quality audits across different products."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of LLM-judged purpose-alignment check",
+        "detail": "Removing the LLM-judged purpose-alignment check from the Purpose-Driven Optimization loop exit criteria may result in optimizations that do not align with the product's purpose. This could lead to suboptimal outcomes that do not meet the intended goals of the product."
+      },
+      {
+        "slot": 4,
+        "title": "Potential misuse of free-form product_purpose field",
+        "detail": "The optional free-form `product_purpose` field in the ProductSSOT may lead to inconsistent and unvalidated purpose statements. Without proper validation, this field could be misused or left empty, defeating the purpose of having a product_purpose field in the first place."
+      },
+      {
+        "slot": 4,
+        "title": "Risk of false positives in drift annotation",
+        "detail": "The tiered drift annotation system may lead to false positives, especially in the major and critical tiers. This could result in unnecessary operator interventions and potential freezes on fixes, disrupting the continuous improvement process."
+      },
+      {
+        "slot": 5,
+        "title": "Admin-opt-in complexity",
+        "detail": "The admin-opt-in mechanism for dimensions 6 and 7 introduces unnecessary complexity and potential for misconfiguration."
+      },
+      {
+        "slot": 5,
+        "title": "Telemetry-only findings",
+        "detail": "Content quality and accessibility findings being telemetry-only may lead to these issues being overlooked by operators."
+      },
+      {
+        "slot": 5,
+        "title": "Optional purpose field",
+        "detail": "The optional nature of the `product_purpose` field may result in inconsistent or missing purpose statements across products."
+      },
+      {
+        "slot": 6,
+        "title": "Admin-only opt-in complexity",
+        "detail": "The admin-only opt-in for dims 6 & 7 in §10.1 adds complexity without a clear benefit. It introduces a configuration flag that needs to be managed and understood, potentially leading to confusion and inconsistent application of quality checks across products."
+      },
+      {
+        "slot": 6,
+        "title": "Telemetry-only findings risk neglect",
+        "detail": "Treating content_quality and accessibility findings as telemetry-only in §7.6 risks neglecting these important aspects of product quality. If these findings don't directly impact the score, they may be deprioritized or ignored, leading to a decline in overall product quality."
+      },
+      {
+        "slot": 6,
+        "title": "Optional product_purpose ambiguity",
+        "detail": "The optional free-form `product_purpose` field in `product_registry` lacks structure and validation, making it difficult to use effectively. The absence of a schema and the reliance on operator-supplied text can lead to inconsistent and unreliable purpose statements."
+      },
+      {
+        "slot": 6,
+        "title": "Tiered drift annotation complexity",
+        "detail": "The tiered drift annotation (minor/major/critical) adds unnecessary complexity to the system. The distinctions between the tiers and their corresponding actions may not be clear, leading to inconsistent application and potential confusion for operators."
+      },
+      {
+        "slot": 6,
+        "title": "Advisory SSOT-Conformance Gate weakness",
+        "detail": "Making the §27 SSOT-Conformance Gate advisory-only weakens its effectiveness. Without a hard blocking gate, operators may choose to ignore conformance issues, leading to a decline in the overall quality and reliability of the system."
+      },
+      {
+        "slot": 7,
+        "title": "§10.1 dimension overlap",
+        "detail": "The proposed Content Quality dimension overlaps with existing UI/UX scoring criteria without clear differentiation boundaries. This creates ambiguity in §10.1 audit reports where the same visual/text issues could be counted under both dimensions, leading to inconsistent weighting and potential double-reporting."
+      },
+      {
+        "slot": 7,
+        "title": "Optional purpose field risk",
+        "detail": "The free-form product_purpose field lacks validation or structured schema, making it vulnerable to misuse and misinterpretation. Without mandatory format rules or automated consistency checks, operators could enter contradictory, outdated, or overly vague purpose statements that undermine drift detection mechanisms."
+      },
+      {
+        "slot": 7,
+        "title": "Drift thresholds arbitrary",
+        "detail": "The 20%/50% token-change thresholds for minor/major/critical drift annotations lack empirical justification. These arbitrary cutoffs may misclassify significant semantic changes as minor if token delta is low, or flag harmless refactors as critical drift, creating noise in governance records."
+      },
+      {
+        "slot": 7,
+        "title": "Conformance scope maintenance",
+        "detail": "Maintaining CONFORMANCE_SCOPE.md as the trigger for CEO re-sign introduces documentation drift risk. The file requires manual updates for every relevant CA, creating a brittle dependency where missed updates could invalidate sign-offs or allow non-conforming changes to bypass scrutiny."
+      },
+      {
+        "slot": 8,
+        "title": "Telemetry-only weakens enforcement",
+        "detail": "CA-15-A-v2-Q2 moves content_quality and accessibility findings out of §7.6 entirely and into dashboard-only telemetry. That means a product can repeatedly fail copy/accessibility checks while still posting a clean readiness score, which undermines the existing score as an operator-facing risk signal."
+      },
+      {
+        "slot": 8,
+        "title": "Admin-opt-in hides regressions",
+        "detail": "In CA-15-A-v2-Q3, dims 6 and 7 are off by default and admin-only, but the proposal still exposes them as quality dimensions in §10.1. This creates a split-brain audit where most products never see these checks in the acceptance path, so regressions can ship unless someone remembers to enable the knob product-by-product."
+      },
+      {
+        "slot": 8,
+        "title": "Purpose field is too underspecified",
+        "detail": "CA-15-B-v2 replaces the canonical `purpose_record` with an optional free-form `product_purpose` string on `product_registry`, but provides no schema, length limit, provenance, or write-atomicity rule beyond a general note. That invites stale, contradictory, or promotional purpose text to become de facto canonical state without any structured validation or lifecycle management."
+      },
+      {
+        "slot": 8,
+        "title": "Drift annotations may mask deadlocks",
+        "detail": "CA-15-C-v2-Q3 converts PURPOSE_DRIFT into minor/major/critical annotations, but the proposal does not specify a deterministic transition rule from annotation to operator disposition or freeze. In practice, major drift can accumulate across runs while still allowing the loop to continue, making the issue visible but not actionable."
+      },
+      {
+        "slot": 8,
+        "title": "Scoped re-sign is gameable",
+        "detail": "CA-15-D-v2-Q2 limits CEO re-sign invalidation to files listed in `docs/governance/CONFORMANCE_SCOPE.md`. Because that scope file is itself editable documentation, the system can drift into a state where consequential governance changes are made adjacent to, but not inside, the tracked scope and therefore avoid re-sign requirements."
+      },
+      {
+        "slot": 9,
+        "title": "Overly Complex §10.1 Extension",
+        "detail": "The proposal extends §10.1 with two new dimensions (Content Quality and Accessibility) but introduces complexity with admin-opt-in and telemetry-only findings. This may lead to inconsistent application and confusion among operators."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of Validation for `product_purpose`",
+        "detail": "The optional `product_purpose` field is introduced without a strict schema or validation rules, potentially leading to inconsistent or malformed data entry."
+      },
+      {
+        "slot": 9,
+        "title": "Removal of `purpose_record` Block",
+        "detail": "Removing `purpose_record` as a canonical block may reduce the system's ability to track and validate product purpose, potentially impacting Purpose-Driven Optimization."
+      },
+      {
+        "slot": 10,
+        "title": "§10.1 dim extension overlap unresolved",
+        "detail": "CA-15-A v2 extends the existing §10.1 5-dim engine (UI/UX, API, Logic, Business Value, Security Posture) with optional dims 6/7 but provides no explicit conflict-resolution rule for UI/UX vs Content Quality double-counting, despite citing Slot 1 and Slot 10 objections from v1."
+      },
+      {
+        "slot": 10,
+        "title": "product_purpose field lacks validation",
+        "detail": "CA-15-B v2 adds optional free-form product_purpose to product_registry without required-field rules, atomic-write enforcement, or schema validation, directly contradicting the §7.5 atomic ProductSSOT update invariant and CA-14-D-Q1 guarantees."
+      },
+      {
+        "slot": 10,
+        "title": "§27 gate advisory weakens §25 rules",
+        "detail": "CA-15-D v2 converts the §27 SSOT-Conformance Gate to advisory-only telemetry via governance_record_entry, eroding the Locked Rules §25 requirement that every CA promotion must maintain strict conformance without operator bypass."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-15-A-v2-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "6 of 9 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 6
+    },
+    "CA-15-A-v2-Q2": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 4 between CA15AV2Q2-RATIFY / REJECT",
+      "topKey": "CA15AV2Q2-RATIFY",
+      "topCount": 4
+    },
+    "CA-15-A-v2-Q3": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 4 between CA15AV2Q3-RATIFY / REJECT",
+      "topKey": "CA15AV2Q3-RATIFY",
+      "topCount": 4
+    },
+    "CA-15-B-v2-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "5 of 9 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 5
+    },
+    "CA-15-B-v2-Q2": {
+      "verdict": "QUORUM_PLURALITY_CA15BV2Q2-RATIFY",
+      "detail": "7 of 9 on CA15BV2Q2-RATIFY (≥ quorum 7/10)",
+      "topKey": "CA15BV2Q2-RATIFY",
+      "topCount": 7
+    },
+    "CA-15-B-v2-Q3": {
+      "verdict": "QUORUM_PLURALITY_CA15BV2Q3-RATIFY",
+      "detail": "7 of 9 on CA15BV2Q3-RATIFY (≥ quorum 7/10)",
+      "topKey": "CA15BV2Q3-RATIFY",
+      "topCount": 7
+    },
+    "CA-15-C-v2-Q1": {
+      "verdict": "PLURALITY_CA15CV2Q1-RATIFY",
+      "detail": "6 of 9 on CA15CV2Q1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA15CV2Q1-RATIFY",
+      "topCount": 6
+    },
+    "CA-15-C-v2-Q2": {
+      "verdict": "QUORUM_PLURALITY_CA15CV2Q2-RATIFY",
+      "detail": "7 of 9 on CA15CV2Q2-RATIFY (≥ quorum 7/10)",
+      "topKey": "CA15CV2Q2-RATIFY",
+      "topCount": 7
+    },
+    "CA-15-C-v2-Q3": {
+      "verdict": "PLURALITY_CA15CV2Q3-RATIFY",
+      "detail": "6 of 9 on CA15CV2Q3-RATIFY (below 7/10 quorum)",
+      "topKey": "CA15CV2Q3-RATIFY",
+      "topCount": 6
+    },
+    "CA-15-D-v2-Q1": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "5 of 9 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 5
+    },
+    "CA-15-D-v2-Q2": {
+      "verdict": "PLURALITY_CA15DV2Q2-RATIFY",
+      "detail": "5 of 9 on CA15DV2Q2-RATIFY (below 7/10 quorum)",
+      "topKey": "CA15DV2Q2-RATIFY",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.5656565656565656,
+    "alignedCount": 56,
+    "totalPossible": 99,
+    "draftedQs": [
+      "CA-15-A-v2-Q1",
+      "CA-15-A-v2-Q2",
+      "CA-15-A-v2-Q3",
+      "CA-15-B-v2-Q1",
+      "CA-15-B-v2-Q2",
+      "CA-15-B-v2-Q3",
+      "CA-15-C-v2-Q1",
+      "CA-15-C-v2-Q2",
+      "CA-15-C-v2-Q3",
+      "CA-15-D-v2-Q1",
+      "CA-15-D-v2-Q2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 56.6 %, distinct objections 37"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Telemetry-only dims create shadow metrics",
+            "detail": "§10.1 dims 6-7 emit telemetry that operators will inevitably use for decisions despite being excluded from §7.6 score. This creates a shadow metric system where content_quality_finding and accessibility_finding accumulate in dashboards but have no canonical interpretation or threshold."
+          },
+          {
+            "title": "Purpose field atomicity gap",
+            "detail": "CA-15-B-v2 adds product_purpose as optional free-form text on product_registry but provides no atomic-write guarantee. Unlike the 6 canonical blocks protected by CA-14-D-Q1, this field could be partially written or corrupted without triggering rollback."
+          },
+          {
+            "title": "Drift tier thresholds undefined",
+            "detail": "CA-15-C-v2-Q3 mentions 20%/50% token-change thresholds in options but the proposal text never defines how PURPOSE_DRIFT_MINOR/MAJOR/CRITICAL are calculated. Without concrete thresholds, operators cannot predict when drift notifications will trigger."
+          },
+          {
+            "title": "CONFORMANCE_SCOPE.md creates circular dependency",
+            "detail": "CA-15-D-v2 delegates CEO re-sign triggers to docs/governance/CONFORMANCE_SCOPE.md which doesn't exist yet. This file must list which files trigger re-sign, but editing CONFORMANCE_SCOPE.md itself could require re-sign, creating an infinite regress."
+          }
+        ],
+        "worse_than_status_quo": "The advisory-only §27 gate allows non-conformant deployments to proceed with just a telemetry emission, making the entire conformance testing infrastructure optional theater that operators will learn to ignore.",
+        "precedent": "Kubernetes deprecated PodSecurityPolicy in favor of Pod Security Standards partly because the advisory-only mode created confusion about which violations actually mattered, leading to production clusters with hundreds of ignored warnings."
+      },
+      "rejection_steelman": "This proposal fragments quality assessment across three incompatible surfaces: canonical §10.1 5-dim scoring that blocks pipelines, optional dims 6-7 that emit ignorable telemetry, and a purpose field with no validation or integration. The structural rewrite replaces v1's coherent (if flawed) vision with a collection of half-measures that increase complexity without improving outcomes. Defer until a unified quality framework emerges.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — leave §10.1 at 5 dims; content quality + accessibility live in tooling only.",
+          "rationale": "Adding optional dims that don't affect pipeline outcomes creates confusion about what 'quality' means in FlowAI; better to keep quality assessment unified."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "CA15AV2Q2-STRICTER",
+          "pick_text": "Ratify with stricter wording — explicit invariant: \"§7.6 formula NEVER absorbs content_quality_finding / accessibility_finding counts.\"",
+          "rationale": "If these findings truly stay telemetry-only, the invariant must be explicit to prevent future scope creep."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "CA15AV2Q3-DEFER",
+          "pick_text": "Defer — opt-in semantics belong in operator-config doc, not canonical §10.1.",
+          "rationale": "Admin-only flags for quality dimensions are operational choices that shouldn't be hardcoded in canonical governance specs."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject the optional field too — no purpose information lives in ProductSSOT.",
+          "rationale": "An unvalidated free-form text field adds no value over external documentation and creates false expectations about purpose-driven features."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": "CA15BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (only `described` mode).",
+          "rationale": "Given the field exists, limiting to operator-supplied purpose avoids the hallucination risks of inferred modes."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "CA15BV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (placeholder detection in tooling, not canonical).",
+          "rationale": "Placeholder detection is a development-time concern that belongs in linting tools, not runtime governance."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "CA15CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (5 numeric exits; no LLM check).",
+          "rationale": "Removing LLM-judged purpose alignment eliminates a major source of non-determinism in the optimization loop."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "CA15CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (threshold gone).",
+          "rationale": "Without LLM purpose scoring, the 0.7 threshold has no meaning and should be removed."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — drift should never block; reduce to single advisory annotation.",
+          "rationale": "Three drift tiers with undefined thresholds and different escalation paths adds complexity without clear operator benefit."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — §27 should stay a hard blocking gate as v1 proposed.",
+          "rationale": "Making conformance advisory-only defeats the purpose of having conformance tests; violations should block deployment."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "CA15DV2Q2-BROADER",
+          "pick_text": "Ratify with broader scope — any CA editing src/lib/governance/ also triggers.",
+          "rationale": "Scoping re-sign triggers to a not-yet-existing file creates implementation uncertainty; src/lib/governance/ is a concrete scope."
+        }
+      },
+      "overallNotes": "The v2 rewrite addresses Panel objections by removing most substantive features, leaving a proposal that adds complexity without clear value.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Admin-only opt-in complexity",
+            "detail": "The proposal introduces an admin-only opt-in mechanism for dimensions 6 and 7 in §10.1, which could complicate the configuration process and limit flexibility for operators who may need these dimensions without admin intervention."
+          },
+          {
+            "title": "Telemetry-only findings risk",
+            "detail": "By making content_quality and accessibility findings telemetry-only, the proposal risks underemphasizing these important aspects, potentially allowing products with poor content quality or accessibility to pass audits without sufficient scrutiny."
+          },
+          {
+            "title": "Purpose information ambiguity",
+            "detail": "The removal of the `purpose_record` block and reliance on an optional free-form `product_purpose` field could lead to inconsistencies in how purpose information is captured and used, as there is no structured schema or validation."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to a situation where important quality dimensions are ignored due to their telemetry-only status, resulting in products that do not meet necessary standards for content quality and accessibility.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces unnecessary complexity with admin-only opt-in mechanisms and telemetry-only findings, which could lead to important quality dimensions being overlooked. Additionally, the removal of structured purpose information capture could result in inconsistencies and a lack of clarity in product objectives, potentially leading to misaligned development efforts.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — leave §10.1 at 5 dims; content quality + accessibility live in tooling only.",
+          "rationale": "The admin-only opt-in adds complexity and could limit the ability to address content quality and accessibility issues effectively."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — both should feed §7.6 with same coefficients as Phase A/B findings.",
+          "rationale": "Content quality and accessibility are critical dimensions that should impact the overall score to ensure they are adequately prioritized."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — always-on; no opt-in.",
+          "rationale": "Making these dimensions always-on ensures they are consistently evaluated, promoting higher standards across all products."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject the optional field too — no purpose information lives in ProductSSOT.",
+          "rationale": "Without a structured approach, the optional field could lead to inconsistencies and misinterpretations of product purpose."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — `inferred` mode is the primary value-add and should remain.",
+          "rationale": "Inferred purpose capture can provide valuable insights and should not be entirely dismissed."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — placeholder detection MUST be canonical to prevent placeholder text reaching production.",
+          "rationale": "Ensuring placeholder text is detected and addressed is crucial for maintaining product quality."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — LLM-judged check is the heart of \"Purpose-Driven\" Optimization.",
+          "rationale": "LLM checks provide a nuanced understanding of purpose alignment that numeric thresholds alone cannot capture."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — keep hardcoded 0.7.",
+          "rationale": "A hardcoded threshold provides a clear and consistent benchmark for purpose fulfillment."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — drift should never block; reduce to single advisory annotation.",
+          "rationale": "Drift annotations should not impede progress but rather inform decision-making."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — §27 should stay a hard blocking gate as v1 proposed.",
+          "rationale": "A hard blocking gate ensures that conformance issues are addressed before deployment, maintaining high standards."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — every CA promotion should invalidate prior sign-offs as v1 proposed.",
+          "rationale": "Requiring re-sign for every CA ensures continuous oversight and accountability."
+        }
+      },
+      "overallNotes": "The proposal's complexity and potential for overlooking critical dimensions warrant a cautious approach, prioritizing structured and consistent evaluation mechanisms.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Validation",
+            "detail": "The proposal does not provide sufficient validation for the `product_purpose` field, which could lead to inconsistent or misleading data. Specifically, §7.5 does not define any validation rules for this field."
+          },
+          {
+            "title": "Inconsistent Scoring",
+            "detail": "The §7.6 score formula does not account for content quality and accessibility findings, which could result in an incomplete or inaccurate assessment of the product's quality. This is evident in the §7.6 score formula, which only considers crit, high, med, and low findings."
+          },
+          {
+            "title": "Overreliance on Admin Opt-in",
+            "detail": "The proposal relies heavily on admin opt-in for dims 6 and 7, which may not be sufficient to ensure that these dimensions are properly considered. This is a concern because the admin opt-in mechanism is not clearly defined in §10.1."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's lack of validation for the `product_purpose` field and inconsistent scoring formula could lead to a decrease in the overall quality of the products, making the system worse than the status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal's lack of clear validation rules and inconsistent scoring formula raise significant concerns about its potential impact on the system. Furthermore, the overreliance on admin opt-in for certain dimensions may not be sufficient to ensure that these dimensions are properly considered. Therefore, it is reasonable to reject or defer the proposal until these concerns are addressed.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "CA15AV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted: §10.1 ONE engine; dims 6 + 7 admin-opt-in.",
+          "rationale": "This option seems to be the most balanced approach, as it extends the existing §10.1 engine while still allowing for admin opt-in for dims 6 and 7."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "CA15AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted: telemetry only; §7.6 formula UNCHANGED.",
+          "rationale": "This option is consistent with the proposal's goal of not modifying the §7.6 score formula, while still allowing for content quality and accessibility findings to be emitted as telemetry."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "CA15AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted: expanded_quality_dims_enabled admin-only, default false.",
+          "rationale": "This option seems to be a reasonable approach, as it allows admins to opt-in to the expanded dimensions while still maintaining control over the default behavior."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": "CA15BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (optional `product_purpose` field).",
+          "rationale": "This option seems to be a reasonable approach, as it allows for an optional `product_purpose` field while still maintaining the existing ProductSSOT structure."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": "CA15BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (only `described` mode).",
+          "rationale": "This option seems to be a reasonable approach, as it eliminates the inferred and synthesized modes, which could potentially introduce inconsistencies or inaccuracies."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "CA15BV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (placeholder detection in tooling, not canonical).",
+          "rationale": "This option seems to be a reasonable approach, as it moves placeholder detection to tooling, which is a more suitable location for this type of functionality."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "CA15CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (5 numeric exits; no LLM check).",
+          "rationale": "This option seems to be a reasonable approach, as it eliminates the LLM-judged purpose-alignment check, which could potentially introduce inconsistencies or inaccuracies."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "CA15CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (threshold gone).",
+          "rationale": "This option seems to be a reasonable approach, as it eliminates the hardcoded threshold, which could potentially introduce inconsistencies or inaccuracies."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "CA15CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minor: log; major: operator dispose; critical: freeze fixes + Panel notify).",
+          "rationale": "This option seems to be a reasonable approach, as it introduces a tiered annotation system for drift, which could help to improve the overall quality of the products."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "CA15DV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (advisory only).",
+          "rationale": "This option seems to be a reasonable approach, as it makes the §27 SSOT-Conformance Gate advisory only, which could help to improve the overall flexibility of the system."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "CA15DV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (scoped to CONFORMANCE_SCOPE.md).",
+          "rationale": "This option seems to be a reasonable approach, as it scopes the CEO re-sign requirement to only CAs that amend files in `docs/governance/CONFORMANCE_SCOPE.md`, which could help to improve the overall efficiency of the system."
+        }
+      },
+      "overallNotes": "The proposal raises several concerns, including the lack of validation for the `product_purpose` field and inconsistent scoring formula. However, it also introduces some positive changes, such as the tiered annotation system for drift and the advisory-only §27 SSOT-Conformance Gate.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity of admin-opt-in mechanism",
+            "detail": "The admin-opt-in mechanism for extending the quality dimensions in §10.1 introduces unnecessary complexity. It requires admin intervention for enabling dimensions that could be beneficial for all products. This might lead to inconsistent quality audits across different products."
+          },
+          {
+            "title": "Lack of LLM-judged purpose-alignment check",
+            "detail": "Removing the LLM-judged purpose-alignment check from the Purpose-Driven Optimization loop exit criteria may result in optimizations that do not align with the product's purpose. This could lead to suboptimal outcomes that do not meet the intended goals of the product."
+          },
+          {
+            "title": "Potential misuse of free-form product_purpose field",
+            "detail": "The optional free-form `product_purpose` field in the ProductSSOT may lead to inconsistent and unvalidated purpose statements. Without proper validation, this field could be misused or left empty, defeating the purpose of having a product_purpose field in the first place."
+          },
+          {
+            "title": "Risk of false positives in drift annotation",
+            "detail": "The tiered drift annotation system may lead to false positives, especially in the major and critical tiers. This could result in unnecessary operator interventions and potential freezes on fixes, disrupting the continuous improvement process."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's complexity and potential for misuse could lead to a more fragmented and less reliable system than the current status quo, where dimensions are consistently applied and purpose alignment is checked.",
+        "precedent": "In the past, similar attempts to introduce complex admin-opt-in mechanisms and remove crucial checks have led to inconsistent application and suboptimal outcomes, as seen in the initial rollout of feature flags in microservices architectures."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it introduces unnecessary complexity with the admin-opt-in mechanism and removes a crucial LLM-judged purpose-alignment check. These changes could lead to inconsistent quality audits and suboptimal outcomes that do not align with the product's purpose.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "CA15AV2Q1-BROADER",
+          "pick_text": "Ratify with broader scope — all 7 dims always-on; admin-opt-in eliminated.",
+          "rationale": "This option ensures consistent application of quality dimensions across all products, eliminating the complexity and potential inconsistencies introduced by the admin-opt-in mechanism."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "CA15AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted: telemetry only; §7.6 formula UNCHANGED.",
+          "rationale": "Keeping the §7.6 formula unchanged maintains the current scoring system's integrity and avoids potential disruptions from incorporating new findings."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "CA15AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted: expanded_quality_dims_enabled admin-only, default false.",
+          "rationale": "This option maintains the admin-only control over enabling additional quality dimensions, ensuring that the decision is made by authorized personnel."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": "CA15BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (optional `product_purpose` field).",
+          "rationale": "The optional free-form `product_purpose` field provides flexibility for operators to define the product's purpose without enforcing a strict schema."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": "CA15BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (only `described` mode).",
+          "rationale": "Limiting the purpose capture to the described mode ensures that the purpose statements are explicitly provided by the operator, avoiding potential misinterpretations from inferred or synthesized modes."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "CA15BV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (placeholder detection in tooling, not canonical).",
+          "rationale": "Moving placeholder detection to tooling simplifies the canonical SSOT and ensures that placeholder text is caught during the development process."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "CA15CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (5 numeric exits; no LLM check).",
+          "rationale": "Removing the LLM-judged purpose-alignment check simplifies the exit criteria and relies on numerical metrics, which are more objective and easier to validate."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "CA15CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (threshold gone).",
+          "rationale": "Eliminating the hardcoded threshold provides more flexibility and avoids potential deadlocks in the optimization loop."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "CA15CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minor: log; major: operator dispose; critical: freeze fixes + Panel notify).",
+          "rationale": "The tiered drift annotation system provides a structured approach to handling drift, ensuring that critical issues are addressed promptly while minor issues are logged for future reference."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "CA15DV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (advisory only).",
+          "rationale": "Making the §27 SSOT-Conformance Gate advisory only allows for flexibility in deployment while still providing important conformance information to the operator."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "CA15DV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (scoped to CONFORMANCE_SCOPE.md).",
+          "rationale": "Scoping the CEO re-sign requirement to specific files ensures that only relevant changes trigger the need for re-sign, reducing unnecessary administrative overhead."
+        }
+      },
+      "overallNotes": "",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Admin-opt-in complexity",
+            "detail": "The admin-opt-in mechanism for dimensions 6 and 7 introduces unnecessary complexity and potential for misconfiguration."
+          },
+          {
+            "title": "Telemetry-only findings",
+            "detail": "Content quality and accessibility findings being telemetry-only may lead to these issues being overlooked by operators."
+          },
+          {
+            "title": "Optional purpose field",
+            "detail": "The optional nature of the `product_purpose` field may result in inconsistent or missing purpose statements across products."
+          }
+        ],
+        "worse_than_status_quo": "The optional `product_purpose` field may lead to inconsistent purpose statements, making it harder to align product development with actual goals.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal introduces unnecessary complexity and potential for oversight of critical issues, which could lead to a degradation in product quality and alignment with goals.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — leave §10.1 at 5 dims; content quality + accessibility live in tooling only.",
+          "rationale": "Simplifies the system and avoids unnecessary complexity."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "CA15AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted: telemetry only; §7.6 formula UNCHANGED.",
+          "rationale": "Maintains the existing scoring system without introducing new complexities."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — always-on; no opt-in.",
+          "rationale": "Simplifies the system by removing the need for admin intervention."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": "CA15BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (optional `product_purpose` field).",
+          "rationale": "Aligns with the proposal's intent while allowing flexibility."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": "CA15BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (only `described` mode).",
+          "rationale": "Ensures purpose statements are accurate and not based on potentially erroneous inferences."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "CA15BV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (placeholder detection in tooling, not canonical).",
+          "rationale": "Keeps the system clean while allowing for necessary checks."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "CA15CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (5 numeric exits; no LLM check).",
+          "rationale": "Removes reliance on potentially unreliable LLM judgments."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "CA15CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (threshold gone).",
+          "rationale": "Simplifies the exit criteria and removes arbitrary thresholds."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "CA15CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minor: log; major: operator dispose; critical: freeze fixes + Panel notify).",
+          "rationale": "Provides a clear and tiered approach to handling drift."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "CA15DV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (advisory only).",
+          "rationale": "Allows for flexibility while still providing necessary warnings."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "CA15DV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (scoped to CONFORMANCE_SCOPE.md).",
+          "rationale": "Limits the scope of required CEO re-sign to relevant changes only."
+        }
+      },
+      "overallNotes": "The proposal, while well-intentioned, introduces several points of complexity and potential oversight that may degrade the overall system effectiveness.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Admin-only opt-in complexity",
+            "detail": "The admin-only opt-in for dims 6 & 7 in §10.1 adds complexity without a clear benefit. It introduces a configuration flag that needs to be managed and understood, potentially leading to confusion and inconsistent application of quality checks across products."
+          },
+          {
+            "title": "Telemetry-only findings risk neglect",
+            "detail": "Treating content_quality and accessibility findings as telemetry-only in §7.6 risks neglecting these important aspects of product quality. If these findings don't directly impact the score, they may be deprioritized or ignored, leading to a decline in overall product quality."
+          },
+          {
+            "title": "Optional product_purpose ambiguity",
+            "detail": "The optional free-form `product_purpose` field in `product_registry` lacks structure and validation, making it difficult to use effectively. The absence of a schema and the reliance on operator-supplied text can lead to inconsistent and unreliable purpose statements."
+          },
+          {
+            "title": "Tiered drift annotation complexity",
+            "detail": "The tiered drift annotation (minor/major/critical) adds unnecessary complexity to the system. The distinctions between the tiers and their corresponding actions may not be clear, leading to inconsistent application and potential confusion for operators."
+          },
+          {
+            "title": "Advisory SSOT-Conformance Gate weakness",
+            "detail": "Making the §27 SSOT-Conformance Gate advisory-only weakens its effectiveness. Without a hard blocking gate, operators may choose to ignore conformance issues, leading to a decline in the overall quality and reliability of the system."
+          }
+        ],
+        "worse_than_status_quo": "By making the SSOT-Conformance Gate advisory-only, operators might ignore critical conformance issues, leading to a deployment of a product that violates key SSOT principles, ultimately degrading the overall system's reliability and maintainability compared to the current state where such violations would be caught and blocked.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal, while attempting to address previous concerns, introduces new complexities and weakens critical aspects of the system. The admin-only opt-in, telemetry-only findings, optional purpose field, tiered drift annotation, and advisory conformance gate collectively create a system that is more difficult to manage, less reliable, and potentially less effective than the status quo. Deferring the proposal would allow for a more thorough evaluation of these issues and the development of a more robust and coherent solution.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — leave §10.1 at 5 dims; content quality + accessibility live in tooling only.",
+          "rationale": "Adding more dimensions adds complexity without clear benefit. Content quality and accessibility checks are better handled in tooling."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — both should feed §7.6 with same coefficients as Phase A/B findings.",
+          "rationale": "Content quality and accessibility are important aspects of product quality and should be reflected in the §7.6 score."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — always-on; no opt-in.",
+          "rationale": "If the dimensions are important, they should always be enabled. The opt-in adds unnecessary complexity."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject the optional field too — no purpose information lives in ProductSSOT.",
+          "rationale": "Purpose information is too subjective and unreliable to be stored in ProductSSOT. It's better to keep ProductSSOT focused on objective data."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": "CA15BV2Q2-TOOLING",
+          "pick_text": "Defer to tooling — operator may run an inference helper script manually.",
+          "rationale": "Inferred purpose can be useful, but it should be generated and reviewed manually, not automatically captured and stored."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — placeholder detection MUST be canonical to prevent placeholder text reaching production.",
+          "rationale": "Placeholder detection is critical for preventing placeholder text from reaching production and should be a canonical rule."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — LLM-judged check is the heart of \"Purpose-Driven\" Optimization.",
+          "rationale": "Without an LLM-judged check, the optimization loop loses its purpose-driven aspect. The LLM check is essential for ensuring that the product aligns with its intended purpose."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — replace with operator-supplied target string + LLM verifier.",
+          "rationale": "An operator-supplied target string combined with an LLM verifier would provide a more reliable and flexible way to assess purpose fulfillment."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — drift should never block; reduce to single advisory annotation.",
+          "rationale": "Drift should be an advisory annotation only, as blocking the loop can lead to deadlock and prevent necessary updates."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — §27 should stay a hard blocking gate as v1 proposed.",
+          "rationale": "The SSOT-Conformance Gate is critical for ensuring the quality and reliability of the system and should remain a hard blocking gate."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — every CA promotion should invalidate prior sign-offs as v1 proposed.",
+          "rationale": "Every CA promotion should invalidate prior sign-offs to ensure that the system is always up-to-date and consistent."
+        }
+      },
+      "overallNotes": "This proposal introduces several changes that weaken critical aspects of the system and add unnecessary complexity. A more thorough evaluation is needed to develop a more robust and coherent solution.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§10.1 dimension overlap",
+            "detail": "The proposed Content Quality dimension overlaps with existing UI/UX scoring criteria without clear differentiation boundaries. This creates ambiguity in §10.1 audit reports where the same visual/text issues could be counted under both dimensions, leading to inconsistent weighting and potential double-reporting."
+          },
+          {
+            "title": "Optional purpose field risk",
+            "detail": "The free-form product_purpose field lacks validation or structured schema, making it vulnerable to misuse and misinterpretation. Without mandatory format rules or automated consistency checks, operators could enter contradictory, outdated, or overly vague purpose statements that undermine drift detection mechanisms."
+          },
+          {
+            "title": "Drift thresholds arbitrary",
+            "detail": "The 20%/50% token-change thresholds for minor/major/critical drift annotations lack empirical justification. These arbitrary cutoffs may misclassify significant semantic changes as minor if token delta is low, or flag harmless refactors as critical drift, creating noise in governance records."
+          },
+          {
+            "title": "Conformance scope maintenance",
+            "detail": "Maintaining CONFORMANCE_SCOPE.md as the trigger for CEO re-sign introduces documentation drift risk. The file requires manual updates for every relevant CA, creating a brittle dependency where missed updates could invalidate sign-offs or allow non-conforming changes to bypass scrutiny."
+          }
+        ],
+        "worse_than_status_quo": "Enabling optional Content Quality dimension could flood telemetry with low-severity findings (e.g., grammar nitpicks) that distract from critical security/logic issues. Operators might disable all expanded dims to reduce noise, causing legitimate accessibility/content defects to reach production undetected.",
+        "precedent": "Google's Accelerated Mobile Pages (AMP) project initially treated validation errors as advisory, leading to compatibility breaks when developers ignored warnings. Similarly, advisory-only conformance gates here risk SSOT drift accumulation."
+      },
+      "rejection_steelman": "The proposal adds operational complexity without proportional value: expanding audit dimensions creates scoring ambiguity, optional purpose fields invite inconsistency, and advisory conformance gates weaken governance rigor. Maintaining the status quo preserves scoring clarity while avoiding new failure modes in drift detection and sign-off protocols.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — leave §10.1 at 5 dims; content quality + accessibility live in tooling only.",
+          "rationale": "Adding dimensions creates overlap with existing UI/UX scoring without clear problem-solving justification."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "CA15AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted: telemetry only; §7.6 formula UNCHANGED.",
+          "rationale": "Preserves scoring integrity while allowing optional monitoring of non-critical dimensions."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "CA15AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted: expanded_quality_dims_enabled admin-only, default false.",
+          "rationale": "Admin control appropriately restricts access to experimental/complex features."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": null,
+          "pick_text": "Ratify v2 as drafted (optional product_purpose field).",
+          "rationale": "Avoids schema bloat while allowing operator context where beneficial."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": null,
+          "pick_text": "Ratify v2 as drafted (only described mode).",
+          "rationale": "Eliminates hallucination risks from LLM-inferred purposes."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "CA15BV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (placeholder detection in tooling, not canonical).",
+          "rationale": "Placeholders are development artifacts, not runtime governance concerns."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "CA15CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (5 numeric exits; no LLM check).",
+          "rationale": "Removes unreliable LLM judgments while maintaining quantifiable exit criteria."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "CA15CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (threshold gone).",
+          "rationale": "Eliminates arbitrary magic numbers without replacement."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "CA15CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minor: log; major: operator dispose; critical: freeze fixes + Panel notify).",
+          "rationale": "Tiered approach balances automation with human oversight."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "CA15DV2Q1-DASHBOARD",
+          "pick_text": "Ratify advisory framing BUT with admin dashboard prominence requirement.",
+          "rationale": "Advisory with enforced visibility maintains flexibility while ensuring accountability."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "CA15DV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (scoped to CONFORMANCE_SCOPE.md).",
+          "rationale": "Scoping prevents unnecessary re-sign burden while covering critical changes."
+        }
+      },
+      "overallNotes": "v2 improves on v1 but retains residual complexity in dimension expansion that warrants monitoring.",
+      "invalid_reason": "9/11 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Telemetry-only weakens enforcement",
+            "detail": "CA-15-A-v2-Q2 moves content_quality and accessibility findings out of §7.6 entirely and into dashboard-only telemetry. That means a product can repeatedly fail copy/accessibility checks while still posting a clean readiness score, which undermines the existing score as an operator-facing risk signal."
+          },
+          {
+            "title": "Admin-opt-in hides regressions",
+            "detail": "In CA-15-A-v2-Q3, dims 6 and 7 are off by default and admin-only, but the proposal still exposes them as quality dimensions in §10.1. This creates a split-brain audit where most products never see these checks in the acceptance path, so regressions can ship unless someone remembers to enable the knob product-by-product."
+          },
+          {
+            "title": "Purpose field is too underspecified",
+            "detail": "CA-15-B-v2 replaces the canonical `purpose_record` with an optional free-form `product_purpose` string on `product_registry`, but provides no schema, length limit, provenance, or write-atomicity rule beyond a general note. That invites stale, contradictory, or promotional purpose text to become de facto canonical state without any structured validation or lifecycle management."
+          },
+          {
+            "title": "Drift annotations may mask deadlocks",
+            "detail": "CA-15-C-v2-Q3 converts PURPOSE_DRIFT into minor/major/critical annotations, but the proposal does not specify a deterministic transition rule from annotation to operator disposition or freeze. In practice, major drift can accumulate across runs while still allowing the loop to continue, making the issue visible but not actionable."
+          },
+          {
+            "title": "Scoped re-sign is gameable",
+            "detail": "CA-15-D-v2-Q2 limits CEO re-sign invalidation to files listed in `docs/governance/CONFORMANCE_SCOPE.md`. Because that scope file is itself editable documentation, the system can drift into a state where consequential governance changes are made adjacent to, but not inside, the tracked scope and therefore avoid re-sign requirements."
+          }
+        ],
+        "worse_than_status_quo": "A product with severe accessibility regressions and misleading purpose text can still pass the numeric readiness gate because the new findings are telemetry-only and the purpose field is optional. Compared with the status quo, that makes the system more likely to ship polished-looking but noncompliant products because the scoring surface no longer forces remediation.",
+        "precedent": "GitHub and other large platforms have repeatedly had accessibility regressions ship when checks were advisory rather than gating; similarly, optional metadata fields in product registries commonly rot into stale documentation unless enforced by schema and write-time validation. no precedent known for this exact combined design."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring CA-15-v2 is that it decomposes a hard governance problem into advisory signals without providing compensating enforcement. Removing canonical purpose structure, making critical quality dimensions optional, and downgrading the SSOT conformance gate all reduce false positives, but they also shift responsibility to humans and dashboards in places where the platform previously had explicit invariants. If the goal is canonical integrity rather than monitoring, this rewrite may be too permissive to justify promotion.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — leave §10.1 at 5 dims; content quality + accessibility live in tooling only.",
+          "rationale": "The proposal still lacks a strong enforcement path for dims 6 and 7, so keeping the canonical rubric at 5 dims avoids creating a quasi-canonical check that is easy to ignore. Tooling-only placement is cleaner until the governance path for these dimensions is specified."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "None of the options adequately addresses the enforcement problem created by making the new findings telemetry-only. If they are important enough to add, they should have a defined blocking or at least severity-sensitive path."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "CA15AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted: expanded_quality_dims_enabled admin-only, default false.",
+          "rationale": "If the dimensions are retained at all, admin-only opt-in is the least risky way to limit blast radius. It at least prevents silent behavior changes for existing products."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject the optional field too — no purpose information lives in ProductSSOT.",
+          "rationale": "An optional free-form purpose field is too weak to serve as reliable canonical state and too easy to rot. If purpose is important, it needs a structured, validated home rather than a nullable note field."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": "CA15BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (only `described` mode).",
+          "rationale": "Dropping inferred and synthesized modes avoids hallucinated purpose becoming canonical state. Operator-supplied text is the only defensible source for such a sensitive field."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "CA15BV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (placeholder detection in tooling, not canonical).",
+          "rationale": "Placeholder detection belongs in linting or CI because it is heuristic and highly prone to false positives. Keeping it out of canonical SSOT avoids overfitting governance to brittle text-pattern rules."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — LLM-judged check is the heart of \"Purpose-Driven\" Optimization.",
+          "rationale": "A purely numeric exit condition does not actually measure purpose alignment, which is the distinct claim of this workflow. Without an explicit purpose check, the loop becomes ordinary score chasing with renamed semantics."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "CA15CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (threshold gone).",
+          "rationale": "A hardcoded 0.7 threshold is arbitrary and hard to defend as canonical. If the alignment check is removed, the threshold should go with it rather than lingering as a pseudo-policy knob."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "CA15CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minor: log; major: operator dispose; critical: freeze fixes + Panel notify).",
+          "rationale": "Tiering drift is preferable to a single deadlock-prone gate because it preserves progress while escalating only severe cases. The freeze-for-critical path gives at least one hard stop where the risk is highest."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — §27 should stay a hard blocking gate as v1 proposed.",
+          "rationale": "An advisory conformance gate is too weak for a canonical SSOT rule, because the whole point of conformance is to prevent divergence, not merely report it. If the gate cannot block, it will eventually be overridden in the cases that matter most."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The scope-based invalidation rule is too easy to game and too dependent on a maintained file that itself may lag reality. A sound policy needs a more explicit, machine-enforced dependency model than the options provide."
+        }
+      },
+      "overallNotes": "The rewrite is cleaner than v1, but it still trades enforcement for observability in several places. That makes it safer operationally, yet weaker as canonical governance.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly Complex §10.1 Extension",
+            "detail": "The proposal extends §10.1 with two new dimensions (Content Quality and Accessibility) but introduces complexity with admin-opt-in and telemetry-only findings. This may lead to inconsistent application and confusion among operators."
+          },
+          {
+            "title": "Lack of Validation for `product_purpose`",
+            "detail": "The optional `product_purpose` field is introduced without a strict schema or validation rules, potentially leading to inconsistent or malformed data entry."
+          },
+          {
+            "title": "Removal of `purpose_record` Block",
+            "detail": "Removing `purpose_record` as a canonical block may reduce the system's ability to track and validate product purpose, potentially impacting Purpose-Driven Optimization."
+          }
+        ],
+        "worse_than_status_quo": "If the optional `product_purpose` field is not properly validated or maintained, it could lead to incorrect or missing purpose information, potentially causing the system to produce suboptimal or irrelevant outputs.",
+        "precedent": "Similar design issues were seen in the 'API Documentation Project' where optional fields without strict validation led to data inconsistencies and downstream processing errors."
+      },
+      "rejection_steelman": "The proposal's structural changes, while addressing some Panel objections, introduce new complexities and potential risks, such as inconsistent application of the extended §10.1 dimensions and lack of validation for `product_purpose`. These changes may not be justified given the potential downsides.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "CA15AV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted: §10.1 ONE engine; dims 6 + 7 admin-opt-in.",
+          "rationale": "The extension of §10.1 with admin-opt-in for new dimensions seems a reasonable compromise between adding new functionality and maintaining simplicity."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "CA15AV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted: telemetry only; §7.6 formula UNCHANGED.",
+          "rationale": "Keeping the §7.6 score formula unchanged avoids introducing new scoring complexity, and telemetry-only findings for content_quality and accessibility provide valuable insights without affecting the core score."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "CA15AV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted: expanded_quality_dims_enabled admin-only, default false.",
+          "rationale": "Admin-only opt-in for the new dimensions ensures that only authorized personnel can enable potentially complex or resource-intensive features."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": "CA15BV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (optional `product_purpose` field).",
+          "rationale": "The optional `product_purpose` field provides flexibility for operators to supply purpose information if needed, without making it mandatory or overly structured."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": "CA15BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (only `described` mode).",
+          "rationale": "Dropping `inferred` and `synthesized` modes reduces the risk of ossifying incorrect or hallucinated purpose information."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "CA15BV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (placeholder detection in tooling, not canonical).",
+          "rationale": "Moving placeholder detection to tooling keeps the canonical SSOT rules focused on critical governance aspects, while still providing a mechanism for operators to catch placeholder text."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "CA15CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (5 numeric exits; no LLM check).",
+          "rationale": "The numeric exit criteria provide a clear and objective measure for loop exit, avoiding the potential unreliability of LLM-judged purpose-alignment checks."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "CA15CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (threshold gone).",
+          "rationale": "Removing the hardcoded threshold eliminates a potential source of rigidity and allows for more flexible exit criteria."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "CA15CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minor: log; major: operator dispose; critical: freeze fixes + Panel notify).",
+          "rationale": "The tiered annotation for drift provides a nuanced approach to handling purpose drift, allowing for appropriate action based on severity."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "CA15DV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (advisory only).",
+          "rationale": "Making the §27 SSOT-Conformance Gate advisory only provides operators with flexibility while still surfacing important conformance information."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "CA15DV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (scoped to CONFORMANCE_SCOPE.md).",
+          "rationale": "Scoping CEO re-sign to specific files in CONFORMANCE_SCOPE.md balances the need for sign-off with the practical reality of frequent CA promotions."
+        }
+      },
+      "overallNotes": "The proposal addresses several Panel objections from v1 while introducing new considerations and trade-offs. The changes generally seem to improve clarity and reduce potential risks.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§10.1 dim extension overlap unresolved",
+            "detail": "CA-15-A v2 extends the existing §10.1 5-dim engine (UI/UX, API, Logic, Business Value, Security Posture) with optional dims 6/7 but provides no explicit conflict-resolution rule for UI/UX vs Content Quality double-counting, despite citing Slot 1 and Slot 10 objections from v1."
+          },
+          {
+            "title": "product_purpose field lacks validation",
+            "detail": "CA-15-B v2 adds optional free-form product_purpose to product_registry without required-field rules, atomic-write enforcement, or schema validation, directly contradicting the §7.5 atomic ProductSSOT update invariant and CA-14-D-Q1 guarantees."
+          },
+          {
+            "title": "§27 gate advisory weakens §25 rules",
+            "detail": "CA-15-D v2 converts the §27 SSOT-Conformance Gate to advisory-only telemetry via governance_record_entry, eroding the Locked Rules §25 requirement that every CA promotion must maintain strict conformance without operator bypass."
+          }
+        ],
+        "worse_than_status_quo": "Admin-opt-in defaulting to false for dims 6/7 plus telemetry-only findings means the system ships with the same 5-dim §10.1 audit as today but with added config surface and dashboard noise, increasing operator overhead without raising any §7.6 scores or blocking regressions.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "Even after structural inversion, the proposal fragments canonical mechanisms (optional dims, advisory gates, free-form fields) that were previously uniform, risking inconsistent 95/95 enforcement across products and gradual erosion of the self-governance invariants in §10 and §25.",
+      "votes": {
+        "CA-15-A-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — leave §10.1 at 5 dims; content quality + accessibility live in tooling only.",
+          "rationale": "Extending §10.1 still inherits the overlap problems cited in the v1 rationale without a resolution mechanism."
+        },
+        "CA-15-A-v2-Q2": {
+          "key": "REJECT",
+          "pick_text": "Reject — both should feed §7.6 with same coefficients as Phase A/B findings.",
+          "rationale": "Telemetry-only leaves quality regressions invisible to the primary readiness metric."
+        },
+        "CA-15-A-v2-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — always-on; no opt-in.",
+          "rationale": "Admin-only gating ensures the new dimensions remain dormant for most products."
+        },
+        "CA-15-B-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject the optional field too — no purpose information lives in ProductSSOT.",
+          "rationale": "Free-form field without validation recreates the schema and timing risks from v1."
+        },
+        "CA-15-B-v2-Q2": {
+          "key": "CA15BV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (only `described` mode).",
+          "rationale": "Limiting to operator-supplied avoids hallucinated intent ossification."
+        },
+        "CA-15-B-v2-Q3": {
+          "key": "CA15BV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (placeholder detection in tooling, not canonical).",
+          "rationale": "Tooling is the appropriate non-canonical location per the rewrite."
+        },
+        "CA-15-C-v2-Q1": {
+          "key": "CA15CV2Q1-RATIFY",
+          "pick_text": "Ratify v2 as drafted (5 numeric exits; no LLM check).",
+          "rationale": "Removes LLM over-reliance at the exit gate."
+        },
+        "CA-15-C-v2-Q2": {
+          "key": "CA15CV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (threshold gone).",
+          "rationale": "Hardcoded threshold was a source of deadlock risk."
+        },
+        "CA-15-C-v2-Q3": {
+          "key": "CA15CV2Q3-RATIFY",
+          "pick_text": "Ratify v2 as drafted (minor: log; major: operator dispose; critical: freeze fixes + Panel notify).",
+          "rationale": "Tiered annotation prevents loop deadlock while surfacing severe drift."
+        },
+        "CA-15-D-v2-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — §27 should stay a hard blocking gate as v1 proposed.",
+          "rationale": "Advisory status directly weakens the §25 Locked Rules."
+        },
+        "CA-15-D-v2-Q2": {
+          "key": "CA15DV2Q2-RATIFY",
+          "pick_text": "Ratify v2 as drafted (scoped to CONFORMANCE_SCOPE.md).",
+          "rationale": "Scoped re-sign reduces unnecessary CEO overhead."
+        }
+      },
+      "overallNotes": "Multiple optional and advisory mechanisms dilute the original self-governance strength.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-15-A-v2-Q1",
+      "topic": "CA-15-A v2 Q1 — Does Panel ratify the v2 structural rewrite: extend §10.1 from 5 to ≤7 dims; admin-opt-in for dims 6 & 7; NO parallel §10.1.1 rubric?",
+      "options": [
+        {
+          "key": "CA15AV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted: §10.1 ONE engine; dims 6 + 7 admin-opt-in."
+        },
+        {
+          "key": "CA15AV2Q1-TIGHTER",
+          "text": "Ratify with tighter scope — only dim 6 (Content Quality) added; dim 7 (Accessibility) deferred."
+        },
+        {
+          "key": "CA15AV2Q1-BROADER",
+          "text": "Ratify with broader scope — all 7 dims always-on; admin-opt-in eliminated."
+        },
+        {
+          "key": "CA15AV2Q1-REJECT",
+          "text": "Reject — leave §10.1 at 5 dims; content quality + accessibility live in tooling only."
+        }
+      ],
+      "draftedKey": "CA15AV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-15-A-v2-Q2",
+      "topic": "CA-15-A v2 Q2 — Does Panel ratify that content_quality + accessibility findings do NOT feed §7.6 score (telemetry-only)?",
+      "options": [
+        {
+          "key": "CA15AV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted: telemetry only; §7.6 formula UNCHANGED."
+        },
+        {
+          "key": "CA15AV2Q2-STRICTER",
+          "text": "Ratify with stricter wording — explicit invariant: \"§7.6 formula NEVER absorbs content_quality_finding / accessibility_finding counts.\""
+        },
+        {
+          "key": "CA15AV2Q2-PARTIAL",
+          "text": "Ratify partial-feed — accessibility critical/high feed §7.6; content_quality stays telemetry only."
+        },
+        {
+          "key": "CA15AV2Q2-REJECT",
+          "text": "Reject — both should feed §7.6 with same coefficients as Phase A/B findings."
+        }
+      ],
+      "draftedKey": "CA15AV2Q2-RATIFY"
+    },
+    {
+      "id": "CA-15-A-v2-Q3",
+      "topic": "CA-15-A v2 Q3 — Does Panel ratify dims 6 + 7 admin-only opt-in (default OFF)?",
+      "options": [
+        {
+          "key": "CA15AV2Q3-RATIFY",
+          "text": "Ratify v2 as drafted: expanded_quality_dims_enabled admin-only, default false."
+        },
+        {
+          "key": "CA15AV2Q3-OPERATOR",
+          "text": "Ratify with operator-role allowed (not admin-only)."
+        },
+        {
+          "key": "CA15AV2Q3-REJECT",
+          "text": "Reject — always-on; no opt-in."
+        },
+        {
+          "key": "CA15AV2Q3-DEFER",
+          "text": "Defer — opt-in semantics belong in operator-config doc, not canonical §10.1."
+        }
+      ],
+      "draftedKey": "CA15AV2Q3-RATIFY"
+    },
+    {
+      "id": "CA-15-B-v2-Q1",
+      "topic": "CA-15-B v2 Q1 — Does Panel ratify that `purpose_record` is NOT added as a 7th canonical block; an optional free-form `product_purpose` field on `product_registry` replaces it?",
+      "options": [
+        {
+          "key": "CA15BV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted (optional `product_purpose` field)."
+        },
+        {
+          "key": "CA15BV2Q1-REQUIRED",
+          "text": "Ratify but `product_purpose` REQUIRED on every product_registry row."
+        },
+        {
+          "key": "CA15BV2Q1-7THBLOCK",
+          "text": "Re-introduce `purpose_record` as 7th block with strict schema validation + atomic-write invariant from CA-14-D-Q1."
+        },
+        {
+          "key": "CA15BV2Q1-REJECT",
+          "text": "Reject the optional field too — no purpose information lives in ProductSSOT."
+        }
+      ],
+      "draftedKey": "CA15BV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-15-B-v2-Q2",
+      "topic": "CA-15-B v2 Q2 — Does Panel ratify dropping `inferred` + `synthesized` purpose-capture modes (only `described` mode accepted)?",
+      "options": [
+        {
+          "key": "CA15BV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted (only `described` mode)."
+        },
+        {
+          "key": "CA15BV2Q2-INFERRED_HINT",
+          "text": "Ratify but allow `inferred` mode as a SUGGESTION surface (admin-reviewable; never auto-applied)."
+        },
+        {
+          "key": "CA15BV2Q2-REJECT",
+          "text": "Reject — `inferred` mode is the primary value-add and should remain."
+        },
+        {
+          "key": "CA15BV2Q2-TOOLING",
+          "text": "Defer to tooling — operator may run an inference helper script manually."
+        }
+      ],
+      "draftedKey": "CA15BV2Q2-RATIFY"
+    },
+    {
+      "id": "CA-15-B-v2-Q3",
+      "topic": "CA-15-B v2 Q3 — Does Panel ratify moving placeholder detection (lorem-ipsum, \"TBD\", etc.) to `scripts/lint-product-purpose.mjs` (NOT canonical SSOT)?",
+      "options": [
+        {
+          "key": "CA15BV2Q3-RATIFY",
+          "text": "Ratify v2 as drafted (placeholder detection in tooling, not canonical)."
+        },
+        {
+          "key": "CA15BV2Q3-DIM6",
+          "text": "Ratify with §10.1 dim 6 overlap — runs both in tooling AND in dim 6 when admin opts in."
+        },
+        {
+          "key": "CA15BV2Q3-REJECT",
+          "text": "Reject — placeholder detection MUST be canonical to prevent placeholder text reaching production."
+        },
+        {
+          "key": "CA15BV2Q3-DEFER",
+          "text": "Defer entirely — placeholder detection is not a FlowAI concern."
+        }
+      ],
+      "draftedKey": "CA15BV2Q3-RATIFY"
+    },
+    {
+      "id": "CA-15-C-v2-Q1",
+      "topic": "CA-15-C v2 Q1 — Does Panel ratify Purpose-Driven Optimization loop exits on numeric §7.6 floor + zero critical + Self-Renewal terminal + LIMITATIONS + Phase B pass — NO LLM-judged purpose-alignment check?",
+      "options": [
+        {
+          "key": "CA15CV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted (5 numeric exits; no LLM check)."
+        },
+        {
+          "key": "CA15CV2Q1-PURPOSENN",
+          "text": "Ratify + add 6th condition — `product_purpose` field non-null."
+        },
+        {
+          "key": "CA15CV2Q1-LLM_SOFT",
+          "text": "Re-introduce LLM-judged check as 6th condition defaulting to satisfied when no `product_purpose` exists."
+        },
+        {
+          "key": "CA15CV2Q1-REJECT",
+          "text": "Reject — LLM-judged check is the heart of \"Purpose-Driven\" Optimization."
+        }
+      ],
+      "draftedKey": "CA15CV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-15-C-v2-Q2",
+      "topic": "CA-15-C v2 Q2 — Does Panel ratify that the hardcoded `purpose_fulfillment_score ≥ 0.7` threshold from v1 is eliminated entirely?",
+      "options": [
+        {
+          "key": "CA15CV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted (threshold gone)."
+        },
+        {
+          "key": "CA15CV2Q2-PARAMETER",
+          "text": "Ratify but parameterize — operator-config knob replaces hardcoded 0.7; default still 0.7."
+        },
+        {
+          "key": "CA15CV2Q2-KEEP07",
+          "text": "Reject — keep hardcoded 0.7."
+        },
+        {
+          "key": "CA15CV2Q2-LLM_VERIFY",
+          "text": "Reject — replace with operator-supplied target string + LLM verifier."
+        }
+      ],
+      "draftedKey": "CA15CV2Q2-RATIFY"
+    },
+    {
+      "id": "CA-15-C-v2-Q3",
+      "topic": "CA-15-C v2 Q3 — Does Panel ratify drift as a tiered annotation (minor/major/critical) that never deadlocks the loop?",
+      "options": [
+        {
+          "key": "CA15CV2Q3-RATIFY",
+          "text": "Ratify v2 as drafted (minor: log; major: operator dispose; critical: freeze fixes + Panel notify)."
+        },
+        {
+          "key": "CA15CV2Q3-STRICTER",
+          "text": "Ratify with stricter critical tier — critical drift ALSO blocks loop exit."
+        },
+        {
+          "key": "CA15CV2Q3-LOOSER",
+          "text": "Ratify with looser tier thresholds — 30%/60% token-change (not 20%/50%)."
+        },
+        {
+          "key": "CA15CV2Q3-REJECT",
+          "text": "Reject — drift should never block; reduce to single advisory annotation."
+        }
+      ],
+      "draftedKey": "CA15CV2Q3-RATIFY"
+    },
+    {
+      "id": "CA-15-D-v2-Q1",
+      "topic": "CA-15-D v2 Q1 — Does Panel ratify that the §27 SSOT-Conformance Gate becomes advisory only (no blocking)?",
+      "options": [
+        {
+          "key": "CA15DV2Q1-RATIFY",
+          "text": "Ratify v2 as drafted (advisory only)."
+        },
+        {
+          "key": "CA15DV2Q1-CRITESC",
+          "text": "Ratify with critical-finding escalation — advisory critical findings DO block deployment until admin acks."
+        },
+        {
+          "key": "CA15DV2Q1-DASHBOARD",
+          "text": "Ratify advisory framing BUT with admin dashboard prominence requirement."
+        },
+        {
+          "key": "CA15DV2Q1-REJECT",
+          "text": "Reject — §27 should stay a hard blocking gate as v1 proposed."
+        }
+      ],
+      "draftedKey": "CA15DV2Q1-RATIFY"
+    },
+    {
+      "id": "CA-15-D-v2-Q2",
+      "topic": "CA-15-D v2 Q2 — Does Panel ratify that CEO re-sign is required ONLY for CAs amending files in `docs/governance/CONFORMANCE_SCOPE.md` (not every CA)?",
+      "options": [
+        {
+          "key": "CA15DV2Q2-RATIFY",
+          "text": "Ratify v2 as drafted (scoped to CONFORMANCE_SCOPE.md)."
+        },
+        {
+          "key": "CA15DV2Q2-BROADER",
+          "text": "Ratify with broader scope — any CA editing src/lib/governance/ also triggers."
+        },
+        {
+          "key": "CA15DV2Q2-NARROWER",
+          "text": "Ratify with narrower scope — only CAs amending §7.6 + §10.1 + §11 trigger."
+        },
+        {
+          "key": "CA15DV2Q2-REJECT",
+          "text": "Reject — every CA promotion should invalidate prior sign-offs as v1 proposed."
+        }
+      ],
+      "draftedKey": "CA15DV2Q2-RATIFY"
+    }
+  ]
+}

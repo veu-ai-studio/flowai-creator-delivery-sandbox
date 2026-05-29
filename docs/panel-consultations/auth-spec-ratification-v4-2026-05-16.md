@@ -1,0 +1,1117 @@
+# Panel Consultation — Auth-Traversal Security Spec v4 — FINAL ADVERSARIAL RATIFICATION (2026-05-16)
+
+**Mode:** ADVERSARIAL — locked W5b format (precondition: `b1cd827` / `ad2ab28` / `3f9dede` MET).
+
+**Spec under final ratification:** `docs/specs/AUTH_TRAVERSAL_SECURITY_SPEC.md` (v4, commit `27fb46b`, 668 lines).
+
+**Carried questions from prior runs (NOT re-voted):**
+  - G-Q1 ✅ SUPERMAJORITY_REFUSE 8/9 (v1, commit `556a751`) — cross-origin refused entirely
+  - G-Q5 ✅ SUPERMAJORITY_STRICT 8/9 (v1, commit `556a751`) — strict same-origin subdomains
+  - G-Q2-v2 ✅ SUPERMAJORITY_LOUD 8/9 (v2, commit `80682558`) — MFA fail-loud
+  - G-Q3-v3 ✅ QUORUM_PLURALITY_DEFER 7/9 (v3, commit `e0c1e1d`) — screenshots deferred to Phase 4
+
+**Re-vote questions this run (3 condition-closers):**
+  - G-Q4-v4 — memory-only MUST + memory-pressure monitor with hard-fail
+  - G-Q6-v4 — 9-language denylist floor + registry-PR expansion path
+  - G-Q7-v4 — 90 hot + 1yr cold retention + §5.4 rationale
+
+**Started:** 2026-05-16T23:38:38.274Z
+**Finished:** 2026-05-16T23:41:11.131Z
+**Bundle size:** 88390 chars (compact §6+§13+§14+§22+§25 canonical excerpt + full v4 spec).
+**Panel audit:** {"providerCounts":{"anthropic":1,"openai":1,"meta-llama":2,"mistralai":1,"cohere":1,"google":1,"deepseek":1,"perplexity":1,"x-ai":1},"maxPerProvider":2,"slots":10,"documentedDuplicates":{"meta-llama":"Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."},"undocumentedDuplicates":[],"modelPrimaryDuplicates":[],"undocumentedModelDuplicates":[],"auditPass":true}
+**Seed:** `auth-spec-v4-ratification-2026-05-16`
+
+---
+
+## 🚨 PLAIN RATIFICATION VERDICT
+
+**Status:** `NOT_RATIFIED`
+
+Spec v4 NOT ratified — 3 re-vote question(s) still lack clear Panel majority.
+
+**Remaining conditions:**
+1. **G-Q4-v4** — storageState memory-only MUST + memory-pressure monitor with hard-fail (no filesystem fallback)
+   - Verdict: `SPLIT`. v4 position (`GQ4v4-OK`) did NOT reach quorum. top tie at 3 between GQ4v4-OK / REJECT.
+
+2. **G-Q6-v4** — i18n denylist 9-language floor + denylist-registry PR expansion path (no Panel re-ratification for additions beyond 9)
+   - Verdict: `PLURALITY_GQ6v4-BROAD`. v4 position (`GQ6v4-OK`) did NOT reach quorum. 5 of 10 on GQ6v4-BROAD (below 7/10 quorum).
+
+3. **G-Q7-v4** — Audit retention 90 days hot + 1 year cold + §5.4 rationale (quarterly-review + annual-audit + minimised-liability)
+   - Verdict: `PLURALITY_GQ7v4-OK`. v4 position (`GQ7v4-OK`) did NOT reach quorum. 5 of 10 on GQ7v4-OK (below 7/10 quorum).
+
+
+
+
+
+---
+
+## DISSENT-FLOOR EVALUATION
+
+Drafted alignment across 3 re-vote questions: **11 / 30** = 36.7%
+Distinct objections: **37**
+
+**✅ Dissent floor PASSED — verdict valid.** alignment 36.7 %, distinct objections 37.
+
+---
+
+## Slot status
+
+| Slot | Provider | Model | Region/Role | Backup? | Status | Adv state | Invalid reason |
+|------|----------|-------|-------------|---------|--------|-----------|----------------|
+| 1 | openrouter | `anthropic/claude-opus-4` | US · frontier reasoning (post-GPT-5-demote 2026-05-16) | — | LIVE-OK | `ENGAGED` | — |
+| 2 | openrouter | `openai/gpt-4o` | US · reasoning (post-mirror-fix 2026-05-16) | — | LIVE-OK | `ENGAGED` | — |
+| 3 | openrouter | `meta-llama/llama-3.3-70b-instruct` | US · frontier reasoning (post-Gemini-demote 2026-05-16) | — | LIVE-OK | `ENGAGED` | — |
+| 4 | openrouter | `mistralai/mistral-large-2411` | Europe · European frontier | — | LIVE-OK | `ENGAGED` | — |
+| 5 | openrouter | `mistralai/mistral-large-2411` | Europe/CA · European RAG-tuned | YES → openrouter:mistralai/mistral-large-2411 | LIVE-OK | `ENGAGED` | — |
+| 6 | openrouter | `minimax/minimax-m2.7` | US · US large-context multimodal (post-minimax-demote 2026-05-16) | YES → openrouter:minimax/minimax-m2.7 | LIVE-OK | `ENGAGED` | — |
+| 7 | openrouter | `deepseek/deepseek-r1` | Asia · Asia reasoning | — | LIVE-OK | `ENGAGED` | — |
+| 8 | openrouter | `perplexity/sonar` | US web-grounded · web-grounded research | — | LIVE-OK | `ENGAGED` | — |
+| 9 | openrouter | `meta-llama/llama-4-maverick` | Asia (Beijing → US/Meta after swap) · frontier coding + agentic | — | LIVE-OK | `ENGAGED` | — |
+| 10 | openrouter | `x-ai/grok-4.3` | US · real-time web-aware reasoning | — | LIVE-OK | `ENGAGED` | — |
+
+LIVE-OK: 10/10. Backups: 2. Quorum met: true.
+Adversarial classification: ENGAGED=10, TANGENTIAL=0, INVALID=0, SILENT=0.
+
+---
+
+## Per-question tally
+
+| Q | Topic | Top key | Top count | Verdict |
+|---|---|---|---:|---|
+| **G-Q4-v4** | storageState memory-only MUST + memory-pressure monitor | `GQ4v4-OK` | 3 / 10 | `SPLIT` |
+| **G-Q6-v4** | i18n denylist 9-language floor + denylist-registry PR e | `GQ6v4-BROAD` | 5 / 10 | `PLURALITY_GQ6v4-BROAD` |
+| **G-Q7-v4** | Audit retention 90 days hot + 1 year cold + §5.4 ration | `GQ7v4-OK` | 5 / 10 | `PLURALITY_GQ7v4-OK` |
+
+### Per-question detail
+
+### G-Q4-v4 — storageState memory-only MUST + memory-pressure monitor with hard-fail (no filesystem fallback)
+
+Tally (ENGAGED-only, 10):
+  - `GQ4v4-OK` "Ratify v4 — memory-only MUST + memory-pressure monitor with hard-fail (process.memoryUsage() threshold at 80% of heapTotal; breach"  →  **3**
+  - `GQ4v4-NOMON` "Reject v4; restore v3 memory-only MUST WITHOUT the explicit monitor (trust runtime defaults rather than codify a monitor as Phase-"  →  **0**
+  - `GQ4v4-THRESH` "Ratify MUST + monitor but raise or lower the default threshold from 80% — specify the alternative in rationale."  →  **2**
+  - `GQ4v4-OTHER` "Different — specify in rationale."  →  **2**
+  - `REJECT` (free-text REJECT bucket) → 3
+
+**Verdict:** `SPLIT` — top tie at 3 between GQ4v4-OK / REJECT.
+
+### G-Q6-v4 — i18n denylist 9-language floor + denylist-registry PR expansion path (no Panel re-ratification for additions beyond 9)
+
+Tally (ENGAGED-only, 10):
+  - `GQ6v4-OK` "Ratify v4 — 9-language floor + denylist-registry PR path + W5a merge gate + native-speaker attestation + no Panel re-ratification "  →  **3**
+  - `GQ6v4-PANEL` "Ratify floor but require Panel re-ratification for each language addition beyond 9 (heavier review, slower expansion)."  →  **2**
+  - `GQ6v4-BROAD` "Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum sign-off OR product-owner sign-off in ad"  →  **5**
+  - `GQ6v4-OTHER` "Different — specify in rationale."  →  **0**
+
+**Verdict:** `PLURALITY_GQ6v4-BROAD` — 5 of 10 on GQ6v4-BROAD (below 7/10 quorum).
+
+### G-Q7-v4 — Audit retention 90 days hot + 1 year cold + §5.4 rationale (quarterly-review + annual-audit + minimised-liability)
+
+Tally (ENGAGED-only, 10):
+  - `GQ7v4-OK` "Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit + minimised-liability triangulation."  →  **5**
+  - `GQ7v4-V2` "Reject v4; restore v2 short retention (30 hot + 0 cold) — the rationale does not justify the cold-store liability window."  →  **0**
+  - `GQ7v4-STD` "Reject v4; restore CA-10-E canonical retention (365 hot + 7yr cold) — the "shorter than standard" intent is not compelling enough "  →  **0**
+  - `GQ7v4-OTHER` "Different — specify (e.g. 90 hot + 6-month cold; or 180 hot + 1yr cold; or other hybrid)."  →  **3**
+  - `REJECT` (free-text REJECT bucket) → 2
+
+**Verdict:** `PLURALITY_GQ7v4-OK` — 5 of 10 on GQ7v4-OK (below 7/10 quorum).
+
+
+---
+
+## All distinct substantive objections (verbatim)
+
+Total distinct: **37**
+
+**01. [Slot 1] Memory monitor threshold arbitrary**
+
+> §13 Engineering Scope specifies 80% heapTotal threshold with no empirical basis. Real-world Node.js apps see legitimate heap usage spikes during JSON parsing that could trigger false-positive aborts on valid authenticated crawls, especially for large ProductSSOT objects.
+
+**02. [Slot 1] Language expansion process ungated**
+
+> Invariant 5's v4 expansion mechanism allows any operator to submit destructive terms via PR with only W5a review. No verification that the 'native-speaker attestation' is genuine, no secondary review, no automated validation that submitted terms are actually destructive actions.
+
+**03. [Slot 1] Audit retention rationale post-hoc**
+
+> §5.4 rationale claims 90-day hot covers 'standard enterprise security review cycle' but provides no citation. Many enterprises run monthly security reviews; others run annual. The 'quarterly' assertion appears fabricated to justify the already-chosen 90-day value.
+
+**04. [Slot 1] No credential rotation detection**
+
+> §3.5 Playwright invocation uses heuristic selectors but has no mechanism to detect when target product rotates credentials mid-crawl. A 2-hour crawl could have its session invalidated after 1 hour, continuing to crawl 'authenticated' pages that are actually auth-gated.
+
+**05. [Slot 2] Memory pressure handling**
+
+> In §2 Invariant 2, the proposal mandates memory-only storageState without filesystem fallback. However, the memory-pressure monitor introduced in v4 may not adequately address scenarios where memory usage spikes unexpectedly, potentially leading to frequent aborts without a clear recovery path.
+
+**06. [Slot 2] Language expansion process**
+
+> In §11 #15, the proposal outlines a process for expanding the language denylist. However, relying solely on native-speaker attestation and W5a review may not be sufficient to ensure comprehensive coverage and prevent potential bypasses, especially for less common languages.
+
+**07. [Slot 2] Retention rationale clarity**
+
+> In §5.4, the rationale for the 90-day hot and 1-year cold retention policy is provided. However, the justification may not fully address concerns about the adequacy of the retention period for compliance and audit purposes, particularly in industries with longer standard retention requirements.
+
+**08. [Slot 3] Memory Pressure**
+
+> The proposal does not adequately address potential memory pressure issues that may arise during the crawl process, particularly when dealing with large storageState objects. This could lead to performance degradation or even crashes.
+
+**09. [Slot 3] Inconsistent Retention**
+
+> The retention policy for credentialed-run audit records (90 days hot + 1 year cold) may not be consistent with other audit record retention policies, potentially leading to confusion and inconsistencies in compliance and incident response.
+
+**10. [Slot 3] Denylist Evasion**
+
+> The i18n denylist may not be comprehensive enough to cover all possible destructive actions, and an attacker could potentially evade the denylist by using custom or obfuscated button text.
+
+**11. [Slot 4] Memory-only storageState handling**
+
+> The spec mandates memory-only storageState handling without any fallback mechanism. This approach might lead to frequent run failures due to memory pressure, especially in environments with limited resources. The hard-fail semantic could disrupt critical operations without providing a graceful degradation path.
+
+**12. [Slot 4] MFA detection heuristics**
+
+> The heuristic detection of MFA challenges relies on specific text patterns and DOM elements. This approach may not cover all MFA implementations, leading to false negatives where MFA is not detected, and the run proceeds without authentication. The heuristics should be more comprehensive or include a fallback mechanism.
+
+**13. [Slot 4] Invariant 5 hybrid gate complexity**
+
+> The hybrid gate for non-destructive actions combines an allowlist and a denylist with i18n support. This complexity increases the risk of false positives and negatives, where safe actions are blocked, or destructive actions are allowed. The gate logic should be simplified or more rigorously tested to ensure reliability.
+
+**14. [Slot 4] Retention policy rationale**
+
+> The retention policy of 90 days hot + 1 year cold is justified by incident response and compliance requirements. However, this policy may not align with all regulatory requirements, such as GDPR, which may require shorter retention periods for sensitive data. The rationale should consider a broader range of regulatory requirements.
+
+**15. [Slot 5] Vague credential scrubbing**
+
+> The proposal does not specify how the `scrubCredentials()` function will be extended to handle evidence artifacts. The §6.3 mentions extending the scrub to cover operator-submitted credentials, but it lacks details on how this will be implemented and verified.
+
+**16. [Slot 5] Incomplete i18n denylist**
+
+> The i18n denylist covers only 9 language families. While the proposal mentions an expansion process, it does not address how to handle languages with different scripts or cultural nuances that may not be covered by the current denylist.
+
+**17. [Slot 5] Potential memory leak**
+
+> The memory-pressure monitor is a good addition, but the proposal does not specify how often the memory usage will be sampled. Infrequent sampling could lead to missed detection of memory leaks, allowing credential data to persist in memory longer than necessary.
+
+**18. [Slot 6] Memory-pressure monitor creates DoS vector**
+
+> Section 13 + §11 #14 specifies a memory-pressure monitor that aborts runs at 80% heapTotal with `ok:false, reason: 'memory_pressure_abort'`. The threshold is checked 'at every storageState read/write boundary' per Section 13. This creates a predictable denial-of-service: any process allocating memory up to 80% of heapTotal — including legitimate concurrent operations on the same Node.js process — will abort authenticated crawls. A malicious operator or compromised dependency could deliberately trigger the threshold to prevent security scanning of their product. The hard-fail semantic (no retry, no GC wait, no reduced-scope continuation) makes this a permanent abort rather than a transient warning.
+
+**19. [Slot 6] Language expansion bypasses Panel governance**
+
+> Invariant 5 v4 condition-closer + §11 #15 allow W5a to merge language additions 'without Panel re-ratification.' The spec states 'the process itself is the control' but provides no technical enforcement that W5a actually performed native-speaker attestation review before merging. A compromised or negligent W5a member could merge a language addition without proper attestation, weakening the destructive-action denylist without Panel oversight. The spec explicitly rejects requiring Panel re-ratification for additions beyond 9 (option b in G-Q6-v4), removing the governance check that would catch attestation failures.
+
+**20. [Slot 6] Defense-in-depth argument is incomplete for same-origin threats**
+
+> Invariant 5's 'defense in depth' argument (Section 5, closing paragraph) relies on Invariant 4 (same-origin) to prevent credential exfiltration even if destructive buttons slip past the denylist. However, Invariant 4 only prevents cross-origin credential exfiltration — it does NOT prevent destructive actions on the same origin. A destructive button on the target product's own domain (e.g., 'Delete Account' or 'Wipe Data') will still execute with the authenticated session because it is same-origin. The spec's own acknowledged-residual list confirms this: 'Custom CSS class names that don't match the convention,' 'Obfuscated text content,' and 'JavaScript-only event handlers' all slip through. The 'defense in depth' framing could mislead implementers into believing they're protected against same-origin destructive actions when they're not.
+
+**21. [Slot 6] 90-day hot retention rationale is unsupported empirical claim**
+
+> Section 5.4 states 'Most security incidents surface within 90 days of the underlying event' as justification for the 90-day hot window. This is presented as fact with no citation. Industry breach reports (Verizon DBIR, Mandiant M-Trends) consistently show median dwell times of 100+ days for sophisticated attacks — well beyond the 90-day window. The rationale also claims the 90-day window 'covers the quarterly enterprise security review cycle' but enterprise security reviews typically examine longer historical windows. An incident discovered on day 91 would have no hot-store audit trail, forcing investigators to cold-store queries for what should be readily available evidence.
+
+**22. [Slot 6] Memory-only storageState creates unrecoverable crash scenario**
+
+> Invariant 2 mandates memory-only storageState with no filesystem fallback. Invariant 10 acknowledges the 'honest heap-dump residual' — a hostile process memory dump could observe the storageState object. The spec documents this as a 'known limitation' but the mitigation is only 'hosting-environment trust assumption' (Vercel isolation). If the Vercel runtime is compromised, or if a kernel core dump is obtained, the in-memory storageState (containing session cookies and tokens for the target product) is fully exposed. The v1 on-disk approach with encryption at rest would have been more resilient to runtime compromise than the v2/v4 memory-only approach.
+
+**23. [Slot 7] Memory-pressure monitor threshold arbitrary**
+
+> The default 80% heap threshold for memory-pressure aborts (§13) lacks empirical justification. High-traffic products may trigger false aborts during legitimate crawls. The hard-fail semantic ignores memory optimization opportunities like selective state pruning.
+
+**24. [Slot 7] i18n denylist expansion ungoverned**
+
+> The denylist registry PR process (§11 #15) lacks verification for native-speaker attestations. W5a merge gate creates single-point failure risk without automated validation. Malicious actors could inject ineffective terms via compromised attestations.
+
+**25. [Slot 7] Retention rationale ignores GDPR conflict**
+
+> §5.4 rationale assumes 1-year cold retention satisfies compliance but contradicts GDPR Article 17's 'right to erasure'. Credentialed-run metadata (URLs/timing) qualifies as PII. The 365-day retention creates legal exposure without data-subject consent mechanisms.
+
+**26. [Slot 7] StorageState GC vulnerabilities**
+
+> Invariant 2 relies on JS garbage collection for credential erasure, but Node.js heap snapshots in diagnostics mode could capture storageState objects. No mechanism prevents heap-dump tooling during authenticated runs.
+
+**27. [Slot 8] Memory-only weakens recoverability**
+
+> §2 Invariant 2 and G-Q4-v4 make storageState memory-only with no filesystem fallback under any condition. That removes the only durable recovery path if the Node process is restarted, the browser crashes, or a transient OOM occurs mid-run; the run becomes unrecoverable even when the credentials themselves were valid and safe to reuse within the same run.
+
+**28. [Slot 8] Monitor can misfire on load**
+
+> §13 makes the memory-pressure monitor mandatory at every storageState read/write boundary with a default 80% heapTotal threshold. In real Node workloads, heap usage spikes are common during GC pauses, large DOMs, or concurrent page captures, so a legitimate crawl can abort purely due to transient pressure rather than actual unsafe persistence risk.
+
+**29. [Slot 8] Denylist still invites destructive clicks**
+
+> §2 Invariant 5 allows clicks on buttons that pass a hybrid gate, but it explicitly acknowledges false negatives for obfuscated text, JS-only handlers, and icon-only controls. Because authenticated crawls are read-only, any missed destructive control can still mutate account state; the allowlist does not cover third-party or legacy UIs that do not expose `data-crawl-safe="true"`.
+
+**30. [Slot 8] Language expansion lacks governance**
+
+> §2 Invariant 5 and §11 #15 let additional destructive-term languages be added via a PR to the denylist registry with W5a merge and native-speaker attestation, without Panel re-ratification. That creates a governance bypass where a small merge path can materially change the safety boundary of authenticated automation across products, but there is no explicit independent review or rollback requirement if the new terms are incomplete or wrong.
+
+**31. [Slot 8] Retention is still highly sensitive**
+
+> §5.4 changes credentialed-run audit retention to 90 days hot plus 1 year cold. Even without raw credentials, these records include URLs visited, timing, and response shapes, which can expose private workflows; keeping them for a year may exceed what is necessary for incident response and increases breach-disclosure and subpoena risk.
+
+**32. [Slot 9] Overly complex credential handling**
+
+> The proposal introduces multiple new mechanisms for handling credentials (§3), including validation, transit, and lifetime management. This complexity increases the risk of errors or security vulnerabilities.
+
+**33. [Slot 9] Insufficient testing for edge cases**
+
+> While the proposal outlines various test surfaces (§11), it may not cover all edge cases, such as unusual login forms or unexpected credential formats, which could lead to failures or security issues.
+
+**34. [Slot 9] Retention policy may not align with all compliance needs**
+
+> The proposed retention policy (§5.4) of 90 days hot + 1 year cold for credentialed-run audit records may not satisfy all compliance requirements, potentially leading to legal or regulatory issues.
+
+**35. [Slot 10] Memory-pressure monitor hard-fail**
+
+> §13 and Invariant 2 mandate a process.memoryUsage() monitor at 80% heapTotal that aborts the entire run with ok:false reason:'memory_pressure_abort' and forbids any filesystem fallback; this couples a transient heap spike directly to crawl termination without rollback or partial-result path, naming the exact acceptance gate in §11 #14.
+
+**36. [Slot 10] i18n denylist false-negative surface**
+
+> Invariant 5 explicitly lists unhandled cases (custom CSS classes, obfuscated onclick handlers, JS-only events, languages outside the 9-family floor) yet still claims defence-in-depth via same-origin + one-shot credentials; the hybrid gate in §2.5 therefore leaves a documented attack surface inside the authenticated context without additional mitigation.
+
+**37. [Slot 10] Retention rationale circularity**
+
+> §5.4 anchors 90-hot + 1yr-cold on 'quarterly enterprise security review' and 'annual compliance' without citing any measured incident latency or audit cadence data from the existing GovernanceAuditLog; the justification therefore reduces to an unverified assumption about operational timelines.
+
+
+---
+
+## Strongest single argument AGAINST v4 spec
+
+**From Slot 6 (openrouter:minimax/minimax-m2.7):**
+
+> The proposal attempts to secure authenticated crawling but introduces new attack surfaces that outweigh the credential-exfiltration risks it mitigates. The memory-pressure monitor creates a predictable DoS vector against security scanning; the language-expansion bypass removes Panel governance for denylist changes; the 90/1yr retention creates compliance gaps for regulated customers; and the memory-only storageState trades filesystem encryption for a 'hosting-environment trust assumption' that is vulnerable to runtime compromise. The 10 invariants, 15 acceptance criteria, and 7.25 W-day implementation create a complex surface area that is harder to audit than the simpler v1 approach with encrypted filesystem persistence. A phased approach that ships the credential-scrubbing invariants (1, 7, 8) without the operational brittleness of the memory-pressure monitor and retention divergence would achieve the security goals with lower risk.
+
+---
+
+## Per-reviewer adversarial pass + steelman + votes
+
+## Slot 1 — openrouter:anthropic/claude-opus-4 — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Memory monitor threshold arbitrary**
+
+> §13 Engineering Scope specifies 80% heapTotal threshold with no empirical basis. Real-world Node.js apps see legitimate heap usage spikes during JSON parsing that could trigger false-positive aborts on valid authenticated crawls, especially for large ProductSSOT objects.
+
+**Objection 2 — Language expansion process ungated**
+
+> Invariant 5's v4 expansion mechanism allows any operator to submit destructive terms via PR with only W5a review. No verification that the 'native-speaker attestation' is genuine, no secondary review, no automated validation that submitted terms are actually destructive actions.
+
+**Objection 3 — Audit retention rationale post-hoc**
+
+> §5.4 rationale claims 90-day hot covers 'standard enterprise security review cycle' but provides no citation. Many enterprises run monthly security reviews; others run annual. The 'quarterly' assertion appears fabricated to justify the already-chosen 90-day value.
+
+**Objection 4 — No credential rotation detection**
+
+> §3.5 Playwright invocation uses heuristic selectors but has no mechanism to detect when target product rotates credentials mid-crawl. A 2-hour crawl could have its session invalidated after 1 hour, continuing to crawl 'authenticated' pages that are actually auth-gated.
+
+**Worse-than-status-quo scenario:** The memory-pressure monitor's hard-fail semantic means legitimate large crawls that would succeed today (using swap or gc pressure) will abort at 80% heap, forcing operators to manually chunk their crawls or upgrade instance sizes unnecessarily.
+
+**Precedent:** Puppeteer's memory leak issues with long-running browser contexts (github.com/puppeteer/puppeteer/issues/1223) caused production crawlers to implement filesystem-based session persistence specifically because memory-only approaches failed under load.
+
+### Rejection steelman
+
+> This spec locks in three contentious decisions without adequate operational validation: the 80% memory threshold is untested against real workloads, the language-expansion process has no quality gates beyond single-person review, and the retention rationale retrofits justification for values that appear arbitrarily chosen. The spec should be deferred until Phase 3 can run memory-pressure experiments on actual authenticated crawls to set data-driven thresholds.
+
+### Votes
+
+- **G-Q4-v4** = `GQ4v4-THRESH` — Ratify MUST + monitor but raise or lower the default threshold from 80% — specify the alte
+  > 80% is too aggressive for Node.js apps that legitimately spike during JSON operations; 90% threshold would reduce false-positive aborts while still protecting against true memory exhaustion.
+- **G-Q6-v4** = `GQ6v4-BROAD` — Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum 
+  > Single-person review for security-critical destructive-action terms is insufficient; requiring Panel sub-quorum (3 members) or product-owner sign-off adds necessary quality control.
+- **G-Q7-v4** = `GQ7v4-OTHER` — Different — specify (e.g. 90 hot + 6-month cold; or 180 hot + 1yr cold; or other hybrid).
+  > 90 hot + 6-month cold better balances incident response (most investigations complete within 6 months) against credential-context sensitivity, while avoiding the full-year liability window.
+
+Overall: The v4 condition-closers feel hasty — adding features to hit vote thresholds rather than addressing root concerns about operational readiness.
+
+---
+
+## Slot 2 — openrouter:openai/gpt-4o — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Memory pressure handling**
+
+> In §2 Invariant 2, the proposal mandates memory-only storageState without filesystem fallback. However, the memory-pressure monitor introduced in v4 may not adequately address scenarios where memory usage spikes unexpectedly, potentially leading to frequent aborts without a clear recovery path.
+
+**Objection 2 — Language expansion process**
+
+> In §11 #15, the proposal outlines a process for expanding the language denylist. However, relying solely on native-speaker attestation and W5a review may not be sufficient to ensure comprehensive coverage and prevent potential bypasses, especially for less common languages.
+
+**Objection 3 — Retention rationale clarity**
+
+> In §5.4, the rationale for the 90-day hot and 1-year cold retention policy is provided. However, the justification may not fully address concerns about the adequacy of the retention period for compliance and audit purposes, particularly in industries with longer standard retention requirements.
+
+**Worse-than-status-quo scenario:** The proposal could lead to frequent aborts due to memory pressure without a fallback, causing disruptions in authenticated crawl operations.
+
+**Precedent:** no precedent known
+
+### Rejection steelman
+
+> The proposal introduces a memory-pressure monitor to enforce memory-only storageState, but this could lead to frequent aborts without a fallback mechanism, potentially disrupting operations. Additionally, the language expansion process may not be robust enough to prevent bypasses, and the retention rationale may not align with industry standards, warranting further review and refinement before implementation.
+
+### Votes
+
+- **G-Q4-v4** = `REJECT` — REJECT
+  > The introduction of a memory-pressure monitor could lead to frequent aborts without a fallback, disrupting operations. Trusting runtime defaults may provide more stability.
+- **G-Q6-v4** = `GQ6v4-BROAD` — Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum 
+  > A broader review process for language additions would ensure more comprehensive coverage and prevent potential bypasses.
+- **G-Q7-v4** = `GQ7v4-OTHER` — Different — specify (e.g. 90 hot + 6-month cold; or 180 hot + 1yr cold; or other hybrid).
+  > A hybrid retention period, such as 90 hot + 6-month cold, could better balance compliance needs with liability concerns.
+
+Overall: The proposal's approach to memory management and language expansion requires further refinement to ensure operational stability and comprehensive coverage.
+
+---
+
+## Slot 3 — openrouter:meta-llama/llama-3.3-70b-instruct — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Memory Pressure**
+
+> The proposal does not adequately address potential memory pressure issues that may arise during the crawl process, particularly when dealing with large storageState objects. This could lead to performance degradation or even crashes.
+
+**Objection 2 — Inconsistent Retention**
+
+> The retention policy for credentialed-run audit records (90 days hot + 1 year cold) may not be consistent with other audit record retention policies, potentially leading to confusion and inconsistencies in compliance and incident response.
+
+**Objection 3 — Denylist Evasion**
+
+> The i18n denylist may not be comprehensive enough to cover all possible destructive actions, and an attacker could potentially evade the denylist by using custom or obfuscated button text.
+
+**Worse-than-status-quo scenario:** If the proposal is implemented without adequate consideration for memory pressure, it could lead to more frequent crashes and performance issues, making the system worse than the status quo.
+
+**Precedent:** No precedent known
+
+### Rejection steelman
+
+> The proposal's complexity and potential for inconsistencies in retention policies, combined with the lack of comprehensive denylist coverage, may outweigh its benefits, and it may be more prudent to reject or defer the proposal until these issues are more thoroughly addressed.
+
+### Votes
+
+- **G-Q4-v4** = `GQ4v4-OK` — Ratify v4 — memory-only MUST + memory-pressure monitor with hard-fail (process.memoryUsage
+  > This option provides a clear and comprehensive approach to handling memory pressure, ensuring that the system does not silently degrade or spill storageState to disk.
+- **G-Q6-v4** = `GQ6v4-OK` — Ratify v4 — 9-language floor + denylist-registry PR path + W5a merge gate + native-speaker
+  > This option provides a balanced approach to denylist expansion, allowing for additions while maintaining a level of review and control.
+- **G-Q7-v4** = `GQ7v4-OK` — Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit +
+  > This option provides a clear and well-reasoned approach to retention, balancing the need for audit trails with the need to minimize liability.
+
+Overall: The proposal requires careful consideration of potential issues and inconsistencies, and may benefit from additional review and refinement before implementation.
+
+---
+
+## Slot 4 — openrouter:mistralai/mistral-large-2411 — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Memory-only storageState handling**
+
+> The spec mandates memory-only storageState handling without any fallback mechanism. This approach might lead to frequent run failures due to memory pressure, especially in environments with limited resources. The hard-fail semantic could disrupt critical operations without providing a graceful degradation path.
+
+**Objection 2 — MFA detection heuristics**
+
+> The heuristic detection of MFA challenges relies on specific text patterns and DOM elements. This approach may not cover all MFA implementations, leading to false negatives where MFA is not detected, and the run proceeds without authentication. The heuristics should be more comprehensive or include a fallback mechanism.
+
+**Objection 3 — Invariant 5 hybrid gate complexity**
+
+> The hybrid gate for non-destructive actions combines an allowlist and a denylist with i18n support. This complexity increases the risk of false positives and negatives, where safe actions are blocked, or destructive actions are allowed. The gate logic should be simplified or more rigorously tested to ensure reliability.
+
+**Objection 4 — Retention policy rationale**
+
+> The retention policy of 90 days hot + 1 year cold is justified by incident response and compliance requirements. However, this policy may not align with all regulatory requirements, such as GDPR, which may require shorter retention periods for sensitive data. The rationale should consider a broader range of regulatory requirements.
+
+**Worse-than-status-quo scenario:** The proposal's hard-fail semantic for memory pressure could lead to more frequent run failures compared to the status quo, where a fallback mechanism might allow for graceful degradation.
+
+**Precedent:** In the context of the AWS Lambda service, a similar design led to frequent function failures due to memory pressure, causing disruptions in critical operations. The lack of a fallback mechanism exacerbated the issue, leading to widespread user dissatisfaction.
+
+### Rejection steelman
+
+> The proposal should be deferred until a more comprehensive fallback mechanism is implemented. The current hard-fail semantic for memory pressure could lead to frequent run failures, disrupting critical operations. Additionally, the MFA detection heuristics and the complex hybrid gate for non-destructive actions need to be more robustly tested to ensure reliability.
+
+### Votes
+
+- **G-Q4-v4** = `GQ4v4-OTHER` — Different — specify in rationale.
+  > The hard-fail semantic for memory pressure could lead to frequent run failures, disrupting critical operations. A fallback mechanism should be implemented to allow for graceful degradation.
+- **G-Q6-v4** = `GQ6v4-BROAD` — Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum 
+  > The addition of new languages should undergo a broader review to ensure the integrity and security of the denylist. This will help prevent unattested additions and maintain the system's reliability.
+- **G-Q7-v4** = `GQ7v4-OTHER` — Different — specify (e.g. 90 hot + 6-month cold; or 180 hot + 1yr cold; or other hybrid).
+  > The retention policy should consider a broader range of regulatory requirements, such as GDPR, which may require shorter retention periods for sensitive data. A hybrid retention policy could better balance compliance and operational needs.
+
+Overall: The proposal introduces several robust security measures but also presents significant risks, particularly in the hard-fail semantic for memory pressure and the complexity of the hybrid gate for non-destructive actions.
+
+---
+
+## Slot 5 — openrouter:mistralai/mistral-large-2411 — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Vague credential scrubbing**
+
+> The proposal does not specify how the `scrubCredentials()` function will be extended to handle evidence artifacts. The §6.3 mentions extending the scrub to cover operator-submitted credentials, but it lacks details on how this will be implemented and verified.
+
+**Objection 2 — Incomplete i18n denylist**
+
+> The i18n denylist covers only 9 language families. While the proposal mentions an expansion process, it does not address how to handle languages with different scripts or cultural nuances that may not be covered by the current denylist.
+
+**Objection 3 — Potential memory leak**
+
+> The memory-pressure monitor is a good addition, but the proposal does not specify how often the memory usage will be sampled. Infrequent sampling could lead to missed detection of memory leaks, allowing credential data to persist in memory longer than necessary.
+
+**Worse-than-status-quo scenario:** The proposal introduces a memory-pressure monitor that aborts the run on high memory usage. However, if the sampling frequency is not adequately specified, it could lead to missed detections and potential memory leaks, making the system worse than the status quo where credentials are scrubbed immediately.
+
+**Precedent:** In the past, similar memory management issues in Node.js applications have led to security vulnerabilities, such as the Heartbleed bug in OpenSSL, where improper memory management allowed attackers to read sensitive information from memory.
+
+### Rejection steelman
+
+> The proposal should be deferred until more details are provided on the implementation and verification of the `scrubCredentials()` function for evidence artifacts. Additionally, the i18n denylist should be expanded to cover more languages, and the memory-pressure monitor should have a clearly defined sampling frequency to prevent potential memory leaks.
+
+### Votes
+
+- **G-Q4-v4** = `GQ4v4-OTHER` — Different — specify in rationale.
+  > The proposal should specify the sampling frequency for the memory-pressure monitor to ensure timely detection of memory leaks.
+- **G-Q6-v4** = `GQ6v4-BROAD` — Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum 
+  > The expansion process should include a broader review to ensure that new languages are adequately covered by the denylist.
+- **G-Q7-v4** = `GQ7v4-OK` — Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit +
+  > The proposed retention policy balances the need for incident response and compliance review while minimizing the liability window.
+
+Overall: The proposal has several strengths, but it needs more specificity in certain areas to ensure that the implementation is secure and effective.
+
+---
+
+## Slot 6 — openrouter:minimax/minimax-m2.7 — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Memory-pressure monitor creates DoS vector**
+
+> Section 13 + §11 #14 specifies a memory-pressure monitor that aborts runs at 80% heapTotal with `ok:false, reason: 'memory_pressure_abort'`. The threshold is checked 'at every storageState read/write boundary' per Section 13. This creates a predictable denial-of-service: any process allocating memory up to 80% of heapTotal — including legitimate concurrent operations on the same Node.js process — will abort authenticated crawls. A malicious operator or compromised dependency could deliberately trigger the threshold to prevent security scanning of their product. The hard-fail semantic (no retry, no GC wait, no reduced-scope continuation) makes this a permanent abort rather than a transient warning.
+
+**Objection 2 — Language expansion bypasses Panel governance**
+
+> Invariant 5 v4 condition-closer + §11 #15 allow W5a to merge language additions 'without Panel re-ratification.' The spec states 'the process itself is the control' but provides no technical enforcement that W5a actually performed native-speaker attestation review before merging. A compromised or negligent W5a member could merge a language addition without proper attestation, weakening the destructive-action denylist without Panel oversight. The spec explicitly rejects requiring Panel re-ratification for additions beyond 9 (option b in G-Q6-v4), removing the governance check that would catch attestation failures.
+
+**Objection 3 — Defense-in-depth argument is incomplete for same-origin threats**
+
+> Invariant 5's 'defense in depth' argument (Section 5, closing paragraph) relies on Invariant 4 (same-origin) to prevent credential exfiltration even if destructive buttons slip past the denylist. However, Invariant 4 only prevents cross-origin credential exfiltration — it does NOT prevent destructive actions on the same origin. A destructive button on the target product's own domain (e.g., 'Delete Account' or 'Wipe Data') will still execute with the authenticated session because it is same-origin. The spec's own acknowledged-residual list confirms this: 'Custom CSS class names that don't match the convention,' 'Obfuscated text content,' and 'JavaScript-only event handlers' all slip through. The 'defense in depth' framing could mislead implementers into believing they're protected against same-origin destructive actions when they're not.
+
+**Objection 4 — 90-day hot retention rationale is unsupported empirical claim**
+
+> Section 5.4 states 'Most security incidents surface within 90 days of the underlying event' as justification for the 90-day hot window. This is presented as fact with no citation. Industry breach reports (Verizon DBIR, Mandiant M-Trends) consistently show median dwell times of 100+ days for sophisticated attacks — well beyond the 90-day window. The rationale also claims the 90-day window 'covers the quarterly enterprise security review cycle' but enterprise security reviews typically examine longer historical windows. An incident discovered on day 91 would have no hot-store audit trail, forcing investigators to cold-store queries for what should be readily available evidence.
+
+**Objection 5 — Memory-only storageState creates unrecoverable crash scenario**
+
+> Invariant 2 mandates memory-only storageState with no filesystem fallback. Invariant 10 acknowledges the 'honest heap-dump residual' — a hostile process memory dump could observe the storageState object. The spec documents this as a 'known limitation' but the mitigation is only 'hosting-environment trust assumption' (Vercel isolation). If the Vercel runtime is compromised, or if a kernel core dump is obtained, the in-memory storageState (containing session cookies and tokens for the target product) is fully exposed. The v1 on-disk approach with encryption at rest would have been more resilient to runtime compromise than the v2/v4 memory-only approach.
+
+**Worse-than-status-quo scenario:** If a target product has MFA enabled (increasingly common in enterprise environments), the authenticated crawl will fail-loud and stop entirely per Invariant 3. The status quo (Phase 1 unauthenticated crawl) at least provides partial coverage of publicly-accessible pages. Under v4, MFA-protected products receive ZERO coverage — the crawl terminates at the MFA wall and returns `ok:false, authFailureReason: 'mfa_required'`. This is strictly worse than the status quo where at least some pages could be crawled, and it affects the growing majority of security-conscious products where MFA is mandatory.
+
+**Precedent:** The 2021 Codecov supply-chain breach (U.S. government advisory BARTON-2021-0178) demonstrated that in-memory credential exposure via compromised build infrastructure is a real-world risk. Codecov's Docker container had a credential exfiltration mechanism that extracted credentials from environment variables — a memory-resident credential surface. The lesson: memory-only credential handling without filesystem encryption provides no protection against runtime compromise, and the 'hosting-environment trust assumption' is only as strong as the infrastructure's supply-chain security. FlowAI's memory-only storageState approach replicates this trust assumption without addressing the underlying vulnerability class.
+
+### Rejection steelman
+
+> The proposal attempts to secure authenticated crawling but introduces new attack surfaces that outweigh the credential-exfiltration risks it mitigates. The memory-pressure monitor creates a predictable DoS vector against security scanning; the language-expansion bypass removes Panel governance for denylist changes; the 90/1yr retention creates compliance gaps for regulated customers; and the memory-only storageState trades filesystem encryption for a 'hosting-environment trust assumption' that is vulnerable to runtime compromise. The 10 invariants, 15 acceptance criteria, and 7.25 W-day implementation create a complex surface area that is harder to audit than the simpler v1 approach with encrypted filesystem persistence. A phased approach that ships the credential-scrubbing invariants (1, 7, 8) without the operational brittleness of the memory-pressure monitor and retention divergence would achieve the security goals with lower risk.
+
+### Votes
+
+- **G-Q4-v4** = `REJECT` — REJECT
+  > The memory-pressure monitor at 80% heapTotal creates a predictable DoS vector against authenticated crawl runs and introduces operational brittleness (hard-fail with no retry/GC-wait/reduced-scope path). The v3 memory-only MUST is sufficient — Vercel's Node.js runtime already has memory management; codifying a specific threshold as a Phase-3 must-ship creates more failure modes than it prevents.
+- **G-Q6-v4** = `GQ6v4-PANEL` — Ratify floor but require Panel re-ratification for each language addition beyond 9 (heavie
+  > The W5a-only merge gate creates a single-point-of-failure governance risk — a compromised or negligent W5a member could weaken the denylist without Panel oversight. Panel re-ratification for each addition beyond 9 is the correct control: it preserves the 9-language floor (which has test coverage) while ensuring that expansion decisions receive the governance review the Panel is designed to provide.
+- **G-Q7-v4** = `REJECT` — REJECT
+  > The 90/1yr rationale relies on an unsupported empirical claim ('most incidents surface within 90 days') that contradicts industry breach data showing median dwell times exceeding 90 days. The CA-10-E standard (365 hot + 7yr cold) was presumably designed for compliance reasons; diverging without stronger evidence creates compliance risk for regulated customers (HIPAA, SOC 2) without clear operational benefit.
+
+Overall: The v4 condition-closers address the v3 Panel's surface concerns (memory-pressure monitor, expansion process, retention rationale) but introduce new failure modes. The proposal would benefit from separating the credential-scrubbing invariants (1, 7, 8) — which are sound — from the operational brittleness (memory-pressure monitor, retention divergence) — which create new risks.
+
+---
+
+## Slot 7 — openrouter:deepseek/deepseek-r1 — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Memory-pressure monitor threshold arbitrary**
+
+> The default 80% heap threshold for memory-pressure aborts (§13) lacks empirical justification. High-traffic products may trigger false aborts during legitimate crawls. The hard-fail semantic ignores memory optimization opportunities like selective state pruning.
+
+**Objection 2 — i18n denylist expansion ungoverned**
+
+> The denylist registry PR process (§11 #15) lacks verification for native-speaker attestations. W5a merge gate creates single-point failure risk without automated validation. Malicious actors could inject ineffective terms via compromised attestations.
+
+**Objection 3 — Retention rationale ignores GDPR conflict**
+
+> §5.4 rationale assumes 1-year cold retention satisfies compliance but contradicts GDPR Article 17's 'right to erasure'. Credentialed-run metadata (URLs/timing) qualifies as PII. The 365-day retention creates legal exposure without data-subject consent mechanisms.
+
+**Objection 4 — StorageState GC vulnerabilities**
+
+> Invariant 2 relies on JS garbage collection for credential erasure, but Node.js heap snapshots in diagnostics mode could capture storageState objects. No mechanism prevents heap-dump tooling during authenticated runs.
+
+**Worse-than-status-quo scenario:** A memory-pressure abort during a business-critical crawl would terminate the entire run without partial results, whereas status quo unauthenticated crawls degrade gracefully. Operators might disable monitoring thresholds, reintroducing memory-exhaustion risks the spec aimed to solve.
+
+**Precedent:** 2017 Uber breach: Engineers stored AWS credentials in plaintext within GitHub repositories despite internal policies, analogous to residual credential exposure risks in debug heap dumps.
+
+### Rejection steelman
+
+> The proposal introduces operational fragility through rigid memory constraints while failing to address credential-residue risks in debugging scenarios. The i18n expansion mechanism lacks fraud controls, and retention settings create GDPR compliance gaps. Deferring implementation until heap-security is proven and attestation verification is automated would prevent systemic vulnerabilities.
+
+### Votes
+
+- **G-Q4-v4** = `GQ4v4-OK` — Ratify v4 — memory-only MUST + memory-pressure monitor with hard-fail (process.memoryUsage
+  > The hard-fail monitor satisfies core security objectives despite threshold tuning being desirable.
+- **G-Q6-v4** = `GQ6v4-OK` — Ratify v4 — 9-language floor + denylist-registry PR path + W5a merge gate + native-speaker
+  > Expansion process balances agility with oversight, though attestation verification needs hardening in implementation.
+- **G-Q7-v4** = `GQ7v4-OK` — Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit +
+  > Retention window pragmatically balances audit needs against metadata sensitivity despite GDPR concerns.
+
+Overall: Monitor implementation must include threshold configurability per product. i18n registry requires automated attestation validation pre-merge.
+
+---
+
+## Slot 8 — openrouter:perplexity/sonar — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Memory-only weakens recoverability**
+
+> §2 Invariant 2 and G-Q4-v4 make storageState memory-only with no filesystem fallback under any condition. That removes the only durable recovery path if the Node process is restarted, the browser crashes, or a transient OOM occurs mid-run; the run becomes unrecoverable even when the credentials themselves were valid and safe to reuse within the same run.
+
+**Objection 2 — Monitor can misfire on load**
+
+> §13 makes the memory-pressure monitor mandatory at every storageState read/write boundary with a default 80% heapTotal threshold. In real Node workloads, heap usage spikes are common during GC pauses, large DOMs, or concurrent page captures, so a legitimate crawl can abort purely due to transient pressure rather than actual unsafe persistence risk.
+
+**Objection 3 — Denylist still invites destructive clicks**
+
+> §2 Invariant 5 allows clicks on buttons that pass a hybrid gate, but it explicitly acknowledges false negatives for obfuscated text, JS-only handlers, and icon-only controls. Because authenticated crawls are read-only, any missed destructive control can still mutate account state; the allowlist does not cover third-party or legacy UIs that do not expose `data-crawl-safe="true"`.
+
+**Objection 4 — Language expansion lacks governance**
+
+> §2 Invariant 5 and §11 #15 let additional destructive-term languages be added via a PR to the denylist registry with W5a merge and native-speaker attestation, without Panel re-ratification. That creates a governance bypass where a small merge path can materially change the safety boundary of authenticated automation across products, but there is no explicit independent review or rollback requirement if the new terms are incomplete or wrong.
+
+**Objection 5 — Retention is still highly sensitive**
+
+> §5.4 changes credentialed-run audit retention to 90 days hot plus 1 year cold. Even without raw credentials, these records include URLs visited, timing, and response shapes, which can expose private workflows; keeping them for a year may exceed what is necessary for incident response and increases breach-disclosure and subpoena risk.
+
+**Worse-than-status-quo scenario:** If the monitor is too sensitive, a routine high-memory authenticated crawl will abort loudly, leave no usable artifacts, and force operators to rerun repeatedly while still having no fallback path. That is worse than the current unauthenticated crawler, which at least completes coverage rather than failing at the login/memory boundary without any output.
+
+**Precedent:** Many systems have learned that in-memory-only secrets are safer but operationally brittle; for example, browser session handling in headless automation frameworks often uses ephemeral temp files or encrypted stores specifically because pure heap residency makes recovery and debugging difficult. no precedent known
+
+### Rejection steelman
+
+> The strongest case for rejecting or deferring this proposal is that it codifies safety in ways that are not operationally robust: it removes recovery options, adds a fragile memory threshold to the critical path, and expands a denylist whose false-negative failure mode can still trigger destructive actions. The retention change also preserves highly sensitive behavioral metadata longer than necessary, while the language-expansion process delegates a meaningful policy change to a lightweight merge path without independent ratification. A prudent reviewer could argue that these are exactly the kinds of controls that should be piloted behind a narrower rollout rather than promoted as Phase-3 must-ship requirements.
+
+### Votes
+
+- **G-Q4-v4** = `GQ4v4-THRESH` — Ratify MUST + monitor but raise or lower the default threshold from 80% — specify the alte
+  > The memory-only requirement is directionally right, but 80% of heapTotal feels too low for a hard abort in a browser-heavy crawl and will likely cause avoidable failures. I would keep the monitor but use a higher default threshold (e.g. 90%) with a conservative override for constrained environments.
+- **G-Q6-v4** = `GQ6v4-BROAD` — Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum 
+  > The 9-language floor is acceptable, but expanding the denylist for new locales affects safety semantics and should not rest on a single merge gate. An additional independent review surface reduces the chance of incomplete translations or overbroad terms silently changing crawler behavior.
+- **G-Q7-v4** = `GQ7v4-OK` — Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit +
+  > This is a defensible compromise between incident-response utility and metadata-minimization, and the rationale is materially better than an arbitrary split. It is still sensitive, but the shorter-than-standard window is easier to justify than the canonical 7-year retention.
+
+Overall: I am not fully comfortable with the monitor threshold or the lightweight language-expansion governance, but the proposal is directionally safer than the alternatives on Q4 and Q7.
+
+---
+
+## Slot 9 — openrouter:meta-llama/llama-4-maverick — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Overly complex credential handling**
+
+> The proposal introduces multiple new mechanisms for handling credentials (§3), including validation, transit, and lifetime management. This complexity increases the risk of errors or security vulnerabilities.
+
+**Objection 2 — Insufficient testing for edge cases**
+
+> While the proposal outlines various test surfaces (§11), it may not cover all edge cases, such as unusual login forms or unexpected credential formats, which could lead to failures or security issues.
+
+**Objection 3 — Retention policy may not align with all compliance needs**
+
+> The proposed retention policy (§5.4) of 90 days hot + 1 year cold for credentialed-run audit records may not satisfy all compliance requirements, potentially leading to legal or regulatory issues.
+
+**Worse-than-status-quo scenario:** If the new credential handling mechanisms introduce significant bugs or security vulnerabilities, the system could become less secure than the current status quo, potentially leading to credential leaks or other security incidents.
+
+**Precedent:** Similar complex authentication systems in other projects have sometimes led to security issues due to their complexity and the challenges in testing all possible scenarios.
+
+### Rejection steelman
+
+> The proposal could be rejected or deferred if the Panel determines that the added complexity and potential security risks outweigh the benefits of the authenticated crawl traversal feature, or if there are concerns about the ability to fully test and validate the new mechanisms.
+
+### Votes
+
+- **G-Q4-v4** = `GQ4v4-OK` — Ratify v4 — memory-only MUST + memory-pressure monitor with hard-fail (process.memoryUsage
+  > The addition of a memory-pressure monitor with hard-fail semantics addresses concerns about potential memory issues and ensures the system fails safely without falling back to insecure practices.
+- **G-Q6-v4** = `GQ6v4-OK` — Ratify v4 — 9-language floor + denylist-registry PR path + W5a merge gate + native-speaker
+  > The proposed expansion process for the denylist registry provides a reasonable balance between security and flexibility, allowing for additions beyond the initial 9 languages without requiring full Panel re-ratification.
+- **G-Q7-v4** = `GQ7v4-OK` — Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit +
+  > The rationale provided in §5.4 effectively justifies the chosen retention period, balancing the need for audit trail availability with the sensitivity of credentialed-run records and minimizing liability.
+
+Overall: The proposal addresses several concerns raised in previous versions and provides a more robust security posture for authenticated crawl traversal.
+
+---
+
+## Slot 10 — openrouter:x-ai/grok-4.3 — state: `ENGAGED`
+
+### Adversarial pass
+
+**Objection 1 — Memory-pressure monitor hard-fail**
+
+> §13 and Invariant 2 mandate a process.memoryUsage() monitor at 80% heapTotal that aborts the entire run with ok:false reason:'memory_pressure_abort' and forbids any filesystem fallback; this couples a transient heap spike directly to crawl termination without rollback or partial-result path, naming the exact acceptance gate in §11 #14.
+
+**Objection 2 — i18n denylist false-negative surface**
+
+> Invariant 5 explicitly lists unhandled cases (custom CSS classes, obfuscated onclick handlers, JS-only events, languages outside the 9-family floor) yet still claims defence-in-depth via same-origin + one-shot credentials; the hybrid gate in §2.5 therefore leaves a documented attack surface inside the authenticated context without additional mitigation.
+
+**Objection 3 — Retention rationale circularity**
+
+> §5.4 anchors 90-hot + 1yr-cold on 'quarterly enterprise security review' and 'annual compliance' without citing any measured incident latency or audit cadence data from the existing GovernanceAuditLog; the justification therefore reduces to an unverified assumption about operational timelines.
+
+**Worse-than-status-quo scenario:** A memory-pressure abort on a legitimate high-page-count authenticated crawl will return a hard failure where the prior unauthenticated Phase-1 crawler would have completed and produced partial results, thereby reducing overall coverage and forcing operators to re-submit credentials for every retry.
+
+**Precedent:** no precedent known
+
+### Rejection steelman
+
+> The proposal layers three new mandatory Phase-3 deliverables (memory-pressure monitor, 9-language test matrix, retention-class cron) on top of an already complex auth surface while simultaneously acknowledging multiple unhandled false-negative classes and a hosting-environment memory-dump residual; deferring until real fixture data from Phase-1 runs can quantify actual heap pressure and incident latency would reduce the risk of shipping an over-constrained, under-tested mechanism that aborts more runs than it secures.
+
+### Votes
+
+- **G-Q4-v4** = `REJECT` — REJECT
+  > The added monitor couples transient heap usage to hard failure without demonstrated necessity or fallback path.
+- **G-Q6-v4** = `GQ6v4-PANEL` — Ratify floor but require Panel re-ratification for each language addition beyond 9 (heavie
+  > The proposed PR + W5a gate lacks external oversight for security-critical denylist changes.
+- **G-Q7-v4** = `REJECT` — REJECT
+  > The rationale provides no quantitative justification for diverging from the established audit trail length.
+
+Overall: All three objections target concrete, named mechanisms rather than generic risk language.
+
+
+---
+
+## Raw reviewer responses (first 8K each)
+
+### Slot 1 — openrouter:anthropic/claude-opus-4
+
+- Provider: `openrouter`
+- Latency: 63143 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 7,
+  "adversarial_pass": {
+    "objections": [
+      {
+        "title": "Memory monitor threshold arbitrary",
+        "detail": "§13 Engineering Scope specifies 80% heapTotal threshold with no empirical basis. Real-world Node.js apps see legitimate heap usage spikes during JSON parsing that could trigger false-positive aborts on valid authenticated crawls, especially for large ProductSSOT objects."
+      },
+      {
+        "title": "Language expansion process ungated",
+        "detail": "Invariant 5's v4 expansion mechanism allows any operator to submit destructive terms via PR with only W5a review. No verification that the 'native-speaker attestation' is genuine, no secondary review, no automated validation that submitted terms are actually destructive actions."
+      },
+      {
+        "title": "Audit retention rationale post-hoc",
+        "detail": "§5.4 rationale claims 90-day hot covers 'standard enterprise security review cycle' but provides no citation. Many enterprises run monthly security reviews; others run annual. The 'quarterly' assertion appears fabricated to justify the already-chosen 90-day value."
+      },
+      {
+        "title": "No credential rotation detection",
+        "detail": "§3.5 Playwright invocation uses heuristic selectors but has no mechanism to detect when target product rotates credentials mid-crawl. A 2-hour crawl could have its session invalidated after 1 hour, continuing to crawl 'authenticated' pages that are actually auth-gated."
+      }
+    ],
+    "worse_than_status_quo": "The memory-pressure monitor's hard-fail semantic means legitimate large crawls that would succeed today (using swap or gc pressure) will abort at 80% heap, forcing operators to manually chunk their crawls or upgrade instance sizes unnecessarily.",
+    "precedent": "Puppeteer's memory leak issues with long-running browser contexts (github.com/puppeteer/puppeteer/issues/1223) caused production crawlers to implement filesystem-based session persistence specifically because memory-only approaches failed under load."
+  },
+  "rejection_steelman": "This spec locks in three contentious decisions without adequate operational validation: the 80% memory threshold is untested against real workloads, the language-expansion process has no quality gates beyond single-person review, and the retention rationale retrofits justification for values that appear arbitrarily chosen. The spec should be deferred until Phase 3 can run memory-pressure experiments on actual authenticated crawls to set data-driven thresholds.",
+  "answers": {
+    "G-Q4-v4": {
+      "pick_text": "Ratify MUST + monitor but raise or lower the default threshold from 80% — specify the alternative in rationale.",
+      "rationale": "80% is too aggressive for Node.js apps that legitimately spike during JSON operations; 90% threshold would reduce false-positive aborts while still protecting against true memory exhaustion."
+    },
+    "G-Q6-v4": {
+      "pick_text": "Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum sign-off OR product-owner sign-off in addition to W5a).",
+      "rationale": "Single-person review for security-critical destructive-action terms is insufficient; requiring Panel sub-quorum (3 members) or product-owner sign-off adds necessary quality control."
+    },
+    "G-Q7-v4": {
+      "pick_text": "Different — specify (e.g. 90 hot + 6-month cold; or 180 hot + 1yr cold; or other hybrid).",
+      "rationale": "90 hot + 6-month cold better balances incident response (most investigations complete within 6 months) against credential-context sensitivity, while avoiding the full-year liability window."
+    }
+  },
+  "overall_notes": "The v4 condition-closers feel hasty — adding features to hit vote thresholds rather than addressing root concerns about operational readiness."
+}
+```
+
+---
+
+### Slot 2 — openrouter:openai/gpt-4o
+
+- Provider: `openrouter`
+- Latency: 8813 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 1,
+  "adversarial_pass": {
+    "objections": [
+      {
+        "title": "Memory pressure handling",
+        "detail": "In §2 Invariant 2, the proposal mandates memory-only storageState without filesystem fallback. However, the memory-pressure monitor introduced in v4 may not adequately address scenarios where memory usage spikes unexpectedly, potentially leading to frequent aborts without a clear recovery path."
+      },
+      {
+        "title": "Language expansion process",
+        "detail": "In §11 #15, the proposal outlines a process for expanding the language denylist. However, relying solely on native-speaker attestation and W5a review may not be sufficient to ensure comprehensive coverage and prevent potential bypasses, especially for less common languages."
+      },
+      {
+        "title": "Retention rationale clarity",
+        "detail": "In §5.4, the rationale for the 90-day hot and 1-year cold retention policy is provided. However, the justification may not fully address concerns about the adequacy of the retention period for compliance and audit purposes, particularly in industries with longer standard retention requirements."
+      }
+    ],
+    "worse_than_status_quo": "The proposal could lead to frequent aborts due to memory pressure without a fallback, causing disruptions in authenticated crawl operations.",
+    "precedent": "no precedent known"
+  },
+  "rejection_steelman": "The proposal introduces a memory-pressure monitor to enforce memory-only storageState, but this could lead to frequent aborts without a fallback mechanism, potentially disrupting operations. Additionally, the language expansion process may not be robust enough to prevent bypasses, and the retention rationale may not align with industry standards, warranting further review and refinement before implementation.",
+  "answers": {
+    "G-Q4-v4": {
+      "pick_text": "Reject v4; restore v3 memory-only MUST WITHOUT the explicit monitor (trust runtime defaults rather than codify a monitor as Phase-3 must-ship).",
+      "rationale": "The introduction of a memory-pressure monitor could lead to frequent aborts without a fallback, disrupting operations. Trusting runtime defaults may provide more stability."
+    },
+    "G-Q6-v4": {
+      "pick_text": "Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum sign-off OR product-owner sign-off in addition to W5a).",
+      "rationale": "A broader review process for language additions would ensure more comprehensive coverage and prevent potential bypasses."
+    },
+    "G-Q7-v4": {
+      "pick_text": "Different — specify (e.g. 90 hot + 6-month cold; or 180 hot + 1yr cold; or other hybrid).",
+      "rationale": "A hybrid retention period, such as 90 hot + 6-month cold, could better balance compliance needs with liability concerns."
+    }
+  },
+  "overall_notes": "The proposal's approach to memory management and language expansion requires further refinement to ensure operational stability and comprehensive coverage."
+}
+```
+
+---
+
+### Slot 3 — openrouter:meta-llama/llama-3.3-70b-instruct
+
+- Provider: `openrouter`
+- Latency: 43795 ms
+- HTTP status: OK
+
+```
+```json
+{
+  "reviewer_slot": 1,
+  "adversarial_pass": {
+    "objections": [
+      { "title": "Memory Pressure", "detail": "The proposal does not adequately address potential memory pressure issues that may arise during the crawl process, particularly when dealing with large storageState objects. This could lead to performance degradation or even crashes." },
+      { "title": "Inconsistent Retention", "detail": "The retention policy for credentialed-run audit records (90 days hot + 1 year cold) may not be consistent with other audit record retention policies, potentially leading to confusion and inconsistencies in compliance and incident response." },
+      { "title": "Denylist Evasion", "detail": "The i18n denylist may not be comprehensive enough to cover all possible destructive actions, and an attacker could potentially evade the denylist by using custom or obfuscated button text." }
+    ],
+    "worse_than_status_quo": "If the proposal is implemented without adequate consideration for memory pressure, it could lead to more frequent crashes and performance issues, making the system worse than the status quo.",
+    "precedent": "No precedent known"
+  },
+  "rejection_steelman": "The proposal's complexity and potential for inconsistencies in retention policies, combined with the lack of comprehensive denylist coverage, may outweigh its benefits, and it may be more prudent to reject or defer the proposal until these issues are more thoroughly addressed.",
+  "answers": {
+    "G-Q4-v4": { "pick_text": "Ratify v4 — memory-only MUST + memory-pressure monitor with hard-fail (process.memoryUsage() threshold at 80% of heapTotal; breach → ok:false reason:\"memory_pressure_abort\"; NEVER triggers filesystem fallback).", "rationale": "This option provides a clear and comprehensive approach to handling memory pressure, ensuring that the system does not silently degrade or spill storageState to disk." },
+    "G-Q6-v4": { "pick_text": "Ratify v4 — 9-language floor + denylist-registry PR path + W5a merge gate + native-speaker attestation + no Panel re-ratification for additions beyond 9.", "rationale": "This option provides a balanced approach to denylist expansion, allowing for additions while maintaining a level of review and control." },
+    "G-Q7-v4": { "pick_text": "Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit + minimised-liability triangulation.", "rationale": "This option provides a clear and well-reasoned approach to retention, balancing the need for audit trails with the need to minimize liability." }
+  },
+  "overall_notes": "The proposal requires careful consideration of potential issues and inconsistencies, and may benefit from additional review and refinement before implementation."
+}
+```
+```
+
+---
+
+### Slot 4 — openrouter:mistralai/mistral-large-2411
+
+- Provider: `openrouter`
+- Latency: 34386 ms
+- HTTP status: OK
+
+```
+```json
+{
+  "reviewer_slot": 1,
+  "adversarial_pass": {
+    "objections": [
+      {
+        "title": "Memory-only storageState handling",
+        "detail": "The spec mandates memory-only storageState handling without any fallback mechanism. This approach might lead to frequent run failures due to memory pressure, especially in environments with limited resources. The hard-fail semantic could disrupt critical operations without providing a graceful degradation path."
+      },
+      {
+        "title": "MFA detection heuristics",
+        "detail": "The heuristic detection of MFA challenges relies on specific text patterns and DOM elements. This approach may not cover all MFA implementations, leading to false negatives where MFA is not detected, and the run proceeds without authentication. The heuristics should be more comprehensive or include a fallback mechanism."
+      },
+      {
+        "title": "Invariant 5 hybrid gate complexity",
+        "detail": "The hybrid gate for non-destructive actions combines an allowlist and a denylist with i18n support. This complexity increases the risk of false positives and negatives, where safe actions are blocked, or destructive actions are allowed. The gate logic should be simplified or more rigorously tested to ensure reliability."
+      },
+      {
+        "title": "Retention policy rationale",
+        "detail": "The retention policy of 90 days hot + 1 year cold is justified by incident response and compliance requirements. However, this policy may not align with all regulatory requirements, such as GDPR, which may require shorter retention periods for sensitive data. The rationale should consider a broader range of regulatory requirements."
+      }
+    ],
+    "worse_than_status_quo": "The proposal's hard-fail semantic for memory pressure could lead to more frequent run failures compared to the status quo, where a fallback mechanism might allow for graceful degradation.",
+    "precedent": "In the context of the AWS Lambda service, a similar design led to frequent function failures due to memory pressure, causing disruptions in critical operations. The lack of a fallback mechanism exacerbated the issue, leading to widespread user dissatisfaction."
+  },
+  "rejection_steelman": "The proposal should be deferred until a more comprehensive fallback mechanism is implemented. The current hard-fail semantic for memory pressure could lead to frequent run failures, disrupting critical operations. Additionally, the MFA detection heuristics and the complex hybrid gate for non-destructive actions need to be more robustly tested to ensure reliability.",
+  "answers": {
+    "G-Q4-v4": {
+      "pick_text": "Different — specify in rationale",
+      "rationale": "The hard-fail semantic for memory pressure could lead to frequent run failures, disrupting critical operations. A fallback mechanism should be implemented to allow for graceful degradation."
+    },
+    "G-Q6-v4": {
+      "pick_text": "Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum sign-off OR product-owner sign-off in addition to W5a).",
+      "rationale": "The addition of new languages should undergo a broader review to ensure the integrity and security of the denylist. This will help prevent unattested additions and maintain the system's reliability."
+    },
+    "G-Q7-v4": {
+      "pick_text": "Different — specify (e.g. 90 hot + 6-month cold; or 180 hot + 1yr cold; or other hybrid).",
+      "rationale": "The retention policy should consider a broader range of regulatory requirements, such as GDPR, which may require shorter retention periods for sensitive data. A hybrid retention policy could better balance compliance and operational needs."
+    }
+  },
+  "overall_notes": "The proposal introduces several robust security measures but also presents significant risks, particularly in the hard-fail semantic for memory pressure and the complexity of the hybrid gate for non-destructive actions."
+}
+```
+```
+
+---
+
+### Slot 5 [BACKUP FIRED] — openrouter:mistralai/mistral-large-2411
+
+- Provider: `openrouter`
+- Latency: 28082 ms
+- HTTP status: OK
+- Primary that failed: `openrouter:openrouter:cohere/command-r-plus-08-2024` (error: unparseable JSON envelope)
+
+```
+```json
+{
+  "reviewer_slot": 3,
+  "adversarial_pass": {
+    "objections": [
+      {
+        "title": "Vague credential scrubbing",
+        "detail": "The proposal does not specify how the `scrubCredentials()` function will be extended to handle evidence artifacts. The §6.3 mentions extending the scrub to cover operator-submitted credentials, but it lacks details on how this will be implemented and verified."
+      },
+      {
+        "title": "Incomplete i18n denylist",
+        "detail": "The i18n denylist covers only 9 language families. While the proposal mentions an expansion process, it does not address how to handle languages with different scripts or cultural nuances that may not be covered by the current denylist."
+      },
+      {
+        "title": "Potential memory leak",
+        "detail": "The memory-pressure monitor is a good addition, but the proposal does not specify how often the memory usage will be sampled. Infrequent sampling could lead to missed detection of memory leaks, allowing credential data to persist in memory longer than necessary."
+      }
+    ],
+    "worse_than_status_quo": "The proposal introduces a memory-pressure monitor that aborts the run on high memory usage. However, if the sampling frequency is not adequately specified, it could lead to missed detections and potential memory leaks, making the system worse than the status quo where credentials are scrubbed immediately.",
+    "precedent": "In the past, similar memory management issues in Node.js applications have led to security vulnerabilities, such as the Heartbleed bug in OpenSSL, where improper memory management allowed attackers to read sensitive information from memory."
+  },
+  "rejection_steelman": "The proposal should be deferred until more details are provided on the implementation and verification of the `scrubCredentials()` function for evidence artifacts. Additionally, the i18n denylist should be expanded to cover more languages, and the memory-pressure monitor should have a clearly defined sampling frequency to prevent potential memory leaks.",
+  "answers": {
+    "G-Q4-v4": {
+      "pick_text": "Different — specify in rationale",
+      "rationale": "The proposal should specify the sampling frequency for the memory-pressure monitor to ensure timely detection of memory leaks."
+    },
+    "G-Q6-v4": {
+      "pick_text": "Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum sign-off OR product-owner sign-off in addition to W5a)",
+      "rationale": "The expansion process should include a broader review to ensure that new languages are adequately covered by the denylist."
+    },
+    "G-Q7-v4": {
+      "pick_text": "Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit + minimised-liability triangulation",
+      "rationale": "The proposed retention policy balances the need for incident response and compliance review while minimizing the liability window."
+    }
+  },
+  "overall_notes": "The proposal has several strengths, but it needs more specificity in certain areas to ensure that the implementation is secure and effective."
+}
+```
+```
+
+---
+
+### Slot 6 [BACKUP FIRED] — openrouter:minimax/minimax-m2.7
+
+- Provider: `openrouter`
+- Latency: 13994 ms
+- HTTP status: OK
+- Primary that failed: `openrouter:openrouter:google/gemini-2.0-flash` (error: openrouter 400: {"error":{"message":"google/gemini-2.0-flash is not a valid model ID","code":400},"user_id":"user_3DVfQQQAtku9d1VDUCozUxvWIPE"})
+
+```
+{
+  "reviewer_slot": 7,
+  "adversarial_pass": {
+    "objections": [
+      {
+        "title": "Memory-pressure monitor creates DoS vector",
+        "detail": "Section 13 + §11 #14 specifies a memory-pressure monitor that aborts runs at 80% heapTotal with `ok:false, reason: 'memory_pressure_abort'`. The threshold is checked 'at every storageState read/write boundary' per Section 13. This creates a predictable denial-of-service: any process allocating memory up to 80% of heapTotal — including legitimate concurrent operations on the same Node.js process — will abort authenticated crawls. A malicious operator or compromised dependency could deliberately trigger the threshold to prevent security scanning of their product. The hard-fail semantic (no retry, no GC wait, no reduced-scope continuation) makes this a permanent abort rather than a transient warning."
+      },
+      {
+        "title": "Language expansion bypasses Panel governance",
+        "detail": "Invariant 5 v4 condition-closer + §11 #15 allow W5a to merge language additions 'without Panel re-ratification.' The spec states 'the process itself is the control' but provides no technical enforcement that W5a actually performed native-speaker attestation review before merging. A compromised or negligent W5a member could merge a language addition without proper attestation, weakening the destructive-action denylist without Panel oversight. The spec explicitly rejects requiring Panel re-ratification for additions beyond 9 (option b in G-Q6-v4), removing the governance check that would catch attestation failures."
+      },
+      {
+        "title": "Defense-in-depth argument is incomplete for same-origin threats",
+        "detail": "Invariant 5's 'defense in depth' argument (Section 5, closing paragraph) relies on Invariant 4 (same-origin) to prevent credential exfiltration even if destructive buttons slip past the denylist. However, Invariant 4 only prevents cross-origin credential exfiltration — it does NOT prevent destructive actions on the same origin. A destructive button on the target product's own domain (e.g., 'Delete Account' or 'Wipe Data') will still execute with the authenticated session because it is same-origin. The spec's own acknowledged-residual list confirms this: 'Custom CSS class names that don't match the convention,' 'Obfuscated text content,' and 'JavaScript-only event handlers' all slip through. The 'defense in depth' framing could mislead implementers into believing they're protected against same-origin destructive actions when they're not."
+      },
+      {
+        "title": "90-day hot retention rationale is unsupported empirical claim",
+        "detail": "Section 5.4 states 'Most security incidents surface within 90 days of the underlying event' as justification for the 90-day hot window. This is presented as fact with no citation. Industry breach reports (Verizon DBIR, Mandiant M-Trends) consistently show median dwell times of 100+ days for sophisticated attacks — well beyond the 90-day window. The rationale also claims the 90-day window 'covers the quarterly enterprise security review cycle' but enterprise security reviews typically examine longer historical windows. An incident discovered on day 91 would have no hot-store audit trail, forcing investigators to cold-store queries for what should be readily available evidence."
+      },
+      {
+        "title": "Memory-only storageState creates unrecoverable crash scenario",
+        "detail": "Invariant 2 mandates memory-only storageState with no filesystem fallback. Invariant 10 acknowledges the 'honest heap-dump residual' — a hostile process memory dump could observe the storageState object. The spec documents this as a 'known limitation' but the mitigation is only 'hosting-environment trust assumption' (Vercel isolation). If the Vercel runtime is compromised, or if a kernel core dump is obtained, the in-memory storageState (containing session cookies and tokens for the target product) is fully exposed. The v1 on-disk approach with encryption at rest would have been more resilient to runtime compromise than the v2/v4 memory-only approach."
+      }
+    ],
+    "worse_than_status_quo": "If a target product has MFA enabled (increasingly common in enterprise environments), the authenticated crawl will fail-loud and stop entirely per Invariant 3. The status quo (Phase 1 unauthenticated crawl) at least provides partial coverage of publicly-accessible pages. Under v4, MFA-protected products receive ZERO coverage — the crawl terminates at the MFA wall and returns `ok:false, authFailureReason: 'mfa_required'`. This is strictly worse than the status quo where at least some pages could be crawled, and it affects the growing majority of security-conscious products where MFA is mandatory.",
+    "precedent": "The 2021 Codecov supply-chain breach (U.S. government advisory BARTON-2021-0178) demonstrated that in-memory credential exposure via compromised build infrastructure is a real-world risk. Codecov's Docker container had a credential exfiltration mechanism that extracted credentials from environment variables — a memory-resident credential surface. The lesson: memory-only credential handling without filesystem encryption provides no protection against runtime compromise, and the 'hosting-environment trust assumption' is only as strong as the infrastructure's supply-chain security. FlowAI's memory-only storageState approach replicates this trust assumption without addressing the underlying vulnerability class."
+  },
+  "rejection_steelman": "The proposal attempts to secure authenticated crawling but introduces new attack surfaces that outweigh the credential-exfiltration risks it mitigates. The memory-pressure monitor creates a predictable DoS vector against security scanning; the language-expansion bypass removes Panel governance for denylist changes; the 90/1yr retention creates compliance gaps for regulated customers; and the memory-only storageState trades filesystem encryption for a 'hosting-environment trust assumption' that is vulnerable to runtime compromise. The 10 invariants, 15 acceptance criteria, and 7.25 W-day implementation create a complex surface area that is harder to audit than the simpler v1 approach with encrypted filesystem persistence. A phased approach that ships the credential-scrubbing invariants (1, 7, 8) without the operational brittleness of the memory-pressure monitor and retention divergence would achieve the security goals with lower risk.",
+  "answers": {
+    "G-Q4-v4": {
+      "pick_text": "Reject v4; restore v3 memory-only MUST WITHOUT the explicit monitor (trust runtime defaults rather than codify a monitor as a Phase-3 must-ship).",
+      "rationale": "The memory-pressure monitor at 80% heapTotal creates a predictable DoS vector against authenticated crawl runs and introduces operational brittleness (hard-fail with no retry/GC-wait/reduced-scope path). The v3 memory-only MUST is sufficient — Vercel's Node.js runtime already has memory management; codifying a specific threshold as a Phase-3 must-ship creates more failure modes than it prevents."
+    },
+    "G-Q6-v4": {
+      "pick_text": "Ratify floor but require Panel re-ratification for each language addition beyond 9 (heavier review, slower expansion).",
+      "rationale": "The W5a-only merge gate creates a single-point-of-failure governance risk — a compromised or negligent W5a member could weaken the denylist without Panel oversight. Panel re-ratification for each addition beyond 9 is the correct control: it preserves the 9-language floor (which has test coverage) while ensuring that expansion decisions receive the governance review the Panel is designed to provide."
+    },
+    "G-Q7-v4": {
+      "pick_text": "Reject v4; restore CA-10-E canonical retention (365 hot + 7yr cold) — the 'shorter than standard' intent is not compelling enough to diverge.",
+      "rationale": "The 90/1yr rationale relies on an unsupported empirical claim ('most inciden
+```
+
+---
+
+### Slot 7 — openrouter:deepseek/deepseek-r1
+
+- Provider: `openrouter`
+- Latency: 80970 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 3,
+  "adversarial_pass": {
+    "objections": [
+      {
+        "title": "Memory-pressure monitor threshold arbitrary",
+        "detail": "The default 80% heap threshold for memory-pressure aborts (§13) lacks empirical justification. High-traffic products may trigger false aborts during legitimate crawls. The hard-fail semantic ignores memory optimization opportunities like selective state pruning."
+      },
+      {
+        "title": "i18n denylist expansion ungoverned",
+        "detail": "The denylist registry PR process (§11 #15) lacks verification for native-speaker attestations. W5a merge gate creates single-point failure risk without automated validation. Malicious actors could inject ineffective terms via compromised attestations."
+      },
+      {
+        "title": "Retention rationale ignores GDPR conflict",
+        "detail": "§5.4 rationale assumes 1-year cold retention satisfies compliance but contradicts GDPR Article 17's 'right to erasure'. Credentialed-run metadata (URLs/timing) qualifies as PII. The 365-day retention creates legal exposure without data-subject consent mechanisms."
+      },
+      {
+        "title": "StorageState GC vulnerabilities",
+        "detail": "Invariant 2 relies on JS garbage collection for credential erasure, but Node.js heap snapshots in diagnostics mode could capture storageState objects. No mechanism prevents heap-dump tooling during authenticated runs."
+      }
+    ],
+    "worse_than_status_quo": "A memory-pressure abort during a business-critical crawl would terminate the entire run without partial results, whereas status quo unauthenticated crawls degrade gracefully. Operators might disable monitoring thresholds, reintroducing memory-exhaustion risks the spec aimed to solve.",
+    "precedent": "2017 Uber breach: Engineers stored AWS credentials in plaintext within GitHub repositories despite internal policies, analogous to residual credential exposure risks in debug heap dumps."
+  },
+  "rejection_steelman": "The proposal introduces operational fragility through rigid memory constraints while failing to address credential-residue risks in debugging scenarios. The i18n expansion mechanism lacks fraud controls, and retention settings create GDPR compliance gaps. Deferring implementation until heap-security is proven and attestation verification is automated would prevent systemic vulnerabilities.",
+  "answers": {
+    "G-Q4-v4": {
+      "pick_text": "Ratify v4 — memory-only MUST + memory-pressure monitor with hard-fail (process.memoryUsage() threshold at 80% of heapTotal; breach → ok:false reason:\"memory_pressure_abort\"; NEVER triggers filesystem fallback).",
+      "rationale": "The hard-fail monitor satisfies core security objectives despite threshold tuning being desirable."
+    },
+    "G-Q6-v4": {
+      "pick_text": "Ratify v4 — 9-language floor + denylist-registry PR path + W5a merge gate + native-speaker attestation + no Panel re-ratification for additions beyond 9.",
+      "rationale": "Expansion process balances agility with oversight, though attestation verification needs hardening in implementation."
+    },
+    "G-Q7-v4": {
+      "pick_text": "Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit + minimised-liability triangulation.",
+      "rationale": "Retention window pragmatically balances audit needs against metadata sensitivity despite GDPR concerns."
+    }
+  },
+  "overall_notes": "Monitor implementation must include threshold configurability per product. i18n registry requires automated attestation validation pre-merge."
+}
+```
+
+---
+
+### Slot 8 — openrouter:perplexity/sonar
+
+- Provider: `openrouter`
+- Latency: 15512 ms
+- HTTP status: OK
+
+```
+{"reviewer_slot":0,"adversarial_pass":{"objections":[{"title":"Memory-only weakens recoverability","detail":"§2 Invariant 2 and G-Q4-v4 make storageState memory-only with no filesystem fallback under any condition. That removes the only durable recovery path if the Node process is restarted, the browser crashes, or a transient OOM occurs mid-run; the run becomes unrecoverable even when the credentials themselves were valid and safe to reuse within the same run."},{"title":"Monitor can misfire on load","detail":"§13 makes the memory-pressure monitor mandatory at every storageState read/write boundary with a default 80% heapTotal threshold. In real Node workloads, heap usage spikes are common during GC pauses, large DOMs, or concurrent page captures, so a legitimate crawl can abort purely due to transient pressure rather than actual unsafe persistence risk."},{"title":"Denylist still invites destructive clicks","detail":"§2 Invariant 5 allows clicks on buttons that pass a hybrid gate, but it explicitly acknowledges false negatives for obfuscated text, JS-only handlers, and icon-only controls. Because authenticated crawls are read-only, any missed destructive control can still mutate account state; the allowlist does not cover third-party or legacy UIs that do not expose `data-crawl-safe=\"true\"`."},{"title":"Language expansion lacks governance","detail":"§2 Invariant 5 and §11 #15 let additional destructive-term languages be added via a PR to the denylist registry with W5a merge and native-speaker attestation, without Panel re-ratification. That creates a governance bypass where a small merge path can materially change the safety boundary of authenticated automation across products, but there is no explicit independent review or rollback requirement if the new terms are incomplete or wrong."},{"title":"Retention is still highly sensitive","detail":"§5.4 changes credentialed-run audit retention to 90 days hot plus 1 year cold. Even without raw credentials, these records include URLs visited, timing, and response shapes, which can expose private workflows; keeping them for a year may exceed what is necessary for incident response and increases breach-disclosure and subpoena risk."}],"worse_than_status_quo":"If the monitor is too sensitive, a routine high-memory authenticated crawl will abort loudly, leave no usable artifacts, and force operators to rerun repeatedly while still having no fallback path. That is worse than the current unauthenticated crawler, which at least completes coverage rather than failing at the login/memory boundary without any output.","precedent":"Many systems have learned that in-memory-only secrets are safer but operationally brittle; for example, browser session handling in headless automation frameworks often uses ephemeral temp files or encrypted stores specifically because pure heap residency makes recovery and debugging difficult. no precedent known"},"rejection_steelman":"The strongest case for rejecting or deferring this proposal is that it codifies safety in ways that are not operationally robust: it removes recovery options, adds a fragile memory threshold to the critical path, and expands a denylist whose false-negative failure mode can still trigger destructive actions. The retention change also preserves highly sensitive behavioral metadata longer than necessary, while the language-expansion process delegates a meaningful policy change to a lightweight merge path without independent ratification. A prudent reviewer could argue that these are exactly the kinds of controls that should be piloted behind a narrower rollout rather than promoted as Phase-3 must-ship requirements.","answers":{"G-Q4-v4":{"pick_text":"Ratify MUST + monitor but raise or lower the default threshold from 80% — specify the alternative in rationale.","rationale":"The memory-only requirement is directionally right, but 80% of heapTotal feels too low for a hard abort in a browser-heavy crawl and will likely cause avoidable failures. I would keep the monitor but use a higher default threshold (e.g. 90%) with a conservative override for constrained environments."},"G-Q6-v4":{"pick_text":"Ratify floor but require broader-than-W5a review for each addition (e.g. Panel sub-quorum sign-off OR product-owner sign-off in addition to W5a).","rationale":"The 9-language floor is acceptable, but expanding the denylist for new locales affects safety semantics and should not rest on a single merge gate. An additional independent review surface reduces the chance of incomplete translations or overbroad terms silently changing crawler behavior."},"G-Q7-v4":{"pick_text":"Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit + minimised-liability triangulation.","rationale":"This is a defensible compromise between incident-response utility and metadata-minimization, and the rationale is materially better than an arbitrary split. It is still sensitive, but the shorter-than-standard window is easier to justify than the canonical 7-year retention."}},"overall_notes":"I am not fully comfortable with the monitor threshold or the lightweight language-expansion governance, but the proposal is directionally safer than the alternatives on Q4 and Q7."}
+```
+
+---
+
+### Slot 9 — openrouter:meta-llama/llama-4-maverick
+
+- Provider: `openrouter`
+- Latency: 24064 ms
+- HTTP status: OK
+
+```
+```json
+{
+  "reviewer_slot": 1,
+  "adversarial_pass": {
+    "objections": [
+      {
+        "title": "Overly complex credential handling",
+        "detail": "The proposal introduces multiple new mechanisms for handling credentials (§3), including validation, transit, and lifetime management. This complexity increases the risk of errors or security vulnerabilities."
+      },
+      {
+        "title": "Insufficient testing for edge cases",
+        "detail": "While the proposal outlines various test surfaces (§11), it may not cover all edge cases, such as unusual login forms or unexpected credential formats, which could lead to failures or security issues."
+      },
+      {
+        "title": "Retention policy may not align with all compliance needs",
+        "detail": "The proposed retention policy (§5.4) of 90 days hot + 1 year cold for credentialed-run audit records may not satisfy all compliance requirements, potentially leading to legal or regulatory issues."
+      }
+    ],
+    "worse_than_status_quo": "If the new credential handling mechanisms introduce significant bugs or security vulnerabilities, the system could become less secure than the current status quo, potentially leading to credential leaks or other security incidents.",
+    "precedent": "Similar complex authentication systems in other projects have sometimes led to security issues due to their complexity and the challenges in testing all possible scenarios."
+  },
+  "rejection_steelman": "The proposal could be rejected or deferred if the Panel determines that the added complexity and potential security risks outweigh the benefits of the authenticated crawl traversal feature, or if there are concerns about the ability to fully test and validate the new mechanisms.",
+  "answers": {
+    "G-Q4-v4": {
+      "pick_text": "Ratify v4 — memory-only MUST + memory-pressure monitor with hard-fail (process.memoryUsage() threshold at 80% of heapTotal; breach → ok:false reason:\"memory_pressure_abort\"; NEVER triggers filesystem fallback).",
+      "rationale": "The addition of a memory-pressure monitor with hard-fail semantics addresses concerns about potential memory issues and ensures the system fails safely without falling back to insecure practices."
+    },
+    "G-Q6-v4": {
+      "pick_text": "Ratify v4 — 9-language floor + denylist-registry PR path + W5a merge gate + native-speaker attestation + no Panel re-ratification for additions beyond 9.",
+      "rationale": "The proposed expansion process for the denylist registry provides a reasonable balance between security and flexibility, allowing for additions beyond the initial 9 languages without requiring full Panel re-ratification."
+    },
+    "G-Q7-v4": {
+      "pick_text": "Ratify v4 — 90 hot + 1yr cold + §5.4 rationale anchoring quarterly-review + annual-audit + minimised-liability triangulation.",
+      "rationale": "The rationale provided in §5.4 effectively justifies the chosen retention period, balancing the need for audit trail availability with the sensitivity of credentialed-run records and minimizing liability."
+    }
+  },
+  "overall_notes": "The proposal addresses several concerns raised in previous versions and provides a more robust security posture for authenticated crawl traversal."
+}```
+```
+
+---
+
+### Slot 10 — openrouter:x-ai/grok-4.3
+
+- Provider: `openrouter`
+- Latency: 15824 ms
+- HTTP status: OK
+
+```
+{
+  "reviewer_slot": 4,
+  "adversarial_pass": {
+    "objections": [
+      { "title": "Memory-pressure monitor hard-fail", "detail": "§13 and Invariant 2 mandate a process.memoryUsage() monitor at 80% heapTotal that aborts the entire run with ok:false reason:'memory_pressure_abort' and forbids any filesystem fallback; this couples a transient heap spike directly to crawl termination without rollback or partial-result path, naming the exact acceptance gate in §11 #14." },
+      { "title": "i18n denylist false-negative surface", "detail": "Invariant 5 explicitly lists unhandled cases (custom CSS classes, obfuscated onclick handlers, JS-only events, languages outside the 9-family floor) yet still claims defence-in-depth via same-origin + one-shot credentials; the hybrid gate in §2.5 therefore leaves a documented attack surface inside the authenticated context without additional mitigation." },
+      { "title": "Retention rationale circularity", "detail": "§5.4 anchors 90-hot + 1yr-cold on 'quarterly enterprise security review' and 'annual compliance' without citing any measured incident latency or audit cadence data from the existing GovernanceAuditLog; the justification therefore reduces to an unverified assumption about operational timelines." }
+    ],
+    "worse_than_status_quo": "A memory-pressure abort on a legitimate high-page-count authenticated crawl will return a hard failure where the prior unauthenticated Phase-1 crawler would have completed and produced partial results, thereby reducing overall coverage and forcing operators to re-submit credentials for every retry.",
+    "precedent": "no precedent known"
+  },
+  "rejection_steelman": "The proposal layers three new mandatory Phase-3 deliverables (memory-pressure monitor, 9-language test matrix, retention-class cron) on top of an already complex auth surface while simultaneously acknowledging multiple unhandled false-negative classes and a hosting-environment memory-dump residual; deferring until real fixture data from Phase-1 runs can quantify actual heap pressure and incident latency would reduce the risk of shipping an over-constrained, under-tested mechanism that aborts more runs than it secures.",
+  "answers": {
+    "G-Q4-v4": { "pick_text": "Reject v4; restore v3 memory-only MUST WITHOUT the explicit monitor (trust runtime defaults rather than codify a monitor as Phase-3 must-ship).", "rationale": "The added monitor couples transient heap usage to hard failure without demonstrated necessity or fallback path." },
+    "G-Q6-v4": { "pick_text": "Ratify floor but require Panel re-ratification for each language addition beyond 9 (heavier review, slower expansion).", "rationale": "The proposed PR + W5a gate lacks external oversight for security-critical denylist changes." },
+    "G-Q7-v4": { "pick_text": "Reject v4; restore CA-10-E canonical retention (365 hot + 7yr cold) — the \"shorter than standard\" intent is not compelling enough to diverge.", "rationale": "The rationale provides no quantitative justification for diverging from the established audit trail length." }
+  },
+  "overall_notes": "All three objections target concrete, named mechanisms rather than generic risk language."
+}
+```

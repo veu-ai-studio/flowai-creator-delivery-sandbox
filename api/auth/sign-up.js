@@ -3,7 +3,7 @@
 //
 // Generic, multi-tenant, product-scoped registration handler. PressAI's UI
 // (when Base44 wires it) POSTs here from /sign-up to create a real user
-// record. Same endpoint serves SAIGE, MyBirthSafe, RelTwin, ReachSMS — each
+// record. Same endpoint serves SAIGE, MyPregLife, RelTwin, ReachSMS — each
 // keyed by (org_id, product_id, email).
 //
 // Closes the backend half of audit issue P0-001 ("/sign-up returns 404").

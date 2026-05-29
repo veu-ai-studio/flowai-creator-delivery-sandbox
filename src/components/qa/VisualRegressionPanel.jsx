@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Camera, Loader2, AlertTriangle, CheckCircle2, Eye, RefreshCw } from 'lucide-react';
+import { Camera, Loader2, AlertTriangle, CheckCircle2, Eye } from 'lucide-react';
 
 const DIFF_LEVELS = {
   none: { label: 'No Change', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30' },

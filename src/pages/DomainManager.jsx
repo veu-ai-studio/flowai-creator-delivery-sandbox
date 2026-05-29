@@ -12,7 +12,7 @@ const PRODUCTS = [
   { name: 'PressAI',        url: 'https://pressai.base44.app',        desc: 'AI publishing platform — authors, publishers, content creators' },
   { name: 'ReachSMS',       url: 'https://reachsms.base44.app',       desc: 'SMS community engagement — nonprofits, community organizations' },
   { name: 'RelTwin',        url: 'https://reltwin.com',               desc: 'Relationship intelligence — coaches, HR professionals' },
-  { name: 'MyBirthSafe',    url: 'https://mybirthsafe.base44.app',    desc: 'Maternal health tracking — pregnant women in Nigeria and Africa' },
+  { name: 'MyPregLife',    url: 'https://mypreglife.base44.app',    desc: 'Maternal health tracking — pregnant women in Nigeria and Africa' },
   { name: 'Victor Udo Hub', url: 'https://victorudo.base44.app',      desc: 'Personal brand & thought leadership platform' },
 ];
 
@@ -58,10 +58,10 @@ Products:
 - PressAI — AI publishing platform targeting authors, publishers, and content creators
 - ReachSMS — SMS community engagement platform targeting nonprofits and community organizations
 - RelTwin — Relationship intelligence platform targeting coaches and HR professionals
-- MyBirthSafe — Personalized maternal health tracking app targeting pregnant women in Nigeria and Africa
+- MyPregLife — Personalized maternal health tracking app targeting pregnant women in Nigeria and Africa
 - Victor Udo Hub — Personal brand and thought leadership platform
 
-Current URLs: SAIGE, PressAI, ReachSMS, MyBirthSafe, Victor Udo Hub are on .base44.app subdomains. RelTwin has reltwin.com.
+Current URLs: SAIGE, PressAI, ReachSMS, MyPregLife, Victor Udo Hub are on .base44.app subdomains. RelTwin has reltwin.com.
 
 For each product produce:
 1. recommended_domain — the ideal production domain name (string, just the domain e.g. saige.ai)
@@ -128,7 +128,7 @@ Also produce:
   const generateChecklist = async () => {
     setChecklistRunning(true);
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate a step-by-step domain registration and configuration checklist for VEU AI Studio. Products: SAIGE, PressAI, ReachSMS, RelTwin, MyBirthSafe, Victor Udo Hub.
+      prompt: `Generate a step-by-step domain registration and configuration checklist for VEU AI Studio. Products: SAIGE, PressAI, ReachSMS, RelTwin, MyPregLife, Victor Udo Hub.
 
 Produce a numbered checklist covering:
 1. Domain registrar selection and account setup

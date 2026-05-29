@@ -1,4 +1,3 @@
-import { useSession } from '@/lib/SessionContext';
 import { Shield } from 'lucide-react';
 
 // Amber shield badge shown in navigation when protection snapshot is active

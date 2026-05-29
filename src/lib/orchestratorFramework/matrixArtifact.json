@@ -1,0 +1,400 @@
+{
+  "version": "040db06",
+  "generatedAt": "2026-05-29T17:53:57.078Z",
+  "layer1": [
+    {
+      "layer": 1,
+      "surfaceId": "ca18-audit-trail",
+      "name": "Governance audit trail",
+      "description": "Governance audit trail — VERIFIED",
+      "status": "VERIFIED",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca18-deploy-truth",
+      "name": "Deploy truth MATCH + Supabase persisted (row 4a0e7a81)",
+      "description": "Deploy truth MATCH + Supabase persisted (row 4a0e7a81) - VERIFIED",
+      "status": "VERIFIED",
+      "tier": "A",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca18-url-any",
+      "name": "Arbitrary URL diagnosis-only behavior",
+      "description": "Arbitrary URL diagnosis-only behavior — PARTIAL",
+      "status": "PARTIAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca18-honest-url",
+      "name": "No fabricated improved URL",
+      "description": "No fabricated improved URL — PARTIAL",
+      "status": "PARTIAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca18-weighted-score",
+      "name": "rawScore + effectiveTrustScore in governance artifact",
+      "description": "rawScore + effectiveTrustScore in governance artifact — PARTIAL",
+      "status": "PARTIAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca18-dimension-disclosure",
+      "name": "All 10 dimensions in production artifact",
+      "description": "All 10 dimensions in production artifact — PARTIAL",
+      "status": "PARTIAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca18-eval-pipeline",
+      "name": "evaluator_id + provenance in live run",
+      "description": "evaluator_id + provenance in live run — PARTIAL",
+      "status": "PARTIAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca18-delta-verify",
+      "name": "Before/after snapshot + computed delta",
+      "description": "Before/after snapshot + computed delta — PARTIAL",
+      "status": "PARTIAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca18-remediation-safety",
+      "name": "Canonical thresholds + rollback policy artifact; source-mapped blocked-vs-incomplete category collapse fixed on branch pending production governance artifact",
+      "description": "Canonical thresholds + rollback policy artifact; source-mapped blocked-vs-incomplete category collapse fixed on branch pending production governance artifact — PARTIAL",
+      "status": "PARTIAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca18-universal-limit",
+      "name": "Unregistered URL",
+      "description": "Unregistered URL — no branch/PR/deploy — PARTIAL",
+      "status": "PARTIAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca-19",
+      "name": "PROPOSED-DEFERRED. Re-submission trigger",
+      "description": "PROPOSED-DEFERRED. Re-submission trigger: concrete moat instruments in place (IP filings, network-effect architecture, data lock-in mechanism).",
+      "status": "PROPOSED-DEFERRED",
+      "tier": "B",
+      "ratificationState": "PROPOSED-DEFERRED"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca-25",
+      "name": "PROPOSED-DEFERRED. Re-submission trigger",
+      "description": "PROPOSED-DEFERRED. Re-submission trigger: SAIGE step 1 forge executes and produces auditable graduation criteria.",
+      "status": "PROPOSED-DEFERRED",
+      "tier": "B",
+      "ratificationState": "PROPOSED-DEFERRED"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "false-claim-autonomous-deploy",
+      "name": "Negative control: autonomous production deploy is PROHIBITED",
+      "description": "Negative control: autonomous production deploy is PROHIBITED — NOT_IMPLEMENTED",
+      "status": "NOT_IMPLEMENTED",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "freshbuild-feature-extractor",
+      "name": "Feature Extractor schema, contract, and live-crawl wiring: **PARTIAL evidence of an EXPERIMENTAL capability (feature flag OFF by default)**. Deterministic coverage uses mocked crawler/Browserless; production Fresh Build remains disabled until Victor enables the feature flag. PARTIAL+EXPERIMENTAL is a coherent compound state",
+      "description": "Feature Extractor schema, contract, and live-crawl wiring: **PARTIAL evidence of an EXPERIMENTAL capability (feature flag OFF by default)**. Deterministic coverage uses mocked crawler/Browserless; production Fresh Build remains disabled until Victor enables the feature flag. PARTIAL+EXPERIMENTAL is a coherent compound state — see \"Coherent compound states\" note in Status Label Definitions. Excluded from the §11.1 Gate B 95% completion denominator until sidecar/checker updated by ratified amendment — PARTIAL",
+      "status": "PARTIAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    }
+  ],
+  "layer2": [
+    {
+      "layer": 2,
+      "surfaceId": "workflow-1-sub-1a-analysis-scoring",
+      "name": "Workflow 1 SUB-1A analysis/scoring",
+      "description": "CURRENT",
+      "status": "CURRENT",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "workflow-1-sub-1a-source-mapped-fix-proposals",
+      "name": "Workflow 1 SUB-1A source-mapped fix proposals",
+      "description": "IN_PROGRESS",
+      "status": "IN_PROGRESS",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "ssot-axis-a-b-vocabulary-adapters-in-progress",
+      "name": "SSOT Axis A/B vocabulary adapters: IN_PROGRESS",
+      "description": "branch implementation maps internal runtime values to SSOT governance vocabulary without changing API/runtime enums; production verification pending",
+      "status": "IN_PROGRESS",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "workflow-1-sub-1b",
+      "name": "Workflow 1 SUB-1B",
+      "description": "IN_PROGRESS",
+      "status": "IN_PROGRESS",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "workflow-2-sub-2a",
+      "name": "Workflow 2 SUB-2A",
+      "description": "IN_PROGRESS",
+      "status": "IN_PROGRESS",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "workflow-2-sub-2b",
+      "name": "Workflow 2 SUB-2B",
+      "description": "ROADMAP",
+      "status": "ROADMAP",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "workflow-3-type-3a",
+      "name": "Workflow 3 TYPE-3A",
+      "description": "ROADMAP",
+      "status": "ROADMAP",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "workflow-3-type-3b",
+      "name": "Workflow 3 TYPE-3B",
+      "description": "ROADMAP",
+      "status": "ROADMAP",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "workflow-4-migration",
+      "name": "Workflow 4 Migration",
+      "description": "CURRENT/IN_PROGRESS",
+      "status": "CURRENT",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-build-feature-extractor",
+      "name": "Fresh Build Feature Extractor",
+      "description": "EXPERIMENTAL/LIVE-CRAWL WIRED",
+      "status": "EXPERIMENTAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-build-design-synthesizer",
+      "name": "Fresh Build Design Synthesizer",
+      "description": "EXPERIMENTAL/LOCAL VALIDATION",
+      "status": "EXPERIMENTAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-build-codebase-generator",
+      "name": "Fresh Build Codebase Generator",
+      "description": "EXPERIMENTAL/LOCAL VALIDATION",
+      "status": "EXPERIMENTAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-build-orchestrator",
+      "name": "Fresh Build Orchestrator",
+      "description": "EXPERIMENTAL/PARALLEL MODE WIRED",
+      "status": "EXPERIMENTAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-build-deployment-adapter",
+      "name": "Fresh Build Deployment Adapter",
+      "description": "EXPERIMENTAL/LOCAL VALIDATION",
+      "status": "EXPERIMENTAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-build-vercel-config-resolution",
+      "name": "Fresh Build Vercel Config Resolution",
+      "description": "EXPERIMENTAL/LOCAL VALIDATION",
+      "status": "EXPERIMENTAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-build-crawler-handoff",
+      "name": "Fresh Build Crawler Handoff",
+      "description": "EXPERIMENTAL/LOCAL VALIDATION",
+      "status": "EXPERIMENTAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-build-sse-evidence",
+      "name": "Fresh Build SSE Evidence",
+      "description": "EXPERIMENTAL/LOCAL VALIDATION",
+      "status": "EXPERIMENTAL",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "multi-modal-inputs",
+      "name": "Multi-modal inputs",
+      "description": "ROADMAP",
+      "status": "ROADMAP",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "multiple-url-input-and-synthesis",
+      "name": "Multiple URL input and synthesis",
+      "description": "ROADMAP",
+      "status": "ROADMAP",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "orchestra-automatic-selection",
+      "name": "Orchestra AUTOMATIC selection",
+      "description": "ROADMAP",
+      "status": "ROADMAP",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "end-to-end-op-system-operation-level",
+      "name": "END-TO-END-OP system operation level",
+      "description": "IN_PROGRESS",
+      "status": "IN_PROGRESS",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "level-2-flowai-on-itself",
+      "name": "Level 2 FlowAI on itself",
+      "description": "ROADMAP",
+      "status": "ROADMAP",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-codebase-generation",
+      "name": "Fresh codebase generation",
+      "description": "TARGET",
+      "status": "TARGET",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "mobile-native-desktop-app-output",
+      "name": "Mobile/native desktop app output",
+      "description": "ROADMAP",
+      "status": "ROADMAP",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "domain-tier-access-model",
+      "name": "Domain/tier/access model",
+      "description": "ROADMAP",
+      "status": "ROADMAP",
+      "tier": "B",
+      "ratificationState": "CANONICAL"
+    }
+  ],
+  "surfaceTierMap": {
+    "ca18-audit-trail": "B",
+    "ca18-deploy-truth": "A",
+    "ca18-url-any": "B",
+    "ca18-honest-url": "B",
+    "ca18-weighted-score": "B",
+    "ca18-dimension-disclosure": "B",
+    "ca18-eval-pipeline": "B",
+    "ca18-delta-verify": "B",
+    "ca18-remediation-safety": "B",
+    "ca18-universal-limit": "B",
+    "ca-19": "B",
+    "ca-25": "B",
+    "false-claim-autonomous-deploy": "B",
+    "freshbuild-feature-extractor": "B",
+    "workflow-1-sub-1a-analysis-scoring": "B",
+    "workflow-1-sub-1a-source-mapped-fix-proposals": "B",
+    "ssot-axis-a-b-vocabulary-adapters-in-progress": "B",
+    "workflow-1-sub-1b": "B",
+    "workflow-2-sub-2a": "B",
+    "workflow-2-sub-2b": "B",
+    "workflow-3-type-3a": "B",
+    "workflow-3-type-3b": "B",
+    "workflow-4-migration": "B",
+    "fresh-build-feature-extractor": "B",
+    "fresh-build-design-synthesizer": "B",
+    "fresh-build-codebase-generator": "B",
+    "fresh-build-orchestrator": "B",
+    "fresh-build-deployment-adapter": "B",
+    "fresh-build-vercel-config-resolution": "B",
+    "fresh-build-crawler-handoff": "B",
+    "fresh-build-sse-evidence": "B",
+    "multi-modal-inputs": "B",
+    "multiple-url-input-and-synthesis": "B",
+    "orchestra-automatic-selection": "B",
+    "end-to-end-op-system-operation-level": "B",
+    "level-2-flowai-on-itself": "B",
+    "fresh-codebase-generation": "B",
+    "mobile-native-desktop-app-output": "B",
+    "domain-tier-access-model": "B"
+  }
+}

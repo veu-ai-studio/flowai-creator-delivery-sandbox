@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { TOOL_REGISTRY, VEU_STACKS } from '@/lib/toolRegistry';
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const VEU_PRODUCT_LIST = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyBirthSafe'];
+const VEU_PRODUCT_LIST = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyPregLife'];
 
 function getToolData(name) {
   return TOOL_REGISTRY.find(t => t.name === name);

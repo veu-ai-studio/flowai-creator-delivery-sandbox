@@ -63,7 +63,7 @@ Test Files  1 passed (1)
 
 ## 5. What the new tests pin down
 
-1. **Each of the 6 product projects (`flowai`, `saige`, `reltwin`, `reachsms`, `pressai`, `mybirthsafe`) is exercised with the right environment allowlist.** The matrix is enforced explicitly so any future change to either set will fail loudly.
+1. **Each of the 6 product projects (`flowai`, `saige`, `reltwin`, `reachsms`, `pressai`, `mypreglife`) is exercised with the right environment allowlist.** The matrix is enforced explicitly so any future change to either set will fail loudly.
 2. **The slug-safety regex is pinned at three classes of input:** allowed (alphanumeric, hyphens), forbidden (underscore, dot, whitespace), and edge (empty string). This protects the Doppler path scheme from collision-prone IDs.
 3. **All return shapes are frozen.** Callers cannot accidentally mutate a credential record. If `_resolve()` ever forgets to `Object.freeze`, the test will fail.
 4. **`getAll()` and `declareExpected()` edge cases are pinned.** Empty-array, non-array input, double-declare, undefined input.

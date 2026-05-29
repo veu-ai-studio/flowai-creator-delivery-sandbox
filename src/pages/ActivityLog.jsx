@@ -4,8 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  ClipboardList, Search, RefreshCw, Loader2, CheckCircle2, XCircle,
-  Activity, Globe, Hammer, BarChart3, FileSearch, Play, Filter
+  ClipboardList, Search, RefreshCw, Loader2,
+  Activity, Globe, Hammer, BarChart3, FileSearch, Filter
 } from 'lucide-react';
 
 const TYPE_CONFIG = {

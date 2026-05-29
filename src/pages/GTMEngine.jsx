@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
-  Rocket, Loader2, CheckCircle2, Globe, FileText, Megaphone,
-  Play, ExternalLink, Copy, Sparkles, Target, Users
+  Rocket, Loader2, CheckCircle2, Globe, Megaphone,
+  Play, ExternalLink, Copy, Users
 } from 'lucide-react';
 import GTMLaunchChecklist from '@/components/gtm/GTMLaunchChecklist';
 import DemoFlowGenerator from '@/components/gtm/DemoFlowGenerator';

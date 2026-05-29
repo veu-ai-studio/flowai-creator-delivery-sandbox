@@ -3,13 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Zap, Globe, Play, CheckCircle2, Loader2, AlertTriangle, ShieldCheck
+import { Globe, Play, CheckCircle2, Loader2, ShieldCheck
 } from 'lucide-react';
 import SandboxBanner from '@/components/demo/SandboxBanner';
 import DemoFooter from '@/components/demo/DemoFooter';
 import ClearanceSimulator from '@/components/demo/ClearanceSimulator';
-import CostChart from '@/components/demo/CostChart';
 import products from '@/data/demo/products.json';
 
 const DEMO_ORG = 'demo-org-public';

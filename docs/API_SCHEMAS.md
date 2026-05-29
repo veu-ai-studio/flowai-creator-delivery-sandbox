@@ -1,6 +1,6 @@
 # FlowAI API Schemas
 
-TypeScript-style contracts for the `/api/configuration/*` and `/api/orchestrator/*` endpoints. Base44's UI side (and any future client like SAIGE / PressAI / RelTwin / ReachSMS / MyBirthSafe) reads this doc when wiring API calls.
+TypeScript-style contracts for the `/api/configuration/*` and `/api/orchestrator/*` endpoints. Base44's UI side (and any future client like SAIGE / PressAI / RelTwin / ReachSMS / MyPregLife) reads this doc when wiring API calls.
 
 All requests/responses are JSON over HTTPS. Multi-tenant: every endpoint accepts `org_id` via `x-flowai-org-id` header, request body, or query string. When `AUTH_REQUIRED=true` (tomorrow), Clerk session resolves it.
 

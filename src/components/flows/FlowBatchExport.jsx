@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Download, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
 
 export default function FlowBatchExport({ flows = [] }) {
   const [exporting, setExporting] = useState(false);

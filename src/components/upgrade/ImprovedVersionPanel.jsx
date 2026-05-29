@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { CheckCircle2, Globe, Zap, ExternalLink, FileCode2 } from 'lucide-react';
+import { CheckCircle2, Zap, ExternalLink, FileCode2 } from 'lucide-react';
 
 export default function ImprovedVersionPanel({ audit, url, verifyResult, generatedFiles }) {
   const score = audit.overall_score || 0;

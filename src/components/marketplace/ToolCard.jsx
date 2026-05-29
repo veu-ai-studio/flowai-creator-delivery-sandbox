@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Plus, Info } from 'lucide-react';
+import { Plus, Info } from 'lucide-react';
 
 function ScoreBar({ score }) {
   const color = score >= 8 ? 'bg-emerald-500' : score >= 5 ? 'bg-amber-500' : 'bg-red-500';

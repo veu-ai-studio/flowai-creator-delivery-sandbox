@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Loader2, Lightbulb, Copy, Check, X, Code2, AlertCircle } from 'lucide-react';
+import { Loader2, Lightbulb, Copy, Check, X, Code2 } from 'lucide-react';
 
 export default function AutoFixSuggestionModal({ analysis, crawlData, isOpen, onClose }) {
   const [fixes, setFixes] = useState([]);

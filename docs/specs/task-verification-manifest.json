@@ -1,0 +1,116 @@
+{
+  "$schema": "https://flowai.local/schemas/task-verification-manifest.v1.json",
+  "version": "1.0.0",
+  "policy": {
+    "baseBranch": "flowai-v0.1",
+    "protectedFiles": [
+      "src/api/base44Client.js"
+    ],
+    "defaultCommands": {
+      "tests": "npx vitest run",
+      "build": "npm run build",
+      "lint": "npm run lint",
+      "ssot": "node scripts/check-ssot-traceability.mjs"
+    }
+  },
+  "tasks": {
+    "operating-dispatch-v1.2": {
+      "title": "Add automated task verification script and operating dispatch v1.2",
+      "phase": "Operating Loop Prerequisite",
+      "highRisk": false,
+      "powershellAuthoritative": true,
+      "powershellAuthoritativeReason": "First adoption task for verify-task.mjs. Repository gates are authoritative from PowerShell until the verifier completes three successful advisory cycles.",
+      "docsOnly": false,
+      "expectedChangedFiles": [
+        "docs/governance/AUTOMATED_OPERATING_DISPATCH.md",
+        "docs/specs/task-verification-manifest.json",
+        "docs/CANONICAL_HISTORY.md",
+        "scripts/verify-task.mjs"
+      ],
+      "requiredPresent": [
+        {
+          "file": "docs/governance/AUTOMATED_OPERATING_DISPATCH.md",
+          "pattern": "Claude observes. Codex drives. Victor decides."
+        },
+        {
+          "file": "docs/governance/AUTOMATED_OPERATING_DISPATCH.md",
+          "pattern": "Never deploy production"
+        },
+        {
+          "file": "docs/specs/task-verification-manifest.json",
+          "pattern": "\"operating-dispatch-v1.2\""
+        },
+        {
+          "file": "scripts/verify-task.mjs",
+          "pattern": "verifyTask"
+        },
+        {
+          "file": "docs/CANONICAL_HISTORY.md",
+          "pattern": "Automated Operating Dispatch v1.2"
+        }
+      ],
+      "requiredAbsent": [
+        {
+          "file": "docs/governance/AUTOMATED_OPERATING_DISPATCH.md",
+          "pattern": "Claude Chat issues Phase Clearance"
+        }
+      ],
+      "commands": {
+        "tests": "npx vitest run",
+        "build": "npm run build",
+        "lint": "npm run lint",
+        "ssot": "node scripts/check-ssot-traceability.mjs"
+      },
+      "minimumTestsPassed": 3070,
+      "allowHistoricalUntracked": true
+    },
+    "orchestrator-framework-v0.1": {
+      "title": "Add orchestrator framework registry v0.1",
+      "phase": "Orchestrator Framework",
+      "highRisk": true,
+      "docsOnly": false,
+      "expectedChangedFiles": [
+        "src/components/orchestrator/PlatformRecommendationPanel.jsx",
+        "src/lib/orchestratorFramework/index.js",
+        "src/lib/orchestratorFramework/liveCallHooks.js",
+        "src/lib/orchestratorFramework/platformRegistry.js",
+        "src/lib/orchestratorFramework/routing.js",
+        "src/lib/orchestratorFramework/scoringAdapter.js",
+        "src/pages/MasterOrchestrator.jsx",
+        "tests/orchestratorFramework.test.js"
+      ],
+      "requiredPresent": [
+        {
+          "file": "src/lib/orchestratorFramework/platformRegistry.js",
+          "pattern": "human-relayed"
+        },
+        {
+          "file": "src/lib/orchestratorFramework/scoringAdapter.js",
+          "pattern": "will not fabricate scores"
+        },
+        {
+          "file": "src/lib/orchestratorFramework/scoringAdapter.js",
+          "pattern": "marketExposureAllowed: false"
+        },
+        {
+          "file": "src/lib/orchestratorFramework/liveCallHooks.js",
+          "pattern": "platform_live_calls_disabled"
+        }
+      ],
+      "requiredAbsent": [
+        {
+          "file": "src/lib/orchestratorFramework/liveCallHooks.js",
+          "pattern": "process.env"
+        }
+      ],
+      "commands": {
+        "tests": "npx vitest run",
+        "build": "npm run build",
+        "lint": "npm run lint",
+        "ssot": "node scripts/check-ssot-traceability.mjs"
+      },
+      "minimumTestsPassed": 3081,
+      "allowHistoricalUntracked": true
+    }
+  }
+}

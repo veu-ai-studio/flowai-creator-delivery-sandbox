@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, AlertCircle, AlertTriangle, Trophy, Copy, Check, Download } from 'lucide-react';
+import { CheckCircle2, AlertCircle, AlertTriangle, Trophy, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function CopyBtn({ text, label = 'Copy Report' }) {

@@ -1,0 +1,12 @@
+{
+  "version": "readiness.meta.v1",
+  "_note": "Meta-mode readiness rubric. Same criterion ids as readiness.v1 but reweighted to emphasise failure handling and observability — the two readiness dimensions most likely to mask Agent #8 corruption.",
+  "criteria": [
+    { "id": "rdy.functional",         "weight": 25, "label": "Functional correctness (meta)",            "description": "Agent #8 produces correct evaluations on representative inputs." },
+    { "id": "rdy.failure_handling",   "weight": 25, "label": "Failure mode handling (meta)",             "description": "Agent #8 handles malformed targets, missing rubrics, evaluator throws — without data corruption." },
+    { "id": "rdy.performance",        "weight": 10, "label": "Performance under realistic load (meta)",  "description": "Audit latency under expected load. Lower weight — meta runs are not on hot path." },
+    { "id": "rdy.observability",      "weight": 20, "label": "Observability sufficient for ops (meta)",  "description": "Meta-audit emits to #10 Monitor with enough detail to diagnose a disputed verdict." },
+    { "id": "rdy.documentation",      "weight": 10, "label": "Documentation present and accurate (meta)","description": "Meta-audit operating procedure published. Disagreement-protocol rules visible." },
+    { "id": "rdy.dependencies",       "weight": 10, "label": "Dependencies declared and healthy (meta)", "description": "Meta-audit dependencies (rubricRunner, disagreementProtocol) reachable." }
+  ]
+}

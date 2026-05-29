@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import {
-  Activity, Loader2, CheckCircle2, AlertTriangle, RefreshCw,
-  TrendingDown, Clock, ChevronDown, ChevronUp, Zap
+  Activity, Loader2, AlertTriangle, RefreshCw, Clock, ChevronDown, ChevronUp, Zap
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 

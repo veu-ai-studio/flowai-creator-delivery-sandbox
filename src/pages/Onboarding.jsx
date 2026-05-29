@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { base44 } from '@/api/base44Client';
 import { CheckCircle2, Zap, Clock, Wrench, ChevronRight, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -158,9 +157,9 @@ export default function Onboarding() {
             <p className="text-sm text-muted-foreground">Select a product to work with, or type a new product name to get started.</p>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground">Product Name</label>
-              <Input value={productName} onChange={e => setProductName(e.target.value)} placeholder="e.g. MyBirthSafe, SAIGE, or a new product name..." className="h-9 text-sm" />
+              <Input value={productName} onChange={e => setProductName(e.target.value)} placeholder="e.g. MyPregLife, SAIGE, or a new product name..." className="h-9 text-sm" />
             </div>
-            <p className="text-[11px] text-muted-foreground">You can also use one of the existing VEU AI Studio products: SAIGE, PressAI, ReachSMS, RelTwin, MyBirthSafe</p>
+            <p className="text-[11px] text-muted-foreground">You can also use one of the existing VEU AI Studio products: SAIGE, PressAI, ReachSMS, RelTwin, MyPregLife</p>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep(1)} className="gap-1">Back</Button>
               <Button className="flex-1 gap-2" onClick={() => setStep(3)} disabled={!productName.trim()}>

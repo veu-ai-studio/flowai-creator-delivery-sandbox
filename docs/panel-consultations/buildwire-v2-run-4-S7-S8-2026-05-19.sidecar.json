@@ -1,0 +1,696 @@
+{
+  "schema": "buildwire-v2.sidecar.v1",
+  "run": "run-4-S7-S8",
+  "bundle_size": 20827,
+  "startedAt": "2026-05-19T12:59:24.159Z",
+  "finishedAt": "2026-05-19T13:00:11.986Z",
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 20827
+  },
+  "tally": {
+    "engagedTotal": 9,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 0,
+    "perQuestion": {
+      "J2v2-S7": {
+        "S7V2-RATIFY": 1,
+        "S7V2-EVERY": 1,
+        "S7V2-REJECT": 0,
+        "S7V2-PERCLASS": 1,
+        "REJECT": 6,
+        "unmatched": 0
+      },
+      "J2v2-S8": {
+        "S8V2-RATIFY": 1,
+        "S8V2-STRENGTHEN": 2,
+        "S8V2-SIMPLIFY": 6,
+        "S8V2-REJECT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 31,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Squash-merge destroys forensic history",
+        "detail": "§3.7's squash-merge for multi-construction redesign sessions collapses multiple construction commits into one, making it impossible to bisect which specific construction in a session caused a regression. This directly conflicts with §7.6(e) per-fix attribution requirement for Self-Heal forensics."
+      },
+      {
+        "slot": 1,
+        "title": "1-hour rollback window too narrow",
+        "detail": "§3.8's live-preview Phase B auto-rollback triggers only within 1 hour of PR merge. Many production issues (memory leaks under real traffic patterns, slow query degradation) manifest after hours or days, leaving the system vulnerable after the 1-hour window expires."
+      },
+      {
+        "slot": 1,
+        "title": "Backend probes miss distributed failures",
+        "detail": "§3.8's backend probes test only single-endpoint behaviors (connection pools, memory, deadlocks). They completely miss distributed system failures like cascading timeouts between services, eventual consistency violations, or message queue backpressure that only appear when multiple endpoints interact."
+      },
+      {
+        "slot": 2,
+        "title": "Sub-branch complexity",
+        "detail": "In §3.7, the introduction of sub-branches for multi-construction redesign sessions adds complexity to the branch management process. This could lead to increased overhead in managing branches and potential confusion among developers, especially if the sub-branching strategy is not well understood or documented."
+      },
+      {
+        "slot": 2,
+        "title": "Phase B redundancy",
+        "detail": "The proposal in §3.8 to run Phase B three times, including a live-preview Phase B, may be redundant. The pre-PR Phase B and operator PR review should already catch most issues, and the additional live-preview Phase B could be seen as an unnecessary duplication of effort, increasing the time and resources required for each deployment."
+      },
+      {
+        "slot": 2,
+        "title": "Backend probe limitations",
+        "detail": "The backend probes introduced in §3.8 for `endpoint_generation` may not cover all potential failure modes. For example, the memory-leak probe only checks for RSS growth over 60 seconds, which might not be sufficient to detect leaks that manifest over longer periods or under different load conditions."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case of failures during the construction process, which could lead to system instability. This is particularly concerning in §3.7 S7, where the use of sub-branches for multi-construction redesign sessions may introduce additional complexity."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "The testing strategy outlined in §3.8 S8, while improved, may still not be sufficient to catch all potential issues, particularly in the context of endpoint_generation and schema_migration. The addition of dual-load testing and backend probes is a step in the right direction, but may not be enough to guarantee the stability of the system."
+      },
+      {
+        "slot": 3,
+        "title": "Over-Reliance on Automation",
+        "detail": "The proposal's emphasis on automation, while efficient, may lead to over-reliance on automated systems, potentially masking human errors or oversights. This is particularly concerning in the context of the Self-Governance Layer, where automated decision-making may not always align with human intent."
+      },
+      {
+        "slot": 4,
+        "title": "Complexity in Branch Management",
+        "detail": "The introduction of sub-branches for multi-construction redesign sessions in §3.7 S7 adds unnecessary complexity. Managing sub-branches and ensuring their proper squash-merge could lead to operational overhead and potential errors in branch management."
+      },
+      {
+        "slot": 4,
+        "title": "Overhead in Phase B Testing",
+        "detail": "The extended Phase B testing in §3.8 S8, including live-preview Phase B, dual-load testing, and backend probes, may introduce significant overhead. This could slow down the deployment process and increase the computational resources required for testing."
+      },
+      {
+        "slot": 4,
+        "title": "Potential for False Positives",
+        "detail": "The backend probes in §3.8 S8, such as the memory-leak probe and transaction-deadlock probe, might generate false positives. These could lead to unnecessary rollbacks and delays in the deployment process, impacting the system's overall efficiency."
+      },
+      {
+        "slot": 5,
+        "title": "Sub-branch complexity",
+        "detail": "The introduction of per-session sub-branches in §3.7 S7 adds unnecessary complexity without a clear safety benefit, potentially leading to confusion and errors in branch management."
+      },
+      {
+        "slot": 5,
+        "title": "Live-preview risk",
+        "detail": "The live-preview Phase B in §3.8 S8 could introduce risks if the preview environment does not accurately reflect production conditions, leading to false positives or negatives in testing."
+      },
+      {
+        "slot": 5,
+        "title": "Backend probe overhead",
+        "detail": "The addition of backend probes in §3.8 S8 may introduce significant overhead and complexity, potentially slowing down the construction process without a commensurate increase in safety."
+      },
+      {
+        "slot": 6,
+        "title": "Sub-branch complexity",
+        "detail": "The introduction of sub-branches for multi-construction redesign sessions in §3.7 adds complexity to the branching strategy.  The benefits of this added complexity, such as isolation, may not outweigh the cognitive overhead and potential for merge conflicts, especially if session IDs are not globally unique."
+      },
+      {
+        "slot": 6,
+        "title": "Live-preview rollback window",
+        "detail": "The 1-hour auto-rollback window after PR merge in §3.8 for live-preview Phase B failures might be insufficient for detecting certain types of regressions, especially those that manifest under sustained load or specific usage patterns. A longer monitoring period with more sophisticated anomaly detection might be necessary."
+      },
+      {
+        "slot": 6,
+        "title": "Redesign scope creep",
+        "detail": "The `redesign_implementation` construction class in §2, while bounded, still allows for significant changes. The reliance on operator-declared scope, even with system caps, introduces a risk of scope creep and unintended consequences, especially if the operator lacks a comprehensive understanding of the system's dependencies."
+      },
+      {
+        "slot": 7,
+        "title": "S7 squash-merge obscures history",
+        "detail": "§3.7 S7's sub-branch squash-merges erase granular commit history for multi-construction sessions, violating Locked Rule #1 (source-of-truth hierarchy) by making forensic analysis of individual session steps dependent on 30-day-retained sub-branches rather than canonical branch history."
+      },
+      {
+        "slot": 7,
+        "title": "S8 memory-leak probe false negatives",
+        "detail": "§3.8 S8's 20% RSS growth threshold for memory leaks allows dangerous accumulation (e.g. 19% growth per deploy). Combined with CA-14-B's continuous crawl cadence, this could permit exponential memory growth across deployments while passing Phase B."
+      },
+      {
+        "slot": 7,
+        "title": "Live-preview Phase B time window gap",
+        "detail": "The 1-hour auto-rollback window for live-preview Phase B failures (§3.8 S8-CT4) creates a race condition: latency-sensitive production traffic hitting the preview URL between merge and test completion could experience errors before rollback triggers."
+      },
+      {
+        "slot": 8,
+        "title": "Sub-branch merge hides provenance",
+        "detail": "In §3.7 S7, multi-construction redesign sessions squash-merge several commits from `<self_renewal_branch>/redesign-session-<sessionId>` into one per-product branch commit. That preserves history compactness, but it weakens forensic traceability promised elsewhere in the artifact because per-construction blame and intermediate rollback points disappear at the branch-of-record. The spec says `governance_record_entry` will record the merge, but that is not the same as retaining navigable source history."
+      },
+      {
+        "slot": 8,
+        "title": "Live-preview rollback window is narrow",
+        "detail": "§3.8 S8 requires a live-preview Phase B rerun only after PR merge, and failures within 1 hour trigger auto-rollback. Failures that surface after one hour are now outside the hard rollback guarantee, even though they may still be caused by the construction; that creates a blind spot versus status quo monitoring. The proposal adds a brittle temporal boundary where the system may silently drift into a bad state after the protection window closes."
+      },
+      {
+        "slot": 8,
+        "title": "Heavy-load probe is under-specified",
+        "detail": "The `endpoint_generation` dual-load requirement in §3.8 names 1 req/s and 100 req/s, but it does not define data volume, request mix, warmup, or success thresholds beyond generic correctness/latency/error-shape. In practice this can produce false confidence: a trivial endpoint can pass 100 req/s for 60s while still failing under bursty, stateful, or tenant-skewed traffic. The added probes may therefore certify the wrong thing while consuming nontrivial CI/runtime budget."
+      },
+      {
+        "slot": 8,
+        "title": "Connection-pool metric can misfire",
+        "detail": "The backend probe in §3.8 says pool size should be at least `p99 concurrent connections`, but the spec does not define how p99 is measured or over what interval. That can make compliant implementations fail due to measurement noise, while noncompliant implementations can tune superficially to the probe instead of actual workload behavior. This is a classic metric-gaming surface, especially for systems with short-lived spikes."
+      },
+      {
+        "slot": 9,
+        "title": "Sub-branch complexity",
+        "detail": "§3.7 introduces per-session sub-branches for multi-construction redesign sessions, adding complexity to the branch management process. The benefits of this added complexity are not clearly justified."
+      },
+      {
+        "slot": 9,
+        "title": "Live-preview Phase B timing",
+        "detail": "§3.8 introduces a live-preview Phase B run after PR merge, which may not be sufficient to catch issues that arise from the merge itself. The 1-hour window for auto-rollback may be too short for some constructions."
+      },
+      {
+        "slot": 9,
+        "title": "Backend probe coverage",
+        "detail": "§3.8 introduces three backend probes for endpoint_generation constructions, but it is unclear whether these probes are comprehensive enough to cover all potential issues, such as performance regressions under varying loads."
+      },
+      {
+        "slot": 10,
+        "title": "S7 sub-branch squash-merge",
+        "detail": "§3.7 defines per-session sub-branches with 30-day retention and squash-merge on approval, but provides no mechanism to prevent sub-branch divergence from the per-product self_renewal_branch HEAD during the session window, violating the CA-14-D invariant that every construction commit must land on the branch-of-record."
+      },
+      {
+        "slot": 10,
+        "title": "S8 live-preview 1-hour rollback",
+        "detail": "§3.8 S8-CT-4 triggers S5 auto-rollback only on Phase B failure within 1 hour of PR merge against the Vercel preview URL, yet the proposal gives no definition of how transient preview-environment differences (cold starts, env var propagation) are distinguished from genuine regressions."
+      },
+      {
+        "slot": 10,
+        "title": "S8 backend probe thresholds",
+        "detail": "§3.8 mandates RSS growth ≤20% and pool size ≥ p99 concurrent connections for endpoint_generation, but these numeric bounds appear in the conformance tests without reference to any measurement baseline or adjustment for the project's existing connection-pool configuration in api/_lib."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "J2v2-S7": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "6 of 9 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 6
+    },
+    "J2v2-S8": {
+      "verdict": "PLURALITY_S8V2-SIMPLIFY",
+      "detail": "6 of 9 on S8V2-SIMPLIFY (below 7/10 quorum)",
+      "topKey": "S8V2-SIMPLIFY",
+      "topCount": 6
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.1111111111111111,
+    "alignedCount": 2,
+    "totalPossible": 18,
+    "draftedQs": [
+      "J2v2-S7",
+      "J2v2-S8"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 11.1 %, distinct objections 31"
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Squash-merge destroys forensic history",
+            "detail": "§3.7's squash-merge for multi-construction redesign sessions collapses multiple construction commits into one, making it impossible to bisect which specific construction in a session caused a regression. This directly conflicts with §7.6(e) per-fix attribution requirement for Self-Heal forensics."
+          },
+          {
+            "title": "1-hour rollback window too narrow",
+            "detail": "§3.8's live-preview Phase B auto-rollback triggers only within 1 hour of PR merge. Many production issues (memory leaks under real traffic patterns, slow query degradation) manifest after hours or days, leaving the system vulnerable after the 1-hour window expires."
+          },
+          {
+            "title": "Backend probes miss distributed failures",
+            "detail": "§3.8's backend probes test only single-endpoint behaviors (connection pools, memory, deadlocks). They completely miss distributed system failures like cascading timeouts between services, eventual consistency violations, or message queue backpressure that only appear when multiple endpoints interact."
+          }
+        ],
+        "worse_than_status_quo": "The v2 sub-branch squash-merge approach makes debugging production incidents harder than v1's direct-commit model, as operators lose the granular commit history needed to identify which specific construction in a multi-step session introduced a subtle bug.",
+        "precedent": "GitHub's 2018 post-mortem on their 24-hour outage traced the root cause to a squash-merged PR that obscured a race condition introduced in one of several bundled commits — the collapsed history delayed diagnosis by hours."
+      },
+      "rejection_steelman": "The v2 additions create a false sense of security through incomplete testing that catches obvious failures but misses the subtle distributed-system bugs that cause real outages. The added complexity of sub-branches and multi-phase testing increases cognitive load on operators without proportionally reducing production risk, especially given that S4 Quality Audit and operator PR review already provide construction validation.",
+      "votes": {
+        "J2v2-S7": {
+          "key": "S7V2-EVERY",
+          "pick_text": "Strengthen — every construction (not just multi-construction sessions) uses a per-construction sub-branch; squash-merges to per-product branch on PR approval.",
+          "rationale": "This preserves per-construction isolation while maintaining a clean per-product branch history, and aligns with the §7.6(e) per-fix attribution requirement by keeping each construction's commit hash traceable."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-STRENGTHEN",
+          "pick_text": "Strengthen further — add load-profile-shadow-traffic (replay 30 minutes of real production traffic against preview URL before merge) OR fail-injection (kill DB connection mid-request, network-partition, simulate disk-full; assert graceful degradation) OR both.",
+          "rationale": "Shadow traffic would catch the distributed-system failures that the current backend probes miss, while fail-injection would validate graceful degradation under real-world failure conditions beyond the happy-path testing."
+        }
+      },
+      "overallNotes": "The v2 spec improves on v1 but still has blind spots around distributed system failures and forensic traceability that production systems require.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Sub-branch complexity",
+            "detail": "In §3.7, the introduction of sub-branches for multi-construction redesign sessions adds complexity to the branch management process. This could lead to increased overhead in managing branches and potential confusion among developers, especially if the sub-branching strategy is not well understood or documented."
+          },
+          {
+            "title": "Phase B redundancy",
+            "detail": "The proposal in §3.8 to run Phase B three times, including a live-preview Phase B, may be redundant. The pre-PR Phase B and operator PR review should already catch most issues, and the additional live-preview Phase B could be seen as an unnecessary duplication of effort, increasing the time and resources required for each deployment."
+          },
+          {
+            "title": "Backend probe limitations",
+            "detail": "The backend probes introduced in §3.8 for `endpoint_generation` may not cover all potential failure modes. For example, the memory-leak probe only checks for RSS growth over 60 seconds, which might not be sufficient to detect leaks that manifest over longer periods or under different load conditions."
+          }
+        ],
+        "worse_than_status_quo": "The added complexity of managing sub-branches and the increased resource consumption from multiple Phase B runs could slow down the development process and lead to more frequent errors in branch management.",
+        "precedent": "The introduction of complex branching strategies has caused issues in other projects, such as the GitFlow model, which can lead to confusion and errors if not properly managed and understood by all team members."
+      },
+      "rejection_steelman": "The proposal introduces additional complexity and redundancy that may not provide sufficient benefits to justify the increased overhead. The sub-branching strategy and multiple Phase B runs could slow down the development process and lead to confusion, without significantly improving the safety or reliability of the system. It may be more prudent to defer these changes until a clearer need is demonstrated or a more streamlined approach is developed.",
+      "votes": {
+        "J2v2-S7": {
+          "key": "REJECT",
+          "pick_text": "Reject sub-branches — keep v1 behavior (every construction commits directly to per-product `self_renewal_branch`); sub-branches add complexity without commensurate safety gain.",
+          "rationale": "The added complexity of sub-branches does not provide enough safety benefits to justify the overhead and potential for confusion."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's pre-PR-only Phase B; drop v2 additions (live-preview post-merge + dual-load + backend probes); rely on post-deploy monitoring.",
+          "rationale": "The additional Phase B runs and backend probes may be redundant and resource-intensive, and existing pre-PR checks should suffice."
+        }
+      },
+      "overallNotes": "The proposal's complexity and redundancy may outweigh its benefits, suggesting a need for simplification and clearer justification for the changes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case of failures during the construction process, which could lead to system instability. This is particularly concerning in §3.7 S7, where the use of sub-branches for multi-construction redesign sessions may introduce additional complexity."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "The testing strategy outlined in §3.8 S8, while improved, may still not be sufficient to catch all potential issues, particularly in the context of endpoint_generation and schema_migration. The addition of dual-load testing and backend probes is a step in the right direction, but may not be enough to guarantee the stability of the system."
+          },
+          {
+            "title": "Over-Reliance on Automation",
+            "detail": "The proposal's emphasis on automation, while efficient, may lead to over-reliance on automated systems, potentially masking human errors or oversights. This is particularly concerning in the context of the Self-Governance Layer, where automated decision-making may not always align with human intent."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of sub-branches for multi-construction redesign sessions in §3.7 S7 may lead to increased complexity and potential errors, potentially making the system worse than the status quo if not properly managed. Additionally, the reliance on automated testing and deployment may lead to a lack of human oversight, potentially resulting in undetected errors or security vulnerabilities.",
+        "precedent": "The use of sub-branches and automated testing in the proposal is reminiscent of the GitFlow workflow, which has been known to introduce complexity and potential errors if not properly managed. A similar example can be seen in the case of the Linux kernel development process, where the use of automated testing and deployment led to a number of high-profile errors and security vulnerabilities."
+      },
+      "rejection_steelman": "The proposal's introduction of new complexity and potential errors, combined with the potential for over-reliance on automation, may outweigh the potential benefits of the proposed changes. Therefore, it may be prudent to reject or defer the proposal until these concerns can be fully addressed and mitigated.",
+      "votes": {
+        "J2v2-S7": {
+          "key": null,
+          "pick_text": "Adjust — sub-branches per construction-class instead of per-session (<self_renewal_branch>/<class>/<runId>)",
+          "rationale": "This option provides a more nuanced approach to branch management, allowing for greater flexibility and control over the construction process."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-STRENGTHEN",
+          "pick_text": "Strengthen further — add load-profile-shadow-traffic (replay 30 minutes of real production traffic against preview URL before merge) OR fail-injection (kill DB connection mid-request, network-partition, simulate disk-full; assert graceful degradation) OR both",
+          "rationale": "This option provides additional testing and validation, which can help to ensure the stability and reliability of the system."
+        }
+      },
+      "overallNotes": "The proposal raises important concerns regarding complexity, testing, and automation, which must be carefully considered and addressed in order to ensure the stability and reliability of the system.",
+      "invalid_reason": "1/2 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity in Branch Management",
+            "detail": "The introduction of sub-branches for multi-construction redesign sessions in §3.7 S7 adds unnecessary complexity. Managing sub-branches and ensuring their proper squash-merge could lead to operational overhead and potential errors in branch management."
+          },
+          {
+            "title": "Overhead in Phase B Testing",
+            "detail": "The extended Phase B testing in §3.8 S8, including live-preview Phase B, dual-load testing, and backend probes, may introduce significant overhead. This could slow down the deployment process and increase the computational resources required for testing."
+          },
+          {
+            "title": "Potential for False Positives",
+            "detail": "The backend probes in §3.8 S8, such as the memory-leak probe and transaction-deadlock probe, might generate false positives. These could lead to unnecessary rollbacks and delays in the deployment process, impacting the system's overall efficiency."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's added complexity in branch management and extensive Phase B testing could lead to increased operational overhead and delayed deployments, making the system less efficient than the current status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because the added complexity in branch management and the extensive Phase B testing could introduce significant operational overhead and potential delays. These changes may not provide commensurate benefits and could negatively impact the system's efficiency and reliability.",
+      "votes": {
+        "J2v2-S7": {
+          "key": "REJECT",
+          "pick_text": "Reject sub-branches — keep v1 behavior (every construction commits directly to per-product self_renewal_branch); sub-branches add complexity without commensurate safety gain.",
+          "rationale": "The introduction of sub-branches adds unnecessary complexity and operational overhead without clear safety benefits."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's pre-PR-only Phase B; drop v2 additions (live-preview post-merge + dual-load + backend probes); rely on post-deploy monitoring.",
+          "rationale": "The extended Phase B testing introduces significant overhead and potential for false positives, which could delay deployments and impact system efficiency."
+        }
+      },
+      "overallNotes": "The proposal introduces complexities that may not justify the benefits, potentially leading to operational inefficiencies and delays.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Sub-branch complexity",
+            "detail": "The introduction of per-session sub-branches in §3.7 S7 adds unnecessary complexity without a clear safety benefit, potentially leading to confusion and errors in branch management."
+          },
+          {
+            "title": "Live-preview risk",
+            "detail": "The live-preview Phase B in §3.8 S8 could introduce risks if the preview environment does not accurately reflect production conditions, leading to false positives or negatives in testing."
+          },
+          {
+            "title": "Backend probe overhead",
+            "detail": "The addition of backend probes in §3.8 S8 may introduce significant overhead and complexity, potentially slowing down the construction process without a commensurate increase in safety."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of sub-branches and additional Phase B tests could lead to increased complexity and potential for errors, making the system more brittle than the current setup.",
+        "precedent": "No precedent known where the introduction of sub-branches for multi-construction sessions and additional Phase B tests has caused significant issues, but the added complexity is a concern."
+      },
+      "rejection_steelman": "The proposal introduces significant complexity with sub-branches and additional Phase B tests without a clear, compelling safety benefit, potentially leading to more errors and a less stable system.",
+      "votes": {
+        "J2v2-S7": {
+          "key": "REJECT",
+          "pick_text": "Reject sub-branches — keep v1 behavior (every construction commits directly to per-product `self_renewal_branch`); sub-branches add complexity without commensurate safety gain.",
+          "rationale": "The added complexity of sub-branches does not provide a clear safety benefit."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's pre-PR-only Phase B; drop v2 additions (live-preview post-merge + dual-load + backend probes); rely on post-deploy monitoring.",
+          "rationale": "The additional Phase B tests introduce unnecessary complexity and potential for errors."
+        }
+      },
+      "overallNotes": "The proposal, while well-intentioned, introduces complexity that may not be justified by the safety benefits it provides.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Sub-branch complexity",
+            "detail": "The introduction of sub-branches for multi-construction redesign sessions in §3.7 adds complexity to the branching strategy.  The benefits of this added complexity, such as isolation, may not outweigh the cognitive overhead and potential for merge conflicts, especially if session IDs are not globally unique."
+          },
+          {
+            "title": "Live-preview rollback window",
+            "detail": "The 1-hour auto-rollback window after PR merge in §3.8 for live-preview Phase B failures might be insufficient for detecting certain types of regressions, especially those that manifest under sustained load or specific usage patterns. A longer monitoring period with more sophisticated anomaly detection might be necessary."
+          },
+          {
+            "title": "Backend probe limitations",
+            "detail": "The backend probes introduced in §3.8 for `endpoint_generation` have limitations. The memory-leak probe's 20% RSS growth threshold might be too lenient, allowing small but persistent leaks to go undetected. The transaction-deadlock probe's concurrent-write workload might not be representative of real-world deadlock scenarios."
+          },
+          {
+            "title": "Redesign scope creep",
+            "detail": "The `redesign_implementation` construction class in §2, while bounded, still allows for significant changes. The reliance on operator-declared scope, even with system caps, introduces a risk of scope creep and unintended consequences, especially if the operator lacks a comprehensive understanding of the system's dependencies."
+          }
+        ],
+        "worse_than_status_quo": "Introducing sub-branches for redesign sessions could lead to increased merge conflicts and developer confusion, slowing down the overall development process compared to the simpler v1 branching strategy. If session IDs are not globally unique, it could lead to accidental overwrites or incorrect merges.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces unnecessary complexity with sub-branches and live-preview rollbacks, while the backend probes might provide a false sense of security due to their limited scope. The potential for increased merge conflicts and developer confusion outweighs the marginal safety gains, making the system more cumbersome and error-prone than the status quo.",
+      "votes": {
+        "J2v2-S7": {
+          "key": "REJECT",
+          "pick_text": "Reject sub-branches — keep v1 behavior (every construction commits directly to per-product `self_renewal_branch`); sub-branches add complexity without commensurate safety gain.",
+          "rationale": "The added complexity of sub-branches does not justify the potential for merge conflicts and developer confusion. Keeping the v1 behavior simplifies the branching strategy and reduces cognitive overhead."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's pre-PR-only Phase B; drop v2 additions (live-preview post-merge + dual-load + backend probes); rely on post-deploy monitoring.",
+          "rationale": "The v2 additions to S8 introduce complexity and potential for false positives without a clear demonstration of significant improvement in detecting regressions. Relying on post-deploy monitoring provides a more comprehensive and realistic assessment of system behavior."
+        }
+      },
+      "overallNotes": "The proposal attempts to address valid concerns but introduces complexity that may outweigh the benefits. A simpler approach with robust post-deploy monitoring might be more effective.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "S7 squash-merge obscures history",
+            "detail": "§3.7 S7's sub-branch squash-merges erase granular commit history for multi-construction sessions, violating Locked Rule #1 (source-of-truth hierarchy) by making forensic analysis of individual session steps dependent on 30-day-retained sub-branches rather than canonical branch history."
+          },
+          {
+            "title": "S8 memory-leak probe false negatives",
+            "detail": "§3.8 S8's 20% RSS growth threshold for memory leaks allows dangerous accumulation (e.g. 19% growth per deploy). Combined with CA-14-B's continuous crawl cadence, this could permit exponential memory growth across deployments while passing Phase B."
+          },
+          {
+            "title": "Live-preview Phase B time window gap",
+            "detail": "The 1-hour auto-rollback window for live-preview Phase B failures (§3.8 S8-CT4) creates a race condition: latency-sensitive production traffic hitting the preview URL between merge and test completion could experience errors before rollback triggers."
+          }
+        ],
+        "worse_than_status_quo": "A schema_migration that passes all Phase B checks but introduces a slow-accumulating foreign-key constraint violation (detectable only after 30+ days via S3 DLP) would now persist longer due to false confidence in extended Phase B coverage, whereas status-quo S3 5-pillar checks might catch it earlier through direct schema analysis.",
+        "precedent": "2016 Knight Capital $460M loss caused by deployment of legacy/test code alongside new systems — analogous to S8's live-preview Phase B creating parallel active states during the 1-hour window."
+      },
+      "rejection_steelman": "The proposal adds substantial complexity (sub-branch management, triple Phase B passes, backend probes) without proving these layers meaningfully improve over v1's already-validated S3/S4/S5 stack. The 95/95 governance threshold might be better served by strengthening existing schema/load tests rather than adding post-merge phases that risk production availability.",
+      "votes": {
+        "J2v2-S7": {
+          "key": "S7V2-RATIFY",
+          "pick_text": "Ratify S7 v2 as drafted (sub-branches for multi-construction; squash-merge; per-product branch remains target).",
+          "rationale": "While squash-merges have drawbacks, the 30-day sub-branch retention and explicit governance records (redesign_session_subbranch_merged.v1) provide adequate auditability without violating CA-14-D invariants."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-RATIFY",
+          "pick_text": "Ratify S8 v2 as drafted (3 Phase B runs incl live-preview; dual-load; backend probes).",
+          "rationale": "The live-preview and backend probes directly address Slot 6/Slot 8 concerns about production-regression gaps, though the 1-hour window and memory thresholds warrant future calibration."
+        }
+      },
+      "overallNotes": "Critical need for S8-CT6 failure_class telemetry to feed back into Self-Renewal's detector set — currently absent from proposal.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Sub-branch merge hides provenance",
+            "detail": "In §3.7 S7, multi-construction redesign sessions squash-merge several commits from `<self_renewal_branch>/redesign-session-<sessionId>` into one per-product branch commit. That preserves history compactness, but it weakens forensic traceability promised elsewhere in the artifact because per-construction blame and intermediate rollback points disappear at the branch-of-record. The spec says `governance_record_entry` will record the merge, but that is not the same as retaining navigable source history."
+          },
+          {
+            "title": "Live-preview rollback window is narrow",
+            "detail": "§3.8 S8 requires a live-preview Phase B rerun only after PR merge, and failures within 1 hour trigger auto-rollback. Failures that surface after one hour are now outside the hard rollback guarantee, even though they may still be caused by the construction; that creates a blind spot versus status quo monitoring. The proposal adds a brittle temporal boundary where the system may silently drift into a bad state after the protection window closes."
+          },
+          {
+            "title": "Heavy-load probe is under-specified",
+            "detail": "The `endpoint_generation` dual-load requirement in §3.8 names 1 req/s and 100 req/s, but it does not define data volume, request mix, warmup, or success thresholds beyond generic correctness/latency/error-shape. In practice this can produce false confidence: a trivial endpoint can pass 100 req/s for 60s while still failing under bursty, stateful, or tenant-skewed traffic. The added probes may therefore certify the wrong thing while consuming nontrivial CI/runtime budget."
+          },
+          {
+            "title": "Connection-pool metric can misfire",
+            "detail": "The backend probe in §3.8 says pool size should be at least `p99 concurrent connections`, but the spec does not define how p99 is measured or over what interval. That can make compliant implementations fail due to measurement noise, while noncompliant implementations can tune superficially to the probe instead of actual workload behavior. This is a classic metric-gaming surface, especially for systems with short-lived spikes."
+          }
+        ],
+        "worse_than_status_quo": "A redesign session that is genuinely defective could pass through a sub-branch, get squash-merged into the per-product branch, and then fail only after the 1-hour live-preview rollback window closes. The status quo at least keeps failure discovery tied to the pre-PR Phase B gate; this proposal can let a bad change survive longer in production-like preview before any automatic reversal is possible.",
+        "precedent": "Gitflow-style long-lived branch and squash-merge workflows are a real-world precedent for provenance loss and merge-trace ambiguity; teams often struggle to bisect regressions after squash merges because intermediate commits vanish. Similarly, many CI systems that rely on narrow post-deploy rollback windows have missed latent failures that only appear under later traffic patterns."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring is that both S7 and S8 add process overhead without fully closing the failure modes they target. S7’s sub-branching improves organization, but squash-merging reduces audit granularity, and S8’s extra Phase B runs may create expensive false negatives while still missing long-tail or production-only behaviors. If the goal is safer construction, a narrower pilot with explicit rollback, measurement definitions, and provenance requirements would be more defensible than broad ratification now.",
+      "votes": {
+        "J2v2-S7": {
+          "key": "REJECT",
+          "pick_text": "Reject sub-branches — keep v1 behavior (every construction commits directly to per-product `self_renewal_branch`); sub-branches add complexity without commensurate safety gain.",
+          "rationale": "The proposal’s sub-branch model adds a second branch topology plus squash-merge semantics, but it does not materially improve safety over v1 for single-construction work. Given the provenance and bisectability loss from squash merges, rejecting the added branch layer is the safer choice."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's pre-PR-only Phase B; drop v2 additions (live-preview post-merge + dual-load + backend probes); rely on post-deploy monitoring.",
+          "rationale": "The v2 additions are the most ambiguous and operationally expensive parts of §3.8, especially the post-merge rollback window and the loosely specified load/probe thresholds. Keeping the pre-PR gate while relying on downstream monitoring is the only listed option that avoids encoding brittle new failure criteria."
+        }
+      },
+      "overallNotes": "I do not think the drafted v2 scope is ready for ratification as-is. The proposal expands control surfaces faster than it defines measurement rigor and rollback semantics.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Sub-branch complexity",
+            "detail": "§3.7 introduces per-session sub-branches for multi-construction redesign sessions, adding complexity to the branch management process. The benefits of this added complexity are not clearly justified."
+          },
+          {
+            "title": "Live-preview Phase B timing",
+            "detail": "§3.8 introduces a live-preview Phase B run after PR merge, which may not be sufficient to catch issues that arise from the merge itself. The 1-hour window for auto-rollback may be too short for some constructions."
+          },
+          {
+            "title": "Backend probe coverage",
+            "detail": "§3.8 introduces three backend probes for endpoint_generation constructions, but it is unclear whether these probes are comprehensive enough to cover all potential issues, such as performance regressions under varying loads."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of per-session sub-branches and additional Phase B runs could lead to increased overhead and complexity in the development process, potentially slowing down the delivery of constructions without providing a clear safety benefit.",
+        "precedent": "The concept of using multiple branches and complex testing regimes has been explored in other development workflows, such as GitFlow, which has been criticized for its complexity and overhead."
+      },
+      "rejection_steelman": "The proposal introduces significant changes to the branch management and testing processes without clear evidence that these changes will improve the overall quality or safety of the constructions. The added complexity could lead to increased maintenance burdens and potential points of failure.",
+      "votes": {
+        "J2v2-S7": {
+          "key": "S7V2-PERCLASS",
+          "pick_text": "Adjust — sub-branches per construction-class instead of per-session (`<self_renewal_branch>/<class>/<runId>`).",
+          "rationale": "This approach could potentially simplify the branch management by aligning sub-branch creation with the type of construction being performed, rather than the session."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-STRENGTHEN",
+          "pick_text": "Strengthen further — add load-profile-shadow-traffic (replay 30 minutes of real production traffic against preview URL before merge) OR fail-injection (kill DB connection mid-request, network-partition, simulate disk-full; assert graceful degradation) OR both.",
+          "rationale": "Adding more comprehensive testing, such as load-profile-shadow-traffic or fail-injection, could further enhance the robustness of the constructions by simulating real-world conditions and potential failure scenarios."
+        }
+      },
+      "overallNotes": "The proposal requires careful consideration of the trade-offs between complexity, safety, and development velocity.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "S7 sub-branch squash-merge",
+            "detail": "§3.7 defines per-session sub-branches with 30-day retention and squash-merge on approval, but provides no mechanism to prevent sub-branch divergence from the per-product self_renewal_branch HEAD during the session window, violating the CA-14-D invariant that every construction commit must land on the branch-of-record."
+          },
+          {
+            "title": "S8 live-preview 1-hour rollback",
+            "detail": "§3.8 S8-CT-4 triggers S5 auto-rollback only on Phase B failure within 1 hour of PR merge against the Vercel preview URL, yet the proposal gives no definition of how transient preview-environment differences (cold starts, env var propagation) are distinguished from genuine regressions."
+          },
+          {
+            "title": "S8 backend probe thresholds",
+            "detail": "§3.8 mandates RSS growth ≤20% and pool size ≥ p99 concurrent connections for endpoint_generation, but these numeric bounds appear in the conformance tests without reference to any measurement baseline or adjustment for the project's existing connection-pool configuration in api/_lib."
+          }
+        ],
+        "worse_than_status_quo": "The mandatory live-preview Phase B plus dual-load probes plus sub-branch discipline will lengthen the critical path from construction to production, causing operators to batch changes into fewer, larger redesign sessions that are harder to review and more likely to introduce undetected regressions than the simpler v1 direct-to-branch flow.",
+        "precedent": "GitHub's early mandatory squash-merge policies on feature branches produced long-lived divergent sub-branches whose integration failures only surfaced after the squash, exactly the pattern §3.7 now codifies for self_renewal_branch."
+      },
+      "rejection_steelman": "The proposal layers three new mandatory execution points (sub-branch creation, post-merge Phase B, and three backend probes) on top of an already gated Self-Renewal pipeline without demonstrating that the current failure rate justifies the added latency and operational surface; deferral would allow the existing S1–S6 gates plus post-deploy monitoring to continue collecting data before further automation is locked in.",
+      "votes": {
+        "J2v2-S7": {
+          "key": "REJECT",
+          "pick_text": "Reject sub-branches — keep v1 behavior (every construction commits directly to per-product `self_renewal_branch`); sub-branches add complexity without commensurate safety gain.",
+          "rationale": "Sub-branches introduce retention, naming, and merge-order invariants that are not justified by any measured failure mode in the current per-product branch discipline."
+        },
+        "J2v2-S8": {
+          "key": "S8V2-SIMPLIFY",
+          "pick_text": "Simplify — keep v1's pre-PR-only Phase B; drop v2 additions (live-preview post-merge + dual-load + backend probes); rely on post-deploy monitoring.",
+          "rationale": "The three new Phase B executions duplicate coverage already provided by S4, S3, and operator PR review while adding unproven numeric thresholds."
+        }
+      },
+      "overallNotes": "All objections are drawn directly from §3.7 and §3.8 of the v2 draft.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "J2v2-S7",
+      "topic": "J2v2-S7 — v2 adds per-session sub-branches within per-product `self_renewal_branch` for CA-16-B multi-construction redesign sessions; squash-merge to per-product branch on operator approval; per-product branch remains merge target. Right discipline? (PANEL-RATIFIABLE.)",
+      "options": [
+        {
+          "key": "S7V2-RATIFY",
+          "text": "Ratify S7 v2 as drafted (sub-branches for multi-construction; squash-merge; per-product branch remains target)."
+        },
+        {
+          "key": "S7V2-EVERY",
+          "text": "Strengthen — every construction (not just multi-construction sessions) uses a per-construction sub-branch; squash-merges to per-product branch on PR approval."
+        },
+        {
+          "key": "S7V2-REJECT",
+          "text": "Reject sub-branches — keep v1 behavior (every construction commits directly to per-product `self_renewal_branch`); sub-branches add complexity without commensurate safety gain."
+        },
+        {
+          "key": "S7V2-PERCLASS",
+          "text": "Adjust — sub-branches per construction-class instead of per-session (`<self_renewal_branch>/<class>/<runId>`)."
+        }
+      ],
+      "draftedKey": "S7V2-RATIFY"
+    },
+    {
+      "id": "J2v2-S8",
+      "topic": "J2v2-S8 — v2 extends S8 with: live-preview Phase B post-PR-merge (auto-rollback on failure within 1h) + dual-load testing for endpoint_generation + backend probes (connection-pool / memory-leak / transaction-deadlock). PANEL-RATIFIABLE per §3.8 (reject path present). Right scope?",
+      "options": [
+        {
+          "key": "S8V2-RATIFY",
+          "text": "Ratify S8 v2 as drafted (3 Phase B runs incl live-preview; dual-load; backend probes)."
+        },
+        {
+          "key": "S8V2-STRENGTHEN",
+          "text": "Strengthen further — add load-profile-shadow-traffic (replay 30 minutes of real production traffic against preview URL before merge) OR fail-injection (kill DB connection mid-request, network-partition, simulate disk-full; assert graceful degradation) OR both."
+        },
+        {
+          "key": "S8V2-SIMPLIFY",
+          "text": "Simplify — keep v1's pre-PR-only Phase B; drop v2 additions (live-preview post-merge + dual-load + backend probes); rely on post-deploy monitoring."
+        },
+        {
+          "key": "S8V2-REJECT",
+          "text": "Reject S8 v2 — Phase B against construction artifacts is duplicative of S4 + S3 + operator PR review; remove the mandatory Phase B step entirely."
+        }
+      ],
+      "draftedKey": "S8V2-RATIFY"
+    }
+  ]
+}

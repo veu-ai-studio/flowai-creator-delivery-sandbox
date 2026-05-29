@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trophy, TrendingUp, DollarSign, Clock, Shield, Database } from 'lucide-react';
+import { Trophy, TrendingUp, DollarSign, Clock, Database } from 'lucide-react';
 
 function ScoreBadge({ score }) {
   const pct = Math.round((score || 0) * 100);

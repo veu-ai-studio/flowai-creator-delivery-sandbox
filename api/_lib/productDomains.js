@@ -55,8 +55,8 @@ export const VEU_PRODUCTS = [
       {
         domain: 'saigedemo.com',
         target_path: '/live-demo',
-        status: 'active',                // not yet redirected; cutover planned
-        notes: 'Pre-dates the four-tier demo standard. Contains the SAIGE waitlist + animated EIP scoring widget. After cutover, redirects to saigeplatform.com/live-demo.',
+        status: 'redirected',            // W4 Phase 4b cutover landed; saigedemo.com 301 → saigeplatform.com/live-demo
+        notes: 'Pre-dates the four-tier demo standard. Contained the SAIGE waitlist + animated EIP scoring widget. As of W4 Phase 4b cutover, 301-redirected to saigeplatform.com/live-demo.',
       },
     ],
     objectives: [
@@ -108,13 +108,13 @@ export const VEU_PRODUCTS = [
     ],
   },
   {
-    slug: 'mybirthsafe',
-    name: 'MyBirthSafe',
+    slug: 'mypreglife',
+    name: 'MyPregLife',
     description: 'Maternal health platform for Africa',
     type: 'web',
     status: 'active',
     tags: ['health', 'maternal', 'africa'],
-    live_url: 'https://safe-path.base44.app',
+    live_url: '',                        // canonical domain TBD; prior staging URL scrubbed per W4 IP-hygiene Tier 1.b
     target_url: '',
     legacy_domains: [],
     objectives: [

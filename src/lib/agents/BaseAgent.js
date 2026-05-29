@@ -1,14 +1,24 @@
 /**
  * BaseAgent — VEU AI Studio FlowAI
  * ---------------------------------------------------------------------------
- * Status:      G2 RATIFIED + Packet 1.5 amendment (adds `environment` dep)
+ * Status:      G2 RATIFIED + Packet 1.5 amendment + Phase 1.0 expansion
  * Owner:       /src/lib/agents/BaseAgent.js
- * Consumers:   All 20 FlowAI Super Agents (#1–#20)
+ * Consumers:   All 25 FlowAI Super Agents (#1–#25)
  *
  * AMENDMENT NOTE (Packet 1.5)
  *   Added `environment` to required deps. Validated against productScope:
- *     - flowai:  accepts 'prod' | 'staging'
- *     - products: accepts 'prod' | 'staging' | 'demo' | 'live-demo' | 'sales-demo'
+ *     - flowai:  accepts 'prd' (canonical) | 'prod' (alias) | 'staging'
+ *     - products: accepts 'prd' | 'prod' | 'staging' | 'demo' | 'live-demo' | 'sales-demo'
+ *
+ * AMENDMENT NOTE (W1 vercel-bypass blocker fix, 2026-05-12)
+ *   Doppler workspace config is named `prd`, not `prod`. The whitelist now
+ *   accepts both (canonical `prd`, `prod` retained as backwards-compat
+ *   alias). See docs/operations/credential-adapter-naming.md.
+ *
+ * AMENDMENT NOTE (Phase 1.0 — W5b infrastructure lock-in, 2026-05-11)
+ *   Roster expanded 20 → 25. Added Ops Runner Alpha/Beta/Gamma/Delta/Epsilon
+ *   (#21–#25), all step-owner mode, all embedded (non-FlowAI-only).
+ *   Partition validator + Charter.id range updated to enforce EXACTLY 25 IDs.
  * ---------------------------------------------------------------------------
  */
 
@@ -35,15 +45,20 @@ export const AGENT_IDS = Object.freeze({
   BUSINESS_PLANNING:       18,
   TECHNOLOGICAL_EVOLUTION: 19,
   ENVIRONMENTAL_IMPACTS:   20,
+  OPS_RUNNER_ALPHA:        21,
+  OPS_RUNNER_BETA:         22,
+  OPS_RUNNER_GAMMA:        23,
+  OPS_RUNNER_DELTA:        24,
+  OPS_RUNNER_EPSILON:      25,
 });
 
 export const FLOWAI_ONLY_AGENTS = Object.freeze(new Set([4, 5, 8, 11, 12, 14, 16, 18]));
-export const EMBEDDED_AGENTS    = Object.freeze(new Set([1, 2, 3, 6, 7, 9, 10, 13, 15, 17, 19, 20]));
+export const EMBEDDED_AGENTS    = Object.freeze(new Set([1, 2, 3, 6, 7, 9, 10, 13, 15, 17, 19, 20, 21, 22, 23, 24, 25]));
 
 (function validateRosterPartition() {
   const all = new Set([...FLOWAI_ONLY_AGENTS, ...EMBEDDED_AGENTS]);
-  if (all.size !== 20) throw new Error('Roster partition invalid: expected 20 unique IDs');
-  for (let i = 1; i <= 20; i++) if (!all.has(i)) throw new Error(`Agent ID ${i} missing from roster`);
+  if (all.size !== 25) throw new Error('Roster partition invalid: expected 25 unique IDs');
+  for (let i = 1; i <= 25; i++) if (!all.has(i)) throw new Error(`Agent ID ${i} missing from roster`);
 })();
 
 export const AUTHORITY = Object.freeze({
@@ -60,19 +75,25 @@ export const PRODUCT_SCOPES = Object.freeze({
   RELTWIN:      'reltwin',
   REACHSMS:     'reachsms',
   PRESSAI:      'pressai',
-  MYBIRTHSAFE:  'mybirthsafe',
+  MYPREGLIFE:  'mypreglife',
+  // System-only scope used by the FlowAI self-adversarial test suite
+  // (docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md §9 LD-2 + §11.8).
+  // Provisioned by migration 0012; cleaned up between runs by
+  // scripts/cleanup-test-tenant.mjs. Never bind to real customers.
+  TEST:         '_test',
 });
 
 export const ENVIRONMENTS = Object.freeze({
-  PROD:        'prod',
+  PRD:         'prd',          // canonical — matches Doppler workspace config name
+  PROD:        'prod',         // backwards-compat alias for `prd`
   STAGING:     'staging',
   DEMO:        'demo',
   LIVE_DEMO:   'live-demo',
   SALES_DEMO:  'sales-demo',
 });
 
-const FLOWAI_VALID_ENVS  = Object.freeze(new Set(['prod', 'staging']));
-const PRODUCT_VALID_ENVS = Object.freeze(new Set(['prod', 'staging', 'demo', 'live-demo', 'sales-demo']));
+const FLOWAI_VALID_ENVS  = Object.freeze(new Set(['prd', 'prod', 'staging']));
+const PRODUCT_VALID_ENVS = Object.freeze(new Set(['prd', 'prod', 'staging', 'demo', 'live-demo', 'sales-demo']));
 
 export function isValidEnvironmentForScope(productScope, environment) {
   if (productScope === PRODUCT_SCOPES.FLOWAI) return FLOWAI_VALID_ENVS.has(environment);
@@ -221,8 +242,8 @@ export class BaseAgent {
   }
 
   static _validateCharter(c) {
-    if (!Number.isInteger(c.id) || c.id < 1 || c.id > 20) {
-      throw new Error(`Charter.id must be an integer 1–20, got ${c.id}`);
+    if (!Number.isInteger(c.id) || c.id < 1 || c.id > 25) {
+      throw new Error(`Charter.id must be an integer 1–25, got ${c.id}`);
     }
     if (typeof c.name !== 'string' || c.name.length === 0) {
       throw new Error(`Charter.name required for agent #${c.id}`);

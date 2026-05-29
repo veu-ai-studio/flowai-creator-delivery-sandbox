@@ -1,0 +1,1398 @@
+{
+  "schema": "j2-buildwire-repanel.sidecar.v1",
+  "startedAt": "2026-05-19T11:14:39.317Z",
+  "finishedAt": "2026-05-19T11:16:27.739Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 43081,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 43081
+  },
+  "tally": {
+    "engagedTotal": 7,
+    "invalid": 0,
+    "tangential": 3,
+    "silent": 0,
+    "perQuestion": {
+      "J2-S1": {
+        "J2S1-RATIFY": 1,
+        "J2S1-SIMPLIFY": 0,
+        "J2S1-REJECT": 0,
+        "J2S1-STRENGTHEN": 6,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J2-S2": {
+        "J2S2-RATIFY": 2,
+        "J2S2-TIGHTEN": 1,
+        "J2S2-SYSCAPS": 3,
+        "J2S2-LOOSEN": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J2-S3": {
+        "J2S3-RATIFY": 1,
+        "J2S3-ADD5TH": 6,
+        "J2S3-REJECT": 0,
+        "J2S3-MANUAL": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J2-S4": {
+        "J2S4-RATIFY": 1,
+        "J2S4-ADDSSRF": 3,
+        "J2S4-ADDRATE": 0,
+        "J2S4-BOTH": 3,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J2-S5": {
+        "J2S5-RATIFY": 1,
+        "J2S5-AUTO": 4,
+        "J2S5-RETAIN": 1,
+        "J2S5-BOTH": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J2-S6": {
+        "J2S6-RATIFY": 2,
+        "J2S6-ADMINALL": 3,
+        "J2S6-FRESH15": 0,
+        "J2S6-BOTH": 2,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J2-S7": {
+        "J2S7-RATIFY": 2,
+        "J2S7-SUBBRANCH": 5,
+        "J2S7-REJECT": 0,
+        "J2S7-SUBPATHS": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "J2-S8": {
+        "J2S8-RATIFY": 1,
+        "J2S8-LIVEPREV": 5,
+        "J2S8-DUALLOAD": 0,
+        "J2S8-BOTH": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 32,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Unbounded operator-declared scope in redesign_implementation",
+        "detail": "§2 Construction Classes allows redesign_implementation to have 'operator-declared' scope caps with no upper bound specified. While S2 enforces system caps of 25 files/2000 lines, an operator could declare redesign_implementation touching all 25 files at once, effectively rewriting large portions of the codebase in a single construction."
+      },
+      {
+        "slot": 1,
+        "title": "Phase B backend coverage gap",
+        "detail": "§3.8 S8 specifies backend-specific tests for endpoint_generation include 'request volume, latency p99, error-response shape' but omits critical backend concerns like connection pooling exhaustion, memory leaks under sustained load, and database transaction deadlocks that only manifest under concurrent access patterns."
+      },
+      {
+        "slot": 1,
+        "title": "CAS protection insufficient for distributed systems",
+        "detail": "§3.5 S5 relies on compare-and-swap on branch HEAD for atomicity, but this fails in distributed scenarios where multiple FlowAI instances might attempt construction on the same product simultaneously. The spec lacks distributed locking or coordination mechanisms, risking conflicting constructions that pass CAS individually but corrupt state collectively."
+      },
+      {
+        "slot": 1,
+        "title": "1-hour approval staleness allows drift",
+        "detail": "§3.6 S6 permits approvals up to 1 hour old, but in that window the product could have received multiple self-renewal fixes that materially change the construction context. The approval might be for a radically different baseline than what construction actually operates on."
+      },
+      {
+        "slot": 2,
+        "title": "Complexity of Safety Invariants",
+        "detail": "The proposal introduces eight safety invariants (S1-S8) that are complex and may be difficult to implement and maintain. Each invariant has multiple conformance tests, which could lead to increased overhead and potential for errors in enforcement. This complexity might hinder the agility of the system and slow down the development process."
+      },
+      {
+        "slot": 2,
+        "title": "Non-overridable Constraints",
+        "detail": "Several constraints are marked as non-overridable, such as S2 (bounded scope) and S4 (construction security suite). This rigidity could prevent necessary flexibility in certain scenarios where exceptions might be justified, potentially stifling innovation or necessary rapid responses to urgent issues."
+      },
+      {
+        "slot": 2,
+        "title": "Rollback Mechanism Limitations",
+        "detail": "The rollback mechanism (S5) relies on pre-commit snapshots and CAS protection, but it may not account for all real-world scenarios, such as complex interdependencies between changes or external system interactions. The reliance on a dry-run might not fully capture the impact of changes in a live environment."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case of failures during the construction process, which could lead to data corruption or loss. This is a critical concern, especially for schema migrations and redesign implementations."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Security",
+        "detail": "The security suite in S4 only includes 6 pillars, which may not be sufficient to cover all potential security risks. Additionally, the proposal does not provide details on how the security suite will be updated or maintained over time."
+      },
+      {
+        "slot": 3,
+        "title": "Inadequate Testing",
+        "detail": "The proposal relies heavily on automated testing, but it does not provide sufficient details on the testing scope, frequency, or coverage. This could lead to inadequate testing and potentially introduce bugs or security vulnerabilities."
+      },
+      {
+        "slot": 4,
+        "title": "Incomplete Rollback Mechanism",
+        "detail": "The rollback substrate (§3.5 S5) does not account for scenarios where the rollback itself fails, leading to potential data corruption. The proposal should include a mechanism for handling failed rollbacks."
+      },
+      {
+        "slot": 4,
+        "title": "Overly Restrictive Scope Caps",
+        "detail": "The bounded scope caps (§3.2 S2) are too restrictive, especially for complex construction operations. The hard system caps may limit the ability to address comprehensive issues effectively."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of Real-World Testing",
+        "detail": "The proposal does not include provisions for real-world testing of the construction classes and safety invariants. This could lead to unforeseen issues when the system is deployed in a live environment."
+      },
+      {
+        "slot": 5,
+        "title": "Complexity Risk",
+        "detail": "The proposal introduces a highly complex system with multiple safety invariants and construction classes. This complexity increases the risk of unforeseen interactions and bugs, as seen in §3.8 where Phase B testing is required for each construction class, which could lead to maintenance challenges."
+      },
+      {
+        "slot": 5,
+        "title": "Operator Override Potential",
+        "detail": "While S2 and S6 are non-overridable, the operator-declared scope for redesign_implementation in §3.2 could still allow for significant changes, potentially undermining the safety invariants if not carefully managed."
+      },
+      {
+        "slot": 5,
+        "title": "Security Suite Limitations",
+        "detail": "The construction security suite in §3.4, while comprehensive, may not catch all potential vulnerabilities, especially those that emerge from the interaction of multiple construction classes or from the dynamic nature of the codebase."
+      },
+      {
+        "slot": 6,
+        "title": "S3: Lock contention test realism",
+        "detail": "The lock contention test in S3 uses a replay of 100 concurrent reads/writes. This may not accurately simulate real-world load patterns and could miss subtle lock contention issues that arise under different concurrency scenarios or with more complex query patterns."
+      },
+      {
+        "slot": 6,
+        "title": "S4: Authz regression scope",
+        "detail": "S4's authorization regression test only verifies the authorization contract for *existing* endpoints. It doesn't explicitly address the risk of *removing* authorization checks from existing endpoints, which could inadvertently expose sensitive data or functionality."
+      },
+      {
+        "slot": 6,
+        "title": "S5: CAS contention risk",
+        "detail": "S5 relies on CAS to prevent concurrent modifications, but the restart mechanism after a CAS failure could lead to a livelock situation if contention is high, repeatedly delaying or preventing the construction from completing."
+      },
+      {
+        "slot": 7,
+        "title": "S2 scope caps unvalidated for redesign",
+        "detail": "The redesign_implementation class allows operator-declared scope caps without validation mechanism (§3.2). This could permit dangerous scope inflation bypassing system caps, violating the NON-OVERRIDABLE intent. Conformance tests only cover class defaults, not operator-declared scopes."
+      },
+      {
+        "slot": 7,
+        "title": "S4 misses SSRF probes",
+        "detail": "The S4 security suite (§3.4) omits Server-Side Request Forgery (SSRF) testing for endpoints fetching external URLs. This leaves a critical vulnerability surface in generated endpoints, contradicting the 'comprehensive security suite' justification."
+      },
+      {
+        "slot": 7,
+        "title": "S5 snapshot retention gap",
+        "detail": "Rollback snapshots (§3.5) lack explicit retention policy. Without mandated duration (e.g., 30 days), operators might lose recovery capability before post-deploy issues surface. The dry-run verifies immediate reversal but not mid-term recoverability."
+      },
+      {
+        "slot": 7,
+        "title": "S6 rationale unverified",
+        "detail": "Operator approval rationale (§3.6) is free-text with no validation. This allows rubber-stamp approvals like 'approved' without substantive review, undermining the human-gate intent. No conformance test checks rationale quality."
+      },
+      {
+        "slot": 8,
+        "title": "Baseline can miss hidden state",
+        "detail": "§3.1 S1 captures DOM, endpoint, schema, and dependency fingerprints, but not runtime-config, feature flags, queues, background jobs, or external service contracts. A construction can therefore appear safe against the Phase A baseline while still breaking the real deployed behavior that users depend on."
+      },
+      {
+        "slot": 8,
+        "title": "Scope caps are gameable",
+        "detail": "§3.2 S2 enforces file-count, line-count, dependency-count, and graph-radius caps, but those are easy to evade with dense refactors, generated code, or indirection layers. A small change set can still rewrite control flow across a large effective surface while staying within the declared caps."
+      },
+      {
+        "slot": 8,
+        "title": "Rollback dry-run is not rollback",
+        "detail": "§3.5 S5 requires a simulated rollback before PR, but a successful dry-run does not guarantee reversibility after merge under real production drift, live traffic, or concurrent schema/data evolution. If the rollback mechanism itself depends on a clean pre-state, the system can pass the test and still fail when the real recovery path is needed."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of Rollback Testing",
+        "detail": "§3.5 S5 describes a rollback dry-run, but there's no mention of testing the rollback mechanism itself. A real-world precedent is the GitLab incident where a backup restore failed due to untested restore procedures."
+      },
+      {
+        "slot": 9,
+        "title": "Overly Complex Approval Process",
+        "detail": "§3.6 S6 introduces a complex approval process with multiple conditions (per-construction, admin-only for schema_migration, ≤1h freshness). This could lead to approval fatigue or delays. A similar complex approval process in the Kubernetes project led to slow adoption and frustration among contributors."
+      },
+      {
+        "slot": 9,
+        "title": "Insufficient Security Suite Coverage",
+        "detail": "§3.4 S4 lists several security tests, but omits testing for Server-Side Request Forgery (SSRF). SSRF is a significant risk in modern web applications, as seen in the recent AWS metadata SSRF vulnerability."
+      },
+      {
+        "slot": 10,
+        "title": "S2 file_count_cap too permissive",
+        "detail": "§3.2 S2 allows up to 25 files under the hard system cap for redesign_implementation; this exceeds the existing Self-Renewal Executor's 25% max surgical-diff per file and is only checked at the fix-generator boundary with no post-generation diff-size re-validation in the §4 lifecycle."
+      },
+      {
+        "slot": 10,
+        "title": "S5 rollback omits data mutations",
+        "detail": "§3.5 S5 rollback dry-run restores schema and files but performs no verification of runtime data mutations or external side-effects (e.g., S3 lock-contention test only measures time, not data integrity post-revert) before recording construction_rollback.v1."
+      },
+      {
+        "slot": 10,
+        "title": "S6 approval freshness window",
+        "detail": "§3.6 S6 requires re-confirmation only after 1 hour yet the approval envelope is persisted once in governance_record_entry; no mechanism invalidates an in-flight construction if operator context changes within that window before the fix-generator runs."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "J2-S1": {
+      "verdict": "PLURALITY_J2S1-STRENGTHEN",
+      "detail": "6 of 7 on J2S1-STRENGTHEN (below 7/10 quorum)",
+      "topKey": "J2S1-STRENGTHEN",
+      "topCount": 6
+    },
+    "J2-S2": {
+      "verdict": "PLURALITY_J2S2-SYSCAPS",
+      "detail": "3 of 7 on J2S2-SYSCAPS (below 7/10 quorum)",
+      "topKey": "J2S2-SYSCAPS",
+      "topCount": 3
+    },
+    "J2-S3": {
+      "verdict": "PLURALITY_J2S3-ADD5TH",
+      "detail": "6 of 7 on J2S3-ADD5TH (below 7/10 quorum)",
+      "topKey": "J2S3-ADD5TH",
+      "topCount": 6
+    },
+    "J2-S4": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 3 between J2S4-ADDSSRF / J2S4-BOTH",
+      "topKey": "J2S4-ADDSSRF",
+      "topCount": 3
+    },
+    "J2-S5": {
+      "verdict": "PLURALITY_J2S5-AUTO",
+      "detail": "4 of 7 on J2S5-AUTO (below 7/10 quorum)",
+      "topKey": "J2S5-AUTO",
+      "topCount": 4
+    },
+    "J2-S6": {
+      "verdict": "PLURALITY_J2S6-ADMINALL",
+      "detail": "3 of 7 on J2S6-ADMINALL (below 7/10 quorum)",
+      "topKey": "J2S6-ADMINALL",
+      "topCount": 3
+    },
+    "J2-S7": {
+      "verdict": "PLURALITY_J2S7-SUBBRANCH",
+      "detail": "5 of 7 on J2S7-SUBBRANCH (below 7/10 quorum)",
+      "topKey": "J2S7-SUBBRANCH",
+      "topCount": 5
+    },
+    "J2-S8": {
+      "verdict": "PLURALITY_J2S8-LIVEPREV",
+      "detail": "5 of 7 on J2S8-LIVEPREV (below 7/10 quorum)",
+      "topKey": "J2S8-LIVEPREV",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.19642857142857142,
+    "alignedCount": 11,
+    "totalPossible": 56,
+    "draftedQs": [
+      "J2-S1",
+      "J2-S2",
+      "J2-S3",
+      "J2-S4",
+      "J2-S5",
+      "J2-S6",
+      "J2-S7",
+      "J2-S8"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 19.6 %, distinct objections 32"
+  },
+  "summary": [
+    {
+      "qId": "J2-S1",
+      "verdict": "PLURALITY_J2S1-STRENGTHEN",
+      "top": "J2S1-STRENGTHEN",
+      "topCount": 6,
+      "engaged": 7,
+      "cleared": false,
+      "tallyByOption": {
+        "J2S1-RATIFY": 1,
+        "J2S1-SIMPLIFY": 0,
+        "J2S1-REJECT": 0,
+        "J2S1-STRENGTHEN": 6,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "hasRejectOption": true,
+      "nonOverridable": false
+    },
+    {
+      "qId": "J2-S2",
+      "verdict": "PLURALITY_J2S2-SYSCAPS",
+      "top": "J2S2-SYSCAPS",
+      "topCount": 3,
+      "engaged": 7,
+      "cleared": false,
+      "tallyByOption": {
+        "J2S2-RATIFY": 2,
+        "J2S2-TIGHTEN": 1,
+        "J2S2-SYSCAPS": 3,
+        "J2S2-LOOSEN": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "hasRejectOption": false,
+      "nonOverridable": true
+    },
+    {
+      "qId": "J2-S3",
+      "verdict": "PLURALITY_J2S3-ADD5TH",
+      "top": "J2S3-ADD5TH",
+      "topCount": 6,
+      "engaged": 7,
+      "cleared": false,
+      "tallyByOption": {
+        "J2S3-RATIFY": 1,
+        "J2S3-ADD5TH": 6,
+        "J2S3-REJECT": 0,
+        "J2S3-MANUAL": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "hasRejectOption": true,
+      "nonOverridable": false
+    },
+    {
+      "qId": "J2-S4",
+      "verdict": "SPLIT",
+      "top": "J2S4-ADDSSRF",
+      "topCount": 3,
+      "engaged": 7,
+      "cleared": false,
+      "tallyByOption": {
+        "J2S4-RATIFY": 1,
+        "J2S4-ADDSSRF": 3,
+        "J2S4-ADDRATE": 0,
+        "J2S4-BOTH": 3,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "hasRejectOption": false,
+      "nonOverridable": true
+    },
+    {
+      "qId": "J2-S5",
+      "verdict": "PLURALITY_J2S5-AUTO",
+      "top": "J2S5-AUTO",
+      "topCount": 4,
+      "engaged": 7,
+      "cleared": false,
+      "tallyByOption": {
+        "J2S5-RATIFY": 1,
+        "J2S5-AUTO": 4,
+        "J2S5-RETAIN": 1,
+        "J2S5-BOTH": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "hasRejectOption": false,
+      "nonOverridable": true
+    },
+    {
+      "qId": "J2-S6",
+      "verdict": "PLURALITY_J2S6-ADMINALL",
+      "top": "J2S6-ADMINALL",
+      "topCount": 3,
+      "engaged": 7,
+      "cleared": false,
+      "tallyByOption": {
+        "J2S6-RATIFY": 2,
+        "J2S6-ADMINALL": 3,
+        "J2S6-FRESH15": 0,
+        "J2S6-BOTH": 2,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "hasRejectOption": false,
+      "nonOverridable": true
+    },
+    {
+      "qId": "J2-S7",
+      "verdict": "PLURALITY_J2S7-SUBBRANCH",
+      "top": "J2S7-SUBBRANCH",
+      "topCount": 5,
+      "engaged": 7,
+      "cleared": false,
+      "tallyByOption": {
+        "J2S7-RATIFY": 2,
+        "J2S7-SUBBRANCH": 5,
+        "J2S7-REJECT": 0,
+        "J2S7-SUBPATHS": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "hasRejectOption": true,
+      "nonOverridable": false
+    },
+    {
+      "qId": "J2-S8",
+      "verdict": "PLURALITY_J2S8-LIVEPREV",
+      "top": "J2S8-LIVEPREV",
+      "topCount": 5,
+      "engaged": 7,
+      "cleared": false,
+      "tallyByOption": {
+        "J2S8-RATIFY": 1,
+        "J2S8-LIVEPREV": 5,
+        "J2S8-DUALLOAD": 0,
+        "J2S8-BOTH": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "hasRejectOption": false,
+      "nonOverridable": true
+    }
+  ],
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unbounded operator-declared scope in redesign_implementation",
+            "detail": "§2 Construction Classes allows redesign_implementation to have 'operator-declared' scope caps with no upper bound specified. While S2 enforces system caps of 25 files/2000 lines, an operator could declare redesign_implementation touching all 25 files at once, effectively rewriting large portions of the codebase in a single construction."
+          },
+          {
+            "title": "Phase B backend coverage gap",
+            "detail": "§3.8 S8 specifies backend-specific tests for endpoint_generation include 'request volume, latency p99, error-response shape' but omits critical backend concerns like connection pooling exhaustion, memory leaks under sustained load, and database transaction deadlocks that only manifest under concurrent access patterns."
+          },
+          {
+            "title": "CAS protection insufficient for distributed systems",
+            "detail": "§3.5 S5 relies on compare-and-swap on branch HEAD for atomicity, but this fails in distributed scenarios where multiple FlowAI instances might attempt construction on the same product simultaneously. The spec lacks distributed locking or coordination mechanisms, risking conflicting constructions that pass CAS individually but corrupt state collectively."
+          },
+          {
+            "title": "1-hour approval staleness allows drift",
+            "detail": "§3.6 S6 permits approvals up to 1 hour old, but in that window the product could have received multiple self-renewal fixes that materially change the construction context. The approval might be for a radically different baseline than what construction actually operates on."
+          }
+        ],
+        "worse_than_status_quo": "The build/wire engine could enable operators to bypass the 25% surgical-diff safety net by using redesign_implementation class with maximal scope caps, effectively allowing 100% codebase rewrites that the current Self-Renewal Executor would reject, while still claiming S1-S8 compliance.",
+        "precedent": "Kubernetes faced similar issues with their admission webhook system where multiple webhooks could individually pass validation but collectively corrupt cluster state due to lack of global coordination - they had to add ResourceVersion optimistic locking in v1.7."
+      },
+      "rejection_steelman": "The build/wire engine should be deferred until distributed coordination is solved and operator scope declarations are bounded more tightly. The current spec allows loopholes (redesign_implementation with max caps, 1-hour stale approvals, single-node CAS) that could enable precisely the kind of unbounded automated changes that Panel reviewers feared in the original consultation. Without stricter bounds on operator-declared scopes and true distributed locking, this engine risks becoming a backdoor to bypass the 25% safety net.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-STRENGTHEN",
+          "pick_text": "Strengthen S1 — also require pre-construction multi-dim audit baseline per CA-15-A.",
+          "rationale": "DOM/endpoint hashes alone miss critical quality dimensions; capturing the full multi-dimensional audit provides richer regression detection surface."
+        },
+        "J2-S2": {
+          "key": "J2S2-SYSCAPS",
+          "pick_text": "Strengthen system caps — 15/1500/3/4 (currently 25/2000/5/5).",
+          "rationale": "25 files at 2000 lines allows near-total rewrites; tighter system caps preserve the surgical-change philosophy while still permitting meaningful construction."
+        },
+        "J2-S3": {
+          "key": "J2S3-ADD5TH",
+          "pick_text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification).",
+          "rationale": "The 4 pillars cover mechanics but miss the most catastrophic failure mode - irreversible data loss from destructive schema changes."
+        },
+        "J2-S4": {
+          "key": "J2S4-BOTH",
+          "pick_text": "Both — 8-pillar S4 (drafted 6 + SSRF + rate-limit).",
+          "rationale": "Construction-generated endpoints are particularly vulnerable to SSRF and abuse; these two additional pillars address the most common post-deployment security incidents."
+        },
+        "J2-S5": {
+          "key": "J2S5-BOTH",
+          "pick_text": "Both — automatic + 30-day retention.",
+          "rationale": "Manual rollback creates a window of vulnerability; automatic rollback on Phase B failure plus extended retention provides both immediate response and forensic capability."
+        },
+        "J2-S6": {
+          "key": "J2S6-BOTH",
+          "pick_text": "Both — admin-required all classes + 15-minute freshness.",
+          "rationale": "1-hour staleness allows too much drift; admin-only for all classes ensures human oversight matches the blast radius of construction operations."
+        },
+        "J2-S7": {
+          "key": "J2S7-SUBBRANCH",
+          "pick_text": "Strengthen — every multi-construction sequence (CA-16-B redesign session) writes to a per-session sub-branch within the per-product branch, then squash-merges to the per-product branch after operator approval.",
+          "rationale": "Per-session sub-branches provide cleaner isolation and rollback granularity for complex multi-step constructions."
+        },
+        "J2-S8": {
+          "key": "J2S8-BOTH",
+          "pick_text": "Both — live-preview Phase B AND dual-load testing.",
+          "rationale": "CI-only Phase B misses production-specific failures; dual-load profiles catch concurrency bugs that single-profile testing masks."
+        }
+      },
+      "overallNotes": "The spec needs tighter bounds on operator-declared scopes and true distributed coordination before it can safely enable construction at scale.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity of Safety Invariants",
+            "detail": "The proposal introduces eight safety invariants (S1-S8) that are complex and may be difficult to implement and maintain. Each invariant has multiple conformance tests, which could lead to increased overhead and potential for errors in enforcement. This complexity might hinder the agility of the system and slow down the development process."
+          },
+          {
+            "title": "Non-overridable Constraints",
+            "detail": "Several constraints are marked as non-overridable, such as S2 (bounded scope) and S4 (construction security suite). This rigidity could prevent necessary flexibility in certain scenarios where exceptions might be justified, potentially stifling innovation or necessary rapid responses to urgent issues."
+          },
+          {
+            "title": "Rollback Mechanism Limitations",
+            "detail": "The rollback mechanism (S5) relies on pre-commit snapshots and CAS protection, but it may not account for all real-world scenarios, such as complex interdependencies between changes or external system interactions. The reliance on a dry-run might not fully capture the impact of changes in a live environment."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to slower development cycles due to the complexity and rigidity of the safety invariants, potentially causing delays in deploying critical updates or features.",
+        "precedent": "The introduction of non-overridable constraints is reminiscent of the rigidity seen in some legacy enterprise systems, where inflexible rules led to operational bottlenecks and hindered timely updates."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it introduces excessive complexity and rigidity that could hinder the system's agility and responsiveness. The non-overridable constraints may prevent necessary flexibility, and the complexity of the safety invariants could lead to increased overhead and potential errors in enforcement, ultimately slowing down development cycles and delaying critical updates.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-STRENGTHEN",
+          "pick_text": "Strengthen S1 — also require pre-construction multi-dim audit baseline per CA-15-A.",
+          "rationale": "Strengthening S1 ensures a more comprehensive baseline, which could improve regression detection and accountability."
+        },
+        "J2-S2": {
+          "key": "J2S2-TIGHTEN",
+          "pick_text": "Tighten — reduce per-class defaults to half the drafted values (wire_up=3/100/0/2 etc.); operator-override still permitted up to system caps.",
+          "rationale": "Tightening the caps could prevent excessive changes and maintain system stability, while still allowing flexibility through operator overrides."
+        },
+        "J2-S3": {
+          "key": "J2S3-ADD5TH",
+          "pick_text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification).",
+          "rationale": "Adding a data-loss-prevention test enhances the robustness of schema migrations by ensuring critical data is not lost inadvertently."
+        },
+        "J2-S4": {
+          "key": "J2S4-ADDSSRF",
+          "pick_text": "Strengthen S4 — add a 7th pillar (SSRF probes for endpoints that fetch external URLs).",
+          "rationale": "Strengthening S4 with SSRF probes addresses potential security vulnerabilities related to external URL fetching."
+        },
+        "J2-S5": {
+          "key": "J2S5-AUTO",
+          "pick_text": "Add automatic rollback — if post-deploy Phase B fails within 1 hour of PR merge, engine auto-rolls-back without operator intervention.",
+          "rationale": "Automatic rollback provides a safety net for rapid recovery from post-deployment failures, enhancing system resilience."
+        },
+        "J2-S6": {
+          "key": "J2S6-ADMINALL",
+          "pick_text": "Tighten — admin-required for ALL construction classes (not just schema_migration).",
+          "rationale": "Requiring admin approval for all classes ensures a higher level of oversight and reduces the risk of unauthorized or inappropriate changes."
+        },
+        "J2-S7": {
+          "key": "J2S7-SUBBRANCH",
+          "pick_text": "Strengthen — every multi-construction sequence (CA-16-B redesign session) writes to a per-session sub-branch within the per-product branch, then squash-merges to the per-product branch after operator approval.",
+          "rationale": "Strengthening S7 with per-session sub-branches improves traceability and reduces the risk of conflicts during multi-construction sequences."
+        },
+        "J2-S8": {
+          "key": "J2S8-LIVEPREV",
+          "pick_text": "Strengthen — also require Phase B AGAIN on the live preview URL post-PR-merge; covers the \"construction passes Phase B in CI but breaks on prd deploy\" failure mode.",
+          "rationale": "Requiring Phase B on the live preview URL ensures that changes are robust and function correctly in the production environment."
+        }
+      },
+      "overallNotes": "The proposal's complexity and rigidity could hinder system agility, but strengthening certain aspects could improve robustness and security.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case of failures during the construction process, which could lead to data corruption or loss. This is a critical concern, especially for schema migrations and redesign implementations."
+          },
+          {
+            "title": "Insufficient Security",
+            "detail": "The security suite in S4 only includes 6 pillars, which may not be sufficient to cover all potential security risks. Additionally, the proposal does not provide details on how the security suite will be updated or maintained over time."
+          },
+          {
+            "title": "Inadequate Testing",
+            "detail": "The proposal relies heavily on automated testing, but it does not provide sufficient details on the testing scope, frequency, or coverage. This could lead to inadequate testing and potentially introduce bugs or security vulnerabilities."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's lack of a clear rollback strategy and insufficient security measures could lead to a worse outcome than the current status quo, where at least some manual review and testing are performed.",
+        "precedent": "The Therac-25 incident, where a software bug caused a radiation therapy machine to deliver lethal doses of radiation, highlights the importance of robust testing and validation procedures, which are not adequately addressed in this proposal."
+      },
+      "rejection_steelman": "The proposal should be rejected or deferred because it does not provide sufficient guarantees for the safety and security of the construction process. The lack of a clear rollback strategy, insufficient security measures, and inadequate testing procedures make it difficult to ensure that the proposed changes will not introduce new risks or exacerbate existing ones.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-RATIFY",
+          "pick_text": "Ratify S1 as drafted.",
+          "rationale": "The pre-construction Phase A baseline is a crucial step in ensuring that the construction process is properly validated and verified."
+        },
+        "J2-S2": {
+          "key": "J2S2-SYSCAPS",
+          "pick_text": "Strengthen system caps — 15/1500/3/4 (currently 25/2000/5/5).",
+          "rationale": "Tightening the system caps will help prevent excessive changes and reduce the risk of errors or security vulnerabilities."
+        },
+        "J2-S3": {
+          "key": "J2S3-ADD5TH",
+          "pick_text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification).",
+          "rationale": "The additional pillar will provide an extra layer of protection against data loss and ensure that operators are aware of the potential risks associated with schema migrations."
+        },
+        "J2-S4": {
+          "key": "J2S4-ADDRATE",
+          "pick_text": "Strengthen S4 — add an 8th pillar (rate-limit / abuse probes for endpoints exposed publicly).",
+          "rationale": "The additional pillar will help prevent abuse and ensure that publicly exposed endpoints are properly secured."
+        },
+        "J2-S5": {
+          "key": "J2S5-RETAIN",
+          "pick_text": "Strengthen rollback retention — snapshot persists for 30 days post-merge (explicit retention specified).",
+          "rationale": "The longer retention period will provide a greater window for debugging and troubleshooting in case of issues or errors."
+        },
+        "J2-S6": {
+          "key": "J2S6-ADMINALL",
+          "pick_text": "Tighten — admin-required for ALL construction classes (not just schema_migration).",
+          "rationale": "Requiring admin approval for all construction classes will help ensure that changes are properly reviewed and validated."
+        },
+        "J2-S7": {
+          "key": "J2S7-SUBBRANCH",
+          "pick_text": "Strengthen — every multi-construction sequence (CA-16-B redesign session) writes to a per-session sub-branch within the per-product branch, then squash-merges to the per-product branch after operator approval.",
+          "rationale": "The additional sub-branch will provide a clearer audit trail and help prevent conflicts or errors during the construction process."
+        },
+        "J2-S8": {
+          "key": null,
+          "pick_text": "Strengthen — also require Phase B AGAIN on the live preview URL post-PR-merge; covers the 'construction passes Phase B in CI but breaks on prd deploy' failure mode.",
+          "rationale": "The additional Phase B run will help ensure that the construction process is properly validated and verified, even after deployment."
+        }
+      },
+      "overallNotes": "The proposal requires significant improvements to address the concerns raised during the adversarial pass. The lack of a clear rollback strategy, insufficient security measures, and inadequate testing procedures are major concerns that need to be addressed before the proposal can be considered acceptable.",
+      "invalid_reason": "7/8 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Incomplete Rollback Mechanism",
+            "detail": "The rollback substrate (§3.5 S5) does not account for scenarios where the rollback itself fails, leading to potential data corruption. The proposal should include a mechanism for handling failed rollbacks."
+          },
+          {
+            "title": "Overly Restrictive Scope Caps",
+            "detail": "The bounded scope caps (§3.2 S2) are too restrictive, especially for complex construction operations. The hard system caps may limit the ability to address comprehensive issues effectively."
+          },
+          {
+            "title": "Lack of Real-World Testing",
+            "detail": "The proposal does not include provisions for real-world testing of the construction classes and safety invariants. This could lead to unforeseen issues when the system is deployed in a live environment."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's strict scope caps and lack of real-world testing could lead to incomplete or faulty constructions, making the system less reliable than the current status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal should be rejected due to the overly restrictive scope caps and the lack of a comprehensive rollback mechanism. These issues could lead to incomplete constructions and potential data corruption, making the system less reliable.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-STRENGTHEN",
+          "pick_text": "Strengthen S1 — also require pre-construction multi-dim audit baseline per CA-15-A",
+          "rationale": "Adding a multi-dim audit baseline will provide a more comprehensive pre-construction baseline, ensuring better regression detection."
+        },
+        "J2-S2": {
+          "key": "J2S2-LOOSEN",
+          "pick_text": "Loosen per-class defaults — wire_up=10/400/1/3 etc. (Panel believes defaults too restrictive for real-world construction)",
+          "rationale": "Loosening the per-class defaults will allow for more flexibility in construction operations, addressing real-world needs more effectively."
+        },
+        "J2-S3": {
+          "key": "J2S3-ADD5TH",
+          "pick_text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification)",
+          "rationale": "Adding a data-loss-prevention test will ensure that critical data is not accidentally lost during schema migrations."
+        },
+        "J2-S4": {
+          "key": "J2S4-ADDSSRF",
+          "pick_text": "Strengthen S4 — add a 7th pillar (SSRF probes for endpoints that fetch external URLs)",
+          "rationale": "Adding SSRF probes will enhance the security suite, addressing a common vulnerability in endpoints that fetch external URLs."
+        },
+        "J2-S5": {
+          "key": "J2S5-AUTO",
+          "pick_text": "Add automatic rollback — if post-deploy Phase B fails within 1 hour of PR merge, engine auto-rolls-back without operator intervention",
+          "rationale": "Adding automatic rollback will ensure timely recovery from failed deployments, reducing the risk of data corruption."
+        },
+        "J2-S6": {
+          "key": "J2S6-ADMINALL",
+          "pick_text": "Tighten — admin-required for ALL construction classes (not just schema_migration)",
+          "rationale": "Requiring admin approval for all construction classes will ensure a higher level of scrutiny, reducing the risk of unauthorized changes."
+        },
+        "J2-S7": {
+          "key": "J2S7-SUBBRANCH",
+          "pick_text": "Strengthen — every multi-construction sequence (CA-16-B redesign session) writes to a per-session sub-branch within the per-product branch, then squash-merges to the per-product branch after operator approval",
+          "rationale": "Writing to a per-session sub-branch will provide better isolation and traceability for multi-construction sequences."
+        },
+        "J2-S8": {
+          "key": "J2S8-LIVEPREV",
+          "pick_text": "Strengthen — also require Phase B AGAIN on the live preview URL post-PR-merge; covers the \"construction passes Phase B in CI but breaks on prd deploy\" failure mode",
+          "rationale": "Requiring Phase B again on the live preview URL will ensure that the construction passes all tests in a live environment, reducing the risk of deployment failures."
+        }
+      },
+      "overallNotes": "The proposal has several strong points but needs to address the identified objections to ensure robustness and reliability in real-world scenarios.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity Risk",
+            "detail": "The proposal introduces a highly complex system with multiple safety invariants and construction classes. This complexity increases the risk of unforeseen interactions and bugs, as seen in §3.8 where Phase B testing is required for each construction class, which could lead to maintenance challenges."
+          },
+          {
+            "title": "Operator Override Potential",
+            "detail": "While S2 and S6 are non-overridable, the operator-declared scope for redesign_implementation in §3.2 could still allow for significant changes, potentially undermining the safety invariants if not carefully managed."
+          },
+          {
+            "title": "Security Suite Limitations",
+            "detail": "The construction security suite in §3.4, while comprehensive, may not catch all potential vulnerabilities, especially those that emerge from the interaction of multiple construction classes or from the dynamic nature of the codebase."
+          }
+        ],
+        "worse_than_status_quo": "If a critical construction operation fails to meet the safety invariants, especially in the schema_migration class, it could lead to data corruption or loss, making the system worse than the status quo where manual reviews and slower, more cautious changes are the norm.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces a highly complex system with multiple safety invariants and construction classes, which could lead to unforeseen interactions, maintenance challenges, and potential security vulnerabilities. The operator-declared scope for redesign_implementation could also undermine the safety invariants if not carefully managed.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-RATIFY",
+          "pick_text": "Ratify S1 as drafted.",
+          "rationale": "The pre-construction Phase A baseline is necessary to ensure regression detection and provide a clean reference point for post-construction verification."
+        },
+        "J2-S2": {
+          "key": "J2S2-RATIFY",
+          "pick_text": "Ratify per-class defaults + hard system caps as drafted (wire_up=5/200/0/3; endpoint_generation=10/500/2/3; schema_migration=3/200/0/3; redesign=operator-declared; system caps 25/2000/5/5).",
+          "rationale": "The drafted caps provide a balanced approach to limiting the scope of construction operations while allowing for necessary flexibility."
+        },
+        "J2-S3": {
+          "key": "J2S3-RATIFY",
+          "pick_text": "Ratify S3 as drafted (4-pillar test suite).",
+          "rationale": "The 4-pillar test suite provides a comprehensive set of tests for schema migrations, ensuring their safety and reliability."
+        },
+        "J2-S4": {
+          "key": "J2S4-RATIFY",
+          "pick_text": "Ratify S4 6-pillar suite as drafted.",
+          "rationale": "The 6-pillar security suite provides a robust set of scans to ensure the security of construction operations."
+        },
+        "J2-S5": {
+          "key": "J2S5-RATIFY",
+          "pick_text": "Ratify S5 as drafted (snapshot + CAS + dry-run + post-PR operator-invoked actual rollback).",
+          "rationale": "The drafted rollback mechanism provides a reliable way to recover from failed construction operations."
+        },
+        "J2-S6": {
+          "key": "J2S6-RATIFY",
+          "pick_text": "Ratify S6 as drafted (per-construction approval; admin-required for schema_migration; 1h freshness).",
+          "rationale": "The drafted approval model ensures that construction operations are reviewed and approved by the appropriate personnel before execution."
+        },
+        "J2-S7": {
+          "key": "J2S7-RATIFY",
+          "pick_text": "Ratify S7 as drafted (per-product branch; never main; CAS-protected).",
+          "rationale": "The drafted branch interaction discipline ensures that construction operations are isolated and protected."
+        },
+        "J2-S8": {
+          "key": "J2S8-RATIFY",
+          "pick_text": "Ratify S8 as drafted (per-class Phase B coverage; PR blocks on failure).",
+          "rationale": "The drafted Phase B mandatory approach ensures that construction operations are thoroughly tested before being merged."
+        }
+      },
+      "overallNotes": "The proposal introduces a robust set of safety invariants and construction classes, but careful management and oversight will be required to ensure their effectiveness and reliability.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "S3: Lock contention test realism",
+            "detail": "The lock contention test in S3 uses a replay of 100 concurrent reads/writes. This may not accurately simulate real-world load patterns and could miss subtle lock contention issues that arise under different concurrency scenarios or with more complex query patterns."
+          },
+          {
+            "title": "S4: Authz regression scope",
+            "detail": "S4's authorization regression test only verifies the authorization contract for *existing* endpoints. It doesn't explicitly address the risk of *removing* authorization checks from existing endpoints, which could inadvertently expose sensitive data or functionality."
+          },
+          {
+            "title": "S5: CAS contention risk",
+            "detail": "S5 relies on CAS to prevent concurrent modifications, but the restart mechanism after a CAS failure could lead to a livelock situation if contention is high, repeatedly delaying or preventing the construction from completing."
+          }
+        ],
+        "worse_than_status_quo": "If the rollback mechanism in S5 fails due to unforeseen circumstances (e.g., a bug in the rollback logic or a corrupted snapshot), the system could be left in a partially modified state that is more difficult to recover from than if the construction had never been attempted.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity with its eight safety invariants and associated testing. The overhead of implementing and maintaining these invariants, along with the potential for false positives and performance bottlenecks, could outweigh the benefits of the build/wire engine. A simpler, more manual approach with thorough code review might be more effective and less prone to unforeseen issues.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-STRENGTHEN",
+          "pick_text": "Strengthen S1 — also require pre-construction multi-dim audit baseline per CA-15-A.",
+          "rationale": "Adding the multi-dimensional audit baseline provides a more comprehensive understanding of the system's state before construction, improving the ability to detect regressions."
+        },
+        "J2-S2": {
+          "key": "J2S2-SYSCAPS",
+          "pick_text": "Strengthen system caps — 15/1500/3/4 (currently 25/2000/5/5).",
+          "rationale": "Tightening the system caps reduces the potential blast radius of any single construction operation, mitigating the risk of unintended consequences."
+        },
+        "J2-S3": {
+          "key": "J2S3-ADD5TH",
+          "pick_text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification).",
+          "rationale": "Adding a data-loss-prevention test provides an additional layer of safety for schema migrations, preventing accidental data loss."
+        },
+        "J2-S4": {
+          "key": "J2S4-ADDSSRF",
+          "pick_text": "Strengthen S4 — add a 7th pillar (SSRF probes for endpoints that fetch external URLs).",
+          "rationale": "Adding SSRF probes addresses a critical security vulnerability that could allow attackers to access internal resources or execute arbitrary code."
+        },
+        "J2-S5": {
+          "key": "J2S5-AUTO",
+          "pick_text": "Add automatic rollback — if post-deploy Phase B fails within 1 hour of PR merge, engine auto-rolls-back without operator intervention.",
+          "rationale": "Automatic rollback provides a safety net in case of post-deployment failures, reducing the time to recovery and minimizing potential impact."
+        },
+        "J2-S6": {
+          "key": "J2S6-BOTH",
+          "pick_text": "Both — admin-required all classes + 15-minute freshness.",
+          "rationale": "Requiring admin approval for all construction classes and tightening the freshness window provides a higher level of control and reduces the risk of unauthorized or stale approvals."
+        },
+        "J2-S7": {
+          "key": "J2S7-SUBBRANCH",
+          "pick_text": "Strengthen — every multi-construction sequence (CA-16-B redesign session) writes to a per-session sub-branch within the per-product branch, then squash-merges to the per-product branch after operator approval.",
+          "rationale": "Using per-session sub-branches for multi-construction sequences provides better isolation and allows for easier review and rollback of individual sessions."
+        },
+        "J2-S8": {
+          "key": "J2S8-LIVEPREV",
+          "pick_text": "Strengthen — also require Phase B AGAIN on the live preview URL post-PR-merge; covers the \"construction passes Phase B in CI but breaks on prd deploy\" failure mode.",
+          "rationale": "Running Phase B on the live preview URL post-PR-merge catches issues that may not be apparent in the CI environment, improving the reliability of deployments."
+        }
+      },
+      "overallNotes": "The proposal is comprehensive but complex. Strengthening the invariants as suggested provides additional layers of safety and control.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "S2 scope caps unvalidated for redesign",
+            "detail": "The redesign_implementation class allows operator-declared scope caps without validation mechanism (§3.2). This could permit dangerous scope inflation bypassing system caps, violating the NON-OVERRIDABLE intent. Conformance tests only cover class defaults, not operator-declared scopes."
+          },
+          {
+            "title": "S4 misses SSRF probes",
+            "detail": "The S4 security suite (§3.4) omits Server-Side Request Forgery (SSRF) testing for endpoints fetching external URLs. This leaves a critical vulnerability surface in generated endpoints, contradicting the 'comprehensive security suite' justification."
+          },
+          {
+            "title": "S5 snapshot retention gap",
+            "detail": "Rollback snapshots (§3.5) lack explicit retention policy. Without mandated duration (e.g., 30 days), operators might lose recovery capability before post-deploy issues surface. The dry-run verifies immediate reversal but not mid-term recoverability."
+          },
+          {
+            "title": "S6 rationale unverified",
+            "detail": "Operator approval rationale (§3.6) is free-text with no validation. This allows rubber-stamp approvals like 'approved' without substantive review, undermining the human-gate intent. No conformance test checks rationale quality."
+          }
+        ],
+        "worse_than_status_quo": "An operator declares an overly permissive scope for a redesign_implementation (S2), bypassing security scans via 'operator-declared' loophole. The construction introduces an SSRF vulnerability missed by S4's incomplete probes, causing data exfiltration that wouldn't occur under current surgical-diff limits.",
+        "precedent": "The 2017 Equifax breach resulted from unvalidated operator inputs in a patching system, analogous to unverified operator scope declarations. A declared CVE fix scope was improperly expanded without security re-scanning."
+      },
+      "rejection_steelman": "The proposal adds significant operational friction without commensurate risk reduction. The overlapping invariants (S4 security suite + S8 Phase B + S5 rollback) create redundant gates that delay critical fixes, while lax validation of operator inputs in S2/S6 introduces new attack vectors. Deferring until S2 redesign scoping and S4 test coverage gaps are resolved would maintain safer status-quo surgical patching.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-RATIFY",
+          "pick_text": "Ratify S1 as drafted.",
+          "rationale": "Full hashes are essential for precise regression detection; score/findings alone are insufficient for construction-level verification."
+        },
+        "J2-S2": {
+          "key": "J2S2-RATIFY",
+          "pick_text": "Ratify per-class defaults + hard system caps as drafted (wire_up=5/200/0/3; endpoint_generation=10/500/2/3; schema_migration=3/200/0/3; redesign=operator-declared; system caps 25/2000/5/5).",
+          "rationale": "Proposed caps balance safety and flexibility; tightening defaults would hinder legitimate redesigns without addressing core validation gaps."
+        },
+        "J2-S3": {
+          "key": "J2S3-ADD5TH",
+          "pick_text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification).",
+          "rationale": "Reversibility alone doesn't prevent data destruction; explicit backup checks are critical for schema migrations."
+        },
+        "J2-S4": {
+          "key": "J2S4-ADDSSRF",
+          "pick_text": "Strengthen S4 — add a 7th pillar (SSRF probes for endpoints that fetch external URLs).",
+          "rationale": "SSRF is a critical OWASP Top 10 risk unaddressed in current suite; adding it closes a high-impact gap."
+        },
+        "J2-S5": {
+          "key": "J2S5-RETAIN",
+          "pick_text": "Strengthen rollback retention — snapshot persists for 30 days post-merge (explicit retention specified).",
+          "rationale": "Mandated retention ensures recoverability when issues surface post-deploy, addressing the snapshot-gap objection."
+        },
+        "J2-S6": {
+          "key": "J2S6-RATIFY",
+          "pick_text": "Ratify S6 as drafted (per-construction approval; admin-required for schema_migration; 1h freshness).",
+          "rationale": "Tighter constraints would impede operational flow; solving rationale validation requires separate mechanism."
+        },
+        "J2-S7": {
+          "key": "J2S7-RATIFY",
+          "pick_text": "Ratify S7 as drafted (per-product branch; never main; CAS-protected).",
+          "rationale": "Per-session sub-branches add unnecessary complexity; the CAS mechanism suffices for isolation."
+        },
+        "J2-S8": {
+          "key": null,
+          "pick_text": "Strengthen — also require Phase B AGAIN on the live preview URL post-PR-merge; covers the 'construction passes Phase B in CI but breaks on prd deploy' failure mode.",
+          "rationale": "CI-environment tests often miss deployment-specific failures; live verification provides essential defense-in-depth."
+        }
+      },
+      "overallNotes": "While ratifiable with amendments, the redesign_implementation scope validation gap remains a critical vulnerability requiring CA-16-B resolution.",
+      "invalid_reason": "7/8 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Baseline can miss hidden state",
+            "detail": "§3.1 S1 captures DOM, endpoint, schema, and dependency fingerprints, but not runtime-config, feature flags, queues, background jobs, or external service contracts. A construction can therefore appear safe against the Phase A baseline while still breaking the real deployed behavior that users depend on."
+          },
+          {
+            "title": "Scope caps are gameable",
+            "detail": "§3.2 S2 enforces file-count, line-count, dependency-count, and graph-radius caps, but those are easy to evade with dense refactors, generated code, or indirection layers. A small change set can still rewrite control flow across a large effective surface while staying within the declared caps."
+          },
+          {
+            "title": "Rollback dry-run is not rollback",
+            "detail": "§3.5 S5 requires a simulated rollback before PR, but a successful dry-run does not guarantee reversibility after merge under real production drift, live traffic, or concurrent schema/data evolution. If the rollback mechanism itself depends on a clean pre-state, the system can pass the test and still fail when the real recovery path is needed."
+          }
+        ],
+        "worse_than_status_quo": "If S6 approval and S5 rollback dry-runs add friction but the build still touches production-adjacent files, teams may defer needed fixes until a larger batch is approved, increasing blast radius and delaying security patches. In that case the system becomes slower and less responsive than the status quo of targeted manual edits and review.",
+        "precedent": "GitHub Actions / CI gating is a real precedent: strong pre-merge checks improve safety, but teams still encounter false confidence when CI passes while production-only configs, secrets, or infra drift break the release."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring the proposal is that it codifies a high-complexity construction pipeline without proving the invariants are sufficient or operationally stable. It introduces multiple new mandatory gates, artifacts, and branch/approval semantics that can create brittle failure modes, slow emergency remediation, and give a false sense of safety if any one test family is incomplete. A narrower pilot on a small class of changes would be safer than adopting the full spec at once.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-STRENGTHEN",
+          "pick_text": "Strengthen S1 — also require pre-construction multi-dim audit baseline per CA-15-A.",
+          "rationale": "S1 should not stop at structural fingerprints; a broader baseline is needed to capture security and business-state drift before construction. Strengthening it is more defensible than weakening it because post-construction verification alone cannot reconstruct the original operational context."
+        },
+        "J2-S2": {
+          "key": "J2S2-RATIFY",
+          "pick_text": "Ratify per-class defaults + hard system caps as drafted (wire_up=5/200/0/3; endpoint_generation=10/500/2/3; schema_migration=3/200/0/3; redesign=operator-declared; system caps 25/2000/5/5).",
+          "rationale": "The drafted defaults are tight but still usable, and the hard system caps preserve a safety ceiling. I do not see a better listed option that improves safety without undermining the bounded-scope intent."
+        },
+        "J2-S3": {
+          "key": "J2S3-ADD5TH",
+          "pick_text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification).",
+          "rationale": "The four-pillar suite misses a high-impact failure class: accidental destructive migrations that are technically reversible in theory but operationally disastrous in practice. A data-loss guard is the most important strengthening among the listed choices."
+        },
+        "J2-S4": {
+          "key": "J2S4-BOTH",
+          "pick_text": "Both — 8-pillar S4 (drafted 6 + SSRF + rate-limit).",
+          "rationale": "SSRF is a critical omission for any endpoint that fetches external resources, and rate-limit/abuse probes address a separate class of production abuse that the core six tests do not cover. Together they materially improve coverage without weakening the suite."
+        },
+        "J2-S5": {
+          "key": "J2S5-RETAIN",
+          "pick_text": "Strengthen rollback retention — snapshot persists for 30 days post-merge (explicit retention specified).",
+          "rationale": "The mechanism is sound, but explicit retention is necessary so rollback is actually possible after delayed defect discovery. Thirty days is a reasonable operational strengthening that preserves the drafted snapshot/CAS/dry-run structure."
+        },
+        "J2-S6": {
+          "key": "J2S6-RATIFY",
+          "pick_text": "Ratify S6 as drafted (per-construction approval; admin-required for schema_migration; 1h freshness).",
+          "rationale": "Per-construction approval is the right control boundary, and the one-hour freshness window is a practical compromise between safety and operator burden. Tightening further would likely create approval churn without materially improving risk reduction."
+        },
+        "J2-S7": {
+          "key": "J2S7-RATIFY",
+          "pick_text": "Ratify S7 as drafted (per-product branch; never main; CAS-protected).",
+          "rationale": "Per-product branch isolation is the cleanest way to keep blast radius bounded while preserving a coherent branch-of-record. The additional alternatives add complexity without clear safety gain."
+        },
+        "J2-S8": {
+          "key": "J2S8-LIVEPREV",
+          "pick_text": "Strengthen — also require Phase B AGAIN on the live preview URL post-PR-merge; covers the \"construction passes Phase B in CI but breaks on prd deploy\" failure mode.",
+          "rationale": "CI-only validation is not enough because deployment-time differences are a classic source of regressions. Re-running Phase B on the live preview closes the gap between test and actual serving environment."
+        }
+      },
+      "overallNotes": "Net: I would not reject the whole proposal outright, but I would insist on strengthening the baseline, migration safety, security coverage, rollback retention, and post-merge verification before treating it as production-safe.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback Testing",
+            "detail": "§3.5 S5 describes a rollback dry-run, but there's no mention of testing the rollback mechanism itself. A real-world precedent is the GitLab incident where a backup restore failed due to untested restore procedures."
+          },
+          {
+            "title": "Overly Complex Approval Process",
+            "detail": "§3.6 S6 introduces a complex approval process with multiple conditions (per-construction, admin-only for schema_migration, ≤1h freshness). This could lead to approval fatigue or delays. A similar complex approval process in the Kubernetes project led to slow adoption and frustration among contributors."
+          },
+          {
+            "title": "Insufficient Security Suite Coverage",
+            "detail": "§3.4 S4 lists several security tests, but omits testing for Server-Side Request Forgery (SSRF). SSRF is a significant risk in modern web applications, as seen in the recent AWS metadata SSRF vulnerability."
+          }
+        ],
+        "worse_than_status_quo": "If the build/wire engine's security suite (S4) fails to detect a critical vulnerability introduced during construction, the system could be left in a more vulnerable state than the status quo.",
+        "precedent": "The Equifax breach, which was caused by a failure to detect and remediate a known vulnerability, is a real-world precedent for the risks associated with inadequate security testing."
+      },
+      "rejection_steelman": "The proposal's complexity and non-overridable invariants (S2, S4, S5, S6) could make it difficult to adapt to changing requirements or unexpected edge cases, potentially leading to a rigid and unmaintainable system.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-RATIFY",
+          "pick_text": "Ratify S1 as drafted.",
+          "rationale": "Capturing a pre-construction baseline is essential for regression detection and ensuring the construction process is auditable."
+        },
+        "J2-S2": {
+          "key": "J2S2-TIGHTEN",
+          "pick_text": "Tighten — reduce per-class defaults to half the drafted values (wire_up=3/100/0/2 etc.); operator-override still permitted up to system caps.",
+          "rationale": "Tighter defaults will help prevent overly broad constructions, while still allowing operators to override when necessary."
+        },
+        "J2-S3": {
+          "key": "J2S3-ADD5TH",
+          "pick_text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification).",
+          "rationale": "Data loss prevention is critical, and an additional test pillar will help ensure that schema migrations are safe and reversible."
+        },
+        "J2-S4": {
+          "key": "J2S4-ADDSSRF",
+          "pick_text": "Strengthen S4 — add a 7th pillar (SSRF probes for endpoints that fetch external URLs).",
+          "rationale": "SSRF is a significant risk, and adding probes for it will improve the security posture of the construction process."
+        },
+        "J2-S5": {
+          "key": "J2S5-RETAIN",
+          "pick_text": "Strengthen rollback retention — snapshot persists for 30 days post-merge (explicit retention specified).",
+          "rationale": "A longer retention period will provide a safer recovery window in case of post-merge issues."
+        },
+        "J2-S6": {
+          "key": "J2S6-FRESH15",
+          "pick_text": "Tighten freshness — 15-minute approval freshness (currently 1h).",
+          "rationale": "A shorter freshness window will reduce the risk of stale approvals being used, improving the overall security and auditability of the construction process."
+        },
+        "J2-S7": {
+          "key": "J2S7-RATIFY",
+          "pick_text": "Ratify S7 as drafted (per-product branch; never main; CAS-protected).",
+          "rationale": "The per-product branch discipline is sound, and CAS protection adds an additional layer of safety against concurrent modifications."
+        },
+        "J2-S8": {
+          "key": null,
+          "pick_text": "Strengthen — also require Phase B AGAIN on the live preview URL post-PR-merge; covers the 'construction passes Phase B in CI but breaks on prd deploy' failure mode.",
+          "rationale": "Running Phase B again on the live preview URL will help catch any environment-specific issues that might not be apparent in the CI environment."
+        }
+      },
+      "overallNotes": "The proposal is generally well-structured, but could benefit from additional testing and security measures to ensure its robustness and safety.",
+      "invalid_reason": "7/8 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "S2 file_count_cap too permissive",
+            "detail": "§3.2 S2 allows up to 25 files under the hard system cap for redesign_implementation; this exceeds the existing Self-Renewal Executor's 25% max surgical-diff per file and is only checked at the fix-generator boundary with no post-generation diff-size re-validation in the §4 lifecycle."
+          },
+          {
+            "title": "S5 rollback omits data mutations",
+            "detail": "§3.5 S5 rollback dry-run restores schema and files but performs no verification of runtime data mutations or external side-effects (e.g., S3 lock-contention test only measures time, not data integrity post-revert) before recording construction_rollback.v1."
+          },
+          {
+            "title": "S6 approval freshness window",
+            "detail": "§3.6 S6 requires re-confirmation only after 1 hour yet the approval envelope is persisted once in governance_record_entry; no mechanism invalidates an in-flight construction if operator context changes within that window before the fix-generator runs."
+          }
+        ],
+        "worse_than_status_quo": "Mandatory S1 baseline + S6 approval + S3/S4/S5/S8 gates for every construction class will serialize what the current Self-Renewal Executor handles as fast surgical diffs, causing critical security findings above §7.6 threshold to remain live for hours instead of minutes.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The eight invariants plus per-class taxonomy and 8-phase lifecycle introduce a heavyweight approval-and-test superstructure on top of an already complex Self-Governance Layer (§10) and Clearance Protocol (§11); until the existing Self-Renewal Executor has demonstrated reliable operation under the lighter 25% diff cap, layering additional non-overridable gates risks stalling the entire J2 pipeline without measurable safety gain.",
+      "votes": {
+        "J2-S1": {
+          "key": "J2S1-STRENGTHEN",
+          "pick_text": "Strengthen S1 — also require pre-construction multi-dim audit baseline per CA-15-A.",
+          "rationale": "S1 as drafted captures only §7.6 and hashes; adding the multi-dim audit aligns with the six readiness dimensions already referenced in §7.5 and §11."
+        },
+        "J2-S2": {
+          "key": "J2S2-SYSCAPS",
+          "pick_text": "Strengthen system caps — 15/1500/3/4 (currently 25/2000/5/5).",
+          "rationale": "The current hard caps still permit changes larger than the legacy 25% surgical limit; tightening reduces blast radius before any code is written."
+        },
+        "J2-S3": {
+          "key": "J2S3-ADD5TH",
+          "pick_text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification).",
+          "rationale": "S3's four pillars omit explicit data-loss checks that are critical for schema_migration class operations."
+        },
+        "J2-S4": {
+          "key": "J2S4-BOTH",
+          "pick_text": "Both — 8-pillar S4 (drafted 6 + SSRF + rate-limit).",
+          "rationale": "The six-pillar suite is incomplete for publicly exposed endpoints generated under endpoint_generation."
+        },
+        "J2-S5": {
+          "key": "J2S5-AUTO",
+          "pick_text": "Add automatic rollback — if post-deploy Phase B fails within 1 hour of PR merge, engine auto-rolls-back without operator intervention.",
+          "rationale": "Relying solely on operator-invoked rollback after PR leaves a window where production is exposed to regressions."
+        },
+        "J2-S6": {
+          "key": "J2S6-ADMINALL",
+          "pick_text": "Tighten — admin-required for ALL construction classes (not just schema_migration).",
+          "rationale": "Allowing operator approval for wire_up and endpoint_generation still bypasses the elevated-role gate that Locked Rule 13 intends to protect."
+        },
+        "J2-S7": {
+          "key": "J2S7-SUBBRANCH",
+          "pick_text": "Strengthen — every multi-construction sequence (CA-16-B redesign session) writes to a per-session sub-branch within the per-product branch, then squash-merges to the per-product branch after operator approval.",
+          "rationale": "Per-product branch alone does not isolate concurrent redesign sessions from each other."
+        },
+        "J2-S8": {
+          "key": "J2S8-LIVEPREV",
+          "pick_text": "Strengthen — also require Phase B AGAIN on the live preview URL post-PR-merge; covers the \"construction passes Phase B in CI but breaks on prd deploy\" failure mode.",
+          "rationale": "Class-specific Phase B in the working tree is insufficient to catch environment-specific deployment drift."
+        }
+      },
+      "overallNotes": "All S-invariants should be treated as Panel-ratifiable until the Self-Renewal Executor baseline is proven stable under production load.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "J2-S1",
+      "topic": "J2-S1 — Pre-construction Phase A baseline (PANEL-RATIFIABLE). S1 captures Phase A baseline (score + findings + DOM/endpoint/schema/deps hashes) before any construction. Conformance tests S1-CT-1 through S1-CT-3 enforce. Right invariant?",
+      "options": [
+        {
+          "key": "J2S1-RATIFY",
+          "text": "Ratify S1 as drafted."
+        },
+        {
+          "key": "J2S1-SIMPLIFY",
+          "text": "Ratify with simplification — capture score + findings only; drop DOM/endpoint/schema/deps hashes (engineering can rebuild from runId)."
+        },
+        {
+          "key": "J2S1-REJECT",
+          "text": "Reject S1 — pre-baseline is unnecessary; post-construction Phase B verification (S8) suffices."
+        },
+        {
+          "key": "J2S1-STRENGTHEN",
+          "text": "Strengthen S1 — also require pre-construction multi-dim audit baseline per CA-15-A."
+        }
+      ],
+      "draftedKey": "J2S1-RATIFY"
+    },
+    {
+      "id": "J2-S2",
+      "topic": "J2-S2 — Bounded scope (NON-OVERRIDABLE per CEO Locked Rule 13 / Path H). S2 declares hard caps (file_count / line_count / new_dependency / dep_graph_radius) before construction; enforced at fix-generator boundary. Panel may strengthen / tighten but cannot eliminate. Right caps?",
+      "options": [
+        {
+          "key": "J2S2-RATIFY",
+          "text": "Ratify per-class defaults + hard system caps as drafted (wire_up=5/200/0/3; endpoint_generation=10/500/2/3; schema_migration=3/200/0/3; redesign=operator-declared; system caps 25/2000/5/5)."
+        },
+        {
+          "key": "J2S2-TIGHTEN",
+          "text": "Tighten — reduce per-class defaults to half the drafted values (wire_up=3/100/0/2 etc.); operator-override still permitted up to system caps."
+        },
+        {
+          "key": "J2S2-SYSCAPS",
+          "text": "Strengthen system caps — 15/1500/3/4 (currently 25/2000/5/5)."
+        },
+        {
+          "key": "J2S2-LOOSEN",
+          "text": "Loosen per-class defaults — wire_up=10/400/1/3 etc. (Panel believes defaults too restrictive for real-world construction)."
+        }
+      ],
+      "draftedKey": "J2S2-RATIFY"
+    },
+    {
+      "id": "J2-S3",
+      "topic": "J2-S3 — Schema migration testing (PANEL-RATIFIABLE). S3 requires every schema_migration to pass idempotency / drift / lock-contention / reversibility tests before PR. Conformance tests S3-CT-1 through S3-CT-4. Right scope?",
+      "options": [
+        {
+          "key": "J2S3-RATIFY",
+          "text": "Ratify S3 as drafted (4-pillar test suite)."
+        },
+        {
+          "key": "J2S3-ADD5TH",
+          "text": "Add a 5th pillar — data-loss-prevention test (no DROP COLUMN / DROP TABLE without explicit operator confirmation + backup verification)."
+        },
+        {
+          "key": "J2S3-REJECT",
+          "text": "Reject S3 — schema migrations belong in a separate W5x dispatch with operator manual review, not in the build/wire engine."
+        },
+        {
+          "key": "J2S3-MANUAL",
+          "text": "Replace S3 with operator-driven manual approval — engineer reviews schema migrations manually; no automated suite."
+        }
+      ],
+      "draftedKey": "J2S3-RATIFY"
+    },
+    {
+      "id": "J2-S4",
+      "topic": "J2-S4 — Construction security suite (NON-OVERRIDABLE per CEO Locked Rule 13 / Path H). S4 requires SQLi / XSS / auth-bypass / secrets / dep-CVE / authz-regression scans before PR. Panel may strengthen but cannot eliminate. Right scope?",
+      "options": [
+        {
+          "key": "J2S4-RATIFY",
+          "text": "Ratify S4 6-pillar suite as drafted."
+        },
+        {
+          "key": "J2S4-ADDSSRF",
+          "text": "Strengthen S4 — add a 7th pillar (SSRF probes for endpoints that fetch external URLs)."
+        },
+        {
+          "key": "J2S4-ADDRATE",
+          "text": "Strengthen S4 — add an 8th pillar (rate-limit / abuse probes for endpoints exposed publicly)."
+        },
+        {
+          "key": "J2S4-BOTH",
+          "text": "Both — 8-pillar S4 (drafted 6 + SSRF + rate-limit)."
+        }
+      ],
+      "draftedKey": "J2S4-RATIFY"
+    },
+    {
+      "id": "J2-S5",
+      "topic": "J2-S5 — Rollback substrate (NON-OVERRIDABLE per CEO Locked Rule 13 / Path H). S5 requires pre-commit snapshot + CAS commit + rollback dry-run before PR; operator may invoke actual rollback post-PR. Panel may strengthen but cannot eliminate. Right mechanism?",
+      "options": [
+        {
+          "key": "J2S5-RATIFY",
+          "text": "Ratify S5 as drafted (snapshot + CAS + dry-run + post-PR operator-invoked actual rollback)."
+        },
+        {
+          "key": "J2S5-AUTO",
+          "text": "Add automatic rollback — if post-deploy Phase B fails within 1 hour of PR merge, engine auto-rolls-back without operator intervention."
+        },
+        {
+          "key": "J2S5-RETAIN",
+          "text": "Strengthen rollback retention — snapshot persists for 30 days post-merge (explicit retention specified)."
+        },
+        {
+          "key": "J2S5-BOTH",
+          "text": "Both — automatic + 30-day retention."
+        }
+      ],
+      "draftedKey": "J2S5-RATIFY"
+    },
+    {
+      "id": "J2-S6",
+      "topic": "J2-S6 — Pre-construction operator approval (NON-OVERRIDABLE per CEO Locked Rule 13 / Path H). S6 requires per-construction operator approval before fix-generator runs; admin-only for schema_migration; ≤1h freshness. Panel may strengthen but cannot eliminate. Right approval model?",
+      "options": [
+        {
+          "key": "J2S6-RATIFY",
+          "text": "Ratify S6 as drafted (per-construction approval; admin-required for schema_migration; 1h freshness)."
+        },
+        {
+          "key": "J2S6-ADMINALL",
+          "text": "Tighten — admin-required for ALL construction classes (not just schema_migration)."
+        },
+        {
+          "key": "J2S6-FRESH15",
+          "text": "Tighten freshness — 15-minute approval freshness (currently 1h)."
+        },
+        {
+          "key": "J2S6-BOTH",
+          "text": "Both — admin-required all classes + 15-minute freshness."
+        }
+      ],
+      "draftedKey": "J2S6-RATIFY"
+    },
+    {
+      "id": "J2-S7",
+      "topic": "J2-S7 — Branch-of-record interaction (PANEL-RATIFIABLE). S7 requires construction commits land on per-product `self_renewal_branch` (per CA-14-D Invariant 1, which CLEARED Panel quorum 8/10 in commit cc14a8f); never `main` direct. The previously-open S7 dependency is now resolved. Right discipline?",
+      "options": [
+        {
+          "key": "J2S7-RATIFY",
+          "text": "Ratify S7 as drafted (per-product branch; never main; CAS-protected)."
+        },
+        {
+          "key": "J2S7-SUBBRANCH",
+          "text": "Strengthen — every multi-construction sequence (CA-16-B redesign session) writes to a per-session sub-branch within the per-product branch, then squash-merges to the per-product branch after operator approval."
+        },
+        {
+          "key": "J2S7-REJECT",
+          "text": "Reject S7 — construction should write to a separate construction-only branch (e.g. `flowai-construction-<runId>`), not the per-product self_renewal_branch."
+        },
+        {
+          "key": "J2S7-SUBPATHS",
+          "text": "Adjust — per-product branch is fine but require per-construction-class sub-paths (e.g. `flowai/construction/<class>/<runId>`)."
+        }
+      ],
+      "draftedKey": "J2S7-RATIFY"
+    },
+    {
+      "id": "J2-S8",
+      "topic": "J2-S8 — Post-construction Phase B mandatory (PANEL-RATIFIABLE). S8 requires Phase B run on construction artifacts before PR opens. Per-class coverage drafted. Right approach?",
+      "options": [
+        {
+          "key": "J2S8-RATIFY",
+          "text": "Ratify S8 as drafted (per-class Phase B coverage; PR blocks on failure)."
+        },
+        {
+          "key": "J2S8-LIVEPREV",
+          "text": "Strengthen — also require Phase B AGAIN on the live preview URL post-PR-merge; covers the \"construction passes Phase B in CI but breaks on prd deploy\" failure mode."
+        },
+        {
+          "key": "J2S8-DUALLOAD",
+          "text": "Strengthen — for endpoint_generation, require Phase B against TWO load profiles (light + heavy), not just one; surfaces concurrency bugs."
+        },
+        {
+          "key": "J2S8-BOTH",
+          "text": "Both — live-preview Phase B AND dual-load testing."
+        }
+      ],
+      "draftedKey": "J2S8-RATIFY"
+    }
+  ],
+  "quorum_floor": 7,
+  "cleared_count": 0
+}

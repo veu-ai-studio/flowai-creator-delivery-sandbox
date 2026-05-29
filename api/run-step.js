@@ -11,11 +11,15 @@ import { STEP_KEYS, STEP_LABELS } from './_lib/stepPrompts.js';
 import { runStepInline } from './_lib/jobs/runStep.js';
 import { isInngestEnabled, sendEvent } from './_lib/inngest.js';
 import { resolveOrgId, resolveProductId } from './_lib/tenant.js';
+import { requireAuthHard } from './_lib/auth.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
+
+  // S-3 fix (W4 adversarial bd2f923): auth gate BEFORE body validation.
+  if (!(await requireAuthHard(req, res))) return;
 
   const {
     step, input = {}, objective, priorResults, pageContent,

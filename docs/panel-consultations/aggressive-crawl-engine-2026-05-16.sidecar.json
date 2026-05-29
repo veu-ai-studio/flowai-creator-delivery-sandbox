@@ -1,0 +1,727 @@
+{
+  "schema": "aggressive-crawl-engine.sidecar.v1",
+  "startedAt": "2026-05-16T00:55:14.972Z",
+  "finishedAt": "2026-05-16T01:04:22.862Z",
+  "panel_audit": {
+    "providerCounts": {
+      "openai": 1,
+      "anthropic": 1,
+      "google": 1,
+      "mistralai": 1,
+      "cohere": 1,
+      "qwen": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "moonshotai": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 1,
+    "slots": 10
+  },
+  "panel_size": 10,
+  "bundle_size": 129097,
+  "liveOk": 10,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 4,
+    "primary_timeout_ms": 150000,
+    "backup_retry_timeout_ms": 180000
+  },
+  "tally": {
+    "engagedTotal": 10,
+    "tangential": 0,
+    "silent": 0,
+    "evasive": 0,
+    "perQuestion": {
+      "ACE-Q1": {
+        "(a)": 10,
+        "(b)": 0,
+        "(c)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      },
+      "ACE-Q2": {
+        "(a)": 10,
+        "(b)": 0,
+        "(c)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      },
+      "ACE-Q3": {
+        "(a)": 10,
+        "(b)": 0,
+        "(c)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      },
+      "ACE-Q4": {
+        "(a)": 10,
+        "(b)": 0,
+        "(c)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      },
+      "ACE-Q5": {
+        "(a)": 10,
+        "(b)": 0,
+        "(c)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      },
+      "ACE-Q6": {
+        "(a)": 7,
+        "(b)": 0,
+        "(c)": 2,
+        "INSUFFICIENT_INFORMATION": 1,
+        "other": 0
+      },
+      "ACE-Q7": {
+        "(a)": 10,
+        "(b)": 0,
+        "(c)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      },
+      "ACE-Q8": {
+        "(a)": 10,
+        "(b)": 0,
+        "(c)": 0,
+        "INSUFFICIENT_INFORMATION": 0,
+        "other": 0
+      }
+    },
+    "totalInsuff": 1
+  },
+  "per_question_verdicts": {
+    "ACE-Q1": {
+      "verdict": "UNANIMOUS_(a)",
+      "detail": "10 of 10 ENGAGED on (a) (unanimous)",
+      "topOption": "(a)",
+      "topCount": 10
+    },
+    "ACE-Q2": {
+      "verdict": "UNANIMOUS_(a)",
+      "detail": "10 of 10 ENGAGED on (a) (unanimous)",
+      "topOption": "(a)",
+      "topCount": 10
+    },
+    "ACE-Q3": {
+      "verdict": "UNANIMOUS_(a)",
+      "detail": "10 of 10 ENGAGED on (a) (unanimous)",
+      "topOption": "(a)",
+      "topCount": 10
+    },
+    "ACE-Q4": {
+      "verdict": "UNANIMOUS_(a)",
+      "detail": "10 of 10 ENGAGED on (a) (unanimous)",
+      "topOption": "(a)",
+      "topCount": 10
+    },
+    "ACE-Q5": {
+      "verdict": "UNANIMOUS_(a)",
+      "detail": "10 of 10 ENGAGED on (a) (unanimous)",
+      "topOption": "(a)",
+      "topCount": 10
+    },
+    "ACE-Q6": {
+      "verdict": "QUORUM_PLURALITY_(a)",
+      "detail": "7 of 10 ENGAGED on (a) (≥ 7/10 quorum, < 8/10 supermajority)",
+      "topOption": "(a)",
+      "topCount": 7
+    },
+    "ACE-Q7": {
+      "verdict": "UNANIMOUS_(a)",
+      "detail": "10 of 10 ENGAGED on (a) (unanimous)",
+      "topOption": "(a)",
+      "topCount": 10
+    },
+    "ACE-Q8": {
+      "verdict": "UNANIMOUS_(a)",
+      "detail": "10 of 10 ENGAGED on (a) (unanimous)",
+      "topOption": "(a)",
+      "topCount": 10
+    }
+  },
+  "high_conviction": [
+    "ACE-Q1",
+    "ACE-Q2",
+    "ACE-Q3",
+    "ACE-Q4",
+    "ACE-Q5",
+    "ACE-Q7",
+    "ACE-Q8"
+  ],
+  "low_conviction": [
+    "ACE-Q6"
+  ],
+  "backup_fires": [
+    {
+      "slot": 3,
+      "fired": true,
+      "primary_provider": "openrouter",
+      "primary": "openrouter:google/gemini-2.5-pro",
+      "replacement_provider": "openrouter",
+      "replacement": "openrouter:mistralai/mistral-large-2411",
+      "primary_error": "unparseable JSON envelope"
+    },
+    {
+      "slot": 6,
+      "fired": true,
+      "primary_provider": "openrouter",
+      "primary": "openrouter:qwen/qwen-2.5-72b-instruct",
+      "replacement_provider": "openrouter",
+      "replacement": "openrouter:deepseek/deepseek-r1",
+      "primary_error": "openrouter 400: {\"error\":{\"message\":\"This endpoint's maximum context length is 32768 tokens. However, you requested about 39122 tokens (35026 of text input, 4096 in the output). Please reduce the length of either one"
+    },
+    {
+      "slot": 9,
+      "fired": true,
+      "primary_provider": "openrouter",
+      "primary": "openrouter:moonshotai/kimi-k2.6",
+      "replacement_provider": "openrouter",
+      "replacement": "openrouter:meta-llama/llama-4-maverick",
+      "primary_error": "timeout after 150000 ms"
+    },
+    {
+      "slot": 10,
+      "fired": true,
+      "primary_provider": "openrouter",
+      "primary": "openrouter:x-ai/grok-4.3",
+      "replacement_provider": "openrouter",
+      "replacement": "openrouter:minimax/minimax-m2.7",
+      "primary_error": "unparseable JSON envelope"
+    }
+  ],
+  "ssot_conflicts": [
+    {
+      "slot": 3,
+      "conflict": "ACE-Q3 conflicts with §22 Product-Agnostic Rule, as the probe prompt is not entirely product-agnostic."
+    },
+    {
+      "slot": 6,
+      "conflict": "ACE-Q1: Proposed depth=8/page=200 exceeds SSOT Rev-2.1 §6 caps (depth=2/max=8 pages), requiring CA-n amendment."
+    },
+    {
+      "slot": 8,
+      "conflict": "ACE-Q6: consultation wording overstates the drafted default; canonical spec uses safe-only triggers by default, not full destructive triggers."
+    }
+  ],
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "Adopt the §A.1 ceilings (default depth=8, hard cap=12; pages=200, hard cap=2000) to meet ENTRY 002's \"AGGRESSIVE EXHAUSTIVE\" mandate while controlling cost. This pairs with §E.3's 20‑min wall‑clock and 30 Browserless‑minutes budgets to keep runs feasible."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "§E.1 recommends Option B: pin Agent #21 Ops Runner Alpha as the Aggressive Crawl Conductor, cleanly separating this substrate operation from Agent #6 and partially resolving Rev‑2.1 §27 OQ‑2 (unassigned Ops Runner steps). The proposed charter limits authority to ['recommend_only','auto_write_internal'] for ProductSSOT writes per CA‑10‑B."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "§A.4 sends the benign probe \"Reply with the single word: ACK\" with a 30‑second window and classifies reachability (ai-agent-unreachable/ai-agent-no-response). This minimizes cost and policy risk while satisfying SSOT Rev‑2.1 §6's aggressive crawl contract to probe AI-agent surfaces."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "§E.3 sets up to 5 concurrent pages per product, single product per run, with a 20‑minute wall‑clock cap and 30 Browserless‑minutes budget. This balances throughput and provider load, aligning with the spec’s cost controls."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "Rev‑2.1 §12 maps `medium` to fork‑and‑fix auto‑deploy and `high`/`critical` to human gates; §B.2 of this spec adopts the same routing. Keeping `medium` auto‑fixable leverages the Self‑Renewal Executor (CA‑7) while preserving human gates for higher severities."
+        },
+        "ACE-Q6": {
+          "pick": "INSUFFICIENT_INFORMATION",
+          "rationale": "§A.7 defaults to 'safe' triggers (404, 500, offline, slow‑network) and explicitly excludes XSS/form‑submit unless the operator opts into 'full' in dev/staging. None of (a)-(c) matches this default (a includes XSS; c omits 500), so the drafted default cannot be represented by the given options."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "Adopt §D.1’s deductions (10/5/2/0.5) with the defined bands, which §D.4 then ties to Clearance Step 5 gating (score ≥75 and no criticals). This complements SSOT Rev‑2.1 §11’s Demo Readiness gate without replacing it."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "§E.2 proposes a $15/run ceiling (3× nominal) with per‑product/env override via Doppler, and §E.3’s budget math targets ~$1500/month steady‑state after CA‑10 narrowing. This provides enough headroom for rich interaction (Playwright + Browserless) while keeping costs governed."
+        }
+      },
+      "insuffCount": 1,
+      "conflicts": [],
+      "overallNotes": "ACE-Q6 options do not reflect §A.7’s 'safe' default (includes 500; excludes XSS), hence (d). All other picks align with the drafted spec and SSOT Rev‑2.1 cross‑references.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-5"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "The proposed depth=8/pages=200 defaults align with SSOT §6's 'aggressive exhaustive traversal' mandate and ENTRY 002's requirement for 'every link, every card, every modal, every page.' The hard caps of depth=12/pages=2000 provide sufficient headroom for complex SPAs while maintaining cost control per §E.3's $15/run ceiling."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "Agent #21 Ops Runner Alpha is the optimal choice per SSOT §15.1's roster structure and §27 OQ-2 which explicitly flags the need to assign Ops Runners to steps. This resolves the open question while maintaining clean separation of concerns, avoiding the bloat risk of expanding Agent #6's charter beyond its current research focus."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "The benign 'Reply ACK' probe satisfies ENTRY 002's requirement for 'AI agent surface probing' while minimizing risk per §A.4's design rationale. The probe is intentionally innocuous to avoid content-policy violations and incurring off-tenant costs, aligning with SSOT §22's Product-Agnostic Rule."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "Five concurrent pages per product balances throughput with resource constraints, fitting within the §E.3 performance budget of 20-minute wall-clock and 30 Browserless minutes per run. This parallelization level enables completing the aggressive crawl scope from ENTRY 002 within reasonable time bounds."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "Auto fork-and-fix for medium severity aligns precisely with SSOT §12's canonical routing where 'medium severity → fork-and-fix auto-deploy in fork-and-fix mode.' This maintains consistency with the established Self-Renewal pattern and CA-7's executor authority model."
+        },
+        "ACE-Q6": {
+          "pick": "(c)",
+          "rationale": "Triggering non-destructive errors only (404/offline/slow) as the 'safe' default per §A.7 balances ENTRY 002's aggressive testing mandate with production safety. The XSS probe and form submissions should require explicit opt-in per §A.7's 'full' mode to avoid mutating production state."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "The 10/5/2/0.5 deduction formula provides granular scoring that maps cleanly to §D.1's demo-readiness bands (90-100 Showcase-ready, 75-89 Demo-ready). This aligns with SSOT §11 Step 5's clearance requirements and provides actionable thresholds for GTM decisions."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "The $15/run ceiling (3× nominal) per §E.2 appropriately reflects the 5-10× heavier workload of aggressive crawls versus standard pipeline runs. This aligns with the Orchestra spec's cost tracking requirements and provides sufficient budget for the depth=8/pages=200 scope while maintaining fiscal discipline."
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "The spec comprehensively operationalizes SSOT §6's aggressive crawling mandate and ENTRY 002's GTM-readiness requirements while maintaining alignment with existing canonical patterns.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "The proposed depth and page caps strike a balance between coverage and cost, ensuring thorough crawling without excessive resource consumption. This aligns with the spec's goal of exhaustive traversal (§A.1)."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "Assigning Agent #21 as the Aggressive Crawl Conductor resolves Rev-2.1 OQ-2 partially and aligns with the Ops Runner role, providing a clean separation of concerns (§E.1)."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "The benign probe prompt is designed to be innocuous, avoiding off-tenant costs and content-policy violations. It ensures that AI agents are reachable without incurring significant risks (§A.4)."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "Parallelizing 5 concurrent pages per product balances efficiency and provider load, ensuring faster overall throughput without overburdening the system (§E.3)."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "Auto fork-and-fix for medium severity issues aligns with the severity routing in Rev-2.1 §12 and the Self-Renewal spec §4.4, ensuring efficient resolution of issues (§C.1)."
+        },
+        "ACE-Q6": {
+          "pick": "(a)",
+          "rationale": "Triggering all error states as drafted ensures comprehensive testing of the product's readiness, including critical scenarios like 404 and 500 handling (§A.7)."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "The proposed scoring formula provides a nuanced evaluation of the product's readiness, with appropriate deductions for different severity levels (§D.1)."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "The $15 per run cost ceiling is a reasonable balance, providing enough headroom for thorough crawling while managing costs effectively (§E.2)."
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [
+        "ACE-Q3 conflicts with §22 Product-Agnostic Rule, as the probe prompt is not entirely product-agnostic."
+      ],
+      "overallNotes": "The spec effectively operationalizes the aggressive crawling contract from Rev-2.1 §6, ensuring thorough and comprehensive crawling of products.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "The depth and page caps proposed in the spec (depth=8 default / cap 12, pages=200 / cap 2000) align with the goal of thorough crawling while balancing cost and coverage. This ensures comprehensive testing without excessive resource usage."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "Assigning Agent #21 Ops Runner Alpha as the Aggressive Crawl Conductor (§E.1 Option B) is recommended. This aligns with the Ops Runner's role and resolves Rev-2.1 OQ-2 partially, providing a clean separation of concerns."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "The benign 'Reply ACK' probe is safe and minimal in cost and content-policy risk, ensuring light interaction without incurring significant costs (§A.4)."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "The proposed parallelization scope of 5 concurrent pages per product (§E.3) is a balanced approach, ensuring efficient crawling without overloading the provider."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "Auto fork-and-fix for medium severity issues aligns with the CA-7 §12 severity routing, ensuring efficient resolution of issues without requiring human intervention for medium severity issues."
+        },
+        "ACE-Q6": {
+          "pick": "(a)",
+          "rationale": "Triggering all error states (404 / 500 / offline / slow / XSS) as drafted ensures comprehensive testing of the product's error handling capabilities (§A.7)."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "The proposed GTM readiness score formula (10/5/2/0.5 deductions per critical/high/medium/low) provides a balanced scoring mechanism, ensuring that products are thoroughly evaluated for readiness (§D.1)."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "The cost ceiling of $15 per run per product per environment (3× nominal) is a reasonable balance, ensuring thorough crawling while managing costs effectively (§E.2)."
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "The spec is well-aligned with the canonical SSOT and addresses the aggressive crawling requirements comprehensively.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "The proposed depth=8 / pages=200 default and depth=12 / pages=2000 hard cap strike a balance between coverage and cost. While a lower depth=5 / pages=100 cap would be safer and less costly, it risks missing deeper SPAs. A higher depth=12 / pages=500 cap would be more thorough but would incur a higher cost per run. The current proposal is a reasonable compromise, ensuring comprehensive coverage while managing costs."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "Assigning the Aggressive Crawl Conductor role to Ops Runner Alpha (Option B) is the recommended approach. It keeps the Research Agent's scope focused and aligns with the Ops Runner's role as a substrate-level operator. This option also resolves the open question in Rev-2.1 §27 OQ-2, partially pinning Ops Runner Alpha to a specific step. While expanding Agent #6 Research (Option A) or creating a new executor (Option C) are possible alternatives, they have drawbacks such as scope bloat or complexity proliferation."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "Sending a benign \"Reply ACK\" probe to discovered AI-agent surfaces is a safe and cost-effective approach. It allows for cataloging and light interaction with AI agents, providing valuable insights without incurring significant content-policy risks. Not probing AI agents at all (Option B) or requiring a human gate per product (Option C) are more conservative approaches, but they limit the level of interaction and may not provide as much information about the AI agent's functionality."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "Running 5 concurrent pages, 1 product at a time, strikes a balance between thoroughness and cost. While running 10 concurrent pages (Option B) would be faster, it would also increase provider load and Browserless costs. Running 3 concurrent pages (Option C) is the safest and least costly option, but it may not provide enough coverage for larger products. The current proposal is a reasonable compromise, ensuring comprehensive coverage while managing costs."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "Auto-fixing medium severity issues aligns with the severity routing in CA-7 §12 and the current Agent #3 caution. While human-gating everything above low (Option B) would be more conservative, it may slow down the fix loop. Auto-fixing low severity issues only (Option C) mirrors the current Agent #3 caution but may not provide enough autonomy for the fix loop. The current proposal is a reasonable compromise, allowing for efficient resolution of medium severity issues while maintaining a balance between automation and human oversight."
+        },
+        "ACE-Q6": {
+          "pick": "(a)",
+          "rationale": "Triggering all error states (404, 500, offline, slow, XSS) as drafted provides a comprehensive view of potential issues. While a read-only approach (Option B) or triggering only non-destructive errors (Option C) may be safer, they may not provide enough information to thoroughly test the system. The current proposal is a reasonable compromise, ensuring comprehensive error detection while managing costs."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "The proposed 10/5/2/0.5 deductions per critical/high/medium/low formula provides a balanced scoring system. While a stricter 20/10/4/1 formula (Option B) would penalize more heavily, it may be too strict for some products. A simpler pass/fail per surface type formula (Option C) would not provide as much granularity in the scoring, making it harder to compare products. The current proposal is a reasonable compromise, allowing for a nuanced evaluation of the system's readiness."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "A $15 / run / product / env cost ceiling is a reasonable balance between thoroughness and cost. While a lower $8 / run ceiling (Option B) would be more conservative, it may not provide enough headroom for larger products. A higher $25 / run ceiling (Option C) would allow for more thorough probes, but it may not be necessary for all products. The current proposal is a reasonable compromise, ensuring comprehensive coverage while managing costs."
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "The Aggressive Crawl Engine spec is well-written and addresses the gaps in the current crawler. The proposed depth and page caps, agent ownership, AI-agent probe safety, parallelization scope, fix-loop autonomy, error-state trigger default, GTM readiness score formula, and cost ceiling per run are all reasonable and well-justified. The spec also includes a comprehensive test plan and engineering scope estimate, ensuring a smooth implementation process.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:cohere/command-r-plus-08-2024"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "The spec §A.1 explicitly proposes default depth=8 (cap 12) and pages=200 (cap 2000), citing cost/coverage balance. This aligns with ENTRY 002's exhaustive crawl mandate but exceeds SSOT Rev-2.1 §6's current caps (depth=2/max=8 pages), requiring future amendment."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "§E.1 recommends Option B (Agent #21 as Aggressive Crawl Conductor) to resolve Rev-2.1 §27 OQ-2. This leverages Ops Runners' substrate role per Layer 2 plan PG1 and avoids overloading Agent #6."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "§A.4 justifies the benign 'ACK' probe as safe and necessary for detecting unreachable agents. It avoids content risks and maps to §B.1's ai-agent-unreachable critical issue, per ENTRY 002's agent-surface mandate."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "§E.3 budgets 5 concurrent pages per product (serialized by product) for 20-min wall-clock feasibility. This balances cost ($15/run) against Browserless minute limits, per Orchestra spec §7.4 cost tracking."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "§C.1 routes medium severity to auto fork-and-fix per Rev-2.1 §12's severity mapping. This reflects Self-Renewal spec §4.4 and avoids human gates for auto-fixable issues, per §6 resolution contract."
+        },
+        "ACE-Q6": {
+          "pick": "(c)",
+          "rationale": "§A.7 defaults to 'safe' triggers (404/500/offline/slow) excluding form/XSS for new products. This aligns with §13 role gates and avoids state mutation in prod, per §A.7's prd-environment caution."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "§D.1's formula (critical:-10, high:-5, medium:-2, low:-0.5) is explicitly proposed and maps to Clearance Step 5 bands. It quantifies ENTRY 002's GTM-readiness bar without zero-tolerance overrides."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "§E.2 sets $15/run ceiling (3× nominal) based on Browserless/Playwright costs. This accounts for 5x heavier usage per §E.3 and allows Doppler overrides, per Orchestra spec §7.4 cost-aware budgeting."
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [
+        "ACE-Q1: Proposed depth=8/page=200 exceeds SSOT Rev-2.1 §6 caps (depth=2/max=8 pages), requiring CA-n amendment."
+      ],
+      "overallNotes": "Spec operationalizes ENTRY 002 and Rev-2.1 §6 but requires co-sequencing with CA-7/9/10 for ProductSSOT and executor patterns.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "The spec §A.1 explicitly proposes default depth=8 (cap 12) and pages=200 (cap 2000), citing engineering Doppler overrides. This aligns with SSOT §6's depth-bound requirement and ENTRY 002's exhaustive scope without conflict."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "Spec §E.1 recommends Option B (Agent #21 Ops Runner Alpha) as owner, resolving Rev-2.1 §27 OQ-2. SSOT §15.1 lists #21 as dormant step-owner, allowing this assignment without conflict per CA-9-B's charter expansion pattern."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "Spec §A.4/A.5 details the benign 'ACK' probe as safe and necessary for issue detection. SSOT §6's aggressive crawl mandate supports probing, and the innocuous design avoids content-policy violations per §A.4 rationale."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "Spec §E.3 proposes 5 concurrent pages per product, balancing coverage and cost. This aligns with SSOT §6's authenticated crawl requirements and Browserless usage per Orchestra wiring (§15.4), with no cap conflicts in SSOT."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "Spec §C.1 routes medium severity to auto-fix per Rev-2.1 §12's resolution contract. SSOT §12 explicitly classifies medium as auto-fixable in fork-and-fix mode, and the spec implements this verbatim without deviation."
+        },
+        "ACE-Q6": {
+          "pick": "(a)",
+          "rationale": "Spec §A.7 defaults to 'safe' triggers (non-state-mutating) but includes all error types contextually. SSOT §6 requires error-state triggering, and 'safe' mode adheres to §A.7's prd-environment safeguards per role gates (§13)."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "Spec §D.1's formula (10/5/2/0.5 deductions) is explicitly proposed and maps to Clearance Step 5 gates (§D.4). SSOT §11's demo readiness step lacks scoring details, so no conflict exists; this extends canonically."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "Spec §E.2 proposes $15/run cost ceiling, justified by 3× nominal pipeline cost. SSOT §8's Orchestra cost tracking allows per-run budgeting, and Doppler overrides (§E.2) align with §3's metadata-driven model without conflict."
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "The drafted caps already align with the spec’s target table in §A.1: default depth 8, hard cap 12, default pages 200, hard cap 2000. That is also consistent with Parking Lot ENTRY 002’s requirement for full-site spidering with depth control, so I would adopt the proposed ceilings rather than tighten them prematurely."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "Option B is explicitly the W3 recommendation in §E.1, and it cleanly closes Rev-2.1 OQ-2 by pinning Agent #21 as the Aggressive Crawl Conductor. The spec also gives a concrete charter for #21 with crawl credentials and produced topics, which makes this the least disruptive path."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "§A.4 defines the benign probe prompt as a single-word ACK test and states that any reachable widget remains counted as reachable even if it does not return ACK exactly. Since the probe is intentionally innocuous and the spec distinguishes this from auth or sensitive actions, the drafted approach is safe enough for the crawl engine."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "§E.3 already budgets up to 5 concurrent pages per product, with a single product at a time, and the run-cost estimate is built around that concurrency. That seems appropriately aggressive while still respecting the Browserless minute and wall-clock limits in the same section."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "The spec’s routing in §C.1 and Rev-2.1 §12 treats medium severity as fork-and-fix auto-deployable, while high and critical remain human-gated. That is consistent with the severity contract and the Self-Renewal Executor model in CA-7, so medium should stay automated."
+        },
+        "ACE-Q6": {
+          "pick": "(a)",
+          "rationale": "§A.7 explicitly lists the deliberate error-state triggers and says the default for new products is `'safe'`, which includes the non-state-mutating triggers such as 404, 500, offline, and slow-network. The consultation option collapses that into “trigger all,” but the underlying drafted default is to include the safe set and reserve full form-submit probes for explicit opt-in."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "§D.1 gives the explicit scoring formula with deductions of 10/5/2/0.5 for critical/high/medium/low, and uses that score to gate Demo-ready status. That weighting is already integrated into the deliverable definition, so adopting it as-is is the canonical choice."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "§E.2 sets the per-run cost ceiling at $15/run and ties it to the aggressive crawl’s heavier Browserless and parallel-session footprint. The spec also notes per-product and per-environment override availability, so the global default need not be lower unless cost data from rollout proves otherwise."
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [
+        "ACE-Q6: consultation wording overstates the drafted default; canonical spec uses safe-only triggers by default, not full destructive triggers."
+      ],
+      "overallNotes": "The spec is internally coherent enough to support all eight choices without needing INSUFFICIENT_INFORMATION. The only notable mismatch is ACE-Q6 wording versus the actual §A.7 default behavior.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "The proposed depth and page caps (default depth=8 / pages=200, hard cap depth=12 / pages=2000) balance coverage with cost, as stated in §A.1. This is a reasonable trade-off between thoroughness and resource usage, and aligns with the aggressive crawling requirements outlined in Parking Lot ENTRY 002."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "Option B, assigning Agent #21 Ops Runner Alpha as the Aggressive Crawl Conductor, is recommended by W3 (§E.1). This choice provides a clean separation of responsibilities and aligns with the Ops Runner role as described in the Layer 2 plan PG1. It also partially resolves Rev-2.1 OQ-2 regarding Ops Runner step assignments."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "The benign probe prompt 'Reply with the single word: ACK' (§A.4) is designed to be safe with minimal cost and content-policy risk. This approach allows for the detection of AI-agent responsiveness without incurring significant off-tenant costs or triggering content-policy violations, as explained in §A.4."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "The proposed parallelism of up to 5 concurrent pages per product (§E.3) is a reasonable balance between speed and resource usage. It is neither too aggressive nor too conservative, and is configurable based on product and environment, as mentioned in §E.3."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "Routing `low` and `medium` severity issues to auto fork-and-fix (§C.1) aligns with the severity routing defined in Rev-2.1 §12 and the Self-Renewal spec §4.4. This approach automates the resolution of less critical issues while still gating more severe ones through human review."
+        },
+        "ACE-Q6": {
+          "pick": "(a)",
+          "rationale": "The default error-state trigger setting of `'safe'` (§A.7) is a sensible compromise between thoroughness and safety. It allows for non-destructive error triggers by default while requiring operator opt-in for more invasive tests, balancing the need for comprehensive testing with the risk of unintended state changes."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "The GTM Readiness score formula (§D.1) deducting 10/5/2/0.5 per critical/high/medium/low finding provides a nuanced scoring that reflects the severity of issues. This formula is reasonable and aligns with the goal of assessing demo readiness, as it penalizes more severe issues more heavily."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "The $15/run cost ceiling (§E.2) is three times the nominal pipeline cost and is considered reasonable for the aggressive crawling task. It provides a balance between thoroughness and cost, with the option for per-product overrides, as mentioned in §E.2."
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "The answers provided are based on the Aggressive Crawl Engine spec and the canonical references, ensuring alignment with the existing SSOT and proposed amendments.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "perQuestion": {
+        "ACE-Q1": {
+          "pick": "(a)",
+          "rationale": "The spec §A.1 proposes depth=8 default / cap 12, pages=200 / cap 2000 as the GTM-readiness bar per ENTRY 002. This is a significant increase over Rev-2.1 §6's current values (depth=2 default, cap=3, pages=8 default, cap=50). The cost ceiling of $15/run per §E.2 and 20-min wall-clock per §E.3 provide guardrails. W3 recommends (a) as the balance between exhaustive coverage and cost control."
+        },
+        "ACE-Q2": {
+          "pick": "(a)",
+          "rationale": "§E.1 Option B pins Agent #21 (Ops Runner Alpha) as Aggressive Crawl Conductor, which W3 recommends. This partially resolves Rev-2.1 §27 OQ-2 (Ops Runner step assignments unspecified). Agent #21 is DORMANT with step-owner (proposed) per §15.1 row 21. The spec explicitly states Option B 'resolves Rev-2.1 OQ-2 partially' and aligns with Layer 2 plan PG1 (Ops Runners as substrate-level operators)."
+        },
+        "ACE-Q3": {
+          "pick": "(a)",
+          "rationale": "§A.4 sends a benign probe 'Reply with the single word: ACK' to detected AI-agent surfaces. W3 recommends (a) because: (1) no off-tenant cost is incurred, (2) no content-policy violations are tripped, and (3) a non-LLM widget produces no response and is classified `ai-agent-no-response`. The probe is intentionally innocuous per §A.4 rationale. This enables the GTM-readiness requirement from ENTRY 002 ('AI agent surface probing')."
+        },
+        "ACE-Q4": {
+          "pick": "(a)",
+          "rationale": "§E.3 proposes 'up to 5 concurrent pages per product (single product per run)' which W3 recommends. The cost estimate of ~$150/day (5 products × 2 envs × $15/run) is based on this parallelism. The 20-min wall-clock per product per environment per §E.3 constrains the burst. Option (a) balances throughput against Browserless cost and provider load."
+        },
+        "ACE-Q5": {
+          "pick": "(a)",
+          "rationale": "§C.1 routes `medium` severity to fork-and-fix auto-deploy per Rev-2.1 §12 severity mapping ('medium → fork-and-fix auto-deploy'). W3 recommends (a) citing alignment with CA-7 §12 and Self-Renewal spec §4.4. The spec explicitly states this 'aligns with CA-7 §12 severity routing'. Human-gating medium would slow the GTM-readiness cycle per ENTRY 002."
+        },
+        "ACE-Q6": {
+          "pick": "(a)",
+          "rationale": "§A.7 defaults to `'safe'` (state-non-mutating triggers: 404 + 500 + offline + slow-network) for new products, which W3 recommends. The spec states `'full'` (includes form-submit triggers) 'only fires when the operator confirms the SUT is in dev or staging environment, never prd' per §13 role-gate. This protects production while enabling thorough testing in lower environments."
+        },
+        "ACE-Q7": {
+          "pick": "(a)",
+          "rationale": "§D.1 formula deducts 10/5/2/0.5 per critical/high/medium/low, producing a 0–100 score with bands (90–100 Showcase-ready, 75–89 Demo-ready, 60–74 Internal-only, 0–59 Not demo-ready). W3 recommends (a). The formula is tied to Clearance Step 5 per §D.4: score ≥75 AND no `critical` findings open required for Demo Readiness gate. The deductions are proportional and align with the severity hierarchy in §B.2."
+        },
+        "ACE-Q8": {
+          "pick": "(a)",
+          "rationale": "§E.2 proposes $15/run cost ceiling (3× the nominal $5 pipeline run) which W3 recommends. The spec justifies this because 'aggressive crawls are 5–10× heavier than nominal pipeline runs'. §E.3 estimates ~$150/day at 5-product × 2-env daily cadence, reducing to ~$1500/month steady-state after CA-10-D crawl-scope narrowing. Per-product per-env override is available via Doppler per §E.2."
+        }
+      },
+      "insuffCount": 0,
+      "conflicts": [],
+      "overallNotes": "All 8 questions align with W3's recommendations in §G. The spec is well-grounded in Rev-2.1 §6 (Aggressive Crawling Contract), §12 (severity routing), §15.1 (Agent #21), and ENTRY 002 (GTM-readiness bar). No conflicts with canonical SSOT detected.",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:minimax/minimax-m2.7"
+    }
+  ],
+  "questions": [
+    {
+      "id": "ACE-Q1",
+      "topic": "Depth + page caps",
+      "a": "depth=8 default / cap 12, pages=200 / cap 2000 (as drafted)",
+      "b": "Lower — depth=5 / pages=100 (safer, lower-cost; risk of missing deeper SPAs)",
+      "c": "Higher — depth=12 / pages=500 (more thorough; higher cost per run)",
+      "d": "INSUFFICIENT_INFORMATION"
+    },
+    {
+      "id": "ACE-Q2",
+      "topic": "Agent ownership",
+      "a": "Agent #21 Ops Runner Alpha as Aggressive Crawl Conductor (W3 recommended)",
+      "b": "Expand Agent #6 Research instead (keep Ops Runner reserved; widen research charter)",
+      "c": "New dedicated executor (mirror CA-7 EXECUTOR_REGISTRY pattern; e.g. CrawlConductorExecutor)",
+      "d": "INSUFFICIENT_INFORMATION"
+    },
+    {
+      "id": "ACE-Q3",
+      "topic": "AI-agent probe safety",
+      "a": "Benign \"Reply ACK\" probe as drafted (catalog + light interaction)",
+      "b": "No AI-agent probing — catalog only (do not send any prompt to discovered agents)",
+      "c": "Probe but require human gate per product (every probe needs explicit per-product approval)",
+      "d": "INSUFFICIENT_INFORMATION"
+    },
+    {
+      "id": "ACE-Q4",
+      "topic": "Parallelization scope",
+      "a": "5 concurrent pages, 1 product at a time (as drafted)",
+      "b": "Higher — 10 concurrent pages (faster; higher provider load + Browserless cost)",
+      "c": "Lower — 3 concurrent (safest; lowest provider load; slower runs)",
+      "d": "INSUFFICIENT_INFORMATION"
+    },
+    {
+      "id": "ACE-Q5",
+      "topic": "Fix-loop autonomy on medium severity",
+      "a": "Auto fork-and-fix medium (as drafted; aligns with CA-7 §12 severity routing)",
+      "b": "Human-gate everything above low (medium also needs human Approve/Modify/Skip)",
+      "c": "Auto-fix low only (medium becomes recommend-only; mirrors current Agent #3 caution)",
+      "d": "INSUFFICIENT_INFORMATION"
+    },
+    {
+      "id": "ACE-Q6",
+      "topic": "Error-state trigger default",
+      "a": "Trigger all (404 / 500 / offline / slow / XSS) as drafted",
+      "b": "Read-only — no deliberate error triggers (purely observational crawl)",
+      "c": "Trigger non-destructive only (404 / offline / slow / XSS attempt explicitly OFF)",
+      "d": "INSUFFICIENT_INFORMATION"
+    },
+    {
+      "id": "ACE-Q7",
+      "topic": "GTM readiness score formula",
+      "a": "10/5/2/0.5 deductions per critical/high/medium/low (as drafted)",
+      "b": "Stricter — any critical = auto 0 (zero-tolerance gate)",
+      "c": "Simpler — pass/fail per surface type (no numeric scoring; binary per page)",
+      "d": "INSUFFICIENT_INFORMATION"
+    },
+    {
+      "id": "ACE-Q8",
+      "topic": "Cost ceiling per run",
+      "a": "$15 / run / product / env (3× nominal, as drafted)",
+      "b": "Lower — $8 / run (conservative; may cap thoroughness on large products)",
+      "c": "Higher — $25 / run for thoroughness (more headroom; higher per-run cost)",
+      "d": "INSUFFICIENT_INFORMATION"
+    }
+  ]
+}

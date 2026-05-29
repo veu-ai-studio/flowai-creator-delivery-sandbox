@@ -1,0 +1,51 @@
+{
+  "model_used": "openai/gpt-5",
+  "degraded": false,
+  "latency_ms": 655,
+  "total_ms": 212405,
+  "agreement_pct": 88,
+  "findings": {
+    "agreement_pct": 88,
+    "correctness_concerns": [
+      "listProducts omits offset=0 due to truthy check (if (opts.offset)); use opts.offset != null to include explicit 0",
+      "PortfolioDashboard correctly separates loading/error/ok-with-empty/ok-with-items; no conflation observed"
+    ],
+    "rls_proxy_concerns": [
+      "Tenant-isolation test does not attempt body.org_id override (only tests body.orgId); a handler that trusts body.org_id could bypass isolation",
+      "GET without orgId test does not assert items.length === 0; loop over empty array vacuously passes and would not catch accidental cross-tenant leaks",
+      "No test for query/body orgId shadowing (e.g., both header and body provided) beyond orgId; add coverage for precedence and stripping server-side"
+    ],
+    "backfill_idempotence_concerns": [
+      "normalizeUrl only trims and strips trailing slash; it does not lower-case host/scheme, so casing differences (https://X.com vs https://x.com) can produce duplicates across runs",
+      "No normalization for www subdomain or http→https canonicalization; inconsistent upstream data could bypass dedup",
+      "Name-based dedup is case-insensitive but not whitespace/punctuation normalized (e.g., 'Press AI' vs 'PressAI'); may allow near-duplicates (not strictly idempotence but may surprise operators)"
+    ],
+    "regression_risks": [
+      "ESLint no-restricted-syntax rule flags any ArrayExpression named PRODUCTS, which may be used for non-product UI data in unrelated pages/components",
+      "If any untouched surface still contains a PRODUCTS array and is not on the allowlist, CI will start failing unexpectedly"
+    ],
+    "eslint_scope_concerns": [
+      "Import restriction regex /.*lib\\/veuProducts$/ misses imports with extensions (e.g., '@/lib/veuProducts.js' or '.mjs'); easy bypass",
+      "'PRODUCTS' identifier match is overly broad and may cause false positives for legitimate arrays not representing product registries",
+      "Allowlist covers 11 files while ADR mentions 13 legacy surfaces; if any of the remaining legacy files still hardcode products, the rule will fire unexpectedly"
+    ],
+    "migration_safety_concerns": [
+      "Unique index on (org_id, lower(name)) may fail migration if existing duplicate names (case-insensitive) are present; no remediation step or concurrent build provided",
+      "Partial unique index excludes only url='' (empty string); if any legacy rows contain NULL url, uniqueness would apply to NULLs (likely fine given schema default, but worth confirming)",
+      "BEFORE UPDATE trigger set_updated_at() is safe and non-recursive; no concern there"
+    ],
+    "must_fix_before_commit": [
+      "1. Strengthen ESLint import restriction: update regex to also match optional extensions (e.g., /.*lib\\/veuProducts(\\.(js|mjs|ts|tsx))?$/) to prevent trivial bypass via file extension.",
+      "2. Expand tenant-isolation tests to cover body.org_id injection and verify the handler strips/ignores any org_id/orgId from the body, enforcing org from auth context exclusively.",
+      "3. Make backfill URL normalization case-insensitive at least for scheme+host (or entire URL) when building dedup keys and posting, so re-runs cannot create duplicates due to URL casing differences."
+    ],
+    "nice_to_have_tweaks": [
+      "1. In listProducts, include offset when offset === 0 by checking opts.offset != null.",
+      "2. Add a test asserting that GET without orgId returns an empty items[] (length === 0) to tighten defense-in-depth coverage.",
+      "3. Consider normalizing www. prefix and http→https in backfill dedup (or document decision) to reduce near-duplicate risk.",
+      "4. Narrow the no-restricted-syntax VariableDeclarator pattern to target VEU_PRODUCTS/HARDCODED_PRODUCTS only, or add a comment-based opt-out to reduce false positives for legitimate PRODUCTS arrays.",
+      "5. Consider building the (org_id, lower(name)) unique index CONCURRENTLY or pre-clean duplicates to reduce migration risk on live data."
+    ],
+    "approve": "YES_WITH_MINOR_TWEAKS"
+  }
+}

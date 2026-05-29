@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, TrendingUp, Zap, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const SERVICES = [

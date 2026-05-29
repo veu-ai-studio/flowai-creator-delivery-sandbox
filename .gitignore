@@ -29,3 +29,29 @@ dist-ssr
 
 .env
 .vite
+.vercel
+
+# Advisory staging lock for parallel Wx workstreams
+# (see scripts/lib/wx-stage-lock.mjs + docs/PANEL_INFRASTRUCTURE.md §7)
+.wx-staging.lock
+
+# Local PEM dumps from scripts/setup-test-bypass-keys.mjs. Private PEMs
+# here are TRANSIENT — delete after uploading to Doppler. Never commit.
+.flowai-keys/
+
+# Adversarial test harness ephemera (regenerated per run)
+tests/adversarial/.findings/
+tests/adversarial/.run-results.json
+tests/adversarial-api/.run-results.json
+test-results/
+playwright-report/
+
+# Per-session scratch (Claude Code workspaces, caches, stray scratch files)
+.claude/
+.w03-cache/
+supabase/.temp/
+test-output.txt
+docs/w03-turns/
+flowai-fresh-build-*
+# Stray UTF-8 file literally named "←" (U+2190)
+"\342\206\220"

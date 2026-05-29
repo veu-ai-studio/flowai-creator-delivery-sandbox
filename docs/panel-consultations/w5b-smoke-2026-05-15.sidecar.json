@@ -1,0 +1,569 @@
+{
+  "schema": "w5b-smoke.sidecar.v1",
+  "startedAt": "2026-05-16T15:55:06.769Z",
+  "finishedAt": "2026-05-16T15:57:17.820Z",
+  "panel_audit": {
+    "providerCounts": {
+      "openai": 1,
+      "anthropic": 1,
+      "google": 1,
+      "mistralai": 1,
+      "cohere": 1,
+      "minimax": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "meta-llama": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 1,
+    "slots": 10
+  },
+  "panel_size": 10,
+  "bundle_chars": 106779,
+  "liveOk": 10,
+  "quorumBar": 7,
+  "quorumMet": true,
+  "engaged": 9,
+  "invalid": 0,
+  "silent": 0,
+  "tangential": 1,
+  "distinctObjections": 38,
+  "backupsApplied": 1,
+  "adversarialPassFired": true,
+  "dissentFloorReachable": true,
+  "dissentFloor": {
+    "triggered": false,
+    "alignedPct": 0,
+    "alignedCount": 0,
+    "totalPossible": 18,
+    "draftedQs": [
+      "SQ1",
+      "SQ2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 0.0 %, distinct objections 38"
+  },
+  "perVerdicts": {
+    "SQ1": {
+      "verdict": "PLURALITY_SQ1-NO",
+      "detail": "6 of 9 on SQ1-NO (below 7/10 quorum)",
+      "topKey": "SQ1-NO",
+      "topCount": 6
+    },
+    "SQ2": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "6 of 9 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 6
+    }
+  },
+  "consultation_valid": true,
+  "certified": true,
+  "verdict": "PASS",
+  "failures": [],
+  "preflight": {
+    "anchorGuard": {
+      "fired": true
+    },
+    "bundleGuard": {
+      "fired": true
+    }
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Breaks §19 quorum thresholds",
+            "detail": "§19 Governance sets quorum ≥7/10 LIVE-OK and supermajority ≥8/10 ENGAGED. A 3-slot mini-Panel cannot satisfy these metrics, so any amendment approved this way would be procedurally invalid unless §19 is also amended, which this proposal does not address."
+          },
+          {
+            "title": "Violates Locked Rules 5 and 17",
+            "detail": "Locked Rule 5 mandates Multi-AI peer review (10-AI Panel) and Locked Rule 17 requires ≥7/10 Panel review before any W0x→CEO action. Shrinking to 3 directly contradicts these binding constraints without proposing corresponding rule changes."
+          },
+          {
+            "title": "Underspecified low-risk triage",
+            "detail": "The proposal relies on the spec author flagging 'low risk', creating a conflict of interest and lacking an objective rubric. This contradicts the CA-n process in §18.2 (engagement thresholds) and offers no mechanism to audit or contest misclassification."
+          },
+          {
+            "title": "False-consensus rollback gap",
+            "detail": "Rollback only triggers on internal disagreement within the mini-Panel. If all three models agree incorrectly (false consensus), there is no escalation to the full 10-slot Panel, weakening the safety net relative to current practice."
+          },
+          {
+            "title": "Homogeneous model/regional bias risk",
+            "detail": "The fixed trio (gpt-5 US, claude-opus-4 US, deepseek-r1 Asia) concentrates vendor and regional biases, reducing cross-model diversity that the current 10-slot design implicitly leverages. This mirrors §8.1 concerns where Agent #11/#14 impose carve-outs for security/legal exposure; governance should not hard-code a narrow set without similar safeguards."
+          },
+          {
+            "title": "Weaker audit/compliance signal",
+            "detail": "§14 GovernanceAuditLog and §18.3 archive discipline rely on robust engagement evidence. Moving to 3 reviewers erodes the credibility of 'ENGAGED' signals promised in §19 and may undercut Clearance Protocol expectations for documented oversight."
+          }
+        ],
+        "worse_than_status_quo": "A 'low-risk' change to §20.2 X-Test-Bypass-Token validation (e.g., relaxing env matching) passes a 3-0 mini-Panel and ships. Attackers exploit cross-env token acceptance to bypass bot defenses portfolio-wide; with a 10-slot Panel, at least one reviewer likely flags the blast radius and blocks it.",
+        "precedent": "Boeing 737 MAX MCAS: reduced independent oversight and delegated review contributed to missed safety issues, demonstrating how shrinking or weakening review bodies can produce catastrophic failures."
+      },
+      "rejection_steelman": "Reject or defer: The amendment conflicts with binding governance (§19 quorum/supermajority; Locked Rules 5 and 17) and introduces author-triaged 'low risk' without an objective rubric or independent gate. It weakens diversity and error-detection guarantees that the 10-slot Panel provides, while the proposed rollback only catches disagreement, not false consensus. If cost and latency are concerns, they should be addressed by engineering the runner (caching, retry policy, parallelization) or considering a rigorously defined hybrid with objective escalation criteria, not by bypassing the canonical governance thresholds.",
+      "votes": {
+        "SQ1": {
+          "key": "SQ1-NO",
+          "pick_text": "No — keep all consultations at full 10 slots",
+          "rationale": "A 3-slot panel contradicts §19 and Locked Rules 5/17 and degrades review diversity and safety. Keeping 10 slots preserves the existing governance guarantees."
+        },
+        "SQ2": {
+          "key": "SQ2-RUBRIC",
+          "pick_text": "Apply a fixed rubric (scope, blast radius, rollback path)",
+          "rationale": "If any risk triage exists, it must be objective and auditable; author self-flagging or a 1-slot triage is conflict-prone. A fixed rubric constrains discretion and supports auditability."
+        }
+      },
+      "overallNotes": "Consider a separate initiative to cut Panel costs via infra improvements (deduping prompts, model-caching) while preserving the 10-slot governance guarantees.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-5"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Destroys geographic diversity mandate",
+            "detail": "The proposal replaces 10 geographically-distributed slots with 3 slots (2 US, 1 Asia), violating the SSOT's own democratization mission (§2) which explicitly targets Sub-Saharan Africa, Latin America, and other underserved regions. This concentrates decision power in US/Asia tech centers."
+          },
+          {
+            "title": "Eliminates engagement-filter protection",
+            "detail": "§19 requires ≥7/10 ENGAGED votes for supermajority. With only 3 slots, a single TANGENTIAL/EVASIVE response could deadlock the mini-Panel entirely, forcing constant escalation to full Panel and negating any efficiency gains."
+          },
+          {
+            "title": "No audit trail for risk classification",
+            "detail": "The proposal lacks any GovernanceAuditLog integration (§14) for tracking who classified something as 'low risk' and why. This creates an unauditable backdoor where contentious changes could be rubber-stamped by gaming the risk classification."
+          },
+          {
+            "title": "Violates Locked Rule 5 explicitly",
+            "detail": "§25 Locked Rule 5 states 'Multi-AI peer review (10-AI Panel) mandatory for substantive outputs.' The proposal directly contradicts this by allowing 3-AI review for some outputs, with no amendment to the Locked Rule itself."
+          }
+        ],
+        "worse_than_status_quo": "A malicious actor could exploit the 'low risk' classification to push through harmful changes with only 3 reviewers instead of 10, reducing the detection surface for adversarial proposals by 70%. The current 10-slot Panel provides defense-in-depth that this proposal eliminates.",
+        "precedent": "The 2016 Tay chatbot incident — Microsoft's bot was corrupted within 24 hours because the review surface was too narrow (single model, no ensemble validation). Similarly, concentrating Panel authority in 3 slots removes the ensemble protection that catches edge-case failures."
+      },
+      "rejection_steelman": "The Panel is FlowAI's primary governance safeguard per §19 and Locked Rule 5. Reducing it from 10 to 3 slots fundamentally weakens the system's ability to catch subtle errors, biases, or adversarial inputs. The 70% cost savings cannot justify removing 70% of the independent review surface, especially when the CA-n amendment process (§18) shows that even with 10 reviewers, contentious items like CA-4 can split 4/4. With only 3 reviewers, such deadlocks become catastrophic.",
+      "votes": {
+        "SQ1": {
+          "key": "SQ1-NO",
+          "pick_text": "No — keep all consultations at full 10 slots",
+          "rationale": "The 10-slot Panel is a Locked Rule (#5) and provides essential geographic/model diversity. Cost savings don't justify governance weakening."
+        },
+        "SQ2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All three options enable gaming the system to bypass full review. Risk classification itself needs Panel consensus, creating circular dependency."
+        }
+      },
+      "overallNotes": "This proposal would gut FlowAI's governance model to save costs, directly violating multiple canonical commitments including democratization and multi-AI mandatory review.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Transparency",
+            "detail": "The proposal does not provide clear information on how the mini-Panel will be selected and what criteria will be used to determine 'low risk' consultations. This lack of transparency could lead to biased decision-making and undermine the integrity of the Panel."
+          },
+          {
+            "title": "Insufficient Expertise",
+            "detail": "Reducing the Panel size from 10 to 3 members may lead to a lack of diverse expertise and perspectives, potentially resulting in poorly informed decisions. The proposal does not address how the mini-Panel will ensure that it has the necessary expertise to make informed decisions."
+          },
+          {
+            "title": "Inadequate Rollback Mechanism",
+            "detail": "The proposal's rollback mechanism, which convenes the full 10-slot Panel in case of disagreement, may not be sufficient to address potential errors or biases introduced by the mini-Panel. The proposal does not provide clear guidelines on how the full Panel will review and correct decisions made by the mini-Panel."
+          }
+        ],
+        "worse_than_status_quo": "The proposed reduction in Panel size could lead to a decrease in the quality of decision-making, potentially resulting in more errors or biases than the current system. This could undermine the credibility and effectiveness of the Panel, ultimately making the system worse than the status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal to shrink the Panel size to 3 slots for low-risk consultations is not justified and may lead to a decrease in the quality of decision-making. The lack of transparency, insufficient expertise, and inadequate rollback mechanism are significant concerns that outweigh any potential benefits of reducing the Panel size. Therefore, the proposal should be rejected or deferred until these concerns are addressed.",
+      "votes": {
+        "SQ1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal does not provide sufficient justification or address the potential risks and concerns associated with reducing the Panel size."
+        },
+        "SQ2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal does not provide a clear and robust mechanism for classifying 'low risk' consultations, and the options provided are insufficient to ensure that the mini-Panel is used effectively and responsibly."
+        }
+      },
+      "overallNotes": "The proposal requires significant revisions to address the concerns and risks associated with reducing the Panel size. A more detailed and transparent approach to selecting the mini-Panel, ensuring diverse expertise, and establishing a robust rollback mechanism is necessary to maintain the integrity and effectiveness of the Panel.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Inadequate Geographic Representation",
+            "detail": "The proposed mini-Panel lacks representation from Africa and Europe, which are key target markets according to §2. This could lead to biased decisions that do not account for the needs of these regions."
+          },
+          {
+            "title": "Risk of Inconsistent Decisions",
+            "detail": "Reducing the Panel to 3 slots increases the risk of inconsistent decisions due to the smaller sample size. This could lead to more frequent escalations to the full Panel, negating the proposed efficiency gains."
+          },
+          {
+            "title": "Lack of Redundancy in Decision Making",
+            "detail": "With only 3 members, the loss of any one member's input (due to technical issues or other reasons) would have a disproportionate impact on the decision-making process. The current 10-member Panel provides redundancy and robustness."
+          }
+        ],
+        "worse_than_status_quo": "In regions with poor internet connectivity, such as rural areas in Africa, the mini-Panel's decision-making process could be disrupted, leading to delays in critical decisions that affect local users.",
+        "precedent": "In the early stages of AI governance, similar attempts to streamline decision-making bodies led to biased outcomes and lack of representation, as seen in the failed AI Ethics Council of 2023, which was criticized for its lack of diversity and ultimately disbanded."
+      },
+      "rejection_steelman": "The proposal to shrink the Panel to 3 slots for low-risk consultations should be rejected because it compromises the diversity and robustness of the decision-making process. The current 10-member Panel ensures that all target regions and stakeholders are represented, reducing the risk of biased decisions.",
+      "votes": {
+        "SQ1": {
+          "key": "SQ1-NO",
+          "pick_text": "No — keep all consultations at full 10 slots",
+          "rationale": "Maintaining a full 10-member Panel ensures diverse representation and robust decision-making, which is crucial for the global target markets."
+        },
+        "SQ2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The classification of 'low risk' is subjective and could lead to inconsistent application, potentially biasing the decision-making process."
+        }
+      },
+      "overallNotes": "The proposal introduces significant risks to the decision-making process, particularly in terms of representation and robustness. It is essential to maintain the current Panel size to ensure fair and unbiased decisions.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of clarity on mini-panel composition",
+            "detail": "The proposal suggests replacing the current 10-slot Panel with a 3-slot mini-Panel, but it is unclear how the mini-Panel will be composed. Will it be a fixed set of three LLMs, or will it be dynamically selected based on some criteria? The proposal should provide more details on the composition of the mini-Panel."
+          },
+          {
+            "title": "Potential for bias in mini-panel composition",
+            "detail": "The proposal suggests using gpt-5 (US), claude-opus-4 (US), and deepseek-r1 (Asia) as the mini-Panel members. However, this composition may introduce bias, as it only includes LLMs from the US and Asia. The proposal should consider including LLMs from other regions to ensure a more diverse and representative mini-Panel."
+          },
+          {
+            "title": "Lack of clarity on the rollback path",
+            "detail": "The proposal mentions a rollback path in case the mini-Panel disagrees with itself, but it is unclear how this will be implemented. Will the full 10-slot Panel be convened automatically, or will there be a manual process to trigger the rollback? The proposal should provide more details on the rollback path."
+          }
+        ],
+        "worse_than_status_quo": "The proposal suggests replacing the current 10-slot Panel with a 3-slot mini-Panel, which may lead to a reduction in the quality and diversity of the Panel's decisions. The current 10-slot Panel provides a more comprehensive and representative set of LLMs, which may result in better decision-making and a more robust adversarial review process.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal to shrink the Panel to 3 slots for low-risk consultations may lead to a reduction in the quality and diversity of the Panel's decisions. The current 10-slot Panel provides a more comprehensive and representative set of LLMs, which may result in better decision-making and a more robust adversarial review process. Additionally, the proposal does not provide enough details on the composition and rollback path of the mini-Panel, which may lead to confusion and potential issues in the future.",
+      "votes": {
+        "SQ1": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        },
+        "SQ2": {
+          "key": null,
+          "pick_text": null,
+          "rationale": null
+        }
+      },
+      "overallNotes": "",
+      "invalid_reason": "0/2 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:cohere/command-r-plus-08-2024"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Self-referential low-risk gating",
+            "detail": "§18.2 requires ≥7/10 ENGAGED votes for a supermajority. The proposal lets the spec author self-flag 'low_risk:true' in frontmatter to bypass this threshold entirely. This creates a conflict of interest: authors can mark any proposal low-risk to escape the supermajority gate. The CANONICAL_REFERENCE §18 has no provision for self-asserted risk classification; no independent validator is defined."
+          },
+          {
+            "title": "Geographic monoculture in mini-Panel",
+            "detail": "The proposed mini-Panel (gpt-5 US + claude-opus-4 US + deepseek-r1 Asia) has 2/3 US-based models vs no geographic constraint on the current 10-slot panel. §19 requires the Panel to serve products across Sub-Saharan Africa, Latin America, and South/Southeast Asia per §2 democratization mission. A US-dominant mini-Panel systematically overlooks regional regulatory, cultural, and legal contexts (GDPR nuances, local accessibility laws, censorship regimes)."
+          },
+          {
+            "title": "Reduced diversity degrades adversarial catch-rate",
+            "detail": "The Panel's canonical purpose (§19 + Locked Rule 5) is 'multi-AI peer review mandatory for substantive outputs.' A 3-slot panel reduces viewpoint diversity by ~70%. The adversarial value of 10-AI review is the orthogonal failure-mode coverage across 10 different model architectures and training distributions. A 3-slot panel is 3× more likely to share a blind spot, not 3× more likely to catch it — a Nash equilibrium failure in adversarial consensus."
+          },
+          {
+            "title": "Rollback trigger 'disagrees with itself' is undefined",
+            "detail": "The proposal specifies rollback to full Panel only 'if the mini-Panel disagrees with itself.' No threshold is given: does this mean unanimous disagreement (3-0), simple split (2-1), or any dissent (2-1 with one abstain)? §19 defines Panel supermajority as ≥8/10 ENGAGED; a 3-slot analog is unspecified. Without explicit thresholds, the rollback path is un-implementable — engineering cannot wire an undefined condition."
+          },
+          {
+            "title": "Flake amplification in small panels",
+            "detail": "The proposal claims 3 slots reduce 'envelope-flake retries.' However, envelope flaking (a single model's contradictory stances across identical contexts) is worse in small panels because: (a) a single flaky model constitutes 33% of a 3-slot vote vs 10% of a 10-slot vote; (b) the 10-slot panel's aggregation absorbs per-model flaking as noise; (c) a 3-slot split vote with one flaky model is statistically indistinguishable from a legitimate 2-1 split with no recourse. The proposal misattributes the flake problem to panel size rather than to model-level instability."
+          }
+        ],
+        "worse_than_status_quo": "A spec author who wants faster promotion marks their proposal 'low_risk:true' — escaping the 7/10 supermajority gate entirely. The mini-Panel (2/3 US-dominant) approves a feature affecting products in India or Brazil that violates local data-residency regulations. The rollout proceeds, the mini-Panel never convened a full review, and the legal exposure surfaces months later when the product is already in production. The 10-slot panel, by forcing cross-regional review, would have caught the jurisdiction mismatch; the 3-slot panel did not.",
+        "precedent": "Deutsche Telekom's 2005 board-size reduction from 20 to 8 members (justified by 'governance efficiency' and cost savings) led to a series of strategic missteps including the T-Mobile US acquisition at inflated valuation and the H 2.6B accounting scandal. The board shrinkage eliminated the dissenting minority voices that had previously checked executive overreach. Cost-driven governance reduction in complex distributed systems is a documented failure pattern."
+      },
+      "rejection_steelman": "The strongest case for deferring this proposal is that Panel size is a load-bearing governance parameter, not a tuning knob. The CA-n cycle (§18) already provides an escalation path: items can be deferred without full 10-slot review for engagement validation, but they still require CEO ratification. The proposal conflates 'Panel efficiency' with 'governance reduction' — a productive middle path (pre-Panel triage, async vs synchronous modes, scope-gated review depth) could achieve speed without sacrificing the adversarial diversity that justifies the Panel in the first place. Until a concrete triage mechanism (§SQ2) is specified and validated, shrinking from 10 to 3 slots is premature.",
+      "votes": {
+        "SQ1": {
+          "key": "SQ1-NO",
+          "pick_text": "No — keep all consultations at full 10 slots",
+          "rationale": "Self-flagged low-risk classification (§SQ2 objection) creates a bypass path for spec authors to escape the 7/10 supermajority gate in §18.2. A US-dominant 3-slot panel (§adversarial objection 2) systematically overlooks regional regulatory contexts incompatible with the §2 democratization mandate. No rollback threshold is defined, making the 'disagrees with itself' trigger unimplementable."
+        },
+        "SQ2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Option (a) adds a single point-of-failure gatekeeper with no defined selection mechanism or appeal path. Option (b) creates a self-referential conflict of interest where spec authors mark their own proposals low-risk. Option (c) proposes a fixed rubric but the proposal itself contains no rubric definition — the option text is aspirational. All three options fail the adversarial pass: none provides an independent, conflict-free, spec-defined mechanism for low-risk classification."
+        }
+      },
+      "overallNotes": "The rollback path in the proposal is the only salvageable element — convening the full Panel on mini-Panel disagreement is sound. However, the disagreement threshold must be defined quantitatively (e.g., unanimous 3-0 vs simple majority 2-1) before this proposal could be reconsidered. The mini-Panel composition also requires geographic diversity constraints before it can be specified.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:minimax/minimax-m2.7"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Vague risk classification",
+            "detail": "The proposal fails to define 'low risk' criteria (§15a), creating ambiguity. Misclassification could push critical decisions like security overrides (§13.1) or Orchestra auto-admission (§8.1) to a mini-Panel lacking diverse perspectives."
+          },
+          {
+            "title": "Regional bias in mini-Panel",
+            "detail": "Mini-Panel composition (gpt-5 US, deepseek-r1 Asia) violates Locked Rule 5's multi-region review principle. This risks overlooking locale-specific impacts on FlowAI's target underserved markets (§2), like rural accessibility or language nuances."
+          },
+          {
+            "title": "Ineffective rollback trigger",
+            "detail": "Rollback only on mini-Panel 'disagreement' lacks clear thresholds (§15a). Unanimous but incorrect low-risk approvals (e.g., flawed cost-governance changes to §7.6’s $15/run ceiling) wouldn’t trigger full review, causing silent failures."
+          },
+          {
+            "title": "Undermines engagement rigor",
+            "detail": "Reducing slots contradicts Locked Rule 17’s ≥7/10 engagement threshold for validity. Mini-Panel’s 3 slots cannot satisfy quorum, risking hasty consultations that bypass §18’s supermajority safeguards for amendments."
+          }
+        ],
+        "worse_than_status_quo": "A misclassified 'low-risk' proposal weakens Aggressive Crawl Engine’s XSS opt-in guard (§6). Mini-Panel approves it; full Panel would have caught the risk. Attackers exploit lax crawling, exfiltrating scrubbed credentials (§6) from dev environments, compromising tenant isolation (§14.3).",
+        "precedent": "Facebook’s automated content moderation downsizing in 2020 increased policy-violating content proliferation. Similarly, reduced AI reviewer diversity here elevates oversight blind spots."
+      },
+      "rejection_steelman": "Shrinking the Panel violates core governance principles: Locked Rule 5 mandates multi-AI scrutiny for robustness, and §19 requires ≥7/10 engagement for legitimacy. The 70% cost saving is outweighed by risks of inadequate reviews for 'low-risk' proposals affecting security (§20) or underserved markets (§2). Defer until rigorous risk-classification metrics exist.",
+      "votes": {
+        "SQ1": {
+          "key": "SQ1-NO",
+          "pick_text": "No — keep all consultations at full 10 slots",
+          "rationale": "Maintaining 10 slots upholds Locked Rule 5 and §19 quorum requirements, ensuring diverse perspectives for all decisions, especially given FlowAI's impact on vulnerable populations."
+        },
+        "SQ2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All options rely on subjective pre-screening; even a fixed rubric (§27) cannot cover contextual risks like regional biases or §14.2 tamper-evidence implications, demanding full-Panel rigor."
+        }
+      },
+      "overallNotes": "Proposal conflicts with canonical governance invariants; rejection preserves system integrity while cost concerns should be addressed via Orchestra optimization (§8.1).",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Low-risk is self-serving",
+            "detail": "The proposal makes the spec author the effective risk arbiter by relying on a label they control, rather than a separately governed rubric. In §SQ2 this creates a delegation loop where the same actor who benefits from faster passage can classify contentious changes as low risk. That is especially dangerous for governance changes because the label is not independently auditable."
+          },
+          {
+            "title": "Panel shrink weakens dissent",
+            "detail": "A 3-slot mini-Panel cannot approximate the diversity of failure detection in the canonical 10-slot process described in the reference. The proposal removes most of the adversarial surface area for catching hidden assumptions, cross-domain regressions, and consensus hallucinations. For panel-governance itself, that is a particularly bad trade because the change alters the guardrail used to evaluate future guardrails."
+          },
+          {
+            "title": "Rollback is too late",
+            "detail": "The rollback path only triggers if the mini-Panel disagrees with itself, which does not cover the more likely failure mode: all three slots agree on a bad decision. §SQ1 therefore permits false confidence, especially on low-risk-but-high-blast-radius amendments that look trivial in isolation. Once a governance change is recorded, later correction does not erase the operational and social cost of the bad decision."
+          },
+          {
+            "title": "Cost savings are overstated",
+            "detail": "The proposal cites a 70% cost reduction, but it ignores the cost of false negatives, rework, and the downstream burden of undoing bad approvals. For governance consultations, the dominant cost is often not inference spend but the cost of an incorrect ratification. A cheaper panel that increases mistaken approvals can easily be more expensive end-to-end."
+          }
+        ],
+        "worse_than_status_quo": "If a controversial governance amendment is mislabeled low-risk, a 3-slot panel could approve it with unanimous but shallow agreement, while the missing seven reviewers would likely have surfaced a structural flaw. The result is worse than the status quo because the system gains speed at the exact point where deliberative breadth is most valuable, and the bad decision then propagates through later procedures as if it were vetted.",
+        "precedent": "The U.S. SEC’s use of a reduced three-member panel structure in some matters has been criticized for concentrating authority and reducing deliberative diversity; more broadly, small review boards are a known source of groupthink and missed edge cases. No single direct precedent matches this exact Panel/SSOT setup."
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring this proposal is that it changes a core governance mechanism without first proving a reliable, independently enforced risk-classification standard. Because the mini-Panel is only allowed for 'low risk' items, the real problem is not the smaller panel itself but the absence of a trustworthy classification gate. In a system where governance amendments can rewire future governance, the safe default is to keep the full 10-slot review until a separate, audited rubric exists.",
+      "votes": {
+        "SQ1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "None of the affirmative options adequately addresses the risk of self-classified low-risk proposals or the asymmetry between speed and governance safety. If the panel is ever shrunk, the proposal needs an independently governed triage rubric and stronger rollback conditions than self-disagreement."
+        },
+        "SQ2": {
+          "key": "SQ2-RUBRIC",
+          "pick_text": "Apply a fixed rubric (scope, blast radius, rollback path)",
+          "rationale": "A fixed rubric is the only option that is not wholly self-referential and can be audited after the fact. Even then, it should be administered independently of the authoring spec owner, but among the listed choices this is the least unsafe."
+        }
+      },
+      "overallNotes": "The proposal reads as a smoke test, but the governance mechanism it modifies is real; that warrants rejection of the shrinkage and caution on any future triage shortcut.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of clear risk assessment",
+            "detail": "The proposal does not provide a clear method for determining what constitutes 'low risk' (§SQ2 options vary widely). Without a standardized risk assessment, the decision to shrink the Panel may be arbitrary."
+          },
+          {
+            "title": "Potential for biased mini-Panel",
+            "detail": "The proposed mini-Panel composition (gpt-5, claude-opus-4, deepseek-r1) may introduce bias due to the specific models chosen. Different models may have varying strengths and weaknesses that could impact the review outcome."
+          },
+          {
+            "title": "Rollback path ambiguity",
+            "detail": "The proposal mentions a rollback path if the mini-Panel disagrees with itself, but it is unclear how this disagreement would be measured and what the exact procedure for convening the full Panel would be."
+          }
+        ],
+        "worse_than_status_quo": "Reducing the Panel size to 3 slots for low-risk consultations could lead to inadequate scrutiny of proposals, potentially allowing flawed or risky changes to pass unnoticed, thereby making the system worse than the status quo.",
+        "precedent": "A similar design was seen in a project that reduced its code review team size, resulting in a significant increase in bugs and security vulnerabilities being introduced into the codebase."
+      },
+      "rejection_steelman": "The strongest argument for rejecting this proposal is that reducing the Panel size without a robust, standardized risk assessment and clear disagreement resolution mechanism could compromise the quality and adversarial nature of the review process.",
+      "votes": {
+        "SQ1": {
+          "key": "SQ1-NO",
+          "pick_text": "No — keep all consultations at full 10 slots",
+          "rationale": "Maintaining the full 10-slot Panel ensures comprehensive review and minimizes the risk of oversight or bias in the review process."
+        },
+        "SQ2": {
+          "key": "SQ2-RUBRIC",
+          "pick_text": "Apply a fixed rubric (scope, blast radius, rollback path)",
+          "rationale": "Using a fixed rubric provides a clear and consistent method for classifying risk, reducing the subjectivity associated with other options."
+        }
+      },
+      "overallNotes": "The proposal is contentious and serves as a smoke test; however, it highlights important considerations for Panel size and risk assessment that should be carefully evaluated.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Mini-Panel composition bias",
+            "detail": "§15a specifies gpt-5 (US), claude-opus-4 (US), deepseek-r1 (Asia) with no mechanism to rotate or audit model drift; this directly violates the 10-slot diversity requirement in §19 Panel quorum rules and §25 Locked Rule 5."
+          },
+          {
+            "title": "Low-risk triage undefined",
+            "detail": "The proposal delegates 'low risk' classification to the spec author without referencing the fixed rubric in §19 or the engagement filter in PANEL_INFRASTRUCTURE.md §6, creating an un-auditable single point of failure before any mini-Panel even convenes."
+          },
+          {
+            "title": "Rollback path insufficient",
+            "detail": "Disagreement only escalates after the 3-slot run completes; no pre-filter prevents a low-quality mini-Panel from emitting a canonical SSOT amendment that then requires full-panel reversal, contradicting the atomic write discipline in §7.5 ProductSSOT and §14.2 hash chain."
+          }
+        ],
+        "worse_than_status_quo": "A single biased or fatigued mini-Panel could ratify a 'low-risk' change that later proves high-impact (e.g., altering Locked Rule 2 roster size), forcing costly full-panel reversal and eroding the supermajority trust model that currently prevents any single run from touching canonical text.",
+        "precedent": "OpenAI's 2023 reduction of its safety review board from a broad group to a smaller internal committee preceded documented delays in surfacing model-risk findings (per the 2024 internal safety team departures and subsequent public statements)."
+      },
+      "rejection_steelman": "Shrinking the Panel to three models for any class of consultation, even 'low-risk,' removes the multi-AI peer-review safeguard that §19 and Locked Rule 5 treat as non-negotiable for every substantive output. The proposal offers no objective, auditable definition of low-risk and relies on the very spec author whose changes are under review, creating an obvious conflict of interest that the existing 10-slot process was explicitly designed to avoid. Until a transparent, rubric-driven triage mechanism is itself Panel-reviewed and added to the SSOT, any reduction in reviewer count should be rejected outright.",
+      "votes": {
+        "SQ1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All three options presuppose that some form of Panel shrinkage is viable; the adversarial pass shows the premise itself violates core governance invariants."
+        },
+        "SQ2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "No classification method can be acceptable while the underlying reduction in reviewer count remains unaddressed."
+        }
+      },
+      "overallNotes": "The smoke-test proposal usefully exposes how quickly the SSOT's governance layer can be gamed when reviewer count is treated as a tunable parameter rather than a locked invariant.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "SQ1",
+      "topic": "Should the Panel be shrunk to 3 slots for low-risk consultations?",
+      "options": [
+        {
+          "key": "SQ1-YES",
+          "text": "Yes — shrink to 3 slots when low-risk, full 10 on dispute"
+        },
+        {
+          "key": "SQ1-NO",
+          "text": "No — keep all consultations at full 10 slots"
+        },
+        {
+          "key": "SQ1-HYBRID",
+          "text": "Hybrid — 5 slots for low-risk, full 10 for canonical changes"
+        }
+      ],
+      "draftedKey": "SQ1-YES"
+    },
+    {
+      "id": "SQ2",
+      "topic": "How should \"low risk\" be classified?",
+      "options": [
+        {
+          "key": "SQ2-AUTHOR",
+          "text": "Spec author flags low_risk:true in the proposal frontmatter"
+        },
+        {
+          "key": "SQ2-RUBRIC",
+          "text": "Apply a fixed rubric (scope, blast radius, rollback path)"
+        },
+        {
+          "key": "SQ2-PANEL",
+          "text": "A 1-slot pre-Panel triages each proposal as low/high risk"
+        }
+      ],
+      "draftedKey": "SQ2-AUTHOR"
+    }
+  ],
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 1,
+    "primary_timeout_ms": 120000,
+    "backup_retry_timeout_ms": 180000,
+    "stagger_ms": 200,
+    "bundle_chars": 106779
+  }
+}

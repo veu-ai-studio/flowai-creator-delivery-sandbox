@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { History, ExternalLink } from 'lucide-react';
+import { History } from 'lucide-react';
 
 export default function DeploymentHistory() {
   return (

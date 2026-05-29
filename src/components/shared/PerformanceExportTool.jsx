@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Download, FileJson, FileText, Loader2, CheckCircle2, BarChart3 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 
 export default function PerformanceExportTool({ results, url, runHistory = [] }) {

@@ -1,0 +1,2133 @@
+{
+  "schema": "ca13-ca14-joint.sidecar.v1",
+  "startedAt": "2026-05-19T02:00:19.762Z",
+  "finishedAt": "2026-05-19T02:04:18.292Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 86898,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 1,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 86898
+  },
+  "tally": {
+    "engagedTotal": 6,
+    "invalid": 0,
+    "tangential": 3,
+    "silent": 1,
+    "perQuestion": {
+      "CA-13-A-Q1": {
+        "CA13AQ1-RATIFY": 0,
+        "CA13AQ1-REVISE": 1,
+        "CA13AQ1-REJECT": 0,
+        "CA13AQ1-DEFER": 3,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "CA-13-A-Q2": {
+        "CA13AQ2-RATIFY": 1,
+        "CA13AQ2-HARD": 2,
+        "CA13AQ2-TIGHTEN": 3,
+        "CA13AQ2-LOOSEN": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-13-A-Q3": {
+        "CA13AQ3-RATIFY": 3,
+        "CA13AQ3-REVISE": 1,
+        "CA13AQ3-REJECT": 0,
+        "CA13AQ3-MOVE": 1,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-13-B-Q1": {
+        "CA13BQ1-RATIFY": 4,
+        "CA13BQ1-REVISE": 0,
+        "CA13BQ1-REJECT": 0,
+        "CA13BQ1-DEFER": 2,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-13-B-Q2": {
+        "CA13BQ2-RATIFY": 4,
+        "CA13BQ2-AGENTID": 0,
+        "CA13BQ2-CAPABILITY": 1,
+        "CA13BQ2-DEFER": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-14-A-Q1": {
+        "CA14AQ1-RATIFY": 1,
+        "CA14AQ1-REDUCED": 2,
+        "CA14AQ1-OPTIN": 2,
+        "CA14AQ1-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-14-A-Q2": {
+        "CA14AQ2-RATIFY": 2,
+        "CA14AQ2-PARAPHRASE": 0,
+        "CA14AQ2-SHORTER": 3,
+        "CA14AQ2-FREEFORM": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-14-A-Q3": {
+        "CA14AQ3-AGENT21": 0,
+        "CA14AQ3-AGENT8": 1,
+        "CA14AQ3-OPSRUNNER": 0,
+        "CA14AQ3-DEFER": 5,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-14-A-Q4": {
+        "CA14AQ4-RATIFY": 2,
+        "CA14AQ4-DEFER": 1,
+        "CA14AQ4-REJECT": 0,
+        "CA14AQ4-MODIFY": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      },
+      "CA-14-B-Q1": {
+        "CA14BQ1-RATIFY": 4,
+        "CA14BQ1-DROP": 0,
+        "CA14BQ1-EXPAND": 1,
+        "CA14BQ1-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-14-B-Q2": {
+        "CA14BQ2-RATIFY": 3,
+        "CA14BQ2-SOFTEN": 1,
+        "CA14BQ2-OVERRIDE": 2,
+        "CA14BQ2-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-14-B-Q3": {
+        "CA14BQ3-RATIFY": 2,
+        "CA14BQ3-S12": 0,
+        "CA14BQ3-S19": 0,
+        "CA14BQ3-CROSSLIST": 4,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-14-C-Q1": {
+        "CA14CQ1-RATIFY": 1,
+        "CA14CQ1-STRONGER": 5,
+        "CA14CQ1-REJECT": 0,
+        "CA14CQ1-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-14-C-Q2": {
+        "CA14CQ2-ADD": 4,
+        "CA14CQ2-CONDITIONAL": 0,
+        "CA14CQ2-SKIP": 2,
+        "CA14CQ2-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CA-14-D-Q1": {
+        "CA14DQ1-RATIFY": 4,
+        "CA14DQ1-DROP": 0,
+        "CA14DQ1-EXPAND": 1,
+        "CA14DQ1-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CA-14-D-Q2": {
+        "CA14DQ2-BLOCK": 0,
+        "CA14DQ2-NDAYS": 4,
+        "CA14DQ2-IMMEDIATE": 2,
+        "CA14DQ2-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 31,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Phase B implementation vacuum",
+        "detail": "CA-14-A mandates Phase B Adversarial Surface Testing as a hard gate but provides no implementation spec, no agent assignment, and no timeline. §6.10 defines what Phase B should test but not HOW to execute it, creating an unfunded mandate that blocks all GTM clearance."
+      },
+      {
+        "slot": 1,
+        "title": "Atomic-write contention deadlock risk",
+        "detail": "§7.5.1 Invariant 3's CAS pattern with 3-retry limit creates a systemic deadlock risk when multiple agents (Self-Renewal, Monitor, ACE) concurrently update ProductSSOT. The 50/100/200ms backoffs are too short for distributed systems, and persistent contention becomes 'non-retryable without operator intervention' - a production showstopper."
+      },
+      {
+        "slot": 1,
+        "title": "95-bar creates impossible bootstrap",
+        "detail": "CA-13-A's ≥95 GTM bar combined with CA-14-A's Phase B requirement creates a catch-22: new products can't reach 95 without Self-Renewal fixes, but Self-Renewal can't run without a seeded ProductSSOT row (CA-14-D Invariant 2), and the seed migrations are incomplete for 4/6 VEU products."
+      },
+      {
+        "slot": 2,
+        "title": "GTM Bar Increase Risks Overhead",
+        "detail": "The proposal to increase the GTM readiness bar from 75 to 95 in §7.6 could lead to significant overhead and delays in product launches. This change may require extensive additional testing and development resources, potentially slowing down the time-to-market for new products."
+      },
+      {
+        "slot": 2,
+        "title": "Phase B Testing Lacks Clear Ownership",
+        "detail": "CA-14-A introduces Phase B Adversarial Surface Testing as a hard prerequisite but does not assign a clear implementation owner. This lack of clarity could lead to confusion and inefficiencies in the testing process, as responsibilities are not clearly defined."
+      },
+      {
+        "slot": 2,
+        "title": "Inconsistent Naming Conventions",
+        "detail": "The naming conventions for sibling charter keys in CA-13-B are inconsistent. The proposal uses `<agent-short-name>-executor`, which may not align with existing naming conventions and could lead to confusion or misalignment with other parts of the system."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of clarity",
+        "detail": "The proposal under review is overly complex and lacks clear explanations of the changes being made to the FlowAI system. Specifically, the sections on GTM Readiness Report and Phase B Adversarial Surface Testing are difficult to understand without prior knowledge of the system."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient testing",
+        "detail": "The proposal does not provide sufficient information on how the new Phase B Adversarial Surface Testing will be tested and validated to ensure it does not introduce new bugs or issues into the system."
+      },
+      {
+        "slot": 3,
+        "title": "Potential for abuse",
+        "detail": "The introduction of the EXECUTOR_REGISTRY sibling pattern and the auto_write_internal authority could potentially be abused by malicious actors, and the proposal does not provide sufficient safeguards to prevent this."
+      },
+      {
+        "slot": 4,
+        "title": "Complexity of CA-13-A",
+        "detail": "The proposed changes in CA-13-A introduce significant complexity. The new GTM-ready bar of 95 and the introduction of the Near-GTM band add layers of decision-making that could slow down the clearance process. The conditional clearance path for Near-GTM scores may lead to inconsistent standards across different products."
+      },
+      {
+        "slot": 4,
+        "title": "Vague Implementation in CA-14-A",
+        "detail": "CA-14-A specifies Phase B Adversarial Surface Testing as a prerequisite but does not assign an implementation owner. This lack of clear ownership could lead to delays and inconsistencies in the implementation process."
+      },
+      {
+        "slot": 4,
+        "title": "Overlap with Existing Mechanisms",
+        "detail": "The proposed changes in CA-14-C overlap with existing mechanisms for remediation prioritization. The Five-Layer Intelligence Framework is already in place, and adding another layer of prioritization based on §7.6 findings could lead to confusion and redundancy."
+      },
+      {
+        "slot": 6,
+        "title": "GTM bar conflation risk",
+        "detail": "Raising the GTM bar to 95 in CA-13-A, while clarifying its distinction from the Self-Audit 95/95, still risks conflation in practice.  Operators might prioritize achieving the GTM score over addressing fundamental build quality issues flagged by the Self-Audit, especially given the conditional clearance path."
+      },
+      {
+        "slot": 6,
+        "title": "Phase B scope creep",
+        "detail": "CA-14-A's Phase B Adversarial Surface Testing, while valuable, lacks concrete definition of scope and adversarial techniques.  Without clear boundaries, Phase B could become overly broad and resource-intensive, potentially delaying releases without proportionally increasing product quality. The 'intentional error states' are particularly vague."
+      },
+      {
+        "slot": 6,
+        "title": "Invariants too strict",
+        "detail": "CA-14-B's five safety invariants, while aiming to prevent regressions, might be overly restrictive.  The 'diff-only' and 'preserve rules' invariants could prevent necessary refactoring or code cleanup, leading to technical debt accumulation and hindering long-term maintainability.  The 'preserve rules' invariant is especially concerning."
+      },
+      {
+        "slot": 6,
+        "title": "LIMITATIONS disclosure burden",
+        "detail": "The mandatory verbatim LIMITATIONS disclosure in CA-14-A, while intended to ensure transparency, could become a boilerplate exercise. Operators might simply copy-paste the required text without truly understanding or addressing the underlying limitations, diminishing the disclosure's effectiveness. The length of the verbatim text is also a concern."
+      },
+      {
+        "slot": 6,
+        "title": "Atomic write contention",
+        "detail": "CA-14-D's atomic-audit-write requirement, while addressing concurrency issues, introduces the risk of contention and retry loops.  The proposed exponential backoff might not be sufficient to resolve contention in high-traffic scenarios, potentially leading to delays or failures in updating the ProductSSOT. The 3-retry limit seems arbitrary."
+      },
+      {
+        "slot": 7,
+        "title": "Unproven Phase B ownership",
+        "detail": "CA-14-A introduces Phase B testing without assigning implementation ownership (§15.1 Roster). This creates ambiguity in responsibility, risking gaps in adversarial testing execution. Agent #21's expanded role isn't codified in the agent charter table."
+      },
+      {
+        "slot": 7,
+        "title": "Sibling executor documentation gap",
+        "detail": "CA-13-B's EXECUTOR_REGISTRY pattern leaves §15.5's sibling charter table unpopulated. Without explicit documentation of 'aggressive-crawl-conductor-executor' in the agent roster, maintenance risks emerge from undocumented authority surfaces."
+      },
+      {
+        "slot": 7,
+        "title": "Atomic write retry risks",
+        "detail": "CA-14-D's atomic-audit-write retry logic (3 attempts with 50/100/200ms backoff) may fail under high concurrency, silently dropping governance entries. §7.5.1 Invariant 3 lacks fallback to queue-based writes when CAS fails."
+      },
+      {
+        "slot": 8,
+        "title": "GTM bar conflates readiness layers",
+        "detail": "CA-13-A rewrites §7.6 from a demo-facing score into a hard product-go/no-go gate at ≥95, but the proposal still keeps the same score formula based on issue severities. That makes the threshold look objective while silently changing its meaning from \"demo guidance\" to \"full market readiness\" without introducing any new measurement for actual user outcomes or revenue-critical functionality."
+      },
+      {
+        "slot": 8,
+        "title": "Conditional clearance weakens the bar",
+        "detail": "CA-13-A-Q2 adds a Near-GTM conditional path where 90–94 can pass §11 Step 5 with admin signoff. That creates a loophole exactly where the proposal claims to be tightening standards, and it also makes the new 95 bar non-hard in practice unless every operator consistently refuses to use the exception."
+      },
+      {
+        "slot": 8,
+        "title": "Two-distinct-95 paragraph adds complexity",
+        "detail": "The new §19.0 reconciliation tries to separate Self-Audit 95/95 from GTM Readiness ≥95, but it introduces another cross-reference layer that future authors can still misread. Because both mechanisms now share the same numeric threshold and both block Step 5, the proposal risks semantic drift rather than preventing it unless the underlying terms are renamed."
+      },
+      {
+        "slot": 8,
+        "title": "Phase B gate lacks ownership",
+        "detail": "CA-14-A makes Phase B mandatory for Step 5, but it does not assign a stable owner in the canonical text. Without a named agent or execution path, the requirement can become a permanent paper gate: the system can fail clearance for lack of a designated verifier even when the product itself is functional."
+      },
+      {
+        "slot": 8,
+        "title": "SSOT seeding may break first-run workflows",
+        "detail": "CA-14-D requires a preexisting ProductSSOT row before any Self-Renewal or governance write, but the draft does not specify an onboarding escape hatch for new products or migrations. That means a missing seed row becomes a hard failure mode for newly created products, which is worse than the status quo where the system could at least inspect and bootstrap from runtime state."
+      },
+      {
+        "slot": 9,
+        "title": "GTM bar ambiguity",
+        "detail": "The proposal changes the GTM-ready bar from 75 to 95 (§7.6), but the rationale for this change is not clearly linked to the underlying metrics or business requirements. The impact of this change on existing products and future development is not thoroughly analyzed."
+      },
+      {
+        "slot": 9,
+        "title": "Phase B testing scope",
+        "detail": "CA-14-A introduces Phase B Adversarial Surface Testing as a hard prerequisite for §11 Clearance Step 5. However, the scope and implementation details of Phase B are not clearly defined, leaving uncertainty about its effectiveness and feasibility."
+      },
+      {
+        "slot": 9,
+        "title": "Five-Layer Framework role",
+        "detail": "CA-14-C clarifies that the Five-Layer Intelligence Framework is for telemetry only, not remediation prioritization. However, this change may cause confusion if not properly communicated to stakeholders, and its implications on existing processes are not fully explored."
+      },
+      {
+        "slot": 10,
+        "title": "Phase B owner undefined",
+        "detail": "CA-14-A §6.10 adds Phase B Adversarial Surface Testing as a mandatory §11 Step 5 prerequisite yet CA-14-A-Q3 leaves ownership assignment to future dispatch; this leaves the five-prerequisite gate in §7.6 without an executing agent, directly contradicting the claim that Phase B produces a reliable phase_b_pass boolean."
+      },
+      {
+        "slot": 10,
+        "title": "Atomic CAS contention deadlock",
+        "detail": "§7.5.1 Invariant 3 requires snapshot+CAS+rollback on every product_ssot.governance_record write with only 3 retries; concurrent triggers from Agent #3 Self-Renewal and Agent #10 Monitor (both writing delta_log and governance_record entries) can exhaust retries and emit agent.product_ssot.atomic_write_contention.v1 with no documented recovery path beyond operator intervention."
+      },
+      {
+        "slot": 10,
+        "title": "GTM 95 + Phase B compound gate",
+        "detail": "CA-13-A raises §7.6 GTM bar to 95 while CA-14-A simultaneously adds Phase B as a hard fifth prerequisite in the same §11 Clearance Step 5 gate; the combined requirement exceeds any threshold previously exercised in ENTRY 010's 42/100 demonstration and lacks a rollback or staged-relaxation mechanism."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CA-13-A-Q1": {
+      "verdict": "PLURALITY_CA13AQ1-DEFER",
+      "detail": "3 of 6 on CA13AQ1-DEFER (below 7/10 quorum)",
+      "topKey": "CA13AQ1-DEFER",
+      "topCount": 3
+    },
+    "CA-13-A-Q2": {
+      "verdict": "PLURALITY_CA13AQ2-TIGHTEN",
+      "detail": "3 of 6 on CA13AQ2-TIGHTEN (below 7/10 quorum)",
+      "topKey": "CA13AQ2-TIGHTEN",
+      "topCount": 3
+    },
+    "CA-13-A-Q3": {
+      "verdict": "PLURALITY_CA13AQ3-RATIFY",
+      "detail": "3 of 6 on CA13AQ3-RATIFY (below 7/10 quorum)",
+      "topKey": "CA13AQ3-RATIFY",
+      "topCount": 3
+    },
+    "CA-13-B-Q1": {
+      "verdict": "PLURALITY_CA13BQ1-RATIFY",
+      "detail": "4 of 6 on CA13BQ1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA13BQ1-RATIFY",
+      "topCount": 4
+    },
+    "CA-13-B-Q2": {
+      "verdict": "PLURALITY_CA13BQ2-RATIFY",
+      "detail": "4 of 6 on CA13BQ2-RATIFY (below 7/10 quorum)",
+      "topKey": "CA13BQ2-RATIFY",
+      "topCount": 4
+    },
+    "CA-14-A-Q1": {
+      "verdict": "SPLIT",
+      "detail": "top tie at 2 between CA14AQ1-REDUCED / CA14AQ1-OPTIN",
+      "topKey": "CA14AQ1-REDUCED",
+      "topCount": 2
+    },
+    "CA-14-A-Q2": {
+      "verdict": "PLURALITY_CA14AQ2-SHORTER",
+      "detail": "3 of 6 on CA14AQ2-SHORTER (below 7/10 quorum)",
+      "topKey": "CA14AQ2-SHORTER",
+      "topCount": 3
+    },
+    "CA-14-A-Q3": {
+      "verdict": "PLURALITY_CA14AQ3-DEFER",
+      "detail": "5 of 6 on CA14AQ3-DEFER (below 7/10 quorum)",
+      "topKey": "CA14AQ3-DEFER",
+      "topCount": 5
+    },
+    "CA-14-A-Q4": {
+      "verdict": "PLURALITY_REJECT",
+      "detail": "3 of 6 on REJECT (below 7/10 quorum)",
+      "topKey": "REJECT",
+      "topCount": 3
+    },
+    "CA-14-B-Q1": {
+      "verdict": "PLURALITY_CA14BQ1-RATIFY",
+      "detail": "4 of 6 on CA14BQ1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA14BQ1-RATIFY",
+      "topCount": 4
+    },
+    "CA-14-B-Q2": {
+      "verdict": "PLURALITY_CA14BQ2-RATIFY",
+      "detail": "3 of 6 on CA14BQ2-RATIFY (below 7/10 quorum)",
+      "topKey": "CA14BQ2-RATIFY",
+      "topCount": 3
+    },
+    "CA-14-B-Q3": {
+      "verdict": "PLURALITY_CA14BQ3-CROSSLIST",
+      "detail": "4 of 6 on CA14BQ3-CROSSLIST (below 7/10 quorum)",
+      "topKey": "CA14BQ3-CROSSLIST",
+      "topCount": 4
+    },
+    "CA-14-C-Q1": {
+      "verdict": "PLURALITY_CA14CQ1-STRONGER",
+      "detail": "5 of 6 on CA14CQ1-STRONGER (below 7/10 quorum)",
+      "topKey": "CA14CQ1-STRONGER",
+      "topCount": 5
+    },
+    "CA-14-C-Q2": {
+      "verdict": "PLURALITY_CA14CQ2-ADD",
+      "detail": "4 of 6 on CA14CQ2-ADD (below 7/10 quorum)",
+      "topKey": "CA14CQ2-ADD",
+      "topCount": 4
+    },
+    "CA-14-D-Q1": {
+      "verdict": "PLURALITY_CA14DQ1-RATIFY",
+      "detail": "4 of 6 on CA14DQ1-RATIFY (below 7/10 quorum)",
+      "topKey": "CA14DQ1-RATIFY",
+      "topCount": 4
+    },
+    "CA-14-D-Q2": {
+      "verdict": "PLURALITY_CA14DQ2-NDAYS",
+      "detail": "4 of 6 on CA14DQ2-NDAYS (below 7/10 quorum)",
+      "topKey": "CA14DQ2-NDAYS",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.40625,
+    "alignedCount": 39,
+    "totalPossible": 96,
+    "draftedQs": [
+      "CA-13-A-Q1",
+      "CA-13-A-Q2",
+      "CA-13-A-Q3",
+      "CA-13-B-Q1",
+      "CA-13-B-Q2",
+      "CA-14-A-Q1",
+      "CA-14-A-Q2",
+      "CA-14-A-Q3",
+      "CA-14-A-Q4",
+      "CA-14-B-Q1",
+      "CA-14-B-Q2",
+      "CA-14-B-Q3",
+      "CA-14-C-Q1",
+      "CA-14-C-Q2",
+      "CA-14-D-Q1",
+      "CA-14-D-Q2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 40.6 %, distinct objections 31"
+  },
+  "summary": [
+    {
+      "qId": "CA-13-A-Q1",
+      "verdict": "PLURALITY_CA13AQ1-DEFER",
+      "top": "CA13AQ1-DEFER",
+      "topCount": 3,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "DEFER",
+      "tallyByOption": {
+        "CA13AQ1-RATIFY": 0,
+        "CA13AQ1-REVISE": 1,
+        "CA13AQ1-REJECT": 0,
+        "CA13AQ1-DEFER": 3,
+        "REJECT": 2,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-13-A-Q2",
+      "verdict": "PLURALITY_CA13AQ2-TIGHTEN",
+      "top": "CA13AQ2-TIGHTEN",
+      "topCount": 3,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "OTHER",
+      "tallyByOption": {
+        "CA13AQ2-RATIFY": 1,
+        "CA13AQ2-HARD": 2,
+        "CA13AQ2-TIGHTEN": 3,
+        "CA13AQ2-LOOSEN": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-13-A-Q3",
+      "verdict": "PLURALITY_CA13AQ3-RATIFY",
+      "top": "CA13AQ3-RATIFY",
+      "topCount": 3,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "PLURALITY_RATIFY",
+      "tallyByOption": {
+        "CA13AQ3-RATIFY": 3,
+        "CA13AQ3-REVISE": 1,
+        "CA13AQ3-REJECT": 0,
+        "CA13AQ3-MOVE": 1,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-13-B-Q1",
+      "verdict": "PLURALITY_CA13BQ1-RATIFY",
+      "top": "CA13BQ1-RATIFY",
+      "topCount": 4,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "PLURALITY_RATIFY",
+      "tallyByOption": {
+        "CA13BQ1-RATIFY": 4,
+        "CA13BQ1-REVISE": 0,
+        "CA13BQ1-REJECT": 0,
+        "CA13BQ1-DEFER": 2,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-13-B-Q2",
+      "verdict": "PLURALITY_CA13BQ2-RATIFY",
+      "top": "CA13BQ2-RATIFY",
+      "topCount": 4,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "PLURALITY_RATIFY",
+      "tallyByOption": {
+        "CA13BQ2-RATIFY": 4,
+        "CA13BQ2-AGENTID": 0,
+        "CA13BQ2-CAPABILITY": 1,
+        "CA13BQ2-DEFER": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-A-Q1",
+      "verdict": "SPLIT",
+      "top": "CA14AQ1-REDUCED",
+      "topCount": 2,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "OTHER",
+      "tallyByOption": {
+        "CA14AQ1-RATIFY": 1,
+        "CA14AQ1-REDUCED": 2,
+        "CA14AQ1-OPTIN": 2,
+        "CA14AQ1-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-A-Q2",
+      "verdict": "PLURALITY_CA14AQ2-SHORTER",
+      "top": "CA14AQ2-SHORTER",
+      "topCount": 3,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "OTHER",
+      "tallyByOption": {
+        "CA14AQ2-RATIFY": 2,
+        "CA14AQ2-PARAPHRASE": 0,
+        "CA14AQ2-SHORTER": 3,
+        "CA14AQ2-FREEFORM": 1,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-A-Q3",
+      "verdict": "PLURALITY_CA14AQ3-DEFER",
+      "top": "CA14AQ3-DEFER",
+      "topCount": 5,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "DEFER",
+      "tallyByOption": {
+        "CA14AQ3-AGENT21": 0,
+        "CA14AQ3-AGENT8": 1,
+        "CA14AQ3-OPSRUNNER": 0,
+        "CA14AQ3-DEFER": 5,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-A-Q4",
+      "verdict": "PLURALITY_REJECT",
+      "top": "REJECT",
+      "topCount": 3,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "OTHER",
+      "tallyByOption": {
+        "CA14AQ4-RATIFY": 2,
+        "CA14AQ4-DEFER": 1,
+        "CA14AQ4-REJECT": 0,
+        "CA14AQ4-MODIFY": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-B-Q1",
+      "verdict": "PLURALITY_CA14BQ1-RATIFY",
+      "top": "CA14BQ1-RATIFY",
+      "topCount": 4,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "PLURALITY_RATIFY",
+      "tallyByOption": {
+        "CA14BQ1-RATIFY": 4,
+        "CA14BQ1-DROP": 0,
+        "CA14BQ1-EXPAND": 1,
+        "CA14BQ1-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-B-Q2",
+      "verdict": "PLURALITY_CA14BQ2-RATIFY",
+      "top": "CA14BQ2-RATIFY",
+      "topCount": 3,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "PLURALITY_RATIFY",
+      "tallyByOption": {
+        "CA14BQ2-RATIFY": 3,
+        "CA14BQ2-SOFTEN": 1,
+        "CA14BQ2-OVERRIDE": 2,
+        "CA14BQ2-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-B-Q3",
+      "verdict": "PLURALITY_CA14BQ3-CROSSLIST",
+      "top": "CA14BQ3-CROSSLIST",
+      "topCount": 4,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "OTHER",
+      "tallyByOption": {
+        "CA14BQ3-RATIFY": 2,
+        "CA14BQ3-S12": 0,
+        "CA14BQ3-S19": 0,
+        "CA14BQ3-CROSSLIST": 4,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-C-Q1",
+      "verdict": "PLURALITY_CA14CQ1-STRONGER",
+      "top": "CA14CQ1-STRONGER",
+      "topCount": 5,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "OTHER",
+      "tallyByOption": {
+        "CA14CQ1-RATIFY": 1,
+        "CA14CQ1-STRONGER": 5,
+        "CA14CQ1-REJECT": 0,
+        "CA14CQ1-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-C-Q2",
+      "verdict": "PLURALITY_CA14CQ2-ADD",
+      "top": "CA14CQ2-ADD",
+      "topCount": 4,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "OTHER",
+      "tallyByOption": {
+        "CA14CQ2-ADD": 4,
+        "CA14CQ2-CONDITIONAL": 0,
+        "CA14CQ2-SKIP": 2,
+        "CA14CQ2-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-D-Q1",
+      "verdict": "PLURALITY_CA14DQ1-RATIFY",
+      "top": "CA14DQ1-RATIFY",
+      "topCount": 4,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "PLURALITY_RATIFY",
+      "tallyByOption": {
+        "CA14DQ1-RATIFY": 4,
+        "CA14DQ1-DROP": 0,
+        "CA14DQ1-EXPAND": 1,
+        "CA14DQ1-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    {
+      "qId": "CA-14-D-Q2",
+      "verdict": "PLURALITY_CA14DQ2-NDAYS",
+      "top": "CA14DQ2-NDAYS",
+      "topCount": 4,
+      "engaged": 6,
+      "cleared": false,
+      "classification": "OTHER",
+      "tallyByOption": {
+        "CA14DQ2-BLOCK": 0,
+        "CA14DQ2-NDAYS": 4,
+        "CA14DQ2-IMMEDIATE": 2,
+        "CA14DQ2-MODIFY": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    }
+  ],
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phase B implementation vacuum",
+            "detail": "CA-14-A mandates Phase B Adversarial Surface Testing as a hard gate but provides no implementation spec, no agent assignment, and no timeline. §6.10 defines what Phase B should test but not HOW to execute it, creating an unfunded mandate that blocks all GTM clearance."
+          },
+          {
+            "title": "Atomic-write contention deadlock risk",
+            "detail": "§7.5.1 Invariant 3's CAS pattern with 3-retry limit creates a systemic deadlock risk when multiple agents (Self-Renewal, Monitor, ACE) concurrently update ProductSSOT. The 50/100/200ms backoffs are too short for distributed systems, and persistent contention becomes 'non-retryable without operator intervention' - a production showstopper."
+          },
+          {
+            "title": "95-bar creates impossible bootstrap",
+            "detail": "CA-13-A's ≥95 GTM bar combined with CA-14-A's Phase B requirement creates a catch-22: new products can't reach 95 without Self-Renewal fixes, but Self-Renewal can't run without a seeded ProductSSOT row (CA-14-D Invariant 2), and the seed migrations are incomplete for 4/6 VEU products."
+          }
+        ],
+        "worse_than_status_quo": "The combined CA-13+CA-14 amendments make it impossible to ship any new product to GTM readiness - the 95 bar plus Phase B gate plus incomplete ProductSSOT seeding creates a deadlock where products get stuck in perpetual 'Pre-internal' state with no automated path forward.",
+        "precedent": "Kubernetes 1.5's admission controller framework shipped with mandatory webhooks but no implementation guidance, causing a 6-month adoption freeze until 1.6 added the mutating/validating webhook specs - similar to CA-14-A's Phase B mandate without implementation."
+      },
+      "rejection_steelman": "These amendments should be deferred until Phase B has a working implementation and all ProductSSOT seeds are migrated. The proposals create multiple blocking dependencies (95 bar, Phase B testing, atomic writes, complete seeding) without proving the system can actually operate under these constraints. Ship the implementations first, then codify the requirements - not the reverse.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end per ENTRY 010 repeat-until-GTM loop.",
+          "rationale": "The 95 bar is aspirational but unproven; ENTRY 010 showed only 42/100 in practice. Codifying an unachieved standard creates false expectations."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-RATIFY",
+          "pick_text": "Ratify as drafted — Near-GTM passes Step 5 with admin signoff + LIMITATIONS published verbatim.",
+          "rationale": "The conditional path provides necessary flexibility while maintaining accountability through admin signoff and explicit limitations disclosure."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-MOVE",
+          "pick_text": "Move the reconciliation to §10 (Self-Governance Layer) instead of §19 (Governance / Panel / SSOT Access) — better topical fit.",
+          "rationale": "The distinction between Self-Audit 95/95 and GTM 95 is fundamentally about self-governance mechanisms, not panel/SSOT access rules."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — adopt CA-13-B verbatim. Strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "ENTRY 009 is the canonical record; the text must match the locked decision to maintain Locked Rule 1 hierarchy."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-RATIFY",
+          "pick_text": "Adopt as drafted — `<agent-short-name>-executor` pattern (consistent with existing `self-renewal-executor` per CA-7 §15.5 row).",
+          "rationale": "Consistency with established naming patterns reduces cognitive load and maintains discoverability."
+        },
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-OPTIN",
+          "pick_text": "Ratify with operator opt-in — Phase B defaults to mandatory but operator (admin role) may explicitly opt out per product with audit-logged justification.",
+          "rationale": "Hard gates without implementation create gridlock; operator opt-out preserves progress while maintaining audit trail for accountability."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-SHORTER",
+          "pick_text": "Adopt a shorter form — e.g. \"§7.6 score reflects surface verification only; NOT a functional certification.\"",
+          "rationale": "The shorter form conveys the critical warning without the verbose enumeration that operators will likely skip reading."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-DEFER",
+          "pick_text": "Defer ownership — CA-14-A canonizes the requirement; engineering dispatch picks the owner in a follow-up.",
+          "rationale": "Assigning ownership without implementation readiness creates false commitments; let engineering determine feasibility first."
+        },
+        "CA-14-A-Q4": {
+          "key": "REJECT",
+          "pick_text": "Reject Locked Rule 19 — the §6.10 + §7.6 + §7 LIMITATIONS amendments are sufficient; no new Locked Rule needed.",
+          "rationale": "The distinction is already well-documented in three sections; adding a locked rule for this creates rule proliferation."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "The five invariants codify existing D27-D38 implementation; they're proven in practice and prevent regression-class defects."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-OVERRIDE",
+          "pick_text": "Strengthen with operator-override clause — \"...UNLESS operator (admin role) explicitly overrides with audit-logged justification.\"",
+          "rationale": "Absolute guarantees without escape hatches create brittleness; admin override preserves operator agency for edge cases."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-CROSSLIST",
+          "pick_text": "Cross-list (live in §10.4 AND cross-referenced from §12 + §19).",
+          "rationale": "Fix-safety invariants touch multiple governance surfaces; cross-listing improves discoverability from all relevant contexts."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-STRONGER",
+          "pick_text": "Ratify with stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition vs. \"DO NOT influence\").",
+          "rationale": "The architectural shift from Five-Layer prioritization to findings-driven needs unambiguous language to prevent regression."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a Step 6 note in §9 referencing §7.6 findings as the prioritization source.",
+          "rationale": "Step 6 is where prioritization happens; the note creates a direct link to the canonical source, reducing ambiguity."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "The invariants reflect implemented reality from D27-D38; they're not speculative but documented existing behavior."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-IMMEDIATE",
+          "pick_text": "Ratify CA-14 immediately; remaining 4 products seeded per operator-driven dispatch order.",
+          "rationale": "Blocking CA-14 on seed completion creates unnecessary coupling; the invariant stands regardless of current seed state."
+        }
+      },
+      "overallNotes": "The proposals codify important safety mechanisms but create operational gridlock through incomplete dependencies and unproven standards.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "GTM Bar Increase Risks Overhead",
+            "detail": "The proposal to increase the GTM readiness bar from 75 to 95 in §7.6 could lead to significant overhead and delays in product launches. This change may require extensive additional testing and development resources, potentially slowing down the time-to-market for new products."
+          },
+          {
+            "title": "Phase B Testing Lacks Clear Ownership",
+            "detail": "CA-14-A introduces Phase B Adversarial Surface Testing as a hard prerequisite but does not assign a clear implementation owner. This lack of clarity could lead to confusion and inefficiencies in the testing process, as responsibilities are not clearly defined."
+          },
+          {
+            "title": "Inconsistent Naming Conventions",
+            "detail": "The naming conventions for sibling charter keys in CA-13-B are inconsistent. The proposal uses `<agent-short-name>-executor`, which may not align with existing naming conventions and could lead to confusion or misalignment with other parts of the system."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to increased complexity and resource demands without clear evidence of improved outcomes, potentially delaying product releases and increasing operational costs.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant changes that increase complexity and resource demands without clear evidence of improved outcomes. The increase in the GTM readiness bar and the introduction of Phase B testing could delay product releases and increase operational costs. Additionally, the lack of clear ownership for Phase B testing and inconsistent naming conventions could lead to confusion and inefficiencies. It may be prudent to defer the proposal until these issues are addressed and a clearer cost-benefit analysis is conducted.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end per ENTRY 010 repeat-until-GTM loop.",
+          "rationale": "Deferring the amendment allows for a practical demonstration of the feasibility and impact of the ≥95 bar before making it a canonical requirement."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-TIGHTEN",
+          "pick_text": "Tighten conditional path — Near-GTM passes Step 5 only when ALL `high` findings are Resolved (not just terminally decided; documented + human-gated insufficient).",
+          "rationale": "Tightening the conditional path ensures that only products with fully resolved high-severity issues can pass, maintaining quality standards."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-REVISE",
+          "pick_text": "Ratify with revision — keep the reconciliation principle but adjust the §19.0 wording (specify).",
+          "rationale": "Revising the wording can clarify the distinction between the two 95 bars, reducing potential confusion."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-DEFER",
+          "pick_text": "Defer — wait for engineering dispatch to populate the §15.5 sibling-row table with executor entries; amend §15 intro + §15.1 at that same commit (joint disposition).",
+          "rationale": "Deferring until the engineering dispatch ensures that the text aligns with the actual implementation, reducing the risk of discrepancies."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-CAPABILITY",
+          "pick_text": "Adopt capability-keyed naming — e.g. `crawl-write-executor`, `orchestra-admission-executor` (consistent with what the sibling DOES rather than which primary it siblings).",
+          "rationale": "Capability-keyed naming provides clarity on the function of each executor, improving readability and understanding."
+        },
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-OPTIN",
+          "pick_text": "Ratify with operator opt-in — Phase B defaults to mandatory but operator (admin role) may explicitly opt out per product with audit-logged justification.",
+          "rationale": "Allowing operator opt-in provides flexibility and ensures that resources are allocated efficiently based on product needs."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-SHORTER",
+          "pick_text": "Adopt a shorter form — e.g. \"§7.6 score reflects surface verification only; NOT a functional certification.\"",
+          "rationale": "A shorter form maintains the necessary warning while being more concise and easier to communicate."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-DEFER",
+          "pick_text": "Defer ownership — CA-14-A canonizes the requirement; engineering dispatch picks the owner in a follow-up.",
+          "rationale": "Deferring ownership allows for a more informed decision based on resource availability and expertise."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-DEFER",
+          "pick_text": "Ratify but defer Rule 19 numbering — CA-14 has multiple Locked-Rule candidates; consolidate at end of CA cycle.",
+          "rationale": "Deferring numbering allows for a comprehensive review and consolidation of Locked Rules, ensuring consistency."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-EXPAND",
+          "pick_text": "Ratify with expansion — add a 6th invariant (e.g. test-suite gate before PR).",
+          "rationale": "Adding a test-suite gate ensures that fixes are thoroughly vetted before being proposed, enhancing quality assurance."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-OVERRIDE",
+          "pick_text": "Strengthen with operator-override clause — \"...UNLESS operator (admin role) explicitly overrides with audit-logged justification.\"",
+          "rationale": "Allowing for operator override with justification provides flexibility while maintaining accountability."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-CROSSLIST",
+          "pick_text": "Cross-list (live in §10.4 AND cross-referenced from §12 + §19).",
+          "rationale": "Cross-listing ensures that the fix-safety invariants are visible in all relevant sections, promoting comprehensive understanding."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-STRONGER",
+          "pick_text": "Ratify with stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition vs. \"DO NOT influence\").",
+          "rationale": "Stronger language provides clear guidance and prevents misinterpretation of the Five-Layer framework's role."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a Step 6 note in §9 referencing §7.6 findings as the prioritization source.",
+          "rationale": "Adding a note ensures that the prioritization source is explicitly documented, reducing ambiguity."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-EXPAND",
+          "pick_text": "Ratify with expansion — e.g. add a 4th invariant on per-product selfRenewalCredentialMode enumeration.",
+          "rationale": "Expanding the invariants ensures comprehensive coverage of operational requirements, enhancing system robustness."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify CA-14 with explicit acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "Setting a clear timeline for seeding ensures timely completion while allowing the proposal to proceed."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes that require careful consideration of resource allocation and implementation clarity to avoid potential inefficiencies and delays.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of clarity",
+            "detail": "The proposal under review is overly complex and lacks clear explanations of the changes being made to the FlowAI system. Specifically, the sections on GTM Readiness Report and Phase B Adversarial Surface Testing are difficult to understand without prior knowledge of the system."
+          },
+          {
+            "title": "Insufficient testing",
+            "detail": "The proposal does not provide sufficient information on how the new Phase B Adversarial Surface Testing will be tested and validated to ensure it does not introduce new bugs or issues into the system."
+          },
+          {
+            "title": "Potential for abuse",
+            "detail": "The introduction of the EXECUTOR_REGISTRY sibling pattern and the auto_write_internal authority could potentially be abused by malicious actors, and the proposal does not provide sufficient safeguards to prevent this."
+          }
+        ],
+        "worse_than_status_quo": "If the proposal is implemented without proper testing and validation, it could lead to a situation where the FlowAI system is less stable and more prone to errors than it is currently, which would be worse than the status quo.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal under review is overly complex and lacks clear explanations of the changes being made to the FlowAI system. Additionally, the introduction of new components and authorities without sufficient testing and validation could lead to unintended consequences, such as bugs or security vulnerabilities. Therefore, it is recommended to reject the proposal and request further clarification and testing before reconsidering it.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-RATIFY",
+          "pick_text": "Ratify — adopt CA-13-A §7.6 bands verbatim. GTM-ready=95–100; Near-GTM (conditional)=90–94; Internal-only=75–89; Pre-internal=60–74; Not-demo-ready=0–59.",
+          "rationale": "The CEO directive to change the GTM-ready bar to 95 is a clear and reasonable requirement, and the proposed band changes align with this directive."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-RATIFY",
+          "pick_text": "Ratify as drafted — Near-GTM passes Step 5 with admin signoff + LIMITATIONS published verbatim.",
+          "rationale": "The introduction of a Near-GTM band with conditional clearance provides a necessary flexibility in the system, and the proposed implementation is reasonable."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Reconciliation paragraph is load-bearing per Locked Rule 3 (three independent governance mechanisms must all pass).",
+          "rationale": "The addition of a reconciliation paragraph to §19 is necessary to prevent future conflation between Self-Audit 95/95 and GTM Readiness ≥95, and the proposed text is clear and concise."
+        },
+        "CA-13-B-Q1": {
+          "key": null,
+          "pick_text": "Ratify — adopt CA-13-B verbatim. Strike '(b) dual-authority' phrasing from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "The proposed changes to §15 intro and §15.1 rows 21/26 are necessary to reflect the CEO's re-disposition of CA-9-Q4 to Option (a), and the proposed text is clear and concise."
+        },
+        "CA-13-B-Q2": {
+          "key": null,
+          "pick_text": "Adopt agentId-keyed naming instead — e.g. 'agent-21-executor', 'agent-26-executor' (consistent with '_registry.ts' agentId column).",
+          "rationale": "The proposed naming convention is consistent with the existing '_registry.ts' agentId column, and provides a clear and consistent way to identify the sibling charters."
+        },
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-RATIFY",
+          "pick_text": "Ratify as drafted — Phase B is a hard gate; failure blocks Step 5.",
+          "rationale": "The introduction of Phase B Adversarial Surface Testing as a hard prerequisite for §11 Clearance Step 5 is a necessary step to ensure the stability and security of the FlowAI system."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "The proposed verbatim disclosure for Phase-A-only deliveries is clear and concise, and provides necessary information to operators."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B (extends ENTRY 006 charter).",
+          "rationale": "The proposed assignment of Phase B ownership to Agent #21 ACE Conductor is reasonable, given its existing charter and responsibilities."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "The proposed Locked Rule 19 is necessary to prevent conflation between Phase A and Phase B, and the proposed text is clear and concise."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "The proposed five invariants for the fix-safety contract are necessary to ensure the stability and security of the FlowAI system, and the proposed text is clear and concise."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The proposed canonical guarantee is clear and concise, and provides necessary assurances to operators and users."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "The proposed placement of §10.4 Fix-Safety invariants in §10 Self-Governance Layer is reasonable, given its relevance to the self-governance mechanisms."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "The proposed clarification that the Five-Layer Intelligence Framework is telemetry only, not a remediation prioritizer, is necessary to prevent confusion and ensure clear understanding of the system."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a Step 6 note in §9 referencing §7.6 findings as the prioritization source.",
+          "rationale": "The proposed addition of a Step 6 note in §9 is necessary to provide clear information on the prioritization source, and the proposed text is clear and concise."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "The proposed three operational invariants for §7.5.1 are necessary to ensure the stability and security of the FlowAI system, and the proposed text is clear and concise."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify CA-14 with explicit acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "The proposed acceptance criterion is reasonable, given the need to ensure that all products are properly seeded and configured before ratifying the proposal."
+        }
+      },
+      "overallNotes": "The proposal under review is complex and requires careful consideration of the potential risks and benefits. While the proposed changes have the potential to improve the stability and security of the FlowAI system, they also introduce new complexities and potential points of failure. Therefore, it is necessary to carefully evaluate the proposal and ensure that all necessary testing and validation are performed before implementation.",
+      "invalid_reason": "14/16 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity of CA-13-A",
+            "detail": "The proposed changes in CA-13-A introduce significant complexity. The new GTM-ready bar of 95 and the introduction of the Near-GTM band add layers of decision-making that could slow down the clearance process. The conditional clearance path for Near-GTM scores may lead to inconsistent standards across different products."
+          },
+          {
+            "title": "Vague Implementation in CA-14-A",
+            "detail": "CA-14-A specifies Phase B Adversarial Surface Testing as a prerequisite but does not assign an implementation owner. This lack of clear ownership could lead to delays and inconsistencies in the implementation process."
+          },
+          {
+            "title": "Overlap with Existing Mechanisms",
+            "detail": "The proposed changes in CA-14-C overlap with existing mechanisms for remediation prioritization. The Five-Layer Intelligence Framework is already in place, and adding another layer of prioritization based on §7.6 findings could lead to confusion and redundancy."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of the Near-GTM band in CA-13-A could lead to a scenario where products with scores between 90-94 are cleared conditionally, even though they do not meet the full GTM-ready standard. This could result in products being released with known issues, making the system worse than the current status quo where a clear threshold of 75 is used for demo-readiness.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposed changes introduce significant complexity and potential for inconsistencies in the clearance process. The lack of clear ownership for Phase B implementation and the overlap with existing remediation prioritization mechanisms are major concerns. Additionally, the introduction of the Near-GTM band could lead to products being released with known issues, which is a step backward from the current clear threshold of 75 for demo-readiness.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end per ENTRY 010 repeat-until-GTM loop.",
+          "rationale": "Deferring the change allows for a more measured approach, ensuring that the new standard is achievable before making it a requirement."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-HARD",
+          "pick_text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff a Near-GTM as cleared.",
+          "rationale": "Eliminating the conditional path ensures consistency and maintains a high standard for GTM-readiness."
+        },
+        "CA-13-A-Q3": {
+          "key": "REJECT",
+          "pick_text": "Reject — the table at §10 already lists the three mechanisms; additional §19.0 paragraph is redundant.",
+          "rationale": "The existing table at §10 already provides the necessary information, making the additional paragraph redundant."
+        },
+        "CA-13-B-Q1": {
+          "key": null,
+          "pick_text": "Ratify with revision — adopt the strike but adjust replacement wording (specify; e.g. shorter citation, different phrasing of 'primary authority retained at recommend_only').",
+          "rationale": "Ratifying with revision allows for clarity and consistency in the canonical text while addressing the specific concerns raised."
+        },
+        "CA-13-B-Q2": {
+          "key": null,
+          "pick_text": "Adopt agentId-keyed naming instead — e.g. agent-21-executor, agent-26-executor (consistent with _registry.ts agentId column).",
+          "rationale": "AgentId-keyed naming provides a clear and consistent naming convention that aligns with existing practices."
+        },
+        "CA-14-A-Q1": {
+          "key": null,
+          "pick_text": "Ratify with reduced scope — Phase B mandatory only for products in prd environment; staging + dev may pass with Phase A only.",
+          "rationale": "Reducing the scope ensures that Phase B testing is focused on the most critical environments while allowing flexibility in less critical environments."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted",
+          "rationale": "The drafted wording provides clear and necessary disclosure for Phase-A-only deliveries."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B (extends ENTRY 006 charter).",
+          "rationale": "Assigning ownership to Agent #21 ensures clear responsibility and alignment with existing charters."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "Ratifying Locked Rule 19 ensures clear and consistent guidelines for Phase A and Phase B testing."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "The five invariants provide a robust framework for ensuring the safety and integrity of the fix pipeline."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted",
+          "rationale": "The drafted wording provides a strong and clear guarantee for the fix pipeline."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "The placement in §10.4 is appropriate and aligns with the self-governance layer."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "The drafted text provides clear and necessary clarification on the role of the Five-Layer Intelligence Framework."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a Step 6 note in §9 referencing §7.6 findings as the prioritization source.",
+          "rationale": "Adding a note ensures clear and consistent prioritization based on §7.6 findings."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "The three invariants provide a robust framework for ensuring the operational integrity of the ProductSSOT."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify CA-14 with explicit acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "This approach ensures that the ratification is contingent on the completion of the remaining seed migrations, maintaining consistency and completeness."
+        }
+      },
+      "overallNotes": "",
+      "invalid_reason": "13/16 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "SILENT",
+      "votes": {},
+      "adversarial": null,
+      "rejection_steelman": null,
+      "degraded": false,
+      "parseFailure": true,
+      "modelTag": "openrouter:cohere/command-r-plus-08-2024"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "GTM bar conflation risk",
+            "detail": "Raising the GTM bar to 95 in CA-13-A, while clarifying its distinction from the Self-Audit 95/95, still risks conflation in practice.  Operators might prioritize achieving the GTM score over addressing fundamental build quality issues flagged by the Self-Audit, especially given the conditional clearance path."
+          },
+          {
+            "title": "Phase B scope creep",
+            "detail": "CA-14-A's Phase B Adversarial Surface Testing, while valuable, lacks concrete definition of scope and adversarial techniques.  Without clear boundaries, Phase B could become overly broad and resource-intensive, potentially delaying releases without proportionally increasing product quality. The 'intentional error states' are particularly vague."
+          },
+          {
+            "title": "Invariants too strict",
+            "detail": "CA-14-B's five safety invariants, while aiming to prevent regressions, might be overly restrictive.  The 'diff-only' and 'preserve rules' invariants could prevent necessary refactoring or code cleanup, leading to technical debt accumulation and hindering long-term maintainability.  The 'preserve rules' invariant is especially concerning."
+          },
+          {
+            "title": "LIMITATIONS disclosure burden",
+            "detail": "The mandatory verbatim LIMITATIONS disclosure in CA-14-A, while intended to ensure transparency, could become a boilerplate exercise. Operators might simply copy-paste the required text without truly understanding or addressing the underlying limitations, diminishing the disclosure's effectiveness. The length of the verbatim text is also a concern."
+          },
+          {
+            "title": "Atomic write contention",
+            "detail": "CA-14-D's atomic-audit-write requirement, while addressing concurrency issues, introduces the risk of contention and retry loops.  The proposed exponential backoff might not be sufficient to resolve contention in high-traffic scenarios, potentially leading to delays or failures in updating the ProductSSOT. The 3-retry limit seems arbitrary."
+          }
+        ],
+        "worse_than_status_quo": "Implementing the Phase B testing requirement (CA-14-A) without sufficient tooling or training could lead to inconsistent and unreliable test results, creating a false sense of security and potentially delaying releases without actually improving product quality.  Operators might focus on passing Phase B rather than addressing underlying issues.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "This proposal introduces significant complexity and process overhead without a clear demonstration of commensurate benefit. The increased GTM bar, Phase B testing, and strict safety invariants could slow down development and release cycles, while the mandatory disclosures and atomic writes add operational burden. The proposal should be deferred until the benefits are more clearly quantified and the operational impact is better understood.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-DEFER",
+          "pick_text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end per ENTRY 010 repeat-until-GTM loop.",
+          "rationale": "Deferral allows for data-driven validation of the 95 bar's feasibility and impact before enshrining it in the SSOT. This mitigates the risk of setting an unrealistic target that hinders product releases."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-TIGHTEN",
+          "pick_text": "Tighten conditional path — Near-GTM passes Step 5 only when ALL `high` findings are Resolved (not just terminally decided; documented + human-gated insufficient).",
+          "rationale": "Tightening the conditional path ensures that even with admin signoff, significant issues are fully resolved, not just acknowledged. This maintains a higher quality standard for products nearing GTM readiness."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Reconciliation paragraph is load-bearing per Locked Rule 3 (three independent governance mechanisms must all pass).",
+          "rationale": "Explicitly distinguishing the two '95' bars is crucial to prevent confusion and ensure proper application of each mechanism. The reconciliation paragraph provides necessary clarity."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — adopt CA-13-B verbatim. Strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "Aligning the canonical text with the code-level decision in ENTRY 009 is essential for maintaining consistency and avoiding confusion. This ratification ensures the SSOT accurately reflects the current system state."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-RATIFY",
+          "pick_text": "Adopt as drafted — `<agent-short-name>-executor` pattern (consistent with existing `self-renewal-executor` per CA-7 §15.5 row).",
+          "rationale": "Maintaining consistency with the existing naming convention simplifies understanding and management of executor charters. This approach promotes clarity and reduces cognitive load."
+        },
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-RATIFY",
+          "pick_text": "Ratify as drafted — Phase B is a hard gate; failure blocks Step 5.",
+          "rationale": "Making Phase B a hard gate enforces a higher standard of product quality by requiring adversarial testing. This ensures that products are robust and resilient before being released."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-SHORTER",
+          "pick_text": "Adopt a shorter form — e.g. \"§7.6 score reflects surface verification only; NOT a functional certification.\"",
+          "rationale": "A shorter, more concise disclosure is more likely to be read and understood by operators. This approach balances transparency with practicality."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT8",
+          "pick_text": "Agent #8 Quality Audit owns Phase B (Phase B is interactive-verification, conceptually closer to QA).",
+          "rationale": "Assigning Phase B to the Quality Audit agent aligns the responsibility with the nature of the testing. This leverages existing QA expertise and infrastructure."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "Adding a locked rule reinforces the importance of distinguishing between Phase A and Phase B testing. This helps prevent misinterpretations and ensures that the two phases are not conflated."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "Ratifying all five invariants provides a comprehensive set of safety measures to prevent regressions. This ensures that fixes are reliable and do not introduce new problems."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The strong guarantee wording sets a high standard for fix quality. While edge cases may exist, the aspirational language encourages continuous improvement and accountability."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "Placing the fix-safety invariants in the Self-Governance Layer emphasizes their role in maintaining system integrity. This aligns the invariants with the broader governance framework."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "Explicitly stating that the Five-Layer Intelligence Framework is telemetry only clarifies its role and prevents its misuse in remediation prioritization. This ensures that remediation efforts are focused on the most critical issues."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-SKIP",
+          "pick_text": "Don't touch §9 — the §6.10 + §7.6 amendments are sufficient.",
+          "rationale": "The existing amendments in §6.10 and §7.6 adequately clarify the prioritization source. Adding a note in §9 is unnecessary and could introduce redundancy."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "Ratifying all three invariants ensures the operational integrity of the ProductSSOT. This provides a solid foundation for reliable data management and governance."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify CA-14 with explicit acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "This approach balances the need for immediate ratification with the importance of completing the ProductSSOT seeding. Setting a clear acceptance criterion ensures that the remaining products are seeded in a timely manner."
+        }
+      },
+      "overallNotes": "This proposal introduces several valuable enhancements to the FlowAI system, but careful consideration should be given to the potential for increased complexity and operational overhead. Staged rollout and continuous monitoring are recommended to ensure successful implementation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unproven Phase B ownership",
+            "detail": "CA-14-A introduces Phase B testing without assigning implementation ownership (§15.1 Roster). This creates ambiguity in responsibility, risking gaps in adversarial testing execution. Agent #21's expanded role isn't codified in the agent charter table."
+          },
+          {
+            "title": "Sibling executor documentation gap",
+            "detail": "CA-13-B's EXECUTOR_REGISTRY pattern leaves §15.5's sibling charter table unpopulated. Without explicit documentation of 'aggressive-crawl-conductor-executor' in the agent roster, maintenance risks emerge from undocumented authority surfaces."
+          },
+          {
+            "title": "Atomic write retry risks",
+            "detail": "CA-14-D's atomic-audit-write retry logic (3 attempts with 50/100/200ms backoff) may fail under high concurrency, silently dropping governance entries. §7.5.1 Invariant 3 lacks fallback to queue-based writes when CAS fails."
+          }
+        ],
+        "worse_than_status_quo": "Products scoring 94 (Near-GTM) under CA-13-A could pass via admin override while having unexercised auth flow vulnerabilities from missing Phase B implementation, degrading system trust compared to ENTRY 006's lower-but-verified bar.",
+        "precedent": "Therac-25 radiation overdoses occurred due to undocumented software state transitions — similar risks exist if executor siblings lack explicit authority documentation."
+      },
+      "rejection_steelman": "These amendments compound complexity without addressing foundational governance gaps. CA-13's 95 threshold lacks empirical validation from live products, while CA-14's Phase B creates unfunded mandate risks. Deferring until W5x completes all ProductSSOT seeding and demonstrates end-to-end Phase B passes would reduce operational debt.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-RATIFY",
+          "pick_text": "Ratify — adopt CA-13-A §7.6 bands verbatim. GTM-ready=95–100; Near-GTM (conditional)=90–94; Internal-only=75–89; Pre-internal=60–74; Not-demo-ready=0–59.",
+          "rationale": "CEO directive alignment justifies threshold elevation despite deployment friction risks."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-TIGHTEN",
+          "pick_text": "Tighten conditional path — Near-GTM passes Step 5 only when ALL `high` findings are Resolved (not just terminally decided; documented + human-gated insufficient).",
+          "rationale": "Prevents admin override of materially incomplete products while preserving flexibility."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Reconciliation paragraph is load-bearing per Locked Rule 3 (three independent governance mechanisms must all pass).",
+          "rationale": "Explicit distinction prevents conflation of build vs runtime quality metrics."
+        },
+        "CA-13-B-Q1": {
+          "key": null,
+          "pick_text": "Ratify — adopt CA-13-B verbatim. Strike '(b) dual-authority' from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "Aligns canonical text with code-level ENTRY 009 decision to prevent authority surface ambiguity."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-RATIFY",
+          "pick_text": "Adopt as drafted — `<agent-short-name>-executor` pattern (consistent with existing `self-renewal-executor` per CA-7 §15.5 row).",
+          "rationale": "Maintains naming consistency critical for discoverability in registry tooling."
+        },
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-RATIFY",
+          "pick_text": "Ratify as drafted — Phase B is a hard gate; failure blocks Step 5.",
+          "rationale": "CEO directive mandates interactive verification to prevent surface-only certification fallacies."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "Verbatim phrasing eliminates operator interpretation risks in critical security disclosures."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-AGENT21",
+          "pick_text": "Agent #21 ACE Conductor expand to own Phase B (extends ENTRY 006 charter).",
+          "rationale": "Maintains crawl/test ownership continuity rather than fragmenting across new agents."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "Codifies the Phase A/B distinction as core system invariant against conflation."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "Comprehensive safety guards address regression classes observed in D27-D38 commits."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "Absolute wording enforces trust in auto-remediation integrity; overrides belong in exception workflows."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "Self-Governance Layer properly groups systemic invariants affecting multiple pipeline stages."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-RATIFY",
+          "pick_text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical.",
+          "rationale": "Clarifies remediation source without over-constraining future telemetry uses."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a Step 6 note in §9 referencing §7.6 findings as the prioritization source.",
+          "rationale": "Explicit pipeline documentation prevents revert to legacy Five-Layer prioritization."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "Operational invariants address observed seed/write failures from D32-D36 commits."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify CA-14 with explicit acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "Balances urgency with accountability by binding completion to ratification."
+        }
+      },
+      "overallNotes": "While amendments introduce operational rigor, Panel should mandate W5x completion reports for CA-14-D seeding before full ratification.",
+      "invalid_reason": "15/16 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "GTM bar conflates readiness layers",
+            "detail": "CA-13-A rewrites §7.6 from a demo-facing score into a hard product-go/no-go gate at ≥95, but the proposal still keeps the same score formula based on issue severities. That makes the threshold look objective while silently changing its meaning from \"demo guidance\" to \"full market readiness\" without introducing any new measurement for actual user outcomes or revenue-critical functionality."
+          },
+          {
+            "title": "Conditional clearance weakens the bar",
+            "detail": "CA-13-A-Q2 adds a Near-GTM conditional path where 90–94 can pass §11 Step 5 with admin signoff. That creates a loophole exactly where the proposal claims to be tightening standards, and it also makes the new 95 bar non-hard in practice unless every operator consistently refuses to use the exception."
+          },
+          {
+            "title": "Two-distinct-95 paragraph adds complexity",
+            "detail": "The new §19.0 reconciliation tries to separate Self-Audit 95/95 from GTM Readiness ≥95, but it introduces another cross-reference layer that future authors can still misread. Because both mechanisms now share the same numeric threshold and both block Step 5, the proposal risks semantic drift rather than preventing it unless the underlying terms are renamed."
+          },
+          {
+            "title": "Phase B gate lacks ownership",
+            "detail": "CA-14-A makes Phase B mandatory for Step 5, but it does not assign a stable owner in the canonical text. Without a named agent or execution path, the requirement can become a permanent paper gate: the system can fail clearance for lack of a designated verifier even when the product itself is functional."
+          },
+          {
+            "title": "SSOT seeding may break first-run workflows",
+            "detail": "CA-14-D requires a preexisting ProductSSOT row before any Self-Renewal or governance write, but the draft does not specify an onboarding escape hatch for new products or migrations. That means a missing seed row becomes a hard failure mode for newly created products, which is worse than the status quo where the system could at least inspect and bootstrap from runtime state."
+          }
+        ],
+        "worse_than_status_quo": "If CA-14-A and CA-14-D are both adopted as written, a product can be fully functional in production yet fail clearance because Phase B was not scheduled and its ProductSSOT row was not pre-seeded. Under the status quo, the system could still surface Phase A results and continue iterating; under the proposal, it can dead-end on governance plumbing instead of product quality.",
+        "precedent": "GitHub Actions and other CI/CD systems commonly gate releases on multiple required checks; when those checks are underspecified or missing owners, teams end up blocked by process rather than code. A similar failure mode was seen in overly strict release pipelines at large orgs where mandatory approvals or environment-specific checks caused healthy builds to stall indefinitely."
+      },
+      "rejection_steelman": "The strongest case for deferring this proposal is that it bundles several independent policy changes into one ratification, each of which changes the meaning of clearance. CA-13 raises the GTM bar, CA-14 adds a new adversarial phase, and CA-14-D adds substrate invariants; together they create a high risk of governance deadlock and ambiguous failure attribution. Deferring would let the team pilot Phase B, validate the 95 bar empirically, and confirm that the new SSOT seeding rules do not break onboarding or recovery paths.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal’s 95 threshold is not well-grounded as a canonical band change because it repurposes a crawl-derived score into a full GTM readiness definition without adding a new measure of real market readiness. I would defer or split the change rather than canonizing the new bands here."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-HARD",
+          "pick_text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff a Near-GTM as cleared.",
+          "rationale": "The conditional path undermines the very threshold the draft is trying to harden, and it invites discretionary bypasses that will be used under schedule pressure. If 95 is truly the bar, then the below-95 path should remain blocked."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Reconciliation paragraph is load-bearing per Locked Rule 3 (three independent governance mechanisms must all pass).",
+          "rationale": "Even though it adds complexity, the explicit reconciliation reduces the risk that future editors conflate the two 95 thresholds. The paragraph is useful because the same number now appears in two unrelated governance contexts."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — adopt CA-13-B verbatim. Strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "This makes the canonical text consistent with the recorded disposition in ENTRY 009 and removes stale authority wording that no longer matches the locked decision. Leaving the contradiction in place would invite implementation drift."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-RATIFY",
+          "pick_text": "Adopt as drafted — `<agent-short-name>-executor` pattern (consistent with existing `self-renewal-executor` per CA-7 §15.5 row).",
+          "rationale": "This is the most legible convention and matches the existing sibling naming style already present in the spec. It avoids introducing a second naming scheme for the same conceptual pattern."
+        },
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-REDUCED",
+          "pick_text": "Ratify with reduced scope — Phase B mandatory only for products in `prd` environment; `staging` + `dev` may pass with Phase A only.",
+          "rationale": "Making Phase B universal across all environments is too disruptive and likely to block iteration in lower environments where adversarial testing is less meaningful. Restricting it to production keeps the safety benefit while preserving development velocity."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "A verbatim disclosure is appropriate here because the proposal is explicitly trying to prevent ambiguity about what was actually tested. Operator-paraphrase rights would weaken the compliance signal."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-DEFER",
+          "pick_text": "Defer ownership — CA-14-A canonizes the requirement; engineering dispatch picks the owner in a follow-up.",
+          "rationale": "The requirement is already a substantial policy change; binding it to the wrong owner now would create avoidable churn. Ownership should be assigned after the team decides how Phase B will actually be implemented."
+        },
+        "CA-14-A-Q4": {
+          "key": "REJECT",
+          "pick_text": "Reject Locked Rule 19 — the §6.10 + §7.6 + §7 LIMITATIONS amendments are sufficient; no new Locked Rule needed.",
+          "rationale": "The rule’s substance is already captured by the new section text, and adding another locked rule increases the canonical surface area without adding enforcement power. This looks like documentation inflation more than governance necessity."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "These are the right safety constraints for a fix engine that is allowed to mutate code autonomously. Without them, the self-renewal path can easily become a regression generator."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The guarantee sets the right normative expectation: fixes should not be accepted if they worsen the product or introduce higher-severity issues. That is an appropriate canonical promise even if exceptions are handled elsewhere."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-CROSSLIST",
+          "pick_text": "Cross-list (live in §10.4 AND cross-referenced from §12 + §19).",
+          "rationale": "This content affects governance, remediation, and self-heal behavior, so a single home is too narrow. Cross-listing reduces the chance that one section is updated while the others drift."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-STRONGER",
+          "pick_text": "Ratify with stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition vs. \"DO NOT influence\").",
+          "rationale": "An explicit prohibition is better than a soft negative when the goal is to prevent prioritization drift. The stronger wording closes off interpretation games in the remediation pipeline."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a Step 6 note in §9 referencing §7.6 findings as the prioritization source.",
+          "rationale": "If Step 6 is where remediation decisions are operationalized, the prioritization source should be stated there directly. That keeps the pipeline behavior discoverable where it matters most."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "These invariants capture real operational requirements: branch-of-record, seeded state, and safe writes. Canonizing them helps prevent silent no-ops and inconsistent governance writes."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify CA-14 with explicit acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "This avoids blocking the amendment on cleanup work while still making the remaining seeding obligations explicit and time-bounded. It is the best compromise between correctness and execution practicality."
+        }
+      },
+      "overallNotes": "I am voting conservatively where the proposal changes governance semantics or introduces new hard gates, and more favorably where it clarifies existing code/spec mismatches. The main concern is not the individual mechanisms but the cumulative risk of governance deadlock and ambiguous exception handling.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "GTM bar ambiguity",
+            "detail": "The proposal changes the GTM-ready bar from 75 to 95 (§7.6), but the rationale for this change is not clearly linked to the underlying metrics or business requirements. The impact of this change on existing products and future development is not thoroughly analyzed."
+          },
+          {
+            "title": "Phase B testing scope",
+            "detail": "CA-14-A introduces Phase B Adversarial Surface Testing as a hard prerequisite for §11 Clearance Step 5. However, the scope and implementation details of Phase B are not clearly defined, leaving uncertainty about its effectiveness and feasibility."
+          },
+          {
+            "title": "Five-Layer Framework role",
+            "detail": "CA-14-C clarifies that the Five-Layer Intelligence Framework is for telemetry only, not remediation prioritization. However, this change may cause confusion if not properly communicated to stakeholders, and its implications on existing processes are not fully explored."
+          }
+        ],
+        "worse_than_status_quo": "If the new GTM-ready bar of 95 is adopted without proper adjustments to the scoring formula or remediation processes, it may lead to a significant increase in the number of products failing to meet the clearance threshold, potentially causing delays and inefficiencies in the development pipeline.",
+        "precedent": "A similar design change caused trouble in the 'Project X' where a sudden increase in the quality bar led to a backlog of non-compliant products and significant rework."
+      },
+      "rejection_steelman": "The strongest argument for rejecting or deferring the proposal is that it introduces significant changes to the clearance process and product readiness criteria without sufficient evidence or analysis of their impact on the development pipeline and product quality. The changes may lead to unintended consequences, such as increased delays or decreased product quality, if not properly implemented and monitored.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "CA13AQ1-REVISE",
+          "pick_text": "Ratify with revision — adopt the bar change but adjust band labels or thresholds (specify).",
+          "rationale": "The change to the GTM-ready bar is significant and requires careful consideration of its impact on existing products and processes."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-TIGHTEN",
+          "pick_text": "Tighten conditional path — Near-GTM passes Step 5 only when ALL `high` findings are Resolved (not just terminally decided; documented + human-gated insufficient).",
+          "rationale": "To ensure that products meet a high level of quality and readiness, the conditional path should be tightened to require resolution of all high findings."
+        },
+        "CA-13-A-Q3": {
+          "key": "CA13AQ3-RATIFY",
+          "pick_text": "Ratify — adopt §19.0 verbatim. Reconciliation paragraph is load-bearing per Locked Rule 3 (three independent governance mechanisms must all pass).",
+          "rationale": "The reconciliation paragraph is necessary to prevent future conflation between the two '95' bars."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-RATIFY",
+          "pick_text": "Ratify — adopt CA-13-B verbatim. Strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009.",
+          "rationale": "The canonical text should match the code-level decision recorded in ENTRY 009."
+        },
+        "CA-13-B-Q2": {
+          "key": "CA13BQ2-RATIFY",
+          "pick_text": "Adopt as drafted — `<agent-short-name>-executor` pattern (consistent with existing `self-renewal-executor` per CA-7 §15.5 row).",
+          "rationale": "The naming convention is consistent with existing patterns and clearly indicates the relationship between the primary agent and its sibling executor."
+        },
+        "CA-14-A-Q1": {
+          "key": "CA14AQ1-REDUCED",
+          "pick_text": "Ratify with reduced scope — Phase B mandatory only for products in `prd` environment; `staging` + `dev` may pass with Phase A only.",
+          "rationale": "Reducing the scope of Phase B to only `prd` environment may be a more feasible and less disruptive approach."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical wording).",
+          "rationale": "The verbatim disclosure is clear and ensures that the importance of Phase B testing is communicated to operators."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-DEFER",
+          "pick_text": "Defer ownership — CA-14-A canonizes the requirement; engineering dispatch picks the owner in a follow-up.",
+          "rationale": "Deferring the ownership decision allows for further discussion and analysis of the most suitable agent to own Phase B."
+        },
+        "CA-14-A-Q4": {
+          "key": "CA14AQ4-RATIFY",
+          "pick_text": "Ratify Locked Rule 19 as drafted.",
+          "rationale": "The new Locked Rule is necessary to emphasize the distinction between Phase A and Phase B and prevent conflation."
+        },
+        "CA-14-B-Q1": {
+          "key": "CA14BQ1-RATIFY",
+          "pick_text": "Ratify all 5 invariants as drafted.",
+          "rationale": "The five invariants are crucial for ensuring the safety and quality of fixes proposed by the Self-Renewal Executor."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-RATIFY",
+          "pick_text": "Ratify as drafted (verbatim canonical guarantee).",
+          "rationale": "The canonical guarantee is clear and provides a strong assurance of the quality of fixes."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-RATIFY",
+          "pick_text": "Ratify §10.4 placement.",
+          "rationale": "The placement of §10.4 in §10 Self-Governance Layer is appropriate as it directly relates to the Self-Renewal Executor's operation."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-STRONGER",
+          "pick_text": "Ratify with stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition vs. \"DO NOT influence\").",
+          "rationale": "Using stronger language ensures that the role of Five-Layer tags is clearly understood and adhered to."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-ADD",
+          "pick_text": "Add a Step 6 note in §9 referencing §7.6 findings as the prioritization source.",
+          "rationale": "Adding a note to Step 6 clarifies the prioritization source and enhances transparency."
+        },
+        "CA-14-D-Q1": {
+          "key": "CA14DQ1-RATIFY",
+          "pick_text": "Ratify all 3 invariants as drafted.",
+          "rationale": "The three operational invariants are essential for ensuring the correct operation of ProductSSOT and should be ratified as drafted."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-NDAYS",
+          "pick_text": "Ratify CA-14 with explicit acceptance criterion: remaining 4 products seeded within N days post-ratification.",
+          "rationale": "Setting an explicit acceptance criterion for seeding the remaining products provides a clear timeline and ensures that the requirement is met."
+        }
+      },
+      "overallNotes": "The proposal introduces significant changes that require careful implementation and monitoring to avoid unintended consequences.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Phase B owner undefined",
+            "detail": "CA-14-A §6.10 adds Phase B Adversarial Surface Testing as a mandatory §11 Step 5 prerequisite yet CA-14-A-Q3 leaves ownership assignment to future dispatch; this leaves the five-prerequisite gate in §7.6 without an executing agent, directly contradicting the claim that Phase B produces a reliable phase_b_pass boolean."
+          },
+          {
+            "title": "Atomic CAS contention deadlock",
+            "detail": "§7.5.1 Invariant 3 requires snapshot+CAS+rollback on every product_ssot.governance_record write with only 3 retries; concurrent triggers from Agent #3 Self-Renewal and Agent #10 Monitor (both writing delta_log and governance_record entries) can exhaust retries and emit agent.product_ssot.atomic_write_contention.v1 with no documented recovery path beyond operator intervention."
+          },
+          {
+            "title": "GTM 95 + Phase B compound gate",
+            "detail": "CA-13-A raises §7.6 GTM bar to 95 while CA-14-A simultaneously adds Phase B as a hard fifth prerequisite in the same §11 Clearance Step 5 gate; the combined requirement exceeds any threshold previously exercised in ENTRY 010's 42/100 demonstration and lacks a rollback or staged-relaxation mechanism."
+          }
+        ],
+        "worse_than_status_quo": "Products that currently clear at 75–80 after Phase A surface crawl will now be permanently blocked from §11 Step 5 until both ≥95 score and full interactive adversarial testing succeed, turning the Self-Renewal loop from an accelerator into a permanent stall for all but the most mature VEU products.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal simultaneously tightens the GTM bar, adds an unimplemented Phase B gate, and imposes strict atomic-write and fix-safety invariants on a 26-agent system whose Self-Renewal Executor has never been shown to sustain the new thresholds end-to-end. These changes risk converting an already intricate governance substrate into a non-terminating loop where clearance is unreachable, violating the very productivity claims made in §7 and §10.",
+      "votes": {
+        "CA-13-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — keep ENTRY 006's ≥75 Demo-ready bar; surface the CEO directive as an operator-product GTM bar (per-product target) rather than the §7.6 canonical band threshold.",
+          "rationale": "Raising the canonical band to 95 without demonstrated sustained runs at that level creates an unreachable gate."
+        },
+        "CA-13-A-Q2": {
+          "key": "CA13AQ2-HARD",
+          "pick_text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff a Near-GTM as cleared.",
+          "rationale": "Conditional clearance undermines the CEO directive that 95 is the true GTM bar."
+        },
+        "CA-13-A-Q3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The reconciliation paragraph is needed but must also address the new Phase B gate introduced by CA-14-A."
+        },
+        "CA-13-B-Q1": {
+          "key": "CA13BQ1-DEFER",
+          "pick_text": "Defer — wait for engineering dispatch to populate the §15.5 sibling-row table with executor entries; amend §15 intro + §15.1 at that same commit (joint disposition).",
+          "rationale": "Text change without the actual registry rows risks further divergence between canonical and code."
+        },
+        "CA-13-B-Q2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Naming should be decided only after the sibling executors are actually implemented and tested."
+        },
+        "CA-14-A-Q1": {
+          "key": "REJECT",
+          "pick_text": "Reject — Phase A is sufficient; the four-prerequisite gate from ENTRY 006 stays; Phase B may surface as advisory signal without blocking.",
+          "rationale": "Phase B is valuable but cannot be made mandatory while its owner and implementation remain undefined."
+        },
+        "CA-14-A-Q2": {
+          "key": "CA14AQ2-FREEFORM",
+          "pick_text": "Adopt no verbatim wording — require disclosure but let operator phrase.",
+          "rationale": "Verbatim legal-style text will be ignored or paraphrased in practice."
+        },
+        "CA-14-A-Q3": {
+          "key": "CA14AQ3-DEFER",
+          "pick_text": "Defer ownership — CA-14-A canonizes the requirement; engineering dispatch picks the owner in a follow-up.",
+          "rationale": "Assigning ownership before the capability exists is premature."
+        },
+        "CA-14-A-Q4": {
+          "key": "REJECT",
+          "pick_text": "Reject Locked Rule 19 — the §6.10 + §7.6 + §7 LIMITATIONS amendments are sufficient; no new Locked Rule needed.",
+          "rationale": "Adding another Locked Rule increases rigidity without adding enforcement."
+        },
+        "CA-14-B-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The invariants belong in both the spec and an executable test harness, not solely in canonical SSOT."
+        },
+        "CA-14-B-Q2": {
+          "key": "CA14BQ2-SOFTEN",
+          "pick_text": "Soften to \"rarely ships\" — acknowledges edge cases.",
+          "rationale": "Absolute \"NEVER\" language is unrealistic given the complexity of the fix pipeline."
+        },
+        "CA-14-B-Q3": {
+          "key": "CA14BQ3-CROSSLIST",
+          "pick_text": "Cross-list (live in §10.4 AND cross-referenced from §12 + §19).",
+          "rationale": "Safety invariants touch governance, remediation, and output contract simultaneously."
+        },
+        "CA-14-C-Q1": {
+          "key": "CA14CQ1-STRONGER",
+          "pick_text": "Ratify with stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition vs. \"DO NOT influence\").",
+          "rationale": "Weak language leaves room for future implicit re-introduction of Five-Layer ordering."
+        },
+        "CA-14-C-Q2": {
+          "key": "CA14CQ2-SKIP",
+          "pick_text": "Don't touch §9 — the §6.10 + §7.6 amendments are sufficient.",
+          "rationale": "Step 6 row edits risk format drift; the §7.6 paragraph already governs prioritization."
+        },
+        "CA-14-D-Q1": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The invariants are necessary but must include explicit contention-resolution SLAs and operator tooling."
+        },
+        "CA-14-D-Q2": {
+          "key": "CA14DQ2-IMMEDIATE",
+          "pick_text": "Ratify CA-14 immediately; remaining 4 products seeded per operator-driven dispatch order.",
+          "rationale": "Blocking ratification on seeding of non-critical products stalls other safety improvements."
+        }
+      },
+      "overallNotes": "Multiple new mandatory gates and invariants are introduced without demonstrated end-to-end execution at the tightened thresholds.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CA-13-A-Q1",
+      "topic": "CA-13-A-Q1 — Should §7.6 GTM Readiness Report adopt the CEO directive of `≥95` as the GTM-ready band (per CA-13-A), superseding the ENTRY 006 `≥75` Demo-ready band?",
+      "options": [
+        {
+          "key": "CA13AQ1-RATIFY",
+          "text": "Ratify — adopt CA-13-A §7.6 bands verbatim. GTM-ready=95–100; Near-GTM (conditional)=90–94; Internal-only=75–89; Pre-internal=60–74; Not-demo-ready=0–59."
+        },
+        {
+          "key": "CA13AQ1-REVISE",
+          "text": "Ratify with revision — adopt the bar change but adjust band labels or thresholds (specify)."
+        },
+        {
+          "key": "CA13AQ1-REJECT",
+          "text": "Reject — keep ENTRY 006's ≥75 Demo-ready bar; surface the CEO directive as an operator-product GTM bar (per-product target) rather than the §7.6 canonical band threshold."
+        },
+        {
+          "key": "CA13AQ1-DEFER",
+          "text": "Defer — surface the CEO directive but do not amend §7.6 until at least one VEU product demonstrates ≥95 sustained end-to-end per ENTRY 010 repeat-until-GTM loop."
+        }
+      ],
+      "draftedKey": "CA13AQ1-RATIFY"
+    },
+    {
+      "id": "CA-13-A-Q2",
+      "topic": "CA-13-A-Q2 — CA-13-A introduces a Near-GTM band (90–94) that MAY pass §11 Step 5 as \"conditional clearance\" (admin signoff per §13 Approval Gate). Right balance, or should the 95-bar be hard?",
+      "options": [
+        {
+          "key": "CA13AQ2-RATIFY",
+          "text": "Ratify as drafted — Near-GTM passes Step 5 with admin signoff + LIMITATIONS published verbatim."
+        },
+        {
+          "key": "CA13AQ2-HARD",
+          "text": "Eliminate conditional path — ≥95 is hard; below 95 → blocked; admin cannot signoff a Near-GTM as cleared."
+        },
+        {
+          "key": "CA13AQ2-TIGHTEN",
+          "text": "Tighten conditional path — Near-GTM passes Step 5 only when ALL `high` findings are Resolved (not just terminally decided; documented + human-gated insufficient)."
+        },
+        {
+          "key": "CA13AQ2-LOOSEN",
+          "text": "Loosen conditional path — Near-GTM passes Step 5 with operator signoff (not just admin); admin retains override authority."
+        }
+      ],
+      "draftedKey": "CA13AQ2-RATIFY"
+    },
+    {
+      "id": "CA-13-A-Q3",
+      "topic": "CA-13-A-Q3 — Should the canonical §19 carry an explicit \"two-distinct-95 bars\" reconciliation paragraph (CA-13-A §19.0) to prevent future conflation between Self-Audit 95/95 and GTM Readiness ≥95?",
+      "options": [
+        {
+          "key": "CA13AQ3-RATIFY",
+          "text": "Ratify — adopt §19.0 verbatim. Reconciliation paragraph is load-bearing per Locked Rule 3 (three independent governance mechanisms must all pass)."
+        },
+        {
+          "key": "CA13AQ3-REVISE",
+          "text": "Ratify with revision — keep the reconciliation principle but adjust the §19.0 wording (specify)."
+        },
+        {
+          "key": "CA13AQ3-REJECT",
+          "text": "Reject — the table at §10 already lists the three mechanisms; additional §19.0 paragraph is redundant."
+        },
+        {
+          "key": "CA13AQ3-MOVE",
+          "text": "Move the reconciliation to §10 (Self-Governance Layer) instead of §19 (Governance / Panel / SSOT Access) — better topical fit."
+        }
+      ],
+      "draftedKey": "CA13AQ3-RATIFY"
+    },
+    {
+      "id": "CA-13-B-Q1",
+      "topic": "CA-13-B-Q1 — ENTRY 009 records the CEO re-disposition of CA-9-Q4 to Option (a) — EXECUTOR_REGISTRY sibling pattern — but §15 intro + §15.1 rows 21/26 still carry the old (b) phrasing. Should the canonical text be amended to match ENTRY 009?",
+      "options": [
+        {
+          "key": "CA13BQ1-RATIFY",
+          "text": "Ratify — adopt CA-13-B verbatim. Strike \"(b) dual-authority\" from §15 intro + §15.1 rows 21/26; replace with Option (a) sibling-pattern language citing ENTRY 009."
+        },
+        {
+          "key": "CA13BQ1-REVISE",
+          "text": "Ratify with revision — adopt the strike but adjust replacement wording (specify; e.g. shorter citation, different phrasing of \"primary authority retained at recommend_only\")."
+        },
+        {
+          "key": "CA13BQ1-REJECT",
+          "text": "Reject — leave canonical text at (b) phrasing; treat ENTRY 009's \"Option (a) LOCKED\" as a code-level decision that doesn't propagate to §15 wording (Panel argues §15 wording is descriptive of the agent's TOTAL authority surface including sibling)."
+        },
+        {
+          "key": "CA13BQ1-DEFER",
+          "text": "Defer — wait for engineering dispatch to populate the §15.5 sibling-row table with executor entries; amend §15 intro + §15.1 at that same commit (joint disposition)."
+        }
+      ],
+      "draftedKey": "CA13BQ1-RATIFY"
+    },
+    {
+      "id": "CA-13-B-Q2",
+      "topic": "CA-13-B-Q2 — CA-13-B uses `aggressive-crawl-conductor-executor` (Agent #21 sibling) and `orchestra-research-agent-executor` (Agent #26 sibling) as the sibling charter keys. Right naming?",
+      "options": [
+        {
+          "key": "CA13BQ2-RATIFY",
+          "text": "Adopt as drafted — `<agent-short-name>-executor` pattern (consistent with existing `self-renewal-executor` per CA-7 §15.5 row)."
+        },
+        {
+          "key": "CA13BQ2-AGENTID",
+          "text": "Adopt agentId-keyed naming instead — e.g. `agent-21-executor`, `agent-26-executor` (consistent with `_registry.ts` agentId column)."
+        },
+        {
+          "key": "CA13BQ2-CAPABILITY",
+          "text": "Adopt capability-keyed naming — e.g. `crawl-write-executor`, `orchestra-admission-executor` (consistent with what the sibling DOES rather than which primary it siblings)."
+        },
+        {
+          "key": "CA13BQ2-DEFER",
+          "text": "Defer naming to engineering dispatch — CA-13-B canonizes the DECISION; W5x picks the keys at population time."
+        }
+      ],
+      "draftedKey": "CA13BQ2-RATIFY"
+    },
+    {
+      "id": "CA-14-A-Q1",
+      "topic": "CA-14-A-Q1 — Should §11 Clearance Step 5 require Phase B Adversarial Surface Testing as a HARD prerequisite (per CEO directive 2026-05-18)?",
+      "options": [
+        {
+          "key": "CA14AQ1-RATIFY",
+          "text": "Ratify as drafted — Phase B is a hard gate; failure blocks Step 5."
+        },
+        {
+          "key": "CA14AQ1-REDUCED",
+          "text": "Ratify with reduced scope — Phase B mandatory only for products in `prd` environment; `staging` + `dev` may pass with Phase A only."
+        },
+        {
+          "key": "CA14AQ1-OPTIN",
+          "text": "Ratify with operator opt-in — Phase B defaults to mandatory but operator (admin role) may explicitly opt out per product with audit-logged justification."
+        },
+        {
+          "key": "CA14AQ1-REJECT",
+          "text": "Reject — Phase A is sufficient; the four-prerequisite gate from ENTRY 006 stays; Phase B may surface as advisory signal without blocking."
+        }
+      ],
+      "draftedKey": "CA14AQ1-RATIFY"
+    },
+    {
+      "id": "CA-14-A-Q2",
+      "topic": "CA-14-A-Q2 — CA-14-A specifies a verbatim disclosure for Phase-A-only deliveries: \"This §7.6 score reflects surface verification only. Interactive flows (authenticated paths, error-state recovery, engine adversarial probes) were not exercised. This score is NOT a functional certification.\" Right wording?",
+      "options": [
+        {
+          "key": "CA14AQ2-RATIFY",
+          "text": "Ratify as drafted (verbatim canonical wording)."
+        },
+        {
+          "key": "CA14AQ2-PARAPHRASE",
+          "text": "Ratify with operator-paraphrase permission — same intent, operator may rewrite (subject to admin review)."
+        },
+        {
+          "key": "CA14AQ2-SHORTER",
+          "text": "Adopt a shorter form — e.g. \"§7.6 score reflects surface verification only; NOT a functional certification.\""
+        },
+        {
+          "key": "CA14AQ2-FREEFORM",
+          "text": "Adopt no verbatim wording — require disclosure but let operator phrase."
+        }
+      ],
+      "draftedKey": "CA14AQ2-RATIFY"
+    },
+    {
+      "id": "CA-14-A-Q3",
+      "topic": "CA-14-A-Q3 — Phase B implementation owner. CA-14-A specifies Phase B as a prerequisite but does not assign an implementation owner. Which agent should own Phase B?",
+      "options": [
+        {
+          "key": "CA14AQ3-AGENT21",
+          "text": "Agent #21 ACE Conductor expand to own Phase B (extends ENTRY 006 charter)."
+        },
+        {
+          "key": "CA14AQ3-AGENT8",
+          "text": "Agent #8 Quality Audit owns Phase B (Phase B is interactive-verification, conceptually closer to QA)."
+        },
+        {
+          "key": "CA14AQ3-OPSRUNNER",
+          "text": "NEW Ops Runner role (one of #22/#24/#25 pending §27 OQ-2) owns Phase B as its canonical charter."
+        },
+        {
+          "key": "CA14AQ3-DEFER",
+          "text": "Defer ownership — CA-14-A canonizes the requirement; engineering dispatch picks the owner in a follow-up."
+        }
+      ],
+      "draftedKey": "CA14AQ3-AGENT21"
+    },
+    {
+      "id": "CA-14-A-Q4",
+      "topic": "CA-14-A-Q4 — Should CA-14-A add Locked Rule 19 (\"Phase A vs Phase B — DO NOT CONFLATE\") to §25?",
+      "options": [
+        {
+          "key": "CA14AQ4-RATIFY",
+          "text": "Ratify Locked Rule 19 as drafted."
+        },
+        {
+          "key": "CA14AQ4-DEFER",
+          "text": "Ratify but defer Rule 19 numbering — CA-14 has multiple Locked-Rule candidates; consolidate at end of CA cycle."
+        },
+        {
+          "key": "CA14AQ4-REJECT",
+          "text": "Reject Locked Rule 19 — the §6.10 + §7.6 + §7 LIMITATIONS amendments are sufficient; no new Locked Rule needed."
+        },
+        {
+          "key": "CA14AQ4-MODIFY",
+          "text": "Modify Rule 19 wording (specify in rationale)."
+        }
+      ],
+      "draftedKey": "CA14AQ4-RATIFY"
+    },
+    {
+      "id": "CA-14-B-Q1",
+      "topic": "CA-14-B-Q1 — Should §7 Output Contract item #6 (the five invariants: diff-only / preserve / parse / regression-guard / attribution) be ratified as drafted?",
+      "options": [
+        {
+          "key": "CA14BQ1-RATIFY",
+          "text": "Ratify all 5 invariants as drafted."
+        },
+        {
+          "key": "CA14BQ1-DROP",
+          "text": "Ratify 4 invariants; drop one (specify which in rationale)."
+        },
+        {
+          "key": "CA14BQ1-EXPAND",
+          "text": "Ratify with expansion — add a 6th invariant (e.g. test-suite gate before PR)."
+        },
+        {
+          "key": "CA14BQ1-REJECT",
+          "text": "Reject — the invariants belong in SELF_RENEWAL_SPEC.md not in canonical SSOT."
+        }
+      ],
+      "draftedKey": "CA14BQ1-RATIFY"
+    },
+    {
+      "id": "CA-14-B-Q2",
+      "topic": "CA-14-B-Q2 — The canonical guarantee reads: \"FlowAI NEVER ships a fix that regresses §7.6 score OR introduces new `critical`/`high` findings. It refuses the PR and exits NO_IMPROVEMENT.\" Right wording?",
+      "options": [
+        {
+          "key": "CA14BQ2-RATIFY",
+          "text": "Ratify as drafted (verbatim canonical guarantee)."
+        },
+        {
+          "key": "CA14BQ2-SOFTEN",
+          "text": "Soften to \"rarely ships\" — acknowledges edge cases."
+        },
+        {
+          "key": "CA14BQ2-OVERRIDE",
+          "text": "Strengthen with operator-override clause — \"...UNLESS operator (admin role) explicitly overrides with audit-logged justification.\""
+        },
+        {
+          "key": "CA14BQ2-MODIFY",
+          "text": "Modify (specify in rationale)."
+        }
+      ],
+      "draftedKey": "CA14BQ2-RATIFY"
+    },
+    {
+      "id": "CA-14-B-Q3",
+      "topic": "CA-14-B-Q3 — CA-14-B adds §10.4 \"Fix-Safety invariants\". Right placement in §10 Self-Governance Layer, or should it live elsewhere?",
+      "options": [
+        {
+          "key": "CA14BQ3-RATIFY",
+          "text": "Ratify §10.4 placement."
+        },
+        {
+          "key": "CA14BQ3-S12",
+          "text": "Move to §12 Remediation Modes (more directly about the fix path)."
+        },
+        {
+          "key": "CA14BQ3-S19",
+          "text": "Move to §19 Governance (alongside 95/95 + Panel + SSOT Access)."
+        },
+        {
+          "key": "CA14BQ3-CROSSLIST",
+          "text": "Cross-list (live in §10.4 AND cross-referenced from §12 + §19)."
+        }
+      ],
+      "draftedKey": "CA14BQ3-RATIFY"
+    },
+    {
+      "id": "CA-14-C-Q1",
+      "topic": "CA-14-C-Q1 — Should the canonical text explicitly state that the Five-Layer Intelligence Framework is telemetry only, not a remediation prioritizer?",
+      "options": [
+        {
+          "key": "CA14CQ1-RATIFY",
+          "text": "Ratify as drafted — §6.10 + §7.6 paragraphs canonical."
+        },
+        {
+          "key": "CA14CQ1-STRONGER",
+          "text": "Ratify with stronger language — \"Five-Layer tags MUST NOT influence remediation ordering\" (explicit prohibition vs. \"DO NOT influence\")."
+        },
+        {
+          "key": "CA14CQ1-REJECT",
+          "text": "Reject — the Five-Layer framework's role is already implicit in Locked Rule 6 (\"tagging\"); the clarification is redundant."
+        },
+        {
+          "key": "CA14CQ1-MODIFY",
+          "text": "Modify (specify in rationale)."
+        }
+      ],
+      "draftedKey": "CA14CQ1-RATIFY"
+    },
+    {
+      "id": "CA-14-C-Q2",
+      "topic": "CA-14-C-Q2 — The pipeline (§9) Step 6 doesn't currently specify the prioritization source. Should CA-14-C add an explicit Step 6 row note referencing §7.6 findings?",
+      "options": [
+        {
+          "key": "CA14CQ2-ADD",
+          "text": "Add a Step 6 note in §9 referencing §7.6 findings as the prioritization source."
+        },
+        {
+          "key": "CA14CQ2-CONDITIONAL",
+          "text": "Add the note only if the §9 step-row table format permits."
+        },
+        {
+          "key": "CA14CQ2-SKIP",
+          "text": "Don't touch §9 — the §6.10 + §7.6 amendments are sufficient."
+        },
+        {
+          "key": "CA14CQ2-MODIFY",
+          "text": "Modify (specify in rationale)."
+        }
+      ],
+      "draftedKey": "CA14CQ2-ADD"
+    },
+    {
+      "id": "CA-14-D-Q1",
+      "topic": "CA-14-D-Q1 — Should §7.5.1 (branch-of-record + ProductSSOT seeding + atomic-audit-write) be ratified as drafted?",
+      "options": [
+        {
+          "key": "CA14DQ1-RATIFY",
+          "text": "Ratify all 3 invariants as drafted."
+        },
+        {
+          "key": "CA14DQ1-DROP",
+          "text": "Ratify 2; drop one (specify in rationale)."
+        },
+        {
+          "key": "CA14DQ1-EXPAND",
+          "text": "Ratify with expansion — e.g. add a 4th invariant on per-product selfRenewalCredentialMode enumeration."
+        },
+        {
+          "key": "CA14DQ1-REJECT",
+          "text": "Reject — §7.5 already covers ProductSSOT; the operational invariants belong in engineering spec not canonical."
+        }
+      ],
+      "draftedKey": "CA14DQ1-RATIFY"
+    },
+    {
+      "id": "CA-14-D-Q2",
+      "topic": "CA-14-D-Q2 — CA-14-D Invariant 2 lists FlowAI + MyPregLife as seeded; remaining 4 VEU products (SAIGE, ReachSMS, RelTwin, PressAI) pending. Block ratification or proceed?",
+      "options": [
+        {
+          "key": "CA14DQ2-BLOCK",
+          "text": "Block CA-14 ratification until all 5 VEU products are seeded."
+        },
+        {
+          "key": "CA14DQ2-NDAYS",
+          "text": "Ratify CA-14 with explicit acceptance criterion: remaining 4 products seeded within N days post-ratification."
+        },
+        {
+          "key": "CA14DQ2-IMMEDIATE",
+          "text": "Ratify CA-14 immediately; remaining 4 products seeded per operator-driven dispatch order."
+        },
+        {
+          "key": "CA14DQ2-MODIFY",
+          "text": "Modify (specify in rationale)."
+        }
+      ],
+      "draftedKey": "CA14DQ2-NDAYS"
+    }
+  ],
+  "ca13_quorum_count": 0,
+  "ca14_quorum_count": 0,
+  "quorum_floor": 7
+}

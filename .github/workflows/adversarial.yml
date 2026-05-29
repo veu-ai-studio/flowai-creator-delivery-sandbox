@@ -1,0 +1,243 @@
+name: Adversarial
+
+# Nightly FlowAI self-adversarial test suite per
+# docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md §7.5 + §11.2 + §11.7.
+#
+# Schedule:
+#   - 03:00 UTC every day (cron 0 3 * * *).
+#   - Manually triggerable via `gh workflow run adversarial`.
+#
+# Target SUT:
+#   - The canonical Vercel preview URL passed in
+#     `secrets.ADVERSARIAL_PREVIEW_URL` (NOT localhost). The suite
+#     itself uses `X-Test-Bypass-Token` per §9.1 to bypass bot
+#     detection on the preview, NOT on prod (LD-1 isolates
+#     high-risk adversarial cases to dev-SUT only).
+#
+# Secrets — DOPPLER-FIRST PATTERN:
+#   We inject the entire `flowai/dev` Doppler config via the Doppler
+#   GitHub Action using `secrets.DOPPLER_TOKEN` (a service-token for
+#   flowai/dev). This avoids mirroring each Doppler key into a
+#   separate GitHub secret. Required key fan-in to the suite:
+#     - TEST_BYPASS_PRIVATE_KEY_DEV  (token issuance, §9.1)
+#     - TEST_BYPASS_PUBLIC_KEY_DEV   (verification, §9.1)
+#     - SUPABASE_URL                 (read _test tenant rows)
+#     - SUPABASE_SERVICE_ROLE_KEY    (cleanup helper, §11.8)
+#     - ANTHROPIC_API_KEY            (4 real Claude calls per LD-6)
+#   Operators provision DOPPLER_TOKEN once in repo settings:
+#     Settings → Secrets and variables → Actions → DOPPLER_TOKEN.
+#
+# Outputs (per §11.2):
+#   - docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_<date>.md   ← auto-committed
+#   - docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_<date>.csv  ← workflow artifact
+#   - docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_<date>.json ← workflow artifact + audit-log feed
+#
+# Failure notification:
+#   Matches the ci.yml pattern (no external Slack/email wiring yet).
+#   We surface findings + failure state into GITHUB_STEP_SUMMARY so
+#   the failure is visible in the Actions UI and in any future
+#   notification consumer (e.g., a follow-on workflow watching the
+#   step-summary). When Slack/email is wired in a later dispatch,
+#   the summary block here is the source of truth to post.
+#
+# Concurrency:
+#   `adversarial-nightly` group so a manual workflow_dispatch
+#   doesn't race with the cron-triggered run.
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 03:00 UTC nightly
+  workflow_dispatch:
+
+concurrency:
+  group: adversarial-nightly
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # auto-commit the MD report back to the branch (§11.2)
+
+jobs:
+  adversarial:
+    name: Nightly adversarial suite (dev-SUT preview)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      ADVERSARIAL_PREVIEW_URL: ${{ secrets.ADVERSARIAL_PREVIEW_URL }}
+      ADVERSARIAL_RUN_ID: ${{ github.run_id }}
+      ADVERSARIAL_ENV: dev-SUT
+      # The suite reads run-date from this so the file names match
+      # across MD / CSV / JSON.
+      ADVERSARIAL_RUN_DATE: ''  # populated by the "Compute run date" step
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so the auto-commit can push cleanly
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Sanity-check Doppler config (flowai/dev)
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          if [ -z "$DOPPLER_TOKEN" ]; then
+            echo "::error::DOPPLER_TOKEN secret is missing. Provision it under Settings → Secrets and variables → Actions, scoped to a Doppler service-token for flowai/dev."
+            exit 1
+          fi
+          if [ -z "$ADVERSARIAL_PREVIEW_URL" ]; then
+            echo "::error::ADVERSARIAL_PREVIEW_URL secret is missing. This must point at the canonical Vercel preview URL (NOT localhost, NOT prod)."
+            exit 1
+          fi
+          doppler configure set token "$DOPPLER_TOKEN" --scope /
+          echo "Doppler CLI authenticated for flowai/dev."
+
+      - name: Compute run date
+        id: rundate
+        run: |
+          RUN_DATE=$(date -u +"%Y-%m-%d")
+          echo "ADVERSARIAL_RUN_DATE=$RUN_DATE" >> "$GITHUB_ENV"
+          echo "run_date=$RUN_DATE" >> "$GITHUB_OUTPUT"
+
+      - name: npm install
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run adversarial suite (api + ui, via Doppler-injected env)
+        id: run_suite
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        # Inject flowai/dev secrets via `doppler run`. The suite
+        # script (scripts/adversarial/run-suite.mjs) orchestrates
+        # api + ui sub-suites and emits the three output files at
+        # docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_<date>.*
+        run: doppler run --project flowai --config dev -- npm run test:adversarial
+        continue-on-error: true   # we want artifacts uploaded even on failure
+
+      - name: Locate result files
+        id: locate
+        if: always()
+        run: |
+          MD="docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_${ADVERSARIAL_RUN_DATE}.md"
+          CSV="docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_${ADVERSARIAL_RUN_DATE}.csv"
+          JSON="docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_${ADVERSARIAL_RUN_DATE}.json"
+          echo "md=$MD"   >> "$GITHUB_OUTPUT"
+          echo "csv=$CSV" >> "$GITHUB_OUTPUT"
+          echo "json=$JSON" >> "$GITHUB_OUTPUT"
+          for f in "$MD" "$CSV" "$JSON"; do
+            if [ -f "$f" ]; then
+              echo "  found: $f ($(wc -c < "$f") bytes)"
+            else
+              echo "  MISSING: $f"
+            fi
+          done
+
+      - name: Upload reports as workflow artifacts (CSV + JSON + MD)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adversarial-${{ steps.rundate.outputs.run_date }}
+          path: |
+            docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_${{ steps.rundate.outputs.run_date }}.md
+            docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_${{ steps.rundate.outputs.run_date }}.csv
+            docs/audits/FLOWAI_SELF_ADVERSARIAL_TEST_RESULTS_${{ steps.rundate.outputs.run_date }}.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Auto-commit the Markdown report (§11.2)
+        if: always() && hashFiles(steps.locate.outputs.md) != ''
+        env:
+          MD_PATH: ${{ steps.locate.outputs.md }}
+        run: |
+          git config user.name  "flowai-adversarial-bot"
+          git config user.email "flowai-adversarial-bot@users.noreply.github.com"
+          git add "$MD_PATH"
+          if git diff --cached --quiet; then
+            echo "no changes to commit (MD report unchanged from last run)"
+          else
+            git commit -m "adversarial: nightly results ${ADVERSARIAL_RUN_DATE} (run ${GITHUB_RUN_ID}) [auto]"
+            git push origin HEAD:flowai-v0.1
+          fi
+
+      - name: Summarise findings into GITHUB_STEP_SUMMARY
+        if: always()
+        env:
+          JSON_PATH: ${{ steps.locate.outputs.json }}
+          MD_PATH: ${{ steps.locate.outputs.md }}
+          SUITE_EXIT: ${{ steps.run_suite.outcome }}
+        run: |
+          {
+            echo "# FlowAI adversarial nightly — ${ADVERSARIAL_RUN_DATE}"
+            echo ""
+            echo "- Run ID: \`${GITHUB_RUN_ID}\`"
+            echo "- Suite exit: \`${SUITE_EXIT}\`"
+            echo "- Target SUT: \`${ADVERSARIAL_PREVIEW_URL}\` (dev-SUT)"
+            echo ""
+            if [ -f "$JSON_PATH" ]; then
+              echo "## Findings summary"
+              echo '```'
+              # The JSON file shape per §11.7 contains a findings[] array.
+              # We surface counts by severity using jq if available, with
+              # a node fallback for environments without jq.
+              if command -v jq >/dev/null 2>&1; then
+                jq -r '.findings | group_by(.severity) | map({severity: .[0].severity, count: length}) | .[] | "  - \(.severity): \(.count)"' "$JSON_PATH" || echo "  (jq parse failed)"
+              else
+                node -e "const f=require(process.env.JSON_PATH).findings||[];const g={};for(const x of f){g[x.severity]=(g[x.severity]||0)+1;}for(const [k,v] of Object.entries(g).sort()){console.log('  - '+k+': '+v);}"
+              fi
+              echo '```'
+            else
+              echo "## Findings"
+              echo "_(no JSON output produced — suite likely failed before report generation)_"
+            fi
+            echo ""
+            if [ -f "$MD_PATH" ]; then
+              echo "## Full Markdown report"
+              echo ""
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```markdown'
+              head -c 50000 "$MD_PATH"
+              echo ""
+              echo '```'
+              echo ""
+              echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Gate — fail the job when suite failed OR high-severity findings exist
+        if: always()
+        env:
+          JSON_PATH: ${{ steps.locate.outputs.json }}
+          SUITE_EXIT: ${{ steps.run_suite.outcome }}
+        run: |
+          # Fail if the suite itself crashed.
+          if [ "$SUITE_EXIT" = "failure" ]; then
+            echo "::error::adversarial suite exited non-zero"
+            exit 1
+          fi
+          # Fail if any finding is >= high (per §7.5: "Findings ≥ high
+          # block the next merge to main"). The nightly job is not on
+          # the merge path itself, but we surface the gate signal here
+          # so downstream merge automation can read it from the job
+          # conclusion.
+          if [ -f "$JSON_PATH" ]; then
+            HIGH_COUNT=$(node -e "const f=require(process.env.JSON_PATH).findings||[]; console.log(f.filter(x=>x.severity==='high'||x.severity==='critical').length);")
+            echo "high+critical finding count: ${HIGH_COUNT}"
+            if [ "$HIGH_COUNT" != "0" ]; then
+              echo "::error::adversarial findings >= high present (${HIGH_COUNT}) — merge-gate would block"
+              exit 1
+            fi
+          else
+            echo "::warning::no JSON report present; treating as suite failure"
+            exit 1
+          fi

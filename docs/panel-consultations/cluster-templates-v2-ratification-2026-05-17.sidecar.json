@@ -1,0 +1,1157 @@
+{
+  "schema": "cluster-templates-v2.sidecar.v1",
+  "startedAt": "2026-05-17T08:19:17.426Z",
+  "finishedAt": "2026-05-17T08:21:19.775Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 99446,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 99446
+  },
+  "tally": {
+    "engagedTotal": 10,
+    "invalid": 0,
+    "tangential": 0,
+    "silent": 0,
+    "perQuestion": {
+      "CL-A-v2": {
+        "CLAV2-PROMOTE": 2,
+        "CLAV2-CONDITIONS": 0,
+        "CLAV2-REVISE": 8,
+        "CLAV2-REJECT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CL-B-v2": {
+        "CLBV2-PROMOTE": 2,
+        "CLBV2-CONDITIONS": 2,
+        "CLBV2-REVISE": 5,
+        "CLBV2-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CL-C-v2": {
+        "CLCV2-PROMOTE": 7,
+        "CLCV2-CONDITIONS": 1,
+        "CLCV2-REVISE": 2,
+        "CLCV2-REJECT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      },
+      "CL-D-v2": {
+        "CLDV2-PROMOTE": 4,
+        "CLDV2-CONDITIONS": 2,
+        "CLDV2-REVISE": 3,
+        "CLDV2-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CL-E-v2": {
+        "CLEV2-PROMOTE": 2,
+        "CLEV2-CONDITIONS": 2,
+        "CLEV2-REVISE": 5,
+        "CLEV2-REJECT": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "CL-F-v2": {
+        "CLFV2-PROMOTE": 5,
+        "CLFV2-CONDITIONS": 4,
+        "CLFV2-REVISE": 1,
+        "CLFV2-REJECT": 0,
+        "REJECT": 0,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 33,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Cluster A atomic UPDATE race window",
+        "detail": "§2.3 Phase 1 uses SET LOCAL lock_timeout='500ms' but the reaper in §2.3 runs every 60s with a 90s window. If lock contention persists for 500ms×3 retries=1.5s, legitimate reservations fail while stale reservations from crashed agents consume budget for up to 90s."
+      },
+      {
+        "slot": 1,
+        "title": "Cluster B cross-metric weight underspecification",
+        "detail": "§2.4.1 declares weight_i defaults to 1.0 but doesn't specify how agents declare non-default weights or validate that weights sum to a meaningful total. An agent could declare weight=1000 for one stream and weight=0.001 for another, gaming the dataQualityScore calculation."
+      },
+      {
+        "slot": 1,
+        "title": "Cluster E dual-authority reversion breaks compatibility",
+        "detail": "§2.6 v2 R3 reverts Agent #26 and #21 from primary dual-authority back to EXECUTOR_REGISTRY siblings, but CA-9-Q4=(b) already ratified the primary pattern. This breaks backward compatibility with any code already written against the v1 pattern and requires CEO re-disposition mid-flight."
+      },
+      {
+        "slot": 2,
+        "title": "Ambiguity in budget enforcement",
+        "detail": "In §1 of Cluster A, the proposal highlights ambiguity in budget enforcement across multiple agents. The lack of a unified approach could lead to inconsistent enforcement and potential overspending, especially if different agents or components enforce caps independently."
+      },
+      {
+        "slot": 2,
+        "title": "Potential for data quality misinterpretation",
+        "detail": "In Cluster B, the proposal lacks a clear provenance model for omitted pages, which could lead downstream consumers to misinterpret low-confidence output as complete coverage. This could result in false positives in governance scoring and other assessments."
+      },
+      {
+        "slot": 2,
+        "title": "Complexity in mode-conditional behavior",
+        "detail": "Cluster C introduces complexity by requiring agents to declare mode-specific behaviors. This could lead to operational confusion and errors, especially if the mode classification is inconsistent between the registry and the blueprint."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback strategy for changes made by agents with auto_write_internal authority, particularly Agent #26. This could lead to unintended consequences and security vulnerabilities."
+      },
+      {
+        "slot": 3,
+        "title": "Inconsistent Authority",
+        "detail": "The proposal introduces dual-authority for Agent #26, which may lead to confusion in implementation and potentially undermine the security model. The use of EXECUTOR_REGISTRY siblings for elevated authority is not consistently applied across all agents."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Testing",
+        "detail": "The proposal does not provide sufficient information on the testing and validation of the new authority-ceiling integration and model-budget fallback mechanisms. This could lead to unforeseen issues and errors in production."
+      },
+      {
+        "slot": 4,
+        "title": "Agent #23 Cost Governor overload",
+        "detail": "The proposal centralizes all budget enforcement in Agent #23 Cost Governor. This could lead to a significant load on Agent #23, potentially becoming a bottleneck. If Agent #23 fails or becomes unresponsive, the entire system's budget enforcement mechanism fails."
+      },
+      {
+        "slot": 4,
+        "title": "TOCTOU race condition unresolved",
+        "detail": "The TOCTOU race condition is mitigated by using an atomic UPDATE statement. However, this does not address the scenario where multiple agents attempt to reserve budget concurrently. The proposal does not specify how contention is handled in such cases."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of failover mechanism",
+        "detail": "There is no failover mechanism specified for Agent #23 Cost Governor. If Agent #23 becomes unavailable, there is no secondary agent or process to take over budget enforcement, leading to potential budget overruns."
+      },
+      {
+        "slot": 5,
+        "title": "Complexity Risk",
+        "detail": "The proposal introduces significant complexity with the addition of new topics and the staged addition process. This complexity could lead to increased maintenance overhead and potential for errors in the future."
+      },
+      {
+        "slot": 5,
+        "title": "Coordination Overhead",
+        "detail": "The staged addition of topics alongside each agent's first ship commit could lead to coordination challenges between different teams working on different agents, potentially slowing down the overall deployment process."
+      },
+      {
+        "slot": 5,
+        "title": "Scalability Concerns",
+        "detail": "The proposal does not adequately address potential scalability issues that may arise from the increased number of topics and the associated message bus traffic, which could impact system performance."
+      },
+      {
+        "slot": 6,
+        "title": "Audit Log Tamper Evidence",
+        "detail": "§14.2 describes a hash chain for tamper evidence, but the security of this chain depends on the security of the Supabase project where the logs are stored.  If an attacker gains write access to the Supabase project, they could rewrite the entire log history, including the hashes, rendering the tamper evidence ineffective. The cold-store snapshot helps, but only provides point-in-time protection, not continuous tamper-evidence."
+      },
+      {
+        "slot": 6,
+        "title": "Agent Roster Dormancy",
+        "detail": "§15.1 states that all agents ship dormant at `recommend_only`. This creates a potential for bitrot and unexpected behavior when these agents are eventually activated.  The dormant agents are not actively tested or maintained, and their dependencies may become outdated or incompatible with the rest of the system over time."
+      },
+      {
+        "slot": 6,
+        "title": "Product-Agnostic Rule Enforcement",
+        "detail": "§22 states that there should be zero product-specific code in the core engine. However, the per-product configuration via metadata introduces complexity and potential for errors.  Incorrectly configured metadata could lead to unexpected behavior or security vulnerabilities, and debugging these issues could be difficult due to the lack of code-level visibility."
+      },
+      {
+        "slot": 6,
+        "title": "Cluster A: Atomic Update Timeout",
+        "detail": "In §2.3, the atomic UPDATE statement uses `SET LOCAL lock_timeout = '500ms'` and `SET LOCAL statement_timeout = '1000ms'`. While these timeouts are intended to prevent deadlocks and long-running queries, they could also lead to false negatives if the database is under heavy load or if the query is legitimately slow. This could result in unnecessary retries and aborted dispatches."
+      },
+      {
+        "slot": 6,
+        "title": "Cluster B: Data Quality Score Weighting",
+        "detail": "§2.4.1 introduces a `dataQualityScore` that combines multiple input streams with weights. The default weight is 1.0, but the spec doesn't provide clear guidance on how to choose appropriate weights for different input streams. Incorrectly chosen weights could lead to a biased `dataQualityScore` that doesn't accurately reflect the overall data quality."
+      },
+      {
+        "slot": 7,
+        "title": "Cluster A deadlock risk",
+        "detail": "The atomic UPDATE in §2.3 with lock_timeout=500ms may cause frequent retries under high concurrency. The exponential backoff (50/100/200ms) could still fail during peak loads, leading to false budget-cap rejections. This violates Orchestra §8.4's reliability guarantee."
+      },
+      {
+        "slot": 7,
+        "title": "Cluster B normalization flaw",
+        "detail": "§2.4.1's dataQualityScore formula aggregates heterogeneous metrics (pageCount/eventCount) via weighted average. This could mask critical gaps (e.g., 0/5 support tickets + 30/30 reviews = score 0.6) while partial data passes threshold. Downstream agents misinterpret incomplete inputs as valid."
+      },
+      {
+        "slot": 7,
+        "title": "Cluster E performance bottleneck",
+        "detail": "§2.5's authoritative ceiling check in BaseAgent.guard() adds synchronous Orchestrator calls to every dispatch. For high-frequency agents (#10 Monitor), this creates latency spikes during Orchestrator outages. The 30s cache TTL (§2.1) doesn't solve real-time enforcement needs."
+      },
+      {
+        "slot": 7,
+        "title": "Cluster F downgrade latency",
+        "detail": "§2.5's tier downgrade loop (3 attempts per dispatch) compounds latency when budget is tight. Agents like #8 QA (5 parallel dispatches) could add 600ms+ per invocation, violating 95/95 governance SLAs (§10.1)."
+      },
+      {
+        "slot": 8,
+        "title": "A/B ordering is internally inconsistent",
+        "detail": "Cluster A §2.6 says `getCeiling()` must run before `costGovernor.reserve()`, but Cluster E §2.7 and §2.6 reintroduce re-checks and call-order requirements that can force a second ceiling fetch after reservation-related latency. This creates a split-brain path where some dispatches are rejected on the advisory cache and others on the authoritative guard, making error semantics and rollback behavior depend on which layer wins the race."
+      },
+      {
+        "slot": 8,
+        "title": "Settlement path is not atomic enough",
+        "detail": "In Cluster A §2.3 Phase 2, the settlement SQL shows two UPDATEs 'in the same transaction' but does not specify isolation level, ordering guarantees, or idempotency protection beyond `settledAt IS NULL` on one statement. If the first UPDATE succeeds and the second fails (or vice versa), the reservation ledger can temporarily or permanently diverge, which is especially risky under retries after timeout or worker crash."
+      },
+      {
+        "slot": 8,
+        "title": "Reaper can reclaim live work",
+        "detail": "Cluster A §2.3 says long-running operations must extend by calling `costGovernor.heartbeat(reservationId)` which sets `reservedAt = now()`, but there is no lease token or monotonic heartbeat sequence to prevent a stale worker from heartbeating after a newer reservation has been issued or after the same reservation has been recycled. A delayed heartbeat racing the 60-second reaper can either free a still-running dispatch or keep a dead reservation alive indefinitely."
+      },
+      {
+        "slot": 9,
+        "title": "TOCTOU Risk in Cost Reservation",
+        "detail": "Cluster A §2.3 still has a potential TOCTOU risk if multiple concurrent reservations occur for the same runId and productId, despite the atomic UPDATE statement. The WHERE clause checks multiple conditions (ceilingUsd, spentUsd, reservedUsd, exceededAt) which could lead to contention and inconsistent results under high concurrency."
+      },
+      {
+        "slot": 9,
+        "title": "Data Quality Score Normalization",
+        "detail": "Cluster B §2.4.1 introduces a dataQualityScore calculation that normalizes multiple input streams. However, the weights assigned to different streams are not clearly defined for all agents, potentially leading to inconsistent scoring across different agents and product configurations."
+      },
+      {
+        "slot": 9,
+        "title": "Mode-Conditional Behavior Complexity",
+        "detail": "Cluster C §2.3 introduces three permissible mode-relation patterns (P1, P2, P3) which adds complexity to agent implementation and validation. The conditional emission of pipelineMode for Pattern P1 envelopes may lead to confusion among downstream consumers who need to handle both cases."
+      },
+      {
+        "slot": 10,
+        "title": "Cluster A §2.3.1 statement_timeout too short",
+        "detail": "The mandatory SET LOCAL statement_timeout = '1000ms' in every reservation/settlement (Cluster A §2.3.1) will abort under realistic LLM latency or Supabase cold-start, causing {ok:false, reason:'statement_timeout'} even when budget headroom exists; no backoff or extension path is defined for long-running but valid dispatches."
+      },
+      {
+        "slot": 10,
+        "title": "Cluster E v2 R3 supersedes CA-9-Q4 without ratification",
+        "detail": "Cluster E §2.6 v2 R3 unilaterally reverts Agent #26 and #21 to EXECUTOR_REGISTRY siblings and declares CA-9-Q4=(b) superseded, yet the proposal contains no CEO re-arbitration step or updated §15.1 roster entry, violating the dual-authority invariant the Panel previously required."
+      },
+      {
+        "slot": 10,
+        "title": "Cluster B §2.4.1 dataQualityScore weights undefined",
+        "detail": "Cross-metric normalization in Cluster B §2.4.1 requires per-agent weight_i values in §3.X of each spec, but the canonical templates and §14.1 topic catalogue provide no default or validation rule when weights are omitted, allowing silent division-by-zero or biased scoring on multi-stream agents such as #10 Monitor."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "CL-A-v2": {
+      "verdict": "SUPERMAJORITY_CLAV2-REVISE",
+      "detail": "8 of 10 on CLAV2-REVISE (≥ 8/10)",
+      "topKey": "CLAV2-REVISE",
+      "topCount": 8
+    },
+    "CL-B-v2": {
+      "verdict": "PLURALITY_CLBV2-REVISE",
+      "detail": "5 of 10 on CLBV2-REVISE (below 7/10 quorum)",
+      "topKey": "CLBV2-REVISE",
+      "topCount": 5
+    },
+    "CL-C-v2": {
+      "verdict": "QUORUM_PLURALITY_CLCV2-PROMOTE",
+      "detail": "7 of 10 on CLCV2-PROMOTE (≥ quorum 7/10)",
+      "topKey": "CLCV2-PROMOTE",
+      "topCount": 7
+    },
+    "CL-D-v2": {
+      "verdict": "PLURALITY_CLDV2-PROMOTE",
+      "detail": "4 of 10 on CLDV2-PROMOTE (below 7/10 quorum)",
+      "topKey": "CLDV2-PROMOTE",
+      "topCount": 4
+    },
+    "CL-E-v2": {
+      "verdict": "PLURALITY_CLEV2-REVISE",
+      "detail": "5 of 10 on CLEV2-REVISE (below 7/10 quorum)",
+      "topKey": "CLEV2-REVISE",
+      "topCount": 5
+    },
+    "CL-F-v2": {
+      "verdict": "PLURALITY_CLFV2-PROMOTE",
+      "detail": "5 of 10 on CLFV2-PROMOTE (below 7/10 quorum)",
+      "topKey": "CLFV2-PROMOTE",
+      "topCount": 5
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.36666666666666664,
+    "alignedCount": 22,
+    "totalPossible": 60,
+    "draftedQs": [
+      "CL-A-v2",
+      "CL-B-v2",
+      "CL-C-v2",
+      "CL-D-v2",
+      "CL-E-v2",
+      "CL-F-v2"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 36.7 %, distinct objections 33"
+  },
+  "ratification": {
+    "status": "NOT_RATIFIED",
+    "headline": "4 of 6 v2 template(s) lack clear Panel majority on PROMOTE.",
+    "conditions": [
+      {
+        "qId": "CL-B-v2",
+        "topic": "Cluster B v2 — Data Quality Gate. Does v2 resolve the v1 Panel conditions (streaming escape valve (R1), override guardrails (R2), cross-metric normalization (R3), halt-cascade circuit-breaker (R4))? Is it ready to promote as canonical?",
+        "verdict": "PLURALITY_CLBV2-REVISE",
+        "draftedKey": "CLBV2-PROMOTE",
+        "detail": "5 of 10 on CLBV2-REVISE (below 7/10 quorum)"
+      },
+      {
+        "qId": "CL-D-v2",
+        "topic": "Cluster D v2 — Audit-Log Topic Schema. Does v2 resolve the v1 Panel conditions (staged topic addition (R1), migration test harness (R2), RLS allow-list (R3), deprecation path (R4))? Is it ready to promote as canonical?",
+        "verdict": "PLURALITY_CLDV2-PROMOTE",
+        "draftedKey": "CLDV2-PROMOTE",
+        "detail": "4 of 10 on CLDV2-PROMOTE (below 7/10 quorum)"
+      },
+      {
+        "qId": "CL-E-v2",
+        "topic": "Cluster E v2 — Authority-Ceiling Integration. Does v2 resolve the v1 Panel conditions (enforcement authority hierarchy (R1), BaseAgent.guard() ceiling check (R2), EXECUTOR_REGISTRY sibling pattern (R3), mid-request ceiling change (R4))? Is it ready to promote as canonical?",
+        "verdict": "PLURALITY_CLEV2-REVISE",
+        "draftedKey": "CLEV2-PROMOTE",
+        "detail": "5 of 10 on CLEV2-REVISE (below 7/10 quorum)"
+      },
+      {
+        "qId": "CL-F-v2",
+        "topic": "Cluster F v2 — Model-Budget Fallback. Does v2 resolve the v1 Panel conditions (cost-tier definition (R1), tier-change handling (R2), hierarchical Doppler keys (R3))? Is it ready to promote as canonical?",
+        "verdict": "PLURALITY_CLFV2-PROMOTE",
+        "draftedKey": "CLFV2-PROMOTE",
+        "detail": "5 of 10 on CLFV2-PROMOTE (below 7/10 quorum)"
+      }
+    ],
+    "alternativeWins": [
+      {
+        "qId": "CL-A-v2",
+        "topic": "Cluster A v2 — Cost Governor Integration. Does v2 resolve the v1 Panel conditions (TOCTOU race (R1), reaper window (R2), deadlock detection (R3), Cluster E ordering (R4))? Is it ready to promote as canonical?",
+        "newPosition": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+        "verdict": "SUPERMAJORITY_CLAV2-REVISE"
+      }
+    ]
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Cluster A atomic UPDATE race window",
+            "detail": "§2.3 Phase 1 uses SET LOCAL lock_timeout='500ms' but the reaper in §2.3 runs every 60s with a 90s window. If lock contention persists for 500ms×3 retries=1.5s, legitimate reservations fail while stale reservations from crashed agents consume budget for up to 90s."
+          },
+          {
+            "title": "Cluster B cross-metric weight underspecification",
+            "detail": "§2.4.1 declares weight_i defaults to 1.0 but doesn't specify how agents declare non-default weights or validate that weights sum to a meaningful total. An agent could declare weight=1000 for one stream and weight=0.001 for another, gaming the dataQualityScore calculation."
+          },
+          {
+            "title": "Cluster E dual-authority reversion breaks compatibility",
+            "detail": "§2.6 v2 R3 reverts Agent #26 and #21 from primary dual-authority back to EXECUTOR_REGISTRY siblings, but CA-9-Q4=(b) already ratified the primary pattern. This breaks backward compatibility with any code already written against the v1 pattern and requires CEO re-disposition mid-flight."
+          }
+        ],
+        "worse_than_status_quo": "Cluster D's staged rollout (§2.1.0-Def) means agents ship with emit calls to topics that don't exist in MessageSchema.js yet, causing runtime validation failures until each agent's topic-addition commit lands.",
+        "precedent": "Kubernetes faced similar issues with CRD versioning where controllers emitted events for CustomResourceDefinitions that hadn't been installed yet, causing event loss and debugging nightmares until they enforced install-order dependencies."
+      },
+      "rejection_steelman": "The v2 templates add significant complexity (two-phase commit, hierarchical Doppler keys, dual enforcement layers) to fix v1 issues, but this complexity creates new failure modes like the Cluster A lock timeout vs reaper window mismatch and Cluster E's mid-flight authority model reversal. The system would be more maintainable with simpler, eventually-consistent patterns rather than trying to achieve perfect atomicity across distributed components.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The lock timeout (500ms) vs reaper window (90s) mismatch creates a new failure mode where legitimate high-contention reservations fail quickly while orphaned reservations block budget for 90 seconds."
+        },
+        "CL-B-v2": {
+          "key": "CLBV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The cross-metric weight declaration mechanism in §2.4.1 needs specification for how agents declare non-default weights, but this can be addressed during implementation without blocking the core design."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "The conditional pipelineMode emission for P1 agents elegantly reduces MessageBus overhead while maintaining full traceability through runId context lookups."
+        },
+        "CL-D-v2": {
+          "key": "CLDV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The staged rollout creates a window where agents emit to non-existent topics, causing runtime failures. Topics must be registered before any agent code that emits them ships."
+        },
+        "CL-E-v2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — v2 reveals the v1 problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture (specify the architectural concern).",
+          "rationale": "The v2 R3 reversion from primary dual-authority to EXECUTOR_REGISTRY pattern contradicts already-ratified CA-9-Q4=(b) and requires CEO re-arbitration, indicating the authority model needs fundamental rethinking rather than tactical fixes."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster F; template is ready to ship as canonical resolution.",
+          "rationale": "The tier-keyed Doppler structure cleanly separates tier semantics from model identity, and the tier-downgrade mechanism elegantly integrates with Cluster A's budget enforcement."
+        }
+      },
+      "overallNotes": "Clusters A, D, and E have blocking issues that need resolution before promotion, while B, C, and F are ready with minor conditions.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Ambiguity in budget enforcement",
+            "detail": "In §1 of Cluster A, the proposal highlights ambiguity in budget enforcement across multiple agents. The lack of a unified approach could lead to inconsistent enforcement and potential overspending, especially if different agents or components enforce caps independently."
+          },
+          {
+            "title": "Potential for data quality misinterpretation",
+            "detail": "In Cluster B, the proposal lacks a clear provenance model for omitted pages, which could lead downstream consumers to misinterpret low-confidence output as complete coverage. This could result in false positives in governance scoring and other assessments."
+          },
+          {
+            "title": "Complexity in mode-conditional behavior",
+            "detail": "Cluster C introduces complexity by requiring agents to declare mode-specific behaviors. This could lead to operational confusion and errors, especially if the mode classification is inconsistent between the registry and the blueprint."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to inconsistent budget enforcement, resulting in overspending or enforcement gaps, which are worse than the current fragmented but predictable system.",
+        "precedent": "The Boeing 737 MAX incidents, where software inconsistencies and lack of unified control led to catastrophic failures, serve as a precedent for the risks of fragmented enforcement and oversight."
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and potential for inconsistency across multiple clusters, which could lead to operational confusion and errors. The lack of a unified approach to budget enforcement and data quality thresholds could result in overspending and misinterpretation of data, respectively. These issues warrant a deferral until a more cohesive and simplified solution is developed.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The ambiguity in budget enforcement and lack of a unified approach could lead to inconsistent enforcement and potential overspending."
+        },
+        "CL-B-v2": {
+          "key": "CLBV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The proposal lacks a clear provenance model for omitted pages, which could lead to misinterpretation of data quality."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The complexity in mode-conditional behavior could lead to operational confusion and errors."
+        },
+        "CL-D-v2": {
+          "key": "CLDV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "While the staged topic addition and migration test harness address major concerns, ongoing monitoring of topic sprawl is necessary."
+        },
+        "CL-E-v2": {
+          "key": "CLEV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The enforcement authority hierarchy is improved, but the complexity of dual-authority agents requires careful monitoring."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The hierarchical Doppler keys and cost-tier definitions are improvements, but the reliance on third-party models needs ongoing evaluation."
+        }
+      },
+      "overallNotes": "The proposal introduces improvements but also adds complexity and potential for inconsistency, warranting careful monitoring and potential revisions.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback strategy for changes made by agents with auto_write_internal authority, particularly Agent #26. This could lead to unintended consequences and security vulnerabilities."
+          },
+          {
+            "title": "Inconsistent Authority",
+            "detail": "The proposal introduces dual-authority for Agent #26, which may lead to confusion in implementation and potentially undermine the security model. The use of EXECUTOR_REGISTRY siblings for elevated authority is not consistently applied across all agents."
+          },
+          {
+            "title": "Insufficient Testing",
+            "detail": "The proposal does not provide sufficient information on the testing and validation of the new authority-ceiling integration and model-budget fallback mechanisms. This could lead to unforeseen issues and errors in production."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's introduction of dual-authority for Agent #26 and the use of EXECUTOR_REGISTRY siblings for elevated authority may lead to a more complex and less secure system than the current status quo, potentially resulting in unintended consequences and security vulnerabilities.",
+        "precedent": "No precedent known for a similar design causing problems in a real-world system or project."
+      },
+      "rejection_steelman": "The proposal's lack of a clear rollback strategy, inconsistent application of authority, and insufficient testing may lead to unintended consequences and security vulnerabilities, making it potentially worse than the current status quo. Therefore, it is recommended to reject or defer the proposal until these concerns are addressed.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster A; template is ready to ship as canonical resolution.",
+          "rationale": "The proposal addresses the v1 conditions for Cluster A, including the TOCTOU race, reaper window, deadlock detection, and Cluster E ordering."
+        },
+        "CL-B-v2": {
+          "key": "CLBV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster B; template is ready to ship as canonical resolution.",
+          "rationale": "The proposal addresses the v1 conditions for Cluster B, including the streaming escape valve, override guardrails, cross-metric normalization, and halt-cascade circuit-breaker."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "The proposal addresses the v1 conditions for Cluster C, including the optional mode-block for P1 agents, conditional pipelineMode, and enforcement mechanism."
+        },
+        "CL-D-v2": {
+          "key": "CLDV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster D; template is ready to ship as canonical resolution.",
+          "rationale": "The proposal addresses the v1 conditions for Cluster D, including the staged topic addition, migration test harness, RLS allow-list, and deprecation path."
+        },
+        "CL-E-v2": {
+          "key": "CLEV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The proposal does not provide a clear rollback strategy for changes made by agents with auto_write_internal authority, and the introduction of dual-authority for Agent #26 may lead to confusion in implementation and potentially undermine the security model."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster F; template is ready to ship as canonical resolution.",
+          "rationale": "The proposal addresses the v1 conditions for Cluster F, including the cost-tier definition, tier-change handling, and hierarchical Doppler keys."
+        }
+      },
+      "overallNotes": "The proposal addresses several concerns and conditions raised in the v1 Panel, but some concerns remain, particularly regarding the introduction of dual-authority for Agent #26 and the lack of a clear rollback strategy. Further revisions and testing are necessary to ensure the security and stability of the system.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Agent #23 Cost Governor overload",
+            "detail": "The proposal centralizes all budget enforcement in Agent #23 Cost Governor. This could lead to a significant load on Agent #23, potentially becoming a bottleneck. If Agent #23 fails or becomes unresponsive, the entire system's budget enforcement mechanism fails."
+          },
+          {
+            "title": "TOCTOU race condition unresolved",
+            "detail": "The TOCTOU race condition is mitigated by using an atomic UPDATE statement. However, this does not address the scenario where multiple agents attempt to reserve budget concurrently. The proposal does not specify how contention is handled in such cases."
+          },
+          {
+            "title": "Lack of failover mechanism",
+            "detail": "There is no failover mechanism specified for Agent #23 Cost Governor. If Agent #23 becomes unavailable, there is no secondary agent or process to take over budget enforcement, leading to potential budget overruns."
+          }
+        ],
+        "worse_than_status_quo": "In the current status quo, budget enforcement is decentralized across multiple agents, providing a level of redundancy. Centralizing this in Agent #23 introduces a single point of failure, making the system more fragile.",
+        "precedent": "In the Knight Capital Group incident of 2012, a single point of failure in the trading algorithm led to a $440 million loss in 45 minutes. Centralizing critical functions without adequate failover mechanisms can lead to catastrophic failures."
+      },
+      "rejection_steelman": "The proposal should be deferred until a robust failover mechanism for Agent #23 Cost Governor is implemented and tested. Additionally, the TOCTOU race condition needs to be addressed more comprehensively to handle concurrent budget reservations.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The TOCTOU race condition and the lack of a failover mechanism for Agent #23 need to be addressed more comprehensively."
+        },
+        "CL-B-v2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal introduces a single point of failure without adequate failover mechanisms, making the system more fragile than the current decentralized approach."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "The v2 proposal for Cluster C adequately addresses the mode-conditional behavior and provides a clear enforcement mechanism."
+        },
+        "CL-D-v2": {
+          "key": "CLDV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster D; template is ready to ship as canonical resolution.",
+          "rationale": "The v2 proposal for Cluster D addresses the staged topic addition and provides a migration test harness, resolving the v1 conditions."
+        },
+        "CL-E-v2": {
+          "key": "CLEV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster E; template is ready to ship as canonical resolution.",
+          "rationale": "The v2 proposal for Cluster E addresses the enforcement authority hierarchy and provides a clear mechanism for BaseAgent.guard() ceiling check."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster F; template is ready to ship as canonical resolution.",
+          "rationale": "The v2 proposal for Cluster F addresses the cost-tier definition and provides a hierarchical Doppler key mechanism, resolving the v1 conditions."
+        }
+      },
+      "overallNotes": "The centralization of budget enforcement in Agent #23 introduces a significant risk without adequate failover mechanisms. This needs to be addressed before the proposal can be promoted.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity Risk",
+            "detail": "The proposal introduces significant complexity with the addition of new topics and the staged addition process. This complexity could lead to increased maintenance overhead and potential for errors in the future."
+          },
+          {
+            "title": "Coordination Overhead",
+            "detail": "The staged addition of topics alongside each agent's first ship commit could lead to coordination challenges between different teams working on different agents, potentially slowing down the overall deployment process."
+          },
+          {
+            "title": "Scalability Concerns",
+            "detail": "The proposal does not adequately address potential scalability issues that may arise from the increased number of topics and the associated message bus traffic, which could impact system performance."
+          }
+        ],
+        "worse_than_status_quo": "If the staged addition process is not managed carefully, it could lead to a fragmented and inconsistent system state, making it harder to maintain and debug than the current status quo.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and coordination overhead without clear benefits that outweigh these costs. The potential for scalability issues and the risk of creating a fragmented system state suggest that a more cautious approach, possibly involving a smaller-scale pilot or a different design, might be preferable.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "The proposal effectively addresses the TOCTOU race, reaper window, deadlock detection, and Cluster E ordering issues."
+        },
+        "CL-B-v2": {
+          "key": "CLBV2-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "The proposal resolves the streaming escape valve, override guardrails, cross-metric normalization, and halt-cascade circuit-breaker issues."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "The proposal addresses the optional mode-block for P1 agents, conditional pipelineMode, and enforcement mechanism issues."
+        },
+        "CL-D-v2": {
+          "key": "CLDV2-REVISE",
+          "pick_text": "REVISE",
+          "rationale": "The proposal needs further clarification on the staged topic addition process and potential scalability issues."
+        },
+        "CL-E-v2": {
+          "key": "CLEV2-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "The proposal resolves the enforcement authority hierarchy, BaseAgent.guard() ceiling check, EXECUTOR_REGISTRY sibling pattern, and mid-request ceiling change issues."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-PROMOTE",
+          "pick_text": "PROMOTE",
+          "rationale": "The proposal addresses the cost-tier definition, tier-change handling, and hierarchical Doppler keys issues."
+        }
+      },
+      "overallNotes": "The proposal shows promise but requires careful consideration of the introduced complexity and coordination overhead.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Audit Log Tamper Evidence",
+            "detail": "§14.2 describes a hash chain for tamper evidence, but the security of this chain depends on the security of the Supabase project where the logs are stored.  If an attacker gains write access to the Supabase project, they could rewrite the entire log history, including the hashes, rendering the tamper evidence ineffective. The cold-store snapshot helps, but only provides point-in-time protection, not continuous tamper-evidence."
+          },
+          {
+            "title": "Agent Roster Dormancy",
+            "detail": "§15.1 states that all agents ship dormant at `recommend_only`. This creates a potential for bitrot and unexpected behavior when these agents are eventually activated.  The dormant agents are not actively tested or maintained, and their dependencies may become outdated or incompatible with the rest of the system over time."
+          },
+          {
+            "title": "Product-Agnostic Rule Enforcement",
+            "detail": "§22 states that there should be zero product-specific code in the core engine. However, the per-product configuration via metadata introduces complexity and potential for errors.  Incorrectly configured metadata could lead to unexpected behavior or security vulnerabilities, and debugging these issues could be difficult due to the lack of code-level visibility."
+          },
+          {
+            "title": "Cluster A: Atomic Update Timeout",
+            "detail": "In §2.3, the atomic UPDATE statement uses `SET LOCAL lock_timeout = '500ms'` and `SET LOCAL statement_timeout = '1000ms'`. While these timeouts are intended to prevent deadlocks and long-running queries, they could also lead to false negatives if the database is under heavy load or if the query is legitimately slow. This could result in unnecessary retries and aborted dispatches."
+          },
+          {
+            "title": "Cluster B: Data Quality Score Weighting",
+            "detail": "§2.4.1 introduces a `dataQualityScore` that combines multiple input streams with weights. The default weight is 1.0, but the spec doesn't provide clear guidance on how to choose appropriate weights for different input streams. Incorrectly chosen weights could lead to a biased `dataQualityScore` that doesn't accurately reflect the overall data quality."
+          }
+        ],
+        "worse_than_status_quo": "If the cost governor (Cluster A) is incorrectly configured or experiences a failure, it could block legitimate agent dispatches, effectively halting the entire system. This is worse than the status quo where agents could at least attempt to run, even if they might exceed their budget.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity across multiple clusters, increasing the risk of integration issues and unexpected behavior. The reliance on metadata-driven configuration and external services (LLMs) creates potential points of failure and makes the system harder to debug and maintain. Deferring the proposal would allow for further simplification and risk mitigation.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The timeout values in the atomic UPDATE statement (§2.3) could lead to false negatives under heavy load. The timeout values should be configurable or dynamically adjusted based on system load."
+        },
+        "CL-B-v2": {
+          "key": "CLBV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The guidance on choosing appropriate weights for the `dataQualityScore` (§2.4.1) is insufficient. The spec should provide more concrete examples and recommendations for setting these weights based on the characteristics of different input streams."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "While v2 addresses the main concerns, the enforcement mechanism relies on both schema validation and runtime guards. The interaction between these two layers should be carefully monitored to ensure consistent behavior and prevent unexpected errors."
+        },
+        "CL-D-v2": {
+          "key": "CLDV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The staged topic addition approach is reasonable, but the migration test harness (§2.3.1) should be thoroughly tested and validated to ensure it correctly handles all possible migration scenarios. The test harness should also include checks for backward compatibility to prevent breaking changes for existing consumers."
+        },
+        "CL-E-v2": {
+          "key": "CLEV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The advisory cache TTL of 30 seconds (§2.7) may be too long in some cases, especially when operators are actively adjusting ceilings. The TTL should be configurable or dynamically adjusted based on the frequency of ceiling changes."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The tier-downgrade cap of 3 attempts (§2.5) seems arbitrary. The spec should provide a rationale for this specific value and consider allowing operators to configure this cap based on their specific needs and risk tolerance."
+        }
+      },
+      "overallNotes": "The proposal is comprehensive but introduces significant complexity. Careful monitoring and testing will be crucial to ensure its successful implementation and prevent unintended consequences.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Cluster A deadlock risk",
+            "detail": "The atomic UPDATE in §2.3 with lock_timeout=500ms may cause frequent retries under high concurrency. The exponential backoff (50/100/200ms) could still fail during peak loads, leading to false budget-cap rejections. This violates Orchestra §8.4's reliability guarantee."
+          },
+          {
+            "title": "Cluster B normalization flaw",
+            "detail": "§2.4.1's dataQualityScore formula aggregates heterogeneous metrics (pageCount/eventCount) via weighted average. This could mask critical gaps (e.g., 0/5 support tickets + 30/30 reviews = score 0.6) while partial data passes threshold. Downstream agents misinterpret incomplete inputs as valid."
+          },
+          {
+            "title": "Cluster E performance bottleneck",
+            "detail": "§2.5's authoritative ceiling check in BaseAgent.guard() adds synchronous Orchestrator calls to every dispatch. For high-frequency agents (#10 Monitor), this creates latency spikes during Orchestrator outages. The 30s cache TTL (§2.1) doesn't solve real-time enforcement needs."
+          },
+          {
+            "title": "Cluster F downgrade latency",
+            "detail": "§2.5's tier downgrade loop (3 attempts per dispatch) compounds latency when budget is tight. Agents like #8 QA (5 parallel dispatches) could add 600ms+ per invocation, violating 95/95 governance SLAs (§10.1)."
+          }
+        ],
+        "worse_than_status_quo": "During database contention, Cluster A's reservation timeouts cause legitimate research runs to abort while orphaned reservations hold budget for 90s. Simultaneously, Cluster B's dataQualityScore incorrectly approves partial inputs due to metric averaging. This combines wasted spend with low-confidence outputs—worse than current fragmented but predictable failures.",
+        "precedent": "The 2012 Knight Capital $460M loss incident, where redundant systems created destructive contention loops during deployment. Similarly, Cluster A's atomic reservations + Cluster E's synchronous checks could cascade failures under load."
+      },
+      "rejection_steelman": "The proposal's interdependence creates unacceptable integration risk: Cluster E's authoritative ceiling checks add latency that exacerbates Cluster A's lock timeouts, while Cluster B's scoring flaws could propagate degraded data through Cluster F's model fallbacks. Deferring until load testing proves stability under peak concurrency (200+ concurrent runs) would prevent system-wide fragility.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "R3 deadlock handling remains vulnerable to sustained contention; retry limits should scale dynamically with system load."
+        },
+        "CL-B-v2": {
+          "key": "CLBV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "R3 cross-metric normalization risks false positives; minimum thresholds per stream are needed before aggregation."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "The P1/P2/P3 pattern with schema validation (R3) effectively resolves mode drift issues."
+        },
+        "CL-D-v2": {
+          "key": "CLDV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster D; template is ready to ship as canonical resolution.",
+          "rationale": "Staged rollout (R1) and migration harness (R2) adequately prevent topic sprawl."
+        },
+        "CL-E-v2": {
+          "key": "CLEV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "R2's BaseAgent.guard() ceiling check creates a single point of failure; circuit-breaker fallback is needed for Orchestrator outages."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "Tier downgrade (R2) may increase latency; track in performance metrics but allow rollout."
+        }
+      },
+      "overallNotes": "",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "A/B ordering is internally inconsistent",
+            "detail": "Cluster A §2.6 says `getCeiling()` must run before `costGovernor.reserve()`, but Cluster E §2.7 and §2.6 reintroduce re-checks and call-order requirements that can force a second ceiling fetch after reservation-related latency. This creates a split-brain path where some dispatches are rejected on the advisory cache and others on the authoritative guard, making error semantics and rollback behavior depend on which layer wins the race."
+          },
+          {
+            "title": "Settlement path is not atomic enough",
+            "detail": "In Cluster A §2.3 Phase 2, the settlement SQL shows two UPDATEs 'in the same transaction' but does not specify isolation level, ordering guarantees, or idempotency protection beyond `settledAt IS NULL` on one statement. If the first UPDATE succeeds and the second fails (or vice versa), the reservation ledger can temporarily or permanently diverge, which is especially risky under retries after timeout or worker crash."
+          },
+          {
+            "title": "Reaper can reclaim live work",
+            "detail": "Cluster A §2.3 says long-running operations must extend by calling `costGovernor.heartbeat(reservationId)` which sets `reservedAt = now()`, but there is no lease token or monotonic heartbeat sequence to prevent a stale worker from heartbeating after a newer reservation has been issued or after the same reservation has been recycled. A delayed heartbeat racing the 60-second reaper can either free a still-running dispatch or keep a dead reservation alive indefinitely."
+          }
+        ],
+        "worse_than_status_quo": "If a dispatch hits `getCeiling()` success, reserves budget, then stalls on a human gate while another worker updates the product ceiling downward, the current design can hold budget longer than necessary and then fail late at `guard()`, after the reservation slot has already blocked unrelated work. That is worse than the status quo because today a single authoritative gate would fail earlier and avoid occupying scarce reserved budget.",
+        "precedent": "Google Cloud quota/lease systems have historically had to add explicit reservation tokens and idempotency keys after TOCTOU-style oversubscription issues; the general failure mode is well known even if this exact stack is not a direct precedent."
+      },
+      "rejection_steelman": "The strongest reason to reject or defer is that the proposal adds a second authoritative-looking layer (advisory `getCeiling()` plus authoritative `BaseAgent.guard()`) while also spreading budget state across reservations, settlements, reapers, and heartbeats. That increases the number of ways a run can fail non-deterministically, and the spec still leaves several failure edges under-defined enough that a production rollout could produce inconsistent operator-visible outcomes. A narrower design with one enforcement locus and a simpler reservation lifecycle would be safer to ratify.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "R1 and R2 are directionally addressed, but the proposal introduces new ambiguity around the split advisory/authoritative path and does not fully specify settlement idempotency or lease safety. Those are concrete defects in the canonical lifecycle, so this is not ready to promote as-is."
+        },
+        "CL-B-v2": {
+          "key": "CLBV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "R1–R4 are mostly covered, but the cross-metric normalization and cascade semantics still leave open how conflicting stream weights interact with degrade-vs-halt decisions in mixed-mode agents. I would not call this fully canonical until the mode interactions are tightened."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "The P1/P2/P3 split is clear, the conditional `pipelineMode` rule is practical, and the validator/runtime guard pairing gives a concrete enforcement mechanism. This cleanly addresses the original ambiguity without forcing unnecessary boilerplate on P1 agents."
+        },
+        "CL-D-v2": {
+          "key": "CLDV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The staged topic plan helps, but the proposal still mixes 'already in §14.1' and 'new' topics in ways that appear to require reconciliation work beyond the stated P0 patch. The migration harness requirement is good, but the current draft does not fully define backward-compatibility behavior for consumers during the staged cutover."
+        },
+        "CL-E-v2": {
+          "key": "CLEV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The guard-based ceiling check is a solid improvement, but the spec now has competing-looking authoritative surfaces: advisory `getCeiling()`, authoritative `BaseAgent.guard()`, and executor-side repeated checks. That is safer than before, but still not clean enough to be a canonical promotion without a sharper single-source enforcement story."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "Tier-keyed selection is better than the old per-model keys, but the draft still mixes hardcoded fallback anchors, Doppler overrides, and per-product overrides in a way that can surprise operators during provider re-pricing. The tier-change handling also depends on Cluster A behavior that is not yet fully stabilized."
+        }
+      },
+      "overallNotes": "Net: Cluster C is the strongest candidate for promotion; A/E/F still need hardening, and D needs clearer migration/backward-compatibility rules before canonicalization.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "TOCTOU Risk in Cost Reservation",
+            "detail": "Cluster A §2.3 still has a potential TOCTOU risk if multiple concurrent reservations occur for the same runId and productId, despite the atomic UPDATE statement. The WHERE clause checks multiple conditions (ceilingUsd, spentUsd, reservedUsd, exceededAt) which could lead to contention and inconsistent results under high concurrency."
+          },
+          {
+            "title": "Data Quality Score Normalization",
+            "detail": "Cluster B §2.4.1 introduces a dataQualityScore calculation that normalizes multiple input streams. However, the weights assigned to different streams are not clearly defined for all agents, potentially leading to inconsistent scoring across different agents and product configurations."
+          },
+          {
+            "title": "Mode-Conditional Behavior Complexity",
+            "detail": "Cluster C §2.3 introduces three permissible mode-relation patterns (P1, P2, P3) which adds complexity to agent implementation and validation. The conditional emission of pipelineMode for Pattern P1 envelopes may lead to confusion among downstream consumers who need to handle both cases."
+          }
+        ],
+        "worse_than_status_quo": "If the Cost Governor (Cluster A) fails to properly reserve or settle costs due to concurrency issues or database contention, it could lead to budget overruns or underutilization, making the system worse than the status quo where individual agents managed their own budgets with simpler, albeit fragmented, logic.",
+        "precedent": "The TOCTOU risk in Cluster A's cost reservation mechanism is reminiscent of issues seen in database transaction handling in systems like PostgreSQL when using complex WHERE clauses with multiple conditions, as discussed in various database administration forums and bug reports."
+      },
+      "rejection_steelman": "The proposal's complexity, particularly in Cluster A and Cluster C, introduces significant risks that could lead to implementation challenges, concurrency issues, and potential security vulnerabilities. The added complexity may not be justified by the benefits, especially considering the potential for simpler, alternative designs that could achieve similar goals with fewer moving parts.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The TOCTOU risk in the cost reservation mechanism (§2.3) needs further revision to ensure atomicity and consistency under high concurrency."
+        },
+        "CL-B-v2": {
+          "key": "CLBV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "While v2 addresses major concerns, the dataQualityScore normalization (§2.4.1) and weight assignment need clearer guidelines for consistent implementation across agents."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The complexity introduced by the three mode-relation patterns (§2.3) and conditional pipelineMode emission for P1 agents (§2.4) needs simplification or clearer guidelines to avoid implementation confusion."
+        },
+        "CL-D-v2": {
+          "key": "CLDV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster D; template is ready to ship as canonical resolution.",
+          "rationale": "The staged topic addition (§2.1) and migration test harness (§2.3.1) effectively address the concerns raised by the Panel."
+        },
+        "CL-E-v2": {
+          "key": "CLEV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "The authoritative enforcement in BaseAgent.guard() (§2.5) is a significant improvement, but the mid-request ceiling change handling (§2.7) should be closely monitored for potential issues."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster F; template is ready to ship as canonical resolution.",
+          "rationale": "The tier-keyed Doppler model selection (§2.1) and cost-tier change handling (§2.5) effectively address the concerns raised by the Panel."
+        }
+      },
+      "overallNotes": "The proposal shows significant improvements across clusters, but certain areas, particularly in Cluster A and Cluster C, require further refinement to address potential concurrency issues and implementation complexity.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Cluster A §2.3.1 statement_timeout too short",
+            "detail": "The mandatory SET LOCAL statement_timeout = '1000ms' in every reservation/settlement (Cluster A §2.3.1) will abort under realistic LLM latency or Supabase cold-start, causing {ok:false, reason:'statement_timeout'} even when budget headroom exists; no backoff or extension path is defined for long-running but valid dispatches."
+          },
+          {
+            "title": "Cluster E v2 R3 supersedes CA-9-Q4 without ratification",
+            "detail": "Cluster E §2.6 v2 R3 unilaterally reverts Agent #26 and #21 to EXECUTOR_REGISTRY siblings and declares CA-9-Q4=(b) superseded, yet the proposal contains no CEO re-arbitration step or updated §15.1 roster entry, violating the dual-authority invariant the Panel previously required."
+          },
+          {
+            "title": "Cluster B §2.4.1 dataQualityScore weights undefined",
+            "detail": "Cross-metric normalization in Cluster B §2.4.1 requires per-agent weight_i values in §3.X of each spec, but the canonical templates and §14.1 topic catalogue provide no default or validation rule when weights are omitted, allowing silent division-by-zero or biased scoring on multi-stream agents such as #10 Monitor."
+          }
+        ],
+        "worse_than_status_quo": "The mandatory cross-cluster call order (Cluster A §2.6), 90-second reaper, and per-statement timeouts create new failure modes where concurrent runs now deadlock or false-fail on budget reservation far more often than the prior fragmented per-agent checks, increasing operator-visible halts without improving actual spend control.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The v2 templates layer six interdependent clusters of new topics, atomic DB patterns, mode flags, and ceiling guards on top of an already 26-agent system whose §14.1 audit log and §15.1 roster are still incomplete; this complexity multiplies the surface for TOCTOU, ordering, and schema-drift bugs while deferring any measurable reduction in the original Panel risk findings.",
+      "votes": {
+        "CL-A-v2": {
+          "key": "CLAV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "The 1000 ms statement_timeout and missing retry semantics for long dispatches leave R3 incompletely addressed."
+        },
+        "CL-B-v2": {
+          "key": "CLBV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "Undefined weights for dataQualityScore and lack of validation rule for omitted §3.X entries leave R3 defective."
+        },
+        "CL-C-v2": {
+          "key": "CLCV2-PROMOTE",
+          "pick_text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster C; template is ready to ship as canonical resolution.",
+          "rationale": "Optional pipelineMode for P1 agents and runtime guard together close the mode-drift gaps."
+        },
+        "CL-D-v2": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Staged P0 vs deferred addition still risks namespace collisions and lacks an explicit deprecation migration test for the 30+ new topics."
+        },
+        "CL-E-v2": {
+          "key": "CLEV2-REVISE",
+          "pick_text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect).",
+          "rationale": "Unilateral superseding of CA-9-Q4 without re-ratification leaves R3 and security model unresolved."
+        },
+        "CL-F-v2": {
+          "key": "CLFV2-CONDITIONS",
+          "pick_text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking).",
+          "rationale": "Tier-keyed Doppler works but re-pricing notification latency (24 h) and override precedence need explicit tracking."
+        }
+      },
+      "overallNotes": "The proposal's cross-cluster ordering invariants are brittle and untested at scale.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "CL-A-v2",
+      "topic": "Cluster A v2 — Cost Governor Integration. Does v2 resolve the v1 Panel conditions (TOCTOU race (R1), reaper window (R2), deadlock detection (R3), Cluster E ordering (R4))? Is it ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLAV2-PROMOTE",
+          "text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster A; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLAV2-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLAV2-REVISE",
+          "text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLAV2-REJECT",
+          "text": "REJECT — v2 reveals the v1 problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture (specify the architectural concern)."
+        }
+      ],
+      "draftedKey": "CLAV2-PROMOTE"
+    },
+    {
+      "id": "CL-B-v2",
+      "topic": "Cluster B v2 — Data Quality Gate. Does v2 resolve the v1 Panel conditions (streaming escape valve (R1), override guardrails (R2), cross-metric normalization (R3), halt-cascade circuit-breaker (R4))? Is it ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLBV2-PROMOTE",
+          "text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster B; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLBV2-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLBV2-REVISE",
+          "text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLBV2-REJECT",
+          "text": "REJECT — v2 reveals the v1 problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture (specify the architectural concern)."
+        }
+      ],
+      "draftedKey": "CLBV2-PROMOTE"
+    },
+    {
+      "id": "CL-C-v2",
+      "topic": "Cluster C v2 — Mode-Conditional Behavior. Does v2 resolve the v1 Panel conditions (optional mode-block for P1 agents (R1), conditional pipelineMode (R2), enforcement mechanism (R3))? Is it ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLCV2-PROMOTE",
+          "text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster C; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLCV2-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLCV2-REVISE",
+          "text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLCV2-REJECT",
+          "text": "REJECT — v2 reveals the v1 problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture (specify the architectural concern)."
+        }
+      ],
+      "draftedKey": "CLCV2-PROMOTE"
+    },
+    {
+      "id": "CL-D-v2",
+      "topic": "Cluster D v2 — Audit-Log Topic Schema. Does v2 resolve the v1 Panel conditions (staged topic addition (R1), migration test harness (R2), RLS allow-list (R3), deprecation path (R4))? Is it ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLDV2-PROMOTE",
+          "text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster D; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLDV2-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLDV2-REVISE",
+          "text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLDV2-REJECT",
+          "text": "REJECT — v2 reveals the v1 problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture (specify the architectural concern)."
+        }
+      ],
+      "draftedKey": "CLDV2-PROMOTE"
+    },
+    {
+      "id": "CL-E-v2",
+      "topic": "Cluster E v2 — Authority-Ceiling Integration. Does v2 resolve the v1 Panel conditions (enforcement authority hierarchy (R1), BaseAgent.guard() ceiling check (R2), EXECUTOR_REGISTRY sibling pattern (R3), mid-request ceiling change (R4))? Is it ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLEV2-PROMOTE",
+          "text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster E; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLEV2-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLEV2-REVISE",
+          "text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLEV2-REJECT",
+          "text": "REJECT — v2 reveals the v1 problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture (specify the architectural concern)."
+        }
+      ],
+      "draftedKey": "CLEV2-PROMOTE"
+    },
+    {
+      "id": "CL-F-v2",
+      "topic": "Cluster F v2 — Model-Budget Fallback. Does v2 resolve the v1 Panel conditions (cost-tier definition (R1), tier-change handling (R2), hierarchical Doppler keys (R3))? Is it ready to promote as canonical?",
+      "options": [
+        {
+          "key": "CLFV2-PROMOTE",
+          "text": "PROMOTE — v2 cleanly resolves all v1 conditions for Cluster F; template is ready to ship as canonical resolution."
+        },
+        {
+          "key": "CLFV2-CONDITIONS",
+          "text": "PROMOTE-WITH-CONDITIONS — v2 resolves the main v1 conditions but the Panel surfaces residual issues that the engineering dispatch should track (specify in rationale, non-blocking)."
+        },
+        {
+          "key": "CLFV2-REVISE",
+          "text": "REVISE — one or more v1 conditions is incompletely addressed, or v2 introduces a new defect that must be fixed before promotion (specify which condition and the defect)."
+        },
+        {
+          "key": "CLFV2-REJECT",
+          "text": "REJECT — v2 reveals the v1 problem cannot be fixed by surgical revisions; the cluster needs a different canonical resolution architecture (specify the architectural concern)."
+        }
+      ],
+      "draftedKey": "CLFV2-PROMOTE"
+    }
+  ],
+  "templates": [
+    {
+      "file": "CLUSTER_A_COST_GOVERNOR_INTEGRATION.md",
+      "cluster": "A",
+      "label": "Cost Governor Integration"
+    },
+    {
+      "file": "CLUSTER_B_DATA_QUALITY_GATE.md",
+      "cluster": "B",
+      "label": "Data Quality Gate"
+    },
+    {
+      "file": "CLUSTER_C_MODE_CONDITIONAL_BEHAVIOR.md",
+      "cluster": "C",
+      "label": "Mode-Conditional Behavior"
+    },
+    {
+      "file": "CLUSTER_D_AUDIT_LOG_TOPIC_SCHEMA.md",
+      "cluster": "D",
+      "label": "Audit-Log Topic Schema"
+    },
+    {
+      "file": "CLUSTER_E_AUTHORITY_CEILING_INTEGRATION.md",
+      "cluster": "E",
+      "label": "Authority-Ceiling Integration"
+    },
+    {
+      "file": "CLUSTER_F_MODEL_BUDGET_FALLBACK.md",
+      "cluster": "F",
+      "label": "Model-Budget Fallback"
+    }
+  ]
+}

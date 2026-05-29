@@ -3,12 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import ManualTracker from '@/components/operations/ManualTracker';
 import SessionInputPanel from '@/components/operations/SessionInputPanel';
 import StepResultPanel from '@/components/operations/StepResultPanel';
 import SessionContextBanner from '@/components/operations/SessionContextBanner';
-import { STEPS, buildStepPrompt, fetchPageContext } from '@/lib/operationsEngine';
+import { STEPS, buildStepPrompt, fetchPageContext, researchViaApi, invokeLlmViaApi } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
 import {
@@ -116,11 +115,38 @@ export default function ManualStep() {
     setShowAiPanel(true);
     try {
       const inp = cfg.inputs[0];
-      const pageContext = await fetchPageContext(inp, base44);
-      const prompt = buildStepPrompt(stepMeta.key, inp, cfg.multiMode, cfg.inputs, pageContext, cfg.objective);
-      const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
-      const output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
-      setAiResult({ full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') });
+
+      // ── Research step: prefer Vercel-side /api/research-url when available ──
+      // On Vercel, base44.integrations.Core.InvokeLLM has no backend and 404s.
+      // /api/research-url runs Browserless + Claude server-side and returns
+      // { ok: true, analysis: <brief text>, page: {...}, ... } on success.
+      // researchViaApi returns null on any non-success; we then fall through
+      // to the existing InvokeLLM path so Base44 deployments keep working.
+      let usedResearchApi = false;
+      if (stepMeta.key === 'research' && inp?.type === 'url') {
+        const apiResult = await researchViaApi(inp.value, cfg.objective, session?.id);
+        if (apiResult && typeof apiResult.analysis === 'string' && apiResult.analysis.length > 0) {
+          const output = apiResult.analysis;
+          setAiResult({
+            full_output: output,
+            summary: output.slice(0, 120).replace(/\n/g, ' '),
+            _researchSource: 'api',
+          });
+          usedResearchApi = true;
+        }
+      }
+
+      if (!usedResearchApi) {
+        const pageContext = await fetchPageContext(inp, base44);
+        const prompt = buildStepPrompt(stepMeta.key, inp, cfg.multiMode, cfg.inputs, pageContext, cfg.objective);
+        // API-first via /api/llm-step; fall back to base44 InvokeLLM on null.
+        let output = await invokeLlmViaApi(prompt, { sessionId: session?.id, endpoint: `/api/llm-step:${stepMeta.key}` });
+        if (!output) {
+          const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
+          output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
+        }
+        setAiResult({ full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') });
+      }
     } catch (e) {
       setAiError(e.message);
     }

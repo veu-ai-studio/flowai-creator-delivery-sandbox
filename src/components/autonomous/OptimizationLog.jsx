@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
 const CAT_COLOR = {
   cost: 'text-emerald-400', performance: 'text-blue-400',

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { VEU_PRODUCTS } from '@/lib/veuProducts';
+import { loadSyntheticPrompt } from '@/lib/syntheticPromptLoader';
 import { Button } from '@/components/ui/button';
 import Tooltip from '@/components/ui/Tooltip';
 import CopyButton from '@/components/gtm/CopyButton';
@@ -107,10 +108,25 @@ export default function DemoGenerator() {
     }
     setDemos(prev => ({ ...prev, [product.name]: record }));
 
-    // Use custom prompt for custom products, pre-loaded prompt for VEU products
+    // Use custom prompt for custom products; load from non-public source for VEU products
+    // (synthetic prompts intentionally not stored in the public repo per W0 IP-hygiene).
     const syntheticPrompt = product.is_custom
       ? buildCustomSyntheticPrompt(product)
-      : product.synthetic_prompt;
+      : loadSyntheticPrompt(product.slug || product.name?.toLowerCase());
+
+    // Fail closed when the synthetic prompt isn't available (env var not set
+    // on this deploy). Avoids passing null to the LLM call.
+    if (!syntheticPrompt) {
+      const failedAt = new Date().toISOString();
+      try {
+        await base44.entities.DemoEnvironment.update(record.id, {
+          demo_status: 'failed', updated_at: failedAt,
+        });
+      } catch { /* swallow — best-effort status update */ }
+      setDemos(prev => ({ ...prev, [product.name]: { ...record, demo_status: 'failed', updated_at: failedAt } }));
+      setGenerating(prev => ({ ...prev, [product.name]: 0 }));
+      return;
+    }
 
     // ── STEP 1: Synthetic data ────────────────────────────
     const syntheticRawBase = await base44.integrations.Core.InvokeLLM({

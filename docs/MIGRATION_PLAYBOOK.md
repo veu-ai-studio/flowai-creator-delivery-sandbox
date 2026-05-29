@@ -1,6 +1,6 @@
 # VEU AI Studio — Universal Migration Playbook
 
-This playbook is the standard sequence VEU AI Studio runs every time a portfolio product migrates to the four-tier demo standard. It applies to SAIGE, PressAI, MyBirthSafe, RelTwin, ReachSMS, and any future products.
+This playbook is the standard sequence VEU AI Studio runs every time a portfolio product migrates to the four-tier demo standard. It applies to SAIGE, PressAI, MyPregLife, RelTwin, ReachSMS, and any future products.
 
 **The four-tier demo standard:** every VEU product lives at one canonical domain serving four tiers from the same root:
 1. **Live** — the real authenticated product (root or `/`)
@@ -31,7 +31,7 @@ Standard approach for any product where a legacy demo or marketing domain exists
 Run an inventory. For each product, surface:
 
 - Domains the product has been served at historically
-- Subdomains under `*.base44.app` from prior platform iterations
+- Subdomains under prior-platform vendor URLs (where applicable)
 - Any `*.demo.veu.ai` / `*-demo.com` / `*-public.com` style aliases
 - Marketing or campaign-specific domains
 - Domains referenced in any partnership materials, press releases, or pitch decks
@@ -191,7 +191,7 @@ Source of truth: [`/api/_lib/productDomains.js`](../api/_lib/productDomains.js)
 |---|---|---|---|---|
 | **SAIGE** | `saigedemo.com` | `saigeplatform.com` | `saigedemo.com → /live-demo` | Cutover planned — see [`saige-cutover-plan.md`](audits/saige-cutover-plan.md) |
 | **PressAI** | `ourpublishingai.com` | TBD | none captured | Decision pending — Victor |
-| **MyBirthSafe** | `safe-path.base44.app` | TBD | none captured | Pre-launch — restore from error state first |
+| **MyPregLife** | _(internal — see registry)_ | TBD | none captured | Pre-launch — restore from error state first |
 | **RelTwin** | unknown | TBD | none captured | URL confirmation pending — Victor |
 | **ReachSMS** | unknown | TBD | none captured | URL confirmation pending — Victor |
 
@@ -242,5 +242,5 @@ server {
 ## Open questions queued for Victor
 
 - **PressAI domain strategy:** Is `ourpublishingai.com` the canonical going forward, or migrating to a new domain (e.g., `pressai.com` if available)? Decision affects whether legacy redirect work applies.
-- **MyBirthSafe:** Once the Base44 app is restored, which domain is canonical going forward? Today's `safe-path.base44.app` is functional but reads as a placeholder.
+- **MyPregLife:** Once the staging deployment is restored, which domain is canonical going forward? The current host (see registry) is functional but reads as a placeholder.
 - **RelTwin / ReachSMS:** Confirm canonical URLs so cutover plans can be drafted.

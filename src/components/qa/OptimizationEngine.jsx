@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { TrendingUp, TrendingDown, RefreshCw, Target, CheckCircle2, AlertCircle, Minus } from 'lucide-react';
+import { RefreshCw, Target, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const PHASE = 'Phase 1 — Optimization Engine';
 

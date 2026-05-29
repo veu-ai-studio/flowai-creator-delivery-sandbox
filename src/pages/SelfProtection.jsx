@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Shield, ShieldCheck, ShieldAlert, Loader2, RefreshCw,
+  Shield, ShieldCheck, ShieldAlert, Loader2,
   Lock, Eye, EyeOff, AlertTriangle, CheckCircle2, Bot,
   Fingerprint, Zap, Globe
 } from 'lucide-react';

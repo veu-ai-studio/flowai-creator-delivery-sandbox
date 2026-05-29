@@ -138,7 +138,7 @@ export const VEU_STACKS = {
     Payments: ['Stripe'],
     Governance: ['FlowAI'],
   },
-  MyBirthSafe: {
+  MyPregLife: {
     Build: ['Base44'],
     Database: ['Supabase'],
     Deployment: ['Railway'],

@@ -1,8 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileJson, FileText, CheckCircle2, AlertTriangle, X, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
 
 export default function BulkUploadTool({ onImported }) {
   const [dragging, setDragging] = useState(false);

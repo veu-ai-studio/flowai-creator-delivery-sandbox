@@ -1,0 +1,657 @@
+{
+  "schema": "productssot-v2-q4.sidecar.v1",
+  "startedAt": "2026-05-17T07:23:03.840Z",
+  "finishedAt": "2026-05-17T07:25:34.259Z",
+  "audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "amazon": 1,
+      "google": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "bundle_size": 56311,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 0,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 56311
+  },
+  "tally": {
+    "engagedTotal": 9,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 0,
+    "perQuestion": {
+      "PS-Q4": {
+        "PSQ4-Y": 2,
+        "PSQ4-N": 0,
+        "PSQ4-HYBRID": 4,
+        "PSQ4-DIFF": 0,
+        "REJECT": 3,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 33,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Unbounded jsonb array growth",
+        "detail": "§2.1 delta_log[] and governance_record[] are append-only jsonb arrays with no retention policy or archival mechanism. A product with 365 daily runs accumulates thousands of entries, degrading query performance and making the 'one row per product+environment' design a liability."
+      },
+      {
+        "slot": 1,
+        "title": "Hash chain verification gap",
+        "detail": "§3.1 computes this_hash during write but §8 criterion #6 only verifies nightly. A corrupted hash chain could persist for up to 24 hours before detection, and the spec provides no remediation path when divergence is found."
+      },
+      {
+        "slot": 1,
+        "title": "Concurrent write serialization failure",
+        "detail": "§8 criterion #3 acknowledges concurrent writes may abort with serialization_failure but provides no retry logic or queue mechanism. High-traffic products could see frequent write failures during peak Self-Renewal hours."
+      },
+      {
+        "slot": 1,
+        "title": "Override revocation creates infinite loops",
+        "detail": "§9 Q4 Option Y's 'revoke = new override with replacementContent' means revoking a revocation creates a third override. There's no mechanism to prevent oscillating override chains or to determine the 'true' original value after multiple revocations."
+      },
+      {
+        "slot": 2,
+        "title": "Atomicity interpretation issues",
+        "detail": "The proposal uses a saga pattern for atomicity (§3.2), which may lead to inconsistencies if compensating actions fail. This could result in partial updates that are difficult to reconcile, especially if external systems like Vercel fail after the database transaction commits."
+      },
+      {
+        "slot": 2,
+        "title": "RLS policy complexity",
+        "detail": "The split into three explicit per-role policies (§4.6) increases complexity and potential for misconfiguration. This could lead to unauthorized access or denial of access to legitimate users, impacting data security and usability."
+      },
+      {
+        "slot": 2,
+        "title": "Cost implications of re-assessment crawl",
+        "detail": "The re-assessment crawl adds significant cost per Self-Renewal cycle (§7.1), which could become prohibitive as the number of products and environments scales. This might deter adoption or lead to budget overruns."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of rollback",
+        "detail": "The proposal does not provide a clear rollback strategy in case of failures during the atomic write transaction, which could lead to data inconsistencies and errors. Specifically, §3.1 does not specify how to handle failures during the transaction."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient RLS",
+        "detail": "The RLS policies defined in §4.6 may not be sufficient to prevent unauthorized access to the ProductSSOT data, as they rely on the `auth.jwt()` function which may be vulnerable to tampering or spoofing. Additionally, the policies do not account for potential conflicts between different roles or users."
+      },
+      {
+        "slot": 3,
+        "title": "Inadequate testing",
+        "detail": "The acceptance criteria defined in §8 may not be comprehensive enough to ensure the correct functioning of the ProductSSOT system, as they do not cover all possible scenarios or edge cases. For example, the criteria do not test the behavior of the system in case of concurrent updates or failures during the atomic write transaction."
+      },
+      {
+        "slot": 4,
+        "title": "Complexity in Self-Governance",
+        "detail": "The Self-Governance Layer introduces multiple components that need to interact seamlessly. The Self-Test component, for instance, requires a scheduledSelfTest that might conflict with other scheduled tasks, leading to resource contention. The Self-Audit component's five-dimension scoring engine adds complexity, especially with the introduction of the Security Posture dimension, which could lead to false positives and unnecessary Self-Protection triggers."
+      },
+      {
+        "slot": 4,
+        "title": "Risk of Self-Protection Rollback",
+        "detail": "The Self-Protect component's snapshot and rollback mechanism before any state mutation is critical but risky. If the rollback mechanism fails or is improperly triggered, it could lead to data loss or inconsistent states. The proposal does not detail the failure recovery process for the rollback mechanism."
+      },
+      {
+        "slot": 4,
+        "title": "Human Gates Bottleneck",
+        "detail": "The four Human Gates introduce potential bottlenecks in the system. The Approval gate, for instance, requires elevated roles for overrides, which could delay critical decisions. The Testing gate's re-fix and escalate options add complexity and potential delays in the approval process."
+      },
+      {
+        "slot": 5,
+        "title": "Complexity of Append-Only",
+        "detail": "The append-only model for overrides (§3 + §13.1) adds complexity to the system, as it requires maintaining a full history of changes, which can lead to performance issues and increased storage requirements over time."
+      },
+      {
+        "slot": 5,
+        "title": "UI Friendliness",
+        "detail": "The append-only model may not be as user-friendly as the UPDATE-with-revision model, as it does not provide a consolidated view of an override's history, potentially leading to confusion for operators."
+      },
+      {
+        "slot": 5,
+        "title": "RLS Policy Complexity",
+        "detail": "The append-only model may complicate the implementation of RLS policies, as it requires handling each override as a separate entry, which could lead to more complex policy definitions and potential security risks."
+      },
+      {
+        "slot": 6,
+        "title": "RLS complexity",
+        "detail": "The RLS policies in §4.6, while seemingly straightforward, introduce significant complexity. The OR-combined policies, while semantically equivalent to the prior single policy, are harder to reason about and debug. Misconfiguration could lead to unintended data access or denial of service."
+      },
+      {
+        "slot": 6,
+        "title": "Saga pattern risks",
+        "detail": "The saga pattern in §3.2, while pragmatic, introduces potential inconsistencies. If the post-commit side effects (Stage C) fail, the system logs the error but doesn't roll back the transaction. This could lead to a state where the ProductSSOT is updated, but the operator isn't notified or the UI isn't updated, leading to confusion and potential errors."
+      },
+      {
+        "slot": 6,
+        "title": "Cost estimation uncertainty",
+        "detail": "The cost estimation in §7.1 for the re-assessment crawl is highly variable (~$0.30 – $2.00). This wide range makes it difficult to accurately budget for the feature and could lead to unexpected cost overruns if the actual cost trends towards the higher end of the estimate. The reliance on external services like Browserless and Anthropic introduces further uncertainty."
+      },
+      {
+        "slot": 6,
+        "title": "Version monotonicity enforcement",
+        "detail": "§3.3 states that version monotonicity is enforced by the write contract, not by SQL. This relies on application-level logic to prevent race conditions and ensure correct versioning. While the acceptance criteria include a test for this, relying on application logic instead of database constraints increases the risk of data corruption or inconsistencies."
+      },
+      {
+        "slot": 7,
+        "title": "Saga leaves unverified deployments",
+        "detail": "§3.2's saga pattern risks leaving live deployments in 'unverified' states if SSOT writes fail. This violates §7's output contract atomicity principle, as users could interact with functionally deployed but unrecorded products. The lack of auto-undeploy creates security drift where ProductSSOT diverges from reality."
+      },
+      {
+        "slot": 7,
+        "title": "RLS policy bypass risk",
+        "detail": "§3.4 service-role writes bypass RLS without org-scoped validation. A compromised service role could inject cross-org data into any ProductSSOT row. The absence of product-org linkage checks during writes contradicts §4.6's read isolation guarantees."
+      },
+      {
+        "slot": 7,
+        "title": "Unbounded override accumulation",
+        "detail": "§4.4's append-only overrides lack expiry mechanisms. Indefinite overrides in governance_record could mask recurring issues (e.g., suppressed security scores), violating §10.2's reconciliation principle where issues must be resolved, not perpetually overridden."
+      },
+      {
+        "slot": 7,
+        "title": "Cost scaling blindspot",
+        "detail": "§7.1's $0.30-$2.00/run cost assumes static product volume. At 50 products with daily cycles, annual costs hit $11k-$73k with no dynamic throttling (e.g., cadence adjustment for low-priority products). This violates §7.6's cost governance intent."
+      },
+      {
+        "slot": 8,
+        "title": "Append-only is underspecified",
+        "detail": "§9 Q4 is still explicitly marked OPEN, but §3 and §13.1 act as if append-only is already canonical. That creates a governance mismatch: implementers are told not to build revoke/revision UI until Q4 lands, yet the core write contract and data model already bake in one interpretation without settling the unresolved semantic question."
+      },
+      {
+        "slot": 8,
+        "title": "Version rows conflate concerns",
+        "detail": "§2.2 `product_ssot_version` stores both immutable snapshots and operational metadata like `write_kind`, `written_by`, and the derived hash chain. That mixes audit, provenance, and state capture into one artifact, which makes later correction or replay logic brittle if the canonical meaning of an override changes or if a write is partially synthesized from multiple sources."
+      },
+      {
+        "slot": 8,
+        "title": "RLS and admin overrides conflict",
+        "detail": "§4.4 says admin annotations + overrides must be honoured as CEO-equivalent directives, but §3.4 and §4.6 separately restrict direct table writes and rely on server-side functions. The proposal never defines whether an operator-visible override is read-time interpretation, write-time mutation, or both, so different services can easily diverge on whether an override is active."
+      },
+      {
+        "slot": 9,
+        "title": "Append-only override semantics may lead to unbounded growth",
+        "detail": "§3 and §13.1 specify append-only semantics for overrides, which could result in unbounded growth in the `overrides[]` jsonb array. This may impact performance and storage requirements."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of explicit override revocation mechanism",
+        "detail": "The proposal relies on appending a new override entry to 'revoke' an existing one (§9 Q4). This may lead to confusion and potential inconsistencies if not properly handled by the UI and downstream consumers."
+      },
+      {
+        "slot": 9,
+        "title": "RLS policies may not be robust against concurrent writes",
+        "detail": "§4.6 defines RLS policies for `product_ssot`, but there is a risk of concurrent writes causing inconsistencies or policy violations if not properly synchronized."
+      },
+      {
+        "slot": 10,
+        "title": "§3.2 saga omits external failure compensation",
+        "detail": "The three-stage saga table in §3.2 defines compensating actions only for Postgres txn failure (mark unverified) but provides no handler for Vercel deploy succeeding while delta report file write fails; this leaves the run in a half-cleared state where ClearanceRecord Step 6 can still pass despite missing §7 item #3 source disclosure."
+      },
+      {
+        "slot": 10,
+        "title": "§4.6 RLS policies share mutable predicate",
+        "detail": "All three org-scoped policies duplicate the identical `exists (select 1 from products p where p.id = product_ssot.product_id and p.org_id = ...)` subquery; any future change to the products RLS or JWT claim shape requires coordinated edits across four policies with no single source of truth or test macro."
+      },
+      {
+        "slot": 10,
+        "title": "§7.1 re-assessment cost bound unenforced",
+        "detail": "The $0.30–$2.00 per-cycle estimate and $15/run ceiling are stated as design assumptions but no mechanism (token counter, Browserless quota guard, or §10 Self-Protect integration) is wired to actually cap or reject runs that would exceed them once Agent #21 Aggressive Crawl is active."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "PS-Q4": {
+      "verdict": "PLURALITY_PSQ4-HYBRID",
+      "detail": "4 of 9 on PSQ4-HYBRID (below 7/10 quorum)",
+      "topKey": "PSQ4-HYBRID",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.2222222222222222,
+    "alignedCount": 2,
+    "totalPossible": 9,
+    "draftedQs": [
+      "PS-Q4"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 22.2 %, distinct objections 33"
+  },
+  "ratification": {
+    "status": "NOT_RATIFIED",
+    "headline": "§9 Q4 lacks clear Panel majority — append-only-vs-UPDATE-with-revision unresolved.",
+    "conditions": [
+      {
+        "qId": "PS-Q4",
+        "topic": "ProductSSOT §9 Q4 — override semantics. Option Y (append-only, current §3 + §13.1): every mutation appends a NEW override entry; \"revoke\" = new entry with replacementContent. Option N (UPDATE-with-revision): each override is a top-level entry with a `revisions[]` sub-array; \"revoke\" = append to that array, current state = LAST revision. Which semantics is canonical for ProductSSOT override mutation?",
+        "verdict": "PLURALITY_PSQ4-HYBRID",
+        "draftedKey": "PSQ4-Y",
+        "detail": "4 of 9 on PSQ4-HYBRID (below 7/10 quorum)"
+      }
+    ],
+    "alternativeWins": []
+  },
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Unbounded jsonb array growth",
+            "detail": "§2.1 delta_log[] and governance_record[] are append-only jsonb arrays with no retention policy or archival mechanism. A product with 365 daily runs accumulates thousands of entries, degrading query performance and making the 'one row per product+environment' design a liability."
+          },
+          {
+            "title": "Hash chain verification gap",
+            "detail": "§3.1 computes this_hash during write but §8 criterion #6 only verifies nightly. A corrupted hash chain could persist for up to 24 hours before detection, and the spec provides no remediation path when divergence is found."
+          },
+          {
+            "title": "Concurrent write serialization failure",
+            "detail": "§8 criterion #3 acknowledges concurrent writes may abort with serialization_failure but provides no retry logic or queue mechanism. High-traffic products could see frequent write failures during peak Self-Renewal hours."
+          },
+          {
+            "title": "Override revocation creates infinite loops",
+            "detail": "§9 Q4 Option Y's 'revoke = new override with replacementContent' means revoking a revocation creates a third override. There's no mechanism to prevent oscillating override chains or to determine the 'true' original value after multiple revocations."
+          }
+        ],
+        "worse_than_status_quo": "Today's silent failures at least complete the pipeline run; with this spec, a transient Postgres connectivity issue during §3.1's atomic write marks the entire run INCOMPLETE and potentially undeploys a working fix, making the system less reliable than status quo.",
+        "precedent": "Kubernetes ConfigMap revision history faced similar unbounded-growth issues with append-only changes, leading to the introduction of revisionHistoryLimit to prevent resource exhaustion."
+      },
+      "rejection_steelman": "This spec introduces a single point of failure (ProductSSOT write) that can halt all pipeline runs, while providing no operational tooling for the inevitable issues: pruning unbounded arrays, repairing hash chain divergence, or handling write contention. The implementation should be deferred until these operational concerns are addressed with concrete limits, archival strategies, and failure recovery paths.",
+      "votes": {
+        "PS-Q4": {
+          "key": "PSQ4-HYBRID",
+          "pick_text": "Hybrid — db layer stays append-only (product_ssot_version preserves every mutation as a new row), but the `/product-ssot/:productId` UI synthesises an UPDATE-with-revision VIEW from the append-only log. DB is the audit truth, UI is the operator ergonomics.",
+          "rationale": "This preserves the audit integrity requirement while avoiding the UI confusion of multiple override entries for the same target, and doesn't require complex UPDATE semantics on jsonb arrays."
+        }
+      },
+      "overallNotes": "The spec's atomic-write-or-rollback design creates more operational risk than it mitigates, especially without bounded array sizes or write queue management.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Atomicity interpretation issues",
+            "detail": "The proposal uses a saga pattern for atomicity (§3.2), which may lead to inconsistencies if compensating actions fail. This could result in partial updates that are difficult to reconcile, especially if external systems like Vercel fail after the database transaction commits."
+          },
+          {
+            "title": "RLS policy complexity",
+            "detail": "The split into three explicit per-role policies (§4.6) increases complexity and potential for misconfiguration. This could lead to unauthorized access or denial of access to legitimate users, impacting data security and usability."
+          },
+          {
+            "title": "Cost implications of re-assessment crawl",
+            "detail": "The re-assessment crawl adds significant cost per Self-Renewal cycle (§7.1), which could become prohibitive as the number of products and environments scales. This might deter adoption or lead to budget overruns."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to increased operator-visible failure rates due to previously silent errors becoming visible, causing confusion and potential operational disruptions.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and cost, particularly with the saga pattern for atomicity and the re-assessment crawl. These could lead to operational inefficiencies and budget overruns, suggesting a need for further simplification or cost analysis before implementation.",
+      "votes": {
+        "PS-Q4": {
+          "key": "PSQ4-HYBRID",
+          "pick_text": "Hybrid — db layer stays append-only (product_ssot_version preserves every mutation as a new row), but the `/product-ssot/:productId` UI synthesises an UPDATE-with-revision VIEW from the append-only log. DB is the audit truth, UI is the operator ergonomics.",
+          "rationale": "This option balances audit trail integrity with UI usability, providing a clear audit log while offering a user-friendly interface for operators."
+        }
+      },
+      "overallNotes": "The proposal's complexity and cost implications warrant careful consideration and potential simplification.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of rollback",
+            "detail": "The proposal does not provide a clear rollback strategy in case of failures during the atomic write transaction, which could lead to data inconsistencies and errors. Specifically, §3.1 does not specify how to handle failures during the transaction."
+          },
+          {
+            "title": "Insufficient RLS",
+            "detail": "The RLS policies defined in §4.6 may not be sufficient to prevent unauthorized access to the ProductSSOT data, as they rely on the `auth.jwt()` function which may be vulnerable to tampering or spoofing. Additionally, the policies do not account for potential conflicts between different roles or users."
+          },
+          {
+            "title": "Inadequate testing",
+            "detail": "The acceptance criteria defined in §8 may not be comprehensive enough to ensure the correct functioning of the ProductSSOT system, as they do not cover all possible scenarios or edge cases. For example, the criteria do not test the behavior of the system in case of concurrent updates or failures during the atomic write transaction."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's introduction of a new atomic write transaction and RLS policies may actually make the system more complex and prone to errors, potentially leading to a worse outcome than the current status quo where pipeline runs silently complete without writing to ProductSSOT.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal's lack of a clear rollback strategy, insufficient RLS policies, and inadequate testing make it difficult to ensure the correct functioning of the ProductSSOT system. Therefore, it may be prudent to reject or defer the proposal until these issues are addressed.",
+      "votes": {
+        "PS-Q4": {
+          "key": "PSQ4-Y",
+          "pick_text": "Y / Append-only — every mutation is a new row; revoke = new override entry with replacementContent.",
+          "rationale": "This option provides the simplest audit trail and cleanest RLS WITH CHECK semantics, making it the most appealing choice."
+        }
+      },
+      "overallNotes": "The proposal requires further refinement to address the identified objections and ensure the correct functioning of the ProductSSOT system.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity in Self-Governance",
+            "detail": "The Self-Governance Layer introduces multiple components that need to interact seamlessly. The Self-Test component, for instance, requires a scheduledSelfTest that might conflict with other scheduled tasks, leading to resource contention. The Self-Audit component's five-dimension scoring engine adds complexity, especially with the introduction of the Security Posture dimension, which could lead to false positives and unnecessary Self-Protection triggers."
+          },
+          {
+            "title": "Risk of Self-Protection Rollback",
+            "detail": "The Self-Protect component's snapshot and rollback mechanism before any state mutation is critical but risky. If the rollback mechanism fails or is improperly triggered, it could lead to data loss or inconsistent states. The proposal does not detail the failure recovery process for the rollback mechanism."
+          },
+          {
+            "title": "Human Gates Bottleneck",
+            "detail": "The four Human Gates introduce potential bottlenecks in the system. The Approval gate, for instance, requires elevated roles for overrides, which could delay critical decisions. The Testing gate's re-fix and escalate options add complexity and potential delays in the approval process."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of the Self-Governance Layer could lead to increased complexity and potential bottlenecks, making the system less efficient and more prone to failures compared to the current status quo.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity with the Self-Governance Layer, which includes multiple interacting components and human gates that could lead to bottlenecks and delays. The rollback mechanism in the Self-Protect component is critical but risky, and the proposal lacks details on failure recovery. Given these risks, it would be prudent to defer the proposal until these issues are addressed.",
+      "votes": {
+        "PS-Q4": {
+          "key": "PSQ4-Y",
+          "pick_text": "Y / Append-only — every mutation is a new row; revoke = new override entry with replacementContent. Simpler audit (every change → new product_ssot_version row), matches §28.3's \"audit trail preserved\" verbatim; cleanest RLS WITH CHECK semantics.",
+          "rationale": "This option ensures a clear audit trail and simpler RLS WITH CHECK semantics, which is crucial for maintaining data integrity and compliance."
+        }
+      },
+      "overallNotes": "The proposal has merits but introduces complexities that need to be carefully managed to avoid potential bottlenecks and system failures.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complexity of Append-Only",
+            "detail": "The append-only model for overrides (§3 + §13.1) adds complexity to the system, as it requires maintaining a full history of changes, which can lead to performance issues and increased storage requirements over time."
+          },
+          {
+            "title": "UI Friendliness",
+            "detail": "The append-only model may not be as user-friendly as the UPDATE-with-revision model, as it does not provide a consolidated view of an override's history, potentially leading to confusion for operators."
+          },
+          {
+            "title": "RLS Policy Complexity",
+            "detail": "The append-only model may complicate the implementation of RLS policies, as it requires handling each override as a separate entry, which could lead to more complex policy definitions and potential security risks."
+          }
+        ],
+        "worse_than_status_quo": "If the append-only model is implemented without careful consideration of performance and storage implications, it could lead to a system that is less efficient and more costly to maintain than the current status quo.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The append-only model for overrides, while simpler for audit purposes, may introduce unnecessary complexity and costs to the system, and could be less user-friendly than alternative models. Therefore, it may be prudent to reconsider the UPDATE-with-revision model or explore a hybrid approach that balances auditability with operational efficiency.",
+      "votes": {
+        "PS-Q4": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The current options do not adequately address the concerns raised by the append-only model, and a more balanced approach may be necessary."
+        }
+      },
+      "overallNotes": "The proposal requires further consideration of the trade-offs between auditability, performance, and user experience.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:amazon/nova-pro-v1"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "RLS complexity",
+            "detail": "The RLS policies in §4.6, while seemingly straightforward, introduce significant complexity. The OR-combined policies, while semantically equivalent to the prior single policy, are harder to reason about and debug. Misconfiguration could lead to unintended data access or denial of service."
+          },
+          {
+            "title": "Saga pattern risks",
+            "detail": "The saga pattern in §3.2, while pragmatic, introduces potential inconsistencies. If the post-commit side effects (Stage C) fail, the system logs the error but doesn't roll back the transaction. This could lead to a state where the ProductSSOT is updated, but the operator isn't notified or the UI isn't updated, leading to confusion and potential errors."
+          },
+          {
+            "title": "Cost estimation uncertainty",
+            "detail": "The cost estimation in §7.1 for the re-assessment crawl is highly variable (~$0.30 – $2.00). This wide range makes it difficult to accurately budget for the feature and could lead to unexpected cost overruns if the actual cost trends towards the higher end of the estimate. The reliance on external services like Browserless and Anthropic introduces further uncertainty."
+          },
+          {
+            "title": "Version monotonicity enforcement",
+            "detail": "§3.3 states that version monotonicity is enforced by the write contract, not by SQL. This relies on application-level logic to prevent race conditions and ensure correct versioning. While the acceptance criteria include a test for this, relying on application logic instead of database constraints increases the risk of data corruption or inconsistencies."
+          }
+        ],
+        "worse_than_status_quo": "If the atomic write fails due to a transient error (e.g., network blip), the pipeline run is marked as INCOMPLETE, and the Vercel deployment is marked as unverified. This could lead to unnecessary rollbacks and disruptions, even if the underlying product functionality is working correctly, making the system less reliable than the current state where these failures are silent.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity with the saga pattern, RLS policies, and application-level versioning. The cost estimation is uncertain, and the potential for inconsistencies due to post-commit side-effect failures raises concerns about data integrity. Deferring the proposal would allow for further refinement of the design and a more thorough evaluation of the risks and costs.",
+      "votes": {
+        "PS-Q4": {
+          "key": "PSQ4-HYBRID",
+          "pick_text": "Hybrid — db layer stays append-only (product_ssot_version preserves every mutation as a new row), but the `/product-ssot/:productId` UI synthesises an UPDATE-with-revision VIEW from the append-only log. DB is the audit truth, UI is the operator ergonomics.",
+          "rationale": "This option provides the best of both worlds: the append-only database layer ensures a complete audit trail, while the UI provides a more user-friendly experience by presenting the data in an UPDATE-with-revision format. This approach balances data integrity with usability."
+        }
+      },
+      "overallNotes": "The proposal is well-documented and addresses several key gaps. However, the complexity introduced by the saga pattern and RLS policies warrants careful consideration.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:google/gemini-2.0-flash-001"
+    },
+    {
+      "slot": 7,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Saga leaves unverified deployments",
+            "detail": "§3.2's saga pattern risks leaving live deployments in 'unverified' states if SSOT writes fail. This violates §7's output contract atomicity principle, as users could interact with functionally deployed but unrecorded products. The lack of auto-undeploy creates security drift where ProductSSOT diverges from reality."
+          },
+          {
+            "title": "RLS policy bypass risk",
+            "detail": "§3.4 service-role writes bypass RLS without org-scoped validation. A compromised service role could inject cross-org data into any ProductSSOT row. The absence of product-org linkage checks during writes contradicts §4.6's read isolation guarantees."
+          },
+          {
+            "title": "Unbounded override accumulation",
+            "detail": "§4.4's append-only overrides lack expiry mechanisms. Indefinite overrides in governance_record could mask recurring issues (e.g., suppressed security scores), violating §10.2's reconciliation principle where issues must be resolved, not perpetually overridden."
+          },
+          {
+            "title": "Cost scaling blindspot",
+            "detail": "§7.1's $0.30-$2.00/run cost assumes static product volume. At 50 products with daily cycles, annual costs hit $11k-$73k with no dynamic throttling (e.g., cadence adjustment for low-priority products). This violates §7.6's cost governance intent."
+          }
+        ],
+        "worse_than_status_quo": "A Postgres outage during §3.1 transactions causes mass SSOT_WRITE_FAILED errors. Operators overwhelmed by new visibility (§7.2) create hasty overrides to silence alerts, masking genuine deployment issues. Meanwhile, accumulating 'unverified' deployments create undetected attack surfaces worse than today's consistent lack of SSOT.",
+        "precedent": "GitLab's 2017 database outage: a failed write saga left inconsistent deployment states causing prolonged service degradation. Similar partial-commit risks here could create 'unverified' deployment sprawl analogous to GitLab's orphaned artifacts."
+      },
+      "rejection_steelman": "The proposal introduces critical new risks: saga-based atomicity failures could spawn unverified deployments, RLS bypass enables cross-org data leaks, and unbounded override costs may escalate exponentially. Since current pipelines function without SSOT, deferring until true 2PC with Vercel integration exists would prevent systemic integrity erosion.",
+      "votes": {
+        "PS-Q4": {
+          "key": null,
+          "pick_text": "Y / Append-only — every mutation is a new row; revoke = new override entry with replacementContent. Simpler audit (every change → new product_ssot_version row), matches §28.3's 'audit trail preserved' verbatim; cleanest RLS WITH CHECK semantics.",
+          "rationale": "Append-only ensures tamper-evident auditing via product_ssot_version and avoids complex UPDATE semantics that could complicate RLS policies and hash-chain verification."
+        }
+      },
+      "overallNotes": "While necessary, the spec's operational risks warrant phased rollout with aggressive SSOT_WRITE_FAILED monitoring pre-merge.",
+      "invalid_reason": "0/1 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Append-only is underspecified",
+            "detail": "§9 Q4 is still explicitly marked OPEN, but §3 and §13.1 act as if append-only is already canonical. That creates a governance mismatch: implementers are told not to build revoke/revision UI until Q4 lands, yet the core write contract and data model already bake in one interpretation without settling the unresolved semantic question."
+          },
+          {
+            "title": "Version rows conflate concerns",
+            "detail": "§2.2 `product_ssot_version` stores both immutable snapshots and operational metadata like `write_kind`, `written_by`, and the derived hash chain. That mixes audit, provenance, and state capture into one artifact, which makes later correction or replay logic brittle if the canonical meaning of an override changes or if a write is partially synthesized from multiple sources."
+          },
+          {
+            "title": "RLS and admin overrides conflict",
+            "detail": "§4.4 says admin annotations + overrides must be honoured as CEO-equivalent directives, but §3.4 and §4.6 separately restrict direct table writes and rely on server-side functions. The proposal never defines whether an operator-visible override is read-time interpretation, write-time mutation, or both, so different services can easily diverge on whether an override is active."
+          }
+        ],
+        "worse_than_status_quo": "If Q4 is implemented as append-only but the UI or downstream agents assume update-with-revision semantics, a revoked override will remain semantically active in some consumers and inactive in others. That can cause Self-Renewal or Quality Audit to keep applying a stale directive that humans believe they have withdrawn, making the system less safe than the current absence of ProductSSOT overrides.",
+        "precedent": "GitHub issue tracking and audit-log systems commonly prefer immutable append-only history, but a close real-world cautionary example is Kubernetes' admission/mutation model: when policy intent is split across multiple layers, operators often misread whether a change is enforced at write time or only at admission. no precedent known"
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring is that Q4 is still open, so ratifying any concrete override mutation semantics now would effectively pre-decide a disputed governance question. Since overrides directly affect CEO-equivalent directives and downstream agent behavior, a wrong choice could hard-code irreversible workflow assumptions across storage, APIs, and UI before the Panel settles the canonical form. A short deferral would preserve flexibility and avoid shipping an audit model that later needs a disruptive migration.",
+      "votes": {
+        "PS-Q4": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal itself says Q4 is open and defers it to a follow-on Panel cycle, so none of the listed options is fully acceptable as currently specified. The safest vote is to reject until the canonical override semantics are explicitly resolved rather than inferred from conflicting sections."
+        }
+      },
+      "overallNotes": "The spec is much stronger on auditability than on semantic closure; that is exactly why Q4 should not be forced through now. The unresolved override model is not a minor UI detail — it changes enforcement, interpretation, and rollback behavior system-wide.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Append-only override semantics may lead to unbounded growth",
+            "detail": "§3 and §13.1 specify append-only semantics for overrides, which could result in unbounded growth in the `overrides[]` jsonb array. This may impact performance and storage requirements."
+          },
+          {
+            "title": "Lack of explicit override revocation mechanism",
+            "detail": "The proposal relies on appending a new override entry to 'revoke' an existing one (§9 Q4). This may lead to confusion and potential inconsistencies if not properly handled by the UI and downstream consumers."
+          },
+          {
+            "title": "RLS policies may not be robust against concurrent writes",
+            "detail": "§4.6 defines RLS policies for `product_ssot`, but there is a risk of concurrent writes causing inconsistencies or policy violations if not properly synchronized."
+          }
+        ],
+        "worse_than_status_quo": "If the append-only semantics lead to performance issues or storage constraints, the system may become unresponsive or lose data integrity, making it worse than the current status quo where such data is not persisted.",
+        "precedent": "The GitLab database decomposition project faced similar challenges with append-only audit logs, leading to significant storage and performance issues. While their context differs, the principle of managing rapidly growing audit or override data is relevant."
+      },
+      "rejection_steelman": "Rejecting the proposal could be justified if the potential drawbacks of append-only override semantics and the lack of an explicit revocation mechanism are deemed too significant to proceed without further refinement or alternative designs.",
+      "votes": {
+        "PS-Q4": {
+          "key": "PSQ4-HYBRID",
+          "pick_text": "Hybrid — db layer stays append-only (product_ssot_version preserves every mutation as a new row), but the `/product-ssot/:productId` UI synthesises an UPDATE-with-revision VIEW from the append-only log. DB is the audit truth, UI is the operator ergonomics.",
+          "rationale": "This approach balances the need for audit trail preservation with operator ergonomics, providing a viable compromise between the append-only and UPDATE-with-revision semantics."
+        }
+      },
+      "overallNotes": "The proposal is well-structured, but careful consideration of the override semantics and potential performance implications is necessary.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§3.2 saga omits external failure compensation",
+            "detail": "The three-stage saga table in §3.2 defines compensating actions only for Postgres txn failure (mark unverified) but provides no handler for Vercel deploy succeeding while delta report file write fails; this leaves the run in a half-cleared state where ClearanceRecord Step 6 can still pass despite missing §7 item #3 source disclosure."
+          },
+          {
+            "title": "§4.6 RLS policies share mutable predicate",
+            "detail": "All three org-scoped policies duplicate the identical `exists (select 1 from products p where p.id = product_ssot.product_id and p.org_id = ...)` subquery; any future change to the products RLS or JWT claim shape requires coordinated edits across four policies with no single source of truth or test macro."
+          },
+          {
+            "title": "§7.1 re-assessment cost bound unenforced",
+            "detail": "The $0.30–$2.00 per-cycle estimate and $15/run ceiling are stated as design assumptions but no mechanism (token counter, Browserless quota guard, or §10 Self-Protect integration) is wired to actually cap or reject runs that would exceed them once Agent #21 Aggressive Crawl is active."
+          }
+        ],
+        "worse_than_status_quo": "Making SSOT_WRITE_FAILED visible will convert today's silent bypasses into frequent ERROR verdicts on every transient Postgres blip or hash-chain mismatch, causing more pipeline runs to be marked INCOMPLETE and requiring manual re-trigger than the current zero-visibility status quo.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The six-block jsonb-plus-saga design adds substantial operational surface (hash-chain verification, version monotonicity under concurrency, four-way RLS duplication) while the only concrete benefit cited is preserving §7.5 living-document semantics that could be achieved with a simpler append-only event log table; until the open Q4 override semantics and the missing cost-guard implementation are resolved, the spec risks locking in an over-engineered substrate that later waves must carry.",
+      "votes": {
+        "PS-Q4": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "All four listed shapes either overload the overrides[] array or require UPDATE-in-place; none addresses the need for a first-class revocation entry type that can be independently RLS-gated and cross-referenced from delta_log without polluting the primary override history."
+        }
+      },
+      "overallNotes": "Objections focus exclusively on §3, §4 and §7 surfaces named in the proposal text.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "PS-Q4",
+      "topic": "ProductSSOT §9 Q4 — override semantics. Option Y (append-only, current §3 + §13.1): every mutation appends a NEW override entry; \"revoke\" = new entry with replacementContent. Option N (UPDATE-with-revision): each override is a top-level entry with a `revisions[]` sub-array; \"revoke\" = append to that array, current state = LAST revision. Which semantics is canonical for ProductSSOT override mutation?",
+      "options": [
+        {
+          "key": "PSQ4-Y",
+          "text": "Y / Append-only — every mutation is a new row; revoke = new override entry with replacementContent. Simpler audit (every change → new product_ssot_version row), matches §28.3's \"audit trail preserved\" verbatim; cleanest RLS WITH CHECK semantics."
+        },
+        {
+          "key": "PSQ4-N",
+          "text": "N / UPDATE-with-revision — each override is one top-level entry with revisions[] sub-array; revoke = append to revisions[]. Friendlier UI (single revision-history pane per override), avoids duplicate-key sprawl in the overrides[] jsonb."
+        },
+        {
+          "key": "PSQ4-HYBRID",
+          "text": "Hybrid — db layer stays append-only (product_ssot_version preserves every mutation as a new row), but the `/product-ssot/:productId` UI synthesises an UPDATE-with-revision VIEW from the append-only log. DB is the audit truth, UI is the operator ergonomics."
+        },
+        {
+          "key": "PSQ4-DIFF",
+          "text": "Different shape entirely — revoke is its own first-class operation (e.g. an `overrideRevocations[]` jsonb that points at active overrides by id), not a synthetic \"new override that restores the original\". Avoids overloading the override entry with two semantics."
+        }
+      ],
+      "draftedKey": "PSQ4-Y"
+    }
+  ]
+}

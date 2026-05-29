@@ -1,0 +1,12 @@
+{
+  "version": "readiness.v1",
+  "_note": "Primary-mode readiness rubric. Mirrors ../readiness.json. Used by the primary scoring engine for all agents except Agent #8.",
+  "criteria": [
+    { "id": "rdy.functional",         "weight": 30, "label": "Functional correctness",            "description": "Target passes its test suite and produces expected outputs." },
+    { "id": "rdy.failure_handling",   "weight": 20, "label": "Failure mode handling",             "description": "Injected failures handled without data corruption or silent drops." },
+    { "id": "rdy.performance",        "weight": 15, "label": "Performance under realistic load",  "description": "p50 and p95 latency within SLA. Resource usage bounded." },
+    { "id": "rdy.observability",      "weight": 15, "label": "Observability sufficient for ops",  "description": "Metrics emitted to #10 Monitor. Errors structured." },
+    { "id": "rdy.documentation",      "weight": 10, "label": "Documentation present and accurate","description": "Charter published. Inputs/outputs documented. Limitations listed." },
+    { "id": "rdy.dependencies",       "weight": 10, "label": "Dependencies declared and healthy", "description": "Credentials + marketplace tools present and responding." }
+  ]
+}

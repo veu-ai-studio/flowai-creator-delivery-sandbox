@@ -4,8 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Globe, RefreshCw, Loader2, CheckCircle2, AlertCircle,
-  Copy, Check, GitCompare, Plus, Pencil, Save, X
+  Globe, RefreshCw, Loader2, AlertCircle,
+  Copy, Check, GitCompare, Pencil, Save, X
 } from 'lucide-react';
 
 const PILOT_PRODUCTS = [
@@ -13,7 +13,7 @@ const PILOT_PRODUCTS = [
   { product_name: 'PressAI',     dev_url: 'https://pressai1.base44.app', prod_url: '' },
   { product_name: 'ReachSMS',    dev_url: 'https://reachsms.base44.app', prod_url: '' },
   { product_name: 'RelTwin',     dev_url: 'https://reltwin.com',         prod_url: '' },
-  { product_name: 'MyBirthSafe', dev_url: 'https://mybirthsafe.base44.app', prod_url: '' },
+  { product_name: 'MyPregLife', dev_url: 'https://mypreglife.base44.app', prod_url: '' },
 ];
 
 const SYNC_COLORS = {

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import {
   Loader2, CheckCircle2, AlertCircle, Zap, BarChart3,
-  ChevronDown, Copy, Download, RefreshCw, Rocket, Server, Key
+  ChevronDown, Copy, Download, RefreshCw, Rocket
 } from 'lucide-react';
 import CostControls from '@/components/verification/CostControls';
 import CostSummary from '@/components/verification/CostSummary';

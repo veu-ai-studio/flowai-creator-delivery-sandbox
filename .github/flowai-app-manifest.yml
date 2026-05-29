@@ -1,0 +1,36 @@
+name: flowai-self-renewal
+url: https://flowai-dun.vercel.app
+description: >
+  FlowAI Self-Renewal GitHub App.
+  Grants FlowAI permission to create branches,
+  commit fixes, and open pull requests on
+  operator product repositories.
+  Never auto-merges. All PRs require human
+  review.
+public: false
+default_permissions:
+  contents: write
+  pull_requests: write
+  metadata: read
+default_events: []
+app_id: 3748219
+installation_id: 133220298
+owner: veu-ai-studio
+installed_on:
+  - veu-ai-studio/my-preg-life
+  - veu-ai-studio/rel-twin
+  - veu-ai-studio/saige
+  - veu-ai-studio/reachsms
+  - veu-ai-studio/press-ai
+  - victor2081new-cloud/flowai
+note: >
+  This file is the canonical source of truth
+  for the FlowAI GitHub App configuration.
+  Any change to App permissions MUST be made
+  via a PR that edits this file, producing an
+  auditable diff. Never change App permissions
+  via the GitHub UI without updating this file.
+  Permission scope matches SELF_RENEWAL_SPEC.md
+  §3.2 MUST-NOT list (no `workflows: write`,
+  no `actions: write`, no `administration: *`,
+  no `secrets: *`).

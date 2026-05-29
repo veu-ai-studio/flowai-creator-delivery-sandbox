@@ -50,8 +50,8 @@ const PRODUCTS = [
     ],
   },
   {
-    name: 'MyBirthSafe',
-    url: 'https://mybirthsafe.base44.app',
+    name: 'MyPregLife',
+    url: 'https://mypreglife.base44.app',
     audience: 'pregnant women in Nigeria and Africa',
     specific_exports: [
       'Export pregnancy tracking data as PDF health report',

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Play, Edit2, BarChart2 } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const COLUMNS = [

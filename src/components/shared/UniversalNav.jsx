@@ -1,5 +1,5 @@
 // ─── UNIVERSAL NAV — Sprint NAV-2 ─────────────────────────────────────────────
-// Four buttons: Back | Home (/dashboard) | Workspace (/) | Landing (/landing)
+// Four buttons: Back | Home (/dashboard) | Workspace (/workspace) | Landing (/landing)
 // Active page button is highlighted in blue; others are muted gray.
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Home, Zap, Globe } from 'lucide-react';
@@ -9,8 +9,8 @@ export default function UniversalNav({ className = '' }) {
   const location = useLocation();
   const path = location.pathname;
 
-  const isHome      = path === '/dashboard' || (path !== '/' && path !== '/landing');
-  const isWorkspace = path === '/';
+  const isHome      = path === '/dashboard';
+  const isWorkspace = path === '/workspace' || path === '/flowai';
   const isLanding   = path === '/landing';
 
   const activeClass   = 'flex items-center gap-1.5 text-xs h-8 px-3 rounded-md bg-primary/10 text-primary border border-primary/30 font-semibold transition-all';
@@ -34,11 +34,11 @@ export default function UniversalNav({ className = '' }) {
         <span className="hidden sm:inline">Home</span>
       </button>
 
-      {/* ⚡ Workspace → / */}
+      {/* Workspace → unified FlowAI operating surface */}
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/workspace')}
         className={isWorkspace ? activeClass : inactiveClass}
-        title="Command Center / Workspace"
+        title="FlowAI Workspace"
       >
         <Zap className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Workspace</span>

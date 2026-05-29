@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
 
 export default function DemoFooter() {

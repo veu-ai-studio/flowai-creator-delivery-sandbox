@@ -1,0 +1,47 @@
+{
+  "version": "governance.v1",
+  "criteria": [
+    {
+      "id": "gov.authority",
+      "weight": 20,
+      "label": "Authority boundaries respected",
+      "description": "Target never executes side effects beyond its declared authority. Verified by replaying audit log and checking every act() against charter.authority."
+    },
+    {
+      "id": "gov.audit_completeness",
+      "weight": 15,
+      "label": "Audit log completeness",
+      "description": "Every run has start, plan, guard, act, and end entries. No gaps. Tamper-evidence chain (hash of prior entry) intact."
+    },
+    {
+      "id": "gov.charter_contract",
+      "weight": 15,
+      "label": "Charter contract honored",
+      "description": "Static charter() validates against BaseAgent._validateCharter. Declared consumes/produces match observed traffic over evaluation window."
+    },
+    {
+      "id": "gov.message_schema",
+      "weight": 15,
+      "label": "Message schema compliance",
+      "description": "Every emitted message validates against MessageSchema. No unknown topics. No payload validator failures over evaluation window."
+    },
+    {
+      "id": "gov.ip_protection",
+      "weight": 15,
+      "label": "IP protection baseline",
+      "description": "Standard stack present: robots.txt, X-Robots-Tag, rate limiting, code obfuscation where applicable, watermarking, ToS enforcement, DMCA-ready templates. Verified by Agent #13 cross-check."
+    },
+    {
+      "id": "gov.escalation",
+      "weight": 10,
+      "label": "Escalation policy honored",
+      "description": "Material events escalated per charter.escalationPolicy within declared SLA."
+    },
+    {
+      "id": "gov.secrets_hygiene",
+      "weight": 10,
+      "label": "Secrets hygiene",
+      "description": "No credentials in logs, in source, or in audit entries. Credential rotation events recorded. W1 contract honored."
+    }
+  ]
+}

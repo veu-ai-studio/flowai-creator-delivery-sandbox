@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Filter, Trash2, Download, CheckCircle2, AlertTriangle, Zap, Upload, Clock, MessageSquare } from 'lucide-react';
+import { Activity, Trash2, Download, CheckCircle2, AlertTriangle, Zap, Upload, Clock, MessageSquare } from 'lucide-react';
 
 const STORAGE_KEY = 'flowai_activity_log';
 const MAX_ENTRIES = 100;

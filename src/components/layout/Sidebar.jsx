@@ -1,243 +1,265 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Tooltip from "@/components/ui/Tooltip";
 import {
-  LayoutDashboard, Zap, Clock, Wrench, Settings,
-  Pencil, ListChecks, Play, SlidersHorizontal,
-  Search, GitBranch, Hammer, ShieldCheck, Megaphone, Activity,
-  BarChart3, ChevronDown, BookOpen, Users, List, CreditCard, Sliders, Shield, RefreshCw, Layers, Link2, FileText, Smartphone, Package
+  ArrowLeft,
+  BarChart3,
+  BookOpen,
+  Boxes,
+  ClipboardList,
+  FolderKanban,
+  Globe,
+  GitBranch,
+  Home,
+  History,
+  Rocket,
+  ShieldCheck,
+  SlidersHorizontal,
+  Zap,
 } from "lucide-react";
-// Alias — Layers already imported above, used for Portfolio section icon
+import { listActiveFlowAIRuns, subscribeFlowAIRuns } from "@/lib/flowaiRunStore";
 
-// ─── SIX-SECTION NAV STRUCTURE ───────────────────────────────────────────────
+const MIGRATION_MODE_ENABLED_FOR_UI =
+  String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || "").toLowerCase() === "true";
 
-const navSections = [
+function getNavSections({ migrationModeEnabled = MIGRATION_MODE_ENABLED_FOR_UI } = {}) {
+  return [
+  {
+    title: "NAVIGATION",
+    items: [
+      {
+        label: "Home",
+        path: "/dashboard",
+        icon: Home,
+        tooltip: "Return to the FlowAI home dashboard.",
+      },
+      {
+        label: "Workspace",
+        path: "/workspace",
+        icon: Zap,
+        tooltip: "Open the 8-step FlowAI pipeline workspace.",
+      },
+      {
+        label: "Landing Page",
+        path: "/landing",
+        icon: Globe,
+        tooltip: "Open the public-facing FlowAI landing page.",
+      },
+    ],
+  },
   {
     title: "PORTFOLIO",
-    description: "Multi-Product OS",
-    icon: Layers,
-    tooltip: "Portfolio-level view across all VEU AI Studio products",
     items: [
-      { label: "Portfolio Dashboard", path: "/portfolio", icon: LayoutDashboard, tooltip: "Hero stats, product grid, active runs and demo-ready count across all products" },
-      { label: "Product Registry",    path: "/products",  icon: Package,       tooltip: "Table of all registered products with status, scores, and row actions" },
-      { label: "Run History",         path: "/runs",      icon: Play,          tooltip: "All 8-step pipeline runs across all products — filterable by product, status, date" },
-      { label: "Dashboard",           path: "/dashboard", icon: LayoutDashboard, tooltip: "Single-product command center — health, sessions, pending gates, quick actions" },
+      {
+        label: "Portfolio Dashboard",
+        path: "/portfolio",
+        icon: BarChart3,
+        tooltip: "Portfolio-level product health, runs, scores, and demo readiness.",
+      },
+      {
+        label: "Product Registry",
+        path: "/products",
+        icon: FolderKanban,
+        tooltip: "Registered products, repository mapping, ownership, and operational status.",
+      },
+      {
+        label: "Session History",
+        path: "/runs",
+        icon: ClipboardList,
+        tooltip: "Previous FlowAI runs across products, statuses, and dates.",
+      },
+    ],
+  },
+  {
+    title: "FLOW HUB",
+    items: [
+      {
+        label: "Production",
+        path: "/flow-hub/production",
+        icon: Rocket,
+        tooltip: "Start the standard FlowAI product upgrade/run flow.",
+        activeWhen: ({ pathname }) => pathname === "/flow-hub/production" || pathname === "/",
+      },
+      {
+        label: "Migration",
+        path: "/flow-hub/migration",
+        icon: GitBranch,
+        tooltip: "Open Flow Hub Migration setup for platform dependency migration.",
+        disabled: !migrationModeEnabled,
+        disabledMessage: "Migration Mode requires operator enablement.",
+        activeWhen: ({ pathname, searchParams }) =>
+          pathname === "/flow-hub/migration" || (pathname === "/" && searchParams.get("mode") === "migration"),
+      },
     ],
   },
   {
     title: "CONFIGURATION",
-    description: "Session Setup",
-    icon: SlidersHorizontal,
-    tooltip: "Configure your session before launching any operation — select product, input method, objective, and parameters.",
     items: [
-      { label: "My Products",       path: "/my-products",     icon: ListChecks, tooltip: "All products created — status, clearance progress, and deliverables." },
-      { label: "Describe & Build",  path: "/configuration?mode=describe",    icon: Pencil,     tooltip: "Describe your product in plain English. Opens Configuration with Describe & Build pre-selected." },
-      { label: "Clone & Improve",   path: "/configuration?mode=clone",       icon: Link2,      tooltip: "Provide an existing product URL. Opens Configuration with Clone & Improve pre-selected." },
-      { label: "Synthesize & Build",path: "/configuration?mode=synthesize",  icon: Layers,     tooltip: "Provide 2–5 competing URLs. Opens Configuration with Synthesize & Build pre-selected." },
-      { label: "Objective & Settings", path: "/configuration", icon: SlidersHorizontal, tooltip: "Set session objective, auto parameters, and launch into any operation mode." },
-    ],
-  },
-  {
-    title: "AUTO OPERATIONS",
-    description: "Seconds to minutes",
-    icon: Zap,
-    tooltip: "FlowAI executes all 8 steps automatically without pausing. You review the final report only.",
-    items: [
-      { label: "Auto Runner", path: "/auto-runner", icon: Play, tooltip: "Watch FlowAI execute all eight process steps live — Research through Monitor — in one continuous automated session." },
-    ],
-  },
-  {
-    title: "GUIDED OPERATIONS",
-    description: "Minutes to hours",
-    icon: Clock,
-    tooltip: "FlowAI proposes its approach at each step. You approve, modify, or skip before any execution begins.",
-    items: [
-      { label: "Research",      path: "/guided/research",  icon: Search,      tooltip: "FlowAI proposes research questions. You approve before analysis begins." },
-      { label: "Design",        path: "/guided/design",    icon: GitBranch,   tooltip: "FlowAI proposes design dimensions. You approve before evaluation begins." },
-      { label: "Build",         path: "/guided/build",     icon: Hammer,      tooltip: "FlowAI proposes build audit scope. You approve before execution begins." },
-      { label: "Quality Audit", path: "/guided/qa-audit",  icon: BarChart3,   tooltip: "FlowAI proposes scoring criteria. You approve before audit begins." },
-      { label: "Deploy",        path: "/guided/deploy",    icon: ShieldCheck, tooltip: "FlowAI proposes deployment checks. You approve before assessment begins." },
-      { label: "Self-Renewal",  path: "/guided/govern",    icon: RefreshCw,   tooltip: "FlowAI proposes self-test, self-heal, optimize, and upgrade scope. You approve each gate." },
-      { label: "Go To Market",  path: "/guided/gtm",       icon: Megaphone,   tooltip: "FlowAI proposes GTM dimensions. You approve before readiness assessment begins." },
-      { label: "App Store",     path: "/app-store-distribution", icon: Smartphone, tooltip: "Guide your product through Apple App Store and Google Play Store submission." },
-      { label: "Monitor",       path: "/guided/monitor",   icon: Activity,    tooltip: "FlowAI proposes final report structure. You approve before clearance decision is produced." },
-    ],
-  },
-  {
-    title: "MANUAL OPERATIONS",
-    description: "Hours to days",
-    icon: Wrench,
-    tooltip: "You propose what needs to be done at each step. FlowAI executes your instructions.",
-    items: [
-      { label: "Research",      path: "/manual/research",  icon: Search,      tooltip: "You define the research scope. FlowAI executes your instructions." },
-      { label: "Design",        path: "/manual/design",    icon: GitBranch,   tooltip: "You define the design dimensions. FlowAI evaluates per your criteria." },
-      { label: "Build",         path: "/manual/build",     icon: Hammer,      tooltip: "You define the build audit scope. FlowAI checks what you specify." },
-      { label: "Quality Audit", path: "/manual/qa-audit",  icon: BarChart3,   tooltip: "You define the scoring criteria. FlowAI audits per your standards." },
-      { label: "Deploy",        path: "/manual/deploy",    icon: ShieldCheck, tooltip: "You define the deployment checks. FlowAI assesses what you specify." },
-      { label: "Self-Renewal",  path: "/manual/govern",    icon: RefreshCw,   tooltip: "You define the self-renewal scope. FlowAI executes per your instructions." },
-      { label: "Go To Market",  path: "/manual/gtm",       icon: Megaphone,   tooltip: "You define the GTM review criteria. FlowAI evaluates per your scope." },
-      { label: "Monitor",       path: "/manual/monitor",   icon: Activity,    tooltip: "You define the monitoring focus. FlowAI produces findings per your specification." },
-    ],
-  },
-  {
-    title: "SETTINGS",
-    description: "Platform Configuration",
-    icon: Settings,
-    tooltip: "Platform configuration, onboarding, and administration.",
-    items: [
-      { label: "Onboarding",           path: "/onboarding",    icon: Zap,        tooltip: "First-time setup guide. Complete this to configure FlowAI for your specific products and workflow." },
-      { label: "Release Notes",        path: "/release-notes", icon: BookOpen,   tooltip: "Complete history of every sprint delivered — what was built and when." },
-      { label: "Users",                path: "/users",         icon: Users,      tooltip: "Manage operator and client accounts. Control who has access to which features." },
-      { label: "URL Whitelist",        path: "/url-whitelist", icon: List,       tooltip: "Manage approved URLs for governance sessions. Add, remove, or grant temporary access." },
-      { label: "Cost & Usage",          path: "/cost-usage",    icon: CreditCard, tooltip: "Track token usage and cost breakdown by session, with monthly totals." },
-      { label: "Cost Controls",        path: "/cost-controls", icon: Sliders,    tooltip: "Set token budgets, session limits, and usage alerts to manage API costs." },
-      { label: "Governance Settings",  path: "/governance",    icon: Shield,     tooltip: "Configure thresholds for Self-Protect, Self-Optimize, and Self-Upgrade triggers." },
-      { label: "Audit Trail",          path: "/audit-trail",   icon: FileText,   tooltip: "Tamper-evident log of every FlowAI action — read only." },
-      { label: "Capability Transfer",  path: "/capability-transfer", icon: Package,  tooltip: "Install Self-Renewal and Self-Protection into any Base44 product with one sprint." },
-      { label: "Org & Settings",       path: "/settings",      icon: Settings,   tooltip: "Organization info, members, and integration status." },
+      {
+        label: "My Products",
+        path: "/my-products",
+        icon: Boxes,
+        tooltip: "Products created or managed through FlowAI.",
+      },
+      {
+        label: "Session History",
+        path: "/runs",
+        icon: History,
+        tooltip: "Review previous FlowAI sessions and run outcomes.",
+      },
+      {
+        label: "Clearance Protocol",
+        path: "/clearance",
+        icon: ShieldCheck,
+        tooltip: "Run product clearance before promotion or release.",
+      },
+      {
+        label: "Governance Dashboard",
+        path: "/governance",
+        icon: BarChart3,
+        tooltip: "Review governance evidence, decisions, and audit status.",
+      },
+      {
+        label: "Release Notes",
+        path: "/release-notes",
+        icon: BookOpen,
+        tooltip: "Review FlowAI release history and shipped changes.",
+      },
+      {
+        label: "Objective & Settings",
+        path: "/configuration",
+        icon: SlidersHorizontal,
+        tooltip: "Session objective, operating mode, and organization settings.",
+      },
     ],
   },
 ];
+}
 
-// ─── NAV ITEM ─────────────────────────────────────────────────────────────────
+function isActivePath(location, item) {
+  const searchParams = new URLSearchParams(location.search);
+  if (typeof item.activeWhen === "function") {
+    return item.activeWhen({ pathname: location.pathname, searchParams });
+  }
+  const itemPath = item.path.split("?")[0];
+  return location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
+}
 
-function NavItem({ label, path, icon: Icon, isActive, tooltip }) {
+function NavItem({ label, path, icon: Icon, tooltip, disabled, disabledMessage, activeWhen }) {
+  const location = useLocation();
+  const active = isActivePath(location, { path, activeWhen });
   const inner = (
     <Link
       to={path}
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-        isActive
+      className={`flex flex-col gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+        active
           ? "bg-primary/10 text-primary"
+          : disabled
+          ? "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
       }`}
     >
-      <Icon className="h-4 w-4 shrink-0" />
-      <span className="truncate">{label}</span>
+      <span className="flex items-center gap-3">
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="truncate">{label}</span>
+      </span>
+      {disabled && disabledMessage && <span className="pl-7 text-[10px] leading-tight text-amber-300">{disabledMessage}</span>}
     </Link>
   );
   return tooltip ? <Tooltip content={tooltip} className="block">{inner}</Tooltip> : inner;
 }
 
-// ─── NAV SECTION ──────────────────────────────────────────────────────────────
-
-function NavSection({ title, description, icon: SectionIcon, tooltip, items, isOpen, onToggle, timeTag }) {
-  const location = useLocation();
-  const isActive = items.some(item => location.pathname === item.path || location.pathname.startsWith(item.path + '/'));
-
-  const btn = (
-    <button
-      onClick={onToggle}
-      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide transition-colors ${
-        isActive
-          ? "text-primary bg-primary/10"
-          : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-      }`}
-    >
-      <SectionIcon className="h-3.5 w-3.5 shrink-0" />
-      <span className="flex-1 text-left">{title}</span>
-      {timeTag && <span className="text-[8px] text-muted-foreground/60 font-normal normal-case hidden xl:block">{timeTag}</span>}
-      <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-    </button>
-  );
-
+function NavSection({ title, items }) {
   return (
-    <div className="space-y-1">
-      {tooltip ? <Tooltip content={tooltip} className="block">{btn}</Tooltip> : btn}
-      {isOpen && (
-        <div className="pl-2 space-y-0.5 border-l border-sidebar-border">
-          {items.map(({ label, path, icon: Icon, tooltip }) => (
-            <NavItem
-              key={path}
-              label={label}
-              path={path}
-              icon={Icon}
-              tooltip={tooltip}
-              isActive={location.pathname === path || location.pathname.startsWith(path + '/')}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    <section className="space-y-1.5">
+      <p className="px-3 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <div className="space-y-0.5">
+        {items.map((item) => <NavItem key={item.path} {...item} />)}
+      </div>
+    </section>
   );
 }
 
-// ─── TIME TAGS FOR SECTION HEADERS ────────────────────────────────────────────
-
-const TIME_TAGS = {
-  "AUTO OPERATIONS":    "seconds–minutes",
-  "GUIDED OPERATIONS":  "minutes–hours",
-  "MANUAL OPERATIONS":  "hours–days",
-  "CONFIGURATION":      "session setup",
-};
-
-// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
-
 export default function Sidebar() {
   const navigate = useNavigate();
+  const [activeRuns, setActiveRuns] = useState(() => listActiveFlowAIRuns());
+  const [migrationModeEnabled, setMigrationModeEnabled] = useState(MIGRATION_MODE_ENABLED_FOR_UI);
+  const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns.filter((run) => run && typeof run === 'object') : [];
+  const navSections = getNavSections({ migrationModeEnabled });
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e) => {
-      if (e.metaKey || e.ctrlKey) {
-        if (e.key === 'n') { e.preventDefault(); navigate('/auto-runner'); }
-        if (e.key === '/') { e.preventDefault(); navigate('/autonomous-engine'); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        navigate("/");
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [navigate]);
 
-  const [openSections, setOpenSections] = useState({
-    "PORTFOLIO": true,
-    "DASHBOARD": true,
-    "CONFIGURATION": true,
-    "AUTO OPERATIONS": false,
-    "GUIDED OPERATIONS": false,
-    "MANUAL OPERATIONS": false,
-    "SETTINGS": false,
-  });
+  useEffect(() => subscribeFlowAIRuns(() => setActiveRuns(listActiveFlowAIRuns())), []);
 
-  const toggleSection = (title) => {
-    setOpenSections(prev => ({ ...prev, [title]: !prev[title] }));
-  };
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/operator/migration-mode", { headers: { Accept: "application/json" } })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (!cancelled && typeof data?.enabled === "boolean") {
+          setMigrationModeEnabled(data.enabled);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <aside className="w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-y-auto">
-      {/* Logo */}
-      <div className="p-4 flex flex-col gap-3 sticky top-0 bg-sidebar border-b border-sidebar-border">
-        <Tooltip content="FlowAI — VEU AI Studio's proprietary governance and product platform">
+      <div className="p-4 sticky top-0 bg-sidebar border-b border-sidebar-border">
+        <Tooltip content="FlowAI - product-agnostic AI operating system for VEU AI Studio and similar organizations">
           <div className="flex items-center gap-3 cursor-default">
             <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Zap className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-lg font-semibold tracking-tight text-foreground font-inter">FlowAI</div>
-              <div className="text-[10px] text-muted-foreground">Process-Driven</div>
+              <div className="text-[10px] leading-tight text-muted-foreground">Product-Agnostic AI Operating System</div>
             </div>
           </div>
         </Tooltip>
-
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-3">
-        {navSections.map(section => (
-          <NavSection
-            key={section.title}
-            title={section.title}
-            description={section.description}
-            icon={section.icon}
-            tooltip={section.tooltip}
-            items={section.items}
-            isOpen={openSections[section.title]}
-            onToggle={() => toggleSection(section.title)}
-            timeTag={TIME_TAGS[section.title]}
-          />
-        ))}
+      <nav className="flex-1 px-3 py-4 space-y-5">
+        {safeActiveRuns.length > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate('/runs')}
+            className="flex w-full items-center justify-between gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/15"
+            title={safeActiveRuns.map((run) => `${run.product}: ${run.progressLabel}`).join('\n')}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <span aria-hidden="true">🟢</span>
+              <span className="truncate">{safeActiveRuns.length} Running</span>
+            </span>
+            <span className="text-[10px] text-emerald-200">View</span>
+          </button>
+        )}
+        <Tooltip content="Go back to the previous page">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex w-full items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <span className="truncate">Back</span>
+          </button>
+        </Tooltip>
+        {navSections.map((section) => <NavSection key={section.title} {...section} />)}
       </nav>
 
-      <div className="p-4 mx-3 mb-4 rounded-lg bg-secondary/50 border border-border sticky bottom-0">
-        <p className="text-xs text-muted-foreground leading-relaxed">FlowAI Engine v0.1</p>
+      <div className="p-4 mx-3 mb-4 rounded-md bg-secondary/50 border border-border sticky bottom-0">
+        <p className="text-xs font-semibold text-foreground">FlowAI Engine v0.1</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">One OS. Upgraded URLs.</p>
       </div>
     </aside>
   );

@@ -1,0 +1,1352 @@
+{
+  "schema": "ca12-v3-ratification.sidecar.v1",
+  "startedAt": "2026-05-16T22:56:46.669Z",
+  "finishedAt": "2026-05-16T23:00:14.699Z",
+  "panel_audit": {
+    "providerCounts": {
+      "anthropic": 1,
+      "openai": 1,
+      "meta-llama": 2,
+      "mistralai": 1,
+      "cohere": 1,
+      "minimax": 1,
+      "deepseek": 1,
+      "perplexity": 1,
+      "x-ai": 1
+    },
+    "maxPerProvider": 2,
+    "slots": 10,
+    "documentedDuplicates": {
+      "meta-llama": "Slot 3 (llama-3.3-70b-instruct, post-Gemini-demote 2026-05-16) + Slot 9 (llama-4-maverick). Different generations, different serving paths on OpenRouter, independent in practice. Documented per W5b dispatch #2 (2026-05-16, commit 556a751 triggering evidence)."
+    },
+    "undocumentedDuplicates": [],
+    "modelPrimaryDuplicates": [],
+    "undocumentedModelDuplicates": [],
+    "auditPass": true
+  },
+  "panel_size": 10,
+  "bundle_size": 65871,
+  "liveOk": 10,
+  "w6_metadata": {
+    "quorum_bar": 7,
+    "supermajority_bar": 8,
+    "quorum_met": true,
+    "supermajority_achievable": true,
+    "final_live_ok": 10,
+    "backups_applied": 1,
+    "primary_timeout_ms": 180000,
+    "backup_retry_timeout_ms": 210000,
+    "stagger_ms": 200,
+    "bundle_chars": 65871
+  },
+  "tally": {
+    "engagedTotal": 9,
+    "invalid": 0,
+    "tangential": 1,
+    "silent": 0,
+    "perQuestion": {
+      "G-Q1-v3": {
+        "GQ1v3-OK": 7,
+        "GQ1v3-MISSING": 0,
+        "GQ1v3-OVERLAP": 1,
+        "GQ1v3-KEEP3B": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "G-Q2-v3": {
+        "GQ2v3-TWO": 5,
+        "GQ2v3-SEP": 3,
+        "GQ2v3-ONE": 0,
+        "GQ2v3-MORE": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "G-Q3-v3": {
+        "GQ3v3-FINE": 2,
+        "GQ3v3-UX": 6,
+        "GQ3v3-MODE": 0,
+        "GQ3v3-PROD": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "G-Q4-v3": {
+        "GQ4v3-JOINT": 5,
+        "GQ4v3-SEP": 3,
+        "GQ4v3-REPRO": 0,
+        "GQ4v3-MORE": 0,
+        "REJECT": 1,
+        "unmatched": 0
+      },
+      "G-Q5-v3": {
+        "GQ5v3-REMOVE": 6,
+        "GQ5v3-TAG": 0,
+        "GQ5v3-SHIP": 0,
+        "GQ5v3-INADV": 1,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "G-Q6-v3": {
+        "GQ6v3-OK": 4,
+        "GQ6v3-AGENT": 3,
+        "GQ6v3-STRICT": 0,
+        "GQ6v3-PERM": 0,
+        "REJECT": 2,
+        "unmatched": 0
+      },
+      "G-Q7-v3": {
+        "GQ7v3-PROMOTE": 3,
+        "GQ7v3-FORM": 1,
+        "GQ7v3-NEW": 0,
+        "GQ7v3-DEFER": 4,
+        "REJECT": 1,
+        "unmatched": 0
+      }
+    },
+    "distinctObjections": 30,
+    "allObjections": [
+      {
+        "slot": 1,
+        "title": "Enforcement mechanism creates race conditions",
+        "detail": "§B.2's HTTP 400 enforcement at AutoRunner submission boundary doesn't prevent mid-run authority escalation. If operator raises ceiling during a long-running Mode 1 SUB-1B pipeline, the run could execute later steps at higher authority than initially validated."
+      },
+      {
+        "slot": 1,
+        "title": "Mode 3A parallel crawl resource explosion",
+        "detail": "§D shows Agent #21 × N parallel for Mode 3A benchmarking. With no explicit concurrency limit in §A.1.3, comparing 10 products at depth=8/pages=200 each spawns 2000 parallel page renders, likely overwhelming Orchestra's browserless pool."
+      },
+      {
+        "slot": 1,
+        "title": "Authority ceiling migration breaks existing runs",
+        "detail": "§F.2 proposes ProductRegistry.authorityCeilings as new JSONB field with recommend_only defaults. In-flight runs started before migration will fail validation when they hit step boundaries, as their original authority config won't match the new 6-cell structure."
+      },
+      {
+        "slot": 1,
+        "title": "GTM context violates product-agnostic principle",
+        "detail": "§A.0 names five specific products (SAIGE, RelTwin, etc.) in canonical prose, creating Conflict 14. This sets precedent for product-specific content creeping into SSOT, undermining §22's zero-product-code rule even if limited to 'preamble only'."
+      },
+      {
+        "slot": 2,
+        "title": "Lack of Precedent for Authority Collapse",
+        "detail": "The proposal collapses Deploy-Authority into Build-Authority, arguing they are inseparable. However, this lacks precedent and may lead to operational confusion, as deployment and building often involve distinct processes and stakeholders."
+      },
+      {
+        "slot": 2,
+        "title": "Potential Security Risks in Autonomous Mode",
+        "detail": "In §A.2.1, the Autonomous level allows FlowAI to write and deploy code without human intervention. This could introduce security vulnerabilities if the system is compromised or if there are bugs in the code generation process."
+      },
+      {
+        "slot": 2,
+        "title": "Complexity in Authority Ceiling Management",
+        "detail": "The authority ceiling structure in §A.2.4 is complex, requiring operators to manage ceilings across multiple dimensions and modes. This complexity could lead to configuration errors and increased administrative overhead."
+      },
+      {
+        "slot": 3,
+        "title": "Lack of Rollback",
+        "detail": "The proposal does not provide a clear rollback mechanism in case of errors or issues during the execution of the pipeline. This could lead to unintended consequences and make it difficult to recover from mistakes."
+      },
+      {
+        "slot": 3,
+        "title": "Insufficient Error Handling",
+        "detail": "The proposal does not provide sufficient error handling mechanisms, which could lead to pipeline failures and make it difficult to diagnose and resolve issues."
+      },
+      {
+        "slot": 3,
+        "title": "Overly Complex Authority Structure",
+        "detail": "The proposal's authority structure, with its multiple dimensions and sub-dimensions, may be overly complex and difficult to manage, potentially leading to errors and inconsistencies."
+      },
+      {
+        "slot": 4,
+        "title": "Over-engineered authority ceiling",
+        "detail": "The per-product per-mode per-dimension authority ceiling is overly complex. It introduces unnecessary granularity that may confuse operators and increase the risk of misconfiguration. The examples provided do not adequately justify this complexity. §A.2.4 and §G-Q3-v3."
+      },
+      {
+        "slot": 4,
+        "title": "Insufficient Mode 3B deferral justification",
+        "detail": "The proposal deferred Mode 3B due to the lack of a cryptographic URL ownership-verification mechanism. However, this deferral is not adequately justified, as the proposal does not explain why this mechanism is critical for Mode 3B specifically. §A.1.4 and §G-Q5-v3."
+      },
+      {
+        "slot": 4,
+        "title": "Lack of clear enforcement mechanism",
+        "detail": "The proposal mentions that the AutoRunner will enforce configuration validity rules with HTTP 400 errors, but it does not provide enough detail on how this enforcement will be implemented and monitored. This lack of clarity could lead to inconsistent enforcement. §B.2."
+      },
+      {
+        "slot": 4,
+        "title": "Unclear GTM context relevance",
+        "detail": "The GTM context provided in §A.0 is not clearly relevant to the proposal's design decisions. It mentions real GTM-ready products but does not explain how these products influence the authority and ceiling design choices. This lack of clarity could lead to misunderstandings about the proposal's applicability."
+      },
+      {
+        "slot": 5,
+        "title": "Lack of clarity on authority levels",
+        "detail": "The proposal introduces a new concept of 'authority levels' without providing a clear definition or explanation. It is not clear what these levels represent or how they are determined, which could lead to confusion and potential misuse."
+      },
+      {
+        "slot": 5,
+        "title": "Inadequate consideration of security risks",
+        "detail": "The proposal does not adequately address potential security risks associated with the new features, such as the 'crawl' and 'deploy' capabilities. Without proper security measures, these features could be exploited by malicious actors to gain unauthorized access to sensitive data or disrupt the system."
+      },
+      {
+        "slot": 5,
+        "title": "Insufficient testing and validation",
+        "detail": "The proposal does not provide enough details on how the new features will be tested and validated. Without comprehensive testing, there is a risk of introducing bugs or vulnerabilities that could impact the system's performance and security."
+      },
+      {
+        "slot": 7,
+        "title": "Complex authority ceiling management",
+        "detail": "The per-product per-mode per-dimension authority ceilings (§A.2.4) create a 6-cell configuration matrix that significantly increases operator cognitive load. Real-world operators managing multiple products will struggle with asymmetric trust configurations, risking misconfigured ceilings that either over-constrain workflows or grant excessive autonomy. The three concrete examples don't address how UI will prevent ceiling conflicts across modes."
+      },
+      {
+        "slot": 7,
+        "title": "Incomplete gate enforcement",
+        "detail": "The Build-Authority supervised level (§A.2.1) requires human approval for every code change and deploy, but §E's capability table shows per-step build-approval UI is only 'PARTIAL' with 'consistent gate UX across all 8 steps' still on the roadmap. This creates a dangerous gap where the system claims supervised capability without full enforcement mechanisms."
+      },
+      {
+        "slot": 7,
+        "title": "GTM context violates agnostic rule",
+        "detail": "§A.0 explicitly names five operator products (SAIGE, RelTwin, etc.) in canonical documentation, directly contradicting §22's Product-Agnostic Rule which forbids product names in 'spec code/schemas/identifiers'. This establishes precedent for product-specific leakage and undermines the metadata-only configuration principle."
+      },
+      {
+        "slot": 7,
+        "title": "Cryptographic verification vaporware",
+        "detail": "Mode 3B deferral (§G-Q5-v3) cites cryptographic URL ownership verification as a blocker, but provides zero technical specification or timeline for this critical security mechanism. The FUTURE_CAPABILITIES.md placeholder doesn't mitigate the risk of building dependent features on nonexistent foundations."
+      },
+      {
+        "slot": 8,
+        "title": "Mode-mixing ambiguity remains",
+        "detail": "§A.1 and §B.2 still allow the same run surface to combine Pipeline Mode, sub-mode, execution pacing, and two authority levels, but the spec does not define precedence when UI, API, and operator-ceiling defaults conflict. For example, §A.2.4 says defaults are the operator ceiling while §A.3 says Automatic is bounded by authority ceilings; neither section says what happens when a guided user lowers one authority dimension but not the other and the run spans multiple steps with different step-level needs."
+      },
+      {
+        "slot": 8,
+        "title": "HTTP 400 is insufficiently precise",
+        "detail": "§B.2 makes every invalid configuration a submission-boundary 400, but several violations are not purely client mistakes; they depend on evolving product metadata and runtime state. If ceilings change between form render and submit, or if a run becomes invalid after a step starts, the proposal gives no conflict-resolution or idempotency rule beyond logging to GovernanceAuditLog."
+      },
+      {
+        "slot": 8,
+        "title": "Preamble product-name exception",
+        "detail": "§A.0 explicitly introduces a controlled exception to the Product-Agnostic Rule by naming the five GTM products in canonical prose. That may be harmless today, but it creates a precedent for future “context-only” exceptions that can leak into canonical SSOT content, making automated neutral-fixture enforcement harder and weakening the rule’s original bright line."
+      },
+      {
+        "slot": 9,
+        "title": "Overly Complex Authority Structure",
+        "detail": "§A.2 introduces a 2-sub-dimension authority structure (Build / Operational) with 3 levels each. This complexity may lead to operational confusion and increased risk of misconfiguration."
+      },
+      {
+        "slot": 9,
+        "title": "Lack of Clear Guidance on Ceiling Configuration",
+        "detail": "§A.2.4 provides examples of authority ceiling configurations, but it is unclear how these examples generalize to other scenarios or how operators should determine appropriate ceiling settings for their products."
+      },
+      {
+        "slot": 9,
+        "title": "Insufficient Explanation of Mode Interactions",
+        "detail": "§A.1 describes the three canonical modes, but the interactions between modes and how they affect the overall pipeline behavior are not clearly explained, potentially leading to unexpected outcomes."
+      },
+      {
+        "slot": 10,
+        "title": "§A.2.4 ceiling JSONB lacks migration",
+        "detail": "The 6-cell authorityCeilings JSONB replaces v2's 12-cell shape with no migration script or default-value transformation specified in §A.2.4 or §F.2; existing ProductRegistry rows will trigger CONFIG_CEILING_VIOLATION on first AutoRunner call under the new 3×2 schema."
+      },
+      {
+        "slot": 10,
+        "title": "§B.2 rule 5 blocks supervised auto",
+        "detail": "Rule 5 in §B.2 forbids AUTOMATIC execution whenever any authority is Supervised, yet Example 2 in §A.2.4 explicitly describes a production-trusted Mode 1 SUB-1B posture using Build=Supervised + Op=Autonomous that would now be rejected at POST /api/orchestrator/run."
+      },
+      {
+        "slot": 10,
+        "title": "§A.0 names breach §22 agnostic rule",
+        "detail": "The GTM context preamble lists SAIGE, RelTwin, ReachSMS, PressAI and MyPregLife by name, directly violating the Product-Agnostic Rule in §22 that prohibits product names in canonical documents, schemas, or identifiers."
+      }
+    ]
+  },
+  "per_question_verdicts": {
+    "G-Q1-v3": {
+      "verdict": "QUORUM_PLURALITY_GQ1v3-OK",
+      "detail": "7 of 9 on GQ1v3-OK (≥ quorum 7/10)",
+      "topKey": "GQ1v3-OK",
+      "topCount": 7
+    },
+    "G-Q2-v3": {
+      "verdict": "PLURALITY_GQ2v3-TWO",
+      "detail": "5 of 9 on GQ2v3-TWO (below 7/10 quorum)",
+      "topKey": "GQ2v3-TWO",
+      "topCount": 5
+    },
+    "G-Q3-v3": {
+      "verdict": "PLURALITY_GQ3v3-UX",
+      "detail": "6 of 9 on GQ3v3-UX (below 7/10 quorum)",
+      "topKey": "GQ3v3-UX",
+      "topCount": 6
+    },
+    "G-Q4-v3": {
+      "verdict": "PLURALITY_GQ4v3-JOINT",
+      "detail": "5 of 9 on GQ4v3-JOINT (below 7/10 quorum)",
+      "topKey": "GQ4v3-JOINT",
+      "topCount": 5
+    },
+    "G-Q5-v3": {
+      "verdict": "PLURALITY_GQ5v3-REMOVE",
+      "detail": "6 of 9 on GQ5v3-REMOVE (below 7/10 quorum)",
+      "topKey": "GQ5v3-REMOVE",
+      "topCount": 6
+    },
+    "G-Q6-v3": {
+      "verdict": "PLURALITY_GQ6v3-OK",
+      "detail": "4 of 9 on GQ6v3-OK (below 7/10 quorum)",
+      "topKey": "GQ6v3-OK",
+      "topCount": 4
+    },
+    "G-Q7-v3": {
+      "verdict": "PLURALITY_GQ7v3-DEFER",
+      "detail": "4 of 9 on GQ7v3-DEFER (below 7/10 quorum)",
+      "topKey": "GQ7v3-DEFER",
+      "topCount": 4
+    }
+  },
+  "dissent_floor": {
+    "triggered": false,
+    "alignedPct": 0.5079365079365079,
+    "alignedCount": 32,
+    "totalPossible": 63,
+    "draftedQs": [
+      "G-Q1-v3",
+      "G-Q2-v3",
+      "G-Q3-v3",
+      "G-Q4-v3",
+      "G-Q5-v3",
+      "G-Q6-v3",
+      "G-Q7-v3"
+    ],
+    "alignmentBar": 0.8,
+    "objectionFloor": 5,
+    "reason": "alignment 50.8 %, distinct objections 30"
+  },
+  "consultation_valid": true,
+  "ratification": {
+    "status": "NOT_RATIFIED",
+    "headline": "CA-12 v3 NOT ratified — 6 question(s) lack a clear Panel majority.",
+    "conditions": [
+      {
+        "qId": "G-Q2-v3",
+        "topic": "Authority dimensions collapsed to 2 sub-dims (Build / Operational; Deploy folded into Build)",
+        "verdict": "PLURALITY_GQ2v3-TWO",
+        "draftedKey": "GQ2v3-TWO",
+        "draftedText": "2-sub-dimension structure (Build / Operational) as v3 defines — ratify.",
+        "detail": "5 of 9 on GQ2v3-TWO (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q3-v3",
+        "topic": "Authority ceiling per-product per-mode per-dimension (3×2 JSONB + 3 concrete examples)",
+        "verdict": "PLURALITY_GQ3v3-UX",
+        "draftedKey": "GQ3v3-FINE",
+        "draftedText": "Per-product per-mode per-dimension ceiling with v3 example justification — ratify (3 modes × 2 dims = 6 cells).",
+        "detail": "6 of 9 on GQ3v3-UX (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q4-v3",
+        "topic": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway",
+        "verdict": "PLURALITY_GQ4v3-JOINT",
+        "draftedKey": "GQ4v3-JOINT",
+        "draftedText": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway — ratify.",
+        "detail": "5 of 9 on GQ4v3-JOINT (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q5-v3",
+        "topic": "Mode 3B fully removed from canonical SSOT (cryptographic ownership-verification blocker named)",
+        "verdict": "PLURALITY_GQ5v3-REMOVE",
+        "draftedKey": "GQ5v3-REMOVE",
+        "draftedText": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism.",
+        "detail": "6 of 9 on GQ5v3-REMOVE (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q6-v3",
+        "topic": "Matrix + §B.2 validity rules + AutoRunner enforcement (HTTP 400 with 6 error codes + audit-log)",
+        "verdict": "PLURALITY_GQ6v3-OK",
+        "draftedKey": "GQ6v3-OK",
+        "draftedText": "v3 matrix + §B.2 validity rules + AutoRunner HTTP 400 enforcement contract — ratify.",
+        "detail": "4 of 9 on GQ6v3-OK (below 7/10 quorum)"
+      },
+      {
+        "qId": "G-Q7-v3",
+        "topic": "Overall CA-12 v3 disposition",
+        "verdict": "PLURALITY_GQ7v3-DEFER",
+        "draftedKey": "GQ7v3-PROMOTE",
+        "draftedText": "v3 sufficient for promotion — promote.",
+        "detail": "4 of 9 on GQ7v3-DEFER (below 7/10 quorum)"
+      }
+    ],
+    "alternativeWins": []
+  },
+  "strongest_rejection_argument": {
+    "slot": 8,
+    "model": "openrouter:perplexity/sonar",
+    "text": "The strongest case for rejecting or deferring CA-12 v3 is that it codifies a more complex control plane before proving that the enforcement path is robust across schema migration, UI state, and runtime execution. The spec narrows some open questions, but it still leaves ambiguous how invalidity is handled once a run has begun, and it introduces a canonical exception to the product-agnostic rule that could erode governance discipline over time. Deferring until the new ceilings, validation contract, and UI affordances are demonstrated end-to-end would reduce the chance of shipping a formally tidy but operationally brittle governance layer."
+  },
+  "shuffled_options": {
+    "G-Q1-v3": [
+      {
+        "key": "GQ1v3-KEEP3B",
+        "text": "Removing Mode 3B from SSOT was wrong; Mode 3B should stay in SSOT with deferred-status tag."
+      },
+      {
+        "key": "GQ1v3-OVERLAP",
+        "text": "3-mode classification still has an overlap — name it."
+      },
+      {
+        "key": "GQ1v3-OK",
+        "text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify."
+      },
+      {
+        "key": "GQ1v3-MISSING",
+        "text": "3-mode classification is missing a mode — name it in rationale."
+      }
+    ],
+    "G-Q2-v3": [
+      {
+        "key": "GQ2v3-TWO",
+        "text": "2-sub-dimension structure (Build / Operational) as v3 defines — ratify."
+      },
+      {
+        "key": "GQ2v3-MORE",
+        "text": "3+ sub-dimensions needed for a specific operational concern — name it."
+      },
+      {
+        "key": "GQ2v3-SEP",
+        "text": "2-sub-dim is right but Deploy should remain separate (re-split per v2 model)."
+      },
+      {
+        "key": "GQ2v3-ONE",
+        "text": "1-sub-dim is sufficient — collapse Build + Operational into a single authority."
+      }
+    ],
+    "G-Q3-v3": [
+      {
+        "key": "GQ3v3-PROD",
+        "text": "Per-product only (no per-mode) — coarsest."
+      },
+      {
+        "key": "GQ3v3-MODE",
+        "text": "Per-product per-mode only (no per-sub-dim) — coarser."
+      },
+      {
+        "key": "GQ3v3-FINE",
+        "text": "Per-product per-mode per-dimension ceiling with v3 example justification — ratify (3 modes × 2 dims = 6 cells)."
+      },
+      {
+        "key": "GQ3v3-UX",
+        "text": "Granularity is right but operator UI complexity needs more thought (engineering follow-on must address UX)."
+      }
+    ],
+    "G-Q4-v3": [
+      {
+        "key": "GQ4v3-REPRO",
+        "text": "Re-promote SUB-2B or Mode 3B as ROADMAP-in-canonical-SSOT (reverse the deferral)."
+      },
+      {
+        "key": "GQ4v3-SEP",
+        "text": "Defer separately — each item gets its own future CA cycle independently."
+      },
+      {
+        "key": "GQ4v3-JOINT",
+        "text": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway — ratify."
+      },
+      {
+        "key": "GQ4v3-MORE",
+        "text": "Defer additional items (e.g., Mode 1 SUB-1B DEPLOY) to FUTURE_CAPABILITIES alongside SUB-2B + Mode 3B."
+      }
+    ],
+    "G-Q5-v3": [
+      {
+        "key": "GQ5v3-INADV",
+        "text": "Mode 3B is structurally inadvisable regardless of mechanism — IP concerns inherent to feature extraction."
+      },
+      {
+        "key": "GQ5v3-REMOVE",
+        "text": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism."
+      },
+      {
+        "key": "GQ5v3-TAG",
+        "text": "Mode 3B should stay in SSOT with DEFERRED status tag, not removed."
+      },
+      {
+        "key": "GQ5v3-SHIP",
+        "text": "Mode 3B should ship with v2 self-attestation mechanism (operator attests; no third-party verification)."
+      }
+    ],
+    "G-Q6-v3": [
+      {
+        "key": "GQ6v3-STRICT",
+        "text": "Some validity rules are too strict (e.g., AUTOMATIC + Supervised should be permitted with explicit warning)."
+      },
+      {
+        "key": "GQ6v3-OK",
+        "text": "v3 matrix + §B.2 validity rules + AutoRunner HTTP 400 enforcement contract — ratify."
+      },
+      {
+        "key": "GQ6v3-PERM",
+        "text": "Some validity rules are too permissive — specify which combinations need additional gates."
+      },
+      {
+        "key": "GQ6v3-AGENT",
+        "text": "Matrix is right but enforcement mechanism is wrong — should be agent-layer gate, not API-boundary HTTP 400."
+      }
+    ],
+    "G-Q7-v3": [
+      {
+        "key": "GQ7v3-FORM",
+        "text": "v3 addresses conditions in form but not in substance — name remaining substantive gaps."
+      },
+      {
+        "key": "GQ7v3-DEFER",
+        "text": "Defer until at least one operator product runs a v3-conformant production pipeline end-to-end."
+      },
+      {
+        "key": "GQ7v3-PROMOTE",
+        "text": "v3 sufficient for promotion — promote."
+      },
+      {
+        "key": "GQ7v3-NEW",
+        "text": "v3 introduces new concerns not in v2 — name them in rationale."
+      }
+    ]
+  },
+  "seed": "ca12-v3-ratification-2026-05-16",
+  "perReviewer": [
+    {
+      "slot": 1,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Enforcement mechanism creates race conditions",
+            "detail": "§B.2's HTTP 400 enforcement at AutoRunner submission boundary doesn't prevent mid-run authority escalation. If operator raises ceiling during a long-running Mode 1 SUB-1B pipeline, the run could execute later steps at higher authority than initially validated."
+          },
+          {
+            "title": "Mode 3A parallel crawl resource explosion",
+            "detail": "§D shows Agent #21 × N parallel for Mode 3A benchmarking. With no explicit concurrency limit in §A.1.3, comparing 10 products at depth=8/pages=200 each spawns 2000 parallel page renders, likely overwhelming Orchestra's browserless pool."
+          },
+          {
+            "title": "Authority ceiling migration breaks existing runs",
+            "detail": "§F.2 proposes ProductRegistry.authorityCeilings as new JSONB field with recommend_only defaults. In-flight runs started before migration will fail validation when they hit step boundaries, as their original authority config won't match the new 6-cell structure."
+          },
+          {
+            "title": "GTM context violates product-agnostic principle",
+            "detail": "§A.0 names five specific products (SAIGE, RelTwin, etc.) in canonical prose, creating Conflict 14. This sets precedent for product-specific content creeping into SSOT, undermining §22's zero-product-code rule even if limited to 'preamble only'."
+          }
+        ],
+        "worse_than_status_quo": "The 2-subdimension authority model creates a new failure mode where Build-Autonomous includes deploy rights by default, making it impossible to grant code-writing autonomy without also granting production deploy access — a regression from status quo where these concerns are naturally separated.",
+        "precedent": "Kubernetes RBAC initially bundled 'create' and 'update' verbs together, leading to privilege escalation vulnerabilities until they separated the permissions in v1.8 — similar to how v3 bundles build+deploy authorities."
+      },
+      "rejection_steelman": "The v3 spec should be deferred until the authority model is prototyped with at least one production product, as the 2-subdimension collapse (Build+Deploy merger) represents a fundamental security model change that could enable unintended production deployments. The HTTP 400 enforcement mechanism is also insufficiently robust for multi-step pipelines where authority requirements may change mid-run. Additionally, removing Mode 3B while keeping its UI surface creates a confusing user experience that promises unavailable functionality.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "GQ1v3-OK",
+          "pick_text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify.",
+          "rationale": "Despite Mode 3B removal creating UI inconsistency, the remaining 3 modes are cleanly separated with no overlap between assess/renew (Mode 1), spec generation (Mode 2), and comparison (Mode 3A)."
+        },
+        "G-Q2-v3": {
+          "key": "GQ2v3-SEP",
+          "pick_text": "2-sub-dim is right but Deploy should remain separate (re-split per v2 model).",
+          "rationale": "Folding Deploy into Build authority removes critical granularity — operators need to grant code-writing autonomy without automatically granting production deploy rights, especially for SUB-1B PREVIEW scenarios."
+        },
+        "G-Q3-v3": {
+          "key": "GQ3v3-UX",
+          "pick_text": "Granularity is right but operator UI complexity needs more thought (engineering follow-on must address UX).",
+          "rationale": "The 6-cell model with concrete examples demonstrates valid use cases, but presenting this complexity to operators requires careful UI design to avoid configuration errors that could grant unintended autonomy."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-SEP",
+          "pick_text": "Defer separately — each item gets its own future CA cycle independently.",
+          "rationale": "SUB-2B (code generation) and Mode 3B (synthesis) have fundamentally different technical blockers and risk profiles; bundling their return creates unnecessary dependencies that could delay the simpler capability."
+        },
+        "G-Q5-v3": {
+          "key": "GQ5v3-REMOVE",
+          "pick_text": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism.",
+          "rationale": "Without cryptographic ownership verification, Mode 3B poses unacceptable IP extraction risks; full removal from SSOT is the correct conservative position until proper safeguards exist."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-AGENT",
+          "pick_text": "Matrix is right but enforcement mechanism is wrong — should be agent-layer gate, not API-boundary HTTP 400.",
+          "rationale": "HTTP 400 at submission only validates initial state; multi-step pipelines need per-agent authority checks at each BaseAgent.guard() invocation to handle mid-run ceiling changes or step-specific overrides."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-DEFER",
+          "pick_text": "Defer until at least one operator product runs a v3-conformant production pipeline end-to-end.",
+          "rationale": "The 2-subdimension authority model represents a fundamental change requiring production validation; promoting without implementation proof risks discovering critical gaps only after deployment."
+        }
+      },
+      "overallNotes": "v3 improves on v2 but introduces new risks through the Build+Deploy authority merger and lacks implementation validation for its core security model changes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 2,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Precedent for Authority Collapse",
+            "detail": "The proposal collapses Deploy-Authority into Build-Authority, arguing they are inseparable. However, this lacks precedent and may lead to operational confusion, as deployment and building often involve distinct processes and stakeholders."
+          },
+          {
+            "title": "Potential Security Risks in Autonomous Mode",
+            "detail": "In §A.2.1, the Autonomous level allows FlowAI to write and deploy code without human intervention. This could introduce security vulnerabilities if the system is compromised or if there are bugs in the code generation process."
+          },
+          {
+            "title": "Complexity in Authority Ceiling Management",
+            "detail": "The authority ceiling structure in §A.2.4 is complex, requiring operators to manage ceilings across multiple dimensions and modes. This complexity could lead to configuration errors and increased administrative overhead."
+          }
+        ],
+        "worse_than_status_quo": "The proposal could lead to security vulnerabilities by allowing autonomous code deployment without sufficient human oversight, potentially introducing bugs or malicious code into production environments.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal introduces significant complexity and potential security risks by collapsing authority dimensions and allowing autonomous operations without sufficient oversight. The lack of precedent for such a governance model suggests that it may not be robust enough for production environments, warranting further testing and refinement before ratification.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "GQ1v3-OVERLAP",
+          "pick_text": "3-mode classification still has an overlap — name it.",
+          "rationale": "The overlap between Mode 1 SUB-1B DEPLOY and Mode 2 SUB-2A in terms of deployment capabilities is not clearly delineated."
+        },
+        "G-Q2-v3": {
+          "key": "GQ2v3-SEP",
+          "pick_text": "2-sub-dim is right but Deploy should remain separate (re-split per v2 model).",
+          "rationale": "Deploy and Build involve distinct processes and stakeholders, and collapsing them could lead to operational confusion."
+        },
+        "G-Q3-v3": {
+          "key": "GQ3v3-UX",
+          "pick_text": "Granularity is right but operator UI complexity needs more thought (engineering follow-on must address UX).",
+          "rationale": "The complexity of managing authority ceilings across multiple dimensions and modes could lead to configuration errors."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-SEP",
+          "pick_text": "Defer separately — each item gets its own future CA cycle independently.",
+          "rationale": "Each deferred item may have unique challenges and blockers that warrant independent consideration and resolution."
+        },
+        "G-Q5-v3": {
+          "key": "GQ5v3-INADV",
+          "pick_text": "Mode 3B is structurally inadvisable regardless of mechanism — IP concerns inherent to feature extraction.",
+          "rationale": "The potential for IP concerns and feature extraction issues makes Mode 3B structurally problematic."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-AGENT",
+          "pick_text": "Matrix is right but enforcement mechanism is wrong — should be agent-layer gate, not API-boundary HTTP 400.",
+          "rationale": "Enforcement at the agent layer would provide more granular control and flexibility than a rigid API-boundary HTTP 400 response."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-FORM",
+          "pick_text": "v3 addresses conditions in form but not in substance — name remaining substantive gaps.",
+          "rationale": "The proposal does not adequately address the potential security risks and operational complexities introduced by the new governance model."
+        }
+      },
+      "overallNotes": "The proposal's complexity and potential security risks warrant further refinement and testing before ratification.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:openai/gpt-4o"
+    },
+    {
+      "slot": 3,
+      "state": "TANGENTIAL",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of Rollback",
+            "detail": "The proposal does not provide a clear rollback mechanism in case of errors or issues during the execution of the pipeline. This could lead to unintended consequences and make it difficult to recover from mistakes."
+          },
+          {
+            "title": "Insufficient Error Handling",
+            "detail": "The proposal does not provide sufficient error handling mechanisms, which could lead to pipeline failures and make it difficult to diagnose and resolve issues."
+          },
+          {
+            "title": "Overly Complex Authority Structure",
+            "detail": "The proposal's authority structure, with its multiple dimensions and sub-dimensions, may be overly complex and difficult to manage, potentially leading to errors and inconsistencies."
+          }
+        ],
+        "worse_than_status_quo": "The proposal's lack of a clear rollback mechanism and insufficient error handling could lead to a situation where the system is more prone to errors and failures than the current status quo, making it worse than the existing system.",
+        "precedent": "No precedent known"
+      },
+      "rejection_steelman": "The proposal's complexity and lack of clear rollback and error handling mechanisms make it difficult to justify its implementation, and it may be better to reject or defer the proposal until these issues are addressed.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "GQ1v3-OK",
+          "pick_text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify.",
+          "rationale": "The proposal's mode classification seems to be well-structured and complete, with no apparent overlaps or missing modes."
+        },
+        "G-Q2-v3": {
+          "key": "GQ2v3-TWO",
+          "pick_text": "2-sub-dimension structure (Build / Operational) as v3 defines — ratify.",
+          "rationale": "The proposal's authority structure, although complex, seems to be well-defined and rationalized, with a clear explanation for the collapse of the Deploy-Authority sub-dimension."
+        },
+        "G-Q3-v3": {
+          "key": null,
+          "pick_text": "Per-product per-mode per-dimension ceiling with v3 example justification — ratify.",
+          "rationale": "The proposal's authority ceiling structure, with its 3x2 JSONB shape, seems to be well-justified and provides a clear explanation for the granularity of the authority structure."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-JOINT",
+          "pick_text": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway — ratify.",
+          "rationale": "The proposal's joint deferral of SUB-2B and Mode 3B seems to be a reasonable approach, given the shared architectural dependencies and the need for a single future CA amendment."
+        },
+        "G-Q5-v3": {
+          "key": "GQ5v3-REMOVE",
+          "pick_text": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism.",
+          "rationale": "The proposal's removal of Mode 3B from the canonical SSOT seems to be a reasonable decision, given the need for a cryptographic ownership-verification mechanism and the potential risks associated with Mode 3B."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-OK",
+          "pick_text": "v3 matrix + §B.2 validity rules + AutoRunner HTTP 400 enforcement contract — ratify.",
+          "rationale": "The proposal's matrix and validity rules seem to be well-defined and rationalized, with a clear explanation for the enforcement mechanism and the use of HTTP 400 error codes."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-PROMOTE",
+          "pick_text": "v3 sufficient for promotion — promote.",
+          "rationale": "The proposal, although complex and with some potential issues, seems to have addressed the conditions and concerns raised in the previous versions, and it may be sufficient for promotion."
+        }
+      },
+      "overallNotes": "The proposal is complex and requires careful consideration of the potential risks and benefits. While it addresses some of the concerns raised in the previous versions, it may still have some issues that need to be addressed.",
+      "invalid_reason": "6/7 votes parsed",
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "slot": 4,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Over-engineered authority ceiling",
+            "detail": "The per-product per-mode per-dimension authority ceiling is overly complex. It introduces unnecessary granularity that may confuse operators and increase the risk of misconfiguration. The examples provided do not adequately justify this complexity. §A.2.4 and §G-Q3-v3."
+          },
+          {
+            "title": "Insufficient Mode 3B deferral justification",
+            "detail": "The proposal deferred Mode 3B due to the lack of a cryptographic URL ownership-verification mechanism. However, this deferral is not adequately justified, as the proposal does not explain why this mechanism is critical for Mode 3B specifically. §A.1.4 and §G-Q5-v3."
+          },
+          {
+            "title": "Lack of clear enforcement mechanism",
+            "detail": "The proposal mentions that the AutoRunner will enforce configuration validity rules with HTTP 400 errors, but it does not provide enough detail on how this enforcement will be implemented and monitored. This lack of clarity could lead to inconsistent enforcement. §B.2."
+          },
+          {
+            "title": "Unclear GTM context relevance",
+            "detail": "The GTM context provided in §A.0 is not clearly relevant to the proposal's design decisions. It mentions real GTM-ready products but does not explain how these products influence the authority and ceiling design choices. This lack of clarity could lead to misunderstandings about the proposal's applicability."
+          }
+        ],
+        "worse_than_status_quo": "The proposal introduces a complex authority ceiling structure that may confuse operators and increase the risk of misconfiguration, making the system worse than the current straightforward configuration.",
+        "precedent": "In the Therac-25 incident, a complex configuration and lack of clear enforcement mechanisms led to several deaths due to radiation overdoses. The complexity and lack of clear enforcement in this proposal could similarly lead to unintended consequences."
+      },
+      "rejection_steelman": "The proposal should be rejected because it introduces an overly complex authority ceiling structure without adequate justification. This complexity could confuse operators and increase the risk of misconfiguration, leading to unintended consequences. Additionally, the deferral of Mode 3B is not sufficiently justified, and the enforcement mechanism for configuration validity rules is unclear.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "GQ1v3-OK",
+          "pick_text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify.",
+          "rationale": "The classification is clear and addresses the overlap issues from previous versions."
+        },
+        "G-Q2-v3": {
+          "key": "GQ2v3-TWO",
+          "pick_text": "2-sub-dimension structure (Build / Operational) as v3 defines — ratify.",
+          "rationale": "The two-sub-dimension structure is reasonable and aligns with the proposal's goals."
+        },
+        "G-Q3-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The authority ceiling structure is over-engineered and lacks sufficient justification."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-JOINT",
+          "pick_text": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway — ratify.",
+          "rationale": "The joint deferral is a reasonable approach to addressing the shared dependencies."
+        },
+        "G-Q5-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The deferral of Mode 3B is not sufficiently justified, and the proposal does not explain why the cryptographic ownership-verification mechanism is critical."
+        },
+        "G-Q6-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The enforcement mechanism for configuration validity rules is unclear and lacks sufficient detail."
+        },
+        "G-Q7-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The proposal introduces new concerns, such as the over-engineered authority ceiling and unclear enforcement mechanisms."
+        }
+      },
+      "overallNotes": "The proposal has some merits, but the complexity of the authority ceiling structure and the lack of clear enforcement mechanisms are significant concerns that need to be addressed.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:mistralai/mistral-large-2411"
+    },
+    {
+      "slot": 5,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Lack of clarity on authority levels",
+            "detail": "The proposal introduces a new concept of 'authority levels' without providing a clear definition or explanation. It is not clear what these levels represent or how they are determined, which could lead to confusion and potential misuse."
+          },
+          {
+            "title": "Inadequate consideration of security risks",
+            "detail": "The proposal does not adequately address potential security risks associated with the new features, such as the 'crawl' and 'deploy' capabilities. Without proper security measures, these features could be exploited by malicious actors to gain unauthorized access to sensitive data or disrupt the system."
+          },
+          {
+            "title": "Insufficient testing and validation",
+            "detail": "The proposal does not provide enough details on how the new features will be tested and validated. Without comprehensive testing, there is a risk of introducing bugs or vulnerabilities that could impact the system's performance and security."
+          }
+        ],
+        "worse_than_status_quo": "The proposal introduces new features and capabilities without addressing potential security risks, which could make the system more vulnerable to attacks and data breaches. This could result in significant financial and reputational damage for the organization.",
+        "precedent": "no precedent known"
+      },
+      "rejection_steelman": "The proposal lacks sufficient detail on security measures and testing, which could lead to potential security risks and system vulnerabilities. Without addressing these concerns, the proposal may not be ready for implementation and could cause more harm than good.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "GQ1v3-OK",
+          "pick_text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify.",
+          "rationale": "The three canonical modes are distinct and non-overlapping, providing a clear and comprehensive classification system."
+        },
+        "G-Q2-v3": {
+          "key": "GQ2v3-TWO",
+          "pick_text": "2-sub-dimension structure (Build / Operational) as v3 defines — ratify.",
+          "rationale": "The two sub-dimensions provide a clear and sufficient structure for authority levels, with no need for additional dimensions."
+        },
+        "G-Q3-v3": {
+          "key": "GQ3v3-FINE",
+          "pick_text": "Per-product per-mode per-dimension ceiling with v3 example justification — ratify (3 modes × 2 dims = 6 cells).",
+          "rationale": "The per-product, per-mode, per-dimension ceiling provides a fine-grained and flexible control over authority levels, as demonstrated by the v3 examples."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-JOINT",
+          "pick_text": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway — ratify.",
+          "rationale": "The joint deferral approach ensures that both features are considered together, allowing for a more efficient and coordinated development process."
+        },
+        "G-Q5-v3": {
+          "key": "GQ5v3-REMOVE",
+          "pick_text": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism.",
+          "rationale": "Deferring Mode 3B until a robust verification mechanism is in place is a prudent approach, ensuring the feature is secure and reliable before implementation."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-OK",
+          "pick_text": "v3 matrix + §B.2 validity rules + AutoRunner HTTP 400 enforcement contract — ratify.",
+          "rationale": "The v3 matrix, combined with the validity rules and AutoRunner enforcement, provides a comprehensive and secure configuration system."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-PROMOTE",
+          "pick_text": "v3 sufficient for promotion — promote.",
+          "rationale": "The v3 proposal addresses all conditions and concerns, and is ready for promotion."
+        }
+      },
+      "overallNotes": "The proposal introduces a comprehensive and flexible system for managing authority levels, with a clear and secure configuration. However, it could benefit from more detailed security considerations and testing plans to ensure the system's integrity and reliability.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:cohere/command-r-plus-08-2024"
+    },
+    {
+      "slot": 6,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Enforcement mechanism creates race conditions",
+            "detail": "§B.2's HTTP 400 enforcement at AutoRunner submission boundary doesn't prevent mid-run authority escalation. If operator raises ceiling during a long-running Mode 1 SUB-1B pipeline, the run could execute later steps at higher authority than initially validated."
+          },
+          {
+            "title": "Mode 3A parallel crawl resource explosion",
+            "detail": "§D shows Agent #21 × N parallel for Mode 3A benchmarking. With no explicit concurrency limit in §A.1.3, comparing 10 products at depth=8/pages=200 each spawns 2000 parallel page renders, likely overwhelming Orchestra's browserless pool."
+          },
+          {
+            "title": "Authority ceiling migration breaks existing runs",
+            "detail": "§F.2 proposes ProductRegistry.authorityCeilings as new JSONB field with recommend_only defaults. In-flight runs started before migration will fail validation when they hit step boundaries, as their original authority config won't match the new 6-cell structure."
+          },
+          {
+            "title": "GTM context violates product-agnostic principle",
+            "detail": "§A.0 names five specific products (SAIGE, RelTwin, etc.) in canonical prose, creating Conflict 14. This sets precedent for product-specific content creeping into SSOT, undermining §22's zero-product-code rule even if limited to 'preamble only'."
+          }
+        ],
+        "worse_than_status_quo": "The 2-subdimension authority model creates a new failure mode where Build-Autonomous includes deploy rights by default, making it impossible to grant code-writing autonomy without also granting production deploy access — a regression from status quo where these concerns are naturally separated.",
+        "precedent": "Kubernetes RBAC initially bundled 'create' and 'update' verbs together, leading to privilege escalation vulnerabilities until they separated the permissions in v1.8 — similar to how v3 bundles build+deploy authorities."
+      },
+      "rejection_steelman": "The v3 spec should be deferred until the authority model is prototyped with at least one production product, as the 2-subdimension collapse (Build+Deploy merger) represents a fundamental security model change that could enable unintended production deployments. The HTTP 400 enforcement mechanism is also insufficiently robust for multi-step pipelines where authority requirements may change mid-run. Additionally, removing Mode 3B while keeping its UI surface creates a confusing user experience that promises unavailable functionality.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "GQ1v3-OK",
+          "pick_text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify.",
+          "rationale": "Despite Mode 3B removal creating UI inconsistency, the remaining 3 modes are cleanly separated with no overlap between assess/renew (Mode 1), spec generation (Mode 2), and comparison (Mode 3A)."
+        },
+        "G-Q2-v3": {
+          "key": "GQ2v3-SEP",
+          "pick_text": "2-sub-dim is right but Deploy should remain separate (re-split per v2 model).",
+          "rationale": "Folding Deploy into Build authority removes critical granularity — operators need to grant code-writing autonomy without automatically granting production deploy rights, especially for SUB-1B PREVIEW scenarios."
+        },
+        "G-Q3-v3": {
+          "key": "GQ3v3-UX",
+          "pick_text": "Granularity is right but operator UI complexity needs more thought (engineering follow-on must address UX).",
+          "rationale": "The 6-cell model with concrete examples demonstrates valid use cases, but presenting this complexity to operators requires careful UI design to avoid configuration errors that could grant unintended autonomy."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-SEP",
+          "pick_text": "Defer separately — each item gets its own future CA cycle independently.",
+          "rationale": "SUB-2B (code generation) and Mode 3B (synthesis) have fundamentally different technical blockers and risk profiles; bundling their return creates unnecessary dependencies that could delay the simpler capability."
+        },
+        "G-Q5-v3": {
+          "key": "GQ5v3-REMOVE",
+          "pick_text": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism.",
+          "rationale": "Without cryptographic ownership verification, Mode 3B poses unacceptable IP extraction risks; full removal from SSOT is the correct conservative position until proper safeguards exist."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-AGENT",
+          "pick_text": "Matrix is right but enforcement mechanism is wrong — should be agent-layer gate, not API-boundary HTTP 400.",
+          "rationale": "HTTP 400 at submission only validates initial state; multi-step pipelines need per-agent authority checks at each BaseAgent.guard() invocation to handle mid-run ceiling changes or step-specific overrides."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-DEFER",
+          "pick_text": "Defer until at least one operator product runs a v3-conformant production pipeline end-to-end.",
+          "rationale": "The 2-subdimension authority model represents a fundamental change requiring production validation; promoting without implementation proof risks discovering critical gaps only after deployment."
+        }
+      },
+      "overallNotes": "v3 improves on v2 but introduces new risks through the Build+Deploy authority merger and lacks implementation validation for its core security model changes.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:anthropic/claude-opus-4"
+    },
+    {
+      "slot": 7,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Complex authority ceiling management",
+            "detail": "The per-product per-mode per-dimension authority ceilings (§A.2.4) create a 6-cell configuration matrix that significantly increases operator cognitive load. Real-world operators managing multiple products will struggle with asymmetric trust configurations, risking misconfigured ceilings that either over-constrain workflows or grant excessive autonomy. The three concrete examples don't address how UI will prevent ceiling conflicts across modes."
+          },
+          {
+            "title": "Incomplete gate enforcement",
+            "detail": "The Build-Authority supervised level (§A.2.1) requires human approval for every code change and deploy, but §E's capability table shows per-step build-approval UI is only 'PARTIAL' with 'consistent gate UX across all 8 steps' still on the roadmap. This creates a dangerous gap where the system claims supervised capability without full enforcement mechanisms."
+          },
+          {
+            "title": "GTM context violates agnostic rule",
+            "detail": "§A.0 explicitly names five operator products (SAIGE, RelTwin, etc.) in canonical documentation, directly contradicting §22's Product-Agnostic Rule which forbids product names in 'spec code/schemas/identifiers'. This establishes precedent for product-specific leakage and undermines the metadata-only configuration principle."
+          },
+          {
+            "title": "Cryptographic verification vaporware",
+            "detail": "Mode 3B deferral (§G-Q5-v3) cites cryptographic URL ownership verification as a blocker, but provides zero technical specification or timeline for this critical security mechanism. The FUTURE_CAPABILITIES.md placeholder doesn't mitigate the risk of building dependent features on nonexistent foundations."
+          }
+        ],
+        "worse_than_status_quo": "An operator misconfigures Mode 1 Build-Authority as 'autonomous' while overlooking that their staging environment shares production credentials. FlowAI's aggressive crawl (§6) then auto-deploys a flawed fix that propagates to production via linked systems, causing extended downtime - a failure mode impossible under current manual deployment controls.",
+        "precedent": "AWS IAM permission boundary misconfigurations, where granular per-service permissions led to operators accidentally granting excessive privileges, resulting in numerous S3 data leaks and resource hijackings despite good intentions."
+      },
+      "rejection_steelman": "This proposal introduces substantial configuration complexity and unresolved implementation risks without commensurate benefits. The 6-cell authority ceiling matrix will confuse operators, the deferred capabilities leave critical path functionality unimplemented, and the GTM context violation sets dangerous precedent. Until UI tooling for ceiling management and full gate enforcement exist, this architecture risks production incidents that exceed current system safeguards. Deferral would allow validation of the model against actual operator workflows before codification.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "GQ1v3-OK",
+          "pick_text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify.",
+          "rationale": "The removal of Mode 3B resolves overlap concerns, and the three remaining modes cover distinct operational scenarios without redundancy."
+        },
+        "G-Q2-v3": {
+          "key": "GQ2v3-TWO",
+          "pick_text": "2-sub-dimension structure (Build / Operational) as v3 defines — ratify.",
+          "rationale": "Folding Deploy into Build reflects operational reality where deployment capability inherently requires build authority."
+        },
+        "G-Q3-v3": {
+          "key": "GQ3v3-UX",
+          "pick_text": "Granularity is right but operator UI complexity needs more thought (engineering follow-on must address UX).",
+          "rationale": "While asymmetric trust justification is valid, §C.4's two-picker interface lacks safeguards against contradictory configurations."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-JOINT",
+          "pick_text": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway — ratify.",
+          "rationale": "Combining both capabilities under a single amendment aligns with their shared dependency on autonomous-build infrastructure."
+        },
+        "G-Q5-v3": {
+          "key": "GQ5v3-REMOVE",
+          "pick_text": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism.",
+          "rationale": "Third-party verification is non-negotiable for IP-sensitive synthesis features, making full removal safer than deferred tagging."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-OK",
+          "pick_text": "v3 matrix + §B.2 validity rules + AutoRunner HTTP 400 enforcement contract — ratify.",
+          "rationale": "API-boundary enforcement provides immediate feedback while audit logging enables tamper-evident tracking of configuration errors."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-PROMOTE",
+          "pick_text": "v3 sufficient for promotion — promote.",
+          "rationale": "All conditions from previous rejections have been substantively addressed through axis simplification and deferred capability resolution."
+        }
+      },
+      "overallNotes": "The GTM context naming violation (§A.0) must be resolved pre-ratification by moving product references to non-canonical documentation.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:deepseek/deepseek-r1"
+    },
+    {
+      "slot": 8,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Mode-mixing ambiguity remains",
+            "detail": "§A.1 and §B.2 still allow the same run surface to combine Pipeline Mode, sub-mode, execution pacing, and two authority levels, but the spec does not define precedence when UI, API, and operator-ceiling defaults conflict. For example, §A.2.4 says defaults are the operator ceiling while §A.3 says Automatic is bounded by authority ceilings; neither section says what happens when a guided user lowers one authority dimension but not the other and the run spans multiple steps with different step-level needs."
+          },
+          {
+            "title": "HTTP 400 is insufficiently precise",
+            "detail": "§B.2 makes every invalid configuration a submission-boundary 400, but several violations are not purely client mistakes; they depend on evolving product metadata and runtime state. If ceilings change between form render and submit, or if a run becomes invalid after a step starts, the proposal gives no conflict-resolution or idempotency rule beyond logging to GovernanceAuditLog."
+          },
+          {
+            "title": "Preamble product-name exception",
+            "detail": "§A.0 explicitly introduces a controlled exception to the Product-Agnostic Rule by naming the five GTM products in canonical prose. That may be harmless today, but it creates a precedent for future “context-only” exceptions that can leak into canonical SSOT content, making automated neutral-fixture enforcement harder and weakening the rule’s original bright line."
+          }
+        ],
+        "worse_than_status_quo": "A product could be launched with ceilings that appear valid at selection time, then fail at runtime because the operator ceiling or mode mapping changed, causing a 400 after the user has already completed the workflow. That is worse than the current looser system if it silently accepted the run or if validation occurred earlier in a more deterministic UI gate, because the proposal moves failure to a later, more expensive point without specifying recovery behavior.",
+        "precedent": "GitHub Actions and other CI systems frequently validate job permissions and environment constraints at dispatch time, but they also suffer from race conditions when repository settings change mid-run; the result is confusing late failures rather than clean prevention. no precedent known"
+      },
+      "rejection_steelman": "The strongest case for rejecting or deferring CA-12 v3 is that it codifies a more complex control plane before proving that the enforcement path is robust across schema migration, UI state, and runtime execution. The spec narrows some open questions, but it still leaves ambiguous how invalidity is handled once a run has begun, and it introduces a canonical exception to the product-agnostic rule that could erode governance discipline over time. Deferring until the new ceilings, validation contract, and UI affordances are demonstrated end-to-end would reduce the chance of shipping a formally tidy but operationally brittle governance layer.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The three-mode taxonomy is plausible, but the proposal still depends on a deferred Mode 3B in FUTURE_CAPABILITIES and does not fully prove that all mode boundaries are stable under the shared future-CA commitment. I would not ratify the classification as complete without seeing the deferred mode’s boundary contract."
+        },
+        "G-Q2-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Collapsing to Build/Operational is defensible, but the spec’s own examples reveal that deploy semantics still matter operationally and are only papered over by folding them into Build. I do not think any listed option fully captures the implementation risk, so I would reject rather than endorse a simplified axis as settled."
+        },
+        "G-Q3-v3": {
+          "key": "GQ3v3-UX",
+          "pick_text": "Granularity is right but operator UI complexity needs more thought (engineering follow-on must address UX).",
+          "rationale": "Per-product per-mode per-dimension ceilings are justified for asymmetric trust, but the proposal acknowledges a larger configuration surface without a concrete UX model for safe editing and review. That makes the granularity directionally right, but not yet ratifiable as a finished control experience."
+        },
+        "G-Q4-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Joint deferral is plausible, but bundling SUB-2B and Mode 3B into one future amendment creates coupling between unrelated blockers and risks delaying a separately resolvable capability. None of the options cleanly addresses the governance downside of cross-coupled deferrals."
+        },
+        "G-Q5-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "Removing Mode 3B outright may be appropriate, but the proposal’s own logic suggests the feature is deferred, not extinguished, and the canonical/prose split is still under-specified. I would not bless any of the listed formulations as fully acceptable without a stronger transition rule."
+        },
+        "G-Q6-v3": {
+          "key": "REJECT",
+          "pick_text": "REJECT — none of the listed options is acceptable as specified",
+          "rationale": "The matrix collapse is attractive, but enforcing all invalid combinations only at the API boundary via HTTP 400 seems too narrow for safety-critical governance. A better answer would pair API validation with preflight/UI and agent-layer checks, so I do not accept the listed choices as written."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-DEFER",
+          "pick_text": "Defer until at least one operator product runs a v3-conformant production pipeline end-to-end.",
+          "rationale": "This is the most defensible disposition because the proposal changes governance mechanics, schema shape, and validation timing all at once. End-to-end production evidence would distinguish a paper improvement from an actually reliable operating model."
+        }
+      },
+      "overallNotes": "I am broadly sympathetic to the architecture direction, but the proposal still reads like a spec that is ahead of its operational proof. The main blockers are runtime invalidation handling, UX-safe ceiling editing, and the risk that the product-agnostic exception becomes a pattern.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:perplexity/sonar"
+    },
+    {
+      "slot": 9,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "Overly Complex Authority Structure",
+            "detail": "§A.2 introduces a 2-sub-dimension authority structure (Build / Operational) with 3 levels each. This complexity may lead to operational confusion and increased risk of misconfiguration."
+          },
+          {
+            "title": "Lack of Clear Guidance on Ceiling Configuration",
+            "detail": "§A.2.4 provides examples of authority ceiling configurations, but it is unclear how these examples generalize to other scenarios or how operators should determine appropriate ceiling settings for their products."
+          },
+          {
+            "title": "Insufficient Explanation of Mode Interactions",
+            "detail": "§A.1 describes the three canonical modes, but the interactions between modes and how they affect the overall pipeline behavior are not clearly explained, potentially leading to unexpected outcomes."
+          }
+        ],
+        "worse_than_status_quo": "The introduction of multiple authority dimensions and complex ceiling configurations could lead to a situation where operators struggle to manage their products effectively, resulting in decreased overall system reliability and increased risk of errors or security breaches.",
+        "precedent": "The introduction of complex configuration options in other governance systems, such as Kubernetes, has led to operational challenges and security issues due to misconfiguration. A similar risk exists here with the proposed authority structure and ceiling configurations."
+      },
+      "rejection_steelman": "The proposal's complexity, particularly around authority dimensions and ceiling configurations, introduces significant operational risk and potential for misconfiguration. Deferring or rejecting the proposal could allow for simplification and clearer guidance, reducing the risk of adverse outcomes in production environments.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "GQ1v3-OK",
+          "pick_text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify.",
+          "rationale": "The removal of Mode 3B and clarification of the remaining modes appear to resolve previous concerns about mode overlap."
+        },
+        "G-Q2-v3": {
+          "key": "GQ2v3-TWO",
+          "pick_text": "2-sub-dimension structure (Build / Operational) as v3 defines — ratify.",
+          "rationale": "Collapsing to 2 sub-dimensions simplifies the structure while still capturing essential authority distinctions."
+        },
+        "G-Q3-v3": {
+          "key": "GQ3v3-UX",
+          "pick_text": "Granularity is right but operator UI complexity needs more thought (engineering follow-on must address UX).",
+          "rationale": "While the per-product per-mode per-dimension ceiling structure is granular and justifiable, the complexity it introduces for operators necessitates careful UI design to mitigate potential confusion or misconfiguration."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-JOINT",
+          "pick_text": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway — ratify.",
+          "rationale": "Deferring both items together acknowledges their shared dependency on autonomous-build infrastructure and streamlines future reintroduction."
+        },
+        "G-Q5-v3": {
+          "key": "GQ5v3-REMOVE",
+          "pick_text": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism.",
+          "rationale": "Removing Mode 3B from the canonical SSOT until a cryptographic ownership-verification mechanism is developed and ratified is prudent, given the concerns about IP and ownership verification."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-OK",
+          "pick_text": "v3 matrix + §B.2 validity rules + AutoRunner HTTP 400 enforcement contract — ratify.",
+          "rationale": "The strengthened validity rules and explicit enforcement contract improve the robustness of the configuration matrix."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-PROMOTE",
+          "pick_text": "v3 sufficient for promotion — promote.",
+          "rationale": "After addressing the concerns and conditions from previous versions, v3 appears to be a significant improvement and ready for promotion."
+        }
+      },
+      "overallNotes": "The proposal has made significant strides in addressing previous concerns, but careful implementation and monitoring will be crucial to mitigate the risks associated with its complexity.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:meta-llama/llama-4-maverick"
+    },
+    {
+      "slot": 10,
+      "state": "ENGAGED",
+      "adversarial": {
+        "valid": true,
+        "objections": [
+          {
+            "title": "§A.2.4 ceiling JSONB lacks migration",
+            "detail": "The 6-cell authorityCeilings JSONB replaces v2's 12-cell shape with no migration script or default-value transformation specified in §A.2.4 or §F.2; existing ProductRegistry rows will trigger CONFIG_CEILING_VIOLATION on first AutoRunner call under the new 3×2 schema."
+          },
+          {
+            "title": "§B.2 rule 5 blocks supervised auto",
+            "detail": "Rule 5 in §B.2 forbids AUTOMATIC execution whenever any authority is Supervised, yet Example 2 in §A.2.4 explicitly describes a production-trusted Mode 1 SUB-1B posture using Build=Supervised + Op=Autonomous that would now be rejected at POST /api/orchestrator/run."
+          },
+          {
+            "title": "§A.0 names breach §22 agnostic rule",
+            "detail": "The GTM context preamble lists SAIGE, RelTwin, ReachSMS, PressAI and MyPregLife by name, directly violating the Product-Agnostic Rule in §22 that prohibits product names in canonical documents, schemas, or identifiers."
+          }
+        ],
+        "worse_than_status_quo": "The stricter §B.2 validity rules plus collapsed authority dimensions could reject currently-working supervised-renewal runs that operators rely on today, forcing every Mode 1 SUB-1B cycle into GUIDED pacing and increasing manual overhead beyond the status-quo v2 matrix.",
+        "precedent": "Kubernetes RBAC role-combination matrices produced exactly this outcome: overly rigid rules caused operators to fall back to cluster-admin, eroding the intended least-privilege model."
+      },
+      "rejection_steelman": "Even after CEO D1/D2/D3 adjustments, the proposal hard-codes a 6-cell ceiling and six new AutoRunner 400 error paths without any production validation of the migration or the §B.2 gate logic; deferring ratification until at least one live operator product completes an end-to-end v3 run would avoid locking the system into an untested, less flexible configuration than the already-deployed v2 draft.",
+      "votes": {
+        "G-Q1-v3": {
+          "key": "GQ1v3-OK",
+          "pick_text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify.",
+          "rationale": "The three-mode split removes the prior overlap but still leaves SUB-2B and Mode 3B in limbo without a concrete re-introduction timeline."
+        },
+        "G-Q2-v3": {
+          "key": "GQ2v3-TWO",
+          "pick_text": "2-sub-dimension structure (Build / Operational) as v3 defines — ratify.",
+          "rationale": "Folding Deploy into Build eliminates one degenerate cell type, yet the resulting matrix still requires the unproven §B.2 enforcement layer."
+        },
+        "G-Q3-v3": {
+          "key": "GQ3v3-FINE",
+          "pick_text": "Per-product per-mode per-dimension ceiling with v3 example justification — ratify (3 modes × 2 dims = 6 cells).",
+          "rationale": "The three concrete examples help, but the JSONB shape change still lacks a migration path and risks runtime violations on existing tenants."
+        },
+        "G-Q4-v3": {
+          "key": "GQ4v3-JOINT",
+          "pick_text": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway — ratify.",
+          "rationale": "Pairing the two deferred items is reasonable, but the proposal provides no milestone or blocker-resolution criteria for their eventual return."
+        },
+        "G-Q5-v3": {
+          "key": "GQ5v3-REMOVE",
+          "pick_text": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism.",
+          "rationale": "Full removal is the cleanest option given the cryptographic blocker, provided FUTURE_CAPABILITIES.md is treated as binding rather than advisory."
+        },
+        "G-Q6-v3": {
+          "key": "GQ6v3-OK",
+          "pick_text": "v3 matrix + §B.2 validity rules + AutoRunner HTTP 400 enforcement contract — ratify.",
+          "rationale": "Concrete error codes and audit logging are improvements, yet the rules remain untested against real operator ceiling configurations."
+        },
+        "G-Q7-v3": {
+          "key": "GQ7v3-DEFER",
+          "pick_text": "Defer until at least one operator product runs a v3-conformant production pipeline end-to-end.",
+          "rationale": "The proposal's new enforcement surface and 6-cell migration have no live validation; deferral protects against configuration breakage in production."
+        }
+      },
+      "overallNotes": "The adversarial objections focus on migration risk, rule rigidity, and the §22 breach; these are the most concrete surfaces that could cause immediate runtime or compliance failures.",
+      "invalid_reason": null,
+      "degraded": false,
+      "parseFailure": false,
+      "modelTag": "openrouter:x-ai/grok-4.3"
+    }
+  ],
+  "questions": [
+    {
+      "id": "G-Q1-v3",
+      "topic": "Pipeline Mode classification (Mode 3B removed; 3 canonical modes — Mode 1, Mode 2 SUB-2A, Mode 3A)",
+      "options": [
+        {
+          "key": "GQ1v3-OK",
+          "text": "3-canonical-mode classification (Mode 1 + Mode 2 SUB-2A + Mode 3A) is complete and non-overlapping — ratify."
+        },
+        {
+          "key": "GQ1v3-MISSING",
+          "text": "3-mode classification is missing a mode — name it in rationale."
+        },
+        {
+          "key": "GQ1v3-OVERLAP",
+          "text": "3-mode classification still has an overlap — name it."
+        },
+        {
+          "key": "GQ1v3-KEEP3B",
+          "text": "Removing Mode 3B from SSOT was wrong; Mode 3B should stay in SSOT with deferred-status tag."
+        }
+      ],
+      "draftedKey": "GQ1v3-OK"
+    },
+    {
+      "id": "G-Q2-v3",
+      "topic": "Authority dimensions collapsed to 2 sub-dims (Build / Operational; Deploy folded into Build)",
+      "options": [
+        {
+          "key": "GQ2v3-TWO",
+          "text": "2-sub-dimension structure (Build / Operational) as v3 defines — ratify."
+        },
+        {
+          "key": "GQ2v3-SEP",
+          "text": "2-sub-dim is right but Deploy should remain separate (re-split per v2 model)."
+        },
+        {
+          "key": "GQ2v3-ONE",
+          "text": "1-sub-dim is sufficient — collapse Build + Operational into a single authority."
+        },
+        {
+          "key": "GQ2v3-MORE",
+          "text": "3+ sub-dimensions needed for a specific operational concern — name it."
+        }
+      ],
+      "draftedKey": "GQ2v3-TWO"
+    },
+    {
+      "id": "G-Q3-v3",
+      "topic": "Authority ceiling per-product per-mode per-dimension (3×2 JSONB + 3 concrete examples)",
+      "options": [
+        {
+          "key": "GQ3v3-FINE",
+          "text": "Per-product per-mode per-dimension ceiling with v3 example justification — ratify (3 modes × 2 dims = 6 cells)."
+        },
+        {
+          "key": "GQ3v3-UX",
+          "text": "Granularity is right but operator UI complexity needs more thought (engineering follow-on must address UX)."
+        },
+        {
+          "key": "GQ3v3-MODE",
+          "text": "Per-product per-mode only (no per-sub-dim) — coarser."
+        },
+        {
+          "key": "GQ3v3-PROD",
+          "text": "Per-product only (no per-mode) — coarsest."
+        }
+      ],
+      "draftedKey": "GQ3v3-FINE"
+    },
+    {
+      "id": "G-Q4-v3",
+      "topic": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway",
+      "options": [
+        {
+          "key": "GQ4v3-JOINT",
+          "text": "Joint deferral of SUB-2B + Mode 3B with shared-future-CA pathway — ratify."
+        },
+        {
+          "key": "GQ4v3-SEP",
+          "text": "Defer separately — each item gets its own future CA cycle independently."
+        },
+        {
+          "key": "GQ4v3-REPRO",
+          "text": "Re-promote SUB-2B or Mode 3B as ROADMAP-in-canonical-SSOT (reverse the deferral)."
+        },
+        {
+          "key": "GQ4v3-MORE",
+          "text": "Defer additional items (e.g., Mode 1 SUB-1B DEPLOY) to FUTURE_CAPABILITIES alongside SUB-2B + Mode 3B."
+        }
+      ],
+      "draftedKey": "GQ4v3-JOINT"
+    },
+    {
+      "id": "G-Q5-v3",
+      "topic": "Mode 3B fully removed from canonical SSOT (cryptographic ownership-verification blocker named)",
+      "options": [
+        {
+          "key": "GQ5v3-REMOVE",
+          "text": "Defer Mode 3B entirely; ratify removal from SSOT pending verification mechanism."
+        },
+        {
+          "key": "GQ5v3-TAG",
+          "text": "Mode 3B should stay in SSOT with DEFERRED status tag, not removed."
+        },
+        {
+          "key": "GQ5v3-SHIP",
+          "text": "Mode 3B should ship with v2 self-attestation mechanism (operator attests; no third-party verification)."
+        },
+        {
+          "key": "GQ5v3-INADV",
+          "text": "Mode 3B is structurally inadvisable regardless of mechanism — IP concerns inherent to feature extraction."
+        }
+      ],
+      "draftedKey": "GQ5v3-REMOVE"
+    },
+    {
+      "id": "G-Q6-v3",
+      "topic": "Matrix + §B.2 validity rules + AutoRunner enforcement (HTTP 400 with 6 error codes + audit-log)",
+      "options": [
+        {
+          "key": "GQ6v3-OK",
+          "text": "v3 matrix + §B.2 validity rules + AutoRunner HTTP 400 enforcement contract — ratify."
+        },
+        {
+          "key": "GQ6v3-AGENT",
+          "text": "Matrix is right but enforcement mechanism is wrong — should be agent-layer gate, not API-boundary HTTP 400."
+        },
+        {
+          "key": "GQ6v3-STRICT",
+          "text": "Some validity rules are too strict (e.g., AUTOMATIC + Supervised should be permitted with explicit warning)."
+        },
+        {
+          "key": "GQ6v3-PERM",
+          "text": "Some validity rules are too permissive — specify which combinations need additional gates."
+        }
+      ],
+      "draftedKey": "GQ6v3-OK"
+    },
+    {
+      "id": "G-Q7-v3",
+      "topic": "Overall CA-12 v3 disposition",
+      "options": [
+        {
+          "key": "GQ7v3-PROMOTE",
+          "text": "v3 sufficient for promotion — promote."
+        },
+        {
+          "key": "GQ7v3-FORM",
+          "text": "v3 addresses conditions in form but not in substance — name remaining substantive gaps."
+        },
+        {
+          "key": "GQ7v3-NEW",
+          "text": "v3 introduces new concerns not in v2 — name them in rationale."
+        },
+        {
+          "key": "GQ7v3-DEFER",
+          "text": "Defer until at least one operator product runs a v3-conformant production pipeline end-to-end."
+        }
+      ],
+      "draftedKey": "GQ7v3-PROMOTE"
+    }
+  ]
+}

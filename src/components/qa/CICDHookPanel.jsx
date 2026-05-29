@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { GitBranch, Play, Copy, Check, ChevronDown, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { GitBranch, Play, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react';
 
 const PIPELINE_TEMPLATES = [
   {

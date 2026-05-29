@@ -1,0 +1,108 @@
+{
+  "timestamp": "2026-05-11T19-34-58",
+  "panel_size": 10,
+  "live_count": 5,
+  "required_live": 5,
+  "aggregate_verdict": "ACCEPT_WITH_TWEAKS",
+  "models_used": 5,
+  "consensus_findings": [
+    "No test for act() invalid plan (e.g., missing proposed.emit) rejection path",
+    "1. Add test coverage for hot store unreachable scenario in recommend()"
+  ],
+  "contradictions": [
+    "verdict_disagreement — MAJOR_REVISION: [openrouter:openai/gpt-5]  |  ACCEPT_WITH_TWEAKS: [openrouter:openai/gpt-4o, openrouter:google/gemini-2.5-pro, openrouter:anthropic/claude-opus-4, openrouter:openai/gpt-4o]"
+  ],
+  "most_severe_gaps": [],
+  "reviewers": [
+    {
+      "provider": "openrouter",
+      "model": "openrouter:openai/gpt-5",
+      "latency_ms": 71148,
+      "degraded": false,
+      "verdict": "MAJOR_REVISION",
+      "agreement_pct": 86,
+      "error": null
+    },
+    {
+      "provider": "openrouter",
+      "model": "openrouter:openai/gpt-4o",
+      "latency_ms": 15227,
+      "degraded": false,
+      "verdict": "ACCEPT_WITH_TWEAKS",
+      "agreement_pct": 95,
+      "error": null
+    },
+    {
+      "provider": "openrouter",
+      "model": "openrouter:google/gemini-2.5-pro",
+      "latency_ms": 48536,
+      "degraded": false,
+      "verdict": "ACCEPT_WITH_TWEAKS",
+      "agreement_pct": 98,
+      "error": null
+    },
+    {
+      "provider": "openrouter",
+      "model": "openrouter:anthropic/claude-opus-4",
+      "latency_ms": 39453,
+      "degraded": false,
+      "verdict": "ACCEPT_WITH_TWEAKS",
+      "agreement_pct": 95,
+      "error": null
+    },
+    {
+      "provider": "vercel_v0",
+      "model": "vercel_v0:v0-1.5-md",
+      "latency_ms": 5606,
+      "degraded": true,
+      "verdict": null,
+      "agreement_pct": null,
+      "error": "vercel_v0 429: {\"error\":{\"type\":\"too_many_requests_error\",\"message\":\"You have reached your daily message limit. Please upgrade your plan to continue.\"}}"
+    },
+    {
+      "provider": "github_models",
+      "model": "github_models:openai/gpt-4.1",
+      "latency_ms": 4817,
+      "degraded": true,
+      "verdict": null,
+      "agreement_pct": null,
+      "error": "github_models 413: {\"error\":{\"code\":\"tokens_limit_reached\",\"message\":\"Request body too large for gpt-4.1 model. Max size: 8000 tokens.\",\"details\":\"Request body too large for gpt-4.1 model. Max size: 8000 tokens.\"}}"
+    },
+    {
+      "provider": "github_models",
+      "model": "github_models:openai/gpt-4o-mini",
+      "latency_ms": 4815,
+      "degraded": true,
+      "verdict": null,
+      "agreement_pct": null,
+      "error": "github_models 413: {\"error\":{\"code\":\"tokens_limit_reached\",\"message\":\"Request body too large for gpt-4o-mini model. Max size: 8000 tokens.\",\"details\":\"Request body too large for gpt-4o-mini model. Max size: 8000 tokens."
+    },
+    {
+      "provider": "headless",
+      "model": "headless:base44_chat",
+      "latency_ms": 1,
+      "degraded": true,
+      "verdict": null,
+      "agreement_pct": null,
+      "error": "not_configured: headless adapter for \"base44_chat\" not yet wired (see scripts/lib/headless-reviewer.mjs)"
+    },
+    {
+      "provider": "headless",
+      "model": "headless:replit_agent",
+      "latency_ms": 1,
+      "degraded": true,
+      "verdict": null,
+      "agreement_pct": null,
+      "error": "not_configured: headless adapter for \"replit_agent\" not yet wired (see scripts/lib/headless-reviewer.mjs)"
+    },
+    {
+      "provider": "openrouter",
+      "model": "openrouter:openai/gpt-4o",
+      "latency_ms": 7933,
+      "degraded": false,
+      "verdict": "ACCEPT_WITH_TWEAKS",
+      "agreement_pct": 95,
+      "error": null
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { GitBranch, Save, RotateCcw, Tag, Clock, ChevronDown, ChevronRight, Loader2, Plus } from 'lucide-react';
+import { GitBranch, Save, RotateCcw, Tag, Clock, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function VersionControlPanel() {

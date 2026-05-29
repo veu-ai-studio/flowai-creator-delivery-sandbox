@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Globe, AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
+import { Globe, AlertCircle, ExternalLink } from 'lucide-react';
 
 export default function OriginalProductPanel({ audit, metadata }) {
   const score = audit.overall_score || 0;

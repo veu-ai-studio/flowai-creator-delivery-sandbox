@@ -188,7 +188,7 @@ export default async function ({ page, context }) {
     return {
       title: trim(document.title, 200),
       metaDescription: trim(document.querySelector('meta[name="description"]')?.content || '', 400),
-      bodyText: trim(document.body?.innerText || '', 12000),
+      bodyText: trim(document.body?.innerText || '', 50000),
       links, buttons, forms, images: imgs.map((i) => ({ src: (i.src||'').slice(0,200), alt: i.alt, broken: i.broken })),
       headings, imagesMissingAlt,
       headingHierarchyOk,
@@ -402,6 +402,325 @@ export async function crawl(url, { force } = {}) {
   return { ok: false, url: target, reason: 'All crawl methods failed', attempts };
 }
 
+// ─── Aggressive Crawl Engine (ACE) Phase 1 ───────────────────────────────
+//
+// Generic, product-agnostic JS-rendered BFS spider. Accepts ANY URL passed
+// at runtime. Phase 1 scope: per-page render via Browserless `/function`
+// (`richCapture` already runs `networkidle2` waits + extracts title, meta,
+// headings, body text, links, buttons, forms, images, accessibility
+// signals, console/network errors). BFS across same-origin internal
+// links up to the canonical depth/page caps per CANONICAL_REFERENCE §6
+// (default depth=8 / hard cap=12; default pages=200 / hard cap=2000).
+// Hard caps overridable via Doppler `flowai/<env>/CRAWL_DEPTH_HARD_CAP`
+// and `flowai/<env>/CRAWL_MAX_PAGES_HARD_CAP`.
+//
+// Phase 1 NOT-YET-IMPLEMENTED (per spec §A.2-§A.7 + engineering scope
+// estimate; later dispatches):
+//   - click-everything pass over internal links + buttons + cards
+//   - modal probing (`[role="dialog"]`, `.modal`, `[aria-modal="true"]`)
+//   - AI-agent benign-probe pass
+//   - desktop+mobile dual-viewport crawl
+//   - authenticated `storageState` re-render
+//   - deliberate error-state triggers (404 / 500 / offline / slow-net /
+//     form-validation / XSS)
+//
+// Phase 1 IS sufficient to replace the prior static-fetch path in
+// `inputAdapters/url.js` with full JS rendering at the canonical caps —
+// the immediate dispatch ask. Later phases extend without changing the
+// CrawlReport JSON shape (only adding optional fields).
+//
+// CrawlReport JSON shape (returned by `aggressiveCrawl`):
+//   {
+//     ok, startUrl, origin,
+//     depth: <configured depth>, pageCap: <configured maxPages>,
+//     pagesCrawled, pages: [PageRecord, ...],
+//     errors: [{ phase, url, reason }],
+//     warnings: [...],
+//     startedAt: <ISO>, finishedAt: <ISO>, durationMs,
+//   }
+// PageRecord (rendered via `richCapture`):
+//   {
+//     url, normalisedUrl, depth, parent,
+//     title, metaDescription, bodyText,
+//     headings, surfaces: { links, buttons, forms, images },
+//     accessibility, timing, consoleErrors, networkErrors,
+//     method: 'browserless-function' | 'browserless-content' | 'simple-fetch',
+//     jsRendered, ok, reason?,
+//   }
+//
+// PRODUCT-AGNOSTIC PER §22: this code references zero product names, zero
+// VEU references, zero hardcoded URLs. URLs flow in at runtime via
+// caller arguments; defaults + caps flow in via env (Doppler).
+
+export const ACE_DEFAULTS = Object.freeze({
+  depth: 8,                  // CANONICAL_REFERENCE §6 default depth
+  maxPages: 200,             // CANONICAL_REFERENCE §6 default pages-per-product
+  depthHardCap: 12,          // §6 hard cap (override env CRAWL_DEPTH_HARD_CAP)
+  maxPagesHardCap: 2000,     // §6 hard cap (override env CRAWL_MAX_PAGES_HARD_CAP)
+  perPageTimeoutMs: 30_000,
+  totalWallClockMs: 20 * 60_000,  // spec §E.3 — 20 min per crawl
+  includeScreenshot: false,  // Phase 1 default off — screenshots are GTM-readiness-track
+});
+
+function resolveHardCaps() {
+  const depthHardCap = parseIntOrDefault(process.env.CRAWL_DEPTH_HARD_CAP, ACE_DEFAULTS.depthHardCap);
+  const maxPagesHardCap = parseIntOrDefault(process.env.CRAWL_MAX_PAGES_HARD_CAP, ACE_DEFAULTS.maxPagesHardCap);
+  return { depthHardCap, maxPagesHardCap };
+}
+
+function parseIntOrDefault(raw, dflt) {
+  const n = parseInt(raw ?? '', 10);
+  return Number.isFinite(n) && n > 0 ? n : dflt;
+}
+
+function normaliseForCompare(href) {
+  try {
+    const u = new URL(href);
+    return (u.origin + u.pathname.replace(/\/$/, '')).toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function isSameOriginUrl(href, origin) {
+  if (!origin) return false;
+  try {
+    return new URL(href).origin === origin;
+  } catch {
+    return false;
+  }
+}
+
+function extractInternalLinks(page, origin) {
+  // richCapture returns `surfaces.links: [{ text, href, isInternal }]`
+  // The `/content` path (viaBrowserless) returns the flat `links` shape via
+  // extractTextFromHtml. Handle both.
+  const fromSurfaces = page?.surfaces?.links;
+  if (Array.isArray(fromSurfaces)) {
+    return fromSurfaces
+      .filter((l) => l && typeof l.href === 'string')
+      .map((l) => l.href)
+      .filter((href) => isSameOriginUrl(href, origin));
+  }
+  const flat = page?.links;
+  if (Array.isArray(flat)) {
+    return flat
+      .map((l) => (typeof l === 'string' ? l : l?.href))
+      .filter((href) => typeof href === 'string')
+      .filter((href) => isSameOriginUrl(href, origin));
+  }
+  return [];
+}
+
+function buildPageRecord({ url, normalisedUrl, depth, parent, capture, fallback }) {
+  if (capture && capture.ok) {
+    return {
+      url: capture.finalUrl ?? url,
+      normalisedUrl,
+      depth,
+      parent: parent ?? null,
+      title: capture.title ?? '',
+      metaDescription: capture.metaDescription ?? '',
+      bodyText: capture.bodyText ?? '',
+      headings: capture.surfaces?.headings ?? [],
+      surfaces: {
+        links: capture.surfaces?.links ?? [],
+        buttons: capture.surfaces?.buttons ?? [],
+        forms: capture.surfaces?.forms ?? [],
+        images: capture.surfaces?.images ?? [],
+      },
+      accessibility: capture.accessibility ?? {},
+      timing: capture.timing ?? {},
+      consoleErrors: capture.consoleErrors ?? [],
+      networkErrors: capture.networkErrors ?? [],
+      method: 'browserless-function',
+      jsRendered: true,
+      ok: true,
+    };
+  }
+  // richCapture failed — fall back to the legacy `crawl()` path so the
+  // BFS still produces something analysable downstream.
+  if (fallback && fallback.ok) {
+    return {
+      url: fallback.url ?? url,
+      normalisedUrl,
+      depth,
+      parent: parent ?? null,
+      title: fallback.title ?? '',
+      metaDescription: fallback.metaDescription ?? '',
+      bodyText: fallback.bodyText ?? '',
+      headings: fallback.headings ?? [],
+      surfaces: { links: fallback.links ?? [], buttons: [], forms: [], images: [] },
+      accessibility: {},
+      timing: {},
+      consoleErrors: [],
+      networkErrors: [],
+      method: fallback.method ?? 'simple-fetch',
+      jsRendered: !!fallback.jsRendered,
+      ok: true,
+      warnings: fallback.warnings ?? [],
+    };
+  }
+  return {
+    url, normalisedUrl, depth, parent: parent ?? null,
+    title: '', metaDescription: '', bodyText: '',
+    headings: [],
+    surfaces: { links: [], buttons: [], forms: [], images: [] },
+    accessibility: {},
+    timing: {},
+    consoleErrors: [],
+    networkErrors: [],
+    method: 'none',
+    jsRendered: false,
+    ok: false,
+    reason: capture?.reason || fallback?.reason || 'render_failed',
+  };
+}
+
+/**
+ * Phase 1 Aggressive Crawl Engine. Accepts any URL at runtime and walks
+ * its same-origin link graph up to the canonical depth/page caps.
+ *
+ * @param {string} startUrl
+ * @param {object} [opts]
+ * @param {number} [opts.depth=8]              — soft depth (clamped to hard cap)
+ * @param {number} [opts.maxPages=200]         — soft pages (clamped to hard cap)
+ * @param {boolean} [opts.includeScreenshot=false]
+ * @param {number} [opts.perPageTimeoutMs=30000]
+ * @param {number} [opts.totalWallClockMs=1200000]  — 20 min default
+ * @param {string} [opts.force]                — pin a method (testing only)
+ * @returns {Promise<object>} CrawlReport
+ */
+export async function aggressiveCrawl(startUrl, opts = {}) {
+  const startedAtMs = Date.now();
+  const startedAt = new Date(startedAtMs).toISOString();
+
+  if (typeof startUrl !== 'string' || !startUrl.trim()) {
+    return {
+      ok: false,
+      startUrl: '',
+      origin: '',
+      depth: 0,
+      pageCap: 0,
+      pagesCrawled: 0,
+      pages: [],
+      errors: [{ phase: 'input', url: '', reason: 'startUrl_required' }],
+      warnings: [],
+      startedAt,
+      finishedAt: startedAt,
+      durationMs: 0,
+    };
+  }
+  let normalisedStart = startUrl.trim();
+  if (!/^https?:\/\//i.test(normalisedStart)) normalisedStart = 'https://' + normalisedStart;
+
+  const { depthHardCap, maxPagesHardCap } = resolveHardCaps();
+  const depth = Math.max(0, Math.min(depthHardCap, opts.depth ?? ACE_DEFAULTS.depth));
+  const maxPages = Math.max(1, Math.min(maxPagesHardCap, opts.maxPages ?? ACE_DEFAULTS.maxPages));
+  const perPageTimeoutMs = opts.perPageTimeoutMs ?? ACE_DEFAULTS.perPageTimeoutMs;
+  const totalWallClockMs = opts.totalWallClockMs ?? ACE_DEFAULTS.totalWallClockMs;
+  const includeScreenshot = opts.includeScreenshot ?? ACE_DEFAULTS.includeScreenshot;
+  const deadlineMs = startedAtMs + totalWallClockMs;
+
+  const browserlessKey = process.env.BROWSERLESS_API_KEY;
+  let origin;
+  try { origin = new URL(normalisedStart).origin; }
+  catch {
+    return {
+      ok: false,
+      startUrl: normalisedStart,
+      origin: '',
+      depth,
+      pageCap: maxPages,
+      pagesCrawled: 0,
+      pages: [],
+      errors: [{ phase: 'input', url: normalisedStart, reason: 'invalid_url' }],
+      warnings: [],
+      startedAt,
+      finishedAt: new Date().toISOString(),
+      durationMs: Date.now() - startedAtMs,
+    };
+  }
+
+  const visited = new Map();   // normalisedUrl → PageRecord
+  const errors = [];
+  const warnings = [];
+  const frontier = [{ url: normalisedStart, depth: 0, parent: null }];
+
+  if (!browserlessKey && !opts.force) {
+    warnings.push(
+      'BROWSERLESS_API_KEY not set — falling back to simple HTTP fetch per page. ' +
+      'JS-rendered surfaces will be missed; configure BROWSERLESS_API_KEY in Doppler for full Phase 1 coverage.',
+    );
+  }
+
+  while (frontier.length > 0 && visited.size < maxPages) {
+    if (Date.now() > deadlineMs) {
+      warnings.push(`crawl wall-clock budget exceeded (${totalWallClockMs}ms) — terminated early at ${visited.size} pages`);
+      break;
+    }
+    const next = frontier.shift();
+    const norm = normaliseForCompare(next.url);
+    if (!norm || visited.has(norm)) continue;
+
+    let capture = null;
+    let fallback = null;
+    if (browserlessKey) {
+      capture = await richCapture(next.url, {
+        fullPage: true,
+        includeScreenshot,
+        timeoutMs: perPageTimeoutMs,
+      });
+    }
+    if (!capture || !capture.ok) {
+      // Try the legacy crawl() so we still get a body for this page.
+      try {
+        fallback = await crawl(next.url, opts.force ? { force: opts.force } : undefined);
+      } catch (e) {
+        errors.push({ phase: 'render', url: next.url, reason: String(e?.message ?? e) });
+      }
+    }
+    const record = buildPageRecord({
+      url: next.url, normalisedUrl: norm, depth: next.depth, parent: next.parent,
+      capture, fallback,
+    });
+    visited.set(norm, record);
+
+    if (!record.ok) {
+      errors.push({ phase: 'render', url: next.url, reason: record.reason ?? 'render_failed' });
+      continue;
+    }
+
+    // Enqueue same-origin internal links at the next depth.
+    if (next.depth + 1 <= depth) {
+      const candidates = extractInternalLinks(capture && capture.ok ? capture : fallback, origin);
+      for (const href of candidates) {
+        const childNorm = normaliseForCompare(href);
+        if (!childNorm || visited.has(childNorm)) continue;
+        if (frontier.some((f) => normaliseForCompare(f.url) === childNorm)) continue;
+        frontier.push({ url: href, depth: next.depth + 1, parent: next.url });
+        if (visited.size + frontier.length >= maxPages * 2) break;  // soft frontier cap
+      }
+    }
+  }
+
+  const finishedAtMs = Date.now();
+  return {
+    ok: true,
+    startUrl: normalisedStart,
+    origin,
+    depth,
+    pageCap: maxPages,
+    pagesCrawled: [...visited.values()].filter((p) => p.ok).length,
+    pages: [...visited.values()],
+    errors,
+    warnings,
+    startedAt,
+    finishedAt: new Date(finishedAtMs).toISOString(),
+    durationMs: finishedAtMs - startedAtMs,
+  };
+}
+
 export function summarisePageForPrompt(page) {
   if (!page || !page.ok) {
     return `Page fetch failed: ${page?.reason || 'unknown'}`;
@@ -409,6 +728,11 @@ export function summarisePageForPrompt(page) {
   const headings = (page.headings || []).map((h) => `${h.tag}: ${h.text}`).join(' | ');
   const warnings = (page.warnings || []).join(' ');
   const meta = `Method: ${page.method}${page.jsRendered ? ' (JS-rendered)' : ''}${warnings ? ' — ' + warnings : ''}`;
+  // Defect A 2026-05-16: body cap raised from 8k → 50k. At 8k the
+  // research/scoring prompts were scoring on a partial DOM and marking
+  // products "incomplete content" when the real SPA had finished rendering.
+  // 50k covers every observed real SPA's visible text; Claude's context
+  // window handles it comfortably.
   return [
     meta,
     `URL: ${page.url}`,
@@ -416,7 +740,7 @@ export function summarisePageForPrompt(page) {
     `Meta: ${page.metaDescription || ''}`,
     `Headings: ${headings}`,
     '',
-    'Body (truncated to 8000 chars):',
-    (page.bodyText || '').slice(0, 8000),
+    'Body:',
+    (page.bodyText || '').slice(0, 50000),
   ].join('\n');
 }

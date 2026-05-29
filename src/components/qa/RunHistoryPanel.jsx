@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, AlertTriangle } from 'lucide-react';
 
 export default function RunHistoryPanel({ runHistory }) {
   if (!runHistory || runHistory.length === 0) {

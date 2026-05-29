@@ -1,0 +1,3 @@
+export const SSOT_MATRIX_PATH = 'docs/specs/SSOT_TRACEABILITY_MATRIX.md';
+export const MINIMUM_COVERAGE_THRESHOLD = 0.5;
+export const MATRIX_LOCK_TTL_MS = 900000;
