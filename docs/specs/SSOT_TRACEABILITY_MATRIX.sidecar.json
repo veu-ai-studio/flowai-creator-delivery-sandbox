@@ -264,16 +264,6 @@
       "governanceEvidence": [],
       "contradictions": [
         {
-          "claim": "registry of auto-applicable fixes",
-          "evidence": "no explicit registry file or constant found in remediation engine",
-          "severity": "MEDIUM"
-        },
-        {
-          "claim": "explicit confidence threshold for low-risk classification",
-          "evidence": "no named threshold constant; risk classification is implicit",
-          "severity": "MEDIUM"
-        },
-        {
           "claim": "rollback path documented",
           "evidence": "S5Rollback test exists but rollback invocation policy is not canonically documented",
           "severity": "LOW"
