@@ -1,17 +1,34 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, CircleDot, LockKeyhole, SlidersHorizontal } from 'lucide-react';
+import { CheckCircle2, CircleDot, LockKeyhole, Play, SlidersHorizontal } from 'lucide-react';
 import {
+  CONTROL_DEPTHS,
+  CONTROL_STRUCTURES,
+  DEFAULT_CONTROL_SCHEME,
   FLOWAI_STEPS,
   ORCHESTRATION_MODE_MATURITY,
   ORCHESTRATION_MODES,
   PLATFORM_REGISTRY,
   buildOrchestrationPlan,
+  createUserInitiationToken,
+  validateRunStart,
 } from '@/lib/orchestratorFramework';
 
 const MODE_LABELS = {
   [ORCHESTRATION_MODES.AUTO]: 'Auto',
   [ORCHESTRATION_MODES.GUIDED]: 'Guided',
   [ORCHESTRATION_MODES.MANUAL]: 'Manual',
+};
+
+const STRUCTURE_LABELS = {
+  [CONTROL_STRUCTURES.AUTONOMOUS]: 'Autonomous',
+  [CONTROL_STRUCTURES.SUPERVISED]: 'Supervised',
+  [CONTROL_STRUCTURES.CONTROLLED]: 'Controlled',
+};
+
+const DEPTH_LABELS = {
+  [CONTROL_DEPTHS.QUICK]: 'Quick',
+  [CONTROL_DEPTHS.NORMAL]: 'Normal',
+  [CONTROL_DEPTHS.DEEP]: 'Deep',
 };
 
 function PlatformPill({ platform, selected }) {
@@ -35,7 +52,10 @@ function PlatformPill({ platform, selected }) {
 }
 
 export default function PlatformRecommendationPanel() {
-  const [mode, setMode] = useState(ORCHESTRATION_MODES.AUTO);
+  const [structure, setStructure] = useState(DEFAULT_CONTROL_SCHEME.structure);
+  const [mode, setMode] = useState(DEFAULT_CONTROL_SCHEME.mode);
+  const [depth, setDepth] = useState(DEFAULT_CONTROL_SCHEME.depth);
+  const [initiationToken, setInitiationToken] = useState(null);
   const [selections, setSelections] = useState({});
 
   const plan = useMemo(() => buildOrchestrationPlan({
@@ -48,31 +68,103 @@ export default function PlatformRecommendationPanel() {
     setSelections(current => ({ ...current, [step]: platformId }));
   };
 
+  const validation = validateRunStart({
+    controlScheme: { structure, mode, depth },
+    userInitiationToken: initiationToken,
+  });
+
+  const applyRecommended = () => {
+    setStructure(DEFAULT_CONTROL_SCHEME.structure);
+    setMode(DEFAULT_CONTROL_SCHEME.mode);
+    setDepth(DEFAULT_CONTROL_SCHEME.depth);
+    setInitiationToken(null);
+  };
+
+  const setStructureWithTokenReset = value => {
+    setStructure(value);
+    if (value !== CONTROL_STRUCTURES.AUTONOMOUS) setInitiationToken(null);
+  };
+
   return (
     <div className="rounded-xl border border-border bg-card p-4 space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 text-primary" />
-            Orchestrator Framework v0.1
+            Orchestrator Framework
           </h2>
           <p className="text-[10px] text-muted-foreground mt-1">
             Deterministic platform routing. Live calls are stubbed; Auto mode is {ORCHESTRATION_MODE_MATURITY[ORCHESTRATION_MODES.AUTO]}.
           </p>
         </div>
-        <div className="flex rounded-md border border-border overflow-hidden">
-          {Object.values(ORCHESTRATION_MODES).map(value => (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={applyRecommended}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground"
+          >
+            <Play className="h-3.5 w-3.5" />
+            Recommended
+          </button>
+          {structure === CONTROL_STRUCTURES.AUTONOMOUS && (
             <button
-              key={value}
               type="button"
-              onClick={() => setMode(value)}
-              className={`px-3 py-1.5 text-xs font-semibold ${mode === value ? 'bg-primary text-primary-foreground' : 'bg-secondary/20 text-muted-foreground hover:text-foreground'}`}
+              onClick={() => setInitiationToken(createUserInitiationToken())}
+              className={`h-8 rounded-md border px-3 text-xs font-semibold ${initiationToken ? 'border-emerald-500/40 text-emerald-400' : 'border-border text-muted-foreground'}`}
             >
-              {MODE_LABELS[value]}
+              {initiationToken ? 'Initiated' : 'Confirm'}
             </button>
-          ))}
+          )}
         </div>
       </div>
+
+      <details className="rounded-lg border border-border bg-background/40 p-3">
+        <summary className="cursor-pointer text-xs font-bold text-foreground">Power controls</summary>
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+          <label className="grid gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Structure
+            <select
+              value={structure}
+              onChange={event => setStructureWithTokenReset(event.target.value)}
+              className="h-8 rounded-md border border-border bg-card px-2 text-xs normal-case text-foreground"
+            >
+              {Object.values(CONTROL_STRUCTURES).map(value => (
+                <option key={value} value={value}>{STRUCTURE_LABELS[value]}</option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Mode
+            <select
+              value={mode}
+              onChange={event => setMode(event.target.value)}
+              className="h-8 rounded-md border border-border bg-card px-2 text-xs normal-case text-foreground"
+            >
+              {Object.values(ORCHESTRATION_MODES).map(value => (
+                <option key={value} value={value}>{MODE_LABELS[value]}</option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Depth
+            <select
+              value={depth}
+              onChange={event => setDepth(event.target.value)}
+              className="h-8 rounded-md border border-border bg-card px-2 text-xs normal-case text-foreground"
+            >
+              {Object.values(CONTROL_DEPTHS).map(value => (
+                <option key={value} value={value}>{DEPTH_LABELS[value]}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </details>
+
+      {validation.error && (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-300">
+          {validation.reason}
+        </div>
+      )}
 
       <div className="grid gap-3">
         {plan.map(stepPlan => {

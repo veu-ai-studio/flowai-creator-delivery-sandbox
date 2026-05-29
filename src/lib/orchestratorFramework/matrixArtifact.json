@@ -1,6 +1,6 @@
 {
-  "version": "d5250e0",
-  "generatedAt": "2026-05-29T05:31:56.125Z",
+  "version": "040db06",
+  "generatedAt": "2026-05-29T06:22:44.136Z",
   "layer1": [
     {
       "layer": 1,
@@ -91,6 +91,24 @@
       "status": "PARTIAL",
       "tier": "B",
       "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca-19",
+      "name": "PROPOSED-DEFERRED. Re-submission trigger",
+      "description": "PROPOSED-DEFERRED. Re-submission trigger: concrete moat instruments in place (IP filings, network-effect architecture, data lock-in mechanism).",
+      "status": "PROPOSED-DEFERRED",
+      "tier": "B",
+      "ratificationState": "PROPOSED-DEFERRED"
+    },
+    {
+      "layer": 1,
+      "surfaceId": "ca-25",
+      "name": "PROPOSED-DEFERRED. Re-submission trigger",
+      "description": "PROPOSED-DEFERRED. Re-submission trigger: SAIGE step 1 forge executes and produces auditable graduation criteria.",
+      "status": "PROPOSED-DEFERRED",
+      "tier": "B",
+      "ratificationState": "PROPOSED-DEFERRED"
     },
     {
       "layer": 1,
@@ -349,6 +367,8 @@
     "ca18-delta-verify": "B",
     "ca18-remediation-safety": "B",
     "ca18-universal-limit": "B",
+    "ca-19": "B",
+    "ca-25": "B",
     "false-claim-autonomous-deploy": "B",
     "freshbuild-feature-extractor": "B",
     "workflow-1-sub-1a-analysis-scoring": "B",

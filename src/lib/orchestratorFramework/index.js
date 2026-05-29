@@ -58,3 +58,23 @@ export {
   excludePendingRatificationEntries,
   runIteration,
 } from './iterationLoop.js';
+
+export {
+  MATRIX_ENTRY_STATES,
+  isScorableEntry,
+  validateEntryState,
+} from './matrixAuthority.js';
+
+export {
+  CONTROL_DEPTHS,
+  CONTROL_MODES,
+  CONTROL_STRUCTURES,
+  DEFAULT_CONTROL_SCHEME,
+  createUserInitiationToken,
+  normalizeControlScheme,
+  validateRunStart,
+} from './controlScheme.js';
+
+export {
+  orchestrateScore,
+} from './ScoringOrchestrator.js';
