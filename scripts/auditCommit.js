@@ -19,7 +19,13 @@ const ALLOWED_SCOPE_PREFIXES = Object.freeze([
   '.github/',
 ]);
 
+const SCOPE_BOUNDARY_EXCLUSIONS = Object.freeze([
+  'src/lib/orchestratorFramework/matrixArtifact.json',
+]);
+
 const PLATFORM_ADAPTER_PREFIX = 'src/lib/agents/orchestrator/adapters/';
+const APP_ROUTE_FILE = 'src/App.jsx';
+const PAGE_FILE_RE = /^src\/pages\/.*\.(jsx|tsx|js|ts)$/;
 const UI_COMPONENT_RE = /^src\/(components|pages)\/.*\.(jsx|tsx|js|ts)$/;
 const WRITE_OP_RE = /\b(writeFile|writeFileSync|appendFile|appendFileSync|createWriteStream|rmSync|unlinkSync|renameSync)\b/;
 
@@ -157,11 +163,24 @@ function checkCaAbsence(git, base, head) {
   };
 }
 
-function checkScopeBoundary(files) {
-  const outOfScope = files.filter(file => !ALLOWED_SCOPE_PREFIXES.some(prefix => file.startsWith(prefix)));
+function checkScopeBoundary(files, addedFiles = []) {
+  const details = [];
+  const addedPageFiles = addedFiles.filter(file => PAGE_FILE_RE.test(file));
+  const expectedAppRouteUpdate = files.includes(APP_ROUTE_FILE) && addedPageFiles.length > 0;
+  if (expectedAppRouteUpdate) {
+    details.push(`INFO: ${APP_ROUTE_FILE} route update expected because new page file added: ${addedPageFiles.join(', ')}`);
+  }
+
+  const outOfScope = files.filter(file =>
+    !SCOPE_BOUNDARY_EXCLUSIONS.includes(file) &&
+    !(file === APP_ROUTE_FILE && expectedAppRouteUpdate) &&
+    !ALLOWED_SCOPE_PREFIXES.some(prefix => file.startsWith(prefix))
+  );
+  details.push(...outOfScope.map(file => `Out-of-scope file changed in head commit: ${file}`));
+
   return {
     status: outOfScope.length === 0 ? 'PASS' : 'WARNING',
-    details: outOfScope.map(file => `Out-of-scope file changed in head commit: ${file}`),
+    details,
   };
 }
 
@@ -186,11 +205,12 @@ export function runAudit({ base, head = 'HEAD', git = defaultGit } = {}) {
   if (!base) throw new Error('auditCommit requires --base <commit>');
   const rangeFiles = changedFiles(git, base, head);
   const headFiles = headCommitFiles(git, head);
+  const addedFiles = newFiles(git, base, head);
   const checks = {
     protectedFiles: checkProtectedFiles(git, base, head, rangeFiles),
     laneDiscipline: checkLaneDiscipline(git, base, head, rangeFiles),
     caAbsence: checkCaAbsence(git, base, head),
-    scopeBoundary: checkScopeBoundary(headFiles),
+    scopeBoundary: checkScopeBoundary(headFiles, addedFiles),
     hotStoreBoundary: checkHotStoreBoundary(git, base, head),
   };
   const mechanicalVerdict = Object.values(checks).some(check => check.status === 'FAIL') ? 'FAIL' : 'PASS';

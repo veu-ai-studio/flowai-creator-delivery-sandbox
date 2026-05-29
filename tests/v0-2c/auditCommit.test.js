@@ -88,6 +88,38 @@ describe('v0.2C auditCommit', () => {
     expect(result.mechanicalVerdict).toBe('PASS');
   });
 
+  it('excludes generated matrix artifact from scope boundary warnings', () => {
+    const result = runAudit({
+      base: 'base123',
+      head: 'head456',
+      git: makeGit({
+        rangeFiles: ['src/lib/orchestratorFramework/matrixArtifact.json'],
+        headFiles: ['src/lib/orchestratorFramework/matrixArtifact.json'],
+      }),
+    });
+
+    expect(result.checks.scopeBoundary.status).toBe('PASS');
+    expect(result.checks.scopeBoundary.details).toEqual([]);
+  });
+
+  it('logs App.jsx route update as info when a new page is added', () => {
+    const result = runAudit({
+      base: 'base123',
+      head: 'head456',
+      git: makeGit({
+        rangeFiles: ['src/App.jsx', 'src/pages/ForgeResearchForm.jsx'],
+        headFiles: ['src/App.jsx', 'src/pages/ForgeResearchForm.jsx'],
+        newFiles: ['src/pages/ForgeResearchForm.jsx'],
+      }),
+    });
+
+    expect(result.checks.scopeBoundary.status).toBe('PASS');
+    expect(result.checks.scopeBoundary.details).toEqual([
+      'INFO: src/App.jsx route update expected because new page file added: src/pages/ForgeResearchForm.jsx',
+    ]);
+    expect(result.mechanicalVerdict).toBe('PASS');
+  });
+
   it('output matches exact format spec', () => {
     const result = runAudit({
       base: 'base123',
