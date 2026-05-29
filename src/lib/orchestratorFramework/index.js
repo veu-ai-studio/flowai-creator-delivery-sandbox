@@ -35,3 +35,12 @@ export {
   createLiveCallEnvelope,
   resolvePlatform,
 } from './liveCallHooks.js';
+
+export {
+  parseMatrix,
+} from './matrixIngestion.js';
+
+export {
+  createOrchestratorLogger,
+  orchestratorLogger,
+} from './logger.js';
