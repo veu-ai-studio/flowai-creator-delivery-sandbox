@@ -396,6 +396,8 @@ Current state as of W09 (2026-05-26). This is the *current capability state*, no
 - `CA18-DELTA-VERIFY` — Before/after snapshot + computed delta — PARTIAL
 - `CA18-REMEDIATION-SAFETY` — Canonical thresholds + rollback policy artifact; source-mapped blocked-vs-incomplete category collapse fixed on branch pending production governance artifact — PARTIAL
 - `CA18-UNIVERSAL-LIMIT` — Unregistered URL — no branch/PR/deploy — PARTIAL
+- `CA-19` — PROPOSED-DEFERRED. Re-submission trigger: concrete moat instruments in place (IP filings, network-effect architecture, data lock-in mechanism).
+- `CA-25` — PROPOSED-DEFERRED. Re-submission trigger: SAIGE step 1 forge executes and produces auditable graduation criteria.
 - `FALSE-CLAIM-AUTONOMOUS-DEPLOY` — Negative control: autonomous production deploy is PROHIBITED — NOT_IMPLEMENTED
 - `FRESHBUILD-FEATURE-EXTRACTOR` — Feature Extractor schema, contract, and live-crawl wiring: **PARTIAL evidence of an EXPERIMENTAL capability (feature flag OFF by default)**. Deterministic coverage uses mocked crawler/Browserless; production Fresh Build remains disabled until Victor enables the feature flag. PARTIAL+EXPERIMENTAL is a coherent compound state — see "Coherent compound states" note in Status Label Definitions. Excluded from the §11.1 Gate B 95% completion denominator until sidecar/checker updated by ratified amendment — PARTIAL
 
