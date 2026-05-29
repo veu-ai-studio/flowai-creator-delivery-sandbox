@@ -23,6 +23,21 @@ function changedFiles() {
   }
 }
 
+function commitRange() {
+  const base = process.argv.includes('--base')
+    ? process.argv[process.argv.indexOf('--base') + 1]
+    : 'origin/flowai-v0.1';
+  try {
+    return git(['rev-list', '--reverse', `${base}..HEAD`]).split(/\r?\n/).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function changedFilesForCommit(commit) {
+  return git(['diff-tree', '--no-commit-id', '--name-only', '-r', commit]).split(/\r?\n/).filter(Boolean);
+}
+
 function fail(reason) {
   console.error(JSON.stringify({
     timestamp: new Date().toISOString(),
@@ -35,11 +50,25 @@ function fail(reason) {
 }
 
 const files = changedFiles();
-const hasSrcChange = files.some(file => file.startsWith('src/'));
-const docsSpecChanges = files.filter(file => file.startsWith('docs/specs/'));
+const commits = commitRange();
 
-if (hasSrcChange && docsSpecChanges.length > 0) {
-  fail(`src changes cannot share a commit range with docs/specs changes: ${docsSpecChanges.join(', ')}`);
+for (const commit of commits) {
+  const commitFiles = changedFilesForCommit(commit);
+  const hasSrcChange = commitFiles.some(file => file.startsWith('src/'));
+  const docsSpecChanges = commitFiles.filter(file => file.startsWith('docs/specs/'));
+
+  if (hasSrcChange && docsSpecChanges.length > 0) {
+    fail(`src changes cannot share commit ${commit.slice(0, 7)} with docs/specs changes: ${docsSpecChanges.join(', ')}`);
+  }
+}
+
+if (commits.length === 0) {
+  const hasSrcChange = files.some(file => file.startsWith('src/'));
+  const docsSpecChanges = files.filter(file => file.startsWith('docs/specs/'));
+
+  if (hasSrcChange && docsSpecChanges.length > 0) {
+    fail(`src changes cannot share a working diff with docs/specs changes: ${docsSpecChanges.join(', ')}`);
+  }
 }
 
 if (existsSync(matrixAuthorityPath)) {
@@ -54,5 +83,5 @@ console.log(JSON.stringify({
   module: 'laneDiscipline',
   event: 'lane_discipline_passed',
   level: 'INFO',
-  payload: { checkedFiles: files.length },
+  payload: { checkedFiles: files.length, checkedCommits: commits.length },
 }));

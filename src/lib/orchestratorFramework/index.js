@@ -44,3 +44,17 @@ export {
   createOrchestratorLogger,
   orchestratorLogger,
 } from './logger.js';
+
+export {
+  GTM_FLAGS,
+  GTM_THRESHOLD,
+  ITERATION_ZERO_LABEL,
+  buildRenewalOutput,
+} from './renewalOutput.js';
+
+export {
+  LOOP_FLAGS,
+  NODE_BACKGROUND_JOB_ONLY,
+  excludePendingRatificationEntries,
+  runIteration,
+} from './iterationLoop.js';

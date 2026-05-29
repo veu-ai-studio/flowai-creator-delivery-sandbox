@@ -16,7 +16,8 @@
     "test:adversarial": "node scripts/adversarial/run-suite.mjs",
     "test:adversarial:api": "vitest run --config tests/adversarial-api/vitest.config.mjs",
     "test:adversarial:ui": "playwright test --config playwright.config.js",
-    "digest": "node scripts/daily-digest/build.mjs"
+    "digest": "node scripts/daily-digest/build.mjs",
+    "preflight": "npm run lint && npm run build && npx vitest run && node scripts/checkLaneDiscipline.js && node scripts/check-ssot-traceability.mjs && node scripts/generateMatrixArtifact.js"
   },
   "dependencies": {
     "@axe-core/playwright": "^4.11.3",
