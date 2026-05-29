@@ -95,6 +95,7 @@ import BaseAgentTest from './pages/BaseAgentTest';
 import FlowAIDashboard from './pages/FlowAIDashboard';
 import ForgeResearchForm from './pages/ForgeResearchForm';
 import ForgeDesignForm from './pages/ForgeDesignForm';
+import ForgeBuildForm from './pages/ForgeBuildForm';
 import Workspace from './pages/Workspace';
 import Login from './pages/Login';
 import RequireAuth from '@/components/RequireAuth';
@@ -138,6 +139,7 @@ const AuthenticatedApp = () => {
         <Route path="/flowai" element={<FlowAIDashboard />} />
         <Route path="/forge/research" element={<ForgeResearchForm />} />
         <Route path="/forge/design" element={<ForgeDesignForm />} />
+        <Route path="/forge/build" element={<ForgeBuildForm />} />
         <Route path="/old-dashboard" element={<Dashboard />} />
 
         <Route path="/flow-designer" element={<FlowDesigner />} />
