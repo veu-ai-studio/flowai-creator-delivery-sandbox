@@ -1,4 +1,4 @@
-import { generateSAIGEBatchPlan } from './base44BatchPlanGenerator.js';
+import { generateBase44BatchPlan } from './base44BatchPlanGenerator.js';
 import { buildBuildTemplate, BUILD_STEP_ID } from './buildTemplate.js';
 import { BUILD_BLOCKED, scoreBuildStep, hasMinimumBuildDirectiveFromDesign } from './buildStepScorer.js';
 import { selectForgeStepTool } from './toolSelection.js';
@@ -171,7 +171,7 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
   }));
   const buildTool = firstPipelineTool(toolSelection) ?? selectBuildTool(config.availableTools ?? []);
   const codeTaskDispatches = generateCodeTaskDispatches(designOutput, entryPath, buildTool);
-  const batchPlan = generateSAIGEBatchPlan(config.saigeAuditData);
+  const batchPlan = generateBase44BatchPlan(config.auditData, { productId });
   const buildRisks = deriveBuildRisks(designOutput);
   const sections = template.sections.map(section => {
     if (section.id === 'build-entry-path') return cloneSection(section, entryPath);

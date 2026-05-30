@@ -146,7 +146,7 @@ describe('SAIGE forge Step 1 research', () => {
     });
     const written = readFileSync(result.absolutePath, 'utf8');
 
-    expect(written).toContain('# SAIGE Step 1 Research Evidence');
+    expect(written).toContain('# saige Step 1 Research Evidence');
     expect(written).toContain('MatrixArtifactVersion: matrix-test');
     expect(written).toContain('CompletionPct: 100%');
     expect(written).toContain('ReadyForDesign: true');

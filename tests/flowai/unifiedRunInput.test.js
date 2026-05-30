@@ -17,7 +17,7 @@ describe('unified FlowAI run input', () => {
     expect(context.url).toBe('https://example.com');
     expect(context.description).toBe('Fix navigation, add pricing page');
     expect(context.attachments).toHaveLength(2);
-    expect(context.receivedInputs).toEqual({ url: true, description: true, attachments: true });
+    expect(context.receivedInputs).toEqual({ url: true, urls: false, description: true, attachments: true });
     expect(context.conceptMode).toBe(false);
   });
 

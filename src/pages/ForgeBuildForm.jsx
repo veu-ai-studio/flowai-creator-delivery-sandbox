@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CheckCircle2, FileText, Hammer, PenLine } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -7,30 +8,59 @@ import { scoreBuildStep, BUILD_BLOCKED } from '@/lib/forge/buildStepScorer';
 import { runDesign } from '@/lib/forge/designRunner';
 import { runResearch } from '@/lib/forge/researchRunner';
 
-const PRODUCT_ID = 'saige';
-
 function InputPreview({ value }) {
   if (typeof value === 'string') return <span>{value}</span>;
   return <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed">{JSON.stringify(value, null, 2)}</pre>;
 }
 
 export default function ForgeBuildForm() {
-  const researchOutput = useMemo(() => runResearch(PRODUCT_ID), []);
-  const designOutput = useMemo(() => runDesign(PRODUCT_ID, researchOutput, {}), [researchOutput]);
-  const initialOutput = useMemo(() => runBuild(PRODUCT_ID, designOutput, {}), [designOutput]);
+  const [searchParams] = useSearchParams();
+  const productId = searchParams.get('productId') ?? null;
+  const productName = searchParams.get('productName') ?? productId ?? 'Unknown Product';
   const [decisionText, setDecisionText] = useState('');
-  const [buildOutput, setBuildOutput] = useState(initialOutput);
-  const [score, setScore] = useState(scoreBuildStep(initialOutput));
+  const [designOutput, setDesignOutput] = useState(null);
+  const [buildOutput, setBuildOutput] = useState(null);
+  const [score, setScore] = useState(null);
 
-  const autoSections = buildOutput.sections.filter(section => section.source === 'auto');
-  const orchestratedSections = buildOutput.sections.filter(section => section.source === 'orchestrated');
-  const derivedSections = buildOutput.sections.filter(section => section.source === 'derived');
-  const manualSections = buildOutput.sections.filter(section => section.source === 'manual');
+  useEffect(() => {
+    let active = true;
+    if (!productId) {
+      setDesignOutput(null);
+      setBuildOutput(null);
+      setScore(null);
+      return () => {
+        active = false;
+      };
+    }
+
+    (async () => {
+      const research = await runResearch(productId, {}, { productId, productName });
+      const design = await runDesign(productId, research, {}, { productId, productName });
+      const build = await runBuild(productId, design, {}, { productId, productName });
+      if (!active) return;
+      setDesignOutput(design);
+      setBuildOutput(build);
+      setScore(scoreBuildStep(build));
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [productId, productName]);
+
+  const autoSections = buildOutput?.sections?.filter(section => section.source === 'auto') ?? [];
+  const orchestratedSections = buildOutput?.sections?.filter(section => section.source === 'orchestrated') ?? [];
+  const derivedSections = buildOutput?.sections?.filter(section => section.source === 'derived') ?? [];
+  const manualSections = buildOutput?.sections?.filter(section => section.source === 'manual') ?? [];
   const hasDecision = decisionText.trim().length > 0;
 
-  const submitBuild = () => {
-    const output = runBuild(PRODUCT_ID, designOutput, {
+  const submitBuild = async () => {
+    if (!productId || !designOutput) return;
+    const output = await runBuild(productId, designOutput, {
       'build-decision-log': decisionText,
+    }, {
+      productId,
+      productName,
     });
     setBuildOutput(output);
     setScore(scoreBuildStep(output));
@@ -42,16 +72,30 @@ export default function ForgeBuildForm() {
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
             <Hammer className="h-7 w-7 text-primary" />
-            SAIGE Build Forge
+            Build Forge
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Step 3 build planning for the FlowAI reference product.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {productId ? `Processing: ${productName}` : 'No product selected'}
+          </p>
         </div>
         <div className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">
-          {buildOutput.readyForQualityAudit ? 'READY FOR QUALITY AUDIT' : 'BUILD EVIDENCE PARTIAL'}
+          {buildOutput?.readyForQualityAudit ? 'READY FOR QUALITY AUDIT' : 'BUILD EVIDENCE PARTIAL'}
         </div>
       </div>
 
-      {buildOutput.flag === BUILD_BLOCKED && (
+      {!productId && (
+        <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          No product selected. Add ?productId= to the URL to continue.
+        </section>
+      )}
+
+      {productId && !buildOutput && (
+        <section className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+          Preparing build plan...
+        </section>
+      )}
+
+      {buildOutput?.flag === BUILD_BLOCKED && (
         <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
           <p className="font-bold">BUILD_BLOCKED</p>
           <p className="mt-1">{buildOutput.entryPath.reason}</p>
@@ -135,7 +179,7 @@ export default function ForgeBuildForm() {
       </section>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" onClick={submitBuild} disabled={!hasDecision}>
+        <Button type="button" onClick={submitBuild} disabled={!productId || !hasDecision}>
           Submit Build Plan
         </Button>
         {!hasDecision && <span className="text-xs text-muted-foreground">Add at least one build decision to score Step 3.</span>}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { BookOpenCheck, CheckCircle2, FileText, LockKeyhole } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { useSearchParams } from 'react-router-dom';
 
 import { buildResearchTemplate } from '@/lib/forge/researchTemplate';
 import { runResearch } from '@/lib/forge/researchRunner';
@@ -8,15 +9,16 @@ import { scoreForgeStep } from '@/lib/forge/forgeStepScorer';
 import { createToolIntelligenceService } from '@/lib/tools/ToolIntelligenceService';
 import { Button } from '@/components/ui/button';
 
-const PRODUCT_ID = 'saige';
-
 function InputPreview({ value }) {
   if (typeof value === 'string') return <span>{value}</span>;
   return <pre className="whitespace-pre-wrap break-words text-[11px] leading-relaxed">{JSON.stringify(value, null, 2)}</pre>;
 }
 
 export default function ForgeResearchForm() {
-  const template = useMemo(() => buildResearchTemplate(PRODUCT_ID), []);
+  const [searchParams] = useSearchParams();
+  const productId = searchParams.get('productId') ?? null;
+  const productName = searchParams.get('productName') ?? productId ?? 'Unknown Product';
+  const template = useMemo(() => buildResearchTemplate(productId ?? 'unselected'), [productId]);
   const toolService = useMemo(() => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? import.meta.env.SUPABASE_URL;
@@ -47,12 +49,15 @@ export default function ForgeResearchForm() {
   };
 
   const submitResearch = async () => {
+    if (!productId) return;
     const output = await runResearch(
-      PRODUCT_ID,
+      productId,
       manualInputs,
       {
         toolService,
         toolIntelligenceMode: 'GUIDED',
+        productId,
+        productName,
       },
     );
     setResearchOutput(output);
@@ -65,14 +70,20 @@ export default function ForgeResearchForm() {
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
             <BookOpenCheck className="h-7 w-7 text-primary" />
-            SAIGE Research Forge
+            Research Forge
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Step 1 research capture for the FlowAI reference product.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{productId ? `Processing: ${productName}` : 'No product selected'}</p>
         </div>
         <div className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">
           {researchOutput?.readyForDesign ? 'READY FOR DESIGN' : 'RESEARCH IN PROGRESS'}
         </div>
       </div>
+
+      {!productId && (
+        <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          No product selected. Add ?productId= to the URL to continue.
+        </section>
+      )}
 
       <section className="space-y-3">
         <div className="flex items-center gap-2 text-sm font-bold text-foreground">
@@ -139,7 +150,7 @@ export default function ForgeResearchForm() {
       </section>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" onClick={submitResearch} disabled={!allManualComplete}>
+        <Button type="button" onClick={submitResearch} disabled={!productId || !allManualComplete}>
           Submit Research
         </Button>
         {!allManualComplete && <span className="text-xs text-muted-foreground">Complete all manual sections to run Step 1.</span>}

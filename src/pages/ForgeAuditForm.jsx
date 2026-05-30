@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CheckCircle2, FileText, PenLine, ShieldCheck } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -7,8 +8,6 @@ import { scoreAuditStep, AUDIT_QUEUED } from '@/lib/forge/auditStepScorer';
 import { runBuild } from '@/lib/forge/buildRunner';
 import { runDesign } from '@/lib/forge/designRunner';
 import { runResearch } from '@/lib/forge/researchRunner';
-
-const PRODUCT_ID = 'saige';
 
 function InputPreview({ value }) {
   if (typeof value === 'string') return <span>{value}</span>;
@@ -41,35 +40,70 @@ function CheckList({ checks }) {
 }
 
 export default function ForgeAuditForm() {
-  const buildOutput = useMemo(() => {
-    const research = runResearch(PRODUCT_ID);
-    const design = runDesign(PRODUCT_ID, research, {});
-    return runBuild(PRODUCT_ID, design, {});
-  }, []);
+  const [searchParams] = useSearchParams();
+  const productId = searchParams.get('productId') ?? null;
+  const productName = searchParams.get('productName') ?? productId ?? 'Unknown Product';
   const [decisionText, setDecisionText] = useState('');
+  const [buildOutput, setBuildOutput] = useState(null);
   const [auditOutput, setAuditOutput] = useState(null);
   const [score, setScore] = useState(null);
   const hasDecision = decisionText.trim().length > 0;
 
   useEffect(() => {
     let active = true;
-    runAudit(PRODUCT_ID, buildOutput, {}).then(output => {
+    if (!productId) {
+      setBuildOutput(null);
+      setAuditOutput(null);
+      setScore(null);
+      return () => {
+        active = false;
+      };
+    }
+
+    (async () => {
+      const research = await runResearch(productId, {}, { productId, productName });
+      const design = await runDesign(productId, research, {}, { productId, productName });
+      const build = await runBuild(productId, design, {}, { productId, productName });
+      const audit = await runAudit(productId, build, {}, { productId, productName });
       if (!active) return;
-      setAuditOutput(output);
-      setScore(scoreAuditStep(output));
-    });
+      setBuildOutput(build);
+      setAuditOutput(audit);
+      setScore(scoreAuditStep(audit));
+    })();
+
     return () => {
       active = false;
     };
-  }, [buildOutput]);
+  }, [productId, productName]);
 
   const submitAudit = async () => {
-    const output = await runAudit(PRODUCT_ID, buildOutput, {
+    if (!productId || !buildOutput) return;
+    const output = await runAudit(productId, buildOutput, {
       'audit-decision-log': decisionText,
+    }, {
+      productId,
+      productName,
     });
     setAuditOutput(output);
     setScore(scoreAuditStep(output));
   };
+
+  if (!productId) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-6 p-8 lg:p-10">
+        <div>
+          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
+            <ShieldCheck className="h-7 w-7 text-primary" />
+            Quality Audit Forge
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">No product selected</p>
+        </div>
+        <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          No product selected. Add ?productId= to the URL to continue.
+        </section>
+      </div>
+    );
+  }
 
   if (!auditOutput || !score) {
     return <div className="p-8 text-sm text-muted-foreground">Preparing quality audit...</div>;
@@ -81,9 +115,9 @@ export default function ForgeAuditForm() {
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
             <ShieldCheck className="h-7 w-7 text-primary" />
-            SAIGE Quality Audit Forge
+            Quality Audit Forge
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Step 4 quality audit for the FlowAI reference product.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Processing: {productName}</p>
         </div>
         <div className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">
           {auditOutput.readyForDeploy ? 'READY FOR DEPLOY' : 'AUDIT EVIDENCE PARTIAL'}
@@ -133,7 +167,7 @@ export default function ForgeAuditForm() {
       </section>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" onClick={submitAudit} disabled={!hasDecision}>
+        <Button type="button" onClick={submitAudit} disabled={!productId || !hasDecision}>
           Submit Audit
         </Button>
         {!hasDecision && <span className="text-xs text-muted-foreground">Add at least one audit decision to complete Step 4.</span>}
