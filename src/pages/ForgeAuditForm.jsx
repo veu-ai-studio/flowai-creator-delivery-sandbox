@@ -1,43 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CheckCircle2, FileText, PenLine, ShieldCheck } from 'lucide-react';
+import { FileText, PenLine, ShieldCheck } from 'lucide-react';
 
+import ForgeSectionRenderer, {
+  getSectionStatus,
+  ScoreDisplay,
+  SectionStatusIcon,
+} from '@/components/forge/ForgeSectionRenderer.jsx';
 import { Button } from '@/components/ui/button';
 import { runAudit } from '@/lib/forge/auditRunner';
 import { scoreAuditStep, AUDIT_QUEUED } from '@/lib/forge/auditStepScorer';
 import { runBuild } from '@/lib/forge/buildRunner';
 import { runDesign } from '@/lib/forge/designRunner';
 import { runResearch } from '@/lib/forge/researchRunner';
-
-function InputPreview({ value }) {
-  if (typeof value === 'string') return <span>{value}</span>;
-  return <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed">{JSON.stringify(value, null, 2)}</pre>;
-}
-
-function StatusBadge({ status }) {
-  const tone = status === 'PASS'
-    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-    : status === 'FAIL'
-      ? 'border-red-500/30 bg-red-500/10 text-red-200'
-      : 'border-amber-500/30 bg-amber-500/10 text-amber-200';
-  return <span className={`rounded-md border px-2 py-1 text-[11px] font-semibold ${tone}`}>{status}</span>;
-}
-
-function CheckList({ checks }) {
-  return (
-    <div className="space-y-2">
-      {(checks ?? []).map(check => (
-        <div key={check.id} className="flex flex-col gap-2 rounded-md border border-border bg-background/50 p-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs font-bold text-foreground">{check.label}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">{check.reason}</p>
-          </div>
-          <StatusBadge status={check.status} />
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export default function ForgeAuditForm() {
   const [searchParams] = useSearchParams();
@@ -135,18 +110,20 @@ export default function ForgeAuditForm() {
         <section key={section.id} className="space-y-3 rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-2 text-sm font-bold text-foreground">
             <FileText className="h-4 w-4 text-primary" />
+            <SectionStatusIcon status={getSectionStatus(section.input)} />
             {section.label}
           </div>
-          {Array.isArray(section.input)
-            ? <CheckList checks={section.input} />
-            : <InputPreview value={section.input} />}
+          <ForgeSectionRenderer value={section.input} />
         </section>
       ))}
 
       <section className="rounded-lg border border-border bg-card p-4">
-        <p className="text-sm font-bold text-foreground">Audit Findings</p>
+        <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+          <SectionStatusIcon status={getSectionStatus(auditOutput.auditFindings)} />
+          Audit Findings
+        </p>
         <div className="mt-3 rounded-md border border-border bg-background/50 p-3 text-xs text-muted-foreground">
-          <InputPreview value={auditOutput.auditFindings} />
+          <ForgeSectionRenderer value={auditOutput.auditFindings} />
         </div>
       </section>
 
@@ -179,10 +156,7 @@ export default function ForgeAuditForm() {
             <p className="text-sm font-bold text-foreground">Audit Step Score</p>
             <p className="mt-1 text-xs text-muted-foreground">Ready for deploy requires score at least 95 and auditComplete true.</p>
           </div>
-          <div className="flex items-center gap-2 text-lg font-bold text-foreground">
-            {score.readyForDeploy && <CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-            {score.auditScore}%
-          </div>
+          <ScoreDisplay percent={auditOutput?.auditScore ?? score.auditScore} />
         </div>
         <div className="mt-3 grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
           <div>auditComplete: {String(score.auditComplete)}</div>

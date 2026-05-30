@@ -230,4 +230,25 @@ describe('ForgeSectionRenderer', () => {
     expect(source).not.toContain('<pre');
     expect(source).not.toContain('JSON.stringify');
   });
+
+  it('forge pages use ForgeSectionRenderer instead of raw previews', () => {
+    const pages = [
+      'src/pages/ForgeResearchForm.jsx',
+      'src/pages/ForgeDesignForm.jsx',
+      'src/pages/ForgeBuildForm.jsx',
+      'src/pages/ForgeAuditForm.jsx',
+    ];
+
+    for (const page of pages) {
+      const source = readFileSync(page, 'utf8');
+      expect(source).not.toContain('function InputPreview');
+      expect(source).not.toContain('<pre');
+      expect(source).not.toContain('JSON.stringify');
+      expect(source).toContain('ForgeSectionRenderer');
+    }
+
+    const auditSource = readFileSync('src/pages/ForgeAuditForm.jsx', 'utf8');
+    expect(auditSource).not.toContain('function StatusBadge');
+    expect(auditSource).not.toContain('function CheckList');
+  });
 });

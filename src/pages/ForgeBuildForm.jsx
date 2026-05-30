@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CheckCircle2, FileText, Hammer, PenLine } from 'lucide-react';
+import { FileText, Hammer, PenLine } from 'lucide-react';
 
+import ForgeSectionRenderer, {
+  getSectionStatus,
+  ScoreDisplay,
+  SectionStatusIcon,
+} from '@/components/forge/ForgeSectionRenderer.jsx';
 import { Button } from '@/components/ui/button';
 import { runBuild } from '@/lib/forge/buildRunner';
 import { scoreBuildStep, BUILD_BLOCKED } from '@/lib/forge/buildStepScorer';
 import { runDesign } from '@/lib/forge/designRunner';
 import { runResearch } from '@/lib/forge/researchRunner';
-
-function InputPreview({ value }) {
-  if (typeof value === 'string') return <span>{value}</span>;
-  return <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed">{JSON.stringify(value, null, 2)}</pre>;
-}
 
 export default function ForgeBuildForm() {
   const [searchParams] = useSearchParams();
@@ -111,10 +111,13 @@ export default function ForgeBuildForm() {
         <div className="grid gap-3">
           {autoSections.map(section => (
             <div key={section.id} className="rounded-lg border border-border bg-card p-4">
-              <p className="text-sm font-bold text-foreground">{section.label}</p>
+              <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+                <SectionStatusIcon status={getSectionStatus(section.input)} />
+                {section.label}
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">{section.prompt}</p>
               <div className="mt-3 rounded-md border border-border bg-background/50 p-3 text-xs text-muted-foreground">
-                <InputPreview value={section.input} />
+                <ForgeSectionRenderer value={section.input} />
               </div>
             </div>
           ))}
@@ -129,13 +132,16 @@ export default function ForgeBuildForm() {
         <div className="grid gap-3">
           {orchestratedSections.map(section => (
             <div key={section.id} className="rounded-lg border border-border bg-card p-4">
-              <p className="text-sm font-bold text-foreground">{section.label}</p>
+              <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+                <SectionStatusIcon status={getSectionStatus(section.input)} />
+                {section.label}
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">{section.prompt}</p>
               <div className="mt-2 inline-flex rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-200">
                 Pending AI build tool or entry-path unlock
               </div>
               <div className="mt-3 rounded-md border border-border bg-background/50 p-3 text-xs text-muted-foreground">
-                <InputPreview value={section.input} />
+                <ForgeSectionRenderer value={section.input} />
               </div>
             </div>
           ))}
@@ -150,9 +156,12 @@ export default function ForgeBuildForm() {
         <div className="grid gap-3">
           {derivedSections.map(section => (
             <div key={section.id} className="rounded-lg border border-border bg-card p-4">
-              <p className="text-sm font-bold text-foreground">{section.label}</p>
+              <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+                <SectionStatusIcon status={getSectionStatus(section.input)} />
+                {section.label}
+              </p>
               <div className="mt-3 rounded-md border border-border bg-background/50 p-3 text-xs text-muted-foreground">
-                <InputPreview value={section.input} />
+                <ForgeSectionRenderer value={section.input} />
               </div>
             </div>
           ))}
@@ -166,7 +175,10 @@ export default function ForgeBuildForm() {
         </div>
         {manualSections.map(section => (
           <label key={section.id} className="grid gap-2 rounded-lg border border-border bg-card p-4">
-            <span className="text-sm font-bold text-foreground">{section.label}</span>
+            <span className="flex items-center gap-2 text-sm font-bold text-foreground">
+              <SectionStatusIcon status={getSectionStatus(section.input)} />
+              {section.label}
+            </span>
             <span className="text-xs text-muted-foreground">{section.prompt}</span>
             <textarea
               value={decisionText}
@@ -192,10 +204,7 @@ export default function ForgeBuildForm() {
               <p className="text-sm font-bold text-foreground">Build Step Score</p>
               <p className="mt-1 text-xs text-muted-foreground">Ready for quality audit requires score at least 95 and buildComplete true.</p>
             </div>
-            <div className="flex items-center gap-2 text-lg font-bold text-foreground">
-              {score.readyForQualityAudit && <CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-              {score.buildScore}%
-            </div>
+            <ScoreDisplay percent={buildOutput?.buildScore ?? score.buildScore} />
           </div>
           <div className="mt-3 grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
             <div>buildComplete: {String(score.buildComplete)}</div>
