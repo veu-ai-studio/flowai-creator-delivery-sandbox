@@ -35,6 +35,7 @@ export function normalizeFlowAIInput(input = {}, fallback = {}) {
   const url = typeof source.url === 'string' && source.url.trim()
     ? source.url.trim()
     : (typeof fallback.url === 'string' && fallback.url.trim() ? fallback.url.trim() : null);
+  const urls = Array.isArray(source.urls) ? source.urls : [];
   const description = typeof source.description === 'string' && source.description.trim()
     ? source.description.trim()
     : (typeof source.productDescription === 'string' && source.productDescription.trim()
@@ -43,12 +44,14 @@ export function normalizeFlowAIInput(input = {}, fallback = {}) {
   const attachments = attachmentsFromLegacyInput(source).map(normalizeAttachment);
   return Object.freeze({
     url,
+    urls,
     description,
     attachments,
     mode: source.mode ?? fallback.mode ?? 'auto',
     conceptMode: !url,
     receivedInputs: Object.freeze({
       url: Boolean(url),
+      urls: urls.length > 0,
       description: Boolean(description),
       attachments: attachments.length > 0,
     }),
