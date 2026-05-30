@@ -1341,3 +1341,27 @@ The Build/Wire Construction Engine is the canonical mechanism by which detected 
 ---
 
 *End of W04-Rev-2.1 + CA-7/CA-8/CA-9/CA-10 promotions. 14 Panel-cited gaps from Rev-1 addressed in Rev-2 (§3 metadata-driven, §4 L4 Capability Transfer, §6 resolution clarification, §8 / §8a axis rename, §10 Self-Governance Layer, §11 6-step Clearance, §12 mode-to-pipeline wiring, §13 auth + roles, §14 GovernanceAuditLog, §15 26-agent roles + OrchestratorHub-vs-Orchestra, §16 deployment infra, §17 6-section sidebar, §18 CA-n cycle, §26 phase status). CA-7 added §15.5 EXECUTOR_REGISTRY. CA-8 added §20.2 X-Test-Bypass-Token Contract. CA-9 (ENTRY 005) added §8.1 Orchestra Self-Expansion + Agent #26 + customer feedback loop. CA-10 (ENTRY 005) added §7.5 ProductSSOT + §13.1 role gates + §28 Symbiotic Feed-Back Loop + §11 Step 4 + §14.3 retention extensions. 10 Open Questions remaining for CEO disposition or W6 re-Panel.*
+
+---
+## CA-W11-TOOL-SELECTION
+**Description:** Globally-underserved-first tool
+ranking is canonical FlowAI OS behavior. All forge
+steps use underserved-first weighted composite
+scoring (0.50 performance / 0.25 accessibility /
+0.15 cost / 0.10 resource) when selecting tools
+via ToolIntelligenceService. Day-1 signal is flat
+pending W11-cleanup catalog enrichment. Framework
+is live. Policy is active.
+
+**Status:** PARTIAL
+
+**Evidence tier:** B pending Tier-A from live
+runner output
+
+**Files:** src/lib/forge/toolSelection.js
+
+**Note:** africa_available field is used as
+temporary proxy for underserved accessibility.
+Will be renamed to underserved_accessible in
+W11-cleanup dispatch.
+---
