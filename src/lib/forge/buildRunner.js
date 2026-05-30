@@ -1,6 +1,7 @@
 import { generateSAIGEBatchPlan } from './base44BatchPlanGenerator.js';
 import { buildBuildTemplate, BUILD_STEP_ID } from './buildTemplate.js';
 import { BUILD_BLOCKED, scoreBuildStep, hasMinimumBuildDirectiveFromDesign } from './buildStepScorer.js';
+import { selectForgeStepTool } from './toolSelection.js';
 
 const NO_BUILD_TOOL_REASON = 'No AI build tool configured; manual input required';
 
@@ -122,6 +123,20 @@ export function generateCodeTaskDispatches(designOutput = {}, entryPath = detect
   return Object.freeze([task]);
 }
 
+function normalizeToolSelection(toolSelection) {
+  if (!toolSelection) return null;
+  return Object.freeze({
+    ...toolSelection,
+    underservedFirstApplied: toolSelection.underservedFirstApplied ?? toolSelection.undServedFirstApplied,
+  });
+}
+
+function firstPipelineTool(toolSelection) {
+  const selection = toolSelection?.selection;
+  if (Array.isArray(selection)) return selection.find(Boolean) ?? null;
+  return selection ?? null;
+}
+
 function deriveBuildRisks(designOutput) {
   const designGaps = sectionById(designOutput, 'design-gaps')?.input ?? [];
   const gaps = Array.isArray(designGaps) ? designGaps : [];
@@ -141,10 +156,20 @@ function deriveBuildRisks(designOutput) {
   })));
 }
 
-export function runBuild(productId, designOutput = {}, manualInputs = {}, config = {}) {
+export async function runBuild(productId, designOutput = {}, manualInputs = {}, config = {}) {
   const template = buildBuildTemplate(productId, designOutput);
   const entryPath = detectBuildEntryPath(designOutput);
-  const buildTool = selectBuildTool(config.availableTools ?? []);
+  const toolSelection = normalizeToolSelection(await selectForgeStepTool({
+    service: config.toolService,
+    stepKey: 'build',
+    productId,
+    mode: config.toolIntelligenceMode,
+    runId: config.runId,
+    coldStore: config.coldStore,
+    undServedFirstEnforce: true,
+    pipelineSubSteps: ['plan', 'scaffold', 'install', 'test'],
+  }));
+  const buildTool = firstPipelineTool(toolSelection) ?? selectBuildTool(config.availableTools ?? []);
   const codeTaskDispatches = generateCodeTaskDispatches(designOutput, entryPath, buildTool);
   const batchPlan = generateSAIGEBatchPlan(config.saigeAuditData);
   const buildRisks = deriveBuildRisks(designOutput);
@@ -155,15 +180,21 @@ export function runBuild(productId, designOutput = {}, manualInputs = {}, config
     if (section.id === 'base44-functionalization') return cloneSection(section, batchPlan.functionalizationPlan ?? batchPlan);
     if (section.id === 'build-risks') return cloneSection(section, buildRisks);
     if (section.id === 'build-decision-log') return cloneSection(section, decisionLogInput(manualInputs));
+    if (section.id === 'selected-tool') return cloneSection(section, toolSelection);
     return cloneSection(section, section.input ?? null);
   });
-  const score = scoreBuildStep({ stepId: BUILD_STEP_ID, sections });
+  const scorableSections = sections.filter(section => section.id !== 'selected-tool');
+  const score = scoreBuildStep({ stepId: BUILD_STEP_ID, sections: scorableSections });
 
   return Object.freeze({
     productId,
     stepId: BUILD_STEP_ID,
     completedAt: new Date().toISOString(),
     sections: Object.freeze(sections),
+    toolSelection,
+    pipelineNullAt: toolSelection?.pipelineNullAt,
+    undServedAccessWarning: toolSelection?.undServedAccessWarning === true,
+    undServedAccessWarningReason: toolSelection?.undServedAccessWarningReason,
     entryPath,
     codeTaskDispatches,
     base44BatchPlan: batchPlan,
