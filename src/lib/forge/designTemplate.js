@@ -55,6 +55,15 @@ export function buildDesignTemplate(productId, researchOutput = {}) {
         input: [],
         evidenceTier: 'A',
       }),
+      Object.freeze({
+        id: 'selected-tool',
+        label: 'Selected Design Tool',
+        source: 'auto',
+        prompt: 'Design tool selected by FlowAI Tool Intelligence. Underserved-first weighting applied. Null if no service configured or mode is MANUAL.',
+        input: null,
+        evidenceTier: 'B',
+        undServedFirstEnforced: true,
+      }),
     ]),
   });
 }

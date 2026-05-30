@@ -71,19 +71,20 @@ describe('SAIGE forge Step 2 design', () => {
       'technical-requirements',
       'design-gaps',
       'design-decision-log',
+      'selected-tool',
     ]);
   });
 
-  it('auto sections derived from research output', () => {
-    const output = runDesign('saige', researchOutput, {});
+  it('auto sections derived from research output', async () => {
+    const output = await runDesign('saige', researchOutput, {});
     const principles = output.sections.find(section => section.id === 'design-principles').input;
     expect(principles.targetCustomer).toContain('All ESG');
     expect(principles.currentStrengths).toEqual(['verified-one']);
     expect(principles.verifiedGaps).toEqual(['partial-one']);
   });
 
-  it('orchestrated sections return honest stub when no design tool configured', () => {
-    const output = runDesign('saige', researchOutput, {});
+  it('orchestrated sections return honest stub when no design tool configured', async () => {
+    const output = await runDesign('saige', researchOutput, {});
     const priorities = output.sections.find(section => section.id === 'feature-priorities');
     expect(priorities.input).toEqual({
       complete: false,
@@ -103,8 +104,8 @@ describe('SAIGE forge Step 2 design', () => {
     expect(selected.rankScore).toBeGreaterThan(89);
   });
 
-  it('design-gaps populated from research stubs', () => {
-    const output = runDesign('saige', researchOutput, {});
+  it('design-gaps populated from research stubs', async () => {
+    const output = await runDesign('saige', researchOutput, {});
     const gaps = output.sections.find(section => section.id === 'design-gaps').input;
     expect(gaps).toEqual(expect.arrayContaining([
       expect.objectContaining({
@@ -113,8 +114,8 @@ describe('SAIGE forge Step 2 design', () => {
     ]));
   });
 
-  it('DESIGN_PARTIAL_TOOL_REQUIRED emitted when orchestrated sections are stubs', () => {
-    const output = runDesign('saige', researchOutput, {
+  it('DESIGN_PARTIAL_TOOL_REQUIRED emitted when orchestrated sections are stubs', async () => {
+    const output = await runDesign('saige', researchOutput, {
       'design-decision-log': 'Victor decision: capture partial design.',
     });
     expect(output.flag).toBe(DESIGN_PARTIAL_TOOL_REQUIRED);
@@ -125,16 +126,16 @@ describe('SAIGE forge Step 2 design', () => {
     ]);
   });
 
-  it('readyForBuild blocked when stubs present without MINIMUM BUILD DIRECTIVE', () => {
-    const output = runDesign('saige', researchOutput, {
+  it('readyForBuild blocked when stubs present without MINIMUM BUILD DIRECTIVE', async () => {
+    const output = await runDesign('saige', researchOutput, {
       'design-decision-log': 'Victor decision: capture partial design.',
     });
     expect(output.designComplete).toBe(false);
     expect(output.readyForBuild).toBe(false);
   });
 
-  it('Victor minimum build directive unlocks readyForBuild', () => {
-    const output = runDesign('saige', researchOutput, {
+  it('Victor minimum build directive unlocks readyForBuild', async () => {
+    const output = await runDesign('saige', researchOutput, {
       'design-decision-log': 'MINIMUM BUILD DIRECTIVE: scaffold Step 3 while design tools remain pending.',
     });
     expect(output.minimumBuildDirectivePresent).toBe(true);
@@ -143,11 +144,11 @@ describe('SAIGE forge Step 2 design', () => {
     expect(output.readyForBuild).toBe(true);
   });
 
-  it('readyForBuild true only when designScore >= 95 and designComplete === true', () => {
-    const complete = runDesign('saige', researchOutput, completeDesignInputs, {
+  it('readyForBuild true only when designScore >= 95 and designComplete === true', async () => {
+    const complete = await runDesign('saige', researchOutput, completeDesignInputs, {
       availableTools: designTools,
     });
-    const partial = runDesign('saige', researchOutput, {
+    const partial = await runDesign('saige', researchOutput, {
       'design-decision-log': 'Victor decision: partial only.',
     });
 
@@ -159,8 +160,8 @@ describe('SAIGE forge Step 2 design', () => {
     expect(partial.readyForBuild).toBe(false);
   });
 
-  it('designStepScorer returns corrective prompts when score < 95', () => {
-    const output = runDesign('saige', researchOutput, {});
+  it('designStepScorer returns corrective prompts when score < 95', async () => {
+    const output = await runDesign('saige', researchOutput, {});
     const score = scoreDesignStep(output);
     expect(score.readyForBuild).toBe(false);
     expect(score.correctivePrompts).toEqual(expect.arrayContaining([
@@ -168,8 +169,8 @@ describe('SAIGE forge Step 2 design', () => {
     ]));
   });
 
-  it('designEvidenceLogger produces correct format', () => {
-    const output = runDesign('saige', researchOutput, completeDesignInputs, {
+  it('designEvidenceLogger produces correct format', async () => {
+    const output = await runDesign('saige', researchOutput, completeDesignInputs, {
       availableTools: designTools,
     });
     const dir = mkdtempSync(path.join(tmpdir(), 'flowai-design-forge-'));
@@ -185,8 +186,8 @@ describe('SAIGE forge Step 2 design', () => {
     expect(formatDesignEvidence(output)).toContain('## Derived gaps');
   });
 
-  it('NEXT STEP SHELL labeled correctly when design evidence is partial', () => {
-    const output = runDesign('saige', researchOutput, {
+  it('NEXT STEP SHELL labeled correctly when design evidence is partial', async () => {
+    const output = await runDesign('saige', researchOutput, {
       'design-decision-log': 'Victor decision: partial only.',
     });
     const label = output.readyForBuild
@@ -202,5 +203,36 @@ describe('SAIGE forge Step 2 design', () => {
     });
     expect(score.designScore).toBe(0);
     expect(score.readyForBuild).toBe(false);
+  });
+
+  it('runner function is async', () => {
+    expect(runDesign('saige', researchOutput, {})).toBeInstanceOf(Promise);
+  });
+
+  it('selected-tool section present in template', () => {
+    const template = buildDesignTemplate('saige', researchOutput);
+    expect(template.sections.find(section => section.id === 'selected-tool')).toMatchObject({
+      label: 'Selected Design Tool',
+      undServedFirstEnforced: true,
+    });
+  });
+
+  it('toolSelection field present in runner output and null when no service provided', async () => {
+    const output = await runDesign('saige', researchOutput, {});
+    expect(Object.hasOwn(output, 'toolSelection')).toBe(true);
+    expect(output.toolSelection).toBeNull();
+  });
+
+  it('undServedFirstApplied true in output when service mock provided', async () => {
+    const service = {
+      async getTopTool() {
+        return [{ rank: 1, platform_name: 'Figma', performance_score: 10, target_classes: ['generic_url'] }];
+      },
+    };
+    const output = await runDesign('saige', researchOutput, {}, { toolService: service, runId: 'design-test' });
+    expect(output.toolSelection).toMatchObject({
+      stepKey: 'design',
+      undServedFirstApplied: true,
+    });
   });
 });

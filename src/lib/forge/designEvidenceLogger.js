@@ -25,6 +25,8 @@ export function formatDesignEvidence(designOutput) {
     `DesignComplete: ${designOutput.designComplete}`,
     `ReadyForBuild: ${designOutput.readyForBuild}`,
     `Flag: ${designOutput.flag ?? 'NONE'}`,
+    `ToolSelection: ${stringifyInput(designOutput.toolSelection ?? null)}`,
+    `UnderservedAccessWarning: ${designOutput.undServedAccessWarning === true}`,
     '',
     '## Auto-populated',
     sectionList(sections, 'auto'),

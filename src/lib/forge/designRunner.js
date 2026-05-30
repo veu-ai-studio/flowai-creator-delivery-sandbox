@@ -1,5 +1,6 @@
 import { buildDesignTemplate, DESIGN_STEP_ID } from './designTemplate.js';
 import { scoreDesignStep } from './designStepScorer.js';
+import { selectForgeStepTool } from './toolSelection.js';
 
 const NO_DESIGN_TOOL_REASON = 'No AI design tool configured; manual input required';
 
@@ -128,23 +129,37 @@ function decisionLogInput(manualInputs) {
   return [];
 }
 
-export function runDesign(productId, researchOutput = {}, manualInputs = {}, config = {}) {
+export async function runDesign(productId, researchOutput = {}, manualInputs = {}, config = {}) {
   const template = buildDesignTemplate(productId, researchOutput);
-  const selectedTool = selectDesignTool(config.availableTools ?? []);
+  const toolSelection = await selectForgeStepTool({
+    service: config.toolService,
+    stepKey: 'design',
+    productId,
+    mode: config.toolIntelligenceMode,
+    runId: config.runId,
+    coldStore: config.coldStore,
+    undServedFirstEnforce: true,
+  });
+  const selectedTool = toolSelection?.selection ?? selectDesignTool(config.availableTools ?? []);
   const sections = template.sections.map(section => {
     if (section.id === 'design-principles') return cloneSection(section, deriveDesignPrinciples(researchOutput));
     if (section.id === 'design-gaps') return cloneSection(section, deriveDesignGaps(researchOutput));
     if (section.id === 'design-decision-log') return cloneSection(section, decisionLogInput(manualInputs));
+    if (section.id === 'selected-tool') return cloneSection(section, toolSelection);
     if (section.source === 'orchestrated') return cloneSection(section, orchestratedInputFor(section, manualInputs, selectedTool));
     return cloneSection(section, section.input ?? null);
   });
-  const score = scoreDesignStep({ stepId: DESIGN_STEP_ID, sections });
+  const scorableSections = sections.filter(section => section.id !== 'selected-tool');
+  const score = scoreDesignStep({ stepId: DESIGN_STEP_ID, sections: scorableSections });
 
   return Object.freeze({
     productId,
     stepId: DESIGN_STEP_ID,
     completedAt: new Date().toISOString(),
     sections: Object.freeze(sections),
+    toolSelection,
+    undServedAccessWarning: toolSelection?.undServedAccessWarning === true,
+    undServedAccessWarningReason: toolSelection?.undServedAccessWarningReason,
     designScore: score.designScore,
     designComplete: score.designComplete,
     readyForBuild: score.readyForBuild,
