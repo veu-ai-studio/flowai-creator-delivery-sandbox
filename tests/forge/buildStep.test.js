@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { generateSAIGEBatchPlan } from '../../src/lib/forge/base44BatchPlanGenerator.js';
+import { generateBase44BatchPlan } from '../../src/lib/forge/base44BatchPlanGenerator.js';
 import { formatBuildEvidence, logBuildEvidence } from '../../src/lib/forge/buildEvidenceLogger.js';
 import { detectBuildEntryPath, generateCodeTaskDispatches, runBuild } from '../../src/lib/forge/buildRunner.js';
 import { scoreBuildStep, BUILD_BLOCKED, BUILD_OUTPUT_REQUIRED } from '../../src/lib/forge/buildStepScorer.js';
@@ -121,7 +121,7 @@ describe('SAIGE forge Step 3 build', () => {
   });
 
   it('base44BatchPlan returns honest stub when no audit data available', () => {
-    const plan = generateSAIGEBatchPlan();
+    const plan = generateBase44BatchPlan();
     expect(plan).toMatchObject({
       status: 'BATCH_PLAN_APPROXIMATE',
       verified: false,
@@ -182,7 +182,7 @@ describe('SAIGE forge Step 3 build', () => {
     });
     const written = readFileSync(result.absolutePath, 'utf8');
 
-    expect(written).toContain('# SAIGE Step 3 Build Evidence');
+    expect(written).toContain('# saige Step 3 Build Evidence');
     expect(written).toContain('Base44BatchPlanStatus: BATCH_PLAN_APPROXIMATE');
     expect(written).toContain('## Code task dispatches');
     expect(formatBuildEvidence(output)).toContain('## Auto-populated');

@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-const DEFAULT_EVIDENCE_PATH = 'docs/forge/saige-step4-audit-evidence.md';
+import { defaultEvidencePath } from './_shared.js';
 
 function stringifyInput(input) {
   if (typeof input === 'string') return input;
@@ -18,7 +18,7 @@ function sectionList(sections, source) {
 export function formatAuditEvidence(auditOutput) {
   const sections = Array.isArray(auditOutput?.sections) ? auditOutput.sections : [];
   return [
-    '# SAIGE Step 4 Quality Audit Evidence',
+    `# ${auditOutput.productId ?? 'Unknown'} Step 4 Quality Audit Evidence`,
     `Date: ${auditOutput.completedAt}`,
     `MatrixArtifactVersion: ${auditOutput.matrixArtifactVersion}`,
     `AuditScore: ${auditOutput.auditScore}%`,
@@ -45,7 +45,7 @@ export function formatAuditEvidence(auditOutput) {
 }
 
 export function logAuditEvidence(auditOutput, opts = {}) {
-  const evidencePath = opts.evidencePath ?? DEFAULT_EVIDENCE_PATH;
+  const evidencePath = opts.evidencePath ?? defaultEvidencePath(auditOutput?.productId, 'step4-audit');
   const absolutePath = path.resolve(opts.cwd ?? process.cwd(), evidencePath);
   const markdown = formatAuditEvidence(auditOutput);
   mkdirSync(path.dirname(absolutePath), { recursive: true });

@@ -2,9 +2,18 @@ export const RESEARCH_TEMPLATE_VERSION = '1.0';
 export const RESEARCH_STEP_ID = 'step-1-research';
 export const TARGET_CUSTOMER_PROFILE = 'All ESG, EHS, CSR, SDGs and Sustainability practitioners in school districts, colleges and universities, local and national government, businesses and NGOs';
 
-export function buildResearchTemplate(productId) {
+function normalizeProduct(productOrId) {
+  if (typeof productOrId === 'string') {
+    return { id: productOrId, name: productOrId, description: '', platform: 'unknown' };
+  }
+  return productOrId ?? { id: 'unknown', name: 'unknown', description: '', platform: 'unknown' };
+}
+
+export function buildResearchTemplate(productOrId, researchOutput) {
+  const product = normalizeProduct(productOrId);
   return Object.freeze({
-    productId,
+    productId: product.id,
+    researchStepId: researchOutput?.stepId ?? null,
     templateVersion: RESEARCH_TEMPLATE_VERSION,
     sections: Object.freeze([
       Object.freeze({
@@ -27,7 +36,7 @@ export function buildResearchTemplate(productId) {
         id: 'target-customer',
         label: 'Target Customer Profile',
         source: 'manual',
-        prompt: 'Who is the primary buyer or user profile for SAIGE?',
+        prompt: `Who is the primary buyer or user profile for ${product.name} (${product.description})?`,
         input: TARGET_CUSTOMER_PROFILE,
         status: 'complete',
         evidenceTier: 'B',
@@ -60,7 +69,7 @@ export function buildResearchTemplate(productId) {
         id: 'competitive-landscape',
         label: 'Competitive Landscape',
         source: 'orchestrated',
-        prompt: 'Who are the primary competitors? What gaps does SAIGE fill?',
+        prompt: `Who are the primary competitors? What gaps does ${product.name} fill?`,
         input: null,
         evidenceTier: 'B',
       }),

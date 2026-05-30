@@ -222,7 +222,7 @@ describe('SAIGE forge Step 4 quality audit', () => {
     });
     const written = readFileSync(result.absolutePath, 'utf8');
 
-    expect(written).toContain('# SAIGE Step 4 Quality Audit Evidence');
+    expect(written).toContain('# saige Step 4 Quality Audit Evidence');
     expect(written).toContain('AuditScore: 100%');
     expect(written).toContain('ReadyForDeploy: true');
     expect(written).toContain('ToolSelection: null');

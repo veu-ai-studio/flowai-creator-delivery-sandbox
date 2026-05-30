@@ -1,9 +1,17 @@
 export const BUILD_TEMPLATE_VERSION = '1.0';
 export const BUILD_STEP_ID = 'step-3-build';
 
-export function buildBuildTemplate(productId, designOutput = {}) {
+function normalizeProduct(productOrId) {
+  if (typeof productOrId === 'string') {
+    return { id: productOrId, name: productOrId, description: '', platform: 'unknown' };
+  }
+  return productOrId ?? { id: 'unknown', name: 'unknown', description: '', platform: 'unknown' };
+}
+
+export function buildBuildTemplate(productOrId, designOutput = {}) {
+  const product = normalizeProduct(productOrId);
   return Object.freeze({
-    productId,
+    productId: product.id,
     designStepId: designOutput.stepId ?? null,
     templateVersion: BUILD_TEMPLATE_VERSION,
     sections: Object.freeze([
@@ -27,7 +35,7 @@ export function buildBuildTemplate(productId, designOutput = {}) {
         id: 'base44-stub-deletions',
         label: 'Base44 Dead Stub Deletions',
         source: 'auto',
-        prompt: 'List of dead stubs identified in SAIGE Base44 codebase for deletion. Auto-populated from known SAIGE surface audit.',
+        prompt: `List of dead stubs identified in ${product.name} codebase (platform: ${product.platform ?? 'unknown'}) for deletion. Auto-populated from known product surface audit.`,
         input: null,
         evidenceTier: 'A',
       }),
@@ -35,7 +43,7 @@ export function buildBuildTemplate(productId, designOutput = {}) {
         id: 'base44-functionalization',
         label: 'Base44 Surface Functionalization',
         source: 'auto',
-        prompt: 'List of surfaces to functionalize in SAIGE Base44 codebase. Auto-populated from known SAIGE surface audit.',
+        prompt: `List of surfaces to functionalize in ${product.name} codebase (platform: ${product.platform ?? 'unknown'}). Auto-populated from known product surface audit.`,
         input: null,
         evidenceTier: 'A',
       }),

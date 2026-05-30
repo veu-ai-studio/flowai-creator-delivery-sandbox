@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-const DEFAULT_EVIDENCE_PATH = 'docs/forge/saige-step3-build-evidence.md';
+import { defaultEvidencePath } from './_shared.js';
 
 function stringifyInput(input) {
   if (typeof input === 'string') return input;
@@ -18,7 +18,7 @@ function sectionList(sections, source) {
 export function formatBuildEvidence(buildOutput) {
   const sections = Array.isArray(buildOutput?.sections) ? buildOutput.sections : [];
   return [
-    '# SAIGE Step 3 Build Evidence',
+    `# ${buildOutput.productId ?? 'Unknown'} Step 3 Build Evidence`,
     `Date: ${buildOutput.completedAt}`,
     `MatrixArtifactVersion: ${buildOutput.matrixArtifactVersion}`,
     `BuildScore: ${buildOutput.buildScore}%`,
@@ -47,7 +47,7 @@ export function formatBuildEvidence(buildOutput) {
 }
 
 export function logBuildEvidence(buildOutput, opts = {}) {
-  const evidencePath = opts.evidencePath ?? DEFAULT_EVIDENCE_PATH;
+  const evidencePath = opts.evidencePath ?? defaultEvidencePath(buildOutput?.productId, 'step3-build');
   const absolutePath = path.resolve(opts.cwd ?? process.cwd(), evidencePath);
   const markdown = formatBuildEvidence(buildOutput);
   mkdirSync(path.dirname(absolutePath), { recursive: true });

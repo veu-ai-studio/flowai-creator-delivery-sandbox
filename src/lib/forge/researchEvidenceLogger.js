@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-const DEFAULT_EVIDENCE_PATH = 'docs/forge/saige-step1-research-evidence.md';
+import { defaultEvidencePath } from './_shared.js';
 
 function stringifyInput(input) {
   if (typeof input === 'string') return input;
@@ -18,7 +18,7 @@ function sectionList(sections, source) {
 export function formatResearchEvidence(researchOutput) {
   const sections = Array.isArray(researchOutput?.sections) ? researchOutput.sections : [];
   return [
-    '# SAIGE Step 1 Research Evidence',
+    `# ${researchOutput.productId ?? 'Unknown'} Step 1 Research Evidence`,
     `Date: ${researchOutput.completedAt}`,
     `MatrixArtifactVersion: ${researchOutput.matrixArtifactVersion}`,
     `CompletionPct: ${researchOutput.completionPct}%`,
@@ -39,7 +39,7 @@ export function formatResearchEvidence(researchOutput) {
 }
 
 export function logResearchEvidence(researchOutput, opts = {}) {
-  const evidencePath = opts.evidencePath ?? DEFAULT_EVIDENCE_PATH;
+  const evidencePath = opts.evidencePath ?? defaultEvidencePath(researchOutput?.productId, 'step1-research');
   const absolutePath = path.resolve(opts.cwd ?? process.cwd(), evidencePath);
   const markdown = formatResearchEvidence(researchOutput);
   mkdirSync(path.dirname(absolutePath), { recursive: true });

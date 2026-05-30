@@ -27,7 +27,7 @@ function relevantMatrixEntries(productId, artifact) {
   return {
     entries: layer1,
     productFilter: 'none-applied',
-    note: 'All Layer 1 surfaces treated as SAIGE context. productId filtering available in future matrix versions.',
+    note: `All Layer 1 surfaces treated as product context (productId: ${productId}). productId filtering available in future matrix versions.`,
   };
 }
 

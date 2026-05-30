@@ -107,6 +107,7 @@ export async function gateValidityChecks(buildOutput = {}, opts = {}) {
 export function batchPlanAdvisoryItems(buildOutput = {}) {
   const plan = buildOutput.base44BatchPlan;
   if (plan?.status !== 'BATCH_PLAN_APPROXIMATE') return Object.freeze([]);
+  const productId = buildOutput.productId ?? 'unknown';
   const entriesToReview = [
     ...(plan.stubDeletions ?? []),
     ...(plan.functionalizationPlan ?? []),
@@ -115,7 +116,7 @@ export function batchPlanAdvisoryItems(buildOutput = {}) {
     id: entry.surfaceId,
     label: entry.surfaceId,
     status: 'ADVISORY_ONLY',
-    reason: 'BATCH_PLAN_APPROXIMATE - precise SAIGE matrix data required to audit',
+    reason: `BATCH_PLAN_APPROXIMATE - precise product matrix data (productId: ${productId}) required to audit`,
   })));
 }
 

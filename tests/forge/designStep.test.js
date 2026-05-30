@@ -180,7 +180,7 @@ describe('SAIGE forge Step 2 design', () => {
     });
     const written = readFileSync(result.absolutePath, 'utf8');
 
-    expect(written).toContain('# SAIGE Step 2 Design Evidence');
+    expect(written).toContain('# saige Step 2 Design Evidence');
     expect(written).toContain('DesignScore: 100%');
     expect(written).toContain('ReadyForBuild: true');
     expect(formatDesignEvidence(output)).toContain('## Derived gaps');
