@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { BookOpenCheck, CheckCircle2, FileText, LockKeyhole } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 
 import { buildResearchTemplate } from '@/lib/forge/researchTemplate';
 import { runResearch } from '@/lib/forge/researchRunner';
 import { scoreForgeStep } from '@/lib/forge/forgeStepScorer';
+import { createToolIntelligenceService } from '@/lib/tools/ToolIntelligenceService';
 import { Button } from '@/components/ui/button';
 
 const PRODUCT_ID = 'saige';
@@ -15,6 +17,19 @@ function InputPreview({ value }) {
 
 export default function ForgeResearchForm() {
   const template = useMemo(() => buildResearchTemplate(PRODUCT_ID), []);
+  const toolService = useMemo(() => {
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? import.meta.env.SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !supabaseKey) return null;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      return createToolIntelligenceService({
+        client: supabase,
+      });
+    } catch {
+      return null;
+    }
+  }, []);
   const manualSections = template.sections.filter(section => section.source === 'manual');
   const autoSections = template.sections.filter(section => section.source === 'auto');
   const orchestratedSections = template.sections.filter(section => section.source === 'orchestrated');
@@ -31,8 +46,15 @@ export default function ForgeResearchForm() {
     setManualInputs(current => ({ ...current, [sectionId]: value }));
   };
 
-  const submitResearch = () => {
-    const output = runResearch(PRODUCT_ID, manualInputs);
+  const submitResearch = async () => {
+    const output = await runResearch(
+      PRODUCT_ID,
+      manualInputs,
+      {
+        toolService,
+        toolIntelligenceMode: 'GUIDED',
+      },
+    );
     setResearchOutput(output);
     setScore(scoreForgeStep(output));
   };
