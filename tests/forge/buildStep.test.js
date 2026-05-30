@@ -84,6 +84,7 @@ describe('SAIGE forge Step 3 build', () => {
       'base44-functionalization',
       'build-risks',
       'build-decision-log',
+      'selected-tool',
     ]);
   });
 
@@ -101,8 +102,8 @@ describe('SAIGE forge Step 3 build', () => {
     });
   });
 
-  it('BUILD_BLOCKED emitted when neither path met', () => {
-    const output = runBuild('saige', blockedDesignOutput, {});
+  it('BUILD_BLOCKED emitted when neither path met', async () => {
+    const output = await runBuild('saige', blockedDesignOutput, {});
     expect(output.flag).toBe(BUILD_BLOCKED);
     expect(output.entryPath.action).toBe('Visit /forge/design to unlock');
   });
@@ -147,19 +148,19 @@ describe('SAIGE forge Step 3 build', () => {
     expect(score.buildComplete).toBe(false);
   });
 
-  it('buildComplete true when at least one output populated', () => {
-    const output = runBuild('saige', directiveDesignOutput, {
+  it('buildComplete true when at least one output populated', async () => {
+    const output = await runBuild('saige', directiveDesignOutput, {
       'build-decision-log': 'Victor build decision: accept approximate batch plan for audit scaffold.',
     });
     expect(output.buildComplete).toBe(true);
     expect(output.readyForQualityAudit).toBe(true);
   });
 
-  it('readyForQualityAudit = buildScore >= 95 && buildComplete === true', () => {
-    const blocked = runBuild('saige', blockedDesignOutput, {
+  it('readyForQualityAudit = buildScore >= 95 && buildComplete === true', async () => {
+    const blocked = await runBuild('saige', blockedDesignOutput, {
       'build-decision-log': 'Victor build decision: blocked state acknowledged.',
     });
-    const ready = runBuild('saige', directiveDesignOutput, {
+    const ready = await runBuild('saige', directiveDesignOutput, {
       'build-decision-log': 'Victor build decision: proceed via directive.',
     });
     expect(blocked.buildScore).toBeLessThan(95);
@@ -170,8 +171,8 @@ describe('SAIGE forge Step 3 build', () => {
     expect(ready.readyForQualityAudit).toBe(true);
   });
 
-  it('buildEvidenceLogger produces correct format including both output types', () => {
-    const output = runBuild('saige', directiveDesignOutput, {
+  it('buildEvidenceLogger produces correct format including both output types', async () => {
+    const output = await runBuild('saige', directiveDesignOutput, {
       'build-decision-log': 'Victor build decision: proceed via directive.',
     });
     const dir = mkdtempSync(path.join(tmpdir(), 'flowai-build-forge-'));
@@ -209,5 +210,74 @@ describe('SAIGE forge Step 3 build', () => {
     });
     expect(score.buildScore).toBe(0);
     expect(score.readyForQualityAudit).toBe(false);
+  });
+
+  it('runner is async', () => {
+    expect(runBuild('saige', blockedDesignOutput, {})).toBeInstanceOf(Promise);
+  });
+
+  it('selected-tool section in template schema', () => {
+    const template = buildBuildTemplate('saige', blockedDesignOutput);
+    expect(template.sections.find(section => section.id === 'selected-tool')).toMatchObject({
+      label: 'Selected Build Tools',
+      selectionMode: 'pipeline',
+      undServedFirstEnforced: true,
+    });
+  });
+
+  it('toolSelection is array in output', async () => {
+    const service = {
+      async getTopTool() {
+        return [
+          { rank: 1, platform_name: 'Base44', performance_score: 9, target_classes: ['generic_url'] },
+          { rank: 2, platform_name: 'Replit', performance_score: 8, target_classes: ['generic_url'] },
+        ];
+      },
+    };
+    const output = await runBuild('saige', directiveDesignOutput, {}, {
+      toolService: service,
+      runId: 'build-test-array',
+    });
+    expect(output.toolSelection).toMatchObject({
+      stepKey: 'build',
+      selectionMode: 'pipeline',
+    });
+    expect(Array.isArray(output.toolSelection.selection)).toBe(true);
+  });
+
+  it('pipelineNullAt emitted when sub-step null', async () => {
+    const service = {
+      async getTopTool() {
+        return [
+          { rank: 1, platform_name: 'Base44', performance_score: 9, target_classes: ['generic_url'] },
+          null,
+          { rank: 3, platform_name: 'Replit', performance_score: 8, target_classes: ['generic_url'] },
+        ];
+      },
+    };
+    const output = await runBuild('saige', directiveDesignOutput, {}, {
+      toolService: service,
+      runId: 'build-test-null',
+    });
+    expect(output.pipelineNullAt).toEqual([1]);
+    expect(output.toolSelection.selection.every(Boolean)).toBe(true);
+  });
+
+  it('undServedFirstApplied true when service mock provided', async () => {
+    const service = {
+      async getTopTool() {
+        return [
+          { rank: 1, platform_name: 'Base44', performance_score: 9, target_classes: ['generic_url'] },
+        ];
+      },
+    };
+    const output = await runBuild('saige', directiveDesignOutput, {}, {
+      toolService: service,
+      runId: 'build-test-underserved',
+    });
+    expect(output.toolSelection).toMatchObject({
+      stepKey: 'build',
+      undServedFirstApplied: true,
+    });
   });
 });

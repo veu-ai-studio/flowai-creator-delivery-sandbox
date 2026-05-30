@@ -1,6 +1,7 @@
 import matrixArtifact from '../orchestratorFramework/matrixArtifact.json';
 import { buildResearchTemplate, RESEARCH_STEP_ID } from './researchTemplate.js';
 import { scoreForgeStep } from './forgeStepScorer.js';
+import { selectForgeStepTool } from './toolSelection.js';
 
 const NO_RESEARCH_TOOL_REASON = 'No AI research tools configured; manual input required for orchestrated sections';
 
@@ -125,7 +126,7 @@ export function selectResearchTool(availableTools = []) {
   });
 }
 
-export function runResearch(productId, manualInputs = {}, config = {}) {
+export async function runResearch(productId, manualInputs = {}, config = {}) {
   const artifact = config.matrixArtifact ?? matrixArtifact;
   if (!artifact || !Array.isArray(artifact.layer1)) {
     return Object.freeze({
@@ -138,14 +139,25 @@ export function runResearch(productId, manualInputs = {}, config = {}) {
   const template = buildResearchTemplate(productId);
   const populated = [];
   const availableTools = config.availableTools ?? [];
+  const toolSelection = await selectForgeStepTool({
+    service: config.toolService,
+    stepKey: 'research',
+    productId,
+    mode: config.toolIntelligenceMode,
+    runId: config.runId,
+    coldStore: config.coldStore,
+    undServedFirstEnforce: true,
+  });
   let selectedTool = null;
 
   for (const section of template.sections) {
     if (section.id === 'current-state') {
       populated.push(cloneSection(section, summarizeCurrentState(productId, artifact)));
     } else if (section.id === 'research-tool-selection') {
-      selectedTool = researchToolInput(availableTools);
+      selectedTool = toolSelection?.selection ?? researchToolInput(availableTools);
       populated.push(cloneSection(section, selectedTool));
+    } else if (section.id === 'selected-tool') {
+      populated.push(cloneSection(section, toolSelection));
     } else if (section.source === 'manual') {
       populated.push(cloneSection(section, manualInputFor(section, manualInputs)));
     } else if (section.source === 'orchestrated') {
@@ -153,7 +165,8 @@ export function runResearch(productId, manualInputs = {}, config = {}) {
     }
   }
 
-  const scorer = scoreForgeStep({ stepId: RESEARCH_STEP_ID, sections: populated });
+  const scorableSections = populated.filter(section => section.id !== 'selected-tool');
+  const scorer = scoreForgeStep({ stepId: RESEARCH_STEP_ID, sections: scorableSections });
   const manualSections = populated.filter(section => section.source === 'manual');
   const manualComplete = manualSections.every(section => !(section.input && section.input.complete === false));
   const completionPct = scorer.score;
@@ -163,6 +176,9 @@ export function runResearch(productId, manualInputs = {}, config = {}) {
     stepId: RESEARCH_STEP_ID,
     completedAt: new Date().toISOString(),
     sections: Object.freeze(populated),
+    toolSelection,
+    undServedAccessWarning: toolSelection?.undServedAccessWarning === true,
+    undServedAccessWarningReason: toolSelection?.undServedAccessWarningReason,
     completionPct,
     evidenceSummary: Object.freeze({
       autoSections: populated.filter(section => section.source === 'auto').length,

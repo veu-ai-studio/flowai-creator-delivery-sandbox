@@ -72,6 +72,15 @@ export function buildResearchTemplate(productId) {
         input: null,
         evidenceTier: 'B',
       }),
+      Object.freeze({
+        id: 'selected-tool',
+        label: 'Selected Research Tool',
+        source: 'auto',
+        prompt: 'Research tool selected by FlowAI Tool Intelligence. Underserved-first weighting applied. Null if no service configured or mode is MANUAL.',
+        input: null,
+        evidenceTier: 'B',
+        undServedFirstEnforced: true,
+      }),
     ]),
   });
 }

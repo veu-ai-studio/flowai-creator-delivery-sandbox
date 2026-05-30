@@ -55,6 +55,16 @@ export function buildBuildTemplate(productId, designOutput = {}) {
         input: [],
         evidenceTier: 'A',
       }),
+      Object.freeze({
+        id: 'selected-tool',
+        label: 'Selected Build Tools',
+        source: 'auto',
+        prompt: 'Ordered build tool sequence. One tool per sub-step: plan, scaffold, install, test.',
+        input: null,
+        evidenceTier: 'B',
+        undServedFirstEnforced: true,
+        selectionMode: 'pipeline',
+      }),
     ]),
   });
 }
