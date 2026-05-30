@@ -1,12 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, FileText, PenLine, Workflow } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { runDesign } from '@/lib/forge/designRunner';
 import { scoreDesignStep, DESIGN_PARTIAL_TOOL_REQUIRED } from '@/lib/forge/designStepScorer';
 import { runResearch } from '@/lib/forge/researchRunner';
-
-const PRODUCT_ID = 'saige';
 
 function InputPreview({ value }) {
   if (typeof value === 'string') return <span>{value}</span>;
@@ -14,22 +13,48 @@ function InputPreview({ value }) {
 }
 
 export default function ForgeDesignForm() {
-  const researchOutput = useMemo(() => runResearch(PRODUCT_ID), []);
-  const initialOutput = useMemo(() => runDesign(PRODUCT_ID, researchOutput, {}), [researchOutput]);
+  const [searchParams] = useSearchParams();
+  const productId = searchParams.get('productId') ?? null;
+  const productName = searchParams.get('productName') ?? productId ?? 'Unknown Product';
   const [decisionText, setDecisionText] = useState('');
-  const [designOutput, setDesignOutput] = useState(initialOutput);
-  const [score, setScore] = useState(scoreDesignStep(initialOutput));
+  const [researchOutput, setResearchOutput] = useState(null);
+  const [designOutput, setDesignOutput] = useState(null);
+  const [score, setScore] = useState(null);
 
-  const autoSections = designOutput.sections.filter(section => section.source === 'auto');
-  const orchestratedSections = designOutput.sections.filter(section => section.source === 'orchestrated');
-  const derivedSections = designOutput.sections.filter(section => section.source === 'derived');
-  const manualSections = designOutput.sections.filter(section => section.source === 'manual');
+  useEffect(() => {
+    let active = true;
+    if (!productId) {
+      setResearchOutput(null);
+      setDesignOutput(null);
+      setScore(null);
+      return () => {
+        active = false;
+      };
+    }
+    (async () => {
+      const research = await runResearch(productId, {}, { productId, productName });
+      const design = await runDesign(productId, research, {}, { productId, productName });
+      if (!active) return;
+      setResearchOutput(research);
+      setDesignOutput(design);
+      setScore(scoreDesignStep(design));
+    })();
+    return () => {
+      active = false;
+    };
+  }, [productId, productName]);
+
+  const autoSections = designOutput?.sections?.filter(section => section.source === 'auto') ?? [];
+  const orchestratedSections = designOutput?.sections?.filter(section => section.source === 'orchestrated') ?? [];
+  const derivedSections = designOutput?.sections?.filter(section => section.source === 'derived') ?? [];
+  const manualSections = designOutput?.sections?.filter(section => section.source === 'manual') ?? [];
   const hasDecision = decisionText.trim().length > 0;
 
-  const submitDesign = () => {
-    const output = runDesign(PRODUCT_ID, researchOutput, {
+  const submitDesign = async () => {
+    if (!productId || !researchOutput) return;
+    const output = await runDesign(productId, researchOutput, {
       'design-decision-log': decisionText,
-    });
+    }, { productId, productName });
     setDesignOutput(output);
     setScore(scoreDesignStep(output));
   };
@@ -40,16 +65,26 @@ export default function ForgeDesignForm() {
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
             <Workflow className="h-7 w-7 text-primary" />
-            SAIGE Design Forge
+            Design Forge
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Step 2 design capture for the FlowAI reference product.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{productId ? `Processing: ${productName}` : 'No product selected'}</p>
         </div>
         <div className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">
-          {designOutput.readyForBuild ? 'READY FOR BUILD' : 'DESIGN PARTIAL'}
+          {designOutput?.readyForBuild ? 'READY FOR BUILD' : 'DESIGN PARTIAL'}
         </div>
       </div>
 
-      {designOutput.flag === DESIGN_PARTIAL_TOOL_REQUIRED && (
+      {!productId && (
+        <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          No product selected. Add ?productId= to the URL to continue.
+        </section>
+      )}
+
+      {productId && !designOutput && (
+        <div className="p-4 text-sm text-muted-foreground">Preparing design forge...</div>
+      )}
+
+      {designOutput?.flag === DESIGN_PARTIAL_TOOL_REQUIRED && (
         <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
           <p className="font-bold">{DESIGN_PARTIAL_TOOL_REQUIRED}</p>
           <p className="mt-1">{designOutput.partialFlag.reason}</p>
@@ -133,7 +168,7 @@ export default function ForgeDesignForm() {
       </section>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" onClick={submitDesign} disabled={!hasDecision}>
+        <Button type="button" onClick={submitDesign} disabled={!productId || !hasDecision}>
           Submit Design
         </Button>
         {!hasDecision && <span className="text-xs text-muted-foreground">Add at least one design decision to score Step 2.</span>}
