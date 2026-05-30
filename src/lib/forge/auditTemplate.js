@@ -74,6 +74,16 @@ export function buildAuditTemplate(productId, buildOutput = {}) {
         input: [],
         evidenceTier: 'A',
       }),
+      Object.freeze({
+        id: 'selected-tool',
+        label: 'Selected Audit Tools',
+        source: 'auto',
+        prompt: 'Ordered audit tool sequence. One tool per sub-step: static-analysis, browser-check, evidence-verify. Advisory when build is blocked.',
+        input: null,
+        evidenceTier: 'B',
+        undServedFirstEnforced: true,
+        selectionMode: 'pipeline',
+      }),
     ]),
   });
 }

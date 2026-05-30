@@ -74,6 +74,7 @@ describe('SAIGE forge Step 4 quality audit', () => {
       'renewal-output-compatibility',
       'audit-findings',
       'audit-decision-log',
+      'selected-tool',
     ]);
   });
 
@@ -224,6 +225,74 @@ describe('SAIGE forge Step 4 quality audit', () => {
     expect(written).toContain('# SAIGE Step 4 Quality Audit Evidence');
     expect(written).toContain('AuditScore: 100%');
     expect(written).toContain('ReadyForDeploy: true');
+    expect(written).toContain('ToolSelection: null');
     expect(formatAuditEvidence(output)).toContain('## Auto checks');
+  });
+
+  it('runner is already async', () => {
+    expect(runAudit('saige', blockedBuildOutput, {})).toBeInstanceOf(Promise);
+  });
+
+  it('selected-tool section in template schema', () => {
+    const template = buildAuditTemplate('saige', blockedBuildOutput);
+    expect(template.sections.find(section => section.id === 'selected-tool')).toMatchObject({
+      label: 'Selected Audit Tools',
+      selectionMode: 'pipeline',
+      undServedFirstEnforced: true,
+    });
+  });
+
+  it('toolSelection is array in output', async () => {
+    const service = {
+      async getTopTool() {
+        return [
+          { rank: 1, platform_name: 'Playwright', performance_score: 10, target_classes: ['generic_url'] },
+          { rank: 2, platform_name: 'Vitest', performance_score: 9, target_classes: ['generic_url'] },
+        ];
+      },
+    };
+    const output = await runAudit('saige', readyBuildOutput, {}, {
+      toolService: service,
+      runId: 'audit-test-array',
+    });
+    expect(output.toolSelection).toMatchObject({
+      stepKey: 'qa_audit',
+      selectionMode: 'pipeline',
+    });
+    expect(Array.isArray(output.toolSelection.selection)).toBe(true);
+  });
+
+  it('toolSelectionAdvisory true when buildBlocked', async () => {
+    const service = {
+      async getTopTool() {
+        return [
+          { rank: 1, platform_name: 'Playwright', performance_score: 10, target_classes: ['generic_url'] },
+        ];
+      },
+    };
+    const output = await runAudit('saige', blockedBuildOutput, {}, {
+      toolService: service,
+      runId: 'audit-test-advisory',
+    });
+    expect(output.toolSelectionAdvisory).toBe(true);
+    expect(output.toolSelection.toolSelectionAdvisory).toBe(true);
+  });
+
+  it('undServedFirstApplied true when service mock provided', async () => {
+    const service = {
+      async getTopTool() {
+        return [
+          { rank: 1, platform_name: 'Playwright', performance_score: 10, target_classes: ['generic_url'] },
+        ];
+      },
+    };
+    const output = await runAudit('saige', readyBuildOutput, {}, {
+      toolService: service,
+      runId: 'audit-test-underserved',
+    });
+    expect(output.toolSelection).toMatchObject({
+      stepKey: 'qa_audit',
+      undServedFirstApplied: true,
+    });
   });
 });

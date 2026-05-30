@@ -3,6 +3,7 @@ import { scoreBuildStep } from './buildStepScorer.js';
 import { scoreDesignStep } from './designStepScorer.js';
 import { buildAuditTemplate, AUDIT_STEP_ID } from './auditTemplate.js';
 import { AUDIT_QUEUED, scoreAuditStep } from './auditStepScorer.js';
+import { selectForgeStepTool } from './toolSelection.js';
 
 function cloneSection(section, input) {
   return Object.freeze({ ...section, input });
@@ -131,6 +132,14 @@ function renewalCompatibility(renewalOutput) {
   return check('renewal-output-compatibility', 'RenewalOutput compatibility', true, 'RenewalOutput provided for future compatibility review', 'RenewalOutput missing');
 }
 
+function withAuditToolMetadata(toolSelection, buildBlocked) {
+  if (!toolSelection) return null;
+  return Object.freeze({
+    ...toolSelection,
+    toolSelectionAdvisory: buildBlocked === true,
+  });
+}
+
 function findingsFrom(groups) {
   const checks = Object.values(groups).flatMap(value => Array.isArray(value) ? value : [value]);
   const passed = checks.filter(item => item.status === 'PASS').length;
@@ -149,6 +158,16 @@ function findingsFrom(groups) {
 export async function runAudit(productId, buildOutput = {}, manualInputs = {}, config = {}) {
   const template = buildAuditTemplate(productId, buildOutput);
   const entryState = auditQueuedState(buildOutput);
+  const toolSelection = withAuditToolMetadata(await selectForgeStepTool({
+    service: config.toolService,
+    stepKey: 'qa_audit',
+    productId,
+    mode: config.toolIntelligenceMode,
+    runId: config.runId,
+    coldStore: config.coldStore,
+    undServedFirstEnforce: true,
+    pipelineSubSteps: ['static-analysis', 'browser-check', 'evidence-verify'],
+  }), entryState.buildBlocked);
   const codeChecks = codeCompletenessChecks(buildOutput);
   const evidenceChecks = evidenceCompletenessChecks(buildOutput);
   const gateChecks = await gateValidityChecks(buildOutput, config);
@@ -171,6 +190,7 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
     if (section.id === 'renewal-output-compatibility') return cloneSection(section, renewalOutputCompatibility);
     if (section.id === 'audit-findings') return cloneSection(section, auditFindings);
     if (section.id === 'audit-decision-log') return cloneSection(section, decisionLog);
+    if (section.id === 'selected-tool') return cloneSection(section, toolSelection);
     return cloneSection(section, section.input ?? null);
   });
   const baseOutput = {
@@ -178,6 +198,11 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
     stepId: AUDIT_STEP_ID,
     completedAt: new Date().toISOString(),
     sections,
+    toolSelection,
+    toolSelectionAdvisory: entryState.buildBlocked === true,
+    pipelineNullAt: toolSelection?.pipelineNullAt,
+    undServedAccessWarning: toolSelection?.undServedAccessWarning === true,
+    undServedAccessWarningReason: toolSelection?.undServedAccessWarningReason,
     buildOutput,
     buildComplete: buildOutput.buildComplete,
     buildBlocked: isBuildBlocked(buildOutput),
