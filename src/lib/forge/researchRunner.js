@@ -67,6 +67,16 @@ function researchToolInput(availableTools) {
   return selectResearchTool(availableTools);
 }
 
+function productContextForTemplate(productId, config = {}) {
+  const productContext = config.productContext ?? {};
+  return Object.freeze({
+    id: productContext.id ?? config.productId ?? productId,
+    name: productContext.name ?? config.productName ?? productId,
+    description: productContext.description ?? config.productDescription ?? '',
+    platform: productContext.platform ?? config.productPlatform ?? 'unknown',
+  });
+}
+
 function orchestratedInputFor(section, manualInputs, selectedTool) {
   const value = manualInputs?.[section.id];
   if (value !== undefined && value !== null && !(typeof value === 'string' && value.trim() === '')) {
@@ -136,7 +146,7 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
     });
   }
 
-  const template = buildResearchTemplate(productId);
+  const template = buildResearchTemplate(productContextForTemplate(productId, config));
   const populated = [];
   const availableTools = config.availableTools ?? [];
   const toolSelection = await selectForgeStepTool({
@@ -198,4 +208,5 @@ export const __test = Object.freeze({
   relevantMatrixEntries,
   selectResearchTool,
   summarizeCurrentState,
+  productContextForTemplate,
 });

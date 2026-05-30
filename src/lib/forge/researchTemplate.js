@@ -69,7 +69,7 @@ export function buildResearchTemplate(productOrId, researchOutput) {
         id: 'competitive-landscape',
         label: 'Competitive Landscape',
         source: 'orchestrated',
-        prompt: `Who are the primary competitors? What gaps does ${product.name} fill?`,
+        prompt: `What gaps does ${product.name} fill?`,
         input: null,
         evidenceTier: 'B',
       }),

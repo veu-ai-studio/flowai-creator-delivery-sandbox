@@ -99,6 +99,15 @@ describe('SAIGE forge Step 1 research', () => {
     });
   });
 
+  it('competitive-landscape prompt uses product name from runner config', async () => {
+    const output = await runResearch('saige', {}, {
+      matrixArtifact,
+      productName: 'SAIGE Platform',
+    });
+    const competitiveLandscape = output.sections.find(section => section.id === 'competitive-landscape');
+    expect(competitiveLandscape.prompt).toBe('What gaps does SAIGE Platform fill?');
+  });
+
   it("source:'orchestrated' sections excluded from manual completion check", async () => {
     const output = await runResearch('saige', {}, { matrixArtifact });
     expect(output.evidenceSummary.manualSections).toBe(1);
