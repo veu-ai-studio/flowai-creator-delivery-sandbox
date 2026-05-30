@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
-import { BookOpenCheck, CheckCircle2, FileText, LockKeyhole } from 'lucide-react';
+import { BookOpenCheck, FileText, LockKeyhole } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { useSearchParams } from 'react-router-dom';
 
+import ForgeSectionRenderer, {
+  getSectionStatus,
+  ScoreDisplay,
+  SectionStatusIcon,
+} from '@/components/forge/ForgeSectionRenderer.jsx';
 import { buildResearchTemplate } from '@/lib/forge/researchTemplate';
 import { runResearch } from '@/lib/forge/researchRunner';
 import { scoreForgeStep } from '@/lib/forge/forgeStepScorer';
 import { createToolIntelligenceService } from '@/lib/tools/ToolIntelligenceService';
 import { Button } from '@/components/ui/button';
-
-function InputPreview({ value }) {
-  if (typeof value === 'string') return <span>{value}</span>;
-  return <pre className="whitespace-pre-wrap break-words text-[11px] leading-relaxed">{JSON.stringify(value, null, 2)}</pre>;
-}
 
 export default function ForgeResearchForm() {
   const [searchParams] = useSearchParams();
@@ -92,13 +92,16 @@ export default function ForgeResearchForm() {
         </div>
         <div className="grid gap-3">
           {autoSections.map(section => {
-            const preview = researchOutput?.sections?.find(item => item.id === section.id)?.input ?? 'Runs after submit.';
+            const preview = researchOutput?.sections?.find(item => item.id === section.id)?.input ?? null;
             return (
               <div key={section.id} className="rounded-lg border border-border bg-card p-4">
-                <p className="text-sm font-bold text-foreground">{section.label}</p>
+                <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+                  <SectionStatusIcon status={getSectionStatus(preview)} />
+                  {section.label}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">{section.prompt}</p>
                 <div className="mt-3 rounded-md border border-border bg-background/50 p-3 text-xs text-muted-foreground">
-                  <InputPreview value={preview} />
+                  <ForgeSectionRenderer value={preview} />
                 </div>
               </div>
             );
@@ -114,7 +117,10 @@ export default function ForgeResearchForm() {
         <div className="grid gap-3">
           {manualSections.map(section => (
             <label key={section.id} className="grid gap-2 rounded-lg border border-border bg-card p-4">
-              <span className="text-sm font-bold text-foreground">{section.label}</span>
+              <span className="flex items-center gap-2 text-sm font-bold text-foreground">
+                <SectionStatusIcon status={getSectionStatus(section.input)} />
+                {section.label}
+              </span>
               <span className="text-xs text-muted-foreground">{section.prompt}</span>
               <textarea
                 value={section.status === 'complete' ? section.input : (manualInputs[section.id] ?? '')}
@@ -135,13 +141,16 @@ export default function ForgeResearchForm() {
         </div>
         <div className="grid gap-3">
           {orchestratedSections.map(section => {
-            const preview = researchOutput?.sections?.find(item => item.id === section.id)?.input ?? 'Requires configured AI research tool or supplied orchestrated output.';
+            const preview = researchOutput?.sections?.find(item => item.id === section.id)?.input ?? null;
             return (
               <div key={section.id} className="rounded-lg border border-border bg-card p-4">
-                <p className="text-sm font-bold text-foreground">{section.label}</p>
+                <p className="flex items-center gap-2 text-sm font-bold text-foreground">
+                  <SectionStatusIcon status={getSectionStatus(preview)} />
+                  {section.label}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">{section.prompt}</p>
                 <div className="mt-3 rounded-md border border-border bg-background/50 p-3 text-xs text-muted-foreground">
-                  <InputPreview value={preview} />
+                  <ForgeSectionRenderer value={preview} />
                 </div>
               </div>
             );
@@ -163,10 +172,7 @@ export default function ForgeResearchForm() {
               <p className="text-sm font-bold text-foreground">Forge Step Score</p>
               <p className="mt-1 text-xs text-muted-foreground">Ready for design requires at least 95% completion.</p>
             </div>
-            <div className="flex items-center gap-2 text-lg font-bold text-foreground">
-              {score.readyForNextStep && <CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-              {score.score}%
-            </div>
+            <ScoreDisplay percent={researchOutput?.completionPct ?? score.score} />
           </div>
           {score.correctivePrompts.length > 0 && (
             <div className="mt-4 space-y-2">
