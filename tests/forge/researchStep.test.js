@@ -48,12 +48,13 @@ describe('SAIGE forge Step 1 research', () => {
       'regulatory-jurisdiction',
       'competitive-landscape',
       'next-priorities',
+      'selected-tool',
     ]);
     expect(template.sections.filter(section => section.source === 'orchestrated')).toHaveLength(5);
   });
 
-  it('auto sections populated from matrix artifact', () => {
-    const output = runResearch('saige', completeOrchestratedInputs, {
+  it('auto sections populated from matrix artifact', async () => {
+    const output = await runResearch('saige', completeOrchestratedInputs, {
       matrixArtifact,
       availableTools: configuredTools,
     });
@@ -66,8 +67,8 @@ describe('SAIGE forge Step 1 research', () => {
     });
   });
 
-  it('orchestrated sections return honest stub when no research tool configured', () => {
-    const output = runResearch('saige', {}, { matrixArtifact });
+  it('orchestrated sections return honest stub when no research tool configured', async () => {
+    const output = await runResearch('saige', {}, { matrixArtifact });
     const marketGaps = output.sections.find(section => section.id === 'market-gaps');
     expect(marketGaps.input).toEqual({
       complete: false,
@@ -98,25 +99,25 @@ describe('SAIGE forge Step 1 research', () => {
     });
   });
 
-  it("source:'orchestrated' sections excluded from manual completion check", () => {
-    const output = runResearch('saige', {}, { matrixArtifact });
+  it("source:'orchestrated' sections excluded from manual completion check", async () => {
+    const output = await runResearch('saige', {}, { matrixArtifact });
     expect(output.evidenceSummary.manualSections).toBe(1);
     expect(output.evidenceSummary.orchestratedSections).toBe(5);
     expect(output.sections.find(section => section.id === 'target-customer').input).toBe(TARGET_CUSTOMER_PROFILE);
   });
 
-  it('completionPct calculates correctly', () => {
-    const output = runResearch('saige', {}, { matrixArtifact });
+  it('completionPct calculates correctly', async () => {
+    const output = await runResearch('saige', {}, { matrixArtifact });
     expect(output.completionPct).toBe(25);
   });
 
-  it('readyForDesign false when orchestrated sections are incomplete', () => {
-    const output = runResearch('saige', {}, { matrixArtifact });
+  it('readyForDesign false when orchestrated sections are incomplete', async () => {
+    const output = await runResearch('saige', {}, { matrixArtifact });
     expect(output.readyForDesign).toBe(false);
   });
 
-  it('readyForDesign true when all sections complete', () => {
-    const output = runResearch('saige', completeOrchestratedInputs, {
+  it('readyForDesign true when all sections complete', async () => {
+    const output = await runResearch('saige', completeOrchestratedInputs, {
       matrixArtifact,
       availableTools: configuredTools,
     });
@@ -124,8 +125,8 @@ describe('SAIGE forge Step 1 research', () => {
     expect(output.readyForDesign).toBe(true);
   });
 
-  it('forgeStepScorer returns corrective prompts when score < 95%', () => {
-    const output = runResearch('saige', {}, { matrixArtifact });
+  it('forgeStepScorer returns corrective prompts when score < 95%', async () => {
+    const output = await runResearch('saige', {}, { matrixArtifact });
     const score = scoreForgeStep(output);
     expect(score.readyForNextStep).toBe(false);
     expect(score.correctivePrompts).toEqual(expect.arrayContaining([
@@ -133,8 +134,8 @@ describe('SAIGE forge Step 1 research', () => {
     ]));
   });
 
-  it('researchEvidenceLogger produces correct evidence file format', () => {
-    const output = runResearch('saige', completeOrchestratedInputs, {
+  it('researchEvidenceLogger produces correct evidence file format', async () => {
+    const output = await runResearch('saige', completeOrchestratedInputs, {
       matrixArtifact,
       availableTools: configuredTools,
     });
@@ -161,13 +162,44 @@ describe('SAIGE forge Step 1 research', () => {
     expect(score.readyForNextStep).toBe(false);
   });
 
-  it('orchestrated next-priorities can be supplied as completed research output', () => {
-    const output = runResearch('saige', completeOrchestratedInputs, {
+  it('orchestrated next-priorities can be supplied as completed research output', async () => {
+    const output = await runResearch('saige', completeOrchestratedInputs, {
       matrixArtifact,
       availableTools: configuredTools,
     });
     const nextPriorities = output.sections.find(section => section.id === 'next-priorities');
     expect(nextPriorities.source).toBe('orchestrated');
     expect(nextPriorities.input).toContain('Functionalize P0');
+  });
+
+  it('runner function is async', () => {
+    expect(runResearch('saige', {}, { matrixArtifact })).toBeInstanceOf(Promise);
+  });
+
+  it('selected-tool section present in template', () => {
+    const template = buildResearchTemplate('saige');
+    expect(template.sections.find(section => section.id === 'selected-tool')).toMatchObject({
+      label: 'Selected Research Tool',
+      undServedFirstEnforced: true,
+    });
+  });
+
+  it('toolSelection field present in runner output and null when no service provided', async () => {
+    const output = await runResearch('saige', {}, { matrixArtifact });
+    expect(Object.hasOwn(output, 'toolSelection')).toBe(true);
+    expect(output.toolSelection).toBeNull();
+  });
+
+  it('undServedFirstApplied true in output when service mock provided', async () => {
+    const service = {
+      async getTopTool() {
+        return [{ rank: 1, platform_name: 'Perplexity AI', performance_score: 9, target_classes: ['generic_url'] }];
+      },
+    };
+    const output = await runResearch('saige', {}, { matrixArtifact, toolService: service, runId: 'research-test' });
+    expect(output.toolSelection).toMatchObject({
+      stepKey: 'research',
+      undServedFirstApplied: true,
+    });
   });
 });

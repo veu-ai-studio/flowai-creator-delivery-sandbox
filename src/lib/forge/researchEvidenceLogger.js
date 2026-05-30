@@ -23,6 +23,8 @@ export function formatResearchEvidence(researchOutput) {
     `MatrixArtifactVersion: ${researchOutput.matrixArtifactVersion}`,
     `CompletionPct: ${researchOutput.completionPct}%`,
     `ReadyForDesign: ${researchOutput.readyForDesign}`,
+    `ToolSelection: ${stringifyInput(researchOutput.toolSelection ?? null)}`,
+    `UnderservedAccessWarning: ${researchOutput.undServedAccessWarning === true}`,
     '',
     '## Auto-populated',
     sectionList(sections, 'auto'),
