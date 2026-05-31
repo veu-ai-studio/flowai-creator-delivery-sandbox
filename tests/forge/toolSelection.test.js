@@ -170,4 +170,58 @@ describe('forge toolSelection adapter', () => {
       undServedFirstApplied: true,
     });
   });
+
+  it('main envelope includes candidates array with full ranked pool in single mode', async () => {
+    const output = await selectForgeStepTool({
+      service: serviceReturning([perplexity, tavily]),
+      stepKey: 'research',
+      productId: 'saige',
+    });
+    expect(Array.isArray(output.candidates)).toBe(true);
+    expect(output.candidates).toHaveLength(2);
+    expect(output.candidates.map(candidate => candidate.platform_name)).toEqual(['Perplexity AI', 'Tavily']);
+  });
+
+  it('selection equals ranked winner and candidates preserves full pool', async () => {
+    const output = await selectForgeStepTool({
+      service: serviceReturning([tavily, perplexity]),
+      stepKey: 'research',
+      productId: 'saige',
+    });
+    expect(output.selection).toBe(output.candidates[0]);
+    expect(output.selection.platform_name).toBe('Perplexity AI');
+    expect(output.candidates.map(candidate => candidate.platform_name)).toEqual(['Perplexity AI', 'Tavily']);
+  });
+
+  it('MANUAL mode returns empty frozen candidates array', async () => {
+    const output = await selectForgeStepTool({
+      service: serviceReturning([perplexity, tavily]),
+      stepKey: 'research',
+      productId: 'saige',
+      mode: 'MANUAL',
+    });
+    expect(output.selection).toBeNull();
+    expect(output.candidates).toEqual([]);
+    expect(Object.isFrozen(output.candidates)).toBe(true);
+  });
+
+  it('candidates array is frozen', async () => {
+    const output = await selectForgeStepTool({
+      service: serviceReturning([perplexity, tavily]),
+      stepKey: 'research',
+      productId: 'saige',
+    });
+    expect(Object.isFrozen(output.candidates)).toBe(true);
+  });
+
+  it('pipeline mode includes candidates while preserving array selection behavior', async () => {
+    const output = await selectForgeStepTool({
+      service: serviceReturning([base44, cursor]),
+      stepKey: 'build',
+      productId: 'saige',
+    });
+    expect(Array.isArray(output.selection)).toBe(true);
+    expect(output.selection).toEqual(output.candidates);
+    expect(output.selection.map(candidate => candidate.platform_name)).toEqual(['Base44', 'Cursor']);
+  });
 });

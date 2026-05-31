@@ -251,4 +251,86 @@ describe('ForgeSectionRenderer', () => {
     expect(auditSource).not.toContain('function StatusBadge');
     expect(auditSource).not.toContain('function CheckList');
   });
+
+  it('renders ranked candidate list when candidates length is greater than one', () => {
+    const html = htmlFor({
+      mode: 'GUIDED',
+      stepKey: 'research',
+      selectionMode: 'single',
+      selection: { platform_name: 'Perplexity AI', platform_type: 'research', compositeScore: 9.2 },
+      candidates: [
+        { platform_name: 'Perplexity AI', platform_type: 'research', compositeScore: 9.2 },
+        { platform_name: 'Tavily', platform_type: 'research', compositeScore: 8.5 },
+      ],
+    });
+    expect(html).toContain('Ranked candidates (2)');
+    expect(html).toContain('Perplexity AI');
+    expect(html).toContain('Tavily');
+    expectCleanOutput(html);
+  });
+
+  it('marks picked tool with selected badge', () => {
+    const html = htmlFor({
+      mode: 'GUIDED',
+      stepKey: 'design',
+      selectionMode: 'single',
+      selection: { platform_name: 'Figma', platform_type: 'design', compositeScore: 9.5 },
+      candidates: [
+        { platform_name: 'Figma', platform_type: 'design', compositeScore: 9.5 },
+        { platform_name: 'Canva', platform_type: 'design', compositeScore: 8.1 },
+      ],
+    });
+    expect(html).toContain('★ Selected');
+    expect(html).toContain('aria-label="Selected"');
+    expectCleanOutput(html);
+  });
+
+  it('does not render candidate pool when candidates length is one or less', () => {
+    const html = htmlFor({
+      mode: 'GUIDED',
+      stepKey: 'research',
+      selectionMode: 'single',
+      selection: { platform_name: 'Perplexity AI', compositeScore: 9.2 },
+      candidates: [{ platform_name: 'Perplexity AI', compositeScore: 9.2 }],
+    });
+    expect(html).not.toContain('Ranked candidates');
+    expectCleanOutput(html);
+  });
+
+  it('does not render candidate pool for pipeline mode', () => {
+    const html = htmlFor({
+      mode: 'GUIDED',
+      stepKey: 'build',
+      selectionMode: 'pipeline',
+      selection: [
+        { platform_name: 'Base44', platform_type: 'build', compositeScore: 9.5 },
+        { platform_name: 'Cursor', platform_type: 'build', compositeScore: 9.2 },
+      ],
+      candidates: [
+        { platform_name: 'Base44', platform_type: 'build', compositeScore: 9.5 },
+        { platform_name: 'Cursor', platform_type: 'build', compositeScore: 9.2 },
+      ],
+    });
+    expect(html).not.toContain('Ranked candidates');
+    expect(html).toContain('Base44');
+    expect(html).toContain('Cursor');
+    expectCleanOutput(html);
+  });
+
+  it('candidate pool output avoids pre tags and JSON object notation', () => {
+    const html = htmlFor({
+      mode: 'GUIDED',
+      stepKey: 'research',
+      selectionMode: 'single',
+      selection: { platform_name: 'Perplexity AI', platform_type: 'research', compositeScore: 9.2 },
+      candidates: [
+        { platform_name: 'Perplexity AI', platform_type: 'research', compositeScore: 9.2 },
+        { platform_name: 'Tavily', platform_type: 'research', compositeScore: 8.5 },
+      ],
+    });
+    expect(html).not.toContain('<pre');
+    expect(html).not.toContain('JSON.stringify');
+    expect(html).not.toContain('[object Object]');
+    expect(html).not.toContain('{&quot;');
+  });
 });

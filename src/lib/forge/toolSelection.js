@@ -165,6 +165,7 @@ export async function selectForgeStepTool(opts = {}) {
     return Object.freeze({
       mode: requestedMode,
       selection: raw?.selection ?? null,
+      candidates: Object.freeze(normalizedCandidates(raw?.selection)),
       recorded: raw?.recorded === true,
       stepKey,
       selectionMode,
@@ -181,6 +182,7 @@ export async function selectForgeStepTool(opts = {}) {
     return Object.freeze({
       mode: requestedMode,
       selection: null,
+      candidates: Object.freeze([]),
       recorded: raw?.recorded === true,
       stepKey,
       selectionMode,
@@ -206,6 +208,7 @@ export async function selectForgeStepTool(opts = {}) {
   return Object.freeze({
     mode: requestedMode,
     selection,
+    candidates: Object.freeze([...ranked]),
     recorded: raw?.recorded === true,
     stepKey,
     selectionMode,
