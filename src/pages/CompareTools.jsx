@@ -57,7 +57,7 @@ export default function CompareTools() {
     setRunningAI(true);
     setAiAnalysis('');
     const toolDetails = selectedTools.map(t =>
-      `${t.name}: Score ${t.performance_score}/10, ${t.cost_tier} (${t.cost_details}), Africa: ${t.africa_available}, Base44: ${t.base44_compatible}. ${t.description}`
+      `${t.name}: Score ${t.performance_score}/10, ${t.cost_tier} (${t.cost_details}), Africa: ${t.underserved_accessible}, Base44: ${t.base44_compatible}. ${t.description}`
     ).join('\n');
 
     const result = await base44.integrations.Core.InvokeLLM({
@@ -95,7 +95,7 @@ End with a clear "RECOMMENDATION:" line stating the winner and why.`,
     { label: 'Performance', render: (t) => <ScoreBar score={t.performance_score} /> },
     { label: 'Cost Tier', render: (t) => <span className={`text-xs font-semibold capitalize ${COST_COLOR[t.cost_tier]}`}>{t.cost_tier}</span> },
     { label: 'Pricing', render: (t) => <span className="text-[10px] text-muted-foreground">{t.cost_details}</span> },
-    { label: 'Africa Available', render: (t) => <span className={`text-xs font-semibold capitalize ${AFRICA_COLOR[t.africa_available]}`}>{t.africa_available}</span> },
+    { label: 'Africa Available', render: (t) => <span className={`text-xs font-semibold capitalize ${AFRICA_COLOR[t.underserved_accessible]}`}>{t.underserved_accessible}</span> },
     { label: 'Base44 Compatible', render: (t) => <span className={`text-xs font-semibold capitalize ${t.base44_compatible === 'native' ? 'text-primary' : t.base44_compatible === 'api' ? 'text-emerald-400' : 'text-muted-foreground'}`}>{t.base44_compatible}</span> },
     { label: 'Production Ready', render: (t) => <span className={`text-xs font-semibold ${t.production_compatible ? 'text-emerald-400' : 'text-red-400'}`}>{t.production_compatible ? 'Yes' : 'No'}</span> },
     { label: 'Category', render: (t) => <span className="text-xs text-muted-foreground">{t.category}</span> },

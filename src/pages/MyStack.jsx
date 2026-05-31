@@ -31,8 +31,8 @@ function estimateCost(tools) {
 function getAfricaStatus(tools) {
   const allNames = Object.values(tools).flat();
   const toolData = allNames.map(n => getToolData(n)).filter(Boolean);
-  const hasNo = toolData.some(t => t.africa_available === 'no');
-  const hasLimited = toolData.some(t => t.africa_available === 'limited');
+  const hasNo = toolData.some(t => t.underserved_accessible === 'no');
+  const hasLimited = toolData.some(t => t.underserved_accessible === 'limited');
   if (hasNo) return 'issues_flagged';
   if (hasLimited) return 'some_limited';
   return 'all_green';
@@ -118,8 +118,8 @@ function StackCard({ productName, tools, isVeu, onExport, onSetupGuide, onEdit }
                           </div>
                           <div className="flex gap-2 items-center shrink-0">
                             <span className={`text-[10px] font-bold ${td.performance_score >= 8 ? 'text-emerald-400' : 'text-amber-400'}`}>{td.performance_score}/10</span>
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full border capitalize ${td.africa_available === 'yes' ? 'border-emerald-500/30 text-emerald-400' : td.africa_available === 'limited' ? 'border-amber-500/30 text-amber-400' : 'border-red-500/30 text-red-400'}`}>
-                              {td.africa_available}
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full border capitalize ${td.underserved_accessible === 'yes' ? 'border-emerald-500/30 text-emerald-400' : td.underserved_accessible === 'limited' ? 'border-amber-500/30 text-amber-400' : 'border-red-500/30 text-red-400'}`}>
+                              {td.underserved_accessible}
                             </span>
                           </div>
                         </div>

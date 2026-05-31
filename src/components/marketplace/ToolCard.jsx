@@ -55,8 +55,8 @@ export default function ToolCard({ tool, onLearnMore, onAddToStack }) {
         <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border capitalize ${COST_BADGE[tool.cost_tier]}`}>
           {tool.cost_tier}
         </span>
-        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${AFRICA_BADGE[tool.africa_available]}`}>
-          Africa: {tool.africa_available}
+        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${AFRICA_BADGE[tool.underserved_accessible]}`}>
+          Africa: {tool.underserved_accessible}
         </span>
         {tool.base44_compatible !== 'none' && (
           <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border border-primary/30 bg-primary/5 text-primary capitalize">
