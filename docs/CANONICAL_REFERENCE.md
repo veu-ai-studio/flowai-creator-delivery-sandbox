@@ -88,7 +88,7 @@ Rev-1 listed three levels. Panel Q2 found the levels "CORRECT_BUT_INCOMPLETE" �
 
 | # | Level | Scope | Status |
 |---|---|---|---|
-| L1 | **Building FlowAI** (current phase) | VEU constructs FlowAI itself — agents, governance, pipeline, Orchestra, OrchestratorHub. All 25 agents ship dormant at `recommend_only` before wire-in. | ACTIVE — Phase 1.0 substrate work in flight; Agents #1/#2/#3/#5 SHIPPED-GREEN; #4 PARTIAL; 20 still DORMANT |
+| L1 | **Building FlowAI** (current phase) | VEU constructs FlowAI itself — agents, governance, pipeline, Orchestra, OrchestratorHub. The 26-agent roster is canonical; rostered, implemented, wired, runtime-active, and production-verified are distinct states. | ACTIVE — Phase 1.0 substrate work in flight; Agents #1/#2/#3/#5 SHIPPED-GREEN; #4 PARTIAL; remaining rostered agents are not presumed runtime-active or production-verified |
 | L2 | **FlowAI on Itself** | Once live, FlowAI self-monitors, self-renews, self-updates Orchestra rankings, runs the 8-step pipeline against its own repos. | PARTIAL — Self-Governance Layer (Sprint 5) live; full self-orchestration awaits Panel-handover gate |
 | L3 | **FlowAI on External Products** | Accepts via 4 input modes (§5), aggressively crawls everything, applies the 8-step pipeline, always delivers a new live URL. The fork-and-fix mode (§12) is the canonical externalized output path. | PARTIAL — W2 three-input renewal pipeline shipped on neutral test fixtures (commit `9b4e511`); fork-and-fix live; full crawl-fix-redeliver loop awaits Agent #3 graduation (see `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`) |
 | L4 | **FlowAI Capability Transfer into Other Products** (NEW — gap #4 from Panel Q2) | FlowAI installs its own capabilities into a target product as a Capability Package. Each package is generated as an install sprint and consumed by the target. | LIVE — Sprint PROTECT-1 shipped two packages: Self-Renewal (4 components: Self-Test, Self-Heal, Self-Monitor, Governance Hook) and Self-Protection (4 components). Install sprints exist for all 5 VEU products. Surface: `/capability-transfer`. |
@@ -1186,8 +1186,8 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 | Sprint history (CANONICAL_REFERENCE) | Sprint 5 → Sprint PROTECT-1 (most recent); plus POST-PROTECT-1 architecture + GTM Demo Stack + Agent Contract Layer (in codebase, not yet in ReleaseNotes.jsx) |
 | Branch | flowai-v0.1 |
 | Phase 0 (Foundation, commit `5dec08d`, 387 tests) | COMPLETE |
-| Agents shipped (G3-ratified roster of 25, 5 live) | #1 Lifecycle Engine, #2 Code Builder, #3 Self-Renewal, #4 Provider Onboarding (PARTIAL), #5 End-Customer Intake — all SHIPPED-GREEN |
-| Agents dormant | 20 of 25 (per Layer 1 SSOT doability assessment) |
+| Agents shipped / implemented subset | #1 Lifecycle Engine, #2 Code Builder, #3 Self-Renewal, #4 Provider Onboarding (PARTIAL), #5 End-Customer Intake — implementation evidence exists; runtime-active and production-verified status remain separate from the 26-agent roster count |
+| Agents dormant / not runtime-verified | Remaining rostered agents are not presumed runtime-active or production-verified until wired and evidenced; roster count is 26 per Locked Rule 2 |
 | W2 three-input renewal pipeline | SHIPPED on neutral test fixtures (commit `9b4e511`); Orchestra direct-write available via fork-and-fix path |
 | Self-Governance Layer (Sprint 5) | LIVE — Self-Test, Self-Audit, Self-Protect, Self-Heal, Four Human Gates |
 | Self-Renewal + Self-Protection Capability Packages (Sprint PROTECT-1) | LIVE — install sprints for all 5 VEU products |
@@ -1207,7 +1207,7 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 | Orchestra Integration spec | DRAFT — `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` (commit `38b1a23`); 8 open questions for CEO disposition |
 | SSOT W04-Rev-1 | DRAFT — superseded by THIS document (Rev-2) per Panel verdict |
 | SSOT W04-Rev-2 | DRAFT (THIS document) — awaiting W6 re-Panel |
-| Next gate | (1) W6 re-Panel of Rev-2; (2) CEO dispositions on §27 Open Questions; (3) Production Hardening (RLS + observability + CI/CD) before remaining 20 agents — Panel Q4 verdict from 2026-05-14 consolidated consultation, plurality (b) Production Hardening; (4) Layer 4 Building Guidance |
+| Next gate | (1) W6 re-Panel of Rev-2; (2) CEO dispositions on §27 Open Questions; (3) Production Hardening (RLS + observability + CI/CD) before graduating remaining rostered agents — Panel Q4 verdict from 2026-05-14 consolidated consultation, plurality (b) Production Hardening; (4) Layer 4 Building Guidance |
 
 ---
 
@@ -1343,6 +1343,21 @@ The Build/Wire Construction Engine is the canonical mechanism by which detected 
 *End of W04-Rev-2.1 + CA-7/CA-8/CA-9/CA-10 promotions. 14 Panel-cited gaps from Rev-1 addressed in Rev-2 (§3 metadata-driven, §4 L4 Capability Transfer, §6 resolution clarification, §8 / §8a axis rename, §10 Self-Governance Layer, §11 6-step Clearance, §12 mode-to-pipeline wiring, §13 auth + roles, §14 GovernanceAuditLog, §15 26-agent roles + OrchestratorHub-vs-Orchestra, §16 deployment infra, §17 6-section sidebar, §18 CA-n cycle, §26 phase status). CA-7 added §15.5 EXECUTOR_REGISTRY. CA-8 added §20.2 X-Test-Bypass-Token Contract. CA-9 (ENTRY 005) added §8.1 Orchestra Self-Expansion + Agent #26 + customer feedback loop. CA-10 (ENTRY 005) added §7.5 ProductSSOT + §13.1 role gates + §28 Symbiotic Feed-Back Loop + §11 Step 4 + §14.3 retention extensions. 10 Open Questions remaining for CEO disposition or W6 re-Panel.*
 
 ---
+
+## Dispatch 0 Reconciliation — Agent Roster and Forge Loop
+
+**Canonical agent roster count:** 26 agents. The roster count is not an implementation claim; every agent must be tracked separately as rostered, implemented, wired, runtime-active, and production-verified.
+
+**Canonical Step 5-8 order:** Step 5 Deploy, Step 6 Self-Renewal, Step 7 GTM, Step 8 Monitor. "Govern" remains a registry/capability vocabulary, governance surface, audit function, and clearance concern; it is not the product-workflow Step 6 label unless a future CEO-ratified SSOT amendment changes the eight-step product workflow.
+
+**Current forge implementation status:** Forge Research, Design, Build, and Quality Audit are scaffolded and wired through UI routes and tests, with honest stubs where live tools or product evidence are not configured. Forge Deploy, Self-Renewal, GTM, and Monitor remain the next vertical-slice build targets and must not be marked VERIFIED until live runtime evidence exists.
+
+**Evidence vocabulary rule:** scaffolded, wired, tested, live, and VERIFIED are distinct statuses. WIRED does not equal VERIFIED; production-grade VERIFIED requires live evidence tied to the relevant SSOT claim, not merely code, routes, tests, mocks, or local scaffolds.
+
+**Next-build gate:** vertical-slice proof precedes horizontal agent graduation. The next key dispatches should prove one product through the loop before graduating dormant agents broadly or expanding SSOT architecture.
+
+---
+
 ## CA-W11-TOOL-SELECTION
 **Description:** Globally-underserved-first tool
 ranking is canonical FlowAI OS behavior. All forge
