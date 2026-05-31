@@ -28,11 +28,14 @@
 // default) is fully functional end-to-end.
 
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import FindingsReport from '@/components/FindingsReport';
 import { REGISTERED_PRODUCT_CONFIG, findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
 import { summarizeAttachmentCounts, summarizeObjectiveTracking } from '@/lib/flowai/objectiveTracking';
 import { extractBranchPrVisibility } from '@/lib/ui/branchVisibility';
 import { normalizeIterationHistoryRow } from '@/lib/ui/iterationHistory';
+import { resolveProductContext } from '@/lib/forge/resolveProductContext';
+import { normalizeFlowAIInput } from '@/lib/flowai/unifiedRunInput';
 import {
   FLOWAI_RUN_HEARTBEAT_TIMEOUT_MS,
   FLOWAI_MACRO_STEPS,
@@ -336,6 +339,7 @@ function PipelineProgressTracker({ logs, isRunning, finalResult, errorMsg }) {
 }
 
 export default function FlowAIDashboard() {
+  const navigate = useNavigate();
   // ── Form inputs ──────────────────────────────────────────────────────────
   const [url, setUrl] = useState('');
   const [productDescription, setProductDescription] = useState('');
@@ -529,6 +533,18 @@ export default function FlowAIDashboard() {
   }
 
   // ── SSE consumer ─────────────────────────────────────────────────────────
+  const launchForge = () => {
+    const normalized = normalizeFlowAIInput({
+      url,
+      productDescription,
+      pastedContent,
+      attachments: attachmentsPayload
+    });
+    const ctx = resolveProductContext(normalized);
+    const dest = `/forge/research?productId=${encodeURIComponent(ctx.id)}&productName=${encodeURIComponent(ctx.name)}`;
+    navigate(dest, { replace: false });
+  };
+
   async function launch() {
     if (!canLaunch) {
       setErrorMsg('Add a product description or pasted content before launching this run.');
@@ -971,6 +987,15 @@ export default function FlowAIDashboard() {
             className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
             {isRunning ? <Icon.Refresh className="w-5 h-5 animate-spin" /> : <Icon.Rocket className="w-5 h-5" />}
             {isRunning ? `Running... ${liveMacroStepCount}/8 steps` : finalResult ? 'START ANOTHER RUN' : 'START NEW RUN'}
+          </button>
+
+          <button
+            type="button"
+            onClick={launchForge}
+            disabled={!canLaunch}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-600 bg-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Launch Forge
           </button>
 
           {errorMsg && (
