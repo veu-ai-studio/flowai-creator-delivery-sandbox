@@ -1360,8 +1360,7 @@ runner output
 
 **Files:** src/lib/forge/toolSelection.js
 
-**Note:** africa_available field is used as
-temporary proxy for underserved accessibility.
-Will be renamed to underserved_accessible in
-W11-cleanup dispatch.
+**Note:** underserved_accessible is the canonical
+field for underserved accessibility. The legacy
+africa_available field was renamed in W11-cleanup.
 ---

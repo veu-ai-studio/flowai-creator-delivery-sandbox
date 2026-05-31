@@ -108,3 +108,5 @@ Because the field is uniformly missing, every tool in the registry is flagged. S
 ## Conclusion
 
 **100% of tools fail the `doppler_compat` check** because the field is unspecified in the registry schema. This is a categorical schema gap, not a per-tool issue.
+
+Note: africa_available field renamed to underserved_accessible in W11-cleanup (2026-05-30).
