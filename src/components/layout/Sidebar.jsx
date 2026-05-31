@@ -90,6 +90,30 @@ function getNavSections({ migrationModeEnabled = MIGRATION_MODE_ENABLED_FOR_UI }
         activeWhen: ({ pathname, searchParams }) =>
           pathname === "/flow-hub/migration" || (pathname === "/" && searchParams.get("mode") === "migration"),
       },
+      {
+        label: "Research Forge",
+        path: "/forge/research",
+        icon: ClipboardList,
+        tooltip: "Open the Research Forge step.",
+      },
+      {
+        label: "Design Forge",
+        path: "/forge/design",
+        icon: ClipboardList,
+        tooltip: "Open the Design Forge step.",
+      },
+      {
+        label: "Build Forge",
+        path: "/forge/build",
+        icon: ClipboardList,
+        tooltip: "Open the Build Forge step.",
+      },
+      {
+        label: "Quality Audit",
+        path: "/forge/quality-audit",
+        icon: ClipboardList,
+        tooltip: "Open the Quality Audit Forge step.",
+      },
     ],
   },
   {
