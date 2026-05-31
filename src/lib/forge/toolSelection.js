@@ -17,12 +17,12 @@ function registryFor(candidate) {
 }
 
 function accessibilityScore(tool, warnings, name) {
-  if (!tool || tool.africa_available == null) {
+  if (!tool || tool.underserved_accessible == null) {
     warnings.push(name);
     return 0;
   }
-  if (tool.africa_available === 'yes') return 1;
-  if (tool.africa_available === 'limited') return 0.5;
+  if (tool.underserved_accessible === 'yes') return 1;
+  if (tool.underserved_accessible === 'limited') return 0.5;
   return 0;
 }
 

@@ -24,13 +24,13 @@ export default function PlatformIntelligenceMarketplace() {
   const filtered = useMemo(() => {
     let list = [...TOOL_REGISTRY];
     if (category !== 'All') list = list.filter(t => t.category === category);
-    if (africaOnly) list = list.filter(t => t.africa_available === 'yes' || t.africa_available === 'limited');
+    if (africaOnly) list = list.filter(t => t.underserved_accessible === 'yes' || t.underserved_accessible === 'limited');
     if (costFilter !== 'All') list = list.filter(t => t.cost_tier === costFilter.toLowerCase());
     if (sortBy === 'performance') list.sort((a, b) => b.performance_score - a.performance_score);
     else if (sortBy === 'name') list.sort((a, b) => a.name.localeCompare(b.name));
     else if (sortBy === 'africa') list.sort((a, b) => {
       const order = { yes: 0, limited: 1, no: 2 };
-      return (order[a.africa_available] || 2) - (order[b.africa_available] || 2);
+      return (order[a.underserved_accessible] || 2) - (order[b.underserved_accessible] || 2);
     });
     return list;
   }, [category, africaOnly, costFilter, sortBy]);

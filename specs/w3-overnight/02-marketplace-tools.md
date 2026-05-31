@@ -111,3 +111,5 @@ FlowAI.
 | SAIGE | AI/LLM | **NeuralMax Pro** | ❌ Missing — no registry entry. |
 
 All 18 other stack-side names resolve cleanly. This is the single concrete inconsistency in the data today.
+
+Note: africa_available field renamed to underserved_accessible in W11-cleanup (2026-05-30).

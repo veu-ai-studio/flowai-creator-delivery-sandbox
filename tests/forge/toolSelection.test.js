@@ -50,37 +50,37 @@ describe('forge toolSelection adapter', () => {
     expect(weighted.metadataStatus).toBe('MISSING_REGISTRY_METADATA');
   });
 
-  it('missing africa_available scores 0.0 and dataGapWarning on that tool', () => {
+  it('missing underserved_accessible scores 0.0 and dataGapWarning on that tool', () => {
     const [weighted] = applyUndServedFirstWeighting([{ ...perplexity, registryEntry: { name: 'partial', cost_tier: 'free' } }]);
     expect(weighted.underservedAccessibilityScore).toBe(0);
     expect(weighted.dataGapWarning).toBe(true);
   });
 
   it('missing cost_tier scores 0.0 and dataGapWarning on that tool', () => {
-    const [weighted] = applyUndServedFirstWeighting([{ ...perplexity, registryEntry: { name: 'partial', africa_available: 'yes' } }]);
+    const [weighted] = applyUndServedFirstWeighting([{ ...perplexity, registryEntry: { name: 'partial', underserved_accessible: 'yes' } }]);
     expect(weighted.costScore).toBe(0);
     expect(weighted.dataGapWarning).toBe(true);
   });
 
-  it('africa_available yes scores higher than no at equal performance', () => {
+  it('underserved_accessible yes scores higher than no at equal performance', () => {
     const ranked = applyUndServedFirstWeighting([
-      { platform_name: 'yes', performance_score: 5, registryEntry: { name: 'yes', africa_available: 'yes', cost_tier: 'paid', tags: [] } },
-      { platform_name: 'no', performance_score: 5, registryEntry: { name: 'no', africa_available: 'no', cost_tier: 'paid', tags: [] } },
+      { platform_name: 'yes', performance_score: 5, registryEntry: { name: 'yes', underserved_accessible: 'yes', cost_tier: 'paid', tags: [] } },
+      { platform_name: 'no', performance_score: 5, registryEntry: { name: 'no', underserved_accessible: 'no', cost_tier: 'paid', tags: [] } },
     ]);
     expect(ranked[0].platform_name).toBe('yes');
   });
 
   it('free scores higher than paid at equal performance and equal accessibility', () => {
     const ranked = applyUndServedFirstWeighting([
-      { platform_name: 'paid', performance_score: 5, registryEntry: { name: 'paid', africa_available: 'yes', cost_tier: 'paid', tags: [] } },
-      { platform_name: 'free', performance_score: 5, registryEntry: { name: 'free', africa_available: 'yes', cost_tier: 'free', tags: [] } },
+      { platform_name: 'paid', performance_score: 5, registryEntry: { name: 'paid', underserved_accessible: 'yes', cost_tier: 'paid', tags: [] } },
+      { platform_name: 'free', performance_score: 5, registryEntry: { name: 'free', underserved_accessible: 'yes', cost_tier: 'free', tags: [] } },
     ]);
     expect(ranked[0].platform_name).toBe('free');
   });
 
   it('weighted composite uses 0.50/0.25/0.15/0.10', () => {
     const [weighted] = applyUndServedFirstWeighting([
-      { platform_name: 'x', performance_score: 8, registryEntry: { name: 'x', africa_available: 'yes', cost_tier: 'free', tags: ['lightweight'] } },
+      { platform_name: 'x', performance_score: 8, registryEntry: { name: 'x', underserved_accessible: 'yes', cost_tier: 'free', tags: ['lightweight'] } },
     ]);
     expect(weighted.compositeScore).toBe(9);
   });
@@ -88,7 +88,7 @@ describe('forge toolSelection adapter', () => {
   it('AUTOMATIC selects best accessible from top-5 when accessible option exists', async () => {
     const output = await selectForgeStepTool({
       service: serviceReturning([
-        { platform_name: 'inaccessible', performance_score: 10, registryEntry: { name: 'inaccessible', africa_available: 'no', cost_tier: 'paid', tags: [] } },
+        { platform_name: 'inaccessible', performance_score: 10, registryEntry: { name: 'inaccessible', underserved_accessible: 'no', cost_tier: 'paid', tags: [] } },
         perplexity,
       ]),
       stepKey: 'research',
@@ -101,7 +101,7 @@ describe('forge toolSelection adapter', () => {
   it('AUTOMATIC emits undServedAccessWarning when no accessible tool in top-5', async () => {
     const output = await selectForgeStepTool({
       service: serviceReturning([
-        { platform_name: 'only-no', performance_score: 10, registryEntry: { name: 'only-no', africa_available: 'no', cost_tier: 'paid', tags: [] } },
+        { platform_name: 'only-no', performance_score: 10, registryEntry: { name: 'only-no', underserved_accessible: 'no', cost_tier: 'paid', tags: [] } },
       ]),
       stepKey: 'research',
       productId: 'saige',
@@ -112,7 +112,7 @@ describe('forge toolSelection adapter', () => {
   it('underservedConstraintSatisfied false when warning emitted', async () => {
     const output = await selectForgeStepTool({
       service: serviceReturning([
-        { platform_name: 'only-no', performance_score: 10, registryEntry: { name: 'only-no', africa_available: 'no', cost_tier: 'paid', tags: [] } },
+        { platform_name: 'only-no', performance_score: 10, registryEntry: { name: 'only-no', underserved_accessible: 'no', cost_tier: 'paid', tags: [] } },
       ]),
       stepKey: 'research',
       productId: 'saige',

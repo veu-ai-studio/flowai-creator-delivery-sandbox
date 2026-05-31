@@ -37,7 +37,7 @@ export default function AIRecommendationPanel({ toolRegistry, onAddToStack }) {
     ).join(', ') || 'None';
 
     const toolSummary = toolRegistry.map(t =>
-      `${t.name} (${t.category}) — Score: ${t.performance_score}/10, Cost: ${t.cost_tier}, Africa: ${t.africa_available}, Base44: ${t.base44_compatible}`
+      `${t.name} (${t.category}) — Score: ${t.performance_score}/10, Cost: ${t.cost_tier}, Africa: ${t.underserved_accessible}, Base44: ${t.base44_compatible}`
     ).join('\n');
 
     const raw = await base44.integrations.Core.InvokeLLM({

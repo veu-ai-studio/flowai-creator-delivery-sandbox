@@ -65,13 +65,13 @@ export default function ToolDetailPanel({ tool, onClose, onAddToStack, onCompare
 
         <div className="space-y-2">
           <p className="text-xs font-bold text-foreground uppercase tracking-wide">Africa / Nigeria Availability</p>
-          <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full border capitalize ${AFRICA_BADGE[tool.africa_available]}`}>
-            {tool.africa_available === 'yes' ? '✅ Available' : tool.africa_available === 'limited' ? '⚠️ Limited' : '❌ Not Available'}
+          <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full border capitalize ${AFRICA_BADGE[tool.underserved_accessible]}`}>
+            {tool.underserved_accessible === 'yes' ? '✅ Available' : tool.underserved_accessible === 'limited' ? '⚠️ Limited' : '❌ Not Available'}
           </span>
-          {tool.africa_available === 'limited' && (
+          {tool.underserved_accessible === 'limited' && (
             <p className="text-xs text-amber-400">Limited availability in Africa — verify current coverage before deployment.</p>
           )}
-          {tool.africa_available === 'no' && (
+          {tool.underserved_accessible === 'no' && (
             <p className="text-xs text-red-400">Not available in Africa. Consider an African alternative for Nigeria/Africa market.</p>
           )}
         </div>

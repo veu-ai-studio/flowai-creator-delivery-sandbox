@@ -20,7 +20,7 @@ describe('Marketplace inventory (toolRegistry.js)', () => {
   it('every tool has the required fields', () => {
     const required = [
       'name', 'category', 'description', 'performance_score',
-      'cost_tier', 'africa_available', 'base44_compatible',
+      'cost_tier', 'underserved_accessible', 'base44_compatible',
       'production_compatible', 'official_url', 'tags',
     ];
     for (const tool of TOOL_REGISTRY) {
