@@ -267,6 +267,50 @@ function Envelope({ value }) {
     <div className="space-y-3">
       {banners}
       <ForgeSectionRenderer value={value.selection} />
+      {value.selectionMode !== 'pipeline' &&
+        Array.isArray(value.candidates) &&
+        value.candidates.length > 1 && (
+          <div className="space-y-1.5 rounded-md border border-border bg-card/50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Ranked candidates ({value.candidates.length})
+            </p>
+            <ol className="space-y-1 text-sm">
+              {value.candidates.map((tool, index) => {
+                const pickedName = value?.selection?.platform_name;
+                const isPicked =
+                  typeof pickedName === 'string' &&
+                  pickedName.length > 0 &&
+                  tool?.platform_name === pickedName;
+                return (
+                  <li
+                    key={tool?.platform_name ?? index}
+                    className={isPicked
+                      ? 'flex items-center gap-2 font-semibold text-foreground'
+                      : 'flex items-center gap-2 text-muted-foreground'}
+                  >
+                    <span className="font-mono text-xs">{index + 1}.</span>
+                    <span>{tool?.platform_name ?? 'unknown'}</span>
+                    {tool?.platform_type && (
+                      <span className="text-xs text-muted-foreground">- {tool.platform_type}</span>
+                    )}
+                    {typeof tool?.compositeScore === 'number' && (
+                      <span className="ml-auto font-mono text-xs">{tool.compositeScore.toFixed(1)}</span>
+                    )}
+                    {isPicked && (
+                      <span
+                        className="text-xs text-emerald-500"
+                        aria-label="Selected"
+                        title="Selected"
+                      >
+                        ★ Selected
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        )}
     </div>
   );
 }
