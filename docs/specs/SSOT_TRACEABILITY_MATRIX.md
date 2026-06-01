@@ -17,7 +17,7 @@
 The Panel v2.2 second review (Runs A + B, 9/10 + 7/10 engagement) surfaced 7 specific defects. v2.3 fixes each:
 
 1. **Layer 2 `PARTIAL` collision with Layer 1 `PARTIAL`** — Layer 2 now uses `IN_PROGRESS` instead. Layer 1 keeps `PARTIAL`. No semantic overlap.
-2. **AUTONOMOUS-OP circular dependency** — renamed to **END-TO-END-OP** with scope explicitly bounded: autonomous through every pipeline step *up to but not including production deploy*. Production deploy remains Victor-only per §11.3. Capability is now reachable (CURRENT/IN_PROGRESS path) without requiring §11.3 amendment.
+2. **AUTONOMOUS-OP circular dependency** — renamed to **END-TO-END-OP** with scope explicitly bounded: autonomous through every pipeline step *up to but not including production deploy*. Production deploy remains authorized-operator-only per §11.3. Capability is now reachable (CURRENT/IN_PROGRESS path) without requiring §11.3 amendment.
 3. **18% VERIFIED vs 95% governance threshold gap** — §11.1 now distinguishes two separate gates: **SSOT document ratification** (a truth-document gate, ratifiable at any capability completion %) vs **product ship readiness** (the 95% gate, applied per release).
 4. **Fresh Build self-contradiction** — §12.1 row clarified: `FRESHBUILD-FEATURE-EXTRACTOR` is `PARTIAL` *evidence* (branch commit exists at c718bf8) of an `EXPERIMENTAL` *capability* (flag-gated OFF). PARTIAL+EXPERIMENTAL is a coherent state and explicitly stated as such.
 5. **Domain 3 commercial-model incoherence** — §13 now includes an explicit operational allocation rule.
@@ -71,7 +71,7 @@ FlowAI's target architecture is fresh-build-first: analyze any input and generat
 
 Reference-product portability rule: SAIGE and the other VEU products are proof fixtures for FlowAI, not special-case destinations. Any SAIGE vertical-slice work must exercise product-agnostic contracts, target-class adapters, ProductSSOT state, and deployment/distribution adapters that can carry forward to websites, SaaS products, mobile apps, native apps, and agentic AI systems. A capability is not SSOT-complete if it works only because the product is SAIGE.
 
-Distribution target rule: Step 5 always produces the canonical output surface, but target classes carry different distribution obligations. Web and SaaS outputs deploy to hosted URLs; mobile and native outputs require build/package metadata plus app-store or installer distribution adapters; agentic AI outputs require runtime, tool-permission, and monitoring adapters. These adapters live at the edge; FlowAI's core orchestration, scoring, evidence, governance, and ProductSSOT remain product-agnostic.
+Distribution target rule: Step 5 always produces the canonical per-target-class delivery artifact, and target classes carry different distribution obligations. Web and SaaS outputs deploy to hosted URLs; mobile and native outputs require build/package metadata plus app-store or installer distribution adapters; agentic AI outputs require runtime, tool-permission, and monitoring adapters. These adapters live at the edge; FlowAI's core orchestration, scoring, evidence, governance, and ProductSSOT remain product-agnostic.
 
 ### 1.3 What FlowAI Is Not
 
@@ -333,22 +333,24 @@ v2.3 fix (Panel v2.2 defect 3): the document now explicitly distinguishes two se
 - Readiness score ≥95%
 - All §11.3 non-negotiable delivery rules satisfied
 - Browser test confirmation
-- CEO deploy approval
+- authorized operator deploy approval
 
 **Gate B is per-product, per-release.** It does not gate SSOT ratification. The 18% current Layer-1-VERIFIED state in §12.1 is the *current capability state of the FlowAI platform*, not a gate against ratifying this document as a truthful record.
 
 ### 11.2 Operating Model
 
-- **Victor (CEO)** — Product authority, all deploy approvals, final decision on all scope and priority
-- **Claude Chat** — Tests every commit, verifies dispatches with PowerShell, drafts SSOT, strategic decisions
-- **Windows Codex** — Sole builder — builds, tests, commits, pushes. Reads SSOT before and after every task.
-- **PowerShell Codex** — Verification only — read-only, no edits. Standard demarcation box format with ET timestamp.
+- **W0/W04 (Claude Chat)** — Orchestrator; drafts dispatches, holds SSOT context, consolidates panel findings, never edits code.
+- **CB (Codex Builder)** — Sole builder; writes, tests, and commits implementation changes. Reads SSOT before and after every task.
+- **CR (Codex Reviewer)** — Read-only verification; checks evidence and wired-vs-verified discipline.
+- **CD (Claude Code)** — Read-only review; codebase-grounded data-shape checks.
+- **CG (ChatGPT)** — Spec critic; no codebase access.
+- **WT (Windows Terminal)** — Execution surface/operator terminal only; not a reviewer and not a code author.
 
 ### 11.3 Non-Negotiable Delivery Rules
 
 1. Never `git add .` — stage only intended files
 2. Never commit untracked docs/scripts
-3. Never deploy production — Victor deploys
+3. Never deploy production without authorized operator approval
 4. Never expose secrets to frontend or VITE env
 5. Build + lint + full tests before every commit
 6. PowerShell verifies before any deploy
@@ -531,7 +533,8 @@ Allocation authority: VEU AI Studio CEO holds final allocation decision. Day-to-
 - `docs/specs/SSOT_TRACEABILITY_MATRIX.md` — canonical SSOT matrix
 - `docs/specs/SSOT_TRACEABILITY_MATRIX.sidecar.json` — machine-readable claim records (Layer 1)
 - `scripts/check-ssot-traceability.mjs` — schema + evidence-rule checker
-- `docs/CANONICAL_REFERENCE.md` — quick-reference canonical rules
+- `docs/CANONICAL_REFERENCE.md` — single authoritative SSOT
+- `docs/FLOWAI_SSOT.md` — archived tombstone pointing to `docs/CANONICAL_REFERENCE.md`
 - `docs/CANONICAL_HISTORY.md` — build history and major decisions
 - `docs/governance/CODEX_WINDOWS_STANDING_DIRECTIVE.md` — Windows Codex standing directive (and agent authority registry per §6)
 - `docs/panel-consultations/` — Panel review records
@@ -544,7 +547,7 @@ Step 2 — PowerShell Codex (Verification) — read-only fact-check.
 Step 3 — Panel of 10 (Strategic and Governance) — ≥7/10 quorum.
 Step 4 — Claude Chat Synthesis — consolidates all three for Victor.
 Step 5 — CEO Ratification — ratify / request revisions / approve revised version.
-Step 6 — Windows Codex Commit — updates all four canonical files in one commit: (1) `docs/specs/SSOT_TRACEABILITY_MATRIX.md`, (2) `docs/specs/SSOT_TRACEABILITY_MATRIX.sidecar.json`, (3) `docs/CANONICAL_REFERENCE.md`, (4) `docs/CANONICAL_HISTORY.md`.
+Step 6 — Codex Builder Commit — updates the authoritative SSOT file and any affected traceability artifacts in one commit. `docs/FLOWAI_SSOT.md` is archived as a tombstone; the single authoritative SSOT is `docs/CANONICAL_REFERENCE.md`.
 
 ## PART 16 - KNOWN GAPS FOR v2.4 CYCLE
 
@@ -553,6 +556,38 @@ Step 6 — Windows Codex Commit — updates all four canonical files in one comm
 - Security/tenant boundary design - deferred to Phase 8 pre-task
 - Fresh Build overlay-write strategy leaves platform residue when generated files do not replace every stale platform config. Quick fix in the Phase 3B Task C commit is comprehensive config generation. Longer-term: consider orphan-branch or clean-write strategy.
 - Phase scope: 1=foundation, 2=Workflow 1, 3=Fresh Build, 4=Workflow 2+intents, 5=Workflow 3, 6=agents, 7=Orchestra, 8=Domain 2/3
+
+## PART 16A — CA-DELIVERY-DISTRIBUTION-GOVERNANCE TRACEABILITY
+
+**CA-DELIVERY-DISTRIBUTION-GOVERNANCE — RATIFIED by CEO 2026-06-01, base `36e9897`.** This entry amends the SSOT delivery and distribution contract only; it does not promote any claim to VERIFIED.
+
+Traceability effects:
+
+- §7 Output Contract generalizes from "always a deployed URL" to a canonical per-target-class DELIVERY ARTIFACT.
+- §4/§6 operationalize all six target classes through detector sets and delivery adapters; implementation is DEFER-TO-BUILD by class.
+- §9 Step 3 adds Build `targetMode ∈ {native, cross_platform, pwa_wrap}` selected by Tool Intelligence.
+- §9 Step 5 adds the distribution-adapter registry, async submission-job statuses, and the submission-vs-publish boundary.
+- §15.1 Agent #10 Monitor adds store-review-status as a fourth signal channel into ProductSSOT.
+- §22 reaffirms SAIGE portability: SAIGE is a reference fixture, not a special-case destination.
+- §23/§24 define six operating roles and key-vs-cleanup dispatch governance.
+- §27 dispositions close the open-question audit without upgrading verification claims.
+- §28.7 records the Layer 4 Building Guidance stub.
+
+Disposition records:
+
+- `CA-4` — WITHDRAWN, market/user-driven design question, 2026-06-01.
+- `CA-5` — WITHDRAWN, market/user-driven design question, 2026-06-01.
+- `CA-6` — WITHDRAWN, market/user-driven design question, 2026-06-01.
+- `CA-16-B` — WITHDRAWN, market/user-driven design question, 2026-06-01. §11.7 admin-only approval from ENTRY 015 remains unchanged.
+- `CA-16-C` — RESOLVED as canonical target-class delivery contract; implementation deferred to each class's build dispatch.
+
+§27 disposition closures:
+
+- Flow-builder code — RESOLVED-LEGACY-WIRED; future archival requires cleanup dispatch and tombstone.
+- Self-Renewal Agent #3 questions — RESOLVED-BY-CODE; no production verification claim upgraded.
+- Orchestra Integration questions — Q1/Q4/Q5 CODE-SUPPORTED, Q6 RESOLVED by ENTRY 019, Q2/Q3/Q7/Q8/Q9 DEFER-TO-BUILD.
+
+Single-SSOT note: `docs/CANONICAL_REFERENCE.md` is the single authoritative SSOT. `docs/FLOWAI_SSOT.md` is archived and retained only as a tombstone pointer.
 
 ## DOCUMENT CONTROL
 
@@ -565,4 +600,4 @@ Step 6 — Windows Codex Commit — updates all four canonical files in one comm
 - Replaces: All prior SSOT versions including v2.0 / v2.1 / v2.2
 - Repo: github.com/victor2081new-cloud/flowai
 - Branch: flowai-v0.1
-- HEAD: 8c4cb42
+- HEAD: 36e9897

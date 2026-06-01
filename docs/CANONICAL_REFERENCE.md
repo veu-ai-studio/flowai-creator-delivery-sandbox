@@ -1,6 +1,6 @@
 # FlowAI Canonical Reference - SSOT v2.3 RATIFIED
 
-Version: **v2.3 RATIFIED** | Date: 2026-05-26 | Status: **CANONICAL - ratified by CEO Victor Udo, FNSE, PhD 2026-05-26** | HEAD: `8c4cb42`
+Version: **v2.3 RATIFIED** | Date: 2026-05-26 | Status: **CANONICAL - ratified by CEO Victor Udo, FNSE, PhD 2026-05-26** | HEAD: `36e9897`
 Supersedes: `docs/SSOT_W04_REV2_DRAFT.md`
 Rev-2 → Rev-2.1 changeset (4 W6-Panel-cited minor amendments):
 - (a) §17: footnote disambiguating UX-C sidebar labels from canonical axis labels in §8/§8a
@@ -61,7 +61,7 @@ Underservedness manifests across (non-exhaustive; representative, not geographic
 
 **Universal product portability requirement:** SAIGE and the other VEU products are reference products and proof fixtures only. Any capability proven on SAIGE must be implemented through product-agnostic contracts, ProductSSOT state, target-class adapters, and deployment/distribution adapters so the same FlowAI loop can serve thousands of digital products across websites, SaaS products, mobile apps, native apps, and agentic AI systems. A SAIGE-specific implementation is not complete unless the reusable contract it exercises is also valid for non-SAIGE products.
 
-**Distribution target requirement:** FlowAI output is always a deployable URL at Step 5, and the deployment/distribution layer must preserve target-class differences instead of flattening them. Web and SaaS products deploy to hosted URLs; mobile and native apps require package/build metadata plus app-store or installer distribution adapters; agentic AI products require runtime, tool, permission, and monitoring adapters. These adapters are platform-specific at the edge, but the core FlowAI orchestration, scoring, evidence, ProductSSOT, and governance logic remain product-agnostic.
+**Distribution target requirement:** FlowAI output is always a canonical per-target-class delivery artifact at Step 5, and the deployment/distribution layer must preserve target-class differences instead of flattening them. Web and SaaS products deploy to hosted URLs; mobile and native apps require package/build metadata plus app-store or installer distribution adapters; agentic AI products require runtime, tool, permission, and monitoring adapters. These adapters are platform-specific at the edge, but the core FlowAI orchestration, scoring, evidence, ProductSSOT, and governance logic remain product-agnostic.
 
 See `docs/specs/FLOWAI_MISSION_PURPOSE_AMENDMENT_DRAFT.md` (CA-18 binding mission/purpose statement per ENTRY 018) for the full §1–§5 canonical mission, including the Core Definition, 10-dimension Quality coverage, three-mode Iteration Model, Global Platform Scope, and Symbiotic Meta-Principle.
 
@@ -94,7 +94,7 @@ Rev-1 listed three levels. Panel Q2 found the levels "CORRECT_BUT_INCOMPLETE" �
 |---|---|---|---|
 | L1 | **Building FlowAI** (current phase) | VEU constructs FlowAI itself — agents, governance, pipeline, Orchestra, OrchestratorHub. The 26-agent roster is canonical; rostered, implemented, wired, runtime-active, and production-verified are distinct states. | ACTIVE — Phase 1.0 substrate work in flight; Agents #1/#2/#3/#5 SHIPPED-GREEN; #4 PARTIAL; remaining rostered agents are not presumed runtime-active or production-verified |
 | L2 | **FlowAI on Itself** | Once live, FlowAI self-monitors, self-renews, self-updates Orchestra rankings, runs the 8-step pipeline against its own repos. | PARTIAL — Self-Governance Layer (Sprint 5) live; full self-orchestration awaits Panel-handover gate |
-| L3 | **FlowAI on External Products** | Accepts via 4 input modes (§5), aggressively crawls everything, applies the 8-step pipeline, always delivers a new live URL. The fork-and-fix mode (§12) is the canonical externalized output path. | PARTIAL — W2 three-input renewal pipeline shipped on neutral test fixtures (commit `9b4e511`); fork-and-fix live; full crawl-fix-redeliver loop awaits Agent #3 graduation (see `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`) |
+| L3 | **FlowAI on External Products** | Accepts via 4 input modes (§5), aggressively crawls everything, applies the 8-step pipeline, always delivers a canonical per-target-class delivery artifact. The fork-and-fix mode (§12) is the canonical externalized output path. | PARTIAL — W2 three-input renewal pipeline shipped on neutral test fixtures (commit `9b4e511`); fork-and-fix live; full crawl-fix-redeliver loop awaits Agent #3 graduation (see `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`) |
 | L4 | **FlowAI Capability Transfer into Other Products** (NEW — gap #4 from Panel Q2) | FlowAI installs its own capabilities into a target product as a Capability Package. Each package is generated as an install sprint and consumed by the target. | LIVE — Sprint PROTECT-1 shipped two packages: Self-Renewal (4 components: Self-Test, Self-Heal, Self-Monitor, Governance Hook) and Self-Protection (4 components). Install sprints exist for all 5 VEU products. Surface: `/capability-transfer`. |
 
 L4 is operationally distinct from L3: L3 acts ON a product to produce a renewed URL; L4 installs a piece of FlowAI INTO a product so the product carries its own self-test / self-heal / self-monitor / governance after install.
@@ -109,6 +109,35 @@ L4 is operationally distinct from L3: L3 acts ON a product to produce a renewed 
 4. **Synthesize & Build** — 2–5 URLs, cross-URL comparative scoring + best-feature extraction + synthesis composition.
 
 INPUT modes are distinct from TOOL INTELLIGENCE axis (§8) and SYSTEM OPERATION axis (§8a). All three concerns vary independently — a user can run "Clone & Improve" in **AUTOMATIC** tool selection (§8) under **AUTOMATIC** system operation (§8a), or any other combination. Both §8 and §8a use the LOCKED AUTOMATIC / GUIDED / MANUAL triad per CA-18 §6 ENTRY 019 (Locked Rule 4).
+
+### 5.1 Granular input and output type maturity
+
+The four input modes above are the operator-facing workflow categories. The normalized input surface underneath them accepts the following granular input types:
+
+| Input type | Maturity |
+|---|---|
+| Single URL | CURRENT |
+| Multiple URLs (2+) | ROADMAP |
+| Text description | IN_PROGRESS |
+| Voice / audio | ROADMAP |
+| Image / screenshot | ROADMAP |
+| Video | ROADMAP |
+| Document / PDF | ROADMAP |
+| Dataset | ROADMAP |
+| Code repository | ROADMAP |
+| Combination (any mix) | ROADMAP |
+
+Output types map to the same target-class delivery contract in §7:
+
+| Output type | Maturity |
+|---|---|
+| Upgraded product (fresh build from URL analysis) | TARGET |
+| Brand-new product (built from non-URL input) | ROADMAP |
+| Product specification for a human developer | IN_PROGRESS |
+| Synthesized product (best of multiple inputs) | ROADMAP |
+| Benchmark report | ROADMAP |
+| Migrated product (platform dependencies removed) | CURRENT / IN_PROGRESS |
+| Combination output | ROADMAP |
 
 ---
 
@@ -130,6 +159,13 @@ INPUT modes are distinct from TOOL INTELLIGENCE axis (§8) and SYSTEM OPERATION 
 
 **Card / interactive tile coverage** (per ENTRY 006): cards detected by class/role heuristics (`.card`, `[role="article"]`, `[data-card]`, visual heuristic of a `div` containing both heading + button/link descendants in flex/grid layout). Each card's primary CTA (last `button` or `a` descendant) clicked once per viewport.
 
+**Target-class Phase-A detector sets (CA-DELIVERY-DISTRIBUTION-GOVERNANCE):** the web/SaaS/generic_url detector set above remains the current default. Full enumeration is deferred to each target class's build dispatch, but the canonical Phase-A shapes are:
+
+- **native_app / mobile_app:** build/signing-config validity, crash-on-launch, permission-manifest sanity, store-guideline lint, binary size/performance.
+- **agentic_ai:** tool-permission scoping, prompt-injection-resistance probe, ACK reachability, rate/cost guardrails, response validity.
+
+CA-16-C (Multi-Format Targets) is resolved as a canonical contract disposition: all six target classes are operationalized through target-class detector sets and delivery adapters, while implementation is deferred to each class's build dispatch. The §7.6 formula remains class-invariant: detector sources vary by target class; scoring formula, band boundaries, and prerequisite gates do not.
+
 **Orchestra wiring (per §15.4 + Aggressive Crawl Engine spec §E.2 / ENTRY 006):** Agent #21 Ops Runner Alpha (Aggressive Crawl Conductor — see §15.1 row 21) dispatches via Orchestra members `playwright` (preferred for full interaction: click + modal + form probing), `browserless` (fallback for crawl + screenshot capture per finding), `anthropic-api` (CA-9-B generic adapter, used for surface classification + Issue Detection LLM-assist on novel categories). Per-run cost ceiling: **$15/run/product/env** (3× nominal pipeline; configurable per product via Doppler).
 
 **Credential handling for authenticated crawls (gap from Panel Q3):** session-only credentials per `src/lib/renewal/inputArtifact.js` `raw.description.loginEmail/loginPassword`. **Scrubbed before any persist / log / external send** via `scrubCredentials()`. Never written to the audit log. Never embedded in renewed output. Playwright `storageState` JSON persisted only in ephemeral `tmp/playwright-state-<runId>/`; auto-deleted at run end.
@@ -142,7 +178,7 @@ Every issue surfaced by `api/_lib/issueDetector.js` MUST reach a **terminal deci
 
 The "every issue MUST be resolved before output delivered" wording in Rev-1 was absolutist and Panel Q3 marked it `NOT_ACHIEVABLE_AS_WRITTEN`. Rev-2 makes the resolution semantic explicit: **resolution = terminal decision**, not necessarily auto-fix. Human-in-the-loop is canonical, not optional.
 
-**Loop:** crawl → detect → propose fix or gate decision → execute (fork-and-fix or human action or document) → re-test (re-crawl + re-detect) → confirm clean OR record gated/documented terminal decision → deliver new live URL with full delta report.
+**Loop:** crawl → detect → propose fix or gate decision → execute (fork-and-fix or human action or document) → re-test (re-crawl + re-detect) → confirm clean OR record gated/documented terminal decision → deliver the target class's delivery artifact with full delta report.
 
 ---
 
@@ -150,7 +186,17 @@ The "every issue MUST be resolved before output delivered" wording in Rev-1 was 
 
 Every run produces:
 
-1. **A new live URL** — fully deployed, real working product (NOT static HTML). Static HTML is permanently rejected as a primary output (legacy `api/_lib/renewalEngine.js` static-HTML path remains as deprecated fallback only).
+1. **A canonical per-target-class DELIVERY ARTIFACT** — fully deployed or packaged, real working product output (NOT static HTML). Static HTML is permanently rejected as a primary output (legacy `api/_lib/renewalEngine.js` static-HTML path remains as deprecated fallback only).
+
+   | Target class | Delivery artifact |
+   |---|---|
+   | `web` / `SaaS` / `generic_url` | Hosted deployable URL |
+   | `mobile_app` / `native_app` | Signed build/package (APK/IPA) + installer + store-distribution adapter. Signing identity is held by the operator per §13/§22. |
+   | `agentic_ai` | Deployed runtime + tool-permission manifest + monitoring adapter |
+
+   Agentic monitoring adapter scope includes tool-call invocations, token/cost usage, latency, error/refusal rate, and behavior-drift signals.
+
+   The operator-approval gate occurs BEFORE FlowAI calls any store submission API. FlowAI initiates submission; the store holds the publish decision. This applies to all distribution adapters, including stores that auto-publish on submission.
 2. **Before/After delta report** — `before_after_delta` from `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` §2.4: `{ issuesBefore, issuesAfter, resolved, unresolved, regressions }`, plus the terminal decision per issue (see §6).
 3. **Source disclosure** — `patch-existing-source` or `generate-from-scratch`, plus retrieval method (git-tarball / vercel-project / base44-stub / none).
 4. **LIMITATIONS section** — verbatim list of human-gated-skip and documented-limitation terminal decisions, per `api/_lib/beforeAfterReport.js`.
@@ -201,7 +247,7 @@ Operators MUST NOT remove or paraphrase these disclosures. The disclosure is loa
 
 Engineering owns the recs surface entirely: `scripts/lint-proactive-recs.mjs` (or equivalent dispatch-time naming) + admin dashboard `/admin/recommendations`; schema lives in tooling-internal types under `scripts/types/`. The dashboard maintains its own audit; no cross-link to canonical state is required (no `last_seen_clearance_record_id` reference promoted either — the v3 draft's lightweight reference is NOT canonical per CEO Decision B).
 
-CA-16-B (Redesign/Build Environment §29-area sub-section) and CA-16-C (Multi-Format Targets §6 extension) remain DEFERRED to future CA-N — unchanged from prior CA-16 SPLIT disposition (`e8bb7d4`). The CA-16-B-Q3 admin-only Redesign approval gate per ENTRY 015 §11.7 + the CA-16-C-Q4 §7.6 formula-generalization invariant per ENTRY 015 §7.6 are already canonical and are NOT re-amended in this entry.
+CA-16-B (Redesign/Build Environment §29-area sub-section) is WITHDRAWN as a market/user-driven design question per ENTRY 020; the CA-16-B-Q3 admin-only Redesign approval gate per ENTRY 015 §11.7 is UNCHANGED. CA-16-C (Multi-Format Targets §6 extension) is resolved as canonical contract disposition by CA-DELIVERY-DISTRIBUTION-GOVERNANCE; implementation remains deferred to each target class's build dispatch. The CA-16-C-Q4 §7.6 formula-generalization invariant per ENTRY 015 §7.6 remains canonical and is NOT re-amended by the implementation deferral.
 
 ### 7.5 ProductSSOT entity — canonical living-document structure (per CA-10-A / ENTRY 005)
 
@@ -216,7 +262,7 @@ One **ProductSSOT** row per `(productId, environment)` pair, where `environment 
 | **`architecture_snapshot`** (jsonb) | system (Agent #10 drift detection) | auto on drift; admin can annotate but NOT mutate the snapshot | `{ capturedAt, framework, dependencies[{name, version, license, deprecated?, criticalCves?}], envConfig[{keyName, present, source: 'doppler'\|'env-file'\|'absent'}], pages[{route, component, lastSeenAt}], apiEndpoints[{path, method, lastSeenAt}], databaseSchema[{table, columns[{name, type, nullable}], rlsPolicies?[]}], readinessScores[{dimension, score}] }` (readinessScores per §16.1 six dimensions) |
 | **`delta_log`** (jsonb[]) | system (Agent #3 + Agent #10) | append-only; admin can annotate per entry | Each entry: `{ entryId, at, triggeredBy: 'agent3_self_renewal'\|'agent10_drift_detection'\|'agent10_customer_issue'\|'clearance_step'\|'manual', triggerSourceId, issue?, remediation?, before_after, humanGateDecision?, annotations[], overrides[] }` |
 | **`governance_record`** (jsonb[]) | system (Clearance + Human Gates) | append-only; admin can annotate per entry; never override | Each entry: `{ entryId, at, kind: '95_95_score'\|'clearance_step'\|'human_gate'\|'panel_decision'\|'self_audit_dimension_score'\|'customer_signal', payload, clearanceStepNumber?, clearanceStepLabel?, scoreBreakdown?, acceptedBy?, annotations[] }` |
-| **`annotations`** + **`overrides`** (jsonb[]) | admin + operator (annotations); admin only (overrides) | append-only; never auto-written | Per §13.1 role gates — operator can append annotations only; admin can append both annotations + overrides; client read-only. See §28 for treatment of admin overrides as CEO-equivalent directives. |
+| **`annotations`** + **`overrides`** (jsonb[]) | admin + operator (annotations); admin only (overrides) | append-only; never auto-written | Per §13.1 role gates — operator can append annotations only; admin can append both annotations + overrides; client read-only. See §28 for treatment of admin overrides as authorized-operator-equivalent directives. |
 
 Plus a `version` field (monotonic per `(productId, environment)`, auto-incremented on every write) + `audit_hash_chain_pointer` (tamper-evidence anchor per §14.2). Every write also appends a row to `product_ssot_version` table (separate Supabase table; hash-chained per §14.2).
 
@@ -264,7 +310,7 @@ score = 100
      clamped to [0, 100]
 ```
 
-**§7.6 formula generalization invariant (CA-16-C-Q4 canonical per ENTRY 015, SUPERMAJORITY 8/9):** the §7.6 scoring formula remains **unchanged across all submission/output target classes** (per CA-16-C target-class taxonomy when broader CA-16-C ratification clears, OR per existing web-default scope today). The formula is:
+**§7.6 formula generalization invariant (CA-16-C-Q4 canonical per ENTRY 015, SUPERMAJORITY 8/9):** the §7.6 scoring formula remains **unchanged across all submission/output target classes** (per CA-16-C target-class taxonomy resolved by ENTRY 020). The formula is:
 
 ```
 score = 100
@@ -277,7 +323,7 @@ score = 100
 
 What CHANGES per target class is the finding-source set (Phase A detector set varies per class). What does NOT change is the formula, the band boundaries, or the prerequisite gate. No per-class weight adjustments; no per-class formula replacement. This invariant prevents per-class scoring drift and keeps cross-class comparisons meaningful.
 
-Cleared independently of CA-16-C-Q1 (6 canonical target classes — pluraled below quorum, re-Panel in CA-16 v2) — the formula invariant holds whether 6 classes ratify or fewer.
+Cleared independently of the original CA-16-C-Q1 panel cycle; ENTRY 020 now resolves the six canonical target classes as a delivery-adapter contract while preserving this formula invariant.
 
 Findings counted are those produced by the Aggressive Crawl Engine's issue-detection pass (per ENTRY 006 detector set: `ai-agent-unreachable`, `ai-agent-no-response`, `broken-modal`, `dead-card`, `engine-error`, `auth-gate-leak`, `console-error`, `network-failure`, `slow-route`, `missing-404-handler`, `missing-500-handler`, `no-offline-indicator`, `no-loading-indicator-on-slow-net`, `no-form-validation`, `xss-in-form-echo` [hard-classified critical, not promotable via override per CA-10-Q3], `external-script-leak`, `accessibility-headings`, `accessibility-alt-text`).
 
@@ -425,6 +471,14 @@ Per CA-18 §6 ENTRY 019, the System Operation axis labels are aligned to the glo
 
 Rev-1 listed pipeline steps as "1-Research, 2-Design, 3-Build, 4-Quality Audit, 5-Deploy, 6-Monitor, 7-Self-Renewal, 8-GTM" — that ordering was stale. The code-canonical ordering (Self-Renewal=6, GTM=7, Monitor=8) is canonical per backlog B5 (commit `0574d0d`). Rev-2 reflects code-wins.
 
+**Step 3 Build targetMode parameter (CA-DELIVERY-DISTRIBUTION-GOVERNANCE):** native/mobile delivery uses a targetMode parameter on the existing Build step, not a new pipeline step. `targetMode ∈ {native, cross_platform, pwa_wrap}` and is selected by Tool Intelligence for the task and target class. This preserves the 8-step canon and Locked Rule 2; `build` remains the step key.
+
+**Step 5 Deploy distribution-adapter registry (CA-DELIVERY-DISTRIBUTION-GOVERNANCE):** Deploy owns a metadata-driven `DISTRIBUTION_ADAPTER_REGISTRY` for Apple App Store, Google Play, Microsoft Store, Samsung Galaxy Store, web-app stores, and pluggable additional adapters admitted under the §8.1 auto-admission pattern. Store submission is an async distribution job with explicit status fields: `artifactProduced → operatorApproved → submissionInitiated → storeAccepted or storeRejected`. Step 5 completes at distribution handoff complete: artifact produced, operator approval captured, and submission initiated only after the operator-approval gate. Store outcome is never assumed; Step 8 Monitor tracks review outcome into ProductSSOT.
+
+Required submission fields are `operatorConsent`, `credentialOwnership`, `artifactHash`, `storeTarget`, `submissionId`, and `postReviewStatus`. FlowAI may prepare, validate, package, and initiate submission only after the operator-approval gate. The gate holds even for auto-publish-on-submission stores. FlowAI NEVER autonomously publishes to a public store. No ninth step is created.
+
+The operator-approval gate occurs BEFORE FlowAI calls any store submission API. FlowAI initiates submission; the store holds the publish decision. This applies to all distribution adapters, including stores that auto-publish on submission.
+
 ---
 
 ## 10. SELF-GOVERNANCE LAYER (NEW — gap #2 from Panel Q2, Sprint 5)
@@ -479,11 +533,11 @@ Each step's status, evidence, and timestamps are recorded in `ClearanceRecord`. 
 
 ### 11.7 Redesign/Build approval gate (CA-16-B-Q3 canonical per ENTRY 015)
 
-For any operator-initiated redesign or build/wire session (CA-16-B Redesign/Build Environment, full §29 sub-section pending broader CA-16 ratification): operators MAY steer (initiate session, modify proposals, constrain scope, veto changes); **only admin role (per §13) MAY approve final implementation** (transition from `operator_steered` → `implementation_in_progress`).
+For any operator-initiated redesign or build/wire session, operators MAY steer (initiate session, modify proposals, constrain scope, veto changes); **only admin role (per §13) MAY approve final implementation** (transition from `operator_steered` → `implementation_in_progress`). CA-16-B as a broader Redesign/Build Environment design question is WITHDRAWN per ENTRY 020; this admin-only approval gate from ENTRY 015 remains unchanged.
 
 Conformance-test acceptance criterion (RB-7 canonical): invoking approval-transition with `operator` role MUST return HTTP 403; only `admin` role MAY transition. Verified by deliberate-failure injection test at engineering dispatch.
 
-This Q is ratified ahead of the broader CA-16-B §29 because the admin-gating discipline is the load-bearing safety property — Stage 3 build/wire (per Path H ENTRY 014) cannot proceed without it, regardless of the remaining CA-16-B §29 sub-questions' Panel disposition.
+This gate remains load-bearing for Stage 3 build/wire (per Path H ENTRY 014) regardless of the withdrawn broader CA-16-B design question.
 
 ---
 
@@ -599,7 +653,7 @@ All 26 agents (was 25 prior to CA-9-B / ENTRY 005) are proprietary VEU IP. All s
 | 7 | Design | step-owner | 2 design | embedded | DORMANT |
 | 8 | Quality Audit | step-owner | 4 qa_audit | flowai-only | DORMANT — owns the 5-dimension scoring engine per §10 |
 | 9 | Go-to-Market | step-owner | 7 gtm | embedded | DORMANT |
-| 10 | Monitor | step-owner | 8 monitor | embedded | DORMANT. Per CA-9-C (ENTRY 005): charter expanded to ingest three customer signal channels — in-app "Report an issue" widget (POST `/api/customer/feedback`); app-store / public review scraping via `orchestra.dispatch('crawl', ...)`; support-ticket webhooks at `/api/customer/support-ticket-webhook` (Zendesk / Intercom / Help Scout). Produces `10.customer.feedback.v1` (normalised, de-duped, sentiment-tagged) + `10.customer.issue.v1` (issues mapped to issueDetector categories). Per CA-10-B: also produces `10.ssot.updated.v1` for ProductSSOT writes (architecture_snapshot drift; customer-signal governance_record entries). |
+| 10 | Monitor | step-owner | 8 monitor | embedded | DORMANT. Per CA-9-C (ENTRY 005): charter expanded to ingest three customer signal channels — in-app "Report an issue" widget (POST `/api/customer/feedback`); app-store / public review scraping via `orchestra.dispatch('crawl', ...)`; support-ticket webhooks at `/api/customer/support-ticket-webhook` (Zendesk / Intercom / Help Scout). CA-DELIVERY-DISTRIBUTION-GOVERNANCE adds a fourth signal channel: store-review-status outcomes from distribution adapter submissions, written to ProductSSOT. Produces `10.customer.feedback.v1` (normalised, de-duped, sentiment-tagged) + `10.customer.issue.v1` (issues mapped to issueDetector categories). Per CA-10-B: also produces `10.ssot.updated.v1` for ProductSSOT writes (architecture_snapshot drift; customer-signal governance_record entries). |
 | 11 | Strategic Intelligence | cross-step | — | flowai-only | DORMANT — feeds continuous marketplace intelligence per Locked Rule 16. Per CA-9-B (ENTRY 005): primary charter function expanded to **global AI-platform discovery** — owns the curated industry-tracker URL list; produces `11.platform.discovery.v1` candidate signals consumed by Agent #26 Orchestra Research Agent. |
 | 12 | Portfolio Risk | cross-step | — | flowai-only | DORMANT |
 | 13 | Self-Protection (anti-crawl / IP) | always-on | — | embedded | DORMANT — distinct from Sprint 5's snapshot/rollback Self-Protect; covers DMCA, clone detection, edge defense, scraper blocking, Cloudflare Bot Management, watermarking per Sprint PROTECT-1 |
@@ -837,6 +891,8 @@ Rev-1 referenced "CA-n" without definition. Rev-2 defines the cycle canonically 
 | `ACCEPTED [commit hash]` | CEO disposition: promote. Promotion commit recorded; archive of pre-promotion SSOT created at `docs/archive/FLOWAI_SSOT-pre-<date>-promotion.md` |
 | `REJECTED [rationale]` | CEO disposition: reject. Rationale recorded inline in parking lot. |
 | `MERGED [into entry]` | Item folded into another CA-n. Original entry retained for audit history. |
+| `WITHDRAWN` | Canonical intention withdrawn; no canonical position taken; closed as a design question; reopenable as a new CA-N on market/user evidence. Not equivalent to implemented or resolved. |
+| `DEFER-TO-BUILD` | Canonical intent affirmed; implementation deferred to its build phase. |
 
 ### 18.2 Threshold per Locked Rule 17 (MG2)
 
@@ -856,13 +912,14 @@ Every promotion creates a pre-promotion snapshot at `docs/archive/FLOWAI_SSOT-pr
 | ENTRY 004 | 2026-05-15 | `fd94f1e` | CA-7 (§15.5 EXECUTOR_REGISTRY + §14 three new rows for M2/M5) + CA-8 (§20.2 X-Test-Bypass-Token Contract with §20.2.1 Doppler env-suffix key naming). Panel: 5× UNANIMOUS_(a), 10/10 ENGAGED, commit `fb0bb64`. |
 | ENTRY 005 | 2026-05-15 | (this promotion) | CA-9 (§8.1 Orchestra Self-Expansion auto-admission + Agent #26 Orchestra Research Agent dual-authority `[recommend_only, auto_write_internal, requires_human_gate]` per CEO arbitration CA-9-Q4=(b); §15.1 charter expansions for Agents #3, #10, #11, #15, #17; §15.2 +21 new MessageBus topic constants; Locked Rule 2 amended 25→26 agents) + CA-10 (§7.5 ProductSSOT entity with 6 canonical blocks; §7 Output Contract item #5; §13.1 role gates + `/product-ssot/:productId` UI; §28 Symbiotic Feed-Back Loop; §14.3 ProductSSOT retention + PII-scrub; §11 Step 4 Data Export expanded). Panel: 7/8 SUPERMAJORITY/UNANIMOUS, commit `cc5fd8d`. |
 | ENTRY 006 | 2026-05-16 | (this promotion) | **Aggressive Crawl Engine (ACE)** promotion. Sections amended: §6 (crawl scope expanded — default depth=8 / hard cap depth=12; default pages=200 / hard cap pages=2000; click-everything pass + modal probing + AI-agent benign-probe + mobile-desktop viewports + non-destructive error-state triggers; XSS opt-in only per CEO arbitration Q6=(c); Orchestra wiring per §15.4 — Agent #21 dispatches via `playwright` + `browserless` + `anthropic-api`); §7.6 (NEW — GTM Readiness Report: 100-point scoring formula `100 − 10·crit − 5·high − 2·med − 0.5·low` clamped to [0,100]; 4 bands Showcase-ready / Demo-ready / Internal-only / Not demo-ready; $15/run cost ceiling; maps to §11 Clearance Step 5 with 4-prerequisite gate); §15.1 row 21 (Ops Runner Alpha pinned as **Aggressive Crawl Conductor** — step-owner, dual-authority `[recommend_only, auto_write_internal, requires_human_gate]`, consumes `1.crawl.request.v1`, produces 3 topics); §15.2 (+4 MessageBus topics: `1.crawl.request.v1`, `21.crawl.completed.v1`, `21.issues.detected.v1`, `21.gtm.readiness.v1`; topic count 61 → **65**). Source spec: `docs/specs/AGGRESSIVE_CRAWL_ENGINE_SPEC.md` (commit `5b30dce`). Panel consultation: `05ac6f4` — 7×UNANIMOUS (Q1 depth caps, Q2 agent-ownership Option B, Q3 AI-agent probe safety, Q4 parallelization scope, Q5 fix-loop autonomy on medium, Q7 readiness score formula, Q8 cost ceiling) + Q6 (error-state defaults) decided by CEO arbitration `(c)` non-destructive triggers always-on, XSS form-submit triggers opt-in only with operator confirmation + dev/staging-environment-only gate. Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-ACE-promotion-2026-05-16.md`. Closes parking-lot ENTRY 002 (CEO 2026-05-14 — "aggressive exhaustive crawler GTM-readiness bar"). |
+| ENTRY 020 | 2026-06-01 | (this promotion) | **CA-DELIVERY-DISTRIBUTION-GOVERNANCE** ratified by CEO 2026-06-01, base `36e9897`. Sections amended: §7 (delivery artifact output contract + submission/publish boundary), §4/§6 (target-class detector sets), §9 Step 3 (Build `targetMode`) and Step 5 (distribution-adapter registry), §15.1 Agent #10 (store-review-status signal), §24 (operator-generic gates), §22 (SAIGE portability reaffirmation), §18.1 (WITHDRAWN + DEFER-TO-BUILD states), §18.4 (this ledger entry + dispositions), §27 (open-question dispositions), §23/§24 (six operating roles and dispatch governance), and §28.7 (Layer 4 Building Guidance stub). CA-4 (Year-1→6 journey), CA-5 (commercial rail), CA-6 (commercial architecture), and CA-16-B (Redesign/Build environment) are WITHDRAWN as market/user-driven design questions, 2026-06-01. CA-16-B scope guard: §11.7 admin-only approval (ENTRY 015) is UNCHANGED. No claim is promoted to VERIFIED by this entry. |
 | ENTRY 019 | 2026-05-19 | (this promotion) | **CA-18 §6 Tool Intelligence Principle ADDITION + global mode-name LOCK** (CEO-ratification track, Locked Rule 13 — no Panel; extension of CA-18 mission/purpose amendment per ENTRY 018). Binding canonical statement: `docs/specs/FLOWAI_MISSION_PURPOSE_AMENDMENT_DRAFT.md` (now 25,259 chars) extended with **new §6 TOOL INTELLIGENCE PRINCIPLE** + uppercased §3 modes + bumped §6/§7 → §7/§8 numbering. §6 defines: FlowAI is AI-provider-agnostic + tool-agnostic at every step; for each of 8 Auto Runner steps the engine researches/ranks/selects from the **top 5 platforms** by current performance/cost/speed/reliability for the specific task and §4 target class; rankings are **research-driven (not hardcoded)** and **refreshed monthly**; **three selection modes LOCKED at AUTOMATIC (rank-#1 auto-pick) / GUIDED (top-5 user picks) / MANUAL (user specifies exact tool)**; vendor-agnosticism invariant — no step locked to any single provider; current rankings reflect current performance, NOT permanent commitment. Sections amended in `docs/CANONICAL_REFERENCE.md`: **§8 Orchestra Selection axis** REPLACED with Tool Intelligence Principle text (Auto/Recommended/User-Choice triad RETIRED; AUTOMATIC/GUIDED/MANUAL triad takes its place; §8.1 Orchestra Self-Expansion sub-section PRESERVED unchanged — auto-admission of new candidate platforms is orthogonal to selection-mode triad); **§8a System Operation axis** labels REALIGNED to AUTOMATIC/GUIDED/MANUAL (mapping: Hands-Off→AUTOMATIC, Reviewed→GUIDED, Hands-On→MANUAL; Rev-2 + Rev-1 triads retained as historical aliases for shipping continuity); **§25 Locked Rule 4** REWRITTEN to lock the single global triad across §8 + §8a + §3 iteration model; **§25 Locked Rule 18** extended with top-5 + monthly-refresh + research-driven specs + AUTOMATIC/GUIDED/MANUAL triad citation; **§5 INPUT modes cross-ref** updated to AUTOMATIC/GUIDED/MANUAL; **§10.2 Review Gate** updated from "Reviewed or Hands-On" to "GUIDED or MANUAL"; **§11 Clearance §7 inline-tool** updated from "Guided + Manual modes" to "GUIDED + MANUAL modes"; **§14.1 audit-log topics** updated for `session_started` + `proposal_approved` + `proposal_modified` + `proposal_skipped` to AUTOMATIC/GUIDED/MANUAL labels; **§17 sidebar footnote** REWRITTEN to acknowledge AUTO OPERATIONS / GUIDED OPERATIONS / MANUAL OPERATIONS sidebar names now ALIGN with canonical (prior "distinct from canonical axis labels" framing superseded); **§27 Open Questions 6 and 9** marked RESOLVED at ENTRY 019 (surface-of-truth resolution: canonical user-facing labels lock to AUTOMATIC/GUIDED/MANUAL; engineering may keep prior enum strings in code). Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-CA18-tool-intelligence-promotion-2026-05-19.md` per §18.3. |
 | ENTRY 018 | 2026-05-19 | (this promotion) | **CA-18 — FlowAI Mission/Purpose Amendment** (CEO-ratification track, Locked Rule 13 — no Panel; CEO has explicitly stated the full mission vision across multiple sessions and this entry captures it canonically). Binding canonical mission/purpose statement: `docs/specs/FLOWAI_MISSION_PURPOSE_AMENDMENT_DRAFT.md` (this commit). §1–§5 of the binding statement define: §1 **Core Definition** (input/output promise — always a new separate deployable URL, input never destructively modified; substantial-transformation quality guarantee; honest assessment refusing to manufacture work; user agency on iteration depth with full trajectory + diminishing-returns reporting); §2 **10 Quality Dimensions** (syntax/grammar, duplication, UI/UX, bugs/errors, functional completeness, performance, accessibility, security, **privacy compliance — jurisdiction-aware**, **legal compliance — jurisdiction-aware**); §3 **Iteration Model** (Manual / Guided / Automatic; preset modes + free-form instruction field; instructions function as **PRIORITY WEIGHTS, not feature toggles** — full §2 coverage maintained regardless of instruction; diminishing-returns trajectory reporting); §4 **Platform Scope and Mission — GLOBAL** (no geographic restriction; underserved is a global condition not a geography; all 5 VEU products are global; 6 target classes web/native_app/mobile_app/SaaS/agentic_ai/generic_url; **uniform ≥95 for everyone, globally — dignity-and-belonging guarantee**; **NO canonical sub-95 exception path** — operational admin exception is engineering-level configuration, not canonical policy); §5 **Symbiotic Meta-Principle** (SSOT governs FlowAI; FlowAI improves SSOT; cycle compounds indefinitely; FlowAI applies to its own development process — VEU AI Studio's own workflow is a valid construction target). Sections amended in `docs/CANONICAL_REFERENCE.md`: **§1.1 MyPregLife row** — the prior "Africa-first as launch market" caveat REMOVED; row now reads "Globally, with no geographic restriction" (launch sequencing is operational, not canonical scope narrowing); **§2 MISSION** — REWRITTEN: prior CA-1+CA-2 geographic bullet listing "Sub-Saharan Africa, parts of Latin America, parts of South/Southeast Asia" REMOVED; replaced with global-condition framing per CA-18 §4 + cross-reference to the binding mission/purpose statement; target-classes line updated to canonical 6 classes; §18.4 ENTRY 001 historical CA-1+CA-2 row preserved unchanged for audit-trail integrity. Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-CA18-promotion-2026-05-19.md` per §18.3. Resolves the explicit ENTRY 017 deferral: the uniform-≥95 directive + sub-95 exception question (deferred to "forthcoming mission/Purpose amendment" per ENTRY 017 third de-canonization) are resolved at this entry — uniform ≥95 is canonical; no canonical sub-95 exception path exists. |
 | ENTRY 017 | 2026-05-19 | (this promotion) | **CA-13 sliver + CA-15 lean-down + CA-16-A zero-canonical disposition** (CEO Decision B, Locked Rule 13 CEO-disposition track after 3-cycle Panel non-convergence 0/13 on the deadlocked questions across CA-13 v2 / CA-15 v2 / CA-16 v2 re-Panels). **CA-15 promoted (3 cleared-pending):** B-Q2 reverse-engineered/synthesized purpose-capture modes DROPPED (described-only carry-forward discipline if revived); B-Q3 placeholder detection moves to `scripts/lint-product-purpose.mjs` tooling (NOT canonical SSOT); C-Q2 hardcoded `purpose_fulfillment_score ≥ 0.7` threshold ELIMINATED. **CA-15 disposed (3 deadlocked):** C-Q1 → numeric-floor-only loop exit (LOCKED; no LLM check); D-Q1 → §19.1 SSOT-Conformance Gate HYBRID (blocks critical/high; advisory on medium/low); D-Q2 → §19.2 Scoped CEO re-sign BROADER scope (`src/lib/governance/**` + `src/lib/conformance/**` + `*.sql` migrations). **CA-13 collapsed:** 95-bar override/expiry/migration machinery DROPPED entirely from canonical; retained only — (1) sibling MEMBERSHIP rename in §15.5 (Agent #26 → `orchestra-membership-executor`, Agent #21 → `crawl-write-executor`; EXECUTOR_REGISTRY count 1→3); (2) §19.0 anti-conflation invariant one-liner ("two distinct 95 bars, NEVER conflated"); the v3-draft §19.0 reconciliation paragraph + 2-row distinction-table NOT promoted (invariant alone suffices per CA-13-A v3 option-(c)). Uniform ≥95 directive EXPLICITLY deferred to forthcoming mission/Purpose amendment (NOT in CA-13). **CA-16-A collapsed to ZERO canonical surface:** NO §7 envelope, NO §11 reference, NO REOPEN lifecycle state, NO canonical defer-window, NO `governance_record_entry kind:'proactive_recommendation.v1'`. Recs are wholly TOOLING-governed (`scripts/lint-proactive-recs.mjs` + admin dashboard). CA-16-B/C remain DEFERRED (unchanged from `e8bb7d4` CA-16 SPLIT). Sections amended: **§7 NEW disposition note** (CA-16-A zero-canonical); **§7.5 disposition** (CA-15-B no `product_purpose`); **§7.6 disposition** (CA-13 no canonical sub-95 exception path); **§10.1 disposition** (CA-15-A stays at 5 dims; tooling-only content_quality/accessibility); **§15.5 updated** (3 executors: `self-renewal-executor`, `crawl-write-executor`, `orchestra-membership-executor`); **§19.0 NEW** (anti-conflation invariant); **§19.1 NEW** (HYBRID SSOT-Conformance Gate); **§19.2 NEW** (broader Scoped CEO re-sign); **§28.6 NEW** (Purpose-Driven Optimization Loop numeric-floor exit + B-Q2/B-Q3/C-Q2 carry notes). Three explicit de-canonizations registered in ENTRY 017 history: (1) proactive-recs governance is tooling-only; (2) no canonical sub-95 exception path exists in CA-13 — operational exception is a DEFERRED DELIBERATE DECISION for the mission/Purpose amendment; (3) §27→§19.1 SSOT-Conformance Gate is HYBRID, not full-hard-gate. Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-CA13-15-16A-leandown-promotion-2026-05-19.md` per §18.3. |
 | ENTRY 016 | 2026-05-19 | (this promotion) | **CA-17 — Build/Wire Construction Engine v3-FINAL ratification** (CEO Decision A, Locked Rule 13 CEO-disposition track, not open re-Panel). Binding canonical contract: `docs/specs/BUILD_WIRE_ENGINE_SPEC_V3_FINAL_DRAFT.md` (commit `1d5e39b`, 33,974 chars). Eight invariants S1–S8 + 48-test conformance inventory + 26 failure envelopes become canonical authority for the construction engine. NON-OVERRIDABLE fidelity (S2/S4/S5/S6) preserved verbatim per Path H ENTRY 014 (no other invariant carries non-overridable status; S1/S3/S7/S8 PANEL-RATIFIABLE). Rationale per Locked Rule 13: convergence-final after documented J2→v2→re-Panel oscillation; W6 v2 4-run re-Panel (`4400958`) returned 0/8 cleared — Panel non-convergence is why CEO disposes. Sections amended: **NEW §29** Build/Wire Construction Engine canonical authority + per-invariant disposition + NON-OVERRIDABLE fidelity statement + 48-test inventory + Path H Stage 3 UNBLOCKED declaration + cross-CA dependencies. **Path H ENTRY 014 Stage 3 (build/wire) marked UNBLOCKED.** Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-CA17-promotion-2026-05-19.md` per §18.3. |
 | ENTRY 015 | 2026-05-19 | (this promotion) | **Cleared-8 promotion** (CEO one-shot ratification per Locked Rule 13). Eight individually quorum-cleared questions from W6 quorum-fix rerun commit `cc14a8f` (`docs/panel-consultations/ca-{13,14,15,16}-quorum-fix-rerun-2026-05-19.md` + cross-summary). Sections amended: **§7** Output Contract NEW item #6 (5 Self-Renewal fix-safety invariants, CA-14-B-Q1 + canonical guarantee CA-14-B-Q2, 7/10 + 7/10) + NEW LIMITATIONS sub-section (CA-14-A-Q2, 7/10); **§7.5.1** NEW (3 ProductSSOT operational invariants — per-product branch-of-record + seeding + atomic-audit-write, CA-14-D-Q1, 8/10); **§7.6** NEW formula-generalization invariant paragraph (CA-16-C-Q4, 8/9); **§11.7** NEW Redesign/Build approval gate (admin-only final approval, CA-16-B-Q3, 7/9); **§15.1 row 21** Agent #21 charter extension to own Phase B (CA-14-A-Q3, 8/10); **§25** NEW Locked Rule 19 (Phase A vs Phase B — DO NOT CONFLATE, CA-14-A-Q4, 8/10; rule count 18→19). Implementing W5a commits cited: D27–D38 arc (`29ce070` → `b719c6d`) + D39–D41 Phase B implementation (`90210d0` → `ed0d779`). Open questions (CA-14: A-Q1, B-Q3, C-Q1, C-Q2, D-Q2; CA-13: all 5; CA-15: all 11; CA-16: A-Q1..A-Q4, B-Q1, B-Q2, C-Q1, C-Q2, C-Q3) re-Panel in CA-13 v2 / CA-15 v2 / CA-16 v2 drafts (this commit's siblings). Pre-promotion archive: `docs/archive/FLOWAI_SSOT-pre-ENTRY015-promotion-2026-05-19.md`. |
 
-CA-4 + CA-5 + CA-6 deferred per Panel consultation `ssot-finalization-and-agent-roadmap-priority-2026-05-14.md`.
+CA-4 + CA-5 + CA-6 are WITHDRAWN as market/user-driven design questions per ENTRY 020. Prior consultation record `ssot-finalization-and-agent-roadmap-priority-2026-05-14.md` remains audit history.
 
 ---
 
@@ -1110,6 +1167,8 @@ Per-product configuration lives entirely in **metadata** per §3:
 
 The 6th, 10th, 100th product onboards via metadata writes alone. Zero code changes. This is the test of correctness.
 
+Any capability proven on SAIGE must exercise reusable product-agnostic contracts (ProductSSOT, target-class adapters, deployment/distribution adapters). If it cannot generalize beyond SAIGE, it is not complete FlowAI work. (Ref: dispatch-0b, commit `b1173a5`, ratified this campaign.)
+
 ---
 
 ## 23. WORKSTREAM ROUTING
@@ -1127,15 +1186,32 @@ The 6th, 10th, 100th product onboards via metadata writes alone. Zero code chang
 
 Pattern: **W5x builds. W2 verifies. W6 runs Panel. W0x dispatches. CEO pastes.**
 
+### 23.1 Current operating roles (CA-DELIVERY-DISTRIBUTION-GOVERNANCE)
+
+| Role | Responsibility |
+|---|---|
+| **W0/W04 (Claude Chat)** | Orchestrator; drafts dispatches, holds SSOT context, consolidates panel findings, never edits code. |
+| **CB (Codex Builder)** | Sole builder; writes, tests, and commits code and docs implementation changes. |
+| **CR (Codex Reviewer)** | Read-only verification; checks runtime evidence and wired-vs-verified discipline. |
+| **CD (Claude Code)** | Read-only review; codebase-grounded data-shape and SSOT-consistency checks. |
+| **CG (ChatGPT)** | Spec critic; no codebase access; reviews coherence, feasibility, and governance meaning. |
+| **WT (Windows Terminal)** | Execution surface/operator terminal only; not a reviewer and not a code author. |
+
+**Dispatch classification:** KEY dispatches require the four-reviewer panel (CB/CR/CD/CG) before CB builds. KEY means any change to behavior, scoring, governance, deploy, persistence, agent authority, SSOT meaning, or verification status. CLEANUP dispatches do not require panel review when they are behavior-preserving only: renames, comments, dead-code removal, file moves, and doc-consistency propagation that do not touch the KEY list.
+
+Post-ratification operating-model memory update required: update `feedback_operating_model_2026_05_25.md` from the prior three-role model to these six roles.
+
 ---
 
 ## 24. CEO OPERATING RULES (CANONICAL W0x PROTOCOL)
 
 CEO role = **approve, click, copy, paste only — nothing else.**
 
+During Level L1 (building FlowAI), the authorized operator is Victor Udo, FNSE, PhD (CEO, VEU AI Studio) for all VEU products. Post-ship, the authorized operator is the FlowAI user for their own products and developer accounts. Every operational "human-run", `requires_human_gate`, approval, deployment, signing, store credential, or distribution decision resolves to the run's authorized operator unless the text explicitly names the Level L1 FlowAI-build context.
+
 - W04 posts instructions in copy boxes labelled with target Claude Code window (`W5a` / `W5b` / `W5c` / `W2` / `W3` / `W4` / `W6`).
-- CEO pastes into named window. Window executes auto mode and reports back using the mandatory format below.
-- CEO pastes report back to W04. W04 summarizes and recommends action.
+- During L1, the CEO pastes into the named window. Post-ship, the run's authorized operator performs the equivalent approval/paste/credential action for their own product account. The window executes auto mode and reports back using the mandatory format below.
+- During L1, the CEO pastes report back to W04. Post-ship, the run's authorized operator reports back to the active orchestration surface. W04 summarizes and recommends action during L1.
 
 **Mandatory report format** (canonical 2026-05-14, supersedes prior `═══════ REPORT-BACK ═══════` template):
 
@@ -1167,7 +1243,7 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 6. Five-layer intelligence framework (L1 Functionality, L2 Operational, L3 Financial, L4 Business, L5 GTM) — mandatory tagging per `src/lib/operationsEngine.js` FIVE_LAYER_FRAMEWORK.
 7. Seven Objective Lenses (audit_demo / investor_review / full_governance / compare / combine / benchmark / launch_readiness) per `OBJECTIVE_LENSES`.
 8. LLM model standard: pipeline steps use claude_sonnet_4_6 by default; cost-aware budgeting required (§7 of Orchestra spec).
-9. Automation-first: CEO paste + approve only. No CEO-side GUI hunting or manual edits.
+9. Automation-first: the run's authorized operator pastes + approves only. During Level L1, that operator is the CEO for VEU products. No operator-side GUI hunting or manual edits.
 10. Complete replacement files, never diffs in dispatches.
 11. Workstream routing per §23.
 12. Cadence: W0 does not impose timing; CEO sets cadence.
@@ -1175,7 +1251,7 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 14. Real production products under continuous crawl + fix at any time; no maintenance windows.
 15. Aggressive URL + wiring verification per §6.
 16. Continuous marketplace intelligence + Self-Renewal Alerts ≥monthly.
-17. Every W0x→CEO message requiring CEO action must be Panel-reviewed (≥7/10) before delivery.
+17. Every W0x→authorized-operator message requiring action must be Panel-reviewed (≥7/10) before delivery when it is a KEY dispatch. During Level L1 this resolves to W0x→CEO.
 18. Tool Intelligence Marketplace ranking formula canonical per §8 + `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md`. Top-5 platforms per Auto Runner step ranked by performance + cost + speed + reliability; rankings research-driven (not hardcoded) and refreshed monthly per CA-18 §6 ENTRY 019. Selection-mode triad LOCKED at AUTOMATIC / GUIDED / MANUAL per Locked Rule 4.
 19. **Phase A (surface) vs Phase B (adversarial interactive) — DO NOT CONFLATE.** §7.6 score = Phase A signal. §11 Clearance Step 5 requires Phase A + Phase B. A §7.6 score alone is NOT a functional certification. LIMITATIONS disclosure per §7 CA-14-A canonical text (ENTRY 015) is mandatory for every operator-facing delivery. Phase B is owned by Agent #21 ACE Conductor per §15.1 row 21 (ENTRY 015 CA-14-A-Q3 ratification).
 
@@ -1202,42 +1278,51 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 | Doppler integration | LIVE (commit `8e29e84` + `ae0441c`) — 4 keys provisioned |
 | Vercel Deployment Protection bypass | LIVE (commit `c533e2d`) |
 | W03 Standing Operating Protocol | CANONICAL (commit `6e9660e`); maximum-oversight configuration |
-| CA ratifications | CA-1 (9/10), CA-2 (8/10), CA-3 (8/8 engaged) ratified. CA-4 split 4/4 — CEO disposition pending. CA-5 below engagement floor — needs re-Panel. CA-6 SPLIT — REVISE AND RE-REVIEW. |
+| CA ratifications | CA-1 (9/10), CA-2 (8/10), CA-3 (8/8 engaged) ratified. CA-4, CA-5, CA-6, and CA-16-B withdrawn as market/user-driven design questions per ENTRY 020. |
 | Layer 1 SSOT | CANONICAL — `docs/FLOWAI_SSOT.md` (commit `fbaf881`), amended `1d65aba` |
 | Layer 2 Implementation Plan | CANONICAL — `docs/FLOWAI_IMPLEMENTATION_PLAN.md` (commit `6d0ccbb`) |
 | Layer 3 Engineering Spec | CANONICAL — `docs/FLOWAI_ENGINEERING_SPEC.md` (commit `c5720a5`) |
-| Layer 4 Building Guidance | NOT YET BUILT |
-| Self-Renewal Agent #3 graduation spec | DRAFT — `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` (commit `446ddb5`); 5 open questions for CEO disposition |
-| Orchestra Integration spec | DRAFT — `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` (commit `38b1a23`); 8 open questions for CEO disposition |
+| Layer 4 Building Guidance | STUB — §28.7; full content deferred to Layer 4 Building Guidance dispatch |
+| Self-Renewal Agent #3 graduation spec | DRAFT — `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` (commit `446ddb5`); 5 prior open questions resolved-by-code per §27 |
+| Orchestra Integration spec | DRAFT — `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` (commit `38b1a23`); 9 questions disposed per §27 (Q1/Q4/Q5 code-supported, Q6 resolved, Q2/Q3/Q7/Q8/Q9 DEFER-TO-BUILD) |
 | SSOT W04-Rev-1 | DRAFT — superseded by THIS document (Rev-2) per Panel verdict |
 | SSOT W04-Rev-2 | RATIFIED — v2.3 |
-| Next gate | (1) W6 re-Panel of Rev-2; (2) CEO dispositions on §27 Open Questions; (3) Production Hardening (RLS + observability + CI/CD) before graduating remaining rostered agents — Panel Q4 verdict from 2026-05-14 consolidated consultation, plurality (b) Production Hardening; (4) Layer 4 Building Guidance |
+| Next gate | (1) Production Hardening (RLS + observability + CI/CD) before graduating remaining rostered agents — Panel Q4 verdict from 2026-05-14 consolidated consultation, plurality (b) Production Hardening; (2) Layer 4 Building Guidance full dispatch; (3) DEFER-TO-BUILD items from §27 |
 
 ---
 
-## 27. OPEN QUESTIONS (areas where existing canonical sources are unclear)
+## 27. OPEN QUESTIONS AND DISPOSITIONS (CA-DELIVERY-DISTRIBUTION-GOVERNANCE)
 
-Items where canonical evidence is incomplete or contradictory — flagged for CEO disposition or W6 re-Panel rather than silently resolved.
+Open-question count after ENTRY 020: **0 unresolved questions in this section.** Some implementation work is explicitly DEFER-TO-BUILD; that state affirms canonical intent without claiming implementation or verification.
 
 1. **Tool count: RECONCILED.** Current `src/lib/toolRegistry.js` shows **61 tools across 13 actual categories**. The marketplace UI exposes 14 filter labels including `All`; code wins per Locked Rule 1, so current canonical count is 61 tools / 13 categories.
 
-2. **Ops Runner #21–#25 step assignments.** BaseAgent.js declares the 5 Ops Runners as embedded step-owners but does not pin which step each owns. Layer 2 plan PG1 hints #23 = Cost Governor; others unspecified. Engineering dispatch needs to fix the step bindings before any Ops Runner can ship.
+2. **Flow-builder code: RESOLVED-LEGACY-WIRED.** The pre-Sprint-5 flow-builder code is legacy but wired, not dead-in-place. Entities `SavedFlow`, `FlowVersion`, `FlowRun`, `FlowComment`, routes/links/webhook surfaces, and `components/designer/*` / `components/flows/*` must be archived only through a future cleanup dispatch that traces live reachability and leaves a tombstone. It must never be blindly deleted.
 
-3. **Pre-Sprint-5 era ("flow builder paradigm") archival status.** CANONICAL_REFERENCE §3 confirms the era existed (legacy routes redirected in Sprint HARD-1; entities SavedFlow / FlowVersion / FlowRun / FlowComment still defined; `components/designer/*` and `components/flows/*` still in tree as dead code). No record of when superseded. Rev-2 SSOT does not include the flow-builder paradigm because it is dead code in-place. Open: should the dead code be formally archived (deleted with a tombstone commit) or left as historical evidence? Panel Slot 5 raised "acknowledgement of the pre-Sprint 5 visual flow builder paradigm and its supersession" as a missing item — Rev-2 acknowledges via this Open Question rather than dedicating a canonical section.
+3. **Self-Renewal Agent #3 spec open questions: RESOLVED-BY-CODE.** This disposition does not promote production verification; it records that the spec questions have code-grounded answers:
+   - Q1 modes: `src/lib/agents/agents/Agent3SelfRenewalExecutor.js` lines 9–20; `api/agent/3/execute.js` lines 7–11 and 53.
+   - Q2 authority: `src/lib/agents/_registry.ts` lines 99–103 (primary `recommend_only`); `src/lib/agents/_registry.ts` lines 613–620 (`EXECUTOR_REGISTRY` entry).
+   - Q3 severity: `src/lib/agents/severity.js` lines 1–87 (3-tier severity logic); `api/agent/3/execute.js` lines 106–110 (tier enforcement).
+   - Q4 execution: `api/agent/3/execute.js` lines 1–4 (sync endpoint); `api/_lib/inngest.js` lines 134–148 (async enqueue).
+   - Q5 re-crawl: `src/lib/agents/verification.js` lines 1–17 (sampled setup); `src/lib/agents/verification.js` lines 21–87 (decision logic); `src/lib/agents/verification.js` lines 89–180 (recrawl execution).
 
-4. **Multi-LLM routing decision engine.** CANONICAL_REFERENCE Section 2 declares "NO RECORD FOUND" for centralised routing logic. Agent #4 Provider Onboarding charter references it but agent is DORMANT and Rev-2 does not include a canonical "multi-LLM routing engine" section. Open: build per Agent #4 graduation, or defer per Panel Q4 Production-Hardening-first verdict.
+4. **Orchestra Integration spec open questions: PARTIAL DISPOSITION.** Count confirmed: 9 questions. Q1/Q4/Q5 are CODE-SUPPORTED (wired, not fully productized). Q6 is RESOLVED by ENTRY 019. Q2/Q3/Q7/Q8/Q9 are DEFER-TO-BUILD and must be implemented when Orchestra integration is built post-spine.
 
-5. **Capability Transfer as L4 — completeness check.** §4 elevates Capability Transfer to Level 4. Sprint PROTECT-1 shipped Self-Renewal + Self-Protection packages, but only 2 of an unbounded set. Open: is Capability Transfer canonically the L4 surface for ALL future capabilities (i.e. every new agent / governance feature ships as a transferable package), or is it specific to those two packages? Affects Agent #13 architecture + future Ops Runner shipping.
+5. **Ops Runner #21–#25 step assignments: DEFER-TO-BUILD.** BaseAgent.js declares the 5 Ops Runners as embedded step-owners but does not pin which step each owns. Engineering dispatch must fix step bindings before any Ops Runner can ship.
 
-6. **Orchestra Selection axis rename — code migration cost.** **RESOLVED at CA-18 §6 ENTRY 019** (surface-of-truth). The canonical user-facing triad is LOCKED at AUTOMATIC / GUIDED / MANUAL across §8 + §8a + §3 iteration model + §17 sidebar. Engineering may keep prior enum strings (`'guided'`, `'manual'`, `'auto'`, `'recommended'`, `'user_choice'`, `'hands_off'`, etc.) in `AgenticModeContext.jsx` + `OrchestrationContext.jsx` + downstream components per the surface-of-truth resolution; enum-string migration in code is an engineering-dispatch decision, NOT a canonical requirement. The canonical lock applies to user-facing labels, audit-log payloads emitted by NEW runs, dashboards, dispatches, and Panel discourse. Historical audit-log payloads emitted under prior labels remain valid + queryable per the alias-preservation rule.
+6. **Multi-LLM routing decision engine: DEFER-TO-BUILD.** Agent #4 Provider Onboarding remains the natural owner, but the centralised routing engine is not canonicalized as built until Agent #4 graduation or a later key dispatch.
 
-7. **Per-mode role gates on Human Gates.** §13 + §10.2 assert that the Approval Gate (95/95 override) is admin-only. Sprint 7.5a UserRole entity defined admin / operator / client but didn't pin role-to-gate mapping explicitly. Open: confirm role-gate mapping is canonical as specified, or is operator allowed to Override 95/95?
+7. **Capability Transfer as L4 completeness check: DEFER-TO-BUILD.** §4 remains the canonical L4 surface; future capabilities should state whether they ship as transferable packages when their build dispatch lands.
 
-8. **CA-4 + CA-5 + CA-6 dispositions.** Deferred from `ssot-finalization-and-agent-roadmap-priority-2026-05-14.md` consultation. CA-4 = Year-1 → Year-6 user journey for O6; CA-5 = generalise E4 commercial rail beyond Stripe Connect; CA-6 = new MG9 commercial-architecture section. Open: dispose per `docs/FLOWAI_SSOT_AMENDMENT_DRAFT_2026-05-14.md`.
+8. **Orchestra Selection axis rename: RESOLVED at CA-18 §6 ENTRY 019.** The canonical user-facing triad is LOCKED at AUTOMATIC / GUIDED / MANUAL across §8 + §8a + §3 iteration model + §17 sidebar. Historical enum strings remain valid engineering aliases.
 
-9. **Pre-Rev-1 axis labels in shipped code.** **RESOLVED at CA-18 §6 ENTRY 019.** The sidebar names (AUTO OPERATIONS / GUIDED OPERATIONS / MANUAL OPERATIONS, Sprint UX-C) are now **canonically aligned** with the AUTOMATIC / GUIDED / MANUAL global lock per Locked Rule 4. The Rev-2 intermediate rename to "Orchestra-Selection-axis labels (Auto / Recommended / User-Choice)" is REVERTED at the surface layer — the canonical user-facing labels are AUTOMATIC / GUIDED / MANUAL across all surfaces (sidebar, picker, dispatches, Panel discourse). No surface/canonical gap remains.
+9. **Per-mode role gates on Human Gates: RESOLVED-BY-§13/§10.2.** Approval Gate (95/95 override) is admin-only. Operators can re-run but cannot override 95/95.
 
-10. **Layer 4 Building Guidance status.** Layer 1, 2, 3 SSOT all canonical. Layer 4 (`docs/FLOWAI_BUILDING_GUIDANCE.md`) was never built. Rev-2 references the 4-layer SSOT plan but does not author Layer 4 contents. Open: when is Layer 4 produced + Panel-reviewed?
+10. **CA-4 + CA-5 + CA-6 dispositions: WITHDRAWN.** CA-4 (Year-1→6 journey), CA-5 (commercial rail beyond Stripe Connect), and CA-6 (commercial architecture section) are market/user-driven questions with no canonical position taken at ENTRY 020; each may reopen as a future CA-N based on market/user evidence.
+
+11. **Pre-Rev-1 axis labels in shipped code: RESOLVED at CA-18 §6 ENTRY 019.** The sidebar names are canonically aligned with the AUTOMATIC / GUIDED / MANUAL global lock per Locked Rule 4; no surface/canonical gap remains.
+
+12. **Layer 4 Building Guidance status: RESOLVED-AS-STUB.** §28.7 now records the Layer 4 Building Guidance stub. Full content is deferred to the Layer 4 Building Guidance dispatch.
 
 ---
 
@@ -1266,9 +1351,9 @@ For a product with a **stable ProductSSOT** (≥3 prior pipeline runs in last 30
 
 This is both a **cost optimisation** + a **fidelity improvement**: known-good surfaces are not re-validated every cycle; new + suspect surfaces get focused attention. Full re-crawl remains available as an explicit user action (`Force full crawl` toggle in AutoRunner) for cases where ProductSSOT integrity is suspect or for periodic deep audits.
 
-### 28.3 Admin overrides as CEO-equivalent directives
+### 28.3 Admin overrides as authorized-operator-equivalent directives
 
-Per CA-10-D.2, **human annotations and overrides on the ProductSSOT (per §13.1) are treated as CEO-equivalent directives for that product's subsequent pipeline runs.** Concretely:
+Per CA-10-D.2 and ENTRY 020, **human annotations and overrides on the ProductSSOT (per §13.1) are treated as authorized-operator-equivalent directives for that product's subsequent pipeline runs.** Concretely:
 
 - An admin annotation "Score this 95/95 even though dependency X looks deprecated" on the `architecture_snapshot` entry for dependency X **suppresses** the Quality Audit dimension-score deduction for that dependency in subsequent runs.
 - An `Override` entry on a `delta_log_entry`'s `issue.severity` from `high` to `medium` re-routes future similar issues to the `medium` severity gate (per §12 mode routing).
@@ -1280,7 +1365,7 @@ When an admin override conflicts with the next auto-generated entry (e.g. admin 
 
 ### 28.5 §4 + §6 + §9 cross-link footers
 
-The §4 L2 ("FlowAI on Itself") and L3 ("FlowAI on External Products") status footnotes are read as: every L2 + L3 pipeline run reads the target product's ProductSSOT as canonical context input; the crawl scope per §6 is narrowed accordingly; admin annotations + overrides are treated as CEO-equivalent directives for that run. The ProductSSOT is updated atomically with the run output per §7 (amended Output Contract item #5) — failure to write ProductSSOT rolls back the entire run.
+The §4 L2 ("FlowAI on Itself") and L3 ("FlowAI on External Products") status footnotes are read as: every L2 + L3 pipeline run reads the target product's ProductSSOT as canonical context input; the crawl scope per §6 is narrowed accordingly; admin annotations + overrides are treated as authorized-operator-equivalent directives for that run. The ProductSSOT is updated atomically with the run output per §7 (amended Output Contract item #5) — failure to write ProductSSOT rolls back the entire run.
 
 §9 (8-step pipeline) footer: at run start, AutoRunner loads the target ProductSSOT row and threads it into the per-step context. Agents #6, #8, #3, #9 (when graduated from DORMANT) consume the relevant blocks; Agent #10 produces updates to the affected blocks. The Self-Renewal Executor (per CA-7 §15.5) writes the final `delta_log_entry` on run completion.
 
@@ -1304,6 +1389,14 @@ The repeat-until-GTM Purpose-Driven Optimization Loop's exit criterion uses **nu
 
 PURPOSE_DRIFT detection (CA-15-C-Q3) was NOT disposed in CEO Decision B and is NOT canonical at ENTRY 017. The §6 closed-kind list at the build/wire engine §29 S6 invariant references `purpose_drift_annotation.v1 severity:'critical'` only because the binding spec for the build/wire engine names that kind as a future-extension hook; emission of that envelope is not currently a canonical FlowAI capability and remains for a future CA-N if/when drift detection lands.
 
+### 28.7 Layer 4 — Building Guidance (STUB)
+
+Content to be drafted per the Layer 4 Building Guidance dispatch.
+
+Purpose: coding, testing, deployment, peer-review, IP-protection, and memory-discipline standards for FlowAI and VEU product development.
+
+Status: **STUB — DRAFT IN PROGRESS.**
+
 ---
 
 ## 29. BUILD/WIRE CONSTRUCTION ENGINE (NEW — CA-17 canonical per ENTRY 016)
@@ -1324,10 +1417,10 @@ The Build/Wire Construction Engine is the canonical mechanism by which detected 
 | **S4** 🔒 | Construction security suite | **NON-OVERRIDABLE** | **9 pillars** (SQLi, XSS, auth-bypass, secrets-leakage, dependency-CVE, authz-regression incl. deletion-detection, SSRF, rate-limit/abuse, **CSRF**). CSRF added as 9th pillar in v3-final: state-changing endpoints (POST/PUT/PATCH/DELETE) must have CSRF-token check OR SameSite=Strict/Lax cookie; advisory hybrid NOT adopted (CSRF is hard). |
 | **S5** 🔒 | Rollback substrate | **NON-OVERRIDABLE** | Pre-commit snapshot + CAS commit + real-rollback dry-run in CI + 30-day retention primary (admin-configurable 90-day option, hard bounds [30, 90]) + **auto-detect + auto-prepare + operator-confirm-to-fire** rollback on Phase B post-merge failure. Auto-execution-without-confirm REJECTED; invariant preserved via execution gate. New envelope `construction_auto_rollback_pending_operator_confirm.v1`. |
 | **S6** 🔒 | Pre-construction approval | **NON-OVERRIDABLE** | Admin-required-all-classes + 15-min freshness + rationale-quality (≥60 chars, canonical stop-word rejection) + **narrow in-flight invalidation on the closed 6-kind set** (`construction_pre_baseline.v1`, `architecture_snapshot.v1`, `gtm_bar_admin_override.v1`, `gtm_bar_admin_override_used.v1`, `construction_class.v1`, `purpose_drift_annotation.v1 severity:'critical'`). Over-broad "any new entry" invalidation REJECTED at Panel 5/10. Closed set; future additions require explicit CA amendment. |
-| **S7** | Branch-of-record | PANEL-RATIFIABLE | Per-product `self_renewal_branch` only per CA-14-D-Q1 ENTRY 015 cleared-8. v2's per-session sub-branches REMOVED. Any future session isolation belongs to CA-16-B (deferred per `e8bb7d4` CA-16 SPLIT), not S7. |
+| **S7** | Branch-of-record | PANEL-RATIFIABLE | Per-product `self_renewal_branch` only per CA-14-D-Q1 ENTRY 015 cleared-8. v2's per-session sub-branches REMOVED. Any future session isolation is a new CA-N design question; CA-16-B is WITHDRAWN per ENTRY 020. |
 | **S8** | Post-construction Phase B | PANEL-RATIFIABLE | Pre-PR Phase B only (v1 form; per-class coverage per binding spec §3.8). v2's live-preview post-merge + dual-load + connection-pool / memory-leak / transaction-deadlock backend probes all REMOVED. Existing Agent #21 Phase B charter (ENTRY 015 §15.1 row 21) operates post-deploy as normal, independent of S8. |
 
-**Four construction classes (canonical per binding spec §2):** `wire_up` (1–5 files), `endpoint_generation` (3–10 files), `schema_migration` (1–3 files; DLP-gated), `redesign_implementation` (operator-declared ≤ system cap per CA-16-B deferred future CA-N).
+**Four construction classes (canonical per binding spec §2):** `wire_up` (1–5 files), `endpoint_generation` (3–10 files), `schema_migration` (1–3 files; DLP-gated), `redesign_implementation` (operator-declared ≤ system cap; broader redesign/build environment questions are withdrawn by ENTRY 020 unless reopened as a new CA-N).
 
 **Conformance test inventory:** **48 tests total** (S1: 4, S2: 6, S3: 5, S4: 9, S5: 8, S6: 8, S7: 3, S8: 3, §4 lifecycle: 2) per binding spec §10. When CA-15-D v3 SSOT-Conformance Gate ratifies (§19.1 below), these tests register in `src/lib/conformance/__tests__/build_wire_engine/`.
 
@@ -1340,11 +1433,11 @@ The Build/Wire Construction Engine is the canonical mechanism by which detected 
 - CA-14-D-Q1 ENTRY 015 cleared-8 atomic-audit-write invariant — S5 inherits.
 - CA-14-A LIMITATIONS + Phase B per ENTRY 015 cleared-8 — S8 + §15.1 row 21 unchanged.
 - CA-15-C v3 PURPOSE_DRIFT_CRITICAL — S6 narrow in-flight invalidation kind 6 (when CA-15 lean-down lands per ENTRY 017).
-- CA-16 SPLIT (`e8bb7d4`) — CA-16-B/C remain deferred; S7 explicitly does NOT take on Redesign/Build Environment session-isolation responsibilities.
+- CA-16 SPLIT (`e8bb7d4`) — superseded by ENTRY 020 for CA-16-B/C dispositions: CA-16-B WITHDRAWN, CA-16-C resolved as canonical target-class delivery contract with implementation deferred to class build dispatches. S7 explicitly does NOT take on Redesign/Build Environment session-isolation responsibilities.
 
 ---
 
-*End of W04-Rev-2.1 + CA-7/CA-8/CA-9/CA-10 promotions. 14 Panel-cited gaps from Rev-1 addressed in Rev-2 (§3 metadata-driven, §4 L4 Capability Transfer, §6 resolution clarification, §8 / §8a axis rename, §10 Self-Governance Layer, §11 6-step Clearance, §12 mode-to-pipeline wiring, §13 auth + roles, §14 GovernanceAuditLog, §15 26-agent roles + OrchestratorHub-vs-Orchestra, §16 deployment infra, §17 6-section sidebar, §18 CA-n cycle, §26 phase status). CA-7 added §15.5 EXECUTOR_REGISTRY. CA-8 added §20.2 X-Test-Bypass-Token Contract. CA-9 (ENTRY 005) added §8.1 Orchestra Self-Expansion + Agent #26 + customer feedback loop. CA-10 (ENTRY 005) added §7.5 ProductSSOT + §13.1 role gates + §28 Symbiotic Feed-Back Loop + §11 Step 4 + §14.3 retention extensions. 9 Open Questions remaining for CEO disposition or W6 re-Panel.*
+*End of W04-Rev-2.1 + CA-7/CA-8/CA-9/CA-10 promotions. 14 Panel-cited gaps from Rev-1 addressed in Rev-2 (§3 metadata-driven, §4 L4 Capability Transfer, §6 resolution clarification, §8 / §8a axis rename, §10 Self-Governance Layer, §11 6-step Clearance, §12 mode-to-pipeline wiring, §13 auth + roles, §14 GovernanceAuditLog, §15 26-agent roles + OrchestratorHub-vs-Orchestra, §16 deployment infra, §17 6-section sidebar, §18 CA-n cycle, §26 phase status). CA-7 added §15.5 EXECUTOR_REGISTRY. CA-8 added §20.2 X-Test-Bypass-Token Contract. CA-9 (ENTRY 005) added §8.1 Orchestra Self-Expansion + Agent #26 + customer feedback loop. CA-10 (ENTRY 005) added §7.5 ProductSSOT + §13.1 role gates + §28 Symbiotic Feed-Back Loop + §11 Step 4 + §14.3 retention extensions. ENTRY 020 disposes §27 open questions; remaining work is tracked as DEFER-TO-BUILD where applicable.*
 
 ---
 
