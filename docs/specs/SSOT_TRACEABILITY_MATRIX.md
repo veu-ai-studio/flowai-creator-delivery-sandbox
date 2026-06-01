@@ -69,6 +69,10 @@ FlowAI accepts any input — a live URL, a description, audio, images, video, do
 
 FlowAI's target architecture is fresh-build-first: analyze any input and generate a completely new, platform-free product from scratch. Current W09 implementation still includes assessment, migration, and registered upgrade-repo patch workflows while fresh-build matures. Both paths are valid and supported.
 
+Reference-product portability rule: SAIGE and the other VEU products are proof fixtures for FlowAI, not special-case destinations. Any SAIGE vertical-slice work must exercise product-agnostic contracts, target-class adapters, ProductSSOT state, and deployment/distribution adapters that can carry forward to websites, SaaS products, mobile apps, native apps, and agentic AI systems. A capability is not SSOT-complete if it works only because the product is SAIGE.
+
+Distribution target rule: Step 5 always produces the canonical output surface, but target classes carry different distribution obligations. Web and SaaS outputs deploy to hosted URLs; mobile and native outputs require build/package metadata plus app-store or installer distribution adapters; agentic AI outputs require runtime, tool-permission, and monitoring adapters. These adapters live at the edge; FlowAI's core orchestration, scoring, evidence, governance, and ProductSSOT remain product-agnostic.
+
 ### 1.3 What FlowAI Is Not
 
 - Not a SaaS tool sold to large enterprises

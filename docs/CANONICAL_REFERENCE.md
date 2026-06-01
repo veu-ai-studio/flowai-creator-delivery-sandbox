@@ -59,6 +59,10 @@ Underservedness manifests across (non-exhaustive; representative, not geographic
 
 **What FlowAI enables:** create web / native_app / mobile_app / SaaS / agentic_ai / generic_url products (canonical target classes per CA-18 §4); audit, benchmark, improve any digital product; deploy working products with real URLs — no code required.
 
+**Universal product portability requirement:** SAIGE and the other VEU products are reference products and proof fixtures only. Any capability proven on SAIGE must be implemented through product-agnostic contracts, ProductSSOT state, target-class adapters, and deployment/distribution adapters so the same FlowAI loop can serve thousands of digital products across websites, SaaS products, mobile apps, native apps, and agentic AI systems. A SAIGE-specific implementation is not complete unless the reusable contract it exercises is also valid for non-SAIGE products.
+
+**Distribution target requirement:** FlowAI output is always a deployable URL at Step 5, and the deployment/distribution layer must preserve target-class differences instead of flattening them. Web and SaaS products deploy to hosted URLs; mobile and native apps require package/build metadata plus app-store or installer distribution adapters; agentic AI products require runtime, tool, permission, and monitoring adapters. These adapters are platform-specific at the edge, but the core FlowAI orchestration, scoring, evidence, ProductSSOT, and governance logic remain product-agnostic.
+
 See `docs/specs/FLOWAI_MISSION_PURPOSE_AMENDMENT_DRAFT.md` (CA-18 binding mission/purpose statement per ENTRY 018) for the full §1–§5 canonical mission, including the Core Definition, 10-dimension Quality coverage, three-mode Iteration Model, Global Platform Scope, and Symbiotic Meta-Principle.
 
 ---
@@ -1096,7 +1100,7 @@ GovernanceAuditLog. Topics:
 
 ## 22. PRODUCT-AGNOSTIC RULE
 
-Zero product-specific code in the core engine + 25 agents + tests + configs + URL patterns + env vars. No VEU product names (SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife) in agent code, BaseAgent dependencies, MessageSchema topic strings, ScoreEvaluator logic, OrchestratorHub registration, Orchestra adapters, or smoke-test fixtures. Smoke tests use **neutral fixtures only** (e.g. `flowai-renewed-<sanitised-stub>-<suffix>`).
+Zero product-specific code in the core engine + 26 agents + tests + configs + URL patterns + env vars. No VEU product names (SAIGE, RelTwin, ReachSMS, PressAI, MyPregLife) in agent code, BaseAgent dependencies, MessageSchema topic strings, ScoreEvaluator logic, OrchestratorHub registration, Orchestra adapters, or smoke-test fixtures. Smoke tests use **neutral fixtures only** (e.g. `flowai-renewed-<sanitised-stub>-<suffix>`).
 
 Per-product configuration lives entirely in **metadata** per §3:
 - `ProductRegistry` entity (Supabase, RLS-isolated)
