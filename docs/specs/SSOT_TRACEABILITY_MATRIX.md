@@ -10,7 +10,7 @@
 **Repo:** github.com/victor2081new-cloud/flowai
 **Branch:** flowai-v0.1
 **Production:** flowai-dun.vercel.app
-**Branch HEAD at draft time:** c718bf8
+**Branch HEAD at draft time:** 8c4cb42
 
 ## CHANGE LOG — v2.2 → v2.3 (Panel-driven revision)
 
@@ -565,4 +565,4 @@ Step 6 — Windows Codex Commit — updates all four canonical files in one comm
 - Replaces: All prior SSOT versions including v2.0 / v2.1 / v2.2
 - Repo: github.com/victor2081new-cloud/flowai
 - Branch: flowai-v0.1
-- HEAD: c718bf8
+- HEAD: 8c4cb42

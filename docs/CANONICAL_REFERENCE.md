@@ -1,6 +1,6 @@
 # FlowAI Canonical Reference - SSOT v2.3 RATIFIED
 
-Version: **v2.3 RATIFIED** | Date: 2026-05-26 | Status: **CANONICAL - ratified by CEO Victor Udo, FNSE, PhD 2026-05-26** | HEAD: `c718bf8`
+Version: **v2.3 RATIFIED** | Date: 2026-05-26 | Status: **CANONICAL - ratified by CEO Victor Udo, FNSE, PhD 2026-05-26** | HEAD: `8c4cb42`
 Supersedes: `docs/SSOT_W04_REV2_DRAFT.md`
 Rev-2 → Rev-2.1 changeset (4 W6-Panel-cited minor amendments):
 - (a) §17: footnote disambiguating UX-C sidebar labels from canonical axis labels in §8/§8a
@@ -75,7 +75,7 @@ See `docs/specs/FLOWAI_MISSION_PURPOSE_AMENDMENT_DRAFT.md` (CA-18 binding missio
 
 | Layer | Product-specific? | Where it lives | Example |
 |---|---|---|---|
-| Core engine + 25 agents | **NEVER** — zero product names in code, tests, configs, env vars, URL patterns | `src/lib/agents/`, `src/lib/runner/`, agent registry | `Agent3SelfRenewal` analyzes ANY run; product is `ctx.productScope` parameter |
+| Core engine + 26 agents | **NEVER** — zero product names in code, tests, configs, env vars, URL patterns | `src/lib/agents/`, `src/lib/runner/`, agent registry | `Agent3SelfRenewal` analyzes ANY run; product is `ctx.productScope` parameter |
 | Commercial / metering layer | Metadata-keyed by `productId`, not code-keyed | Supabase `flowai_provider_billing`, `flowai_product_pricing`, `flowai_revenue_splits` | Per-product rate = `pricing.lookup(productId, planTier)` |
 | Per-product configuration | Metadata, never code | `flowai_product_config` rows + Doppler vault paths `flowai/<env>/PRODUCTS_<productId>_*` | Custom domain for a tenant lives in a config row, not a hardcoded constant |
 | Agent invocation scope | Parameter, not embedded | `productScope: 'flowai' \| 'tenantA' \| 'tenantB' \| ...` (illustrative; expands at runtime) [1] | `BaseAgent` accepts `productScope` as a runtime dep |
@@ -592,7 +592,7 @@ All 26 agents (was 25 prior to CA-9-B / ENTRY 005) are proprietary VEU IP. All s
 |---|---|---|---|---|---|
 | 1 | Lifecycle Engine | step-owner | 1 research | embedded | SHIPPED-GREEN (commit `d712993`) |
 | 2 | Code Builder | step-owner | 3 build | embedded | SHIPPED-GREEN (commit `fdd3863`) — server-side only (node:crypto) |
-| 3 | Self-Renewal | step-owner | 6 govern | embedded | SHIPPED-GREEN (commit `68a0c75`); fork-and-fix graduation spec drafted at `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`. Per CA-9-C + CA-10-B (ENTRY 005): consumes `10.customer.issue.v1` with new `customerReportedIssues` heuristic (1-2 reports/24h → medium; 3-9 → high; ≥10 → critical). Per CA-10-B: produces new topic `3.ssot.delta.v1` (delta_log entry written to ProductSSOT post-Approve/auto-deploy via the Self-Renewal Executor per CA-7 §15.5). |
+| 3 | Self-Renewal | step-owner | 6 Self-Renewal | embedded | SHIPPED-GREEN (commit `68a0c75`); fork-and-fix graduation spec drafted at `docs/specs/SELF_RENEWAL_AGENT_SPEC.md`. Per CA-9-C + CA-10-B (ENTRY 005): consumes `10.customer.issue.v1` with new `customerReportedIssues` heuristic (1-2 reports/24h → medium; 3-9 → high; ≥10 → critical). Per CA-10-B: produces new topic `3.ssot.delta.v1` (delta_log entry written to ProductSSOT post-Approve/auto-deploy via the Self-Renewal Executor per CA-7 §15.5). |
 | 4 | Provider Onboarding | step-owner | (commercial layer) | flowai-only | PARTIAL — executor code exists; Stripe Connect deployment incomplete per §3 + Panel ruling FA-Q1 (commit `708e59d`) 2026-05-16. Original landing commit `5006431`. |
 | 5 | End-Customer Intake | step-owner | (commercial layer) | flowai-only | SHIPPED-GREEN (commit `2fff449`) |
 | 6 | Research | step-owner | 1 research (collab w/ #1) | embedded | DORMANT — block-semantic on content-insufficient already wired (commit `0fc8851`) |
@@ -680,7 +680,7 @@ The **EXECUTOR_REGISTRY** is a sibling namespace to `AGENT_REGISTRY` in
 `src/lib/agents/_registry.ts`. It holds charters for **executors** —
 elevated-authority counterparts to existing primary agents whose authority
 profile would otherwise break the canonical RECOMMEND_ONLY-dominant
-25-agent partition (per §25 Locked Rule 2). Executors share a charter id
+26-agent partition (per §25 Locked Rule 2). Executors share a charter id
 with a primary agent (e.g. id=3 for the Self-Renewal Executor) but carry
 distinct `mode` and `authority` arrays.
 
@@ -756,7 +756,7 @@ by an executor MUST include an `executorKey` field disambiguating from
 primary-agent events. See §14 amendment in CA-7.4.
 
 **Cross-link with §15.1 Roster table:** the primary Agent #3 row in the
-25-agent roster now optionally references its executor key(s) under an
+26-agent roster now optionally references its executor key(s) under an
 `executors[]` column for discoverability. Adding a row to
 `EXECUTOR_REGISTRY` without adding the corresponding entry to the
 primary agent's `executors[]` causes `validateExecutors()` to throw.
@@ -1195,7 +1195,7 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 | W2 three-input renewal pipeline | SHIPPED on neutral test fixtures (commit `9b4e511`); Orchestra direct-write available via fork-and-fix path |
 | Self-Governance Layer (Sprint 5) | LIVE — Self-Test, Self-Audit, Self-Protect, Self-Heal, Four Human Gates |
 | Self-Renewal + Self-Protection Capability Packages (Sprint PROTECT-1) | LIVE — install sprints for all 5 VEU products |
-| Tool Intelligence Marketplace (Sprint 8 — 65 tools / 12+1 categories) | LIVE per `src/lib/toolRegistry.js` (61 actual tools / 14 actual categories — see Open Questions §27) |
+| Tool Intelligence Marketplace (Sprint 8 — 61 tools / 13 categories) | LIVE per `src/lib/toolRegistry.js` (61 actual tools / 13 actual categories; marketplace UI exposes 14 filter labels including `All`) |
 | 6-step Clearance Protocol (Sprint 9) | LIVE at `/clearance` |
 | 6-section sidebar (post-ARCH-1) | LIVE per `src/components/layout/Sidebar.jsx` |
 | GovernanceAuditLog (Sprint HARD-1) | LIVE; `/audit-trail` read-only surface |
@@ -1210,7 +1210,7 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 | Self-Renewal Agent #3 graduation spec | DRAFT — `docs/specs/SELF_RENEWAL_AGENT_SPEC.md` (commit `446ddb5`); 5 open questions for CEO disposition |
 | Orchestra Integration spec | DRAFT — `docs/specs/ORCHESTRA_INTEGRATION_SPEC.md` (commit `38b1a23`); 8 open questions for CEO disposition |
 | SSOT W04-Rev-1 | DRAFT — superseded by THIS document (Rev-2) per Panel verdict |
-| SSOT W04-Rev-2 | DRAFT (THIS document) — awaiting W6 re-Panel |
+| SSOT W04-Rev-2 | RATIFIED — v2.3 |
 | Next gate | (1) W6 re-Panel of Rev-2; (2) CEO dispositions on §27 Open Questions; (3) Production Hardening (RLS + observability + CI/CD) before graduating remaining rostered agents — Panel Q4 verdict from 2026-05-14 consolidated consultation, plurality (b) Production Hardening; (4) Layer 4 Building Guidance |
 
 ---
@@ -1219,7 +1219,7 @@ Referenced from the canonical FLOWAI_SSOT.md anchor + W03 opening package. The 1
 
 Items where canonical evidence is incomplete or contradictory — flagged for CEO disposition or W6 re-Panel rather than silently resolved.
 
-1. **Tool count: 65 vs 61.** CANONICAL_REFERENCE Sprint 8 says "65 tools pre-loaded across 12 categories"; current `src/lib/toolRegistry.js` shows **61 tools across 14 categories**. Either 4 tools were removed without a release note OR the Sprint 8 number was aspirational. Code wins per Locked Rule 1; Rev-2 reflects 61/14, but canonical history should reconcile.
+1. **Tool count: RECONCILED.** Current `src/lib/toolRegistry.js` shows **61 tools across 13 actual categories**. The marketplace UI exposes 14 filter labels including `All`; code wins per Locked Rule 1, so current canonical count is 61 tools / 13 categories.
 
 2. **Ops Runner #21–#25 step assignments.** BaseAgent.js declares the 5 Ops Runners as embedded step-owners but does not pin which step each owns. Layer 2 plan PG1 hints #23 = Cost Governor; others unspecified. Engineering dispatch needs to fix the step bindings before any Ops Runner can ship.
 
@@ -1344,7 +1344,7 @@ The Build/Wire Construction Engine is the canonical mechanism by which detected 
 
 ---
 
-*End of W04-Rev-2.1 + CA-7/CA-8/CA-9/CA-10 promotions. 14 Panel-cited gaps from Rev-1 addressed in Rev-2 (§3 metadata-driven, §4 L4 Capability Transfer, §6 resolution clarification, §8 / §8a axis rename, §10 Self-Governance Layer, §11 6-step Clearance, §12 mode-to-pipeline wiring, §13 auth + roles, §14 GovernanceAuditLog, §15 26-agent roles + OrchestratorHub-vs-Orchestra, §16 deployment infra, §17 6-section sidebar, §18 CA-n cycle, §26 phase status). CA-7 added §15.5 EXECUTOR_REGISTRY. CA-8 added §20.2 X-Test-Bypass-Token Contract. CA-9 (ENTRY 005) added §8.1 Orchestra Self-Expansion + Agent #26 + customer feedback loop. CA-10 (ENTRY 005) added §7.5 ProductSSOT + §13.1 role gates + §28 Symbiotic Feed-Back Loop + §11 Step 4 + §14.3 retention extensions. 10 Open Questions remaining for CEO disposition or W6 re-Panel.*
+*End of W04-Rev-2.1 + CA-7/CA-8/CA-9/CA-10 promotions. 14 Panel-cited gaps from Rev-1 addressed in Rev-2 (§3 metadata-driven, §4 L4 Capability Transfer, §6 resolution clarification, §8 / §8a axis rename, §10 Self-Governance Layer, §11 6-step Clearance, §12 mode-to-pipeline wiring, §13 auth + roles, §14 GovernanceAuditLog, §15 26-agent roles + OrchestratorHub-vs-Orchestra, §16 deployment infra, §17 6-section sidebar, §18 CA-n cycle, §26 phase status). CA-7 added §15.5 EXECUTOR_REGISTRY. CA-8 added §20.2 X-Test-Bypass-Token Contract. CA-9 (ENTRY 005) added §8.1 Orchestra Self-Expansion + Agent #26 + customer feedback loop. CA-10 (ENTRY 005) added §7.5 ProductSSOT + §13.1 role gates + §28 Symbiotic Feed-Back Loop + §11 Step 4 + §14.3 retention extensions. 9 Open Questions remaining for CEO disposition or W6 re-Panel.*
 
 ---
 
