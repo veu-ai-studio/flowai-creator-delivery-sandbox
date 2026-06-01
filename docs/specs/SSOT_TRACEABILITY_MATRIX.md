@@ -69,6 +69,10 @@ FlowAI accepts any input — a live URL, a description, audio, images, video, do
 
 FlowAI's target architecture is fresh-build-first: analyze any input and generate a completely new, platform-free product from scratch. Current W09 implementation still includes assessment, migration, and registered upgrade-repo patch workflows while fresh-build matures. Both paths are valid and supported.
 
+Reference-product portability rule: SAIGE and the other VEU products are proof fixtures for FlowAI, not special-case destinations. Any SAIGE vertical-slice work must exercise product-agnostic contracts, target-class adapters, ProductSSOT state, and deployment/distribution adapters that can carry forward to websites, SaaS products, mobile apps, native apps, and agentic AI systems. A capability is not SSOT-complete if it works only because the product is SAIGE.
+
+Distribution target rule: Step 5 always produces the canonical output surface, but target classes carry different distribution obligations. Web and SaaS outputs deploy to hosted URLs; mobile and native outputs require build/package metadata plus app-store or installer distribution adapters; agentic AI outputs require runtime, tool-permission, and monitoring adapters. These adapters live at the edge; FlowAI's core orchestration, scoring, evidence, governance, and ProductSSOT remain product-agnostic.
+
 ### 1.3 What FlowAI Is Not
 
 - Not a SaaS tool sold to large enterprises
@@ -144,6 +148,8 @@ Pipeline steps for Workflow 1:
 - SUB-2B BUILD AND DEPLOY — ROADMAP
 
 Pipeline steps (Workflow 2): Research → Design → Build → Quality Audit → Deploy → Self-Renewal → GTM → Monitor.
+
+Dispatch 0 reconciliation note: Step 6 in the product workflow is canonically Self-Renewal. Governance remains a cross-cutting capability, clearance surface, audit concern, and registry capability vocabulary, but it is not the Step 6 product-workflow label.
 
 **WORKFLOW 3 — COMPARE AND SYNTHESIZE** — `ROADMAP`. Assess multiple products; benchmark or synthesize.
 - TYPE-3A BENCHMARK — ROADMAP
@@ -253,13 +259,15 @@ All four product workflows run through this pipeline with workflow-appropriate b
 
 Orchestra is not limited to these members.
 
-## PART 6 — THE 20-AGENT ROSTER
+## PART 6 — THE 26-AGENT ROSTER
 
-All 20 agents are proprietary VEU IP. Never sold individually. All ship dormant at `recommend_only` authority. Roster is TARGET architecture. Formal agent authority registry must be created and approved before any agent is marked CURRENT. See Phase 6 Task 1.
+All 26 agents are proprietary VEU IP. Never sold individually. Rostered does not mean implemented, wired, runtime-active, or production-verified. Formal agent authority registry status must distinguish rostered, implemented, wired, runtime-active, and production-verified before any agent capability is promoted to CURRENT/VERIFIED.
 
 FlowAI-only agents (8): #4 Provider Onboarding, #5 End-Customer Intake, #8 Quality Audit, #11 Strategic Intelligence, #12 Portfolio Risk & Fire Detection, #14 Public Policy, #16 Productivity & HR, #18 Business Planning & Performance.
 
-Embedded in every product (12): #1 Lifecycle Engine, #2 Code Builder, #3 Self-Renewal, #6 Research, #7 Design, #9 GTM, #10 Monitor, #13 Self-Protection, #15 Benchmarking & Competition, #17 Product Evolution, #19 Technological Evolution, #20 Environmental Impacts.
+Embedded in every product (13): #1 Lifecycle Engine, #2 Code Builder, #3 Self-Renewal, #6 Research, #7 Design, #9 GTM, #10 Monitor, #13 Self-Protection, #15 Benchmarking & Competition, #17 Product Evolution, #19 Technological Evolution, #20 Environmental Impacts, #26 Orchestra Research.
+
+Ops Runners embedded (5): #21 Aggressive Crawl Conductor, #22 Ops Runner Beta, #23 Cost Governor, #24 Ops Runner Delta, #25 Ops Runner Epsilon. Ops Runner names and step bindings remain governed by the agent registry and future engineering dispatches.
 
 No agent auto-executes without operator approval. No product-specific code in the agent layer.
 
