@@ -1389,14 +1389,35 @@ The repeat-until-GTM Purpose-Driven Optimization Loop's exit criterion uses **nu
 
 PURPOSE_DRIFT detection (CA-15-C-Q3) was NOT disposed in CEO Decision B and is NOT canonical at ENTRY 017. The §6 closed-kind list at the build/wire engine §29 S6 invariant references `purpose_drift_annotation.v1 severity:'critical'` only because the binding spec for the build/wire engine names that kind as a future-extension hook; emission of that envelope is not currently a canonical FlowAI capability and remains for a future CA-N if/when drift detection lands.
 
-### 28.7 Layer 4 — Building Guidance (STUB)
+### 28.7 Layer 4 — Building Guidance
 
-Content to be drafted per the Layer 4 Building Guidance dispatch.
+#### §28.7.1 CODING STANDARDS
 
-Purpose: coding, testing, deployment, peer-review, IP-protection, and memory-discipline standards for FlowAI and VEU product development.
+ESM (import/export only; never `require()`). TypeScript for agent registry and governance files; JavaScript elsewhere. No platform SDK/proxy/runtime dependency in FlowAI output code. Complete replacement files only — never diffs, never "change line N". Product-agnostic rule §22 applies to all core files: zero product names in forge, agents, or shared runtime.
 
-Status: **STUB — DRAFT IN PROGRESS.**
+#### §28.7.2 TESTING STANDARDS
 
+Vitest for all tests. `npm run preflight` must pass before any commit (only the 3 accepted baseline failures). `npm run audit:commit` must pass (docs scope warning acceptable; new failures are blockers). Every new capability requires at least one test; stubs without tests are marked `verified:false` and excluded from scoring. File:line citations must be confirmed against actual source before written to any SSOT doc — fabricated citations are prohibited.
+
+#### §28.7.3 DEPLOYMENT STANDARDS
+
+One branch per dispatch (format: `flowai/<scope>-<purpose>`). Merge to main via `--no-ff` with message format `"<scope> | <purpose> | <summary>"`. CEO authorizes every push to origin — no auto-push, no CI auto-promote. After every merge+push, promote the topmost Vercel deployment to Production; never promote an older deployment. All environment variables through Doppler; never hardcoded in commits.
+
+#### §28.7.4 PEER-REVIEW AND DISPATCH GOVERNANCE
+
+KEY dispatch: 4-reviewer panel (CB/CR/CD/CG) before CB builds. Key = changes behavior / scoring / governance / deploy / persistence / agent authority / SSOT meaning / verification status. CLEANUP dispatch: no panel; behavior-preserving only (renames, comments, dead-code removal, file moves, doc-consistency propagation). Every CB dispatch must include: explicit action label (BUILD / READ-ONLY / CLEANUP BUILD), STOP conditions for unexpected state, single commit scope, and "DO NOT START until W04 sends CLEAR TO BUILD" on Panel-first dispatches. CB is the sole codebase writer. W04/CR/CD/CG/WT never write code. W04 confirms every first-round Panel issue is addressed before re-dispatching to CB.
+
+#### §28.7.5 IP PROTECTION STANDARDS
+
+FlowAI is internal infrastructure — never sold as SaaS, never open-sourced, never white-labeled. Self-Protection Agent #13 governs IP: robots.txt, X-Robots-Tag noai/noimageai, Cloudflare Bot Management, rate limiting, code obfuscation, DMCA-ready templates. Staging URLs and internal tokens must never appear in commit messages or docs.
+
+#### §28.7.6 SSOT AND MEMORY DISCIPLINE
+
+`CANONICAL_REFERENCE.md` is the single SSOT — never trust memory alone for canonical facts; fetch the live doc before any synthesis. WIRED ≠ VERIFIED: no claim advances to VERIFIED without evidence at the appropriate Tier floor (A persistent / B behavioral / C never counts). Every CA amendment requires a pre-promotion snapshot per §18.3 before archival. No ratification from a summary — always on the full canonical document in its current state. Citation language in §27 and all disposition records: "Code support located at..." — descriptive, not evidentiary. Never "VERIFIED by..." unless production evidence exists.
+
+#### §28.7.7 OPERATING CADENCE
+
+AI time frame: work in seconds and minutes — no week/month estimates. CEO is paste-and-approve only: every instruction reduces to a click (URL or window name) plus a copy-paste-ready block. Auto-approve all git read commands; ask permission only on `git push`, `git reset --hard`, or `git rebase`. CB runs one task at a time; CR and CD may read in parallel. W04 surfaces the next decision the moment a gate is ready.
 ---
 
 ## 29. BUILD/WIRE CONSTRUCTION ENGINE (NEW — CA-17 canonical per ENTRY 016)
