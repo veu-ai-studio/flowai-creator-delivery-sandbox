@@ -473,7 +473,7 @@ Rev-1 listed pipeline steps as "1-Research, 2-Design, 3-Build, 4-Quality Audit, 
 
 **Step 3 Build targetMode parameter (CA-DELIVERY-DISTRIBUTION-GOVERNANCE):** native/mobile delivery uses a targetMode parameter on the existing Build step, not a new pipeline step. `targetMode ∈ {native, cross_platform, pwa_wrap}` and is selected by Tool Intelligence for the task and target class. This preserves the 8-step canon and Locked Rule 2; `build` remains the step key.
 
-**Step 5 Deploy distribution-adapter registry (CA-DELIVERY-DISTRIBUTION-GOVERNANCE):** Deploy owns a metadata-driven `DISTRIBUTION_ADAPTER_REGISTRY` for Apple App Store, Google Play, Microsoft Store, Samsung Galaxy Store, web-app stores, and pluggable additional adapters admitted under the §8.1 auto-admission pattern. Store submission is an async distribution job with explicit status fields: `artifactProduced → submissionInitiated → operatorApproved → storeAccepted` or `storeRejected`. Step 5 completes at distribution handoff complete: artifact produced and submission initiated only after the operator-approval gate. Store outcome is never assumed; Step 8 Monitor tracks review outcome into ProductSSOT.
+**Step 5 Deploy distribution-adapter registry (CA-DELIVERY-DISTRIBUTION-GOVERNANCE):** Deploy owns a metadata-driven `DISTRIBUTION_ADAPTER_REGISTRY` for Apple App Store, Google Play, Microsoft Store, Samsung Galaxy Store, web-app stores, and pluggable additional adapters admitted under the §8.1 auto-admission pattern. Store submission is an async distribution job with explicit status fields: `artifactProduced → operatorApproved → submissionInitiated → storeAccepted or storeRejected`. Step 5 completes at distribution handoff complete: artifact produced, operator approval captured, and submission initiated only after the operator-approval gate. Store outcome is never assumed; Step 8 Monitor tracks review outcome into ProductSSOT.
 
 Required submission fields are `operatorConsent`, `credentialOwnership`, `artifactHash`, `storeTarget`, `submissionId`, and `postReviewStatus`. FlowAI may prepare, validate, package, and initiate submission only after the operator-approval gate. The gate holds even for auto-publish-on-submission stores. FlowAI NEVER autonomously publishes to a public store. No ninth step is created.
 
@@ -1211,7 +1211,7 @@ During Level L1 (building FlowAI), the authorized operator is Victor Udo, FNSE, 
 
 - W04 posts instructions in copy boxes labelled with target Claude Code window (`W5a` / `W5b` / `W5c` / `W2` / `W3` / `W4` / `W6`).
 - During L1, the CEO pastes into the named window. Post-ship, the run's authorized operator performs the equivalent approval/paste/credential action for their own product account. The window executes auto mode and reports back using the mandatory format below.
-- The authorized operator pastes report back to W04 or the active orchestration surface. W04 summarizes and recommends action during L1.
+- During L1, the CEO pastes report back to W04. Post-ship, the run's authorized operator reports back to the active orchestration surface. W04 summarizes and recommends action during L1.
 
 **Mandatory report format** (canonical 2026-05-14, supersedes prior `═══════ REPORT-BACK ═══════` template):
 
@@ -1299,7 +1299,12 @@ Open-question count after ENTRY 020: **0 unresolved questions in this section.**
 
 2. **Flow-builder code: RESOLVED-LEGACY-WIRED.** The pre-Sprint-5 flow-builder code is legacy but wired, not dead-in-place. Entities `SavedFlow`, `FlowVersion`, `FlowRun`, `FlowComment`, routes/links/webhook surfaces, and `components/designer/*` / `components/flows/*` must be archived only through a future cleanup dispatch that traces live reachability and leaves a tombstone. It must never be blindly deleted.
 
-3. **Self-Renewal Agent #3 spec open questions: RESOLVED-BY-CODE.** Modes/severity are covered by `Agent3SelfRenewalExecutor.js`; authority/registry by `src/lib/agents/_registry.ts` (`EXECUTOR_REGISTRY`); endpoint by `api/agent/3/execute.js`; async execution by `api/_lib/inngest.js`; sampled re-crawl by `verification.js`. This disposition does not promote production verification; it records that the spec questions have code-grounded answers.
+3. **Self-Renewal Agent #3 spec open questions: RESOLVED-BY-CODE.** This disposition does not promote production verification; it records that the spec questions have code-grounded answers:
+   - Q1 modes: `src/lib/agents/agents/Agent3SelfRenewalExecutor.js` lines 9–20; `api/agent/3/execute.js` lines 7–11 and 53.
+   - Q2 authority: `src/lib/agents/_registry.ts` lines 99–103 (primary `recommend_only`); `src/lib/agents/_registry.ts` lines 613–620 (`EXECUTOR_REGISTRY` entry).
+   - Q3 severity: `src/lib/agents/severity.js` lines 1–87 (3-tier severity logic); `api/agent/3/execute.js` lines 106–110 (tier enforcement).
+   - Q4 execution: `api/agent/3/execute.js` lines 1–4 (sync endpoint); `api/_lib/inngest.js` lines 134–148 (async enqueue).
+   - Q5 re-crawl: `src/lib/agents/verification.js` lines 1–17 (sampled setup); `src/lib/agents/verification.js` lines 21–87 (decision logic); `src/lib/agents/verification.js` lines 89–180 (recrawl execution).
 
 4. **Orchestra Integration spec open questions: PARTIAL DISPOSITION.** Count confirmed: 9 questions. Q1/Q4/Q5 are CODE-SUPPORTED (wired, not fully productized). Q6 is RESOLVED by ENTRY 019. Q2/Q3/Q7/Q8/Q9 are DEFER-TO-BUILD and must be implemented when Orchestra integration is built post-spine.
 
