@@ -2,12 +2,12 @@
  * Immutable Agent Registry — Pre-Agent Foundation
  * ---------------------------------------------------------------------------
  * Owner:    /src/lib/agents/_registry.ts (W5 territory)
- * Status:   Pre-build foundation. None of the 20 agents are implemented yet;
+ * Status:   Pre-build foundation. None of the 26 agents are implemented yet;
  *           this registry is the single source of truth for *what they will
  *           be* once they are.
  *
  * Schema per agent:
- *   id                    — 1..25, matches AGENT_IDS in BaseAgent.js
+ *   id                    — 1..26, matches AGENT_IDS in BaseAgent.js
  *   name                  — short human-readable label
  *   mode                  — 'always-on' | 'step-owner' | 'cross-step'
  *   authority             — readonly tuple of authority levels (recommend_only
@@ -373,6 +373,31 @@ const AGENTS: AgentRecord[] = [
     produces: [],
     escalationPolicy: 'Reserved Step-Owner charter — escalate to #1 on any side effect attempt.',
   },
+  {
+    id: 26,
+    name: 'Orchestra Research Agent',
+    mode: 'always-on',
+    authority: ['recommend_only', 'auto_write_internal', 'requires_human_gate'],
+    requiredCredentials: ['ANTHROPIC_API_KEY', 'BROWSERLESS_API_KEY'],
+    consumes: [
+      'community.signal.v1',
+      '11.platform.discovery.v1',
+      '15.benchmark.head_to_head.v1',
+      '17.orchestra.deprecation_proposal.v1',
+      'vendor.changelog.poll.v1',
+    ],
+    produces: [
+      '26.orchestra.candidate.v1',
+      '26.orchestra.admitted.v1',
+      '26.orchestra.candidate_rejected.v1',
+      '26.orchestra.candidate_panel_gate.v1',
+      '26.orchestra.deprecated.v1',
+      '26.orchestra.lifecycle_state_changed.v1',
+      '26.orchestra.candidate_reactivated.v1',
+    ],
+    escalationPolicy:
+      '4-condition auto-admission gate failure → Panel + CEO per Locked Rule 13',
+  },
 ];
 
 // ── Deep-freeze helpers ──────────────────────────────────────────────────────
@@ -409,7 +434,7 @@ export function listAgentsByMode(mode: AgentMode): readonly AgentRecord[] {
 
 // ── Active runtime registry (PA #2.7) ────────────────────────────────────────
 //
-// The static AGENT_REGISTRY above declares all 20 charters at module load.
+// The static AGENT_REGISTRY above declares all 26 charters at module load.
 // The active registry tracks which agents are *currently wired into the
 // runtime* — i.e., have been instantiated and connected to MessageBus +
 // stores. registerAgent() is idempotent: re-registering the SAME shape is a
@@ -547,14 +572,14 @@ export function _resetActiveRegistry(): void {
 
 // ── Roster invariants — runtime self-check at module load ────────────────────
 (function validateRoster() {
-  if (AGENT_REGISTRY.length !== 25) {
+  if (AGENT_REGISTRY.length !== 26) {
     throw new Error(
-      `_registry: expected 25 agents, got ${AGENT_REGISTRY.length}`,
+      `_registry: expected 26 agents, got ${AGENT_REGISTRY.length}`,
     );
   }
   const ids = new Set<number>();
   for (const a of AGENT_REGISTRY) {
-    if (!Number.isInteger(a.id) || a.id < 1 || a.id > 25) {
+    if (!Number.isInteger(a.id) || a.id < 1 || a.id > 26) {
       throw new Error(`_registry: agent id out of range: ${a.id}`);
     }
     if (ids.has(a.id)) {
@@ -571,7 +596,7 @@ export function _resetActiveRegistry(): void {
       throw new Error(`_registry: agent ${a.id} authority must be non-empty`);
     }
   }
-  for (let i = 1; i <= 25; i++) {
+  for (let i = 1; i <= 26; i++) {
     if (!ids.has(i)) {
       throw new Error(`_registry: missing agent id ${i}`);
     }
@@ -582,9 +607,9 @@ export function _resetActiveRegistry(): void {
 //
 // SPLIT-CHARTER EXCEPTION: a small sibling registry that holds executor
 // charters whose authority is incompatible with the canonical
-// 25-agent partition (which is RECOMMEND_ONLY-dominant for shipped
+// 26-agent partition (which is RECOMMEND_ONLY-dominant for shipped
 // agents). Executors share a charter id with a primary agent (e.g. #3)
-// but carry distinct authority + mode. The 25-ID partition + the
+// but carry distinct authority + mode. The 26-ID partition + the
 // single-authority-per-charter invariant in BaseAgent.js are preserved
 // because executors are a *separate namespace* — they never enter
 // AGENT_REGISTRY, never collide with BY_ID, and never affect
@@ -598,7 +623,7 @@ export function _resetActiveRegistry(): void {
 
 export interface ExecutorRecord {
   readonly key: string;                     // unique identifier within EXECUTOR_REGISTRY
-  readonly agentId: number;                 // the primary agent this executor extends (1..25)
+  readonly agentId: number;                 // the primary agent this executor extends (1..26)
   readonly name: string;                    // human label, e.g. "Self-Renewal Executor"
   readonly mode: AgentMode;                 // typically 'cross-step' for executors
   readonly authority: readonly AuthorityLevel[];
@@ -709,7 +734,7 @@ export function listExecutors(): readonly ExecutorRecord[] {
       throw new Error(`_registry: duplicate executor key "${e.key}"`);
     }
     keys.add(e.key);
-    if (!Number.isInteger(e.agentId) || e.agentId < 1 || e.agentId > 25) {
+    if (!Number.isInteger(e.agentId) || e.agentId < 1 || e.agentId > 26) {
       throw new Error(
         `_registry: executor "${e.key}" agentId out of range: ${e.agentId}`,
       );

@@ -11,9 +11,9 @@ import { buildResearchTemplate, TARGET_CUSTOMER_PROFILE } from '../../src/lib/fo
 const matrixArtifact = {
   version: 'matrix-test',
   layer1: [
-    { surfaceId: 'verified-one', status: 'VERIFIED', tier: 'A' },
-    { surfaceId: 'partial-one', status: 'PARTIAL', tier: 'B' },
-    { surfaceId: 'unknown-one', status: 'NOT_IMPLEMENTED', tier: 'B' },
+    { surfaceId: 'verified-one', status: 'VERIFIED', tier: 'A', productId: 'saige' },
+    { surfaceId: 'partial-one', status: 'PARTIAL', tier: 'B', productIds: ['saige'] },
+    { surfaceId: 'unknown-one', status: 'NOT_IMPLEMENTED', tier: 'B', productId: 'saige' },
   ],
   layer2: [],
 };
@@ -60,11 +60,26 @@ describe('SAIGE forge Step 1 research', () => {
     });
     const currentState = output.sections.find(section => section.id === 'current-state').input;
     expect(currentState).toMatchObject({
-      productFilter: 'none-applied',
+      productFilter: 'productId',
       strengths: ['verified-one'],
       gapCandidates: ['partial-one'],
       unknownOrUnverified: ['unknown-one'],
     });
+  });
+
+  it('does not fall back to all layer1 entries when productId is missing', async () => {
+    const output = await runResearch('missing-product', completeOrchestratedInputs, {
+      matrixArtifact,
+      availableTools: configuredTools,
+    });
+    const currentState = output.sections.find(section => section.id === 'current-state').input;
+
+    expect(currentState.note).toBe('productId not in artifact.layer1');
+    expect(currentState.entries).toEqual([]);
+    expect(currentState.strengths).toEqual([]);
+    expect(currentState.gapCandidates).toEqual([]);
+    expect(currentState.unknownOrUnverified).toEqual([]);
+    expect(currentState.summary).toContain('0 verified, 0 partial, 0 unknown');
   });
 
   it('orchestrated sections return honest stub when no research tool configured', async () => {

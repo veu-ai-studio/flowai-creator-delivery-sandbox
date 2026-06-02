@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { generateBase44BatchPlan } from '../../src/lib/forge/base44BatchPlanGenerator.js';
 import { formatBuildEvidence, logBuildEvidence } from '../../src/lib/forge/buildEvidenceLogger.js';
 import { detectBuildEntryPath, generateCodeTaskDispatches, runBuild } from '../../src/lib/forge/buildRunner.js';
-import { scoreBuildStep, BUILD_BLOCKED, BUILD_OUTPUT_REQUIRED } from '../../src/lib/forge/buildStepScorer.js';
+import { scoreBuildStep, BUILD_BLOCKED, BUILD_OUTPUT_REQUIRED, __test as buildScorerTest } from '../../src/lib/forge/buildStepScorer.js';
 import { buildBuildTemplate } from '../../src/lib/forge/buildTemplate.js';
 
 const blockedDesignOutput = {
@@ -148,12 +148,37 @@ describe('SAIGE forge Step 3 build', () => {
     expect(score.buildComplete).toBe(false);
   });
 
-  it('buildComplete true when at least one output populated', async () => {
+  it('outputPopulated rejects placeholder code task entries', () => {
+    expect(buildScorerTest.outputPopulated([
+      { id: 'code-task-dispatches', input: [{ complete: false }] },
+      { id: 'base44-stub-deletions', input: [] },
+      { id: 'base44-functionalization', input: [] },
+    ])).toBe(false);
+  });
+
+  it('outputPopulated accepts at least one real code task entry', () => {
+    expect(buildScorerTest.outputPopulated([
+      { id: 'code-task-dispatches', input: [{ complete: true, verified: true, task: 'x' }] },
+      { id: 'base44-stub-deletions', input: [] },
+      { id: 'base44-functionalization', input: [] },
+    ])).toBe(true);
+  });
+
+  it('outputPopulated requires code tasks before additive evidence can count', () => {
+    expect(buildScorerTest.outputPopulated([
+      { id: 'code-task-dispatches', input: [] },
+      { id: 'base44-stub-deletions', input: ['file.js'] },
+      { id: 'base44-functionalization', input: [] },
+    ])).toBe(false);
+  });
+
+  it('buildComplete false when no real code task is populated', async () => {
     const output = await runBuild('saige', directiveDesignOutput, {
       'build-decision-log': 'Victor build decision: accept approximate batch plan for audit scaffold.',
     });
-    expect(output.buildComplete).toBe(true);
-    expect(output.readyForQualityAudit).toBe(true);
+    expect(output.buildComplete).toBe(false);
+    expect(output.readyForQualityAudit).toBe(false);
+    expect(output.flag).toBe(BUILD_OUTPUT_REQUIRED);
   });
 
   it('readyForQualityAudit = buildScore >= 95 && buildComplete === true', async () => {
@@ -167,8 +192,8 @@ describe('SAIGE forge Step 3 build', () => {
     expect(blocked.buildComplete).toBe(false);
     expect(blocked.readyForQualityAudit).toBe(false);
     expect(ready.buildScore).toBe(100);
-    expect(ready.buildComplete).toBe(true);
-    expect(ready.readyForQualityAudit).toBe(true);
+    expect(ready.buildComplete).toBe(false);
+    expect(ready.readyForQualityAudit).toBe(false);
   });
 
   it('buildEvidenceLogger produces correct format including both output types', async () => {

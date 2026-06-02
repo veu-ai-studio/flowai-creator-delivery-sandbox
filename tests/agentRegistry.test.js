@@ -6,13 +6,29 @@ import {
 } from '../src/lib/agents/_registry.ts';
 
 describe('AGENT_REGISTRY — completeness', () => {
-  it('contains exactly 25 agents', () => {
-    expect(AGENT_REGISTRY).toHaveLength(25);
+  it('contains exactly 26 agents', () => {
+    expect(AGENT_REGISTRY).toHaveLength(26);
   });
 
-  it('agent ids 1..25 are all present, exactly once each', () => {
+  it('agent ids 1..26 are all present, exactly once each', () => {
     const ids = AGENT_REGISTRY.map((a) => a.id).sort((a, b) => a - b);
-    expect(ids).toEqual(Array.from({ length: 25 }, (_, i) => i + 1));
+    expect(ids).toEqual(Array.from({ length: 26 }, (_, i) => i + 1));
+  });
+
+  it('Agent #26 has the full Orchestra Research charter shape', () => {
+    const agent = getAgent(26);
+    expect(agent).toBeDefined();
+    for (const field of ['id', 'name', 'mode', 'authority', 'requiredCredentials', 'consumes', 'produces', 'escalationPolicy']) {
+      expect(agent[field]).toBeDefined();
+    }
+    expect(agent.name).toBe('Orchestra Research Agent');
+    expect(agent.mode).toBe('always-on');
+    expect(agent.authority).toContain('recommend_only');
+    expect(agent.requiredCredentials).toEqual(['ANTHROPIC_API_KEY', 'BROWSERLESS_API_KEY']);
+  });
+
+  it('registry validator passes at module load', () => {
+    expect(AGENT_REGISTRY.map((agent) => agent.id)).toContain(26);
   });
 
   it('every agent has a non-empty name', () => {
@@ -132,7 +148,7 @@ describe('AGENT_REGISTRY — getAgent', () => {
 
   it('returns undefined for an unknown id', () => {
     expect(getAgent(0)).toBeUndefined();
-    expect(getAgent(26)).toBeUndefined();
+    expect(getAgent(27)).toBeUndefined();
     expect(getAgent(-1)).toBeUndefined();
   });
 
@@ -160,11 +176,11 @@ describe('AGENT_REGISTRY — listAgentsByMode', () => {
     }
   });
 
-  it('the three modes partition the 25 agents', () => {
+  it('the three modes partition the 26 agents', () => {
     const a = listAgentsByMode('always-on').length;
     const s = listAgentsByMode('step-owner').length;
     const c = listAgentsByMode('cross-step').length;
-    expect(a + s + c).toBe(25);
+    expect(a + s + c).toBe(26);
   });
 
   it('returned lists are frozen', () => {

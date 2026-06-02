@@ -96,22 +96,22 @@ describe('Cross-agent invariants — §3.6', () => {
     expect(['PASS','FAIL','SKIP']).toContain(verdict);
   });
 
-  it('INV-5: _registry.ts validates 25 unique IDs each in FLOWAI_ONLY ∪ EMBEDDED set', () => {
+  it('INV-5: _registry.ts validates 26 unique IDs each in FLOWAI_ONLY ∪ EMBEDDED set', () => {
     const reg = readIfExists('src/lib/agents/_registry.ts');
     let verdict = 'SKIP', actual = '_registry.ts not found';
     if (reg) {
-      // Charter rows declare `id: N,` (1..25). Executor rows declare
-      // `agentId: N,` (foreign-key reference). The invariant is "25 unique
-      // charter IDs in [1..25]", so we match `id: N,` and dedupe.
+      // Charter rows declare `id: N,` (1..26). Executor rows declare
+      // `agentId: N,` (foreign-key reference). The invariant is "26 unique
+      // charter IDs in [1..26]", so we match `id: N,` and dedupe.
       const idMatches = [...reg.matchAll(/^\s*id:\s*(\d+)\s*,/gm)].map((m) => Number(m[1]));
-      const inRange = idMatches.filter((n) => n >= 1 && n <= 25);
+      const inRange = idMatches.filter((n) => n >= 1 && n <= 26);
       const idSet = new Set(inRange);
-      verdict = idSet.size === 25 ? 'PASS' : 'FAIL';
+      verdict = idSet.size === 26 ? 'PASS' : 'FAIL';
       actual = `charter id declarations: total=${idMatches.length} inRange=${inRange.length} unique=${idSet.size}`;
     }
     record({ test_id: 'INV-5', surface: '_registry.ts', category: 'invariant',
       severity: verdict==='PASS'?'low':'high', status: verdict,
-      expected_behavior: 'validator passes at module load (25 unique IDs)',
+      expected_behavior: 'validator passes at module load (26 unique IDs)',
       actual_behavior: actual, latency_ms: 0,
       reproducer_steps: ['grep _registry.ts for agentId declarations', 'count unique values'] });
     expect(['PASS','FAIL','SKIP']).toContain(verdict);

@@ -25,9 +25,9 @@ function relevantMatrixEntries(productId, artifact) {
   }
 
   return {
-    entries: layer1,
+    entries: [],
     productFilter: 'none-applied',
-    note: `All Layer 1 surfaces treated as product context (productId: ${productId}). productId filtering available in future matrix versions.`,
+    note: 'productId not in artifact.layer1',
   };
 }
 
@@ -38,12 +38,15 @@ function summarizeCurrentState(productId, artifact) {
   const unverified = entries.filter(entry => !['VERIFIED', 'PARTIAL'].includes(entry.status));
 
   return Object.freeze({
+    entries,
     productFilter,
     note,
     strengths: verified.map(entry => entry.surfaceId),
     gapCandidates: partial.map(entry => entry.surfaceId),
     unknownOrUnverified: unverified.map(entry => entry.surfaceId),
-    summary: `${verified.length} verified surfaces, ${partial.length} partial gap candidates, ${unverified.length} unknown/unverified surfaces.`,
+    summary: entries.length === 0 && note === 'productId not in artifact.layer1'
+      ? '0 verified, 0 partial, 0 unknown — productId not in artifact.layer1'
+      : `${verified.length} verified surfaces, ${partial.length} partial gap candidates, ${unverified.length} unknown/unverified surfaces.`,
   });
 }
 
