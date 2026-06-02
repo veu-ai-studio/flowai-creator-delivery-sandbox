@@ -18,7 +18,7 @@ The Panel v2.2 second review (Runs A + B, 9/10 + 7/10 engagement) surfaced 7 spe
 
 1. **Layer 2 `PARTIAL` collision with Layer 1 `PARTIAL`** — Layer 2 now uses `IN_PROGRESS` instead. Layer 1 keeps `PARTIAL`. No semantic overlap.
 2. **AUTONOMOUS-OP circular dependency** — renamed to **END-TO-END-OP** with scope explicitly bounded: autonomous through every pipeline step *up to but not including production deploy*. Production deploy remains authorized-operator-only per §11.3. Capability is now reachable (CURRENT/IN_PROGRESS path) without requiring §11.3 amendment.
-3. **18% VERIFIED vs 95% governance threshold gap** — §11.1 now distinguishes two separate gates: **SSOT document ratification** (a truth-document gate, ratifiable at any capability completion %) vs **product ship readiness** (the 95% gate, applied per release).
+3. **0% VERIFIED vs 95% governance threshold gap** — §11.1 now distinguishes two separate gates: **SSOT document ratification** (a truth-document gate, ratifiable at any capability completion %) vs **product ship readiness** (the 95% gate, applied per release).
 4. **Fresh Build self-contradiction** — §12.1 row clarified: `FRESHBUILD-FEATURE-EXTRACTOR` is `PARTIAL` *evidence* (branch commit exists at c718bf8) of an `EXPERIMENTAL` *capability* (flag-gated OFF). PARTIAL+EXPERIMENTAL is a coherent state and explicitly stated as such.
 5. **Domain 3 commercial-model incoherence** — §13 now includes an explicit operational allocation rule.
 6. **MANUAL-OP vs MANUAL still confusable in operator UI** — Axis B `MANUAL` renamed to **MANUAL-ORCHESTRA**. Axis A keeps `MANUAL-OP`. No bare "MANUAL" anywhere.
@@ -326,7 +326,7 @@ v2.3 fix (Panel v2.2 defect 3): the document now explicitly distinguishes two se
 - Panel of 10 strategic review reaches ≥7/10 READY or MINOR-REVISIONS quorum
 - CEO ratifies
 
-**Gate A does NOT require any specific capability completion percentage.** A truth document can be ratifiable while the underlying system is at 18%, 50%, or 95% capability VERIFIED — what matters for Gate A is whether the document accurately describes the current state and the target architecture, not whether the target architecture is built yet.
+**Gate A does NOT require any specific capability completion percentage.** A truth document can be ratifiable while the underlying system is at 0%, 50%, or 95% capability VERIFIED — what matters for Gate A is whether the document accurately describes the current state and the target architecture, not whether the target architecture is built yet.
 
 **Gate B — Product Ship Readiness.** A specific product (saige-v2, reltwin-v2, any future product) is ready to ship to production when:
 - Governance score ≥95%
@@ -335,7 +335,7 @@ v2.3 fix (Panel v2.2 defect 3): the document now explicitly distinguishes two se
 - Browser test confirmation
 - authorized operator deploy approval
 
-**Gate B is per-product, per-release.** It does not gate SSOT ratification. The 18% current Layer-1-VERIFIED state in §12.1 is the *current capability state of the FlowAI platform*, not a gate against ratifying this document as a truthful record.
+**Gate B is per-product, per-release.** It does not gate SSOT ratification. The 0% current Layer-1-VERIFIED state in §12.1 is the *current capability state of the FlowAI platform*, not a gate against ratifying this document as a truthful record.
 
 ### 11.2 Operating Model
 
@@ -396,8 +396,8 @@ Current state as of W09 (2026-05-26). This is the *current capability state*, no
 
 ### 12.1 Evidence Claims (Layer 1 — Matrix Status)
 
-- `CA18-AUDIT-TRAIL` — Governance audit trail — VERIFIED
-- `CA18-DEPLOY-TRUTH` - Deploy truth MATCH + Supabase persisted (row 4a0e7a81) - VERIFIED
+- `CA18-AUDIT-TRAIL` — Governance audit trail — PARTIAL — downgraded — no evidence artifact at time of audit; evidenceUrl + verifiedAt + verifiedBy required to promote.
+- `CA18-DEPLOY-TRUTH` - Deploy truth MATCH + Supabase persisted (row 4a0e7a81) - PARTIAL — downgraded — no evidence artifact at time of audit; evidenceUrl + verifiedAt + verifiedBy required to promote.
 - `CA18-URL-ANY` — Arbitrary URL diagnosis-only behavior — PARTIAL
 - `CA18-HONEST-URL` — No fabricated improved URL — PARTIAL
 - `CA18-WEIGHTED-SCORE` — rawScore + effectiveTrustScore in governance artifact — PARTIAL
@@ -411,7 +411,7 @@ Current state as of W09 (2026-05-26). This is the *current capability state*, no
 - `FALSE-CLAIM-AUTONOMOUS-DEPLOY` — Negative control: autonomous production deploy is PROHIBITED — NOT_IMPLEMENTED
 - `FRESHBUILD-FEATURE-EXTRACTOR` — Feature Extractor schema, contract, and live-crawl wiring: **PARTIAL evidence of an EXPERIMENTAL capability (feature flag OFF by default)**. Deterministic coverage uses mocked crawler/Browserless; production Fresh Build remains disabled until Victor enables the feature flag. PARTIAL+EXPERIMENTAL is a coherent compound state — see "Coherent compound states" note in Status Label Definitions. Excluded from the §11.1 Gate B 95% completion denominator until sidecar/checker updated by ratified amendment — PARTIAL
 
-SSOT completion against Gate B 95% target: **2 / 11 release-critical Layer-1 claims VERIFIED = 18%**. FRESHBUILD-FEATURE-EXTRACTOR excluded from denominator. This 18% is the current capability state, not a blocker against Gate A SSOT ratification.
+SSOT completion against Gate B 95% target: **0 / 11 release-critical Layer-1 claims VERIFIED = 0%**. FRESHBUILD-FEATURE-EXTRACTOR excluded from denominator. This 0% is the current capability state, not a blocker against Gate A SSOT ratification.
 
 ### 12.2 Capability Planning (Layer 2)
 
