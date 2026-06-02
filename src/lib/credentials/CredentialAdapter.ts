@@ -1,5 +1,5 @@
 /**
- * W1 Credential Schema — 20-agent coverage layer
+ * W1 Credential Schema — 26-agent coverage layer
  * ---------------------------------------------------------------------------
  * Owner:    /src/lib/credentials/CredentialAdapter.ts (W1 territory)
  * Status:   Pre-agent foundation. Schema-only — runtime resolution lives in
@@ -8,7 +8,7 @@
  *
  * What this module owns:
  *   1. CREDENTIAL_CATALOG — frozen map of every credential key any of the
- *      20 agents can declare, with purpose + which agents need it.
+ *      26 agents can declare, with purpose + which agents need it.
  *   2. REGISTRY_KEY_ALIASES — normalization map for known cross-workstream
  *      naming drift between the W5 _registry.ts and the W1 inventory in
  *      docs/ENV_VARS.md. Lets W1 validate consistency without modifying
@@ -42,10 +42,10 @@ import {
 } from '../shared/CredentialAdapter.js';
 import { AGENT_REGISTRY, type AgentRecord } from '../agents/_registry.js';
 
-// ── Catalog of all credential keys used across the 20-agent roster ───────────
+// ── Catalog of all credential keys used across the 26-agent roster ───────────
 
 /**
- * Every credential key any of the 20 agents can declare. Catalog is the
+ * Every credential key any of the 26 agents can declare. Catalog is the
  * single source of truth for W1; the registry's per-agent
  * `requiredCredentials` array must contain only keys present here (after
  * alias normalization).
@@ -59,7 +59,7 @@ export interface CredentialDescriptor {
   readonly key: string;
   /** Plain-English description of what this credential is for. */
   readonly purpose: string;
-  /** Optional/required by which agents (subset of 1..25). */
+  /** Optional/required by which agents (subset of 1..26). */
   readonly requiredForAgents: readonly number[];
   /** Where the W5 runtime adapter looks: 'doppler' first, 'env_fallback' as backup. */
   readonly source: 'doppler' | 'env_fallback';
@@ -80,14 +80,14 @@ export const CREDENTIAL_CATALOG: Readonly<Record<string, CredentialDescriptor>> 
   ANTHROPIC_API_KEY: Object.freeze({
     key: 'ANTHROPIC_API_KEY',
     purpose: 'Claude (Anthropic) LLM API access for research, design, audit, GTM, and policy briefs.',
-    requiredForAgents: Object.freeze([6, 7, 8, 9, 11, 14, 15, 17, 18, 19]),
+    requiredForAgents: Object.freeze([6, 7, 8, 9, 11, 14, 15, 17, 18, 19, 26]),
     source: 'doppler',
     notes: 'Live in production today. Rotation cadence: 180 days per W1 rotation runbook.',
   }),
   BROWSERLESS_API_KEY: Object.freeze({
     key: 'BROWSERLESS_API_KEY',
     purpose: 'Headless browser rendering for Research crawls of JS-heavy SPAs.',
-    requiredForAgents: Object.freeze([6]),
+    requiredForAgents: Object.freeze([6, 26]),
     source: 'doppler',
     notes:
       'Registry _registry.ts uses the legacy alias "BROWSERLESS_TOKEN" — see ' +
@@ -108,7 +108,7 @@ export const CREDENTIAL_CATALOG: Readonly<Record<string, CredentialDescriptor>> 
     source: 'doppler',
     notes:
       'Used by the Auto Runner build/fix paths (api/, base44/) — not declared by any of the ' +
-      'current 20-agent registry entries. Listed here for inventory completeness; W1 inventory ' +
+      'current 26-agent registry entries. Listed here for inventory completeness; W1 inventory ' +
       'expansion (specs/w1-overnight/12-inventory-expansion.md) tracks this gap.',
   }),
   VERCEL_TOKEN: Object.freeze({
@@ -185,7 +185,7 @@ export function listRequiredCredentialsForAgent(agentId: number): readonly strin
 
 /**
  * Return the deduplicated, sorted union of canonical credential keys
- * required across the entire 20-agent roster.
+ * required across the entire 26-agent roster.
  */
 export function listAllRequiredCredentials(): readonly string[] {
   const set = new Set<string>();
@@ -260,8 +260,8 @@ export async function bindAgentCredentials(
   agentId: number,
   adapter: RuntimeCredentialResolver,
 ): Promise<AgentCredentialBinding> {
-  if (!Number.isInteger(agentId) || agentId < 1 || agentId > 25) {
-    throw new Error(`bindAgentCredentials: agentId must be an integer 1..25, got ${agentId}`);
+  if (!Number.isInteger(agentId) || agentId < 1 || agentId > 26) {
+    throw new Error(`bindAgentCredentials: agentId must be an integer 1..26, got ${agentId}`);
   }
   if (!adapter || typeof adapter.get !== 'function') {
     throw new Error('bindAgentCredentials: adapter must implement get(key)');
@@ -315,7 +315,7 @@ export async function bindAgentCredentials(
  *   1. Every credential key declared in any agent's `requiredCredentials`
  *      (after alias normalization) MUST exist in CREDENTIAL_CATALOG.
  *   2. Every catalog entry's `requiredForAgents` MUST reference valid agent
- *      ids in 1..25 and the corresponding agent MUST declare that credential
+ *      ids in 1..26 and the corresponding agent MUST declare that credential
  *      (after alias normalization).
  *   3. Every catalog descriptor's `key` field MUST match its catalog map key.
  *
@@ -349,10 +349,10 @@ export function validateCredentialSchema(): void {
   // Rule 2: catalog `requiredForAgents` is consistent with the registry
   for (const descriptor of Object.values(CREDENTIAL_CATALOG)) {
     for (const agentId of descriptor.requiredForAgents) {
-      if (!Number.isInteger(agentId) || agentId < 1 || agentId > 25) {
+      if (!Number.isInteger(agentId) || agentId < 1 || agentId > 26) {
         throw new Error(
           `validateCredentialSchema: catalog "${descriptor.key}" lists agent id ${agentId} ` +
-            `which is out of range 1..25.`,
+            `which is out of range 1..26.`,
         );
       }
       const agent = AGENT_REGISTRY.find((a) => a.id === agentId);

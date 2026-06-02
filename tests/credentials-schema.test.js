@@ -83,12 +83,12 @@ describe('CREDENTIAL_CATALOG shape', () => {
     }
   });
 
-  it('every descriptor.requiredForAgents id is in 1..25', () => {
+  it('every descriptor.requiredForAgents id is in 1..26', () => {
     for (const d of Object.values(CREDENTIAL_CATALOG)) {
       for (const id of d.requiredForAgents) {
         expect(Number.isInteger(id)).toBe(true);
         expect(id).toBeGreaterThanOrEqual(1);
-        expect(id).toBeLessThanOrEqual(25);
+        expect(id).toBeLessThanOrEqual(26);
       }
     }
   });
@@ -182,7 +182,8 @@ describe('listRequiredCredentialsForAgent', () => {
 
   it('throws on unknown agent id', () => {
     expect(() => listRequiredCredentialsForAgent(0)).toThrow(/unknown agent id 0/);
-    expect(() => listRequiredCredentialsForAgent(26)).toThrow(/unknown agent id 26/);
+    expect(() => listRequiredCredentialsForAgent(26)).not.toThrow();
+    expect(() => listRequiredCredentialsForAgent(27)).toThrow(/unknown agent id 27/);
     expect(() => listRequiredCredentialsForAgent(-1)).toThrow(/unknown agent id -1/);
   });
 });
@@ -192,7 +193,7 @@ describe('listRequiredCredentialsForAgent', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('listAllRequiredCredentials', () => {
-  it('returns sorted, deduped union across all 25 agents', () => {
+  it('returns sorted, deduped union across all 26 agents', () => {
     const all = listAllRequiredCredentials();
     expect(Object.isFrozen(all)).toBe(true);
     expect(all).toEqual([...all].sort());
@@ -269,9 +270,10 @@ function makeAdapterStub(secrets = {}, expectedKeys = []) {
 describe('bindAgentCredentials — input validation', () => {
   it('rejects non-integer / out-of-range agent ids', async () => {
     const adapter = makeAdapterStub();
-    await expect(bindAgentCredentials(0, adapter)).rejects.toThrow(/integer 1\.\.25/);
-    await expect(bindAgentCredentials(26, adapter)).rejects.toThrow(/integer 1\.\.25/);
-    await expect(bindAgentCredentials(1.5, adapter)).rejects.toThrow(/integer 1\.\.25/);
+    await expect(bindAgentCredentials(0, adapter)).rejects.toThrow(/integer 1\.\.26/);
+    await expect(bindAgentCredentials(27, adapter)).rejects.toThrow(/integer 1\.\.26/);
+    await expect(bindAgentCredentials(1.5, adapter)).rejects.toThrow(/integer 1\.\.26/);
+    await expect(bindAgentCredentials(26, adapter)).resolves.toBeDefined();
   });
 
   it('rejects adapters without a get() method', async () => {

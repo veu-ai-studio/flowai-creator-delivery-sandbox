@@ -3,7 +3,7 @@
  * ---------------------------------------------------------------------------
  * Status:      G2 RATIFIED + Packet 1.5 amendment + Phase 1.0 expansion
  * Owner:       /src/lib/agents/BaseAgent.js
- * Consumers:   All 25 FlowAI Super Agents (#1–#25)
+ * Consumers:   All 26 FlowAI Super Agents (#1–#26)
  *
  * AMENDMENT NOTE (Packet 1.5)
  *   Added `environment` to required deps. Validated against productScope:
@@ -18,7 +18,7 @@
  * AMENDMENT NOTE (Phase 1.0 — W5b infrastructure lock-in, 2026-05-11)
  *   Roster expanded 20 → 25. Added Ops Runner Alpha/Beta/Gamma/Delta/Epsilon
  *   (#21–#25), all step-owner mode, all embedded (non-FlowAI-only).
- *   Partition validator + Charter.id range updated to enforce EXACTLY 25 IDs.
+ *   Partition validator + Charter.id range updated to enforce EXACTLY 26 IDs.
  * ---------------------------------------------------------------------------
  */
 
@@ -50,15 +50,16 @@ export const AGENT_IDS = Object.freeze({
   OPS_RUNNER_GAMMA:        23,
   OPS_RUNNER_DELTA:        24,
   OPS_RUNNER_EPSILON:      25,
+  ORCHESTRA_RESEARCH:      26,
 });
 
 export const FLOWAI_ONLY_AGENTS = Object.freeze(new Set([4, 5, 8, 11, 12, 14, 16, 18]));
-export const EMBEDDED_AGENTS    = Object.freeze(new Set([1, 2, 3, 6, 7, 9, 10, 13, 15, 17, 19, 20, 21, 22, 23, 24, 25]));
+export const EMBEDDED_AGENTS    = Object.freeze(new Set([1, 2, 3, 6, 7, 9, 10, 13, 15, 17, 19, 20, 21, 22, 23, 24, 25, 26]));
 
 (function validateRosterPartition() {
   const all = new Set([...FLOWAI_ONLY_AGENTS, ...EMBEDDED_AGENTS]);
-  if (all.size !== 25) throw new Error('Roster partition invalid: expected 25 unique IDs');
-  for (let i = 1; i <= 25; i++) if (!all.has(i)) throw new Error(`Agent ID ${i} missing from roster`);
+  if (all.size !== 26) throw new Error('Roster partition invalid: expected 26 unique IDs');
+  for (let i = 1; i <= 26; i++) if (!all.has(i)) throw new Error(`Agent ID ${i} missing from roster`);
 })();
 
 export const AUTHORITY = Object.freeze({
@@ -242,8 +243,8 @@ export class BaseAgent {
   }
 
   static _validateCharter(c) {
-    if (!Number.isInteger(c.id) || c.id < 1 || c.id > 25) {
-      throw new Error(`Charter.id must be an integer 1–25, got ${c.id}`);
+    if (!Number.isInteger(c.id) || c.id < 1 || c.id > 26) {
+      throw new Error(`Charter.id must be an integer 1–26, got ${c.id}`);
     }
     if (typeof c.name !== 'string' || c.name.length === 0) {
       throw new Error(`Charter.name required for agent #${c.id}`);
