@@ -349,11 +349,13 @@ describe('SAIGE forge Step 3 build', () => {
         toolService: serviceReturning(rankedBuildTools),
         dispatch: dispatchReturning(dispatchCalls),
         runId: 'build-live-test',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
       });
 
       expect(output.toolSelection.mode).toBe('AUTOMATIC');
       expect(dispatchCalls).toHaveLength(1);
       expect(dispatchCalls[0].action).toBe('code-patch');
+      expect(dispatchCalls[0].payload.timeoutMs).toBe(30000);
       expect(output.codeTaskDispatches[0]).toMatchObject({
         complete: true,
         verified: true,
@@ -363,6 +365,51 @@ describe('SAIGE forge Step 3 build', () => {
       expect(output.buildComplete).toBe(true);
       expect(output.readyForQualityAudit).toBe(true);
       expect(output.evidenceSummary.liveDispatches).toBe(1);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('live build STOPs when no real sourceContent is provided', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    try {
+      await expect(runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedBuildTools),
+        dispatch: dispatchReturning([]),
+        runId: 'build-no-source-test',
+      })).rejects.toThrow(/real sourceContent is required/);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('live build STOPs when code-patch returns placeholder content', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    try {
+      await expect(runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedBuildTools),
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+        dispatch: async () => ({
+          ok: true,
+          action: 'code-patch',
+          member: 'claude-code',
+          data: {
+            filePath: 'src/App.jsx',
+            patchedContent: 'placeholder demo content',
+            rationale: 'placeholder',
+            usage: { input_tokens: 1, output_tokens: 1 },
+          },
+        }),
+        runId: 'build-placeholder-result-test',
+      })).rejects.toThrow(/placeholder output/);
     } finally {
       if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = oldKey;

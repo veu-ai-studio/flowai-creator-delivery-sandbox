@@ -158,6 +158,15 @@ function semanticEmpty(value) {
   return false;
 }
 
+function containsPlaceholderText(value) {
+  const text = typeof value === 'string'
+    ? value
+    : value && typeof value === 'object'
+      ? JSON.stringify(value)
+      : '';
+  return /\b(simulated|demo|mock|placeholder)\b/i.test(text);
+}
+
 function assertLiveDispatchResult(result, action) {
   if (!result || result.ok !== true || result.deferred === true) {
     const status = typeof result?.status === 'number' ? ` status=${result.status}` : '';
@@ -168,6 +177,9 @@ function assertLiveDispatchResult(result, action) {
   }
   if (semanticEmpty(result.data)) {
     throw new Error(`P2 live execution STOP: ${action} dispatch returned semantically empty output`);
+  }
+  if (containsPlaceholderText(result.data)) {
+    throw new Error(`P2 live execution STOP: ${action} dispatch returned placeholder output`);
   }
   return result;
 }
@@ -183,13 +195,17 @@ function ensureBudget(budget) {
 
 async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config) {
   if (!Array.isArray(tasks)) return tasks;
+  if (typeof config.sourceContent !== 'string' || config.sourceContent.trim().length === 0 || containsPlaceholderText(config.sourceContent)) {
+    throw new Error('P2 live execution STOP: real sourceContent is required for live build code-patch');
+  }
   const liveTasks = [];
   for (const task of tasks) {
     budget.dispatchCount += 1;
     ensureBudget(budget);
     const result = assertLiveDispatchResult(await dispatchFn('code-patch', {
       filePath: config.targetFilePath ?? 'src/App.jsx',
-      sourceContent: config.sourceContent ?? '// FlowAI build target placeholder\n',
+      sourceContent: config.sourceContent,
+      timeoutMs: 30000,
       framework: config.framework ?? 'vite-react',
       issueSpec: {
         category: 'flowai-build-task',

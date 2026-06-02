@@ -120,4 +120,26 @@ describe('Orchestra live capability dispatch', () => {
     expect(wiredFalseIds).not.toContain(result.member);
     expect(result.deferred).not.toBe(true);
   });
+
+  it('threads code-patch timeoutMs only when caller supplies one', async () => {
+    mockClaudeJson({
+      patchedContent: 'export default function App() { return <main>Patched</main>; }',
+      rationale: 'Patched with caller timeout.',
+    });
+
+    const result = await dispatch('code-patch', {
+      filePath: 'src/App.jsx',
+      sourceContent: 'export default function App() { return <main>Current</main>; }',
+      timeoutMs: 30000,
+      issueSpec: {
+        category: 'test',
+        severity: 'medium',
+        evidence: 'test evidence',
+        fixSpec: {},
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(callClaude).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: 30000 }));
+  });
 });

@@ -152,6 +152,17 @@ function assertLiveDispatchResult(result, action) {
   return result;
 }
 
+function isCrawlClassTool(tool) {
+  if (!tool) return false;
+  const caps = Array.isArray(tool.capabilities) ? tool.capabilities.join(' ') : '';
+  const text = `${tool.platform_type ?? ''} ${tool.platform_name ?? ''} ${tool.toolName ?? ''} ${tool.name ?? ''} ${caps}`;
+  return /crawl|browser|browserless|playwright|spider|scrape/i.test(text);
+}
+
+function researchUrlFromConfig(config = {}) {
+  return config.url ?? config.productUrl ?? config.productContext?.url ?? config.normalizedInput?.url ?? null;
+}
+
 function ensureBudget(budget) {
   if (budget.dispatchCount > P2_MAX_DISPATCHES_PER_RUN) {
     throw new Error(`P2 live execution STOP: dispatch count exceeded ${P2_MAX_DISPATCHES_PER_RUN}`);
@@ -179,6 +190,22 @@ async function runLiveResearchSection(section, context, budget, dispatchFn) {
     selectedTool: context.selectedTool?.platform_name ?? context.selectedTool?.toolName ?? null,
     action: result.action,
     member: result.member,
+  });
+}
+
+async function runLiveCrawl(url, budget, dispatchFn) {
+  budget.dispatchCount += 1;
+  ensureBudget(budget);
+  const result = assertLiveDispatchResult(await dispatchFn('crawl', { url }), 'crawl');
+  budget.costUsd += usageCostUsd(result.data);
+  ensureBudget(budget);
+  return Object.freeze({
+    complete: true,
+    verified: true,
+    url,
+    action: result.action,
+    member: result.member,
+    content: result.data,
   });
 }
 
@@ -245,8 +272,14 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
   const shortCircuit = shouldShortCircuitToolSelection(toolSelection);
   const dispatchFn = config.dispatch ?? orchestraDispatch;
   const budget = { dispatchCount: 0, costUsd: 0 };
+  const researchUrl = researchUrlFromConfig(config);
+  let crawlResult = null;
 
   if (liveDispatch) assertAnthropicReady();
+
+  if (liveDispatch && researchUrl && (isCrawlClassTool(toolSelection?.selection) || researchUrl)) {
+    crawlResult = await runLiveCrawl(researchUrl, budget, dispatchFn);
+  }
 
   for (const section of template.sections) {
     if (section.id === 'current-state') {
@@ -254,6 +287,8 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
     } else if (section.id === 'research-tool-selection') {
       selectedTool = toolSelection?.selection ?? researchToolInput(availableTools);
       populated.push(cloneSection(section, selectedTool));
+    } else if (section.id === 'crawl-result') {
+      populated.push(cloneSection(section, crawlResult));
     } else if (section.id === 'selected-tool') {
       populated.push(cloneSection(section, toolSelection));
     } else if (section.source === 'manual') {
@@ -274,6 +309,7 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
         populated.push(cloneSection(section, await runLiveResearchSection(section, {
           productId,
           currentState: populated.find(item => item.id === 'current-state')?.input ?? null,
+          crawlResult,
           targetCustomer: populated.find(item => item.id === 'target-customer')?.input ?? null,
           selectedTool,
         }, budget, dispatchFn)));
@@ -283,7 +319,10 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
     }
   }
 
-  const scorableSections = populated.filter(section => section.id !== 'selected-tool');
+  const scorableSections = populated.filter(section =>
+    section.id !== 'selected-tool' &&
+    !(section.id === 'crawl-result' && section.input == null)
+  );
   const scorer = scoreForgeStep({ stepId: RESEARCH_STEP_ID, sections: scorableSections });
   const manualSections = populated.filter(section => section.source === 'manual');
   const manualComplete = manualSections.every(section => !(section.input && section.input.complete === false));

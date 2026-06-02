@@ -33,6 +33,14 @@ export function buildResearchTemplate(productOrId, researchOutput) {
         evidenceTier: 'B',
       }),
       Object.freeze({
+        id: 'crawl-result',
+        label: 'Live Crawl Result',
+        source: 'auto',
+        prompt: 'Live crawl output from the selected crawl-class tool or input URL.',
+        input: null,
+        evidenceTier: 'B',
+      }),
+      Object.freeze({
         id: 'target-customer',
         label: 'Target Customer Profile',
         source: 'manual',

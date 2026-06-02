@@ -192,7 +192,7 @@ ${JSON.stringify(context ?? {}, null, 2)}`;
 }
 
 async function codePatch(payload) {
-  const { filePath, sourceContent, issueSpec, framework } = payload || {};
+  const { filePath, sourceContent, issueSpec, framework, timeoutMs } = payload || {};
   if (typeof filePath !== 'string' || !filePath) return memberError(id, 'code-patch', 'filePath required');
   if (typeof sourceContent !== 'string')           return memberError(id, 'code-patch', 'sourceContent required');
   if (!issueSpec || typeof issueSpec !== 'object') return memberError(id, 'code-patch', 'issueSpec required');
@@ -201,7 +201,7 @@ async function codePatch(payload) {
   const prompt = buildPatchPrompt({ filePath, sourceContent, issueSpec, framework });
   let response;
   try {
-    response = await callClaude({ prompt, maxTokens: 4000, complexity: 'routine' });
+    response = await callClaude({ prompt, maxTokens: 4000, complexity: 'routine', timeoutMs: timeoutMs ?? undefined });
   } catch (e) {
     return memberError(id, 'code-patch', e.message || String(e));
   }

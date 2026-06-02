@@ -72,6 +72,7 @@ describe('SAIGE forge Step 1 research', () => {
     expect(template.sections.map(section => section.id)).toEqual([
       'current-state',
       'research-tool-selection',
+      'crawl-result',
       'target-customer',
       'market-gaps',
       'regulatory-requirements',
@@ -278,6 +279,94 @@ describe('SAIGE forge Step 1 research', () => {
         member: 'claude-code',
       });
       expect(output.evidenceSummary.liveDispatches).toBe(5);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('AUTOMATIC research with URL dispatches crawl and populates crawl-result', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const dispatchCalls = [];
+    const dispatch = async (action, payload) => {
+      dispatchCalls.push({ action, payload });
+      if (action === 'crawl') {
+        return {
+          ok: true,
+          action,
+          member: 'browserless',
+          data: {
+            html: '<main>Real product page</main>',
+            text: 'Real product page',
+            url: payload.url,
+          },
+        };
+      }
+      return {
+        ok: true,
+        action,
+        member: 'claude-code',
+        data: {
+          summary: 'Live analysis output',
+          findings: ['Crawl-informed finding'],
+          evidenceRef: 'analysis-fixture',
+          usage: { input_tokens: 100, output_tokens: 50 },
+        },
+      };
+    };
+
+    try {
+      const output = await runResearch('neutral-product', {}, {
+        matrixArtifact,
+        toolService: serviceReturning([
+          { rank: 1, platform_name: 'Browserless', platform_type: 'crawl', performance_score: 9, target_classes: ['generic_url'] },
+        ]),
+        dispatch,
+        url: 'https://example.com',
+        runId: 'research-crawl-test',
+      });
+
+      expect(dispatchCalls[0]).toMatchObject({
+        action: 'crawl',
+        payload: { url: 'https://example.com' },
+      });
+      const crawlResult = output.sections.find(section => section.id === 'crawl-result').input;
+      expect(crawlResult).toMatchObject({
+        complete: true,
+        verified: true,
+        action: 'crawl',
+        member: 'browserless',
+        url: 'https://example.com',
+      });
+      expect(crawlResult.content.text).toBe('Real product page');
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('Browserless 401, 5xx, and deferred crawl results STOP research', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const blockedResults = [
+      { ok: false, action: 'crawl', member: 'browserless', status: 401, error: 'unauthorized' },
+      { ok: false, action: 'crawl', member: 'browserless', status: 503, error: 'service unavailable' },
+      { ok: false, action: 'crawl', member: 'browserless', deferred: true, error: 'not yet wired' },
+    ];
+
+    try {
+      for (const blockedResult of blockedResults) {
+        await expect(runResearch('neutral-product', {}, {
+          matrixArtifact,
+          toolService: serviceReturning([
+            { rank: 1, platform_name: 'Browserless', platform_type: 'crawl', performance_score: 9, target_classes: ['generic_url'] },
+          ]),
+          dispatch: async () => blockedResult,
+          url: 'https://example.com',
+          runId: `research-crawl-stop-${blockedResult.status ?? 'deferred'}`,
+        })).rejects.toThrow(/P2 live execution STOP/);
+      }
     } finally {
       if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = oldKey;
