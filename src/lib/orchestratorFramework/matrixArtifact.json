@@ -1,24 +1,26 @@
 {
-  "version": "040db06",
-  "generatedAt": "2026-05-29T17:53:57.078Z",
+  "version": "b41bc99",
+  "generatedAt": "2026-06-02T00:39:34.107Z",
   "layer1": [
     {
       "layer": 1,
       "surfaceId": "ca18-audit-trail",
       "name": "Governance audit trail",
       "description": "Governance audit trail — VERIFIED",
-      "status": "VERIFIED",
+      "status": "PARTIAL",
       "tier": "B",
-      "ratificationState": "CANONICAL"
+      "ratificationState": "CANONICAL",
+      "note": "downgraded — no evidence artifact at time of audit; evidenceUrl + verifiedAt + verifiedBy required to promote"
     },
     {
       "layer": 1,
       "surfaceId": "ca18-deploy-truth",
       "name": "Deploy truth MATCH + Supabase persisted (row 4a0e7a81)",
       "description": "Deploy truth MATCH + Supabase persisted (row 4a0e7a81) - VERIFIED",
-      "status": "VERIFIED",
+      "status": "PARTIAL",
       "tier": "A",
-      "ratificationState": "CANONICAL"
+      "ratificationState": "CANONICAL",
+      "note": "downgraded — no evidence artifact at time of audit; evidenceUrl + verifiedAt + verifiedBy required to promote"
     },
     {
       "layer": 1,

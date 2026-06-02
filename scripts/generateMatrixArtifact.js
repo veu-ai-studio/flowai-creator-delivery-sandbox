@@ -23,6 +23,11 @@ const CODED_ROW_RE = new RegExp('^`([^`]+)`\\s*(?:\\u2014|-)\\s*(.+)$');
 const STATUS_RE = /\b(VERIFIED|PARTIAL|STUBBED|SIMULATED|NOT_IMPLEMENTED|DEFERRED|CURRENT|IN_PROGRESS|TARGET|ROADMAP|EXPERIMENTAL|DESIGN_ONLY|PROPOSED-DEFERRED|PENDING-RATIFICATION)\b/i;
 const TIER_RE = /\bTier\s*[:=-]?\s*([ABC])\b|\bTIER-([ABC])\b|\b\(([ABC])\)\b/i;
 const PERSISTENCE_TERMS_RE = /\b(entity|entities|store|stored|persist|persisted|record|records|database|db|supabase|vercel kv|kv|storage)\b/i;
+const DOWNGRADED_WITHOUT_EVIDENCE = Object.freeze(new Set([
+  'ca18-audit-trail',
+  'ca18-deploy-truth',
+]));
+const DOWNGRADED_WITHOUT_EVIDENCE_NOTE = 'downgraded — no evidence artifact at time of audit; evidenceUrl + verifiedAt + verifiedBy required to promote';
 
 function normalizeMojibake(value) {
   return String(value ?? '')
@@ -114,6 +119,11 @@ function parseBullet(line, layer) {
     entry.ratificationState = 'PROPOSED-DEFERRED';
   } else {
     entry.ratificationState = 'CANONICAL';
+  }
+
+  if (DOWNGRADED_WITHOUT_EVIDENCE.has(entry.surfaceId)) {
+    entry.status = 'PARTIAL';
+    entry.note = DOWNGRADED_WITHOUT_EVIDENCE_NOTE;
   }
 
   if (!declaredTier) warnDefaultTier(entry);
