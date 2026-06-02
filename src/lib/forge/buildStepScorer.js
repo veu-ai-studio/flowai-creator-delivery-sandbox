@@ -23,11 +23,24 @@ function populated(value) {
   return typeof value === 'string' ? value.trim().length > 0 : value !== null && value !== undefined;
 }
 
+function isRealEntry(entry) {
+  if (entry === null || entry === undefined) return false;
+  if (typeof entry === 'string') return entry.trim().length > 0;
+  if (typeof entry === 'object') {
+    if (entry.complete === false || entry.verified === false) return false;
+    return entry.complete === true && entry.verified !== false;
+  }
+  return false;
+}
+
+function realEntryCount(value) {
+  if (Array.isArray(value)) return value.filter(isRealEntry).length;
+  return isRealEntry(value) ? 1 : 0;
+}
+
 function outputPopulated(sections) {
   const codeTasks = sectionById(sections, 'code-task-dispatches')?.input;
-  const stubDeletions = sectionById(sections, 'base44-stub-deletions')?.input;
-  const functionalization = sectionById(sections, 'base44-functionalization')?.input;
-  return populated(codeTasks) || populated(stubDeletions) || populated(functionalization);
+  return realEntryCount(codeTasks) >= 1;
 }
 
 function entryConfirmed(entryPath) {
@@ -80,4 +93,6 @@ export const __test = Object.freeze({
   hasMinimumBuildDirectiveFromDesign,
   outputPopulated,
   populated,
+  isRealEntry,
+  realEntryCount,
 });
