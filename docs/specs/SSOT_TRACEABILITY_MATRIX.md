@@ -396,8 +396,8 @@ Current state as of W09 (2026-05-26). This is the *current capability state*, no
 
 ### 12.1 Evidence Claims (Layer 1 — Matrix Status)
 
-- `CA18-AUDIT-TRAIL` — Governance audit trail — VERIFIED
-- `CA18-DEPLOY-TRUTH` - Deploy truth MATCH + Supabase persisted (row 4a0e7a81) - VERIFIED
+- `CA18-AUDIT-TRAIL` — Governance audit trail — PARTIAL — downgraded — no evidence artifact at time of audit; evidenceUrl + verifiedAt + verifiedBy required to promote.
+- `CA18-DEPLOY-TRUTH` - Deploy truth MATCH + Supabase persisted (row 4a0e7a81) - PARTIAL — downgraded — no evidence artifact at time of audit; evidenceUrl + verifiedAt + verifiedBy required to promote.
 - `CA18-URL-ANY` — Arbitrary URL diagnosis-only behavior — PARTIAL
 - `CA18-HONEST-URL` — No fabricated improved URL — PARTIAL
 - `CA18-WEIGHTED-SCORE` — rawScore + effectiveTrustScore in governance artifact — PARTIAL
