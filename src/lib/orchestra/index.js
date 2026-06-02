@@ -55,6 +55,9 @@ export async function dispatch(action, payload, opts = {}) {
   // Deploys → vercel.  Crawl/screenshot → browserless.  Interact → playwright.
   // Source retrieval — try the URL-specific hints first; fall back to vercel.
   const preferred = {
+    'analyze': claudeCode,
+    'design': claudeCode,
+    'score': claudeCode,
     'code-patch': claudeCode,
     'generate-from-scratch': claudeCode,
     'deploy': vercel,
