@@ -1,8 +1,13 @@
 import { buildDesignTemplate, DESIGN_STEP_ID } from './designTemplate.js';
 import { scoreDesignStep } from './designStepScorer.js';
 import { selectForgeStepTool } from './toolSelection.js';
+import { dispatch as orchestraDispatch } from '../orchestra/index.js';
+import { MODES } from '../tools/ToolIntelligenceService.js';
 
 const NO_DESIGN_TOOL_REASON = 'No AI design tool configured; manual input required';
+const P2_MAX_DISPATCHES_PER_RUN = 12;
+const CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION = 3;
+const CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION = 15;
 
 function cloneSection(section, input) {
   return Object.freeze({ ...section, input });
@@ -122,6 +127,82 @@ function orchestratedInputFor(section, manualInputs, selectedTool) {
   });
 }
 
+function isAutomaticToolSelection(toolSelection) {
+  return toolSelection?.mode === MODES.AUTOMATIC;
+}
+
+function shouldShortCircuitToolSelection(toolSelection) {
+  return toolSelection && !isAutomaticToolSelection(toolSelection);
+}
+
+function assertAnthropicReady() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('P2 live execution STOP: ANTHROPIC_API_KEY is required for live design dispatch');
+  }
+}
+
+function usageCostUsd(data = {}) {
+  const usage = data.usage ?? {};
+  const inputTokens = Number(usage.input_tokens ?? usage.inputTokens ?? 0);
+  const outputTokens = Number(usage.output_tokens ?? usage.outputTokens ?? 0);
+  return ((inputTokens / 1_000_000) * CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION) +
+    ((outputTokens / 1_000_000) * CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION);
+}
+
+function semanticEmpty(value) {
+  if (value == null) return true;
+  if (typeof value === 'string') return value.trim().length === 0;
+  if (Array.isArray(value)) return value.length === 0 || value.every(semanticEmpty);
+  if (typeof value === 'object') return Object.values(value).every(semanticEmpty);
+  return false;
+}
+
+function assertLiveDispatchResult(result, action) {
+  if (!result || result.ok !== true || result.deferred === true) {
+    const status = typeof result?.status === 'number' ? ` status=${result.status}` : '';
+    if (result?.status === 401 || (typeof result?.status === 'number' && result.status >= 500)) {
+      throw new Error(`P2 live execution STOP: ${action} dispatch failed with blocked HTTP${status}`);
+    }
+    throw new Error(`P2 live execution STOP: ${action} dispatch failed (${result?.error ?? 'unknown error'})`);
+  }
+  if (semanticEmpty(result.data)) {
+    throw new Error(`P2 live execution STOP: ${action} dispatch returned semantically empty output`);
+  }
+  return result;
+}
+
+function ensureBudget(budget) {
+  if (budget.dispatchCount > P2_MAX_DISPATCHES_PER_RUN) {
+    throw new Error(`P2 live execution STOP: dispatch count exceeded ${P2_MAX_DISPATCHES_PER_RUN}`);
+  }
+  if (budget.costUsd > 5) {
+    throw new Error('P2 live execution STOP: derived cost exceeded $5 P2 soft cap');
+  }
+}
+
+async function runLiveDesign(researchOutput, selectedTool, budget, dispatchFn) {
+  budget.dispatchCount += 1;
+  ensureBudget(budget);
+  const result = assertLiveDispatchResult(await dispatchFn('design', {
+    spec: {
+      productId: researchOutput.productId ?? null,
+      targetCustomer: targetCustomerFrom(researchOutput),
+      currentState: currentStateFrom(researchOutput),
+    },
+    context: {
+      researchOutput,
+      selectedTool,
+    },
+  }), 'design');
+  budget.costUsd += usageCostUsd(result.data);
+  ensureBudget(budget);
+  return Object.freeze({
+    action: result.action,
+    member: result.member,
+    data: result.data,
+  });
+}
+
 function decisionLogInput(manualInputs) {
   const value = manualInputs?.['design-decision-log'];
   if (Array.isArray(value)) return value.filter(item => stringifyInput(item).trim().length > 0);
@@ -141,12 +222,54 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
     undServedFirstEnforce: true,
   });
   const selectedTool = toolSelection?.selection ?? selectDesignTool(config.availableTools ?? []);
+  const liveDispatch = toolSelection && isAutomaticToolSelection(toolSelection);
+  const shortCircuit = shouldShortCircuitToolSelection(toolSelection);
+  const dispatchFn = config.dispatch ?? orchestraDispatch;
+  const budget = { dispatchCount: 0, costUsd: 0 };
+  let liveDesignData = null;
+
+  if (liveDispatch) {
+    assertAnthropicReady();
+    liveDesignData = await runLiveDesign(researchOutput, selectedTool, budget, dispatchFn);
+  }
+
   const sections = template.sections.map(section => {
     if (section.id === 'design-principles') return cloneSection(section, deriveDesignPrinciples(researchOutput));
     if (section.id === 'design-gaps') return cloneSection(section, deriveDesignGaps(researchOutput));
     if (section.id === 'design-decision-log') return cloneSection(section, decisionLogInput(manualInputs));
     if (section.id === 'selected-tool') return cloneSection(section, toolSelection);
-    if (section.source === 'orchestrated') return cloneSection(section, orchestratedInputFor(section, manualInputs, selectedTool));
+    if (section.source === 'orchestrated') {
+      const manualValue = manualInputs?.[section.id];
+      if (manualValue !== undefined && manualValue !== null && !(typeof manualValue === 'string' && manualValue.trim() === '')) {
+        return cloneSection(section, manualValue);
+      }
+      if (shortCircuit) {
+        return cloneSection(section, Object.freeze({
+          complete: false,
+          verified: false,
+          reason: 'tool selection requires operator action before live dispatch',
+          toolSelection,
+          sectionId: section.id,
+        }));
+      }
+      if (liveDesignData) {
+        const valueBySection = {
+          'feature-priorities': liveDesignData.data.featurePriorities,
+          'user-flows': liveDesignData.data.userFlows,
+          'technical-requirements': liveDesignData.data.technicalRequirements,
+        };
+        return cloneSection(section, Object.freeze({
+          complete: true,
+          verified: true,
+          input: valueBySection[section.id],
+          evidenceRef: liveDesignData.data.evidenceRef,
+          selectedTool: selectedTool?.platform_name ?? selectedTool?.toolName ?? null,
+          action: liveDesignData.action,
+          member: liveDesignData.member,
+        }));
+      }
+      return cloneSection(section, orchestratedInputFor(section, manualInputs, selectedTool));
+    }
     return cloneSection(section, section.input ?? null);
   });
   const scorableSections = sections.filter(section => section.id !== 'selected-tool');
@@ -172,6 +295,8 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
       derivedSections: sections.filter(section => section.source === 'derived').length,
       manualSections: sections.filter(section => section.source === 'manual').length,
       researchGaps: deriveDesignGaps(researchOutput).length,
+      liveDispatches: budget.dispatchCount,
+      estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
     matrixArtifactVersion: String(researchOutput.matrixArtifactVersion ?? 'unknown'),
   });
