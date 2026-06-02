@@ -24,6 +24,36 @@ const configuredTools = [
   { toolId: 'offline-tool', toolName: 'Offline Tool', performanceScore: 1, costPerQuery: 0, available: false },
 ];
 
+const rankedResearchTools = [
+  { rank: 1, platform_name: 'Perplexity AI', performance_score: 9, target_classes: ['generic_url'] },
+];
+
+function serviceReturning(selection, calls = []) {
+  return {
+    async getTopTool(step, targetClass, mode) {
+      calls.push({ step, targetClass, mode });
+      return selection;
+    },
+  };
+}
+
+function dispatchReturning(calls = []) {
+  return async (action, payload) => {
+    calls.push({ action, payload });
+    return {
+      ok: true,
+      action,
+      member: 'claude-code',
+      data: {
+        summary: `Live ${action} output`,
+        findings: [`${payload.prompt} finding`],
+        evidenceRef: `${action}-fixture`,
+        usage: { input_tokens: 100, output_tokens: 50 },
+      },
+    };
+  };
+}
+
 const completeOrchestratedInputs = {
   'market-gaps': 'SAIGE must close the gap between ESG simulations and persisted workflow evidence.',
   'regulatory-requirements': 'GRI, CDP, TCFD, SEC climate rule, CSRD, and customer-specific audit evidence apply.',
@@ -220,10 +250,58 @@ describe('SAIGE forge Step 1 research', () => {
         return [{ rank: 1, platform_name: 'Perplexity AI', performance_score: 9, target_classes: ['generic_url'] }];
       },
     };
-    const output = await runResearch('saige', {}, { matrixArtifact, toolService: service, runId: 'research-test' });
+    const output = await runResearch('saige', {}, { matrixArtifact, toolService: service, runId: 'research-test', toolIntelligenceMode: 'GUIDED' });
     expect(output.toolSelection).toMatchObject({
       stepKey: 'research',
       undServedFirstApplied: true,
     });
+  });
+
+  it('AUTOMATIC tool selection dispatches live analysis instead of short-circuiting', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runResearch('neutral-product', {}, {
+        matrixArtifact,
+        toolService: serviceReturning(rankedResearchTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        runId: 'research-live-test',
+      });
+
+      expect(output.toolSelection.mode).toBe('AUTOMATIC');
+      expect(dispatchCalls.length).toBeGreaterThan(0);
+      expect(dispatchCalls.every(call => call.action === 'analyze')).toBe(true);
+      expect(output.sections.find(section => section.id === 'market-gaps').input).toMatchObject({
+        complete: true,
+        verified: true,
+        member: 'claude-code',
+      });
+      expect(output.evidenceSummary.liveDispatches).toBe(5);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('GUIDED and MANUAL tool selection short-circuit without live dispatch', async () => {
+    for (const mode of ['GUIDED', 'MANUAL']) {
+      const dispatchCalls = [];
+      const output = await runResearch('neutral-product', {}, {
+        matrixArtifact,
+        toolService: serviceReturning(rankedResearchTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        runId: `research-${mode.toLowerCase()}-test`,
+        toolIntelligenceMode: mode,
+      });
+
+      expect(output.toolSelection.mode).toBe(mode);
+      expect(dispatchCalls).toEqual([]);
+      expect(output.sections.find(section => section.id === 'market-gaps').input).toMatchObject({
+        complete: false,
+        verified: false,
+        reason: 'tool selection requires operator action before live dispatch',
+      });
+    }
   });
 });
