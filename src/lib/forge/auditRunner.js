@@ -4,6 +4,19 @@ import { scoreDesignStep } from './designStepScorer.js';
 import { buildAuditTemplate, AUDIT_STEP_ID } from './auditTemplate.js';
 import { AUDIT_QUEUED, scoreAuditStep } from './auditStepScorer.js';
 import { selectForgeStepTool } from './toolSelection.js';
+import { dispatch as orchestraDispatch } from '../orchestra/index.js';
+import { MODES } from '../tools/ToolIntelligenceService.js';
+
+const P2_MAX_DISPATCHES_PER_RUN = 12;
+const CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION = 3;
+const CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION = 15;
+const QUALITY_AUDIT_DIMENSIONS = Object.freeze([
+  'UI/UX',
+  'API',
+  'Logic',
+  'Business Value',
+  'Security Posture',
+]);
 
 function cloneSection(section, input) {
   return Object.freeze({ ...section, input });
@@ -141,6 +154,96 @@ function withAuditToolMetadata(toolSelection, buildBlocked) {
   });
 }
 
+function isAutomaticToolSelection(toolSelection) {
+  return toolSelection?.mode === MODES.AUTOMATIC;
+}
+
+function assertAnthropicReady() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('P2 live execution STOP: ANTHROPIC_API_KEY is required for live audit scoring dispatch');
+  }
+}
+
+function usageCostUsd(data = {}) {
+  const usage = data.usage ?? {};
+  const inputTokens = Number(usage.input_tokens ?? usage.inputTokens ?? 0);
+  const outputTokens = Number(usage.output_tokens ?? usage.outputTokens ?? 0);
+  return ((inputTokens / 1_000_000) * CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION) +
+    ((outputTokens / 1_000_000) * CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION);
+}
+
+function semanticEmpty(value) {
+  if (value == null) return true;
+  if (typeof value === 'string') return value.trim().length === 0;
+  if (Array.isArray(value)) return value.length === 0 || value.every(semanticEmpty);
+  if (typeof value === 'object') return Object.values(value).every(semanticEmpty);
+  return false;
+}
+
+function assertLiveDispatchResult(result, action) {
+  if (!result || result.ok !== true || result.deferred === true) {
+    const status = typeof result?.status === 'number' ? ` status=${result.status}` : '';
+    if (result?.status === 401 || (typeof result?.status === 'number' && result.status >= 500)) {
+      throw new Error(`P2 live execution STOP: ${action} dispatch failed with blocked HTTP${status}`);
+    }
+    throw new Error(`P2 live execution STOP: ${action} dispatch failed (${result?.error ?? 'unknown error'})`);
+  }
+  if (semanticEmpty(result.data)) {
+    throw new Error(`P2 live execution STOP: ${action} dispatch returned semantically empty output`);
+  }
+  return result;
+}
+
+function ensureBudget(budget) {
+  if (budget.dispatchCount > P2_MAX_DISPATCHES_PER_RUN) {
+    throw new Error(`P2 live execution STOP: dispatch count exceeded ${P2_MAX_DISPATCHES_PER_RUN}`);
+  }
+  if (budget.costUsd > 5) {
+    throw new Error('P2 live execution STOP: derived cost exceeded $5 P2 soft cap');
+  }
+}
+
+function promptForDimension(dimension) {
+  const base = 'Comparability anchor: 10 = ships per Section 10 governance threshold; deduct per Section 6 detector set.';
+  if (dimension === 'Business Value') {
+    return `${base} Score Business Value against product goals, Step 1 research output, and Step 2 design output. Do not free-form guess market value.`;
+  }
+  return `${base} Score ${dimension} against the actual build evidence and audit checks.`;
+}
+
+async function runDimensionScores(buildOutput, config, budget, dispatchFn) {
+  const scores = [];
+  for (const dimension of QUALITY_AUDIT_DIMENSIONS) {
+    budget.dispatchCount += 1;
+    ensureBudget(budget);
+    const result = assertLiveDispatchResult(await dispatchFn('score', {
+      dimension,
+      prompt: promptForDimension(dimension),
+      context: {
+        productGoals: config.productGoals ?? null,
+        researchOutput: config.researchOutput ?? null,
+        designOutput: config.designOutput ?? null,
+        buildOutput,
+      },
+    }), 'score');
+    const data = result.data;
+    if (typeof data.score !== 'number' || typeof data.justification !== 'string' || typeof data.evidenceRef !== 'string') {
+      throw new Error(`P2 live execution STOP: score dispatch returned malformed schema for ${dimension}`);
+    }
+    budget.costUsd += usageCostUsd(data);
+    ensureBudget(budget);
+    scores.push(Object.freeze({
+      dimension,
+      score: data.score,
+      justification: data.justification,
+      evidenceRef: data.evidenceRef,
+      action: result.action,
+      member: result.member,
+    }));
+  }
+  return Object.freeze(scores);
+}
+
 function findingsFrom(groups) {
   const checks = Object.values(groups).flatMap(value => Array.isArray(value) ? value : [value]);
   const passed = checks.filter(item => item.status === 'PASS').length;
@@ -169,6 +272,13 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
     undServedFirstEnforce: true,
     pipelineSubSteps: ['static-analysis', 'browser-check', 'evidence-verify'],
   }), entryState.buildBlocked);
+  const dispatchFn = config.dispatch ?? orchestraDispatch;
+  const budget = { dispatchCount: 0, costUsd: 0 };
+  const liveDimensionScoring = toolSelection && isAutomaticToolSelection(toolSelection) && entryState.buildBlocked !== true;
+  if (liveDimensionScoring) assertAnthropicReady();
+  const dimensionScores = liveDimensionScoring
+    ? await runDimensionScores(buildOutput, config, budget, dispatchFn)
+    : Object.freeze([]);
   const codeChecks = codeCompletenessChecks(buildOutput);
   const evidenceChecks = evidenceCompletenessChecks(buildOutput);
   const gateChecks = await gateValidityChecks(buildOutput, config);
@@ -214,6 +324,7 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
     batchPlanAdvisoryItems: advisoryItems,
     renewalOutputCompatibility,
     auditFindings,
+    dimensionScores,
     auditDecisionLog: decisionLog,
     matrixArtifactVersion: String(buildOutput.matrixArtifactVersion ?? 'unknown'),
     flag: entryState.flag === AUDIT_QUEUED ? AUDIT_QUEUED : undefined,
@@ -232,6 +343,8 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
       advisoryItems: advisoryItems.length,
       notApplicableItems: renewalOutputCompatibility.status === 'NOT_APPLICABLE' ? 1 : 0,
       failedChecks: score.failedChecks.length,
+      liveDispatches: budget.dispatchCount,
+      estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
   });
 }

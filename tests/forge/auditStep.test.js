@@ -57,6 +57,44 @@ const readyBuildOutput = {
   ],
 };
 
+const liveReadyBuildOutput = {
+  ...readyBuildOutput,
+  sections: [
+    { ...baseSections[0], input: { path: 'PATH_A' } },
+    { ...baseSections[1], input: [{ taskId: 'task-1', complete: true, verified: true }] },
+    ...baseSections.slice(2),
+  ],
+};
+
+const rankedAuditTools = [
+  { rank: 1, platform_name: 'Claude Code', performance_score: 9, target_classes: ['generic_url'] },
+];
+
+function serviceReturning(selection) {
+  return {
+    async getTopTool() {
+      return selection;
+    },
+  };
+}
+
+function dispatchReturning(calls = []) {
+  return async (action, payload) => {
+    calls.push({ action, payload });
+    return {
+      ok: true,
+      action,
+      member: 'claude-code',
+      data: {
+        score: 8,
+        justification: `${payload.dimension} is supported by evidence but not production verified.`,
+        evidenceRef: `${payload.dimension}-fixture`,
+        usage: { input_tokens: 100, output_tokens: 50 },
+      },
+    };
+  };
+}
+
 describe('SAIGE forge Step 4 quality audit', () => {
   it('auditTemplate returns correct schema', () => {
     const template = buildAuditTemplate('saige', blockedBuildOutput);
@@ -262,6 +300,7 @@ describe('SAIGE forge Step 4 quality audit', () => {
     const output = await runAudit('saige', readyBuildOutput, {}, {
       toolService: service,
       runId: 'audit-test-array',
+      toolIntelligenceMode: 'GUIDED',
     });
     expect(output.toolSelection).toMatchObject({
       stepKey: 'qa_audit',
@@ -281,6 +320,7 @@ describe('SAIGE forge Step 4 quality audit', () => {
     const output = await runAudit('saige', blockedBuildOutput, {}, {
       toolService: service,
       runId: 'audit-test-advisory',
+      toolIntelligenceMode: 'GUIDED',
     });
     expect(output.toolSelectionAdvisory).toBe(true);
     expect(output.toolSelection.toolSelectionAdvisory).toBe(true);
@@ -297,10 +337,79 @@ describe('SAIGE forge Step 4 quality audit', () => {
     const output = await runAudit('saige', readyBuildOutput, {}, {
       toolService: service,
       runId: 'audit-test-underserved',
+      toolIntelligenceMode: 'GUIDED',
     });
     expect(output.toolSelection).toMatchObject({
       stepKey: 'qa_audit',
       undServedFirstApplied: true,
     });
+  });
+
+  it('AUTOMATIC tool selection adds sibling dimensionScores without feeding deploy gates', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runAudit('neutral-product', liveReadyBuildOutput, {
+        'audit-decision-log': 'Neutral audit decision: accept P2 dimension evidence.',
+      }, {
+        toolService: serviceReturning(rankedAuditTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        productGoals: ['prove the main user path'],
+        researchOutput: { stepId: 'step-1-research' },
+        designOutput: { stepId: 'step-2-design' },
+        runId: 'audit-live-test',
+      });
+
+      expect(output.toolSelection.mode).toBe('AUTOMATIC');
+      expect(dispatchCalls.map(call => call.action)).toEqual(['score', 'score', 'score', 'score', 'score']);
+      expect(output.dimensionScores.map(item => item.dimension)).toEqual([
+        'UI/UX',
+        'API',
+        'Logic',
+        'Business Value',
+        'Security Posture',
+      ]);
+      expect(dispatchCalls.find(call => call.payload.dimension === 'Business Value').payload.context).toMatchObject({
+        productGoals: ['prove the main user path'],
+        researchOutput: { stepId: 'step-1-research' },
+        designOutput: { stepId: 'step-2-design' },
+      });
+      expect(output.auditScore).toBe(100);
+      expect(output.readyForDeploy).toBe(true);
+      expect(output.evidenceSummary.liveDispatches).toBe(5);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('dimensionScores do not change the existing build gate mismatch behavior', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    try {
+      const output = await runAudit('neutral-product', readyBuildOutput, {
+        'audit-decision-log': 'Neutral audit decision: accept findings.',
+      }, {
+        toolService: serviceReturning(rankedAuditTools),
+        dispatch: dispatchReturning([]),
+        runId: 'audit-gate-mismatch-test',
+      });
+
+      expect(output.dimensionScores).toHaveLength(5);
+      expect(output.gateValidityChecks).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          id: 'gate-readyForQualityAudit',
+          status: 'FAIL',
+          reason: 'build gate mismatch',
+        }),
+      ]));
+      expect(output.auditScore).toBe(95);
+      expect(output.auditComplete).toBe(false);
+      expect(output.readyForDeploy).toBe(false);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
   });
 });
