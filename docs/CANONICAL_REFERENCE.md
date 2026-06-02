@@ -1419,6 +1419,8 @@ FlowAI is internal infrastructure — never sold as SaaS, never open-sourced, ne
 
 `CANONICAL_REFERENCE.md` is the single SSOT — never trust memory alone for canonical facts; fetch the live doc before any synthesis. WIRED ≠ VERIFIED: no claim advances to VERIFIED without evidence at the appropriate Tier floor (A persistent / B behavioral / C never counts). Every CA amendment requires a pre-promotion snapshot per §18.3 before archival. No ratification from a summary — always on the full canonical document in its current state. Citation language in §27 and all disposition records: "Code support located at..." — descriptive, not evidentiary. Never "VERIFIED by..." unless production evidence exists.
 
+##### §28.7.6 P1 evidence-discipline gate
+
 P1 evidence-discipline gate (merge `1683a96`, 2026-06-02): `scripts/lint-evidence.mjs` is registered as the matrix evidence gate and is chained into `npm run audit:commit`. Any `matrixArtifact` entry with `status === "VERIFIED"` must include all three fields: `evidenceUrl`, `verifiedAt`, and `verifiedBy`; missing or empty values fail the gate.
 
 #### §28.7.7 OPERATING CADENCE
