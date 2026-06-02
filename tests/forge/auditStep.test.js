@@ -154,13 +154,20 @@ describe('SAIGE forge Step 4 quality audit', () => {
     expect(output.readyForDeploy).toBe(false);
   });
 
-  it('readyForDeploy = auditScore >= 95 && auditComplete === true', async () => {
+  it('readyForDeploy remains false when build gate mismatch is detected', async () => {
     const output = await runAudit('saige', readyBuildOutput, {
       'audit-decision-log': 'Victor audit decision: accept findings.',
     });
-    expect(output.auditScore).toBe(100);
-    expect(output.auditComplete).toBe(true);
-    expect(output.readyForDeploy).toBe(true);
+    expect(output.auditScore).toBe(95);
+    expect(output.auditComplete).toBe(false);
+    expect(output.readyForDeploy).toBe(false);
+    expect(output.gateValidityChecks).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'gate-readyForQualityAudit',
+        status: 'FAIL',
+        reason: 'build gate mismatch',
+      }),
+    ]));
   });
 
   it('readyForDeploy false when build is BLOCKED even if auditScore >= 95', () => {
@@ -223,8 +230,9 @@ describe('SAIGE forge Step 4 quality audit', () => {
     const written = readFileSync(result.absolutePath, 'utf8');
 
     expect(written).toContain('# saige Step 4 Quality Audit Evidence');
-    expect(written).toContain('AuditScore: 100%');
-    expect(written).toContain('ReadyForDeploy: true');
+    expect(written).toContain('AuditScore: 95%');
+    expect(written).toContain('AuditComplete: false');
+    expect(written).toContain('ReadyForDeploy: false');
     expect(written).toContain('ToolSelection: null');
     expect(formatAuditEvidence(output)).toContain('## Auto checks');
   });

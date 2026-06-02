@@ -75,8 +75,10 @@ describe('MessageSchema required field enforcement', () => {
       .toThrow(/missing required field "productScope"/);
   });
 
-  it('rejects envelope.from with out-of-range agentId', () => {
+  it('accepts agentId 26 and rejects out-of-range agentIds', () => {
     expect(() => validateEnvelope(baseEnvelope({ from: { agentId: 26, productScope: 'flowai' } })))
+      .not.toThrow();
+    expect(() => validateEnvelope(baseEnvelope({ from: { agentId: 27, productScope: 'flowai' } })))
       .toThrow(/agentId invalid/);
     expect(() => validateEnvelope(baseEnvelope({ from: { agentId: 0, productScope: 'flowai' } })))
       .toThrow(/agentId invalid/);
