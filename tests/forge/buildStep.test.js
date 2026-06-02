@@ -69,6 +69,35 @@ const completeDesignOutput = {
   ],
 };
 
+const rankedBuildTools = [
+  { rank: 1, platform_name: 'Claude Code', performance_score: 9, target_classes: ['generic_url'] },
+];
+
+function serviceReturning(selection) {
+  return {
+    async getTopTool() {
+      return selection;
+    },
+  };
+}
+
+function dispatchReturning(calls = []) {
+  return async (action, payload) => {
+    calls.push({ action, payload });
+    return {
+      ok: true,
+      action,
+      member: 'claude-code',
+      data: {
+        filePath: payload.filePath,
+        patchedContent: 'export default function App() { return <main>Built</main>; }',
+        rationale: 'Implemented the requested build task.',
+        usage: { input_tokens: 200, output_tokens: 100 },
+      },
+    };
+  };
+}
+
 describe('SAIGE forge Step 3 build', () => {
   it('buildTemplate returns correct schema', () => {
     const template = buildBuildTemplate('saige', blockedDesignOutput);
@@ -262,6 +291,7 @@ describe('SAIGE forge Step 3 build', () => {
     const output = await runBuild('saige', directiveDesignOutput, {}, {
       toolService: service,
       runId: 'build-test-array',
+      toolIntelligenceMode: 'GUIDED',
     });
     expect(output.toolSelection).toMatchObject({
       stepKey: 'build',
@@ -283,6 +313,7 @@ describe('SAIGE forge Step 3 build', () => {
     const output = await runBuild('saige', directiveDesignOutput, {}, {
       toolService: service,
       runId: 'build-test-null',
+      toolIntelligenceMode: 'GUIDED',
     });
     expect(output.pipelineNullAt).toEqual([1]);
     expect(output.toolSelection.selection.every(Boolean)).toBe(true);
@@ -299,10 +330,42 @@ describe('SAIGE forge Step 3 build', () => {
     const output = await runBuild('saige', directiveDesignOutput, {}, {
       toolService: service,
       runId: 'build-test-underserved',
+      toolIntelligenceMode: 'GUIDED',
     });
     expect(output.toolSelection).toMatchObject({
       stepKey: 'build',
       undServedFirstApplied: true,
     });
+  });
+
+  it('AUTOMATIC tool selection dispatches code-patch and satisfies the real code task gate', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedBuildTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        runId: 'build-live-test',
+      });
+
+      expect(output.toolSelection.mode).toBe('AUTOMATIC');
+      expect(dispatchCalls).toHaveLength(1);
+      expect(dispatchCalls[0].action).toBe('code-patch');
+      expect(output.codeTaskDispatches[0]).toMatchObject({
+        complete: true,
+        verified: true,
+        member: 'claude-code',
+        buildToolStatus: 'LIVE_BUILD_TOOL_DISPATCHED',
+      });
+      expect(output.buildComplete).toBe(true);
+      expect(output.readyForQualityAudit).toBe(true);
+      expect(output.evidenceSummary.liveDispatches).toBe(1);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
   });
 });
