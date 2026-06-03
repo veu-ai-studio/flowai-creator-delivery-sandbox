@@ -207,6 +207,43 @@ function formatRunError(event = {}) {
   return parts.filter(Boolean).join(' | ');
 }
 
+function RankedToolSelection({ selection }) {
+  if (!selection || selection.kind !== 'tool_intelligence_selection') return null;
+  const candidates = Array.isArray(selection.candidates) ? selection.candidates : [];
+  if (candidates.length === 0) return null;
+  const selectedName = selection.selected?.platform_name ?? null;
+  return (
+    <div className="mt-1.5 rounded-md border border-border/60 bg-background/60 p-2">
+      <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <span>Ranked tools</span>
+        <span className="rounded bg-muted px-1.5 py-0.5 normal-case">mode: {selection.mode || 'unknown'}</span>
+        <span className="rounded bg-muted px-1.5 py-0.5 normal-case">step: {selection.stepKey || 'unknown'}</span>
+      </div>
+      <ol className="mt-1 space-y-1">
+        {candidates.map((tool, index) => {
+          const isSelected = selectedName && tool?.platform_name === selectedName;
+          return (
+            <li
+              key={`${tool?.platform_name ?? 'tool'}-${tool?.rank ?? index}`}
+              className={isSelected ? 'flex items-center gap-2 text-foreground' : 'flex items-center gap-2 text-muted-foreground'}
+            >
+              <span className="w-5 font-mono text-[10px]">{tool?.rank ?? index + 1}.</span>
+              <span className="truncate font-medium">{tool?.platform_name ?? 'Unknown tool'}</span>
+              {tool?.platform_type && <span className="text-[10px]">- {tool.platform_type}</span>}
+              <span className="ml-auto font-mono text-[10px]">rank_score: {tool?.rank_score ?? 'n/a'}</span>
+              {isSelected && (
+                <span className="text-[10px] font-semibold text-emerald-400" aria-label="Selected" title="Selected">
+                  selected
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
 function StepRow({ event }) {
   const log = event.log || {};
   // DISPATCH U1 ITEM 3 — universal-mode deployment steps are honest in
@@ -277,6 +314,7 @@ function StepRow({ event }) {
         {log.result?.error && (
           <div className="text-red-400 text-[10px] mt-0.5 truncate">{String(log.result.error).slice(0, 160)}</div>
         )}
+        <RankedToolSelection selection={log.result} />
       </div>
     </div>
   );

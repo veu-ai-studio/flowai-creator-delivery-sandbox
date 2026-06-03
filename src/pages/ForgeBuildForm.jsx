@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FileText, Hammer, PenLine } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 
 import ForgeSectionRenderer, {
   getSectionStatus,
@@ -12,6 +13,7 @@ import { runBuild } from '@/lib/forge/buildRunner';
 import { scoreBuildStep, BUILD_BLOCKED } from '@/lib/forge/buildStepScorer';
 import { runDesign } from '@/lib/forge/designRunner';
 import { runResearch } from '@/lib/forge/researchRunner';
+import { createToolIntelligenceService } from '@/lib/tools/ToolIntelligenceService';
 
 export default function ForgeBuildForm() {
   const [searchParams] = useSearchParams();
@@ -21,6 +23,18 @@ export default function ForgeBuildForm() {
   const [designOutput, setDesignOutput] = useState(null);
   const [buildOutput, setBuildOutput] = useState(null);
   const [score, setScore] = useState(null);
+  const toolService = useMemo(() => {
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? import.meta.env.SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !supabaseKey) return null;
+      return createToolIntelligenceService({
+        client: createClient(supabaseUrl, supabaseKey),
+      });
+    } catch {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -36,7 +50,7 @@ export default function ForgeBuildForm() {
     (async () => {
       const research = await runResearch(productId, {}, { productId, productName });
       const design = await runDesign(productId, research, {}, { productId, productName });
-      const build = await runBuild(productId, design, {}, { productId, productName });
+      const build = await runBuild(productId, design, {}, { productId, productName, toolService });
       if (!active) return;
       setDesignOutput(design);
       setBuildOutput(build);
@@ -46,7 +60,7 @@ export default function ForgeBuildForm() {
     return () => {
       active = false;
     };
-  }, [productId, productName]);
+  }, [productId, productName, toolService]);
 
   const autoSections = buildOutput?.sections?.filter(section => section.source === 'auto') ?? [];
   const orchestratedSections = buildOutput?.sections?.filter(section => section.source === 'orchestrated') ?? [];
@@ -61,6 +75,7 @@ export default function ForgeBuildForm() {
     }, {
       productId,
       productName,
+      toolService,
     });
     setBuildOutput(output);
     setScore(scoreBuildStep(output));
