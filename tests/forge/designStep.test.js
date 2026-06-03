@@ -49,6 +49,37 @@ const designTools = [
   { toolId: 'design-best', toolName: 'Design Best', performanceScore: 0.9, costPerQuery: 0.02, available: true },
 ];
 
+const rankedDesignTools = [
+  { rank: 1, platform_name: 'Claude Code', performance_score: 9, target_classes: ['generic_url'] },
+];
+
+function serviceReturning(selection) {
+  return {
+    async getTopTool() {
+      return selection;
+    },
+  };
+}
+
+function dispatchReturning(calls = []) {
+  return async (action, payload) => {
+    calls.push({ action, payload });
+    return {
+      ok: true,
+      action,
+      member: 'claude-code',
+      data: {
+        principles: ['Use evidence-led design'],
+        featurePriorities: ['Ship the highest-value path first'],
+        userFlows: ['Operator reviews research and approves the build brief'],
+        technicalRequirements: ['Persist design artifacts for downstream build'],
+        evidenceRef: 'design-fixture',
+        usage: { input_tokens: 150, output_tokens: 75 },
+      },
+    };
+  };
+}
+
 const completeDesignInputs = {
   'feature-priorities': 'P0: functionalize supplier risk, EIP score, and reporting obligations.',
   'user-flows': 'Practitioner opens dashboard, completes org setup, creates evidence, and verifies persistence.',
@@ -229,10 +260,57 @@ describe('SAIGE forge Step 2 design', () => {
         return [{ rank: 1, platform_name: 'Figma', performance_score: 10, target_classes: ['generic_url'] }];
       },
     };
-    const output = await runDesign('saige', researchOutput, {}, { toolService: service, runId: 'design-test' });
+    const output = await runDesign('saige', researchOutput, {}, { toolService: service, runId: 'design-test', toolIntelligenceMode: 'GUIDED' });
     expect(output.toolSelection).toMatchObject({
       stepKey: 'design',
       undServedFirstApplied: true,
     });
+  });
+
+  it('AUTOMATIC tool selection dispatches live design instead of short-circuiting', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runDesign('neutral-product', researchOutput, {}, {
+        toolService: serviceReturning(rankedDesignTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        runId: 'design-live-test',
+      });
+
+      expect(output.toolSelection.mode).toBe('AUTOMATIC');
+      expect(dispatchCalls).toHaveLength(1);
+      expect(dispatchCalls[0].action).toBe('design');
+      expect(output.sections.find(section => section.id === 'feature-priorities').input).toMatchObject({
+        complete: true,
+        verified: true,
+        member: 'claude-code',
+        input: ['Ship the highest-value path first'],
+      });
+      expect(output.evidenceSummary.liveDispatches).toBe(1);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('GUIDED and MANUAL tool selection short-circuit design without live dispatch', async () => {
+    for (const mode of ['GUIDED', 'MANUAL']) {
+      const dispatchCalls = [];
+      const output = await runDesign('neutral-product', researchOutput, {}, {
+        toolService: serviceReturning(rankedDesignTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        runId: `design-${mode.toLowerCase()}-test`,
+        toolIntelligenceMode: mode,
+      });
+
+      expect(output.toolSelection.mode).toBe(mode);
+      expect(dispatchCalls).toEqual([]);
+      expect(output.sections.find(section => section.id === 'feature-priorities').input).toMatchObject({
+        complete: false,
+        verified: false,
+        reason: 'tool selection requires operator action before live dispatch',
+      });
+    }
   });
 });

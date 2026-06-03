@@ -2,8 +2,13 @@ import { generateBase44BatchPlan } from './base44BatchPlanGenerator.js';
 import { buildBuildTemplate, BUILD_STEP_ID } from './buildTemplate.js';
 import { BUILD_BLOCKED, scoreBuildStep, hasMinimumBuildDirectiveFromDesign } from './buildStepScorer.js';
 import { selectForgeStepTool } from './toolSelection.js';
+import { dispatch as orchestraDispatch } from '../orchestra/index.js';
+import { MODES } from '../tools/ToolIntelligenceService.js';
 
 const NO_BUILD_TOOL_REASON = 'No AI build tool configured; manual input required';
+const P2_MAX_DISPATCHES_PER_RUN = 12;
+const CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION = 3;
+const CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION = 15;
 
 function cloneSection(section, input) {
   return Object.freeze({ ...section, input });
@@ -123,6 +128,113 @@ export function generateCodeTaskDispatches(designOutput = {}, entryPath = detect
   return Object.freeze([task]);
 }
 
+function isAutomaticToolSelection(toolSelection) {
+  return toolSelection?.mode === MODES.AUTOMATIC;
+}
+
+function shouldShortCircuitToolSelection(toolSelection) {
+  return toolSelection && !isAutomaticToolSelection(toolSelection);
+}
+
+function assertAnthropicReady() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('P2 live execution STOP: ANTHROPIC_API_KEY is required for live build dispatch');
+  }
+}
+
+function usageCostUsd(data = {}) {
+  const usage = data.usage ?? {};
+  const inputTokens = Number(usage.input_tokens ?? usage.inputTokens ?? 0);
+  const outputTokens = Number(usage.output_tokens ?? usage.outputTokens ?? 0);
+  return ((inputTokens / 1_000_000) * CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION) +
+    ((outputTokens / 1_000_000) * CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION);
+}
+
+function semanticEmpty(value) {
+  if (value == null) return true;
+  if (typeof value === 'string') return value.trim().length === 0;
+  if (Array.isArray(value)) return value.length === 0 || value.every(semanticEmpty);
+  if (typeof value === 'object') return Object.values(value).every(semanticEmpty);
+  return false;
+}
+
+function containsPlaceholderText(value) {
+  const text = typeof value === 'string'
+    ? value
+    : value && typeof value === 'object'
+      ? JSON.stringify(value)
+      : '';
+  return /\b(simulated|demo|mock|placeholder)\b/i.test(text);
+}
+
+function assertLiveDispatchResult(result, action) {
+  if (!result || result.ok !== true || result.deferred === true) {
+    const status = typeof result?.status === 'number' ? ` status=${result.status}` : '';
+    if (result?.status === 401 || (typeof result?.status === 'number' && result.status >= 500)) {
+      throw new Error(`P2 live execution STOP: ${action} dispatch failed with blocked HTTP${status}`);
+    }
+    throw new Error(`P2 live execution STOP: ${action} dispatch failed (${result?.error ?? 'unknown error'})`);
+  }
+  if (semanticEmpty(result.data)) {
+    throw new Error(`P2 live execution STOP: ${action} dispatch returned semantically empty output`);
+  }
+  if (containsPlaceholderText(result.data)) {
+    throw new Error(`P2 live execution STOP: ${action} dispatch returned placeholder output`);
+  }
+  return result;
+}
+
+function ensureBudget(budget) {
+  if (budget.dispatchCount > P2_MAX_DISPATCHES_PER_RUN) {
+    throw new Error(`P2 live execution STOP: dispatch count exceeded ${P2_MAX_DISPATCHES_PER_RUN}`);
+  }
+  if (budget.costUsd > 5) {
+    throw new Error('P2 live execution STOP: derived cost exceeded $5 P2 soft cap');
+  }
+}
+
+async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config) {
+  if (!Array.isArray(tasks)) return tasks;
+  if (typeof config.sourceContent !== 'string' || config.sourceContent.trim().length === 0 || containsPlaceholderText(config.sourceContent)) {
+    throw new Error('P2 live execution STOP: real sourceContent is required for live build code-patch');
+  }
+  const liveTasks = [];
+  for (const task of tasks) {
+    budget.dispatchCount += 1;
+    ensureBudget(budget);
+    const result = assertLiveDispatchResult(await dispatchFn('code-patch', {
+      filePath: config.targetFilePath ?? 'src/App.jsx',
+      sourceContent: config.sourceContent,
+      timeoutMs: 30000,
+      framework: config.framework ?? 'vite-react',
+      issueSpec: {
+        category: 'flowai-build-task',
+        severity: 'medium',
+        evidence: task.description,
+        fixSpec: {
+          taskId: task.taskId,
+          title: task.title,
+          designOutput,
+        },
+      },
+    }), 'code-patch');
+    budget.costUsd += usageCostUsd(result.data);
+    ensureBudget(budget);
+    liveTasks.push(Object.freeze({
+      ...task,
+      complete: true,
+      verified: true,
+      action: result.action,
+      member: result.member,
+      evidenceRef: result.data.filePath ?? config.targetFilePath ?? 'src/App.jsx',
+      rationale: result.data.rationale,
+      patchedContentPresent: typeof result.data.patchedContent === 'string' && result.data.patchedContent.trim().length > 0,
+      buildToolStatus: 'LIVE_BUILD_TOOL_DISPATCHED',
+    }));
+  }
+  return Object.freeze(liveTasks);
+}
+
 function normalizeToolSelection(toolSelection) {
   if (!toolSelection) return null;
   return Object.freeze({
@@ -170,7 +282,22 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
     pipelineSubSteps: ['plan', 'scaffold', 'install', 'test'],
   }));
   const buildTool = firstPipelineTool(toolSelection) ?? selectBuildTool(config.availableTools ?? []);
-  const codeTaskDispatches = generateCodeTaskDispatches(designOutput, entryPath, buildTool);
+  const generatedCodeTaskDispatches = generateCodeTaskDispatches(designOutput, entryPath, buildTool);
+  const liveDispatch = toolSelection && isAutomaticToolSelection(toolSelection) && entryPath.path !== 'BUILD_BLOCKED';
+  const shortCircuit = shouldShortCircuitToolSelection(toolSelection);
+  const dispatchFn = config.dispatch ?? orchestraDispatch;
+  const budget = { dispatchCount: 0, costUsd: 0 };
+  if (liveDispatch) assertAnthropicReady();
+  const codeTaskDispatches = liveDispatch
+    ? await runLiveBuildTasks(generatedCodeTaskDispatches, designOutput, budget, dispatchFn, config)
+    : shortCircuit && Array.isArray(generatedCodeTaskDispatches)
+      ? Object.freeze(generatedCodeTaskDispatches.map(task => Object.freeze({
+        ...task,
+        complete: false,
+        verified: false,
+        reason: 'tool selection requires operator action before live dispatch',
+      })))
+      : generatedCodeTaskDispatches;
   const batchPlan = generateBase44BatchPlan(config.auditData, { productId });
   const buildRisks = deriveBuildRisks(designOutput);
   const sections = template.sections.map(section => {
@@ -208,6 +335,8 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
       buildRisks: buildRisks.length,
       stubDeletions: batchPlan.stubDeletions?.length ?? 0,
       functionalizationTargets: batchPlan.functionalizationPlan?.length ?? 0,
+      liveDispatches: budget.dispatchCount,
+      estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
     matrixArtifactVersion: String(designOutput.matrixArtifactVersion ?? 'unknown'),
   });

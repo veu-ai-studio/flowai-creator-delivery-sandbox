@@ -17,7 +17,7 @@ import { memberOk, memberError } from './member.js';
 
 export const id = 'claude-code';
 export const displayName = 'Claude Code (Anthropic API direct)';
-export const capabilities = Object.freeze(['code-patch', 'generate-from-scratch']);
+export const capabilities = Object.freeze(['analyze', 'design', 'score', 'code-patch', 'generate-from-scratch']);
 export const wired = true;
 
 /**
@@ -29,6 +29,9 @@ export const wired = true;
  * @returns {Promise<import('./member.js').MemberResult>}
  */
 export async function invoke(action, payload) {
+  if (action === 'analyze') return analyze(payload);
+  if (action === 'design') return design(payload);
+  if (action === 'score') return score(payload);
   if (action === 'code-patch') return codePatch(payload);
   if (action === 'generate-from-scratch') return generateFromScratch(payload);
   return memberError(id, action, `unsupported action "${action}"`);
@@ -36,8 +39,160 @@ export async function invoke(action, payload) {
 
 // ─── code-patch ──────────────────────────────────────────────────────
 
+async function analyze(payload) {
+  const { prompt, context } = payload || {};
+  if (typeof prompt !== 'string' || prompt.trim().length === 0) {
+    return memberError(id, 'analyze', 'prompt required');
+  }
+
+  const { callClaude } = await import('../../../api/_lib/claude.js');
+  let response;
+  try {
+    response = await callClaude({
+      prompt: buildAnalyzePrompt({ prompt, context }),
+      maxTokens: 1600,
+      complexity: 'routine',
+      timeoutMs: 30000,
+    });
+  } catch (e) {
+    return memberError(id, 'analyze', e.message || String(e), statusExtras(e));
+  }
+
+  const parsed = safeJson(response.text);
+  if (!parsed || semanticEmpty(parsed.summary) || !nonEmptyArray(parsed.findings)) {
+    return memberError(id, 'analyze', 'Claude response did not include non-empty analysis schema', { rawText: (response.text || '').slice(0, 600) });
+  }
+
+  return memberOk(id, 'analyze', {
+    summary: parsed.summary.trim(),
+    findings: parsed.findings,
+    evidenceRef: nonEmptyString(parsed.evidenceRef) ? parsed.evidenceRef.trim() : 'anthropic-analysis',
+    model: response.model,
+    usage: response.usage,
+  });
+}
+
+async function design(payload) {
+  const { spec, context } = payload || {};
+  if (!spec || typeof spec !== 'object') return memberError(id, 'design', 'spec required');
+
+  const { callClaude } = await import('../../../api/_lib/claude.js');
+  let response;
+  try {
+    response = await callClaude({
+      prompt: buildDesignArtifactPrompt({ spec, context }),
+      maxTokens: 2400,
+      complexity: 'routine',
+      timeoutMs: 30000,
+    });
+  } catch (e) {
+    return memberError(id, 'design', e.message || String(e), statusExtras(e));
+  }
+
+  const parsed = safeJson(response.text);
+  const requiredArrays = ['principles', 'featurePriorities', 'userFlows', 'technicalRequirements'];
+  const hasRequired = parsed && requiredArrays.every(key => nonEmptyArray(parsed[key]));
+  if (!hasRequired) {
+    return memberError(id, 'design', 'Claude response did not include non-empty design schema', { rawText: (response.text || '').slice(0, 600) });
+  }
+
+  return memberOk(id, 'design', {
+    principles: parsed.principles,
+    featurePriorities: parsed.featurePriorities,
+    userFlows: parsed.userFlows,
+    technicalRequirements: parsed.technicalRequirements,
+    evidenceRef: nonEmptyString(parsed.evidenceRef) ? parsed.evidenceRef.trim() : 'anthropic-design',
+    model: response.model,
+    usage: response.usage,
+  });
+}
+
+async function score(payload) {
+  const { dimension, prompt, context } = payload || {};
+  if (typeof dimension !== 'string' || dimension.trim().length === 0) return memberError(id, 'score', 'dimension required');
+  if (typeof prompt !== 'string' || prompt.trim().length === 0) return memberError(id, 'score', 'prompt required');
+
+  const { callClaude } = await import('../../../api/_lib/claude.js');
+  let response;
+  try {
+    response = await callClaude({
+      prompt: buildScorePrompt({ dimension, prompt, context }),
+      maxTokens: 1000,
+      complexity: 'routine',
+      timeoutMs: 30000,
+    });
+  } catch (e) {
+    return memberError(id, 'score', e.message || String(e), statusExtras(e));
+  }
+
+  const parsed = safeJson(response.text);
+  const numericScore = Number(parsed?.score);
+  if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > 10 || semanticEmpty(parsed?.justification) || semanticEmpty(parsed?.evidenceRef)) {
+    return memberError(id, 'score', 'Claude response did not include valid score schema', { rawText: (response.text || '').slice(0, 600) });
+  }
+
+  return memberOk(id, 'score', {
+    score: Math.round(numericScore * 100) / 100,
+    justification: parsed.justification.trim(),
+    evidenceRef: parsed.evidenceRef.trim(),
+    model: response.model,
+    usage: response.usage,
+  });
+}
+
+function buildAnalyzePrompt({ prompt, context }) {
+  return `Analyze the FlowAI research context below. Return EXACTLY JSON, no markdown:
+{
+  "summary": "<non-empty summary>",
+  "findings": ["<non-empty finding>", "..."],
+  "evidenceRef": "<short evidence reference>"
+}
+
+Prompt:
+${prompt}
+
+Context:
+${JSON.stringify(context ?? {}, null, 2)}`;
+}
+
+function buildDesignArtifactPrompt({ spec, context }) {
+  return `Create structured FlowAI design artifacts from this research context. Return EXACTLY JSON, no markdown:
+{
+  "principles": ["<non-empty principle>"],
+  "featurePriorities": ["<non-empty feature priority>"],
+  "userFlows": ["<non-empty user flow>"],
+  "technicalRequirements": ["<non-empty technical requirement>"],
+  "evidenceRef": "<short evidence reference>"
+}
+
+Spec:
+${JSON.stringify(spec, null, 2)}
+
+Context:
+${JSON.stringify(context ?? {}, null, 2)}`;
+}
+
+function buildScorePrompt({ dimension, prompt, context }) {
+  return `Score the FlowAI Quality Audit dimension "${dimension}" on a 0-10 scale.
+
+Comparability anchor: 10 = ships per Section 10 governance threshold; deduct per Section 6 detector set.
+
+Return EXACTLY JSON, no markdown:
+{
+  "score": <number from 0 to 10>,
+  "justification": "<non-empty justification grounded in evidence>",
+  "evidenceRef": "<short evidence reference>"
+}
+
+Prompt:
+${prompt}
+
+Context:
+${JSON.stringify(context ?? {}, null, 2)}`;
+}
+
 async function codePatch(payload) {
-  const { filePath, sourceContent, issueSpec, framework } = payload || {};
+  const { filePath, sourceContent, issueSpec, framework, timeoutMs } = payload || {};
   if (typeof filePath !== 'string' || !filePath) return memberError(id, 'code-patch', 'filePath required');
   if (typeof sourceContent !== 'string')           return memberError(id, 'code-patch', 'sourceContent required');
   if (!issueSpec || typeof issueSpec !== 'object') return memberError(id, 'code-patch', 'issueSpec required');
@@ -46,7 +201,7 @@ async function codePatch(payload) {
   const prompt = buildPatchPrompt({ filePath, sourceContent, issueSpec, framework });
   let response;
   try {
-    response = await callClaude({ prompt, maxTokens: 4000, complexity: 'routine' });
+    response = await callClaude({ prompt, maxTokens: 4000, complexity: 'routine', timeoutMs: timeoutMs ?? undefined });
   } catch (e) {
     return memberError(id, 'code-patch', e.message || String(e));
   }
@@ -273,6 +428,29 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system
 footer { text-align: center; padding: 24px; border-top: 1px solid #e2e8f0; font-size: 12px; opacity: 0.7; }
 footer a { color: inherit; }
 `;
+}
+
+function nonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function semanticEmpty(value) {
+  if (typeof value === 'string') return value.trim().length === 0;
+  return value == null;
+}
+
+function nonEmptyArray(value) {
+  return Array.isArray(value) && value.some(item => {
+    if (typeof item === 'string') return item.trim().length > 0;
+    return item != null;
+  });
+}
+
+function statusExtras(error) {
+  const extras = {};
+  if (typeof error?.status === 'number') extras.status = error.status;
+  if (typeof error?.details === 'string') extras.details = error.details.slice(0, 600);
+  return extras;
 }
 
 function sanitizeName(s) {
