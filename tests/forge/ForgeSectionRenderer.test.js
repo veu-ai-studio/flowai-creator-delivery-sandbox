@@ -297,7 +297,7 @@ describe('ForgeSectionRenderer', () => {
     expectCleanOutput(html);
   });
 
-  it('does not render candidate pool for pipeline mode', () => {
+  it('renders candidate pool for pipeline mode and marks selected entries', () => {
     const html = htmlFor({
       mode: 'GUIDED',
       stepKey: 'build',
@@ -311,7 +311,9 @@ describe('ForgeSectionRenderer', () => {
         { platform_name: 'Cursor', platform_type: 'build', compositeScore: 9.2 },
       ],
     });
-    expect(html).not.toContain('Ranked candidates');
+    expect(html).toContain('Ranked candidates (2)');
+    expect(html).toContain('Selected');
+    expect(html).toContain('aria-label="Selected"');
     expect(html).toContain('Base44');
     expect(html).toContain('Cursor');
     expectCleanOutput(html);

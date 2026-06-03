@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { BookOpenCheck, FileText, LockKeyhole } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import ForgeSectionRenderer, {
   getSectionStatus,
@@ -14,11 +14,46 @@ import { scoreForgeStep } from '@/lib/forge/forgeStepScorer';
 import { createToolIntelligenceService } from '@/lib/tools/ToolIntelligenceService';
 import { Button } from '@/components/ui/button';
 
+function blockedPublicUrlReason(value) {
+  if (typeof value !== 'string' || value.trim().length === 0) return null;
+  let parsed;
+  try {
+    parsed = new URL(value.trim());
+  } catch {
+    return 'Enter a valid http(s) URL before running Research Forge.';
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    return 'Only http(s) URLs can be used for Research Forge.';
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '[::1]' || host === '::1') {
+    return 'Localhost URLs are blocked for Research Forge.';
+  }
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const [a, b] = ipv4.slice(1).map(Number);
+    if (a === 0 || a === 10 || a === 127 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31) || (a === 169 && b === 254)) {
+      return 'Private, loopback, and link-local URLs are blocked for Research Forge.';
+    }
+  }
+  return null;
+}
+
 export default function ForgeResearchForm() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const productId = searchParams.get('productId') ?? null;
   const productName = searchParams.get('productName') ?? productId ?? 'Unknown Product';
-  const template = useMemo(() => buildResearchTemplate(productId ?? 'unselected'), [productId]);
+  const productUrl = searchParams.get('url') ?? location.state?.url ?? null;
+  const productDescription = searchParams.get('description') ?? location.state?.description ?? '';
+  const productContext = useMemo(() => ({
+    id: productId ?? 'unselected',
+    name: productName,
+    url: productUrl,
+    description: productDescription,
+    platform: 'unknown',
+  }), [productDescription, productId, productName, productUrl]);
+  const template = useMemo(() => buildResearchTemplate(productContext), [productContext]);
   const toolService = useMemo(() => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? import.meta.env.SUPABASE_URL;
@@ -38,6 +73,7 @@ export default function ForgeResearchForm() {
   const [manualInputs, setManualInputs] = useState({});
   const [researchOutput, setResearchOutput] = useState(null);
   const [score, setScore] = useState(null);
+  const [urlGuardMessage, setUrlGuardMessage] = useState(null);
 
   const allManualComplete = manualSections.every(section => {
     const value = section.status === 'complete' ? section.input : manualInputs[section.id];
@@ -50,6 +86,12 @@ export default function ForgeResearchForm() {
 
   const submitResearch = async () => {
     if (!productId) return;
+    const blockedReason = blockedPublicUrlReason(productUrl);
+    if (blockedReason) {
+      setUrlGuardMessage(blockedReason);
+      return;
+    }
+    setUrlGuardMessage(null);
     const output = await runResearch(
       productId,
       manualInputs,
@@ -58,6 +100,14 @@ export default function ForgeResearchForm() {
         toolIntelligenceMode: 'GUIDED',
         productId,
         productName,
+        productDescription,
+        url: productUrl,
+        productUrl,
+        productContext,
+        normalizedInput: {
+          url: productUrl,
+          description: productDescription,
+        },
       },
     );
     setResearchOutput(output);
@@ -82,6 +132,12 @@ export default function ForgeResearchForm() {
       {!productId && (
         <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
           No product selected. Add ?productId= to the URL to continue.
+        </section>
+      )}
+
+      {urlGuardMessage && (
+        <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          {urlGuardMessage}
         </section>
       )}
 

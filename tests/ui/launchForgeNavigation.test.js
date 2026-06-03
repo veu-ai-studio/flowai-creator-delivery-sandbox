@@ -24,6 +24,23 @@ describe('Launch Forge navigation', () => {
     expect(src).toContain(
       "encodeURIComponent");
   });
+  it('passes URL and description into forge navigation', () => {
+    expect(src).toContain('&url=');
+    expect(src).toContain('&description=');
+    expect(src).toContain('state: {');
+    expect(src).toContain('description: inputPayload.productDescription');
+  });
+  it('blocks unsafe URLs before navigating to forge', () => {
+    expect(src).toContain('function blockedPublicUrlReason');
+    expect(src).toContain("host === 'localhost'");
+    expect(src).toContain('a === 10');
+    expect(src).toContain('a === 169 && b === 254');
+    expect(src).toContain('setErrorMsg(blockedReason)');
+  });
+  it('keeps public fetch failures non-blocking for forge', () => {
+    expect(src).toContain('URL reachability unconfirmed - forge will attempt live crawl and stop if unreachable.');
+    expect(src).toContain("ok: 'warning'");
+  });
   it('existing launch function preserved', () => {
     expect(src).toContain(
       "async function launch");
