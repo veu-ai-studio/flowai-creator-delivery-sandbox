@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Zap, Clock, Wrench, Link2, Pencil, Clipboard, Mic, MicOff,
-  CheckCircle2, XCircle, Loader2, UploadCloud, ChevronRight,
+  XCircle, Loader2, UploadCloud, ChevronRight,
   Layers, History, ShieldCheck, BookOpen, BarChart3, X, GitBranch, Sparkles
 } from 'lucide-react';
 import { saveSessionConfig } from './Configuration';
@@ -34,6 +34,9 @@ const FRESH_BUILD_ENABLED_FOR_UI =
   String(import.meta.env?.VITE_FLOWAI_ENABLE_FRESH_BUILD || '').toLowerCase() === 'true';
 const FLOWAI_OPERATOR_NAME = import.meta.env?.VITE_FLOWAI_OPERATOR_NAME || 'FlowAI operator';
 const FLOWAI_OPERATOR_EMAIL = import.meta.env?.VITE_FLOWAI_OPERATOR_EMAIL || '';
+const URL_FORMAT_VALID_MESSAGE = 'URL format valid — forge will attempt live crawl and stop if unreachable.';
+const URL_HARD_BLOCK_MESSAGE = 'Hard block — this URL is not allowed by the client-side URL safety screen.';
+const URL_INVALID_SCHEME_MESSAGE = 'Invalid scheme — enter an http(s) URL.';
 
 const DESCRIPTION_TEMPLATE = `Product Name: 
 What it does: 
@@ -43,6 +46,50 @@ Current known issues:
 Live URL (optional): 
 Login email (optional — for authenticated testing): 
 Login password (optional — for authenticated testing): `;
+
+export function evaluateClientUrlSafety(value) {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return { status: 'empty', message: '', launchBlocked: false };
+
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return { status: 'invalid', message: URL_INVALID_SCHEME_MESSAGE, launchBlocked: true };
+  }
+
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    return { status: 'invalid', message: URL_INVALID_SCHEME_MESSAGE, launchBlocked: true };
+  }
+
+  const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  const localhostBlocked =
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host === '::1' ||
+    host === '0:0:0:0:0:0:0:1';
+  const octets = host.split('.');
+  const isIpv4 = octets.length === 4 && octets.every(part => /^\d+$/.test(part));
+  const privateIpv4Blocked = isIpv4 && (() => {
+    const [a, b, c, d] = octets.map(Number);
+    const validOctets = [a, b, c, d].every(n => Number.isInteger(n) && n >= 0 && n <= 255);
+    if (!validOctets) return true;
+    return (
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254)
+    );
+  })();
+
+  if (localhostBlocked || privateIpv4Blocked) {
+    return { status: 'blocked', message: URL_HARD_BLOCK_MESSAGE, launchBlocked: true };
+  }
+
+  return { status: 'valid', message: URL_FORMAT_VALID_MESSAGE, launchBlocked: false };
+}
 
 function detectMigrationPlatformHint({ url = '', description = '', productConfig = null } = {}) {
   const haystack = `${url}\n${description}\n${productConfig?.systemNote || ''}`.toLowerCase();
@@ -276,6 +323,9 @@ function FocusedMigrationSetup({
 }
 
 function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, onTestFetch, testing, crawlerQuality }) {
+  const liveSafety = evaluateClientUrlSafety(url);
+  const shownStatus = liveSafety.launchBlocked ? liveSafety.status : fetchStatus;
+  const shownMessage = liveSafety.launchBlocked ? liveSafety.message : URL_FORMAT_VALID_MESSAGE;
   return (
     <div
       onClick={onActivate}
@@ -293,8 +343,8 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
       <div className="flex gap-2 items-center">
         <Input
           value={url}
-          onChange={e => { setUrl(e.target.value); setFetchStatus(null); }}
-          onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); setUrl(t); setFetchStatus(null); }}
+          onChange={e => { onActivate(); setUrl(e.target.value); setFetchStatus(null); }}
+          onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); onActivate(); setUrl(t); setFetchStatus(null); }}
           onClick={e => { e.stopPropagation(); onActivate(); }}
           placeholder="Enter your product URL..."
           className="h-9 text-sm flex-1"
@@ -316,16 +366,22 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
 
       {/* Fetch result */}
       <AnimatePresence>
-        {fetchStatus === 'ok' && (
+        {shownStatus === 'valid' && (
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Page reachable — FlowAI can read this URL
+            className="flex items-center gap-2 text-slate-300 text-xs font-semibold">
+            <ShieldCheck className="h-3.5 w-3.5" /> {shownMessage}
           </motion.div>
         )}
-        {fetchStatus === 'fail' && (
+        {shownStatus === 'blocked' && (
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="flex items-center gap-2 text-red-400 text-xs font-semibold">
-            <XCircle className="h-3.5 w-3.5" /> Page could not be reached — use Card B or C instead
+            <XCircle className="h-3.5 w-3.5" /> {shownMessage}
+          </motion.div>
+        )}
+        {shownStatus === 'invalid' && (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="flex items-center gap-2 text-amber-300 text-xs font-semibold">
+            <XCircle className="h-3.5 w-3.5" /> {liveSafety.message || URL_INVALID_SCHEME_MESSAGE}
           </motion.div>
         )}
       </AnimatePresence>
@@ -582,7 +638,7 @@ export default function LandingPage() {
 
   // Card A
   const [urlInput, setUrlInput] = useState('');
-  const [fetchStatus, setFetchStatus] = useState(null); // null | 'ok' | 'fail'
+  const [fetchStatus, setFetchStatus] = useState(null); // null | 'valid' | 'blocked' | 'invalid'
   const [crawlerQuality, setCrawlerQuality] = useState(null); // null | 'none' | 'basic' | 'full'
   const [testing, setTesting] = useState(false);
 
@@ -625,55 +681,15 @@ export default function LandingPage() {
   const [runPanelUrl, setRunPanelUrl] = useState(null);
 
   // ── Test Fetch (Card A) ──
-  // Routes through FlowAI's own /api/research-url (Browserless-backed, full
-  // JS rendering). Previously called a dead Replit proxy that returned null
-  // `bodyText` for any SPA, baking the literal string "Body: null" into
-  // sessionStorage's pageContext and propagating it through every pipeline
-  // step prompt downstream.
-  const testFetch = async () => {
+  // Client-side URL safety screen only. It does not call a server endpoint
+  // and does not claim reachability; authenticated crawl paths enforce
+  // server-side URL safety before live execution.
+  const testFetch = () => {
     if (!urlInput.trim()) return;
     setTesting(true);
-    setFetchStatus(null);
-    try {
-      const response = await fetch('/api/research-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: urlInput.trim() }),
-      });
-      if (!response.ok) {
-        setFetchStatus('fail');
-        setCrawlerQuality(null);
-        setTesting(false);
-        return;
-      }
-      const data = await response.json().catch(() => null);
-      const page = data?.page || {};
-      const hasContent = data?.ok === true && (page.title || page.bodyTextSnippet);
-      if (hasContent) {
-        const headings = Array.isArray(page.headings)
-          ? page.headings.map((h) => (typeof h === 'string' ? h : (h?.text || ''))).filter(Boolean).join(' | ')
-          : '';
-        const pageContext = `Title: ${page.title || ''}\nMeta: ${page.metaDescription || ''}\nHeadings: ${headings}\nBody: ${page.bodyTextSnippet || ''}`;
-        try {
-          const existing = JSON.parse(sessionStorage.getItem('flowai_session_config') || '{}');
-          sessionStorage.setItem('flowai_session_config', JSON.stringify({ ...existing, pageContext }));
-        } catch {}
-        setFetchStatus('ok');
-        // crawlerQuality values are constrained to { 'full' | 'basic' | 'none' | null } —
-        // the CrawlerQualityDot lookup table only knows those keys. Browserless
-        // (jsRendered:true) → 'full'. Static fetch (simple-fetch) → 'basic'.
-        setCrawlerQuality(
-          data.crawler_quality
-          || (data.method === 'browserless' || data.jsRendered ? 'full' : 'basic')
-        );
-      } else {
-        setFetchStatus('fail');
-        setCrawlerQuality(null);
-      }
-    } catch {
-      setFetchStatus('fail');
-      setCrawlerQuality(null);
-    }
+    const safety = evaluateClientUrlSafety(urlInput);
+    setFetchStatus(safety.status === 'empty' ? null : safety.status);
+    setCrawlerQuality(null);
     setTesting(false);
   };
 
@@ -719,13 +735,24 @@ export default function LandingPage() {
   };
 
   // ── Valid input check ──
+  const urlSafety = activeCard === 'A' ? evaluateClientUrlSafety(urlInput) : null;
+  const isUrlLaunchBlocked = activeCard === 'A' && urlSafety?.launchBlocked === true;
   const hasValidInput =
-    (activeCard === 'A' && !!urlInput.trim()) ||
+    (activeCard === 'A' && !!urlInput.trim() && !isUrlLaunchBlocked) ||
     (activeCard === 'B' && !!description.trim()) ||
     (activeCard === 'C' && (!!pastedContent.trim() || uploadedFiles.length > 0));
 
   // ── Launch ──
   const launch = () => {
+    if (activeCard === 'A') {
+      const safety = evaluateClientUrlSafety(urlInput);
+      if (safety.launchBlocked) {
+        setFetchStatus(safety.status);
+        setActiveCard('A');
+        return;
+      }
+    }
+
     const uploadedFileList = Array.isArray(uploadedFiles) ? uploadedFiles.filter((file) => file && typeof file === 'object') : [];
     const effectiveObjective = objective === 'custom'
       ? (customObjective.trim() || 'Custom objective')
@@ -1174,6 +1201,7 @@ export default function LandingPage() {
             <RunConstructionPanel
               url={runPanelUrl}
               mode={isMigrationMode ? 'MIGRATION' : isFreshBuildMode ? 'FRESH_BUILD' : 'FOREGROUND'}
+              autoStart
               onClose={() => setRunPanelUrl(null)}
             />
           ) : (
