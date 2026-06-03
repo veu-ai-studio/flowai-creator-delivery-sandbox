@@ -161,6 +161,31 @@ function normalizeHref(value) {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
 
+function blockedPublicUrlReason(value) {
+  if (typeof value !== 'string' || value.trim().length === 0) return null;
+  let parsed;
+  try {
+    parsed = new URL(value.trim());
+  } catch {
+    return 'Enter a valid http(s) URL before launching Forge.';
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    return 'Only http(s) URLs can be used for Forge runs.';
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '[::1]' || host === '::1') {
+    return 'Localhost URLs are blocked for Forge runs.';
+  }
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const [a, b] = ipv4.slice(1).map(Number);
+    if (a === 0 || a === 10 || a === 127 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31) || (a === 169 && b === 254)) {
+      return 'Private, loopback, and link-local URLs are blocked for Forge runs.';
+    }
+  }
+  return null;
+}
+
 function upgradeDeliveryMessage(result = {}) {
   if (result.upgradeDeployed) return 'Live upgraded deployment is ready.';
   if (result.upgradeDeployStatus === 'repo_available') {
@@ -534,6 +559,13 @@ export default function FlowAIDashboard() {
 
   // ── SSE consumer ─────────────────────────────────────────────────────────
   const launchForge = () => {
+    if (inputPayload.url) {
+      const blockedReason = blockedPublicUrlReason(inputPayload.url);
+      if (blockedReason) {
+        setErrorMsg(blockedReason);
+        return;
+      }
+    }
     const normalized = normalizeFlowAIInput({
       url,
       productDescription,
@@ -541,8 +573,14 @@ export default function FlowAIDashboard() {
       attachments: attachmentsPayload
     });
     const ctx = resolveProductContext(normalized);
-    const dest = `/forge/research?productId=${encodeURIComponent(ctx.id)}&productName=${encodeURIComponent(ctx.name)}`;
-    navigate(dest, { replace: false });
+    const dest = `/forge/research?productId=${encodeURIComponent(ctx.id)}&productName=${encodeURIComponent(ctx.name)}${inputPayload.url ? `&url=${encodeURIComponent(inputPayload.url)}` : ''}${inputPayload.productDescription ? `&description=${encodeURIComponent(inputPayload.productDescription)}` : ''}`;
+    navigate(dest, {
+      replace: false,
+      state: {
+        url: inputPayload.url,
+        description: inputPayload.productDescription,
+      },
+    });
   };
 
   async function launch() {
@@ -801,6 +839,11 @@ export default function FlowAIDashboard() {
       setFetchStatus({ ok: false, message: 'Enter a URL before testing fetch.' });
       return;
     }
+    const blockedReason = blockedPublicUrlReason(inputPayload.url);
+    if (blockedReason) {
+      setFetchStatus({ ok: false, message: blockedReason });
+      return;
+    }
     setFetchStatus({ ok: null, message: 'Testing fetch...' });
     try {
       const response = await fetch('/api/fetch-url', {
@@ -812,10 +855,10 @@ export default function FlowAIDashboard() {
       if (response.ok && body.ok) {
         setFetchStatus({ ok: true, message: `Fetch passed${body.title ? `: ${body.title}` : ''}` });
       } else {
-        setFetchStatus({ ok: false, message: body.reason || body.error || `Fetch returned HTTP ${response.status}` });
+        setFetchStatus({ ok: 'warning', message: 'URL reachability unconfirmed - forge will attempt live crawl and stop if unreachable.' });
       }
     } catch (error) {
-      setFetchStatus({ ok: false, message: error?.message ?? 'Fetch test failed' });
+      setFetchStatus({ ok: 'warning', message: 'URL reachability unconfirmed - forge will attempt live crawl and stop if unreachable.' });
     }
   }
 
@@ -890,7 +933,7 @@ export default function FlowAIDashboard() {
                 ))}
               </datalist>
               {fetchStatus && (
-                <p className={`text-[11px] mt-1 ${fetchStatus.ok ? 'text-emerald-300' : fetchStatus.ok === false ? 'text-amber-300' : 'text-slate-400'}`}>
+                <p className={`text-[11px] mt-1 ${fetchStatus.ok === true ? 'text-emerald-300' : fetchStatus.ok === false ? 'text-amber-300' : fetchStatus.ok === 'warning' ? 'text-slate-300' : 'text-slate-400'}`}>
                   {fetchStatus.message}
                 </p>
               )}

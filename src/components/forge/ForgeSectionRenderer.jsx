@@ -267,8 +267,7 @@ function Envelope({ value }) {
     <div className="space-y-3">
       {banners}
       <ForgeSectionRenderer value={value.selection} />
-      {value.selectionMode !== 'pipeline' &&
-        Array.isArray(value.candidates) &&
+      {Array.isArray(value.candidates) &&
         value.candidates.length > 1 && (
           <div className="space-y-1.5 rounded-md border border-border bg-card/50 p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -276,11 +275,12 @@ function Envelope({ value }) {
             </p>
             <ol className="space-y-1 text-sm">
               {value.candidates.map((tool, index) => {
-                const pickedName = value?.selection?.platform_name;
+                const pickedNames = Array.isArray(value?.selection)
+                  ? [toolSource(value.selection[0])?.platform_name].filter(Boolean)
+                  : [value?.selection?.platform_name].filter(Boolean);
                 const isPicked =
-                  typeof pickedName === 'string' &&
-                  pickedName.length > 0 &&
-                  tool?.platform_name === pickedName;
+                  typeof tool?.platform_name === 'string' &&
+                  pickedNames.includes(tool.platform_name);
                 return (
                   <li
                     key={tool?.platform_name ?? index}
