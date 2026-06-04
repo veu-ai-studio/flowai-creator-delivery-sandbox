@@ -55,6 +55,8 @@ describe('P2 debt + SSRF source wiring', () => {
     expect(crawlerSrc).toContain('redirects > MAX_SAFE_REDIRECTS');
     expect(crawlerSrc).toContain('function createSsrGuardedLookup');
     expect(crawlerSrc).toContain('pinnedAddress = null');
+    expect(crawlerSrc).toContain('all: true');
+    expect(crawlerSrc).toContain('candidates.find((entry) => isBlockedIp(entry.address))');
     expect(crawlerSrc).toContain('requestOptions.lookup = createSsrGuardedLookup');
     expect(crawlerSrc).toContain('dnsWarning');
     expect(crawlerSrc).toContain('blocked_private_ip');
