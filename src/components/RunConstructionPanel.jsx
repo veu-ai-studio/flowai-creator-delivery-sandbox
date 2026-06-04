@@ -207,30 +207,106 @@ function formatRunError(event = {}) {
   return parts.filter(Boolean).join(' | ');
 }
 
-function RankedToolSelection({ selection }) {
-  if (!selection || selection.kind !== 'tool_intelligence_selection') return null;
-  const candidates = Array.isArray(selection.candidates) ? selection.candidates : [];
+function toolName(tool) {
+  return tool?.platform_name ?? tool?.toolName ?? tool?.name ?? tool?.toolId ?? tool?.id ?? null;
+}
+
+function scoreFields(tool) {
+  if (tool?.rank_score != null) {
+    return {
+      scoreField: 'rank_score',
+      scoreValue: tool.rank_score,
+      scoreLabel: `rank_score: ${tool.rank_score}`,
+    };
+  }
+  if (tool?.compositeScore != null) {
+    return {
+      scoreField: 'score',
+      scoreValue: tool.compositeScore,
+      scoreLabel: `score: ${tool.compositeScore}`,
+    };
+  }
+  if (tool?.rankScore != null) {
+    return {
+      scoreField: 'score',
+      scoreValue: tool.rankScore,
+      scoreLabel: `score: ${tool.rankScore}`,
+    };
+  }
+  return {
+    scoreField: 'score',
+    scoreValue: null,
+    scoreLabel: 'score: n/a',
+  };
+}
+
+function scoreText(tool) {
+  return tool?.scoreLabel ?? scoreFields(tool).scoreLabel;
+}
+
+export function resolveRankedToolSelectionPayload(result) {
+  const source = result?.kind === 'tool_intelligence_selection'
+    ? result
+    : (result?.toolSelection ?? result?.tool_selection ?? null);
+  if (!source || typeof source !== 'object') return null;
+
+  const candidates = Array.isArray(source.candidates)
+    ? source.candidates.map((candidate) => ({
+      ...candidate,
+      displayName: toolName(candidate),
+      ...scoreFields(candidate),
+    }))
+    : [];
   if (candidates.length === 0) return null;
-  const selectedName = selection.selected?.platform_name ?? null;
+
+  const rawSelection = source.selected ?? source.selection ?? null;
+  const selectedTools = Array.isArray(rawSelection)
+    ? rawSelection.slice(0, 1)
+    : (rawSelection ? [rawSelection] : []);
+  const selectedNames = selectedTools
+    .map((tool) => toolName(tool))
+    .filter((name) => typeof name === 'string' && name.length > 0);
+  const fallbackSelected = source.selected?.platform_name
+    ?? (source.selected ? toolName(source.selected) : null)
+    ?? selectedNames[0]
+    ?? null;
+
+  return {
+    ...source,
+    selectedName: fallbackSelected,
+    selectedNames,
+    candidates,
+  };
+}
+
+function RankedToolSelection({ selection }) {
+  const normalized = resolveRankedToolSelectionPayload(selection);
+  if (!normalized) return null;
+  const candidates = normalized.candidates;
+  if (candidates.length === 0) return null;
+  const selectedNames = new Set(normalized.selectedNames?.length ? normalized.selectedNames : [normalized.selectedName]);
   return (
     <div className="mt-1.5 rounded-md border border-border/60 bg-background/60 p-2">
       <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
         <span>Ranked tools</span>
-        <span className="rounded bg-muted px-1.5 py-0.5 normal-case">mode: {selection.mode || 'unknown'}</span>
-        <span className="rounded bg-muted px-1.5 py-0.5 normal-case">step: {selection.stepKey || 'unknown'}</span>
+        <span className="rounded bg-muted px-1.5 py-0.5 normal-case">mode: {normalized.mode || 'unknown'}</span>
+        <span className="rounded bg-muted px-1.5 py-0.5 normal-case">step: {normalized.stepKey || 'unknown'}</span>
       </div>
       <ol className="mt-1 space-y-1">
         {candidates.map((tool, index) => {
-          const isSelected = selectedName && tool?.platform_name === selectedName;
+          const name = toolName(tool);
+          const isSelected = name && selectedNames.has(name);
           return (
             <li
-              key={`${tool?.platform_name ?? 'tool'}-${tool?.rank ?? index}`}
+              key={`${name ?? 'tool'}-${tool?.rank ?? index}`}
               className={isSelected ? 'flex items-center gap-2 text-foreground' : 'flex items-center gap-2 text-muted-foreground'}
             >
               <span className="w-5 font-mono text-[10px]">{tool?.rank ?? index + 1}.</span>
-              <span className="truncate font-medium">{tool?.platform_name ?? 'Unknown tool'}</span>
-              {tool?.platform_type && <span className="text-[10px]">- {tool.platform_type}</span>}
-              <span className="ml-auto font-mono text-[10px]">rank_score: {tool?.rank_score ?? 'n/a'}</span>
+              <span className="truncate font-medium">{name ?? 'Unknown tool'}</span>
+              {(tool?.platform_type ?? tool?.type ?? tool?.platformType) && (
+                <span className="text-[10px]">- {tool.platform_type ?? tool.type ?? tool.platformType}</span>
+              )}
+              <span className="ml-auto font-mono text-[10px]">{scoreText(tool)}</span>
               {isSelected && (
                 <span className="text-[10px] font-semibold text-emerald-400" aria-label="Selected" title="Selected">
                   selected
