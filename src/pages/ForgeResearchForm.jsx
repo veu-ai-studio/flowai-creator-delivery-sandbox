@@ -12,6 +12,7 @@ import { buildResearchTemplate } from '@/lib/forge/researchTemplate';
 import { runResearch } from '@/lib/forge/researchRunner';
 import { scoreForgeStep } from '@/lib/forge/forgeStepScorer';
 import { resolveProductContext } from '@/lib/forge/resolveProductContext';
+import { persistForgeStepArtifactClient, persistenceDisplayText } from '@/lib/forge/persistForgeArtifactClient';
 import { createToolIntelligenceService } from '@/lib/tools/ToolIntelligenceService';
 import { Button } from '@/components/ui/button';
 
@@ -95,7 +96,7 @@ export default function ForgeResearchForm() {
   const toolService = useMemo(() => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? import.meta.env.SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       if (!supabaseUrl || !supabaseKey) return null;
       const supabase = createClient(supabaseUrl, supabaseKey);
       return createToolIntelligenceService({
@@ -112,6 +113,7 @@ export default function ForgeResearchForm() {
   const [researchOutput, setResearchOutput] = useState(null);
   const [score, setScore] = useState(null);
   const [urlGuardMessage, setUrlGuardMessage] = useState(null);
+  const [persistenceState, setPersistenceState] = useState(null);
 
   const allManualComplete = manualSections.every(section => {
     const value = section.status === 'complete' ? section.input : manualInputs[section.id];
@@ -150,6 +152,19 @@ export default function ForgeResearchForm() {
     );
     setResearchOutput(output);
     setScore(scoreForgeStep(output));
+    setPersistenceState({ state: 'pending' });
+    const persisted = await persistForgeStepArtifactClient({
+      productId,
+      runId: output.runId ?? `research-${Date.now()}`,
+      stepKey: 'research',
+      stepLabel: 'Research Forge',
+      artifact: output,
+      mode: 'GUIDED',
+      runtime: 'offline',
+      evidenceTier: 'B',
+      proofLabel: 'UNIT',
+    });
+    setPersistenceState(persisted);
   };
 
   return (
@@ -168,7 +183,7 @@ export default function ForgeResearchForm() {
           )}
         </div>
         <div className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">
-          {researchOutput?.readyForDesign ? 'READY FOR DESIGN' : 'RESEARCH IN PROGRESS'}
+          {persistenceState?.state === 'failed' ? 'PERSISTED: FAILED' : researchOutput?.readyForDesign ? 'READY FOR DESIGN' : 'RESEARCH IN PROGRESS'}
         </div>
       </div>
 
@@ -181,6 +196,19 @@ export default function ForgeResearchForm() {
       {urlGuardMessage && (
         <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
           {urlGuardMessage}
+        </section>
+      )}
+
+      {persistenceState && (
+        <section className={`rounded-lg border p-4 text-sm ${
+          persistenceState.state === 'persisted'
+            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+            : persistenceState.state === 'failed'
+              ? 'border-red-500/30 bg-red-500/10 text-red-200'
+              : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+        }`}>
+          <span className="font-semibold">{persistenceDisplayText(persistenceState)}</span>
+          {persistenceState.reason && <span className="ml-2 text-xs opacity-80">{persistenceState.reason}</span>}
         </section>
       )}
 

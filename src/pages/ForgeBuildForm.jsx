@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { runBuild } from '@/lib/forge/buildRunner';
 import { scoreBuildStep, BUILD_BLOCKED } from '@/lib/forge/buildStepScorer';
 import { runDesign } from '@/lib/forge/designRunner';
+import { persistForgeStepArtifactClient, persistenceDisplayText } from '@/lib/forge/persistForgeArtifactClient';
 import { runResearch } from '@/lib/forge/researchRunner';
 import { createToolIntelligenceService } from '@/lib/tools/ToolIntelligenceService';
 
@@ -23,10 +24,11 @@ export default function ForgeBuildForm() {
   const [designOutput, setDesignOutput] = useState(null);
   const [buildOutput, setBuildOutput] = useState(null);
   const [score, setScore] = useState(null);
+  const [persistenceState, setPersistenceState] = useState(null);
   const toolService = useMemo(() => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? import.meta.env.SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       if (!supabaseUrl || !supabaseKey) return null;
       return createToolIntelligenceService({
         client: createClient(supabaseUrl, supabaseKey),
@@ -55,6 +57,7 @@ export default function ForgeBuildForm() {
       setDesignOutput(design);
       setBuildOutput(build);
       setScore(scoreBuildStep(build));
+      setPersistenceState(null);
     })();
 
     return () => {
@@ -79,6 +82,19 @@ export default function ForgeBuildForm() {
     });
     setBuildOutput(output);
     setScore(scoreBuildStep(output));
+    setPersistenceState({ state: 'pending' });
+    const persisted = await persistForgeStepArtifactClient({
+      productId,
+      runId: output.runId ?? `build-${Date.now()}`,
+      stepKey: 'build',
+      stepLabel: 'Build Forge',
+      artifact: output,
+      mode: 'GUIDED',
+      runtime: 'offline',
+      evidenceTier: 'B',
+      proofLabel: 'UNIT',
+    });
+    setPersistenceState(persisted);
   };
 
   return (
@@ -94,7 +110,7 @@ export default function ForgeBuildForm() {
           </p>
         </div>
         <div className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">
-          {buildOutput?.readyForQualityAudit ? 'READY FOR QUALITY AUDIT' : 'BUILD EVIDENCE PARTIAL'}
+          {persistenceState?.state === 'failed' ? 'PERSISTED: FAILED' : buildOutput?.readyForQualityAudit ? 'READY FOR QUALITY AUDIT' : 'BUILD EVIDENCE PARTIAL'}
         </div>
       </div>
 
@@ -115,6 +131,19 @@ export default function ForgeBuildForm() {
           <p className="font-bold">BUILD_BLOCKED</p>
           <p className="mt-1">{buildOutput.entryPath.reason}</p>
           <p className="mt-1 text-xs">{buildOutput.entryPath.action}</p>
+        </section>
+      )}
+
+      {persistenceState && (
+        <section className={`rounded-lg border p-4 text-sm ${
+          persistenceState.state === 'persisted'
+            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+            : persistenceState.state === 'failed'
+              ? 'border-red-500/30 bg-red-500/10 text-red-200'
+              : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+        }`}>
+          <span className="font-semibold">{persistenceDisplayText(persistenceState)}</span>
+          {persistenceState.reason && <span className="ml-2 text-xs opacity-80">{persistenceState.reason}</span>}
         </section>
       )}
 
