@@ -9,6 +9,10 @@ vi.mock('@/components/forge/ForgeSectionRenderer.jsx', () => ({
 vi.mock('@/lib/forge/researchTemplate', () => ({ buildResearchTemplate: () => ({ sections: [] }) }));
 vi.mock('@/lib/forge/researchRunner', () => ({ runResearch: async () => ({}) }));
 vi.mock('@/lib/forge/forgeStepScorer', () => ({ scoreForgeStep: () => ({ score: 0, correctivePrompts: [] }) }));
+vi.mock('@/lib/forge/persistForgeArtifactClient', () => ({
+  persistForgeStepArtifactClient: async () => ({ state: 'skipped_auth_required' }),
+  persistenceDisplayText: () => 'persisted: skipped_auth_required',
+}));
 vi.mock('@/lib/forge/resolveProductContext', () => ({
   resolveProductContext: (input = {}) => ({
     id: 'saigeplatform',
