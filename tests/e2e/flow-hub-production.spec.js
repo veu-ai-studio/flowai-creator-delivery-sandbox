@@ -140,3 +140,11 @@ test('E2E-6: Deploy Forge route renders the operator-gated Step 5 surface', asyn
   await expect(page.getByText(/Processing: Example Product/i)).toBeVisible();
   await expect(page.getByText(/Authorized operator approval is required before deploy\/submission/i).first()).toBeVisible();
 });
+
+test('E2E-7: Self-Renewal Forge route renders the operator-gated Step 6 surface', async ({ page }) => {
+  await page.goto('/forge/self-renewal?productId=example-product&productName=Example%20Product&outputUrl=https%3A%2F%2Fexample.com&auditIssuesCount=2', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('heading', { name: /Self-Renewal Forge/i })).toBeVisible();
+  await expect(page.getByText(/Processing: Example Product/i)).toBeVisible();
+  await expect(page.getByText(/Authorized operator approval is required before applying any renewal fix/i)).toBeVisible();
+});
