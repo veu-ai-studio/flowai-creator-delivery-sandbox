@@ -1185,14 +1185,14 @@ Any capability proven on SAIGE must exercise reusable product-agnostic contracts
 | W5a / W5b / W5c | Shared infrastructure, agent builds, parallel commits gated by `.wx-staging.lock` per `docs/PANEL_INFRASTRUCTURE.md` §7. |
 | W6 | Dedicated Panel workstream (runs 10-AI consultations end-to-end). |
 
-Pattern: **W5x builds. W2 verifies. W6 runs Panel. W0x dispatches. CEO pastes.**
+Pattern: **CB drafts dispatches. W5x builds. W2 verifies. W6 runs Panel. CEO pastes.**
 
 ### 23.1 Current operating roles (CA-DELIVERY-DISTRIBUTION-GOVERNANCE)
 
 | Role | Responsibility |
 |---|---|
-| **W0/W04 (Claude Chat)** | Orchestrator; drafts dispatches, holds SSOT context, consolidates panel findings, never edits code. |
-| **CB (Codex Builder)** | Sole builder; writes, tests, and commits code and docs implementation changes. |
+| **W0/W04 (Claude Chat)** | Adjudicates; issues clearances; does not draft dispatches. |
+| **CB (Codex Builder)** | Sole builder; drafts all dispatches from actual codebase state. |
 | **CR (Codex Reviewer)** | Read-only verification; checks runtime evidence and wired-vs-verified discipline. |
 | **CD (Claude Code)** | Read-only review; codebase-grounded data-shape and SSOT-consistency checks. |
 | **CG (ChatGPT)** | Spec critic; no codebase access; reviews coherence, feasibility, and governance meaning. |
@@ -1409,7 +1409,7 @@ One branch per dispatch (format: `flowai/<scope>-<purpose>`). Merge to main via 
 
 #### §28.7.4 PEER-REVIEW AND DISPATCH GOVERNANCE
 
-KEY dispatch: 4-reviewer panel (CB/CR/CD/CG) before CB builds. Key = changes behavior / scoring / governance / deploy / persistence / agent authority / SSOT meaning / verification status. CLEANUP dispatch: no panel; behavior-preserving only (renames, comments, dead-code removal, file moves, doc-consistency propagation). Every CB dispatch must include: explicit action label (BUILD / READ-ONLY / CLEANUP BUILD), STOP conditions for unexpected state, single commit scope, and "DO NOT START until W04 sends CLEAR TO BUILD" on Panel-first dispatches. CB is the sole codebase writer. W04/CR/CD/CG/WT never write code. W04 confirms every first-round Panel issue is addressed before re-dispatching to CB.
+KEY dispatch: 4-reviewer panel (CB/CR/CD/CG) before CB builds. Key = changes behavior / scoring / governance / deploy / persistence / agent authority / SSOT meaning / verification status. CLEANUP dispatch: no panel; behavior-preserving only (renames, comments, dead-code removal, file moves, doc-consistency propagation). Every CB dispatch must include: explicit action label (BUILD / READ-ONLY / CLEANUP BUILD), STOP conditions for unexpected state, single commit scope, and "DO NOT START until W04 sends CLEAR TO BUILD" on Panel-first dispatches. CB is the sole codebase writer. W04/CR/CD/CG/WT never write code. W04 confirms every first-round Panel issue is addressed before CB re-drafts / W04 re-clears.
 
 #### §28.7.5 IP PROTECTION STANDARDS
 
