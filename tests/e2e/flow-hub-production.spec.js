@@ -134,8 +134,9 @@ test('E2E-5: GUIDED mode stores session config and does not call run-constructio
 });
 
 test('E2E-6: Deploy Forge route renders the operator-gated Step 5 surface', async ({ page }) => {
-  await page.goto('/forge/deploy', { waitUntil: 'domcontentloaded' });
+  await page.goto('/forge/deploy?productId=example-product&productName=Example%20Product', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { name: /Deploy Forge/i })).toBeVisible();
-  await expect(page.getByText('No product selected. Add ?productId= to the URL to continue.')).toBeVisible();
+  await expect(page.getByText(/Processing: Example Product/i)).toBeVisible();
+  await expect(page.getByText(/Authorized operator approval is required before deploy\/submission/i).first()).toBeVisible();
 });
