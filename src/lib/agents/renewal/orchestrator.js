@@ -996,6 +996,37 @@ export async function runOrchestration(args = {}) {
   // W6 INTEGRATION — emit a tool.selection envelope for each of the 8
   // canonical AutoRunner step keys (per ToolIntelligenceService.STEP_KEYS).
   // recommend_only: any failure is captured locally and never bubbled.
+  const toolSelectionEnvelope = ({ stepKey, selection, candidates }) => {
+    const list = Array.isArray(candidates)
+      ? candidates
+      : (Array.isArray(selection) ? selection : (selection ? [selection] : []));
+    const selectedTool = Array.isArray(selection) ? selection[0] ?? null : selection ?? null;
+    return Object.freeze({
+      kind: 'tool_intelligence_selection',
+      stepKey,
+      mode: ssotOrchestraExecutionMode,
+      internalMode: state.mode,
+      selected: selectedTool
+        ? Object.freeze({
+            platform_name: selectedTool.platform_name ?? null,
+            platform_type: selectedTool.platform_type ?? null,
+            rank: selectedTool.rank ?? null,
+            rank_score: selectedTool.rank_score ?? null,
+          })
+        : null,
+      candidates: Object.freeze(list.map((candidate) => Object.freeze({
+        platform_name: candidate?.platform_name ?? null,
+        platform_type: candidate?.platform_type ?? null,
+        rank: candidate?.rank ?? null,
+        rank_score: candidate?.rank_score ?? null,
+        performance_score: candidate?.performance_score ?? null,
+        cost_score: candidate?.cost_score ?? null,
+        speed_score: candidate?.speed_score ?? null,
+        reliability_score: candidate?.reliability_score ?? null,
+      }))),
+    });
+  };
+
   const _emitToolSelections = async () => {
     if (!toolIntelligenceService) return { written: 0, skipped: 'service_unavailable' };
     const STEP_KEYS = ['research', 'design', 'build', 'qa_audit', 'deploy', 'monitor', 'govern', 'gtm'];
@@ -1003,6 +1034,17 @@ export async function runOrchestration(args = {}) {
     for (const stepKey of STEP_KEYS) {
       try {
         const selection = await toolIntelligenceService.getTopTool(stepKey, undefined, toolIntelligenceServiceMode);
+        const candidates = typeof toolIntelligenceService.getRankings === 'function'
+          ? await toolIntelligenceService.getRankings(stepKey, undefined)
+          : (Array.isArray(selection) ? selection : (selection ? [selection] : []));
+        const envelope = toolSelectionEnvelope({ stepKey, selection, candidates });
+        emit(makeStepLog({
+          iteration: iterations.length, step: 0, status: 'complete',
+          tool: 'ToolIntelligenceService',
+          why: `CA-18 §6 — ranked tool candidates for ${stepKey}`,
+          result: envelope,
+          mode: state.mode,
+        }));
         const selected = toolIntelligenceServiceMode === 'GUIDED'
           ? (Array.isArray(selection) ? selection.map((p) => p.platform_name) : null)
           : (selection && typeof selection.platform_name === 'string' ? selection.platform_name : null);

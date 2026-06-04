@@ -141,6 +141,7 @@ const AuthenticatedApp = () => {
         <Route path="/forge/research" element={<ForgeResearchForm />} />
         <Route path="/forge/design" element={<ForgeDesignForm />} />
         <Route path="/forge/build" element={<ForgeBuildForm />} />
+        <Route path="/forge/audit" element={<ForgeAuditForm />} />
         <Route path="/forge/quality-audit" element={<ForgeAuditForm />} />
         <Route path="/old-dashboard" element={<Dashboard />} />
 

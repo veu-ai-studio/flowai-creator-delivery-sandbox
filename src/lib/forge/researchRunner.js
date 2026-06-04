@@ -277,7 +277,7 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
 
   if (liveDispatch) assertAnthropicReady();
 
-  if (liveDispatch && researchUrl && (isCrawlClassTool(toolSelection?.selection) || researchUrl)) {
+  if (liveDispatch && researchUrl && isCrawlClassTool(toolSelection?.selection)) {
     crawlResult = await runLiveCrawl(researchUrl, budget, dispatchFn);
   }
 

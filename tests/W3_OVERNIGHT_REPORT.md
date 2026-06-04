@@ -26,7 +26,7 @@ Full per-file listing → `specs/w3-overnight/01-inventory.md`.
 ## Job 2 — Marketplace tool registry deep audit
 
 - 61 tools across 13 categories. Per-category counts: 12 × 5 + Governance × 1.
-- The required schema fields **`vendor`, `doppler_compat`, `wave`, `agents`** are **missing on every entry**. Only `name, category, description, performance_score, cost_tier, cost_details, africa_available, base44_compatible, production_compatible, official_url, tags` are present.
+- The required schema fields **`vendor`, `doppler_compat`, `wave`, `agents`** are **missing on every entry**. Only `name, category, description, performance_score, cost_tier, cost_details, underserved_accessible, base44_compatible, production_compatible, official_url, tags` are present.
 - Charter `marketplaceTools` cross-check is **impossible today** because no concrete agent class implements `static charter()`. (Note: `src/docs/w2/v3-defect-register.md` claims D-009 / D-015 were resolved with files at `src/lib/agents/06-research.js`, `07-design.js`, `AgentRegistry.js` — none of these exist in this repo.)
 - Stack-side reverse cross-check found **one expected-but-missing reference:** `VEU_STACKS.SAIGE.AI/LLM` names `NeuralMax Pro`, which is absent from `TOOL_REGISTRY`.
 - Verified by `tests/marketplace_inventory.test.js` — **7/7 tests passing.**

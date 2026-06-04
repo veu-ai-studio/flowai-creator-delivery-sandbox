@@ -1503,5 +1503,5 @@ runner output
 
 **Note:** underserved_accessible is the canonical
 field for underserved accessibility. The legacy
-africa_available field was renamed in W11-cleanup.
+underserved_accessible field was renamed in W11-cleanup.
 ---

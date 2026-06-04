@@ -56,6 +56,7 @@ import { getMigrationModeFlag } from '../lib/runtimeFeatureFlags.js';
 import { findRegisteredProductConfigForUrl } from '../lib/products/registeredProductConfig.js';
 import { createGithubMigrationHooks } from '../lib/migration/githubMigrationHooks.js';
 import { pickSafeErrorFields } from '../lib/migration/safeErrorFields.js';
+import { assertPublicHttpUrl } from '../../api/_lib/crawler.js';
 
 const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION', 'FRESH_BUILD']);
 const GTM_TARGET = 95;
@@ -130,6 +131,7 @@ export default async function handler(req, res) {
   }
 
   const url = typeof body.url === 'string' ? body.url.trim() : '';
+  const description = typeof body.description === 'string' ? body.description.trim() : '';
   const rawMode = typeof body.mode === 'string' ? body.mode.toUpperCase() : 'FOREGROUND';
   const mode = ALLOWED_MODES.has(rawMode) ? rawMode : 'FOREGROUND';
 
@@ -137,6 +139,20 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'application/json');
     res.statusCode = 400;
     return res.end(JSON.stringify({ ok: false, error: 'invalid_url', detail: 'body.url must be an http(s) URL' }));
+  }
+
+  const publicUrlVerdict = await assertPublicHttpUrl(url).catch((error) => ({
+    ok: false,
+    reason: error?.message ?? String(error),
+  }));
+  if (!publicUrlVerdict.ok) {
+    res.setHeader('Content-Type', 'application/json');
+    res.statusCode = 400;
+    return res.end(JSON.stringify({
+      ok: false,
+      error: 'ssrf_blocked_url',
+      detail: publicUrlVerdict.reason,
+    }));
   }
 
   // ── SSE preamble ─────────────────────────────────────────────────────────
@@ -404,6 +420,10 @@ export default async function handler(req, res) {
     result = await runOrchestration({
       url,
       mode: orchestratorMode,
+      input: {
+        url,
+        description,
+      },
       runId,
       supabase,
       environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
@@ -439,6 +459,7 @@ export default async function handler(req, res) {
     type: 'final',
     ok: result?.ok === true,
     previewUrl: result?.previewUrl ?? null,
+    originalProductUrl: result?.originalUrl ?? url,
     finalScore: result?.runMode === 'MIGRATION' && result?.finalScore == null
       ? null
       : result?.finalScore ?? 0,

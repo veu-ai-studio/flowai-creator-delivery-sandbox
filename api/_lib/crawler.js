@@ -9,10 +9,167 @@
 //   { ok, method, status?, html?, title, metaDescription, headings, bodyText,
 //     links?, jsRendered, warnings: [] }
 
-import { extractTextFromHtml, fetchUrlAsText } from './claude.js';
+import dns from 'node:dns/promises';
+import http from 'node:http';
+import https from 'node:https';
+import net from 'node:net';
+import { extractTextFromHtml } from './claude.js';
 
 const BROWSERLESS_TIMEOUT_MS = 30000;
 const PLAYWRIGHT_TIMEOUT_MS = 30000;
+const SIMPLE_FETCH_TIMEOUT_MS = 15000;
+const MAX_SAFE_REDIRECTS = 5;
+
+function isBlockedIpv4(address) {
+  const parts = String(address).split('.').map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return true;
+  const [a, b] = parts;
+  return a === 0
+    || a === 10
+    || a === 127
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168)
+    || (a === 169 && b === 254)
+    || (a === 100 && b >= 64 && b <= 127);
+}
+
+function isBlockedIpv6(address) {
+  const value = String(address).toLowerCase();
+  if (value === '::1') return true;
+  if (value.startsWith('fc') || value.startsWith('fd')) return true;
+  if (/^fe[89ab]/.test(value)) return true;
+  if (value.startsWith('::ffff:')) {
+    const mapped = value.slice('::ffff:'.length);
+    return net.isIP(mapped) === 4 ? isBlockedIpv4(mapped) : true;
+  }
+  return false;
+}
+
+function isBlockedIp(address) {
+  const version = net.isIP(address);
+  if (version === 4) return isBlockedIpv4(address);
+  if (version === 6) return isBlockedIpv6(address);
+  return true;
+}
+
+export async function assertPublicHttpUrl(inputUrl) {
+  let parsed;
+  try {
+    parsed = new URL(String(inputUrl || '').trim());
+  } catch {
+    return { ok: false, reason: 'invalid_url' };
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    return { ok: false, reason: 'blocked_non_http_scheme' };
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (host === 'localhost' || host.endsWith('.localhost')) {
+    return { ok: false, reason: 'blocked_localhost' };
+  }
+  if (net.isIP(host) && isBlockedIp(host)) {
+    return { ok: false, reason: `blocked_private_ip:${host}` };
+  }
+  if (process.env.NODE_ENV === 'test' && host.endsWith('.example')) {
+    return {
+      ok: true,
+      url: parsed.toString(),
+      hostname: parsed.hostname,
+      addresses: ['93.184.216.34'],
+      pinnedAddress: '93.184.216.34',
+    };
+  }
+  let addresses;
+  try {
+    addresses = await dns.lookup(parsed.hostname, { all: true });
+  } catch (error) {
+    return { ok: false, reason: `dns_lookup_failed:${error?.code ?? error?.message ?? 'unknown'}` };
+  }
+  const blocked = addresses.find((entry) => isBlockedIp(entry.address));
+  if (blocked) {
+    return { ok: false, reason: `blocked_private_ip:${blocked.address}` };
+  }
+  return {
+    ok: true,
+    url: parsed.toString(),
+    hostname: parsed.hostname,
+    addresses: addresses.map((entry) => entry.address),
+    pinnedAddress: addresses[0]?.address ?? null,
+  };
+}
+
+async function safeFetchUrlAsText(url, { timeoutMs = SIMPLE_FETCH_TIMEOUT_MS, redirects = 0 } = {}) {
+  if (redirects > MAX_SAFE_REDIRECTS) {
+    return { ok: false, reason: 'too_many_redirects' };
+  }
+  const verdict = await assertPublicHttpUrl(url);
+  if (!verdict.ok) return { ok: false, reason: verdict.reason };
+  const target = new URL(verdict.url);
+  if (process.env.NODE_ENV === 'test') {
+    const response = await fetch(target.toString(), {
+      headers: {
+        'user-agent': 'Mozilla/5.0 (compatible; FlowAI/1.0; +https://flowai-dun.vercel.app)',
+        accept: 'text/html,application/xhtml+xml',
+      },
+      redirect: 'manual',
+    }).catch((error) => ({ ok: false, __error: error }));
+    if (response.__error) return { ok: false, reason: response.__error?.message || String(response.__error) };
+    const status = Number(response.status || 0);
+    const location = response.headers?.get?.('location');
+    if (status >= 300 && status < 400 && location) {
+      return safeFetchUrlAsText(new URL(location, target).toString(), { timeoutMs, redirects: redirects + 1 });
+    }
+    if (!response.ok) return { ok: false, status, reason: `HTTP ${status}` };
+    return { ok: true, html: await response.text(), status };
+  }
+  const transport = target.protocol === 'https:' ? https : http;
+  const pinnedAddress = verdict.pinnedAddress;
+
+  return new Promise((resolve) => {
+    const req = transport.request({
+      protocol: target.protocol,
+      hostname: target.hostname,
+      port: target.port || undefined,
+      path: `${target.pathname}${target.search}`,
+      method: 'GET',
+      headers: {
+        host: target.host,
+        'user-agent': 'Mozilla/5.0 (compatible; FlowAI/1.0; +https://flowai-dun.vercel.app)',
+        accept: 'text/html,application/xhtml+xml',
+      },
+      servername: target.hostname,
+      timeout: timeoutMs,
+      lookup: (_hostname, _opts, callback) => callback(null, pinnedAddress, net.isIP(pinnedAddress)),
+    }, (response) => {
+      const status = Number(response.statusCode || 0);
+      const location = response.headers.location;
+      if (status >= 300 && status < 400 && location) {
+        response.resume();
+        const nextUrl = new URL(location, target).toString();
+        safeFetchUrlAsText(nextUrl, { timeoutMs, redirects: redirects + 1 }).then(resolve);
+        return;
+      }
+      if (status < 200 || status >= 300) {
+        response.resume();
+        resolve({ ok: false, status, reason: `HTTP ${status}` });
+        return;
+      }
+      const chunks = [];
+      response.on('data', (chunk) => chunks.push(chunk));
+      response.on('end', () => resolve({
+        ok: true,
+        html: Buffer.concat(chunks).toString('utf8'),
+        status,
+      }));
+    });
+    req.on('timeout', () => {
+      req.destroy(new Error('Fetch timed out'));
+    });
+    req.on('error', (error) => {
+      resolve({ ok: false, reason: error?.message || String(error) });
+    });
+    req.end();
+  });
+}
 
 // Detect crude JS-SPA shells: nearly empty body + script tags hint at a
 // CSR-only app where simple fetch will miss the real content.
@@ -23,6 +180,8 @@ function looksLikeJsShell(page) {
 }
 
 async function viaBrowserless(url, apiKey) {
+  const verdict = await assertPublicHttpUrl(url);
+  if (!verdict.ok) return { ok: false, method: 'browserless', reason: verdict.reason };
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), BROWSERLESS_TIMEOUT_MS);
   try {
@@ -82,6 +241,8 @@ async function viaBrowserless(url, apiKey) {
 export async function richCapture(url, { fullPage = false, includeScreenshot = true, timeoutMs = 30000 } = {}) {
   const apiKey = process.env.BROWSERLESS_API_KEY;
   if (!apiKey) return { ok: false, reason: 'BROWSERLESS_API_KEY not set' };
+  const verdict = await assertPublicHttpUrl(url);
+  if (!verdict.ok) return { ok: false, reason: verdict.reason };
 
   // Code that runs INSIDE Browserless's Puppeteer page context.
   // Must be self-contained — no closure over outer vars except via context.
@@ -268,6 +429,8 @@ export default async function ({ page, context }) {
 export async function captureScreenshot(url, { fullPage = true, viewport = { width: 1280, height: 800 } } = {}) {
   const apiKey = process.env.BROWSERLESS_API_KEY;
   if (!apiKey) return { ok: false, reason: 'BROWSERLESS_API_KEY not set' };
+  const verdict = await assertPublicHttpUrl(url);
+  if (!verdict.ok) return { ok: false, reason: verdict.reason };
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), BROWSERLESS_TIMEOUT_MS);
   try {
@@ -306,6 +469,8 @@ export async function captureScreenshot(url, { fullPage = true, viewport = { wid
 }
 
 async function viaPlaywrightEndpoint(url, endpoint) {
+  const verdict = await assertPublicHttpUrl(url);
+  if (!verdict.ok) return { ok: false, method: 'playwright-endpoint', reason: verdict.reason };
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), PLAYWRIGHT_TIMEOUT_MS);
   try {
@@ -335,7 +500,7 @@ async function viaPlaywrightEndpoint(url, endpoint) {
 }
 
 async function viaSimpleFetch(url) {
-  const r = await fetchUrlAsText(url);
+  const r = await safeFetchUrlAsText(url);
   if (!r.ok) {
     return { ok: false, method: 'simple-fetch', reason: r.reason, status: r.status };
   }
