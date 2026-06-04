@@ -34,6 +34,16 @@ describe('P2 debt + SSRF source wiring', () => {
     expect(orchestratorSrc).not.toContain('compositeScore');
   });
 
+  it('orchestrator emits ranked candidates before long-running product discovery', () => {
+    const visibleEmission = orchestratorSrc.indexOf('writeGovernance: false');
+    const productDiscovery = orchestratorSrc.indexOf('Product Discovery (iteration');
+    expect(visibleEmission).toBeGreaterThan(0);
+    expect(productDiscovery).toBeGreaterThan(0);
+    expect(visibleEmission).toBeLessThan(productDiscovery);
+    expect(orchestratorSrc).toContain('emitVisible: false');
+    expect(orchestratorSrc).toContain('writeGovernance: true');
+  });
+
   it('RunConstructionPanel renders ranked tool envelope without raw JSON', () => {
     expect(panelSrc).toContain('function RankedToolSelection');
     expect(panelSrc).toContain('rank_score:');

@@ -1027,10 +1027,11 @@ export async function runOrchestration(args = {}) {
     });
   };
 
-  const _emitToolSelections = async () => {
-    if (!toolIntelligenceService) return { written: 0, skipped: 'service_unavailable' };
+  const _emitToolSelections = async ({ emitVisible = true, writeGovernance = true } = {}) => {
+    if (!toolIntelligenceService) return { written: 0, visible: 0, skipped: 'service_unavailable' };
     const STEP_KEYS = ['research', 'design', 'build', 'qa_audit', 'deploy', 'monitor', 'govern', 'gtm'];
     let written = 0;
+    let visible = 0;
     for (const stepKey of STEP_KEYS) {
       try {
         const selection = await toolIntelligenceService.getTopTool(stepKey, undefined, toolIntelligenceServiceMode);
@@ -1038,40 +1039,62 @@ export async function runOrchestration(args = {}) {
           ? await toolIntelligenceService.getRankings(stepKey, undefined)
           : (Array.isArray(selection) ? selection : (selection ? [selection] : []));
         const envelope = toolSelectionEnvelope({ stepKey, selection, candidates });
-        emit(makeStepLog({
-          iteration: iterations.length, step: 0, status: 'complete',
-          tool: 'ToolIntelligenceService',
-          why: `CA-18 §6 — ranked tool candidates for ${stepKey}`,
-          result: envelope,
-          mode: state.mode,
-        }));
-        const selected = toolIntelligenceServiceMode === 'GUIDED'
-          ? (Array.isArray(selection) ? selection.map((p) => p.platform_name) : null)
-          : (selection && typeof selection.platform_name === 'string' ? selection.platform_name : null);
-        const result = await _appendGovernanceEntry({
-          productId: product?.product_id, environment,
-          entry: {
-            kind: 'tool.selection.v1',
-            runId,
-            productId: product?.product_id,
-            stepKey,
-            mode: ssotOrchestraExecutionMode,
-            internalMode: state.mode,
-            ssotVocabulary,
-            selected,
-            at: new Date().toISOString(),
-          },
-          supabase,
-        });
-        if (result?.written) written += 1;
+        if (emitVisible) {
+          emit(makeStepLog({
+            iteration: iterations.length, step: 0, status: 'complete',
+            tool: 'ToolIntelligenceService',
+            why: `CA-18 §6 — ranked tool candidates for ${stepKey}`,
+            result: envelope,
+            mode: state.mode,
+          }));
+          visible += 1;
+        }
+        if (writeGovernance) {
+          const selected = toolIntelligenceServiceMode === 'GUIDED'
+            ? (Array.isArray(selection) ? selection.map((p) => p.platform_name) : null)
+            : (selection && typeof selection.platform_name === 'string' ? selection.platform_name : null);
+          const result = await _appendGovernanceEntry({
+            productId: product?.product_id, environment,
+            entry: {
+              kind: 'tool.selection.v1',
+              runId,
+              productId: product?.product_id,
+              stepKey,
+              mode: ssotOrchestraExecutionMode,
+              internalMode: state.mode,
+              ssotVocabulary,
+              selected,
+              at: new Date().toISOString(),
+            },
+            supabase,
+          });
+          if (result?.written) written += 1;
+        }
       } catch { /* recommend_only — never throw */ }
     }
-    return { written };
+    return { written, visible };
   };
-  // We defer the actual emission until STEP 14 (after product is resolved
-  // and right before the orchestration_complete write) to keep the
-  // tool.selection envelopes adjacent to the run's final state in the
-  // governance_record array.
+  // Emit visible ranked candidates before long-running step work so the
+  // operator sees the selected tool and ranked pool while the run is active.
+  // Governance writes still happen near STEP 14, adjacent to final run state.
+  const visibleToolSelectionsResult = await _emitToolSelections({
+    emitVisible: true,
+    writeGovernance: false,
+  });
+  emit(makeStepLog({
+    iteration: iterations.length, step: 0, status: 'complete',
+    tool: 'ToolIntelligenceService — per-step ranked candidates',
+    why: 'CA-18 §6 — expose ranked tool candidates for operator visibility before live execution',
+    result: {
+      kind: 'tool_intel_selections_visible',
+      visible: visibleToolSelectionsResult.visible ?? 0,
+      attachReason: toolIntelligenceAttachReason,
+      mode: ssotOrchestraExecutionMode,
+      internalMode: state.mode,
+      ssotVocabulary,
+    },
+    mode: state.mode,
+  }));
 
   // ── STEP 1 — Product Discovery (iteration 1 only, then carry forward) ─────
   //
@@ -4214,7 +4237,10 @@ export async function runOrchestration(args = {}) {
   // W6 INTEGRATION — STEP 3a: emit one tool.selection envelope per
   // AutoRunner step key into governance_record before the
   // orchestration_complete write. Best-effort (recommend_only).
-  const toolSelectionsResult = await _emitToolSelections();
+  const toolSelectionsResult = await _emitToolSelections({
+    emitVisible: false,
+    writeGovernance: true,
+  });
   emit(makeStepLog({
     iteration: iterations.length, step: 0, status: 'complete',
     tool: 'ToolIntelligenceService — per-step selection trail',
