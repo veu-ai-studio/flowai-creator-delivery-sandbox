@@ -45,7 +45,7 @@ function constructionSseBody() {
 }
 
 async function gotoProduction(page) {
-  await page.goto('/flow-hub/production');
+  await page.goto('/flow-hub/production', { waitUntil: 'domcontentloaded' });
   await expect(page.getByPlaceholder('Enter your product URL...')).toBeVisible();
 }
 
