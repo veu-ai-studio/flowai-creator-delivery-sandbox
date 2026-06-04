@@ -148,3 +148,11 @@ test('E2E-7: Self-Renewal Forge route renders the operator-gated Step 6 surface'
   await expect(page.getByText(/Processing: Example Product/i)).toBeVisible();
   await expect(page.getByText(/Authorized operator approval is required before applying any renewal fix/i)).toBeVisible();
 });
+
+test('E2E-8: GTM Forge route renders the human-decision-gated Step 7 surface', async ({ page }) => {
+  await page.goto('/forge/gtm?productId=example-product&productName=Example%20Product&outputUrl=https%3A%2F%2Fexample.com', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('heading', { name: /GTM Forge/i })).toBeVisible();
+  await expect(page.getByText(/Processing: Example Product/i)).toBeVisible();
+  await expect(page.getByText(/Human decision log required before GTM readiness/i).first()).toBeVisible();
+});
