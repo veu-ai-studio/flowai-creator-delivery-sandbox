@@ -38,10 +38,7 @@ function isBlockedIpv6(address) {
   if (value === '::1') return true;
   if (value.startsWith('fc') || value.startsWith('fd')) return true;
   if (/^fe[89ab]/.test(value)) return true;
-  if (value.startsWith('::ffff:')) {
-    const mapped = value.slice('::ffff:'.length);
-    return net.isIP(mapped) === 4 ? isBlockedIpv4(mapped) : true;
-  }
+  if (value.startsWith('::ffff:')) return true;
   return false;
 }
 
@@ -56,19 +53,21 @@ export function createSsrGuardedLookup({ hostname, pinnedAddress = null, resolve
   return async (_hostname, opts, callback) => {
     try {
       const resolved = pinnedAddress
-        ? { address: pinnedAddress, family: net.isIP(pinnedAddress) }
-        : await resolver(hostname || _hostname, { ...(opts || {}), all: false });
-      const address = typeof resolved === 'string' ? resolved : resolved?.address;
-      const family = typeof resolved === 'object' && resolved?.family
-        ? resolved.family
-        : net.isIP(address);
-      if (!address || isBlockedIp(address)) {
+        ? [{ address: pinnedAddress, family: net.isIP(pinnedAddress) }]
+        : await resolver(hostname || _hostname, { ...(opts || {}), all: true });
+      const candidates = (Array.isArray(resolved) ? resolved : [resolved])
+        .map((entry) => (typeof entry === 'string' ? { address: entry, family: net.isIP(entry) } : entry))
+        .filter((entry) => entry?.address);
+      const blocked = candidates.find((entry) => isBlockedIp(entry.address));
+      const selected = candidates[0];
+      if (!selected || blocked) {
+        const address = blocked?.address ?? selected?.address ?? 'unresolved';
         const error = new Error(`blocked_private_ip:${address || 'unresolved'}`);
         error.code = 'ERR_FLOWAI_SSRF_BLOCKED';
         callback(error);
         return;
       }
-      callback(null, address, family);
+      callback(null, selected.address, selected.family || net.isIP(selected.address));
     } catch (error) {
       callback(error);
     }
