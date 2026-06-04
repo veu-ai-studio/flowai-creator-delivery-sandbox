@@ -52,6 +52,29 @@ function isBlockedIp(address) {
   return true;
 }
 
+export function createSsrGuardedLookup({ hostname, pinnedAddress = null, resolver = dns.lookup } = {}) {
+  return async (_hostname, opts, callback) => {
+    try {
+      const resolved = pinnedAddress
+        ? { address: pinnedAddress, family: net.isIP(pinnedAddress) }
+        : await resolver(hostname || _hostname, { ...(opts || {}), all: false });
+      const address = typeof resolved === 'string' ? resolved : resolved?.address;
+      const family = typeof resolved === 'object' && resolved?.family
+        ? resolved.family
+        : net.isIP(address);
+      if (!address || isBlockedIp(address)) {
+        const error = new Error(`blocked_private_ip:${address || 'unresolved'}`);
+        error.code = 'ERR_FLOWAI_SSRF_BLOCKED';
+        callback(error);
+        return;
+      }
+      callback(null, address, family);
+    } catch (error) {
+      callback(error);
+    }
+  };
+}
+
 export async function assertPublicHttpUrl(inputUrl) {
   let parsed;
   try {
@@ -147,9 +170,7 @@ async function safeFetchUrlAsText(url, { timeoutMs = SIMPLE_FETCH_TIMEOUT_MS, re
       servername: target.hostname,
       timeout: timeoutMs,
     };
-    if (pinnedAddress) {
-      requestOptions.lookup = (_hostname, _opts, callback) => callback(null, pinnedAddress, net.isIP(pinnedAddress));
-    }
+    requestOptions.lookup = createSsrGuardedLookup({ hostname: target.hostname, pinnedAddress });
     const req = transport.request(requestOptions, (response) => {
       const status = Number(response.statusCode || 0);
       const location = response.headers.location;
