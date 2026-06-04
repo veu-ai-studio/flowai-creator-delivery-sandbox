@@ -26,4 +26,11 @@ describe('api/_lib/crawler SSRF guard', () => {
     expect(verdict.ok).toBe(true);
     expect(verdict.pinnedAddress).toBe('93.184.216.34');
   });
+
+  it('does not SSRF-block transient DNS lookup failures', async () => {
+    const verdict = await assertPublicHttpUrl('https://flowai-dns-transient.invalid/');
+    expect(verdict.ok).toBe(true);
+    expect(verdict.pinnedAddress).toBeNull();
+    expect(verdict.dnsWarning).toMatch(/^dns_lookup_failed:/);
+  });
 });

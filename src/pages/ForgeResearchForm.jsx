@@ -11,6 +11,7 @@ import ForgeSectionRenderer, {
 import { buildResearchTemplate } from '@/lib/forge/researchTemplate';
 import { runResearch } from '@/lib/forge/researchRunner';
 import { scoreForgeStep } from '@/lib/forge/forgeStepScorer';
+import { resolveProductContext } from '@/lib/forge/resolveProductContext';
 import { createToolIntelligenceService } from '@/lib/tools/ToolIntelligenceService';
 import { Button } from '@/components/ui/button';
 
@@ -39,20 +40,57 @@ function blockedPublicUrlReason(value) {
   return null;
 }
 
+export function resolveForgeResearchRouteContext({
+  productId,
+  productName,
+  productUrl,
+  productDescription,
+} = {}) {
+  if (productId) {
+    return {
+      id: productId,
+      name: productName ?? productId,
+      url: productUrl ?? null,
+      description: productDescription ?? '',
+      platform: 'unknown',
+      derivedFromUrl: false,
+    };
+  }
+  if (productUrl || productDescription) {
+    const derived = resolveProductContext({
+      url: productUrl ?? null,
+      description: productDescription ?? '',
+    });
+    return {
+      ...derived,
+      derivedFromUrl: true,
+    };
+  }
+  return {
+    id: null,
+    name: productName ?? 'Unknown Product',
+    url: productUrl ?? null,
+    description: productDescription ?? '',
+    platform: 'unknown',
+    derivedFromUrl: false,
+  };
+}
+
 export default function ForgeResearchForm() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const productId = searchParams.get('productId') ?? null;
-  const productName = searchParams.get('productName') ?? productId ?? 'Unknown Product';
+  const productIdParam = searchParams.get('productId') ?? null;
+  const productNameParam = searchParams.get('productName') ?? null;
   const productUrl = searchParams.get('url') ?? location.state?.url ?? null;
   const productDescription = searchParams.get('description') ?? location.state?.description ?? '';
-  const productContext = useMemo(() => ({
-    id: productId ?? 'unselected',
-    name: productName,
-    url: productUrl,
-    description: productDescription,
-    platform: 'unknown',
-  }), [productDescription, productId, productName, productUrl]);
+  const productContext = useMemo(() => resolveForgeResearchRouteContext({
+    productId: productIdParam,
+    productName: productNameParam,
+    productUrl,
+    productDescription,
+  }), [productDescription, productIdParam, productNameParam, productUrl]);
+  const productId = productContext.id;
+  const productName = productContext.name;
   const template = useMemo(() => buildResearchTemplate(productContext), [productContext]);
   const toolService = useMemo(() => {
     try {
@@ -123,6 +161,11 @@ export default function ForgeResearchForm() {
             Research Forge
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{productId ? `Processing: ${productName}` : 'No product selected'}</p>
+          {productContext.derivedFromUrl && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Product context derived from URL for this run.
+            </p>
+          )}
         </div>
         <div className="rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">
           {researchOutput?.readyForDesign ? 'READY FOR DESIGN' : 'RESEARCH IN PROGRESS'}
@@ -131,7 +174,7 @@ export default function ForgeResearchForm() {
 
       {!productId && (
         <section className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-          No product selected. Add ?productId= to the URL to continue.
+          No product selected. Add ?productId= or ?url= to the URL to continue.
         </section>
       )}
 

@@ -82,7 +82,15 @@ export async function assertPublicHttpUrl(inputUrl) {
   try {
     addresses = await dns.lookup(parsed.hostname, { all: true });
   } catch (error) {
-    return { ok: false, reason: `dns_lookup_failed:${error?.code ?? error?.message ?? 'unknown'}` };
+    const reason = `dns_lookup_failed:${error?.code ?? error?.message ?? 'unknown'}`;
+    return {
+      ok: true,
+      url: parsed.toString(),
+      hostname: parsed.hostname,
+      addresses: [],
+      pinnedAddress: null,
+      dnsWarning: reason,
+    };
   }
   const blocked = addresses.find((entry) => isBlockedIp(entry.address));
   if (blocked) {
@@ -125,7 +133,7 @@ async function safeFetchUrlAsText(url, { timeoutMs = SIMPLE_FETCH_TIMEOUT_MS, re
   const pinnedAddress = verdict.pinnedAddress;
 
   return new Promise((resolve) => {
-    const req = transport.request({
+    const requestOptions = {
       protocol: target.protocol,
       hostname: target.hostname,
       port: target.port || undefined,
@@ -138,8 +146,11 @@ async function safeFetchUrlAsText(url, { timeoutMs = SIMPLE_FETCH_TIMEOUT_MS, re
       },
       servername: target.hostname,
       timeout: timeoutMs,
-      lookup: (_hostname, _opts, callback) => callback(null, pinnedAddress, net.isIP(pinnedAddress)),
-    }, (response) => {
+    };
+    if (pinnedAddress) {
+      requestOptions.lookup = (_hostname, _opts, callback) => callback(null, pinnedAddress, net.isIP(pinnedAddress));
+    }
+    const req = transport.request(requestOptions, (response) => {
       const status = Number(response.statusCode || 0);
       const location = response.headers.location;
       if (status >= 300 && status < 400 && location) {

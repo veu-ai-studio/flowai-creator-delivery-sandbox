@@ -43,7 +43,9 @@ describe('P2 debt + SSRF source wiring', () => {
   it('crawler has DNS-based SSRF guard and manual redirect validation', () => {
     expect(crawlerSrc).toContain('dns.lookup');
     expect(crawlerSrc).toContain('redirects > MAX_SAFE_REDIRECTS');
-    expect(crawlerSrc).toContain('lookup: (_hostname, _opts, callback)');
+    expect(crawlerSrc).toContain('if (pinnedAddress)');
+    expect(crawlerSrc).toContain('requestOptions.lookup = (_hostname, _opts, callback)');
+    expect(crawlerSrc).toContain('dnsWarning');
     expect(crawlerSrc).toContain('blocked_private_ip');
   });
 });
