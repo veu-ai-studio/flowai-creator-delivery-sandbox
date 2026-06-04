@@ -97,6 +97,7 @@ import ForgeResearchForm from './pages/ForgeResearchForm';
 import ForgeDesignForm from './pages/ForgeDesignForm';
 import ForgeBuildForm from './pages/ForgeBuildForm';
 import ForgeAuditForm from './pages/ForgeAuditForm';
+import ForgeDeployForm from './pages/ForgeDeployForm';
 import Workspace from './pages/Workspace';
 import Login from './pages/Login';
 import RequireAuth from '@/components/RequireAuth';
@@ -143,6 +144,7 @@ const AuthenticatedApp = () => {
         <Route path="/forge/build" element={<ForgeBuildForm />} />
         <Route path="/forge/audit" element={<ForgeAuditForm />} />
         <Route path="/forge/quality-audit" element={<ForgeAuditForm />} />
+        <Route path="/forge/deploy" element={<ForgeDeployForm />} />
         <Route path="/old-dashboard" element={<Dashboard />} />
 
         <Route path="/flow-designer" element={<FlowDesigner />} />
