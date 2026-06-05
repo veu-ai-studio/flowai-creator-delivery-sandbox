@@ -241,6 +241,72 @@ function formatRunError(event = {}) {
   return parts.filter(Boolean).join(' | ');
 }
 
+function eventToStepEvents(event) {
+  if (event?.type === 'step') return [event];
+  if (event?.type === 'iteration') {
+    return [{
+      type: 'step',
+      log: {
+        ...event.iteration,
+        stepName: `Iteration ${event.iteration?.number} complete`,
+        status: 'complete',
+        kind: 'iteration_complete',
+      },
+    }];
+  }
+  if (event?.type === 'registry') {
+    return [{
+      type: 'step',
+      log: {
+        stepName: `Registry ${event.action}`,
+        status: 'complete',
+        result: { productId: event.productId },
+      },
+    }];
+  }
+  if (event?.type === 'symbiotic_context') {
+    return [{
+      type: 'step',
+      log: {
+        stepName: 'ProductSSOT Context',
+        status: event.ok ? 'complete' : 'degraded',
+        tool: event.ok ? 'ProductSSOT context loaded' : 'ProductSSOT context unavailable',
+        why: 'Symbiotic Loop: run N+1 reads prior ProductSSOT state before execution',
+        result: event.context ? {
+          kind: 'product_ssot.symbiotic_context.v1',
+          hasPriorRun: event.context.hasPriorRun === true,
+          priorRunCount: event.context.priorRunCount ?? 0,
+          sourceVersion: event.context.sourceVersion ?? null,
+          latestDeliveryArtifactUrl: event.context.latestDeliveryArtifactUrl ?? null,
+        } : { reason: event.reason || 'no_context' },
+      },
+    }];
+  }
+  if (event?.type === 'symbiotic_write') {
+    return [{
+      type: 'step',
+      log: {
+        stepName: 'ProductSSOT Symbiotic Write',
+        status: event.persisted ? 'complete' : 'degraded',
+        tool: event.persisted ? 'Symbiotic run summary persisted' : 'Symbiotic run summary not persisted',
+        why: 'Symbiotic Loop: run N output seeds run N+1 context',
+        result: {
+          kind: 'product_ssot.symbiotic_run.v1',
+          persisted: event.persisted === true,
+          state: event.state || 'failed',
+          version: event.version ?? null,
+          reason: event.reason ?? null,
+        },
+      },
+    }];
+  }
+  return [];
+}
+
+function storedRunEventsToSteps(events = []) {
+  return events.flatMap((entry) => eventToStepEvents(entry?.payload ?? entry));
+}
+
 function toolName(tool) {
   return tool?.platform_name ?? tool?.toolName ?? tool?.name ?? tool?.toolId ?? tool?.id ?? null;
 }
@@ -944,6 +1010,40 @@ export default function RunConstructionPanel({
   const abortRef = useRef(null);
   const autoStartRef = useRef(false);
 
+  const pollBackgroundStatus = async (statusUrl, signal) => {
+    for (;;) {
+      if (signal.aborted) return;
+      const statusRes = await fetch(statusUrl, {
+        headers: { Accept: 'application/json' },
+        signal,
+      });
+      if (!statusRes.ok) {
+        throw new Error(`status_poll_failed:${statusRes.status}`);
+      }
+      const payload = await statusRes.json();
+      const run = payload?.run;
+      if (!run) throw new Error('status_poll_missing_run');
+      const nextSteps = storedRunEventsToSteps(run.events || []);
+      setSteps(nextSteps);
+      setKnownGapSeen(nextSteps.some((event) => event?.log?.known_gap === true));
+      if (run.final) setFinal(run.final);
+      if (run.status === 'completed') {
+        setStatus('done');
+        return;
+      }
+      if (run.status === 'failed') {
+        if (run.final) {
+          setStatus('done');
+        } else {
+          setErrorMsg(formatRunError(run.error || { error: 'background_run_failed' }));
+          setStatus('error');
+        }
+        return;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 3000));
+    }
+  };
+
   const start = async () => {
     setStatus('running');
     setSteps([]);
@@ -970,6 +1070,27 @@ export default function RunConstructionPanel({
         try { const j = await res.json(); detail = j?.detail || j?.error || detail; } catch { /* ignore */ }
         setErrorMsg(detail);
         setStatus('error');
+        return;
+      }
+      if (res.status === 202) {
+        const queued = await res.json();
+        setRunId(queued.runId || null);
+        setSteps([{
+          type: 'step',
+          log: {
+            stepName: 'Background Forge queued',
+            status: 'running',
+            tool: 'Inngest background executor',
+            why: 'Long-running Forge execution is detached from the browser request and polled through a durable status channel.',
+            result: {
+              kind: 'forge_async_run.queued.v1',
+              runId: queued.runId,
+              statusUrl: queued.statusUrl,
+              transport: queued.transport,
+            },
+          },
+        }]);
+        await pollBackgroundStatus(queued.statusUrl, ac.signal);
         return;
       }
       if (!res.body) {

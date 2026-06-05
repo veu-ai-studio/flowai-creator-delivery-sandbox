@@ -61,6 +61,13 @@ import {
   readProductSsotRunContext,
 } from '../lib/forge/productSsotContinuity.js';
 import { assertPublicHttpUrl } from '../../api/_lib/crawler.js';
+import { isInngestEnabled, sendEvent } from '../../api/_lib/inngest.js';
+import {
+  appendForgeRunEvent,
+  initializeForgeRunStatus,
+  markForgeRunFailed,
+  markForgeRunStarted,
+} from '../../api/_lib/forgeRunStatusBus.js';
 
 const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION', 'FRESH_BUILD']);
 const GTM_TARGET = 95;
@@ -208,7 +215,7 @@ function emitRunConstructionSoftTimeoutFinal({ send, done, payload }) {
   return payload;
 }
 
-export default async function handler(req, res) {
+export async function runConstructionHandler(req, res, { internalBackgroundJob = false } = {}) {
   // CORS / preflight.
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -283,6 +290,64 @@ export default async function handler(req, res) {
   }
 
   // ── SSE preamble ─────────────────────────────────────────────────────────
+  if (!internalBackgroundJob && mode === 'BACKGROUND') {
+    if (!isInngestEnabled()) {
+      res.setHeader('Content-Type', 'application/json');
+      res.statusCode = 503;
+      return res.end(JSON.stringify({
+        ok: false,
+        error: 'async_not_configured',
+        detail: 'Background Forge requires INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY, and INNGEST_BACKEND=inngest.',
+        inngestReady: false,
+      }));
+    }
+
+    const queuedRunId = typeof body.runId === 'string' && body.runId.trim()
+      ? body.runId.trim()
+      : randomUUID();
+    const statusWrite = await initializeForgeRunStatus({
+      runId: queuedRunId,
+      url,
+      mode: 'BACKGROUND',
+    });
+    const queued = await sendEvent('flowai/forge.run.requested', {
+      runId: queuedRunId,
+      body: {
+        ...body,
+        url,
+        description,
+        mode: 'FOREGROUND',
+      },
+    });
+    if (!queued.ok) {
+      await markForgeRunFailed(queuedRunId, Object.assign(new Error(queued.reason || 'Inngest send failed'), {
+        code: 'INNGEST_SEND_FAILED',
+      }));
+      res.setHeader('Content-Type', 'application/json');
+      res.statusCode = 502;
+      return res.end(JSON.stringify({
+        ok: false,
+        error: 'background_queue_failed',
+        detail: queued.reason || 'Inngest send failed',
+        runId: queuedRunId,
+        transport: statusWrite.transport,
+      }));
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.statusCode = 202;
+    return res.end(JSON.stringify({
+      ok: true,
+      async: true,
+      runId: queuedRunId,
+      status: 'queued',
+      statusUrl: `/api/run-construction-status?runId=${encodeURIComponent(queuedRunId)}`,
+      transport: statusWrite.transport,
+      inngestReady: true,
+      eventIds: queued.ids || [],
+    }));
+  }
+
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
@@ -312,7 +377,9 @@ export default async function handler(req, res) {
   // Best-effort Supabase. When unavailable, the orchestrator falls through
   // to PATH B; we skip the registry upsert and report governanceRecordId
   // as the runId so the SSE consumer still has a correlation handle.
-  const runId = randomUUID();
+  const runId = typeof body.runId === 'string' && body.runId.trim()
+    ? body.runId.trim()
+    : randomUUID();
   const migrationFlag = mode === 'MIGRATION'
     ? await getMigrationModeFlag()
     : { enabled: false, source: 'not_checked' };
@@ -609,10 +676,14 @@ export default async function handler(req, res) {
       deps,
     });
     const softTimeoutMs = configuredRunConstructionSoftTimeoutMs();
-    const timeoutPromise = new Promise((resolve) => {
-      softTimeout = setTimeout(() => resolve({ __runConstructionSoftTimeout: true }), softTimeoutMs);
-    });
-    const raced = await Promise.race([orchestrationPromise, timeoutPromise]);
+    const timeoutPromise = internalBackgroundJob
+      ? null
+      : new Promise((resolve) => {
+          softTimeout = setTimeout(() => resolve({ __runConstructionSoftTimeout: true }), softTimeoutMs);
+        });
+    const raced = internalBackgroundJob
+      ? await orchestrationPromise
+      : await Promise.race([orchestrationPromise, timeoutPromise]);
     if (raced?.__runConstructionSoftTimeout) {
       stopExposedState();
       send({
@@ -777,6 +848,81 @@ export default async function handler(req, res) {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+
+export default runConstructionHandler;
+
+export async function runConstructionToStatus({ runId, body } = {}) {
+  if (typeof runId !== 'string' || runId.trim().length === 0) {
+    return { ok: false, error: 'missing_runId' };
+  }
+  const resolvedRunId = runId.trim();
+  await markForgeRunStarted(resolvedRunId);
+
+  let buffer = '';
+  let terminalSeen = false;
+  const writes = [];
+  let writeChain = Promise.resolve();
+  const appendParsedFrames = (chunk) => {
+    buffer += String(chunk);
+    const frames = buffer.split('\n\n');
+    buffer = frames.pop() ?? '';
+    for (const frame of frames) {
+      const line = frame.split('\n').find((item) => item.startsWith('data:'));
+      if (!line) continue;
+      const data = line.slice(5).trim();
+      if (data === '[DONE]') {
+        terminalSeen = true;
+        continue;
+      }
+      try {
+        const parsed = JSON.parse(data);
+        writeChain = writeChain.then(() => appendForgeRunEvent(resolvedRunId, parsed));
+        writes.push(writeChain);
+      } catch {
+        // Keep the background run alive even if a frame cannot be parsed.
+      }
+    }
+  };
+
+  const fakeReq = {
+    method: 'POST',
+    headers: {},
+    body: {
+      ...(body && typeof body === 'object' ? body : {}),
+      runId: resolvedRunId,
+      mode: 'FOREGROUND',
+    },
+  };
+  const fakeRes = {
+    statusCode: 200,
+    headers: {},
+    ended: false,
+    setHeader(name, value) { this.headers[name] = value; },
+    flushHeaders() {},
+    write(chunk) { appendParsedFrames(chunk); },
+    end(chunk = '') {
+      if (chunk) appendParsedFrames(chunk);
+      this.ended = true;
+    },
+    on() {},
+  };
+
+  try {
+    await runConstructionHandler(fakeReq, fakeRes, { internalBackgroundJob: true });
+    await Promise.allSettled(writes);
+    if (!terminalSeen) {
+      await markForgeRunFailed(resolvedRunId, Object.assign(new Error('background run ended without [DONE]'), {
+        code: 'ASYNC_STREAM_ENDED_WITHOUT_DONE',
+      }));
+      return { ok: false, runId: resolvedRunId, error: 'ASYNC_STREAM_ENDED_WITHOUT_DONE' };
+    }
+    return { ok: true, runId: resolvedRunId };
+  } catch (error) {
+    await Promise.allSettled(writes);
+    await markForgeRunFailed(resolvedRunId, error);
+    return { ok: false, runId: resolvedRunId, error: error?.message ?? String(error) };
+  }
+}
 
 /**
  * Lazy-load the @supabase/supabase-js client. Returns null on any failure
