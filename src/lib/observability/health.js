@@ -23,6 +23,7 @@
 //   - NEVER returns credential VALUES. Field whitelisting: status,
 //     reason, and configured-boolean only.
 
+import { resolveBuildIdentity } from './buildIdentity.js';
 import { observabilityInventory } from './logger.js';
 
 const DEFAULT_PROBE_TIMEOUT_MS = 5_000;
@@ -117,20 +118,24 @@ const ORCHESTRA = Object.freeze([
 // ─── Build / env probe ──────────────────────────────────────────────────
 
 function buildProbe() {
-  const commit = process.env.VERCEL_GIT_COMMIT_SHA || null;
-  const branch = process.env.VERCEL_GIT_COMMIT_REF || null;
+  const buildIdentity = resolveBuildIdentity(process.env);
   const env = process.env.VERCEL_ENV || process.env.NODE_ENV || 'unknown';
   const region = process.env.VERCEL_REGION || null;
   const url = process.env.VERCEL_URL || null;
   return {
-    status: commit ? STATUSES.PASS : STATUSES.DEGRADED,
-    commit: commit ? String(commit).slice(0, 12) : null,
-    branch,
+    status: buildIdentity.commitFull ? STATUSES.PASS : STATUSES.DEGRADED,
+    commit: buildIdentity.commit,
+    commitFull: buildIdentity.commitFull,
+    branch: buildIdentity.branch,
+    buildIdentitySource: buildIdentity.source,
+    buildIdentityGeneratedAt: buildIdentity.generatedAt,
     env,
     region,
     deploymentUrl: url ? `https://${url}` : null,
     nodeVersion: process.versions?.node ?? null,
-    reason: commit ? null : 'VERCEL_GIT_COMMIT_SHA not surfaced — local dev or build-time missing',
+    reason: buildIdentity.commitFull
+      ? null
+      : 'No commit metadata surfaced by Vercel env or generated build info',
   };
 }
 

@@ -13,6 +13,7 @@ import { isEmailConfigured } from './_lib/email.js';
 import { isEmbeddingsConfigured } from './_lib/embeddings.js';
 import { isAxiomConfigured } from './_lib/logger.js';
 import { isSupabaseConfigured } from './_lib/supabase.js';
+import { resolveBuildIdentity } from '../src/lib/observability/buildIdentity.js';
 
 // Read package.json at module load using fs. The `assert { type: 'json' }`
 // syntax is unreliable across Node versions / bundlers; fs is portable.
@@ -46,16 +47,17 @@ async function versionHandler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Use GET' });
 
-  const commit = process.env.VERCEL_GIT_COMMIT_SHA || null;
-  const branch = process.env.VERCEL_GIT_COMMIT_REF || null;
+  const buildIdentity = resolveBuildIdentity(process.env);
   const deployUrl = process.env.VERCEL_URL || null;
 
   return res.status(200).json({
     name: pkg.name,
     version: pkg.version,
-    commit: commit ? commit.slice(0, 12) : null,
-    commitFull: commit,
-    branch,
+    commit: buildIdentity.commit,
+    commitFull: buildIdentity.commitFull,
+    branch: buildIdentity.branch,
+    buildIdentitySource: buildIdentity.source,
+    buildIdentityGeneratedAt: buildIdentity.generatedAt,
     env: process.env.VERCEL_ENV || process.env.NODE_ENV || 'development',
     region: process.env.VERCEL_REGION || null,
     deployUrl,
