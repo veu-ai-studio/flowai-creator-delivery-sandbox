@@ -24,6 +24,7 @@ const LABELS = {
 export default function StepToolStatusList({ stepKey, toolSelection = null, compact = false }) {
   const tools = rankedToolsForStepCard(stepKey, toolSelection);
   if (tools.length === 0) return null;
+  const mode = toolSelection?.mode ?? toolSelection?.selectionMode ?? 'AUTO';
 
   return (
     <div className={compact ? 'mt-2 flex flex-wrap gap-1.5' : 'mt-3 grid gap-2'}>
@@ -37,6 +38,9 @@ export default function StepToolStatusList({ stepKey, toolSelection = null, comp
           >
             <span className="text-[10px] font-semibold">
               {tool.rank}. {tool.platform_name}
+            </span>
+            <span className="ml-1 text-[9px] uppercase opacity-80">
+              {mode}
             </span>
             <span className="ml-1 text-[9px] uppercase opacity-80">
               {LABELS[state] ?? state}

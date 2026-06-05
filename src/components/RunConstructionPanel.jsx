@@ -20,10 +20,11 @@
 //   error     | error, code     (terminal)
 //   [DONE]    | terminator
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import FindingsReport from '@/components/FindingsReport';
+import StepToolStatusList from './operations/StepToolStatusList';
 import {
   Loader2, CheckCircle2, XCircle, AlertTriangle,
   ExternalLink, ChevronRight, RotateCcw,
@@ -133,8 +134,35 @@ function buildMacroProgress({ events = [], status, final, errorMsg }) {
   return { states, active };
 }
 
-function PipelineProgressTracker({ events, status, final, errorMsg }) {
+function toolSelectionFromLog(log = {}) {
+  const result = log.result ?? {};
+  if (result?.kind === 'tool_intelligence_selection') return result;
+  return log.toolSelection
+    ?? log.tool_selection
+    ?? result.toolSelection
+    ?? result.tool_selection
+    ?? null;
+}
+
+function buildMacroToolSelections(events = []) {
+  const selections = {};
+  for (const event of events) {
+    const log = event?.log ?? {};
+    const macro = macroStepForLog(log);
+    if (!macro) continue;
+    const toolSelection = toolSelectionFromLog(log);
+    if (toolSelection) selections[macro] = toolSelection;
+  }
+  return selections;
+}
+
+function stepToolKey(stepKey) {
+  return stepKey === 'self_renewal' ? 'govern' : stepKey;
+}
+
+export function PipelineProgressTracker({ events, status, final, errorMsg }) {
   const { states, active } = buildMacroProgress({ events, status, final, errorMsg });
+  const toolSelections = buildMacroToolSelections(events);
   return (
     <div className="rounded-lg border border-border bg-background/40 p-3 space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -175,13 +203,19 @@ function PipelineProgressTracker({ events, status, final, errorMsg }) {
               : stepStatus === 'complete'
                 ? <CheckCircle2 className="h-3.5 w-3.5" />
                 : <span className="h-3.5 w-3.5 rounded-full border border-current/30" />;
+          const toolKey = stepToolKey(step.key);
           return (
-            <div key={step.key} className={`rounded-md border px-2.5 py-2 min-h-[64px] ${classes}`}>
+            <div key={step.key} className={`rounded-md border px-2.5 py-2 min-h-[104px] ${classes}`}>
               <div className="flex items-center justify-between gap-1">
                 <span className="text-[9px] font-bold uppercase tracking-wide opacity-70">{index + 1}</span>
                 {icon}
               </div>
               <p className="mt-1 text-[11px] font-semibold leading-tight">{step.label}</p>
+              <StepToolStatusList
+                stepKey={toolKey}
+                toolSelection={toolSelections[step.key] ?? toolSelections[toolKey] ?? null}
+                compact
+              />
             </div>
           );
         })}

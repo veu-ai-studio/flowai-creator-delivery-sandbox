@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 vi.mock('@/components/ui/button', () => ({ Button: () => null }));
 vi.mock('@/components/ui/input', () => ({ Input: () => null }));
 vi.mock('@/components/FindingsReport', () => ({ default: () => null }));
 
-const { resolveRankedToolSelectionPayload } = await import(
+const { PipelineProgressTracker, resolveRankedToolSelectionPayload } = await import(
   '../../src/components/RunConstructionPanel.jsx'
 );
 
@@ -96,5 +98,41 @@ describe('RunConstructionPanel ranked tool selection payloads', () => {
 
   it('returns null when no ranked candidates are present', () => {
     expect(resolveRankedToolSelectionPayload({ toolSelection: { candidates: [] } })).toBeNull();
+  });
+
+  it('renders ranked tool name, status, and mode inside the 8-step card when tool selection is present', () => {
+    const html = renderToStaticMarkup(React.createElement(PipelineProgressTracker, {
+      status: 'running',
+      final: null,
+      errorMsg: null,
+      events: [
+        {
+          type: 'step',
+          log: {
+            step: 6,
+            status: 'complete',
+            result: {
+              toolSelection: {
+                stepKey: 'design',
+                mode: 'GUIDED',
+                candidates: [
+                  {
+                    rank: 1,
+                    platform_name: 'v0 by Vercel',
+                    platform_type: 'design',
+                    dispatchState: 'stub_unavailable',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    }));
+
+    expect(html).toContain('Design');
+    expect(html).toContain('v0 by Vercel');
+    expect(html).toContain('GUIDED');
+    expect(html).toContain('stub unavailable');
   });
 });
