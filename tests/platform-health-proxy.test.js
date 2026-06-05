@@ -49,7 +49,7 @@ describe('PlatformHealthWidget — resolveProxyBaseUrl', () => {
 });
 
 describe('PlatformHealthWidget — DEFAULT_PROXY_FALLBACK', () => {
-  it('is the legacy Replit proxy URL pending infra migration', () => {
-    expect(DEFAULT_PROXY_FALLBACK).toBe('https://attached-assets-victor2081new.replit.app');
+  it('uses the same-origin Vercel API by default', () => {
+    expect(DEFAULT_PROXY_FALLBACK).toBe('/api');
   });
 });

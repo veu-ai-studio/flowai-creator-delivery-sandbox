@@ -1200,7 +1200,7 @@ export default function LandingPage() {
           {runPanelUrl ? (
             <RunConstructionPanel
               url={runPanelUrl}
-              mode={isMigrationMode ? 'MIGRATION' : isFreshBuildMode ? 'FRESH_BUILD' : 'FOREGROUND'}
+              mode={isMigrationMode ? 'MIGRATION' : isFreshBuildMode ? 'FRESH_BUILD' : 'BACKGROUND'}
               autoStart
               onClose={() => setRunPanelUrl(null)}
             />

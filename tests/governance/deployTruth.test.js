@@ -254,6 +254,33 @@ describe('deploy truth governance artifact', () => {
     });
   });
 
+  it('API checker is read-only by default and still reports MATCH as ok', async () => {
+    const fetchImpl = vi.fn(async (url) => ({
+      ok: true,
+      json: async () => ({
+        commitFull: 'abc123',
+        branch: 'main',
+        deployUrl: 'flowai.example',
+        requested: url,
+      }),
+    }));
+
+    const summary = await runDeployTruthCheck({
+      productionUrl: 'https://flowai.example',
+      expectedCommit: 'abc123',
+      branch: 'main',
+      fetchImpl,
+    });
+
+    expect(summary.ok).toBe(true);
+    expect(summary.artifact.status).toBe('MATCH');
+    expect(summary.artifact.branch).toBe('main');
+    expect(summary.persistence).toMatchObject({
+      written: false,
+      reason: 'read_only_check',
+    });
+  });
+
   it('API checker reports DRIFT when expected head differs from production', async () => {
     const summary = await runDeployTruthCheck({
       productionUrl: 'https://flowai.example',

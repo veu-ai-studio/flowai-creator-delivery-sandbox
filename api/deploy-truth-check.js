@@ -6,6 +6,7 @@ import {
   summarizeDeployTruth,
 } from '../src/lib/governance/deployTruth.js';
 import { appendGovernanceEntryLight } from '../src/lib/governance/appendGovernanceEntry.light.js';
+import { resolveBuildIdentity } from '../src/lib/observability/buildIdentity.js';
 
 function requestBaseUrl(req) {
   const envUrl = process.env.FLOWAI_PRODUCTION_URL;
@@ -22,8 +23,15 @@ function requestBaseUrl(req) {
 function expectedHead() {
   return process.env.EXPECTED_HEAD
     || process.env.FLOWAI_EXPECTED_HEAD
-    || process.env.VERCEL_GIT_COMMIT_SHA
+    || resolveBuildIdentity(process.env).commitFull
     || null;
+}
+
+function expectedBranch() {
+  return process.env.EXPECTED_BRANCH
+    || process.env.FLOWAI_EXPECTED_BRANCH
+    || resolveBuildIdentity(process.env).branch
+    || 'main';
 }
 
 function driftDetails({ productionCommit, expectedCommit }) {
@@ -37,9 +45,10 @@ function driftDetails({ productionCommit, expectedCommit }) {
 export async function runDeployTruthCheck({
   productionUrl,
   expectedCommit = expectedHead(),
-  branch = process.env.VERCEL_GIT_COMMIT_REF || 'flowai-v0.1',
+  branch = expectedBranch(),
   fetchImpl = fetch,
-  persist = appendGovernanceEntryLight,
+  persist = null,
+  requirePersistenceForOk = Boolean(persist),
 } = {}) {
   const versionResult = await fetchProductionVersion({ productionUrl, fetchImpl });
   const productionCommit = versionResult.version?.commitFull || versionResult.version?.commit || null;
@@ -50,17 +59,32 @@ export async function runDeployTruthCheck({
     driftDetails: driftDetails({ productionCommit, expectedCommit }),
     blockedReason: versionResult.ok ? null : versionResult.reason,
   });
-  const persistence = await persist({ entry: artifact });
-  return summarizeDeployTruth({ artifact, persistence });
+  const persistence = typeof persist === 'function'
+    ? await persist({ entry: artifact })
+    : { written: false, transport: null, reason: 'read_only_check' };
+  const summary = summarizeDeployTruth({ artifact, persistence });
+  return {
+    ...summary,
+    ok: requirePersistenceForOk
+      ? summary.ok
+      : artifact.status === 'MATCH',
+  };
 }
 
 async function deployTruthCheckHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Use GET' });
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ error: 'Use GET or POST' });
+  }
 
   const productionUrl = requestBaseUrl(req);
-  const summary = await runDeployTruthCheck({ productionUrl });
+  const persist = req.method === 'POST' ? appendGovernanceEntryLight : null;
+  const summary = await runDeployTruthCheck({
+    productionUrl,
+    persist,
+    requirePersistenceForOk: req.method === 'POST',
+  });
   return res.status(200).json({
     ok: summary.ok,
     status: summary.artifact?.status || 'BLOCKED',

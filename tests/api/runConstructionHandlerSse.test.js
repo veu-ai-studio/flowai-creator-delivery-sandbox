@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   persistSymbioticRunSummary: vi.fn(),
   createClient: vi.fn(),
   stop: vi.fn(),
+  isInngestEnabled: vi.fn(),
+  sendEvent: vi.fn(),
 }));
 
 vi.mock('../../api/_lib/crawler.js', () => ({
@@ -26,7 +28,13 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: mocks.createClient,
 }));
 
-const { default: handler } = await import('../../src/api/run-construction.js');
+vi.mock('../../api/_lib/inngest.js', () => ({
+  isInngestEnabled: mocks.isInngestEnabled,
+  sendEvent: mocks.sendEvent,
+}));
+
+const { default: handler, runConstructionToStatus } = await import('../../src/api/run-construction.js');
+const { readForgeRunStatus, resetForgeRunStatusForTests } = await import('../../api/_lib/forgeRunStatusBus.js');
 
 function createResponse() {
   const chunks = [];
@@ -115,11 +123,100 @@ describe('run-construction handler SSE terminal framing', () => {
       version: 1,
       reason: null,
     });
+    mocks.isInngestEnabled.mockReturnValue(false);
+    mocks.sendEvent.mockResolvedValue({ ok: true, ids: ['evt_test'] });
+    resetForgeRunStatusForTests();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     process.env = originalEnv;
+  });
+
+  it('returns async_not_configured for BACKGROUND mode when Inngest is unavailable', async () => {
+    mocks.isInngestEnabled.mockReturnValue(false);
+
+    const res = createResponse();
+    await handler(createRequest({ url: 'https://example.com', mode: 'BACKGROUND' }), res);
+
+    expect(res.statusCode).toBe(503);
+    const body = JSON.parse(res.chunks.join(''));
+    expect(body).toMatchObject({
+      ok: false,
+      error: 'async_not_configured',
+      inngestReady: false,
+    });
+    expect(mocks.runOrchestration).not.toHaveBeenCalled();
+  });
+
+  it('queues BACKGROUND mode through Inngest and creates a status record', async () => {
+    mocks.isInngestEnabled.mockReturnValue(true);
+    mocks.sendEvent.mockResolvedValue({ ok: true, ids: ['evt_queued'] });
+
+    const res = createResponse();
+    await handler(createRequest({
+      url: 'https://example.com',
+      mode: 'BACKGROUND',
+      description: 'Async product run',
+      runId: '11111111-1111-4111-8111-111111111111',
+    }), res);
+
+    expect(res.statusCode).toBe(202);
+    const body = JSON.parse(res.chunks.join(''));
+    expect(body).toMatchObject({
+      ok: true,
+      async: true,
+      runId: '11111111-1111-4111-8111-111111111111',
+      status: 'queued',
+      inngestReady: true,
+      eventIds: ['evt_queued'],
+    });
+    expect(body.statusUrl).toContain('/api/run-construction-status?runId=');
+    expect(mocks.sendEvent).toHaveBeenCalledWith('flowai/forge.run.requested', expect.objectContaining({
+      runId: '11111111-1111-4111-8111-111111111111',
+      body: expect.objectContaining({
+        url: 'https://example.com',
+        description: 'Async product run',
+        mode: 'FOREGROUND',
+      }),
+    }));
+    const { record } = await readForgeRunStatus('11111111-1111-4111-8111-111111111111');
+    expect(record).toMatchObject({
+      runId: '11111111-1111-4111-8111-111111111111',
+      status: 'queued',
+      url: 'https://example.com',
+      mode: 'BACKGROUND',
+    });
+  });
+
+  it('background worker writes streamed events and final state to the status bus', async () => {
+    mocks.runOrchestration.mockImplementation(async ({ onStep }) => {
+      onStep({ step: 1, status: 'complete', tool: 'Research', result: { kind: 'research' } });
+      return {
+        ok: true,
+        originalUrl: 'https://example.com',
+        finalScore: 77,
+        gtmReady: false,
+        exitReason: 'ASYNC_COMPLETE',
+        iterationsCompleted: 1,
+      };
+    });
+
+    const result = await runConstructionToStatus({
+      runId: '22222222-2222-4222-8222-222222222222',
+      body: { url: 'https://example.com', mode: 'FOREGROUND' },
+    });
+
+    expect(result).toEqual({ ok: true, runId: '22222222-2222-4222-8222-222222222222' });
+    const { record } = await readForgeRunStatus('22222222-2222-4222-8222-222222222222');
+    expect(record.status).toBe('completed');
+    expect(record.final).toMatchObject({
+      type: 'final',
+      ok: true,
+      finalScore: 77,
+      exitReason: 'ASYNC_COMPLETE',
+    });
+    expect(record.events.some((entry) => entry.payload?.type === 'step')).toBe(true);
   });
 
   it('emits final then DONE when orchestration resolves for a generic URL', async () => {

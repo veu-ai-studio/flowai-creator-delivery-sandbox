@@ -82,6 +82,11 @@ async function versionHandler(req, res) {
       // Integration activation status
       anthropicReady: Boolean(process.env.ANTHROPIC_API_KEY),
       browserlessReady: Boolean(process.env.BROWSERLESS_API_KEY),
+      githubAppReady: Boolean(
+        process.env.GITHUB_APP_ID &&
+        process.env.GITHUB_APP_PRIVATE_KEY &&
+        (process.env.GITHUB_APP_INSTALLATION_ID || process.env.GITHUB_INSTALLATION_ID),
+      ),
       supabaseReady: isSupabaseConfigured(),
       inngestReady: isInngestEnabled(),
       clerkReady: isClerkConfigured(),

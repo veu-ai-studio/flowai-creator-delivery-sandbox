@@ -103,6 +103,27 @@ const TOPICS = Object.freeze({
   // --- Agent #20 Environmental Impacts ---
   '20.impact.assessment.v1':            'Environmental impact assessment',
 
+  // --- Agent #21 Ops Runner Alpha ---
+  '1.crawl.request.v1':                 'Aggressive crawl request',
+  '10.ssot.updated.v1':                 'ProductSSOT update notification',
+  '21.crawl.completed.v1':              'Aggressive crawl completed',
+  '21.issues.detected.v1':              'Aggressive crawl issues detected',
+  '21.gtm.readiness.v1':                'GTM readiness score from crawl evidence',
+
+  // --- Agent #26 Orchestra Research ---
+  'community.signal.v1':                'Community signal for candidate tool evaluation',
+  '11.platform.discovery.v1':           'Strategic intelligence platform discovery signal',
+  '15.benchmark.head_to_head.v1':       'Head-to-head benchmark candidate signal',
+  '17.orchestra.deprecation_proposal.v1': 'Product evolution deprecation proposal for Orchestra member',
+  'vendor.changelog.poll.v1':           'Vendor changelog signal for Orchestra candidate evaluation',
+  '26.orchestra.candidate.v1':          'Orchestra candidate observed',
+  '26.orchestra.admitted.v1':           'Orchestra candidate admitted recommendation',
+  '26.orchestra.candidate_rejected.v1': 'Orchestra candidate rejected recommendation',
+  '26.orchestra.candidate_panel_gate.v1': 'Orchestra candidate requires Panel gate',
+  '26.orchestra.deprecated.v1':         'Orchestra member deprecation recommendation',
+  '26.orchestra.lifecycle_state_changed.v1': 'Orchestra member lifecycle-state change recommendation',
+  '26.orchestra.candidate_reactivated.v1': 'Archived Orchestra candidate reactivated recommendation',
+
   // --- Portfolio-level (cross-agent rollups) ---
   'portfolio.fire.v1':                  'Portfolio-level fire rollup (from #12)',
   'portfolio.health.v1':                'Portfolio-level health rollup',

@@ -112,8 +112,19 @@ async function updateHashPointer({ supabase, productSsotId, version, snapshotHas
       audit_hash_chain_pointer: snapshotHash,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', productSsotId);
+    .eq('id', productSsotId)
+    .select('id');
   if (error) return { ok: false, reason: `hash_pointer_update_failed:${error.message}` };
+  return { ok: true };
+}
+
+async function deleteVersionRow({ supabase, versionId }) {
+  if (!versionId) return { ok: false, reason: 'version_id_missing' };
+  const { error } = await supabase
+    .from('product_ssot_version')
+    .delete()
+    .eq('id', versionId);
+  if (error) return { ok: false, reason: `version_delete_failed:${error.message}` };
   return { ok: true };
 }
 
@@ -229,6 +240,8 @@ export async function persistForgeStepArtifact({
     snapshotHash,
   });
   if (!pointerWrite.ok) {
+    const rollback = await governanceWrite.rollback?.();
+    const versionRollback = await deleteVersionRow({ supabase, versionId: versionWrite.id });
     return {
       ok: false,
       persisted: false,
@@ -239,6 +252,8 @@ export async function persistForgeStepArtifact({
       versionId: versionWrite.id,
       snapshotHash,
       prevHash,
+      rollback,
+      versionRollback,
     };
   }
 
@@ -262,4 +277,5 @@ export const __internals = Object.freeze({
   readVersionContext,
   insertVersionRow,
   updateHashPointer,
+  deleteVersionRow,
 });

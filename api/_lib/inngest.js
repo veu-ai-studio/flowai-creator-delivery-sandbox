@@ -131,6 +131,19 @@ export async function getInngestFunctions() {
     },
   ));
 
+  fns.push(client.createFunction(
+    {
+      id: 'forge-run-construction-executor',
+      name: 'Forge run-construction executor',
+      retries: 1,
+      trigger: { event: 'flowai/forge.run.requested' },
+    },
+    async ({ event, step }) => {
+      const { runConstructionToStatus } = await import('../../src/api/run-construction.js');
+      return await step.run('execute', () => runConstructionToStatus(event.data));
+    },
+  ));
+
   // Agent #3 Self-Renewal async path (Phase 1.3, CEO Q4 = (c) combined).
   // Job logic is inlined below in runAgent3RenewalJob() rather than
   // delegated to ./jobs/* — the W5a dispatch step 7 stages api/_lib/

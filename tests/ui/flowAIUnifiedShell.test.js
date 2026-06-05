@@ -18,6 +18,7 @@ const jobContextSrc = readFileSync(resolve(__dirname, '../../src/lib/JobContext.
 describe('FlowAI unified operating system shell', () => {
   it('splits Flow Hub Production and Workspace into distinct routes', () => {
     expect(appSrc).toMatch(/path="\/"\s+element=\{<LegacyFlowHubRedirect \/>/);
+    expect(appSrc).toMatch(/path="\/flow-hub"\s+element=\{<Navigate to="\/flow-hub\/production" replace \/>/);
     expect(appSrc).toMatch(/path="\/flow-hub\/production"\s+element=\{<LandingPage \/>/);
     expect(appSrc).toMatch(/path="\/flow-hub\/migration"\s+element=\{<LandingPage \/>/);
     expect(appSrc).toMatch(/path="\/flowai"\s+element=\{<FlowAIDashboard \/>/);
@@ -25,6 +26,13 @@ describe('FlowAI unified operating system shell', () => {
     expect(workspaceSrc).toContain('8-step upgrade pipeline');
     expect(workspaceSrc).toContain('Original Product');
     expect(workspaceSrc).toContain('Upgraded Version');
+  });
+
+  it('keeps legacy product and session aliases from falling through to 404', () => {
+    expect(appSrc).toMatch(/path="\/product-registry"\s+element=\{<Navigate to="\/products" replace \/>/);
+    expect(appSrc).toMatch(/path="\/registry"\s+element=\{<Navigate to="\/products" replace \/>/);
+    expect(appSrc).toMatch(/path="\/session-history"\s+element=\{<Navigate to="\/runs" replace \/>/);
+    expect(appSrc).toMatch(/path="\/sessions"\s+element=\{<Navigate to="\/runs" replace \/>/);
   });
 
   it('exposes the canonical sidebar sections and labels', () => {

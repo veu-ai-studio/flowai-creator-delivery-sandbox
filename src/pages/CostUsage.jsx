@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, Activity, Zap, Loader2, RefreshCw, AlertCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer, Cell } from 'recharts';
+import { listProducts } from '@/lib/products/registry';
 
-const VEU_PRODUCTS = ['SAIGE', 'PressAI', 'ReachSMS', 'RelTwin', 'MyPregLife'];
 const PROVIDERS = ['Anthropic', 'OpenAI', 'Voyage AI', 'Vercel', 'Replit'];
 
 function StatCard({ label, value, sub, icon: Icon, color = 'text-primary', bg = 'bg-primary/10' }) {
@@ -29,6 +29,7 @@ export default function CostUsage() {
   const [error, setError] = useState(null);
   const [productFilter, setProductFilter] = useState('all');
   const [providerFilter, setProviderFilter] = useState('all');
+  const [registeredProducts, setRegisteredProducts] = useState([]);
   const [budgets, setBudgets] = useState(() => {
     try { return JSON.parse(localStorage.getItem('flowai_budgets') || '{}'); } catch { return {}; }
   });
@@ -47,7 +48,15 @@ export default function CostUsage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  const fetchProducts = async () => {
+    const result = await listProducts({ status: 'active' });
+    setRegisteredProducts(result.ok ? result.items : []);
+  };
+
+  useEffect(() => {
+    fetchData();
+    fetchProducts();
+  }, []);
 
   const sessions = (data?.sessions || []).filter(s => {
     const matchProduct = productFilter === 'all' || (s.product || '').toLowerCase().includes(productFilter.toLowerCase());
@@ -59,8 +68,18 @@ export default function CostUsage() {
   const activeSessions = data?.active_sessions ?? null;
   const avgCost = data?.avg_cost_per_session ?? null;
 
+  const productNames = useMemo(() => {
+    const registered = registeredProducts
+      .map((product) => product.name || product.slug)
+      .filter(Boolean);
+    const observed = (data?.sessions || [])
+      .map((session) => session.product)
+      .filter(Boolean);
+    return [...new Set([...registered, ...observed])].sort((a, b) => a.localeCompare(b));
+  }, [data?.sessions, registeredProducts]);
+
   // Build chart data from sessions
-  const costByProduct = VEU_PRODUCTS.map(name => ({
+  const costByProduct = productNames.map(name => ({
     name,
     cost: sessions.filter(s => (s.product || '').toLowerCase().includes(name.toLowerCase()))
       .reduce((sum, s) => sum + (s.cost || 0), 0),
@@ -137,7 +156,7 @@ export default function CostUsage() {
         <select value={productFilter} onChange={e => setProductFilter(e.target.value)}
           className="h-8 text-xs rounded-md border border-input bg-background px-2 text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
           <option value="all">All Products</option>
-          {VEU_PRODUCTS.map(p => <option key={p} value={p}>{p}</option>)}
+          {productNames.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
         <select value={providerFilter} onChange={e => setProviderFilter(e.target.value)}
           className="h-8 text-xs rounded-md border border-input bg-background px-2 text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
@@ -209,7 +228,7 @@ export default function CostUsage() {
         className="rounded-xl border border-border bg-card p-5 space-y-4">
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Budget Alerts (per product / month)</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {VEU_PRODUCTS.map(product => {
+          {productNames.map(product => {
             const budget = budgets[product] || '';
             const spent = sessions.filter(s => (s.product || '').toLowerCase().includes(product.toLowerCase())).reduce((sum, s) => sum + (s.cost || 0), 0);
             const over = budget && spent > Number(budget);

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const outputPath = resolve(__dirname, '../src/lib/observability/buildInfo.generated.js');
+const checkOnly = process.argv.includes('--check');
 
 function firstNonEmpty(...values) {
   for (const value of values) {
@@ -77,7 +78,11 @@ export const BUILD_INFO = Object.freeze({
 });
 `;
 
+if (checkOnly) {
+  console.log(`[build-info] Check ${commitFull ? commitFull.slice(0, 12) : 'unavailable'}; generated file not written.`);
+  process.exit(0);
+}
+
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, content);
 console.log(`[build-info] Wrote ${commitFull ? commitFull.slice(0, 12) : 'unavailable'} to ${outputPath}`);
-

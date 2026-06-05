@@ -139,6 +139,7 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<LegacyFlowHubRedirect />} />
+        <Route path="/flow-hub" element={<Navigate to="/flow-hub/production" replace />} />
         <Route path="/flow-hub/production" element={<LandingPage />} />
         <Route path="/flow-hub/migration" element={<LandingPage />} />
         <Route path="/flowai" element={<FlowAIDashboard />} />
@@ -227,7 +228,11 @@ const AuthenticatedApp = () => {
         <Route path="/cost-usage" element={<CostUsage />} />
         <Route path="/portfolio" element={<PortfolioDashboard />} />
         <Route path="/products" element={<ProductRegistry />} />
+        <Route path="/product-registry" element={<Navigate to="/products" replace />} />
+        <Route path="/registry" element={<Navigate to="/products" replace />} />
         <Route path="/runs" element={<RunsHistory />} />
+        <Route path="/session-history" element={<Navigate to="/runs" replace />} />
+        <Route path="/sessions" element={<Navigate to="/runs" replace />} />
         <Route path="/settings" element={<OrgSettings />} />
         {/* Legacy redirects — Phase 5 cleanup */}
         <Route path="/flows" element={<Navigate to="/dashboard" replace />} />
