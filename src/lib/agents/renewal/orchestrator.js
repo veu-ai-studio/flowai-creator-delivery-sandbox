@@ -289,17 +289,16 @@ function buildPipelineEffortProfile({ args = {}, crawlSummary = null } = {}) {
 }
 
 /**
- * Resolve the live (deployed) URL for a product. D40 generic-engine
- * refactor: PRIMARY source is the product_registry row's product_url
- * column (added by migration 0021). Falls back to a small hardcoded
- * map ONLY for tests / environments where the column hasn't been
+ * Resolve the live (deployed) URL for a product. P12 product-agnostic
+ * expansion: source is the product_registry row's product_url
+ * column (added by migration 0021). No code fallback map is used;
+ * environments where the column hasn't been
  * applied yet — those entries are scheduled for removal once all
  * environments are on 0021.
  *
  * @param {string} productId
  * @param {object} [product]   — optional registry row; if supplied,
- *                               product.product_url takes precedence
- *                               over the legacy fallback map.
+ *                               product.product_url is the resolution source.
  * @returns {string|null}
  */
 export function resolveLiveUrl(productId, product = null) {
@@ -307,18 +306,7 @@ export function resolveLiveUrl(productId, product = null) {
     return product.product_url;
   }
   // Legacy fallback — kept ONLY for tests + back-compat with
-  // environments missing migration 0021. New onboarding does NOT
-  // require touching this map; the registry row + product_url
-  // column are the canonical onboarding surface.
-  const LEGACY_FALLBACK = {
-    mypreglife: 'https://mypreglife-platform.vercel.app',
-    reltwin:    'https://reltwin-platform.vercel.app',
-    saige:      'https://saige-platform.vercel.app',
-    reachsms:   'https://reachsms-platform.vercel.app',
-    pressai:    'https://pressai-platform.vercel.app',
-    flowai:     'https://flowai-dun.vercel.app',
-  };
-  return LEGACY_FALLBACK[productId] ?? null;
+  return null;
 }
 
 // ── Product-agnostic helpers (DISPATCH 24) ───────────────────────────────────

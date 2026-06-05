@@ -13,6 +13,7 @@ const PRODUCT = Object.freeze({
   product_id: 'mypreglife',
   org_id: 'veu-ai-studio',
   github_repo_url: 'https://github.com/veu-ai-studio/my-preg-life',
+  product_url: 'https://mypreglife-platform.vercel.app',
   self_renewal_enabled: true,
 });
 
@@ -2808,7 +2809,7 @@ describe('orchestrator — canonical findings threading (DISPATCH 38)', () => {
 // ── D40 — resolveLiveUrl registry-driven + no hardcoded fast-paths ─────
 
 describe('resolveLiveUrl — D40 generic resolution (registry-row primary)', () => {
-  it('prefers product.product_url over the legacy fallback map', async () => {
+  it('uses product.product_url as the registry-driven live URL source', async () => {
     const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
     // Even for mypreglife (which IS in the legacy map), an explicit
     // registry row's product_url takes precedence.
@@ -2822,10 +2823,10 @@ describe('resolveLiveUrl — D40 generic resolution (registry-row primary)', () 
     })).toBe('https://brand-new.example/');
   });
 
-  it('falls back to the legacy map only when no row is supplied', async () => {
+  it('does not use a hardcoded live-url fallback when no row is supplied', async () => {
     const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
-    expect(mod.resolveLiveUrl('mypreglife')).toBe('https://mypreglife-platform.vercel.app');
-    expect(mod.resolveLiveUrl('saige')).toBe('https://saige-platform.vercel.app');
+    expect(mod.resolveLiveUrl('mypreglife')).toBeNull();
+    expect(mod.resolveLiveUrl('brand-new-product')).toBeNull();
   });
 
   it('returns null for unknown productId when no row supplied', async () => {
@@ -2833,9 +2834,9 @@ describe('resolveLiveUrl — D40 generic resolution (registry-row primary)', () 
     expect(mod.resolveLiveUrl('brand-new-product')).toBeNull();
   });
 
-  it('row with empty product_url falls through to legacy map / null', async () => {
+  it('row with empty product_url resolves to null until registry metadata is populated', async () => {
     const mod = await import('../../../src/lib/agents/renewal/orchestrator.js');
-    expect(mod.resolveLiveUrl('mypreglife', { product_url: '' })).toBe('https://mypreglife-platform.vercel.app');
+    expect(mod.resolveLiveUrl('mypreglife', { product_url: '' })).toBeNull();
     expect(mod.resolveLiveUrl('brand-new', { product_url: '' })).toBeNull();
   });
 });

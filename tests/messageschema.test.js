@@ -91,8 +91,13 @@ describe('MessageSchema required field enforcement', () => {
       .toBe(true);
   });
 
-  it('rejects unknown productScope', () => {
-    expect(() => validateEnvelope(baseEnvelope({ from: { agentId: 10, productScope: 'bogus' } })))
+  it('accepts runtime metadata-driven productScope values', () => {
+    expect(() => validateEnvelope(baseEnvelope({ from: { agentId: 10, productScope: 'tenant-alpha-42' } })))
+      .not.toThrow();
+  });
+
+  it('rejects malformed productScope values', () => {
+    expect(() => validateEnvelope(baseEnvelope({ from: { agentId: 10, productScope: 'Bad Scope!' } })))
       .toThrow(/productScope invalid/);
   });
 });

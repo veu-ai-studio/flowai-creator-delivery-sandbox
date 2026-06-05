@@ -4,7 +4,7 @@
 // FlowAI self-adversarial test plan §11.8. Coverage:
 //   - `_test` is recognized as a valid productScope by both
 //     authoritative whitelists (BaseAgent PRODUCT_SCOPES,
-//     MessageSchema VALID_PRODUCT_SCOPES via validateEnvelope).
+//     MessageSchema validateEnvelope().
 //   - cleanupTestTenant() works in the three meaningful states:
 //       (a) migration 0012 not yet applied → no-op + null org_id.
 //       (b) tenant row exists, child rows exist → child rows deleted,
@@ -30,13 +30,10 @@ describe('_test productScope — whitelist coverage', () => {
     expect(PRODUCT_SCOPES.TEST).toBe('_test');
   });
 
-  it('PRODUCT_SCOPES preserves the 6 production scopes alongside _test', () => {
+  it('PRODUCT_SCOPES exposes only reserved built-in scopes', () => {
+    expect(Object.keys(PRODUCT_SCOPES)).toEqual(['FLOWAI', 'TEST']);
     expect(PRODUCT_SCOPES.FLOWAI).toBe('flowai');
-    expect(PRODUCT_SCOPES.SAIGE).toBe('saige');
-    expect(PRODUCT_SCOPES.RELTWIN).toBe('reltwin');
-    expect(PRODUCT_SCOPES.REACHSMS).toBe('reachsms');
-    expect(PRODUCT_SCOPES.PRESSAI).toBe('pressai');
-    expect(PRODUCT_SCOPES.MYPREGLIFE).toBe('mypreglife');
+    expect(PRODUCT_SCOPES.TEST).toBe('_test');
   });
 
   it('MessageSchema validateEnvelope accepts productScope="_test"', () => {
@@ -44,15 +41,15 @@ describe('_test productScope — whitelist coverage', () => {
     expect(() => validateEnvelope(env)).not.toThrow();
   });
 
-  it('MessageSchema validateEnvelope still accepts production scopes', () => {
-    for (const scope of ['flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mypreglife']) {
+  it('MessageSchema validateEnvelope accepts runtime product scopes', () => {
+    for (const scope of ['flowai', 'tenant-alpha', 'external-product-42', 'provider7']) {
       const env = makeMinimalEnv({ productScope: scope });
       expect(() => validateEnvelope(env), `scope=${scope}`).not.toThrow();
     }
   });
 
-  it('MessageSchema validateEnvelope rejects unknown productScope (sanity)', () => {
-    const env = makeMinimalEnv({ productScope: 'definitely-not-a-real-scope' });
+  it('MessageSchema validateEnvelope rejects malformed productScope values', () => {
+    const env = makeMinimalEnv({ productScope: 'Bad Scope!' });
     expect(() => validateEnvelope(env)).toThrow(/productScope invalid/);
   });
 });
