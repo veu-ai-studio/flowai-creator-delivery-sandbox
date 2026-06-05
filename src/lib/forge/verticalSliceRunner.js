@@ -172,6 +172,7 @@ export async function runReferenceVerticalSlice(fixture = {}, opts = {}) {
   try {
     const common = {
       runId,
+      enableStepOwnerRecommendations: true,
       toolService,
       dispatch: opts.dispatch ?? dispatch,
       productContext: {
@@ -241,7 +242,10 @@ export async function runReferenceVerticalSlice(fixture = {}, opts = {}) {
       renewalOutput: renewal,
       userObjectives: [fixture.objective ?? 'launch reference product safely'],
       issues: [],
-    }, manual.gtm);
+    }, manual.gtm, {
+      runId,
+      enableStepOwnerRecommendations: true,
+    });
     const monitor = await runMonitor(productId, {
       outputUrl: deploy.outputUrl,
       deploymentId: deploy.deploymentId,
@@ -250,6 +254,8 @@ export async function runReferenceVerticalSlice(fixture = {}, opts = {}) {
       gtmOutput: gtm,
       distribution: deploy.distribution,
     }, {}, {
+      runId,
+      enableStepOwnerRecommendations: true,
       monitorAdapter: opts.monitorAdapter ?? (async ({ outputUrl }) => ({
         ok: true,
         status: 'healthy',

@@ -1,5 +1,6 @@
 import { buildMonitorTemplate, MONITOR_STEP_ID } from './monitorTemplate.js';
 import { scoreMonitorStep } from './monitorStepScorer.js';
+import { invokeForgeStepOwner } from './stepOwnerRecommendations.js';
 
 function cloneSection(section, input) {
   return Object.freeze({ ...section, input });
@@ -90,6 +91,10 @@ export async function runMonitor(productId, context = {}, manualInputs = {}, con
     renewalTrigger: renewal,
   };
   const score = scoreMonitorStep(baseOutput);
+  const stepOwnerRecommendation = await invokeForgeStepOwner(config, 'monitor', {
+    productId,
+    stepInputs: baseOutput,
+  });
   return Object.freeze({
     ...baseOutput,
     sections: Object.freeze(sections),
@@ -98,6 +103,7 @@ export async function runMonitor(productId, context = {}, manualInputs = {}, con
     loopClosed: score.loopClosed,
     flag: score.flag,
     correctivePrompts: score.correctivePrompts,
+    stepOwnerRecommendation,
   });
 }
 

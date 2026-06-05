@@ -1,6 +1,7 @@
 import { computeGtmReadiness } from '../agents/renewal/gtmReadinessScorer.js';
 import { buildGtmTemplate, GTM_STEP_ID } from './gtmTemplate.js';
 import { scoreGtmStep } from './gtmStepScorer.js';
+import { invokeForgeStepOwner } from './stepOwnerRecommendations.js';
 
 function cloneSection(section, input) {
   return Object.freeze({ ...section, input });
@@ -114,6 +115,10 @@ export async function runGtm(productId, context = {}, manualInputs = {}, config 
     decision,
   };
   const score = scoreGtmStep(baseOutput);
+  const stepOwnerRecommendation = await invokeForgeStepOwner(config, 'gtm', {
+    productId,
+    stepInputs: baseOutput,
+  });
   return Object.freeze({
     ...baseOutput,
     sections: Object.freeze(sections),
@@ -122,6 +127,7 @@ export async function runGtm(productId, context = {}, manualInputs = {}, config 
     readyForMonitor: score.readyForMonitor,
     flag: score.flag,
     correctivePrompts: score.correctivePrompts,
+    stepOwnerRecommendation,
   });
 }
 

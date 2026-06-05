@@ -4,6 +4,7 @@ import { scoreForgeStep } from './forgeStepScorer.js';
 import { selectForgeStepTool } from './toolSelection.js';
 import { dispatch as orchestraDispatch } from '../orchestra/index.js';
 import { MODES } from '../tools/ToolIntelligenceService.js';
+import { invokeForgeStepOwner } from './stepOwnerRecommendations.js';
 
 const NO_RESEARCH_TOOL_REASON = 'No AI research tools configured; manual input required for orchestrated sections';
 const P2_MAX_DISPATCHES_PER_RUN = 12;
@@ -327,8 +328,7 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
   const manualSections = populated.filter(section => section.source === 'manual');
   const manualComplete = manualSections.every(section => !(section.input && section.input.complete === false));
   const completionPct = scorer.score;
-
-  return Object.freeze({
+  const baseOutput = {
     productId,
     stepId: RESEARCH_STEP_ID,
     completedAt: new Date().toISOString(),
@@ -348,6 +348,15 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
     }),
     matrixArtifactVersion: String(artifact.version ?? 'unknown'),
     readyForDesign: manualComplete && completionPct >= 95,
+  };
+  const stepOwnerRecommendation = await invokeForgeStepOwner(config, 'research', {
+    productId,
+    stepInputs: baseOutput,
+  });
+
+  return Object.freeze({
+    ...baseOutput,
+    stepOwnerRecommendation,
   });
 }
 

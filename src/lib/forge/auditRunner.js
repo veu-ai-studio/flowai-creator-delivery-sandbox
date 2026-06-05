@@ -6,6 +6,7 @@ import { AUDIT_QUEUED, scoreAuditStep } from './auditStepScorer.js';
 import { selectForgeStepTool } from './toolSelection.js';
 import { dispatch as orchestraDispatch } from '../orchestra/index.js';
 import { MODES } from '../tools/ToolIntelligenceService.js';
+import { invokeForgeStepOwner } from './stepOwnerRecommendations.js';
 
 const P2_MAX_DISPATCHES_PER_RUN = 12;
 const CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION = 3;
@@ -330,6 +331,10 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
     flag: entryState.flag === AUDIT_QUEUED ? AUDIT_QUEUED : undefined,
   };
   const score = scoreAuditStep(baseOutput);
+  const stepOwnerRecommendation = await invokeForgeStepOwner(config, 'qa_audit', {
+    productId,
+    stepInputs: baseOutput,
+  });
 
   return Object.freeze({
     ...baseOutput,
@@ -346,6 +351,7 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
       liveDispatches: budget.dispatchCount,
       estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
+    stepOwnerRecommendation,
   });
 }
 
