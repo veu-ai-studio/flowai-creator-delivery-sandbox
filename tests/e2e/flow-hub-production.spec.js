@@ -156,3 +156,11 @@ test('E2E-8: GTM Forge route renders the human-decision-gated Step 7 surface', a
   await expect(page.getByText(/Processing: Example Product/i)).toBeVisible();
   await expect(page.getByText(/Human decision log required before GTM readiness/i).first()).toBeVisible();
 });
+
+test('E2E-9: Monitor Forge route renders Step 8 and blocks healthy status before live check', async ({ page }) => {
+  await page.goto('/forge/monitor?productId=example-product&productName=Example%20Product&outputUrl=https%3A%2F%2Fexample.com', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('heading', { name: /Monitor Forge/i })).toBeVisible();
+  await expect(page.getByText(/Processing: Example Product/i)).toBeVisible();
+  await expect(page.getByText(/Monitor cannot report healthy without a real live check/i)).toBeVisible();
+});
