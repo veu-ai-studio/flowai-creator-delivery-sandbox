@@ -10,15 +10,16 @@
 
 'use strict';
 
+import { isValidProductScope } from '../products/productScope.js';
+
 const ENVELOPE_VERSION = '1.0.0';
 
-const VALID_PRODUCT_SCOPES = new Set([
-  'flowai', 'saige', 'reltwin', 'reachsms', 'pressai', 'mypreglife',
+const RESERVED_PRODUCT_SCOPE_EXAMPLES = new Set([
+  'flowai', '_test',
   // System-only scope reserved for the FlowAI self-adversarial test
   // suite (docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md §11.8).
   // Mirrors the BaseAgent PRODUCT_SCOPES.TEST entry. Test rows are
   // cleaned up between runs by scripts/cleanup-test-tenant.mjs.
-  '_test',
 ]);
 
 const TOPICS = Object.freeze({
@@ -183,7 +184,7 @@ function validateEnvelope(env) {
       throw new Error(`envelope.from.agentId invalid: ${env.from.agentId}`);
     }
   }
-  if (!VALID_PRODUCT_SCOPES.has(env.from.productScope)) {
+  if (!isValidProductScope(env.from.productScope)) {
     throw new Error(`envelope.from.productScope invalid: ${env.from.productScope}`);
   }
   if (typeof env.at !== 'number' || !Number.isFinite(env.at)) {

@@ -56,6 +56,15 @@ describe('BaseAgent environment validation', () => {
   it('isValidEnvironmentForScope: saige accepts sales-demo', () => {
     expect(isValidEnvironmentForScope('saige', 'sales-demo')).toBe(true);
   });
+
+  it('isValidEnvironmentForScope: arbitrary runtime scope accepts product environments', () => {
+    expect(isValidEnvironmentForScope('tenant-alpha-42', 'sales-demo')).toBe(true);
+  });
+
+  it('rejects malformed productScope values at construction', () => {
+    expect(() => new TestAgent({ ...stubDeps, productScope: 'Bad Scope!', environment: 'prod' }))
+      .toThrow(/productScope invalid/);
+  });
 });
 
 describe('CredentialAdapter', () => {

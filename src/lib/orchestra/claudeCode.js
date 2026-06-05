@@ -328,7 +328,7 @@ CRITICAL RULES:
 - src/App.jsx MUST render a single-page marketing landing page implementing the spec — hero, features section, CTA, footer with privacy/terms links.
 - DO NOT use Tailwind, shadcn, or any external CSS framework — keep styling inline or via src/index.css to avoid extra dependencies.
 - DO NOT import images or fonts from external URLs.
-- DO NOT include any product name from the seed phrase "saigedemo, pressai, reltwin, smscommunities, mypreglife, SAIGE".
+- DO NOT include any product name from seed phrases, examples, or unrelated prior runs unless it appears in the current product context.
 - Total bytes of all files combined should be under 50 KB.
 - The project MUST build cleanly with "npm install && npm run build".`;
 }

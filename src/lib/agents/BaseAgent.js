@@ -24,6 +24,8 @@
 
 'use strict';
 
+import { assertValidProductScope, RESERVED_PRODUCT_SCOPES } from '../products/productScope.js';
+
 export const AGENT_IDS = Object.freeze({
   LIFECYCLE_ENGINE:        1,
   CODE_BUILDER:            2,
@@ -71,17 +73,12 @@ export const AUTHORITY = Object.freeze({
 });
 
 export const PRODUCT_SCOPES = Object.freeze({
-  FLOWAI:       'flowai',
-  SAIGE:        'saige',
-  RELTWIN:      'reltwin',
-  REACHSMS:     'reachsms',
-  PRESSAI:      'pressai',
-  MYPREGLIFE:  'mypreglife',
+  FLOWAI:       RESERVED_PRODUCT_SCOPES.FLOWAI,
   // System-only scope used by the FlowAI self-adversarial test suite
   // (docs/specs/FLOWAI_SELF_ADVERSARIAL_TEST_PLAN.md §9 LD-2 + §11.8).
   // Provisioned by migration 0012; cleaned up between runs by
   // scripts/cleanup-test-tenant.mjs. Never bind to real customers.
-  TEST:         '_test',
+  TEST:         RESERVED_PRODUCT_SCOPES.TEST,
 });
 
 export const ENVIRONMENTS = Object.freeze({
@@ -113,6 +110,8 @@ export class BaseAgent {
     if (!charter) throw new Error(`${this.constructor.name}: static charter() not implemented`);
     BaseAgent._validateCharter(charter);
     this.charter = Object.freeze(charter);
+
+    assertValidProductScope(deps.productScope);
 
     if (charter.flowAiOnly && deps.productScope !== PRODUCT_SCOPES.FLOWAI) {
       throw new Error(
