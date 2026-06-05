@@ -982,6 +982,40 @@ export default function RunConstructionPanel({
           } else if (event.type === 'registry') {
             // Surface as informational step.
             setSteps((prev) => [...prev, { type: 'step', log: { stepName: `Registry ${event.action}`, status: 'complete', result: { productId: event.productId } } }]);
+          } else if (event.type === 'symbiotic_context') {
+            setSteps((prev) => [...prev, {
+              type: 'step',
+              log: {
+                stepName: 'ProductSSOT Context',
+                status: event.ok ? 'complete' : 'degraded',
+                tool: event.ok ? 'ProductSSOT context loaded' : 'ProductSSOT context unavailable',
+                why: 'Symbiotic Loop: run N+1 reads prior ProductSSOT state before execution',
+                result: event.context ? {
+                  kind: 'product_ssot.symbiotic_context.v1',
+                  hasPriorRun: event.context.hasPriorRun === true,
+                  priorRunCount: event.context.priorRunCount ?? 0,
+                  sourceVersion: event.context.sourceVersion ?? null,
+                  latestDeliveryArtifactUrl: event.context.latestDeliveryArtifactUrl ?? null,
+                } : { reason: event.reason || 'no_context' },
+              },
+            }]);
+          } else if (event.type === 'symbiotic_write') {
+            setSteps((prev) => [...prev, {
+              type: 'step',
+              log: {
+                stepName: 'ProductSSOT Symbiotic Write',
+                status: event.persisted ? 'complete' : 'degraded',
+                tool: event.persisted ? 'Symbiotic run summary persisted' : 'Symbiotic run summary not persisted',
+                why: 'Symbiotic Loop: run N output seeds run N+1 context',
+                result: {
+                  kind: 'product_ssot.symbiotic_run.v1',
+                  persisted: event.persisted === true,
+                  state: event.state || 'failed',
+                  version: event.version ?? null,
+                  reason: event.reason ?? null,
+                },
+              },
+            }]);
           }
         }
       }

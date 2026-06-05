@@ -56,6 +56,10 @@ import { getMigrationModeFlag } from '../lib/runtimeFeatureFlags.js';
 import { findRegisteredProductConfigForUrl } from '../lib/products/registeredProductConfig.js';
 import { createGithubMigrationHooks } from '../lib/migration/githubMigrationHooks.js';
 import { pickSafeErrorFields } from '../lib/migration/safeErrorFields.js';
+import {
+  persistSymbioticRunSummary,
+  readProductSsotRunContext,
+} from '../lib/forge/productSsotContinuity.js';
 import { assertPublicHttpUrl } from '../../api/_lib/crawler.js';
 
 const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION', 'FRESH_BUILD']);
@@ -228,6 +232,32 @@ export default async function handler(req, res) {
     // Upsert failures are non-fatal — the orchestrator can still run via
     // PATH B. Surface the reason on the wire for operator visibility.
     send({ type: 'registry', action: 'skipped', reason: (e?.message ?? String(e)).slice(0, 200) });
+  }
+
+  const environment = process.env.NODE_ENV === 'production' ? 'prd' : 'staging';
+  let productSsotContext = null;
+  if (registryRow?.product_id) {
+    const continuityRead = await readProductSsotRunContext({
+      productId: registryRow.product_id,
+      environment,
+      supabase,
+    });
+    productSsotContext = continuityRead.context;
+    send({
+      type: 'symbiotic_context',
+      productId: registryRow.product_id,
+      ok: continuityRead.ok,
+      reason: continuityRead.reason,
+      context: productSsotContext,
+    });
+  } else {
+    send({
+      type: 'symbiotic_context',
+      productId: null,
+      ok: false,
+      reason: supabase ? 'no_product_registry_row' : 'supabase_unavailable',
+      context: null,
+    });
   }
 
   // ── Orchestrator invocation ──────────────────────────────────────────────
@@ -423,10 +453,11 @@ export default async function handler(req, res) {
       input: {
         url,
         description,
+        productSsotContext,
       },
       runId,
       supabase,
-      environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
+      environment,
       gtmTarget: GTM_TARGET,
       onStep: (log) => send({ type: 'step', log }),
       onIteration: (iteration) => send({ type: 'iteration', iteration }),
@@ -455,6 +486,27 @@ export default async function handler(req, res) {
           ? result.failureArtifact : null,
       }
     : {};
+  const symbioticWrite = registryRow?.product_id
+    ? await persistSymbioticRunSummary({
+        productId: registryRow.product_id,
+        environment,
+        runId,
+        url,
+        priorContext: productSsotContext,
+        result,
+        supabase,
+        proofLabel: environment === 'prd' ? 'LIVE_PRODUCTION' : 'LIVE_PREVIEW',
+      })
+    : { ok: false, persisted: false, state: 'skipped_no_product_registry_row', reason: 'no_product_registry_row' };
+  send({
+    type: 'symbiotic_write',
+    productId: registryRow?.product_id ?? null,
+    ok: symbioticWrite.ok === true,
+    persisted: symbioticWrite.persisted === true,
+    state: symbioticWrite.state ?? 'failed',
+    reason: symbioticWrite.reason ?? null,
+    version: symbioticWrite.version ?? null,
+  });
   send({
     type: 'final',
     ok: result?.ok === true,
@@ -464,6 +516,19 @@ export default async function handler(req, res) {
       ? null
       : result?.finalScore ?? 0,
     governanceRecordId: runId,
+    productSsotContext: productSsotContext ? {
+      hasPriorRun: productSsotContext.hasPriorRun,
+      priorRunCount: productSsotContext.priorRunCount,
+      sourceVersion: productSsotContext.sourceVersion,
+      sourceHash: productSsotContext.sourceHash,
+      latestDeliveryArtifactUrl: productSsotContext.latestDeliveryArtifactUrl,
+    } : null,
+    symbioticLoop: {
+      persisted: symbioticWrite.persisted === true,
+      state: symbioticWrite.state ?? 'failed',
+      version: symbioticWrite.version ?? null,
+      reason: symbioticWrite.reason ?? null,
+    },
     gtmReady: !!result?.gtmReady,
     exitReason: result?.exitReason ?? 'UNKNOWN',
     ...stepFailedDiagnostics,
@@ -873,6 +938,8 @@ export const __test = Object.freeze({
   GTM_TARGET,
   ensureProductRegistryRow,
   createMigrationRuntimeHooks,
+  readProductSsotRunContext,
+  persistSymbioticRunSummary,
   isPathInside,
   freshBuildFinalStatus,
   freshBuildFailureFromError,

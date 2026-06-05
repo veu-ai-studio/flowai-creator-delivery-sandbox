@@ -10,6 +10,17 @@ function constructionSseBody() {
   return [
     sseFrame({ type: 'start', runId: 'e2e-run', url: PRODUCT_URL, mode: 'FOREGROUND' }),
     sseFrame({
+      type: 'symbiotic_context',
+      ok: true,
+      productId: 'example-product',
+      context: {
+        hasPriorRun: true,
+        priorRunCount: 1,
+        sourceVersion: 7,
+        latestDeliveryArtifactUrl: 'https://example.com',
+      },
+    }),
+    sseFrame({
       type: 'step',
       log: {
         iteration: 1,
@@ -40,6 +51,13 @@ function constructionSseBody() {
       },
     }),
     sseFrame({ type: 'final', ok: true, runId: 'e2e-run', finalScore: 91 }),
+    sseFrame({
+      type: 'symbiotic_write',
+      ok: true,
+      persisted: true,
+      state: 'persisted',
+      version: 8,
+    }),
     'data: [DONE]\n\n',
   ].join('');
 }
@@ -163,4 +181,19 @@ test('E2E-9: Monitor Forge route renders Step 8 and blocks healthy status before
   await expect(page.getByRole('heading', { name: /Monitor Forge/i })).toBeVisible();
   await expect(page.getByText(/Processing: Example Product/i)).toBeVisible();
   await expect(page.getByText(/Monitor cannot report healthy without a real live check/i)).toBeVisible();
+});
+
+test('E2E-10: Pipeline renders ProductSSOT symbiotic read and write events', async ({ page }) => {
+  await page.route('**/api/run-construction', (route) => route.fulfill({
+    status: 200,
+    headers: { 'content-type': 'text/event-stream; charset=utf-8' },
+    body: constructionSseBody(),
+  }));
+
+  await gotoProduction(page);
+  await enterUrl(page);
+  await launchButton(page).click();
+
+  await expect(page.getByText(/ProductSSOT context loaded/i)).toBeVisible();
+  await expect(page.getByText(/Symbiotic run summary persisted/i)).toBeVisible();
 });
