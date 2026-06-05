@@ -25,6 +25,7 @@ import { isEmbeddingsConfigured, embeddingDimensions } from './_lib/embeddings.j
 import { isAxiomConfigured } from './_lib/logger.js';
 import { isSupabaseConfigured, getSupabase } from './_lib/supabase.js';
 import { withRequestLog } from './_lib/requestLog.js';
+import { resolveBuildIdentity } from '../src/lib/observability/buildIdentity.js';
 
 // ─── Probe helpers ────────────────────────────────────────────────────
 
@@ -181,6 +182,7 @@ async function diagnosticHandler(req, res) {
     else summary.inactiveCount += 1;
   }
   const ok = summary.failingCount === 0;
+  const buildIdentity = resolveBuildIdentity(process.env);
 
   return res.status(ok ? 200 : 503).json({
     ok,
@@ -189,8 +191,11 @@ async function diagnosticHandler(req, res) {
     runtime: {
       env: process.env.VERCEL_ENV || process.env.NODE_ENV || 'development',
       region: process.env.VERCEL_REGION || null,
-      commit: process.env.VERCEL_GIT_COMMIT_SHA || null,
-      branch: process.env.VERCEL_GIT_COMMIT_REF || null,
+      commit: buildIdentity.commit,
+      commitFull: buildIdentity.commitFull,
+      branch: buildIdentity.branch,
+      buildIdentitySource: buildIdentity.source,
+      buildIdentityGeneratedAt: buildIdentity.generatedAt,
       url: process.env.VERCEL_URL || null,
       node: process.versions?.node || null,
       backend: { db: selectedBackend() },

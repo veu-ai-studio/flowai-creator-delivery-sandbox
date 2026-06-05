@@ -6,7 +6,7 @@ import {
   sha256Hex,
 } from '../../src/lib/forge/productSsotArtifactWriter.js';
 
-function makeSupabaseFake({ initialRow, failVersionInsert = false }) {
+function makeSupabaseFake({ initialRow, failVersionInsert = false, failPointerUpdate = false }) {
   const state = {
     row: initialRow ? { ...initialRow } : null,
     versions: [],
@@ -19,6 +19,7 @@ function makeSupabaseFake({ initialRow, failVersionInsert = false }) {
       _filters: [],
       _update: null,
       _insert: null,
+      _delete: false,
       _select: '*',
       select(cols) {
         if (q._update !== null) {
@@ -26,6 +27,9 @@ function makeSupabaseFake({ initialRow, failVersionInsert = false }) {
           if (!row || table !== 'product_ssot') return Promise.resolve({ data: [], error: null });
           for (const f of q._filters) {
             if (row[f.k] !== f.v) return Promise.resolve({ data: [], error: null });
+          }
+          if (failPointerUpdate && Object.prototype.hasOwnProperty.call(q._update, 'audit_hash_chain_pointer')) {
+            return Promise.resolve({ data: null, error: { message: 'forced pointer failure' } });
           }
           Object.assign(state.row, q._update);
           state.calls.push({ table, op: 'update', fields: q._update });
@@ -42,8 +46,17 @@ function makeSupabaseFake({ initialRow, failVersionInsert = false }) {
         q._insert = fields;
         return q;
       },
+      delete() {
+        q._delete = true;
+        return q;
+      },
       eq(k, v) {
         q._filters.push({ k, v });
+        if (q._delete && table === 'product_ssot_version' && k === 'id') {
+          state.versions = state.versions.filter((row) => row.id !== v);
+          state.calls.push({ table, op: 'delete', id: v });
+          return Promise.resolve({ error: null });
+        }
         return q;
       },
       async maybeSingle() {
@@ -179,6 +192,42 @@ describe('persistForgeStepArtifact', () => {
     expect(result.state).toBe('failed');
     expect(result.reason).toMatch(/^version_insert_failed:/);
     expect(result.rollback).toEqual({ rolled: true });
+    expect(supabase._state.row.governance_record).toEqual(prior);
+    expect(supabase._state.versions).toHaveLength(0);
+  });
+
+  it('rolls back governance and version row when hash pointer update fails', async () => {
+    const prior = [{ kind: 'existing' }];
+    const supabase = makeSupabaseFake({
+      initialRow: {
+        id: 'ssot-1',
+        product_id: 'product-a',
+        environment: 'prd',
+        governance_record: prior,
+        version: 1,
+        audit_hash_chain_pointer: null,
+        updated_at: 'T0',
+      },
+      failPointerUpdate: true,
+    });
+
+    const result = await persistForgeStepArtifact({
+      productId: 'product-a',
+      environment: 'prd',
+      runId: 'run-1',
+      stepKey: 'research',
+      artifact: { summary: 'done' },
+      supabase,
+      writtenBy: 'operator-1',
+      now: () => '2026-06-04T00:00:00.000Z',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.persisted).toBe(false);
+    expect(result.state).toBe('failed');
+    expect(result.reason).toMatch(/^hash_pointer_update_failed:/);
+    expect(result.rollback).toEqual({ rolled: true });
+    expect(result.versionRollback).toEqual({ ok: true });
     expect(supabase._state.row.governance_record).toEqual(prior);
     expect(supabase._state.versions).toHaveLength(0);
   });

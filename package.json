@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/write-build-info.mjs && vite build",
+    "build:preflight": "node scripts/write-build-info.mjs --check && vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
@@ -19,7 +20,7 @@
     "test:e2e": "playwright test --config playwright.config.js --project=e2e",
     "test:e2e:ci": "playwright test --config playwright.config.js --project=e2e --reporter=list",
     "digest": "node scripts/daily-digest/build.mjs",
-    "preflight": "npm run lint && npm run build && npx vitest run && node scripts/checkLaneDiscipline.js && node scripts/check-ssot-traceability.mjs && node scripts/generateMatrixArtifact.js",
+    "preflight": "npm run lint && npm run build:preflight && npx vitest run && node scripts/checkLaneDiscipline.js && node scripts/check-ssot-traceability.mjs && node scripts/generateMatrixArtifact.js",
     "lint:evidence": "node scripts/lint-evidence.mjs",
     "audit:commit": "npm run lint:evidence && node scripts/auditCommit.js"
   },
