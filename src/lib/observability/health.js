@@ -46,9 +46,9 @@ const ORCHESTRA = Object.freeze([
   {
     id: 'claude-code',
     label: 'Claude Code',
-    envs: [],
-    adapterHint: 'developer-IDE only; no runtime adapter expected in /api/*',
-    runtimeAdapter: false,
+    envs: ['ANTHROPIC_API_KEY'],
+    adapterHint: 'src/lib/orchestra/claudeCode.js analyze/design/score/code-patch runtime adapter',
+    runtimeAdapter: true,
   },
   {
     id: 'base44',
@@ -252,6 +252,39 @@ function observabilityProbe() {
   };
 }
 
+function githubAppProbe() {
+  const hasPatFallback = Boolean(process.env.GITHUB_PAT);
+  const configured = Boolean(
+    process.env.GITHUB_APP_ID &&
+    process.env.GITHUB_APP_PRIVATE_KEY &&
+    (process.env.GITHUB_APP_INSTALLATION_ID || process.env.GITHUB_INSTALLATION_ID),
+  );
+  if (configured) {
+    return {
+      status: STATUSES.PASS,
+      configured: true,
+      patFallback: hasPatFallback,
+      installationIdAlias: process.env.GITHUB_APP_INSTALLATION_ID
+        ? 'GITHUB_APP_INSTALLATION_ID'
+        : 'GITHUB_INSTALLATION_ID',
+    };
+  }
+  if (hasPatFallback) {
+    return {
+      status: STATUSES.DEGRADED,
+      configured: false,
+      patFallback: true,
+      reason: 'GITHUB_PAT fallback present but GitHub App env trio incomplete',
+    };
+  }
+  return {
+    status: STATUSES.NOT_WIRED,
+    configured: false,
+    patFallback: false,
+    reason: 'GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, and installation id env are required',
+  };
+}
+
 // ─── Aggregate ──────────────────────────────────────────────────────────
 
 function aggregateStatus(checks) {
@@ -282,7 +315,8 @@ export async function runHealthChecks({ timeoutMs = DEFAULT_PROBE_TIMEOUT_MS } =
     const build = buildProbe();
     const orchestra = orchestraProbe();
     const observability = observabilityProbe();
-    const checks = { build, supabase, vercelKv, orchestra, observability };
+    const githubApp = githubAppProbe();
+    const checks = { build, supabase, vercelKv, orchestra, observability, githubApp };
     const status = aggregateStatus(checks);
     return {
       status,

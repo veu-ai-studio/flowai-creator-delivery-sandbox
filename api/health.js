@@ -58,6 +58,7 @@ export default async function handler(req, res) {
       env: report.checks.build.env,
       region: report.checks.build.region,
       commit: report.checks.build.commit,
+      githubAppReady: report.checks.githubApp?.status === 'PASS',
       timestamp: report.timestamp,
       durationMs: report.durationMs,
       checks: report.checks,

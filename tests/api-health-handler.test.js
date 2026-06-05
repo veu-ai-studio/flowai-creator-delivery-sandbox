@@ -37,6 +37,8 @@ describe('GET /api/health', () => {
       ok: true,
       service: 'flowai',
     });
+    expect(typeof out.body.githubAppReady).toBe('boolean');
+    expect(out.body.checks.githubApp).toBeTruthy();
     // status is 'ready' on PASS and 'degraded' on DEGRADED — both
     // map to ok:true per the handler's PASS|DEGRADED gate. The exact
     // string depends on which downstream credentials are wired in
@@ -78,6 +80,21 @@ describe('GET /api/health', () => {
     const res = makeRes();
     await handler(req, res);
     expect(res._get().body.commit).toBe('abc123');
+  });
+
+  it('reports GitHub App readiness when canonical env vars are present', async () => {
+    process.env.GITHUB_APP_ID = '3748219';
+    process.env.GITHUB_APP_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\\nfake\\n-----END PRIVATE KEY-----';
+    process.env.GITHUB_APP_INSTALLATION_ID = '133220298';
+    const req = { method: 'GET', headers: {} };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res._get().body.githubAppReady).toBe(true);
+    expect(res._get().body.checks.githubApp).toMatchObject({
+      status: 'PASS',
+      configured: true,
+      installationIdAlias: 'GITHUB_APP_INSTALLATION_ID',
+    });
   });
 
   it('handles OPTIONS preflight with 204', () => {
