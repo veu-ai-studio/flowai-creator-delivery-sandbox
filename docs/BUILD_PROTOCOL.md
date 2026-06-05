@@ -1,5 +1,5 @@
 # FlowAI Build Protocol
-**Version:** 1.2 | **Authority:** docs/CANONICAL_REFERENCE.md Section 28.7
+**Version:** 1.3 | **Authority:** docs/CANONICAL_REFERENCE.md Section 28.7
 **Active until:** FlowAI reaches 95/100 SSOT evidence
 **Every dispatch begins with:** Read this file + docs/CANONICAL_REFERENCE.md + docs/IMPLEMENTATION_PLAN.md
 
@@ -55,15 +55,17 @@ Every DoD must confirm:
 Missing confirmation is a CD/CR BLOCK.
 
 **STEP 5 - CEO pastes CB's DoD to CD and CR simultaneously**
-CD and CR perform the SAME FULL CHECK independently. Neither sees the other's report until both are filed to W04.
+CD and CR file independently. Neither sees the other's report until both are filed to W04.
 
-Both check:
+CD is the primary full Step 5 reviewer and checks:
 - Does output match the SSOT?
 - Is evidence real and correctly tiered? (WIRED != VERIFIED)
 - Was any claim upgraded without Tier A/B proof?
 - Does the build do what the dispatch said it would?
 - Does the DoD contain complete Browser Test Instructions?
 - Are mocked and unmocked proofs labeled correctly?
+
+CR is the focused adversarial reviewer for evidence, security, deployment proof, VERIFIED-claim inflation, dispatch acceptance criteria, and governance bypass. CR may BLOCK only on a demonstrated failure against dispatch acceptance criteria, security requirements, evidence requirements, governance requirements, or production/runtime proof. CR findings must cite code, command output, production evidence, test output, or SSOT sections. Speculative concerns, uncertainty, preference, or duplicate CD coverage are NOTES, not BLOCKS. If CR requests an additional verification rerun, the rerun must resolve into PASS, PASS-WITH-FINDINGS, or a concrete evidence-tied BLOCK.
 
 **STEP 5.5 - Claim Impact Check (inside each Step 5 report)**
 CD and CR each state: which SSOT claims were touched, whether any moved (STUBBED -> PARTIAL, PARTIAL -> WIRED, or PARTIAL -> VERIFIED), what evidence supports the move, and whether the Traceability Matrix was consulted.
@@ -219,14 +221,14 @@ Missing or vague Browser Test Instructions are a CD/CR BLOCK.
 |------|----------------|---------------------|
 | W04 (Claude Chat) | Browser/runtime proof direction and confirmation; Step 6 adjudication; issues CLEAR TO BUILD / CLEAR TO MERGE / CLEAR TO PROMOTE; never drafts dispatches or writes code | Will not clear without conditions met |
 | CB (Codex Builder) | Drafts dispatches from code reality; sole builder; builds, tests, audits, debugs, verifies, deploys when authorized, browser-tests, reports, and STOPs on unexpected state | Will not draft or build before reading the three governing docs; will not build non-HOTFIX work without CLEAR TO BUILD |
-| CD (Claude Code) | Full check - SSOT + evidence; files independently at required review gates and end-of-phase review | Blocks on canonical drift or claim upgrade |
-| CR (Codex Reviewer) | Full check - SSOT + evidence; files independently at required review gates and end-of-phase review | Blocks on evidence violation or WIRED=VERIFIED |
+| CD (Claude Code) | Primary full Step 5 reviewer; checks SSOT consistency, evidence, implementation correctness, data shape, dispatch compliance, and claim impact | Blocks on canonical drift, implementation mismatch, missing proof, or unsupported claim movement |
+| CR (Codex Reviewer) | Focused adversarial reviewer for evidence, security, deployment proof, VERIFIED-claim inflation, dispatch acceptance criteria, and governance bypass | Blocks only on demonstrated evidence-tied failures against dispatch acceptance criteria, security, evidence, governance, or production/runtime proof |
 | CG (ChatGPT) | Spec critic + governance; KEY dispatches Step 2 only unless W04/CEO requests final-release review | Flags spec conflicts and governance gaps |
 | Victor (CEO) | Performs only the exact click/copy/paste/browser actions specified by W04/CB, with no independent technical debugging or repo work; holds merge/push/promote authority | Ultimate gate - nothing moves without CEO action |
 
 ---
 
 *Canonical authority: docs/CANONICAL_REFERENCE.md Section 28.7*
-*Loop version: 1.2 - 2026-06-04*
+*Loop version: 1.3 - 2026-06-04*
 
 ---

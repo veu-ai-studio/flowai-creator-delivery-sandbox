@@ -452,6 +452,22 @@ SSOT completion against Gate B 95% target: **0 / 11 release-critical Layer-1 cla
 - saige-v2 score: 35.5/100 (+9.7 from migration)
 - GTM early score saige-v2: 70.5/100
 
+### 12.3.1 Production Evidence Reconciliation (P2-P9)
+
+Scope: P2-P9 implementation evidence reflection only. This section records shipped code and proof labels; it does not promote any Layer 1 CA18 claim to VERIFIED.
+
+Current production evidence after P9:
+- Production URL: `flowai-dun.vercel.app`
+- HEAD commit: `71b3500`
+- HEAD proof: `/api/version` returned `commitFull: 71b3500c27743e58861807291e0a2b108c49e363`
+- Production deployment: `truthful-flow-logic-o20j9qu5s-veu-ai-studio.vercel.app`
+- Automated production browser proof: `npm run test:e2e:ci` with `PLAYWRIGHT_BASE_URL=https://flowai-dun.vercel.app` passed 10/10.
+- Implemented phases: P2 live execution, P3 ProductSSOT minimal persistence, P4 Deploy, P5 Self-Renewal, P6 GTM, P7 Monitor, P8 Symbiotic Loop, P9 reference vertical slice.
+- Proof labels: UNIT, MOCKED_E2E, LIVE_PRODUCTION.
+- Evidence tier: Tier B behavioral evidence for implemented wiring and production smoke behavior; no Layer 1 VERIFIED promotion.
+
+Claim impact: no Layer 1 claim advances to VERIFIED. The release-critical Layer-1 aggregate remains **0 / 11 VERIFIED = 0%** until the claim-promotion checklist is satisfied with `evidenceUrl`, `verifiedAt`, and `verifiedBy`.
+
 ### 12.4 Orchestrator Framework v0.1 Matrix Reflection
 
 Scope: Layer 2 capability reflection only. This entry does not promote any Layer 1 CA18 claim to VERIFIED.
