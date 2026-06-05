@@ -13,14 +13,7 @@ import ClearanceStatusDashboard from '@/components/clearance/ClearanceStatusDash
 import ClearanceProgressTimeline from '@/components/clearance/ClearanceProgressTimeline';
 import { logAction } from '@/lib/auditLogger';
 import { asArray, resolveArray } from '@/lib/uiDataGuards';
-
-const VEU_PRODUCTS = [
-  { product_name: 'SAIGE',       base44_url: 'https://saige.base44.app',       custom_domain: 'saigeplatform.com',       target_audience: 'University sustainability directors, utility executives', category: 'Sustainability' },
-  { product_name: 'PressAI',     base44_url: 'https://pressai.base44.app',     custom_domain: 'ourpublishingai.com',     target_audience: 'Authors and publishers', category: 'Publishing' },
-  { product_name: 'ReachSMS',    base44_url: 'https://reachsms.base44.app',    custom_domain: 'ourcommunitiesai.com',    target_audience: 'Nonprofit community organizations', category: 'Community' },
-  { product_name: 'RelTwin',     base44_url: 'https://reltwin.com',            custom_domain: 'reltwin.com',             target_audience: 'Coaches and HR professionals', category: 'Relationships' },
-  { product_name: 'MyPregLife', base44_url: 'https://mypreglife.base44.app', custom_domain: 'preglife.com',            target_audience: 'Pregnant women in Nigeria and Africa', category: 'Health' },
-];
+import { listProducts } from '@/lib/products/registry';
 
 const STATUS_STYLE = {
   not_started: { label: 'Not Started',        color: 'text-muted-foreground', border: 'border-border',          bg: 'bg-secondary/20' },
@@ -28,6 +21,26 @@ const STATUS_STYLE = {
   cleared:      { label: 'Cleared for Launch', color: 'text-emerald-400',      border: 'border-emerald-500/30', bg: 'bg-emerald-500/5' },
   blocked:      { label: 'Blocked',            color: 'text-red-400',          border: 'border-red-500/30',     bg: 'bg-red-500/5' },
 };
+
+function toClearanceProduct(product) {
+  const url = product.url || product.live_url || '';
+  return {
+    product_name: product.name || product.slug || 'Untitled product',
+    base44_url: url,
+    custom_domain: normalizeHost(url),
+    target_audience: product.metadata?.target_audience || '',
+    category: product.type || (Array.isArray(product.tags) ? product.tags[0] : '') || '',
+  };
+}
+
+function normalizeHost(url) {
+  if (typeof url !== 'string' || !url.trim()) return '';
+  try {
+    return new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
+  } catch {
+    return url.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  }
+}
 
 function getCurrentStep(record) {
   const steps = ['step1','step2','step3','step4','step5','step6'];
@@ -39,6 +52,7 @@ function getCurrentStep(record) {
 
 export default function Clearance() {
   const [records, setRecords] = useState({});
+  const [registryProducts, setRegistryProducts] = useState([]);
   const [wizardProduct, setWizardProduct] = useState(null);
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [customProducts, setCustomProducts] = useState([]);
@@ -53,6 +67,9 @@ export default function Clearance() {
   const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
+    listProducts({ status: 'active' }).then(result => {
+      setRegistryProducts(result.ok ? result.items.map(toClearanceProduct) : []);
+    });
     resolveArray(base44.entities.ClearanceRecord.list('-created_date')).then(recs => {
       const map = {};
       asArray(recs).forEach(r => { map[r.product_name] = r; });
@@ -61,7 +78,7 @@ export default function Clearance() {
     base44.auth.me().then(u => { if (u?.email) setUserEmail(u.email); }).catch(() => {});
   }, []);
 
-  const allProducts = [...VEU_PRODUCTS, ...asArray(customProducts)];
+  const allProducts = [...registryProducts, ...asArray(customProducts)];
 
   // ── Filtered & searched products ──────────────────────────────────────────
   const filteredProducts = allProducts.filter(p => {
