@@ -66,6 +66,10 @@ const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION'
 const GTM_TARGET = 95;
 const RATE_LIMIT_CAPACITY = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const VERCEL_RUN_CONSTRUCTION_HARD_TIMEOUT_MS = 800_000;
+const VERCEL_RUN_CONSTRUCTION_STREAM_LIMIT_MS = 450_000;
+const RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS = 30_000;
+const DEFAULT_RUN_CONSTRUCTION_SSE_SOFT_TIMEOUT_MS = 420_000;
 const execFileAsync = promisify(execFile);
 
 function freshBuildFinalStatus(result) {
@@ -83,6 +87,125 @@ function freshBuildFailureFromError(error, stage = 'fresh_build') {
     readyState: error?.readyState || null,
     attempts: Number.isFinite(error?.attempts) ? error.attempts : null,
   };
+}
+
+function configuredRunConstructionSoftTimeoutMs(env = process.env) {
+  const configured = Number(env?.FLOWAI_RUN_CONSTRUCTION_SSE_SOFT_TIMEOUT_MS);
+  const requested = Number.isFinite(configured) && configured > 0
+    ? configured
+    : DEFAULT_RUN_CONSTRUCTION_SSE_SOFT_TIMEOUT_MS;
+  const maximum = Math.min(
+    VERCEL_RUN_CONSTRUCTION_HARD_TIMEOUT_MS - RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS,
+    VERCEL_RUN_CONSTRUCTION_STREAM_LIMIT_MS - RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS,
+  );
+  return Math.max(1_000, Math.min(requested, maximum));
+}
+
+function latestRunConstructionStep(stepLogs = []) {
+  if (!Array.isArray(stepLogs) || stepLogs.length === 0) return null;
+  const last = stepLogs[stepLogs.length - 1];
+  return {
+    step: last?.step ?? null,
+    status: last?.status ?? null,
+    tool: last?.tool ?? null,
+    kind: last?.result?.kind ?? last?.kind ?? null,
+    why: last?.why ?? null,
+  };
+}
+
+function buildRunConstructionSoftTimeoutFinal({
+  runId,
+  url,
+  mode,
+  orchestratorMode,
+  gtmTarget,
+  timeoutMs,
+  stepLogs = [],
+  iterations = [],
+  productSsotContext = null,
+  registryRow = null,
+} = {}) {
+  const completedSteps = Array.isArray(stepLogs)
+    ? stepLogs.filter((log) => log?.status === 'complete').length
+    : 0;
+  const lastStep = latestRunConstructionStep(stepLogs);
+  return {
+    type: 'final',
+    ok: false,
+    complete: false,
+    partial: true,
+    timedOut: true,
+    timeoutMs,
+    exitReason: 'SSE_SOFT_TIMEOUT',
+    code: 'SSE_SOFT_TIMEOUT',
+    previewUrl: null,
+    originalProductUrl: url ?? null,
+    finalScore: null,
+    governanceRecordId: runId ?? null,
+    productId: registryRow?.product_id ?? null,
+    productSsotContext: productSsotContext ? {
+      hasPriorRun: productSsotContext.hasPriorRun,
+      priorRunCount: productSsotContext.priorRunCount,
+      sourceVersion: productSsotContext.sourceVersion,
+      sourceHash: productSsotContext.sourceHash,
+      latestDeliveryArtifactUrl: productSsotContext.latestDeliveryArtifactUrl,
+    } : null,
+    symbioticLoop: {
+      persisted: null,
+      state: 'in_progress_timeout',
+      version: null,
+      reason: 'sse_soft_timeout_before_summary_write',
+    },
+    gtmReady: false,
+    iterationsCompleted: Array.isArray(iterations) ? iterations.length : 0,
+    stepsCompleted: completedSteps,
+    lastStep,
+    lastKnownState: {
+      stepLogs: Array.isArray(stepLogs) ? stepLogs.length : 0,
+      iterations: Array.isArray(iterations) ? iterations.length : 0,
+      productId: registryRow?.product_id ?? null,
+      mode: orchestratorMode ?? mode ?? null,
+    },
+    prUrl: null,
+    dimensions_contributing: null,
+    rawScore: null,
+    effectiveTrustScore: null,
+    coverageConfidence: null,
+    scoredDimensions: null,
+    totalDimensions: null,
+    meetsMinimumCoverage: null,
+    minimumScoredDimensionsForGTM: 7,
+    coverageDisclosure: 'Run returned a partial terminal result before the serverless hard timeout; remaining scoring evidence was not fabricated.',
+    runMode: null,
+    universalMode: false,
+    autoFixAvailable: false,
+    registerCTA: false,
+    operatorMode: null,
+    operatorRepoAccess: null,
+    findingsCount: null,
+    findingsSeverity: null,
+    deepBrowserAnalysis: null,
+    fixProposals: [],
+    sourceMapping: null,
+    sourceMappedFixProposals: [],
+    transformationDelta: null,
+    skippedSteps: [{
+      step: 'remaining_orchestration',
+      reason: 'sse_soft_timeout',
+      detail: `run-construction reached ${Math.round(timeoutMs / 1000)}s soft timeout and returned partial streamed results before the platform hard timeout.`,
+    }],
+    migration: null,
+    migrationModeDisabled: false,
+    migrationMessage: null,
+    runId,
+    gtmTarget,
+  };
+}
+
+function emitRunConstructionSoftTimeoutFinal({ send, done, payload }) {
+  send(payload);
+  done();
+  return payload;
 }
 
 export default async function handler(req, res) {
@@ -168,12 +291,23 @@ export default async function handler(req, res) {
     try { res.flushHeaders(); } catch { /* ignore */ }
   }
 
+  let terminalSent = false;
+  let exposedState = null;
   const send = (payload) => {
     try { res.write(`data: ${JSON.stringify(payload)}\n\n`); } catch { /* socket closed */ }
   };
   const done = () => {
+    terminalSent = true;
     try { res.write('data: [DONE]\n\n'); res.end(); } catch { /* ignore */ }
   };
+  const stopExposedState = () => {
+    try { exposedState?.stop?.(); } catch { /* best-effort stop */ }
+  };
+  if (typeof res.on === 'function') {
+    res.on('close', () => {
+      if (!terminalSent) stopExposedState();
+    });
+  }
 
   // Best-effort Supabase. When unavailable, the orchestrator falls through
   // to PATH B; we skip the registry upsert and report governanceRecordId
@@ -403,7 +537,9 @@ export default async function handler(req, res) {
   // discoverProduct override so it uses our row directly (no second
   // registry lookup, no PATH B detour). Without a row, omit the override
   // and let discoverProduct take its normal path.
-  const deps = {};
+  const deps = {
+    __exposeState: (state) => { exposedState = state; },
+  };
   if (registryRow) {
     deps.discoverProduct = async () => registryRow;
   }
@@ -445,9 +581,12 @@ export default async function handler(req, res) {
     Object.assign(deps, migrationHooks.deps);
   }
 
+  const stepLogs = [];
+  const iterations = [];
   let result;
+  let softTimeout = null;
   try {
-    result = await runOrchestration({
+    const orchestrationPromise = runOrchestration({
       url,
       mode: orchestratorMode,
       input: {
@@ -459,10 +598,56 @@ export default async function handler(req, res) {
       supabase,
       environment,
       gtmTarget: GTM_TARGET,
-      onStep: (log) => send({ type: 'step', log }),
-      onIteration: (iteration) => send({ type: 'iteration', iteration }),
+      onStep: (log) => {
+        stepLogs.push(log);
+        send({ type: 'step', log });
+      },
+      onIteration: (iteration) => {
+        iterations.push(iteration);
+        send({ type: 'iteration', iteration });
+      },
       deps,
     });
+    const softTimeoutMs = configuredRunConstructionSoftTimeoutMs();
+    const timeoutPromise = new Promise((resolve) => {
+      softTimeout = setTimeout(() => resolve({ __runConstructionSoftTimeout: true }), softTimeoutMs);
+    });
+    const raced = await Promise.race([orchestrationPromise, timeoutPromise]);
+    if (raced?.__runConstructionSoftTimeout) {
+      stopExposedState();
+      send({
+        type: 'step',
+        log: {
+          step: 'run-construction',
+          status: 'partial',
+          tool: 'SSE soft-timeout guard',
+          why: 'Registered-product orchestration exceeded the request soft timeout; returning an honest partial final before the platform closes the stream.',
+          result: {
+            kind: 'sse_soft_timeout',
+            timeoutMs: softTimeoutMs,
+            stepsCompleted: stepLogs.filter((log) => log?.status === 'complete').length,
+            lastStep: latestRunConstructionStep(stepLogs),
+          },
+        },
+      });
+      return emitRunConstructionSoftTimeoutFinal({
+        send,
+        done,
+        payload: buildRunConstructionSoftTimeoutFinal({
+          runId,
+          url,
+          mode,
+          orchestratorMode,
+          gtmTarget: GTM_TARGET,
+          timeoutMs: softTimeoutMs,
+          stepLogs,
+          iterations,
+          productSsotContext,
+          registryRow,
+        }),
+      });
+    }
+    result = raced;
   } catch (e) {
     send({
       type: 'error',
@@ -471,6 +656,8 @@ export default async function handler(req, res) {
       ...pickSafeErrorFields(e),
     });
     return done();
+  } finally {
+    if (softTimeout) clearTimeout(softTimeout);
   }
 
   // governanceRecordId: per orchestrator STEP 14, appendGovernanceEntry
@@ -943,4 +1130,12 @@ export const __test = Object.freeze({
   isPathInside,
   freshBuildFinalStatus,
   freshBuildFailureFromError,
+  configuredRunConstructionSoftTimeoutMs,
+  buildRunConstructionSoftTimeoutFinal,
+  emitRunConstructionSoftTimeoutFinal,
+  latestRunConstructionStep,
+  VERCEL_RUN_CONSTRUCTION_HARD_TIMEOUT_MS,
+  VERCEL_RUN_CONSTRUCTION_STREAM_LIMIT_MS,
+  RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS,
+  DEFAULT_RUN_CONSTRUCTION_SSE_SOFT_TIMEOUT_MS,
 });
