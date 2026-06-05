@@ -3,6 +3,7 @@ import { scoreDesignStep } from './designStepScorer.js';
 import { selectForgeStepTool } from './toolSelection.js';
 import { dispatch as orchestraDispatch } from '../orchestra/index.js';
 import { MODES } from '../tools/ToolIntelligenceService.js';
+import { invokeForgeStepOwner } from './stepOwnerRecommendations.js';
 
 const NO_DESIGN_TOOL_REASON = 'No AI design tool configured; manual input required';
 const P2_MAX_DISPATCHES_PER_RUN = 12;
@@ -274,8 +275,7 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
   });
   const scorableSections = sections.filter(section => section.id !== 'selected-tool');
   const score = scoreDesignStep({ stepId: DESIGN_STEP_ID, sections: scorableSections });
-
-  return Object.freeze({
+  const baseOutput = {
     productId,
     stepId: DESIGN_STEP_ID,
     completedAt: new Date().toISOString(),
@@ -299,6 +299,15 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
       estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
     matrixArtifactVersion: String(researchOutput.matrixArtifactVersion ?? 'unknown'),
+  };
+  const stepOwnerRecommendation = await invokeForgeStepOwner(config, 'design', {
+    productId,
+    stepInputs: baseOutput,
+  });
+
+  return Object.freeze({
+    ...baseOutput,
+    stepOwnerRecommendation,
   });
 }
 
