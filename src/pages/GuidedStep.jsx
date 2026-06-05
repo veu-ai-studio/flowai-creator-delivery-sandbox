@@ -19,6 +19,15 @@ import {
 } from 'lucide-react';
 
 const STEP_ORDER = STEPS.map(s => s.key);
+const GUIDED_SESSION_LOAD_TIMEOUT_MS = 8000;
+
+function withGuidedSessionTimeout(promise, timeoutMs = GUIDED_SESSION_LOAD_TIMEOUT_MS) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('guided_session_load_timeout')), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
 // ─── SPEECH SUPPORT ───────────────────────────────────────────────────────────
 const SPEECH_SUPPORTED = typeof window !== 'undefined' &&
@@ -83,6 +92,7 @@ export default function GuidedStep() {
   const [session, setSession] = useState(null);
   const [sessionConfig, setSessionConfig] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessionLoadWarning, setSessionLoadWarning] = useState(null);
   const [showInputPanel, setShowInputPanel] = useState(false);
 
   // ── Phase state ──
@@ -118,9 +128,9 @@ export default function GuidedStep() {
       let storedConfig = null;
       try { storedConfig = JSON.parse(sessionStorage.getItem('flowai_session_config') || 'null'); } catch {}
 
-      const sessions = await base44.entities.GuidedSession.filter(
+      const sessions = await withGuidedSessionTimeout(base44.entities.GuidedSession.filter(
         { overall_status: 'in_progress' }, '-last_active_at', 1
-      ).catch(() => []);
+      ).catch(() => []));
       const candidate = sessions[0];
       const stepAlreadyComplete = candidate?.step_statuses?.[stepSlug] === 'complete';
       const hasConfig = !!candidate?.mode_switches?.sessionConfig;
@@ -143,7 +153,7 @@ export default function GuidedStep() {
         // Auto-start from Workspace config — skip input panel
         setSessionConfig(storedConfig);
         const now = new Date().toISOString();
-        const newSession = await base44.entities.GuidedSession.create({
+        const newSession = await withGuidedSessionTimeout(base44.entities.GuidedSession.create({
           product_name: storedConfig.inputs.map(i => i.name).join(' + '),
           current_step: stepIndex + 1,
           overall_status: 'in_progress',
@@ -154,7 +164,7 @@ export default function GuidedStep() {
           mode_switches: { sessionConfig: storedConfig },
           started_at: now,
           last_active_at: now,
-        });
+        }));
         setSession(newSession);
         setShowInputPanel(false);
         setPhase('propose');
@@ -164,7 +174,16 @@ export default function GuidedStep() {
         setLoading(false);
       }
     };
-    load();
+    load().catch((error) => {
+      setSession(null);
+      setSessionConfig(null);
+      setShowInputPanel(true);
+      setPhase('propose');
+      setSessionLoadWarning(error?.message === 'guided_session_load_timeout'
+        ? 'Guided session service timed out. Start a new session or retry.'
+        : 'Guided session service is unavailable. Start a new session or retry.');
+      setLoading(false);
+    });
   }, [stepSlug]);
 
   // ── Start session from input panel ──
@@ -493,6 +512,12 @@ Please revise and expand your findings incorporating the user's request. Maintai
         {/* ── INPUT PANEL ── */}
         {showInputPanel && (
           <div className="space-y-3">
+            {sessionLoadWarning && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+                <p className="text-sm font-bold text-amber-400 mb-1">Guided session fallback</p>
+                <p className="text-xs text-muted-foreground">{sessionLoadWarning}</p>
+              </div>
+            )}
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
               <p className="text-sm font-bold text-amber-400 mb-1">Start a Guided Session</p>
               <p className="text-xs text-muted-foreground">FlowAI will propose its approach at each step. You approve, modify, or skip before any execution begins.</p>
