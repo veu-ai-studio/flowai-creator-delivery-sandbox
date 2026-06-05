@@ -12,7 +12,10 @@
 // function uses (base44/functions/deployApp/entry.ts) so we are not
 // inventing a new pattern.
 //
-// VERCEL_TOKEN is read from process.env (Doppler-injected).
+// VERCEL_OPERATOR_TOKEN / VERCEL_TOKEN is read from process.env
+// (Doppler-injected). The operator-token alias keeps credential naming
+// aligned with the server-side operator bridge while preserving the legacy
+// VERCEL_TOKEN path.
 
 import { memberOk, memberError } from './member.js';
 
@@ -49,8 +52,8 @@ export async function invoke(action, payload) {
  *   }
  */
 async function deploy(payload) {
-  const token = process.env.VERCEL_TOKEN;
-  if (!token) return memberError(id, 'deploy', 'VERCEL_TOKEN missing from environment');
+  const token = process.env.VERCEL_OPERATOR_TOKEN || process.env.VERCEL_TOKEN;
+  if (!token) return memberError(id, 'deploy', 'VERCEL_OPERATOR_TOKEN/VERCEL_TOKEN missing from environment');
 
   const files = Array.isArray(payload?.files) ? payload.files : null;
   if (!files || files.length === 0) return memberError(id, 'deploy', 'files[] required');
@@ -188,8 +191,8 @@ async function fetchBuildLog(deploymentId, token, teamQs) {
  *   { projectId: string, teamId?: string }
  */
 async function sourceRetrieval(payload) {
-  const token = process.env.VERCEL_TOKEN;
-  if (!token) return memberError(id, 'source-retrieval', 'VERCEL_TOKEN missing from environment');
+  const token = process.env.VERCEL_OPERATOR_TOKEN || process.env.VERCEL_TOKEN;
+  if (!token) return memberError(id, 'source-retrieval', 'VERCEL_OPERATOR_TOKEN/VERCEL_TOKEN missing from environment');
   const projectId = payload?.projectId;
   if (!projectId) return memberError(id, 'source-retrieval', 'projectId required');
   const teamId = payload.teamId || process.env.VERCEL_TEAM || null;
