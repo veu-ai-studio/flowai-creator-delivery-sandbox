@@ -187,6 +187,17 @@ function happyDeps({ preScoreSequence = [60], postScoreSequence = [72] } = {}) {
 
 // ── AUTO mode happy path ────────────────────────────────────────────────────
 
+function makeSelfRenewalRateLimitError() {
+  return Object.assign(new Error('daily self-renewal cap reached'), {
+    code: 'SELF_RENEWAL_RATE_LIMIT',
+    productId: PRODUCT.product_id,
+    cap: 1,
+    runsInWindow: 1,
+    windowStart: new Date('2026-06-04T12:00:00.000Z'),
+    nextEligibleAt: new Date('2026-06-06T12:00:00.000Z'),
+  });
+}
+
 describe('runOrchestration — AUTO mode', () => {
   it('GTM_READY exits when postScore reaches target on first iteration', async () => {
     withVercelEnv();
@@ -270,6 +281,58 @@ describe('runOrchestration — AUTO mode', () => {
 });
 
 // ── GUIDED mode pauses at checkpoints ───────────────────────────────────────
+
+describe('runOrchestration — rate-cap degradation', () => {
+  it('continues read-only analysis after Step 2 rate cap and blocks before branch/file writes', async () => {
+    const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [72] });
+    const rateLimit = makeSelfRenewalRateLimitError();
+    deps.checkRateCap = vi.fn(async () => { throw rateLimit; });
+    const stepLogs = [];
+
+    const result = await runOrchestration({
+      url: null,
+      mode: 'auto',
+      runId: 'rate-cap-degrade-1',
+      supabase: { from: vi.fn(() => { throw new Error('test supabase should not be queried directly'); }) },
+      environment: 'prd',
+      gtmTarget: 95,
+      maxIterations: 1,
+      deps,
+      onStep: (log) => stepLogs.push(log),
+    });
+
+    const step2 = stepLogs.find((log) => log.step === 2);
+    expect(step2).toMatchObject({
+      status: 'degraded',
+      tool: 'rateCap.js',
+      result: {
+        code: 'SELF_RENEWAL_RATE_LIMIT',
+        allowed: false,
+        degraded: true,
+        cap: 1,
+        runsInWindow: 1,
+      },
+    });
+
+    expect(stepLogs.some((log) => log.step === 3 && log.status === 'complete')).toBe(true);
+    expect(stepLogs.some((log) => log.step === 5 && log.status === 'complete')).toBe(true);
+    expect(stepLogs.some((log) => log.step === 6 && log.status === 'complete')).toBe(true);
+    expect(result.ok).toBe(false);
+    expect(result.failedStep).toBe('STEP_9');
+    expect(result.code).toBe('SELF_RENEWAL_RATE_LIMIT');
+    const mutationBlock = stepLogs.find((log) => (
+      log.step === 9 && log.tool === 'rateCap.js (mutation guard)'
+    ));
+    expect(mutationBlock?.result).toMatchObject({
+      blocked: true,
+      action: 'branch/file write',
+    });
+    expect(deps.createRenewalBranch).not.toHaveBeenCalled();
+    expect(deps.commitFileToBranch).not.toHaveBeenCalled();
+    expect(deps.deployBranchPreview).not.toHaveBeenCalled();
+    expect(deps.createRenewalPr).not.toHaveBeenCalled();
+  });
+});
 
 describe('runOrchestration — GUIDED mode', () => {
   it('pauses at checkpoints; resume() continues', async () => {

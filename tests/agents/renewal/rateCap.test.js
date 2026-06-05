@@ -103,12 +103,13 @@ describe('checkRateCap — under limit', () => {
     expect(result.runsInWindow).toBe(0);
   });
 
-  it('counts only self_renewal.* events within the 24h window', async () => {
+  it('counts only self_renewal.run_started.v1 events within the 24h window', async () => {
     const supabase = makeMockSupabase({
       productSsot: {
         governance_record: [
           { kind: 'self_renewal.run_started.v1', at: HOURS_AGO(2) },   // in
-          { kind: 'self_renewal.gate_failed.v1', at: HOURS_AGO(23) },  // in
+          { kind: 'self_renewal.gate_failed.v1', at: HOURS_AGO(23) },  // out (same run metadata)
+          { kind: 'self_renewal.orchestration_complete.v1', at: HOURS_AGO(4) }, // out
           { kind: 'self_renewal.run_started.v1', at: HOURS_AGO(48) },  // out (>24h)
           { kind: 'gtm.review.v1',               at: HOURS_AGO(1) },   // out (wrong prefix)
           { kind: 'self_renewal.run_started.v1', at: 'malformed-ts' }, // out (bad ts)
@@ -117,7 +118,22 @@ describe('checkRateCap — under limit', () => {
     });
     const result = await checkRateCap({ productId: PRODUCT_ID, maxPerDay: 5, supabase, now: NOW });
     expect(result.allowed).toBe(true);
-    expect(result.runsInWindow).toBe(2);
+    expect(result.runsInWindow).toBe(1);
+  });
+
+  it('does not consume multiple cap units for non-start self_renewal events in the same run', async () => {
+    const supabase = makeMockSupabase({
+      productSsot: {
+        governance_record: [
+          { kind: 'self_renewal.run_started.v1', at: HOURS_AGO(2), runId: 'run-1' },
+          { kind: 'self_renewal.delta_evaluated.v1', at: HOURS_AGO(2), runId: 'run-1' },
+          { kind: 'self_renewal.gate_failed.v1', at: HOURS_AGO(2), runId: 'run-1' },
+          { kind: 'self_renewal.orchestration_complete.v1', at: HOURS_AGO(2), runId: 'run-1' },
+        ],
+      },
+    });
+    const result = await checkRateCap({ productId: PRODUCT_ID, maxPerDay: 2, supabase, now: NOW });
+    expect(result).toEqual({ allowed: true, runsInWindow: 1, cap: 2 });
   });
 
   it('queries the right table + filter', async () => {
@@ -513,6 +529,7 @@ describe('rateCap internals', () => {
 
   it('exposes the documented kind constants', () => {
     expect(__internals.SELF_RENEWAL_KIND_PREFIX).toBe('self_renewal.');
+    expect(__internals.RUN_STARTED_KIND).toBe('self_renewal.run_started.v1');
     expect(__internals.GATE_FAILED_KIND).toBe('self_renewal.gate_failed.v1');
     expect(__internals.RUNAWAY_DISABLED_KIND).toBe('self_renewal.runaway_disabled.v1');
     expect(__internals.ONE_DAY_MS).toBe(24 * 60 * 60 * 1000);
