@@ -27,6 +27,7 @@ const DOWNGRADED_WITHOUT_EVIDENCE = Object.freeze(new Set([
   'ca18-audit-trail',
   'ca18-deploy-truth',
 ]));
+const UNSUPPORTED_VERIFIED_TEXT_RE = /\s*(?:[-–—]\s*)?VERIFIED\b/gi;
 const DOWNGRADED_WITHOUT_EVIDENCE_NOTE = 'downgraded — no evidence artifact at time of audit; evidenceUrl + verifiedAt + verifiedBy required to promote';
 
 function normalizeMojibake(value) {
@@ -123,6 +124,7 @@ function parseBullet(line, layer) {
 
   if (DOWNGRADED_WITHOUT_EVIDENCE.has(entry.surfaceId)) {
     entry.status = 'PARTIAL';
+    entry.description = entry.description.replace(UNSUPPORTED_VERIFIED_TEXT_RE, '').trim();
     entry.note = DOWNGRADED_WITHOUT_EVIDENCE_NOTE;
   }
 
