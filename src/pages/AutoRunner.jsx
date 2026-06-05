@@ -11,6 +11,7 @@ import SessionContextBanner from '@/components/operations/SessionContextBanner';
 import FetchFailurePrompt from '@/components/operations/FetchFailurePrompt';
 import ClearanceProtocolPrompt from '@/components/operations/ClearanceProtocolPrompt';
 import SessionResumePrompt from '@/components/operations/SessionResumePrompt';
+import StepToolStatusList from '@/components/operations/StepToolStatusList';
 import { STEPS, buildStepPrompt, buildFinalReportPrompt, fetchPageContext, runCrawl, researchViaApi, invokeLlmViaApi, computeMonitorClearance, formatMonitorClearanceFooter } from '@/lib/operationsEngine';
 import SelfRenewalEngine from '@/components/operations/SelfRenewalEngine';
 import { logAction } from '@/lib/auditLogger';
@@ -215,6 +216,7 @@ function StepCard({ step, index, status, result, elapsed, onExpand, isExpanded, 
               {(result.full_output || '').slice(0, 600).replace(/\n/g, ' ')}{(result.full_output || '').length > 600 ? '...' : ''}
             </p>
           )}
+          <StepToolStatusList stepKey={step.key} toolSelection={result?.toolSelection ?? null} compact />
         </div>
         {status === 'complete' && result && (
           <button onClick={onExpand} className="text-muted-foreground hover:text-foreground shrink-0">

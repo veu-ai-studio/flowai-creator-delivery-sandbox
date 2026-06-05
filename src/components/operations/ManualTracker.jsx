@@ -1,5 +1,6 @@
 import { CheckCircle2, Circle, Play } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import StepToolStatusList from './StepToolStatusList';
 
 const STEPS = [
   { key: 'research',  label: 'Research' },
@@ -48,23 +49,26 @@ export default function ManualTracker({ session, currentStepKey, onMarkComplete,
 
           return (
             <div key={step.key}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
+              className={`min-w-[13rem] px-2.5 py-1.5 rounded-lg border text-[11px] font-semibold transition-all ${
                 status === 'complete'
                   ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400'
                   : isCurrent || status === 'in_progress'
                   ? 'border-primary/40 bg-primary/5 text-primary'
                   : 'border-border text-muted-foreground'
               }`}>
-              {status === 'complete'
-                ? <CheckCircle2 className="h-3 w-3 shrink-0" />
-                : isCurrent || status === 'in_progress'
-                ? <Play className="h-2.5 w-2.5 shrink-0" />
-                : <Circle className="h-2.5 w-2.5 shrink-0" />
-              }
-              {step.label}
-              {completedAt && (
-                <span className="text-[9px] opacity-60">{new Date(completedAt).toLocaleDateString('en-US', { weekday: 'short' })}</span>
-              )}
+              <div className="flex items-center gap-1.5">
+                {status === 'complete'
+                  ? <CheckCircle2 className="h-3 w-3 shrink-0" />
+                  : isCurrent || status === 'in_progress'
+                  ? <Play className="h-2.5 w-2.5 shrink-0" />
+                  : <Circle className="h-2.5 w-2.5 shrink-0" />
+                }
+                {step.label}
+                {completedAt && (
+                  <span className="text-[9px] opacity-60">{new Date(completedAt).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                )}
+              </div>
+              <StepToolStatusList stepKey={step.key} compact />
             </div>
           );
         })}

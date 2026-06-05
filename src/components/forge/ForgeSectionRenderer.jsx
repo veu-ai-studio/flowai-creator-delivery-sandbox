@@ -48,6 +48,11 @@ function toolScore(item) {
   return tool?.compositeScore ?? tool?.rankScore ?? tool?.performance_score ?? item?.compositeScore ?? item?.rank ?? 'n/a';
 }
 
+function toolDispatchState(item) {
+  const tool = toolSource(item);
+  return tool?.dispatchState ?? item?.dispatchState ?? null;
+}
+
 function hasToolListShape(value) {
   if (!Array.isArray(value) || value.length === 0 || !isObject(value[0])) return false;
   const item = value[0];
@@ -138,6 +143,9 @@ function ToolList({ value }) {
             </div>
             {(tool?.metadataStatus ?? item.metadataStatus) === 'MISSING_REGISTRY_METADATA' && (
               <p className="mt-2 text-xs text-muted-foreground">Limited metadata</p>
+            )}
+            {toolDispatchState(item) && (
+              <p className="mt-2 text-xs text-muted-foreground">Dispatch: {toolDispatchState(item)}</p>
             )}
           </div>
         );
@@ -295,6 +303,9 @@ function Envelope({ value }) {
                     )}
                     {typeof tool?.compositeScore === 'number' && (
                       <span className="ml-auto font-mono text-xs">{tool.compositeScore.toFixed(1)}</span>
+                    )}
+                    {tool?.dispatchState && (
+                      <span className="text-xs text-muted-foreground">{tool.dispatchState}</span>
                     )}
                     {isPicked && (
                       <span
