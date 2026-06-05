@@ -14,7 +14,7 @@
  * Constructor envs (read from process.env unless `opts` overrides):
  *   - GITHUB_APP_ID                  (required)
  *   - GITHUB_APP_PRIVATE_KEY         (required; PEM, may contain literal \n)
- *   - GITHUB_APP_INSTALLATION_ID     (required)
+ *   - GITHUB_APP_INSTALLATION_ID     (required; GITHUB_INSTALLATION_ID accepted as alias)
  *
  * Honest scope: this module assumes a single FlowAI App + a single
  * default installation. Per-installation lookup (e.g. when multiple
@@ -141,7 +141,7 @@ export function buildAppJwtClaims(appId, nowMs) {
  * @param {string} [opts.pat]                   — default: process.env.GITHUB_PAT (PAT fallback)
  * @param {string|number} [opts.appId]          — default: process.env.GITHUB_APP_ID
  * @param {string} [opts.privateKey]            — default: process.env.GITHUB_APP_PRIVATE_KEY
- * @param {string|number} [opts.installationId] — default: process.env.GITHUB_APP_INSTALLATION_ID
+ * @param {string|number} [opts.installationId] — default: process.env.GITHUB_APP_INSTALLATION_ID or GITHUB_INSTALLATION_ID
  * @param {() => number} [opts.now]             — default: Date.now (overridable for tests)
  * @param {typeof globalThis.fetch} [opts.fetch] — default: globalThis.fetch (overridable for tests)
  *
@@ -161,7 +161,9 @@ export async function getInstallationToken(opts = {}) {
 
   const appId = opts.appId ?? process.env.GITHUB_APP_ID;
   const privateKey = opts.privateKey ?? process.env.GITHUB_APP_PRIVATE_KEY;
-  const installationId = opts.installationId ?? process.env.GITHUB_APP_INSTALLATION_ID;
+  const installationId = opts.installationId
+    ?? process.env.GITHUB_APP_INSTALLATION_ID
+    ?? process.env.GITHUB_INSTALLATION_ID;
   const now = typeof opts.now === 'function' ? opts.now : Date.now;
   const fetchImpl = typeof opts.fetch === 'function' ? opts.fetch : globalThis.fetch;
 
@@ -181,7 +183,7 @@ export async function getInstallationToken(opts = {}) {
   if (!installationId) {
     throw new Error(
       'getInstallationToken: GITHUB_APP_INSTALLATION_ID is required. ' +
-      'Set process.env.GITHUB_APP_INSTALLATION_ID (Doppler key in production) or pass opts.installationId.',
+      'Set process.env.GITHUB_APP_INSTALLATION_ID (or legacy alias GITHUB_INSTALLATION_ID) in production, or pass opts.installationId.',
     );
   }
   if (typeof fetchImpl !== 'function') {

@@ -176,6 +176,30 @@ describe('getInstallationToken — happy path', () => {
     expect(init.headers['Accept']).toBe('application/vnd.github+json');
     expect(init.headers['X-GitHub-Api-Version']).toBe('2022-11-28');
   });
+
+  it('accepts GITHUB_INSTALLATION_ID as a production env alias', async () => {
+    const saved = { ...process.env };
+    const fetchMock = mockFetchOk();
+    process.env = {
+      ...process.env,
+      GITHUB_APP_ID: '3748219',
+      GITHUB_APP_PRIVATE_KEY: privateKeyPem,
+      GITHUB_INSTALLATION_ID: '133220298',
+    };
+    delete process.env.GITHUB_APP_INSTALLATION_ID;
+    delete process.env.GITHUB_PAT;
+    try {
+      await getInstallationToken({
+        pat: '',
+        now: () => FIXED_NOW,
+        fetch: fetchMock,
+      });
+    } finally {
+      process.env = saved;
+    }
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://api.github.com/app/installations/133220298/access_tokens');
+  });
 });
 
 describe('getInstallationToken — env-var validation', () => {
