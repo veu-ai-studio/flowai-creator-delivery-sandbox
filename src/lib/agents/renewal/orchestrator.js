@@ -433,6 +433,36 @@ function effectiveRateCapForRun({ policy, product, operatorContext } = {}) {
   return configuredCap;
 }
 
+function buildRateCapDegradedState(error = {}) {
+  return Object.freeze({
+    limited: true,
+    code: error?.code ?? 'SELF_RENEWAL_RATE_LIMIT',
+    allowed: false,
+    degraded: true,
+    productId: error?.productId ?? null,
+    cap: Number.isFinite(error?.cap) ? error.cap : null,
+    runsInWindow: Number.isFinite(error?.runsInWindow) ? error.runsInWindow : null,
+    windowStart: error?.windowStart instanceof Date
+      ? error.windowStart.toISOString()
+      : (typeof error?.windowStart === 'string' ? error.windowStart : null),
+    nextEligibleAt: error?.nextEligibleAt instanceof Date
+      ? error.nextEligibleAt.toISOString()
+      : (typeof error?.nextEligibleAt === 'string' ? error.nextEligibleAt : null),
+    mutationPolicy: 'read_only_steps_continue; write/pr/deploy/success-governance blocked',
+  });
+}
+
+function buildRateCapMutationBlock(state, action) {
+  const rateCap = state?.rateCapDegraded ?? null;
+  return Object.freeze({
+    blocked: true,
+    code: rateCap?.code ?? 'SELF_RENEWAL_RATE_LIMIT',
+    action,
+    rateCap,
+    detail: 'Self-Renewal rate cap was hit at Step 2; read-only pipeline steps may continue, but mutation/write/PR/deploy actions are blocked.',
+  });
+}
+
 function resolveGithubOperatorToken(deps = {}) {
   if (typeof deps.githubOperatorToken === 'string' && deps.githubOperatorToken.length > 0) {
     return deps.githubOperatorToken;
@@ -1569,13 +1599,24 @@ export async function runOrchestration(args = {}) {
       durationMs: Date.now() - t0, mode: state.mode,
     }));
   } catch (e) {
-    emit(makeStepLog({
-      iteration: 0, step: 2, status: 'failed',
-      tool: 'rateCap.js', why: 'verify daily rate cap',
-      result: { error: e?.message }, mode: state.mode,
-    }));
-    return failStep({ product, failedStep: 'STEP_2',
-      error: e?.message ?? String(e), code: e?.code ?? 'RATE_LIMIT', diagnostics: e });
+    if (e?.code === 'SELF_RENEWAL_RATE_LIMIT') {
+      state.rateCapDegraded = buildRateCapDegradedState(e);
+      emit(makeStepLog({
+        iteration: 0, step: 2, status: 'degraded',
+        tool: 'rateCap.js',
+        why: 'daily rate cap reached; continue read-only analysis but block renewal mutations',
+        result: state.rateCapDegraded,
+        mode: state.mode,
+      }));
+    } else {
+      emit(makeStepLog({
+        iteration: 0, step: 2, status: 'failed',
+        tool: 'rateCap.js', why: 'verify daily rate cap',
+        result: { error: e?.message }, mode: state.mode,
+      }));
+      return failStep({ product, failedStep: 'STEP_2',
+        error: e?.message ?? String(e), code: e?.code ?? 'RATE_LIMIT', diagnostics: e });
+    }
   }
 
   // D41 T4 — authenticated traversal preparation.
@@ -3343,6 +3384,23 @@ export async function runOrchestration(args = {}) {
       }
 
       // STEP 9 — Branch + multi-file commits (PATH A only).
+      if (state.rateCapDegraded?.limited === true) {
+        const block = buildRateCapMutationBlock(state, 'branch/file write');
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 9, status: 'failed',
+          tool: 'rateCap.js (mutation guard)',
+          why: 'rate-limited run reached branch/file write boundary',
+          result: block,
+          mode: state.mode,
+        }));
+        return failStep({
+          product,
+          failedStep: 'STEP_9',
+          error: block.detail,
+          code: block.code,
+          diagnostics: block,
+        });
+      }
       try {
         const t0 = Date.now();
         const first = fileChanges[0];
@@ -3421,6 +3479,23 @@ export async function runOrchestration(args = {}) {
             autoFixSkippedReason: 'UNIVERSAL_NO_REPO_ACCESS', detail: skipDetail,
           });
         } else if (pathB) {
+          if (state.rateCapDegraded?.limited === true) {
+            const block = buildRateCapMutationBlock(state, 'PATH_B deploy/upload');
+            emit(makeStepLog({
+              iteration: iterationNumber, step: 10, status: 'failed',
+              tool: 'rateCap.js (mutation guard)',
+              why: 'rate-limited run reached deploy/upload boundary',
+              result: block,
+              mode: state.mode,
+            }));
+            return failStep({
+              product,
+              failedStep: 'STEP_10',
+              error: block.detail,
+              code: block.code,
+              diagnostics: block,
+            });
+          }
           const PATH_B_DEPLOY_TIMEOUT_MS = 120_000;
           let timer;
           const timeoutPromise = new Promise((resolve) => {
@@ -3529,6 +3604,23 @@ export async function runOrchestration(args = {}) {
           // D40 — pass registry row so vercel_project_id column is used
           // as primary source; env-var fallback only kicks in when the
           // column isn't populated.
+          if (state.rateCapDegraded?.limited === true) {
+            const block = buildRateCapMutationBlock(state, 'PATH_A preview deploy');
+            emit(makeStepLog({
+              iteration: iterationNumber, step: 10, status: 'failed',
+              tool: 'rateCap.js (mutation guard)',
+              why: 'rate-limited run reached preview deploy boundary',
+              result: block,
+              mode: state.mode,
+            }));
+            return failStep({
+              product,
+              failedStep: 'STEP_10',
+              error: block.detail,
+              code: block.code,
+              diagnostics: block,
+            });
+          }
           const projectId = resolveVercelProjectId(productId, process.env, product);
           if (!projectId) {
             throw new Error(`no Vercel project ID for ${productId} (env VERCEL_PROJECT_ID_${productId.toUpperCase()})`);
@@ -4188,6 +4280,24 @@ export async function runOrchestration(args = {}) {
       autoFixSkippedReason: 'OPERATOR_APPROVAL_REQUIRED', detail: 'operatorApproval.approved must be true before PR creation',
     });
   } else if (lastIter.branchName && token) {
+    if (state.rateCapDegraded?.limited === true) {
+      const block = buildRateCapMutationBlock(state, 'PR creation');
+      emit(makeStepLog({
+        iteration: iterations.length, step: 13, status: 'failed',
+        tool: 'rateCap.js (mutation guard)',
+        why: 'rate-limited run reached PR creation boundary',
+        result: block,
+        mode: state.mode,
+        canInterrupt: false,
+      }));
+      return failStep({
+        product,
+        failedStep: 'STEP_13',
+        error: block.detail,
+        code: block.code,
+        diagnostics: block,
+      });
+    }
     try {
       const t0 = Date.now();
       pr = await _createRenewalPr({
@@ -4320,6 +4430,18 @@ export async function runOrchestration(args = {}) {
   }
 
   let auditWrite = { written: false, reason: 'not_attempted' };
+  if (state.rateCapDegraded?.limited === true) {
+    const block = buildRateCapMutationBlock(state, 'ProductSSOT renewal-success write');
+    auditWrite = { written: false, reason: 'rate_cap_mutation_blocked', block };
+    emit(makeStepLog({
+      iteration: iterations.length, step: 14, status: 'failed',
+      tool: 'rateCap.js (mutation guard)',
+      why: 'rate-limited run reached ProductSSOT success-write boundary',
+      result: block,
+      mode: state.mode,
+      canInterrupt: false,
+    }));
+  } else {
   try {
     auditWrite = await _appendGovernanceEntry({
       productId, environment,
@@ -4404,6 +4526,7 @@ export async function runOrchestration(args = {}) {
       tool: 'governance_record', why: 'audit write',
       result: { error: e?.message }, mode: state.mode,
     }));
+  }
   }
 
   return Object.freeze({

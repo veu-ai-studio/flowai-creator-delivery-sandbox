@@ -4,8 +4,9 @@
  * Two guards every renewal cycle must pass before execution:
  *
  *   checkRateCap({ productId, maxPerDay, supabase })
- *     - Counts `self_renewal.*` events in product_ssot.governance_record
- *       for this product within the last 24 hours.
+ *     - Counts `self_renewal.run_started.v1` events in
+ *       product_ssot.governance_record for this product within the last
+ *       24 hours.
  *     - If count ≥ maxPerDay → throws SELF_RENEWAL_RATE_LIMIT.
  *     - Otherwise returns { allowed: true, runsInWindow, cap }.
  *
@@ -45,6 +46,7 @@
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const SELF_RENEWAL_KIND_PREFIX = 'self_renewal.';
+const RUN_STARTED_KIND = 'self_renewal.run_started.v1';
 const GATE_FAILED_KIND = 'self_renewal.gate_failed.v1';
 const RUNAWAY_DISABLED_KIND = 'self_renewal.runaway_disabled.v1';
 
@@ -109,7 +111,9 @@ function requireSupabase(supabase, fn) {
 }
 
 /**
- * Count renewal runs in the last 24 hours and enforce the daily cap.
+ * Count renewal run-start events in the last 24 hours and enforce the
+ * daily cap. Other self_renewal.* governance events describe the same run
+ * and must not consume additional cap units.
  *
  * @param {object} args
  * @param {string} args.productId        — e.g. 'mypreglife'
@@ -149,7 +153,7 @@ export async function checkRateCap({ productId, maxPerDay, supabase, now } = {})
   const records = Array.isArray(data?.governance_record) ? data.governance_record : [];
   const inWindow = records.filter((r) => {
     if (!r || typeof r !== 'object') return false;
-    if (typeof r.kind !== 'string' || !r.kind.startsWith(SELF_RENEWAL_KIND_PREFIX)) return false;
+    if (r.kind !== RUN_STARTED_KIND) return false;
     const at = parseAt(r.at);
     return at !== null && at >= windowStart && at <= nowDate;
   });
@@ -330,6 +334,7 @@ export async function checkRunawayDetector({ productId, runawayThreshold, supaba
 export const __internals = Object.freeze({
   ONE_DAY_MS,
   SELF_RENEWAL_KIND_PREFIX,
+  RUN_STARTED_KIND,
   GATE_FAILED_KIND,
   RUNAWAY_DISABLED_KIND,
   makeError,
