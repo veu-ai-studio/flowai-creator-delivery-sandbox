@@ -265,9 +265,13 @@ All 26 agents are proprietary VEU IP. Never sold individually. Rostered does not
 
 FlowAI-only agents (8): #4 Provider Onboarding, #5 End-Customer Intake, #8 Quality Audit, #11 Strategic Intelligence, #12 Portfolio Risk & Fire Detection, #14 Public Policy, #16 Productivity & HR, #18 Business Planning & Performance.
 
-Embedded in every product (13): #1 Lifecycle Engine, #2 Code Builder, #3 Self-Renewal, #6 Research, #7 Design, #9 GTM, #10 Monitor, #13 Self-Protection, #15 Benchmarking & Competition, #17 Product Evolution, #19 Technological Evolution, #20 Environmental Impacts, #26 Orchestra Research.
+Embedded in every product (12): #1 Lifecycle Engine, #2 Code Builder, #3 Self-Renewal, #6 Research, #7 Design, #9 GTM, #10 Monitor, #13 Self-Protection, #15 Benchmarking & Competition, #17 Product Evolution, #19 Technological Evolution, #20 Environmental Impacts.
 
-Ops Runners embedded (5): #21 Aggressive Crawl Conductor, #22 Ops Runner Beta, #23 Cost Governor, #24 Ops Runner Delta, #25 Ops Runner Epsilon. Ops Runner names and step bindings remain governed by the agent registry and future engineering dispatches.
+Ops Runners embedded (1): #21 Aggressive Crawl Conductor.
+
+Business-advisory agents (5): #22 Finance & Procurement, #23 HR & Compensation, #24 Information Security, #25 Customer Care, #26 Legal & Communications. These rows are ROSTERED + IMPLEMENTED in `AGENT_REGISTRY` at code base `19c554b`; not WIRED, not RUNTIME_ACTIVE, not PRODUCTION_VERIFIED. Registry mode `step-owner` does not make them §9 Forge-pipeline step owners.
+
+Orchestra membership lifecycle and auto-admission ownership is assigned to `orchestra-membership-executor` as a §15.5 canonical executor entry. The stable `26.orchestra.*` topic identifiers are retained for engineering compatibility; the numeric prefix no longer means Agent #26 owns the capability.
 
 No agent auto-executes without operator approval. No product-specific code in the agent layer.
 
