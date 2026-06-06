@@ -15,16 +15,18 @@ describe('AGENT_REGISTRY — completeness', () => {
     expect(ids).toEqual(Array.from({ length: 26 }, (_, i) => i + 1));
   });
 
-  it('Agent #26 has the full Orchestra Research charter shape', () => {
+  it('Agent #26 has the reserved Legal & Communications charter shape', () => {
     const agent = getAgent(26);
     expect(agent).toBeDefined();
     for (const field of ['id', 'name', 'mode', 'authority', 'requiredCredentials', 'consumes', 'produces', 'escalationPolicy']) {
       expect(agent[field]).toBeDefined();
     }
-    expect(agent.name).toBe('Orchestra Research Agent');
-    expect(agent.mode).toBe('always-on');
-    expect(agent.authority).toContain('recommend_only');
-    expect(agent.requiredCredentials).toEqual(['ANTHROPIC_API_KEY', 'BROWSERLESS_API_KEY']);
+    expect(agent.name).toBe('Legal & Communications');
+    expect(agent.mode).toBe('step-owner');
+    expect(agent.authority).toEqual(['recommend_only']);
+    expect(agent.requiredCredentials).toEqual([]);
+    expect(agent.consumes).toEqual([]);
+    expect(agent.produces).toEqual([]);
   });
 
   it('registry validator passes at module load', () => {
@@ -48,8 +50,7 @@ describe('AGENT_REGISTRY — completeness', () => {
   it('every agent declares non-empty authority drawn from the canonical level set', () => {
     // Per CANONICAL_REFERENCE §15.1: most agents ship at recommend_only,
     // but Agent #21 (Aggressive Crawl Conductor, ENTRY 006 promotion
-    // 2026-05-16) and Agent #26 (Orchestra Research Agent, CA-9-Q4=(b))
-    // are canonically granted the dual+gate triple
+    // 2026-05-16) is canonically granted the dual+gate triple
     // [recommend_only, auto_write_internal, requires_human_gate] — the
     // first agents with elevated charter authority. The 5 levels below
     // are the canonical BaseAgent set.
@@ -74,7 +75,7 @@ describe('AGENT_REGISTRY — completeness', () => {
     // auto_write_internal or requires_human_gate must ALSO declare
     // recommend_only so the dormant-safe default path remains. This
     // mirrors the Phase 1 graduation rule from Panel ruling 30e5edb
-    // (Agent #21) and CA-9-Q4=(b) (Agent #26).
+    // (Agent #21).
     for (const a of AGENT_REGISTRY) {
       const hasElevated =
         a.authority.includes('auto_write_internal') ||

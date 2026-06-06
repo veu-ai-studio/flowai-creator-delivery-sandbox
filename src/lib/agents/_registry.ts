@@ -335,7 +335,7 @@ const AGENTS: AgentRecord[] = [
   },
   {
     id: 22,
-    name: 'Ops Runner Beta',
+    name: 'Finance & Procurement',
     mode: 'step-owner',
     authority: ['recommend_only'],
     requiredCredentials: [],
@@ -345,7 +345,7 @@ const AGENTS: AgentRecord[] = [
   },
   {
     id: 23,
-    name: 'Ops Runner Gamma',
+    name: 'HR & Compensation',
     mode: 'step-owner',
     authority: ['recommend_only'],
     requiredCredentials: [],
@@ -355,7 +355,7 @@ const AGENTS: AgentRecord[] = [
   },
   {
     id: 24,
-    name: 'Ops Runner Delta',
+    name: 'Information Security',
     mode: 'step-owner',
     authority: ['recommend_only'],
     requiredCredentials: [],
@@ -365,7 +365,7 @@ const AGENTS: AgentRecord[] = [
   },
   {
     id: 25,
-    name: 'Ops Runner Epsilon',
+    name: 'Customer Care',
     mode: 'step-owner',
     authority: ['recommend_only'],
     requiredCredentials: [],
@@ -375,28 +375,13 @@ const AGENTS: AgentRecord[] = [
   },
   {
     id: 26,
-    name: 'Orchestra Research Agent',
-    mode: 'always-on',
-    authority: ['recommend_only', 'auto_write_internal', 'requires_human_gate'],
-    requiredCredentials: ['ANTHROPIC_API_KEY', 'BROWSERLESS_API_KEY'],
-    consumes: [
-      'community.signal.v1',
-      '11.platform.discovery.v1',
-      '15.benchmark.head_to_head.v1',
-      '17.orchestra.deprecation_proposal.v1',
-      'vendor.changelog.poll.v1',
-    ],
-    produces: [
-      '26.orchestra.candidate.v1',
-      '26.orchestra.admitted.v1',
-      '26.orchestra.candidate_rejected.v1',
-      '26.orchestra.candidate_panel_gate.v1',
-      '26.orchestra.deprecated.v1',
-      '26.orchestra.lifecycle_state_changed.v1',
-      '26.orchestra.candidate_reactivated.v1',
-    ],
-    escalationPolicy:
-      '4-condition auto-admission gate failure → Panel + CEO per Locked Rule 13',
+    name: 'Legal & Communications',
+    mode: 'step-owner',
+    authority: ['recommend_only'],
+    requiredCredentials: [],
+    consumes: [],
+    produces: [],
+    escalationPolicy: 'Reserved Step-Owner charter — escalate to #1 on any side effect attempt.',
   },
 ];
 
