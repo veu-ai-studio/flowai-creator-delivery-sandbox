@@ -26,7 +26,7 @@ export class AdvisoryAgentBase extends BaseAgent {
       inputKind: config.inputKind,
       rules: Object.freeze([...config.rules]),
       selectTopic: config.selectTopic,
-      buildPayload: config.buildPayload,
+      buildPayload: config.buildPayload ?? ((payload) => payload),
     });
   }
 
@@ -40,7 +40,12 @@ export class AdvisoryAgentBase extends BaseAgent {
     const urgent = signals.filter((s) => s.status === 'urgent');
     const warnings = signals.filter((s) => s.status === 'watch');
     const confidence = confidenceFromSignals(signals);
-    const topic = this.advisoryConfig.selectTopic(input, signals);
+    const topic = this.charter.produces.length > 0
+      ? this.advisoryConfig.selectTopic(input, signals)
+      : null;
+    if (topic !== null && !this.charter.produces.includes(topic)) {
+      throw new Error(`${this.constructor.name}.plan: topic '${topic}' is not in charter.produces`);
+    }
     const payload = this.advisoryConfig.buildPayload({
       input,
       ctx,
@@ -50,6 +55,9 @@ export class AdvisoryAgentBase extends BaseAgent {
       warnings,
       confidence,
     });
+    const emit = topic === null
+      ? []
+      : [Object.freeze({ topic, payload: Object.freeze(payload) })];
     return Object.freeze({
       summary: `${this.charter.name}: ${urgent.length > 0 ? 'material alert' : 'advisory brief'} (${signals.length} rules)`,
       authorityNeeded: [...this.charter.authority],
@@ -57,10 +65,9 @@ export class AdvisoryAgentBase extends BaseAgent {
       outcome: urgent.length > 0 ? 'material_alert' : 'advisory_ready',
       confidence,
       signals: Object.freeze(signals),
+      advisoryPayload: Object.freeze(payload),
       proposed: Object.freeze({
-        emit: Object.freeze([
-          Object.freeze({ topic, payload: Object.freeze(payload) }),
-        ]),
+        emit: Object.freeze(emit),
       }),
     });
   }
