@@ -6,6 +6,9 @@ const COMMIT_KEYS = Object.freeze([
   'VITE_GIT_COMMIT_SHA',
   'GIT_COMMIT_SHA',
   'COMMIT_SHA',
+]);
+
+const EXPECTED_COMMIT_KEYS = Object.freeze([
   'FLOWAI_EXPECTED_HEAD',
   'EXPECTED_HEAD',
 ]);
@@ -29,21 +32,24 @@ function firstNonEmpty(env, keys) {
   return { value: null, key: null };
 }
 
-export function resolveBuildIdentity(env = process.env) {
+export function resolveBuildIdentity(env = process.env, buildInfo = BUILD_INFO) {
   const commitEnv = firstNonEmpty(env, COMMIT_KEYS);
+  const expectedCommitEnv = firstNonEmpty(env, EXPECTED_COMMIT_KEYS);
   const branchEnv = firstNonEmpty(env, BRANCH_KEYS);
-  const generatedCommit = typeof BUILD_INFO.commitFull === 'string' && BUILD_INFO.commitFull.trim()
-    ? BUILD_INFO.commitFull.trim()
+  const generatedCommit = typeof buildInfo.commitFull === 'string' && buildInfo.commitFull.trim()
+    ? buildInfo.commitFull.trim()
     : null;
-  const generatedBranch = typeof BUILD_INFO.branch === 'string' && BUILD_INFO.branch.trim()
-    ? BUILD_INFO.branch.trim()
+  const generatedBranch = typeof buildInfo.branch === 'string' && buildInfo.branch.trim()
+    ? buildInfo.branch.trim()
     : null;
-  const commitFull = commitEnv.value || generatedCommit;
+  const commitFull = commitEnv.value || generatedCommit || expectedCommitEnv.value;
   const branch = branchEnv.value || generatedBranch;
   const source = commitEnv.value
     ? `env:${commitEnv.key}`
     : generatedCommit
-      ? `generated:${BUILD_INFO.source || 'git'}`
+      ? `generated:${buildInfo.source || 'git'}`
+      : expectedCommitEnv.value
+        ? `env:${expectedCommitEnv.key}`
       : 'unavailable';
 
   return {
@@ -51,12 +57,12 @@ export function resolveBuildIdentity(env = process.env) {
     commitFull,
     branch,
     source,
-    generatedAt: BUILD_INFO.generatedAt || null,
+    generatedAt: buildInfo.generatedAt || null,
   };
 }
 
 export const __buildIdentityInternals = Object.freeze({
   COMMIT_KEYS,
+  EXPECTED_COMMIT_KEYS,
   BRANCH_KEYS,
 });
-
