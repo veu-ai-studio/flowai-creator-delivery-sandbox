@@ -390,7 +390,8 @@ describe('freshBuild Orchestrator', () => {
     expect(landingSource).toContain('Fresh Build');
     expect(landingSource).toContain('VITE_FLOWAI_ENABLE_FRESH_BUILD');
     expect(landingSource).toContain("mode === 'auto' || mode === 'migration' || mode === 'fresh_build'");
-    expect(landingSource).toContain("mode={isMigrationMode ? 'MIGRATION' : isFreshBuildMode ? 'FRESH_BUILD' : 'FOREGROUND'}");
+    expect(landingSource).toContain('resolveRunConstructionMode({');
+    expect(landingSource).toContain("if (isFreshBuildMode) return 'FRESH_BUILD'");
     expect(landingSource).toContain("setMode('migration')");
   });
 

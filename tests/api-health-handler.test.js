@@ -38,6 +38,7 @@ describe('GET /api/health', () => {
       service: 'flowai',
     });
     expect(typeof out.body.githubAppReady).toBe('boolean');
+    expect(typeof out.body.inngestReady).toBe('boolean');
     expect(out.body.checks.githubApp).toBeTruthy();
     // status is 'ready' on PASS and 'degraded' on DEGRADED — both
     // map to ok:true per the handler's PASS|DEGRADED gate. The exact
@@ -95,6 +96,26 @@ describe('GET /api/health', () => {
       configured: true,
       installationIdAlias: 'GITHUB_APP_INSTALLATION_ID',
     });
+  });
+
+  it('reports Inngest readiness when canonical env vars are present', async () => {
+    process.env.INNGEST_EVENT_KEY = 'inngest-event-key';
+    process.env.INNGEST_SIGNING_KEY = 'inngest-signing-key';
+    delete process.env.INNGEST_BACKEND;
+    const req = { method: 'GET', headers: {} };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res._get().body.inngestReady).toBe(true);
+  });
+
+  it('reports Inngest unavailable when backend is forced inline', async () => {
+    process.env.INNGEST_EVENT_KEY = 'inngest-event-key';
+    process.env.INNGEST_SIGNING_KEY = 'inngest-signing-key';
+    process.env.INNGEST_BACKEND = 'inline';
+    const req = { method: 'GET', headers: {} };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res._get().body.inngestReady).toBe(false);
   });
 
   it('handles OPTIONS preflight with 204', () => {

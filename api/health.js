@@ -28,6 +28,7 @@
 
 import { runHealthChecks } from '../src/lib/observability/health.js';
 import { captureException, flush as flushObservability } from '../src/lib/observability/logger.js';
+import { isInngestEnabled } from './_lib/inngest.js';
 
 const APP_VERSION = '1.0.0';
 
@@ -59,6 +60,7 @@ export default async function handler(req, res) {
       region: report.checks.build.region,
       commit: report.checks.build.commit,
       githubAppReady: report.checks.githubApp?.status === 'PASS',
+      inngestReady: isInngestEnabled(),
       timestamp: report.timestamp,
       durationMs: report.durationMs,
       checks: report.checks,

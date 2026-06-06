@@ -91,6 +91,18 @@ export function evaluateClientUrlSafety(value) {
   return { status: 'valid', message: URL_FORMAT_VALID_MESSAGE, launchBlocked: false };
 }
 
+export function resolveRunConstructionMode({
+  mode,
+  isMigrationMode = false,
+  isFreshBuildMode = false,
+  inngestReady = false,
+} = {}) {
+  if (isMigrationMode) return 'MIGRATION';
+  if (isFreshBuildMode) return 'FRESH_BUILD';
+  if (mode === 'auto' && inngestReady === true) return 'BACKGROUND';
+  return 'FOREGROUND';
+}
+
 function detectMigrationPlatformHint({ url = '', description = '', productConfig = null } = {}) {
   const haystack = `${url}\n${description}\n${productConfig?.systemNote || ''}`.toLowerCase();
   if (haystack.includes('base44')) return 'Base44';
@@ -660,6 +672,7 @@ export default function LandingPage() {
   // Mode
   const [mode, setMode] = useState('auto');
   const [depth, setDepth] = useState('Standard');
+  const [inngestReady, setInngestReady] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -673,6 +686,24 @@ export default function LandingPage() {
       setMode((current) => current === 'migration' ? 'auto' : current);
     }
   }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/health', {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!cancelled) setInngestReady(data?.inngestReady === true);
+      })
+      .catch(() => {
+        if (!cancelled) setInngestReady(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // W6 INTEGRATION — Track C: inline construction-engine run panel.
   // Shown when the user clicks "Run FlowAI" from Card A + Auto mode.
@@ -1200,7 +1231,12 @@ export default function LandingPage() {
           {runPanelUrl ? (
             <RunConstructionPanel
               url={runPanelUrl}
-              mode={isMigrationMode ? 'MIGRATION' : isFreshBuildMode ? 'FRESH_BUILD' : 'FOREGROUND'}
+              mode={resolveRunConstructionMode({
+                mode,
+                isMigrationMode,
+                isFreshBuildMode,
+                inngestReady,
+              })}
               autoStart
               onClose={() => setRunPanelUrl(null)}
             />

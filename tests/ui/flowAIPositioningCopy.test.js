@@ -33,7 +33,8 @@ describe('FlowAI positioning copy', () => {
     expect(landingSource).toContain('Migration Mode requires operator activation.');
     expect(landingSource).not.toContain('Contact your admin.');
     expect(landingSource).toContain('VITE_FLOWAI_ENABLE_MIGRATION_MODE');
-    expect(landingSource).toContain("mode={isMigrationMode ? 'MIGRATION' : isFreshBuildMode ? 'FRESH_BUILD' : 'FOREGROUND'}");
+    expect(landingSource).toContain('resolveRunConstructionMode({');
+    expect(landingSource).toContain("if (isMigrationMode) return 'MIGRATION'");
     expect(landingSource).toContain('migrationModeEnabled ? (');
     expect(landingSource).toContain('Start Migration');
   });
