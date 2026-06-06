@@ -249,18 +249,13 @@ export async function runAgent3RenewalJob(data) {
   }
 }
 
-// Lazy serve handler — used by /api/inngest. Tries the lambda adapter first
-// (best fit for Vercel's serverless runtime), falls back to express adapter
-// if needed.
+// Lazy serve handler — used by /api/inngest. Vercel Node API routes expose an
+// Express-like req/res pair, so use the Express adapter directly. The Lambda
+// adapter returns a Lambda-shaped object and does not write/end Vercel's res.
 export async function getServeHandler() {
   const client = await getClient();
   const functions = await getInngestFunctions();
-  let serve;
-  try {
-    ({ serve } = await import('inngest/lambda'));
-  } catch {
-    ({ serve } = await import('inngest/express'));
-  }
+  const { serve } = await import('inngest/express');
   return serve({
     client, functions,
     signingKey: process.env.INNGEST_SIGNING_KEY,
