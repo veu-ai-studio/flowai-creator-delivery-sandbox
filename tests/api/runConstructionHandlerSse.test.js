@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   createClient: vi.fn(),
   stop: vi.fn(),
   isInngestEnabled: vi.fn(),
+  syncInngestRegistration: vi.fn(),
   sendEvent: vi.fn(),
 }));
 
@@ -30,6 +31,7 @@ vi.mock('@supabase/supabase-js', () => ({
 
 vi.mock('../../api/_lib/inngest.js', () => ({
   isInngestEnabled: mocks.isInngestEnabled,
+  syncInngestRegistration: mocks.syncInngestRegistration,
   sendEvent: mocks.sendEvent,
 }));
 
@@ -124,6 +126,7 @@ describe('run-construction handler SSE terminal framing', () => {
       reason: null,
     });
     mocks.isInngestEnabled.mockReturnValue(false);
+    mocks.syncInngestRegistration.mockResolvedValue({ ok: true, status: 200 });
     mocks.sendEvent.mockResolvedValue({ ok: true, ids: ['evt_test'] });
     resetForgeRunStatusForTests();
   });
@@ -146,11 +149,13 @@ describe('run-construction handler SSE terminal framing', () => {
       error: 'async_not_configured',
       inngestReady: false,
     });
+    expect(mocks.syncInngestRegistration).not.toHaveBeenCalled();
     expect(mocks.runOrchestration).not.toHaveBeenCalled();
   });
 
-  it('queues BACKGROUND mode through Inngest and creates a status record', async () => {
+  it('syncs Inngest before queueing BACKGROUND mode and creates a status record', async () => {
     mocks.isInngestEnabled.mockReturnValue(true);
+    mocks.syncInngestRegistration.mockResolvedValue({ ok: true, status: 200 });
     mocks.sendEvent.mockResolvedValue({ ok: true, ids: ['evt_queued'] });
 
     const res = createResponse();
@@ -172,6 +177,9 @@ describe('run-construction handler SSE terminal framing', () => {
       eventIds: ['evt_queued'],
     });
     expect(body.statusUrl).toContain('/api/run-construction-status?runId=');
+    expect(mocks.syncInngestRegistration).toHaveBeenCalledTimes(1);
+    expect(mocks.syncInngestRegistration.mock.invocationCallOrder[0])
+      .toBeLessThan(mocks.sendEvent.mock.invocationCallOrder[0]);
     expect(mocks.sendEvent).toHaveBeenCalledWith('flowai/forge.run.requested', expect.objectContaining({
       runId: '11111111-1111-4111-8111-111111111111',
       body: expect.objectContaining({
@@ -187,6 +195,33 @@ describe('run-construction handler SSE terminal framing', () => {
       url: 'https://example.com',
       mode: 'BACKGROUND',
     });
+  });
+
+  it('fails honestly when Inngest registration sync fails before BACKGROUND queueing', async () => {
+    mocks.isInngestEnabled.mockReturnValue(true);
+    mocks.syncInngestRegistration.mockResolvedValue({
+      ok: false,
+      reason: 'inngest sync returned HTTP 500',
+    });
+
+    const res = createResponse();
+    await handler(createRequest({
+      url: 'https://example.com',
+      mode: 'BACKGROUND',
+      runId: '33333333-3333-4333-8333-333333333333',
+    }), res);
+
+    expect(res.statusCode).toBe(502);
+    const body = JSON.parse(res.chunks.join(''));
+    expect(body).toMatchObject({
+      ok: false,
+      error: 'inngest_sync_failed',
+      inngestReady: true,
+    });
+    expect(body.detail).toContain('HTTP 500');
+    expect(mocks.sendEvent).not.toHaveBeenCalled();
+    const { record } = await readForgeRunStatus('33333333-3333-4333-8333-333333333333');
+    expect(record).toBeNull();
   });
 
   it('background worker writes streamed events and final state to the status bus', async () => {

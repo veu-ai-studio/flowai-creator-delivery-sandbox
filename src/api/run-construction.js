@@ -61,7 +61,7 @@ import {
   readProductSsotRunContext,
 } from '../lib/forge/productSsotContinuity.js';
 import { assertPublicHttpUrl } from '../../api/_lib/crawler.js';
-import { isInngestEnabled, sendEvent } from '../../api/_lib/inngest.js';
+import { isInngestEnabled, sendEvent, syncInngestRegistration } from '../../api/_lib/inngest.js';
 import {
   appendForgeRunEvent,
   initializeForgeRunStatus,
@@ -299,6 +299,18 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
         error: 'async_not_configured',
         detail: 'Background Forge requires INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY, and INNGEST_BACKEND=inngest.',
         inngestReady: false,
+      }));
+    }
+
+    const sync = await syncInngestRegistration();
+    if (!sync.ok) {
+      res.setHeader('Content-Type', 'application/json');
+      res.statusCode = 502;
+      return res.end(JSON.stringify({
+        ok: false,
+        error: 'inngest_sync_failed',
+        detail: sync.reason || 'Inngest registration sync failed',
+        inngestReady: true,
       }));
     }
 
