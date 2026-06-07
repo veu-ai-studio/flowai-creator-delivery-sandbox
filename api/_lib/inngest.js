@@ -20,6 +20,7 @@
 let _Inngest = null;
 let _client = null;
 let _functions = null;
+let _lastSync = null;
 
 async function loadInngestClass() {
   if (_Inngest) return _Inngest;
@@ -61,19 +62,92 @@ export async function sendEvent(name, data = {}, { user, ts } = {}) {
   }
 }
 
+function deploymentUrlFromEnv(env = process.env) {
+  if (typeof env.VERCEL_URL === 'string' && env.VERCEL_URL.trim()) {
+    const value = env.VERCEL_URL.trim();
+    return value.startsWith('http://') || value.startsWith('https://')
+      ? value
+      : `https://${value}`;
+  }
+  if (typeof env.FLOWAI_LEGACY_URL === 'string' && env.FLOWAI_LEGACY_URL.trim()) {
+    return env.FLOWAI_LEGACY_URL.trim();
+  }
+  if (typeof env.FLOWAI_CANONICAL_URL === 'string' && env.FLOWAI_CANONICAL_URL.trim()) {
+    return env.FLOWAI_CANONICAL_URL.trim();
+  }
+  return null;
+}
+
+export async function syncInngestRegistration({
+  fetchImpl = globalThis.fetch,
+  env = process.env,
+  timeoutMs = 10_000,
+  force = false,
+} = {}) {
+  if (!isInngestEnabled()) {
+    return { ok: false, reason: 'inngest disabled', enabled: false };
+  }
+  const deploymentUrl = deploymentUrlFromEnv(env);
+  if (!force && _lastSync?.ok && _lastSync?.deploymentUrl === deploymentUrl) {
+    return { ..._lastSync, cached: true };
+  }
+  if (typeof fetchImpl !== 'function') {
+    return { ok: false, reason: 'fetch unavailable', enabled: true };
+  }
+  if (!deploymentUrl) {
+    return { ok: false, reason: 'deployment URL unavailable', enabled: true };
+  }
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = controller
+    ? setTimeout(() => controller.abort(), timeoutMs).unref?.()
+    : null;
+  try {
+    const response = await fetchImpl(`${deploymentUrl.replace(/\/+$/, '')}/api/inngest`, {
+      method: 'PUT',
+      headers: { Accept: 'application/json' },
+      signal: controller?.signal,
+    });
+    const text = await response.text().catch(() => '');
+    let body = null;
+    try { body = text ? JSON.parse(text) : null; } catch { body = text || null; }
+    const result = {
+      ok: response.ok,
+      enabled: true,
+      status: response.status,
+      deploymentUrl,
+      body,
+      reason: response.ok ? null : `inngest sync returned HTTP ${response.status}`,
+    };
+    if (result.ok) _lastSync = result;
+    return result;
+  } catch (error) {
+    return {
+      ok: false,
+      enabled: true,
+      deploymentUrl,
+      reason: error?.name === 'AbortError'
+        ? `inngest sync timed out after ${timeoutMs}ms`
+        : String(error?.message ?? error),
+    };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 // Lazy function registry — built on first /api/inngest invocation.
 export async function getInngestFunctions() {
   if (_functions) return _functions;
   const client = await getClient();
   const fns = [];
 
-  // Inngest v4.x signature: createFunction({ id, trigger, ... }, handler)
+  // Inngest v4.x signature for the installed SDK:
+  // createFunction({ id, triggers: { event|cron }, ... }, handler)
   fns.push(client.createFunction(
     {
       id: 'auto-runner-step-executor',
       name: 'Auto Runner step executor',
       retries: 2,
-      trigger: { event: 'flowai/run-step.requested' },
+      triggers: { event: 'flowai/run-step.requested' },
     },
     async ({ event, step }) => {
       const { runStepInline } = await import('./jobs/runStep.js');
@@ -86,7 +160,7 @@ export async function getInngestFunctions() {
       id: 'scheduled-clearance-check',
       name: 'Scheduled clearance check',
       retries: 1,
-      trigger: { event: 'flowai/clearance.scheduled' },
+      triggers: { event: 'flowai/clearance.scheduled' },
     },
     async ({ event, step }) => {
       const { runScheduledClearance } = await import('./jobs/scheduledClearance.js');
@@ -98,7 +172,7 @@ export async function getInngestFunctions() {
     {
       id: 'cost-rollup-daily',
       name: 'Daily cost rollup',
-      trigger: { cron: '0 2 * * *' }, // 02:00 UTC daily
+      triggers: { cron: '0 2 * * *' }, // 02:00 UTC daily
     },
     async ({ step }) => {
       const { rollupYesterdayCosts } = await import('./jobs/costRollup.js');
@@ -110,7 +184,7 @@ export async function getInngestFunctions() {
     {
       id: 'marketplace-rerank-weekly',
       name: 'Weekly marketplace re-rank',
-      trigger: { cron: '0 3 * * 1' }, // 03:00 UTC every Monday
+      triggers: { cron: '0 3 * * 1' }, // 03:00 UTC every Monday
     },
     async ({ step }) => {
       const { rerankAllTools } = await import('./jobs/marketplaceRerank.js');
@@ -123,7 +197,7 @@ export async function getInngestFunctions() {
       id: 'orchestrator-run-executor',
       name: 'Orchestrator run executor',
       retries: 2,
-      trigger: { event: 'flowai/orchestrator.run.requested' },
+      triggers: { event: 'flowai/orchestrator.run.requested' },
     },
     async ({ event, step }) => {
       const { runOrchestratorEvent } = await import('./jobs/orchestratorRun.js');
@@ -136,7 +210,7 @@ export async function getInngestFunctions() {
       id: 'forge-run-construction-executor',
       name: 'Forge run-construction executor',
       retries: 1,
-      trigger: { event: 'flowai/forge.run.requested' },
+      triggers: { event: 'flowai/forge.run.requested' },
     },
     async ({ event, step }) => {
       const { runConstructionToStatus } = await import('../../src/api/run-construction.js');
@@ -155,7 +229,7 @@ export async function getInngestFunctions() {
       id: 'agent3-renewal-executor',
       name: 'Agent #3 Self-Renewal executor',
       retries: 1,
-      trigger: { event: 'flowai/agent3.renewal.requested' },
+      triggers: { event: 'flowai/agent3.renewal.requested' },
     },
     async ({ event, step }) => {
       return await step.run('execute', () => runAgent3RenewalJob(event.data));
@@ -267,3 +341,10 @@ export async function getServeHandler() {
 export function getInngestSync() {
   return _client;
 }
+
+export const __internals = Object.freeze({
+  deploymentUrlFromEnv,
+  resetSyncForTests() {
+    _lastSync = null;
+  },
+});
