@@ -6,6 +6,9 @@
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "functions": {
+    "api/inngest.js": {
+      "maxDuration": 300
+    },
     "api/agent/3/execute.js": {
       "maxDuration": 800
     },
