@@ -106,6 +106,16 @@ describe('CREDENTIAL_CATALOG shape', () => {
     expect(CREDENTIAL_CATALOG.CLOUDFLARE_API_TOKEN).toBeTruthy();
   });
 
+  it('catalog inverse includes Agent #21 for Anthropic and Browserless credentials', () => {
+    expect(CREDENTIAL_CATALOG.ANTHROPIC_API_KEY.requiredForAgents).toContain(21);
+    expect(CREDENTIAL_CATALOG.BROWSERLESS_API_KEY.requiredForAgents).toContain(21);
+  });
+
+  it('Browserless purpose covers Research and Aggressive Crawl usage', () => {
+    expect(CREDENTIAL_CATALOG.BROWSERLESS_API_KEY.purpose).toMatch(/Research crawls/i);
+    expect(CREDENTIAL_CATALOG.BROWSERLESS_API_KEY.purpose).toMatch(/aggressive crawl/i);
+  });
+
   it('catalog covers OPENAI_API_KEY and VERCEL_TOKEN even though no agent declares them', () => {
     // Listed for inventory completeness; required_for_agents may be empty.
     expect(CREDENTIAL_CATALOG.OPENAI_API_KEY).toBeTruthy();
@@ -180,6 +190,12 @@ describe('listRequiredCredentialsForAgent', () => {
     expect(listRequiredCredentialsForAgent(13)).toEqual(['CLOUDFLARE_API_TOKEN']);
   });
 
+  it('returns Anthropic and Browserless credentials for agent #21 Aggressive Crawl Conductor', () => {
+    expect(new Set(listRequiredCredentialsForAgent(21))).toEqual(
+      new Set(['ANTHROPIC_API_KEY', 'BROWSERLESS_API_KEY']),
+    );
+  });
+
   it('throws on unknown agent id', () => {
     expect(() => listRequiredCredentialsForAgent(0)).toThrow(/unknown agent id 0/);
     expect(() => listRequiredCredentialsForAgent(26)).not.toThrow();
@@ -207,7 +223,7 @@ describe('listAllRequiredCredentials', () => {
     expect(all).toContain('BROWSERLESS_API_KEY');
   });
 
-  it('includes ANTHROPIC_API_KEY (declared by 10 agents)', () => {
+  it('includes ANTHROPIC_API_KEY (declared by 11 agents)', () => {
     expect(listAllRequiredCredentials()).toContain('ANTHROPIC_API_KEY');
   });
 
