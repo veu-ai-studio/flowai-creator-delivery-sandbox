@@ -80,14 +80,15 @@ export const CREDENTIAL_CATALOG: Readonly<Record<string, CredentialDescriptor>> 
   ANTHROPIC_API_KEY: Object.freeze({
     key: 'ANTHROPIC_API_KEY',
     purpose: 'Claude (Anthropic) LLM API access for research, design, audit, GTM, and policy briefs.',
-    requiredForAgents: Object.freeze([6, 7, 8, 9, 11, 14, 15, 17, 18, 19]),
+    requiredForAgents: Object.freeze([6, 7, 8, 9, 11, 14, 15, 17, 18, 19, 21]),
     source: 'doppler',
     notes: 'Live in production today. Rotation cadence: 180 days per W1 rotation runbook.',
   }),
   BROWSERLESS_API_KEY: Object.freeze({
     key: 'BROWSERLESS_API_KEY',
-    purpose: 'Headless browser rendering for Research crawls of JS-heavy SPAs.',
-    requiredForAgents: Object.freeze([6]),
+    purpose:
+      'Headless browser rendering for Research crawls, aggressive crawl orchestration, and Browserless-backed product inspection.',
+    requiredForAgents: Object.freeze([6, 21]),
     source: 'doppler',
     notes:
       'Registry _registry.ts uses the legacy alias "BROWSERLESS_TOKEN" — see ' +
