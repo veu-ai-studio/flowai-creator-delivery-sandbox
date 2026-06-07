@@ -256,6 +256,7 @@ describe('run-construction handler SSE terminal framing', () => {
     expect(record.status).toBe('completed');
     expect(record.final).toMatchObject({
       type: 'final',
+      final: true,
       ok: true,
       finalScore: 77,
       exitReason: 'ASYNC_COMPLETE',
@@ -284,6 +285,7 @@ describe('run-construction handler SSE terminal framing', () => {
     const events = parseSse(res.chunks);
     expect(events.at(-2)).toMatchObject({
       type: 'final',
+      final: true,
       ok: true,
       originalProductUrl: 'https://example.com',
       finalScore: 72,
@@ -328,6 +330,7 @@ describe('run-construction handler SSE terminal framing', () => {
     expect(mocks.stop).toHaveBeenCalledTimes(1);
     expect(events.at(-2)).toMatchObject({
       type: 'final',
+      final: true,
       ok: false,
       complete: false,
       partial: true,
@@ -388,8 +391,18 @@ describe('run-construction handler SSE terminal framing', () => {
       productId: 'ct-registered-example',
       ok: true,
     });
+    expect(events.at(-3)).toMatchObject({
+      type: 'symbiotic_write',
+      productId: 'ct-registered-example',
+      ok: true,
+      persisted: true,
+      state: 'written',
+      idempotent: false,
+      version: 1,
+    });
     expect(events.at(-2)).toMatchObject({
       type: 'final',
+      final: true,
       ok: true,
       originalProductUrl: 'https://example.com',
       exitReason: 'REGISTERED_FIXTURE_COMPLETE',
@@ -399,6 +412,17 @@ describe('run-construction handler SSE terminal framing', () => {
       },
     });
     expect(events.at(-1)).toBe('[DONE]');
+    expect(mocks.persistSymbioticRunSummary).toHaveBeenCalledWith(expect.objectContaining({
+      productId: 'ct-registered-example',
+      environment: 'staging',
+      runId: expect.any(String),
+      url: 'https://example.com',
+      priorContext: expect.objectContaining({
+        hasPriorRun: true,
+        sourceVersion: 2,
+      }),
+      proofLabel: 'LIVE_PREVIEW',
+    }));
   });
 
   it('stops exposed orchestration state on client disconnect without terminal frame', async () => {

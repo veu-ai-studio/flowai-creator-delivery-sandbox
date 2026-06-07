@@ -161,6 +161,55 @@ describe('persistForgeStepArtifact', () => {
     });
   });
 
+  it('treats the same runId and step artifact as an idempotent replay', async () => {
+    const existingEntry = buildForgeStepArtifactEntry({
+      productId: 'product-a',
+      environment: 'prd',
+      runId: 'run-1',
+      stepKey: 'symbiotic_loop',
+      artifact: { kind: 'product_ssot.symbiotic_run.v1', finalScore: 88 },
+      mode: 'AUTOMATIC',
+      runtime: 'live',
+      now: () => '2026-06-04T00:00:00.000Z',
+    });
+    const supabase = makeSupabaseFake({
+      initialRow: {
+        id: 'ssot-1',
+        product_id: 'product-a',
+        environment: 'prd',
+        governance_record: [{ kind: 'existing' }, existingEntry],
+        version: 8,
+        audit_hash_chain_pointer: 'hash-run-1',
+        updated_at: 'T0',
+      },
+    });
+
+    const result = await persistForgeStepArtifact({
+      productId: 'product-a',
+      environment: 'prd',
+      runId: 'run-1',
+      stepKey: 'symbiotic_loop',
+      artifact: { kind: 'product_ssot.symbiotic_run.v1', finalScore: 88 },
+      supabase,
+      writtenBy: 'operator-1',
+      writeKind: 'product_ssot.symbiotic_run.v1',
+      mode: 'AUTOMATIC',
+      runtime: 'live',
+      now: () => '2026-06-04T00:01:00.000Z',
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      persisted: true,
+      state: 'already_persisted',
+      idempotent: true,
+      version: 8,
+      snapshotHash: 'hash-run-1',
+    });
+    expect(supabase._state.row.governance_record).toHaveLength(2);
+    expect(supabase._state.versions).toHaveLength(0);
+  });
+
   it('rolls governance_record back when product_ssot_version insert fails', async () => {
     const prior = [{ kind: 'existing' }];
     const supabase = makeSupabaseFake({

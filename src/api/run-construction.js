@@ -138,6 +138,7 @@ function buildRunConstructionSoftTimeoutFinal({
   const lastStep = latestRunConstructionStep(stepLogs);
   return {
     type: 'final',
+    final: true,
     ok: false,
     complete: false,
     partial: true,
@@ -408,6 +409,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     });
     send({
       type: 'final',
+      final: true,
       previewUrl: null,
       finalScore: 0,
       governanceRecordId: runId,
@@ -506,6 +508,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
 
       send({
         type: 'final',
+        final: true,
         ok: freshBuildResult?.ok === true,
         status: freshBuildFinalStatus(freshBuildResult),
         previewUrl: freshBuildResult?.previewUrl ?? null,
@@ -547,6 +550,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     } catch (e) {
       send({
         type: 'final',
+        final: true,
         ok: false,
         status: 'failed',
         previewUrl: null,
@@ -641,6 +645,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     if (!migrationHooks.ok) {
       send({
         type: 'final',
+        final: true,
         previewUrl: null,
         finalScore: 0,
         governanceRecordId: runId,
@@ -778,10 +783,12 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     persisted: symbioticWrite.persisted === true,
     state: symbioticWrite.state ?? 'failed',
     reason: symbioticWrite.reason ?? null,
+    idempotent: symbioticWrite.idempotent === true,
     version: symbioticWrite.version ?? null,
   });
   send({
     type: 'final',
+    final: true,
     ok: result?.ok === true,
     previewUrl: result?.previewUrl ?? null,
     originalProductUrl: result?.originalUrl ?? url,
