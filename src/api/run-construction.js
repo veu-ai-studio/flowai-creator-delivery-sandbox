@@ -302,17 +302,20 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
       }));
     }
 
-    const sync = await syncInngestRegistration();
-    if (!sync.ok) {
-      res.setHeader('Content-Type', 'application/json');
-      res.statusCode = 502;
-      return res.end(JSON.stringify({
-        ok: false,
-        error: 'inngest_sync_failed',
-        detail: sync.reason || 'Inngest registration sync failed',
-        inngestReady: true,
-      }));
-    }
+    void syncInngestRegistration()
+      .then((sync) => {
+        if (!sync?.ok) {
+          console.warn('[flowai] Inngest registration sync skipped before background queue', {
+            reason: sync?.reason || 'unknown',
+            status: sync?.status || null,
+          });
+        }
+      })
+      .catch((error) => {
+        console.warn('[flowai] Inngest registration sync failed before background queue', {
+          message: error?.message || String(error),
+        });
+      });
 
     const queuedRunId = typeof body.runId === 'string' && body.runId.trim()
       ? body.runId.trim()
