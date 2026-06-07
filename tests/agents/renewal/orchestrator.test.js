@@ -538,6 +538,60 @@ describe('runOrchestration — callbacks', () => {
     } finally { clearVercelEnv(); }
   });
 
+  it('emits degraded-honest user-facing steps when no deployment artifact exists', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({
+        preScoreSequence: [59],
+        postScoreSequence: [59],
+      });
+      deps.discoverProduct = vi.fn(async () => null);
+
+      await runOrchestration({
+        url: 'https://example.com', mode: 'auto', runId: 'user-facing-degraded', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        onStep: (log) => steps.push(log),
+      });
+
+      const userSteps = steps
+        .filter((log) => log.result?.kind === 'forge.user_step.v1')
+        .reduce((acc, log) => {
+          acc[log.result.userStep] = log;
+          return acc;
+        }, {});
+      expect(userSteps[5]).toMatchObject({
+        status: 'degraded',
+        result: { key: 'deploy', previewUrl: null },
+      });
+      expect(userSteps[6]).toMatchObject({
+        status: 'scaffold',
+        result: {
+          key: 'self_renewal',
+          nonMutating: true,
+          recommendOnly: true,
+          autoApply: false,
+        },
+      });
+      expect(userSteps[7]).toMatchObject({
+        status: 'degraded',
+        result: {
+          key: 'gtm',
+          gtmReady: false,
+          deployedArtifactAvailable: false,
+        },
+      });
+      expect(userSteps[8]).toMatchObject({
+        result: {
+          key: 'monitor',
+          finalStatusReady: true,
+          monitoringHealthy: false,
+          monitoringHealthClaimed: false,
+        },
+      });
+    } finally { clearVercelEnv(); }
+  });
+
   it('preserves the last measured score on STEP_FAILED partial results', () => {
     const score = __internals.latestMeasuredScore({
       iterations: [{ preScore: 59, postScore: 59 }],
