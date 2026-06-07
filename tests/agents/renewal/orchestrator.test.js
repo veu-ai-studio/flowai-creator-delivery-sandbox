@@ -486,6 +486,40 @@ describe('runOrchestration — callbacks', () => {
     } finally { clearVercelEnv(); }
   });
 
+  it('emits an explicit STEP 5 handoff before STEP 6 prioritization', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [60], postScoreSequence: [72] });
+      deps.probeAllPages = vi.fn(async () => ({ ok: true, pagesProbed: 1, findings: [], summary: null }));
+      deps.runEvaluationPipeline = vi.fn(async () => ({
+        ok: true,
+        findings: [],
+        stats: {},
+        errors: {},
+        perEvaluator: {},
+      }));
+
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'step5-handoff', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        onStep: (log) => steps.push(log),
+      });
+
+      const handoffIndex = steps.findIndex((log) =>
+        log.step === 5.1 && log.result?.kind === 'forge_step_handoff.v1');
+      const step6Index = steps.findIndex((log) => log.step === 6);
+      expect(handoffIndex).toBeGreaterThan(-1);
+      expect(step6Index).toBeGreaterThan(-1);
+      expect(handoffIndex).toBeLessThan(step6Index);
+      expect(steps[handoffIndex].result).toMatchObject({
+        fromInternalStep: 5,
+        toInternalStep: 6,
+        userFacingStepCompleted: 'design_scoring',
+      });
+    } finally { clearVercelEnv(); }
+  });
+
   it('keeps the original URL across universal-mode iterations when no preview exists', async () => {
     withVercelEnv();
     try {

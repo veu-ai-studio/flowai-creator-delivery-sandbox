@@ -2278,6 +2278,23 @@ export async function runOrchestration(args = {}) {
       };
     }
     await state.checkpoint(onCheckpoint, { lastStep: 5, iteration: iterationNumber });
+    const step5HandoffLog = makeStepLog({
+      iteration: iterationNumber,
+      step: 5.1,
+      status: 'complete',
+      tool: 'forge-step-handoff',
+      why: 'Five-Layer scoring baseline is recorded; continue to Issue Prioritization without waiting for additional enrichment',
+      result: {
+        kind: 'forge_step_handoff.v1',
+        fromInternalStep: 5,
+        toInternalStep: 6,
+        userFacingStepCompleted: 'design_scoring',
+        nextUserFacingStep: 'build_planning_prioritization',
+        baselineScore: originalGtmScore ?? null,
+      },
+      mode: state.mode,
+    });
+    emit(step5HandoffLog); iterLog.steps.push(step5HandoffLog);
 
     // DISPATCH 27: For PATH A, mint the GitHub App token BEFORE STEP 6 so
     // we can call the Trees API to fetch the real repo file list and feed
