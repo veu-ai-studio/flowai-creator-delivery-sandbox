@@ -23,11 +23,13 @@ export default async function handler(req, res) {
   }
 
   const result = await syncInngestRegistration({ force: true });
-  return res.status(result.ok ? 200 : 502).json({
+  return res.status(200).json({
     ok: result.ok,
     inngestReady: result.enabled === true,
     status: result.status ?? null,
+    method: result.method ?? null,
     modified: result.body?.modified ?? null,
     reason: result.reason ?? null,
+    atRisk: result.ok !== true,
   });
 }

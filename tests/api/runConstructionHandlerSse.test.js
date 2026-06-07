@@ -197,11 +197,13 @@ describe('run-construction handler SSE terminal framing', () => {
     });
   });
 
-  it('continues BACKGROUND queueing when Inngest registration sync fails', async () => {
+  it('continues BACKGROUND queueing when best-effort Inngest registration sync fails', async () => {
     mocks.isInngestEnabled.mockReturnValue(true);
     mocks.syncInngestRegistration.mockResolvedValue({
       ok: false,
       reason: 'inngest sync returned HTTP 500',
+      status: 500,
+      method: 'inngest_api',
     });
     mocks.sendEvent.mockResolvedValue({ ok: true, ids: ['evt_after_sync_failure'] });
 

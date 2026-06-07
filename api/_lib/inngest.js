@@ -21,6 +21,7 @@ let _Inngest = null;
 let _client = null;
 let _functions = null;
 let _lastSync = null;
+const INNGEST_APP_ID = 'flowai';
 
 async function loadInngestClass() {
   if (_Inngest) return _Inngest;
@@ -38,7 +39,7 @@ async function getClient() {
   if (_client) return _client;
   const Inngest = await loadInngestClass();
   _client = new Inngest({
-    id: 'flowai',
+    id: INNGEST_APP_ID,
     name: 'FlowAI / VEUaaS',
     eventKey: process.env.INNGEST_EVENT_KEY,
   });
@@ -97,16 +98,30 @@ export async function syncInngestRegistration({
   if (!deploymentUrl) {
     return { ok: false, reason: 'deployment URL unavailable', enabled: true };
   }
+  const serveUrl = `${deploymentUrl.replace(/\/+$/, '')}/api/inngest`;
   const controller = typeof AbortController === 'function' ? new AbortController() : null;
   const timer = controller
     ? setTimeout(() => controller.abort(), timeoutMs).unref?.()
     : null;
   try {
-    const response = await fetchImpl(`${deploymentUrl.replace(/\/+$/, '')}/api/inngest`, {
-      method: 'PUT',
-      headers: { Accept: 'application/json' },
-      signal: controller?.signal,
-    });
+    const apiKey = typeof env.INNGEST_API_KEY === 'string' ? env.INNGEST_API_KEY.trim() : '';
+    const response = apiKey
+      ? await fetchImpl(`https://api.inngest.com/v2/apps/${encodeURIComponent(INNGEST_APP_ID)}/syncs`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: serveUrl }),
+          signal: controller?.signal,
+        })
+      : await fetchImpl(serveUrl, {
+          method: 'PUT',
+          headers: { Accept: 'application/json' },
+          signal: controller?.signal,
+        });
+    const method = apiKey ? 'inngest_api' : 'serve_endpoint_put';
     const text = await response.text().catch(() => '');
     let body = null;
     try { body = text ? JSON.parse(text) : null; } catch { body = text || null; }
@@ -115,8 +130,10 @@ export async function syncInngestRegistration({
       enabled: true,
       status: response.status,
       deploymentUrl,
+      serveUrl,
+      method,
       body,
-      reason: response.ok ? null : `inngest sync returned HTTP ${response.status}`,
+      reason: response.ok ? null : `inngest sync returned HTTP ${response.status} via ${method}`,
     };
     if (result.ok) _lastSync = result;
     return result;

@@ -365,14 +365,17 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     void syncInngestRegistration()
       .then((sync) => {
         if (!sync?.ok) {
-          console.warn('[flowai] Inngest registration sync skipped before background queue', {
+          console.warn('[flowai] Inngest registration sync at-risk before background queue', {
+            atRisk: true,
             reason: sync?.reason || 'unknown',
             status: sync?.status || null,
+            method: sync?.method || null,
           });
         }
       })
       .catch((error) => {
         console.warn('[flowai] Inngest registration sync failed before background queue', {
+          atRisk: true,
           message: error?.message || String(error),
         });
       });
