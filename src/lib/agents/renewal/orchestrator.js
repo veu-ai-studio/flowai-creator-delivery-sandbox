@@ -132,6 +132,36 @@ function makeStepLog({ iteration, step, status, tool, why, result, durationMs, s
   });
 }
 
+function makeForgeUserStepLog({
+  iteration,
+  internalStep,
+  userStep,
+  key,
+  label,
+  status,
+  why,
+  result,
+  mode,
+}) {
+  return makeStepLog({
+    iteration,
+    step: internalStep,
+    status,
+    tool: `Forge user step ${userStep}: ${label}`,
+    why,
+    result: {
+      kind: 'forge.user_step.v1',
+      userStep,
+      key,
+      label,
+      ...(result && typeof result === 'object' ? result : {}),
+    },
+    durationMs: 0,
+    mode,
+    canInterrupt: false,
+  });
+}
+
 function computeProgress({ originalScore, currentScore, target }) {
   if (!Number.isFinite(currentScore) || !Number.isFinite(originalScore)) return 0;
   // If already at or above target, progress is complete.
@@ -2278,6 +2308,23 @@ export async function runOrchestration(args = {}) {
       };
     }
     await state.checkpoint(onCheckpoint, { lastStep: 5, iteration: iterationNumber });
+    const step5HandoffLog = makeStepLog({
+      iteration: iterationNumber,
+      step: 5.1,
+      status: 'complete',
+      tool: 'forge-step-handoff',
+      why: 'Five-Layer scoring baseline is recorded; continue to Issue Prioritization without waiting for additional enrichment',
+      result: {
+        kind: 'forge_step_handoff.v1',
+        fromInternalStep: 5,
+        toInternalStep: 6,
+        userFacingStepCompleted: 'design_scoring',
+        nextUserFacingStep: 'build_planning_prioritization',
+        baselineScore: originalGtmScore ?? null,
+      },
+      mode: state.mode,
+    });
+    emit(step5HandoffLog); iterLog.steps.push(step5HandoffLog);
 
     // DISPATCH 27: For PATH A, mint the GitHub App token BEFORE STEP 6 so
     // we can call the Trees API to fetch the real repo file list and feed
@@ -3681,6 +3728,27 @@ export async function runOrchestration(args = {}) {
       }
     }
     await state.checkpoint(onCheckpoint, { lastStep: 10, iteration: iterationNumber });
+    if (!previewUrl) {
+      const deployUserStepLog = makeForgeUserStepLog({
+        iteration: iterationNumber,
+        internalStep: 10.5,
+        userStep: 5,
+        key: 'deploy',
+        label: 'Deploy',
+        status: 'degraded',
+        why: '§9 Deploy did not produce a verified deployment artifact; downstream steps continue in degraded-honest mode',
+        result: {
+          deployDegraded: deployDegraded === true,
+          githubAppReady: Boolean(process.env.GITHUB_APP_ID || process.env.GITHUB_APP_INSTALLATION_ID || process.env.GITHUB_INSTALLATION_ID),
+          previewUrl: null,
+          reason: state.universalMode
+            ? 'UNIVERSAL_NO_REPO_ACCESS'
+            : 'NO_DEPLOYED_ARTIFACT',
+        },
+        mode: state.mode,
+      });
+      emit(deployUserStepLog); iterLog.steps.push(deployUserStepLog);
+    }
 
     // DISPATCH 26: when PATH B deploy degraded, score the ORIGINAL URL
     // instead of the (non-existent) preview URL. STEP 11 needs a URL to
@@ -4008,6 +4076,27 @@ export async function runOrchestration(args = {}) {
     }
     }
     await state.checkpoint(onCheckpoint, { lastStep: 11, iteration: iterationNumber });
+    if (!previewUrl) {
+      const selfRenewalUserStepLog = makeForgeUserStepLog({
+        iteration: iterationNumber,
+        internalStep: 11.6,
+        userStep: 6,
+        key: 'self_renewal',
+        label: 'Self-Renewal',
+        status: 'scaffold',
+        why: 'No patched/deployed artifact exists, so Self-Renewal remains non-mutating and recommend_only',
+        result: {
+          nonMutating: true,
+          recommendOnly: true,
+          operatorApprovalRequired: true,
+          autoApply: false,
+          deployedArtifactAvailable: false,
+          reason: 'NO_DEPLOYED_ARTIFACT',
+        },
+        mode: state.mode,
+      });
+      emit(selfRenewalUserStepLog); iterLog.steps.push(selfRenewalUserStepLog);
+    }
 
     // DISPATCH 30 — Per-fix attribution.
     // The branch deploy's pre-fix score (preGtm) is the no-fixes
@@ -4204,6 +4293,27 @@ export async function runOrchestration(args = {}) {
       },
     });
     emit(decisionLog); iterLog.steps.push(decisionLog);
+    if (!previewUrl) {
+      const gtmUserStepLog = makeForgeUserStepLog({
+        iteration: iterationNumber,
+        internalStep: 12.7,
+        userStep: 7,
+        key: 'gtm',
+        label: 'GTM',
+        status: 'degraded',
+        why: 'GTM readiness is reported against available evidence only; no deployed artifact exists',
+        result: {
+          gtmReady: false,
+          deployedArtifactAvailable: false,
+          rawGtmScore: postGtmForIter.score,
+          effectiveTrustScore: weighted.effectiveTrustScore,
+          coverageConfidence: weighted.coverageConfidence,
+          reason: 'NO_DEPLOYED_ARTIFACT',
+        },
+        mode: state.mode,
+      });
+      emit(gtmUserStepLog); iterLog.steps.push(gtmUserStepLog);
+    }
     try { onIteration({ ...iterLog }); } catch { /* swallow */ }
     await state.checkpoint(onCheckpoint, { lastStep: 12, iteration: iterationNumber, decision: iterExit ?? 'CONTINUE' });
 
@@ -4528,6 +4638,28 @@ export async function runOrchestration(args = {}) {
     }));
   }
   }
+  const monitorUserStepLog = makeForgeUserStepLog({
+    iteration: iterations.length,
+    internalStep: 14.8,
+    userStep: 8,
+    key: 'monitor',
+    label: 'Monitor',
+    status: auditWrite?.written ? 'complete' : 'degraded',
+    why: auditWrite?.written
+      ? 'Final run report and audit write completed'
+      : 'Final run report completed with degraded audit persistence',
+    result: {
+      finalStatusReady: true,
+      auditWritten: auditWrite?.written === true,
+      auditReason: auditWrite?.reason ?? null,
+      deployedArtifactAvailable: Boolean(finalPreviewUrl),
+      monitoringHealthy: false,
+      monitoringHealthClaimed: false,
+      finalScore: finalGtmScore,
+    },
+    mode: state.mode,
+  });
+  emit(monitorUserStepLog);
 
   return Object.freeze({
     ok: true,

@@ -31,6 +31,32 @@ function cleanString(value, fallback = null) {
   return trimmed ? trimmed : fallback;
 }
 
+function sameArtifactWrite(existing, entry, writeKind) {
+  if (!existing || typeof existing !== 'object') return false;
+  if (existing.kind !== entry.kind) return false;
+  if (existing.productId !== entry.productId) return false;
+  if (existing.environment !== entry.environment) return false;
+  if (existing.runId !== entry.runId) return false;
+  if (existing.stepKey !== entry.stepKey) return false;
+  const existingArtifactKind = existing.artifact && typeof existing.artifact === 'object'
+    ? existing.artifact.kind
+    : null;
+  const nextArtifactKind = entry.artifact && typeof entry.artifact === 'object'
+    ? entry.artifact.kind
+    : null;
+  return (existingArtifactKind ?? writeKind) === (nextArtifactKind ?? writeKind);
+}
+
+function findExistingArtifactWrite(governanceRecord, entry, writeKind) {
+  if (!Array.isArray(governanceRecord)) return null;
+  for (let i = governanceRecord.length - 1; i >= 0; i -= 1) {
+    if (sameArtifactWrite(governanceRecord[i], entry, writeKind)) {
+      return governanceRecord[i];
+    }
+  }
+  return null;
+}
+
 export function buildForgeStepArtifactEntry({
   productId,
   environment = DEFAULT_ENVIRONMENT,
@@ -170,6 +196,29 @@ export async function persistForgeStepArtifact({
     source,
     now,
   });
+
+  const priorVersionContext = await readVersionContext({ productId, environment, supabase });
+  if (priorVersionContext.ok) {
+    const existingEntry = findExistingArtifactWrite(
+      priorVersionContext.row.governance_record,
+      entry,
+      writeKind,
+    );
+    if (existingEntry) {
+      return {
+        ok: true,
+        persisted: true,
+        state: 'already_persisted',
+        reason: null,
+        idempotent: true,
+        entry: existingEntry,
+        version: Number.isInteger(priorVersionContext.row.version) ? priorVersionContext.row.version : null,
+        versionId: null,
+        snapshotHash: priorVersionContext.row.audit_hash_chain_pointer ?? null,
+        prevHash: priorVersionContext.row.audit_hash_chain_pointer ?? null,
+      };
+    }
+  }
 
   const governanceWrite = await appendGovernanceEntry({
     productId,

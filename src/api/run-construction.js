@@ -120,6 +120,65 @@ function latestRunConstructionStep(stepLogs = []) {
   };
 }
 
+function sanitizeCheckpointKey(value) {
+  return String(value ?? 'unknown')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'unknown';
+}
+
+function userFacingForgeStepFromLog(log = {}) {
+  const status = typeof log.status === 'string' ? log.status : null;
+  const result = log.result && typeof log.result === 'object' ? log.result : {};
+  if (result.kind === 'forge.user_step.v1') {
+    const userStep = Number(result.userStep);
+    if (!Number.isFinite(userStep) || userStep < 1 || userStep > 8) return null;
+    return {
+      userStep,
+      key: typeof result.key === 'string' ? result.key : `user_step_${userStep}`,
+      status,
+    };
+  }
+  if (status !== 'complete') return null;
+
+  const numericStep = Math.floor(Number(log.step));
+  if (!Number.isFinite(numericStep)) return null;
+  if (numericStep >= 1 && numericStep <= 3) {
+    return { userStep: 1, key: 'research_analysis', status };
+  }
+  if (numericStep === 4) {
+    return { userStep: 2, key: 'quality_adversarial_surface', status };
+  }
+  if (numericStep === 5) {
+    return { userStep: 3, key: 'design_scoring_handoff', status };
+  }
+  if (numericStep >= 6 && numericStep <= 9) {
+    return { userStep: 4, key: 'build_planning_prioritization', status };
+  }
+  if (numericStep === 10) {
+    return { userStep: 5, key: 'deploy', status };
+  }
+  if (numericStep === 11) {
+    return { userStep: 6, key: 'self_renewal', status };
+  }
+  if (numericStep >= 12 && numericStep <= 13) {
+    return { userStep: 7, key: 'gtm', status };
+  }
+  if (numericStep >= 14) {
+    return { userStep: 8, key: 'monitor', status };
+  }
+  return null;
+}
+
+function statusEventCheckpointName(event) {
+  if (event?.type !== 'step') return null;
+  const mapped = userFacingForgeStepFromLog(event.log);
+  if (!mapped) return null;
+  if (!['complete', 'degraded', 'scaffold'].includes(mapped.status)) return null;
+  return `forge-user-step-${mapped.userStep}-${sanitizeCheckpointKey(mapped.key)}`;
+}
+
 function buildRunConstructionSoftTimeoutFinal({
   runId,
   url,
@@ -138,6 +197,7 @@ function buildRunConstructionSoftTimeoutFinal({
   const lastStep = latestRunConstructionStep(stepLogs);
   return {
     type: 'final',
+    final: true,
     ok: false,
     complete: false,
     partial: true,
@@ -305,14 +365,17 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     void syncInngestRegistration()
       .then((sync) => {
         if (!sync?.ok) {
-          console.warn('[flowai] Inngest registration sync skipped before background queue', {
+          console.warn('[flowai] Inngest registration sync at-risk before background queue', {
+            atRisk: true,
             reason: sync?.reason || 'unknown',
             status: sync?.status || null,
+            method: sync?.method || null,
           });
         }
       })
       .catch((error) => {
         console.warn('[flowai] Inngest registration sync failed before background queue', {
+          atRisk: true,
           message: error?.message || String(error),
         });
       });
@@ -408,6 +471,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     });
     send({
       type: 'final',
+      final: true,
       previewUrl: null,
       finalScore: 0,
       governanceRecordId: runId,
@@ -506,6 +570,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
 
       send({
         type: 'final',
+        final: true,
         ok: freshBuildResult?.ok === true,
         status: freshBuildFinalStatus(freshBuildResult),
         previewUrl: freshBuildResult?.previewUrl ?? null,
@@ -547,6 +612,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     } catch (e) {
       send({
         type: 'final',
+        final: true,
         ok: false,
         status: 'failed',
         previewUrl: null,
@@ -641,6 +707,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     if (!migrationHooks.ok) {
       send({
         type: 'final',
+        final: true,
         previewUrl: null,
         finalScore: 0,
         governanceRecordId: runId,
@@ -778,10 +845,12 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     persisted: symbioticWrite.persisted === true,
     state: symbioticWrite.state ?? 'failed',
     reason: symbioticWrite.reason ?? null,
+    idempotent: symbioticWrite.idempotent === true,
     version: symbioticWrite.version ?? null,
   });
   send({
     type: 'final',
+    final: true,
     ok: result?.ok === true,
     previewUrl: result?.previewUrl ?? null,
     originalProductUrl: result?.originalUrl ?? url,
@@ -866,7 +935,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
 
 export default runConstructionHandler;
 
-export async function runConstructionToStatus({ runId, body } = {}) {
+export async function runConstructionToStatus({ runId, body, checkpointStep } = {}) {
   if (typeof runId !== 'string' || runId.trim().length === 0) {
     return { ok: false, error: 'missing_runId' };
   }
@@ -877,6 +946,19 @@ export async function runConstructionToStatus({ runId, body } = {}) {
   let terminalSeen = false;
   const writes = [];
   let writeChain = Promise.resolve();
+  const checkpointsSeen = new Set();
+  const appendStatusEvent = (event) => {
+    const checkpointName = statusEventCheckpointName(event);
+    if (
+      checkpointName
+      && !checkpointsSeen.has(checkpointName)
+      && typeof checkpointStep === 'function'
+    ) {
+      checkpointsSeen.add(checkpointName);
+      return checkpointStep(checkpointName, () => appendForgeRunEvent(resolvedRunId, event));
+    }
+    return appendForgeRunEvent(resolvedRunId, event);
+  };
   const appendParsedFrames = (chunk) => {
     buffer += String(chunk);
     const frames = buffer.split('\n\n');
@@ -891,7 +973,7 @@ export async function runConstructionToStatus({ runId, body } = {}) {
       }
       try {
         const parsed = JSON.parse(data);
-        writeChain = writeChain.then(() => appendForgeRunEvent(resolvedRunId, parsed));
+        writeChain = writeChain.then(() => appendStatusEvent(parsed));
         writes.push(writeChain);
       } catch {
         // Keep the background run alive even if a frame cannot be parsed.
@@ -1295,6 +1377,8 @@ export const __test = Object.freeze({
   buildRunConstructionSoftTimeoutFinal,
   emitRunConstructionSoftTimeoutFinal,
   latestRunConstructionStep,
+  userFacingForgeStepFromLog,
+  statusEventCheckpointName,
   VERCEL_RUN_CONSTRUCTION_HARD_TIMEOUT_MS,
   VERCEL_RUN_CONSTRUCTION_STREAM_LIMIT_MS,
   RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS,

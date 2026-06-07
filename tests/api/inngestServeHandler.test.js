@@ -71,9 +71,46 @@ describe('/api/inngest serve handler', () => {
 });
 
 describe('Inngest registration sync', () => {
-  it('PUTs the deployed /api/inngest endpoint and reports modified registration', async () => {
+  it('uses the Inngest REST sync API when INNGEST_API_KEY is configured', async () => {
     process.env.INNGEST_EVENT_KEY = 'test-event-key';
     process.env.INNGEST_SIGNING_KEY = 'signkey-test-signing-key';
+    process.env.INNGEST_API_KEY = 'test-api-key';
+    process.env.INNGEST_BACKEND = 'inngest';
+    process.env.VERCEL_URL = 'flowai-test.vercel.app';
+
+    const { syncInngestRegistration, __internals } = await import('../../api/_lib/inngest.js');
+    __internals.resetSyncForTests();
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 201,
+      text: async () => JSON.stringify({ id: 'sync-1', status: 'created' }),
+    }));
+
+    const result = await syncInngestRegistration({ fetchImpl, force: true });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 201,
+      deploymentUrl: 'https://flowai-test.vercel.app',
+      serveUrl: 'https://flowai-test.vercel.app/api/inngest',
+      method: 'inngest_api',
+      body: { id: 'sync-1', status: 'created' },
+    });
+    expect(fetchImpl).toHaveBeenCalledWith('https://api.inngest.com/v2/apps/flowai/syncs', expect.objectContaining({
+      method: 'POST',
+      headers: expect.objectContaining({
+        Accept: 'application/json',
+        Authorization: 'Bearer test-api-key',
+        'Content-Type': 'application/json',
+      }),
+      body: JSON.stringify({ url: 'https://flowai-test.vercel.app/api/inngest' }),
+    }));
+  });
+
+  it('falls back to PUTing the deployed /api/inngest endpoint without an API key', async () => {
+    process.env.INNGEST_EVENT_KEY = 'test-event-key';
+    process.env.INNGEST_SIGNING_KEY = 'signkey-test-signing-key';
+    delete process.env.INNGEST_API_KEY;
     process.env.INNGEST_BACKEND = 'inngest';
     process.env.VERCEL_URL = 'flowai-test.vercel.app';
     process.env.FLOWAI_INTERNAL_SECRET = 'cron-secret';
@@ -92,6 +129,8 @@ describe('Inngest registration sync', () => {
       ok: true,
       status: 200,
       deploymentUrl: 'https://flowai-test.vercel.app',
+      serveUrl: 'https://flowai-test.vercel.app/api/inngest',
+      method: 'serve_endpoint_put',
       body: { message: 'Successfully registered', modified: true },
     });
     expect(fetchImpl).toHaveBeenCalledWith('https://flowai-test.vercel.app/api/inngest', expect.objectContaining({
@@ -103,6 +142,7 @@ describe('Inngest registration sync', () => {
   it('returns disabled when Inngest credentials are not configured', async () => {
     delete process.env.INNGEST_EVENT_KEY;
     delete process.env.INNGEST_SIGNING_KEY;
+    delete process.env.INNGEST_API_KEY;
     process.env.INNGEST_BACKEND = 'inngest';
 
     const { syncInngestRegistration, __internals } = await import('../../api/_lib/inngest.js');
@@ -124,6 +164,7 @@ describe('/api/cron/inngest-sync', () => {
   it('runs the registration sync and returns its status', async () => {
     process.env.INNGEST_EVENT_KEY = 'test-event-key';
     process.env.INNGEST_SIGNING_KEY = 'signkey-test-signing-key';
+    delete process.env.INNGEST_API_KEY;
     process.env.INNGEST_BACKEND = 'inngest';
     process.env.VERCEL_URL = 'flowai-test.vercel.app';
     process.env.FLOWAI_INTERNAL_SECRET = 'cron-secret';
@@ -165,7 +206,64 @@ describe('/api/cron/inngest-sync', () => {
       ok: true,
       inngestReady: true,
       status: 200,
+      method: 'serve_endpoint_put',
       modified: false,
+      atRisk: false,
+    });
+    expect(fetchSpy).toHaveBeenCalledWith('https://flowai-test.vercel.app/api/inngest', expect.objectContaining({
+      method: 'PUT',
+    }));
+    fetchSpy.mockRestore();
+  });
+
+  it('reports cron sync failures as at-risk without returning a false acceptance status', async () => {
+    process.env.INNGEST_EVENT_KEY = 'test-event-key';
+    process.env.INNGEST_SIGNING_KEY = 'signkey-test-signing-key';
+    delete process.env.INNGEST_API_KEY;
+    process.env.INNGEST_BACKEND = 'inngest';
+    process.env.VERCEL_URL = 'flowai-test.vercel.app';
+    process.env.FLOWAI_INTERNAL_SECRET = 'cron-secret';
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => JSON.stringify({ error: 'sync failed' }),
+    });
+    const { __internals } = await import('../../api/_lib/inngest.js');
+    __internals.resetSyncForTests();
+    const { default: handler } = await import('../../api/cron/inngest-sync.js');
+
+    const res = {
+      statusCode: null,
+      body: null,
+      headers: {},
+      setHeader(name, value) { this.headers[name] = value; },
+      status(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json(body) {
+        this.body = body;
+        return this;
+      },
+    };
+
+    await handler({
+      method: 'GET',
+      headers: {
+        'x-vercel-cron': '1',
+        authorization: 'Bearer cron-secret',
+      },
+    }, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({
+      ok: false,
+      inngestReady: true,
+      status: 500,
+      method: 'serve_endpoint_put',
+      reason: 'inngest sync returned HTTP 500 via serve_endpoint_put',
+      atRisk: true,
     });
     expect(fetchSpy).toHaveBeenCalledWith('https://flowai-test.vercel.app/api/inngest', expect.objectContaining({
       method: 'PUT',
@@ -176,6 +274,7 @@ describe('/api/cron/inngest-sync', () => {
   it('rejects unauthenticated calls without running registration sync', async () => {
     process.env.INNGEST_EVENT_KEY = 'test-event-key';
     process.env.INNGEST_SIGNING_KEY = 'signkey-test-signing-key';
+    delete process.env.INNGEST_API_KEY;
     process.env.INNGEST_BACKEND = 'inngest';
     process.env.VERCEL_URL = 'flowai-test.vercel.app';
     process.env.FLOWAI_INTERNAL_SECRET = 'cron-secret';

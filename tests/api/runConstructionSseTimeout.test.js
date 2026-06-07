@@ -38,6 +38,7 @@ describe('run-construction SSE terminal framing', () => {
 
     expect(payload).toMatchObject({
       type: 'final',
+      final: true,
       ok: false,
       complete: false,
       partial: true,
@@ -109,6 +110,7 @@ describe('run-construction SSE terminal framing', () => {
     expect(events).toHaveLength(2);
     expect(events[0]).toMatchObject({
       type: 'final',
+      final: true,
       ok: false,
       complete: false,
       partial: true,

@@ -197,11 +197,13 @@ describe('run-construction handler SSE terminal framing', () => {
     });
   });
 
-  it('continues BACKGROUND queueing when Inngest registration sync fails', async () => {
+  it('continues BACKGROUND queueing when best-effort Inngest registration sync fails', async () => {
     mocks.isInngestEnabled.mockReturnValue(true);
     mocks.syncInngestRegistration.mockResolvedValue({
       ok: false,
       reason: 'inngest sync returned HTTP 500',
+      status: 500,
+      method: 'inngest_api',
     });
     mocks.sendEvent.mockResolvedValue({ ok: true, ids: ['evt_after_sync_failure'] });
 
@@ -256,11 +258,75 @@ describe('run-construction handler SSE terminal framing', () => {
     expect(record.status).toBe('completed');
     expect(record.final).toMatchObject({
       type: 'final',
+      final: true,
       ok: true,
       finalScore: 77,
       exitReason: 'ASYNC_COMPLETE',
     });
     expect(record.events.some((entry) => entry.payload?.type === 'step')).toBe(true);
+  });
+
+  it('checkpoints each user-facing forge step while persisting background status', async () => {
+    const checkpointStep = vi.fn(async (_name, fn) => fn());
+    mocks.runOrchestration.mockImplementation(async ({ onStep }) => {
+      onStep({ step: 1, status: 'complete', tool: 'Product Discovery', result: { kind: 'product_discovery' } });
+      onStep({ step: 4, status: 'complete', tool: 'Adversarial Surface Testing', result: { kind: 'adversarial_surface' } });
+      onStep({ step: 5.1, status: 'complete', tool: 'Five-Layer Scoring handoff', result: { kind: 'forge_step_handoff.v1' } });
+      onStep({ step: 6, status: 'complete', tool: 'Issue Prioritization', result: { kind: 'issue_prioritization' } });
+      onStep({
+        step: 10.5,
+        status: 'degraded',
+        tool: 'Forge User Step 5 - Deploy',
+        result: { kind: 'forge.user_step.v1', userStep: 5, key: 'deploy' },
+      });
+      onStep({
+        step: 11.6,
+        status: 'scaffold',
+        tool: 'Forge User Step 6 - Self-Renewal',
+        result: { kind: 'forge.user_step.v1', userStep: 6, key: 'self_renewal' },
+      });
+      onStep({
+        step: 12.7,
+        status: 'degraded',
+        tool: 'Forge User Step 7 - GTM',
+        result: { kind: 'forge.user_step.v1', userStep: 7, key: 'gtm' },
+      });
+      onStep({
+        step: 14.8,
+        status: 'degraded',
+        tool: 'Forge User Step 8 - Monitor',
+        result: { kind: 'forge.user_step.v1', userStep: 8, key: 'monitor' },
+      });
+      return {
+        ok: true,
+        originalUrl: 'https://example.com',
+        finalScore: 81,
+        gtmReady: false,
+        exitReason: 'ASYNC_COMPLETE',
+        iterationsCompleted: 1,
+      };
+    });
+
+    const result = await runConstructionToStatus({
+      runId: '44444444-4444-4444-8444-444444444444',
+      body: { url: 'https://example.com', mode: 'FOREGROUND' },
+      checkpointStep,
+    });
+
+    expect(result).toEqual({ ok: true, runId: '44444444-4444-4444-8444-444444444444' });
+    expect(checkpointStep.mock.calls.map(([name]) => name)).toEqual([
+      'forge-user-step-1-research-analysis',
+      'forge-user-step-2-quality-adversarial-surface',
+      'forge-user-step-3-design-scoring-handoff',
+      'forge-user-step-4-build-planning-prioritization',
+      'forge-user-step-5-deploy',
+      'forge-user-step-6-self-renewal',
+      'forge-user-step-7-gtm',
+      'forge-user-step-8-monitor',
+    ]);
+    const { record } = await readForgeRunStatus('44444444-4444-4444-8444-444444444444');
+    expect(record.status).toBe('completed');
+    expect(record.final).toMatchObject({ type: 'final', final: true, exitReason: 'ASYNC_COMPLETE' });
   });
 
   it('emits final then DONE when orchestration resolves for a generic URL', async () => {
@@ -284,6 +350,7 @@ describe('run-construction handler SSE terminal framing', () => {
     const events = parseSse(res.chunks);
     expect(events.at(-2)).toMatchObject({
       type: 'final',
+      final: true,
       ok: true,
       originalProductUrl: 'https://example.com',
       finalScore: 72,
@@ -328,6 +395,7 @@ describe('run-construction handler SSE terminal framing', () => {
     expect(mocks.stop).toHaveBeenCalledTimes(1);
     expect(events.at(-2)).toMatchObject({
       type: 'final',
+      final: true,
       ok: false,
       complete: false,
       partial: true,
@@ -388,8 +456,18 @@ describe('run-construction handler SSE terminal framing', () => {
       productId: 'ct-registered-example',
       ok: true,
     });
+    expect(events.at(-3)).toMatchObject({
+      type: 'symbiotic_write',
+      productId: 'ct-registered-example',
+      ok: true,
+      persisted: true,
+      state: 'written',
+      idempotent: false,
+      version: 1,
+    });
     expect(events.at(-2)).toMatchObject({
       type: 'final',
+      final: true,
       ok: true,
       originalProductUrl: 'https://example.com',
       exitReason: 'REGISTERED_FIXTURE_COMPLETE',
@@ -399,6 +477,17 @@ describe('run-construction handler SSE terminal framing', () => {
       },
     });
     expect(events.at(-1)).toBe('[DONE]');
+    expect(mocks.persistSymbioticRunSummary).toHaveBeenCalledWith(expect.objectContaining({
+      productId: 'ct-registered-example',
+      environment: 'staging',
+      runId: expect.any(String),
+      url: 'https://example.com',
+      priorContext: expect.objectContaining({
+        hasPriorRun: true,
+        sourceVersion: 2,
+      }),
+      proofLabel: 'LIVE_PREVIEW',
+    }));
   });
 
   it('stops exposed orchestration state on client disconnect without terminal frame', async () => {
