@@ -214,7 +214,10 @@ export async function getInngestFunctions() {
     },
     async ({ event, step }) => {
       const { runConstructionToStatus } = await import('../../src/api/run-construction.js');
-      return await step.run('execute', () => runConstructionToStatus(event.data));
+      return await runConstructionToStatus({
+        ...event.data,
+        checkpointStep: (name, fn) => step.run(name, fn),
+      });
     },
   ));
 
