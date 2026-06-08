@@ -2509,6 +2509,75 @@ describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () =>
       expect(result.orchestrationLog.some((l) => l.result?.kind === 'source_mapping_complete')).toBe(true);
     } finally { clearVercelEnv(); }
   });
+
+  it('degrades timed-out Phase B/B1 source proposal enrichment and continues to Step 6 prioritization', async () => {
+    withVercelEnv();
+    try {
+      const fetchRepoFileList = vi.fn(async () => ({
+        files: ['package.json', 'index.html', 'src/pages/Settings.jsx'],
+        truncated: false, sha: 'sha', error: null,
+      }));
+      const fetchFileContent = vi.fn(async ({ filePath }) => {
+        if (filePath === 'package.json') return JSON.stringify({ dependencies: { react: '^18.0.0' } });
+        return 'export default function Settings() {}';
+      });
+      const runEvaluationPipeline = vi.fn(async () => ({
+        ok: true,
+        findings: [{
+          id: 'f-settings',
+          source: 'runtime-diagnostics',
+          category: 'network:http_404',
+          severity: 'medium',
+          location: 'https://example.com/settings',
+        }],
+        stats: { perEvaluator: {}, perEvaluatorRaw: {}, evaluatorMetrics: {} },
+        perEvaluator: {},
+        errors: {},
+      }));
+      const generateSourceMappedFixProposals = vi.fn(() => new Promise(() => {}));
+      const steps = [];
+      const base = happyDeps({ preScoreSequence: [62], postScoreSequence: [62] });
+
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'phase-b-enrichment-timeout', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        phaseBEnrichmentTimeoutMs: 5,
+        deps: {
+          ...base,
+          fetchRepoFileList,
+          fetchFileContent,
+          runEvaluationPipeline,
+          generateSourceMappedFixProposals,
+        },
+        issue: { filePath: 'src/pages/Settings.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+        onStep: (log) => steps.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      const timeoutLogIndex = steps.findIndex((log) =>
+        log.step === 6
+        && log.status === 'degraded'
+        && log.result?.reason === 'phase_b_enrichment_timeout');
+      const prioritizationIndex = steps.findIndex((log) =>
+        log.step === 6
+        && log.status === 'complete'
+        && log.why === 'rank issues by Five-Layer impact for max score improvement per iteration'
+        && Number.isFinite(log.result?.issueCount));
+      expect(timeoutLogIndex).toBeGreaterThan(-1);
+      expect(prioritizationIndex).toBeGreaterThan(-1);
+      expect(timeoutLogIndex).toBeLessThan(prioritizationIndex);
+      expect(steps[timeoutLogIndex].result).toMatchObject({
+        kind: 'source_mapped_recommendations_degraded',
+        degraded: true,
+        timeoutMs: 5,
+        fallbackScore: 62,
+        proposals: 0,
+        recommendOnly: true,
+        code: 'PHASE_B_ENRICHMENT_TIMEOUT',
+      });
+      expect(generateSourceMappedFixProposals).toHaveBeenCalledTimes(1);
+    } finally { clearVercelEnv(); }
+  });
 });
 
 describe('diffEditor.validateDiff — scoped relaxation via preserveExceptions (DISPATCH 33 T2)', () => {

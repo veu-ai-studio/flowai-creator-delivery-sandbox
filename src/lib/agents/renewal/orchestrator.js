@@ -96,6 +96,8 @@ export const SMALL_SITE_EFFORT_PROFILE = Object.freeze({
   phaseBMaxInteractives: 8,
   postFixReprobe: false,
 });
+export const PHASE_B_ENRICHMENT_TIMEOUT_MS = 45_000;
+export const MAX_PHASE_B_ENRICHMENT_TIMEOUT_MS = 60_000;
 export const STEP_NAMES = Object.freeze([
   'Product Discovery',
   'Rate Cap + Runaway Check',
@@ -160,6 +162,25 @@ function makeForgeUserStepLog({
     mode,
     canInterrupt: false,
   });
+}
+
+function boundedTimeoutMs(value, fallback = PHASE_B_ENRICHMENT_TIMEOUT_MS) {
+  if (!Number.isFinite(value) || value <= 0) return fallback;
+  return Math.max(1, Math.min(value, MAX_PHASE_B_ENRICHMENT_TIMEOUT_MS));
+}
+
+function withTimeout(promise, { timeoutMs, code, message }) {
+  let timer = null;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(Object.assign(new Error(message), { code }));
+    }, timeoutMs);
+    timer.unref?.();
+  });
+  return Promise.race([promise, timeoutPromise])
+    .finally(() => {
+      if (timer) clearTimeout(timer);
+    });
 }
 
 function computeProgress({ originalScore, currentScore, target }) {
@@ -781,6 +802,7 @@ export async function runOrchestration(args = {}) {
   const onCheckpoint = typeof args.onCheckpoint === 'function' ? args.onCheckpoint : () => {};
   const onIteration = typeof args.onIteration === 'function' ? args.onIteration : () => {};
   const deps = args.deps || {};
+  const phaseBEnrichmentTimeoutMs = boundedTimeoutMs(args.phaseBEnrichmentTimeoutMs);
   const migrationFlag = mode === 'migration'
     ? await isMigrationModeExecutionEnabled(deps.env || process.env)
     : { enabled: false, source: 'not_checked' };
@@ -2449,22 +2471,29 @@ export async function runOrchestration(args = {}) {
       const recommendationFindings = Array.isArray(state.pipelineFindings) && state.pipelineFindings.length > 0
         ? state.pipelineFindings
         : (Array.isArray(iterLog.preGtm?.issues) ? iterLog.preGtm.issues : []);
-      const generatedProposals = await _generateSourceMappedFixProposals({
-        findings: recommendationFindings,
-        sourceMapping: state.sourceMapping,
-        fileContentProvider: async (filePath) => {
-          if (pathB || !token || !githubRepoUrl) return null;
-          const parsed = parseGithubRepoUrl(githubRepoUrl);
-          if (!parsed) return null;
-          return _fetchFileContent({
-            owner: parsed.owner,
-            repo: parsed.repo,
-            filePath,
-            ref: productBranch,
-            token,
-          });
+      const generatedProposals = await withTimeout(
+        _generateSourceMappedFixProposals({
+          findings: recommendationFindings,
+          sourceMapping: state.sourceMapping,
+          fileContentProvider: async (filePath) => {
+            if (pathB || !token || !githubRepoUrl) return null;
+            const parsed = parseGithubRepoUrl(githubRepoUrl);
+            if (!parsed) return null;
+            return _fetchFileContent({
+              owner: parsed.owner,
+              repo: parsed.repo,
+              filePath,
+              ref: productBranch,
+              token,
+            });
+          },
+        }),
+        {
+          timeoutMs: phaseBEnrichmentTimeoutMs,
+          code: 'PHASE_B_ENRICHMENT_TIMEOUT',
+          message: `Phase B/B1 source-mapped proposal enrichment exceeded ${phaseBEnrichmentTimeoutMs}ms`,
         },
-      });
+      );
       const proposalBoundary = filterPlatformBoundaryFindings(generatedProposals, {
         pathSelector: (p) => p?.filePath ?? p?.targetFilePath ?? p?.selectedFilePath ?? p?.path,
       });
@@ -2496,11 +2525,30 @@ export async function runOrchestration(args = {}) {
       }));
     } catch (e) {
       state.sourceMappedFixProposals = [];
+      const timedOut = e?.code === 'PHASE_B_ENRICHMENT_TIMEOUT';
+      state.pipelineErrors = {
+        ...(state.pipelineErrors && typeof state.pipelineErrors === 'object' ? state.pipelineErrors : {}),
+        source_mapped_proposals: timedOut
+          ? `timeout:${phaseBEnrichmentTimeoutMs}ms`
+          : (e?.message ?? String(e)).slice(0, 200),
+      };
       emit(makeStepLog({
         iteration: iterationNumber, step: 6, status: 'degraded',
         tool: 'sourceMappedFixGenerator.generateSourceMappedFixProposals (U5)',
-        why: 'recommendation generation failed; continuing without blocking run',
-        result: { error: (e?.message ?? String(e)).slice(0, 200) },
+        why: timedOut
+          ? 'Phase B/B1 proposal enrichment timed out; preserving baseline score and continuing to Issue Prioritization'
+          : 'recommendation generation failed; continuing without blocking run',
+        result: {
+          kind: 'source_mapped_recommendations_degraded',
+          degraded: true,
+          reason: timedOut ? 'phase_b_enrichment_timeout' : 'source_mapped_recommendations_failed',
+          timeoutMs: timedOut ? phaseBEnrichmentTimeoutMs : null,
+          fallbackScore: originalGtmScore ?? iterLog.preGtm?.score ?? null,
+          proposals: 0,
+          recommendOnly: true,
+          error: (e?.message ?? String(e)).slice(0, 200),
+          code: e?.code ?? 'SOURCE_MAPPED_RECOMMENDATIONS_FAILED',
+        },
         durationMs: 0, mode: state.mode,
       }));
     }
