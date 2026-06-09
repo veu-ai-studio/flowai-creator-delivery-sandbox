@@ -116,6 +116,7 @@ describe('run-construction handler SSE terminal framing', () => {
     delete process.env.SUPABASE_URL;
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
     delete process.env.FLOWAI_RUN_CONSTRUCTION_SSE_SOFT_TIMEOUT_MS;
+    delete process.env.FLOWAI_RUN_CONSTRUCTION_BACKGROUND_TIMEOUT_MS;
     mocks.assertPublicHttpUrl.mockResolvedValue({ ok: true });
     mocks.readProductSsotRunContext.mockResolvedValue({ ok: false, reason: 'no_row', context: null });
     mocks.persistSymbioticRunSummary.mockResolvedValue({
@@ -264,6 +265,35 @@ describe('run-construction handler SSE terminal framing', () => {
       exitReason: 'ASYNC_COMPLETE',
     });
     expect(record.events.some((entry) => entry.payload?.type === 'step')).toBe(true);
+  });
+
+  it('background worker timeout writes a terminal failed status instead of staying running', async () => {
+    vi.useFakeTimers();
+    process.env.FLOWAI_RUN_CONSTRUCTION_BACKGROUND_TIMEOUT_MS = '5';
+    mocks.runOrchestration.mockImplementation(({ onStep }) => {
+      onStep({ step: 1, status: 'complete', tool: 'Research', result: { kind: 'research' } });
+      return new Promise(() => {});
+    });
+
+    const pending = runConstructionToStatus({
+      runId: '55555555-5555-4555-8555-555555555555',
+      body: { url: 'https://example.com', mode: 'FOREGROUND' },
+    });
+    await vi.advanceTimersByTimeAsync(1_000);
+    const result = await pending;
+
+    expect(result).toEqual({ ok: true, runId: '55555555-5555-4555-8555-555555555555' });
+    const { record } = await readForgeRunStatus('55555555-5555-4555-8555-555555555555');
+    expect(record.status).toBe('failed');
+    expect(record.final).toMatchObject({
+      type: 'final',
+      final: true,
+      ok: false,
+      partial: true,
+      timedOut: true,
+      exitReason: 'SSE_SOFT_TIMEOUT',
+      timeoutMs: 1_000,
+    });
   });
 
   it('checkpoints each user-facing forge step while persisting background status', async () => {
@@ -501,7 +531,7 @@ describe('run-construction handler SSE terminal framing', () => {
 
     const res = createResponse();
     const pending = handler(createRequest({ url: 'https://example.com' }), res);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await vi.waitFor(() => expect(resolveRun).toBeTypeOf('function'));
     res.emitClose();
 
     expect(mocks.stop).toHaveBeenCalledTimes(1);
