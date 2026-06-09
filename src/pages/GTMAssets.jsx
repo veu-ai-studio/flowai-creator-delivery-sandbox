@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import { VEU_PRODUCTS } from '@/lib/veuProducts';
 import { Button } from '@/components/ui/button';
 import CopyButton from '@/components/gtm/CopyButton';
@@ -119,7 +120,7 @@ export default function GTMAssets() {
   const [activeProduct, setActiveProduct] = useState(VEU_PRODUCTS[0].name);
 
   useEffect(() => {
-    base44.entities.GTMAsset.list('-created_date').then(records => {
+    resolveArray(base44.entities.GTMAsset.list('-created_date')).then(records => {
       const map = {};
       records.forEach(r => { map[`${r.product_name}::${r.asset_type}`] = r; });
       setAssets(map);
@@ -208,7 +209,9 @@ export default function GTMAssets() {
 
             // Parse content for display
             const parsed = (() => { try { return JSON.parse(asset?.content || '{}'); } catch { return {}; } })();
-            const displayItems = parsed.emails || parsed.posts || (parsed.content ? [{ body: parsed.content }] : []);
+            const emails = asArray(parsed.emails);
+            const posts = asArray(parsed.posts);
+            const displayItems = emails.length > 0 ? emails : posts.length > 0 ? posts : (parsed.content ? [{ body: parsed.content }] : []);
 
             return (
               <motion.div key={assetType.key} layout className="rounded-xl border border-border bg-card overflow-hidden">
@@ -243,7 +246,7 @@ export default function GTMAssets() {
                       className="overflow-hidden border-t border-border">
                       <div className="p-5 space-y-4">
                         {/* Email sequence */}
-                        {assetType.key === 'email_sequence' && parsed.emails?.map((email, i) => (
+                        {assetType.key === 'email_sequence' && emails.map((email, i) => (
                           <div key={i} className="rounded-lg border border-border bg-secondary/20 p-4 space-y-2">
                             <div className="flex items-center justify-between">
                               <p className="text-xs font-bold text-foreground">Email {email.email_number || i + 1}</p>
@@ -256,7 +259,7 @@ export default function GTMAssets() {
                         ))}
 
                         {/* LinkedIn posts */}
-                        {assetType.key === 'linkedin_posts' && parsed.posts?.map((post, i) => (
+                        {assetType.key === 'linkedin_posts' && posts.map((post, i) => (
                           <div key={i} className="rounded-lg border border-border bg-secondary/20 p-4 space-y-2">
                             <div className="flex items-center justify-between">
                               <p className="text-xs font-bold text-foreground">Post {post.post_number || i + 1}</p>

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import BlockUsageDashboard from "@/components/analytics/BlockUsageDashboard";
 import PipelineAnalyticsDashboard from "@/components/analytics/PipelineAnalyticsDashboard";
 import { base44 } from "@/api/base44Client";
+import { asArray, resolveArray } from "@/lib/uiDataGuards";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, CartesianGrid, Legend, AreaChart, Area,
@@ -32,7 +33,7 @@ export default function Analytics() {
 
   const fetchRuns = async (quiet = false) => {
     if (!quiet) setLoading(true); else setRefreshing(true);
-    const data = await base44.entities.FlowRun.list("-created_date", 500).catch(() => []);
+    const data = await resolveArray(base44.entities.FlowRun.list("-created_date", 500));
     setRuns(data);
     setLoading(false);
     setRefreshing(false);
@@ -41,9 +42,10 @@ export default function Analytics() {
   useEffect(() => { fetchRuns(); }, []);
 
   const filtered = useMemo(() => {
-    if (!rangeDays) return runs;
+    const safeRuns = asArray(runs);
+    if (!rangeDays) return safeRuns;
     const cutoff = subDays(new Date(), rangeDays);
-    return runs.filter((r) => r.created_date && isAfter(new Date(r.created_date), cutoff));
+    return safeRuns.filter((r) => r.created_date && isAfter(new Date(r.created_date), cutoff));
   }, [runs, rangeDays]);
 
   const total = filtered.length;

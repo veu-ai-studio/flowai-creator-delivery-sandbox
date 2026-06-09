@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import { Activity, CheckCircle2, XCircle, Clock, Zap, RefreshCw, Globe, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -66,15 +67,16 @@ export default function RealtimeDashboard() {
   const fetchAll = async () => {
     try {
       const [r, j, e, d] = await Promise.all([
-        base44.entities.Run.list('-created_date', 50),
-        base44.entities.Job.list('-created_date', 20),
-        base44.entities.ErrorLog.list('-created_date', 10),
-        base44.entities.Deployment.list('-created_date', 10),
+        resolveArray(base44.entities.Run.list('-created_date', 50)),
+        resolveArray(base44.entities.Job.list('-created_date', 20)),
+        resolveArray(base44.entities.ErrorLog.list('-created_date', 10)),
+        resolveArray(base44.entities.Deployment.list('-created_date', 10)),
       ]);
-      setRuns(r);
-      setJobs(j);
-      setErrors(e);
-      setDeployments(d);
+      const safeRuns = asArray(r);
+      setRuns(safeRuns);
+      setJobs(asArray(j));
+      setErrors(asArray(e));
+      setDeployments(asArray(d));
       setLastUpdated(new Date());
 
       // Build hourly trend for last 12 hours
@@ -82,7 +84,7 @@ export default function RealtimeDashboard() {
       const trend = Array.from({ length: 12 }, (_, i) => {
         const hourStart = now - (11 - i) * 3600000;
         const hourEnd = hourStart + 3600000;
-        const hourRuns = r.filter(run => {
+        const hourRuns = safeRuns.filter(run => {
           const t = new Date(run.created_date).getTime();
           return t >= hourStart && t < hourEnd;
         });
@@ -114,18 +116,21 @@ export default function RealtimeDashboard() {
   useEffect(() => {
     const unsub = base44.entities.Run.subscribe((event) => {
       if (event.type === 'create') {
-        setRuns(prev => [event.data, ...prev].slice(0, 50));
+        setRuns(prev => event.data ? [event.data, ...asArray(prev)].slice(0, 50) : asArray(prev));
       } else if (event.type === 'update') {
-        setRuns(prev => prev.map(r => r.id === event.id ? event.data : r));
+        setRuns(prev => event.data ? asArray(prev).map(r => r.id === event.id ? event.data : r) : asArray(prev));
       }
     });
     return unsub;
   }, []);
 
-  const activeRuns = runs.filter(r => r.status === 'running');
-  const successRate = runs.length > 0 ? Math.round((runs.filter(r => r.status === 'success').length / runs.length) * 100) : 0;
-  const criticalErrors = errors.filter(e => e.severity === 'critical').length;
-  const liveDeployments = deployments.filter(d => d.status === 'live').length;
+  const safeRuns = asArray(runs);
+  const safeErrors = asArray(errors);
+  const safeDeployments = asArray(deployments);
+  const activeRuns = safeRuns.filter(r => r.status === 'running');
+  const successRate = safeRuns.length > 0 ? Math.round((safeRuns.filter(r => r.status === 'success').length / safeRuns.length) * 100) : 0;
+  const criticalErrors = safeErrors.filter(e => e.severity === 'critical').length;
+  const liveDeployments = safeDeployments.filter(d => d.status === 'live').length;
 
   return (
     <div className="p-8 lg:p-10 max-w-6xl space-y-8">
@@ -158,7 +163,7 @@ export default function RealtimeDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard label="Active Runs"  value={activeRuns.length}  color="text-primary"      sub="currently running" />
-        <StatCard label="Success Rate" value={`${successRate}%`}  color={successRate >= 70 ? 'text-emerald-400' : 'text-amber-400'} sub={`${runs.length} total runs`} />
+        <StatCard label="Success Rate" value={`${successRate}%`}  color={successRate >= 70 ? 'text-emerald-400' : 'text-amber-400'} sub={`${safeRuns.length} total runs`} />
         <StatCard label="Live Deploys" value={liveDeployments}    color="text-sky-400"      sub="apps deployed" />
         <StatCard label="Crit. Errors" value={criticalErrors}     color={criticalErrors > 0 ? 'text-red-400' : 'text-emerald-400'} sub="last 10 errors" />
       </div>
@@ -195,9 +200,9 @@ export default function RealtimeDashboard() {
           </h2>
           <div className="space-y-2 max-h-72 overflow-y-auto">
             <AnimatePresence>
-              {runs.slice(0, 15).map(run => <RunCard key={run.id} run={run} />)}
+              {safeRuns.slice(0, 15).map(run => <RunCard key={run.id} run={run} />)}
             </AnimatePresence>
-            {runs.length === 0 && <p className="text-xs text-muted-foreground py-8 text-center">No runs yet</p>}
+            {safeRuns.length === 0 && <p className="text-xs text-muted-foreground py-8 text-center">No runs yet</p>}
           </div>
         </div>
 
@@ -209,7 +214,7 @@ export default function RealtimeDashboard() {
               <Globe className="h-4 w-4 text-sky-400" /> Live Deployments ({liveDeployments})
             </h2>
             <div className="space-y-2 max-h-36 overflow-y-auto">
-              {deployments.filter(d => d.status === 'live').slice(0, 5).map((d, i) => (
+              {safeDeployments.filter(d => d.status === 'live').slice(0, 5).map((d, i) => (
                 <a key={i} href={d.live_url} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 text-xs p-2 rounded-lg border border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-colors">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
@@ -226,7 +231,7 @@ export default function RealtimeDashboard() {
               <AlertTriangle className="h-4 w-4 text-amber-400" /> Recent Errors ({errors.length})
             </h2>
             <div className="space-y-2 max-h-36 overflow-y-auto">
-              {errors.slice(0, 5).map((e, i) => (
+              {safeErrors.slice(0, 5).map((e, i) => (
                 <div key={i} className={`rounded-lg border p-2 text-xs ${e.severity === 'critical' ? 'border-red-500/30 bg-red-500/5 text-red-400' : 'border-border bg-secondary/20 text-muted-foreground'}`}>
                   <span className="font-bold uppercase text-[9px]">{e.severity}</span>
                   <p className="truncate">{e.message}</p>

@@ -7,7 +7,9 @@ const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), '
 describe('sidebar page data resilience', () => {
   it('normalizes malformed API results before array operations', () => {
     expect(asArray([{ id: 1 }])).toEqual([{ id: 1 }]);
-    expect(asArray({ items: [] })).toEqual([]);
+    expect(asArray({ items: [{ id: 2 }] })).toEqual([{ id: 2 }]);
+    expect(asArray({ data: [{ id: 3 }] })).toEqual([{ id: 3 }]);
+    expect(asArray({ results: [{ id: 4 }] })).toEqual([{ id: 4 }]);
     expect(asArray(null)).toEqual([]);
     expect(asObject({ ok: true })).toEqual({ ok: true });
     expect(asObject([])).toEqual({});
@@ -46,6 +48,19 @@ describe('sidebar page data resilience', () => {
       'src/pages/Governance.jsx',
       'src/pages/Clearance.jsx',
       'src/pages/MyCreations.jsx',
+      'src/pages/Flows.jsx',
+      'src/pages/Analytics.jsx',
+      'src/pages/ActivityLog.jsx',
+      'src/pages/RealtimeDashboard.jsx',
+      'src/pages/DemoGenerator.jsx',
+      'src/pages/InvestorStudio.jsx',
+      'src/pages/GTMAssets.jsx',
+      'src/pages/Research.jsx',
+      'src/pages/PortfolioEngine.jsx',
+      'src/pages/DomainManager.jsx',
+      'src/pages/Environments.jsx',
+      'src/pages/ProductionMonitor.jsx',
+      'src/pages/AuditTrail.jsx',
       'src/pages/Workspace.jsx',
       'src/components/governance/PortfolioQuickSelect.jsx',
       'src/components/operations/ClearanceProtocolPrompt.jsx',
