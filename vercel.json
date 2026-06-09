@@ -1,6 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    { "source": "/api/orchestrator/status/:run_id", "destination": "/api/orchestrator/status/[run_id]?run_id=:run_id" },
+    { "source": "/api/audits/super-customer/status/:run_id", "destination": "/api/audits/super-customer/status/[run_id]?run_id=:run_id" },
+    { "source": "/api/audits/super-customer/results/:run_id", "destination": "/api/audits/super-customer/results/[run_id]?run_id=:run_id" },
+    { "source": "/api/audits/super-customer/results/:run_id/pdf", "destination": "/api/audits/super-customer/results/[run_id]/pdf?run_id=:run_id" },
+    { "source": "/api/products/:id", "destination": "/api/products/[id]?id=:id" },
+    { "source": "/api/configuration/products/:idOrSlug", "destination": "/api/configuration/products/[idOrSlug]?idOrSlug=:idOrSlug" },
+    { "source": "/api/renewed/:hash", "destination": "/api/renewed/[hash]?hash=:hash" },
+    { "source": "/api/marketplace/tool-history/:slug", "destination": "/api/marketplace/tool-history/[slug]?slug=:slug" },
+    { "source": "/api/marketplace/recommend/:rec_id/pdf", "destination": "/api/marketplace/recommend/[rec_id]/pdf?rec_id=:rec_id" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }

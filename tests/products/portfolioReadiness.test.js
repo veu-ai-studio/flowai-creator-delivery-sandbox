@@ -29,6 +29,18 @@ describe('portfolioReadiness', () => {
     });
   });
 
+  it('shows registry repo and domain links without fabricating upgrade readiness', () => {
+    const readiness = productUpgradeReadiness({ name: 'PressAI', live_url: 'https://ourpublishingai.com' });
+    expect(readiness).toMatchObject({
+      ready: false,
+      readyLabel: 'NO',
+      upgradeRepoLabel: 'Missing',
+      deploymentLabel: 'Missing',
+      upgradeRepoUrl: 'https://github.com/veu-ai-studio/press-ai',
+      deploymentUrl: 'https://ourpublishingai.com',
+    });
+  });
+
   it('summarizes ready product count for portfolio tables', () => {
     const summary = summarizePortfolioUpgradeReadiness([
       { name: 'SAIGE', live_url: 'https://saigeplatform.com' },

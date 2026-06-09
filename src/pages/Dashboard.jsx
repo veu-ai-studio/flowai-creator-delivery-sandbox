@@ -7,6 +7,7 @@ import { base44 } from "@/api/base44Client";
 import MonitoringAlerts from "@/components/dashboard/MonitoringAlerts";
 import RealtimeLogs from "@/components/dashboard/RealtimeLogs";
 import QuickTemplates from "@/components/dashboard/QuickTemplates";
+import { asArray, resolveArray } from "@/lib/uiDataGuards";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ flows: 0, runsToday: 0, totalBlocks: 0 });
@@ -15,13 +16,15 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       const [flows, runs] = await Promise.all([
-        base44.entities.SavedFlow.list("-updated_date", 200).catch(() => []),
-        base44.entities.FlowRun.list("-created_date", 200).catch(() => []),
+        resolveArray(base44.entities.SavedFlow.list("-updated_date", 200)),
+        resolveArray(base44.entities.FlowRun.list("-created_date", 200)),
       ]);
+      const safeFlows = asArray(flows);
+      const safeRuns = asArray(runs);
       const today = new Date().toDateString();
-      const runsToday = runs.filter((r) => r.created_date && new Date(r.created_date).toDateString() === today).length;
-      const totalBlocks = flows.reduce((s, f) => s + (f.nodes?.length || 0), 0);
-      setStats({ flows: flows.length, runsToday, totalBlocks });
+      const runsToday = safeRuns.filter((r) => r.created_date && new Date(r.created_date).toDateString() === today).length;
+      const totalBlocks = safeFlows.reduce((s, f) => s + (f.nodes?.length || 0), 0);
+      setStats({ flows: safeFlows.length, runsToday, totalBlocks });
       setLoading(false);
     };
     fetchStats();

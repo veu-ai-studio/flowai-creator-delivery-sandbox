@@ -14,6 +14,12 @@ function hostOf(value) {
   }
 }
 
+function withHttps(value) {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  const trimmed = value.trim();
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : `https://${trimmed}`;
+}
+
 export function registeredConfigForProduct(product = {}, configs = REGISTERED_PRODUCT_CONFIG) {
   const productName = normalizeText(product.name ?? product.product_name ?? product.label);
   const productSlug = normalizeText(product.slug);
@@ -31,13 +37,25 @@ export function registeredConfigForProduct(product = {}, configs = REGISTERED_PR
 
 export function mergeProductUpgradeSources(product = {}, registryRow = {}) {
   const registered = registeredConfigForProduct(product) ?? {};
+  const upgradeRepoDisplayUrl =
+    registryRow.upgrade_repo_url ?? registryRow.upgrade_repo ?? product.upgrade_repo_url ?? product.upgrade_repo ?? registered.upgrade_repo ?? registered.repo;
+  const deploymentDisplayUrl =
+    registryRow.deployment_url ?? registryRow.upgrade_url ?? product.deployment_url ?? product.upgrade_url ?? registered.upgrade_url ?? withHttps(registered.domain);
+  const explicitUpgradeRepoEvidence =
+    registryRow.upgrade_repo_url ?? registryRow.upgrade_repo ?? product.upgrade_repo_url ?? product.upgrade_repo ?? registered.upgrade_repo;
+  const explicitDeploymentEvidence =
+    registryRow.deployment_url ?? registryRow.upgrade_url ?? product.deployment_url ?? product.upgrade_url ?? registered.deployment_url ?? registered.upgrade_url;
   return {
     ...registered,
     ...product,
     ...registryRow,
     original_url: product.original_url ?? product.live_url ?? product.url ?? registered.original_url ?? registered.domain,
-    upgrade_repo_url: registryRow.upgrade_repo_url ?? registryRow.upgrade_repo ?? product.upgrade_repo_url ?? product.upgrade_repo ?? registered.upgrade_repo,
-    deployment_url: registryRow.deployment_url ?? registryRow.upgrade_url ?? product.deployment_url ?? product.upgrade_url ?? registered.upgrade_url,
+    upgrade_repo_url: upgradeRepoDisplayUrl,
+    deployment_url: deploymentDisplayUrl,
+    upgrade_repo_status:
+      registryRow.upgrade_repo_status ?? product.upgrade_repo_status ?? registered.upgrade_repo_status ?? (explicitUpgradeRepoEvidence ? undefined : 'missing'),
+    deployment_status:
+      registryRow.deployment_status ?? product.deployment_status ?? registered.deployment_status ?? (explicitDeploymentEvidence ? undefined : 'missing'),
   };
 }
 

@@ -41,6 +41,7 @@ describe('sidebar page data resilience', () => {
       'src/pages/Configuration.jsx',
       'src/pages/ProductRegistry.jsx',
       'src/pages/PortfolioDashboard.jsx',
+      'src/pages/Dashboard.jsx',
       'src/pages/MainDashboard.jsx',
       'src/pages/Governance.jsx',
       'src/pages/Clearance.jsx',
