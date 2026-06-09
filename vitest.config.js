@@ -5,6 +5,15 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  plugins: [{
+    name: 'flowai-strip-shebang-for-vitest',
+    transform(code) {
+      if (typeof code === 'string' && code.startsWith('#!')) {
+        return { code: code.replace(/^#!.*(?:\r?\n|$)/, '') };
+      }
+      return null;
+    },
+  }],
   test: {
     include: ['tests/**/*.test.js'],
     testTimeout: 30000,
