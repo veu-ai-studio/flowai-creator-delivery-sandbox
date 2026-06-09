@@ -404,7 +404,7 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
 }
 
 // ─── CARD B — DESCRIBE ────────────────────────────────────────────────────────
-function CardB({ active, onActivate, description, setDescription, products, loadingProducts }) {
+function CardB({ active, onActivate, description, setDescription, setUrlInput, products, loadingProducts }) {
   const [listening, setListening] = useState(false);
   const recRef = useRef(null);
   const productList = Array.isArray(products) ? products.filter((product) => product && typeof product === 'object') : [];
@@ -426,8 +426,10 @@ function CardB({ active, onActivate, description, setDescription, products, load
 
   const loadProduct = (e, product) => {
     e.stopPropagation();
+    const productUrl = product.live_url || product.url || product.base44_url || product.product_url || product.domain || '';
+    if (productUrl) setUrlInput(productUrl.startsWith('http') ? productUrl : `https://${productUrl}`);
     setDescription(
-      `Product Name: ${product.product_name}\nWhat it does: ${product.description || ''}\nTarget audience: ${product.target_audience || ''}\nKey features: \nCurrent known issues: \nLive URL (optional): ${product.base44_url || ''}`
+      `Product Name: ${product.product_name || product.name || ''}\nWhat it does: ${product.description || ''}\nTarget audience: ${product.target_audience || ''}\nKey features: \nCurrent known issues: \nLive URL (optional): ${productUrl}`
     );
   };
 
@@ -999,6 +1001,7 @@ export default function LandingPage() {
               onActivate={() => setActiveCard('B')}
               description={description}
               setDescription={setDescription}
+              setUrlInput={setUrlInput}
               products={products}
               loadingProducts={loadingProducts}
             />

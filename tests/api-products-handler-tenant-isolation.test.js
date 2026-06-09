@@ -198,7 +198,7 @@ describe('POST /api/products — tenant isolation on writes', () => {
     const out = await call({ method: 'POST', body: { name: 'orphan' } });
     expect(out.statusCode).toBe(400);
     expect(out.body.ok).toBe(false);
-    expect(out.body.error).toMatch(/orgId/i);
+    expect(out.body.error).toMatch(/org_id/i);
     expect(store.rows.length).toBe(0);
   });
 });

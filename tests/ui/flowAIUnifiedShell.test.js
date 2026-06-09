@@ -45,6 +45,14 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toMatch(/title:\s*"FLOW HUB"/);
     expect(sidebarSrc).toMatch(/label:\s*"Production"/);
     expect(sidebarSrc).toMatch(/label:\s*"Migration"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Research Forge"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Design Forge"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Build Forge"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Quality Audit"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Deploy Forge"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Self-Renewal Forge"/);
+    expect(sidebarSrc).toMatch(/label:\s*"GTM Forge"/);
+    expect(sidebarSrc).toMatch(/label:\s*"Monitor Forge"/);
     expect(sidebarSrc).not.toMatch(/label:\s*"New Run"/);
     expect(sidebarSrc).not.toMatch(/label:\s*"Migrate a Product"/);
     expect(sidebarSrc).toMatch(/title:\s*"CONFIGURATION"/);
@@ -100,6 +108,8 @@ describe('FlowAI unified operating system shell', () => {
     expect(landingSrc).toContain('Rollback');
     expect(landingSrc).toContain('data-paste-behavior="replace"');
     expect(landingSrc).toContain('setUrlInput(text.trim())');
+    expect(landingSrc).toContain('setUrlInput(productUrl.startsWith');
+    expect(landingSrc).toContain('Live URL (optional): ${productUrl}');
     expect(landingSrc).toContain('Enter product URL — e.g. https://saigeplatform.com');
     expect(landingSrc).toContain('border-cyan-500/60');
   });

@@ -111,13 +111,40 @@ describe('POST /api/products — shape', () => {
 
   it('returns 400 with { ok: false, error } when createProduct rejects', async () => {
     mockCreateProduct.mockRejectedValueOnce(new Error('name required'));
-    const req = { method: 'POST', headers: {}, query: {}, body: {} };
+    const req = { method: 'POST', headers: { 'x-flowai-org-id': 'org-a' }, query: {}, body: {} };
     const res = makeRes();
     await handler(req, res);
     const out = res._get();
     expect(out.statusCode).toBe(400);
     expect(out.body.ok).toBe(false);
     expect(out.body.error).toMatch(/name required/);
+  });
+
+  it('returns clean 400 when org_id is missing from product writes', async () => {
+    const req = { method: 'POST', headers: {}, query: {}, body: { name: 'Missing Org Product' } };
+    const res = makeRes();
+    await handler(req, res);
+    const out = res._get();
+    expect(out.statusCode).toBe(400);
+    expect(out.body).toMatchObject({
+      ok: false,
+      error: 'org_id is required for product writes',
+    });
+    expect(mockCreateProduct).not.toHaveBeenCalled();
+  });
+
+  it('accepts snake_case org_id as the explicit write fallback', async () => {
+    const req = {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      query: {},
+      body: { name: 'Snake Org Product', org_id: 'org-snake' },
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res._get().statusCode).toBe(201);
+    const [, ctx] = mockCreateProduct.mock.calls[0];
+    expect(ctx.orgId).toBe('org-snake');
   });
 
   it('passes orgId from header into createProduct context', async () => {

@@ -27,7 +27,7 @@ const STATUS_STYLES = {
 };
 
 function AddProductModal({ onClose, onAdded }) {
-  const [form, setForm] = useState({ name: '', slug: '', live_url: '', description: '', org: 'VEU AI Studio', status: 'active' });
+  const [form, setForm] = useState({ name: '', slug: '', live_url: '', description: '', org: 'VEU AI Studio', org_id: 'veu-ai-studio', status: 'active' });
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {

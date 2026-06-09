@@ -143,7 +143,11 @@ export default async function handler(req, res) {
 
   const adminKey = req.headers['x-flowai-admin-key'];
   if (!process.env.ADMIN_SEED_KEY) {
-    return res.status(503).json({ error: 'ADMIN_SEED_KEY not configured on the server' });
+    return res.status(503).json({
+      ok: false,
+      error: 'admin_seed_unavailable',
+      message: 'ADMIN_SEED_KEY not configured on the server',
+    });
   }
   if (!adminKey || adminKey !== process.env.ADMIN_SEED_KEY) {
     return res.status(401).json({ error: 'Invalid x-flowai-admin-key' });
