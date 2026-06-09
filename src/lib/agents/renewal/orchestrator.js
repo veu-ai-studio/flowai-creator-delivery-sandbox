@@ -99,6 +99,9 @@ export const SMALL_SITE_EFFORT_PROFILE = Object.freeze({
 export const PHASE_B_ENRICHMENT_TIMEOUT_MS = 45_000;
 export const MAX_PHASE_B_ENRICHMENT_TIMEOUT_MS = 60_000;
 export const FORGE_STEP5_TO_STEP6_TIMEOUTS_MS = Object.freeze({
+  monitorText: 30_000,
+  computeScore: 30_000,
+  structuredCrawl: 30_000,
   probeAllPages: 30_000,
   probeAdversarialSurface: 30_000,
   runEvaluationPipeline: 45_000,
@@ -106,6 +109,20 @@ export const FORGE_STEP5_TO_STEP6_TIMEOUTS_MS = Object.freeze({
   fetchRepoFileList: 10_000,
   fetchFileContent: 10_000,
   prioritizeIssuesWithClaude: 20_000,
+  generateFix: 20_000,
+  construction: 20_000,
+  remediation: 20_000,
+  createRenewalBranch: 10_000,
+  commitFileToBranch: 10_000,
+  deployBranchPreview: 30_000,
+  postFixEvaluationPipeline: 20_000,
+  postFixMonitorText: 15_000,
+  postFixComputeScore: 15_000,
+  postFixCrawl: 15_000,
+  postFixProbeAllPages: 15_000,
+  createRenewalPr: 10_000,
+  governanceWrite: 8_000,
+  toolSelections: 8_000,
 });
 export const STEP_NAMES = Object.freeze([
   'Product Discovery',
@@ -221,6 +238,24 @@ function recordPipelineError(state, key, value) {
     ...(state.pipelineErrors && typeof state.pipelineErrors === 'object' ? state.pipelineErrors : {}),
     [key]: value,
   };
+}
+
+function makeDegradedScoreEnvelope({ productId, url, runId, fallbackScore = 0, label = 'degraded-timeout-baseline' }) {
+  const total = Number.isFinite(fallbackScore) ? Math.max(0, Math.min(100, fallbackScore)) : 0;
+  const layer = total / 5;
+  return Object.freeze({
+    productId,
+    url,
+    runId,
+    total,
+    l1: layer,
+    l2: layer,
+    l3: layer,
+    l4: layer,
+    l5: layer,
+    label,
+    degraded: true,
+  });
 }
 
 function computeProgress({ originalScore, currentScore, target }) {
@@ -844,6 +879,9 @@ export async function runOrchestration(args = {}) {
   const deps = args.deps || {};
   const phaseBEnrichmentTimeoutMs = boundedTimeoutMs(args.phaseBEnrichmentTimeoutMs);
   const step5ToStep6Timeouts = Object.freeze({
+    monitorText: boundedOperationTimeoutMs(args.monitorTextTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.monitorText),
+    computeScore: boundedOperationTimeoutMs(args.computeScoreTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.computeScore),
+    structuredCrawl: boundedOperationTimeoutMs(args.structuredCrawlTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.structuredCrawl),
     probeAllPages: boundedOperationTimeoutMs(args.probeAllPagesTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.probeAllPages),
     probeAdversarialSurface: boundedOperationTimeoutMs(args.probeAdversarialSurfaceTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.probeAdversarialSurface),
     runEvaluationPipeline: boundedOperationTimeoutMs(args.runEvaluationPipelineTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.runEvaluationPipeline),
@@ -851,6 +889,20 @@ export async function runOrchestration(args = {}) {
     fetchRepoFileList: boundedOperationTimeoutMs(args.fetchRepoFileListTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.fetchRepoFileList),
     fetchFileContent: boundedOperationTimeoutMs(args.fetchFileContentTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.fetchFileContent),
     prioritizeIssuesWithClaude: boundedOperationTimeoutMs(args.prioritizeIssuesWithClaudeTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.prioritizeIssuesWithClaude),
+    generateFix: boundedOperationTimeoutMs(args.generateFixTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.generateFix),
+    construction: boundedOperationTimeoutMs(args.constructionTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.construction),
+    remediation: boundedOperationTimeoutMs(args.remediationTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.remediation),
+    createRenewalBranch: boundedOperationTimeoutMs(args.createRenewalBranchTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.createRenewalBranch),
+    commitFileToBranch: boundedOperationTimeoutMs(args.commitFileToBranchTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.commitFileToBranch),
+    deployBranchPreview: boundedOperationTimeoutMs(args.deployBranchPreviewTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.deployBranchPreview),
+    postFixEvaluationPipeline: boundedOperationTimeoutMs(args.postFixEvaluationPipelineTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.postFixEvaluationPipeline),
+    postFixMonitorText: boundedOperationTimeoutMs(args.postFixMonitorTextTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.postFixMonitorText),
+    postFixComputeScore: boundedOperationTimeoutMs(args.postFixComputeScoreTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.postFixComputeScore),
+    postFixCrawl: boundedOperationTimeoutMs(args.postFixCrawlTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.postFixCrawl),
+    postFixProbeAllPages: boundedOperationTimeoutMs(args.postFixProbeAllPagesTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.postFixProbeAllPages),
+    createRenewalPr: boundedOperationTimeoutMs(args.createRenewalPrTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.createRenewalPr),
+    governanceWrite: boundedOperationTimeoutMs(args.governanceWriteTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.governanceWrite),
+    toolSelections: boundedOperationTimeoutMs(args.toolSelectionsTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.toolSelections),
   });
   const migrationFlag = mode === 'migration'
     ? await isMigrationModeExecutionEnabled(deps.env || process.env)
@@ -979,7 +1031,7 @@ export async function runOrchestration(args = {}) {
     }
     const safeDiagnostics = pickSafeDiagnosticFields(diagnostics);
     try {
-      return await _appendGovernanceEntry({
+      return await withTimeout(_appendGovernanceEntry({
         productId: productIdForFailure,
         environment,
         entry: {
@@ -999,6 +1051,10 @@ export async function runOrchestration(args = {}) {
           at: new Date().toISOString(),
         },
         supabase,
+      }), {
+        timeoutMs: step5ToStep6Timeouts.governanceWrite,
+        code: 'STEP_FAILURE_GOVERNANCE_WRITE_TIMEOUT',
+        message: `step failure governance write exceeded ${step5ToStep6Timeouts.governanceWrite}ms`,
       });
     } catch (failureArtifactError) {
       return {
@@ -1196,9 +1252,21 @@ export async function runOrchestration(args = {}) {
   // Emit visible ranked candidates before long-running step work so the
   // operator sees the selected tool and ranked pool while the run is active.
   // Governance writes still happen near STEP 14, adjacent to final run state.
-  const visibleToolSelectionsResult = await _emitToolSelections({
-    emitVisible: true,
-    writeGovernance: false,
+  const visibleToolSelectionsResult = await withTimeout(
+    _emitToolSelections({
+      emitVisible: true,
+      writeGovernance: false,
+    }),
+    {
+      timeoutMs: step5ToStep6Timeouts.toolSelections,
+      code: 'TOOL_SELECTION_VISIBLE_TIMEOUT',
+      message: `visible tool selection emit exceeded ${step5ToStep6Timeouts.toolSelections}ms`,
+    },
+  ).catch((e) => {
+    if (e?.code === 'TOOL_SELECTION_VISIBLE_TIMEOUT') {
+      recordPipelineError(state, 'tool_selection_visible', `timeout:${step5ToStep6Timeouts.toolSelections}ms`);
+    }
+    return { visible: 0, written: 0, error: e?.message ?? String(e), code: e?.code ?? 'TOOL_SELECTION_VISIBLE_FAILED' };
   });
   emit(makeStepLog({
     iteration: iterations.length, step: 0, status: 'complete',
@@ -1978,7 +2046,7 @@ export async function runOrchestration(args = {}) {
     let crawlOutput;
     try {
       const t0 = Date.now();
-      crawlOutput = await _conductStructuredCrawl({
+      crawlOutput = await withTimeout(_conductStructuredCrawl({
         url: currentUrl,
         maxPages: effortProfile.structuredCrawlMaxPages,
         depth: effortProfile.structuredCrawlDepth,
@@ -1988,6 +2056,10 @@ export async function runOrchestration(args = {}) {
         // to the crawler so auth-gated pages are reachable when the
         // ENTRY-007 stack is wired into richCapture/Browserless.
         storageState: args.storageState ?? state.storageState ?? undefined,
+      }), {
+        timeoutMs: step5ToStep6Timeouts.structuredCrawl,
+        code: 'STRUCTURED_CRAWL_TIMEOUT',
+        message: `structured crawl exceeded ${step5ToStep6Timeouts.structuredCrawl}ms`,
       });
       state.crawlOutput = crawlOutput;
       const log = makeStepLog({
@@ -2013,10 +2085,37 @@ export async function runOrchestration(args = {}) {
       });
       emit(log); iterLog.steps.push(log);
     } catch (e) {
+      if (e?.code === 'STRUCTURED_CRAWL_TIMEOUT') {
+        recordPipelineError(state, 'structured_crawl', `timeout:${step5ToStep6Timeouts.structuredCrawl}ms`);
+        crawlOutput = {
+          pagesCrawled: 0,
+          depth: 0,
+          pages: [],
+          brokenLinks: [],
+          forms: [],
+          interactiveElements: [],
+          errors: [{ phase: 'crawl', url: currentUrl, reason: 'structured_crawl_timeout' }],
+          totalTextLength: 0,
+        };
+        state.crawlOutput = crawlOutput;
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 3, status: 'degraded',
+          tool: 'Agent #21 AggressiveCrawlConductor -> crawlOutputAdapter',
+          why: 'structured crawl timed out; continuing with degraded empty crawl evidence',
+          result: {
+            degraded: true,
+            reason: 'structured_crawl_timeout',
+            timeoutMs: step5ToStep6Timeouts.structuredCrawl,
+            code: e.code,
+          },
+          mode: state.mode,
+        }));
+      } else {
       emit(makeStepLog({ iteration: iterationNumber, step: 3, status: 'failed',
         tool: 'Agent #21 → crawlOutputAdapter', why: 'deep crawl', result: { error: e?.message }, mode: state.mode }));
       return failStep({ product, failedStep: 'STEP_3',
         error: e?.message ?? String(e), code: e?.code ?? 'CRAWL_FAILED', diagnostics: e });
+      }
     }
     await state.checkpoint(onCheckpoint, { lastStep: 3, iteration: iterationNumber });
 
@@ -2031,15 +2130,77 @@ export async function runOrchestration(args = {}) {
     let preScoreEnvelope;
     try {
       const t0 = Date.now();
-      const monitor = await _produceMonitorText({
-        url: currentUrl, productId, runId,
-        githubRepoUrl: githubRepoUrl || undefined,
-        token: token || undefined,
-        crawlReport: crawlOutput,
-      });
-      preScoreEnvelope = await _computeScore({
-        productId, url: currentUrl, runId, monitorText: monitor.monitorText,
-      });
+      let monitor;
+      try {
+        monitor = await withTimeout(
+          _produceMonitorText({
+            url: currentUrl, productId, runId,
+            githubRepoUrl: githubRepoUrl || undefined,
+            token: token || undefined,
+            crawlReport: crawlOutput,
+          }),
+          {
+            timeoutMs: step5ToStep6Timeouts.monitorText,
+            code: 'PRE_SCORE_MONITOR_TEXT_TIMEOUT',
+            message: `Pre-score monitor text exceeded ${step5ToStep6Timeouts.monitorText}ms`,
+          },
+        );
+      } catch (monitorErr) {
+        if (monitorErr?.code !== 'PRE_SCORE_MONITOR_TEXT_TIMEOUT') throw monitorErr;
+        recordPipelineError(state, 'pre_score_monitor_text', `timeout:${step5ToStep6Timeouts.monitorText}ms`);
+        monitor = {
+          monitorText: '[degraded] monitor text timed out; using structured crawl evidence only for baseline scoring.',
+          degraded: true,
+          reason: 'pre_score_monitor_text_timeout',
+        };
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 5, status: 'degraded',
+          tool: 'monitorTextProducer (early baseline)',
+          why: 'monitor text timed out before Five-Layer Scoring; continuing with crawl-only degraded baseline',
+          result: {
+            degraded: true,
+            reason: 'pre_score_monitor_text_timeout',
+            timeoutMs: step5ToStep6Timeouts.monitorText,
+            code: monitorErr.code,
+          },
+          durationMs: Date.now() - t0, mode: state.mode,
+        }));
+      }
+      try {
+        preScoreEnvelope = await withTimeout(
+          _computeScore({
+            productId, url: currentUrl, runId, monitorText: monitor.monitorText,
+          }),
+          {
+            timeoutMs: step5ToStep6Timeouts.computeScore,
+            code: 'PRE_SCORE_COMPUTE_SCORE_TIMEOUT',
+            message: `Pre-score computeScore exceeded ${step5ToStep6Timeouts.computeScore}ms`,
+          },
+        );
+      } catch (scoreErr) {
+        if (scoreErr?.code !== 'PRE_SCORE_COMPUTE_SCORE_TIMEOUT') throw scoreErr;
+        const fallbackGtm = _scoreCrawlOutput(crawlOutput, null);
+        preScoreEnvelope = makeDegradedScoreEnvelope({
+          productId,
+          url: currentUrl,
+          runId,
+          fallbackScore: fallbackGtm?.score ?? 0,
+        });
+        recordPipelineError(state, 'pre_score_compute_score', `timeout:${step5ToStep6Timeouts.computeScore}ms`);
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 5, status: 'degraded',
+          tool: 'preScoreAdapter.computeScore (early baseline)',
+          why: 'computeScore timed out before Five-Layer Scoring; using degraded crawl-derived baseline score',
+          result: {
+            degraded: true,
+            reason: 'pre_score_compute_score_timeout',
+            timeoutMs: step5ToStep6Timeouts.computeScore,
+            fallbackScore: preScoreEnvelope.total,
+            code: scoreErr.code,
+          },
+          durationMs: Date.now() - t0, mode: state.mode,
+        }));
+      }
       if (originalScore === null) originalScore = preScoreEnvelope.total;
 
       const preGtm = _scoreCrawlOutput(crawlOutput, null);
@@ -2982,7 +3143,21 @@ export async function runOrchestration(args = {}) {
             token = githubOperatorToken;
             credentialSource = 'GITHUB_OPERATOR_TOKEN';
           } else {
-            const minted = await _getInstallationToken({ pat: '' });
+            const minted = await withTimeout(
+              _getInstallationToken({
+                pat: '',
+                fetch: makeAbortableFetch({
+                  timeoutMs: step5ToStep6Timeouts.getInstallationToken,
+                  code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
+                  message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
+                }),
+              }),
+              {
+                timeoutMs: step5ToStep6Timeouts.getInstallationToken,
+                code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
+                message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
+              },
+            );
             token = minted.token;
             expiresAt = minted.expiresAt;
             credentialSource = minted.source === 'pat' ? 'GITHUB_PAT' : 'github_app_installation';
@@ -3005,10 +3180,22 @@ export async function runOrchestration(args = {}) {
         });
         emit(log); iterLog.steps.push(log);
       } catch (e) {
-        emit(makeStepLog({ iteration: iterationNumber, step: 8, status: 'failed',
-          tool: 'githubApp', why: 'mint token', result: { error: e?.message }, mode: state.mode }));
+        const tokenTimedOut = e?.code === 'GITHUB_INSTALLATION_TOKEN_TIMEOUT';
+        emit(makeStepLog({ iteration: iterationNumber, step: 8, status: tokenTimedOut ? 'degraded' : 'failed',
+          tool: 'githubApp', why: 'mint token', result: {
+            error: e?.message,
+            degraded: tokenTimedOut,
+            reason: tokenTimedOut ? 'github_installation_token_timeout' : undefined,
+            timeoutMs: tokenTimedOut ? step5ToStep6Timeouts.getInstallationToken : null,
+            code: e?.code ?? 'GITHUB_AUTH_FAILED',
+          }, mode: state.mode }));
+        if (tokenTimedOut) {
+          recordPipelineError(state, 'github_installation_token_step8', `timeout:${step5ToStep6Timeouts.getInstallationToken}ms`);
+          token = null;
+        } else {
         return failStep({ product, failedStep: 'STEP_8',
           error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_AUTH_FAILED', diagnostics: e });
+        }
       }
 
       const repoParsed = parseGithubRepoUrl(githubRepoUrl);
@@ -3047,11 +3234,30 @@ export async function runOrchestration(args = {}) {
           const filePath = issue.filePath || 'README.md';
           let current;
           try {
-            current = await _fetchFileContent({ owner, repo, filePath, ref: productBranch, token });
+            current = await withTimeout(
+              _fetchFileContent({
+                owner, repo, filePath, ref: productBranch, token,
+                opts: {
+                  fetch: makeAbortableFetch({
+                    timeoutMs: step5ToStep6Timeouts.fetchFileContent,
+                    code: 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT',
+                    message: `GitHub file content fetch exceeded ${step5ToStep6Timeouts.fetchFileContent}ms`,
+                  }),
+                },
+              }),
+              {
+                timeoutMs: step5ToStep6Timeouts.fetchFileContent,
+                code: 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT',
+                message: `GitHub file content fetch exceeded ${step5ToStep6Timeouts.fetchFileContent}ms`,
+              },
+            );
             if (typeof current === 'string' && !originalContentByPath.has(filePath)) {
               originalContentByPath.set(filePath, current);
             }
           } catch (fetchErr) {
+            if (fetchErr?.code === 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT') {
+              recordPipelineError(state, `step7_fetch_${filePath}`, `timeout:${step5ToStep6Timeouts.fetchFileContent}ms`);
+            }
             fixOutcomes.push({
               filePath, status: 'rejected',
               category: issue.category ?? null,
@@ -3154,36 +3360,48 @@ export async function runOrchestration(args = {}) {
             // remove-import preserve rule.
             llmCallsThisIteration += 1;
             state.llmFixCallsThisRun += 1;
-            const fix = await _generateFix({
-              filePath, fileContent: current,
-              issue: issue.issue || issue.description || issue.title,
-              fix: issue.fix || null,
-              findings: findingsForFile,
-              userDescription: inputContext.description,
-              scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
-              sourceContext: [
-                `Product: ${product?.product_id ?? productId}`,
-                `Original URL: ${initialUrl ?? currentUrl}`,
-                `Current score: ${preScoreEnvelope?.total ?? 'unknown'}/100`,
-                `User objectives: ${userObjectives.map((objective) => objective.text).join('; ') || '(none)'}`,
-                `Source mapped proposals: ${(state.sourceMappedFixProposals ?? [])
-                  .filter((proposal) => proposal?.filePath === filePath)
-                  .map((proposal) => proposal.proposedFix)
-                  .filter(Boolean)
-                  .join('; ') || '(none)'}`,
-              ].join('\n'),
-              productId, runId,
-              opts: {
-                model: 'claude-sonnet-4-20250514',
-                mode: 'full',
-                requireStructured: true,
+            const fix = await withTimeout(
+              _generateFix({
+                filePath, fileContent: current,
+                issue: issue.issue || issue.description || issue.title,
+                fix: issue.fix || null,
+                findings: findingsForFile,
                 userDescription: inputContext.description,
                 scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
-                ...(scopedRelax ? { preserveExceptions: scopedRelax } : {}),
-                ...(repoFileList ? { fileInventory: repoFileList } : {}),
-                ...(knownPackages ? { knownPackages } : {}),
+                sourceContext: [
+                  `Product: ${product?.product_id ?? productId}`,
+                  `Original URL: ${initialUrl ?? currentUrl}`,
+                  `Current score: ${preScoreEnvelope?.total ?? 'unknown'}/100`,
+                  `User objectives: ${userObjectives.map((objective) => objective.text).join('; ') || '(none)'}`,
+                  `Source mapped proposals: ${(state.sourceMappedFixProposals ?? [])
+                    .filter((proposal) => proposal?.filePath === filePath)
+                    .map((proposal) => proposal.proposedFix)
+                    .filter(Boolean)
+                    .join('; ') || '(none)'}`,
+                ].join('\n'),
+                productId, runId,
+                opts: {
+                  model: 'claude-sonnet-4-20250514',
+                  mode: 'full',
+                  requireStructured: true,
+                  userDescription: inputContext.description,
+                  scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
+                  ...(scopedRelax ? { preserveExceptions: scopedRelax } : {}),
+                  ...(repoFileList ? { fileInventory: repoFileList } : {}),
+                  ...(knownPackages ? { knownPackages } : {}),
+                  fetch: makeAbortableFetch({
+                    timeoutMs: step5ToStep6Timeouts.generateFix,
+                    code: 'GENERATE_FIX_TIMEOUT',
+                    message: `generateFix exceeded ${step5ToStep6Timeouts.generateFix}ms`,
+                  }),
+                },
+              }),
+              {
+                timeoutMs: step5ToStep6Timeouts.generateFix,
+                code: 'GENERATE_FIX_TIMEOUT',
+                message: `generateFix exceeded ${step5ToStep6Timeouts.generateFix}ms`,
               },
-            });
+            );
             const candidateForValidation = typeof deps.generateFix === 'function'
               ? {
                   ...fix,
@@ -3286,7 +3504,7 @@ export async function runOrchestration(args = {}) {
         iterLog.fixOutcomes = fixOutcomes;
         if (state.llmFixAttempts.length > 0) {
           try {
-            await _appendGovernanceEntry({
+            await withTimeout(_appendGovernanceEntry({
               productId, environment,
               entry: {
                 kind: 'self_renewal.llm_fix_attempts.v1',
@@ -3298,8 +3516,16 @@ export async function runOrchestration(args = {}) {
                 at: new Date().toISOString(),
               },
               supabase,
+            }), {
+              timeoutMs: step5ToStep6Timeouts.governanceWrite,
+              code: 'LLM_FIX_ATTEMPTS_GOVERNANCE_TIMEOUT',
+              message: `LLM fix attempts governance write exceeded ${step5ToStep6Timeouts.governanceWrite}ms`,
             });
-          } catch { /* final audit path records governance write availability */ }
+          } catch (e) {
+            if (e?.code === 'LLM_FIX_ATTEMPTS_GOVERNANCE_TIMEOUT') {
+              recordPipelineError(state, 'llm_fix_attempts_governance', `timeout:${step5ToStep6Timeouts.governanceWrite}ms`);
+            }
+          }
         }
         const accepted = fixOutcomes.filter((o) => o.status === 'accepted');
         const rejected = fixOutcomes.filter((o) => o.status === 'rejected');
@@ -3346,7 +3572,7 @@ export async function runOrchestration(args = {}) {
       if (_runConstruction && (product?.construction_eligible === true || _constructionEnvBypass)) {
         try {
           const t0 = Date.now();
-          const constructionResult = await _runConstruction({
+          const constructionResult = await withTimeout(_runConstruction({
             product,
             environment,
             // PHASE B1: prefer the normalized multi-engine pipeline output
@@ -3397,7 +3623,14 @@ export async function runOrchestration(args = {}) {
               ?? (typeof deps.createOriginPageResolver === 'function' && owner && repo && token && Array.isArray(repoFileList)
                 ? deps.createOriginPageResolver({
                     repoFileList: async () => repoFileList,
-                    fetchFileContent: async (filePath) => _fetchFileContent({ owner, repo, filePath, ref: productBranch, token }),
+                    fetchFileContent: async (filePath) => withTimeout(
+                      _fetchFileContent({ owner, repo, filePath, ref: productBranch, token }),
+                      {
+                        timeoutMs: step5ToStep6Timeouts.fetchFileContent,
+                        code: 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT',
+                        message: `GitHub file content fetch exceeded ${step5ToStep6Timeouts.fetchFileContent}ms`,
+                      },
+                    ),
                   })
                 : null),
             registryConfig: {
@@ -3409,6 +3642,10 @@ export async function runOrchestration(args = {}) {
             supabase,
             deps: { aiOpts: { apiKey: process.env.ANTHROPIC_API_KEY } },
             logger: console,
+          }), {
+            timeoutMs: step5ToStep6Timeouts.construction,
+            code: 'CONSTRUCTION_ENGINE_TIMEOUT',
+            message: `ConstructionEngine exceeded ${step5ToStep6Timeouts.construction}ms`,
           });
           const constructed = constructionResult?.result?.candidateFiles ?? [];
           for (const cf of constructed) {
@@ -3440,9 +3677,19 @@ export async function runOrchestration(args = {}) {
             iteration: iterationNumber, step: 7, status: 'degraded',
             tool: 'ConstructionEngine (CA-17 Phase 1)',
             why: 'wire_up construction attempt',
-            result: { error: (e?.message ?? String(e)).slice(0, 280), code: e?.code ?? 'CONSTRUCTION_ERROR', gate: e?.gate ?? null },
+            result: {
+              error: (e?.message ?? String(e)).slice(0, 280),
+              code: e?.code ?? 'CONSTRUCTION_ERROR',
+              gate: e?.gate ?? null,
+              degraded: e?.code === 'CONSTRUCTION_ENGINE_TIMEOUT',
+              reason: e?.code === 'CONSTRUCTION_ENGINE_TIMEOUT' ? 'construction_engine_timeout' : undefined,
+              timeoutMs: e?.code === 'CONSTRUCTION_ENGINE_TIMEOUT' ? step5ToStep6Timeouts.construction : null,
+            },
             mode: state.mode,
           }));
+          if (e?.code === 'CONSTRUCTION_ENGINE_TIMEOUT') {
+            recordPipelineError(state, 'construction_engine', `timeout:${step5ToStep6Timeouts.construction}ms`);
+          }
           // Phase 1 proof-of-concept: never halt the pipeline on
           // construction failure. The standard fix path stands as-is.
         }
@@ -3469,7 +3716,7 @@ export async function runOrchestration(args = {}) {
           : (Array.isArray(state.phaseBFindings) ? state.phaseBFindings : []);
         if (_findings.length > 0) {
           const t0 = Date.now();
-          remediationOutput = await _runRemediation({
+          remediationOutput = await withTimeout(_runRemediation({
             findings: _findings,
             // File resolver: PATH A uses the GitHub Contents API; PATH B
             // skips remediation patches entirely (no operator repo to
@@ -3495,10 +3742,17 @@ export async function runOrchestration(args = {}) {
                 candidatePath = (repoFileList ?? []).find((p) => /(^|\/)index\.html?$/i.test(p)) ?? 'index.html';
               }
               try {
-                const content = await _fetchFileContent({
-                  owner: parsed.owner, repo: parsed.repo,
-                  filePath: candidatePath, ref: productBranch, token,
-                });
+                const content = await withTimeout(
+                  _fetchFileContent({
+                    owner: parsed.owner, repo: parsed.repo,
+                    filePath: candidatePath, ref: productBranch, token,
+                  }),
+                  {
+                    timeoutMs: step5ToStep6Timeouts.fetchFileContent,
+                    code: 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT',
+                    message: `GitHub file content fetch exceeded ${step5ToStep6Timeouts.fetchFileContent}ms`,
+                  },
+                );
                 if (typeof content !== 'string') return null;
                 return { filePath: candidatePath, fileContent: content };
               } catch { return null; }
@@ -3516,6 +3770,10 @@ export async function runOrchestration(args = {}) {
                 }));
               } catch { /* swallow */ }
             },
+          }), {
+            timeoutMs: step5ToStep6Timeouts.remediation,
+            code: 'REMEDIATION_ENGINE_TIMEOUT',
+            message: `remediation engine exceeded ${step5ToStep6Timeouts.remediation}ms`,
           });
           // Merge approved patches into fileChanges using
           // last-write-wins on filePath (a later remediation patch
@@ -3552,9 +3810,18 @@ export async function runOrchestration(args = {}) {
           iteration: iterationNumber, step: 7, status: 'degraded',
           tool: 'remediationEngine (PHASE B2)',
           why: 'rule-based remediation attempt',
-          result: { error: (e?.message ?? String(e)).slice(0, 280) },
+          result: {
+            error: (e?.message ?? String(e)).slice(0, 280),
+            degraded: e?.code === 'REMEDIATION_ENGINE_TIMEOUT',
+            reason: e?.code === 'REMEDIATION_ENGINE_TIMEOUT' ? 'remediation_engine_timeout' : undefined,
+            timeoutMs: e?.code === 'REMEDIATION_ENGINE_TIMEOUT' ? step5ToStep6Timeouts.remediation : null,
+            code: e?.code ?? 'REMEDIATION_ERROR',
+          },
           mode: state.mode,
         }));
+        if (e?.code === 'REMEDIATION_ENGINE_TIMEOUT') {
+          recordPipelineError(state, 'remediation_engine', `timeout:${step5ToStep6Timeouts.remediation}ms`);
+        }
       }
 
       if (fileChanges.length === 0) {
@@ -3613,7 +3880,7 @@ export async function runOrchestration(args = {}) {
             ...platformRejected.map((r) => ({ ...r, stage: 'repair_integrity_gate' })),
           ];
           try {
-            await _appendGovernanceEntry({
+            await withTimeout(_appendGovernanceEntry({
               productId, environment,
               entry: {
                 kind: 'self_renewal.platform_boundary_blocked.v1',
@@ -3626,8 +3893,16 @@ export async function runOrchestration(args = {}) {
                 at: new Date().toISOString(),
               },
               supabase,
+            }), {
+              timeoutMs: step5ToStep6Timeouts.governanceWrite,
+              code: 'PLATFORM_BOUNDARY_GOVERNANCE_TIMEOUT',
+              message: `platform boundary governance write exceeded ${step5ToStep6Timeouts.governanceWrite}ms`,
             });
-          } catch { /* governance write failure is captured by final audit path */ }
+          } catch (e) {
+            if (e?.code === 'PLATFORM_BOUNDARY_GOVERNANCE_TIMEOUT') {
+              recordPipelineError(state, 'platform_boundary_governance', `timeout:${step5ToStep6Timeouts.governanceWrite}ms`);
+            }
+          }
         }
       }
 
@@ -3720,19 +3995,47 @@ export async function runOrchestration(args = {}) {
       try {
         const t0 = Date.now();
         const first = fileChanges[0];
-        await _createRenewalBranch({
-          owner, repo, baseBranch: productBranch, branchName,
-          filePath: first.filePath, fileContent: first.fileContent,
-          commitMessage: `FlowAI Self-Renewal iter${iterationNumber} fix: ${first.filePath}`,
-          token,
-        });
+        await withTimeout(
+          _createRenewalBranch({
+            owner, repo, baseBranch: productBranch, branchName,
+            filePath: first.filePath, fileContent: first.fileContent,
+            commitMessage: `FlowAI Self-Renewal iter${iterationNumber} fix: ${first.filePath}`,
+            token,
+            opts: {
+              fetch: makeAbortableFetch({
+                timeoutMs: step5ToStep6Timeouts.createRenewalBranch,
+                code: 'GITHUB_BRANCH_CREATE_TIMEOUT',
+                message: `GitHub branch creation exceeded ${step5ToStep6Timeouts.createRenewalBranch}ms`,
+              }),
+            },
+          }),
+          {
+            timeoutMs: step5ToStep6Timeouts.createRenewalBranch,
+            code: 'GITHUB_BRANCH_CREATE_TIMEOUT',
+            message: `GitHub branch creation exceeded ${step5ToStep6Timeouts.createRenewalBranch}ms`,
+          },
+        );
         for (let i = 1; i < fileChanges.length; i += 1) {
           const f = fileChanges[i];
-          await _commitFileToBranch({
-            owner, repo, branchName, filePath: f.filePath, fileContent: f.fileContent,
-            commitMessage: `FlowAI Self-Renewal iter${iterationNumber} fix: ${f.filePath}`,
-            token,
-          });
+          await withTimeout(
+            _commitFileToBranch({
+              owner, repo, branchName, filePath: f.filePath, fileContent: f.fileContent,
+              commitMessage: `FlowAI Self-Renewal iter${iterationNumber} fix: ${f.filePath}`,
+              token,
+              opts: {
+                fetch: makeAbortableFetch({
+                  timeoutMs: step5ToStep6Timeouts.commitFileToBranch,
+                  code: 'GITHUB_BRANCH_COMMIT_TIMEOUT',
+                  message: `GitHub branch commit exceeded ${step5ToStep6Timeouts.commitFileToBranch}ms`,
+                }),
+              },
+            }),
+            {
+              timeoutMs: step5ToStep6Timeouts.commitFileToBranch,
+              code: 'GITHUB_BRANCH_COMMIT_TIMEOUT',
+              message: `GitHub branch commit exceeded ${step5ToStep6Timeouts.commitFileToBranch}ms`,
+            },
+          );
         }
         // DISPATCH 30 — record the per-file commit order on iterLog so
         // the per-fix attribution block (after STEP 11) can reference it.
@@ -3752,6 +4055,31 @@ export async function runOrchestration(args = {}) {
         });
         emit(log); iterLog.steps.push(log);
       } catch (e) {
+        if (e?.code === 'GITHUB_BRANCH_CREATE_TIMEOUT' || e?.code === 'GITHUB_BRANCH_COMMIT_TIMEOUT') {
+          recordPipelineError(state, 'github_branch_write', `timeout:${e.code}`);
+          emit(makeStepLog({
+            iteration: iterationNumber, step: 9, status: 'degraded',
+            tool: 'githubBranchWriter.js (bounded)',
+            why: 'branch/file write timed out; continuing without deploy or PR rather than stalling the forge',
+            result: {
+              degraded: true,
+              reason: 'github_branch_write_timeout',
+              code: e.code,
+              timeoutMs: e.code === 'GITHUB_BRANCH_CREATE_TIMEOUT'
+                ? step5ToStep6Timeouts.createRenewalBranch
+                : step5ToStep6Timeouts.commitFileToBranch,
+            },
+            mode: state.mode,
+          }));
+          fileChanges.length = 0;
+          exitReason = 'GITHUB_BRANCH_WRITE_TIMEOUT';
+          await recordNoFixIteration({
+            reason: exitReason,
+            detail: 'GitHub branch write timed out before a deployable artifact was available.',
+            remediationOutput,
+          });
+          break;
+        }
         return failStep({ product, failedStep: 'STEP_9',
           error: e?.message ?? String(e), code: e?.code ?? 'GITHUB_API_ERROR', diagnostics: e });
       }
@@ -3946,9 +4274,23 @@ export async function runOrchestration(args = {}) {
           if (!orgId || !vercelToken) {
             throw new Error('VERCEL_ORG_ID or VERCEL_OPERATOR_TOKEN/VERCEL_TOKEN missing from env');
           }
-          const deployment = await _deployBranchPreview({
-            projectId, orgId, owner, repo, branchName, token: vercelToken,
-          });
+          const deployment = await withTimeout(
+            _deployBranchPreview({
+              projectId, orgId, owner, repo, branchName, token: vercelToken,
+              opts: {
+                fetch: makeAbortableFetch({
+                  timeoutMs: step5ToStep6Timeouts.deployBranchPreview,
+                  code: 'VERCEL_PREVIEW_DEPLOY_TIMEOUT',
+                  message: `Vercel preview deploy exceeded ${step5ToStep6Timeouts.deployBranchPreview}ms`,
+                }),
+              },
+            }),
+            {
+              timeoutMs: step5ToStep6Timeouts.deployBranchPreview,
+              code: 'VERCEL_PREVIEW_DEPLOY_TIMEOUT',
+              message: `Vercel preview deploy exceeded ${step5ToStep6Timeouts.deployBranchPreview}ms`,
+            },
+          );
           // DISPATCH 26: Vercel's deployments API returns the host without a
           // protocol prefix (e.g. "app-xyz.vercel.app"). Downstream
           // produceMonitorText → fetchUrlContent calls `new URL(url)` which
@@ -3987,6 +4329,7 @@ export async function runOrchestration(args = {}) {
             degraded: true,
             reason: e?.message ?? String(e),
             code: e?.code ?? 'DEPLOY_FAILED',
+            timeoutMs: e?.code === 'VERCEL_PREVIEW_DEPLOY_TIMEOUT' ? step5ToStep6Timeouts.deployBranchPreview : null,
             // Common cause is build error in the fix branch — the pre-
             // deploy parse gate (STEP 9 sub-gate) should catch most of
             // these; this fallback covers the residual (e.g. runtime
@@ -3994,6 +4337,9 @@ export async function runOrchestration(args = {}) {
           },
           durationMs: Date.now() - t0, mode: state.mode,
         }));
+        if (e?.code === 'VERCEL_PREVIEW_DEPLOY_TIMEOUT') {
+          recordPipelineError(state, 'vercel_preview_deploy', `timeout:${step5ToStep6Timeouts.deployBranchPreview}ms`);
+        }
       }
     }
     await state.checkpoint(onCheckpoint, { lastStep: 10, iteration: iterationNumber });
@@ -4043,25 +4389,32 @@ export async function runOrchestration(args = {}) {
     } else {
       try {
         const t0 = Date.now();
-        postFixEvaluationOutput = await _runEvaluationPipeline({
-          url: postFixUrl,
-          options: {
-            phaseBFindings: [],
-            ...evaluationRuntimeOptions,
-            onStep: (evt) => {
-              try {
-                emit(makeStepLog({
-                  iteration: iterationNumber, step: 11,
-                  status: evt?.log?.ok === false ? 'degraded' : 'complete',
-                  tool: `evaluationPipeline:${evt?.log?.evaluator ?? 'unknown'} (PHASE C post-fix)`,
-                  why: 'Phase C post-fix evaluator complete signal',
-                  result: evt?.log ?? null,
-                  mode: state.mode,
-                }));
-              } catch { /* swallow */ }
+        postFixEvaluationOutput = await withTimeout(
+          _runEvaluationPipeline({
+            url: postFixUrl,
+            options: {
+              phaseBFindings: [],
+              ...evaluationRuntimeOptions,
+              onStep: (evt) => {
+                try {
+                  emit(makeStepLog({
+                    iteration: iterationNumber, step: 11,
+                    status: evt?.log?.ok === false ? 'degraded' : 'complete',
+                    tool: `evaluationPipeline:${evt?.log?.evaluator ?? 'unknown'} (PHASE C post-fix)`,
+                    why: 'Phase C post-fix evaluator complete signal',
+                    result: evt?.log ?? null,
+                    mode: state.mode,
+                  }));
+                } catch { /* swallow */ }
+              },
             },
+          }),
+          {
+            timeoutMs: step5ToStep6Timeouts.postFixEvaluationPipeline,
+            code: 'POST_FIX_EVALUATION_PIPELINE_TIMEOUT',
+            message: `post-fix evaluation pipeline exceeded ${step5ToStep6Timeouts.postFixEvaluationPipeline}ms`,
           },
-        });
+        );
         postFixSnapshot = await _capturePostFixSnapshot({
           url: postFixUrl,
           evaluationResult: postFixEvaluationOutput,
@@ -4084,13 +4437,25 @@ export async function runOrchestration(args = {}) {
           durationMs: Date.now() - t0, mode: state.mode,
         }));
       } catch (snapshotErr) {
+        if (snapshotErr?.code === 'POST_FIX_EVALUATION_PIPELINE_TIMEOUT') {
+          recordPipelineError(state, 'post_fix_evaluation_pipeline', `timeout:${step5ToStep6Timeouts.postFixEvaluationPipeline}ms`);
+        }
         postFixSnapshot = null;
         state.transformationPostFix = null;
         emit(makeStepLog({
           iteration: iterationNumber, step: 11, status: 'degraded',
           tool: 'verification.capturePostFixSnapshot (PHASE C)',
           why: 'post-fix delta snapshot failed; continuing with existing scoring path',
-          result: { error: (snapshotErr?.message ?? String(snapshotErr)).slice(0, 200) },
+          result: {
+            error: (snapshotErr?.message ?? String(snapshotErr)).slice(0, 200),
+            reason: snapshotErr?.code === 'POST_FIX_EVALUATION_PIPELINE_TIMEOUT'
+              ? 'post_fix_evaluation_pipeline_timeout'
+              : 'post_fix_snapshot_failed',
+            timeoutMs: snapshotErr?.code === 'POST_FIX_EVALUATION_PIPELINE_TIMEOUT'
+              ? step5ToStep6Timeouts.postFixEvaluationPipeline
+              : null,
+            code: snapshotErr?.code ?? 'POST_FIX_SNAPSHOT_FAILED',
+          },
           mode: state.mode,
         }));
       }
@@ -4155,15 +4520,76 @@ export async function runOrchestration(args = {}) {
       // DISPATCH 26: on deploy-degraded (PATH B timeout/error), `postFixUrl`
       // falls back to the original URL so STEP 11 still has something to
       // score. On the happy path postFixUrl === previewUrl.
-      const postMonitor = await _produceMonitorText({
-        url: postFixUrl, productId, runId,
-        githubRepoUrl: githubRepoUrl || undefined,
-        token: token || undefined,
-        crawlReport: crawlOutput,
-      });
-      postScoreEnvelope = await _computeScore({
-        productId, url: postFixUrl, runId, monitorText: postMonitor.monitorText,
-      });
+      let postMonitor;
+      try {
+        postMonitor = await withTimeout(
+          _produceMonitorText({
+            url: postFixUrl, productId, runId,
+            githubRepoUrl: githubRepoUrl || undefined,
+            token: token || undefined,
+            crawlReport: crawlOutput,
+          }),
+          {
+            timeoutMs: step5ToStep6Timeouts.postFixMonitorText,
+            code: 'POST_FIX_MONITOR_TEXT_TIMEOUT',
+            message: `post-fix monitor text exceeded ${step5ToStep6Timeouts.postFixMonitorText}ms`,
+          },
+        );
+      } catch (postMonitorErr) {
+        if (postMonitorErr?.code !== 'POST_FIX_MONITOR_TEXT_TIMEOUT') throw postMonitorErr;
+        recordPipelineError(state, 'post_fix_monitor_text', `timeout:${step5ToStep6Timeouts.postFixMonitorText}ms`);
+        postMonitor = {
+          monitorText: '[degraded] post-fix monitor text timed out; reusing available crawl evidence.',
+          degraded: true,
+        };
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 11, status: 'degraded',
+          tool: 'monitorTextProducer (post-fix)',
+          why: 'post-fix monitor text timed out; continuing with degraded score input',
+          result: {
+            degraded: true,
+            reason: 'post_fix_monitor_text_timeout',
+            timeoutMs: step5ToStep6Timeouts.postFixMonitorText,
+            code: postMonitorErr.code,
+          },
+          mode: state.mode,
+        }));
+      }
+      try {
+        postScoreEnvelope = await withTimeout(
+          _computeScore({
+            productId, url: postFixUrl, runId, monitorText: postMonitor.monitorText,
+          }),
+          {
+            timeoutMs: step5ToStep6Timeouts.postFixComputeScore,
+            code: 'POST_FIX_COMPUTE_SCORE_TIMEOUT',
+            message: `post-fix computeScore exceeded ${step5ToStep6Timeouts.postFixComputeScore}ms`,
+          },
+        );
+      } catch (postScoreErr) {
+        if (postScoreErr?.code !== 'POST_FIX_COMPUTE_SCORE_TIMEOUT') throw postScoreErr;
+        recordPipelineError(state, 'post_fix_compute_score', `timeout:${step5ToStep6Timeouts.postFixComputeScore}ms`);
+        postScoreEnvelope = makeDegradedScoreEnvelope({
+          productId,
+          url: postFixUrl,
+          runId,
+          fallbackScore: preScoreEnvelope?.total ?? originalScore ?? 0,
+          label: 'degraded-post-fix-timeout-baseline',
+        });
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 11, status: 'degraded',
+          tool: 'preScoreAdapter.computeScore (post-fix)',
+          why: 'post-fix computeScore timed out; reusing degraded baseline instead of fabricating improvement',
+          result: {
+            degraded: true,
+            reason: 'post_fix_compute_score_timeout',
+            timeoutMs: step5ToStep6Timeouts.postFixComputeScore,
+            fallbackScore: postScoreEnvelope.total,
+            code: postScoreErr.code,
+          },
+          mode: state.mode,
+        }));
+      }
       lastPostScore = postScoreEnvelope.total;
       // DISPATCH 28 — focused post-fix re-crawl against the live
       // preview URL so the canonical §7.6 score reflects the actual
@@ -4177,15 +4603,25 @@ export async function runOrchestration(args = {}) {
           // re-probe covers the same surface. W08 raises the default
           // surface budget so production verification is no longer
           // artificially capped at a handful of pages.
-          postFixCrawlOutput = await _conductStructuredCrawl({
-            url: postFixUrl,
-            maxPages: effortProfile.structuredCrawlMaxPages,
-            depth: effortProfile.structuredCrawlDepth,
-            productId,
-            runId,
-            storageState: args.storageState ?? state.storageState ?? undefined,
-          });
-        } catch {
+          postFixCrawlOutput = await withTimeout(
+            _conductStructuredCrawl({
+              url: postFixUrl,
+              maxPages: effortProfile.structuredCrawlMaxPages,
+              depth: effortProfile.structuredCrawlDepth,
+              productId,
+              runId,
+              storageState: args.storageState ?? state.storageState ?? undefined,
+            }),
+            {
+              timeoutMs: step5ToStep6Timeouts.postFixCrawl,
+              code: 'POST_FIX_CRAWL_TIMEOUT',
+              message: `post-fix crawl exceeded ${step5ToStep6Timeouts.postFixCrawl}ms`,
+            },
+          );
+        } catch (crawlErr) {
+          if (crawlErr?.code === 'POST_FIX_CRAWL_TIMEOUT') {
+            recordPipelineError(state, 'post_fix_crawl', `timeout:${step5ToStep6Timeouts.postFixCrawl}ms`);
+          }
           postFixCrawlOutput = crawlOutput;
         }
       }
@@ -4216,9 +4652,10 @@ export async function runOrchestration(args = {}) {
                 postFixSeedsByUrl[p.url] = p.interactives;
               }
             }
-            const reprobe = await _probeAllPagesPost({
-              urls: postFixUrls,
-              opts: {
+            const reprobe = await withTimeout(
+              _probeAllPagesPost({
+                urls: postFixUrls,
+                opts: {
                 // D43 Lever b — defaults bumped in adversarialSurface.js.
                 probeBudgetMs: state.phaseBProbeBudgetMs ?? effortProfile.phaseBProbeBudgetMs ?? phaseBBudget.probeBudgetMs,
                 overallBudgetMs: state.phaseBOverallBudgetMs ?? effortProfile.phaseBOverallBudgetMs ?? phaseBBudget.overallBudgetMs,
@@ -4227,8 +4664,14 @@ export async function runOrchestration(args = {}) {
                 storageState: args.storageState ?? state.storageState ?? undefined,
                 seedsByUrl: postFixSeedsByUrl,
                 maxModals: 10, maxForms: 10,
+                },
+              }),
+              {
+                timeoutMs: step5ToStep6Timeouts.postFixProbeAllPages,
+                code: 'POST_FIX_PROBE_ALL_PAGES_TIMEOUT',
+                message: `post-fix probeAllPages exceeded ${step5ToStep6Timeouts.postFixProbeAllPages}ms`,
               },
-            });
+            );
             if (reprobe && reprobe.ok !== false && Array.isArray(reprobe.findings)) {
               postFixPhaseBFindings = reprobe.findings;
               postFixPhaseBSummary = reprobe.summary ?? null;
@@ -4238,7 +4681,10 @@ export async function runOrchestration(args = {}) {
               state.phaseBPostFixSummary = postFixPhaseBSummary;
             }
           }
-        } catch {
+        } catch (reprobeErr) {
+          if (reprobeErr?.code === 'POST_FIX_PROBE_ALL_PAGES_TIMEOUT') {
+            recordPipelineError(state, 'post_fix_probe_all_pages', `timeout:${step5ToStep6Timeouts.postFixProbeAllPages}ms`);
+          }
           // Re-probe failure ⇒ keep pre-fix findings as fallback.
           // No log emission here — the post-fix probe is best-effort;
           // STEP 11 still emits its score log below.
@@ -4679,21 +5125,35 @@ export async function runOrchestration(args = {}) {
     }
     try {
       const t0 = Date.now();
-      pr = await _createRenewalPr({
-        owner: parseGithubRepoUrl(githubRepoUrl).owner,
-        repo: parseGithubRepoUrl(githubRepoUrl).repo,
-        branchName: lastIter.branchName,
-        baseBranch: productBranch,
-        title: `FlowAI Self-Renewal: ${runId.slice(0, 8)} (${exitReason})`,
-        body: buildPrBody({
-          runId, mode, exitReason,
-          originalScore: originalGtmScore ?? 0,
-          finalScore: lastPostGtm?.score ?? originalGtmScore ?? 0,
-          totalDelta: (lastPostGtm?.score ?? originalGtmScore ?? 0) - (originalGtmScore ?? 0),
-          iterations, finalPreviewUrl, gtmTarget,
+      pr = await withTimeout(
+        _createRenewalPr({
+          owner: parseGithubRepoUrl(githubRepoUrl).owner,
+          repo: parseGithubRepoUrl(githubRepoUrl).repo,
+          branchName: lastIter.branchName,
+          baseBranch: productBranch,
+          title: `FlowAI Self-Renewal: ${runId.slice(0, 8)} (${exitReason})`,
+          body: buildPrBody({
+            runId, mode, exitReason,
+            originalScore: originalGtmScore ?? 0,
+            finalScore: lastPostGtm?.score ?? originalGtmScore ?? 0,
+            totalDelta: (lastPostGtm?.score ?? originalGtmScore ?? 0) - (originalGtmScore ?? 0),
+            iterations, finalPreviewUrl, gtmTarget,
+          }),
+          token,
+          opts: {
+            fetch: makeAbortableFetch({
+              timeoutMs: step5ToStep6Timeouts.createRenewalPr,
+              code: 'GITHUB_PR_CREATE_TIMEOUT',
+              message: `GitHub PR creation exceeded ${step5ToStep6Timeouts.createRenewalPr}ms`,
+            }),
+          },
         }),
-        token,
-      });
+        {
+          timeoutMs: step5ToStep6Timeouts.createRenewalPr,
+          code: 'GITHUB_PR_CREATE_TIMEOUT',
+          message: `GitHub PR creation exceeded ${step5ToStep6Timeouts.createRenewalPr}ms`,
+        },
+      );
       emit(makeStepLog({
         iteration: iterations.length, step: 13, status: 'complete',
         tool: 'githubPrWriter.js',
@@ -4705,8 +5165,17 @@ export async function runOrchestration(args = {}) {
       emit(makeStepLog({
         iteration: iterations.length, step: 13, status: 'failed',
         tool: 'githubPrWriter', why: 'open PR',
-        result: { error: e?.message }, mode: state.mode,
+        result: {
+          error: e?.message,
+          code: e?.code ?? 'PR_CREATE_FAILED',
+          degraded: e?.code === 'GITHUB_PR_CREATE_TIMEOUT',
+          reason: e?.code === 'GITHUB_PR_CREATE_TIMEOUT' ? 'github_pr_create_timeout' : undefined,
+          timeoutMs: e?.code === 'GITHUB_PR_CREATE_TIMEOUT' ? step5ToStep6Timeouts.createRenewalPr : null,
+        }, mode: state.mode,
       }));
+      if (e?.code === 'GITHUB_PR_CREATE_TIMEOUT') {
+        recordPipelineError(state, 'github_pr_create', `timeout:${step5ToStep6Timeouts.createRenewalPr}ms`);
+      }
       // Continue to STEP 14 even if PR failed.
     }
   }
@@ -4714,9 +5183,21 @@ export async function runOrchestration(args = {}) {
   // W6 INTEGRATION — STEP 3a: emit one tool.selection envelope per
   // AutoRunner step key into governance_record before the
   // orchestration_complete write. Best-effort (recommend_only).
-  const toolSelectionsResult = await _emitToolSelections({
-    emitVisible: false,
-    writeGovernance: true,
+  const toolSelectionsResult = await withTimeout(
+    _emitToolSelections({
+      emitVisible: false,
+      writeGovernance: true,
+    }),
+    {
+      timeoutMs: step5ToStep6Timeouts.toolSelections,
+      code: 'TOOL_SELECTION_GOVERNANCE_TIMEOUT',
+      message: `tool selection governance write exceeded ${step5ToStep6Timeouts.toolSelections}ms`,
+    },
+  ).catch((e) => {
+    if (e?.code === 'TOOL_SELECTION_GOVERNANCE_TIMEOUT') {
+      recordPipelineError(state, 'tool_selection_governance', `timeout:${step5ToStep6Timeouts.toolSelections}ms`);
+    }
+    return { written: 0, error: e?.message ?? String(e), code: e?.code ?? 'TOOL_SELECTION_GOVERNANCE_FAILED' };
   });
   emit(makeStepLog({
     iteration: iterations.length, step: 0, status: 'complete',
@@ -4822,7 +5303,7 @@ export async function runOrchestration(args = {}) {
     }));
   } else {
   try {
-    auditWrite = await _appendGovernanceEntry({
+    auditWrite = await withTimeout(_appendGovernanceEntry({
       productId, environment,
       entry: {
         kind: 'self_renewal.orchestration_complete.v1',
@@ -4892,6 +5373,10 @@ export async function runOrchestration(args = {}) {
         at: new Date().toISOString(),
       },
       supabase,
+    }), {
+      timeoutMs: step5ToStep6Timeouts.governanceWrite,
+      code: 'FINAL_GOVERNANCE_WRITE_TIMEOUT',
+      message: `final governance write exceeded ${step5ToStep6Timeouts.governanceWrite}ms`,
     });
     emit(makeStepLog({
       iteration: iterations.length, step: 14, status: 'complete',
@@ -4900,6 +5385,10 @@ export async function runOrchestration(args = {}) {
       result: auditWrite, mode: state.mode, canInterrupt: false,
     }));
   } catch (e) {
+    if (e?.code === 'FINAL_GOVERNANCE_WRITE_TIMEOUT') {
+      auditWrite = { written: false, reason: 'final_governance_write_timeout', timeoutMs: step5ToStep6Timeouts.governanceWrite };
+      recordPipelineError(state, 'final_governance_write', `timeout:${step5ToStep6Timeouts.governanceWrite}ms`);
+    }
     emit(makeStepLog({
       iteration: iterations.length, step: 14, status: 'failed',
       tool: 'governance_record', why: 'audit write',

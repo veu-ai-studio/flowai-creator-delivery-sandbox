@@ -77,6 +77,7 @@ const VERCEL_RUN_CONSTRUCTION_HARD_TIMEOUT_MS = 800_000;
 const VERCEL_RUN_CONSTRUCTION_STREAM_LIMIT_MS = 450_000;
 const RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS = 30_000;
 const DEFAULT_RUN_CONSTRUCTION_SSE_SOFT_TIMEOUT_MS = 420_000;
+const DEFAULT_RUN_CONSTRUCTION_BACKGROUND_TIMEOUT_MS = 240_000;
 const execFileAsync = promisify(execFile);
 
 function freshBuildFinalStatus(result) {
@@ -105,6 +106,15 @@ function configuredRunConstructionSoftTimeoutMs(env = process.env) {
     VERCEL_RUN_CONSTRUCTION_HARD_TIMEOUT_MS - RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS,
     VERCEL_RUN_CONSTRUCTION_STREAM_LIMIT_MS - RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS,
   );
+  return Math.max(1_000, Math.min(requested, maximum));
+}
+
+function configuredRunConstructionBackgroundTimeoutMs(env = process.env) {
+  const configured = Number(env?.FLOWAI_RUN_CONSTRUCTION_BACKGROUND_TIMEOUT_MS);
+  const requested = Number.isFinite(configured) && configured > 0
+    ? configured
+    : DEFAULT_RUN_CONSTRUCTION_BACKGROUND_TIMEOUT_MS;
+  const maximum = VERCEL_RUN_CONSTRUCTION_HARD_TIMEOUT_MS - RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS;
   return Math.max(1_000, Math.min(requested, maximum));
 }
 
@@ -436,6 +446,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
 
   let terminalSent = false;
   let exposedState = null;
+  let clientClosed = false;
   const send = (payload) => {
     try { res.write(`data: ${JSON.stringify(payload)}\n\n`); } catch { /* socket closed */ }
   };
@@ -448,6 +459,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
   };
   if (typeof res.on === 'function') {
     res.on('close', () => {
+      clientClosed = true;
       if (!terminalSent) stopExposedState();
     });
   }
@@ -686,7 +698,10 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
   // registry lookup, no PATH B detour). Without a row, omit the override
   // and let discoverProduct take its normal path.
   const deps = {
-    __exposeState: (state) => { exposedState = state; },
+    __exposeState: (state) => {
+      exposedState = state;
+      if (clientClosed && !terminalSent) stopExposedState();
+    },
   };
   if (registryRow) {
     deps.discoverProduct = async () => registryRow;
@@ -757,15 +772,13 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
       },
       deps,
     });
-    const softTimeoutMs = configuredRunConstructionSoftTimeoutMs();
-    const timeoutPromise = internalBackgroundJob
-      ? null
-      : new Promise((resolve) => {
-          softTimeout = setTimeout(() => resolve({ __runConstructionSoftTimeout: true }), softTimeoutMs);
-        });
-    const raced = internalBackgroundJob
-      ? await orchestrationPromise
-      : await Promise.race([orchestrationPromise, timeoutPromise]);
+    const softTimeoutMs = internalBackgroundJob
+      ? configuredRunConstructionBackgroundTimeoutMs()
+      : configuredRunConstructionSoftTimeoutMs();
+    const timeoutPromise = new Promise((resolve) => {
+      softTimeout = setTimeout(() => resolve({ __runConstructionSoftTimeout: true }), softTimeoutMs);
+    });
+    const raced = await Promise.race([orchestrationPromise, timeoutPromise]);
     if (raced?.__runConstructionSoftTimeout) {
       stopExposedState();
       send({
@@ -983,7 +996,7 @@ export async function runConstructionToStatus({ runId, body, checkpointStep } = 
 
   const fakeReq = {
     method: 'POST',
-    headers: {},
+    headers: { 'x-forwarded-for': `background:${resolvedRunId}` },
     body: {
       ...(body && typeof body === 'object' ? body : {}),
       runId: resolvedRunId,
@@ -1374,6 +1387,7 @@ export const __test = Object.freeze({
   freshBuildFinalStatus,
   freshBuildFailureFromError,
   configuredRunConstructionSoftTimeoutMs,
+  configuredRunConstructionBackgroundTimeoutMs,
   buildRunConstructionSoftTimeoutFinal,
   emitRunConstructionSoftTimeoutFinal,
   latestRunConstructionStep,
@@ -1383,4 +1397,5 @@ export const __test = Object.freeze({
   VERCEL_RUN_CONSTRUCTION_STREAM_LIMIT_MS,
   RUN_CONSTRUCTION_TIMEOUT_BUFFER_MS,
   DEFAULT_RUN_CONSTRUCTION_SSE_SOFT_TIMEOUT_MS,
+  DEFAULT_RUN_CONSTRUCTION_BACKGROUND_TIMEOUT_MS,
 });

@@ -2605,6 +2605,59 @@ describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () =>
     } finally { clearVercelEnv(); }
   });
 
+  it('degrades timed-out pre-score monitor text and still reaches Step 6', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [62], postScoreSequence: [62] });
+      deps.produceMonitorText = vi.fn(() => new Promise(() => {}));
+
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'pre-score-monitor-timeout', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        postFixReprobe: false,
+        monitorTextTimeoutMs: 5,
+        deps,
+        issue: { filePath: 'src/App.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+        onStep: (log) => steps.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      expect(steps.some((log) => log.result?.reason === 'pre_score_monitor_text_timeout'
+        && log.result?.timeoutMs === 5)).toBe(true);
+      expect(steps.some((log) => log.step === 6
+        && log.status === 'complete'
+        && log.why === 'rank issues by Five-Layer impact for max score improvement per iteration')).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('degrades timed-out pre-score computeScore and still reaches Step 6', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [62], postScoreSequence: [62] });
+      deps.computeScore = vi.fn(() => new Promise(() => {}));
+
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'pre-score-compute-timeout', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        postFixReprobe: false,
+        computeScoreTimeoutMs: 5,
+        deps,
+        issue: { filePath: 'src/App.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+        onStep: (log) => steps.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      expect(steps.some((log) => log.result?.reason === 'pre_score_compute_score_timeout'
+        && log.result?.timeoutMs === 5
+        && log.result?.fallbackScore === 62)).toBe(true);
+      expect(steps.some((log) => log.step === 6
+        && log.status === 'complete'
+        && log.why === 'rank issues by Five-Layer impact for max score improvement per iteration')).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
   it('degrades timed-out Phase B1 evaluation pipeline and continues to Step 6', async () => {
     withVercelEnv();
     try {
