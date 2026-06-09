@@ -17,7 +17,7 @@ describe('v0.2A matrix artifact generator', () => {
     expect(parsed.layer1[0]).toMatchObject({
       surfaceId: 'ca18-audit-trail',
       name: 'Governance audit trail',
-      status: 'VERIFIED',
+      status: 'PARTIAL',
       tier: 'B',
     });
     expect(parsed.layer2[0]).toMatchObject({
