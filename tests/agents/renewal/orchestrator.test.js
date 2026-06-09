@@ -1027,7 +1027,7 @@ describe('orchestrator - GitHub operator token mode', () => {
       });
 
       expect(result.runMode).toBe('PATH_A');
-      expect(deps.getInstallationToken).toHaveBeenCalledWith({ pat: '' });
+      expect(deps.getInstallationToken).toHaveBeenCalledWith(expect.objectContaining({ pat: '' }));
       expect(deps.fetchRepoFileList).toHaveBeenCalledWith(expect.objectContaining({
         owner: 'veu-ai-studio',
         repo: 'saige-v2',
@@ -2577,6 +2577,167 @@ describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () =>
       });
       expect(generateSourceMappedFixProposals).toHaveBeenCalledTimes(1);
     } finally { clearVercelEnv(); }
+  });
+
+  it('degrades timed-out Phase B probeAllPages and continues to Step 6', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [62], postScoreSequence: [62] });
+      deps.probeAllPages = vi.fn(() => new Promise(() => {}));
+
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'phase-b-probe-timeout', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        postFixReprobe: false,
+        probeAllPagesTimeoutMs: 5,
+        deps,
+        issue: { filePath: 'src/App.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+        onStep: (log) => steps.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      expect(steps.some((log) => log.result?.reason === 'phase_b_probe_timeout'
+        && log.result?.timeoutMs === 5)).toBe(true);
+      expect(steps.some((log) => log.step === 6
+        && log.status === 'complete'
+        && log.why === 'rank issues by Five-Layer impact for max score improvement per iteration')).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('degrades timed-out Phase B1 evaluation pipeline and continues to Step 6', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [62], postScoreSequence: [62] });
+      deps.runEvaluationPipeline = vi.fn(() => new Promise((resolve) => setTimeout(() => resolve({
+        ok: true, findings: [], stats: {}, perEvaluator: {}, errors: {},
+      }), 100)));
+
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'phase-b1-eval-timeout', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        postFixReprobe: false,
+        runEvaluationPipelineTimeoutMs: 5,
+        deps,
+        issue: { filePath: 'src/App.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+        onStep: (log) => steps.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      expect(steps.some((log) => log.result?.reason === 'phase_b1_evaluation_timeout'
+        && log.result?.timeoutMs === 5)).toBe(true);
+      expect(steps.some((log) => log.step === 6
+        && log.status === 'complete'
+        && log.why === 'rank issues by Five-Layer impact for max score improvement per iteration')).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('degrades timed-out GitHub App token mint before Step 6 and continues', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [62], postScoreSequence: [62] });
+      deps.getInstallationToken = vi.fn(() => new Promise((resolve) => setTimeout(() => resolve({
+        token: 'late-ghs', expiresAt: '2099-01-01T00:00:00Z',
+      }), 100)));
+
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'github-token-timeout', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        postFixReprobe: false,
+        getInstallationTokenTimeoutMs: 5,
+        deps,
+        issue: { filePath: 'src/App.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+        onStep: (log) => steps.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      expect(steps.some((log) => log.tool?.includes('fetchRepoFileList')
+        && log.result?.reason === 'timeout:GITHUB_INSTALLATION_TOKEN_TIMEOUT'
+        && log.result?.timeoutMs === 5)).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('degrades timed-out GitHub repo file inventory before Step 6 and continues', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [62], postScoreSequence: [62] });
+      deps.fetchRepoFileList = vi.fn(() => new Promise(() => {}));
+
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'repo-file-list-timeout', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        postFixReprobe: false,
+        fetchRepoFileListTimeoutMs: 5,
+        deps,
+        issue: { filePath: 'src/App.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+        onStep: (log) => steps.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      expect(steps.some((log) => log.tool?.includes('fetchRepoFileList')
+        && log.result?.reason === 'timeout:GITHUB_REPO_FILE_LIST_TIMEOUT'
+        && log.result?.timeoutMs === 5)).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('degrades timed-out package.json content fetch before Step 6 and continues without knownPackages', async () => {
+    withVercelEnv();
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [62], postScoreSequence: [62] });
+      deps.fetchRepoFileList = vi.fn(async () => ({
+        files: ['package.json', 'src/App.jsx'], truncated: false, sha: 'sha', error: null,
+      }));
+      deps.fetchFileContent = vi.fn(() => new Promise((resolve) => setTimeout(() => resolve('{}'), 100)));
+
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'fetch-file-content-timeout', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        postFixReprobe: false,
+        fetchFileContentTimeoutMs: 5,
+        deps,
+        issue: { filePath: 'src/App.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't' },
+        onStep: (log) => steps.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      expect(steps.some((log) => log.result?.reason === 'github_fetch_file_content_timeout'
+        && log.result?.timeoutMs === 5)).toBe(true);
+    } finally { clearVercelEnv(); }
+  });
+
+  it('degrades timed-out Claude issue prioritization and falls back to heuristic Step 6', async () => {
+    withVercelEnv();
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(() => new Promise(() => {}));
+    try {
+      const steps = [];
+      const deps = happyDeps({ preScoreSequence: [62], postScoreSequence: [62] });
+
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'prioritize-claude-timeout', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
+        postFixReprobe: false,
+        prioritizeIssuesWithClaudeTimeoutMs: 5,
+        deps,
+        onStep: (log) => steps.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('STEP_FAILED');
+      expect(steps.some((log) => log.result?.reason === 'issue_prioritization_claude_timeout'
+        && log.result?.timeoutMs === 5)).toBe(true);
+      expect(steps.some((log) => log.step === 6
+        && log.status === 'complete'
+        && log.why === 'rank issues by Five-Layer impact for max score improvement per iteration')).toBe(true);
+    } finally {
+      globalThis.fetch = originalFetch;
+      delete process.env.ANTHROPIC_API_KEY;
+      clearVercelEnv();
+    }
   });
 });
 
