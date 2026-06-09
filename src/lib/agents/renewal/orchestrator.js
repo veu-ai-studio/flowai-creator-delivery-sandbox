@@ -98,6 +98,15 @@ export const SMALL_SITE_EFFORT_PROFILE = Object.freeze({
 });
 export const PHASE_B_ENRICHMENT_TIMEOUT_MS = 45_000;
 export const MAX_PHASE_B_ENRICHMENT_TIMEOUT_MS = 60_000;
+export const FORGE_STEP5_TO_STEP6_TIMEOUTS_MS = Object.freeze({
+  probeAllPages: 30_000,
+  probeAdversarialSurface: 30_000,
+  runEvaluationPipeline: 45_000,
+  getInstallationToken: 10_000,
+  fetchRepoFileList: 10_000,
+  fetchFileContent: 10_000,
+  prioritizeIssuesWithClaude: 20_000,
+});
 export const STEP_NAMES = Object.freeze([
   'Product Discovery',
   'Rate Cap + Runaway Check',
@@ -169,6 +178,11 @@ function boundedTimeoutMs(value, fallback = PHASE_B_ENRICHMENT_TIMEOUT_MS) {
   return Math.max(1, Math.min(value, MAX_PHASE_B_ENRICHMENT_TIMEOUT_MS));
 }
 
+function boundedOperationTimeoutMs(value, fallback) {
+  if (!Number.isFinite(value) || value <= 0) return fallback;
+  return Math.max(1, Math.min(value, fallback));
+}
+
 function withTimeout(promise, { timeoutMs, code, message }) {
   let timer = null;
   const timeoutPromise = new Promise((_, reject) => {
@@ -181,6 +195,32 @@ function withTimeout(promise, { timeoutMs, code, message }) {
     .finally(() => {
       if (timer) clearTimeout(timer);
     });
+}
+
+function makeAbortableFetch({ timeoutMs, code, message, fetchImpl = globalThis.fetch }) {
+  if (typeof fetchImpl !== 'function') return fetchImpl;
+  return async (input, init = {}) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort(Object.assign(new Error(message), { code }));
+    }, timeoutMs);
+    timer.unref?.();
+    try {
+      return await fetchImpl(input, {
+        ...init,
+        signal: init?.signal ?? controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+}
+
+function recordPipelineError(state, key, value) {
+  state.pipelineErrors = {
+    ...(state.pipelineErrors && typeof state.pipelineErrors === 'object' ? state.pipelineErrors : {}),
+    [key]: value,
+  };
 }
 
 function computeProgress({ originalScore, currentScore, target }) {
@@ -803,6 +843,15 @@ export async function runOrchestration(args = {}) {
   const onIteration = typeof args.onIteration === 'function' ? args.onIteration : () => {};
   const deps = args.deps || {};
   const phaseBEnrichmentTimeoutMs = boundedTimeoutMs(args.phaseBEnrichmentTimeoutMs);
+  const step5ToStep6Timeouts = Object.freeze({
+    probeAllPages: boundedOperationTimeoutMs(args.probeAllPagesTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.probeAllPages),
+    probeAdversarialSurface: boundedOperationTimeoutMs(args.probeAdversarialSurfaceTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.probeAdversarialSurface),
+    runEvaluationPipeline: boundedOperationTimeoutMs(args.runEvaluationPipelineTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.runEvaluationPipeline),
+    getInstallationToken: boundedOperationTimeoutMs(args.getInstallationTokenTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.getInstallationToken),
+    fetchRepoFileList: boundedOperationTimeoutMs(args.fetchRepoFileListTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.fetchRepoFileList),
+    fetchFileContent: boundedOperationTimeoutMs(args.fetchFileContentTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.fetchFileContent),
+    prioritizeIssuesWithClaude: boundedOperationTimeoutMs(args.prioritizeIssuesWithClaudeTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.prioritizeIssuesWithClaude),
+  });
   const migrationFlag = mode === 'migration'
     ? await isMigrationModeExecutionEnabled(deps.env || process.env)
     : { enabled: false, source: 'not_checked' };
@@ -2096,10 +2145,24 @@ export async function runOrchestration(args = {}) {
 
       let probe;
       if (urls.length > 1 || _probeAllPages !== probeAllPages) {
-        probe = await _probeAllPages({ urls, opts: probeOpts });
+        probe = await withTimeout(
+          _probeAllPages({ urls, opts: probeOpts }),
+          {
+            timeoutMs: step5ToStep6Timeouts.probeAllPages,
+            code: 'PHASE_B_PROBE_ALL_PAGES_TIMEOUT',
+            message: `Phase B probeAllPages exceeded ${step5ToStep6Timeouts.probeAllPages}ms`,
+          },
+        );
         phaseBPagesProbed = probe?.pagesProbed ?? 0;
       } else {
-        probe = await _probeAdversarialSurface({ url: urls[0], opts: probeOpts });
+        probe = await withTimeout(
+          _probeAdversarialSurface({ url: urls[0], opts: probeOpts }),
+          {
+            timeoutMs: step5ToStep6Timeouts.probeAdversarialSurface,
+            code: 'PHASE_B_PROBE_ADVERSARIAL_SURFACE_TIMEOUT',
+            message: `Phase B probeAdversarialSurface exceeded ${step5ToStep6Timeouts.probeAdversarialSurface}ms`,
+          },
+        );
         phaseBPagesProbed = (probe?.ok ? 1 : 0);
       }
       if (probe && Array.isArray(probe.findings)) {
@@ -2127,11 +2190,30 @@ export async function runOrchestration(args = {}) {
     } catch (e) {
       // Phase B failures NEVER fail the pipeline — emit a degraded
       // log and continue. Phase A signal is still complete.
+      const timedOut = e?.code === 'PHASE_B_PROBE_ALL_PAGES_TIMEOUT'
+        || e?.code === 'PHASE_B_PROBE_ADVERSARIAL_SURFACE_TIMEOUT';
+      recordPipelineError(
+        state,
+        'phase_b_probe',
+        timedOut
+          ? `timeout:${e?.code}:${e?.message ?? ''}`
+          : (e?.message ?? String(e)).slice(0, 200),
+      );
       emit(makeStepLog({
         iteration: iterationNumber, step: 4, status: 'degraded',
         tool: 'adversarialSurface (Phase B — D39)',
-        why: 'Phase B probe threw; continuing with Phase A signal only',
-        result: { error: (e?.message ?? String(e)).slice(0, 200) },
+        why: timedOut
+          ? 'Phase B probe timed out; preserving baseline score and continuing with Phase A signal only'
+          : 'Phase B probe threw; continuing with Phase A signal only',
+        result: {
+          degraded: true,
+          reason: timedOut ? 'phase_b_probe_timeout' : 'phase_b_probe_failed',
+          timeoutMs: timedOut ? (e?.code === 'PHASE_B_PROBE_ALL_PAGES_TIMEOUT'
+            ? step5ToStep6Timeouts.probeAllPages
+            : step5ToStep6Timeouts.probeAdversarialSurface) : null,
+          error: (e?.message ?? String(e)).slice(0, 200),
+          code: e?.code ?? 'PHASE_B_PROBE_FAILED',
+        },
         durationMs: 0, mode: state.mode,
       }));
     }
@@ -2164,7 +2246,7 @@ export async function runOrchestration(args = {}) {
     let pipelineOutput = null;
     try {
       const t0 = Date.now();
-      pipelineOutput = await _runEvaluationPipeline({
+      pipelineOutput = await withTimeout(_runEvaluationPipeline({
         url: currentUrl,
         options: {
           phaseBFindings,
@@ -2184,6 +2266,10 @@ export async function runOrchestration(args = {}) {
             } catch { /* swallow */ }
           },
         },
+      }), {
+        timeoutMs: step5ToStep6Timeouts.runEvaluationPipeline,
+        code: 'PHASE_B1_EVALUATION_PIPELINE_TIMEOUT',
+        message: `Phase B1 evaluation pipeline exceeded ${step5ToStep6Timeouts.runEvaluationPipeline}ms`,
       });
       state.pipelineFindings = Array.isArray(pipelineOutput?.findings) ? pipelineOutput.findings : [];
       state.pipelineStats = pipelineOutput?.stats ?? null;
@@ -2239,14 +2325,27 @@ export async function runOrchestration(args = {}) {
     } catch (e) {
       state.pipelineFindings = [];
       state.pipelineStats = null;
-      state.pipelineErrors = { _: (e?.message ?? String(e)).slice(0, 200) };
+      const timedOut = e?.code === 'PHASE_B1_EVALUATION_PIPELINE_TIMEOUT';
+      state.pipelineErrors = {
+        _: timedOut
+          ? `timeout:${step5ToStep6Timeouts.runEvaluationPipeline}ms`
+          : (e?.message ?? String(e)).slice(0, 200),
+      };
       state.deepBrowserAnalysis = null;
       state.fixProposals = [];
       emit(makeStepLog({
         iteration: iterationNumber, step: 4, status: 'degraded',
         tool: 'evaluationPipeline (Phase B1)',
-        why: 'pipeline threw; continuing with Phase A + raw Phase B only',
-        result: { error: (e?.message ?? String(e)).slice(0, 200) },
+        why: timedOut
+          ? 'pipeline timed out; preserving baseline score and continuing with Phase A + raw Phase B only'
+          : 'pipeline threw; continuing with Phase A + raw Phase B only',
+        result: {
+          degraded: true,
+          reason: timedOut ? 'phase_b1_evaluation_timeout' : 'phase_b1_evaluation_failed',
+          timeoutMs: timedOut ? step5ToStep6Timeouts.runEvaluationPipeline : null,
+          error: (e?.message ?? String(e)).slice(0, 200),
+          code: e?.code ?? 'PHASE_B1_EVALUATION_FAILED',
+        },
         mode: state.mode,
       }));
     }
@@ -2372,13 +2471,41 @@ export async function runOrchestration(args = {}) {
             token = githubOperatorToken;
             credentialSource = 'GITHUB_OPERATOR_TOKEN';
           } else {
-            const minted = await _getInstallationToken({ pat: '' });
+            const minted = await withTimeout(
+              _getInstallationToken({
+                pat: '',
+                fetch: makeAbortableFetch({
+                  timeoutMs: step5ToStep6Timeouts.getInstallationToken,
+                  code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
+                  message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
+                }),
+              }),
+              {
+                timeoutMs: step5ToStep6Timeouts.getInstallationToken,
+                code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
+                message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
+              },
+            );
             token = minted.token;
             credentialSource = minted.source === 'pat' ? 'GITHUB_PAT' : 'github_app_installation';
           }
-          const treeResult = await _fetchRepoFileList({
-            owner: parsed.owner, repo: parsed.repo, ref: productBranch, token,
-          });
+          const treeResult = await withTimeout(
+            _fetchRepoFileList({
+              owner: parsed.owner, repo: parsed.repo, ref: productBranch, token,
+              opts: {
+                fetch: makeAbortableFetch({
+                  timeoutMs: step5ToStep6Timeouts.fetchRepoFileList,
+                  code: 'GITHUB_REPO_FILE_LIST_TIMEOUT',
+                  message: `GitHub repo file list fetch exceeded ${step5ToStep6Timeouts.fetchRepoFileList}ms`,
+                }),
+              },
+            }),
+            {
+              timeoutMs: step5ToStep6Timeouts.fetchRepoFileList,
+              code: 'GITHUB_REPO_FILE_LIST_TIMEOUT',
+              message: `GitHub repo file list fetch exceeded ${step5ToStep6Timeouts.fetchRepoFileList}ms`,
+            },
+          );
           if (treeResult && treeResult.error) {
             treesOutcome = { ok: false, reason: treeResult.error, filesCount: 0, sha: treeResult.sha ?? null };
           } else if (treeResult && Array.isArray(treeResult.files)) {
@@ -2396,7 +2523,25 @@ export async function runOrchestration(args = {}) {
             treesOutcome = { ok: false, reason: 'malformed_envelope', filesCount: 0, sha: null };
           }
         } catch (e) {
-          treesOutcome = { ok: false, reason: `threw:${(e?.message ?? String(e)).slice(0, 80)}`, filesCount: 0, sha: null };
+          const timedOut = e?.code === 'GITHUB_INSTALLATION_TOKEN_TIMEOUT'
+            || e?.code === 'GITHUB_REPO_FILE_LIST_TIMEOUT';
+          if (timedOut) {
+            recordPipelineError(state, e?.code === 'GITHUB_INSTALLATION_TOKEN_TIMEOUT'
+              ? 'github_installation_token'
+              : 'github_repo_file_list', `timeout:${e?.message ?? ''}`);
+          }
+          treesOutcome = {
+            ok: false,
+            reason: timedOut
+              ? `timeout:${e?.code}`
+              : `threw:${(e?.message ?? String(e)).slice(0, 80)}`,
+            filesCount: 0,
+            sha: null,
+            timeoutMs: timedOut ? (e?.code === 'GITHUB_INSTALLATION_TOKEN_TIMEOUT'
+              ? step5ToStep6Timeouts.getInstallationToken
+              : step5ToStep6Timeouts.fetchRepoFileList) : null,
+            code: e?.code ?? null,
+          };
         }
         // Always emit a log entry so the outcome is visible.
         emit(makeStepLog({
@@ -2418,10 +2563,24 @@ export async function runOrchestration(args = {}) {
       const parsed = parseGithubRepoUrl(githubRepoUrl);
       if (parsed && repoFileList.includes('package.json')) {
         try {
-          const pkgRaw = await _fetchFileContent({
-            owner: parsed.owner, repo: parsed.repo,
-            filePath: 'package.json', ref: productBranch, token,
-          });
+          const pkgRaw = await withTimeout(
+            _fetchFileContent({
+              owner: parsed.owner, repo: parsed.repo,
+              filePath: 'package.json', ref: productBranch, token,
+              opts: {
+                fetch: makeAbortableFetch({
+                  timeoutMs: step5ToStep6Timeouts.fetchFileContent,
+                  code: 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT',
+                  message: `GitHub file content fetch exceeded ${step5ToStep6Timeouts.fetchFileContent}ms`,
+                }),
+              },
+            }),
+            {
+              timeoutMs: step5ToStep6Timeouts.fetchFileContent,
+              code: 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT',
+              message: `GitHub file content fetch exceeded ${step5ToStep6Timeouts.fetchFileContent}ms`,
+            },
+          );
           const pkg = JSON.parse(pkgRaw);
           const names = new Set();
           for (const k of Object.keys(pkg.dependencies ?? {})) names.add(k);
@@ -2429,7 +2588,22 @@ export async function runOrchestration(args = {}) {
           for (const k of Object.keys(pkg.peerDependencies ?? {})) names.add(k);
           for (const k of Object.keys(pkg.optionalDependencies ?? {})) names.add(k);
           knownPackages = names;
-        } catch {
+        } catch (e) {
+          if (e?.code === 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT') {
+            recordPipelineError(state, 'github_fetch_file_content', `timeout:${e?.message ?? ''}`);
+            emit(makeStepLog({
+              iteration: iterationNumber, step: 6, status: 'degraded',
+              tool: 'fetchFileContent (GitHub Contents API; package.json)',
+              why: 'package.json dependency inventory timed out; continuing without knownPackages',
+              result: {
+                degraded: true,
+                reason: 'github_fetch_file_content_timeout',
+                timeoutMs: step5ToStep6Timeouts.fetchFileContent,
+                code: e.code,
+              },
+              durationMs: 0, mode: state.mode,
+            }));
+          }
           knownPackages = null;
         }
       }
@@ -2479,13 +2653,27 @@ export async function runOrchestration(args = {}) {
             if (pathB || !token || !githubRepoUrl) return null;
             const parsed = parseGithubRepoUrl(githubRepoUrl);
             if (!parsed) return null;
-            return _fetchFileContent({
-              owner: parsed.owner,
-              repo: parsed.repo,
-              filePath,
-              ref: productBranch,
-              token,
-            });
+            return withTimeout(
+              _fetchFileContent({
+                owner: parsed.owner,
+                repo: parsed.repo,
+                filePath,
+                ref: productBranch,
+                token,
+                opts: {
+                  fetch: makeAbortableFetch({
+                    timeoutMs: step5ToStep6Timeouts.fetchFileContent,
+                    code: 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT',
+                    message: `GitHub file content fetch exceeded ${step5ToStep6Timeouts.fetchFileContent}ms`,
+                  }),
+                },
+              }),
+              {
+                timeoutMs: step5ToStep6Timeouts.fetchFileContent,
+                code: 'GITHUB_FETCH_FILE_CONTENT_TIMEOUT',
+                message: `GitHub file content fetch exceeded ${step5ToStep6Timeouts.fetchFileContent}ms`,
+              },
+            );
           },
         }),
         {
@@ -2572,11 +2760,44 @@ export async function runOrchestration(args = {}) {
       // than imagining problems based on Five-Layer telemetry. The
       // iterLog.preGtm was captured during STEP 5 and carries the
       // .issues array (severity-tagged, location-tagged).
-      const claudeIssues = await prioritizeIssuesWithClaude({
-        preScore: preScoreEnvelope, product, suppliedIssue: args.issue,
-        fileList: repoFileList,
-        canonicalFindings: iterLog.preGtm?.issues ?? null,
-      }).catch(() => null);
+      let claudeIssues = null;
+      try {
+        claudeIssues = await withTimeout(
+          prioritizeIssuesWithClaude({
+            preScore: preScoreEnvelope, product, suppliedIssue: args.issue,
+            fileList: repoFileList,
+            canonicalFindings: iterLog.preGtm?.issues ?? null,
+            opts: {
+              fetch: makeAbortableFetch({
+                timeoutMs: step5ToStep6Timeouts.prioritizeIssuesWithClaude,
+                code: 'ISSUE_PRIORITIZATION_CLAUDE_TIMEOUT',
+                message: `Issue prioritization Claude call exceeded ${step5ToStep6Timeouts.prioritizeIssuesWithClaude}ms`,
+              }),
+            },
+          }),
+          {
+            timeoutMs: step5ToStep6Timeouts.prioritizeIssuesWithClaude,
+            code: 'ISSUE_PRIORITIZATION_CLAUDE_TIMEOUT',
+            message: `Issue prioritization Claude call exceeded ${step5ToStep6Timeouts.prioritizeIssuesWithClaude}ms`,
+          },
+        );
+      } catch (e) {
+        if (e?.code === 'ISSUE_PRIORITIZATION_CLAUDE_TIMEOUT') {
+          recordPipelineError(state, 'issue_prioritization_claude', `timeout:${e?.message ?? ''}`);
+          emit(makeStepLog({
+            iteration: iterationNumber, step: 6, status: 'degraded',
+            tool: 'prioritizeIssuesWithClaude',
+            why: 'Claude prioritization timed out; falling back to score-derived heuristic issues',
+            result: {
+              degraded: true,
+              reason: 'issue_prioritization_claude_timeout',
+              timeoutMs: step5ToStep6Timeouts.prioritizeIssuesWithClaude,
+              code: e.code,
+            },
+            durationMs: 0, mode: state.mode,
+          }));
+        }
+      }
       if (claudeIssues && claudeIssues.length > 0) {
         prioritizedIssues = claudeIssues;
       } else {
