@@ -226,14 +226,13 @@ export async function getInngestFunctions() {
     {
       id: 'forge-run-construction-executor',
       name: 'Forge run-construction executor',
-      retries: 1,
+      retries: 0,
       triggers: { event: 'flowai/forge.run.requested' },
     },
-    async ({ event, step }) => {
+    async ({ event }) => {
       const { runConstructionToStatus } = await import('../../src/api/run-construction.js');
       return await runConstructionToStatus({
         ...event.data,
-        checkpointStep: (name, fn) => step.run(name, fn),
       });
     },
   ));
