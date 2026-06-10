@@ -819,6 +819,8 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
       type: 'error',
       error: (e?.message ?? String(e)).slice(0, 400),
       code: e?.code ?? 'ORCHESTRATION_THREW',
+      failedStep: typeof e?.failedStep === 'string' ? e.failedStep : null,
+      exitReason: typeof e?.exitReason === 'string' ? e.exitReason : 'STEP_FAILED',
       ...pickSafeErrorFields(e),
     });
     return done();
@@ -957,6 +959,8 @@ export async function runConstructionToStatus({ runId, body, checkpointStep } = 
 
   let buffer = '';
   let terminalSeen = false;
+  let finalSeen = false;
+  let lastErrorEvent = null;
   const writes = [];
   let writeChain = Promise.resolve();
   const checkpointsSeen = new Set();
@@ -986,6 +990,12 @@ export async function runConstructionToStatus({ runId, body, checkpointStep } = 
       }
       try {
         const parsed = JSON.parse(data);
+        if (parsed?.type === 'final' || parsed?.final === true) {
+          finalSeen = true;
+        }
+        if (parsed?.type === 'error') {
+          lastErrorEvent = parsed;
+        }
         writeChain = writeChain.then(() => appendStatusEvent(parsed));
         writes.push(writeChain);
       } catch {
@@ -1020,11 +1030,19 @@ export async function runConstructionToStatus({ runId, body, checkpointStep } = 
   try {
     await runConstructionHandler(fakeReq, fakeRes, { internalBackgroundJob: true });
     await Promise.allSettled(writes);
-    if (!terminalSeen) {
+    if (!terminalSeen && !finalSeen) {
       await markForgeRunFailed(resolvedRunId, Object.assign(new Error('background run ended without [DONE]'), {
         code: 'ASYNC_STREAM_ENDED_WITHOUT_DONE',
       }));
       return { ok: false, runId: resolvedRunId, error: 'ASYNC_STREAM_ENDED_WITHOUT_DONE' };
+    }
+    if (!finalSeen && lastErrorEvent) {
+      await markForgeRunFailed(resolvedRunId, Object.assign(new Error(lastErrorEvent.error || 'background run failed'), {
+        code: lastErrorEvent.code ?? 'ASYNC_RUN_FAILED',
+        failedStep: lastErrorEvent.failedStep ?? null,
+        exitReason: lastErrorEvent.exitReason ?? 'STEP_FAILED',
+      }));
+      return { ok: false, runId: resolvedRunId, error: lastErrorEvent.error ?? 'ASYNC_RUN_FAILED' };
     }
     return { ok: true, runId: resolvedRunId };
   } catch (error) {

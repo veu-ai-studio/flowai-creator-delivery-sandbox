@@ -1022,6 +1022,7 @@ export async function runOrchestration(args = {}) {
     tokenRedacted: true,
     repoAccess: null,
   });
+  state.terminalFailure = null;
   state.llmFixCallsThisRun = 0;
   state.llmFixAttempts = [];
   const orchestrationLog = [];
@@ -1096,6 +1097,30 @@ export async function runOrchestration(args = {}) {
       diagnostics: { ...safeDiagnostics, code },
       failureArtifact,
     });
+  };
+
+  const recordTerminalFailure = async ({ product: failureProduct, failedStep, error, code, diagnostics, remediation }) => {
+    const safeDiagnostics = {
+      ...pickSafeDiagnosticFields(diagnostics),
+      code,
+      remediation: remediation ?? null,
+    };
+    const failureArtifact = await persistStepFailure({
+      product: failureProduct,
+      failedStep,
+      error,
+      code,
+      diagnostics: safeDiagnostics,
+    });
+    state.terminalFailure = Object.freeze({
+      failedStep,
+      error,
+      code,
+      diagnostics: safeDiagnostics,
+      remediation: remediation ?? null,
+      failureArtifact,
+    });
+    return state.terminalFailure;
   };
 
   emit(makeStepLog({
@@ -2107,22 +2132,35 @@ export async function runOrchestration(args = {}) {
           },
         );
       } catch (monitorErr) {
-        if (monitorErr?.code !== 'PRE_SCORE_MONITOR_TEXT_TIMEOUT') throw monitorErr;
-        recordPipelineError(state, 'pre_score_monitor_text', `timeout:${step5ToStep6Timeouts.monitorText}ms`);
+        const monitorFetchFailed = monitorErr?.code === 'MONITOR_FETCH_FAILED';
+        if (monitorErr?.code !== 'PRE_SCORE_MONITOR_TEXT_TIMEOUT' && !monitorFetchFailed) throw monitorErr;
+        const reason = monitorFetchFailed ? 'monitor_fetch_failed' : 'pre_score_monitor_text_timeout';
+        recordPipelineError(
+          state,
+          'pre_score_monitor_text',
+          monitorFetchFailed
+            ? `fetch_failed:${(monitorErr?.message ?? String(monitorErr)).slice(0, 160)}`
+            : `timeout:${step5ToStep6Timeouts.monitorText}ms`,
+        );
         monitor = {
-          monitorText: '[degraded] monitor text timed out; using structured crawl evidence only for baseline scoring.',
+          monitorText: `[degraded] ${reason}; using structured crawl evidence only for baseline scoring.`,
           degraded: true,
-          reason: 'pre_score_monitor_text_timeout',
+          reason,
         };
         emit(makeStepLog({
           iteration: iterationNumber, step: 5, status: 'degraded',
           tool: 'monitorTextProducer (early baseline)',
-          why: 'monitor text timed out before Five-Layer Scoring; continuing with crawl-only degraded baseline',
+          why: 'monitor text unavailable before Five-Layer Scoring; continuing with crawl-only degraded baseline',
           result: {
             degraded: true,
-            reason: 'pre_score_monitor_text_timeout',
-            timeoutMs: step5ToStep6Timeouts.monitorText,
-            code: monitorErr.code,
+            reason,
+            targetUrl: currentUrl,
+            timeoutMs: monitorErr?.code === 'PRE_SCORE_MONITOR_TEXT_TIMEOUT' ? step5ToStep6Timeouts.monitorText : null,
+            code: monitorErr.code ?? 'MONITOR_TEXT_UNAVAILABLE',
+            remediation: monitorFetchFailed
+              ? 'Retry the monitor fetch or verify target network availability; forge continued with crawl evidence.'
+              : 'Increase monitor-text budget only through a bounded dispatch; forge continued with crawl evidence.',
+            error: (monitorErr?.message ?? String(monitorErr)).slice(0, 240),
           },
           durationMs: Date.now() - t0, mode: state.mode,
         }));
@@ -3243,8 +3281,58 @@ export async function runOrchestration(args = {}) {
 
       const repoParsed = parseGithubRepoUrl(githubRepoUrl);
       if (!repoParsed) {
-        return failStep({ product, failedStep: 'STEP_7',
-          error: `unparseable githubRepoUrl: ${githubRepoUrl}`, code: 'BAD_REPO_URL' });
+        const missingField = githubRepoUrl ? null : 'githubRepoUrl';
+        const remediation = 'Configure product_registry.github_repo_url or upgrade_repo with a valid GitHub URL before repo mutation/deploy.';
+        const error = githubRepoUrl
+          ? `unparseable githubRepoUrl: ${githubRepoUrl}`
+          : 'missing githubRepoUrl';
+        await recordTerminalFailure({
+          product,
+          failedStep: 'STEP_7',
+          error,
+          code: 'BAD_REPO_URL',
+          diagnostics: {
+            githubRepoUrl: githubRepoUrl ?? null,
+            missingField,
+            unparseableField: missingField ? null : 'githubRepoUrl',
+          },
+          remediation,
+        });
+        const log = makeStepLog({
+          iteration: iterationNumber, step: 7, status: 'degraded',
+          tool: 'githubRepoUrl validation',
+          why: 'validate operator repo target before fix generation',
+          result: {
+            kind: 'forge.terminal_failure.v1',
+            failedStep: 'STEP_7',
+            code: 'BAD_REPO_URL',
+            error,
+            githubRepoUrl: githubRepoUrl ?? null,
+            missingField,
+            degraded: true,
+            remediation,
+          },
+          mode: state.mode,
+        });
+        emit(log); iterLog.steps.push(log);
+        state.skippedSteps.push(
+          {
+            iteration: iterationNumber, step: 9, tool: 'githubBranchWriter.js',
+            autoFixSkippedReason: 'BAD_REPO_URL',
+            detail: 'no valid GitHub repo URL for branch + commits',
+          },
+          {
+            iteration: iterationNumber, step: 10, tool: 'vercelBranchDeploy.js',
+            autoFixSkippedReason: 'BAD_REPO_URL',
+            detail: 'no valid GitHub repo URL for deployment source',
+          },
+        );
+        exitReason = 'STEP_FAILED';
+        await recordNoFixIteration({
+          reason: 'BAD_REPO_URL',
+          detail: 'Step 7 cannot generate or commit fixes because githubRepoUrl is missing or unparseable.',
+        });
+        break outerLoop;
       }
       owner = repoParsed.owner;
       repo = repoParsed.repo;
@@ -5091,6 +5179,10 @@ export async function runOrchestration(args = {}) {
     iterationNumber += 1;
   }
 
+  if (state.terminalFailure) {
+    exitReason = 'STEP_FAILED';
+  }
+
   // STEP 13 — Final PR Creation. PATH A only (PATH B has no upstream
   // GitHub repo to PR against; preview URL is the deliverable).
   const lastIter = iterations[iterations.length - 1] || {};
@@ -5111,6 +5203,24 @@ export async function runOrchestration(args = {}) {
     state.skippedSteps.push({
       iteration: iterations.length, step: 13, tool: 'githubPrWriter.js',
       autoFixSkippedReason: skipReason, detail: skipDetail,
+    });
+  } else if (state.terminalFailure) {
+    emit(makeStepLog({
+      iteration: iterations.length, step: 13, status: 'skipped',
+      tool: 'githubPrWriter.js',
+      why: 'terminal failure before PR gate',
+      result: {
+        skipped: 'terminal_failure',
+        failedStep: state.terminalFailure.failedStep,
+        code: state.terminalFailure.code,
+        remediation: state.terminalFailure.remediation ?? null,
+      },
+      mode: state.mode, canInterrupt: false,
+    }));
+    state.skippedSteps.push({
+      iteration: iterations.length, step: 13, tool: 'githubPrWriter.js',
+      autoFixSkippedReason: state.terminalFailure.code ?? 'TERMINAL_FAILURE',
+      detail: state.terminalFailure.error ?? 'terminal failure before PR gate',
     });
   } else if (lastIter.regressed) {
     // DISPATCH 30: regression guard fired on the final iteration. Never
@@ -5369,7 +5479,10 @@ export async function runOrchestration(args = {}) {
         fiveLayerScoreDegraded: preScoreEvidenceDegraded || postScoreEvidenceDegraded,
         totalDelta: finalGtmScore - (originalGtmScore ?? 0),
         iterationsCompleted: iterations.length,
-        gtmReady: canonicalGtmReady,
+        gtmReady: state.terminalFailure ? false : canonicalGtmReady,
+        failedStep: state.terminalFailure?.failedStep ?? null,
+        errorCode: state.terminalFailure?.code ?? null,
+        terminalFailure: state.terminalFailure ?? null,
         previewUrl: finalPreviewUrl,
         ...upgradeDelivery,
         prUrl: pr?.prHtmlUrl ?? null,
@@ -5469,13 +5582,13 @@ export async function runOrchestration(args = {}) {
   emit(monitorUserStepLog);
 
   return Object.freeze({
-    ok: true,
+    ok: !state.terminalFailure,
     // DISPATCH 28: gtmReady + scores are now driven by the canonical §7.6
     // formula. Five-Layer fields kept on the envelope as internal telemetry
     // (fiveLayer* prefix) so existing consumers can read them, but the
     // top-level originalScore / finalScore / totalDelta now refer to the
     // canonical /100 GTM Readiness score.
-    gtmReady: canonicalGtmReady,
+    gtmReady: state.terminalFailure ? false : canonicalGtmReady,
     gtmBand: finalGtmBand,
     gtmCounts: lastPostGtm?.counts ?? null,
     ceo95Criteria: lastPostGtm?.ceo95Criteria ?? null,
@@ -5483,6 +5596,10 @@ export async function runOrchestration(args = {}) {
     inputStepMatrix,
     userObjectives,
     exitReason,
+    failedStep: state.terminalFailure?.failedStep ?? undefined,
+    error: state.terminalFailure?.error ?? undefined,
+    code: state.terminalFailure?.code ?? undefined,
+    failureArtifact: state.terminalFailure?.failureArtifact ?? null,
     originalScore: originalGtmScore ?? 0,
     finalScore: finalGtmScore,
     totalDelta: finalGtmScore - (originalGtmScore ?? 0),
