@@ -919,7 +919,7 @@ export default function LandingPage() {
               <Zap className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <div className="text-sm font-bold text-foreground leading-tight">{isMigrationMode ? 'Flow Hub — Migration' : 'Flow Hub — Production'}</div>
+              <h1 className="text-sm font-bold text-foreground leading-tight">{isMigrationMode ? 'Flow Hub — Migration' : 'Flow Hub — Production'}</h1>
               <div className="text-[10px] text-muted-foreground leading-tight">
                 {isMigrationMode ? 'Standalone v2 migration setup.' : 'Start the standard product upgrade flow.'}
               </div>

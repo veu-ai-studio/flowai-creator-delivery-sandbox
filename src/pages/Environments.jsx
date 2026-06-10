@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -51,7 +52,7 @@ export default function Environments() {
 
   const load = async () => {
     setLoading(true);
-    const existing = await base44.entities.ProductEnvironment.list('-created_date');
+    const existing = await resolveArray(base44.entities.ProductEnvironment.list('-created_date'));
     if (existing.length === 0) {
       // Seed pilot products
       const created = await Promise.all(
@@ -108,7 +109,7 @@ Return:
       last_checked_at: new Date().toISOString(),
     });
 
-    setEnvs(prev => prev.map(e => e.id === env.id ? { ...e, ...updated, sync_status: result.sync_status, sync_report: result, last_checked_at: new Date().toISOString() } : e));
+    setEnvs(prev => asArray(prev).map(e => e.id === env.id ? { ...e, ...updated, sync_status: result.sync_status, sync_report: result, last_checked_at: new Date().toISOString() } : e));
     setSyncingId(null);
     setExpandedId(env.id);
   };
@@ -116,7 +117,7 @@ Return:
   const saveProdUrl = async (env) => {
     setSavingId(env.id);
     const updated = await base44.entities.ProductEnvironment.update(env.id, { prod_url: editProdUrl });
-    setEnvs(prev => prev.map(e => e.id === env.id ? { ...e, prod_url: editProdUrl } : e));
+    setEnvs(prev => asArray(prev).map(e => e.id === env.id ? { ...e, prod_url: editProdUrl } : e));
     setEditingId(null);
     setSavingId(null);
   };
@@ -143,7 +144,7 @@ Return:
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : (
         <div className="space-y-4">
-          {envs.map(env => {
+          {asArray(envs).map(env => {
             const sync = SYNC_COLORS[env.sync_status || 'unknown'];
             const isSyncing = syncingId === env.id;
             const isExpanded = expandedId === env.id;
@@ -233,10 +234,10 @@ Return:
                       <div className="p-5 space-y-4">
                         <p className="text-xs text-muted-foreground">{report.summary}</p>
 
-                        {report.change_list?.length > 0 && (
+                        {asArray(report.change_list).length > 0 && (
                           <div className="space-y-1.5">
                             <p className="text-[10px] font-bold text-foreground uppercase tracking-wide">Change List</p>
-                            {report.change_list.map((item, i) => (
+                            {asArray(report.change_list).map((item, i) => (
                               <div key={i} className="flex items-start gap-2 text-[11px] text-muted-foreground">
                                 <span className="text-primary shrink-0 mt-0.5">•</span> {item}
                               </div>

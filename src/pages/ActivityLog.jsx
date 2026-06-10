@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -71,8 +72,8 @@ export default function ActivityLog() {
   // Real-time subscription
   useEffect(() => {
     const unsub = base44.entities.Run.subscribe((event) => {
-      if (event.type === 'create') setRuns(prev => [event.data, ...prev]);
-      else if (event.type === 'update') setRuns(prev => prev.map(r => r.id === event.id ? event.data : r));
+      if (event.type === 'create' && event.data) setRuns(prev => [event.data, ...asArray(prev)]);
+      else if (event.type === 'update' && event.data) setRuns(prev => asArray(prev).map(r => r.id === event.id ? event.data : r));
     });
     return unsub;
   }, []);
@@ -80,12 +81,14 @@ export default function ActivityLog() {
   const fetchRuns = async () => {
     setLoading(true);
     try {
-      const data = await base44.entities.Run.list('-created_date', 100);
+      const data = await resolveArray(base44.entities.Run.list('-created_date', 100));
       setRuns(data);
     } catch {} finally { setLoading(false); }
   };
 
-  const filtered = runs.filter(r => {
+  const safeRuns = asArray(runs);
+
+  const filtered = safeRuns.filter(r => {
     const matchType   = typeFilter === 'all' || r.type === typeFilter;
     const matchStatus = statusFilter === 'all' || r.status === statusFilter;
     const matchSearch = !search || r.input?.toLowerCase().includes(search.toLowerCase()) || r.user_email?.toLowerCase().includes(search.toLowerCase()) || r.type?.includes(search.toLowerCase());
@@ -94,10 +97,10 @@ export default function ActivityLog() {
 
   // Stats
   const stats = {
-    total:   runs.length,
-    success: runs.filter(r => r.status === 'success').length,
-    failed:  runs.filter(r => r.status === 'failed').length,
-    running: runs.filter(r => r.status === 'running').length,
+    total:   safeRuns.length,
+    success: safeRuns.filter(r => r.status === 'success').length,
+    failed:  safeRuns.filter(r => r.status === 'failed').length,
+    running: safeRuns.filter(r => r.status === 'running').length,
   };
 
   return (
@@ -177,7 +180,7 @@ export default function ActivityLog() {
       </div>
 
       <p className="text-[10px] text-muted-foreground text-center">
-        Showing {filtered.length} of {runs.length} events · Updates in real-time
+        Showing {filtered.length} of {safeRuns.length} events · Updates in real-time
       </p>
     </div>
   );

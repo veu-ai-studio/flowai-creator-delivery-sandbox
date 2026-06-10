@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray } from '@/lib/uiDataGuards';
 import { useJobs } from '@/lib/JobContext';
 import { pushJobUpdate } from '@/lib/JobContext';
 import { Button } from '@/components/ui/button';
@@ -20,10 +21,11 @@ export default function PortfolioEngine() {
   const stopRef = useRef(false);
 
   const updateApp = useCallback((url, patch) => {
-    setApps(prev => prev.map(a => a.url === url ? { ...a, ...patch } : a));
+    setApps(prev => asArray(prev).map(a => a.url === url ? { ...a, ...patch } : a));
   }, []);
 
   const runSingleApp = useCallback(async (app, jobId) => {
+    if (!app?.url) return null;
     updateApp(app.url, { status: 'running' });
     pushJobUpdate(jobId, { status: 'running', progress: 10, meta: { url: app.url, label: app.label } });
 
@@ -67,7 +69,7 @@ export default function PortfolioEngine() {
   }, [updateApp]);
 
   const runSequential = useCallback(async (appList) => {
-    for (const app of appList) {
+    for (const app of asArray(appList)) {
       if (stopRef.current) {
         updateApp(app.url, { status: 'pending' });
         continue;
@@ -79,9 +81,10 @@ export default function PortfolioEngine() {
 
   const runParallel = useCallback(async (appList) => {
     // Process in batches of PARALLEL_LIMIT
-    for (let i = 0; i < appList.length; i += PARALLEL_LIMIT) {
+    const safeAppList = asArray(appList);
+    for (let i = 0; i < safeAppList.length; i += PARALLEL_LIMIT) {
       if (stopRef.current) break;
-      const batch = appList.slice(i, i + PARALLEL_LIMIT);
+      const batch = safeAppList.slice(i, i + PARALLEL_LIMIT);
       await Promise.all(batch.map(app => {
         const jobId = createJob({ type: 'portfolio', label: `Portfolio: ${app.label}`, meta: { url: app.url } });
         return runSingleApp({ ...app, jobId }, jobId);
@@ -90,22 +93,23 @@ export default function PortfolioEngine() {
   }, [createJob, runSingleApp]);
 
   const handleStart = useCallback(async (appList, mode) => {
+    const safeAppList = asArray(appList).filter((app) => app && typeof app.url === 'string' && app.url.trim());
     stopRef.current = false;
-    setApps(appList);
+    setApps(safeAppList);
     setRunning(true);
 
     const rootJobId = createJob({
       type: 'portfolio',
-      label: `Portfolio Run — ${appList.length} apps [${mode}]`,
-      meta: { total: appList.length, mode },
+      label: `Portfolio Run — ${safeAppList.length} apps [${mode}]`,
+      meta: { total: safeAppList.length, mode },
     });
     pushJobUpdate(rootJobId, { status: 'running', progress: 5 });
 
     try {
       if (mode === 'parallel') {
-        await runParallel(appList);
+        await runParallel(safeAppList);
       } else {
-        await runSequential(appList);
+        await runSequential(safeAppList);
       }
       pushJobUpdate(rootJobId, { status: 'completed', progress: 100, completedAt: new Date().toISOString() });
     } catch (err) {
@@ -119,7 +123,8 @@ export default function PortfolioEngine() {
   const handleStop = () => { stopRef.current = true; };
   const handleReset = () => { setApps([]); setRunning(false); stopRef.current = false; };
 
-  const hasApps = apps.length > 0;
+  const safeApps = asArray(apps);
+  const hasApps = safeApps.length > 0;
 
   return (
     <div className="p-8 lg:p-10 max-w-5xl space-y-6">
@@ -174,7 +179,7 @@ export default function PortfolioEngine() {
       {hasApps && !running && (
         <div className="text-xs text-muted-foreground">
           Portfolio ID: <code className="font-mono text-primary">{portfolioId}</code>
-          {' · '}{apps.filter(a => a.status === 'completed').length}/{apps.length} completed
+          {' · '}{safeApps.filter(a => a.status === 'completed').length}/{safeApps.length} completed
         </div>
       )}
 
@@ -182,7 +187,7 @@ export default function PortfolioEngine() {
       <AnimatePresence>
         {hasApps && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <PortfolioStatusTable apps={apps} />
+            <PortfolioStatusTable apps={safeApps} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -191,7 +196,7 @@ export default function PortfolioEngine() {
       <AnimatePresence>
         {hasApps && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <PortfolioSummaryPanel apps={apps} />
+            <PortfolioSummaryPanel apps={safeApps} />
           </motion.div>
         )}
       </AnimatePresence>

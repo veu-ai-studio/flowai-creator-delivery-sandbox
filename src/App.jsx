@@ -114,6 +114,12 @@ function LegacyFlowHubRedirect() {
   return <Navigate to={destination} replace />;
 }
 
+function BaseAgentTestRoute() {
+  const showBaseAgentTest = import.meta.env.DEV
+    || String(import.meta.env?.VITE_SHOW_BASE_AGENT_TEST || '').toLowerCase() === 'true';
+  return showBaseAgentTest ? <BaseAgentTest /> : <PageNotFound />;
+}
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
@@ -146,13 +152,13 @@ const AuthenticatedApp = () => {
         <Route path="/forge/research" element={<ForgeResearchForm />} />
         <Route path="/forge/design" element={<ForgeDesignForm />} />
         <Route path="/forge/build" element={<ForgeBuildForm />} />
-        <Route path="/forge/audit" element={<ForgeAuditForm />} />
+        <Route path="/forge/audit" element={<Navigate to="/forge/quality-audit" replace />} />
         <Route path="/forge/quality-audit" element={<ForgeAuditForm />} />
         <Route path="/forge/deploy" element={<ForgeDeployForm />} />
         <Route path="/forge/self-renewal" element={<ForgeRenewalForm />} />
         <Route path="/forge/gtm" element={<ForgeGTMForm />} />
         <Route path="/forge/monitor" element={<ForgeMonitorForm />} />
-        <Route path="/old-dashboard" element={<Dashboard />} />
+        <Route path="/old-dashboard" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="/flow-designer" element={<FlowDesigner />} />
         <Route path="/run-flow" element={<RunFlow />} />
@@ -253,7 +259,7 @@ const AuthenticatedApp = () => {
       <Route path="/demo" element={<DemoSandbox />} />
       <Route path="/live-demo" element={<LiveDemo />} />
       <Route path="/enterprise-demo" element={<EnterpriseDemo />} />
-      <Route path="/base-agent-test" element={<BaseAgentTest />} />
+      <Route path="/base-agent-test" element={<BaseAgentTestRoute />} />
       <Route path="/about" element={<Navigate to="/landing" replace />} />
       <Route path="*" element={<PageNotFound />} />
 

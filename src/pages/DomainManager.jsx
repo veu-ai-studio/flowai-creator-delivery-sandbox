@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import { Button } from '@/components/ui/button';
 import {
   Globe, Loader2, RefreshCw, ChevronDown, ChevronUp,
@@ -43,7 +44,7 @@ export default function DomainManager() {
   const [updatingStatus, setUpdatingStatus] = useState(null);
 
   useEffect(() => {
-    base44.entities.DomainStrategy.list('-created_date')
+    resolveArray(base44.entities.DomainStrategy.list('-created_date'))
       .then(data => setStrategies(data))
       .catch(() => {});
   }, []);
@@ -102,8 +103,8 @@ Also produce:
 
     // Save each product strategy to entity
     const saved = await Promise.all(
-      (result.products || []).map(p => {
-        const existing = strategies.find(s => s.product_name === p.name);
+      asArray(result.products).map(p => {
+        const existing = asArray(strategies).find(s => s.product_name === p.name);
         const productUrl = PRODUCTS.find(pr => pr.name === p.name)?.url || '';
         const payload = {
           product_name: p.name,
@@ -153,7 +154,8 @@ Format as a clean markdown checklist with checkboxes [ ] and time estimates per 
     setUpdatingStatus(null);
   };
 
-  const hasStrategies = strategies.length > 0;
+  const safeStrategies = asArray(strategies);
+  const hasStrategies = safeStrategies.length > 0;
 
   return (
     <div className="p-8 lg:p-10 max-w-5xl space-y-6">
@@ -233,7 +235,7 @@ Format as a clean markdown checklist with checkboxes [ ] and time estimates per 
         {/* Show all 6 products — with data if analyzed, or placeholder row */}
         <div className="space-y-3">
           {PRODUCTS.map(product => {
-            const strategy = strategies.find(s => s.product_name === product.name);
+            const strategy = safeStrategies.find(s => s.product_name === product.name);
             const status = strategy?.status || 'recommended';
             const statusInfo = STATUS_STYLE[status];
             const isExpanded = expanded === product.name;
@@ -290,7 +292,7 @@ Format as a clean markdown checklist with checkboxes [ ] and time estimates per 
                         )}
                       </>
                     )}
-                    {strategy?.dns_records?.length > 0 && (
+                    {asArray(strategy?.dns_records).length > 0 && (
                       <button onClick={() => setExpanded(isExpanded ? null : product.name)}
                         className="h-7 px-2 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-all">
                         DNS {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -301,7 +303,7 @@ Format as a clean markdown checklist with checkboxes [ ] and time estimates per 
 
                 {/* DNS records */}
                 <AnimatePresence>
-                  {isExpanded && strategy?.dns_records?.length > 0 && (
+                  {isExpanded && asArray(strategy?.dns_records).length > 0 && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden">
                       <div className="pt-3 border-t border-border/40 space-y-2">
@@ -312,7 +314,7 @@ Format as a clean markdown checklist with checkboxes [ ] and time estimates per 
                           </span>
                         </p>
                         <div className="space-y-1.5">
-                          {strategy.dns_records.map((rec, i) => (
+                          {asArray(strategy.dns_records).map((rec, i) => (
                             <div key={i} className="flex items-start gap-2 font-mono text-[10px] bg-background border border-border rounded-lg p-2.5">
                               <span className="text-primary font-bold shrink-0 w-12">{rec.type}</span>
                               <span className="text-muted-foreground shrink-0 w-24 truncate">{rec.name || '@'}</span>
@@ -321,11 +323,11 @@ Format as a clean markdown checklist with checkboxes [ ] and time estimates per 
                             </div>
                           ))}
                         </div>
-                        {strategy.professional_emails?.length > 0 && (
+                        {asArray(strategy.professional_emails).length > 0 && (
                           <div className="pt-2">
                             <p className="text-[10px] font-bold text-muted-foreground mb-1">Recommended Email Addresses</p>
                             <div className="flex flex-wrap gap-1.5">
-                              {strategy.professional_emails.map((email, i) => (
+                              {asArray(strategy.professional_emails).map((email, i) => (
                                 <span key={i} className="flex items-center gap-1 font-mono text-[10px] bg-secondary/40 px-2 py-1 rounded border border-border text-foreground">
                                   {email} <CopyButton text={email} />
                                 </span>
@@ -336,8 +338,8 @@ Format as a clean markdown checklist with checkboxes [ ] and time estimates per 
                         {strategy.domain_rationale && (
                           <p className="text-[10px] text-muted-foreground italic border-t border-border/30 pt-2">{strategy.domain_rationale}</p>
                         )}
-                        {strategy.alternatives?.length > 0 && (
-                          <p className="text-[10px] text-muted-foreground">Alternatives: {strategy.alternatives.join(', ')}</p>
+                        {asArray(strategy.alternatives).length > 0 && (
+                          <p className="text-[10px] text-muted-foreground">Alternatives: {asArray(strategy.alternatives).join(', ')}</p>
                         )}
                       </div>
                     </motion.div>

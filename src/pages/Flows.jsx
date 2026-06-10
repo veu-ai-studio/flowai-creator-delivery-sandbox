@@ -9,6 +9,7 @@ import CanvasPreview from "@/components/designer/CanvasPreview";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { BLOCK_TYPES } from "@/lib/flowStore";
+import { asArray, resolveArray } from "@/lib/uiDataGuards";
 import { formatDistanceToNow } from "date-fns";
 import FlowKanban from "@/components/flows/FlowKanban";
 import FlowPerformanceChart from "@/components/flows/FlowPerformanceChart";
@@ -40,7 +41,7 @@ export default function Flows() {
 
   const fetchFlows = async () => {
     setLoading(true);
-    const data = await base44.entities.SavedFlow.list("-updated_date");
+    const data = await resolveArray(base44.entities.SavedFlow.list("-updated_date"));
     setFlows(data);
     setLoading(false);
   };
@@ -92,7 +93,7 @@ export default function Flows() {
     // Pre-fetch runs for export/perf tabs
     if (!flowRuns[flowId]) {
       base44.entities.FlowRun.filter({ flow_id: flowId }, '-created_date', 30)
-        .then(data => setFlowRuns(prev => ({ ...prev, [flowId]: data })))
+        .then(data => setFlowRuns(prev => ({ ...prev, [flowId]: asArray(data) })))
         .catch(() => {});
     }
   };

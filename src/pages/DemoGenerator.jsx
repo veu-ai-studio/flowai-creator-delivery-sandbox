@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import { VEU_PRODUCTS } from '@/lib/veuProducts';
 import { loadSyntheticPrompt } from '@/lib/syntheticPromptLoader';
 import { Button } from '@/components/ui/button';
@@ -70,7 +71,7 @@ export default function DemoGenerator() {
 
   // Load existing demos on mount — also restore any saved custom products
   useEffect(() => {
-    base44.entities.DemoEnvironment.list('-created_date').then(records => {
+    resolveArray(base44.entities.DemoEnvironment.list('-created_date')).then(records => {
       const map = {};
       const restoredCustom = [];
       records.forEach(r => {
@@ -287,7 +288,7 @@ Return JSON with keys: welcome_message, steps (array of Shepherd step objects wi
           const status = isGenerating ? 'generating' : (demo?.demo_status || 'not_generated');
           const st = STATUS_STYLE[status];
           const isExpanded = expanded === product.name;
-          const tourStops = (() => { try { const t = JSON.parse(demo?.tour_script || '{}'); return t.steps?.length || 0; } catch { return 0; } })();
+          const tourStops = (() => { try { const t = JSON.parse(demo?.tour_script || '{}'); return asArray(t.steps).length; } catch { return 0; } })();
 
           return (
             <motion.div key={product.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
@@ -477,7 +478,7 @@ Return JSON with keys: welcome_message, steps (array of Shepherd step objects wi
                                     <span className="font-bold text-foreground">Welcome: </span>{t.welcome_message}
                                   </div>
                                 )}
-                                {(t.steps || []).map((step, i) => (
+                                {asArray(t.steps).map((step, i) => (
                                   <div key={i} className="flex items-start gap-2 text-[10px]">
                                     <span className="h-4 w-4 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                                     <div>

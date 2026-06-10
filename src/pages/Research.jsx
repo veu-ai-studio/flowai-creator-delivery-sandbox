@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray } from '@/lib/uiDataGuards';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,14 +15,15 @@ import ResearchHistoryPanel from '@/components/research/ResearchHistoryPanel';
 const PHASE = 'Phase 2 — Research Engine';
 
 function Section({ icon: Icon, title, items, color }) {
-  if (!items || items.length === 0) return null;
+  const safeItems = asArray(items);
+  if (safeItems.length === 0) return null;
   return (
     <div className="space-y-2">
       <p className={`text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5 ${color}`}>
         <Icon className="h-3.5 w-3.5" />{title}
       </p>
       <ul className="space-y-1">
-        {items.map((item, i) => (
+        {safeItems.map((item, i) => (
           <motion.li
             key={i}
             initial={{ opacity: 0, x: -6 }}
@@ -87,11 +89,18 @@ Provide comprehensive competitive intelligence and market analysis. Be specific 
       let failStep = '';
       let failError = '';
 
-      if (!res?.competitors?.length) { failed = true; failStep = 'Competitors'; failError = 'No competitors returned'; }
+      const competitors = asArray(res?.competitors);
+      const opportunities = asArray(res?.opportunities);
+      const risks = asArray(res?.risks);
+      const keyFeatures = asArray(res?.key_features);
+      const positioning = asArray(res?.positioning);
+      const targetAudience = asArray(res?.target_audience);
+
+      if (!competitors.length) { failed = true; failStep = 'Competitors'; failError = 'No competitors returned'; }
       else checks.push('competitors populated');
-      if (!res?.opportunities?.length) { failed = true; failStep = 'Opportunities'; failError = 'No opportunities returned'; }
+      if (!opportunities.length) { failed = true; failStep = 'Opportunities'; failError = 'No opportunities returned'; }
       else checks.push('opportunities populated');
-      if (!res?.risks?.length) { failed = true; failStep = 'Risks'; failError = 'No risks returned'; }
+      if (!risks.length) { failed = true; failStep = 'Risks'; failError = 'No risks returned'; }
       else checks.push('risks populated');
       checks.push('structured fields exist', 'research output visible');
 
@@ -99,7 +108,7 @@ Provide comprehensive competitive intelligence and market analysis. Be specific 
         setPhaseStatus('failed');
         setPhaseReport({ status: 'FAILED', phase: PHASE, step: failStep, error: failError, root_cause: 'LLM returned incomplete data', fix_recommendation: 'Retry with more specific input', next_action: 'Refine query → re-run Phase 2' });
       } else {
-        const researchData = { ...res, inputQuery: input, industry };
+        const researchData = { ...res, competitors, opportunities, risks, key_features: keyFeatures, positioning, target_audience: targetAudience, inputQuery: input, industry };
         setResearch(researchData);
         setPhaseStatus('passed');
         setPhaseReport({ status: 'SUCCESS', phase: PHASE, validated: true, checks_passed: checks, next_phase: 'Phase 3 — Design Engine' });
@@ -113,12 +122,12 @@ Provide comprehensive competitive intelligence and market analysis. Be specific 
               query: input,
               industry: industry || '',
               summary: res.summary || '',
-              competitors: res.competitors || [],
-              opportunities: res.opportunities || [],
-              risks: res.risks || [],
-              key_features: res.key_features || [],
-              positioning: res.positioning || [],
-              target_audience: res.target_audience || [],
+              competitors,
+              opportunities,
+              risks,
+              key_features: keyFeatures,
+              positioning,
+              target_audience: targetAudience,
               market_size: res.market_size || '',
             });
             setHistoryKey(k => k + 1);

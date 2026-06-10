@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import { Button } from '@/components/ui/button';
 import {
   Activity, Loader2, AlertTriangle, RefreshCw, Clock, ChevronDown, ChevronUp, Zap
@@ -8,6 +9,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 
 function Gate1ReviewCard({ product, score, issues }) {
+  const safeIssues = asArray(issues);
   return (
     <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
       className="rounded-xl border border-red-500/40 bg-red-500/5 p-4 space-y-2">
@@ -19,9 +21,9 @@ function Gate1ReviewCard({ product, score, issues }) {
         Production health score dropped to <strong className="text-red-400">{score}/10</strong> (threshold: 8/10).
         Governance action needed.
       </p>
-      {issues?.length > 0 && (
+      {safeIssues.length > 0 && (
         <ul className="space-y-0.5">
-          {issues.map((issue, i) => (
+          {safeIssues.map((issue, i) => (
             <li key={i} className="text-[10px] text-red-300 flex items-start gap-1.5">
               <span className="shrink-0 mt-0.5">•</span>{issue}
             </li>
@@ -59,7 +61,7 @@ export default function ProductionMonitor() {
   const [gate1Cards, setGate1Cards] = useState([]);
 
   useEffect(() => {
-    base44.entities.ProductEnvironment.list('-created_date').then(setEnvs);
+    resolveArray(base44.entities.ProductEnvironment.list('-created_date')).then(setEnvs);
   }, []);
 
   const checkSingle = async (env) => {
@@ -103,7 +105,7 @@ Return:
     // Update score in entity and score history
     const now = new Date().toISOString();
     const historyEntry = { date: now, score: result.health_score, url };
-    const existingHistory = env.score_history || [];
+    const existingHistory = asArray(env.score_history);
     const newHistory = [...existingHistory.slice(-9), historyEntry]; // keep last 10
 
     if (env.prod_url) {
@@ -123,11 +125,11 @@ Return:
     // Surface Gate 1 if score < 8
     if (result.health_score < 8) {
       setGate1Cards(prev => {
-        const without = prev.filter(c => c.product !== env.product_name);
+        const without = asArray(prev).filter(c => c.product !== env.product_name);
         return [...without, { product: env.product_name, score: result.health_score, issues: result.issues }];
       });
     } else {
-      setGate1Cards(prev => prev.filter(c => c.product !== env.product_name));
+      setGate1Cards(prev => asArray(prev).filter(c => c.product !== env.product_name));
     }
 
     return result;
@@ -136,7 +138,7 @@ Return:
   const runAllChecks = async () => {
     setRunning(true);
     setGate1Cards([]);
-    const freshEnvs = await base44.entities.ProductEnvironment.list('-created_date');
+    const freshEnvs = await resolveArray(base44.entities.ProductEnvironment.list('-created_date'));
     setEnvs(freshEnvs);
 
     const newResults = {};
@@ -206,7 +208,7 @@ Return:
       </AnimatePresence>
 
       {/* Environment cards */}
-      {envs.length === 0 ? (
+      {asArray(envs).length === 0 ? (
         <div className="text-center py-16">
           <Activity className="h-12 w-12 text-muted-foreground/15 mx-auto mb-3" />
           <p className="text-muted-foreground text-sm">No environments registered yet.</p>
@@ -214,7 +216,7 @@ Return:
         </div>
       ) : (
         <div className="space-y-3">
-          {envs.map(env => {
+          {asArray(envs).map(env => {
             const r = results[env.id];
             const isRunning = runningId === env.id;
             const isExpanded = expandedId === env.id;
@@ -273,9 +275,9 @@ Return:
                 </div>
 
                 {/* Score history mini-chart */}
-                {env.score_history?.length > 1 && (
+                {asArray(env.score_history).length > 1 && (
                   <div className="px-4 pb-2 flex items-end gap-0.5 h-8">
-                    {env.score_history.slice(-10).map((h, i) => {
+                    {asArray(env.score_history).slice(-10).map((h, i) => {
                       const pct = (h.score / 10) * 100;
                       const barColor = h.score >= 8 ? 'bg-emerald-500/60' : h.score >= 5 ? 'bg-amber-500/60' : 'bg-red-500/60';
                       return (
@@ -310,10 +312,10 @@ Return:
                         )}
 
                         {/* Issues */}
-                        {r.issues?.length > 0 && (
+                        {asArray(r.issues).length > 0 && (
                           <div className="space-y-1">
                             <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide">Issues</p>
-                            {r.issues.map((issue, i) => (
+                            {asArray(r.issues).map((issue, i) => (
                               <div key={i} className="flex items-start gap-1.5 text-[10px] text-red-300">
                                 <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" /> {issue}
                               </div>
@@ -322,10 +324,10 @@ Return:
                         )}
 
                         {/* Recommendations */}
-                        {r.recommendations?.length > 0 && (
+                        {asArray(r.recommendations).length > 0 && (
                           <div className="space-y-1">
                             <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wide">Quick Fixes</p>
-                            {r.recommendations.map((rec, i) => (
+                            {asArray(r.recommendations).map((rec, i) => (
                               <div key={i} className="flex items-start gap-1.5 text-[10px] text-amber-300">
                                 <Zap className="h-3 w-3 shrink-0 mt-0.5" /> {rec}
                               </div>

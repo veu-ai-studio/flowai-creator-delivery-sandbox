@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import { Shield, Loader2, RefreshCw, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,22 +30,24 @@ export default function AuditTrail() {
 
   const load = async () => {
     setLoading(true);
-    const data = await base44.entities.GovernanceAuditLog.list('-created_date', 200).catch(() => []);
+    const data = await resolveArray(base44.entities.GovernanceAuditLog.list('-created_date', 200));
     setLogs(data);
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
-  const filtered = logs.filter(l => {
+  const safeLogs = asArray(logs);
+
+  const filtered = safeLogs.filter(l => {
     if (filterProduct && !l.product_url?.toLowerCase().includes(filterProduct.toLowerCase()) && !l.action_detail?.toLowerCase().includes(filterProduct.toLowerCase())) return false;
     if (filterAction && l.action_type !== filterAction) return false;
     if (filterMode && l.mode !== filterMode) return false;
     return true;
   });
 
-  const ACTION_TYPES = [...new Set(logs.map(l => l.action_type).filter(Boolean))];
-  const MODES = [...new Set(logs.map(l => l.mode).filter(Boolean))];
+  const ACTION_TYPES = [...new Set(safeLogs.map(l => l.action_type).filter(Boolean))];
+  const MODES = [...new Set(safeLogs.map(l => l.mode).filter(Boolean))];
 
   return (
     <div className="p-8 lg:p-10 max-w-5xl space-y-6">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { asArray, resolveArray } from '@/lib/uiDataGuards';
 import { VEU_PRODUCTS } from '@/lib/veuProducts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -105,7 +106,7 @@ export default function InvestorStudio() {
   const [customProducts, setCustomProducts] = useState([]);
 
   useEffect(() => {
-    base44.entities.InvestorAsset.list('-created_date').then(records => {
+    resolveArray(base44.entities.InvestorAsset.list('-created_date')).then(records => {
       const deckMap = {};
       records.forEach(r => {
         if (r.asset_type === 'pitch_deck') deckMap[r.product_name] = r;
@@ -129,7 +130,7 @@ export default function InvestorStudio() {
         response_json_schema: SLIDE_SCHEMA,
       });
 
-      const groupSlides = result?.slides || [];
+      const groupSlides = asArray(result?.slides);
       allSlides = [...allSlides, ...groupSlides];
     }
 
@@ -288,7 +289,7 @@ Return JSON with single key "html" containing the complete single-file HTML+CSS 
   const allProducts = [...VEU_PRODUCTS, ...customProducts];
   const anyGenerating = Object.values(deckProgress).some(p => p.step < 3);
 
-  const getSlides = (productName) => decks[productName]?.content?.slides || [];
+  const getSlides = (productName) => asArray(decks[productName]?.content?.slides);
 
   return (
     <div className="p-8 lg:p-10 max-w-5xl space-y-8">
@@ -462,13 +463,13 @@ Return JSON with single key "html" containing the complete single-file HTML+CSS 
                               <p className="text-sm font-bold text-foreground">{slide.title}</p>
                             </div>
                             <CopyButton
-                              text={`${slide.title}\n\n${slide.key_message}\n\n${(slide.bullets || []).join('\n')}\n\nSpeaker Notes: ${slide.speaker_notes}`}
+                              text={`${slide.title}\n\n${slide.key_message}\n\n${asArray(slide.bullets).join('\n')}\n\nSpeaker Notes: ${slide.speaker_notes}`}
                               label="Copy" size="sm" />
                           </div>
                           {slide.key_message && <p className={`text-xs font-semibold ${product.color}`}>{slide.key_message}</p>}
-                          {slide.bullets?.length > 0 && (
+                          {asArray(slide.bullets).length > 0 && (
                             <ul className="space-y-0.5">
-                              {slide.bullets.map((b, j) => (
+                              {asArray(slide.bullets).map((b, j) => (
                                 <li key={j} className="text-[11px] text-foreground flex items-start gap-1.5">
                                   <span className="text-primary shrink-0 mt-0.5">•</span>{b}
                                 </li>
