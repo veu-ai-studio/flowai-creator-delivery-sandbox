@@ -1827,19 +1827,12 @@ export async function runOrchestration(args = {}) {
     }
   }
 
-  // ── W6 INTEGRATION — STEP 3b: Pre-run honest-gate (CA-18 §1) ──────────────
+  // ── W6 INTEGRATION — STEP 3b: historical score context (CA-18 §1) ─────────
   //
-  // CA-18 §1 honest-assessment obligation: if this product already meets
-  // the gtmTarget per its most recent orchestration_complete entry, the
-  // engine must refuse to re-run rather than silently re-evaluate. The
-  // run short-circuits with exitReason='HONEST_GATE_REFUSAL_ALREADY_PASSING'
-  // so the UI surfaces it as an explicit message (not as an error).
-  //
-  // Source of truth for last_score: product_ssot.governance_record (NOT a
-  // dedicated product_registry.last_score column, which doesn't exist yet
-  // — the governance_record is the canonical score-history substrate per
-  // CA-18 §7.6). We pull the most recent self_renewal.orchestration_complete.v1
-  // entry's finalScore and compare to gtmTarget.
+  // Historical ProductSSOT scores are context only. They may predate
+  // degraded-score evidence markers, so they must never hard-stop a new run.
+  // The honest-gate refusal is evaluated below after current-run scoring.
+  let historicalHonestGateContext = null;
   if (supabase && typeof supabase.from === 'function' && product?.product_id) {
     try {
       const { data: ssotRow } = await supabase
@@ -1853,74 +1846,28 @@ export async function runOrchestration(args = {}) {
       const last = completes.length > 0 ? completes[completes.length - 1] : null;
       const lastScore = typeof last?.finalScore === 'number' ? last.finalScore : null;
       const lastScoreIsDegraded = hasDegradedScoreEvidence(last);
-      if (lastScore !== null && !lastScoreIsDegraded && lastScore >= gtmTarget) {
-        // Emit the honest_gate_refusal envelope BEFORE returning so it
-        // lands in governance_record + the SSE stream.
-        try {
-          await _appendGovernanceEntry({
-            productId: product.product_id, environment,
-            entry: {
-              kind: 'honest_gate_refusal.v1',
-              runId,
-              productId: product.product_id,
-              reason: 'ALREADY_AT_TARGET',
-              currentScore: lastScore,
-              targetScore: gtmTarget,
-              priorRunId: last.runId ?? null,
-              at: new Date().toISOString(),
-            },
-            supabase,
-          });
-        } catch { /* honest-gate envelope is best-effort */ }
+      if (lastScore !== null) {
+        historicalHonestGateContext = {
+          priorRunId: last?.runId ?? null,
+          score: lastScore,
+          targetScore: gtmTarget,
+          degraded: lastScoreIsDegraded,
+          wouldHavePassed: lastScore >= gtmTarget,
+        };
         emit(makeStepLog({
           iteration: 0, step: 0, status: 'complete',
-          tool: 'honest_gate (CA-18 §1 pre-run assessment)',
-          why: 'refuse to re-evaluate a product already at target — honesty over busywork',
+          tool: 'honest_gate historical context (CA-18 §1)',
+          why: 'historical ProductSSOT scores are context only; current-run evidence decides refusal',
           result: {
-            kind: 'honest_gate_refusal',
-            reason: 'ALREADY_AT_TARGET',
-            currentScore: lastScore,
+            kind: 'honest_gate_context',
+            priorRunId: historicalHonestGateContext.priorRunId,
+            historicalScore: lastScore,
             targetScore: gtmTarget,
+            degraded: lastScoreIsDegraded,
+            wouldHavePassed: lastScore >= gtmTarget,
           },
           mode: state.mode,
         }));
-        return Object.freeze({
-          ok: true,
-          gtmReady: true,
-          gtmBand: 'showcase-ready',
-          gtmCounts: null,
-          exitReason: 'HONEST_GATE_REFUSAL_ALREADY_PASSING',
-          originalScore: lastScore,
-          finalScore: lastScore,
-          totalDelta: 0,
-          fiveLayerOriginalScore: 0,
-          fiveLayerFinalScore: 0,
-          iterationsCompleted: 0,
-          previewUrl: null,
-          inputSummary,
-          inputStepMatrix,
-          userObjectives,
-          ...buildUpgradeDeliveryEnvelope({
-            product,
-            initialUrl,
-            iterations: [],
-            skippedSteps: state.skippedSteps,
-          }),
-          prUrl: null,
-          prNumber: null,
-          orchestrationLog,
-          iterations: [],
-          product,
-          runId,
-          mode: state.mode,
-          auditWrite: { written: false, reason: 'honest_gate_refusal' },
-          runIncomplete: null,
-          honestGateRefusal: {
-            reason: 'ALREADY_AT_TARGET',
-            currentScore: lastScore,
-            targetScore: gtmTarget,
-          },
-        });
       }
     } catch { /* lookup failure is non-fatal — proceed with normal run */ }
   }
@@ -2251,6 +2198,87 @@ export async function runOrchestration(args = {}) {
         },
       });
       emit(log); iterLog.steps.push(log);
+      const currentRunScore = typeof preGtm?.score === 'number' ? preGtm.score : null;
+      const currentRunScoreIsDegraded = hasDegradedScoreEvidence(preScoreEnvelope) || preGtm?.degraded === true;
+      if (
+        iterationNumber === 1
+        && supabase
+        && typeof supabase.from === 'function'
+        && product?.product_id
+        && currentRunScore !== null
+        && !currentRunScoreIsDegraded
+        && currentRunScore >= gtmTarget
+      ) {
+        try {
+          await _appendGovernanceEntry({
+            productId: product.product_id, environment,
+            entry: {
+              kind: 'honest_gate_refusal.v1',
+              runId,
+              productId: product.product_id,
+              reason: 'ALREADY_AT_TARGET',
+              evidenceSource: 'current_run',
+              currentScore: currentRunScore,
+              targetScore: gtmTarget,
+              historicalContext: historicalHonestGateContext,
+              at: new Date().toISOString(),
+            },
+            supabase,
+          });
+        } catch { /* honest-gate envelope is best-effort */ }
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 5, status: 'complete',
+          tool: 'honest_gate (CA-18 §1 current-run assessment)',
+          why: 'current run evidence shows product already at target; refuse further busywork',
+          result: {
+            kind: 'honest_gate_refusal',
+            reason: 'ALREADY_AT_TARGET',
+            evidenceSource: 'current_run',
+            currentScore: currentRunScore,
+            targetScore: gtmTarget,
+            degraded: false,
+          },
+          mode: state.mode,
+        }));
+        return Object.freeze({
+          ok: true,
+          gtmReady: true,
+          gtmBand: preGtm.band ?? 'showcase-ready',
+          gtmCounts: preGtm.counts ?? null,
+          exitReason: 'HONEST_GATE_REFUSAL_ALREADY_PASSING',
+          originalScore: currentRunScore,
+          finalScore: currentRunScore,
+          totalDelta: 0,
+          fiveLayerOriginalScore: preScoreEnvelope?.total ?? 0,
+          fiveLayerFinalScore: preScoreEnvelope?.total ?? 0,
+          iterationsCompleted: 0,
+          previewUrl: null,
+          inputSummary,
+          inputStepMatrix,
+          userObjectives,
+          ...buildUpgradeDeliveryEnvelope({
+            product,
+            initialUrl,
+            iterations: [],
+            skippedSteps: state.skippedSteps,
+          }),
+          prUrl: null,
+          prNumber: null,
+          orchestrationLog,
+          iterations: [],
+          product,
+          runId,
+          mode: state.mode,
+          auditWrite: { written: false, reason: 'honest_gate_refusal' },
+          runIncomplete: null,
+          honestGateRefusal: {
+            reason: 'ALREADY_AT_TARGET',
+            evidenceSource: 'current_run',
+            currentScore: currentRunScore,
+            targetScore: gtmTarget,
+          },
+        });
+      }
     } catch (e) {
       emit(makeStepLog({ iteration: iterationNumber, step: 5, status: 'failed',
         tool: 'preScoreAdapter', why: 'early pre-score', result: { error: e?.message }, mode: state.mode }));

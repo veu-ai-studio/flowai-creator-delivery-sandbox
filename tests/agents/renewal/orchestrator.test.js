@@ -309,6 +309,65 @@ describe('runOrchestration — AUTO mode', () => {
       expect(deps.computeScore).toHaveBeenCalled();
     } finally { clearVercelEnv(); }
   });
+
+  it('does not hard-stop on non-degraded historical passing scores', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [55] });
+      const maybeSingle = vi.fn(async () => ({
+        data: {
+          governance_record: [{
+            kind: 'self_renewal.orchestration_complete.v1',
+            runId: 'prior-clean-score',
+            finalScore: 100,
+          }],
+        },
+      }));
+      const query = {
+        select: vi.fn(() => query),
+        eq: vi.fn(() => query),
+        maybeSingle,
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'run-historical-clean-score',
+        supabase: { from: vi.fn(() => query) },
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+
+      expect(result.exitReason).not.toBe('HONEST_GATE_REFUSAL_ALREADY_PASSING');
+      expect(result.iterationsCompleted).toBeGreaterThan(0);
+      expect(deps.computeScore).toHaveBeenCalled();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('refuses only when current-run non-degraded score is already passing', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [96], postScoreSequence: [96] });
+      const maybeSingle = vi.fn(async () => ({
+        data: { governance_record: [] },
+      }));
+      const query = {
+        select: vi.fn(() => query),
+        eq: vi.fn(() => query),
+        maybeSingle,
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'run-current-clean-score',
+        supabase: { from: vi.fn(() => query) },
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+
+      expect(result.exitReason).toBe('HONEST_GATE_REFUSAL_ALREADY_PASSING');
+      expect(result.honestGateRefusal).toMatchObject({
+        reason: 'ALREADY_AT_TARGET',
+        evidenceSource: 'current_run',
+        currentScore: 96,
+        targetScore: 95,
+      });
+      expect(deps.createRenewalBranch).not.toHaveBeenCalled();
+    } finally { clearVercelEnv(); }
+  });
 });
 
 // ── GUIDED mode pauses at checkpoints ───────────────────────────────────────
@@ -1430,7 +1489,7 @@ describe('runOrchestration — DISPATCH 24 PATH B (unknown URL)', () => {
     }));
     const result = await runOrchestration({
       url: 'https://newsite.com', mode: 'auto', runId: 'runid24-pathB-1',
-      supabase: null, environment: 'prd', gtmTarget: 30, maxIterations: 10, deps,
+      supabase: null, environment: 'prd', gtmTarget: 50, maxIterations: 10, deps,
     });
     // PRODUCT_NOT_FOUND must NOT be the outcome.
     expect(result.code).not.toBe('PRODUCT_NOT_FOUND');
@@ -1469,7 +1528,7 @@ describe('runOrchestration — DISPATCH 24 PATH B (unknown URL)', () => {
     }));
     const result = await runOrchestration({
       url: 'https://example.com', mode: 'auto', runId: 'pathB-deploy-1',
-      supabase: null, environment: 'prd', gtmTarget: 30, maxIterations: 10, deps,
+      supabase: null, environment: 'prd', gtmTarget: 50, maxIterations: 10, deps,
     });
     expect(result.ok).toBe(true);
     // remediationEngine called exactly once per iteration; branch-deploy NEVER.
@@ -2126,7 +2185,7 @@ describe('orchestrator — post-deploy regression guard (DISPATCH 30)', () => {
       const createRenewalPr = vi.fn(async () => ({ prNumber: 999, prHtmlUrl: 'https://example/pr' }));
       const result = await runOrchestration({
         url: null, mode: 'auto', runId: 'd30-rg-3', supabase: null,
-        environment: 'prd', gtmTarget: 30, maxIterations: 1,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1,
         deps: regressionDeps({ createRenewalPr }),
       });
       expect(createRenewalPr).not.toHaveBeenCalled();
@@ -2289,7 +2348,7 @@ describe('orchestrator — visible diff-rejection reasons (DISPATCH 33 T1)', () 
       const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [50] });
       const result = await runOrchestration({
         url: null, mode: 'auto', runId: 'd33-rej-1', supabase: null,
-        environment: 'prd', gtmTarget: 30, maxIterations: 1,
+        environment: 'prd', gtmTarget: 55, maxIterations: 1,
         deps: { ...base, generateFix },
         issue: { filePath: 'src/X.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't', category: 'console-error' },
       });
@@ -2321,7 +2380,7 @@ describe('orchestrator — visible diff-rejection reasons (DISPATCH 33 T1)', () 
       const base = happyDeps({ preScoreSequence: [50], postScoreSequence: [60] });
       const result = await runOrchestration({
         url: null, mode: 'auto', runId: 'd33-rej-2', supabase: null,
-        environment: 'prd', gtmTarget: 30, maxIterations: 1,
+        environment: 'prd', gtmTarget: 55, maxIterations: 1,
         deps: { ...base, generateFix },
         issue: { filePath: 'src/X.jsx', issue: 'demo', fix: 'demo', severity: 'medium', title: 't', category: 'accessibility-headings' },
       });
