@@ -258,6 +258,17 @@ function makeDegradedScoreEnvelope({ productId, url, runId, fallbackScore = 0, l
   });
 }
 
+function hasDegradedScoreEvidence(record) {
+  return record?.scoreEvidenceDegraded === true
+    || record?.preScoreDegraded === true
+    || record?.postScoreDegraded === true
+    || record?.fiveLayerScoreDegraded === true
+    || record?.scoreEnvelope?.degraded === true
+    || record?.preScoreEnvelope?.degraded === true
+    || record?.postScoreEnvelope?.degraded === true
+    || record?.degraded === true;
+}
+
 function computeProgress({ originalScore, currentScore, target }) {
   if (!Number.isFinite(currentScore) || !Number.isFinite(originalScore)) return 0;
   // If already at or above target, progress is complete.
@@ -1841,7 +1852,8 @@ export async function runOrchestration(args = {}) {
       const completes = records.filter((r) => r?.kind === 'self_renewal.orchestration_complete.v1');
       const last = completes.length > 0 ? completes[completes.length - 1] : null;
       const lastScore = typeof last?.finalScore === 'number' ? last.finalScore : null;
-      if (lastScore !== null && lastScore >= gtmTarget) {
+      const lastScoreIsDegraded = hasDegradedScoreEvidence(last);
+      if (lastScore !== null && !lastScoreIsDegraded && lastScore >= gtmTarget) {
         // Emit the honest_gate_refusal envelope BEFORE returning so it
         // lands in governance_record + the SSE stream.
         try {
@@ -1923,6 +1935,8 @@ export async function runOrchestration(args = {}) {
   // internal-only telemetry signal per the dispatch directive.
   let originalGtmScore = null;
   let lastPostGtm = null;
+  let preScoreEvidenceDegraded = false;
+  let postScoreEvidenceDegraded = false;
   // W5b TRACK B PART 2 — initialize to the URL we tested against, NOT null.
   // When the run exits early (e.g. NO_FIXES_GENERATED before STEP 10), this
   // anchors the governance_record entry to the artifact we actually evaluated.
@@ -2202,6 +2216,7 @@ export async function runOrchestration(args = {}) {
         }));
       }
       if (originalScore === null) originalScore = preScoreEnvelope.total;
+      preScoreEvidenceDegraded = preScoreEvidenceDegraded || preScoreEnvelope?.degraded === true;
 
       const preGtm = _scoreCrawlOutput(crawlOutput, null);
       if (originalGtmScore === null) originalGtmScore = preGtm.score;
@@ -4475,6 +4490,7 @@ export async function runOrchestration(args = {}) {
     if (!previewUrl) {
       postScoreEnvelope = preScoreEnvelope;
       lastPostScore = postScoreEnvelope.total;
+      postScoreEvidenceDegraded = postScoreEvidenceDegraded || postScoreEnvelope?.degraded === true;
       const postGtm = iterLog.preGtm ?? _scoreCrawlOutput(crawlOutput, state.phaseBFindings ?? null);
       const postGtmSurfaceOnly = iterLog.preGtmSurfaceOnly ?? postGtm;
       lastPostGtm = postGtm;
@@ -4591,6 +4607,7 @@ export async function runOrchestration(args = {}) {
         }));
       }
       lastPostScore = postScoreEnvelope.total;
+      postScoreEvidenceDegraded = postScoreEvidenceDegraded || postScoreEnvelope?.degraded === true;
       // DISPATCH 28 — focused post-fix re-crawl against the live
       // preview URL so the canonical §7.6 score reflects the actual
       // deployed state, not the pre-fix crawl. PATH B / deploy-degraded
@@ -5318,6 +5335,10 @@ export async function runOrchestration(args = {}) {
         finalGtmCounts: lastPostGtm?.counts ?? null,
         fiveLayerOriginal: originalScore,                 // internal telemetry
         fiveLayerFinal: lastPostScore,                    // internal telemetry
+        scoreEvidenceDegraded: preScoreEvidenceDegraded || postScoreEvidenceDegraded,
+        preScoreDegraded: preScoreEvidenceDegraded,
+        postScoreDegraded: postScoreEvidenceDegraded,
+        fiveLayerScoreDegraded: preScoreEvidenceDegraded || postScoreEvidenceDegraded,
         totalDelta: finalGtmScore - (originalGtmScore ?? 0),
         iterationsCompleted: iterations.length,
         gtmReady: canonicalGtmReady,

@@ -278,6 +278,37 @@ describe('runOrchestration — AUTO mode', () => {
       expect(result.iterationsCompleted).toBe(4);
     } finally { clearVercelEnv(); }
   });
+
+  it('does not treat degraded prior score evidence as already passing', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [55] });
+      const maybeSingle = vi.fn(async () => ({
+        data: {
+          governance_record: [{
+            kind: 'self_renewal.orchestration_complete.v1',
+            runId: 'prior-degraded-score',
+            finalScore: 100,
+            scoreEvidenceDegraded: true,
+          }],
+        },
+      }));
+      const query = {
+        select: vi.fn(() => query),
+        eq: vi.fn(() => query),
+        maybeSingle,
+      };
+      const result = await runOrchestration({
+        url: null, mode: 'auto', runId: 'run-degraded-prior-score',
+        supabase: { from: vi.fn(() => query) },
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+      });
+
+      expect(result.exitReason).not.toBe('HONEST_GATE_REFUSAL_ALREADY_PASSING');
+      expect(result.iterationsCompleted).toBeGreaterThan(0);
+      expect(deps.computeScore).toHaveBeenCalled();
+    } finally { clearVercelEnv(); }
+  });
 });
 
 // ── GUIDED mode pauses at checkpoints ───────────────────────────────────────
