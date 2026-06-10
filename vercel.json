@@ -16,7 +16,7 @@
   ],
   "functions": {
     "api/inngest.js": {
-      "maxDuration": 300
+      "maxDuration": 800
     },
     "api/agent/3/execute.js": {
       "maxDuration": 800
