@@ -1272,18 +1272,76 @@ describe('runOrchestration — failure handling', () => {
     } finally { clearVercelEnv(); }
   });
 
-  it('returns failure shape when scoring fails', async () => {
+  it('degrades MONITOR_FETCH_FAILED during Step 5 and continues to final Monitor', async () => {
     withVercelEnv();
     try {
       const deps = happyDeps();
-      deps.produceMonitorText = vi.fn(async () => {
-        throw Object.assign(new Error('SPA shell, no SSR'), { code: 'MONITOR_FETCH_FAILED' });
+      let monitorCalls = 0;
+      deps.produceMonitorText = vi.fn(async ({ url }) => {
+        monitorCalls += 1;
+        if (monitorCalls === 1) {
+          throw Object.assign(new Error('fetchUrlContent network error'), { code: 'MONITOR_FETCH_FAILED' });
+        }
+        return {
+          monitorText: `[L1] 6/10 [L2] 6/10 [L3] 6/10 [L4] 6/10 [L5] 6/10`,
+          rawContent: 'page text', url, fetchedAt: 'now', wordCount: 100, pageTitle: 'demo',
+          model: 'claude-sonnet-4-6', usage: {},
+        };
       });
       const result = await runOrchestration({
-        url: null, mode: 'auto', runId: 'r', supabase: null, deps,
+        url: null, mode: 'auto', runId: 'monitor-fetch-degrade', supabase: null, deps,
+      });
+      expect(result.ok).toBe(true);
+      expect(result.failedStep).toBeUndefined();
+      expect(result.code).toBeUndefined();
+      expect(result.orchestrationLog.find((log) => (
+        log.step === 5
+        && log.status === 'degraded'
+        && log.result?.code === 'MONITOR_FETCH_FAILED'
+      ))).toBeDefined();
+      expect(result.orchestrationLog.find((log) => (
+        log.result?.kind === 'forge.user_step.v1'
+        && log.result?.userStep === 8
+        && log.result?.finalStatusReady === true
+      ))).toBeDefined();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('records BAD_REPO_URL as a terminal final failure when githubRepoUrl is null', async () => {
+    withVercelEnv();
+    try {
+      const productWithMissingRepo = Object.freeze({
+        ...PRODUCT,
+        product_id: 'safe-path',
+        product_url: 'https://safe-path.base44.app',
+        github_repo_url: null,
+      });
+      const deps = happyDeps({ preScoreSequence: [60], postScoreSequence: [60] });
+      deps.discoverProduct = vi.fn(async () => productWithMissingRepo);
+      const result = await runOrchestration({
+        url: 'https://safe-path.base44.app', mode: 'auto', runId: 'bad-repo-url', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
       });
       expect(result.ok).toBe(false);
-      expect(result.failedStep).toBe('STEP_5');
+      expect(result.exitReason).toBe('STEP_FAILED');
+      expect(result.failedStep).toBe('STEP_7');
+      expect(result.code).toBe('BAD_REPO_URL');
+      expect(result.gtmReady).toBe(false);
+      expect(result.failureArtifact).toBeTruthy();
+      expect(result.orchestrationLog.find((log) => (
+        log.step === 7
+        && log.status === 'degraded'
+        && log.result?.code === 'BAD_REPO_URL'
+        && log.result?.missingField === 'githubRepoUrl'
+      ))).toBeDefined();
+      expect(result.orchestrationLog.find((log) => (
+        log.result?.kind === 'forge.user_step.v1'
+        && log.result?.userStep === 8
+        && log.result?.finalStatusReady === true
+      ))).toBeDefined();
+      expect(deps.createRenewalBranch).not.toHaveBeenCalled();
+      expect(deps.deployBranchPreview).not.toHaveBeenCalled();
+      expect(deps.createRenewalPr).not.toHaveBeenCalled();
     } finally { clearVercelEnv(); }
   });
 

@@ -296,6 +296,36 @@ describe('run-construction handler SSE terminal framing', () => {
     });
   });
 
+  it('background worker converts error-only streams into failed final status', async () => {
+    mocks.runOrchestration.mockImplementation(async () => {
+      throw Object.assign(new Error('missing githubRepoUrl'), {
+        code: 'BAD_REPO_URL',
+        failedStep: 'STEP_7',
+      });
+    });
+
+    const result = await runConstructionToStatus({
+      runId: '66666666-6666-4666-8666-666666666666',
+      body: { url: 'https://safe-path.base44.app', mode: 'FOREGROUND' },
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      runId: '66666666-6666-4666-8666-666666666666',
+      error: 'missing githubRepoUrl',
+    });
+    const { record } = await readForgeRunStatus('66666666-6666-4666-8666-666666666666');
+    expect(record.status).toBe('failed');
+    expect(record.final).toMatchObject({
+      type: 'final',
+      final: true,
+      ok: false,
+      exitReason: 'STEP_FAILED',
+      failedStep: 'STEP_7',
+      code: 'BAD_REPO_URL',
+    });
+  });
+
   it('checkpoints each user-facing forge step while persisting background status', async () => {
     const checkpointStep = vi.fn(async (_name, fn) => fn());
     mocks.runOrchestration.mockImplementation(async ({ onStep }) => {

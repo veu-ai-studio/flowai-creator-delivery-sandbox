@@ -152,14 +152,30 @@ export async function markForgeRunFailed(runId, error) {
     type: 'error',
     error: String(error?.message ?? error ?? 'async_run_failed').slice(0, 500),
     code: error?.code ?? 'ASYNC_RUN_FAILED',
+    failedStep: error?.failedStep ?? null,
   };
+  const final = {
+    type: 'final',
+    final: true,
+    ok: false,
+    exitReason: error?.exitReason ?? 'STEP_FAILED',
+    failedStep: error?.failedStep ?? null,
+    error: payload.error,
+    code: payload.code,
+  };
+  const completedAt = nowIso();
   return writeRaw(runId, {
     ...normalizeRecord(record ?? { runId }),
     status: 'failed',
-    updatedAt: nowIso(),
-    completedAt: nowIso(),
+    updatedAt: completedAt,
+    completedAt,
     error: payload,
-    events: [...(record?.events ?? []), { at: nowIso(), payload }].slice(-MAX_EVENTS),
+    final,
+    events: [
+      ...(record?.events ?? []),
+      { at: completedAt, payload },
+      { at: completedAt, payload: final },
+    ].slice(-MAX_EVENTS),
   });
 }
 
