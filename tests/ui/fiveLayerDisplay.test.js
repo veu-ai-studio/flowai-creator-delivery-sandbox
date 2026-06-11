@@ -36,9 +36,12 @@ describe('Five-Layer display reads orchestrator-emitted fields', () => {
   it('component is not consuming fabricated layer scores — only real fields', () => {
     // Negative assertion: no hardcoded numeric layer values in the
     // FiveLayerRadar component (would indicate fabrication).
-    const radar = dashboardSrc.match(/function FiveLayerRadar[\s\S]*?\n\}\n/);
-    expect(radar).not.toBeNull();
-    expect(radar[0]).toMatch(/scores\?\.l1[\s\S]*scores\?\.l5/);
-    expect(radar[0]).not.toMatch(/l1:\s*[1-9]/);
+    const start = dashboardSrc.indexOf('function FiveLayerRadar');
+    const end = dashboardSrc.indexOf('const STATUS_STYLE', start);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
+    const radar = dashboardSrc.slice(start, end);
+    expect(radar).toMatch(/scores\?\.l1[\s\S]*scores\?\.l5/);
+    expect(radar).not.toMatch(/l1:\s*[1-9]/);
   });
 });
