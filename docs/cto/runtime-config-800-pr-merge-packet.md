@@ -3,8 +3,10 @@
 Date: 2026-06-11
 Owner: CTO
 Branch: `fix/forge-runtime-config-800`
-Current branch HEAD: `61d3f2cc3d55c38c1faacb39542be225c2e1c32a`
-Base main: `06829983b50f16613c548f77708e96b905a8fbb9`
+Review target: latest `origin/fix/forge-runtime-config-800`
+Technical code delta: `61d3f2cc3d55c38c1faacb39542be225c2e1c32a`
+Deferred proof production base: `06829983b50f16613c548f77708e96b905a8fbb9`
+Current PR base: use current `origin/main` at PR creation time.
 
 ## Status
 
