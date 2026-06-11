@@ -129,6 +129,34 @@ function finalPayload(events) {
   return null;
 }
 
+function normalizeUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    url.hash = '';
+    const normalized = url.toString().replace(/\/$/, '');
+    return normalized.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function isDistinctObservedUrl(candidate, sourceUrl) {
+  const normalizedCandidate = normalizeUrl(candidate);
+  if (!normalizedCandidate) return false;
+  const normalizedSource = normalizeUrl(sourceUrl);
+  return !normalizedSource || normalizedCandidate !== normalizedSource;
+}
+
+function observedDeliveryUrl(value, sourceUrl) {
+  const candidates = [
+    value?.deliveryArtifactUrl,
+    value?.upgradedUrl,
+    value?.previewUrl,
+  ];
+  return candidates.find((candidate) => isDistinctObservedUrl(candidate, sourceUrl)) || null;
+}
+
 export function summarizeSseProof(events, options = {}) {
   const typeCounts = {};
   for (const event of events) inc(typeCounts, event.type);
@@ -137,7 +165,8 @@ export function summarizeSseProof(events, options = {}) {
   const finalLogs = Array.isArray(finalResult?.orchestrationLog) ? finalResult.orchestrationLog : [];
   const branchFromFinalLog = [...(finalResult?.orchestrationLog || [])].reverse()
     .find((log) => log?.result?.branchName);
-  const previewFromFinal = finalResult?.previewUrl || finalResult?.upgradedUrl || finalResult?.deliveryArtifactUrl || null;
+  const sourceUrl = options.request?.url || finalResult?.url || finalResult?.sourceUrl || finalResult?.originalUrl || null;
+  const deliveryUrlFromFinal = observedDeliveryUrl(finalResult, sourceUrl);
   const finalLogHas = (predicate) => finalLogs.some((log) => predicate(log));
 
   const milestones = {
@@ -152,8 +181,8 @@ export function summarizeSseProof(events, options = {}) {
       || hasStep(events, (log) => log?.result?.kind === 'crawl_complete'),
     branchCreation: Boolean(branchFromFinalLog)
       || hasStep(events, (log) => Boolean(log?.result?.branchName)),
-    previewDeployment: Boolean(previewFromFinal)
-      || hasStep(events, (log) => Boolean(log?.result?.previewUrl || log?.result?.upgradedUrl)),
+    previewDeployment: Boolean(deliveryUrlFromFinal)
+      || hasStep(events, (log) => Boolean(observedDeliveryUrl(log?.result, sourceUrl))),
     postFixScoring: Boolean(finalResult?.finalScore || finalResult?.postScore)
       || finalLogHas((log) => /post[-_ ]?fix|post score|postscore/i.test(`${log?.stepName || ''} ${log?.tool || ''}`))
       || hasStep(events, (log) => /post[-_ ]?fix|post score|postscore/i.test(`${log?.stepName || ''} ${log?.tool || ''}`)),
@@ -204,7 +233,7 @@ export function summarizeSseProof(events, options = {}) {
     milestones,
     observed: {
       branchName: branchFromFinalLog?.result?.branchName || null,
-      previewUrl: previewFromFinal,
+      previewUrl: deliveryUrlFromFinal,
       finalScore: finalResult?.finalScore ?? finalResult?.effectiveTrustScore ?? null,
       exitReason: finalResult?.exitReason ?? null,
       productSsotPersisted: milestones.productSsotPersistence,
@@ -239,7 +268,7 @@ function renderMarkdown(summary) {
     '## Observed Delivery Fields',
     '',
     `- Branch: ${summary.observed.branchName || '(none)'}`,
-    `- Preview URL: ${summary.observed.previewUrl || '(none)'}`,
+    `- Delivery URL: ${summary.observed.previewUrl || '(none)'}`,
     `- Final score: ${summary.observed.finalScore ?? '(none)'}`,
     `- Exit reason: ${summary.observed.exitReason || '(none)'}`,
     '',
