@@ -550,6 +550,12 @@ function buildSseRunInput(body = {}, fallback = {}) {
   }, fallback);
 }
 
+export const config = {
+  maxDuration: 800,
+};
+
+export const maxDuration = 800;
+
 export const __test = Object.freeze({
   resolveAuthContext,
   buildExecutor,

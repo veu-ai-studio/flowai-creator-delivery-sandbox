@@ -6,11 +6,20 @@ import { __test } from '../../api/agent/3/execute.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const executeSrc = readFileSync(resolve(__dirname, '../../api/agent/3/execute.js'), 'utf8');
+const inngestSrc = readFileSync(resolve(__dirname, '../../api/inngest.js'), 'utf8');
 const vercelConfig = JSON.parse(readFileSync(resolve(__dirname, '../../vercel.json'), 'utf8'));
 
 describe('Agent 3 execute timeout handling', () => {
   it('configures Vercel maxDuration at the platform maximum for execute', () => {
     expect(vercelConfig.functions['api/agent/3/execute.js'].maxDuration).toBe(800);
+    expect(executeSrc).toMatch(/export const config = \{\s*maxDuration: 800,\s*\};/);
+    expect(executeSrc).toContain('export const maxDuration = 800;');
+  });
+
+  it('keeps the Inngest endpoint exported maxDuration aligned with the 800s platform window', () => {
+    expect(vercelConfig.functions['api/inngest.js'].maxDuration).toBe(800);
+    expect(inngestSrc).toMatch(/maxDuration: 800/);
+    expect(inngestSrc).toContain('export const maxDuration = 800;');
   });
 
   it('keeps the SSE soft timeout below the Vercel hard timeout with buffer', () => {
