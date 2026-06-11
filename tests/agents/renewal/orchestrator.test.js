@@ -2478,6 +2478,170 @@ describe('orchestrator — visible diff-rejection reasons (DISPATCH 33 T1)', () 
   });
 });
 
+// ── CTO repair-pipeline unblock — primary root-cause retry discipline ───
+
+describe('orchestrator — primary root-cause LLM retry discipline', () => {
+  it('retries a timed-out primary root-cause file once in diff mode and can reach branch creation', async () => {
+    withVercelEnv();
+    try {
+      const timeout = new Error('generateFix exceeded 30000ms');
+      timeout.code = 'GENERATE_FIX_TIMEOUT';
+      const generateFix = vi.fn()
+        .mockRejectedValueOnce(timeout)
+        .mockResolvedValueOnce({
+          fixedContent: 'export default function App() { return "fixed"; }\n',
+          model: 'claude',
+          promptTokens: 10,
+          completionTokens: 5,
+          attempts: 1,
+          mode: 'diff',
+          diffStats: { hunks: 1, linesAdded: 1, linesRemoved: 1, changeRatio: 0.1, totalLines: 1 },
+        });
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [55] }),
+        generateFix,
+        fetchFileContent: vi.fn(async () => 'export default function App() { return "old"; }\n'),
+        parseCheckContent: vi.fn(async () => ({ ok: true })),
+      };
+
+      const result = await runOrchestration({
+        url: null,
+        mode: 'auto',
+        runId: 'cto-primary-retry-pass',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+        issue: {
+          filePath: 'src/App.jsx',
+          issue: 'Runtime console error fires on every route',
+          fix: 'Remove the app-layer root cause without hiding diagnostics.',
+          severity: 'high',
+          title: 'Root console error',
+          category: 'console-error',
+          location: 'https://saigeplatform.com',
+        },
+      });
+
+      expect(generateFix).toHaveBeenCalledTimes(2);
+      expect(generateFix.mock.calls[0][0].opts.mode).toBe('full');
+      expect(generateFix.mock.calls[1][0].opts.mode).toBe('diff');
+      expect(generateFix.mock.calls[1][0].fix).toContain('https://saigeplatform.com');
+      expect(deps.createRenewalBranch).toHaveBeenCalled();
+      expect(result.orchestrationLog.find((l) => l.step === 9 && l.tool.startsWith('githubBranchWriter'))?.status)
+        .toBe('complete');
+      const governance = deps.appendGovernanceEntry.mock.calls
+        .map((call) => call[0]?.entry)
+        .find((entry) => entry?.kind === 'self_renewal.llm_fix_attempts.v1');
+      expect(governance?.attempts).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          accepted: false,
+          rejectionReason: 'GENERATE_FIX_TIMEOUT',
+          validationResult: expect.objectContaining({ retryPlanned: true, retryMode: 'diff' }),
+        }),
+        expect.objectContaining({ accepted: true, filesChanged: ['src/App.jsx'] }),
+      ]));
+    } finally { clearVercelEnv(); }
+  });
+
+  it('keeps branch creation blocked when the primary retry also fails', async () => {
+    withVercelEnv();
+    try {
+      const timeout = new Error('generateFix exceeded 30000ms');
+      timeout.code = 'GENERATE_FIX_TIMEOUT';
+      const retryFailure = new Error('generateFix: validation failed for src/App.jsx after 2 attempt(s) — diff_preserve_violation:import');
+      retryFailure.code = 'FIX_GENERATION_FAILED';
+      retryFailure.validationReason = 'diff_preserve_violation:import';
+      const generateFix = vi.fn()
+        .mockRejectedValueOnce(timeout)
+        .mockRejectedValueOnce(retryFailure);
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [50] }),
+        generateFix,
+        createRenewalBranch: vi.fn(),
+      };
+
+      const result = await runOrchestration({
+        url: null,
+        mode: 'auto',
+        runId: 'cto-primary-retry-fail',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+        issue: {
+          filePath: 'src/App.jsx',
+          issue: 'Runtime console error fires on every route',
+          fix: 'Remove the app-layer root cause without hiding diagnostics.',
+          severity: 'high',
+          title: 'Root console error',
+          category: 'console-error',
+        },
+      });
+
+      expect(generateFix).toHaveBeenCalledTimes(2);
+      expect(deps.createRenewalBranch).not.toHaveBeenCalled();
+      expect(result.exitReason).toBe('NO_FIXES_GENERATED');
+      const step7 = result.orchestrationLog.find((l) => l.step === 7 && l.tool.includes('fixGenerator'));
+      expect(step7.result.rejected[0]).toMatchObject({
+        filePath: 'src/App.jsx',
+        code: 'FIX_GENERATION_FAILED',
+        reason: 'diff_preserve_violation:import',
+      });
+    } finally { clearVercelEnv(); }
+  });
+
+  it('passes real finding URL context into generateFix without inventing a new URL', async () => {
+    withVercelEnv();
+    try {
+      const generateFix = vi.fn(async () => ({
+        fixedContent: 'export default function App() { return "fixed"; }\n',
+        model: 'claude',
+        promptTokens: 10,
+        completionTokens: 5,
+        attempts: 1,
+        mode: 'full',
+      }));
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [55] }),
+        generateFix,
+        fetchFileContent: vi.fn(async () => 'export default function App() { return "old"; }\n'),
+        parseCheckContent: vi.fn(async () => ({ ok: true })),
+      };
+
+      await runOrchestration({
+        url: 'https://saigeplatform.com',
+        mode: 'auto',
+        runId: 'cto-url-context',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+        issue: {
+          filePath: 'src/App.jsx',
+          issue: 'Runtime console error fires on every route',
+          fix: 'Remove the app-layer root cause without hiding diagnostics.',
+          severity: 'high',
+          title: 'Root console error',
+          category: 'console-error',
+          location: 'https://saigeplatform.com/home',
+        },
+      });
+
+      const call = generateFix.mock.calls[0][0];
+      expect(call.findings[0]).toMatchObject({
+        failingUrl: 'https://saigeplatform.com/home',
+        pageUrl: 'https://saigeplatform.com/home',
+        url: 'https://saigeplatform.com/home',
+      });
+      expect(call.sourceContext).toContain('https://saigeplatform.com/home');
+    } finally { clearVercelEnv(); }
+  });
+});
+
 // ── DISPATCH 33 T2 — scoped per-finding preserve relaxation ─────────────
 
 describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () => {

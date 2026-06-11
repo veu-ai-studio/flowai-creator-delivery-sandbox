@@ -3412,7 +3412,9 @@ export async function runOrchestration(args = {}) {
                     return mapped === filePath;
                   })
                 : []),
-            ].slice(0, 10);
+            ].slice(0, 10).map((finding) => enrichFindingUrlContext(finding, {
+              fallbackUrl: initialUrl ?? currentUrl,
+            }));
             const sourceChars = typeof current === 'string' ? current.length : 0;
             const baseAttempt = {
               model: 'claude-sonnet-4-20250514',
@@ -3462,21 +3464,6 @@ export async function runOrchestration(args = {}) {
               ];
               continue;
             }
-            const budget = enforceLlmFixBudget({
-              files: [filePath],
-              findings: findingsForFile,
-              sourceChars,
-              iterationCalls: llmCallsThisIteration + 1,
-              runCalls: state.llmFixCallsThisRun + 1,
-            });
-            if (!budget.ok) {
-              rejectBeforeCall(LLM_FIX_BUDGET_EXCEEDED, {
-                cap: budget.cap,
-                actual: budget.actual,
-                limit: budget.limit,
-              });
-              continue;
-            }
             // DISPATCH 33 T2 — scoped per-finding preserve relaxation.
             // If the finding's category directly implies modifying a
             // normally-preserved construct (broken-link, network-failure,
@@ -3489,50 +3476,116 @@ export async function runOrchestration(args = {}) {
             // that introduce imports pointing at non-existent files
             // or unknown packages. Symmetric to the existing
             // remove-import preserve rule.
-            llmCallsThisIteration += 1;
-            state.llmFixCallsThisRun += 1;
-            const fix = await withTimeout(
-              _generateFix({
-                filePath, fileContent: current,
-                issue: issue.issue || issue.description || issue.title,
-                fix: issue.fix || null,
+            const sourceContext = [
+              `Product: ${product?.product_id ?? productId}`,
+              `Original URL: ${initialUrl ?? currentUrl}`,
+              `Current score: ${preScoreEnvelope?.total ?? 'unknown'}/100`,
+              `User objectives: ${userObjectives.map((objective) => objective.text).join('; ') || '(none)'}`,
+              `Finding URLs: ${findingsForFile.map((finding) => finding?.failingUrl || finding?.pageUrl || finding?.url || finding?.location)
+                .filter(Boolean)
+                .join('; ') || '(none)'}`,
+              `Source mapped proposals: ${(state.sourceMappedFixProposals ?? [])
+                .filter((proposal) => proposal?.filePath === filePath)
+                .map((proposal) => proposal.proposedFix)
+                .filter(Boolean)
+                .join('; ') || '(none)'}`,
+            ].join('\n');
+            const findingUrls = findingsForFile
+              .map((finding) => finding?.failingUrl || finding?.pageUrl || finding?.url || finding?.location)
+              .filter(Boolean);
+            const runGenerateFixAttempt = async ({ mode = 'full', retry = false } = {}) => {
+              const budget = enforceLlmFixBudget({
+                files: [filePath],
                 findings: findingsForFile,
-                userDescription: inputContext.description,
-                scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
-                sourceContext: [
-                  `Product: ${product?.product_id ?? productId}`,
-                  `Original URL: ${initialUrl ?? currentUrl}`,
-                  `Current score: ${preScoreEnvelope?.total ?? 'unknown'}/100`,
-                  `User objectives: ${userObjectives.map((objective) => objective.text).join('; ') || '(none)'}`,
-                  `Source mapped proposals: ${(state.sourceMappedFixProposals ?? [])
-                    .filter((proposal) => proposal?.filePath === filePath)
-                    .map((proposal) => proposal.proposedFix)
-                    .filter(Boolean)
-                    .join('; ') || '(none)'}`,
-                ].join('\n'),
-                productId, runId,
-                opts: {
-                  model: 'claude-sonnet-4-20250514',
-                  mode: 'full',
-                  requireStructured: true,
-                  userDescription: inputContext.description,
-                  scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
-                  ...(scopedRelax ? { preserveExceptions: scopedRelax } : {}),
-                  ...(repoFileList ? { fileInventory: repoFileList } : {}),
-                  ...(knownPackages ? { knownPackages } : {}),
-                  fetch: makeAbortableFetch({
+                sourceChars,
+                iterationCalls: llmCallsThisIteration + 1,
+                runCalls: state.llmFixCallsThisRun + 1,
+              });
+              if (!budget.ok) {
+                return {
+                  ok: false,
+                  beforeCall: true,
+                  reason: LLM_FIX_BUDGET_EXCEEDED,
+                  extra: { cap: budget.cap, actual: budget.actual, limit: budget.limit },
+                };
+              }
+              llmCallsThisIteration += 1;
+              state.llmFixCallsThisRun += 1;
+              try {
+                const fix = await withTimeout(
+                  _generateFix({
+                    filePath, fileContent: current,
+                    issue: issue.issue || issue.description || issue.title,
+                    fix: retry
+                      ? [
+                          issue.fix || null,
+                          `Observed finding URLs: ${findingUrls.join('; ') || '(none)'}`,
+                          'Retry scope: fix only the primary observed root-cause finding for this file.',
+                          'Use the smallest safe app-layer change possible. Do not touch platform/auth/Base44 internals.',
+                        ].filter(Boolean).join('\n')
+                      : issue.fix || null,
+                    findings: findingsForFile,
+                    userDescription: inputContext.description,
+                    scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
+                    sourceContext,
+                    productId, runId,
+                    opts: {
+                      model: 'claude-sonnet-4-20250514',
+                      mode,
+                      requireStructured: mode !== 'diff',
+                      userDescription: inputContext.description,
+                      scoringCriteria: fixGenInternals.DEFAULT_SCORING_CRITERIA,
+                      ...(scopedRelax ? { preserveExceptions: scopedRelax } : {}),
+                      ...(repoFileList ? { fileInventory: repoFileList } : {}),
+                      ...(knownPackages ? { knownPackages } : {}),
+                      fetch: makeAbortableFetch({
+                        timeoutMs: step5ToStep6Timeouts.generateFix,
+                        code: 'GENERATE_FIX_TIMEOUT',
+                        message: `generateFix exceeded ${step5ToStep6Timeouts.generateFix}ms`,
+                      }),
+                    },
+                  }),
+                  {
                     timeoutMs: step5ToStep6Timeouts.generateFix,
                     code: 'GENERATE_FIX_TIMEOUT',
                     message: `generateFix exceeded ${step5ToStep6Timeouts.generateFix}ms`,
-                  }),
+                  },
+                );
+                return { ok: true, fix };
+              } catch (error) {
+                return { ok: false, error };
+              }
+            };
+            let attempt = await runGenerateFixAttempt({ mode: 'full' });
+            if (attempt.beforeCall) {
+              rejectBeforeCall(attempt.reason, attempt.extra);
+              continue;
+            }
+            if (!attempt.ok && isPrimaryRootCauseIssue(issue, prioritizedIssues) && isGenerateFixTimeoutError(attempt.error)) {
+              recordLlmAttempt({
+                ...baseAttempt,
+                accepted: false,
+                rejectionReason: attempt.error?.code ?? 'GENERATE_FIX_TIMEOUT',
+                filesChanged: [],
+                validationResult: {
+                  ok: false,
+                  reason: attempt.error?.code ?? 'GENERATE_FIX_TIMEOUT',
+                  retryPlanned: true,
+                  retryMode: 'diff',
                 },
-              }),
-              {
-                timeoutMs: step5ToStep6Timeouts.generateFix,
-                code: 'GENERATE_FIX_TIMEOUT',
-                message: `generateFix exceeded ${step5ToStep6Timeouts.generateFix}ms`,
-              },
-            );
+                previewUrl: null,
+                scoreDelta: null,
+              });
+              attempt = await runGenerateFixAttempt({ mode: 'diff', retry: true });
+              if (attempt.beforeCall) {
+                rejectBeforeCall(attempt.reason, { ...attempt.extra, retry: true, retryMode: 'diff' });
+                continue;
+              }
+            }
+            if (!attempt.ok) {
+              throw attempt.error;
+            }
+            const fix = attempt.fix;
             const candidateForValidation = typeof deps.generateFix === 'function'
               ? {
                   ...fix,
@@ -6076,6 +6129,40 @@ function filterPlatformBoundaryFindings(items = [], { pathSelector } = {}) {
     }
   }
   return { allowed, blocked };
+}
+
+function isPrimaryRootCauseIssue(issue, prioritizedIssues = []) {
+  if (!issue || !Array.isArray(prioritizedIssues) || prioritizedIssues[0] !== issue) return false;
+  return severityRank(issue?.severity) >= 3
+    || isRootCauseCategory(issue?.category)
+    || isRootCauseCategory(issue?.title)
+    || isRootCauseCategory(issue?.issue);
+}
+
+function isGenerateFixTimeoutError(error) {
+  const code = String(error?.code ?? '');
+  const message = String(error?.message ?? error ?? '');
+  return code === 'GENERATE_FIX_TIMEOUT'
+    || /generateFix exceeded \d+ms/i.test(message)
+    || /GENERATE_FIX_TIMEOUT/i.test(message);
+}
+
+function enrichFindingUrlContext(finding = {}, { fallbackUrl = null } = {}) {
+  if (!finding || typeof finding !== 'object') return finding;
+  const existingUrl = finding.failingUrl
+    || finding.pageUrl
+    || finding.url
+    || finding.locationUrl
+    || (/^https?:\/\//i.test(String(finding.location ?? '')) ? finding.location : null)
+    || fallbackUrl
+    || null;
+  if (!existingUrl) return finding;
+  return {
+    ...finding,
+    failingUrl: finding.failingUrl ?? existingUrl,
+    pageUrl: finding.pageUrl ?? existingUrl,
+    url: finding.url ?? existingUrl,
+  };
 }
 
 function evaluateRepairIntegrity({
