@@ -8,7 +8,7 @@ Move FlowAI from constrained SAIGE runtime proof into the next unsupported SSOT 
 
 ## Current Technical Reality
 
-- `origin/main` is at `a60c2abd6f789e7d71223a7a6cefaa21c280678f`.
+- Last verified `origin/main` before this directive wording refresh was `8fa1e0e32b299ef45f9701ebe17a731e65fe625b`; later docs-only coordination commits may advance main without changing the active CA18 gate.
 - Main includes the runtime-config 800s merge commit: `64b60a4 Merge runtime config 800s patch`.
 - Main includes the SAIGE SSE proof runner merge: `d59630d docs/cto | add SAIGE SSE proof runner`.
 - Main now includes proof-runner evidence hardening:
@@ -48,6 +48,7 @@ Move FlowAI from constrained SAIGE runtime proof into the next unsupported SSOT 
 - The final-payload extraction branch is a review artifact only and does not itself justify SSOT movement.
 - `CA18-URL-ANY` and `CA18-UNIVERSAL-LIMIT` are not supported by this proof because the run was registered-product SAIGE, not arbitrary unregistered URL / universal diagnosis-only mode.
 - W04 cleared `docs/cto-ca18-url-boundary-dispatch` for CD/CR routing only, not build. It is the next SSOT-gap review packet because it targets the exact unsupported `CA18-URL-ANY` and `CA18-UNIVERSAL-LIMIT` evidence boundary.
+- W04 acknowledged `docs/cto-ca18-url-boundary-readiness` as docs-only implementation-readiness support. It may remain unmerged until CD/CR complete review of the dispatch branch. It does not authorize build work.
 - The durable `ForgeRunState` phase-split architecture remains the long-term solution. The 800s window is an immediate production-window repair, not a replacement for stateful phase execution.
 
 ## Active Branches And Gates
@@ -98,14 +99,23 @@ Move FlowAI from constrained SAIGE runtime proof into the next unsupported SSOT 
    - Purpose: ensure unregistered arbitrary URLs stay diagnosis-only / universal-mode and never gain mutation authority from synthetic `url-*` registry rows.
    - Boundary: no SSOT movement, no VERIFIED movement, and no claim-promotion shortcut.
 
+7. CA18 URL-boundary implementation-readiness note
+   - Branch: `docs/cto-ca18-url-boundary-readiness`.
+   - Head: `0c22739f70edab1df7ff0753a10244b1df75f054`.
+   - File: `docs/cto/ca18-url-boundary-implementation-readiness.md`.
+   - W04 status: ACK as docs-only readiness support; merge not required right now.
+   - Purpose: record exact current-main code anchors, existing universal-mode safeguards, missing coverage, and likely minimal build shape for CB after clearance.
+   - Boundary: planning/readiness only; does not replace the dispatch packet and does not authorize CB build work.
+
 ## Immediate Priority Queue
 
 1. CD and CR independently review `origin/docs/cto-ca18-url-boundary-dispatch`.
 2. CTO combines CD/CR results and returns PASS/BLOCK recommendation to W04.
 3. If CD/CR pass, W04 decides whether to issue `CLEAR TO BUILD` for CB.
-4. Keep `CA18-URL-ANY`, `CA18-UNIVERSAL-LIMIT`, fresh preview deploy success, PR creation, and positive delta out of scope for the SAIGE registered-product proof.
-5. Do not move any exact CA18 claim without the Claim Promotion Checklist.
-6. Resume the `ForgeRunState` phase-split or Migration Mode path when W04/CEO select that implementation track.
+4. If W04 clears build, CB may use `origin/docs/cto-ca18-url-boundary-readiness` as implementation support while treating the dispatch branch as the controlling packet.
+5. Keep `CA18-URL-ANY`, `CA18-UNIVERSAL-LIMIT`, fresh preview deploy success, PR creation, and positive delta out of scope for the SAIGE registered-product proof.
+6. Do not move any exact CA18 claim without the Claim Promotion Checklist.
+7. Resume the `ForgeRunState` phase-split or Migration Mode path when W04/CEO select that implementation track.
 
 ## Standing Rules For CB
 
