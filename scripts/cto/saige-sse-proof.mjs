@@ -29,7 +29,7 @@ function parseArgs(argv = process.argv.slice(2)) {
 function usage() {
   return [
     'Usage:',
-    '  node scripts/cto/saige-sse-proof.mjs --input <transcript.sse> [--summary-out <summary.json>]',
+    '  node scripts/cto/saige-sse-proof.mjs --input <transcript.sse> [--url <source-url>] [--summary-out <summary.json>]',
     '  node scripts/cto/saige-sse-proof.mjs --run-live [--base-url https://flowai-dun.vercel.app] [--output-dir <dir>]',
     '',
     'Safe default: parses an existing transcript. Live production calls require --run-live.',
@@ -165,7 +165,7 @@ export function summarizeSseProof(events, options = {}) {
   const finalLogs = Array.isArray(finalResult?.orchestrationLog) ? finalResult.orchestrationLog : [];
   const branchFromFinalLog = [...(finalResult?.orchestrationLog || [])].reverse()
     .find((log) => log?.result?.branchName);
-  const sourceUrl = options.request?.url || finalResult?.url || finalResult?.sourceUrl || finalResult?.originalUrl || null;
+  const sourceUrl = options.sourceUrl || options.request?.url || finalResult?.url || finalResult?.sourceUrl || finalResult?.originalUrl || null;
   const deliveryUrlFromFinal = observedDeliveryUrl(finalResult, sourceUrl);
   const finalLogHas = (predicate) => finalLogs.some((log) => predicate(log));
 
@@ -356,7 +356,10 @@ async function main() {
     }
     const inputPath = path.resolve(String(args.input));
     const text = readFileSync(inputPath, 'utf8');
-    summary = summarizeSseProof(parseSseTranscript(text), { inputPath });
+    summary = summarizeSseProof(parseSseTranscript(text), {
+      inputPath,
+      sourceUrl: String(args.url || DEFAULT_TARGET_URL),
+    });
     writeSummary(summary, args['summary-out'] ? path.resolve(String(args['summary-out'])) : null);
   }
 

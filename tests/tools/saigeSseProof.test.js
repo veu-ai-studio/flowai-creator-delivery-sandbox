@@ -85,6 +85,37 @@ describe('SAIGE SSE proof summarizer', () => {
     expect(summary.observed.previewUrl).toBeNull();
   });
 
+  it('uses the sourceUrl option when parsing stored transcripts', () => {
+    const final = {
+      type: 'final',
+      result: {
+        runId: 'run-source-url-option',
+        previewUrl: 'https://saigeplatform.com/',
+        finalScore: 73,
+        exitReason: 'MAX_ITERATIONS',
+        orchestrationLog: [
+          { step: 9, result: { branchName: 'flowai/test' } },
+          { step: 10, stepName: 'Final governance write', tool: 'governance audit', result: { kind: 'governance.write' } },
+          { step: 11, stepName: 'ProductSSOT Symbiotic Write', tool: 'ProductSSOT', result: { kind: 'product_ssot.symbiotic_run.v1' } },
+        ],
+      },
+    };
+    const transcript = [
+      `data: ${JSON.stringify(final)}`,
+      '',
+      'data: [DONE]',
+      '',
+    ].join('\n');
+
+    const summary = summarizeSseProof(parseSseTranscript(transcript), {
+      sourceUrl: 'https://saigeplatform.com',
+    });
+
+    expect(summary.verdict).toBe('TERMINAL_FINAL_INCOMPLETE_MILESTONES');
+    expect(summary.milestones.previewDeployment).toBe(false);
+    expect(summary.observed.previewUrl).toBeNull();
+  });
+
   it('prefers a distinct upgraded URL over a source preview URL', () => {
     const final = {
       type: 'final',
