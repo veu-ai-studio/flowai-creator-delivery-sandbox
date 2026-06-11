@@ -8,7 +8,7 @@ Move FlowAI from constrained SAIGE runtime proof into the next unsupported SSOT 
 
 ## Current Technical Reality
 
-- `origin/main` is at `9a8c0c331c4a53a8d328e6976ee2eccc3623e90b`.
+- `origin/main` is at `a60c2abd6f789e7d71223a7a6cefaa21c280678f`.
 - Main includes the runtime-config 800s merge commit: `64b60a4 Merge runtime config 800s patch`.
 - Main includes the SAIGE SSE proof runner merge: `d59630d docs/cto | add SAIGE SSE proof runner`.
 - Main now includes proof-runner evidence hardening:
@@ -54,7 +54,7 @@ Move FlowAI from constrained SAIGE runtime proof into the next unsupported SSOT 
 
 1. Proof-runner evidence hardening
    - Branch merged: `fix/cto-proof-runner-delivery-url-evidence`.
-   - Merge advanced `origin/main` to `3292ba292ccaa7b27c282ce9a3735de9087d6a64`; `origin/main` later advanced to `9a8c0c331c4a53a8d328e6976ee2eccc3623e90b`.
+   - Merge advanced `origin/main` to `3292ba292ccaa7b27c282ce9a3735de9087d6a64`; `origin/main` later advanced to `a60c2abd6f789e7d71223a7a6cefaa21c280678f` after docs-only coordination refreshes.
    - Status: merged, pushed, and locally verified.
    - Verification: `node --check scripts/cto/saige-sse-proof.mjs` PASS; `npx vitest run tests/tools/saigeSseProof.test.js` PASS, 6 tests; `node scripts/check-ssot-traceability.mjs` PASS with standing warnings only; `git diff --check` PASS.
    - Claim boundary: no VERIFIED movement.
