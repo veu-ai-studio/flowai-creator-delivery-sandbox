@@ -3412,9 +3412,8 @@ export async function runOrchestration(args = {}) {
                     return mapped === filePath;
                   })
                 : []),
-            ].slice(0, 10).map((finding) => enrichFindingUrlContext(finding, {
-              fallbackUrl: initialUrl ?? currentUrl,
-            }));
+            ].slice(0, 10).map((finding) => enrichFindingUrlContext(finding));
+            const runContextUrl = initialUrl ?? currentUrl ?? null;
             const sourceChars = typeof current === 'string' ? current.length : 0;
             const baseAttempt = {
               model: 'claude-sonnet-4-20250514',
@@ -3481,17 +3480,18 @@ export async function runOrchestration(args = {}) {
               `Original URL: ${initialUrl ?? currentUrl}`,
               `Current score: ${preScoreEnvelope?.total ?? 'unknown'}/100`,
               `User objectives: ${userObjectives.map((objective) => objective.text).join('; ') || '(none)'}`,
-              `Finding URLs: ${findingsForFile.map((finding) => finding?.failingUrl || finding?.pageUrl || finding?.url || finding?.location)
+              `Observed finding URLs: ${findingsForFile.map(getObservedFindingUrl)
                 .filter(Boolean)
                 .join('; ') || '(none)'}`,
+              `Fallback run URL context: ${runContextUrl || '(none)'}`,
               `Source mapped proposals: ${(state.sourceMappedFixProposals ?? [])
                 .filter((proposal) => proposal?.filePath === filePath)
                 .map((proposal) => proposal.proposedFix)
                 .filter(Boolean)
                 .join('; ') || '(none)'}`,
             ].join('\n');
-            const findingUrls = findingsForFile
-              .map((finding) => finding?.failingUrl || finding?.pageUrl || finding?.url || finding?.location)
+            const observedFindingUrls = findingsForFile
+              .map(getObservedFindingUrl)
               .filter(Boolean);
             const runGenerateFixAttempt = async ({ mode = 'full', retry = false } = {}) => {
               const budget = enforceLlmFixBudget({
@@ -3519,7 +3519,8 @@ export async function runOrchestration(args = {}) {
                     fix: retry
                       ? [
                           issue.fix || null,
-                          `Observed finding URLs: ${findingUrls.join('; ') || '(none)'}`,
+                          `Observed finding URLs: ${observedFindingUrls.join('; ') || '(none)'}`,
+                          `Fallback run URL context: ${runContextUrl || '(none)'}`,
                           'Retry scope: fix only the primary observed root-cause finding for this file.',
                           'Use the smallest safe app-layer change possible. Do not touch platform/auth/Base44 internals.',
                         ].filter(Boolean).join('\n')
@@ -6147,15 +6148,19 @@ function isGenerateFixTimeoutError(error) {
     || /GENERATE_FIX_TIMEOUT/i.test(message);
 }
 
-function enrichFindingUrlContext(finding = {}, { fallbackUrl = null } = {}) {
-  if (!finding || typeof finding !== 'object') return finding;
-  const existingUrl = finding.failingUrl
+function getObservedFindingUrl(finding = {}) {
+  if (!finding || typeof finding !== 'object') return null;
+  return finding.failingUrl
     || finding.pageUrl
     || finding.url
     || finding.locationUrl
     || (/^https?:\/\//i.test(String(finding.location ?? '')) ? finding.location : null)
-    || fallbackUrl
     || null;
+}
+
+function enrichFindingUrlContext(finding = {}) {
+  if (!finding || typeof finding !== 'object') return finding;
+  const existingUrl = getObservedFindingUrl(finding);
   if (!existingUrl) return finding;
   return {
     ...finding,

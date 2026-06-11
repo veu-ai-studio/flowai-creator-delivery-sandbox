@@ -2638,6 +2638,65 @@ describe('orchestrator — primary root-cause LLM retry discipline', () => {
         url: 'https://saigeplatform.com/home',
       });
       expect(call.sourceContext).toContain('https://saigeplatform.com/home');
+      expect(call.sourceContext).toContain('Observed finding URLs: https://saigeplatform.com/home');
+      expect(call.sourceContext).toContain('Fallback run URL context: https://saigeplatform.com');
+    } finally { clearVercelEnv(); }
+  });
+
+  it('keeps fallback run URL as context only when a finding has no observed URL', async () => {
+    withVercelEnv();
+    try {
+      const timeout = new Error('generateFix exceeded 30000ms');
+      timeout.code = 'GENERATE_FIX_TIMEOUT';
+      const generateFix = vi.fn()
+        .mockRejectedValueOnce(timeout)
+        .mockResolvedValueOnce({
+          fixedContent: 'export default function App() { return "fixed"; }\n',
+          model: 'claude',
+          promptTokens: 10,
+          completionTokens: 5,
+          attempts: 1,
+          mode: 'diff',
+          diffStats: { hunks: 1, linesAdded: 1, linesRemoved: 1, changeRatio: 0.1, totalLines: 1 },
+        });
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [55] }),
+        generateFix,
+        fetchFileContent: vi.fn(async () => 'export default function App() { return "old"; }\n'),
+        parseCheckContent: vi.fn(async () => ({ ok: true })),
+      };
+
+      await runOrchestration({
+        url: 'https://saigeplatform.com',
+        mode: 'auto',
+        runId: 'cto-url-context-fallback-only',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+        issue: {
+          filePath: 'src/App.jsx',
+          issue: 'Runtime console error fires on every route',
+          fix: 'Remove the app-layer root cause without hiding diagnostics.',
+          severity: 'high',
+          title: 'Root console error',
+          category: 'console-error',
+        },
+      });
+
+      expect(generateFix).toHaveBeenCalledTimes(2);
+      const firstCall = generateFix.mock.calls[0][0];
+      expect(firstCall.findings[0].failingUrl).toBeUndefined();
+      expect(firstCall.findings[0].pageUrl).toBeUndefined();
+      expect(firstCall.findings[0].url).toBeUndefined();
+      expect(firstCall.sourceContext).toContain('Observed finding URLs: (none)');
+      expect(firstCall.sourceContext).toContain('Fallback run URL context: https://saigeplatform.com');
+
+      const retryCall = generateFix.mock.calls[1][0];
+      expect(retryCall.fix).toContain('Observed finding URLs: (none)');
+      expect(retryCall.fix).toContain('Fallback run URL context: https://saigeplatform.com');
+      expect(retryCall.fix).not.toContain('Observed finding URLs: https://saigeplatform.com');
     } finally { clearVercelEnv(); }
   });
 });
