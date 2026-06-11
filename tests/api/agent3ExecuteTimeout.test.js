@@ -13,11 +13,13 @@ describe('Agent 3 execute timeout handling', () => {
   it('configures Vercel maxDuration at the platform maximum for execute', () => {
     expect(vercelConfig.functions['api/agent/3/execute.js'].maxDuration).toBe(800);
     expect(executeSrc).toMatch(/export const config = \{\s*maxDuration: 800,\s*\};/);
+    expect(executeSrc).toContain('export const maxDuration = 800;');
   });
 
   it('keeps the Inngest endpoint exported maxDuration aligned with the 800s platform window', () => {
     expect(vercelConfig.functions['api/inngest.js'].maxDuration).toBe(800);
     expect(inngestSrc).toMatch(/maxDuration: 800/);
+    expect(inngestSrc).toContain('export const maxDuration = 800;');
   });
 
   it('keeps the SSE soft timeout below the Vercel hard timeout with buffer', () => {

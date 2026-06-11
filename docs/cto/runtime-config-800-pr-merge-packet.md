@@ -42,9 +42,11 @@ No VERIFIED movement.
 ## Changes
 
 - `api/inngest.js`
-  - exported `maxDuration` changed from `60` to `800`
+  - exported `config.maxDuration` changed from `60` to `800`
+  - added named `export const maxDuration = 800`
 - `api/agent/3/execute.js`
   - added source-level `export const config = { maxDuration: 800 }`
+  - added named `export const maxDuration = 800`
 - `tests/api/agent3ExecuteTimeout.test.js`
   - pins both root `vercel.json` and source-level function runtime config
 - `docs/cto/pr11-deferred-proof-runtime-config-20260611.md`
@@ -98,7 +100,7 @@ No VERIFIED movement until live production evidence supports it.
 
 Use this note if merged:
 
-`Runtime config alignment: source-level Vercel function config now matches the intended 800s window for Agent 3 SSE and Inngest. Live proof remains required after production deploy; no VERIFIED movement in this merge.`
+`Runtime config alignment: source-level Vercel function config and named maxDuration exports now match the intended 800s window for Agent 3 SSE and Inngest. Live proof remains required after production deploy; no VERIFIED movement in this merge.`
 
 ## Victor Action Required
 

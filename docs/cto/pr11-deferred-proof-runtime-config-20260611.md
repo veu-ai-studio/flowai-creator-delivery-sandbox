@@ -92,12 +92,12 @@ Repo inspection found a concrete runtime-config drift:
 - Root `vercel.json` sets `api/agent/3/execute.js` to `maxDuration: 800`.
 - `api/agent/3/execute.js` did not export a source-level Vercel function config.
 
-This branch makes the 800-second window explicit in source-level function exports and pins the alignment in tests.
+This branch makes the 800-second window explicit in source-level function exports and pins the alignment in tests. It preserves the repo's existing `export const config` pattern and also adds the docs-current named `export const maxDuration = 800` signal.
 
 ## Patch Scope
 
-- `api/inngest.js`: exported `maxDuration` changed from 60 to 800.
-- `api/agent/3/execute.js`: added explicit exported `config = { maxDuration: 800 }`.
+- `api/inngest.js`: exported `config.maxDuration` changed from 60 to 800 and named `maxDuration` export added.
+- `api/agent/3/execute.js`: added explicit exported `config = { maxDuration: 800 }` and named `maxDuration` export.
 - `tests/api/agent3ExecuteTimeout.test.js`: pins both root `vercel.json` and source-level function config.
 
 No scoring logic, governance policy, SSOT status, VERIFIED status, or repair gate changed.

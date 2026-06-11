@@ -23,3 +23,5 @@ export const config = {
   },
   maxDuration: 800,
 };
+
+export const maxDuration = 800;

@@ -34,8 +34,8 @@ No VERIFIED movement was made.
 
 ## What Changed
 
-- `api/inngest.js` exported `maxDuration` changed from 60 to 800.
-- `api/agent/3/execute.js` now exports `config = { maxDuration: 800 }`.
+- `api/inngest.js` exported `config.maxDuration` changed from 60 to 800 and now also exports `maxDuration = 800`.
+- `api/agent/3/execute.js` now exports `config = { maxDuration: 800 }` and `maxDuration = 800`.
 - `tests/api/agent3ExecuteTimeout.test.js` pins both root `vercel.json` and source-level function runtime config.
 - CTO evidence doc records the proof as `INCOMPLETE / BLOCK`, not success.
 
@@ -45,7 +45,7 @@ No VERIFIED movement was made.
 2. Does the patch avoid relabeling partial setup/crawl evidence as end-to-end forge success?
 3. Are scoring, governance writes, ProductSSOT persistence, VERIFIED entries, and repair gates untouched?
 4. Does the test addition prevent the exact config drift observed here?
-5. Any hidden regression risk from exporting `config` in `api/agent/3/execute.js`?
+5. Any hidden regression risk from exporting `config` and named `maxDuration` in `api/agent/3/execute.js`?
 
 ## Verification Already Run
 

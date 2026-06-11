@@ -21,15 +21,15 @@ Files in scope:
 
 ## What Changed
 
-- `api/inngest.js` exported `maxDuration` changed from 60 to 800.
-- `api/agent/3/execute.js` now exports `config = { maxDuration: 800 }`.
+- `api/inngest.js` exported `config.maxDuration` changed from 60 to 800 and now also exports `maxDuration = 800`.
+- `api/agent/3/execute.js` now exports `config = { maxDuration: 800 }` and `maxDuration = 800`.
 - `tests/api/agent3ExecuteTimeout.test.js` now pins both root `vercel.json` and source-level function runtime config.
 - CTO evidence doc records the deferred proof and the acceptance gate.
 
 ## Review Questions
 
 1. Does this patch correctly align Vercel function-level config with the intended 800s runtime window?
-2. Is there any Vercel/runtime reason this source-level export would be ignored or harmful in this repo shape?
+2. Is there any Vercel/runtime reason the source-level `config.maxDuration` plus named `maxDuration` exports would be ignored or harmful in this repo shape?
 3. Does the `api/inngest.js` source-level `maxDuration: 800` remove the contradiction with root `vercel.json`?
 4. Does this patch leave scoring, governance, SSOT, VERIFIED status, and repair gates untouched?
 5. Are the tests sufficient for this surgical config alignment?
