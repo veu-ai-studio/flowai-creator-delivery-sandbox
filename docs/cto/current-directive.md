@@ -8,20 +8,24 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 
 ## Current Technical Reality
 
-- `origin/main` is at `64b60a419bb99ba34793ffad1acbd97623cb8a04`.
+- `origin/main` is at `d59630d6394436db2730829c96187a08260caff7`.
 - Main now includes the runtime-config 800s merge commit: `64b60a4 Merge runtime config 800s patch`.
 - The merge aligns source-level Vercel function config and named `maxDuration` exports for Agent 3 SSE and Inngest.
 - The merge commit explicitly states that live proof remains required after production deploy and that no VERIFIED movement occurred.
 - CD and CR both returned PASS for the runtime-config Step 5 review.
+- Main now also includes the SAIGE SSE proof runner merge: `d59630d docs/cto | add SAIGE SSE proof runner`.
+- The proof runner is tooling only. It records request JSON, raw SSE transcript, summary JSON, and summary Markdown for the constrained SAIGE proof. It does not move VERIFIED or claim success.
 - Post-merge local verification passed:
   - `node --check api/agent/3/execute.js`
   - `node --check api/inngest.js`
   - `npx vitest run tests/api/agent3ExecuteTimeout.test.js`
+  - `node --check scripts/cto/saige-sse-proof.mjs`
+  - `npx vitest run tests/tools/saigeSseProof.test.js`
   - `node scripts/check-ssot-traceability.mjs`
-- Production has not yet picked up `64b60a4`. Latest non-mutating production check still reports:
+- Production has not yet picked up `64b60a4` or current `main`. Latest non-mutating production check still reports:
   - `/api/health` commit: `06829983b50f`
   - commitFull: `06829983b50f16613c548f77708e96b905a8fbb9`
-  - checked at: 2026-06-11T15:18:54Z
+  - checked at: 2026-06-11T18:48:48Z
 - `/api/operator-readiness` remains `ok=true` with 7/7 required operator credentials present.
 - No constrained SAIGE proof has been run against `64b60a4`.
 - No branch creation, preview deploy, post-fix scoring, final governance write, or ProductSSOT persistence has been observed after the runtime-config merge.
@@ -31,10 +35,11 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 ## Active Branches And Gates
 
 1. Production deploy gate
-   - Required production commit: `64b60a419bb99ba34793ffad1acbd97623cb8a04`.
+   - Required production commit for the runtime-config proof: `64b60a419bb99ba34793ffad1acbd97623cb8a04` or later.
+   - Preferred production commit: current `main` at `d59630d6394436db2730829c96187a08260caff7`.
    - Current production commit: `06829983b50f16613c548f77708e96b905a8fbb9`.
    - Gate: production must deploy or otherwise pick up current `main`.
-   - Do not run the constrained SAIGE proof until `/api/health` reports `64b60a4`.
+   - Do not run the constrained SAIGE proof until `/api/health` reports `64b60a4` or later.
 
 2. Runtime-config merge
    - Branch merged: `fix/forge-runtime-config-800`.
@@ -44,31 +49,27 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 
 3. SAIGE proof runner
    - Branch: `docs/cto-saige-proof-runner`.
-   - Current head: `dd32b3dbb7d643cae79089d81e609fd2dc8e914a`.
+   - Branch head merged: `dd32b3dbb7d643cae79089d81e609fd2dc8e914a`.
+   - Merge commit on main: `d59630d6394436db2730829c96187a08260caff7`.
    - Purpose: provide a safe parser and explicit live-run command for post-merge SAIGE SSE proof evidence.
-   - Verification reported: `node --check` PASS, focused proof-runner tests PASS, old failed transcript parsed as `INCOMPLETE_STREAM`, full preflight PASS with 231 files / 3657 tests / 3 skipped.
-   - Gate: W04 decides whether to merge this proof tooling before the runtime-config acceptance run or use an equivalent SSE capture without merging it.
+   - Status: merged to `main`, pushed to `origin/main`, and locally verified after merge.
+   - Verification reported: `node --check scripts/cto/saige-sse-proof.mjs` PASS, focused proof-runner tests PASS, SSOT traceability PASS with standing warnings only.
+   - Gate: use this repo-versioned runner for the constrained proof after production identity catches up.
 
 4. Current directive refresh
-   - Branch: `docs/cto-runtime-merged-deploy-gate`.
+   - Branch: `docs/cto-proof-runner-merged-deploy-gate`.
    - File: `docs/cto/current-directive.md`.
-   - Scope: docs only; updates the repo communication layer to match the current deployment/proof gate.
+   - Scope: docs only; updates the repo communication layer to record the proof-runner merge and current deployment/proof gate.
    - Gate: W04 CLEAR required before merging this docs-only branch to main.
 
 ## Immediate Priority Queue
 
-1. Victor deploys production from current Git-backed `main`, or production otherwise picks up `64b60a4`.
+1. Victor deploys production from current Git-backed `main`, or production otherwise picks up `64b60a4` or later.
 2. CTO verifies:
-   - `/api/health` reports commit `64b60a4`.
+   - `/api/health` reports commit `64b60a4` or later, preferably `d59630d`.
    - `/api/operator-readiness` remains `ok=true` with 7/7 credentials present.
-3. Run constrained SAIGE proof only after production identity matches `64b60a4`:
-   - `POST /api/agent/3/execute`
-   - `Accept: text/event-stream`
-   - `x-product-scope: saige`
-   - `url=https://saigeplatform.com`
-   - `maxIterations=1`
-   - `mode=auto`
-   - `gtmTarget=95`
+3. Run constrained SAIGE proof only after production identity matches the gate:
+   - `node scripts/cto/saige-sse-proof.mjs --run-live --base-url https://flowai-dun.vercel.app --output-dir C:\Users\victo\Documents\Codex\flowai-verification\evidence --product-scope saige --url https://saigeplatform.com --max-iterations 1 --gtm-target 95 --mode auto --fail-on-incomplete`
 4. Accept runtime-config fix only if the stream produces terminal `final` + `[DONE]` or honest terminal `timeout` + `[DONE]`.
 5. Count branch creation, preview deployment, post-fix scoring, governance write, and ProductSSOT persistence only if independently observed in the live proof.
 6. If the proof still ends without a terminal SSE event, route the result as BLOCK and resume the `ForgeRunState` phase-split architecture path.
