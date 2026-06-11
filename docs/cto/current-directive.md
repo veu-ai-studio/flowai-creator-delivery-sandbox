@@ -4,75 +4,72 @@ Last updated: 2026-06-11
 
 ## Active Priority
 
-Move FlowAI toward its first honest, fully functional end-to-end forge run with a deployed URL, post-fix scoring, final governance evidence, and ProductSSOT persistence.
+Move FlowAI from a proven constrained SAIGE runtime proof to reviewed SSOT claim impact without inflating evidence. The next objective is not automatic VERIFIED movement; it is CD/CR/W04 adjudication of what the proof actually supports.
 
 ## Current Technical Reality
 
-- `origin/main` is at `d59630d6394436db2730829c96187a08260caff7`.
-- Main now includes the runtime-config 800s merge commit: `64b60a4 Merge runtime config 800s patch`.
-- The merge aligns source-level Vercel function config and named `maxDuration` exports for Agent 3 SSE and Inngest.
-- The merge commit explicitly states that live proof remains required after production deploy and that no VERIFIED movement occurred.
-- CD and CR both returned PASS for the runtime-config Step 5 review.
-- Main now also includes the SAIGE SSE proof runner merge: `d59630d docs/cto | add SAIGE SSE proof runner`.
-- The proof runner is tooling only. It records request JSON, raw SSE transcript, summary JSON, and summary Markdown for the constrained SAIGE proof. It does not move VERIFIED or claim success.
-- Post-merge local verification passed:
-  - `node --check api/agent/3/execute.js`
-  - `node --check api/inngest.js`
-  - `npx vitest run tests/api/agent3ExecuteTimeout.test.js`
-  - `node --check scripts/cto/saige-sse-proof.mjs`
-  - `npx vitest run tests/tools/saigeSseProof.test.js`
-  - `node scripts/check-ssot-traceability.mjs`
-- Production has not yet picked up `64b60a4` or current `main`. Latest non-mutating production check still reports:
-  - `/api/health` commit: `06829983b50f`
-  - commitFull: `06829983b50f16613c548f77708e96b905a8fbb9`
-  - checked at: 2026-06-11T18:48:48Z
-- `/api/operator-readiness` remains `ok=true` with 7/7 required operator credentials present.
-- No constrained SAIGE proof has been run against `64b60a4`.
-- No branch creation, preview deploy, post-fix scoring, final governance write, or ProductSSOT persistence has been observed after the runtime-config merge.
-- No VERIFIED movement is justified.
-- The durable `ForgeRunState` phase-split architecture remains the true long-term solution; the runtime-config fix is an immediate production-window repair, not a replacement for stateful phase execution.
+- `origin/main` is at `3292ba292ccaa7b27c282ce9a3735de9087d6a64`.
+- Main includes the runtime-config 800s merge commit: `64b60a4 Merge runtime config 800s patch`.
+- Main includes the SAIGE SSE proof runner merge: `d59630d docs/cto | add SAIGE SSE proof runner`.
+- Main now includes proof-runner evidence hardening:
+  - `5d91354 tools/cto | harden SAIGE proof delivery URL evidence`
+  - `3292ba2 tools/cto | enforce source URL in proof reparse`
+- The proof runner now treats the source URL as context, not delivery evidence. Offline transcript parsing accepts a source URL via `--url`, and the SAIGE default source is `https://saigeplatform.com`.
+- A constrained SAIGE live proof was run after production picked up a runtime-config-capable commit.
+- Production identity before the proof reported `/api/health` commit `0c8ee3759fd2`, full `0c8ee3759fd26320b1f095b1b4da227f4c2f2c46`, which is later than required runtime merge `64b60a4`.
+- `/api/operator-readiness` reported `ok=true` with 7/7 required operator credentials present.
+- Live proof run ID: `cto-saige-sse-proof-20260611185806`.
+- Corrected proof summary:
+  - Verdict: `END_TO_END_COMPLETE`
+  - Terminal: `final` + `[DONE]`
+  - Events: `89`
+  - Branch observed: `flowai/renewal-cto-saige-sse-proof-20260611185806-iter1`
+  - Delivery URL observed: `https://saige-v2.vercel.app`
+  - Final score: `73`
+  - Exit reason: `MAX_ITERATIONS`
+  - ProductSSOT persisted: `true`
+- Evidence files are under `C:\Users\victo\Documents\Codex\flowai-verification\evidence`.
+- Runtime acceptance packet on main: `docs/cto/saige-proof-20260611-runtime-config-acceptance.md`.
+- No VERIFIED movement is justified from the proof summary alone.
+- `CA18-URL-ANY` and `CA18-UNIVERSAL-LIMIT` are not supported by this proof because the run was registered-product SAIGE, not arbitrary unregistered URL / universal diagnosis-only mode.
+- The durable `ForgeRunState` phase-split architecture remains the long-term solution. The 800s window is an immediate production-window repair, not a replacement for stateful phase execution.
 
 ## Active Branches And Gates
 
-1. Production deploy gate
-   - Required production commit for the runtime-config proof: `64b60a419bb99ba34793ffad1acbd97623cb8a04` or later.
-   - Preferred production commit: current `main` at `d59630d6394436db2730829c96187a08260caff7`.
-   - Current production commit: `06829983b50f16613c548f77708e96b905a8fbb9`.
-   - Gate: production must deploy or otherwise pick up current `main`.
-   - Do not run the constrained SAIGE proof until `/api/health` reports `64b60a4` or later.
+1. Proof-runner evidence hardening
+   - Branch merged: `fix/cto-proof-runner-delivery-url-evidence`.
+   - New `origin/main`: `3292ba292ccaa7b27c282ce9a3735de9087d6a64`.
+   - Status: merged, pushed, and locally verified.
+   - Verification: `node --check scripts/cto/saige-sse-proof.mjs` PASS; `npx vitest run tests/tools/saigeSseProof.test.js` PASS, 6 tests; `node scripts/check-ssot-traceability.mjs` PASS with standing warnings only; `git diff --check` PASS.
+   - Claim boundary: no VERIFIED movement.
 
-2. Runtime-config merge
-   - Branch merged: `fix/forge-runtime-config-800`.
-   - Merge commit on main: `64b60a419bb99ba34793ffad1acbd97623cb8a04`.
-   - Status: merged and locally verified.
-   - Claim boundary: no live proof yet, no success claim, no VERIFIED movement.
+2. SAIGE proof claim-impact packet
+   - Branch: `docs/cto-saige-proof-claim-impact`.
+   - Head: `a0cc192db38cf617f1caf1ec8f5b12f8dec15b43`.
+   - File: `docs/cto/saige-proof-20260611-claim-impact.md`.
+   - Status: review material only; not merged unless W04 clears.
+   - Purpose: map which CA18 claims the proof may support and which it does not support.
+   - Boundary: no claim promotion without the Claim Promotion Checklist and CD/CR/W04 review.
 
-3. SAIGE proof runner
-   - Branch: `docs/cto-saige-proof-runner`.
-   - Branch head merged: `dd32b3dbb7d643cae79089d81e609fd2dc8e914a`.
-   - Merge commit on main: `d59630d6394436db2730829c96187a08260caff7`.
-   - Purpose: provide a safe parser and explicit live-run command for post-merge SAIGE SSE proof evidence.
-   - Status: merged to `main`, pushed to `origin/main`, and locally verified after merge.
-   - Verification reported: `node --check scripts/cto/saige-sse-proof.mjs` PASS, focused proof-runner tests PASS, SSOT traceability PASS with standing warnings only.
-   - Gate: use this repo-versioned runner for the constrained proof after production identity catches up.
+3. AOL five-layer user architecture
+   - Branch: `docs/aol-five-layer-user-architecture`.
+   - Head: `76498d40c12a9a567954f36306dd6b0ae7d2b5e1`.
+   - File: `docs/aol/FIVE_LAYER_USER_ARCHITECTURE.md`.
+   - Status: separate product-guidance branch; not merged unless cleared.
+   - Boundary: AOL product guidance only; not a FlowAI canonical amendment unless separately ratified.
 
-4. Current directive refresh
-   - Branch: `docs/cto-proof-runner-merged-deploy-gate`.
-   - File: `docs/cto/current-directive.md`.
-   - Scope: docs only; updates the repo communication layer to record the proof-runner merge and current deployment/proof gate.
+4. CTO directive refresh
+   - Branch: `docs/cto-proof-runner-hardening-merged`.
+   - Scope: docs only.
    - Gate: W04 CLEAR required before merging this docs-only branch to main.
 
 ## Immediate Priority Queue
 
-1. Victor deploys production from current Git-backed `main`, or production otherwise picks up `64b60a4` or later.
-2. CTO verifies:
-   - `/api/health` reports commit `64b60a4` or later, preferably `d59630d`.
-   - `/api/operator-readiness` remains `ok=true` with 7/7 credentials present.
-3. Run constrained SAIGE proof only after production identity matches the gate:
-   - `node scripts/cto/saige-sse-proof.mjs --run-live --base-url https://flowai-dun.vercel.app --output-dir C:\Users\victo\Documents\Codex\flowai-verification\evidence --product-scope saige --url https://saigeplatform.com --max-iterations 1 --gtm-target 95 --mode auto --fail-on-incomplete`
-4. Accept runtime-config fix only if the stream produces terminal `final` + `[DONE]` or honest terminal `timeout` + `[DONE]`.
-5. Count branch creation, preview deployment, post-fix scoring, governance write, and ProductSSOT persistence only if independently observed in the live proof.
-6. If the proof still ends without a terminal SSE event, route the result as BLOCK and resume the `ForgeRunState` phase-split architecture path.
+1. CD/CR/W04 review the proof-runner hardening now on main and the separate claim-impact packet.
+2. Decide whether any CA18 claim has enough evidence to enter the Claim Promotion Checklist. Do not move any claim by summary alone.
+3. Keep `CA18-URL-ANY` and `CA18-UNIVERSAL-LIMIT` out of scope for the SAIGE registered-product proof.
+4. Prepare the next live evidence run only when the exact claim target is named and the acceptance criteria are written in advance.
+5. Resume the `ForgeRunState` phase-split or Migration Mode path when W04/CEO select the next implementation track.
 
 ## Standing Rules For CB
 
@@ -87,14 +84,14 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 - Review SSOT consistency, implementation correctness, data shape, evidence tiering, and claim impact.
 - Treat mocked proof, route existence, and code wiring as insufficient for production VERIFIED claims.
 - Block on canonical drift, missing evidence, unsupported claim movement, or incomplete DoD proof fields.
-- For post-merge runtime-config acceptance, focus on production identity, Vercel behavior, and whether proof evidence is honestly terminal.
+- For SAIGE runtime-config acceptance, focus on production identity, Vercel behavior, terminal proof evidence, and whether claim impact is scoped honestly.
 
 ## Standing Rules For CR
 
 - Review adversarially for evidence inflation, security regressions, deployment-proof gaps, governance bypass, and acceptance-criteria failures.
 - Block only on demonstrated, evidence-tied failures.
 - Cite code, command output, production/runtime proof, or canonical sections for every blocker.
-- For post-merge runtime-config acceptance, confirm partial setup/crawl evidence is not relabeled as end-to-end forge success and does not move VERIFIED.
+- For SAIGE runtime-config acceptance, confirm source/fallback URLs are never relabeled as observed delivery evidence and do not move VERIFIED by themselves.
 
 ## CTO Rule
 
