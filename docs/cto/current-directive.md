@@ -8,49 +8,60 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 
 ## Current Technical Reality
 
-- Main is at `b32bcc5cf1c7f7e63ebd40b6a39ef1a9038171e1` with PR #11 merged and the CTO current directive on main.
-- PR #11 was merged with a documented W04/CEO waiver of the unmocked live proof for the URL context labeling fix.
-- Production was later deployed to PR #11 main commit `06829983b50f16613c548f77708e96b905a8fbb9` and confirmed by `/api/health`, with `/api/operator-readiness` showing 7/7 required operator credentials present. The later `b32bcc5` main commits are docs-only and do not require a production proof claim.
-- The deferred constrained SAIGE proof on production reached credential readiness, Product Discovery, repo probe, and 11-page crawl completion, but the Agent 3 SSE stream ended without `[DONE]`, `final`, `timeout`, or `error`.
-- The failed proof did not reach branch creation, preview deploy, post-fix scoring, final governance write, or ProductSSOT persistence.
-- No VERIFIED movement is justified by the deferred proof.
-- Root `vercel.json` already intended 800s windows, but source-level runtime config was ambiguous/drifted. Runtime-config alignment is now isolated on `fix/forge-runtime-config-800`.
+- `origin/main` is at `64b60a419bb99ba34793ffad1acbd97623cb8a04`.
+- Main now includes the runtime-config 800s merge commit: `64b60a4 Merge runtime config 800s patch`.
+- The merge aligns source-level Vercel function config and named `maxDuration` exports for Agent 3 SSE and Inngest.
+- The merge commit explicitly states that live proof remains required after production deploy and that no VERIFIED movement occurred.
+- CD and CR both returned PASS for the runtime-config Step 5 review.
+- Post-merge local verification passed:
+  - `node --check api/agent/3/execute.js`
+  - `node --check api/inngest.js`
+  - `npx vitest run tests/api/agent3ExecuteTimeout.test.js`
+  - `node scripts/check-ssot-traceability.mjs`
+- Production has not yet picked up `64b60a4`. Latest non-mutating production check still reports:
+  - `/api/health` commit: `06829983b50f`
+  - commitFull: `06829983b50f16613c548f77708e96b905a8fbb9`
+  - checked at: 2026-06-11T15:18:54Z
+- `/api/operator-readiness` remains `ok=true` with 7/7 required operator credentials present.
+- No constrained SAIGE proof has been run against `64b60a4`.
+- No branch creation, preview deploy, post-fix scoring, final governance write, or ProductSSOT persistence has been observed after the runtime-config merge.
+- No VERIFIED movement is justified.
 - The durable `ForgeRunState` phase-split architecture remains the true long-term solution; the runtime-config fix is an immediate production-window repair, not a replacement for stateful phase execution.
 
 ## Active Branches And Gates
 
-1. Runtime-config fix
-   - Branch: `fix/forge-runtime-config-800`
-   - Review target: latest `origin/fix/forge-runtime-config-800`.
-   - Technical code delta: `61d3f2cc3d55c38c1faacb39542be225c2e1c32a`; later commits on the branch are docs-only coordination corrections unless `git diff` shows otherwise.
-   - Purpose: align `api/agent/3/execute.js` and `api/inngest.js` with explicit 800s source-level runtime config.
-   - Verification reported: `node --check` PASS, focused timeout test PASS, full preflight PASS with 230 files / 3655 tests / 3 skipped.
-   - Gate: CD and CR must review the latest branch state and return PASS/BLOCK before merge.
-   - Merge/PR packet: `docs/cto/runtime-config-800-pr-merge-packet.md` on that branch.
+1. Production deploy gate
+   - Required production commit: `64b60a419bb99ba34793ffad1acbd97623cb8a04`.
+   - Current production commit: `06829983b50f16613c548f77708e96b905a8fbb9`.
+   - Gate: production must deploy or otherwise pick up current `main`.
+   - Do not run the constrained SAIGE proof until `/api/health` reports `64b60a4`.
 
-2. SAIGE proof runner
-   - Branch: `docs/cto-saige-proof-runner`
-   - Current head: `dd32b3dbb7d643cae79089d81e609fd2dc8e914a`
+2. Runtime-config merge
+   - Branch merged: `fix/forge-runtime-config-800`.
+   - Merge commit on main: `64b60a419bb99ba34793ffad1acbd97623cb8a04`.
+   - Status: merged and locally verified.
+   - Claim boundary: no live proof yet, no success claim, no VERIFIED movement.
+
+3. SAIGE proof runner
+   - Branch: `docs/cto-saige-proof-runner`.
+   - Current head: `dd32b3dbb7d643cae79089d81e609fd2dc8e914a`.
    - Purpose: provide a safe parser and explicit live-run command for post-merge SAIGE SSE proof evidence.
    - Verification reported: `node --check` PASS, focused proof-runner tests PASS, old failed transcript parsed as `INCOMPLETE_STREAM`, full preflight PASS with 231 files / 3657 tests / 3 skipped.
-   - Gate: merge only after W04 decides whether this proof tooling should land before or alongside runtime-config acceptance.
+   - Gate: W04 decides whether to merge this proof tooling before the runtime-config acceptance run or use an equivalent SSE capture without merging it.
 
-3. Current directive layer
-   - File: `docs/cto/current-directive.md` on `main`.
-   - Purpose: keep incoming windows aligned on the current runtime gate and proof sequence.
-   - Scope: docs only; no claim movement.
+4. Current directive refresh
+   - Branch: `docs/cto-runtime-merged-deploy-gate`.
+   - File: `docs/cto/current-directive.md`.
+   - Scope: docs only; updates the repo communication layer to match the current deployment/proof gate.
+   - Gate: W04 CLEAR required before merging this docs-only branch to main.
 
 ## Immediate Priority Queue
 
-1. Get CD and CR PASS/BLOCK on latest `origin/fix/forge-runtime-config-800`; technical code delta is `61d3f2c`.
-2. After review clearance, create/open PR from:
-   `https://github.com/victor2081new-cloud/flowai/compare/main...fix/forge-runtime-config-800?quick_pull=1`
-3. Merge only after W04 issues CLEAR TO MERGE.
-4. Victor deploys production from the merged Git-backed main when W04 clears deploy.
-5. CTO verifies:
-   - `/api/health` reports the merged production commit.
+1. Victor deploys production from current Git-backed `main`, or production otherwise picks up `64b60a4`.
+2. CTO verifies:
+   - `/api/health` reports commit `64b60a4`.
    - `/api/operator-readiness` remains `ok=true` with 7/7 credentials present.
-6. Run constrained SAIGE proof using the proof-runner command:
+3. Run constrained SAIGE proof only after production identity matches `64b60a4`:
    - `POST /api/agent/3/execute`
    - `Accept: text/event-stream`
    - `x-product-scope: saige`
@@ -58,8 +69,9 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
    - `maxIterations=1`
    - `mode=auto`
    - `gtmTarget=95`
-7. Accept runtime-config fix only if the stream produces terminal `final` + `[DONE]` or honest terminal `timeout` + `[DONE]`.
-8. Claim first end-to-end forge completion only if live evidence also shows branch creation, preview deployment, post-fix scoring, final governance write, and ProductSSOT persistence.
+4. Accept runtime-config fix only if the stream produces terminal `final` + `[DONE]` or honest terminal `timeout` + `[DONE]`.
+5. Count branch creation, preview deployment, post-fix scoring, governance write, and ProductSSOT persistence only if independently observed in the live proof.
+6. If the proof still ends without a terminal SSE event, route the result as BLOCK and resume the `ForgeRunState` phase-split architecture path.
 
 ## Standing Rules For CB
 
@@ -74,14 +86,14 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 - Review SSOT consistency, implementation correctness, data shape, evidence tiering, and claim impact.
 - Treat mocked proof, route existence, and code wiring as insufficient for production VERIFIED claims.
 - Block on canonical drift, missing evidence, unsupported claim movement, or incomplete DoD proof fields.
-- For `fix/forge-runtime-config-800`, focus on runtime config correctness, Vercel behavior risk, and absence of scoring/governance drift.
+- For post-merge runtime-config acceptance, focus on production identity, Vercel behavior, and whether proof evidence is honestly terminal.
 
 ## Standing Rules For CR
 
 - Review adversarially for evidence inflation, security regressions, deployment-proof gaps, governance bypass, and acceptance-criteria failures.
 - Block only on demonstrated, evidence-tied failures.
 - Cite code, command output, production/runtime proof, or canonical sections for every blocker.
-- For `fix/forge-runtime-config-800`, confirm the branch does not relabel partial setup/crawl evidence as end-to-end forge success and does not move VERIFIED.
+- For post-merge runtime-config acceptance, confirm partial setup/crawl evidence is not relabeled as end-to-end forge success and does not move VERIFIED.
 
 ## CTO Rule
 
