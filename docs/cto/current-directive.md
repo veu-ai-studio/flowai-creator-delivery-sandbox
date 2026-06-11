@@ -8,9 +8,9 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 
 ## Current Technical Reality
 
-- Main is at `06829983b50f16613c548f77708e96b905a8fbb9` with PR #11 merged.
+- Main is at `b32bcc5cf1c7f7e63ebd40b6a39ef1a9038171e1` with PR #11 merged and the CTO current directive on main.
 - PR #11 was merged with a documented W04/CEO waiver of the unmocked live proof for the URL context labeling fix.
-- Production was later deployed to main and confirmed by `/api/health`, with `/api/operator-readiness` showing 7/7 required operator credentials present.
+- Production was later deployed to PR #11 main commit `06829983b50f16613c548f77708e96b905a8fbb9` and confirmed by `/api/health`, with `/api/operator-readiness` showing 7/7 required operator credentials present. The later `b32bcc5` main commits are docs-only and do not require a production proof claim.
 - The deferred constrained SAIGE proof on production reached credential readiness, Product Discovery, repo probe, and 11-page crawl completion, but the Agent 3 SSE stream ended without `[DONE]`, `final`, `timeout`, or `error`.
 - The failed proof did not reach branch creation, preview deploy, post-fix scoring, final governance write, or ProductSSOT persistence.
 - No VERIFIED movement is justified by the deferred proof.
@@ -21,11 +21,11 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 
 1. Runtime-config fix
    - Branch: `fix/forge-runtime-config-800`
-   - Current head: `303885b4294a890fb4cac1b7c9ebaf40b5b02cfc`
-   - Technical code delta: `61d3f2cc3d55c38c1faacb39542be225c2e1c32a`; latest commit is docs-only review-packet correction.
+   - Review target: latest `origin/fix/forge-runtime-config-800`.
+   - Technical code delta: `61d3f2cc3d55c38c1faacb39542be225c2e1c32a`; later commits on the branch are docs-only coordination corrections unless `git diff` shows otherwise.
    - Purpose: align `api/agent/3/execute.js` and `api/inngest.js` with explicit 800s source-level runtime config.
    - Verification reported: `node --check` PASS, focused timeout test PASS, full preflight PASS with 230 files / 3655 tests / 3 skipped.
-   - Gate: CD and CR must review updated head and return PASS/BLOCK before merge.
+   - Gate: CD and CR must review the latest branch state and return PASS/BLOCK before merge.
    - Merge/PR packet: `docs/cto/runtime-config-800-pr-merge-packet.md` on that branch.
 
 2. SAIGE proof runner
@@ -35,14 +35,14 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
    - Verification reported: `node --check` PASS, focused proof-runner tests PASS, old failed transcript parsed as `INCOMPLETE_STREAM`, full preflight PASS with 231 files / 3657 tests / 3 skipped.
    - Gate: merge only after W04 decides whether this proof tooling should land before or alongside runtime-config acceptance.
 
-3. Current directive update
-   - Branch: `docs/cto-current-directive-runtime-gate`
+3. Current directive layer
+   - File: `docs/cto/current-directive.md` on `main`.
    - Purpose: keep incoming windows aligned on the current runtime gate and proof sequence.
    - Scope: docs only; no claim movement.
 
 ## Immediate Priority Queue
 
-1. Get CD and CR PASS/BLOCK on `fix/forge-runtime-config-800` head `303885b`.
+1. Get CD and CR PASS/BLOCK on latest `origin/fix/forge-runtime-config-800`; technical code delta is `61d3f2c`.
 2. After review clearance, create/open PR from:
    `https://github.com/victor2081new-cloud/flowai/compare/main...fix/forge-runtime-config-800?quick_pull=1`
 3. Merge only after W04 issues CLEAR TO MERGE.
