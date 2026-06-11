@@ -21,7 +21,8 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 
 1. Runtime-config fix
    - Branch: `fix/forge-runtime-config-800`
-   - Current head: `61d3f2cc3d55c38c1faacb39542be225c2e1c32a`
+   - Current head: `303885b4294a890fb4cac1b7c9ebaf40b5b02cfc`
+   - Technical code delta: `61d3f2cc3d55c38c1faacb39542be225c2e1c32a`; latest commit is docs-only review-packet correction.
    - Purpose: align `api/agent/3/execute.js` and `api/inngest.js` with explicit 800s source-level runtime config.
    - Verification reported: `node --check` PASS, focused timeout test PASS, full preflight PASS with 230 files / 3655 tests / 3 skipped.
    - Gate: CD and CR must review updated head and return PASS/BLOCK before merge.
@@ -41,7 +42,7 @@ Move FlowAI toward its first honest, fully functional end-to-end forge run with 
 
 ## Immediate Priority Queue
 
-1. Get CD and CR PASS/BLOCK on `fix/forge-runtime-config-800` head `61d3f2c`.
+1. Get CD and CR PASS/BLOCK on `fix/forge-runtime-config-800` head `303885b`.
 2. After review clearance, create/open PR from:
    `https://github.com/victor2081new-cloud/flowai/compare/main...fix/forge-runtime-config-800?quick_pull=1`
 3. Merge only after W04 issues CLEAR TO MERGE.
