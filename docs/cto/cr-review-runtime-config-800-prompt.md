@@ -9,7 +9,7 @@ ACTION: Regression and SSOT review for branch `fix/forge-runtime-config-800`
 Review the runtime-duration fix produced after the PR #11 deferred SAIGE proof closed without a terminal SSE event.
 
 Branch: `fix/forge-runtime-config-800`
-Commit: `8562eb8 fix/forge | align runtime max duration config`
+Head: `61d3f2cc3d55c38c1faacb39542be225c2e1c32a fix/forge | add named max duration exports`
 Base main: `06829983b50f16613c548f77708e96b905a8fbb9`
 
 Files in scope:
