@@ -175,9 +175,31 @@ Recommended next UI build:
 
 ## TIM Build Amendment - Codex
 
-Status: DOCUMENTED; CB worker dispatched for implementation on `fix/tim-codex-build-tool`.
+Status: IMPLEMENTED ON BRANCH; CD/CR review dispatched through repo.
 
 W04 directed that Codex must be added as the rank-1 Step 3 Build tool in the Tool Intelligence Marketplace. This is now integrated into the four-path proof strategy as a cross-cutting gate.
+
+Implementation branch:
+
+- Branch: `origin/fix/tim-codex-build-tool`
+- Head: `a6b82e5c893fac1491b2c25611a680bd1ca0bed8`
+- Commit: `tim | add Codex build tool`
+- Result packet: `docs/cto/cb-tim-codex-build-tool-result-20260612.md`
+- CD prompt: `docs/cto/cd-review-tim-codex-build-tool-step5-prompt-20260612.md`
+- CR prompt: `docs/cto/cr-review-tim-codex-build-tool-step5-prompt-20260612.md`
+
+Verification:
+
+- Focused TIM suite: PASS, 8 files / 136 tests.
+- `node --check` on new Codex/ranking modules: PASS.
+- `git diff --check`: PASS with Windows line-ending warnings only.
+- `npm run build:preflight`: PASS.
+
+Honesty boundary:
+
+- Codex is ranked first and callable only when `OPENAI_API_KEY` is present.
+- The adapter is OpenAI API-backed for code patch and generate-from-scratch output. It does not itself claim local git, test, branch, or deploy authority.
+- No VERIFIED movement and no canonical SSOT edits.
 
 Current code reality:
 

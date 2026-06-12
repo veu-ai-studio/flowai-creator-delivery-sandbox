@@ -32,6 +32,9 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `cr-review-path2-boundary-chain-step5-second-rereview-result-20260612.md` - CR PASS result for the second Path 2 boundary-chain re-review.
 - `tim-codex-build-tool-amendment-plan-20260612.md` - TIM amendment plan requiring Codex as rank-1 Step 3 Build tool.
 - `cb-tim-codex-build-tool-dispatch-20260612.md` - CB dispatch packet for adding Codex to the Step 3 Build TIM path.
+- `cb-tim-codex-build-tool-result-20260612.md` - CB result for the TIM Codex Build tool branch.
+- `cd-review-tim-codex-build-tool-step5-prompt-20260612.md` - CD review prompt for the TIM Codex Build tool branch.
+- `cr-review-tim-codex-build-tool-step5-prompt-20260612.md` - CR review prompt for the TIM Codex Build tool branch.
 - `path2-saige-v2-postmerge-proof-20260612.md` - Post-merge Path 2 proof showing branch/deploy reached and protected-preview post-fix scoring failed.
 - `cb-path2-preview-protection-postfix-dispatch-20260612.md` - CB dispatch for the protected-preview post-fix scoring blocker.
 - `cb-path3-fresh-build-codegen-recovery-dispatch-20260612.md` - Queued CB dispatch for Path 3 Fresh Build codegen recovery.
