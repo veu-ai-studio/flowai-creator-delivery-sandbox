@@ -149,6 +149,7 @@ function isDistinctObservedUrl(candidate, sourceUrl) {
 }
 
 function observedDeliveryUrl(value, sourceUrl) {
+  if (value?.upgradeDeployed === false) return null;
   const candidates = [
     value?.deliveryArtifactUrl,
     value?.upgradedUrl,

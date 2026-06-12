@@ -188,6 +188,9 @@ function blockedPublicUrlReason(value) {
 
 function upgradeDeliveryMessage(result = {}) {
   if (result.upgradeDeployed) return 'Live upgraded deployment is ready.';
+  if (result.upgradeDeployReason === 'PLATFORM_BOUNDARY_BLOCKED') {
+    return 'No current-run deployment: platform boundary blocked mutation.';
+  }
   if (result.upgradeDeployStatus === 'repo_available') {
     return 'Upgrade repo is available; no verified deployment URL is stored.';
   }
@@ -499,19 +502,24 @@ export default function FlowAIDashboard() {
       ? (repoConfig?.deployment_url ?? repoConfig?.upgrade_url ?? null)
       : null;
     const registryRepoUrl = repoConfig?.upgrade_repo ?? repoConfig?.upgrade_repo_url ?? null;
-    const upgradedUrl = finalResult?.upgradedUrl
-      ?? finalResult?.previewUrl
+    const currentRunDeployed = finalResult?.upgradeDeployed === true;
+    const upgradedUrl = currentRunDeployed
+      ? (finalResult?.upgradedUrl ?? finalResult?.previewUrl ?? null)
+      : null;
+    const registryContextUrl = finalResult?.registryUpgradeUrl
       ?? registryDeployedUrl
       ?? registryRepoUrl
       ?? null;
     const upgradeDeployStatus = finalResult?.upgradeDeployStatus
-      ?? (registryDeployedUrl ? 'deployed' : (registryRepoUrl ? 'repo_available' : null));
-    const upgradeDeployed = finalResult?.upgradeDeployed ?? Boolean(registryDeployedUrl);
+      ?? (finalResult ? 'not_deployed' : (registryDeployedUrl ? 'deployed' : (registryRepoUrl ? 'repo_available' : null)));
+    const upgradeDeployed = finalResult ? currentRunDeployed : Boolean(registryDeployedUrl);
     return {
       originalUrl,
       upgradedUrl,
+      registryContextUrl,
       originalHref: normalizeHref(originalUrl),
       upgradedHref: normalizeHref(upgradedUrl),
+      registryContextHref: normalizeHref(registryContextUrl),
       message: finalResult ? upgradeDeliveryMessage({
         ...finalResult,
         upgradeDeployed,
@@ -725,7 +733,9 @@ export default function FlowAIDashboard() {
               verdict: runVerdictFromResult(payload.result),
               branchCreated: branchStep?.result?.branchName ?? null,
               originalUrl: payload.result?.originalUrl ?? inputPayload.url ?? null,
-              upgradedUrl: payload.result?.upgradedUrl ?? payload.result?.previewUrl ?? finalDelivery.upgradedUrl ?? null,
+              upgradedUrl: payload.result?.upgradeDeployed === true
+                ? (payload.result?.upgradedUrl ?? payload.result?.previewUrl ?? null)
+                : null,
               upgradeDeployStatus: payload.result?.upgradeDeployStatus ?? null,
               upgradeDeployReason: payload.result?.upgradeDeployReason ?? null,
               progressLabel: payload.result?.exitReason ?? 'Completed',
@@ -1373,7 +1383,7 @@ export default function FlowAIDashboard() {
                   <p className="text-[10px] text-slate-500 uppercase tracking-wide">Delivered URLs</p>
                   <p className="text-sm text-slate-300">{finalDelivery.message}</p>
                 </div>
-                {finalDelivery.originalHref && finalDelivery.upgradedHref && (
+                {finalResult?.upgradeDeployed === true && finalDelivery.originalHref && finalDelivery.upgradedHref && (
                   <a
                     href={`/workspace?original=${encodeURIComponent(finalDelivery.originalHref)}&upgraded=${encodeURIComponent(finalDelivery.upgradedHref)}`}
                     className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5"
@@ -1394,7 +1404,7 @@ export default function FlowAIDashboard() {
                   )}
                 </div>
                 <div className="rounded-md bg-slate-900/70 px-3 py-2">
-                  <p className="text-[10px] font-bold uppercase text-slate-500">Upgraded Version</p>
+                  <p className="text-[10px] font-bold uppercase text-slate-500">Current-run Upgraded Version</p>
                   {finalDelivery.upgradedHref ? (
                     <a href={finalDelivery.upgradedHref} target="_blank" rel="noreferrer" className="mt-1 block break-all text-emerald-300 hover:text-emerald-200">
                       {finalDelivery.upgradedUrl}
@@ -1402,12 +1412,21 @@ export default function FlowAIDashboard() {
                   ) : (
                     <p className="mt-1 text-amber-300">{finalDelivery.message}</p>
                   )}
+                  {!finalDelivery.upgradedHref && finalDelivery.registryContextHref && (
+                    <div className="mt-2 border-t border-slate-800 pt-2">
+                      <p className="text-[10px] font-bold uppercase text-slate-500">Registered upgrade target</p>
+                      <a href={finalDelivery.registryContextHref} target="_blank" rel="noreferrer" className="mt-1 block break-all text-slate-300 hover:text-slate-200">
+                        {finalDelivery.registryContextUrl}
+                      </a>
+                      <p className="mt-1 text-[10px] text-slate-500">Context only; no current-run preview was produced.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {finalResult.previewUrl && (
+              {finalResult.previewUrl && finalResult.upgradeDeployed === true && (
                 <a href={finalResult.previewUrl.startsWith('http') ? finalResult.previewUrl : `https://${finalResult.previewUrl}`}
                    target="_blank" rel="noreferrer"
                    className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5">

@@ -26,7 +26,7 @@ describe('upgrade delivery envelope', () => {
     });
   });
 
-  it('uses a verified deployed registry URL when no preview was produced', () => {
+  it('keeps deployed registry URLs as context when no current-run preview was produced', () => {
     const envelope = buildUpgradeDeliveryEnvelope({
       product: {
         original_url: 'https://saige-platform.vercel.app',
@@ -38,14 +38,37 @@ describe('upgrade delivery envelope', () => {
 
     expect(envelope).toMatchObject({
       originalUrl: 'https://saige-platform.vercel.app',
-      upgradedUrl: 'https://saige-v2.vercel.app',
-      upgradeDeployed: true,
-      upgradeDeployStatus: 'deployed',
-      upgradeDeployReason: null,
+      upgradedUrl: null,
+      upgradeDeployed: false,
+      upgradeDeployStatus: 'not_deployed',
+      upgradeDeployReason: 'NO_CURRENT_RUN_DEPLOYMENT',
+      registryUpgradeUrl: 'https://saige-v2.vercel.app',
+      registryUpgradeStatus: 'deployed',
     });
   });
 
-  it('falls back to the upgrade repo link before reporting unknown', () => {
+  it('reports platform-boundary blocked when no preview was produced', () => {
+    const envelope = buildUpgradeDeliveryEnvelope({
+      product: {
+        original_url: 'https://saige-platform.vercel.app',
+        upgrade_url: 'https://saige-v2.vercel.app',
+        deployment_status: 'deployed',
+      },
+      iterations: [],
+      exitReason: 'PLATFORM_BOUNDARY_BLOCKED',
+    });
+
+    expect(envelope).toMatchObject({
+      upgradedUrl: null,
+      upgradeDeployed: false,
+      upgradeDeployStatus: 'blocked',
+      upgradeDeployReason: 'PLATFORM_BOUNDARY_BLOCKED',
+      registryUpgradeUrl: 'https://saige-v2.vercel.app',
+    });
+    expect(envelope.upgradeDeployDetail).toMatch(/platform boundary/i);
+  });
+
+  it('keeps an upgrade repo link as context before reporting no current-run deployment', () => {
     const envelope = buildUpgradeDeliveryEnvelope({
       product: {
         product_url: 'https://product.example',
@@ -56,10 +79,12 @@ describe('upgrade delivery envelope', () => {
 
     expect(envelope).toMatchObject({
       originalUrl: 'https://product.example',
-      upgradedUrl: 'https://github.com/example/product-v2',
+      upgradedUrl: null,
       upgradeDeployed: false,
-      upgradeDeployStatus: 'repo_available',
-      upgradeDeployReason: 'UPGRADE_REPO_AVAILABLE',
+      upgradeDeployStatus: 'not_deployed',
+      upgradeDeployReason: 'NO_CURRENT_RUN_DEPLOYMENT',
+      registryUpgradeUrl: 'https://github.com/example/product-v2',
+      registryUpgradeStatus: 'repo_available',
     });
   });
 });

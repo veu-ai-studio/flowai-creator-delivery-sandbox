@@ -350,28 +350,45 @@ function pickSafeDiagnosticFields(value = {}) {
   return safe;
 }
 
-function buildUpgradeDeliveryEnvelope({ product, initialUrl, iterations = [], skippedSteps = [] } = {}) {
+function buildUpgradeDeliveryEnvelope({
+  product,
+  initialUrl,
+  iterations = [],
+  skippedSteps = [],
+  exitReason = null,
+} = {}) {
   const originalUrl = resolveOriginalProductUrl({ product, initialUrl });
   const deliveredUrl = resolveDeliveredUpgradeUrl({ iterations });
   const fallback = resolveProductUpgradeFallback(product);
-  const upgradedUrl = deliveredUrl ?? fallback.url;
   const deploySkip = Array.isArray(skippedSteps)
     ? [...skippedSteps].reverse().find((step) => Number(step?.step) === 10 && step?.autoFixSkippedReason)
     : null;
-  const upgradeDeployed = Boolean(deliveredUrl) || fallback.status === 'deployed';
+  const blockedReason = exitReason === 'PLATFORM_BOUNDARY_BLOCKED'
+    ? 'PLATFORM_BOUNDARY_BLOCKED'
+    : deploySkip?.autoFixSkippedReason;
+  const blockedDetail = exitReason === 'PLATFORM_BOUNDARY_BLOCKED'
+    ? 'No current-run preview/deployment was produced because mutation was blocked at the platform boundary.'
+    : deploySkip?.detail;
+  const upgradeDeployed = Boolean(deliveredUrl);
+  const upgradeDeployStatus = deliveredUrl
+    ? 'deployed'
+    : (blockedReason ? 'blocked' : 'not_deployed');
   return Object.freeze({
     originalUrl,
-    upgradedUrl,
+    upgradedUrl: deliveredUrl,
     upgradeDeployed,
-    upgradeDeployStatus: upgradedUrl
-      ? (upgradeDeployed ? 'deployed' : fallback.status)
-      : (deploySkip ? 'blocked' : 'not_deployed'),
+    upgradeDeployStatus,
     upgradeDeployReason: upgradeDeployed
       ? null
-      : (fallback.reason ?? deploySkip?.autoFixSkippedReason ?? null),
+      : (blockedReason ?? 'NO_CURRENT_RUN_DEPLOYMENT'),
     upgradeDeployDetail: upgradeDeployed
       ? null
-      : (fallback.detail ?? deploySkip?.detail ?? null),
+      : (blockedDetail ?? 'No current-run preview/deployment artifact was produced. Existing registry URLs are context only.'),
+    registryUpgradeUrl: fallback.url,
+    registryUpgradeKind: fallback.kind,
+    registryUpgradeStatus: fallback.status,
+    registryUpgradeReason: fallback.reason,
+    registryUpgradeDetail: fallback.detail,
   });
 }
 
@@ -1909,16 +1926,11 @@ export async function runOrchestration(args = {}) {
   let lastPostGtm = null;
   let preScoreEvidenceDegraded = false;
   let postScoreEvidenceDegraded = false;
-  // W5b TRACK B PART 2 — initialize to the URL we tested against, NOT null.
-  // When the run exits early (e.g. NO_FIXES_GENERATED before STEP 10), this
-  // anchors the governance_record entry to the artifact we actually evaluated.
-  // STEP 10 overwrites this when a new preview is deployed.
-  // W5b TRACK B initializes this to initialUrl so the audit anchors to
-  // the evaluated artifact when no preview deploy happens. DISPATCH U1
-  // (universal mode) keeps this null — the run is evaluation-only and
-  // STEP 10 is skipped, so there is no preview to report. The
-  // governance trail still captures the input URL via product.__sourceUrl.
-  let finalPreviewUrl = state.universalMode ? null : (initialUrl ?? null);
+  // Current-run preview only. The evaluated/source URL remains available
+  // via originalUrl/evaluated context; previewUrl must not point to the
+  // source URL or a pre-existing registry deployment when this run did
+  // not produce a fresh preview artifact.
+  let finalPreviewUrl = null;
   let pr = null;
   let exitReason = 'UNKNOWN';
   let noImprovementStreak = 0;
@@ -2299,6 +2311,7 @@ export async function runOrchestration(args = {}) {
             initialUrl,
             iterations: [],
             skippedSteps: state.skippedSteps,
+            exitReason: 'HONEST_GATE_REFUSAL_ALREADY_PASSING',
           }),
           prUrl: null,
           prNumber: null,
@@ -5481,6 +5494,7 @@ export async function runOrchestration(args = {}) {
     initialUrl,
     iterations,
     skippedSteps: state.skippedSteps,
+    exitReason,
   });
   // Promote INSUFFICIENT_DIMENSION_COVERAGE into exitReason when the
   // run ended without a clean GTM exit AND the only blocker was the

@@ -19,4 +19,14 @@ describe('FlowAI result card objectives', () => {
     expect(dashboardSrc).toContain('FLOWAI_MACRO_STEPS.filter((key) => keys.has(key)).length');
     expect(dashboardSrc).not.toContain('Object.values(matrix).filter');
   });
+
+  it('keeps registry upgrade targets contextual when no current-run preview exists', () => {
+    expect(dashboardSrc).toContain("finalResult.previewUrl && finalResult.upgradeDeployed === true");
+    expect(dashboardSrc).toContain('Current-run Upgraded Version');
+    expect(dashboardSrc).toContain('Registered upgrade target');
+    expect(dashboardSrc).toContain('Context only; no current-run preview was produced.');
+    expect(dashboardSrc).toContain('const upgradedUrl = currentRunDeployed');
+    expect(dashboardSrc).toContain("payload.result?.upgradeDeployed === true");
+    expect(dashboardSrc).not.toContain('?? finalDelivery.upgradedUrl');
+  });
 });
