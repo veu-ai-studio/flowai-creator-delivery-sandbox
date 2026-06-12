@@ -14,6 +14,9 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `standing-goal-cb2.md` - Standing autonomous operating goal for CB2.
 - `standing-goal-ct2.md` - Standing autonomous operating goal for CT2.
 - `standing-goal-cr.md` - Standing autonomous operating goal for CR.
+- `path1-saige-migration-phase3-dod-20260612.md` - Path 1 migration evidence and remaining gaps.
+- `path2-saige-v2-production-proof-20260612.md` - Path 2 constrained production proof result.
+- `ct2-path1-saige-preview-acceptance-dispatch-20260612.md` - CT2 dispatch for SAIGE preview acceptance.
 - `session-brief.md` - Reserved for end-of-session CTO summaries when produced.
 
 ## Use
