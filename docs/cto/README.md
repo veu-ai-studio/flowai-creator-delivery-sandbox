@@ -19,6 +19,9 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `ct2-path1-saige-preview-acceptance-dispatch-20260612.md` - CT2 dispatch for SAIGE preview acceptance.
 - `ct2-path1-saige-preview-acceptance-result-20260612.md` - CT2 acceptance result for the SAIGE preview.
 - `cb-path2-platform-boundary-chain-dispatch-20260612.md` - CB dispatch for Path 2 boundary-chain repair.
+- `path2-boundary-chain-step5-review-packet-20260612.md` - Step 5 review packet for the Path 2 boundary-chain repair.
+- `cd-review-path2-boundary-chain-step5-prompt-20260612.md` - CD review prompt for the Path 2 boundary-chain repair.
+- `cr-review-path2-boundary-chain-step5-prompt-20260612.md` - CR review prompt for the Path 2 boundary-chain repair.
 - `cb-path3-fresh-build-codegen-recovery-dispatch-20260612.md` - Queued CB dispatch for Path 3 Fresh Build codegen recovery.
 - `session-brief.md` - Current CTO session summary for Victor and W04.
 
