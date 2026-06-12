@@ -95,7 +95,9 @@ Action taken:
 - CR blocked `4290b39` for id-only active-host bypasses.
 - CB patched those findings at `455c2d24f85cdabf723a2b6cc3bde323a97437e9`.
 - CR re-review still BLOCKED merge because `sourcePathForFinding` permits id-only mapping under active-host scope when no observed location exists, while proposal generation rejects that same case.
-- Second CB patch dispatch is now recorded in `docs/cto/cb-path2-boundary-chain-cr-rereview-patch-dispatch-20260612.md`.
+- Second CB patch dispatch is recorded in `docs/cto/cb-path2-boundary-chain-cr-rereview-patch-dispatch-20260612.md`.
+- CB patched the remaining mismatch at `53255c64007f479bd355eea336c4155750878d95`.
+- CR second re-review is being routed through `docs/cto/cr-review-path2-boundary-chain-step5-second-rereview-prompt-20260612.md`.
 
 ## Path 3 - Fresh Build: VEU AI Studio Website
 

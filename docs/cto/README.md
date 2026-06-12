@@ -27,6 +27,8 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `cb-path2-boundary-chain-cr-block-patch-dispatch-20260612.md` - CB patch dispatch for the CR block on Path 2 boundary repair.
 - `cr-review-path2-boundary-chain-step5-rereview-result-20260612.md` - CR re-review result after CB's first CR-block patch.
 - `cb-path2-boundary-chain-cr-rereview-patch-dispatch-20260612.md` - CB patch dispatch for the remaining CR re-review block.
+- `cb-path2-boundary-chain-cr-rereview-patch-result-20260612.md` - CB result for the remaining CR re-review patch.
+- `cr-review-path2-boundary-chain-step5-second-rereview-prompt-20260612.md` - CR prompt for the second Path 2 boundary-chain re-review.
 - `cb-path3-fresh-build-codegen-recovery-dispatch-20260612.md` - Queued CB dispatch for Path 3 Fresh Build codegen recovery.
 - `session-brief.md` - Current CTO session summary for Victor and W04.
 
