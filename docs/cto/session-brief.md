@@ -92,6 +92,7 @@ Action taken:
 - CB dispatch committed to `docs/cto-path2-boundary-dispatch-20260612`.
 - Dispatch file: `docs/cto/cb-path2-platform-boundary-chain-dispatch-20260612.md`.
 - CB worker `Maxwell` is running the build assignment.
+- As of this brief update, `fix/path2-platform-boundary-chain` has not appeared on origin yet.
 
 ## Path 3 - Fresh Build: VEU AI Studio Website
 
@@ -113,6 +114,11 @@ CTO interpretation:
 - This is the correct fail-closed behavior.
 - No fabricated URL or deployment was claimed.
 - Next build work should harden Fresh Build code generation and validation recovery.
+
+Action taken:
+
+- Queued CB dispatch: `docs/cto/cb-path3-fresh-build-codegen-recovery-dispatch-20260612.md`.
+- This packet is documentation-only for now; no second runtime worker was spawned while Path 2 repair is active.
 
 ## Path 4 - Three-URL Synthesis
 
@@ -156,7 +162,7 @@ Recommended next UI build:
 Docs/evidence:
 
 - `docs/cto-four-path-evidence-20260612` at `a90b589`
-- `docs/cto-path2-boundary-dispatch-20260612` at this session brief commit once pushed
+- `docs/cto-path2-boundary-dispatch-20260612` at `ee91889` once pushed
 
 Runtime/SAIGE:
 
