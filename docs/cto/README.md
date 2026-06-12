@@ -17,6 +17,7 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `path1-saige-migration-phase3-dod-20260612.md` - Path 1 migration evidence and remaining gaps.
 - `path2-saige-v2-production-proof-20260612.md` - Path 2 constrained production proof result.
 - `ct2-path1-saige-preview-acceptance-dispatch-20260612.md` - CT2 dispatch for SAIGE preview acceptance.
+- `cb-path2-platform-boundary-chain-dispatch-20260612.md` - CB dispatch for Path 2 boundary-chain repair.
 - `session-brief.md` - Reserved for end-of-session CTO summaries when produced.
 
 ## Use
