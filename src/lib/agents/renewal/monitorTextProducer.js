@@ -785,7 +785,7 @@ async function callClaudeForMonitor({ prompt, opts = {} }) {
     let bodyText = '';
     try { bodyText = await response.text(); } catch { /* ignore */ }
     throw makeError('MONITOR_SCORE_FAILED',
-      `monitorTextProducer: Anthropic returned ${response.status} ${response.statusText}. Body: ${bodyText.slice(0, 300)}`,
+      `monitorTextProducer: Anthropic returned ${response.status} ${response.statusText}. Upstream body omitted for secret safety (${bodyText.length} chars).`,
       { status: response.status });
   }
   let parsed;
@@ -856,7 +856,7 @@ async function callOpenAIForMonitor({ prompt, opts = {} }) {
     let bodyText = '';
     try { bodyText = await response.text(); } catch { /* ignore */ }
     throw makeError('MONITOR_SCORE_FAILED',
-      `monitorTextProducer: OpenAI returned ${response.status} ${response.statusText}. Body: ${bodyText.slice(0, 300)}`,
+      `monitorTextProducer: OpenAI returned ${response.status} ${response.statusText}. Upstream body omitted for secret safety (${bodyText.length} chars).`,
       { status: response.status });
   }
 

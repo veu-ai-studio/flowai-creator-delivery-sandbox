@@ -365,6 +365,61 @@ describe('produceMonitorText — error paths', () => {
     expect(JSON.stringify(r)).not.toContain('sk-openai-test');
   });
 
+  it('omits provider failure bodies so echoed API keys cannot leak', async () => {
+    const openaiKey = 'sk-openai-SECRET_xxxxxxxxxxxxxxxxxxxxxxxxx';
+    const fetchMock = vi.fn(async (url) => {
+      if (String(url).includes('anthropic.com')) {
+        return {
+          ok: false,
+          status: 400,
+          statusText: 'Bad Request',
+          headers: { get: () => 'application/json' },
+          text: async () => `{"error":{"message":"bad key ${API_KEY}"}}`,
+          json: async () => ({}),
+        };
+      }
+      if (String(url).includes('api.openai.com')) {
+        return {
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          headers: { get: () => 'application/json' },
+          text: async () => `{"error":{"message":"bad key ${openaiKey}"}}`,
+          json: async () => ({}),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: { get: () => 'text/html' },
+        text: async () => SAMPLE_HTML,
+      };
+    });
+
+    try {
+      await produceMonitorText({
+        url: URL_OK,
+        productId: 'demo',
+        runId: 'r1',
+        opts: { fetch: fetchMock, apiKey: API_KEY, openaiApiKey: openaiKey },
+      });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      const serialized = JSON.stringify(e);
+      expect(e.code).toBe('MONITOR_SCORE_FAILED');
+      expect(e.message).toContain('Upstream body omitted for secret safety');
+      expect(e.message).not.toContain(API_KEY);
+      expect(e.message).not.toContain(openaiKey);
+      expect(serialized).not.toContain(API_KEY);
+      expect(serialized).not.toContain(openaiKey);
+      expect(e.providerFailures).toMatchObject([
+        { provider: 'anthropic', status: 400 },
+        { provider: 'openai', status: 401 },
+      ]);
+    }
+  });
+
   it('throws when no monitor LLM provider is configured', async () => {
     const fetchMock = mockFetchOk(SAMPLE_HTML);
     try {
