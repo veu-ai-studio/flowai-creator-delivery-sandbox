@@ -1,16 +1,37 @@
 # CTO Current Directive
 
-Last updated: 2026-06-12
+Last updated: 2026-06-12 post-merge Path 2 proof
 
 ## Active Priority
 
 Move FlowAI toward the first fully functional end-to-end forge run with a deployed URL without inflating evidence. Current active technical gates:
 
-1. Merge and prove the Path 2 platform-boundary-chain repair after CD/CR clearance.
-2. Add Codex to the Tool Intelligence Marketplace as the rank-1 Step 3 Build tool, with callable state only when a real adapter exists.
+1. Add Codex to the Tool Intelligence Marketplace as the rank-1 Step 3 Build tool, with callable state only when a real adapter exists.
+2. Patch the Path 2 protected-preview post-fix scoring blocker exposed after the boundary-chain repair.
 3. Continue the four-path proof strategy with Step 3 Build evidence explicitly recording the TIM candidate list and selected Build member.
 
 The Codex TIM amendment is documented in `docs/cto/tim-codex-build-tool-amendment-plan-20260612.md` and dispatched in `docs/cto/cb-tim-codex-build-tool-dispatch-20260612.md`.
+
+Post-merge Path 2 proof is documented in `docs/cto/path2-saige-v2-postmerge-proof-20260612.md`. The residual protected-preview blocker is dispatched in `docs/cto/cb-path2-preview-protection-postfix-dispatch-20260612.md`.
+
+## Current Critical State
+
+- Current production main: `b4e02c566378e5f00b17252f9db176e20f9e7d42`.
+- Production deployment: `https://flowai-cddxkdlzq-veu-ai-studio.vercel.app`.
+- `/api/health` on `https://flowai-dun.vercel.app` reports commit `b4e02c566378`, branch `main`, GitHub App ready, Inngest ready.
+- Path 2 boundary-chain branch has been merged.
+- Post-merge Path 2 proof run `cto-path2-saige-v2-postmerge-20260612-0801` reached:
+  - branch creation: `flowai/renewal-cto-path2-saige-v2-postmerge-20260612-0801-iter1`
+  - Step 10 preview deployment: `https://saige-v2-p7cwizuu8-veu-ai-studio.vercel.app`
+- Same proof ended incomplete:
+  - final code: `MONITOR_FETCH_FAILED`
+  - status: `401 Unauthorized`
+  - detail: `vercel-protection-bypass attempted`
+  - final governance write: false
+  - ProductSSOT persistence: false
+- Live Tool Intelligence evidence still omitted Codex from Build and selected Cursor rank 1. CB has been dispatched to implement `fix/tim-codex-build-tool`.
+- No Path 2 CT2 final URL acceptance is authorized until the preview is fetchable or the final delivery URL is otherwise independently accessible.
+- No VERIFIED movement.
 
 ## Current Technical Reality
 
