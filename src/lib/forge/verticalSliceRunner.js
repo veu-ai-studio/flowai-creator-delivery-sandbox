@@ -1,4 +1,5 @@
 import { MODES } from '../tools/ToolIntelligenceService.js';
+import { canonicalBuildRankingRows } from '../tools/buildToolRanking.js';
 import { runAudit } from './auditRunner.js';
 import { runBuild } from './buildRunner.js';
 import { runDeploy } from './deployRunner.js';
@@ -74,32 +75,40 @@ function defaultManualInputs(fixture = {}) {
 }
 
 function makeToolService() {
-  const rowsByStep = new Map(STEP_ORDER.map((stepKey) => [stepKey, [
-    {
-      step_name: stepKey,
-      rank: 1,
-      platform_name: `flowai-${stepKey}-adapter`,
-      platform_type: stepKey === 'build' ? 'code-patch' : 'orchestra',
-      performance_score: 9,
-      cost_score: 8,
-      speed_score: 8,
-      reliability_score: 9,
-      target_classes: ['generic_url', 'web', 'saas'],
-      last_updated: '2026-06-04T00:00:00.000Z',
-    },
-    {
-      step_name: stepKey,
-      rank: 2,
-      platform_name: `fallback-${stepKey}-adapter`,
-      platform_type: 'orchestra',
-      performance_score: 7,
-      cost_score: 7,
-      speed_score: 7,
-      reliability_score: 7,
-      target_classes: ['generic_url', 'web', 'saas'],
-      last_updated: '2026-06-04T00:00:00.000Z',
-    },
-  ]]));
+  const rowsByStep = new Map(STEP_ORDER.map((stepKey) => {
+    const rows = stepKey === 'build'
+      ? canonicalBuildRankingRows()
+      : [
+        {
+          step_name: stepKey,
+          rank: 1,
+          platform_name: `flowai-${stepKey}-adapter`,
+          platform_type: 'orchestra',
+          performance_score: 9,
+          cost_score: 8,
+          speed_score: 8,
+          reliability_score: 9,
+          target_classes: ['generic_url', 'web', 'saas'],
+          last_updated: '2026-06-04T00:00:00.000Z',
+        },
+        {
+          step_name: stepKey,
+          rank: 2,
+          platform_name: `fallback-${stepKey}-adapter`,
+          platform_type: 'orchestra',
+          performance_score: 7,
+          cost_score: 7,
+          speed_score: 7,
+          reliability_score: 7,
+          target_classes: ['generic_url', 'web', 'saas'],
+          last_updated: '2026-06-04T00:00:00.000Z',
+        },
+      ];
+    return [stepKey, rows.map(row => ({
+      ...row,
+      last_updated: row.last_updated ?? '2026-06-04T00:00:00.000Z',
+    }))];
+  }));
 
   return {
     async getTopTool(stepKey, _targetClass, mode) {
@@ -111,12 +120,12 @@ function makeToolService() {
   };
 }
 
-async function dispatch(action, payload = {}) {
+async function dispatch(action, payload = {}, opts = {}) {
   if (action === 'code-patch') {
     return {
       ok: true,
       action,
-      member: 'flowai-code-patch-adapter',
+      member: opts.memberId ?? 'codex',
       data: {
         filePath: payload.filePath ?? 'src/App.jsx',
         patchedContent: 'export function referenceVerticalSlice(){ return "ready"; }',
@@ -167,7 +176,9 @@ export async function runReferenceVerticalSlice(fixture = {}, opts = {}) {
   const toolService = opts.toolService ?? makeToolService();
   const manual = { ...defaultManualInputs(fixture), ...(opts.manualInputs ?? {}) };
   const originalAnthropicKey = process.env.ANTHROPIC_API_KEY;
+  const originalOpenAIKey = process.env.OPENAI_API_KEY;
   if (!process.env.ANTHROPIC_API_KEY) process.env.ANTHROPIC_API_KEY = 'flowai-reference-test-key';
+  if (!process.env.OPENAI_API_KEY) process.env.OPENAI_API_KEY = 'flowai-reference-openai-test-key';
 
   try {
     const common = {
@@ -288,6 +299,8 @@ export async function runReferenceVerticalSlice(fixture = {}, opts = {}) {
   } finally {
     if (!originalAnthropicKey) delete process.env.ANTHROPIC_API_KEY;
     else process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
+    if (!originalOpenAIKey) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalOpenAIKey;
   }
 }
 

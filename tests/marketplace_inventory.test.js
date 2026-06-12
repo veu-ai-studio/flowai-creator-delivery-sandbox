@@ -31,7 +31,7 @@ describe('Marketplace inventory (toolRegistry.js)', () => {
   });
 
   it('reports total tool count', () => {
-    expect(TOOL_REGISTRY.length).toBe(61);
+    expect(TOOL_REGISTRY.length).toBe(63);
   });
 
   it('reports categories', () => {
@@ -48,7 +48,7 @@ describe('Marketplace inventory (toolRegistry.js)', () => {
     expect(counts).toEqual({
       Research: 5,
       Design: 5,
-      Build: 5,
+      Build: 7,
       Database: 5,
       Authentication: 5,
       Deployment: 5,
