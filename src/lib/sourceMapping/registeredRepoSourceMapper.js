@@ -255,8 +255,6 @@ export function sourcePathForFinding({
     if (location && m.category === category && (m.location ?? null) === location) return true;
     if (!id || m.findingId !== id) return false;
     if (!evidence.hasActiveHostScope) return true;
-    if (evidence.activeHostFiltered) return false;
-    if (!location) return true;
     return false;
   });
   if (!match || !match.mapped || match.confidence < minimumConfidence) return null;

@@ -107,6 +107,26 @@ describe('registeredRepoSourceMapper (U4)', () => {
     })).toBeNull();
   });
 
+  it('does not resolve a source path by id under active-host scope without observed location evidence', () => {
+    const sourceMappings = [{
+      findingId: 'id-only-settings',
+      category: 'network:http_404',
+      mapped: true,
+      selectedFilePath: 'src/pages/Settings.jsx',
+      confidence: 0.92,
+      reason: 'legacy_id_only_match',
+    }];
+
+    expect(sourcePathForFinding({
+      finding: {
+        id: 'id-only-settings',
+        category: 'network:http_404',
+      },
+      sourceMappings,
+      activeTargetUrl: 'https://saige-v2.vercel.app',
+    })).toBeNull();
+  });
+
   it('maps contrast findings to real stylesheet candidates only', () => {
     const mapped = mapFindingToSource({
       repoFileList: FILES,
