@@ -181,6 +181,28 @@ Implementation notes:
 
 ## Task 3 - Four-Path Proof Strategy
 
+### Cross-cutting TIM Build amendment
+
+W04 added a required Tool Intelligence Marketplace correction on 2026-06-12: Codex must be present as the rank-1 callable Step 3 Build candidate.
+
+This is now part of the four-path proof strategy:
+
+- every path that reaches Step 3 Build must record the Build candidate list
+- Codex must appear as rank 1
+- Codex must rank above Claude Code, Cursor, Bolt, Windsurf, Replit, and Base44
+- if Step 3 dispatches a build action, the evidence must identify whether Codex actually produced the accepted output
+- fallback or context-only execution must not be labeled as Codex-built evidence
+
+Planning packet:
+
+- `docs/cto/tim-codex-build-tool-amendment-plan-20260612.md`
+
+CB dispatch packet:
+
+- `docs/cto/cb-tim-codex-build-tool-dispatch-20260612.md`
+
+No canonical amendment or VERIFIED movement is made by this planning update.
+
 ### Path 1 - Migration: SAIGE
 
 Status: in progress.

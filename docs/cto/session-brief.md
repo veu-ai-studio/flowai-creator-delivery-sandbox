@@ -97,7 +97,8 @@ Action taken:
 - CR re-review still BLOCKED merge because `sourcePathForFinding` permits id-only mapping under active-host scope when no observed location exists, while proposal generation rejects that same case.
 - Second CB patch dispatch is recorded in `docs/cto/cb-path2-boundary-chain-cr-rereview-patch-dispatch-20260612.md`.
 - CB patched the remaining mismatch at `53255c64007f479bd355eea336c4155750878d95`.
-- CR second re-review is being routed through `docs/cto/cr-review-path2-boundary-chain-step5-second-rereview-prompt-20260612.md`.
+- CR second re-review returned PASS on `53255c6`.
+- The branch is cleared for merge from review perspective, with post-merge production promotion, constrained Path 2 live proof, and CT2 acceptance still required before any stronger claim.
 
 ## Path 3 - Fresh Build: VEU AI Studio Website
 
@@ -149,6 +150,8 @@ Current blocker:
 Evidence:
 
 - `docs/cto/four-path-proof-strategy-ui-audit-20260612.md`
+- `docs/cto/tim-codex-build-tool-amendment-plan-20260612.md`
+- `docs/cto/cb-tim-codex-build-tool-dispatch-20260612.md`
 
 Findings:
 
@@ -161,6 +164,27 @@ Recommended next UI build:
 
 - Sidebar-level Flow Controls section with independent path, tool-intelligence/structural layer, operational mode, and analysis depth selectors.
 - Use `Describe & Build (Fresh Build)` unless/until canonical docs ratify a different label.
+
+## TIM Build Amendment - Codex
+
+Status: DOCUMENTED, not yet implemented in runtime.
+
+W04 directed that Codex must be added as the rank-1 Step 3 Build tool in the Tool Intelligence Marketplace. This is now integrated into the four-path proof strategy as a cross-cutting gate.
+
+Current code reality:
+
+- `src/lib/tools/stepToolVisibility.js` Build candidates omit Codex.
+- `src/lib/toolRegistry.js` Build category omits Codex.
+- `src/lib/tools/toolDispatchContract.js` has no Codex alias or credential contract.
+- `src/lib/orchestra/index.js` has no Codex member and routes code actions to `claudeCode`.
+- `src/lib/forge/buildRunner.js` hardcodes Anthropic readiness for live build dispatch.
+
+Required runtime target:
+
+- Codex appears as Build rank 1 above Claude Code, Cursor, Bolt, Windsurf, Replit, and Base44.
+- Codex is marked `callable` only when a real adapter/credential path exists.
+- Any fallback is explicitly labeled and does not count as Codex-built proof.
+- No VERIFIED movement.
 
 ## Active Branches
 
