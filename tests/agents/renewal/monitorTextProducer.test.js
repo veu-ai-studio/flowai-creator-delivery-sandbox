@@ -10,7 +10,7 @@
 //   - filesRead count matches files actually fetched
 //   - token never appears in error messages or returned envelope
 
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import {
   produceMonitorText,
   fetchUrlContent,
@@ -28,6 +28,7 @@ const API_KEY = 'sk-ant-TEST_KEY_xxxxxxxxxxxx';
 const URL_OK = 'https://example.com';
 const GH_TOKEN = 'ghs_TEST_TOKEN_xxxxxxxxxxxx';
 const GH_REPO = 'https://github.com/veu-ai-studio/test-product';
+const ORIGINAL_OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const SAMPLE_HTML = `
 <!DOCTYPE html>
@@ -55,6 +56,15 @@ CRITICAL ISSUES
 None.
 `;
 
+beforeEach(() => {
+  delete process.env.OPENAI_API_KEY;
+});
+
+afterEach(() => {
+  if (ORIGINAL_OPENAI_API_KEY) process.env.OPENAI_API_KEY = ORIGINAL_OPENAI_API_KEY;
+  else delete process.env.OPENAI_API_KEY;
+});
+
 function mockFetchOk(html, options = {}) {
   return vi.fn(async () => ({
     ok: true,
@@ -76,6 +86,17 @@ function mockAnthropicOk(text = SAMPLE_MONITOR_RESPONSE) {
     text: async () => JSON.stringify({ content: [{ type: 'text', text }], model: 'claude-sonnet-4-6', usage: { input_tokens: 100, output_tokens: 50 } }),
     json: async () => ({ content: [{ type: 'text', text }], model: 'claude-sonnet-4-6', usage: { input_tokens: 100, output_tokens: 50 } }),
   }));
+}
+
+function mockOpenAIOk(text = SAMPLE_MONITOR_RESPONSE) {
+  return {
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: { get: () => 'application/json' },
+    text: async () => JSON.stringify({ choices: [{ message: { content: text } }], model: 'gpt-4o-mini', usage: { prompt_tokens: 100, completion_tokens: 50 } }),
+    json: async () => ({ choices: [{ message: { content: text } }], model: 'gpt-4o-mini', usage: { prompt_tokens: 100, completion_tokens: 50 } }),
+  };
 }
 
 function sequencedFetch(fetchResponses, anthropicResponses) {
@@ -225,6 +246,7 @@ describe('produceMonitorText — happy path', () => {
     expect(r.url).toBe(URL_OK);
     expect(r.pageTitle).toBe('Demo Product');
     expect(r.wordCount).toBeGreaterThan(5);
+    expect(r.provider).toBe('anthropic');
     expect(r.model).toBe('claude-sonnet-4-6');
     expect(r.usage).toBeDefined();
     expect(r.fetchedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
@@ -306,17 +328,109 @@ describe('produceMonitorText — error paths', () => {
     }
   });
 
-  it('throws when ANTHROPIC_API_KEY is missing', async () => {
+  it('falls back to OpenAI when Anthropic is unavailable and OpenAI is configured', async () => {
+    const fetchMock = vi.fn(async (url) => {
+      if (String(url).includes('anthropic.com')) {
+        return {
+          ok: false,
+          status: 400,
+          statusText: 'Bad Request',
+          headers: { get: () => 'application/json' },
+          text: async () => '{"error":{"message":"Your credit balance is too low to access the Anthropic API."}}',
+          json: async () => ({}),
+        };
+      }
+      if (String(url).includes('api.openai.com')) return mockOpenAIOk();
+      return {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: { get: () => 'text/html' },
+        text: async () => SAMPLE_HTML,
+      };
+    });
+
+    const r = await produceMonitorText({
+      url: URL_OK,
+      productId: 'demo',
+      runId: 'r1',
+      opts: { fetch: fetchMock, apiKey: API_KEY, openaiApiKey: 'sk-openai-test' },
+    });
+
+    expect(r.provider).toBe('openai');
+    expect(r.model).toBe('gpt-4o-mini');
+    expect(r.monitorText).toContain('[L1] Functionality Score: 7/10');
+    expect(r.fallbackFrom).toMatchObject([{ provider: 'anthropic', status: 400 }]);
+    expect(JSON.stringify(r)).not.toContain(API_KEY);
+    expect(JSON.stringify(r)).not.toContain('sk-openai-test');
+  });
+
+  it('omits provider failure bodies so echoed API keys cannot leak', async () => {
+    const openaiKey = 'sk-openai-SECRET_xxxxxxxxxxxxxxxxxxxxxxxxx';
+    const fetchMock = vi.fn(async (url) => {
+      if (String(url).includes('anthropic.com')) {
+        return {
+          ok: false,
+          status: 400,
+          statusText: 'Bad Request',
+          headers: { get: () => 'application/json' },
+          text: async () => `{"error":{"message":"bad key ${API_KEY}"}}`,
+          json: async () => ({}),
+        };
+      }
+      if (String(url).includes('api.openai.com')) {
+        return {
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          headers: { get: () => 'application/json' },
+          text: async () => `{"error":{"message":"bad key ${openaiKey}"}}`,
+          json: async () => ({}),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: { get: () => 'text/html' },
+        text: async () => SAMPLE_HTML,
+      };
+    });
+
+    try {
+      await produceMonitorText({
+        url: URL_OK,
+        productId: 'demo',
+        runId: 'r1',
+        opts: { fetch: fetchMock, apiKey: API_KEY, openaiApiKey: openaiKey },
+      });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      const serialized = JSON.stringify(e);
+      expect(e.code).toBe('MONITOR_SCORE_FAILED');
+      expect(e.message).toContain('Upstream body omitted for secret safety');
+      expect(e.message).not.toContain(API_KEY);
+      expect(e.message).not.toContain(openaiKey);
+      expect(serialized).not.toContain(API_KEY);
+      expect(serialized).not.toContain(openaiKey);
+      expect(e.providerFailures).toMatchObject([
+        { provider: 'anthropic', status: 400 },
+        { provider: 'openai', status: 401 },
+      ]);
+    }
+  });
+
+  it('throws when no monitor LLM provider is configured', async () => {
     const fetchMock = mockFetchOk(SAMPLE_HTML);
     try {
       await produceMonitorText({
         url: URL_OK, productId: 'demo', runId: 'r1',
-        opts: { fetch: fetchMock }, // no apiKey
+        opts: { fetch: fetchMock },
       });
       expect.unreachable('should have thrown');
     } catch (e) {
       expect(e.code).toBe('MONITOR_SCORE_FAILED');
-      expect(e.message).toMatch(/ANTHROPIC_API_KEY is required/);
+      expect(e.message).toMatch(/no monitor LLM provider configured/);
     }
   });
 

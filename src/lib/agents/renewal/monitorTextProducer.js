@@ -32,16 +32,17 @@
  *   producer falls back to URL-only scoring (returns the same envelope
  *   shape minus the enrichment metadata).
  *
- * Anthropic API key (`ANTHROPIC_API_KEY`) never logged. GitHub App
- * installation token never logged, never persisted, never appears in
- * error messages.
+ * Anthropic/OpenAI API keys never logged. GitHub App installation token
+ * never logged, never persisted, never appears in error messages.
  */
 
 'use strict';
 
 const ANTHROPIC_API_BASE = 'https://api.anthropic.com';
 const ANTHROPIC_API_VERSION = '2023-06-01';
+const OPENAI_API_BASE = 'https://api.openai.com';
 const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-6';
+const OPENAI_MONITOR_FALLBACK_MODEL = 'gpt-4o-mini';
 const DEFAULT_MAX_TOKENS = 2048;
 const FETCH_TIMEOUT_MS = 30_000;
 const MAX_PAGE_TEXT_CHARS = 50_000;
@@ -784,7 +785,7 @@ async function callClaudeForMonitor({ prompt, opts = {} }) {
     let bodyText = '';
     try { bodyText = await response.text(); } catch { /* ignore */ }
     throw makeError('MONITOR_SCORE_FAILED',
-      `monitorTextProducer: Anthropic returned ${response.status} ${response.statusText}. Body: ${bodyText.slice(0, 300)}`,
+      `monitorTextProducer: Anthropic returned ${response.status} ${response.statusText}. Upstream body omitted for secret safety (${bodyText.length} chars).`,
       { status: response.status });
   }
   let parsed;
@@ -806,7 +807,119 @@ async function callClaudeForMonitor({ prompt, opts = {} }) {
     text,
     model: parsed.model ?? model,
     usage: parsed.usage ?? {},
+    provider: 'anthropic',
   };
+}
+
+async function callOpenAIForMonitor({ prompt, opts = {} }) {
+  const apiKey = opts.openaiApiKey ?? process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw makeError('MONITOR_SCORE_FAILED',
+      'monitorTextProducer: OPENAI_API_KEY is required for OpenAI monitor fallback.');
+  }
+  const model = typeof opts.openaiModel === 'string' && opts.openaiModel
+    ? opts.openaiModel
+    : (process.env.OPENAI_MONITOR_MODEL || process.env.OPENAI_MODEL || OPENAI_MONITOR_FALLBACK_MODEL);
+  const maxTokens = Number.isFinite(opts.maxTokens) ? opts.maxTokens : DEFAULT_MAX_TOKENS;
+  const fetchImpl = typeof opts.fetch === 'function' ? opts.fetch : globalThis.fetch;
+  if (typeof fetchImpl !== 'function') {
+    throw makeError('MONITOR_SCORE_FAILED',
+      'monitorTextProducer: fetch is not available on globalThis. Node 18+ required.');
+  }
+
+  let response;
+  try {
+    response = await fetchImpl(`${OPENAI_API_BASE}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_tokens: maxTokens,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are FlowAI Monitor. Return the requested five-layer assessment text exactly; do not include markdown fences.',
+          },
+          { role: 'user', content: prompt },
+        ],
+      }),
+    });
+  } catch (e) {
+    throw makeError('MONITOR_SCORE_FAILED',
+      `monitorTextProducer: network error calling OpenAI — ${e?.message ?? String(e)}`);
+  }
+  if (!response.ok) {
+    let bodyText = '';
+    try { bodyText = await response.text(); } catch { /* ignore */ }
+    throw makeError('MONITOR_SCORE_FAILED',
+      `monitorTextProducer: OpenAI returned ${response.status} ${response.statusText}. Upstream body omitted for secret safety (${bodyText.length} chars).`,
+      { status: response.status });
+  }
+
+  let parsed;
+  try {
+    parsed = await response.json();
+  } catch (e) {
+    throw makeError('MONITOR_SCORE_FAILED',
+      `monitorTextProducer: OpenAI response was not JSON — ${e?.message ?? String(e)}`);
+  }
+  const text = parsed?.choices?.[0]?.message?.content ?? '';
+  if (typeof text !== 'string' || text.length === 0) {
+    throw makeError('MONITOR_SCORE_FAILED',
+      'monitorTextProducer: OpenAI returned empty content');
+  }
+  return {
+    text,
+    model: parsed.model ?? model,
+    usage: parsed.usage ?? {},
+    provider: 'openai',
+  };
+}
+
+function safeProviderFailure(error) {
+  return {
+    provider: error?.provider ?? null,
+    code: error?.code ?? 'MONITOR_SCORE_FAILED',
+    status: typeof error?.status === 'number' ? error.status : null,
+    message: (error?.message ?? String(error)).slice(0, 300),
+  };
+}
+
+async function callLlmForMonitor({ prompt, opts = {} }) {
+  const failures = [];
+
+  if (opts.apiKey || process.env.ANTHROPIC_API_KEY) {
+    try {
+      return await callClaudeForMonitor({ prompt, opts });
+    } catch (e) {
+      e.provider = 'anthropic';
+      failures.push(safeProviderFailure(e));
+      if (!(opts.openaiApiKey || process.env.OPENAI_API_KEY)) throw e;
+    }
+  }
+
+  if (opts.openaiApiKey || process.env.OPENAI_API_KEY) {
+    try {
+      const openai = await callOpenAIForMonitor({ prompt, opts });
+      return Object.freeze({
+        ...openai,
+        fallbackFrom: failures.length > 0 ? failures : undefined,
+      });
+    } catch (e) {
+      e.provider = 'openai';
+      failures.push(safeProviderFailure(e));
+      throw makeError('MONITOR_SCORE_FAILED',
+        `monitorTextProducer: no configured monitor LLM provider succeeded. Failures: ${JSON.stringify(failures)}`,
+        { providerFailures: failures });
+    }
+  }
+
+  throw makeError('MONITOR_SCORE_FAILED',
+    'monitorTextProducer: no monitor LLM provider configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY.');
 }
 
 /**
@@ -825,7 +938,7 @@ async function callClaudeForMonitor({ prompt, opts = {} }) {
  *
  * @returns {Promise<{
  *   monitorText, rawContent, url, fetchedAt, wordCount, pageTitle,
- *   contentType, model, usage,
+ *   contentType, provider, model, usage,
  *   sources: ('url'|'github')[], filesRead: number,
  *   sourceDirsListed?: string[], enrichmentError?: string
  * }>}
@@ -903,8 +1016,8 @@ export async function produceMonitorText(args) {
     crawlBlock,
   });
 
-  // 4. Call Claude to produce the Monitor text.
-  const llm = await callClaudeForMonitor({ prompt, opts });
+  // 4. Call a configured monitor LLM to produce real Monitor text.
+  const llm = await callLlmForMonitor({ prompt, opts });
 
   const sources = ['url', ...(githubBundle.sources || [])];
 
@@ -916,18 +1029,22 @@ export async function produceMonitorText(args) {
     wordCount,
     pageTitle,
     contentType,
+    provider: llm.provider,
     model: llm.model,
     usage: llm.usage,
     sources,
     filesRead: githubBundle.filesRead || 0,
     sourceDirsListed: githubBundle.sourceDirsListed || [],
+    ...(llm.fallbackFrom ? { fallbackFrom: llm.fallbackFrom } : {}),
     ...(enrichmentError ? { enrichmentError } : {}),
   };
 }
 
 export const __internals = Object.freeze({
   ANTHROPIC_API_BASE,
+  OPENAI_API_BASE,
   FINAL_FALLBACK_MODEL,
+  OPENAI_MONITOR_FALLBACK_MODEL,
   DEFAULT_MAX_TOKENS,
   FETCH_TIMEOUT_MS,
   MAX_PAGE_TEXT_CHARS,
@@ -943,6 +1060,8 @@ export const __internals = Object.freeze({
   fetchUrlContent,
   buildMonitorPrompt,
   callClaudeForMonitor,
+  callOpenAIForMonitor,
+  callLlmForMonitor,
   makeError,
   parseGithubRepoUrl,
   decodeContentEntry,
