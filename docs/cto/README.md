@@ -35,6 +35,8 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `cb-tim-codex-build-tool-result-20260612.md` - CB result for the TIM Codex Build tool branch.
 - `cd-review-tim-codex-build-tool-step5-prompt-20260612.md` - CD review prompt for the TIM Codex Build tool branch.
 - `cr-review-tim-codex-build-tool-step5-prompt-20260612.md` - CR review prompt for the TIM Codex Build tool branch.
+- `cd-review-tim-codex-build-tool-step5-result-20260612.md` - CD PASS result for the TIM Codex Build tool branch.
+- `cr-review-tim-codex-build-tool-step5-result-20260612.md` - CR BLOCK then PASS result for the TIM Codex Build tool branch.
 - `path2-saige-v2-postmerge-proof-20260612.md` - Post-merge Path 2 proof showing branch/deploy reached and protected-preview post-fix scoring failed.
 - `cb-path2-preview-protection-postfix-dispatch-20260612.md` - CB dispatch for the protected-preview post-fix scoring blocker.
 - `cb-path3-fresh-build-codegen-recovery-dispatch-20260612.md` - Queued CB dispatch for Path 3 Fresh Build codegen recovery.

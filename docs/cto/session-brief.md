@@ -175,22 +175,25 @@ Recommended next UI build:
 
 ## TIM Build Amendment - Codex
 
-Status: IMPLEMENTED ON BRANCH; CD/CR review dispatched through repo.
+Status: IMPLEMENTED ON BRANCH; CD/CR CLEARED FOR MERGE.
 
 W04 directed that Codex must be added as the rank-1 Step 3 Build tool in the Tool Intelligence Marketplace. This is now integrated into the four-path proof strategy as a cross-cutting gate.
 
 Implementation branch:
 
 - Branch: `origin/fix/tim-codex-build-tool`
-- Head: `a6b82e5c893fac1491b2c25611a680bd1ca0bed8`
+- Head: `121c98cbdf489dcdfb3e673087013b5c8f5042d0`
 - Commit: `tim | add Codex build tool`
 - Result packet: `docs/cto/cb-tim-codex-build-tool-result-20260612.md`
 - CD prompt: `docs/cto/cd-review-tim-codex-build-tool-step5-prompt-20260612.md`
 - CR prompt: `docs/cto/cr-review-tim-codex-build-tool-step5-prompt-20260612.md`
+- CD result: `docs/cto/cd-review-tim-codex-build-tool-step5-result-20260612.md` PASS.
+- CR result: `docs/cto/cr-review-tim-codex-build-tool-step5-result-20260612.md` BLOCK then PASS after patch.
 
 Verification:
 
 - Focused TIM suite: PASS, 8 files / 136 tests.
+- Focused TIM suite after CR patch: PASS, 9 files / 137 tests.
 - `node --check` on new Codex/ranking modules: PASS.
 - `git diff --check`: PASS with Windows line-ending warnings only.
 - `npm run build:preflight`: PASS.
@@ -200,6 +203,8 @@ Honesty boundary:
 - Codex is ranked first and callable only when `OPENAI_API_KEY` is present.
 - The adapter is OpenAI API-backed for code patch and generate-from-scratch output. It does not itself claim local git, test, branch, or deploy authority.
 - No VERIFIED movement and no canonical SSOT edits.
+- CR-block patch preserves observed Build score history during the SQL rank reorder by matching existing rows by platform name before delete/insert.
+- Residual boundary: no live Postgres/Supabase migration-apply proof has been run.
 
 Current code reality:
 
