@@ -2905,6 +2905,7 @@ export async function runOrchestration(args = {}) {
         _generateSourceMappedFixProposals({
           findings: recommendationFindings,
           sourceMapping: state.sourceMapping,
+          activeTargetUrl: currentUrl ?? initialUrl ?? upgradeTargets.upgradeUrl ?? null,
           fileContentProvider: async (filePath) => {
             if (pathB || !token || !githubRepoUrl) return null;
             const parsed = parseGithubRepoUrl(githubRepoUrl);

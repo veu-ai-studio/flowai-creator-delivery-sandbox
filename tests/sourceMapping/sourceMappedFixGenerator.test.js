@@ -56,6 +56,107 @@ describe('sourceMappedFixGenerator (U5)', () => {
     expect(proposals[0].proposedFix).toContain('alt text');
   });
 
+  it('does not resolve proposals by id when current URL evidence is non-active-host context', async () => {
+    const fileContentProvider = vi.fn(async () => '<main>should not be read</main>');
+    const proposals = await generateSourceMappedFixProposals({
+      findings: [{
+        ...FINDING,
+        id: 'stale-settings',
+        category: 'network:http_404',
+        location: 'https://saigeplatform.com/settings',
+      }],
+      sourceMapping: {
+        mappings: [{
+          findingId: 'stale-settings',
+          category: 'network:http_404',
+          location: 'https://saige-v2.vercel.app/settings',
+          mapped: true,
+          selectedFilePath: 'src/pages/Settings.jsx',
+          confidence: 0.92,
+          reason: 'route_token_exact_basename:settings',
+        }],
+      },
+      activeTargetUrl: 'https://saige-v2.vercel.app',
+      fileContentProvider,
+    });
+
+    expect(fileContentProvider).not.toHaveBeenCalled();
+    expect(proposals[0]).toMatchObject({
+      findingId: 'stale-settings',
+      filePath: null,
+      selectedFilePath: null,
+      status: 'source_map_incomplete',
+      classification: 'source_map_incomplete',
+      sourceMapComplete: false,
+    });
+  });
+
+  it('does not resolve proposals by id when active-host scope has no observed URL evidence', async () => {
+    const fileContentProvider = vi.fn(async () => '<main>should not be read</main>');
+    const proposals = await generateSourceMappedFixProposals({
+      findings: [{
+        id: 'missing-location',
+        category: 'image-missing-alt',
+        severity: 'medium',
+      }],
+      sourceMapping: {
+        mappings: [{
+          findingId: 'missing-location',
+          category: 'image-missing-alt',
+          mapped: true,
+          selectedFilePath: 'src/pages/Dashboard.jsx',
+          confidence: 0.91,
+          reason: 'legacy_id_only_match',
+        }],
+      },
+      activeTargetUrl: 'https://saige-v2.vercel.app',
+      fileContentProvider,
+    });
+
+    expect(fileContentProvider).not.toHaveBeenCalled();
+    expect(proposals[0]).toMatchObject({
+      findingId: 'missing-location',
+      filePath: null,
+      status: 'source_map_incomplete',
+      sourceMapComplete: false,
+    });
+  });
+
+  it('preserves observed saige-v2 source-mapped proposals under active host filtering', async () => {
+    const proposals = await generateSourceMappedFixProposals({
+      findings: [{
+        id: 'saige-v2-settings',
+        category: 'network:http_404',
+        severity: 'medium',
+        location: 'https://saige-v2.vercel.app/settings',
+      }],
+      sourceMapping: {
+        mappings: [{
+          findingId: 'saige-v2-settings',
+          category: 'network:http_404',
+          location: 'https://saige-v2.vercel.app/settings',
+          mapped: true,
+          selectedFilePath: 'src/pages/Settings.jsx',
+          confidence: 0.91,
+          lineNumber: 2,
+          currentSnippet: '   2 | <main><h1>Settings</h1></main>',
+          reason: 'route_token_exact_basename:settings',
+        }],
+      },
+      activeTargetUrl: 'https://saige-v2.vercel.app',
+    });
+
+    expect(proposals[0]).toMatchObject({
+      findingId: 'saige-v2-settings',
+      filePath: 'src/pages/Settings.jsx',
+      selectedFilePath: 'src/pages/Settings.jsx',
+      status: 'actionable',
+      classification: 'actionable',
+      sourceMapComplete: true,
+      sourceMapConfidence: 0.91,
+    });
+  });
+
   it('degrades honestly when U4 source mapping is incomplete', async () => {
     const proposals = await generateSourceMappedFixProposals({
       findings: [FINDING],

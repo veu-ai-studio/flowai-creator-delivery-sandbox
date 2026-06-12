@@ -6,6 +6,15 @@
 
 'use strict';
 
+import {
+  OBSERVED_URL_FIELDS,
+  hostnamesFromOptions,
+  matchesActiveHost,
+  observedLocationEvidenceForFinding,
+  observedLocationForFinding,
+  urlFieldIsObserved,
+} from './observedUrlEvidence.js';
+
 const SOURCE_EXT_RE = /\.(?:tsx|jsx|ts|js|css|scss|html)$/i;
 const STYLE_EXT_RE = /\.(?:css|scss)$/i;
 const ROUTE_SOURCE_RE = /\.(?:tsx|jsx|ts|js)$/i;
@@ -41,63 +50,11 @@ const CATEGORY_HINTS = Object.freeze({
   'network-failure': 'route',
 });
 
-const OBSERVED_URL_FIELDS = Object.freeze([
-  'failingUrl',
-  'pageUrl',
-  'locationUrl',
-  'observedUrl',
-  'observed_url',
-  'location',
-]);
-
 function cleanToken(value) {
   return String(value ?? '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-}
-
-function hostnameForUrl(value) {
-  if (typeof value !== 'string' || !/^https?:\/\//i.test(value.trim())) return null;
-  try {
-    return new URL(value.trim()).hostname.toLowerCase();
-  } catch {
-    return null;
-  }
-}
-
-function hostnamesFromOptions({ activeTargetUrl, observedHostnames } = {}) {
-  const hosts = new Set();
-  const add = (value) => {
-    const host = hostnameForUrl(value);
-    if (host) hosts.add(host);
-  };
-  add(activeTargetUrl);
-  if (Array.isArray(observedHostnames)) {
-    for (const host of observedHostnames) {
-      if (typeof host === 'string' && host.trim()) {
-        const normalized = host.includes('://') ? hostnameForUrl(host) : host.trim().toLowerCase();
-        if (normalized) hosts.add(normalized);
-      }
-    }
-  }
-  return hosts;
-}
-
-function matchesActiveHost(value, activeHosts) {
-  if (!(activeHosts instanceof Set) || activeHosts.size === 0) return true;
-  const host = hostnameForUrl(value);
-  return !host || activeHosts.has(host);
-}
-
-function urlFieldIsObserved(finding, field) {
-  if (OBSERVED_URL_FIELDS.includes(field)) return true;
-  if (field !== 'url') return false;
-  return finding?.urlObserved === true
-    || finding?.urlIsObserved === true
-    || finding?.observedUrlField === 'url'
-    || finding?.urlRole === 'observed'
-    || finding?.evidenceRole === 'observed';
 }
 
 function lastPathToken(value) {
@@ -121,23 +78,6 @@ function addRouteTokenFromValue(out, value, activeHosts) {
   if (!matchesActiveHost(value, activeHosts)) return;
   const token = lastPathToken(value);
   if (token && token !== 'http' && token !== 'https') out.add(token);
-}
-
-function observedLocationForFinding(finding, options = {}) {
-  const activeHosts = hostnamesFromOptions(options);
-  for (const field of OBSERVED_URL_FIELDS) {
-    const value = finding?.[field];
-    if (typeof value === 'string' && value.trim() && matchesActiveHost(value, activeHosts)) {
-      return value;
-    }
-  }
-  if (urlFieldIsObserved(finding, 'url')) {
-    const value = finding?.url;
-    if (typeof value === 'string' && value.trim() && matchesActiveHost(value, activeHosts)) {
-      return value;
-    }
-  }
-  return null;
 }
 
 function routeTokensFromFinding(finding, options = {}) {
@@ -309,11 +249,15 @@ export function sourcePathForFinding({
   if (!finding || !Array.isArray(sourceMappings)) return null;
   const id = finding.id ?? null;
   const category = finding.category ?? null;
-  const location = observedLocationForFinding(finding, { activeTargetUrl, observedHostnames });
+  const evidence = observedLocationEvidenceForFinding(finding, { activeTargetUrl, observedHostnames });
+  const location = evidence.location;
   const match = sourceMappings.find((m) => {
-    if (id && m.findingId === id) return true;
-    if (!location) return false;
-    return m.category === category && (m.location ?? null) === location;
+    if (location && m.category === category && (m.location ?? null) === location) return true;
+    if (!id || m.findingId !== id) return false;
+    if (!evidence.hasActiveHostScope) return true;
+    if (evidence.activeHostFiltered) return false;
+    if (!location) return true;
+    return false;
   });
   if (!match || !match.mapped || match.confidence < minimumConfidence) return null;
   return match.selectedFilePath;

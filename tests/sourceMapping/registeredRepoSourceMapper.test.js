@@ -64,19 +64,47 @@ describe('registeredRepoSourceMapper (U4)', () => {
   });
 
   it('uses observed saige-v2 locations for active target source mapping', () => {
+    const finding = {
+      id: 'f2-observed',
+      category: 'network:http_404',
+      location: 'https://saige-v2.vercel.app/settings',
+    };
     const mapped = mapFindingToSource({
       repoFileList: FILES,
       activeTargetUrl: 'https://saige-v2.vercel.app',
-      finding: {
-        id: 'f2-observed',
-        category: 'network:http_404',
-        location: 'https://saige-v2.vercel.app/settings',
-      },
+      finding,
     });
 
     expect(mapped.location).toBe('https://saige-v2.vercel.app/settings');
     expect(mapped.selectedFilePath).toBe('src/pages/Settings.jsx');
     expect(mapped.confidence).toBeGreaterThanOrEqual(0.7);
+    expect(sourcePathForFinding({
+      finding,
+      sourceMappings: [mapped],
+      activeTargetUrl: 'https://saige-v2.vercel.app',
+    })).toBe('src/pages/Settings.jsx');
+  });
+
+  it('does not resolve a source path by id when current URL evidence is non-active-host context', () => {
+    const sourceMappings = [{
+      findingId: 'stale-settings',
+      category: 'network:http_404',
+      location: 'https://saige-v2.vercel.app/settings',
+      mapped: true,
+      selectedFilePath: 'src/pages/Settings.jsx',
+      confidence: 0.92,
+      reason: 'route_token_exact_basename:settings',
+    }];
+
+    expect(sourcePathForFinding({
+      finding: {
+        id: 'stale-settings',
+        category: 'network:http_404',
+        location: 'https://saigeplatform.com/settings',
+      },
+      sourceMappings,
+      activeTargetUrl: 'https://saige-v2.vercel.app',
+    })).toBeNull();
   });
 
   it('maps contrast findings to real stylesheet candidates only', () => {
