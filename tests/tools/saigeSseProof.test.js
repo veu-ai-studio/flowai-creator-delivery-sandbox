@@ -123,6 +123,7 @@ describe('SAIGE SSE proof summarizer', () => {
         runId: 'run-upgraded-preview',
         previewUrl: 'https://saigeplatform.com',
         upgradedUrl: 'https://saige-v2.vercel.app',
+        upgradeDeployed: true,
         finalScore: 73,
         exitReason: 'MAX_ITERATIONS',
         orchestrationLog: [
@@ -147,6 +148,41 @@ describe('SAIGE SSE proof summarizer', () => {
     expect(summary.endToEndComplete).toBe(true);
     expect(summary.milestones.previewDeployment).toBe(true);
     expect(summary.observed.previewUrl).toBe('https://saige-v2.vercel.app');
+  });
+
+  it('does not count registry upgradedUrl as preview evidence when current run did not deploy', () => {
+    const final = {
+      type: 'final',
+      result: {
+        runId: 'run-blocked-registry-context',
+        previewUrl: null,
+        upgradedUrl: 'https://saige-v2.vercel.app',
+        upgradeDeployed: false,
+        upgradeDeployStatus: 'blocked',
+        upgradeDeployReason: 'PLATFORM_BOUNDARY_BLOCKED',
+        finalScore: 71,
+        exitReason: 'PLATFORM_BOUNDARY_BLOCKED',
+        orchestrationLog: [
+          { step: 10, stepName: 'Final governance write', tool: 'governance audit', result: { kind: 'governance.write' } },
+          { step: 11, stepName: 'ProductSSOT Symbiotic Write', tool: 'ProductSSOT', result: { kind: 'product_ssot.symbiotic_run.v1' } },
+        ],
+      },
+    };
+    const transcript = [
+      `data: ${JSON.stringify(final)}`,
+      '',
+      'data: [DONE]',
+      '',
+    ].join('\n');
+
+    const summary = summarizeSseProof(parseSseTranscript(transcript), {
+      request: { url: 'https://saigeplatform.com' },
+    });
+
+    expect(summary.verdict).toBe('TERMINAL_FINAL_INCOMPLETE_MILESTONES');
+    expect(summary.endToEndComplete).toBe(false);
+    expect(summary.milestones.previewDeployment).toBe(false);
+    expect(summary.observed.previewUrl).toBeNull();
   });
 
   it('accepts an honest timeout terminal without calling it end-to-end complete', () => {

@@ -852,6 +852,11 @@ describe('orchestrator - repair integrity gate', () => {
       });
 
       expect(result.exitReason).toBe('PLATFORM_BOUNDARY_BLOCKED');
+      expect(result.previewUrl).toBeNull();
+      expect(result.upgradedUrl).toBeNull();
+      expect(result.upgradeDeployed).toBe(false);
+      expect(result.upgradeDeployStatus).toBe('blocked');
+      expect(result.upgradeDeployReason).toBe('PLATFORM_BOUNDARY_BLOCKED');
       expect(result.platformBoundaryBlocked).toEqual(expect.arrayContaining([
         expect.objectContaining({
           filePath: 'src/api/base44Client.js',
@@ -866,6 +871,13 @@ describe('orchestrator - repair integrity gate', () => {
       expect(complete?.platformBoundaryBlocked?.[0]).toMatchObject({
         classification: 'PLATFORM_BOUNDARY_BLOCKED',
         reason: 'base44_client_internal',
+      });
+      expect(complete).toMatchObject({
+        previewUrl: null,
+        upgradedUrl: null,
+        upgradeDeployed: false,
+        upgradeDeployStatus: 'blocked',
+        upgradeDeployReason: 'PLATFORM_BOUNDARY_BLOCKED',
       });
     } finally { clearVercelEnv(); }
   });
@@ -2078,9 +2090,11 @@ describe('orchestrator — STEP 10 Vercel failure non-fatal (DISPATCH 29)', () =
       expect(degraded).toBeDefined();
       expect(degraded.result.reason).toMatch(/readyState=ERROR/);
       expect(degraded.result.degraded).toBe(true);
-      // No improved preview was produced; the result remains anchored to
-      // the original evaluated URL for honest UI disclosure.
-      expect(result.previewUrl).toBe('https://mypreglife-platform.vercel.app');
+      // No improved preview was produced; previewUrl is current-run
+      // delivery proof only and must not fall back to the evaluated URL.
+      expect(result.previewUrl).toBeNull();
+      expect(result.upgradeDeployed).toBe(false);
+      expect(result.upgradeDeployStatus).toBe('not_deployed');
     } finally { clearVercelEnv(); }
   });
 
