@@ -30,6 +30,7 @@ function clearVercelEnv() {
   for (const k of Object.keys(VERCEL_ENV)) delete process.env[k];
   delete process.env.GITHUB_OPERATOR_TOKEN;
   delete process.env.GITHUB_PAT;
+  delete process.env.FLOWAI_ENABLE_LLM_FIXES;
 }
 
 function makeScoreEnvelope(total) {
@@ -823,8 +824,9 @@ describe('orchestrator - repair integrity gate', () => {
     })).toMatchObject({ blocked: false });
   });
 
-  it('filters prioritized platform-boundary findings before branch creation', async () => {
+  it('filters prioritized platform-boundary findings before branch creation even when LLM fixes are enabled', async () => {
     withVercelEnv();
+    process.env.FLOWAI_ENABLE_LLM_FIXES = 'true';
     try {
       const base = happyDeps({ preScoreSequence: [59], postScoreSequence: [59] });
       const governanceEntries = [];
@@ -2870,7 +2872,7 @@ describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () =>
           source: 'runtime-diagnostics',
           category: 'network:http_404',
           severity: 'medium',
-          location: 'https://saigeplatform.com/settings',
+          location: 'https://mypreglife-platform.vercel.app/settings',
         }],
         stats: { perEvaluator: {}, perEvaluatorRaw: {}, evaluatorMetrics: {} },
         perEvaluator: {},
@@ -2893,6 +2895,114 @@ describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () =>
       expect(result.sourceMapping.mappings[0].selectedFilePath).toBe('src/pages/Settings.jsx');
       expect(result.orchestrationLog.some((l) => l.result?.kind === 'source_mapping_complete')).toBe(true);
     } finally { clearVercelEnv(); }
+  });
+
+  it('lets an observed saige-v2 app-layer finding reach branch creation under mocked downstream gates', async () => {
+    withVercelEnv();
+    process.env.VERCEL_PROJECT_ID_SAIGE = 'prj_saige';
+    try {
+      const fetchRepoFileList = vi.fn(async () => ({
+        files: ['package.json', 'src/pages/Settings.jsx', 'src/api/saigeClient.js'],
+        truncated: false,
+        sha: 'sha',
+        error: null,
+      }));
+      const fetchFileContent = vi.fn(async ({ filePath }) => {
+        if (filePath === 'package.json') {
+          return JSON.stringify({ dependencies: { react: '^18.0.0' }, devDependencies: {} });
+        }
+        if (filePath === 'src/pages/Settings.jsx') {
+          return [
+            'export default function Settings() {',
+            '  return <main><h1>Settings</h1><p>Status unavailable.</p></main>;',
+            '}',
+            '',
+          ].join('\n');
+        }
+        return 'export const client = {};\n';
+      });
+      const generateFix = vi.fn(async () => ({
+        fixedContent: [
+          'export default function Settings() {',
+          '  return <main><h1>Settings</h1><p>Status restored.</p></main>;',
+          '}',
+          '',
+        ].join('\n'),
+        model: 'claude',
+        promptTokens: 10,
+        completionTokens: 5,
+        attempts: 1,
+        mode: 'full',
+      }));
+      const runEvaluationPipeline = vi.fn(async () => ({
+        ok: true,
+        findings: [{
+          id: 'saige-v2-settings',
+          source: 'runtime-diagnostics',
+          category: 'network:http_404',
+          severity: 'medium',
+          location: 'https://saige-v2.vercel.app/settings',
+          evidence: 'GET /settings returned 404 on the migrated app-layer deployment.',
+        }],
+        stats: { perEvaluator: {}, perEvaluatorRaw: {}, evaluatorMetrics: {} },
+        perEvaluator: {},
+        errors: {},
+      }));
+      const base = happyDeps({ preScoreSequence: [54.5], postScoreSequence: [55] });
+      const result = await runOrchestration({
+        url: 'https://saige-v2.vercel.app',
+        mode: 'auto',
+        runId: 'path2-safe-saige-v2',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        postFixReprobe: false,
+        deps: {
+          ...base,
+          discoverProduct: vi.fn(async () => null),
+          fetchRepoFileList,
+          fetchFileContent,
+          generateFix,
+          runEvaluationPipeline,
+          parseCheckContent: vi.fn(async () => ({ ok: true })),
+        },
+        issue: {
+          category: 'network:http_404',
+          severity: 'medium',
+          title: 'Settings route fails on migrated app',
+          issue: 'Settings route fails on the migrated app-layer URL.',
+          fix: 'Apply the smallest app-layer fix in the mapped settings page.',
+          location: 'https://saige-v2.vercel.app/settings',
+        },
+      });
+
+      expect(result.runMode).toBe('PATH_A');
+      expect(result.product.product_id).toBe('saige');
+      expect(result.product.github_repo_url).toBe('https://github.com/veu-ai-studio/saige-v2');
+      expect(result.sourceMapping.mappings[0]).toMatchObject({
+        location: 'https://saige-v2.vercel.app/settings',
+        selectedFilePath: 'src/pages/Settings.jsx',
+      });
+      expect(generateFix).toHaveBeenCalledWith(expect.objectContaining({
+        filePath: 'src/pages/Settings.jsx',
+      }));
+      expect(generateFix.mock.calls[0][0].sourceContext).toContain(
+        'Observed finding URLs: https://saige-v2.vercel.app/settings',
+      );
+      expect(generateFix.mock.calls[0][0].sourceContext).toContain(
+        'Fallback run URL context: https://saige-v2.vercel.app',
+      );
+      expect(base.createRenewalBranch).toHaveBeenCalledWith(expect.objectContaining({
+        owner: 'veu-ai-studio',
+        repo: 'saige-v2',
+        filePath: 'src/pages/Settings.jsx',
+      }));
+      expect(result.platformBoundaryBlocked ?? []).toEqual([]);
+    } finally {
+      delete process.env.VERCEL_PROJECT_ID_SAIGE;
+      clearVercelEnv();
+    }
   });
 
   it('degrades timed-out Phase B/B1 source proposal enrichment and continues to Step 6 prioritization', async () => {

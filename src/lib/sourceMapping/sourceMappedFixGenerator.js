@@ -10,6 +10,10 @@ import {
   MIN_SOURCE_MAP_CONFIDENCE,
   SOURCE_MAPPING_STATUSES,
 } from './sourceMappingConstants.js';
+import {
+  observedLocationEvidenceForFinding,
+  observedLocationForFinding,
+} from './observedUrlEvidence.js';
 
 const AUTHORITY = 'recommend_only';
 const LOW_DEGRADED_REASON = 'source_map_incomplete';
@@ -19,8 +23,8 @@ function findingKey(finding) {
   return finding?.id ?? finding?.findingId ?? null;
 }
 
-function findingLocation(finding) {
-  return finding?.location ?? finding?.url ?? finding?.pageUrl ?? null;
+function findingLocation(finding, options = {}) {
+  return observedLocationForFinding(finding, options);
 }
 
 function getMappings(sourceMapping) {
@@ -40,15 +44,20 @@ function topCandidate(mapping) {
     .sort((a, b) => candidateConfidence(b) - candidateConfidence(a))[0] ?? null;
 }
 
-function findMappingForFinding(finding, sourceMapping) {
+function findMappingForFinding(finding, sourceMapping, options = {}) {
   const mappings = getMappings(sourceMapping);
   const id = findingKey(finding);
   const category = finding?.category ?? null;
-  const location = findingLocation(finding);
-  return mappings.find((m) =>
-    (id && m.findingId === id)
-    || (m.category === category && (m.location ?? null) === location)
-    || (m.category === category && !location));
+  const evidence = observedLocationEvidenceForFinding(finding, options);
+  const location = evidence.location;
+  return mappings.find((m) => {
+    if (location && m.category === category && (m.location ?? null) === location) return true;
+    if (id && m.findingId === id) {
+      if (!evidence.hasActiveHostScope) return true;
+      return false;
+    }
+    return !evidence.hasActiveHostScope && !location && m.category === category && !m.location;
+  });
 }
 
 function selectedPathForMapping(mapping) {
@@ -205,12 +214,15 @@ export async function generateSourceMappedFixProposals({
   findings,
   sourceMapping,
   fileContentProvider,
+  activeTargetUrl,
+  observedHostnames,
 } = {}) {
   const list = Array.isArray(findings) ? findings : [];
   const out = [];
+  const mappingOptions = { activeTargetUrl, observedHostnames };
 
   for (const finding of list) {
-    const mapping = findMappingForFinding(finding, sourceMapping);
+    const mapping = findMappingForFinding(finding, sourceMapping, mappingOptions);
     const filePath = selectedPathForMapping(mapping);
     const mapped = mapping?.mapped === true && typeof filePath === 'string' && filePath.length > 0;
     if (!mapped) {
