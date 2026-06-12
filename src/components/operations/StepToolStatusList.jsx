@@ -7,6 +7,7 @@ const TONES = {
   unavailable: 'border-slate-500/30 bg-slate-500/5 text-slate-300',
   stub_unavailable: 'border-slate-500/30 bg-slate-500/5 text-slate-300',
   pending_operator_gate: 'border-blue-500/30 bg-blue-500/5 text-blue-300',
+  pending_server_credential_check: 'border-blue-500/30 bg-blue-500/5 text-blue-300',
   mutation_deferred_until_P13C: 'border-amber-500/30 bg-amber-500/5 text-amber-300',
   blocked: 'border-red-500/30 bg-red-500/5 text-red-300',
 };
@@ -17,6 +18,7 @@ const LABELS = {
   unavailable: 'unavailable',
   stub_unavailable: 'stub unavailable',
   pending_operator_gate: 'pending approval',
+  pending_server_credential_check: 'server check pending',
   mutation_deferred_until_P13C: 'deferred',
   blocked: 'blocked',
 };

@@ -16,6 +16,11 @@ const tavily = { rank: 2, platform_name: 'Tavily', performance_score: 8, target_
 const serper = { rank: 3, platform_name: 'Unknown Tool', performance_score: 10, target_classes: ['generic_url'] };
 const base44 = { rank: 1, platform_name: 'Base44', performance_score: 9, target_classes: ['generic_url'] };
 const cursor = { rank: 2, platform_name: 'Cursor', performance_score: 9, target_classes: ['generic_url'] };
+const codex = { rank: 1, platform_name: 'Codex', performance_score: 10, target_classes: ['generic_url'] };
+const claudeCode = { rank: 2, platform_name: 'Claude Code', performance_score: 9.8, target_classes: ['generic_url'] };
+const bolt = { rank: 4, platform_name: 'Bolt', performance_score: 8.7, target_classes: ['generic_url'] };
+const windsurf = { rank: 5, platform_name: 'Windsurf', performance_score: 8.5, target_classes: ['generic_url'] };
+const replit = { rank: 6, platform_name: 'Replit', performance_score: 8.2, target_classes: ['generic_url'] };
 
 describe('forge toolSelection adapter', () => {
   it('returns null when service not provided', async () => {
@@ -136,6 +141,23 @@ describe('forge toolSelection adapter', () => {
     expect(Array.isArray(output.selection)).toBe(true);
   });
 
+  it('pipeline mode preserves the required Codex-first Build order', async () => {
+    const output = await selectForgeStepTool({
+      service: serviceReturning([cursor, base44, bolt, windsurf, replit, claudeCode, codex]),
+      stepKey: 'build',
+      productId: 'saige',
+    });
+    expect(output.selection.map(candidate => candidate.platform_name)).toEqual([
+      'Codex',
+      'Claude Code',
+      'Cursor',
+      'Bolt',
+      'Windsurf',
+      'Replit',
+      'Base44',
+    ]);
+  });
+
   it('single mode returns object', async () => {
     const output = await selectForgeStepTool({ service: serviceReturning([perplexity, tavily]), stepKey: 'research', productId: 'saige' });
     expect(Array.isArray(output.selection)).toBe(false);
@@ -147,12 +169,12 @@ describe('forge toolSelection adapter', () => {
     expect(output.pipelineNullAt).toEqual([1]);
   });
 
-  it('base44_compatible tie-breaker applied for build step only', () => {
+  it('canonical Build order beats the legacy Base44 tie-breaker', () => {
     const tiedCursor = { ...cursor, rank: 1 };
     const tiedBase44 = { ...base44, rank: 1 };
     const buildRanked = applyUndServedFirstWeighting([tiedCursor, tiedBase44], { stepKey: 'build' });
     const researchRanked = applyUndServedFirstWeighting([tiedCursor, tiedBase44], { stepKey: 'research' });
-    expect(buildRanked[0].platform_name).toBe('Base44');
+    expect(buildRanked[0].platform_name).toBe('Cursor');
     expect(researchRanked[0].platform_name).toBe('Cursor');
   });
 
@@ -222,6 +244,6 @@ describe('forge toolSelection adapter', () => {
     });
     expect(Array.isArray(output.selection)).toBe(true);
     expect(output.selection).toEqual(output.candidates);
-    expect(output.selection.map(candidate => candidate.platform_name)).toEqual(['Base44', 'Cursor']);
+    expect(output.selection.map(candidate => candidate.platform_name)).toEqual(['Cursor', 'Base44']);
   });
 });

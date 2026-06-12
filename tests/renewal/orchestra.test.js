@@ -22,10 +22,11 @@ describe('OrchestraMember interface', () => {
 });
 
 describe('Orchestra registry', () => {
-  it('lists 10 members including 4 wired (claudeCode + vercel + browserless + playwright)', () => {
+  it('lists 11 members including 5 wired (codex + claudeCode + vercel + browserless + playwright)', () => {
     const members = listMembers();
-    expect(members.length).toBe(10);
+    expect(members.length).toBe(11);
     const wired = members.filter((m) => m.wired).map((m) => m.id);
+    expect(wired).toContain('codex');
     expect(wired).toContain('claude-code');
     expect(wired).toContain('vercel');
     expect(wired).toContain('browserless');
@@ -34,6 +35,7 @@ describe('Orchestra registry', () => {
     expect(notWired).toEqual(expect.arrayContaining(['base44', 'lovable', 'v0', 'cursor', 'replit', 'openrouter']));
   });
   it('getMember resolves by id', () => {
+    expect(getMember('codex').wired).toBe(true);
     expect(getMember('claude-code').wired).toBe(true);
     expect(getMember('base44').wired).toBe(false);
     expect(getMember('does-not-exist')).toBeNull();
@@ -96,11 +98,19 @@ describe('vercel adapter — sanitization + encoding', () => {
 describe('Orchestra dispatcher routing', () => {
   beforeEach(() => { vi.restoreAllMocks(); });
 
+  it('routes code-patch to codex by default', async () => {
+    const codex = await import('../../src/lib/orchestra/codex.js');
+    const spy = vi.spyOn(codex, 'invoke').mockResolvedValueOnce({ ok: true, member: 'codex', action: 'code-patch', data: { patchedContent: '// patched' } });
+    const r = await dispatch('code-patch', { filePath: 'x.js', sourceContent: '// x', issueSpec: { category: 'missing-cta' } });
+    expect(spy).toHaveBeenCalledWith('code-patch', expect.any(Object));
+    expect(r.member).toBe('codex');
+  });
+
   it('routes code-patch → claudeCode invoke', async () => {
     // Spy on the claudeCode module's invoke via a fresh import.
     const claudeCode = await import('../../src/lib/orchestra/claudeCode.js');
     const spy = vi.spyOn(claudeCode, 'invoke').mockResolvedValueOnce({ ok: true, member: 'claude-code', action: 'code-patch', data: { patchedContent: '// patched' } });
-    const r = await dispatch('code-patch', { filePath: 'x.js', sourceContent: '// x', issueSpec: { category: 'missing-cta' } });
+    const r = await dispatch('code-patch', { filePath: 'x.js', sourceContent: '// x', issueSpec: { category: 'missing-cta' } }, { memberId: 'claude-code' });
     expect(spy).toHaveBeenCalledWith('code-patch', expect.any(Object));
     expect(r.member).toBe('claude-code');
   });

@@ -15,11 +15,13 @@ export const TOOL_REGISTRY = [
   { name: 'v0 by Vercel', category: 'Design', description: 'AI UI component generator producing production-ready React code.', performance_score: 9, cost_tier: 'freemium', cost_details: 'Free tier available; Pro with Vercel subscription', underserved_accessible: 'yes', base44_compatible: 'api', production_compatible: true, official_url: 'https://v0.dev', tags: ['design', 'ai', 'react', 'components'] },
 
   // BUILD
-  { name: 'Base44', category: 'Build', description: 'AI-native full-stack builder with built-in backend, auth, and database.', performance_score: 9, cost_tier: 'freemium', cost_details: 'Free tier; Pro $29/month', underserved_accessible: 'yes', base44_compatible: 'native', production_compatible: true, official_url: 'https://base44.com', tags: ['build', 'fullstack', 'ai', 'no-code', 'native'] },
-  { name: 'Replit', category: 'Build', description: 'Browser-based collaborative IDE with instant deployment capabilities.', performance_score: 8, cost_tier: 'freemium', cost_details: 'Free; Core $7/month; Teams $20/month', underserved_accessible: 'limited', base44_compatible: 'api', production_compatible: true, official_url: 'https://replit.com', tags: ['build', 'ide', 'collaboration', 'deployment'] },
-  { name: 'Bolt', category: 'Build', description: 'AI full-stack web builder that generates and deploys complete applications.', performance_score: 8, cost_tier: 'freemium', cost_details: 'Free tier; Pro $20/month', underserved_accessible: 'yes', base44_compatible: 'api', production_compatible: true, official_url: 'https://bolt.new', tags: ['build', 'ai', 'fullstack', 'deployment'] },
+  { name: 'Codex', category: 'Build', description: 'OpenAI-backed coding agent path for code patching and generate-from-scratch build artifacts.', performance_score: 10, cost_tier: 'freemium', cost_details: 'Requires OPENAI_API_KEY for API-backed dispatch; plan/API billing varies by account', underserved_accessible: 'yes', base44_compatible: 'api', production_compatible: true, official_url: 'https://openai.com/codex', tags: ['build', 'ai', 'code', 'agentic', 'low-resource'] },
+  { name: 'Claude Code', category: 'Build', description: 'Anthropic-backed code patching and project generation adapter used by the Orchestra.', performance_score: 9.8, cost_tier: 'freemium', cost_details: 'Requires ANTHROPIC_API_KEY for API-backed dispatch; plan/API billing varies by account', underserved_accessible: 'yes', base44_compatible: 'api', production_compatible: true, official_url: 'https://anthropic.com', tags: ['build', 'ai', 'code', 'agentic'] },
   { name: 'Cursor', category: 'Build', description: 'AI-powered code editor with deep codebase understanding and autocomplete.', performance_score: 9, cost_tier: 'freemium', cost_details: 'Free Hobby; Pro $20/month', underserved_accessible: 'yes', base44_compatible: 'api', production_compatible: true, official_url: 'https://cursor.sh', tags: ['build', 'ai', 'editor', 'ide'] },
-  { name: 'Windsurf', category: 'Build', description: 'AI-first coding environment with agentic coding capabilities.', performance_score: 8, cost_tier: 'freemium', cost_details: 'Free tier; Pro $15/month', underserved_accessible: 'yes', base44_compatible: 'api', production_compatible: true, official_url: 'https://codeium.com/windsurf', tags: ['build', 'ai', 'editor', 'agentic'] },
+  { name: 'Bolt', category: 'Build', description: 'AI full-stack web builder that generates and deploys complete applications.', performance_score: 8.7, cost_tier: 'freemium', cost_details: 'Free tier; Pro $20/month', underserved_accessible: 'yes', base44_compatible: 'api', production_compatible: true, official_url: 'https://bolt.new', tags: ['build', 'ai', 'fullstack', 'deployment'] },
+  { name: 'Windsurf', category: 'Build', description: 'AI-first coding environment with agentic coding capabilities.', performance_score: 8.5, cost_tier: 'freemium', cost_details: 'Free tier; Pro $15/month', underserved_accessible: 'yes', base44_compatible: 'api', production_compatible: true, official_url: 'https://codeium.com/windsurf', tags: ['build', 'ai', 'editor', 'agentic'] },
+  { name: 'Replit', category: 'Build', description: 'Browser-based collaborative IDE with instant deployment capabilities.', performance_score: 8.2, cost_tier: 'freemium', cost_details: 'Free; Core $7/month; Teams $20/month', underserved_accessible: 'limited', base44_compatible: 'api', production_compatible: true, official_url: 'https://replit.com', tags: ['build', 'ide', 'collaboration', 'deployment'] },
+  { name: 'Base44', category: 'Build', description: 'AI-native full-stack builder with built-in backend, auth, and database.', performance_score: 7, cost_tier: 'freemium', cost_details: 'Free tier; Pro $29/month', underserved_accessible: 'yes', base44_compatible: 'native', production_compatible: true, official_url: 'https://base44.com', tags: ['build', 'fullstack', 'ai', 'no-code', 'native'] },
 
   // DATABASE
   { name: 'Supabase', category: 'Database', description: 'Open source Firebase alternative with Postgres, auth, storage, and realtime.', performance_score: 10, cost_tier: 'freemium', cost_details: 'Free tier; Pro $25/month', underserved_accessible: 'yes', base44_compatible: 'api', production_compatible: true, official_url: 'https://supabase.com', tags: ['database', 'postgres', 'realtime', 'auth', 'storage'] },
@@ -95,7 +97,7 @@ export const CATEGORIES = [
 
 export const VEU_STACKS = {
   SAIGE: {
-    Build: ['Base44'],
+    Build: ['Codex', 'Claude Code', 'Cursor', 'Bolt', 'Windsurf', 'Replit', 'Base44'],
     Database: ['Supabase'],
     Deployment: ['Vercel'],
     Authentication: ['Supabase Auth'],
@@ -106,7 +108,7 @@ export const VEU_STACKS = {
     Governance: ['FlowAI'],
   },
   PressAI: {
-    Build: ['Base44'],
+    Build: ['Codex', 'Claude Code', 'Cursor', 'Bolt', 'Windsurf', 'Replit', 'Base44'],
     Database: ['Supabase'],
     Deployment: ['Railway'],
     Authentication: ['Clerk'],
@@ -117,7 +119,7 @@ export const VEU_STACKS = {
     Governance: ['FlowAI'],
   },
   ReachSMS: {
-    Build: ['Base44'],
+    Build: ['Codex', 'Claude Code', 'Cursor', 'Bolt', 'Windsurf', 'Replit', 'Base44'],
     Database: ['Supabase'],
     Deployment: ['Railway'],
     Authentication: ['Supabase Auth'],
@@ -128,7 +130,7 @@ export const VEU_STACKS = {
     Governance: ['FlowAI'],
   },
   RelTwin: {
-    Build: ['Base44'],
+    Build: ['Codex', 'Claude Code', 'Cursor', 'Bolt', 'Windsurf', 'Replit', 'Base44'],
     Database: ['Supabase'],
     Deployment: ['Vercel'],
     Authentication: ['Clerk'],
@@ -139,7 +141,7 @@ export const VEU_STACKS = {
     Governance: ['FlowAI'],
   },
   MyPregLife: {
-    Build: ['Base44'],
+    Build: ['Codex', 'Claude Code', 'Cursor', 'Bolt', 'Windsurf', 'Replit', 'Base44'],
     Database: ['Supabase'],
     Deployment: ['Railway'],
     Authentication: ['Supabase Auth'],

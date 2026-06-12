@@ -4,6 +4,7 @@ import { BUILD_BLOCKED, scoreBuildStep, hasMinimumBuildDirectiveFromDesign } fro
 import { selectForgeStepTool } from './toolSelection.js';
 import { dispatch as orchestraDispatch } from '../orchestra/index.js';
 import { MODES } from '../tools/ToolIntelligenceService.js';
+import { DISPATCH_STATES, normalizeToolCandidate } from '../tools/toolDispatchContract.js';
 
 const NO_BUILD_TOOL_REASON = 'No AI build tool configured; manual input required';
 const P2_MAX_DISPATCHES_PER_RUN = 12;
@@ -136,10 +137,19 @@ function shouldShortCircuitToolSelection(toolSelection) {
   return toolSelection && !isAutomaticToolSelection(toolSelection);
 }
 
-function assertAnthropicReady() {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('P2 live execution STOP: ANTHROPIC_API_KEY is required for live build dispatch');
+function assertSelectedBuildMemberReady(buildTool, env = process.env) {
+  const selected = normalizeToolCandidate(buildTool, { env });
+  if (!selected?.memberId) {
+    throw new Error('P2 live execution STOP: selected Build tool is not an admitted Orchestra member');
   }
+  if (selected.dispatchState !== DISPATCH_STATES.CALLABLE) {
+    const missing = Object.entries(selected.credentialStatus ?? {})
+      .filter(([, status]) => status === 'MISSING')
+      .map(([name]) => name);
+    const missingSuffix = missing.length > 0 ? ` Missing credentials: ${missing.join(', ')}.` : '';
+    throw new Error(`P2 live execution STOP: selected Build member "${selected.memberId}" is not callable. ${selected.dispatchReason}${missingSuffix}`);
+  }
+  return selected.memberId;
 }
 
 function usageCostUsd(data = {}) {
@@ -167,7 +177,7 @@ function containsPlaceholderText(value) {
   return /\b(simulated|demo|mock|placeholder)\b/i.test(text);
 }
 
-function assertLiveDispatchResult(result, action) {
+function assertLiveDispatchResult(result, action, expectedMemberId = null) {
   if (!result || result.ok !== true || result.deferred === true) {
     const status = typeof result?.status === 'number' ? ` status=${result.status}` : '';
     if (result?.status === 401 || (typeof result?.status === 'number' && result.status >= 500)) {
@@ -181,6 +191,9 @@ function assertLiveDispatchResult(result, action) {
   if (containsPlaceholderText(result.data)) {
     throw new Error(`P2 live execution STOP: ${action} dispatch returned placeholder output`);
   }
+  if (expectedMemberId && result.member !== expectedMemberId) {
+    throw new Error(`P2 live execution STOP: selected Build member "${expectedMemberId}" but dispatch returned "${result.member ?? 'unknown'}"; fallback is not counted as selected-tool proof`);
+  }
   return result;
 }
 
@@ -193,7 +206,7 @@ function ensureBudget(budget) {
   }
 }
 
-async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config) {
+async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config, selectedMemberId) {
   if (!Array.isArray(tasks)) return tasks;
   if (typeof config.sourceContent !== 'string' || config.sourceContent.trim().length === 0 || containsPlaceholderText(config.sourceContent)) {
     throw new Error('P2 live execution STOP: real sourceContent is required for live build code-patch');
@@ -217,7 +230,7 @@ async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config
           designOutput,
         },
       },
-    }), 'code-patch');
+    }, { memberId: selectedMemberId }), 'code-patch', selectedMemberId);
     budget.costUsd += usageCostUsd(result.data);
     ensureBudget(budget);
     liveTasks.push(Object.freeze({
@@ -287,9 +300,9 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
   const shortCircuit = shouldShortCircuitToolSelection(toolSelection);
   const dispatchFn = config.dispatch ?? orchestraDispatch;
   const budget = { dispatchCount: 0, costUsd: 0 };
-  if (liveDispatch) assertAnthropicReady();
+  const selectedMemberId = liveDispatch ? assertSelectedBuildMemberReady(buildTool, config.env ?? process.env) : null;
   const codeTaskDispatches = liveDispatch
-    ? await runLiveBuildTasks(generatedCodeTaskDispatches, designOutput, budget, dispatchFn, config)
+    ? await runLiveBuildTasks(generatedCodeTaskDispatches, designOutput, budget, dispatchFn, config, selectedMemberId)
     : shortCircuit && Array.isArray(generatedCodeTaskDispatches)
       ? Object.freeze(generatedCodeTaskDispatches.map(task => Object.freeze({
         ...task,
@@ -347,5 +360,6 @@ export const __test = Object.freeze({
   deriveBuildRisks,
   detectBuildEntryPath,
   generateCodeTaskDispatches,
+  assertSelectedBuildMemberReady,
   selectBuildTool,
 });

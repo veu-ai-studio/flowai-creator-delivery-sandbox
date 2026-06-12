@@ -22,6 +22,7 @@ function mockClaudeJson(value) {
 
 describe('Orchestra live capability dispatch', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     callClaude.mockReset();
   });
 
@@ -121,7 +122,48 @@ describe('Orchestra live capability dispatch', () => {
     expect(result.deferred).not.toBe(true);
   });
 
-  it('threads code-patch timeoutMs only when caller supplies one', async () => {
+  it('routes explicit codex code-patch through the OpenAI-backed member', async () => {
+    const oldKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = 'openai-test-key';
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({
+        model: 'gpt-4o',
+        usage,
+        choices: [{ message: { content: JSON.stringify({
+          patchedContent: 'export default function App() { return <main>Codex patched</main>; }',
+          rationale: 'Patched through Codex.',
+        }) } }],
+      }),
+    });
+
+    try {
+      const result = await dispatch('code-patch', {
+        filePath: 'src/App.jsx',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+        timeoutMs: 30000,
+        issueSpec: {
+          category: 'test',
+          severity: 'medium',
+          evidence: 'test evidence',
+          fixSpec: {},
+        },
+      }, { memberId: 'codex' });
+
+      expect(result.ok).toBe(true);
+      expect(result.member).toBe('codex');
+      expect(result.data.patchedContent).toContain('Codex patched');
+      expect(fetchSpy).toHaveBeenCalledWith(expect.stringContaining('api.openai.com'), expect.objectContaining({
+        method: 'POST',
+      }));
+    } finally {
+      if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldKey;
+    }
+  });
+
+  it('threads claude-code code-patch timeoutMs only when caller supplies one', async () => {
     mockClaudeJson({
       patchedContent: 'export default function App() { return <main>Patched</main>; }',
       rationale: 'Patched with caller timeout.',
@@ -137,7 +179,7 @@ describe('Orchestra live capability dispatch', () => {
         evidence: 'test evidence',
         fixSpec: {},
       },
-    });
+    }, { memberId: 'claude-code' });
 
     expect(result.ok).toBe(true);
     expect(callClaude).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: 30000 }));

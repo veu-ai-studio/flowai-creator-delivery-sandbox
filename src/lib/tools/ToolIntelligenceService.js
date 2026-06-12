@@ -24,6 +24,8 @@
  * ---------------------------------------------------------------------------
  */
 
+import { canonicalBuildRankingRows, normalizeBuildToolName } from './buildToolRanking.js';
+
 const DEFAULT_TABLE = 'step_tool_rankings';
 
 export const MODES = Object.freeze({
@@ -76,6 +78,30 @@ function rowToPlatform(row) {
   });
 }
 
+function normalizeRankRows(step, rows, targetClass = null) {
+  if (step !== 'build') return rows;
+  const rowsByName = new Map((rows ?? []).map(row => [normalizeBuildToolName(row.platform_name), row]));
+  return canonicalBuildRankingRows()
+    .filter(canonical => !targetClass || canonical.target_classes.includes(targetClass))
+    .map(canonical => {
+      const current = rowsByName.get(normalizeBuildToolName(canonical.platform_name));
+      return Object.freeze({
+        ...canonical,
+        ...(current ?? {}),
+        step_name: 'build',
+        rank: canonical.rank,
+        platform_name: canonical.platform_name,
+        platform_type: canonical.platform_type,
+        target_classes: [...canonical.target_classes],
+        notes: current?.notes ?? canonical.notes,
+      });
+    });
+}
+
+function maxRowsForStep(step) {
+  return step === 'build' ? canonicalBuildRankingRows().length : 5;
+}
+
 function clamp(n, lo, hi) {
   if (Number.isNaN(n)) return lo;
   if (n < lo) return lo;
@@ -118,7 +144,7 @@ export function createToolIntelligenceService(opts = {}) {
       const msg = error instanceof Error ? error.message : JSON.stringify(error);
       throw new Error(`ToolIntelligenceService.getRankings failed: ${msg}`);
     }
-    return (data ?? []).map(rowToPlatform);
+    return normalizeRankRows(step, data ?? [], targetClass).map(rowToPlatform);
   }
 
   /**
@@ -161,13 +187,14 @@ export function createToolIntelligenceService(opts = {}) {
     if (!Array.isArray(freshRows) || freshRows.length === 0) {
       throw new TypeError('refreshRankings: freshRows must be a non-empty array');
     }
-    if (freshRows.length > 5) {
-      throw new RangeError('refreshRankings: at most 5 rows per step');
+    const maxRows = maxRowsForStep(step);
+    if (freshRows.length > maxRows) {
+      throw new RangeError(`refreshRankings: at most ${maxRows} rows per step`);
     }
     const now = new Date(clock()).toISOString();
     const rows = freshRows.map((r, i) => {
       const rank = r.rank ?? (i + 1);
-      if (rank < 1 || rank > 5) {
+      if (rank < 1 || rank > maxRows) {
         throw new RangeError(`refreshRankings: rank ${rank} out of range`);
       }
       return {
