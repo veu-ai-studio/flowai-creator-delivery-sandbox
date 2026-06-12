@@ -11,7 +11,8 @@ FlowAI production identity is restored and points to current main:
 
 - Production URL: `https://flowai-dun.vercel.app`
 - `/api/health` status: `ready`
-- Production commit: `21109fee0ae30d381923d4422da3f107d41cd8a1`
+- Production commit: `b4e02c566378e5f00b17252f9db176e20f9e7d42`
+- Production deployment: `https://flowai-cddxkdlzq-veu-ai-studio.vercel.app`
 - GitHub App: ready
 - Inngest: ready
 
@@ -65,40 +66,45 @@ Remaining gaps:
 
 ## Path 2 - Production: SAIGE Migrated URL
 
-Status: RUNTIME PATCH IN REVIEW; MERGE BLOCKED BY CR RE-REVIEW.
+Status: RUNTIME PATCH MERGED; POST-MERGE PROOF REACHED BRANCH/DEPLOY BUT FAILED POST-FIX PREVIEW ACCESS.
 
 Evidence:
 
 - `docs/cto/path2-saige-v2-production-proof-20260612.md`
-- Run ID: `cto-path2-saige-v2-20260612-0450`
+- `docs/cto/path2-saige-v2-postmerge-proof-20260612.md`
+- Initial run ID: `cto-path2-saige-v2-20260612-0450`
+- Post-merge run ID: `cto-path2-saige-v2-postmerge-20260612-0801`
 
 What happened:
 
-- Live production run targeted `https://saige-v2.vercel.app`.
-- Credential readiness, product discovery, repo probe, crawl, governance write, post-fix scoring, and ProductSSOT persistence were observed.
-- Branch creation was not observed.
-- Preview deployment was not observed.
+- Initial live production run targeted `https://saige-v2.vercel.app` and stopped at `PLATFORM_BOUNDARY_BLOCKED`.
+- CB patched the boundary chain at `53255c64007f479bd355eea336c4155750878d95`.
+- CD returned PASS-WITH-FINDINGS; CR returned PASS on second re-review.
+- Runtime branch merged to main and production was promoted to `b4e02c566378e5f00b17252f9db176e20f9e7d42`.
+- Post-merge proof reached branch creation:
+  - `flowai/renewal-cto-path2-saige-v2-postmerge-20260612-0801-iter1`
+- Post-merge proof reached Step 10 Vercel preview deployment:
+  - `https://saige-v2-p7cwizuu8-veu-ai-studio.vercel.app`
+- Post-merge proof failed terminally at post-fix monitoring:
+  - `MONITOR_FETCH_FAILED`
+  - `401 Unauthorized`
+  - `vercel-protection-bypass attempted`
 - Final score: `54.5`.
-- Exit reason: `PLATFORM_BOUNDARY_BLOCKED`.
+- Final governance write: not complete.
+- ProductSSOT persistence: not complete.
 
 CTO interpretation:
 
-- Targeting `saige-v2` alone does not bypass the platform boundary.
-- `FLOWAI_ENABLE_LLM_FIXES=true` is necessary for some repairs but insufficient.
-- The full evidence-to-source-mapping-to-fix-eligibility chain needs repair.
+- The platform-boundary-chain repair worked enough to reach branch creation and preview deployment.
+- The active Path 2 blocker is now protected-preview access during post-fix scoring.
+- The Step 10 preview URL is deployment-attempt evidence, not yet an accepted delivered URL.
+- CT2 should not be dispatched for Path 2 final URL acceptance until scoring or a browser test can actually access the preview.
 
 Action taken:
 
-- Initial CB dispatch committed to `docs/cto/cb-path2-platform-boundary-chain-dispatch-20260612.md`.
-- Runtime branch `fix/path2-platform-boundary-chain` reached `4290b39312e69087be8cd3a09bb3a68efef4802a`.
-- CD returned PASS-WITH-FINDINGS; findings are tracked as non-blocking.
-- CR blocked `4290b39` for id-only active-host bypasses.
-- CB patched those findings at `455c2d24f85cdabf723a2b6cc3bde323a97437e9`.
-- CR re-review still BLOCKED merge because `sourcePathForFinding` permits id-only mapping under active-host scope when no observed location exists, while proposal generation rejects that same case.
-- Second CB patch dispatch is recorded in `docs/cto/cb-path2-boundary-chain-cr-rereview-patch-dispatch-20260612.md`.
-- CB patched the remaining mismatch at `53255c64007f479bd355eea336c4155750878d95`.
-- CR second re-review returned PASS on `53255c6`.
-- The branch is cleared for merge from review perspective, with post-merge production promotion, constrained Path 2 live proof, and CT2 acceptance still required before any stronger claim.
+- Path 2 boundary-chain branch has been merged.
+- New dispatch packet for the residual blocker:
+  - `docs/cto/cb-path2-preview-protection-postfix-dispatch-20260612.md`
 
 ## Path 3 - Fresh Build: VEU AI Studio Website
 
@@ -167,7 +173,7 @@ Recommended next UI build:
 
 ## TIM Build Amendment - Codex
 
-Status: DOCUMENTED, not yet implemented in runtime.
+Status: DOCUMENTED; CB worker dispatched for implementation on `fix/tim-codex-build-tool`.
 
 W04 directed that Codex must be added as the rank-1 Step 3 Build tool in the Tool Intelligence Marketplace. This is now integrated into the four-path proof strategy as a cross-cutting gate.
 
@@ -186,6 +192,12 @@ Required runtime target:
 - Any fallback is explicitly labeled and does not count as Codex-built proof.
 - No VERIFIED movement.
 
+Live proof impact:
+
+- The post-merge Path 2 proof still showed Build candidates as Cursor, Base44, Bolt, Windsurf, and Replit.
+- Codex was absent.
+- This proves static planning is not enough; live Tool Intelligence selection must also be corrected.
+
 ## Active Branches
 
 Docs/evidence:
@@ -200,15 +212,17 @@ Runtime/SAIGE:
 
 Runtime repair in progress:
 
-- CB target branch: `fix/path2-platform-boundary-chain`
+- CB target branch: `fix/tim-codex-build-tool`
+- Queued Path 2 residual branch: `fix/path2-preview-protection-postfix`
 
 ## Next Actions
 
-1. Wait for CB `Maxwell` to return the Path 2 boundary-chain patch.
-2. Run CD and CR review after CB pushes runtime branch.
-3. If CD and CR pass, merge per standing authorization, then rerun constrained Path 2 live proof.
-4. Dispatch Fresh Build codegen recovery after Path 2 patch is moving or complete.
-5. Keep VERIFIED frozen until CT2 confirms a deployed URL satisfies the relevant SSOT gate.
+1. Review and integrate CB's TIM Codex branch when it returns.
+2. Dispatch or implement the Path 2 protected-preview post-fix scoring patch.
+3. After CD/CR clearance, rerun constrained Path 2 live proof.
+4. Dispatch CT2 only after a final delivery URL is actually accessible.
+5. Dispatch Fresh Build codegen recovery after the Path 2/TIM critical lane is moving.
+6. Keep VERIFIED frozen until CT2 confirms a deployed URL satisfies the relevant SSOT gate.
 
 ## Claim Controls
 

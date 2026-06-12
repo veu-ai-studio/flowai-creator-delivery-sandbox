@@ -1,0 +1,125 @@
+# CB Dispatch - Path 2 Protected Preview Post-Fix Scoring
+
+Date: 2026-06-12
+From: CTO
+To: CB
+Priority: next Path 2 runtime blocker after TIM Codex work is moving, unless CTO/W04 reorders
+Suggested branch: `fix/path2-preview-protection-postfix`
+Runtime repo: `C:\Users\victo\Downloads\truthful-flow-logic-lab`
+VERIFIED movement: no
+
+## Required Reading
+
+1. `docs/CANONICAL_REFERENCE.md`
+2. `docs/BUILD_PROTOCOL.md`
+3. `docs/IMPLEMENTATION_PLAN.md`
+4. `docs/cto/path2-saige-v2-postmerge-proof-20260612.md`
+
+## Problem
+
+After the Path 2 boundary-chain repair merged to production, a constrained SAIGE v2 run reached branch creation and Vercel preview deployment, then failed at post-fix monitoring:
+
+```text
+MONITOR_FETCH_FAILED
+fetchUrlContent: https://saige-v2-p7cwizuu8-veu-ai-studio.vercel.app returned 401 Unauthorized (vercel-protection-bypass attempted)
+```
+
+This means the platform-boundary blocker moved forward. The active blocker is now preview access for post-fix scoring and final governance/ProductSSOT completion.
+
+## Ownership
+
+Likely files to inspect:
+
+- `src/lib/agents/renewal/monitorTextProducer.js`
+- `src/lib/verification/postFixSnapshot.js`
+- `src/lib/agents/renewal/orchestrator.js`
+- `src/lib/agents/renewal/vercelBranchDeploy.js`
+- relevant tests under `tests/agents/renewal`, `tests/verification`, or `tests/tools`
+
+Do not modify:
+
+- canonical docs
+- matrixArtifact / VERIFIED entries
+- unrelated Tool Intelligence work
+- platform boundary gates
+- auth/platform/Base44 write boundaries
+
+## Required Diagnosis
+
+Map the full preview-access chain before patching:
+
+1. Which productId is supplied to post-fix preview fetch for `saige-v2`.
+2. Which bypass secret name is selected.
+3. Whether `VERCEL_AUTOMATION_BYPASS_SECRET` or a product-scoped bypass secret is present in runtime.
+4. Whether the code sends the exact current Vercel Deployment Protection contract.
+5. Whether the failing 401 comes from missing secret, wrong secret, wrong header/cookie flow, or unsupported protected-preview access.
+6. Whether the final output is dropping a valid preview URL because post-fix fetch failed.
+
+## Required Behavior
+
+If the preview can be accessed honestly:
+
+- post-fix scoring may use the protected preview with a valid bypass
+- evidence must record that bypass was attempted and succeeded without exposing the secret
+- the final delivery URL may be carried only after scoring/CT2 can access it
+
+If the preview cannot be accessed:
+
+- keep the preview URL as context only
+- return a clear terminal state such as `PREVIEW_ACCESS_BLOCKED` or equivalent
+- do not label post-fix score as observed on the preview
+- do not write ProductSSOT as completed end-to-end evidence
+- do not claim deployed URL acceptance
+
+## Guardrails
+
+- Do not treat a Step 10 deployment URL as final delivered evidence if Step 11 cannot fetch it.
+- Do not suppress `401` into a green post-fix score.
+- Do not echo bypass secrets in logs, errors, snapshots, or docs.
+- Do not weaken Vercel Deployment Protection globally.
+- Do not fabricate ProductSSOT persistence.
+- Do not move VERIFIED.
+
+## Tests Required
+
+At minimum:
+
+1. Protected preview fetch sends the expected Vercel bypass signal when a bypass secret is present.
+2. Missing or invalid bypass produces an honest blocked/degraded state, not a false success.
+3. Final output preserves the distinction between:
+   - preview URL produced by deploy
+   - preview URL successfully accessed for post-fix evidence
+   - final delivered URL accepted by the forge
+4. ProductSSOT/governance completion remains false or clearly partial when post-fix access fails.
+5. Existing platform-boundary tests still pass.
+
+Run focused tests for the touched modules and `npm run build:preflight` if the patch touches orchestrator or verification flow.
+
+## Proof Required
+
+After patch and review clearance, rerun constrained Path 2 proof:
+
+```powershell
+node scripts/cto/saige-sse-proof.mjs --run-live --base-url https://flowai-dun.vercel.app --product-scope saige --url https://saige-v2.vercel.app --max-iterations 1 --gtm-target 95 --mode auto --run-id <new-run-id> --timeout-ms 900000 --fail-on-incomplete
+```
+
+Report:
+
+- branch and commit
+- tests run
+- whether Step 10 produced a preview URL
+- whether Step 11 fetched it successfully
+- whether final governance write completed
+- whether ProductSSOT persisted
+- whether CT2 can access the final delivery URL
+- claim impact
+- VERIFIED movement: no
+
+## Stop Conditions
+
+Stop without patching if:
+
+- the bypass cannot be validated without exposing secrets
+- the only possible fix is to disable Deployment Protection
+- the only possible fix is to ignore post-fix access failure
+- the change would weaken platform/auth/Base44 boundaries
