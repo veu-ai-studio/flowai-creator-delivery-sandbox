@@ -40,6 +40,7 @@ describe('GET /api/health', () => {
     expect(typeof out.body.githubAppReady).toBe('boolean');
     expect(typeof out.body.inngestReady).toBe('boolean');
     expect(out.body.checks.githubApp).toBeTruthy();
+    expect(out.body.checks.orchestra.members.some(member => member.id === 'codex')).toBe(true);
     // status is 'ready' on PASS and 'degraded' on DEGRADED — both
     // map to ok:true per the handler's PASS|DEGRADED gate. The exact
     // string depends on which downstream credentials are wired in

@@ -1,5 +1,6 @@
 import { TOOL_REGISTRY } from '../toolRegistry.js';
 import { MODES, selectToolForStep } from '../tools/ToolIntelligenceService.js';
+import { buildToolRank, compareBuildToolRank } from '../tools/buildToolRanking.js';
 
 const SERVICE_TARGET_CLASS = 'generic_url';
 const UNDERSERVED_METADATA_TARGET = 'underserved_market';
@@ -56,6 +57,14 @@ function normalizedCandidates(selection) {
 
 function compareWeighted(stepKey) {
   return (a, b) => {
+    if (stepKey === 'build') {
+      const aBuildRank = buildToolRank(a);
+      const bBuildRank = buildToolRank(b);
+      if (Number.isFinite(aBuildRank) || Number.isFinite(bBuildRank)) {
+        const buildOrder = compareBuildToolRank(a, b);
+        if (buildOrder !== 0) return buildOrder;
+      }
+    }
     if (b.compositeScore !== a.compositeScore) return b.compositeScore - a.compositeScore;
     if (BASE44_TIE_BREAK_STEPS.has(stepKey)) return b.base44TieBreakScore - a.base44TieBreakScore;
     return (a.rank ?? 999) - (b.rank ?? 999);

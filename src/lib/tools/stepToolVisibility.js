@@ -1,3 +1,19 @@
+import { canonicalBuildRankingRows } from './buildToolRanking.js';
+
+const BUILD_STEP_TOOLS = Object.freeze(canonicalBuildRankingRows().map(row => Object.freeze({
+  rank: row.rank,
+  platform_name: row.platform_name,
+  platform_type: row.platform_type,
+  dispatchState: row.platform_name === 'Codex'
+    ? 'pending_server_credential_check'
+    : row.platform_name === 'Claude Code'
+      ? 'pending_operator_gate'
+      : 'stub_unavailable',
+  note: row.platform_name === 'Codex'
+    ? 'server checks Codex adapter and OPENAI_API_KEY at dispatch'
+    : row.notes,
+})));
+
 const STEP_TOOLS = Object.freeze({
   research: [
     { platform_name: 'Browserless', platform_type: 'crawl', dispatchState: 'callable', note: 'server-side credential checked at dispatch' },
@@ -10,9 +26,7 @@ const STEP_TOOLS = Object.freeze({
     { platform_name: 'Lovable', platform_type: 'design', dispatchState: 'stub_unavailable', note: 'requires real callable API before execution' },
   ],
   build: [
-    { platform_name: 'Claude Code', platform_type: 'code', dispatchState: 'pending_operator_gate', note: 'mutations deferred in P13-A' },
-    { platform_name: 'Cursor', platform_type: 'code', dispatchState: 'stub_unavailable', note: 'requires real callable API before execution' },
-    { platform_name: 'Base44', platform_type: 'source', dispatchState: 'stub_unavailable', note: 'ranked but non-executable today' },
+    ...BUILD_STEP_TOOLS,
   ],
   qa_audit: [
     { platform_name: 'Playwright', platform_type: 'browser', dispatchState: 'callable', note: 'read-only browser interaction path' },

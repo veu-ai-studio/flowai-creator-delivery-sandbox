@@ -7,10 +7,12 @@ import {
   dispatchToolAction,
   normalizeDispatchCandidates,
   redactSecrets,
+  resolveMemberId,
   resolveDispatchEligibility,
 } from '../../src/lib/tools/toolDispatchContract.js';
 
 const env = {
+  OPENAI_API_KEY: 'openai-secret',
   ANTHROPIC_API_KEY: 'anthropic-secret',
   BROWSERLESS_API_KEY: 'browser-secret',
   VERCEL_OPERATOR_TOKEN: 'vercel-secret',
@@ -34,6 +36,34 @@ describe('P13-A tool dispatch contract', () => {
     expect(candidate.dispatchState).toBe('missing_credentials');
     expect(candidate.credentialStatus.BROWSERLESS_API_KEY).toBe('MISSING');
     expect(JSON.stringify(candidate)).not.toContain('browser-secret');
+  });
+
+  it('resolves Codex aliases to the codex member', () => {
+    expect(resolveMemberId('Codex')).toBe('codex');
+    expect(resolveMemberId('OpenAI Codex')).toBe('codex');
+    expect(resolveMemberId('codex')).toBe('codex');
+  });
+
+  it('marks Codex missing credentials honestly when OPENAI_API_KEY is absent', () => {
+    const [candidate] = normalizeDispatchCandidates([
+      { platform_name: 'Codex', rank: 1 },
+    ], { env: {} });
+
+    expect(candidate.memberId).toBe('codex');
+    expect(candidate.dispatchState).toBe('missing_credentials');
+    expect(candidate.dispatchCallable).toBe(false);
+    expect(candidate.credentialStatus.OPENAI_API_KEY).toBe('MISSING');
+  });
+
+  it('marks Codex callable only when OPENAI_API_KEY is present', () => {
+    const [candidate] = normalizeDispatchCandidates([
+      { platform_name: 'Codex', rank: 1 },
+    ], { env });
+
+    expect(candidate.memberId).toBe('codex');
+    expect(candidate.dispatchState).toBe('callable');
+    expect(candidate.dispatchCallable).toBe(true);
+    expect(candidate.credentialStatus.OPENAI_API_KEY).toBe('PRESENT');
   });
 
   it('marks Cursor and v0 as stub unavailable unless real adapters exist', () => {

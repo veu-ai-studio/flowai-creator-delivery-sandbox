@@ -70,7 +70,7 @@ const completeDesignOutput = {
 };
 
 const rankedBuildTools = [
-  { rank: 1, platform_name: 'Claude Code', performance_score: 9, target_classes: ['generic_url'] },
+  { rank: 1, platform_name: 'Codex', performance_score: 10, target_classes: ['generic_url'] },
 ];
 
 function serviceReturning(selection) {
@@ -82,12 +82,12 @@ function serviceReturning(selection) {
 }
 
 function dispatchReturning(calls = []) {
-  return async (action, payload) => {
-    calls.push({ action, payload });
+  return async (action, payload, opts = {}) => {
+    calls.push({ action, payload, opts });
     return {
       ok: true,
       action,
-      member: 'claude-code',
+      member: opts.memberId ?? 'codex',
       data: {
         filePath: payload.filePath,
         patchedContent: 'export default function App() { return <main>Built</main>; }',
@@ -339,8 +339,10 @@ describe('SAIGE forge Step 3 build', () => {
   });
 
   it('AUTOMATIC tool selection dispatches code-patch and satisfies the real code task gate', async () => {
-    const oldKey = process.env.ANTHROPIC_API_KEY;
-    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    delete process.env.ANTHROPIC_API_KEY;
     const dispatchCalls = [];
     try {
       const output = await runBuild('neutral-product', directiveDesignOutput, {
@@ -355,25 +357,28 @@ describe('SAIGE forge Step 3 build', () => {
       expect(output.toolSelection.mode).toBe('AUTOMATIC');
       expect(dispatchCalls).toHaveLength(1);
       expect(dispatchCalls[0].action).toBe('code-patch');
+      expect(dispatchCalls[0].opts.memberId).toBe('codex');
       expect(dispatchCalls[0].payload.timeoutMs).toBe(30000);
       expect(output.codeTaskDispatches[0]).toMatchObject({
         complete: true,
         verified: true,
-        member: 'claude-code',
+        member: 'codex',
         buildToolStatus: 'LIVE_BUILD_TOOL_DISPATCHED',
       });
       expect(output.buildComplete).toBe(true);
       expect(output.readyForQualityAudit).toBe(true);
       expect(output.evidenceSummary.liveDispatches).toBe(1);
     } finally {
-      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
-      else process.env.ANTHROPIC_API_KEY = oldKey;
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
+      if (oldAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldAnthropicKey;
     }
   });
 
   it('live build STOPs when no real sourceContent is provided', async () => {
-    const oldKey = process.env.ANTHROPIC_API_KEY;
-    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const oldKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
     try {
       await expect(runBuild('neutral-product', directiveDesignOutput, {
         'build-decision-log': 'Neutral build decision: proceed via directive.',
@@ -383,14 +388,26 @@ describe('SAIGE forge Step 3 build', () => {
         runId: 'build-no-source-test',
       })).rejects.toThrow(/real sourceContent is required/);
     } finally {
-      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
-      else process.env.ANTHROPIC_API_KEY = oldKey;
+      if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldKey;
     }
   });
 
+  it('live build STOPs honestly when Codex credential is missing', async () => {
+    await expect(runBuild('neutral-product', directiveDesignOutput, {
+      'build-decision-log': 'Neutral build decision: proceed via directive.',
+    }, {
+      toolService: serviceReturning(rankedBuildTools),
+      sourceContent: 'export default function App() { return <main>Current</main>; }',
+      dispatch: dispatchReturning([]),
+      runId: 'build-missing-codex-credential-test',
+      env: {},
+    })).rejects.toThrow(/selected Build member "codex" is not callable.*OPENAI_API_KEY/s);
+  });
+
   it('live build STOPs when code-patch returns placeholder content', async () => {
-    const oldKey = process.env.ANTHROPIC_API_KEY;
-    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const oldKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
     try {
       await expect(runBuild('neutral-product', directiveDesignOutput, {
         'build-decision-log': 'Neutral build decision: proceed via directive.',
@@ -400,7 +417,7 @@ describe('SAIGE forge Step 3 build', () => {
         dispatch: async () => ({
           ok: true,
           action: 'code-patch',
-          member: 'claude-code',
+          member: 'codex',
           data: {
             filePath: 'src/App.jsx',
             patchedContent: 'placeholder demo content',
@@ -411,8 +428,8 @@ describe('SAIGE forge Step 3 build', () => {
         runId: 'build-placeholder-result-test',
       })).rejects.toThrow(/placeholder output/);
     } finally {
-      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
-      else process.env.ANTHROPIC_API_KEY = oldKey;
+      if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldKey;
     }
   });
 });

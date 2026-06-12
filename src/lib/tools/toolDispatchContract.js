@@ -38,6 +38,8 @@ const READ_ONLY_ACTIONS = new Set([
 ]);
 
 const TOOL_MEMBER_ALIASES = Object.freeze({
+  'codex': 'codex',
+  'openai codex': 'codex',
   'anthropic claude': 'claude-code',
   'claude code': 'claude-code',
   'claude-code': 'claude-code',
@@ -57,6 +59,7 @@ const TOOL_MEMBER_ALIASES = Object.freeze({
 });
 
 const CREDENTIAL_REQUIREMENTS = Object.freeze({
+  codex: ['OPENAI_API_KEY'],
   'claude-code': ['ANTHROPIC_API_KEY'],
   vercel: ['VERCEL_OPERATOR_TOKEN', 'VERCEL_TOKEN'],
   browserless: ['BROWSERLESS_API_KEY'],

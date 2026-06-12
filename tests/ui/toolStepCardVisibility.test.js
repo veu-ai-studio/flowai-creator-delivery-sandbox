@@ -18,12 +18,32 @@ describe('P13-A step-card ranked tool visibility', () => {
 
   it('renders callable and unavailable statuses without raw JSON', () => {
     const html = renderToStaticMarkup(React.createElement(StepToolStatusList, { stepKey: 'build' }));
+    expect(html).toContain('Codex');
+    expect(html).toContain('server check pending');
     expect(html).toContain('Claude Code');
     expect(html).toContain('pending approval');
     expect(html).toContain('Cursor');
     expect(html).toContain('stub unavailable');
     expect(html).not.toContain('<pre');
     expect(html).not.toContain('[object Object]');
+  });
+
+  it('returns the required Codex-first Build order', () => {
+    const tools = rankedToolsForStepCard('build');
+    expect(tools.map(tool => tool.platform_name)).toEqual([
+      'Codex',
+      'Claude Code',
+      'Cursor',
+      'Bolt',
+      'Windsurf',
+      'Replit',
+      'Base44',
+    ]);
+    expect(tools[0]).toMatchObject({
+      rank: 1,
+      platform_name: 'Codex',
+      dispatchState: 'pending_server_credential_check',
+    });
   });
 
   it('Auto, Guided, and Manual step cards import the ranked tool list component', () => {

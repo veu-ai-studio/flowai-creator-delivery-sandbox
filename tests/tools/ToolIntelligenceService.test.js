@@ -154,6 +154,51 @@ describe('ToolIntelligenceService.getTopTool', () => {
     expect(list.map((p) => p.platform_name)).toEqual(['A', 'B', 'C', 'D', 'E']);
   });
 
+  it('normalizes stale Build DB rows to the required Codex-first order', async () => {
+    const rows = [
+      makeRow({ step: 'build', rank: 1, name: 'Cursor', type: 'ai_ide', perf: 6.25 }),
+      makeRow({ step: 'build', rank: 2, name: 'Base44', type: 'ai_fullstack' }),
+      makeRow({ step: 'build', rank: 3, name: 'Bolt', type: 'ai_fullstack' }),
+      makeRow({ step: 'build', rank: 4, name: 'Windsurf', type: 'ai_ide' }),
+      makeRow({ step: 'build', rank: 5, name: 'Replit', type: 'cloud_ide' }),
+    ];
+    const svc = createToolIntelligenceService({ client: makeClient(rows) });
+    const list = await svc.getRankings('build', 'generic_url');
+    expect(list.map((p) => p.platform_name)).toEqual([
+      'Codex',
+      'Claude Code',
+      'Cursor',
+      'Bolt',
+      'Windsurf',
+      'Replit',
+      'Base44',
+    ]);
+    expect(list.map((p) => p.rank)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(list.find((p) => p.platform_name === 'Cursor').performance_score).toBe(6.25);
+
+    const top = await svc.getTopTool('build', 'generic_url', MODES.AUTOMATIC);
+    expect(top).toMatchObject({
+      rank: 1,
+      platform_name: 'Codex',
+      platform_type: 'code',
+    });
+  });
+
+  it('keeps targetClass filtering when normalizing Build rankings', async () => {
+    const rows = [
+      makeRow({ step: 'build', rank: 1, name: 'Cursor', type: 'ai_ide', classes: ['mobile_app'] }),
+    ];
+    const svc = createToolIntelligenceService({ client: makeClient(rows) });
+    const list = await svc.getRankings('build', 'mobile_app');
+    expect(list.map((p) => p.platform_name)).toEqual([
+      'Codex',
+      'Claude Code',
+      'Cursor',
+      'Windsurf',
+    ]);
+    expect(list.every((p) => p.target_classes.includes('mobile_app'))).toBe(true);
+  });
+
   it('MANUAL mode returns null (passthrough)', async () => {
     const rows = [makeRow({ rank: 1, name: 'Perplexity AI' })];
     const svc = createToolIntelligenceService({ client: makeClient(rows) });
@@ -226,6 +271,22 @@ describe('ToolIntelligenceService.refreshRankings', () => {
       performance_score: 5, cost_score: 5, speed_score: 5, reliability_score: 5,
     }));
     await expect(svc.refreshRankings('research', six)).rejects.toThrow(/at most 5/);
+  });
+
+  it('allows the seven canonical Build rows during refresh', async () => {
+    const client = makeClient();
+    const svc = createToolIntelligenceService({ client });
+    const seven = ['Codex', 'Claude Code', 'Cursor', 'Bolt', 'Windsurf', 'Replit', 'Base44'].map((name, index) => ({
+      rank: index + 1,
+      platform_name: name,
+      platform_type: 'code',
+      performance_score: 9,
+      cost_score: 8,
+      speed_score: 8,
+      reliability_score: 8,
+      target_classes: ['generic_url'],
+    }));
+    await expect(svc.refreshRankings('build', seven)).resolves.toBe(7);
   });
 
   it('clamps out-of-range scores into [0,10]', async () => {

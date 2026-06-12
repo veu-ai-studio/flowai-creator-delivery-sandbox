@@ -9,7 +9,7 @@
 //   - build:       commit + env metadata
 //   - supabase:    reachable + service-role key present
 //   - vercel_kv:   reachable (uses @vercel/kv if configured)
-//   - orchestra:   per-member adapter status (10 members per parking-lot
+//   - orchestra:   per-member adapter status (11 members per parking-lot
 //                  ENTRY 004; reports adapter-code-present + credentials-
 //                  present per member; does NOT exercise the member at
 //                  runtime — that's a deeper smoke probe)
@@ -37,12 +37,19 @@ const STATUSES = Object.freeze({
 
 // ─── Orchestra registry (per parking-lot ENTRY 004) ─────────────────────
 //
-// 10-member AI Orchestra. NOT yet canonical — pending SSOT amendment
+// 11-member AI Orchestra. NOT yet canonical — pending SSOT amendment
 // cycle disposition (see docs/SSOT_PARKING_LOT.md ENTRY 004 + 005).
 // Each entry declares the credential env vars the member needs and a
 // short adapter probe (presence check only, not a live call).
 
 const ORCHESTRA = Object.freeze([
+  {
+    id: 'codex',
+    label: 'Codex',
+    envs: ['OPENAI_API_KEY'],
+    adapterHint: 'src/lib/orchestra/codex.js code-patch/generate-from-scratch runtime adapter',
+    runtimeAdapter: true,
+  },
   {
     id: 'claude-code',
     label: 'Claude Code',

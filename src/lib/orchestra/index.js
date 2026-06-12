@@ -6,6 +6,7 @@
 // declares the requested capability, falls back to the canonical
 // claudeCode member when the preferred member is a stub.
 
+import * as codex      from './codex.js';
 import * as claudeCode from './claudeCode.js';
 import * as vercel     from './vercel.js';
 import * as browserless from './browserless.js';
@@ -13,6 +14,7 @@ import * as playwright from './playwright.js';
 import * as stubs       from './stubs.js';
 
 const MEMBERS = [
+  codex,
   claudeCode,
   vercel,
   browserless,
@@ -58,8 +60,8 @@ export async function dispatch(action, payload, opts = {}) {
     'analyze': claudeCode,
     'design': claudeCode,
     'score': claudeCode,
-    'code-patch': claudeCode,
-    'generate-from-scratch': claudeCode,
+    'code-patch': codex,
+    'generate-from-scratch': codex,
     'deploy': vercel,
     'crawl': browserless,
     'screenshot': browserless,
