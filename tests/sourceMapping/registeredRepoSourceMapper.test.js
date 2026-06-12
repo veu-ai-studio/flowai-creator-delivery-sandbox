@@ -47,6 +47,38 @@ describe('registeredRepoSourceMapper (U4)', () => {
     expect(mapped.confidence).toBeGreaterThanOrEqual(0.7);
   });
 
+  it('does not promote a fallback run url into observed route evidence', () => {
+    const mapped = mapFindingToSource({
+      repoFileList: FILES,
+      activeTargetUrl: 'https://saige-v2.vercel.app',
+      finding: {
+        id: 'f2-context',
+        category: 'network:http_404',
+        url: 'https://saigeplatform.com/settings',
+      },
+    });
+
+    expect(mapped.location).toBeNull();
+    expect(mapped.selectedFilePath).not.toBe('src/pages/Settings.jsx');
+    expect(mapped.confidence).toBeLessThan(0.7);
+  });
+
+  it('uses observed saige-v2 locations for active target source mapping', () => {
+    const mapped = mapFindingToSource({
+      repoFileList: FILES,
+      activeTargetUrl: 'https://saige-v2.vercel.app',
+      finding: {
+        id: 'f2-observed',
+        category: 'network:http_404',
+        location: 'https://saige-v2.vercel.app/settings',
+      },
+    });
+
+    expect(mapped.location).toBe('https://saige-v2.vercel.app/settings');
+    expect(mapped.selectedFilePath).toBe('src/pages/Settings.jsx');
+    expect(mapped.confidence).toBeGreaterThanOrEqual(0.7);
+  });
+
   it('maps contrast findings to real stylesheet candidates only', () => {
     const mapped = mapFindingToSource({
       repoFileList: FILES,

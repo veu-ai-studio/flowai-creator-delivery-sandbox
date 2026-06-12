@@ -2876,6 +2876,7 @@ export async function runOrchestration(args = {}) {
       sourceMapping = _mapFindingsToSource({
         findings: mappingFindings,
         repoFileList,
+        activeTargetUrl: currentUrl ?? initialUrl ?? upgradeTargets.upgradeUrl ?? null,
       });
       state.sourceMapping = sourceMapping;
       state.sourceMappings = sourceMapping?.mappings ?? [];
@@ -3067,6 +3068,7 @@ export async function runOrchestration(args = {}) {
             finding: issue,
             sourceMappings: state.sourceMappings,
             minimumConfidence: 0.7,
+            activeTargetUrl: currentUrl ?? initialUrl ?? upgradeTargets.upgradeUrl ?? null,
           });
           return mappedPath
             ? { ...issue, filePath: mappedPath, sourceMapped: true }
@@ -3375,7 +3377,22 @@ export async function runOrchestration(args = {}) {
           return summary;
         };
         for (const issue of prioritizedIssues) {
-          const filePath = issue.filePath || 'README.md';
+          const filePath = typeof issue.filePath === 'string' && issue.filePath.trim()
+            ? issue.filePath.trim()
+            : null;
+          if (!filePath) {
+            fixOutcomes.push({
+              filePath: null,
+              status: 'rejected',
+              category: issue.category ?? null,
+              severity: issue.severity ?? null,
+              title: issue.title ?? issue.issue ?? null,
+              code: 'SOURCE_MAPPING_REQUIRED',
+              reason: 'SOURCE_MAPPING_REQUIRED',
+              detail: 'No observed source-mapped app-layer file was available for this issue.',
+            });
+            continue;
+          }
           let current;
           try {
             current = await withTimeout(
@@ -3421,6 +3438,7 @@ export async function runOrchestration(args = {}) {
                       finding,
                       sourceMappings: state.sourceMappings,
                       minimumConfidence: 0.7,
+                      activeTargetUrl: currentUrl ?? initialUrl ?? upgradeTargets.upgradeUrl ?? null,
                     });
                     return mapped === filePath;
                   })
@@ -3933,6 +3951,7 @@ export async function runOrchestration(args = {}) {
                 finding,
                 sourceMappings: state.sourceMappings,
                 minimumConfidence: 0.7,
+                activeTargetUrl: currentUrl ?? initialUrl ?? upgradeTargets.upgradeUrl ?? null,
               });
               if (strategy === 'css-contrast-adjust') {
                 candidatePath = candidatePath ?? (repoFileList ?? []).find((p) => /\.css$/i.test(p)) ?? 'index.html';
@@ -5906,7 +5925,11 @@ export async function prioritizeIssuesWithClaude({ preScore, product, suppliedIs
   return arr.slice(0, 5).map((it, idx) => ({
     severity: it.severity || 'medium',
     title: it.title || `Fix issue ${idx + 1}`,
-    filePath: typeof it.filePath === 'string' && it.filePath ? it.filePath : 'README.md',
+    filePath: typeof it.filePath === 'string' && it.filePath ? it.filePath : null,
+    category: it.category || null,
+    location: it.location || null,
+    failingUrl: it.failingUrl || null,
+    pageUrl: it.pageUrl || it.location || null,
     issue: it.issue || it.description || '',
     fix: it.fix || '',
     description: it.issue || '',
@@ -6162,14 +6185,28 @@ function isGenerateFixTimeoutError(error) {
     || /GENERATE_FIX_TIMEOUT/i.test(message);
 }
 
+function findingUrlFieldIsObserved(finding, field) {
+  if (['failingUrl', 'pageUrl', 'locationUrl', 'observedUrl', 'observed_url'].includes(field)) {
+    return true;
+  }
+  if (field === 'location') return /^https?:\/\//i.test(String(finding?.location ?? ''));
+  if (field !== 'url') return false;
+  return finding?.urlObserved === true
+    || finding?.urlIsObserved === true
+    || finding?.observedUrlField === 'url'
+    || finding?.urlRole === 'observed'
+    || finding?.evidenceRole === 'observed';
+}
+
 function getObservedFindingUrl(finding = {}) {
   if (!finding || typeof finding !== 'object') return null;
-  return finding.failingUrl
-    || finding.pageUrl
-    || finding.url
-    || finding.locationUrl
-    || (/^https?:\/\//i.test(String(finding.location ?? '')) ? finding.location : null)
-    || null;
+  for (const field of ['failingUrl', 'pageUrl', 'locationUrl', 'observedUrl', 'observed_url', 'location', 'url']) {
+    const value = finding[field];
+    if (typeof value === 'string' && value.trim() && findingUrlFieldIsObserved(finding, field)) {
+      return value;
+    }
+  }
+  return null;
 }
 
 function enrichFindingUrlContext(finding = {}) {

@@ -41,11 +41,63 @@ const CATEGORY_HINTS = Object.freeze({
   'network-failure': 'route',
 });
 
+const OBSERVED_URL_FIELDS = Object.freeze([
+  'failingUrl',
+  'pageUrl',
+  'locationUrl',
+  'observedUrl',
+  'observed_url',
+  'location',
+]);
+
 function cleanToken(value) {
   return String(value ?? '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+function hostnameForUrl(value) {
+  if (typeof value !== 'string' || !/^https?:\/\//i.test(value.trim())) return null;
+  try {
+    return new URL(value.trim()).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function hostnamesFromOptions({ activeTargetUrl, observedHostnames } = {}) {
+  const hosts = new Set();
+  const add = (value) => {
+    const host = hostnameForUrl(value);
+    if (host) hosts.add(host);
+  };
+  add(activeTargetUrl);
+  if (Array.isArray(observedHostnames)) {
+    for (const host of observedHostnames) {
+      if (typeof host === 'string' && host.trim()) {
+        const normalized = host.includes('://') ? hostnameForUrl(host) : host.trim().toLowerCase();
+        if (normalized) hosts.add(normalized);
+      }
+    }
+  }
+  return hosts;
+}
+
+function matchesActiveHost(value, activeHosts) {
+  if (!(activeHosts instanceof Set) || activeHosts.size === 0) return true;
+  const host = hostnameForUrl(value);
+  return !host || activeHosts.has(host);
+}
+
+function urlFieldIsObserved(finding, field) {
+  if (OBSERVED_URL_FIELDS.includes(field)) return true;
+  if (field !== 'url') return false;
+  return finding?.urlObserved === true
+    || finding?.urlIsObserved === true
+    || finding?.observedUrlField === 'url'
+    || finding?.urlRole === 'observed'
+    || finding?.evidenceRole === 'observed';
 }
 
 function lastPathToken(value) {
@@ -64,17 +116,48 @@ function lastPathToken(value) {
   }
 }
 
-function routeTokensFromFinding(finding) {
+function addRouteTokenFromValue(out, value, activeHosts) {
+  if (typeof value !== 'string' || !value.trim()) return;
+  if (!matchesActiveHost(value, activeHosts)) return;
+  const token = lastPathToken(value);
+  if (token && token !== 'http' && token !== 'https') out.add(token);
+}
+
+function observedLocationForFinding(finding, options = {}) {
+  const activeHosts = hostnamesFromOptions(options);
+  for (const field of OBSERVED_URL_FIELDS) {
+    const value = finding?.[field];
+    if (typeof value === 'string' && value.trim() && matchesActiveHost(value, activeHosts)) {
+      return value;
+    }
+  }
+  if (urlFieldIsObserved(finding, 'url')) {
+    const value = finding?.url;
+    if (typeof value === 'string' && value.trim() && matchesActiveHost(value, activeHosts)) {
+      return value;
+    }
+  }
+  return null;
+}
+
+function routeTokensFromFinding(finding, options = {}) {
   const out = new Set();
-  for (const field of ['location', 'url', 'pageUrl', 'target', 'selector', 'route']) {
-    const token = lastPathToken(finding?.[field]);
-    if (token && token !== 'http' && token !== 'https') out.add(token);
+  const activeHosts = hostnamesFromOptions(options);
+  for (const field of [...OBSERVED_URL_FIELDS, 'url']) {
+    if (urlFieldIsObserved(finding, field)) {
+      addRouteTokenFromValue(out, finding?.[field], activeHosts);
+    }
+  }
+  for (const field of ['target', 'selector', 'route']) {
+    addRouteTokenFromValue(out, finding?.[field], activeHosts);
   }
   for (const field of ['message', 'description', 'evidence']) {
     const text = typeof finding?.[field] === 'string' ? finding[field] : '';
-    for (const m of text.matchAll(/\/([a-z0-9][a-z0-9._-]{1,40})(?:[/?#\s"')]|$)/gi)) {
-      const token = cleanToken(m[1].replace(/\.[a-z0-9]+$/i, ''));
-      if (token) out.add(token);
+    for (const m of text.matchAll(/https?:\/\/[^\s"')]+|\/[a-z0-9][a-z0-9._/-]{1,80}(?:[/?#\s"')]|$)/gi)) {
+      const raw = m[0].trim().replace(/[.,;]+$/, '');
+      if (!matchesActiveHost(raw, activeHosts)) continue;
+      const token = lastPathToken(raw);
+      if (token && token !== 'http' && token !== 'https') out.add(token);
     }
   }
   return [...out].filter((t) => t.length >= 2);
@@ -93,7 +176,7 @@ function addCandidate(candidates, filePath, score, reason, signals = []) {
   }
 }
 
-export function mapFindingToSource({ finding, repoFileList } = {}) {
+export function mapFindingToSource({ finding, repoFileList, activeTargetUrl, observedHostnames } = {}) {
   const files = Array.isArray(repoFileList)
     ? repoFileList.filter((p) => typeof p === 'string' && SOURCE_EXT_RE.test(p))
     : [];
@@ -138,7 +221,7 @@ export function mapFindingToSource({ finding, repoFileList } = {}) {
   }
 
   if (hint === 'route') {
-    const tokens = routeTokensFromFinding(finding);
+    const tokens = routeTokensFromFinding(finding, { activeTargetUrl, observedHostnames });
     for (const token of tokens) {
       for (const f of files.filter((p) => ROUTE_SOURCE_RE.test(p))) {
         const lower = f.toLowerCase();
@@ -183,14 +266,25 @@ export function mapFindingToSource({ finding, repoFileList } = {}) {
     findingId: finding?.id ?? null,
     category: finding?.category ?? null,
     severity: finding?.severity ?? null,
-    location: finding?.location ?? finding?.url ?? null,
+    location: observedLocationForFinding(finding, { activeTargetUrl, observedHostnames }),
     mappingStrategyVersion: 'u4.1',
   });
 }
 
-export function mapFindingsToSource({ findings, repoFileList, maxFindings = 50 } = {}) {
+export function mapFindingsToSource({
+  findings,
+  repoFileList,
+  maxFindings = 50,
+  activeTargetUrl,
+  observedHostnames,
+} = {}) {
   const list = Array.isArray(findings) ? findings.slice(0, maxFindings) : [];
-  const mappings = list.map((finding) => mapFindingToSource({ finding, repoFileList }));
+  const mappings = list.map((finding) => mapFindingToSource({
+    finding,
+    repoFileList,
+    activeTargetUrl,
+    observedHostnames,
+  }));
   const mapped = mappings.filter((m) => m.mapped);
   const highConfidence = mapped.filter((m) => m.confidence >= 0.7);
   return Object.freeze({
@@ -205,14 +299,22 @@ export function mapFindingsToSource({ findings, repoFileList, maxFindings = 50 }
   });
 }
 
-export function sourcePathForFinding({ finding, sourceMappings, minimumConfidence = 0.7 } = {}) {
+export function sourcePathForFinding({
+  finding,
+  sourceMappings,
+  minimumConfidence = 0.7,
+  activeTargetUrl,
+  observedHostnames,
+} = {}) {
   if (!finding || !Array.isArray(sourceMappings)) return null;
   const id = finding.id ?? null;
   const category = finding.category ?? null;
-  const location = finding.location ?? finding.url ?? null;
-  const match = sourceMappings.find((m) =>
-    (id && m.findingId === id)
-    || (m.category === category && (m.location ?? null) === location));
+  const location = observedLocationForFinding(finding, { activeTargetUrl, observedHostnames });
+  const match = sourceMappings.find((m) => {
+    if (id && m.findingId === id) return true;
+    if (!location) return false;
+    return m.category === category && (m.location ?? null) === location;
+  });
   if (!match || !match.mapped || match.confidence < minimumConfidence) return null;
   return match.selectedFilePath;
 }
@@ -221,6 +323,9 @@ export const __internals = Object.freeze({
   cleanToken,
   lastPathToken,
   routeTokensFromFinding,
+  observedLocationForFinding,
+  urlFieldIsObserved,
+  hostnamesFromOptions,
   basenameToken,
   CATEGORY_HINTS,
   ROOT_FALLBACKS,

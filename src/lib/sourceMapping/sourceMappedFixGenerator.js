@@ -14,13 +14,35 @@ import {
 const AUTHORITY = 'recommend_only';
 const LOW_DEGRADED_REASON = 'source_map_incomplete';
 const LOW_DEGRADED_FIX = 'inspect registered repo/source map before patching';
+const OBSERVED_URL_FIELDS = Object.freeze([
+  'failingUrl',
+  'pageUrl',
+  'locationUrl',
+  'observedUrl',
+  'observed_url',
+  'location',
+]);
 
 function findingKey(finding) {
   return finding?.id ?? finding?.findingId ?? null;
 }
 
+function urlFieldIsObserved(finding, field) {
+  if (OBSERVED_URL_FIELDS.includes(field)) return true;
+  if (field !== 'url') return false;
+  return finding?.urlObserved === true
+    || finding?.urlIsObserved === true
+    || finding?.observedUrlField === 'url'
+    || finding?.urlRole === 'observed'
+    || finding?.evidenceRole === 'observed';
+}
+
 function findingLocation(finding) {
-  return finding?.location ?? finding?.url ?? finding?.pageUrl ?? null;
+  for (const field of OBSERVED_URL_FIELDS) {
+    const value = finding?.[field];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+  return urlFieldIsObserved(finding, 'url') ? (finding?.url ?? null) : null;
 }
 
 function getMappings(sourceMapping) {
@@ -47,8 +69,8 @@ function findMappingForFinding(finding, sourceMapping) {
   const location = findingLocation(finding);
   return mappings.find((m) =>
     (id && m.findingId === id)
-    || (m.category === category && (m.location ?? null) === location)
-    || (m.category === category && !location));
+    || (location && m.category === category && (m.location ?? null) === location)
+    || (!location && m.category === category && !m.location));
 }
 
 function selectedPathForMapping(mapping) {
