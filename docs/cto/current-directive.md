@@ -1,10 +1,16 @@
 # CTO Current Directive
 
-Last updated: 2026-06-11
+Last updated: 2026-06-12
 
 ## Active Priority
 
-Move FlowAI from constrained SAIGE runtime proof into the next unsupported SSOT gap without inflating evidence. The active gate is CD/CR review of the CA18 arbitrary URL / universal boundary dispatch packet; CB is not cleared to build until W04 issues explicit `CLEAR TO BUILD`.
+Move FlowAI toward the first fully functional end-to-end forge run with a deployed URL without inflating evidence. Current active technical gates:
+
+1. Merge and prove the Path 2 platform-boundary-chain repair after CD/CR clearance.
+2. Add Codex to the Tool Intelligence Marketplace as the rank-1 Step 3 Build tool, with callable state only when a real adapter exists.
+3. Continue the four-path proof strategy with Step 3 Build evidence explicitly recording the TIM candidate list and selected Build member.
+
+The Codex TIM amendment is documented in `docs/cto/tim-codex-build-tool-amendment-plan-20260612.md` and dispatched in `docs/cto/cb-tim-codex-build-tool-dispatch-20260612.md`.
 
 ## Current Technical Reality
 
