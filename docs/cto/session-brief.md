@@ -65,7 +65,7 @@ Remaining gaps:
 
 ## Path 2 - Production: SAIGE Migrated URL
 
-Status: BLOCKED BY PLATFORM BOUNDARY CHAIN.
+Status: RUNTIME PATCH IN REVIEW; MERGE BLOCKED BY CR RE-REVIEW.
 
 Evidence:
 
@@ -89,10 +89,13 @@ CTO interpretation:
 
 Action taken:
 
-- CB dispatch committed to `docs/cto-path2-boundary-dispatch-20260612`.
-- Dispatch file: `docs/cto/cb-path2-platform-boundary-chain-dispatch-20260612.md`.
-- CB worker `Maxwell` is running the build assignment.
-- As of this brief update, `fix/path2-platform-boundary-chain` has not appeared on origin yet.
+- Initial CB dispatch committed to `docs/cto/cb-path2-platform-boundary-chain-dispatch-20260612.md`.
+- Runtime branch `fix/path2-platform-boundary-chain` reached `4290b39312e69087be8cd3a09bb3a68efef4802a`.
+- CD returned PASS-WITH-FINDINGS; findings are tracked as non-blocking.
+- CR blocked `4290b39` for id-only active-host bypasses.
+- CB patched those findings at `455c2d24f85cdabf723a2b6cc3bde323a97437e9`.
+- CR re-review still BLOCKED merge because `sourcePathForFinding` permits id-only mapping under active-host scope when no observed location exists, while proposal generation rejects that same case.
+- Second CB patch dispatch is now recorded in `docs/cto/cb-path2-boundary-chain-cr-rereview-patch-dispatch-20260612.md`.
 
 ## Path 3 - Fresh Build: VEU AI Studio Website
 
