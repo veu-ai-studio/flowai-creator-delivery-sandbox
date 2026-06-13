@@ -3,7 +3,7 @@
 Date: 2026-06-13
 Owner: CTO
 Path: Migration - SAIGE
-Status: HTTP-CONFIRMED PRODUCTION URL; CT2 BROWSER ACCEPTANCE PENDING
+Status: CT2-ACCEPTED PRODUCTION URL; VERIFIED PROMOTION NOT APPLIED
 
 ## Result
 
@@ -26,19 +26,24 @@ PASS:
 - `curl -I https://saige-v2.vercel.app`: `200 OK`.
 - `curl -L https://saige-v2.vercel.app`: serves `title=SAIGE`, `/assets/index-D5JW4xEN.js`, `/assets/index-CA9S5vrn.css`, and root node.
 - `curl -I https://saige-v2.vercel.app/manifest.json`: `200 OK`.
+- CT2 browser acceptance: PASS.
+- CT2 observed browser-rendered app shell with top navigation, Home selected, Ask SAIGE, Welcome Local hero, agent counts, filters, and agent cards.
+- No Vercel Deployment Protection/auth wall observed on the public alias.
 
 FAIL / pending:
 
 - `npm run typecheck`: FAIL, 279 generated-JS typing errors remain after central migration repairs.
-- CTO in-app browser check: unavailable; browser bridge failed during setup.
-- CT2 independent browser acceptance: dispatched and pending.
+- No matrixArtifact VERIFIED promotion has been applied.
+
+## CT2 Evidence
+
+- Result file: `docs/cto/ct2-saige-production-acceptance-2026-06-13.md`
+- Screenshot: `docs/cto/ct2-saige-production-2026-06-13.png`
 
 ## Honesty Boundary
 
-This evidence proves that the production alias is public and serving the SAIGE app shell by HTTP. It does not justify VERIFIED movement yet because the standing rule requires CT2 or `/api/health` confirmation before claiming a deployed URL as verified. SAIGE is a static app and has no `/api/health`, so CT2 browser confirmation is the remaining acceptance gate.
+This evidence proves a browser-rendered deployed URL for Path 1. It supports a separate claim-promotion packet, but CTO did not edit `matrixArtifact.json` because standing repo rules require explicit clearance for the full VERIFIED promotion process.
 
-## Notes
-
-The immutable deployment hostname returned Vercel Deployment Protection, while the production alias returned public `200 OK`. The Victor-facing URL should therefore be the alias:
+## Victor-Facing URL
 
 - `https://saige-v2.vercel.app`
