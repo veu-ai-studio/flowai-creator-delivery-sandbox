@@ -897,6 +897,12 @@ export async function runOrchestration(args = {}) {
   const runId = args.runId || randomUUID();
   const supabase = args.supabase ?? null;
   const environment = args.environment ?? 'prd';
+  const flowHubAxes = Object.freeze({
+    structuralLayer: typeof args.structuralLayer === 'string' ? args.structuralLayer : null,
+    operationalMode: typeof args.operationalMode === 'string' ? args.operationalMode : mode,
+    analysisDepth: typeof args.analysisDepth === 'string' ? args.analysisDepth : null,
+    flowHubPath: typeof args.flowHubPath === 'string' ? args.flowHubPath : null,
+  });
   const inputContext = normalizeFlowAIInput(args.input ?? {}, { url: args.url, mode });
   const inputSummary = summarizeFlowAIInputContext(inputContext);
   const userObjectives = parseUserObjectives(inputContext.description);
@@ -1030,8 +1036,9 @@ export async function runOrchestration(args = {}) {
   const state = new OrchestrationState({ mode, maxIterations, gtmTarget });
   const ssotVocabulary = buildSsotVocabularyContext({
     orchestraMode: state.mode,
-    systemOperationLevel: args.systemOperationLevel ?? args.agenticMode ?? null,
+    systemOperationLevel: args.systemOperationLevel ?? args.structuralLayer ?? args.agenticMode ?? null,
   });
+  state.flowHubAxes = flowHubAxes;
   state.operatorMode = operatorMode;
   state.operatorContext = Object.freeze({
     operator_mode: operatorMode,
@@ -1161,6 +1168,18 @@ export async function runOrchestration(args = {}) {
       inputSummary,
       inputStepMatrix,
       userObjectives,
+    },
+    mode: state.mode,
+  }));
+
+  emit(makeStepLog({
+    iteration: 0, step: 0, status: 'complete',
+    tool: 'Flow Hub axis envelope',
+    why: 'Flow Hub axes are normalized before execution; structural layer sets checkpoint ceiling and analysis depth sets crawl/scoring effort',
+    result: {
+      kind: 'flow_hub_axes.v1',
+      ...flowHubAxes,
+      effortProfile,
     },
     mode: state.mode,
   }));
@@ -5724,6 +5743,7 @@ export async function runOrchestration(args = {}) {
     registerCTA: !!state.universalMode,
     operatorMode: state.operatorMode ?? null,
     operatorRepoAccess: state.operatorRepoAccess ?? null,
+    flowHubAxes: state.flowHubAxes ?? flowHubAxes,
     findingsCount,
     findingsSeverity,
     deepBrowserAnalysis: state.deepBrowserAnalysis ?? null,

@@ -108,9 +108,12 @@ import RequireAuth from '@/components/RequireAuth';
 function LegacyFlowHubRedirect() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const destination = params.get('mode') === 'migration'
+  const requestedMode = params.get('mode');
+  const destination = requestedMode === 'migration'
     ? '/flow-hub/migration'
-    : '/flow-hub/production';
+    : requestedMode === 'fresh_build'
+      ? '/flow-hub/fresh-build'
+      : '/flow-hub/production';
   return <Navigate to={destination} replace />;
 }
 
@@ -148,6 +151,7 @@ const AuthenticatedApp = () => {
         <Route path="/flow-hub" element={<Navigate to="/flow-hub/production" replace />} />
         <Route path="/flow-hub/production" element={<LandingPage />} />
         <Route path="/flow-hub/migration" element={<LandingPage />} />
+        <Route path="/flow-hub/fresh-build" element={<LandingPage />} />
         <Route path="/flowai" element={<FlowAIDashboard />} />
         <Route path="/forge/research" element={<ForgeResearchForm />} />
         <Route path="/forge/design" element={<ForgeDesignForm />} />
