@@ -147,6 +147,7 @@ SAIGE product-card score patch:
 
 - Branch: `fix/portfolio-product-ssot-cards`.
 - Evidence: `docs/cto/saige-product-card-score-fix-evidence-20260614.md`.
+- CTO review: `docs/cto/cto-review-saige-product-card-score-20260614.md` with `PASS-WITH-FINDINGS`; does not replace CD/CR.
 - CD review prompt: `docs/cto/cd-review-saige-product-card-score-prompt-20260614.md`.
 - CR review prompt: `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`.
 - CT2 post-deploy dispatch: `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`.
@@ -196,6 +197,7 @@ Universal input and delivery architecture:
 - Universal Delivery Workspace CTO review note: `docs/cto/cto-review-universal-delivery-workspace-20260614.md`.
 - Universal Delivery Workspace gate status: `docs/cto/universal-delivery-review-gate-status-20260614.md`.
 - SAIGE product-card score evidence: `docs/cto/saige-product-card-score-fix-evidence-20260614.md`.
+- SAIGE product-card CTO review: `docs/cto/cto-review-saige-product-card-score-20260614.md`.
 - SAIGE product-card CD review prompt: `docs/cto/cd-review-saige-product-card-score-prompt-20260614.md`.
 - SAIGE product-card CR review prompt: `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`.
 - SAIGE product-card CT2 post-deploy dispatch: `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`.
