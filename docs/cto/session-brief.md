@@ -97,6 +97,17 @@ Finding:
 - The next patch should make a Clerk-authenticated SPA session attach a bearer token to `/api/me`.
 - CT2 should prove an app-origin authenticated fetch or app state, not only direct address-bar navigation to `/api/me`.
 
+CB build status:
+
+- Branch: `fix/clerk-session-propagation`
+- HEAD: `9264ce3ed08d6adbde6b0ce37c4a84e075c7560b`
+- Commit: `wire clerk bearer session propagation`
+- Files changed: `src/App.jsx`, `src/lib/AuthContext.jsx`, `tests/clerk-session-propagation.test.js`, `docs/cto/cb-clerk-session-propagation-evidence-20260614.md`
+- CB reported focused tests PASS, `npm run build:preflight` PASS, `npm run lint` PASS, and `git diff --check` PASS.
+- Step 5 prompts are filed:
+  - `docs/cto/cd-review-clerk-session-propagation-prompt-20260614.md`
+  - `docs/cto/cr-review-clerk-session-propagation-prompt-20260614.md`
+
 ## VERIFIED Promotion State
 
 No VERIFIED movement has been applied.
@@ -111,6 +122,7 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Dispatch CB using `docs/cto/cb-clerk-session-propagation-dispatch-20260614.md`.
-4. After CB pushes, dispatch CD and CR Step 5 review through repo prompts.
-5. Do not move VERIFIED without W04/CEO clearance.
+3. Wait for CD and CR Step 5 results on `fix/clerk-session-propagation`.
+4. If both PASS, merge, deploy, promote, and dispatch CT2 app-origin Clerk session proof.
+5. If either BLOCKS, send same-branch patch request to CB.
+6. Do not move VERIFIED without W04/CEO clearance.
