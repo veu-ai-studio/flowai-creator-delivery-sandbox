@@ -13,14 +13,15 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 - Last production identity verified before this directive refresh: `7bc95bb36a573cc94528d08c09d9de6aac9d2d01`.
 - Production: `https://flowai-dun.vercel.app`.
 - Production `/api/health` was verified at that identity to report branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
-- Current `main` is ahead at docs-only commit `e844f9b`; production is behind only by docs coordination commits. Verify `/api/health` again before runtime claims.
+- Current `main` is ahead at docs-only commit `40830d6` before the latest proof evidence commit; production is behind only by docs coordination commits. Verify `/api/health` again before runtime claims.
 - Active matrixArtifact state remains `VERIFIED=0`, `WIRED=0`; no matrixArtifact edit has been made.
 - Highest matrixArtifact status remains `CURRENT` on 2 of 39 entries.
 - Deployed URL evidence exists for 2 of 3 Flow Hub paths:
   - Path 1 Migration: CT2-confirmed public URL `https://saige-v2.vercel.app`.
   - Path 3 Fresh Build: CT2-confirmed public URL `https://flowai-fresh-public-veusite.vercel.app`.
   - Path 2 Production: no CT2-confirmed deployed URL yet.
-- Latest Path 2 reruns: SAIGE v2 ended honestly with `HONEST_GATE_REFUSAL_ALREADY_PASSING` at score `98`; RelTwin scored `71.5` but failed before branch creation with `GITHUB_AUTH_FAILED` and unsafe same original/upgrade repo resolution.
+- Latest Path 2 reruns: SAIGE v2 ended honestly with `HONEST_GATE_REFUSAL_ALREADY_PASSING` at score `98`; RelTwin is the active below-target Production candidate.
+- Latest constrained RelTwin Production proof after Anthropic credit restoration: pre-fix scoring PASS at score `69`, step 5 to step 6 handoff observed, branch creation not observed, preview URL not produced, terminal stop `STEP_8` `GITHUB_AUTH_FAILED` from GitHub App PEM signing failure. Unsafe same original/upgrade repo resolution remains visible behind that gate.
 - Path 2 token/upgrade-target runtime fix is pushed at branch `fix/path2-production-token-upgrade-target`, commit `5a66bee`, with CD/CR review prompts committed to that branch.
 - Four-axis UI and run propagation are CT2-confirmed at the evidence level: Structural Layer, Operational Mode, Analysis Depth, and Flow Hub Path are visible, independently selectable, and appear in live run payload/log evidence.
 - Clerk ticket/session is CT2-confirmed at the evidence level: app-owned `/sign-in-token` flow lands on Flow Hub Production, scrubs the ticket, establishes a signed-in Clerk app session, and app-origin `/api/me` returns authenticated Clerk state. This does not prove `AUTH_REQUIRED=true`, paid-user onboarding, or organization enforcement.
@@ -45,6 +46,7 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 - Path 3 CT2 acceptance: `docs/cto/ct2-path3-publictarget-acceptance-result-20260614.md`.
 - Acceleration CT2 sweep: `docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md`.
 - Path 2 rerun result: `docs/cto/path2-production-rerun-result-20260614.md`.
+- Latest RelTwin Production proof result: `docs/cto/production-path-proof-reltwin-result-20260614.md`.
 - CB Path 2 dispatch: `docs/cto/cb-path2-production-token-and-upgrade-target-dispatch-20260614.md`.
 - Path 2 runtime fix evidence on branch `fix/path2-production-token-upgrade-target`: `docs/cto/path2-token-upgrade-target-fix-evidence-20260614.md`.
 

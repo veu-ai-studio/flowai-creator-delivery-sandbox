@@ -17,14 +17,14 @@ The Path 3 result is the strongest proof so far: FlowAI generated a 342-file pla
 
 No VERIFIED movement has been applied. The batch packet is prepared and now needs W04/CEO exact row authorization before any `matrixArtifact` edit. The stale batch-packet filename now points to the current acceleration packet so there is only one active promotion packet.
 
-Path 2 was rerun after the Fresh Build milestone. SAIGE v2 ended with an honest no-mutation result because it scored `98`; RelTwin is the better below-target candidate but currently blocks on GitHub token acquisition and unsafe upgrade-target resolution. A runtime fix branch for that chain is now pushed for CD/CR review.
+Path 2 was rerun after the Fresh Build milestone. SAIGE v2 ended with an honest no-mutation result because it scored `98`; RelTwin is the better below-target candidate. After Anthropic credits were restored, the constrained RelTwin Production proof passed pre-fix scoring and reached step 6, then blocked before branch creation on GitHub credential acquisition. Unsafe same-repo upgrade-target resolution is also visible behind that gate. A runtime fix branch for that chain is now pushed for CD/CR review.
 
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
 - Last production identity verified after the packet refresh: `7bc95bb36a573cc94528d08c09d9de6aac9d2d01`.
 - `/api/health` reports branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
-- `main` is now ahead at docs-only commit `77fa518fee1960bfe0e804d11db3da1e7404ec11`; production runtime is therefore behind only by a docs coordination commit. Do not use `77fa518` as runtime evidence until production is redeployed/promoted to that SHA.
+- `main` is now ahead at docs-only commit `40830d6` before this proof evidence commit; production runtime is therefore behind only by docs coordination commits. Do not use docs-only commits as runtime evidence until production is redeployed/promoted to that SHA.
 
 ## Completed Evidence
 
@@ -76,6 +76,18 @@ Path 2 Production reruns:
 - Evidence: `docs/cto/path2-production-rerun-result-20260614.md`.
 - CB dispatch: `docs/cto/cb-path2-production-token-and-upgrade-target-dispatch-20260614.md`.
 
+Constrained Production proof after Anthropic credit restoration:
+
+- Target: `https://reltwin.com`.
+- Run ID: `cto-production-proof-reltwin-20260614-1425`.
+- Max iterations: `1`.
+- Pre-fix scoring: PASS, baseline/current score `69`, handoff observed from step 5 to step 6.
+- Branch creation: not observed.
+- Preview URL: not produced.
+- Terminal stop: `STEP_8`, `GITHUB_AUTH_FAILED`, GitHub App PEM signing failure.
+- Safety observation: `writesOriginalRepo:true` and `originalReadOnly:true`, matching the pending Path 2 fix branch risk chain.
+- Evidence: `docs/cto/production-path-proof-reltwin-result-20260614.md`.
+
 Path 2 token/upgrade-target patch:
 
 - Branch: `fix/path2-production-token-upgrade-target`.
@@ -107,7 +119,7 @@ No matrixArtifact edit has been made. W04/CEO must authorize exact row movement 
 
 1. Submit the row-mapping proposal to W04/CEO with the acceleration packet.
 2. Await CD/CR review on `fix/path2-production-token-upgrade-target`; if PASS, merge and redeploy/promote production.
-3. Rerun RelTwin Path 2 after the token/upgrade-target fix lands.
+3. Rerun RelTwin Path 2 after the token/upgrade-target fix lands; the target proof is branch creation and preview deployment, since pre-fix scoring is now proven past the prior blocker.
 4. Resolve or formally quarantine the `/api/test-claude` smoke boundary so full preflight no longer obscures branch health.
 5. Keep accumulating CT2-confirmed evidence, but do not move VERIFIED until W04/CEO authorizes the exact rows.
 

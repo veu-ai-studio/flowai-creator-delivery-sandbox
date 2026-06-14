@@ -1,0 +1,11 @@
+{
+  "endpoint": "https://flowai-dun.vercel.app/api/agent/3/execute",
+  "productScope": "reltwin",
+  "request": {
+    "gtmTarget": 95,
+    "url": "https://reltwin.com",
+    "maxIterations": 1,
+    "runId": "cto-production-proof-reltwin-20260614-1425",
+    "mode": "auto"
+  }
+}
