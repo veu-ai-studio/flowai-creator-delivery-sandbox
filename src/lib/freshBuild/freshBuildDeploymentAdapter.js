@@ -315,26 +315,6 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
       const baseSha = baseRef?.object?.sha;
       if (!baseSha) throw makeGitHubError('GITHUB_WRITE_FAILED', 'Base branch ref did not include a commit sha');
 
-      const blobs = [];
-      for (const file of files) {
-        const blob = await githubRequest({
-          fetchImpl,
-          token,
-          method: 'POST',
-          path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/blobs`,
-          body: {
-            content: file.content,
-            encoding: 'utf-8',
-          },
-        });
-        blobs.push({
-          path: file.path,
-          mode: '100644',
-          type: 'blob',
-          sha: blob.sha,
-        });
-      }
-
       const tree = await githubRequest({
         fetchImpl,
         token,
@@ -342,7 +322,12 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
         path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees`,
         body: {
           base_tree: baseSha,
-          tree: blobs,
+          tree: files.map((file) => ({
+            path: file.path,
+            mode: '100644',
+            type: 'blob',
+            content: file.content,
+          })),
         },
       });
 
