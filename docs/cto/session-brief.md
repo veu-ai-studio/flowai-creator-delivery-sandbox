@@ -23,6 +23,8 @@ W04 then identified the larger infrastructure gap: FlowAI cannot require preconf
 
 Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
 
+Latest CTO runtime branch: `fix/portfolio-product-ssot-cards` addresses the remaining SAIGE visual acceptance blocker by making `/api/products` surface ProductSSOT-backed product cards when the legacy `products` table is empty. Full preflight passed. This is not CT2-accepted until merged, promoted, and browser-confirmed.
+
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
@@ -141,6 +143,18 @@ CTO visual follow-up on the three missing SAIGE checks:
 - BLOCK: SAIGE product card with a numeric score was not visible on `/portfolio` or `/dashboard`; both rendered as empty/no registered products in the observed browser context.
 - Additional browser diagnostic: page error `g.filter is not a function` was observed, matching the known dashboard regression family.
 
+SAIGE product-card score patch:
+
+- Branch: `fix/portfolio-product-ssot-cards`.
+- Evidence: `docs/cto/saige-product-card-score-fix-evidence-20260614.md`.
+- CD review prompt: `docs/cto/cd-review-saige-product-card-score-prompt-20260614.md`.
+- CR review prompt: `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`.
+- CT2 post-deploy dispatch: `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`.
+- Patch scope: `/api/products` now prefers `products` rows but falls back to `product_registry` + `product_ssot`; `/dashboard` reads product cards from `/api/products`; `/products` consumes `{ items: [...] }` correctly and normalizes ProductSSOT-backed scores.
+- Focused verification: `node --check` for `api/_lib/db.js` and `api/products.js` PASS; focused Vitest PASS, 4 files / 51 tests.
+- Full verification: `npm run preflight` PASS, lint/build/preflight PASS, 237 files / 3741 tests passed / 3 skipped, lane discipline PASS, SSOT traceability PASS, matrix generation PASS.
+- Boundary: no canonical docs, ProductSSOT data, matrixArtifact evidence status, scoring logic, forge behavior, deployment logic, or VERIFIED movement changed.
+
 Universal input and delivery architecture:
 
 - Branch: `docs/cto-auto-repo-provisioning-plan`.
@@ -181,6 +195,10 @@ Universal input and delivery architecture:
 - Universal Delivery Workspace CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
 - Universal Delivery Workspace CTO review note: `docs/cto/cto-review-universal-delivery-workspace-20260614.md`.
 - Universal Delivery Workspace gate status: `docs/cto/universal-delivery-review-gate-status-20260614.md`.
+- SAIGE product-card score evidence: `docs/cto/saige-product-card-score-fix-evidence-20260614.md`.
+- SAIGE product-card CD review prompt: `docs/cto/cd-review-saige-product-card-score-prompt-20260614.md`.
+- SAIGE product-card CR review prompt: `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`.
+- SAIGE product-card CT2 post-deploy dispatch: `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`.
 
 W04/CEO authorized applying the batch VERIFIED packet. CTO applied the narrow exact-row set in `src/lib/orchestratorFramework/matrixArtifact.json`: `10 VERIFIED`, `0` missing evidence fields. Evidence note: `docs/cto/verified-promotion-applied-20260614.md`.
 
@@ -207,17 +225,17 @@ Path 4 URL selection:
 - Type 2 description-only cannot enter the deployed production construction route without a URL. The Universal Delivery Workspace branch adds this path pending review, merge, deploy, and CT2 proof.
 - Type 3 multi-URL synthesis is not wired into the active Flow Hub forge as a deployed URL path.
 - Full browser acceptance is not proven. CT2 reported one SAIGE background run completed all 8 user-facing steps and persisted ProductSSOT, but three visual criteria remain unverified.
-- SAIGE visual acceptance still blocks on product-card score visibility. CTO closed two of the three visual checks, but `/portfolio` and `/dashboard` did not show a SAIGE numeric score card in the observed production context.
+- SAIGE visual acceptance still blocks in production on product-card score visibility. CTO has a runtime branch ready to fix the data path, but CT2 must confirm after merge/promotion.
 - Codex live Build invocation is not proven.
 - `/api/test-claude` live smoke returns HTTP 500 and blocks full `npm run preflight` for otherwise scoped passing branches.
 - Path 4 three-URL synthesis selection is documented; execution still depends on the active run target supporting multi-URL synthesis honestly.
 
 ## Next Starting Point
 
-1. Collect CD, CR, and CB2 verdicts for `feature/universal-delivery-workspace` at `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3` against base `f9c570601febae842d02e12faea0e5fce4dcf6be`; CTO fallback full-preflight evidence is available but does not clear the gate by itself.
-2. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
-3. If Universal Delivery passes review, merge, promote production, and dispatch CT2 for a Type 2 description-only Fresh Build URL proof.
-4. Resolve whether SAIGE product-card score visibility is a data-path bug or an authenticated/org-scoped acceptance-context requirement.
+1. Push `fix/portfolio-product-ssot-cards`, collect CD and CR verdicts, merge after clearance, promote production, then dispatch CT2 from `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`.
+2. Collect CD, CR, and CB2 verdicts for `feature/universal-delivery-workspace` at `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3` against base `f9c570601febae842d02e12faea0e5fce4dcf6be`; CTO fallback full-preflight evidence is available but does not clear the gate by itself.
+3. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
+4. If Universal Delivery passes review, merge, promote production, and dispatch CT2 for a Type 2 description-only Fresh Build URL proof.
 5. Use the Universal Delivery Workspace to unblock Path 2 Production URL creation without relying on manually preconfigured upgrade repos.
 6. Run or dispatch the Path 4 synthesis proof only when the active run target supports multi-URL synthesis honestly.
 

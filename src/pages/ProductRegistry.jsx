@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { productUpgradeReadiness } from '@/lib/products/portfolioReadiness';
+import { normalizeScore } from '@/lib/products/registry';
 import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 const VEU_SEED = [
@@ -111,8 +112,8 @@ export default function ProductRegistry() {
     asArray(registry).forEach(r => { rm[r.product_name || r.label] = r; });
     setRegistryMap(rm);
 
-    // Use API products if any, otherwise seed with VEU defaults
-    const list = asArray(apiProducts).length > 0 ? asArray(apiProducts) : VEU_SEED;
+    const apiProductRows = Array.isArray(apiProducts?.items) ? apiProducts.items : asArray(apiProducts);
+    const list = apiProductRows.length > 0 ? apiProductRows : VEU_SEED;
     setProducts(list);
     setLoading(false);
   };
@@ -124,6 +125,11 @@ export default function ProductRegistry() {
   };
 
   const productUrl = (product) => product?.live_url || product?.url || product?.base44_url || '';
+  const productScore = (product, registryRow) => {
+    const score = registryRow?.last_score ?? product?.last_score ?? product?.last_audit_score;
+    if (typeof score === 'number' && score <= 10) return score;
+    return normalizeScore(score);
+  };
 
   const runProduct = (product) => {
     const params = new URLSearchParams();
@@ -222,6 +228,7 @@ export default function ProductRegistry() {
                   const reg = registryMap[p.name];
                   const cleared = cl?.overall_status === 'cleared';
                   const readiness = productUpgradeReadiness(p, reg);
+                  const score = productScore(p, reg);
                   return (
                     <tr
                       key={p.slug}
@@ -276,8 +283,8 @@ export default function ProductRegistry() {
                         {reg?.last_run_at ? formatDistanceToNow(new Date(reg.last_run_at), { addSuffix: true }) : '—'}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {reg?.last_score != null
-                          ? <span className={`font-bold ${reg.last_score >= 7 ? 'text-emerald-400' : reg.last_score >= 5 ? 'text-amber-400' : 'text-red-400'}`}>{reg.last_score}/10</span>
+                        {score != null
+                          ? <span className={`font-bold ${score >= 7 ? 'text-emerald-400' : score >= 5 ? 'text-amber-400' : 'text-red-400'}`}>{score}/10</span>
                           : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="px-5 py-3 text-right">

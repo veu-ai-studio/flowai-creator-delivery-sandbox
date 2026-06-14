@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const registrySrc = readFileSync(resolve(__dirname, '../../src/pages/ProductRegistry.jsx'), 'utf8');
 const portfolioSrc = readFileSync(resolve(__dirname, '../../src/pages/PortfolioDashboard.jsx'), 'utf8');
+const mainDashboardSrc = readFileSync(resolve(__dirname, '../../src/pages/MainDashboard.jsx'), 'utf8');
 
 describe('portfolio upgrade readiness UI', () => {
   it('shows readiness columns in Product Registry', () => {
@@ -22,5 +23,18 @@ describe('portfolio upgrade readiness UI', () => {
     expect(portfolioSrc).toContain('Portfolio Upgrade Readiness');
     expect(portfolioSrc).toContain('const readiness = productUpgradeReadiness(product)');
     expect(portfolioSrc).toContain('stats.upgradeReady');
+  });
+
+  it('surfaces ProductSSOT-backed scores in Product Registry and Main Dashboard', () => {
+    expect(registrySrc).toContain("import { normalizeScore } from '@/lib/products/registry'");
+    expect(registrySrc).toContain('Array.isArray(apiProducts?.items) ? apiProducts.items : asArray(apiProducts)');
+    expect(registrySrc).toContain('const productScore = (product, registryRow) => {');
+    expect(registrySrc).toContain('const score = productScore(p, reg)');
+    expect(registrySrc).toContain('{score}/10');
+
+    expect(mainDashboardSrc).toContain("import { listProducts, normalizeScore, deriveSlug } from '@/lib/products/registry'");
+    expect(mainDashboardSrc).toContain('function dashboardProductFromRegistry(product)');
+    expect(mainDashboardSrc).toContain("listProducts({ sort: '-updated_at', limit: 20 })");
+    expect(mainDashboardSrc).not.toContain('base44.entities.ProductRegistry.list');
   });
 });

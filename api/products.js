@@ -48,7 +48,7 @@ export default async function handler(req, res) {
         limit: limit ? parseInt(limit, 10) : 1000,
         offset: offset ? parseInt(offset, 10) : 0,
       });
-      return res.status(200).json({ ...data, stats: stats() });
+      return res.status(200).json({ ...data, stats: data.stats || stats() });
     } catch (e) {
       return res.status(500).json({ error: e.message || String(e) });
     }

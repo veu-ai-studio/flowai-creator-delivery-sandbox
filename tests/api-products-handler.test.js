@@ -69,6 +69,20 @@ describe('GET /api/products — shape', () => {
     expect(res._get().body.total).toBe(0);
   });
 
+  it('preserves backend stats when listProducts supplies ProductSSOT fallback stats', async () => {
+    mockListProducts.mockResolvedValueOnce({
+      items: [{ id: 'saige', name: 'SAIGE', last_audit_score: 78, source: 'product_registry' }],
+      total: 1,
+      limit: 100,
+      offset: 0,
+      stats: { total: 1, audited: 1, source: 'product_registry' },
+    });
+    const req = { method: 'GET', headers: {}, query: {} };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res._get().body.stats).toEqual({ total: 1, audited: 1, source: 'product_registry' });
+  });
+
   it('forwards query params (status, q, sort, limit, offset) to listProducts', async () => {
     const req = {
       method: 'GET',
