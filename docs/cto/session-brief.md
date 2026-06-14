@@ -15,15 +15,16 @@ FlowAI has now produced two CT2-confirmed public deployed URLs across the Flow H
 
 The Path 3 result is the strongest proof so far: FlowAI generated a 342-file platform-free VEU AI Studio site, created a GitHub branch, deployed it to a dedicated public Vercel project, scored baseline `93` to final `100`, and CT2 opened the public URL anonymously without a bypass header. The remaining highest-value gap is Path 2 Production producing its own deployed URL from an app-layer-owned product.
 
-No VERIFIED movement has been applied. The batch packet is prepared and now needs W04/CEO exact row authorization before any `matrixArtifact` edit.
+No VERIFIED movement has been applied. The batch packet is prepared and now needs W04/CEO exact row authorization before any `matrixArtifact` edit. The stale batch-packet filename now points to the current acceleration packet so there is only one active promotion packet.
 
-Path 2 was rerun after the Fresh Build milestone. SAIGE v2 ended with an honest no-mutation result because it scored `98`; RelTwin is the better below-target candidate but currently blocks on GitHub token acquisition and unsafe upgrade-target resolution.
+Path 2 was rerun after the Fresh Build milestone. SAIGE v2 ended with an honest no-mutation result because it scored `98`; RelTwin is the better below-target candidate but currently blocks on GitHub token acquisition and unsafe upgrade-target resolution. A runtime fix branch for that chain is now pushed for CD/CR review.
 
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
-- Last production identity verified before this docs refresh: `6f3067678a1193b1763a0936854bfcae1197d3b6`.
-- `/api/health` was verified at that identity to report branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS. Docs-only commits may move `main` ahead; verify `/api/health` again before runtime claims.
+- Last production identity verified after the packet refresh: `7bc95bb36a573cc94528d08c09d9de6aac9d2d01`.
+- `/api/health` reports branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
+- `main` is now ahead at docs-only commit `77fa518fee1960bfe0e804d11db3da1e7404ec11`; production runtime is therefore behind only by a docs coordination commit. Do not use `77fa518` as runtime evidence until production is redeployed/promoted to that SHA.
 
 ## Completed Evidence
 
@@ -75,9 +76,20 @@ Path 2 Production reruns:
 - Evidence: `docs/cto/path2-production-rerun-result-20260614.md`.
 - CB dispatch: `docs/cto/cb-path2-production-token-and-upgrade-target-dispatch-20260614.md`.
 
+Path 2 token/upgrade-target patch:
+
+- Branch: `fix/path2-production-token-upgrade-target`.
+- Commit: `5a66bee` (`fix/forge | harden path2 token and upgrade target gates`).
+- Review prompts: `docs/cto/cd-review-path2-token-upgrade-target-20260614.md` and `docs/cto/cr-review-path2-token-upgrade-target-20260614.md` on that branch.
+- Evidence: `docs/cto/path2-token-upgrade-target-fix-evidence-20260614.md` on that branch.
+- Focused verification: `139/139` resolver + orchestrator tests PASS.
+- Static checks: lane discipline PASS; SSOT traceability PASS.
+- Full `npm run preflight`: stopped on existing/external smoke failure `tests/smoke/api-health.test.js > POST /api/test-claude`, expected `200` but received `500`; lint/build and 3732 tests passed before that single failure.
+
 ## Current Packets
 
 - Batch VERIFIED packet: `docs/cto/verified-promotion-packet-acceleration-20260614.md`.
+- Legacy batch filename now points to the acceleration packet: `docs/cto/verified-promotion-packet-batch-20260614.md`.
 - Exact row mapping proposal: `docs/cto/verified-promotion-row-mapping-proposal-20260614.md`.
 
 No matrixArtifact edit has been made. W04/CEO must authorize exact row movement before promotion.
@@ -94,9 +106,10 @@ No matrixArtifact edit has been made. W04/CEO must authorize exact row movement 
 ## Next Starting Point
 
 1. Submit the row-mapping proposal to W04/CEO with the acceleration packet.
-2. Land the Path 2 Production token/upgrade-target chain fix, then rerun RelTwin.
-3. Resolve or formally quarantine the `/api/test-claude` smoke boundary so full preflight no longer obscures branch health.
-4. Keep accumulating CT2-confirmed evidence, but do not move VERIFIED until W04/CEO authorizes the exact rows.
+2. Await CD/CR review on `fix/path2-production-token-upgrade-target`; if PASS, merge and redeploy/promote production.
+3. Rerun RelTwin Path 2 after the token/upgrade-target fix lands.
+4. Resolve or formally quarantine the `/api/test-claude` smoke boundary so full preflight no longer obscures branch health.
+5. Keep accumulating CT2-confirmed evidence, but do not move VERIFIED until W04/CEO authorizes the exact rows.
 
 Victor action required:
 
