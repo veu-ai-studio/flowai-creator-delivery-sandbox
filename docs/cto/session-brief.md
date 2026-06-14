@@ -146,12 +146,12 @@ CTO visual follow-up on the three missing SAIGE checks:
 SAIGE product-card score patch:
 
 - Branch: `fix/portfolio-product-ssot-cards`.
-- Current pushed head: `a8c6a5ea4109873899cc88a1b14e8dfd1382ba56`.
+- Current pushed head: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`.
 - Purpose: make ProductSSOT-backed product-card scores visible on `/portfolio`, `/dashboard`, and `/products` without fabricated rows or scores.
 - Audit follow-up: raw `/api/products.items` rows are normalized before UI use and hardcoded `VEU_SEED` fallback was removed.
 - Full preflight after follow-up patch: PASS; lint, build, 237 test files / 3741 tests, lane discipline, SSOT traceability, and matrix generation all passed.
-- Evidence and review prompts live on branch `fix/portfolio-product-ssot-cards` at `a8c6a5e`; they are not on `main` until that branch is merge-cleared.
-- Merge status: not merge-cleared yet; requires CD/CR and CB2 clearance or explicit W04 waiver.
+- Evidence, CD prompt, CR prompt, CT2 post-deploy dispatch, and CB2 branch-audit dispatch live on branch `fix/portfolio-product-ssot-cards` at `cb03a20`; they are not on `main` until that branch is merge-cleared.
+- Merge status: not merge-cleared yet; requires CD/CR and CB2 clearance or explicit W04 waiver. The branch is synced with `origin/main` and full preflight passed after the sync.
 
 Universal input and delivery architecture:
 
@@ -226,10 +226,10 @@ Path 4 URL selection:
 
 ## Next Starting Point
 
-1. Collect CD, CR, and CB2 verdicts for `feature/universal-delivery-workspace` at `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3` against base `f9c570601febae842d02e12faea0e5fce4dcf6be`; CTO fallback full-preflight evidence is available but does not clear the gate by itself.
-2. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
-3. If Universal Delivery passes review, merge, promote production, and dispatch CT2 for a Type 2 description-only Fresh Build URL proof.
-4. Resolve whether SAIGE product-card score visibility is a data-path bug or an authenticated/org-scoped acceptance-context requirement.
+1. Collect CD, CR, and CB2 verdicts for `fix/portfolio-product-ssot-cards` at `cb03a203dddc2a5f033a1c3222cd7896f72452ef`; merge only after clearance or explicit W04 waiver, then promote production and dispatch CT2.
+2. Collect CD, CR, and CB2 verdicts for `feature/universal-delivery-workspace` at `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3` against base `f9c570601febae842d02e12faea0e5fce4dcf6be`; CTO fallback full-preflight evidence is available but does not clear the gate by itself.
+3. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
+4. If Universal Delivery passes review, merge, promote production, and dispatch CT2 for a Type 2 description-only Fresh Build URL proof.
 5. Use the Universal Delivery Workspace to unblock Path 2 Production URL creation without relying on manually preconfigured upgrade repos.
 6. Run or dispatch the Path 4 synthesis proof only when the active run target supports multi-URL synthesis honestly.
 
