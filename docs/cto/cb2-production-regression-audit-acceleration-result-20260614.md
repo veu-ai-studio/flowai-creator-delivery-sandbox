@@ -1,10 +1,10 @@
 # CB2 Production Regression Audit - Acceleration Track
 
-FROM: CB2  
-TO: CTO  
-DATE: 2026-06-14 UTC  
-TARGET: https://flowai-dun.vercel.app  
-PROOF LABEL: LIVE_PRODUCTION  
+FROM: CB2
+TO: CTO
+DATE: 2026-06-14 UTC
+TARGET: https://flowai-dun.vercel.app
+PROOF LABEL: LIVE_PRODUCTION
 
 ## Verdict
 
