@@ -70,7 +70,7 @@ Additive anti-drift rules:
 ## Evidence-Corrected State
 
 - Active repo: `C:\Users\victo\Documents\Codex\flowai-cto-docs-20260612`.
-- Current `origin/main`: `7492879`.
+- Reviewed `origin/main` baseline before this update: `7aadc14`.
 - Last production identity verified after Path 2 merge/promotion: `d6b92d54e1693fd18f37b5549df9d68285204449`.
 - Production: `https://flowai-dun.vercel.app`.
 - Production `/api/health` was verified at that identity to report branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
@@ -87,7 +87,7 @@ Additive anti-drift rules:
 - Path 2 token/upgrade-target runtime fix is merged on `main` through merge commit `e08a624` and deployed in production identity `d6b92d54e1693fd18f37b5549df9d68285204449`.
 - CT2 post-merge RelTwin proof result: PASS with one caution. The prior GitHub App PEM signing hard failure did not recur; redacted `GITHUB_OPERATOR_TOKEN` fallback was observed; unsafe same-repo upgrade-target detection blocked before branch creation. No deployed URL was produced.
 - W04 identified a larger universal delivery gap: FlowAI cannot assume preconfigured upgrade repos or Vercel projects for real users. The final directive clears CB to build the Universal Delivery Workspace. Active dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`; CB branch: `feature/universal-delivery-workspace`.
-- Universal input state: Type 1 single URL is partial; Type 2 description-only is not end-to-end in the active forge; Type 3 multi-URL synthesis is not end-to-end in the active forge.
+- Universal input state: Type 1 single URL is partial; Type 2 description-only is not end-to-end in the deployed production forge; Type 3 multi-URL synthesis is not end-to-end in the deployed production forge. The Universal Delivery Workspace branch adds a Type 2 substrate pending CD/CR/CB2 review, merge, deploy, and CT2 proof.
 - Universal infrastructure state: repo/project provisioning helpers exist, but the active forge does not yet create a FlowAI-owned GitHub repo, write code, create/import a Vercel project, deploy, return a URL, and bind ProductSSOT evidence for arbitrary user input.
 - Four-axis UI and run propagation are CT2-confirmed at the evidence level: Structural Layer, Operational Mode, Analysis Depth, and Flow Hub Path are visible, independently selectable, and appear in live run payload/log evidence.
 - Clerk ticket/session is CT2-confirmed at the evidence level: app-owned `/sign-in-token` flow lands on Flow Hub Production, scrubs the ticket, establishes a signed-in Clerk app session, and app-origin `/api/me` returns authenticated Clerk state. This does not prove `AUTH_REQUIRED=true`, paid-user onboarding, or organization enforcement.
@@ -128,6 +128,7 @@ Additive anti-drift rules:
 - Universal Delivery Workspace CD review dispatch: `docs/cto/cd-review-universal-delivery-workspace-prompt-20260614.md`.
 - Universal Delivery Workspace CR review dispatch: `docs/cto/cr-review-universal-delivery-workspace-prompt-20260614.md`.
 - Universal Delivery Workspace CB2 branch audit dispatch: `docs/cto/cb2-review-universal-delivery-workspace-dispatch-20260614.md`.
+- Universal Delivery Workspace CTO review note: `docs/cto/cto-review-universal-delivery-workspace-20260614.md`.
 - Universal Delivery Workspace CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
 
 ## Anti-Drift Rules
