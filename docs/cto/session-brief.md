@@ -29,7 +29,8 @@ Most important corrected state:
 - Clerk readiness/routes and bearer-token propagation code are live, but full authenticated user-session proof is still blocked at hosted redirect/session establishment.
 - Clerk redirect allow-list gap was machine-corrected through Clerk Backend API; CT2 rerun still BLOCKED on hosted-token session transfer.
 - CB built the ticket route, CD/CR Step 5 reviews both passed, and the branch merged to `main` at `78672e5f28e763b17a6fda6b05b812c1781f16cc`.
-- Production deployment `https://flowai-opncymhub-veu-ai-studio.vercel.app` is Ready and aliased to `https://flowai-dun.vercel.app`, but build identity is degraded (`commitFull:null`) because the deployment came from the local Vercel CLI path. CT2 proof waits for a Git-backed production deployment.
+- Production deployment identity has been restored through Git-backed redeploy `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`, now aliased to `https://flowai-dun.vercel.app`. `/api/health` reports `commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"` and `clerkReady:true`.
+- CT2 live proof is dispatched for the FlowAI-owned `/sign-in-token` route.
 - Codex TIM Build rank/callability code exists, but live Step 3 Build use is not yet proven.
 
 ## Current Runtime Evidence
@@ -38,16 +39,16 @@ FlowAI production URL:
 
 - `https://flowai-dun.vercel.app`
 
-Latest acceptable runtime production commit:
+Latest runtime production commit:
 
-- `021212d2ebf52511493869e7fea9270a7865db31`
+- `34268c9d76399e10ec6c25cd485cf8fae1afd0a1`
 
 Latest production deployment:
 
-- `https://flowai-opncymhub-veu-ai-studio.vercel.app`
+- `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`
 - Alias: `https://flowai-dun.vercel.app`
 - Status: Ready
-- Identity: degraded, `commitFull:null`
+- Identity: PASS, `buildIdentitySource:"env:VERCEL_GIT_COMMIT_SHA"`
 
 Origin/main docs state:
 
@@ -111,6 +112,15 @@ Interpretation:
 
 18. Recorded deployment evidence and identity blocker:
    - `docs/cto/clerk-ticket-signin-production-deploy-20260614.md`
+
+19. Redeployed from Git-backed source preview to production:
+   - Source preview: `https://flowai-rjbsanwgl-veu-ai-studio.vercel.app`
+   - Production deployment: `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`
+   - Commit: `34268c9d76399e10ec6c25cd485cf8fae1afd0a1`
+   - Production identity: PASS.
+
+20. Filed CT2 live proof dispatch:
+   - `docs/cto/ct2-clerk-ticket-signin-live-proof-dispatch-20260614.md`
 
 ## Clerk Auth State
 
@@ -207,9 +217,9 @@ CB build status:
   - CD PASS.
   - CR PASS.
 - Merge: complete at `78672e5f28e763b17a6fda6b05b812c1781f16cc`.
-- Production deploy: Ready at `https://flowai-opncymhub-veu-ai-studio.vercel.app`, aliased to `https://flowai-dun.vercel.app`.
-- Identity gate: BLOCKED for CT2 proof because `/api/health` and `/api/version` currently report `commitFull:null`.
-- Next action: push a Git-backed `main` docs/evidence refresh and wait for production to redeploy with commit identity.
+- Production deploy: Ready at `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`, aliased to `https://flowai-dun.vercel.app`.
+- Identity gate: PASS. `/api/health` and `/api/version` report `commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"`.
+- Next action: CT2 live production proof for the FlowAI-owned ticket route.
 
 ## VERIFIED Promotion State
 
@@ -225,8 +235,7 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Verify the next Git-backed production deployment after this docs/evidence refresh.
-4. PASS condition: `https://flowai-dun.vercel.app/api/health` reports `commitFull` equal to current `main` HEAD, `clerkReady:true`, and deployment URL equal to the active production deployment.
-5. Dispatch CT2 proof using FlowAI-owned `/sign-in-token?ticket=<redacted>` route, not Clerk hosted token URL.
-6. If CT2 PASS, prepare evidence packet only; do not move VERIFIED without W04/CEO clearance.
-7. Do not move VERIFIED without W04/CEO clearance.
+3. Wait for CT2 result from `docs/cto/ct2-clerk-ticket-signin-live-proof-dispatch-20260614.md`.
+4. If CT2 PASS, prepare evidence packet only; do not move VERIFIED without W04/CEO clearance.
+5. If CT2 BLOCKS, map the full blocker chain before dispatching CB.
+6. Do not move VERIFIED without W04/CEO clearance.

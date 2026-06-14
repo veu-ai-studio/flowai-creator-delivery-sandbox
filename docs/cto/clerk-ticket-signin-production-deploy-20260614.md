@@ -9,7 +9,7 @@ Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `d
 
 The Clerk ticket sign-in route branch passed CD and CR, merged to `main`, and has a production deployment serving the FlowAI alias. However, the first production deployment was created from the local Vercel CLI path and does not expose Git commit identity through `/api/health` or `/api/version`.
 
-This is an evidence blocker for CT2 production proof. Do not run the Clerk authenticated-session acceptance proof until a Git-backed production deployment restores `commitFull`.
+This was initially an evidence blocker for CT2 production proof. A Git-backed production redeploy has now restored production commit identity.
 
 ## Repo State
 
@@ -66,11 +66,40 @@ The next corrective action is a Git-backed production deployment from current `m
 
 ## CT2 Gate
 
-CT2 should not start the Clerk ticket sign-in proof until:
+Initial gate before restored deploy:
 
 1. `https://flowai-dun.vercel.app/api/health` returns `checks.build.commitFull` equal to the current pushed `main` HEAD.
 2. `checks.build.deploymentUrl` equals the active production deployment.
 3. `clerkReady:true`.
 4. `/sign-in-token` serves the FlowAI app shell.
+
+## Restored Production Identity
+
+Git-backed production redeploy:
+
+- Source preview: `https://flowai-rjbsanwgl-veu-ai-studio.vercel.app`
+- Source preview commitFull: `34268c9d76399e10ec6c25cd485cf8fae1afd0a1`
+- Production redeploy: `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`
+- Alias: `https://flowai-dun.vercel.app`
+- Status: Ready
+
+Public production checks after redeploy:
+
+- `https://flowai-dun.vercel.app/api/health`
+  - `checks.build.status:"PASS"`
+  - `checks.build.commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"`
+  - `checks.build.branch:"main"`
+  - `checks.build.buildIdentitySource:"env:VERCEL_GIT_COMMIT_SHA"`
+  - `checks.build.deploymentUrl:"https://flowai-7ufisvpk3-veu-ai-studio.vercel.app"`
+  - `clerkReady:true`
+- `https://flowai-dun.vercel.app/api/version`
+  - `commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"`
+  - `branch:"main"`
+  - `deployUrl:"flowai-7ufisvpk3-veu-ai-studio.vercel.app"`
+  - `clerkReady:true`
+- `https://flowai-dun.vercel.app/sign-in-token`
+  - Returns the FlowAI app shell.
+
+CT2 is now clear to run the live ticket-route proof using `docs/cto/ct2-clerk-ticket-signin-live-proof-dispatch-20260614.md`.
 
 No VERIFIED movement is allowed from this deploy evidence.
