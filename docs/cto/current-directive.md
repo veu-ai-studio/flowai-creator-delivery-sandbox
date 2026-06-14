@@ -19,6 +19,7 @@ This folder is an executive coordination layer. Canonical authority remains `doc
   - Path 1 Migration: CT2-confirmed public URL `https://saige-v2.vercel.app`.
   - Path 3 Fresh Build: CT2-confirmed public URL `https://flowai-fresh-public-veusite.vercel.app`.
   - Path 2 Production: no CT2-confirmed deployed URL yet.
+- Latest Path 2 reruns: SAIGE v2 ended honestly with `HONEST_GATE_REFUSAL_ALREADY_PASSING` at score `98`; RelTwin scored `71.5` but failed before branch creation with `GITHUB_AUTH_FAILED` and unsafe same original/upgrade repo resolution.
 - Four-axis UI and run propagation are CT2-confirmed at the evidence level: Structural Layer, Operational Mode, Analysis Depth, and Flow Hub Path are visible, independently selectable, and appear in live run payload/log evidence.
 - Clerk ticket/session is CT2-confirmed at the evidence level: app-owned `/sign-in-token` flow lands on Flow Hub Production, scrubs the ticket, establishes a signed-in Clerk app session, and app-origin `/api/me` returns authenticated Clerk state. This does not prove `AUTH_REQUIRED=true`, paid-user onboarding, or organization enforcement.
 - TIM Build Codex ranking is CT2/CB2-confirmed as visible with Codex ranked first. Live Step 3 Codex invocation is not yet proven.
@@ -29,7 +30,7 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 ## Current Priority Order
 
 1. Keep the batch VERIFIED promotion packet current and add exact row-mapping guidance for W04/CEO. Do not edit `matrixArtifact` until authorized.
-2. Resume Path 2 Production proof against an app-layer-owned target. Preferred target remains the migrated SAIGE URL unless current evidence shows it cannot produce an honest deployable change.
+2. Dispatch and land the Path 2 Production token/upgrade-target chain fix so a below-target app-layer product can reach branch creation safely.
 3. Resolve or formally document the live `/api/test-claude` smoke boundary that blocks full `npm run preflight` on otherwise passing branches.
 4. Continue Fresh Build hardening after the public URL milestone: same-origin generated routes, broader submissions, and live Step 3 Build evidence.
 5. Prepare Path 4 three-URL synthesis only as a proposal. Execution requires W04/CEO approval of the three URLs and product direction.
@@ -41,6 +42,8 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 - Path 3 Fresh Build proof: `docs/cto/path3-fresh-build-veusite-publictarget-result-20260614.md`.
 - Path 3 CT2 acceptance: `docs/cto/ct2-path3-publictarget-acceptance-result-20260614.md`.
 - Acceleration CT2 sweep: `docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md`.
+- Path 2 rerun result: `docs/cto/path2-production-rerun-result-20260614.md`.
+- CB Path 2 dispatch: `docs/cto/cb-path2-production-token-and-upgrade-target-dispatch-20260614.md`.
 
 ## Anti-Drift Rules
 

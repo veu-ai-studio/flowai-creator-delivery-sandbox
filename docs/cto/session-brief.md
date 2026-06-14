@@ -17,6 +17,8 @@ The Path 3 result is the strongest proof so far: FlowAI generated a 342-file pla
 
 No VERIFIED movement has been applied. The batch packet is prepared and now needs W04/CEO exact row authorization before any `matrixArtifact` edit.
 
+Path 2 was rerun after the Fresh Build milestone. SAIGE v2 ended with an honest no-mutation result because it scored `98`; RelTwin is the better below-target candidate but currently blocks on GitHub token acquisition and unsafe upgrade-target resolution.
+
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
@@ -65,6 +67,14 @@ TIM Build Codex visibility:
 - CT2/CB2 observed Codex ranked first in the Build step candidate list.
 - Boundary: live Step 3 invocation of Codex is not yet proven.
 
+Path 2 Production reruns:
+
+- SAIGE v2 run `cto-path2-saige-v2-rerun-20260614-1336` scored `98` and ended with `HONEST_GATE_REFUSAL_ALREADY_PASSING`; no branch or preview URL was expected.
+- RelTwin run `cto-path2-reltwin-20260614-1337` scored `71.5` but failed before branch creation with `GITHUB_AUTH_FAILED`.
+- RelTwin evidence also showed original and upgrade repo resolving to the same repo while `originalReadOnly:true`, so Production mode must not write until the upgrade target chain is made safe.
+- Evidence: `docs/cto/path2-production-rerun-result-20260614.md`.
+- CB dispatch: `docs/cto/cb-path2-production-token-and-upgrade-target-dispatch-20260614.md`.
+
 ## Current Packets
 
 - Batch VERIFIED packet: `docs/cto/verified-promotion-packet-acceleration-20260614.md`.
@@ -75,6 +85,7 @@ No matrixArtifact edit has been made. W04/CEO must authorize exact row movement 
 ## Known Gaps
 
 - Path 2 Production has no CT2-confirmed deployed URL.
+- Path 2 RelTwin is blocked by GitHub token fallback and upgrade-target safety.
 - Full 8-step forge completion is not proven.
 - Codex live Build invocation is not proven.
 - `/api/test-claude` live smoke returns HTTP 500 and blocks full `npm run preflight` for otherwise scoped passing branches.
@@ -83,7 +94,7 @@ No matrixArtifact edit has been made. W04/CEO must authorize exact row movement 
 ## Next Starting Point
 
 1. Submit the row-mapping proposal to W04/CEO with the acceleration packet.
-2. Dispatch or execute the Path 2 Production proof against an app-layer-owned target.
+2. Land the Path 2 Production token/upgrade-target chain fix, then rerun RelTwin.
 3. Resolve or formally quarantine the `/api/test-claude` smoke boundary so full preflight no longer obscures branch health.
 4. Keep accumulating CT2-confirmed evidence, but do not move VERIFIED until W04/CEO authorizes the exact rows.
 

@@ -1,0 +1,62 @@
+{
+  "verdict": "TERMINAL_FINAL_INCOMPLETE_MILESTONES",
+  "acceptedTerminal": true,
+  "endToEndComplete": false,
+  "eventCount": 30,
+  "typeCounts": {
+    "start": 1,
+    "step": 25,
+    "iteration": 1,
+    "heartbeat": 1,
+    "final": 1,
+    "done": 1
+  },
+  "hasDone": true,
+  "hasFinal": true,
+  "hasTimeout": false,
+  "hasError": false,
+  "lastAt": "2026-06-14T13:34:49.202Z",
+  "lastEventType": "done",
+  "lastEventPreview": "[DONE]",
+  "runId": "cto-path2-saige-v2-rerun-20260614-1336",
+  "baseUrl": "https://flowai-dun.vercel.app",
+  "request": {
+    "endpoint": "https://flowai-dun.vercel.app/api/agent/3/execute",
+    "productScope": "saige",
+    "httpStatus": 200,
+    "gtmTarget": 95,
+    "url": "https://saige-v2.vercel.app",
+    "maxIterations": 1,
+    "runId": "cto-path2-saige-v2-rerun-20260614-1336",
+    "mode": "auto"
+  },
+  "milestones": {
+    "credentialMode": true,
+    "productDiscovery": true,
+    "operatorReadiness": true,
+    "upgradeTargetResolved": true,
+    "upgradeTargetProvisioned": true,
+    "repoProbe": true,
+    "rateCap": true,
+    "crawlComplete": true,
+    "branchCreation": false,
+    "previewDeployment": false,
+    "postFixScoring": true,
+    "finalGovernanceWrite": false,
+    "productSsotPersistence": false
+  },
+  "observed": {
+    "branchName": null,
+    "previewUrl": null,
+    "finalScore": 98,
+    "exitReason": "HONEST_GATE_REFUSAL_ALREADY_PASSING",
+    "productSsotPersisted": false
+  },
+  "note": "No VERIFIED movement is justified by this summary alone; use live production evidence and SSOT gates.",
+  "files": {
+    "requestPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\path2-saige-v2-production-rerun-20260614\\cto-path2-saige-v2-rerun-20260614-1336.request.json",
+    "transcriptPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\path2-saige-v2-production-rerun-20260614\\cto-path2-saige-v2-rerun-20260614-1336.sse",
+    "summaryPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\path2-saige-v2-production-rerun-20260614\\cto-path2-saige-v2-rerun-20260614-1336.summary.json",
+    "markdownPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\path2-saige-v2-production-rerun-20260614\\cto-path2-saige-v2-rerun-20260614-1336.summary.md"
+  }
+}
