@@ -13,7 +13,7 @@ I accept this directive as the operating plan with the following evidence correc
 
 - Actual matrixArtifact status count on current main before this docs update: `VERIFIED=0`, `WIRED status=0`, `CURRENT=2`, total entries `39`.
 - Path 1 Migration has one CT2-confirmed deployed public URL, `https://saige-v2.vercel.app`, but no matrixArtifact VERIFIED movement has been applied.
-- Priority 2 axis wiring is merged to main at runtime merge head `c6a2d97c1f1b2f160887ba7dafc4551c105a1515`, with CD PASS and CR PASS, but production still needs exact-main deployment promotion and CT2 live proof before it can be claimed live-wired.
+- Priority 2 axis wiring is merged to main and promoted to production at commit `54422549044c5ff8e4e187a155c25bfc38462e10`, with CD PASS and CR PASS. CT2 live proof is still required before it can be claimed live-wired.
 - Codex TIM Build rank/callability code is present on main, but live Step 3 Build evidence is still required before counting it as verified behavior.
 - Any future VERIFIED movement requires W04/CEO clearance and the claim-promotion checklist. The CTO may prepare packets but must not apply promotion unilaterally.
 
@@ -29,7 +29,7 @@ The five VEU AI Studio products are proof-of-concept targets only. They are not 
 - WIRED matrixArtifact status entries: 0.
 - Max matrixArtifact status currently attained: CURRENT, 2 of 39 entries.
 - Three Flow Hub paths with deployed URLs: 1 of 3 at the URL-evidence level. Path 1 Migration has CT2-confirmed `https://saige-v2.vercel.app`.
-- Four axes wired end to end: code merged, live production proof pending.
+- Four axes wired end to end: code merged and production deployed; CT2 live browser/run proof pending.
 - Forge completing full 8-step runs: not yet proven.
 - Clerk auth: not enabled in production health.
 - Real external users: 0.
@@ -63,7 +63,7 @@ These rules exist because the project has cycled, drifted, and hallucinated prog
 
 ## Active Milestone 1 - Axis Wiring Live Proof
 
-Status: code built, reviewed, merged to main. Production live proof is pending.
+Status: code built, reviewed, merged to main, and promoted to production. CT2 live proof is pending.
 
 Completed:
 
@@ -74,21 +74,21 @@ Completed:
 5. CD review passed.
 6. CR review passed.
 7. Branch merged to main at `c6a2d97c1f1b2f160887ba7dafc4551c105a1515`.
+8. Current main promoted to production at `54422549044c5ff8e4e187a155c25bfc38462e10`.
+9. `https://flowai-dun.vercel.app/api/health` reports the promoted main SHA.
+10. `https://flowai-dun.vercel.app/flow-hub/production` returns `200 OK`.
 
 Remaining before claiming Milestone 1 complete:
 
-1. Find or create a Ready Vercel deployment for the exact current main SHA.
-2. Promote that exact main deployment to production using the Vercel token.
-3. Confirm `https://flowai-dun.vercel.app/api/health` reports the promoted main SHA.
-4. Dispatch CT2 through `docs/cto/` to verify in a live browser:
+1. CT2 must verify in a live browser:
    - All four axes are visible in the sidebar.
    - Each axis is independently selectable.
    - Changing Structural Layer changes run behavior.
    - Changing Analysis Depth changes crawl/scoring depth.
    - Changing Flow Hub Path changes which pipeline runs.
    - All four axis values appear in a real forge run log.
-5. CT2 PASS is required before claiming live axis wiring complete.
-6. Prepare, but do not apply, a VERIFIED promotion packet for W04/CEO clearance.
+2. CT2 PASS is required before claiming live axis wiring complete.
+3. Prepare, but do not apply, a VERIFIED promotion packet for W04/CEO clearance.
 
 Acceptance criteria:
 

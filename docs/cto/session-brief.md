@@ -2,122 +2,96 @@
 
 Date: 2026-06-13
 Owner: CTO
-Scope: Strategic reset execution: produce one real URL first
+Scope: Strategic reset execution and Priority 2 production deployment
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`
 
 ## Executive Summary
 
-Priority 1 is achieved at the deployed-URL milestone through Path 1 - Migration: SAIGE.
+Priority 1 URL milestone remains achieved through Path 1 - Migration: SAIGE.
 
 Victor-facing URL to open:
 
 - `https://saige-v2.vercel.app`
 
-Evidence status:
+Priority 2 Flow Hub axis wiring is now merged and deployed to FlowAI production.
 
-- Vercel production deployment: `READY`
-- Production alias: `https://saige-v2.vercel.app`
-- Production alias HTTP check: `200 OK`
-- App shell served: `title=SAIGE`, `div id="root"`, JS/CSS asset references present
-- Manifest check: `https://saige-v2.vercel.app/manifest.json` returns `200 OK`
-- CT2 browser acceptance: PASS
-- CT2 observed public, nonblank SAIGE app shell with top nav, Home selected, Ask SAIGE, Welcome Local hero, agent counts, filters, and agent cards
-- No Vercel Deployment Protection/auth wall on the public alias
-- VERIFIED movement: not performed; eligible evidence now exists for a separate explicit claim-promotion packet
+FlowAI production URL:
 
-Important honesty boundary: CT2 independently confirmed the browser-rendered deployed URL, so the URL milestone is accepted. I did not edit `matrixArtifact.json` or move any claim to VERIFIED because standing repo rules require explicit clearance for the full claim-promotion process.
+- `https://flowai-dun.vercel.app`
+
+Current production health:
+
+- `/api/health` reports commit `54422549044c`
+- full commit `54422549044c5ff8e4e187a155c25bfc38462e10`
+- branch `main`
+- deployment `https://flowai-b7ogb5gbi-veu-ai-studio.vercel.app`
+- GitHub App ready: true
+- Inngest ready: true
+- Codex orchestra member: PASS, credentials present
+
+Important honesty boundary: Priority 2 is deployed, but not yet Milestone 1 complete. CT2 still must confirm the four axes in a live browser and prove the selected axis values reach a real run request or run log. No VERIFIED movement has been applied.
+
+## Current Directive
+
+`docs/cto/current-directive.md` was refreshed and pushed to main at commit `54422549044c5ff8e4e187a155c25bfc38462e10`.
+
+I accepted the W04/CEO directive with evidence corrections:
+
+- active matrixArtifact has `VERIFIED=0`, not 1;
+- Path 1 has CT2-confirmed URL evidence but no promotion yet;
+- Priority 2 was merged and then promoted to production;
+- W04/CEO clearance remains required for any VERIFIED movement.
 
 ## Path 1 - Migration: SAIGE
 
-Branch:
+Status: URL milestone complete.
 
-- Repo: `veu-ai-studio/saige-v2`
-- Branch: `flowai/migration-saige-1781139104798-ctosaige`
-- Final commit: `4cc85e216b0ab505973397a2ebc8dee63e8b5e5e`
+Public deployed URL:
 
-Deployment:
+- `https://saige-v2.vercel.app`
 
-- Deployment id: `dpl_GKebj1Kq1sG4CZh8Mf3ouD5etdj8`
-- Production deployment URL: `https://saige-v2-abo35l72p-veu-ai-studio.vercel.app`
-- Public production alias: `https://saige-v2.vercel.app`
-
-Verification run by CTO:
-
-- Scoped Base44 scan: PASS, no matches for `base44|Base44|@base44|base44.` in scoped files
-- `npm run lint`: PASS
-- `npm run build`: PASS
-- `npm run typecheck`: FAIL, 279 generated-JS typing errors remain
-- Public alias `curl -I`: `200 OK`
-- Public manifest `curl -I`: `200 OK`
-
-Verification run by CT2:
-
-- Verdict: PASS
-- Browser: Microsoft Edge headless render against production alias
-- Visible shell: top navigation, Home selected, Ask SAIGE, Welcome Local hero, agent counts, filter controls, and agent cards
-- DOM content included `Welcome, Local`, `Ask SAIGE`, `System Configuration Agent`, and `Data Entry & Validation Agent`
-- JS/CSS assets returned `200 OK`
-- No auth wall or blank page observed
-- Screenshot: `docs/cto/ct2-saige-production-2026-06-13.png`
-
-What changed:
-
-- Stabilized repeated generated platform-client helper defaults across migrated files
-- Marked the dynamic platform-free SAIGE adapter as intentionally loose for migration preview typing
-- Added a UI type shim for generated UI imports
-- Added missing `public/manifest.json`
-- Added `.vercel` to `.gitignore`
-
-CTO interpretation:
-
-- FlowAI now has one real deployed URL from a Flow Hub path that Victor can open.
-- Phase 3 is not fully closed because typecheck still fails.
-- The remaining typecheck work is broad generated-JS migration debt, not a single Base44 dependency blocker.
-- The next product priority is Priority 2: wire the remaining three axes and Codex TIM Build candidate.
-- The next evidence priority is a separate VERIFIED promotion packet with `evidenceUrl`, `verifiedAt`, and `verifiedBy` populated, after explicit clearance.
-
+CT2 browser acceptance already passed for a public, nonblank SAIGE shell. Remaining SAIGE typecheck debt is tracked separately and does not erase the URL evidence. No matrixArtifact promotion has been applied.
 
 ## Priority 2 - Flow Hub Axis Wiring
 
-Status: CD PASS + CR PASS on branch `fix/priority2-flow-hub-axes` at `c1deb3e`; clear to merge under standing authorization.
+Status: merged, deployed, CT2 live proof pending.
 
-What is now wired on the branch:
+What is in production now:
 
-- Structural Layer: Autonomous / Supervised / Controlled is visible in the sidebar and affects run behavior.
+- Structural Layer: Autonomous / Supervised / Controlled is visible in the sidebar and is intended to affect run behavior.
 - Operational Mode: Auto / Guided / Manual remains independently selectable.
-- Analysis Depth: Quick / Standard / Deep is visible in the sidebar and maps to crawl and Phase B effort overrides.
+- Analysis Depth: Quick / Standard / Deep is visible in the sidebar and maps to crawl/Phase B effort overrides.
 - Flow Hub Path: Production / Migration / Fresh Build is visible in the sidebar as a unified path axis.
 - Fresh Build has a first-class `/flow-hub/fresh-build` route.
-- The run-construction request body now carries `structuralLayer`, `operationalMode`, `analysisDepth`, and `flowHubPath`.
+- The run-construction request body carries `structuralLayer`, `operationalMode`, `analysisDepth`, and `flowHubPath`.
 - The orchestrator records the normalized axis envelope in step logs and final result metadata.
 
-Verification on the branch:
+Deployment evidence:
 
-- Focused tests: 6 files / 51 tests PASS.
-- `npm run build:preflight`: PASS.
-- `npm run lint`: PASS with existing flat-config warnings only.
+- `docs/cto/priority2-production-deployment-20260613.md`
 
-Evidence note: `docs/cto/priority2-flow-hub-axis-wiring-20260613.md`.
-Review result: `docs/cto/priority2-flow-hub-axis-wiring-step5-result-20260613.md`.
+CT2 dispatch:
+
+- `docs/cto/ct2-priority2-axis-live-proof-dispatch-20260613.md`
 
 ## Immediate Next Actions
 
-1. Begin Priority 2 axis wiring dispatch: Structural Layer, Analysis Depth, Flow Hub Path selector, and Codex TIM Build rank/callability if not already merged.
-2. Track SAIGE typecheck debt separately; do not let it stall the proven URL milestone.
-3. Prepare, but do not apply, the first matrixArtifact VERIFIED promotion packet for explicit clearance.
-4. Victor's morning task: open `https://saige-v2.vercel.app` for the final guided browser test.
+1. CT2 executes `docs/cto/ct2-priority2-axis-live-proof-dispatch-20260613.md` against public production.
+2. If CT2 PASS, prepare a VERIFIED promotion packet for W04/CEO clearance. Do not apply it.
+3. If CT2 BLOCK, dispatch CB with the full blocker chain, not one-layer-at-a-time patches.
+4. After Milestone 1 CT2 PASS or BLOCK is recorded, move to the next directive milestone: Clerk auth diagnostic or Path 2/3 URL proof depending on the blocker state.
 
-## Documents Added This Session
+## Documents Added Or Updated This Session
 
-- `docs/cto/path1-saige-production-url-20260613.md`
-- `docs/cto/ct2-path1-saige-production-url-dispatch-20260613.md`
-- `docs/cto/ct2-saige-production-acceptance-2026-06-13.md`
-- `docs/cto/ct2-saige-production-2026-06-13.png`
+- `docs/cto/current-directive.md`
+- `docs/cto/priority2-production-deployment-20260613.md`
+- `docs/cto/ct2-priority2-axis-live-proof-dispatch-20260613.md`
+- `docs/cto/session-brief.md`
 
 ## Standing Rules Observed
 
 - No fabricated deployed claim.
 - No VERIFIED movement.
-- No SSOT canonical edits.
+- No canonical SSOT edits.
 - Evidence committed to `docs/cto/`.
-- Victor's only needed action in the morning is to open `https://saige-v2.vercel.app` and perform the final guided browser test.
+- Victor's only manual role remains CEO decisions and final guided browser testing when requested.
