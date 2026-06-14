@@ -1,0 +1,59 @@
+{
+  "targetUrl": "https://flowai-fresh-public-veusite.vercel.app",
+  "checkedAt": "2026-06-14T13:00:30.746Z",
+  "method": "Fresh anonymous Playwright Chromium context; no Vercel bypass header; no cookies/tokens/secrets supplied.",
+  "requestHeaders": {
+    "vercelBypassHeaderUsed": false
+  },
+  "initial": {
+    "status": 200,
+    "ok": true,
+    "title": "url-416b941ffbc3b7d5",
+    "finalUrl": "https://flowai-fresh-public-veusite.vercel.app/",
+    "bodyText": "Home victor-udo-fnse-phd-ai-platform-builder-sustainability-leader-abasi-foundation-leader-power-sector-executive about veu-ai-studio abasi-people abasi-people-forum-podcast speaking publications contact carbon-calculator linkedin-banner blog afri-decarbonization advisory news gallery mothers-memorial platforms books CHECKOUT Victor Udo, FNSE, PhD | AI Platform Builder - Sustainability Leader - Abasi Foundation Leader - Power Sector Executive Victor Udo, FNSE, PhD | AI Platform Builder - Sustainability Leader - Abasi Foundation Leader - Power Sector Executive Dr. Victor Udo Executive · AI Builder · Author · Community Leader Home About VEU AI Studio Abasi People Abasi People Foundation Abasi People Forum Podcast Speaking Publications Contact More ▾ Blog &amp; Insights Carbon Calculator Afri Decarbonization Advisory Services News Gallery Mother's Memorial... Dr. Victor Udo Executive · AI Builder · Author · Community Leader Home About VEU AI Studio Abasi People Abasi People Foundation Abasi People Forum Podcast Speaking Dr. Victor Udo Executive · AI Builder · Author · Community Leader Home About VEU AI Studio Abasi People Abasi People Foundation Abasi People Forum Podcast Speaking Publications Contact More ▾ Blog &amp; Insights Carbon... Start the Demo → Subscribe Home About Blog &amp; Insights Books Speaking News Gallery Publications Contact VEU AI Studio SAIGE Demo Afri Decarbonization Corp Abasi People Foundation Abasi People Forum Podcast The Podium of Leadership (The POL) with Victor Udo Victor.Udo@VEUAIStudio.Com +1 302 898 9542 LinkedIn Content unavailable Atlantic City Electric Conectiv Power Delivery Pepco Holdings (now part of Exelon) Ibom Power Akwa Ibom State Government Bucknell University University of Delaware University of Pennsylvania Howard University Impact Zones 🔵 Launching Soon ~30% #25 2030 1984–1991 1991–2006 2006–2012 2012–2019 2019–2025 2020–Present With Vice President Joe Biden, 2008 Discussing Nigeria's Power Sector with Alhaji Dangote With US Senator Chris Coons in Lagos With Governor Akpabio of Akwa Ibom State at Washington DC, 2011 Bucknell Student Blog — Margaret Hunter Bucknell ENLS 103 Blog Bucknell University News NorthCentralPA.com Business Day Nigeria The Nigerian Voice Victor Udo, FNSE, PhD Engineer · Executive · AI Builder · Author · Community Leader Founder, VEU AI Studio · Chairman/CEO, Afri Decarbonization Corporation · Founding Chairman/President/CEO, Abasi People Foundation · Fo... Content unavailable More ▾ Work With Victor × Explore All Platforms Start the Demo → View Demo Visit SAIGE Learn About ADC Learn More See All Press Coverage Subscribe ↑ Back to top Engineer. Executive. Community Leader. AI Builder. Speaker.",
+    "signals": {
+      "victorUdo": true,
+      "veuAiStudio": true,
+      "flowAiPositioning": true,
+      "vercelProtection": false,
+      "operatorShell": false,
+      "blankViteShell": false
+    },
+    "screenshot": "docs/cto/ct2-path3-publictarget-acceptance-evidence-20260614/screenshots/publictarget-initial-2026-06-14T13-00-30-585Z.png"
+  },
+  "routeClicks": {
+    "clicked": [
+      {
+        "index": 0,
+        "attempted": true,
+        "before": "https://flowai-fresh-public-veusite.vercel.app/",
+        "after": "https://victorudo.com/veu-ai-studio",
+        "error": null,
+        "pageStillRendered": true,
+        "operatorShellAfterClick": false,
+        "vercelProtectionAfterClick": false
+      },
+      {
+        "index": 1,
+        "attempted": true,
+        "before": "https://victorudo.com/veu-ai-studio",
+        "after": "https://victorudo.com/about",
+        "error": null,
+        "pageStillRendered": true,
+        "operatorShellAfterClick": false,
+        "vercelProtectionAfterClick": false
+      },
+      {
+        "index": 2,
+        "attempted": true,
+        "before": "https://victorudo.com/about",
+        "after": "https://victorudo.com/contact",
+        "error": null,
+        "pageStillRendered": true,
+        "operatorShellAfterClick": false,
+        "vercelProtectionAfterClick": false
+      }
+    ],
+    "screenshot": "docs/cto/ct2-path3-publictarget-acceptance-evidence-20260614/screenshots/publictarget-after-route-clicks-2026-06-14T13-00-30-585Z.png"
+  }
+}
