@@ -23,6 +23,8 @@ W04 then identified the larger infrastructure gap: FlowAI cannot require preconf
 
 Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
 
+Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md` on branch `docs/cto-final-directive-detail-20260614`. The SAIGE product-card score branch was also updated and pushed at `a8c6a5e` after a CTO-delegated audit found raw API row shape and hardcoded seed fallback concerns; the follow-up patch passed full preflight and awaits CD/CR/CB2 clearance before merge.
+
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
@@ -140,6 +142,16 @@ CTO visual follow-up on the three missing SAIGE checks:
 - PASS: `/flowai` rendered, accepted `https://saigeplatform.com`, showed SAIGE upgrade-target context, and enabled `Launch Forge`.
 - BLOCK: SAIGE product card with a numeric score was not visible on `/portfolio` or `/dashboard`; both rendered as empty/no registered products in the observed browser context.
 - Additional browser diagnostic: page error `g.filter is not a function` was observed, matching the known dashboard regression family.
+
+SAIGE product-card score patch:
+
+- Branch: `fix/portfolio-product-ssot-cards`.
+- Current pushed head: `a8c6a5ea4109873899cc88a1b14e8dfd1382ba56`.
+- Purpose: make ProductSSOT-backed product-card scores visible on `/portfolio`, `/dashboard`, and `/products` without fabricated rows or scores.
+- Audit follow-up: raw `/api/products.items` rows are normalized before UI use and hardcoded `VEU_SEED` fallback was removed.
+- Full preflight after follow-up patch: PASS; lint, build, 237 test files / 3741 tests, lane discipline, SSOT traceability, and matrix generation all passed.
+- Evidence and review prompts live on branch `fix/portfolio-product-ssot-cards` at `a8c6a5e`; they are not on `main` until that branch is merge-cleared.
+- Merge status: not merge-cleared yet; requires CD/CR and CB2 clearance or explicit W04 waiver.
 
 Universal input and delivery architecture:
 
