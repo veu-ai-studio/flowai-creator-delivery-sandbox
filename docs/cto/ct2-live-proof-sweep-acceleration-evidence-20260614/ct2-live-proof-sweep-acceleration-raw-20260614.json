@@ -1,0 +1,487 @@
+{
+  "startedAt": "2026-06-14T11:53:06.224Z",
+  "method": "Playwright Chromium fresh browser contexts; in-app Browser unavailable in local Windows sandbox",
+  "productionUrl": "https://flowai-dun.vercel.app",
+  "freshBuildPublicUrl": "https://flowai-fresh-veusite.vercel.app/",
+  "health": {
+    "status": 200,
+    "ok": true,
+    "json": {
+      "ok": true,
+      "status": "ready",
+      "service": "flowai",
+      "version": "1.0.0",
+      "env": "production",
+      "region": "iad1",
+      "commit": "7aaea6d1f13a",
+      "clerkReady": true,
+      "githubAppReady": true,
+      "inngestReady": true,
+      "timestamp": "2026-06-14T11:53:09.925Z",
+      "durationMs": 322,
+      "checks": {
+        "build": {
+          "status": "PASS",
+          "commit": "7aaea6d1f13a",
+          "commitFull": "7aaea6d1f13a68b78fbd629b357cdbd9c5d2d1a4",
+          "branch": "main",
+          "buildIdentitySource": "generated:git-or-env",
+          "buildIdentityGeneratedAt": "2026-06-14T11:33:28.420Z",
+          "env": "production",
+          "region": "iad1",
+          "deploymentUrl": "https://flowai-6vir8d0tf-veu-ai-studio.vercel.app",
+          "nodeVersion": "24.14.1",
+          "reason": null
+        },
+        "supabase": {
+          "status": "PASS",
+          "httpStatus": 200
+        },
+        "vercelKv": {
+          "status": "PASS",
+          "httpStatus": 200
+        },
+        "orchestra": {
+          "members": [
+            {
+              "id": "codex",
+              "label": "Codex",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "OPENAI_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "src/lib/orchestra/codex.js code-patch/generate-from-scratch runtime adapter"
+            },
+            {
+              "id": "claude-code",
+              "label": "Claude Code",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "ANTHROPIC_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "src/lib/orchestra/claudeCode.js analyze/design/score/code-patch runtime adapter"
+            },
+            {
+              "id": "base44",
+              "label": "Base44",
+              "status": "DEGRADED",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "BASE44_API_BASE_URL",
+                "BASE44_API_TOKEN"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "api/_lib/orchestrator/agents/base44.js + src/api/base44Client.js"
+            },
+            {
+              "id": "lovable",
+              "label": "Lovable",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [],
+              "credentialsPresent": null,
+              "adapterHint": "archived (scripts/lib/headless/archive/lovable-chat.mjs.archived-2026-05-13)"
+            },
+            {
+              "id": "v0",
+              "label": "Vercel v0",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [
+                "VERCEL_V0_TOKEN"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "scripts/lib/peer-review.mjs callVercelV0Adapter (Panel reviewer only — no /api/* runtime adapter)"
+            },
+            {
+              "id": "cursor",
+              "label": "Cursor",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [],
+              "credentialsPresent": null,
+              "adapterHint": "developer-IDE only; no runtime adapter expected in /api/*"
+            },
+            {
+              "id": "openrouter",
+              "label": "OpenRouter",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [
+                "OPENROUTER_API_KEY"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "scripts/lib/peer-review.mjs (Panel reviewer; no /api/* runtime adapter)"
+            },
+            {
+              "id": "browserless",
+              "label": "Browserless",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "BROWSERLESS_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "api/_lib/crawler.js viaBrowserless + richCapture"
+            },
+            {
+              "id": "anthropic",
+              "label": "Anthropic API (direct)",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "ANTHROPIC_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "api/_lib/claude.js callClaude"
+            },
+            {
+              "id": "replit",
+              "label": "Replit",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [],
+              "credentialsPresent": null,
+              "adapterHint": "archived (scripts/lib/headless/archive/replit-agent.mjs.archived-2026-05-13)"
+            },
+            {
+              "id": "playwright",
+              "label": "Playwright",
+              "status": "DEGRADED",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "PLAYWRIGHT_ENDPOINT"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "api/_lib/orchestrator/agents/playwright.js + api/_lib/crawler.js viaPlaywright"
+            }
+          ],
+          "summary": {
+            "total": 11,
+            "runtimeAdapters": 6,
+            "live": 4,
+            "degraded": 2,
+            "notWired": 5
+          }
+        },
+        "observability": {
+          "status": "NOT_WIRED",
+          "pino": {
+            "ready": true,
+            "level": "info"
+          },
+          "sentry": {
+            "configured": false,
+            "initialized": false,
+            "tracesSampleRate": 0
+          },
+          "axiomBridge": {
+            "configured": false
+          }
+        },
+        "githubApp": {
+          "status": "PASS",
+          "configured": true,
+          "patFallback": true,
+          "installationIdAlias": "GITHUB_APP_INSTALLATION_ID"
+        },
+        "auth": {
+          "status": "PASS",
+          "clerkConfigured": true,
+          "frontendPublishableKeyPresent": true,
+          "authRequired": false,
+          "reason": null
+        }
+      }
+    }
+  },
+  "version": {
+    "status": 200,
+    "ok": true,
+    "json": {
+      "name": "flowai-platform",
+      "version": "0.0.0",
+      "commit": "7aaea6d1f13a",
+      "commitFull": "7aaea6d1f13a68b78fbd629b357cdbd9c5d2d1a4",
+      "branch": "main",
+      "buildIdentitySource": "generated:git-or-env",
+      "buildIdentityGeneratedAt": "2026-06-14T11:33:28.420Z",
+      "env": "production",
+      "region": "iad1",
+      "deployUrl": "flowai-6vir8d0tf-veu-ai-studio.vercel.app",
+      "startedAt": "2026-06-14T11:36:48.376Z",
+      "nowAt": "2026-06-14T11:53:10.047Z",
+      "runtime": {
+        "node": "24.14.1",
+        "v8": "13.6.233.17-node.44",
+        "platform": "linux",
+        "arch": "x64"
+      },
+      "sdks": {
+        "anthropic": "rest@2023-06-01",
+        "@supabase/supabase-js": "^2.105.3",
+        "inngest": "^4.2.6",
+        "@clerk/clerk-sdk-node": "^4.13.23",
+        "resend": "^6.12.2",
+        "voyageai": "^0.2.1",
+        "@axiomhq/js": "^1.6.0"
+      },
+      "featureFlags": {
+        "anthropicReady": true,
+        "browserlessReady": true,
+        "githubAppReady": true,
+        "supabaseReady": true,
+        "inngestReady": true,
+        "clerkReady": true,
+        "resendReady": false,
+        "voyageReady": false,
+        "axiomReady": false,
+        "authRequired": false,
+        "dbBackend": "supabase",
+        "inngestBackend": "inngest",
+        "emailTestEnabled": false,
+        "emailDryRun": false,
+        "axiomDryRun": false,
+        "replitProxyDisabled": false,
+        "logLevel": "info"
+      }
+    }
+  },
+  "axis": {
+    "status": 200,
+    "visibleAxes": {
+      "structuralLayer": true,
+      "operationalMode": true,
+      "analysisDepth": true,
+      "flowHubPath": true
+    },
+    "selectedUrl": "https://flowai-dun.vercel.app/flow-hub/production?structuralLayer=controlled&operationalMode=manual&analysisDepth=quick&flowHubPath=production",
+    "selectedSummary": {
+      "layerControlled": true,
+      "modeManual": true,
+      "depthQuick": true,
+      "pathProduction": true
+    },
+    "runRequests": [
+      {
+        "url": "https://flowai-dun.vercel.app/api/run-construction",
+        "method": "POST",
+        "postData": {
+          "url": "https://saige-v2.vercel.app",
+          "mode": "MANUAL",
+          "operationalMode": "manual",
+          "structuralLayer": "controlled",
+          "analysisDepth": "quick",
+          "flowHubPath": "production"
+        }
+      }
+    ],
+    "runLog": {
+      "hasAxisEnvelope": true,
+      "hasAxisEnvelopeDetail": true,
+      "hasFalseVerifiedClaim": false,
+      "hasPreviewUrlText": false,
+      "excerpt": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Flow Hub - Production Upgrade an existing product URL in its owned delivery path. FlowAI Ready · Layer: Controlled · Mode: Manual · Depth: Quick · Path: Production Choose how you want to work with your product, then select your operation mode. PRE-RELEASE · INTERNAL USE ONLY v0.1 · VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch) Analyze a Live Product SELECTED FlowAI will fetch and analyze the public-facing pages of your product. Test Fetch Note: URL must be publicly accessible. Authenticated or private apps use Card B or C. Describe Your Product Type or speak a description. Best for authenticated apps, internal tools, or early-stage products. 🔒 Credentials are used only for this session and are never stored. Voice Input Paste Content or Upload Screenshots Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly. Drop screenshots here or click to upload — PNG, JPG, PDF Combine with Card B for best results on authenticated products. SETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH? Audit for prospect demo readiness Prepare for investor review Full governance and clearance cycle Compare two or more products Combine inputs into a unified specification Benchmark against competitors Launch readiness check Custom — I will describe my objective SETUP 3 OF 3 — SELECT OPERATION MODE Auto FlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings. Analysis Depth Quick Standard Deep Guided FlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes. Minutes to hours · 8 approval gates across the execution pipeline Manual SELECTED You direct each step. FlowAI executes what you specify and assists on demand. Hours to days · Full operator control Fresh Build EXPERIMENTAL FlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo. Fresh Build is enabled for this environment. Existing modes remain unchanged. Migrate FlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback. Plan File count and dependency count before execution Progress Per-file migration status during execution Summary Files migrated, dependencies removed, upgrade URL Run FlowAI on this URL RUNNING... https://saige-v2.vercel.app Cancel Close 8-STEP PROGRESS Active: De"
+    },
+    "screenshots": {
+      "initial": "docs/cto/ct2-live-proof-sweep-acceleration-evidence-20260614/screenshots/axis-production-initial-2026-06-14T11-53-06-223Z.png",
+      "selected": "docs/cto/ct2-live-proof-sweep-acceleration-evidence-20260614/screenshots/axis-selected-controlled-manual-quick-2026-06-14T11-53-06-223Z.png",
+      "beforeRun": "docs/cto/ct2-live-proof-sweep-acceleration-evidence-20260614/screenshots/axis-before-run-filled-2026-06-14T11-53-06-223Z.png",
+      "afterRun": "docs/cto/ct2-live-proof-sweep-acceleration-evidence-20260614/screenshots/axis-after-run-wait-2026-06-14T11-53-06-223Z.png"
+    }
+  },
+  "clerk": {
+    "anonymousBefore": {
+      "status": 200,
+      "json": {
+        "authenticated": false,
+        "authMode": "anonymous",
+        "userId": null,
+        "orgId": null,
+        "productId": null,
+        "config": {
+          "authRequired": false,
+          "clerkConfigured": true
+        }
+      }
+    },
+    "disposableUser": {
+      "created": true,
+      "emailIdentifier": "flowai.ct2.acceleration.[redacted]@example.com",
+      "rawUserIdPresent": true,
+      "rawUserId": "[redacted]",
+      "rawTicketPresent": true,
+      "hostedUrlPresentButNotOpened": true
+    },
+    "ticketRoute": {
+      "status": 200,
+      "finalUrlClass": "https://flowai-dun.vercel.app/flow-hub/production",
+      "sameOriginFinal": true,
+      "finalPathIsFlowHub": true,
+      "finalUrlHasTicket": false,
+      "visibleTextContainsTicket": false,
+      "pageDoesNotExposeTicket": true,
+      "addressBarScrubbed": true,
+      "flowHubLoaded": true,
+      "visibleTextExcerpt": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Flow Hub - Production Upgrade an existing product URL in its owned delivery path. FlowAI Ready · Layer: Autonomous · Mode: Auto · Depth: Standard · Path: Production Choose how you want to work with your product, then select your operation mode. PRE-RELEASE · INTERNAL USE ONLY v0.1 · VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after l",
+      "screenshot": "docs/cto/ct2-live-proof-sweep-acceleration-evidence-20260614/screenshots/clerk-ticket-final-scrubbed-flow-hub-2026-06-14T11-53-06-223Z.png",
+      "screenshotSkipped": false,
+      "screenshotSkipReason": null
+    },
+    "clerkState": {
+      "clerkLoaded": true,
+      "signedIn": true,
+      "sessionPresent": true,
+      "userPresent": true,
+      "tokenPresent": true,
+      "tokenError": null
+    },
+    "appOriginApiMe": {
+      "approach": "FlowAI app-origin JavaScript obtained Clerk session token and fetched /api/me with Authorization header; token value redacted and not stored",
+      "ok": true,
+      "status": 200,
+      "tokenPresent": true,
+      "redactedJson": {
+        "authenticated": true,
+        "authMode": "clerk",
+        "userId": "[redacted-present]",
+        "orgId": null,
+        "productId": null,
+        "config": {
+          "authRequired": false,
+          "clerkConfigured": true
+        }
+      },
+      "apiMeEventsRedacted": [
+        {
+          "type": "request",
+          "url": "/api/me",
+          "method": "GET",
+          "authorizationHeaderPresent": false
+        },
+        {
+          "type": "response",
+          "url": "/api/me",
+          "status": 200,
+          "redactedJson": {
+            "authenticated": false,
+            "authMode": "anonymous",
+            "userId": null,
+            "orgId": null,
+            "productId": null,
+            "config": {
+              "authRequired": false,
+              "clerkConfigured": true
+            }
+          }
+        },
+        {
+          "type": "request",
+          "url": "/api/me",
+          "method": "GET",
+          "authorizationHeaderPresent": true
+        },
+        {
+          "type": "response",
+          "url": "/api/me",
+          "status": 200,
+          "redactedJson": {
+            "authenticated": true,
+            "authMode": "clerk",
+            "userId": "[redacted-present]",
+            "orgId": null,
+            "productId": null,
+            "config": {
+              "authRequired": false,
+              "clerkConfigured": true
+            }
+          }
+        },
+        {
+          "type": "request",
+          "url": "/api/me",
+          "method": "GET",
+          "authorizationHeaderPresent": true
+        },
+        {
+          "type": "response",
+          "url": "/api/me",
+          "status": 200,
+          "redactedJson": {
+            "authenticated": true,
+            "authMode": "clerk",
+            "userId": "[redacted-present]",
+            "orgId": null,
+            "productId": null,
+            "config": {
+              "authRequired": false,
+              "clerkConfigured": true
+            }
+          }
+        }
+      ],
+      "screenshot": "docs/cto/ct2-live-proof-sweep-acceleration-evidence-20260614/screenshots/clerk-after-app-origin-api-me-2026-06-14T11-53-06-223Z.png"
+    },
+    "anonymousAfter": {
+      "status": 200,
+      "json": {
+        "authenticated": false,
+        "authMode": "anonymous",
+        "userId": null,
+        "orgId": null,
+        "productId": null,
+        "config": {
+          "authRequired": false,
+          "clerkConfigured": true
+        }
+      }
+    },
+    "cleanup": {
+      "attempted": true,
+      "userDeleted": true,
+      "error": null
+    },
+    "secretHandling": {
+      "dopplerReadAttempted": true,
+      "clerkSecretPresentInProcess": true,
+      "hostedSignInTokenUrlOpened": false,
+      "rawTicketPrintedOrCommitted": false,
+      "secretPrintedOrCommitted": false,
+      "bearerTokenPrintedOrCommitted": false,
+      "authorizationHeaderValuePrintedOrCommitted": false,
+      "cookiesPrintedOrCommitted": false,
+      "passwordPrintedOrCommitted": false,
+      "rawClerkUserIdPrintedOrCommitted": false
+    }
+  },
+  "freshBuildPublic": {
+    "status": 200,
+    "ok": true,
+    "title": "FlowAI — VEU AI Studio",
+    "url": "https://flowai-fresh-veusite.vercel.app/flow-hub/production",
+    "bodyText": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Migration Mode requires operator enablement. Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Flow Hub - Production Upgrade an existing product URL in its owned delivery path. FlowAI Ready · Layer: Autonomous · Mode: Auto · Depth: Standard · Path: Production Choose how you want to work with your product, then select your operation mode. PRE-RELEASE · INTERNAL USE ONLY v0.1 · VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch) Analyze a Live Product FlowAI will fetch and analyze the public-facing pages of your product. Test Fetch Note: URL must be publicly accessible. Authenticated or private apps use Card B or C. Describe Your Product Type or speak a description. Best for authenticated apps, internal tools, or early-stage products. 🔒 Credentials are used only for this session and are never stored. Voice Input Paste Content or Upload Screenshots Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly. Drop screenshots here or click to upload — PNG, JPG, PDF Combine with Card B for best results on authenticated products. SETUP 2 OF",
+    "generatedSiteSignals": {
+      "victorUdo": false,
+      "veuAiStudio": true,
+      "flowAiPositioning": true,
+      "vercelLogin": false,
+      "flowAiOperatorShell": true
+    },
+    "screenshot": "docs/cto/ct2-live-proof-sweep-acceleration-evidence-20260614/screenshots/fresh-build-public-anonymous-2026-06-14T11-53-06-223Z.png"
+  },
+  "completedAt": "2026-06-14T11:54:12.777Z",
+  "verdictInputs": {
+    "clerkReady": true,
+    "axesVisible": true,
+    "axesSelected": true,
+    "axisRunRequestEnvelope": true,
+    "axisRunLogEnvelope": true,
+    "noFalseRuntimeClaim": true,
+    "clerkTicketPass": true,
+    "freshBuildPublicPass": false
+  }
+}
