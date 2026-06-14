@@ -161,6 +161,8 @@ Completed:
 - CB redirect-completion patch dispatch filed at `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`.
 - CB pushed branch `fix/clerk-ticket-redirect-completion` at `dbeeb454c129cd47be982b02820adcd1064040d7`.
 - CD/CR review prompts are filed at `docs/cto/cd-review-clerk-ticket-redirect-completion-prompt-20260614.md` and `docs/cto/cr-review-clerk-ticket-redirect-completion-prompt-20260614.md`.
+- CD returned `PASS-WITH-FINDINGS` on branch `fix/clerk-ticket-redirect-completion`; the only finding is a non-blocking evidence metadata note. CD result is on the patch branch at `docs/cto/cd-review-clerk-ticket-redirect-completion-result-20260614.md`.
+- CR result is still pending. Runtime merge remains blocked until CR returns PASS or PASS-WITH-FINDINGS accepted by CTO/W04.
 
 Blocked:
 
@@ -172,10 +174,10 @@ Blocked:
 
 Next technical action:
 
-1. CD and CR review `fix/clerk-ticket-redirect-completion`.
-2. After CD and CR PASS, merge/promote and dispatch CT2 rerun.
-3. If CT2 PASS, prepare an evidence packet only; do not move VERIFIED without W04/CEO clearance.
-4. If CD/CR BLOCK, patch the same branch.
+1. Obtain CR result for `fix/clerk-ticket-redirect-completion`.
+2. If CR passes or returns accepted non-blocking findings, merge/promote and dispatch CT2 rerun.
+3. If CR blocks, patch the same branch.
+4. If CT2 PASS, prepare an evidence packet only; do not move VERIFIED without W04/CEO clearance.
 
 No VERIFIED movement is allowed from Clerk work until CT2 proves a real authenticated user session and W04/CEO clears the promotion packet.
 

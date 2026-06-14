@@ -134,12 +134,22 @@ Interpretation:
 
 23. CB pushed patch branch:
    - Branch: `fix/clerk-ticket-redirect-completion`
-   - HEAD: `dbeeb454c129cd47be982b02820adcd1064040d7`
+   - Runtime code HEAD reviewed: `dbeeb454c129cd47be982b02820adcd1064040d7`
+   - Current branch head: `7ba04e73dac0c3477b7c893bcf6148db9bafd67e`
    - Changed: `src/pages/ClerkTicketSignInPage.jsx`, `tests/clerk-ticket-signin.test.js`, `docs/cto/cb-clerk-ticket-redirect-completion-evidence-20260614.md`
 
 24. Filed CD/CR review prompts:
    - `docs/cto/cd-review-clerk-ticket-redirect-completion-prompt-20260614.md`
    - `docs/cto/cr-review-clerk-ticket-redirect-completion-prompt-20260614.md`
+
+25. CD returned Step 5 review:
+   - Result file: `docs/cto/cd-review-clerk-ticket-redirect-completion-result-20260614.md`
+   - Branch: `fix/clerk-ticket-redirect-completion`
+   - Review verdict: `PASS-WITH-FINDINGS`
+   - Finding: non-blocking evidence metadata note only.
+   - Runtime code/test review: PASS.
+
+26. CR review remains pending. Runtime merge remains blocked until CR returns PASS or an accepted PASS-WITH-FINDINGS.
 
 ## Clerk Auth State
 
@@ -255,8 +265,8 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Wait for CD and CR review results for `fix/clerk-ticket-redirect-completion`.
-4. If CD/CR PASS, merge/promote and dispatch CT2 rerun.
-5. If CD/CR BLOCK, patch the same branch.
+3. Obtain CR review result for `fix/clerk-ticket-redirect-completion`.
+4. If CR PASS or accepted PASS-WITH-FINDINGS, merge/promote and dispatch CT2 rerun.
+5. If CR BLOCK, patch the same branch.
 6. If CT2 PASS, prepare evidence packet only; do not move VERIFIED without W04/CEO clearance.
 7. Do not move VERIFIED without W04/CEO clearance.
