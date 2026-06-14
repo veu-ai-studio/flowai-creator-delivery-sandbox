@@ -692,11 +692,12 @@ export function generateCodebase(featureInventory, designSpec, options = {}) {
   }
 
   const files = buildGeneratedFiles(featureInventory, designSpec, productName);
+  const generatedPageCount = files.filter((file) => String(file?.path || '').startsWith('src/pages/')).length;
   const codebase = {
     status: 'READY',
     files,
     stack: options.targetStack || DEFAULT_TARGET_STACK,
-    pageCount: featureInventory.pages.length,
+    pageCount: generatedPageCount,
     componentCount: featureInventory.components.length,
     flowCount: featureInventory.userFlows.length,
     platformDependencies: [],

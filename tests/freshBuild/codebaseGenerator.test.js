@@ -290,6 +290,7 @@ describe('freshBuild Codebase Generator', () => {
       'src/pages/Pricing.jsx',
       'src/pages/Pricing2.jsx',
     ]);
+    expect(codebase.pageCount).toBe(3);
     expect(appFile.match(/import Pricing from/g)).toHaveLength(1);
     expect(appFile.match(/import Pricing2 from/g)).toHaveLength(1);
     expect(appFile.match(/"route": "\/pricing"/g)).toHaveLength(1);
