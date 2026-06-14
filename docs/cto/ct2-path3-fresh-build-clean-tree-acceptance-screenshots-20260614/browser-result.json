@@ -1,0 +1,22 @@
+{
+  "targetUrl": "https://flowai-qia5zr2ag-veu-ai-studio.vercel.app",
+  "checkedAt": "2026-06-14T11:17:40.327Z",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "anonymous": {
+    "status": 401,
+    "title": "Login – Vercel",
+    "url": "https://vercel.com/login?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fflowai-qia5zr2ag-veu-ai-studio.vercel.app%252F%26nonce%3D2bb2f7f449410856529cc09971b2d9c8e7cc7c75982c40fb48a7ae703ef4bf43",
+    "bodyText": "Skip to content Sign Up Log in to Vercel Continue with Email Continue with Google Continue with GitHub Continue with Apple Continue with SAML SSO Continue with Passkey Show other options Don't have an account? Sign Up Terms Privacy Policy",
+    "screenshot": "docs/cto/ct2-path3-fresh-build-clean-tree-acceptance-screenshots-20260614/anonymous-negative.png"
+  },
+  "bypass": {
+    "status": 200,
+    "title": "url-416b941ffbc3b7d5",
+    "url": "https://flowai-qia5zr2ag-veu-ai-studio.vercel.app/",
+    "bodyText": "Home victor-udo-fnse-phd-ai-platform-builder-sustainability-leader-abasi-foundation-leader-power-sector-executive about veu-ai-studio abasi-people abasi-people-forum-podcast speaking publications contact carbon-calculator linkedin-banner blog afri-decarbonization advisory news gallery mothers-memorial platforms books CHECKOUT Victor Udo, FNSE, PhD | AI Platform Builder - Sustainability Leader - Abasi Foundation Leader - Power Sector Executive Victor Udo, FNSE, PhD | AI Platform Builder - Sustainability Leader - Abasi Foundation Leader - Power Sector Executive Dr. Victor Udo Executive · AI Builder · Author · Community Leader Home About VEU AI Studio Abasi People Abasi People Foundation Abasi People Forum Podcast Speaking Publications Contact More ▾ Blog &amp; Insights Carbon Calculator Afri Decarbonization Advisory Services News Gallery Mother's Memorial... Dr. Victor Udo Executive · AI Builder · Author · Community Leader Home About VEU AI Studio Abasi People Abasi People Foundation Abasi People Forum Podcast Speaking Dr. Victor Udo Executive · AI Builder · Author · Community Leader Home About VEU AI Studio Abasi People Abasi People Foundation Abasi People Forum Podcast Speaking Publications Contact More ▾ Blog &amp; Insights Carbon... Start the Demo → Subscribe Home About Blog &amp; Insights Books Speaking News Gallery Publications Contact VEU AI Studio SAIGE Demo Afri Decarbonization Corp Abasi People Foundation Abasi People Forum Podcast The Podium of Leadership (The POL) w",
+    "screenshot": "docs/cto/ct2-path3-fresh-build-clean-tree-acceptance-screenshots-20260614/bypass-positive.png"
+  }
+}
