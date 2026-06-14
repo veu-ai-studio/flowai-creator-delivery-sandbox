@@ -178,13 +178,38 @@ Boundary:
 
 This does not prove production paid-user onboarding, organization membership enforcement, or `AUTH_REQUIRED=true` gating.
 
+## Candidate 8 - Fresh Build Path Produced A Public URL
+
+Claim scope:
+
+FlowAI Fresh Build path produced a CT2-confirmed public deployed URL for a generated, platform-free VEU AI Studio website from a real Fresh Build run.
+
+Evidence:
+
+- Public evidence URL: `https://flowai-fresh-public-veusite.vercel.app`
+- CTO run result: `docs/cto/path3-fresh-build-veusite-publictarget-result-20260614.md`
+- Raw run SSE: `docs/cto/path3-fresh-build-veusite-publictarget-proof-20260614/cto-path3-veusite-publictarget-20260614-1253.sse`
+- CT2 browser acceptance: `docs/cto/ct2-path3-publictarget-acceptance-result-20260614.md`
+- `verifiedAt`: `2026-06-14`
+- `verifiedBy`: `CT2 browser acceptance + FlowAI runtime proof`
+- Evidence label: `LIVE_PRODUCTION`
+
+Observed:
+
+- FlowAI runtime commit `eb290b490093c199596ec7b0a178aac0dd73c1fe` ran Path 3 Fresh Build.
+- Runtime returned public URL `https://flowai-fresh-public-veusite.vercel.app`.
+- Runtime preview probe reported HTTP `200`, `PREVIEW_BROWSER_CLEAR`, and `bypassAttempted:false`.
+- Generated branch `flowai/fresh-build-url-416b941ffbc3b7d5-cto-path3-veusite-publictarget-20260614-1253` has `342` files.
+- Forbidden retained FlowAI platform prefixes were absent.
+- CT2 opened the public URL in a fresh anonymous browser with no bypass header.
+- CT2 observed generated Victor Udo / VEU AI Studio / FlowAI-positioning content.
+- CT2 observed no Vercel protection page and no FlowAI operator shell.
+
+Boundary:
+
+This proves Fresh Build can produce one public generated URL. It does not prove all Fresh Build submissions work, Path 2 Production URL generation, or full 8-step forge completion. CT2 noted sampled nav links left the generated public target domain for `victorudo.com`, so same-origin generated-route handling remains a separate polish/follow-up claim.
+
 ## Explicitly Excluded
-
-Fresh Build public URL:
-
-- CT2 current result: `BLOCK`.
-- Candidate `https://flowai-fresh-veusite.vercel.app/` returned HTTP 200 but rendered the FlowAI operator app, not generated VEU/Victor content.
-- No Fresh Build public URL promotion is requested.
 
 Path 2 Production URL:
 
@@ -204,10 +229,10 @@ Safe authorization set:
 - 4 Flow Hub axis propagation claims.
 - Optional 1 narrow TIM Build Codex visibility/ranking claim.
 - Optional 1 narrow Clerk ticket/session claim.
+- Optional 1 narrow Fresh Build public URL claim.
 
 Do not authorize:
 
-- Fresh Build URL production.
 - Path 2 URL production.
 - full 8-step forge completion.
 - Codex live Build invocation.
