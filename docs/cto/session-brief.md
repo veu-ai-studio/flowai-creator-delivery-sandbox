@@ -21,6 +21,8 @@ Path 2 was rerun after the Fresh Build milestone. SAIGE v2 ended with an honest 
 
 W04 then identified the larger infrastructure gap: FlowAI cannot require preconfigured upgrade repos or Vercel projects for real users. CTO completed the requested diagnosis and pushed a Universal Delivery Workspace clearance packet. No build has been dispatched. The next architecture decision is whether W04 clears the FlowAI-owned workspace model for auto-created GitHub repos, committed code, Vercel projects/deployments, returned URLs, and ProductSSOT evidence. Until that is cleared, do not run more Production proofs that depend on manually preconfigured products except by explicit W04 instruction.
 
+Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
+
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
@@ -107,15 +109,19 @@ Path 2 token/upgrade-target patch:
 Universal input and delivery architecture:
 
 - Branch: `docs/cto-auto-repo-provisioning-plan`.
-- Latest pushed commit: `b8d94ec` (`docs/cto | request universal delivery workspace clearance`).
+- Latest pushed commit before final-directive integration: `d575b4d` (`docs/cto | add universal delivery decision packet`).
 - Universal input audit: `docs/cto/universal-input-journey-audit-20260614.md`.
 - Auto-repo infrastructure audit: `docs/cto/auto-repo-provisioning-infrastructure-audit-20260614.md`.
 - W04 clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
 - Paste-ready W04 decision packet: `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md`.
 - CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
+- Active CB dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
+- Post-clearance runbook: `docs/cto/universal-delivery-workspace-postclearance-runbook-20260614.md`.
+- CD review draft: `docs/cto/cd-review-universal-delivery-workspace-prompt-draft-20260614.md`.
+- CR review draft: `docs/cto/cr-review-universal-delivery-workspace-prompt-draft-20260614.md`.
+- CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
 - Finding: Type 1 is partial; Type 2 and Type 3 are not end-to-end in the active forge. The active system still assumes preconfigured delivery targets in key paths.
-- Status: diagnosis complete, runtime build not dispatched, canonical docs untouched, matrixArtifact untouched.
-- Decision needed: W04 must clear or revise the Universal Delivery Workspace direction before CB implements it.
+- Status: diagnosis complete, CB dispatch prepared, canonical docs untouched. Runtime build now authorized by final directive; matrixArtifact promotion is separately authorized by the batch packet.
 
 ## Current Packets
 
@@ -125,8 +131,13 @@ Universal input and delivery architecture:
 - Universal Delivery Workspace clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
 - Universal Delivery Workspace decision packet: `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md`.
 - Universal Delivery Workspace CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
+- Universal Delivery Workspace active CB dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
+- Universal Delivery Workspace post-clearance runbook: `docs/cto/universal-delivery-workspace-postclearance-runbook-20260614.md`.
+- Universal Delivery Workspace CD review draft: `docs/cto/cd-review-universal-delivery-workspace-prompt-draft-20260614.md`.
+- Universal Delivery Workspace CR review draft: `docs/cto/cr-review-universal-delivery-workspace-prompt-draft-20260614.md`.
+- Universal Delivery Workspace CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
 
-No matrixArtifact edit has been made. W04/CEO must authorize exact row movement before promotion.
+W04/CEO has now authorized applying the batch VERIFIED packet. The next matrixArtifact edit must still stay within the exact evidence packet and populate `evidenceUrl`, `verifiedAt`, and `verifiedBy`.
 
 ## Known Gaps
 
@@ -142,15 +153,13 @@ No matrixArtifact edit has been made. W04/CEO must authorize exact row movement 
 
 ## Next Starting Point
 
-1. W04 reviews `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md` and clears, revises, or blocks the Universal Delivery Workspace direction.
-2. If cleared, CTO issues a `CLEAR TO EXECUTE` follow-up from `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`; CB first commits diagnosis before runtime patching.
-3. Keep the VERIFIED row-mapping packet ready, but do not edit `matrixArtifact` until W04/CEO authorizes exact rows.
-4. Hold additional manually preconfigured Production proof runs unless W04 explicitly instructs; the newly identified gap says universal delivery must come first.
-5. Resolve the formal review gate on `fix/path2-production-token-upgrade-target` only if W04 decides that branch remains relevant before or alongside Universal Delivery Workspace work.
+1. Commit and push the final-directive integration docs.
+2. Apply the authorized VERIFIED batch packet to `src/lib/orchestratorFramework/matrixArtifact.json` without broad-row overclaiming.
+3. Merge `fix/path2-production-token-upgrade-target`, promote production, and dispatch CT2.
+4. Dispatch CB on `feature/universal-delivery-workspace` from `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
+5. Select and document three external Path 4 synthesis URLs, then execute when the run target is ready.
 
 Victor action required:
 
-- W04/CEO authorization for exact VERIFIED row mapping.
-- W04 decision on Universal Delivery Workspace architecture.
-- Path 4 three-URL synthesis approval.
+- No action required for the four immediate authorizations in the final directive.
 - Canonical doc changes, if W04/CEO chooses to add new canonical surface rows instead of only updating matrixArtifact evidence state.
