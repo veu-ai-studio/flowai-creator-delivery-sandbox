@@ -5,7 +5,7 @@ TO: W04 / CD / CR / CB2
 DATE: 2026-06-14 UTC
 BRANCH: `feature/universal-delivery-workspace`
 BASE: `f9c570601febae842d02e12faea0e5fce4dcf6be`
-HEAD: `6e1372a855d23cb21055afc98752cd3913cf294c`
+HEAD: `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`
 VERDICT: PASS-WITH-FINDINGS, pending CD/CR/CB2 final clearance
 
 ## CTO Assessment
@@ -29,10 +29,13 @@ The branch is directionally consistent with the SSOT and the W04/CEO final direc
 - Result: only CB diagnosis/evidence docs, four runtime files, and three matching test files.
 - Focused tests: `npx vitest run tests/provisioning/upgradeTargetProvisioner.test.js tests/freshBuild/freshBuildDeploymentAdapter.test.js tests/freshBuild/freshBuildOrchestrator.test.js`
 - Result: PASS, 3 files, 40 tests.
+- Test-only addendum at `c19a8c4`: `npx vitest run tests/api/runConstructionHandlerSse.test.js tests/provisioning/upgradeTargetProvisioner.test.js tests/freshBuild/freshBuildDeploymentAdapter.test.js tests/freshBuild/freshBuildOrchestrator.test.js`
+- Result: PASS, 4 files, 53 tests.
+- Full branch preflight at `c19a8c4`: PASS, 236 files, 3741 tests passed, 3 skipped.
 
 ## Findings
 
-1. Non-blocking coverage gap: `/api/run-construction` description-only input is implemented by inspection, but there is no direct handler-level test for no-URL Fresh Build. The orchestrator-level test proves description-only Fresh Build does not crawl or fabricate baseline scoring.
+1. Coverage addendum resolved: `/api/run-construction` now has a handler-level test proving description-only Fresh Build enters without a URL, skips URL public-crawl validation, emits `description_only_fresh_build`, calls `runFreshBuild`, and terminally frames the SSE result without fabricated baseline score fields.
 
 2. Non-blocking live-proof risk: an empty auto-created GitHub repo may be initialized on the generated `flowai/...` branch rather than `main`. Vercel receives an explicit git ref, so this may be fine, but CT2 must prove the created project can deploy from that branch before anyone claims Universal Delivery complete.
 

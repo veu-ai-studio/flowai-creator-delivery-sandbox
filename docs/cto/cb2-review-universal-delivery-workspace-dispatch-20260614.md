@@ -9,7 +9,7 @@ STATUS: DISPATCHED
 ## Branch Under Audit
 
 - Branch: `feature/universal-delivery-workspace`
-- Review HEAD: `6e1372a855d23cb21055afc98752cd3913cf294c`
+- Review HEAD: `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`
 - Review base commit: `f9c570601febae842d02e12faea0e5fce4dcf6be`
 
 ## Scope
@@ -46,6 +46,7 @@ Run or inspect:
 
 - `git diff --name-status f9c570601febae842d02e12faea0e5fce4dcf6be..origin/feature/universal-delivery-workspace`
 - `npx vitest run tests/provisioning/upgradeTargetProvisioner.test.js tests/freshBuild/freshBuildDeploymentAdapter.test.js tests/freshBuild/freshBuildOrchestrator.test.js`
+- `npx vitest run tests/api/runConstructionHandlerSse.test.js tests/provisioning/upgradeTargetProvisioner.test.js tests/freshBuild/freshBuildDeploymentAdapter.test.js tests/freshBuild/freshBuildOrchestrator.test.js`
 - `npm run preflight` if feasible in your environment
 
 If full preflight cannot be run, state why and run the strongest focused substitute.
