@@ -1,0 +1,5 @@
+﻿PID=4016
+StartedAt=2026-06-14T04:25:19.0404730-04:00
+RunId=cto-path3-veusite-patonly-20260614-0825
+Output=docs\cto\path3-fresh-build-veusite-patonly-proof-20260614\cto-path3-veusite-patonly-20260614-0825.sse
+Error=docs\cto\path3-fresh-build-veusite-patonly-proof-20260614\cto-path3-veusite-patonly-20260614-0825.stderr.txt

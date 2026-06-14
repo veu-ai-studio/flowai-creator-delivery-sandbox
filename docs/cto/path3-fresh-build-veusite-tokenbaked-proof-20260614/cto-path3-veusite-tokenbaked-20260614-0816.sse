@@ -1,0 +1,27 @@
+data: {"type":"start","runId":"cto-path3-veusite-tokenbaked-20260614-0816","url":"https://victorudo.com","mode":"FRESH_BUILD","flowHubAxes":{"structuralLayer":"autonomous","operationalMode":"auto","analysisDepth":"standard","flowHubPath":"fresh_build"},"gtmTarget":95,"supabase":"connected","at":"2026-06-14T08:16:40.098Z"}
+
+data: {"type":"registry","action":"reused","productId":"url-416b941ffbc3b7d5"}
+
+data: {"type":"symbiotic_context","productId":"url-416b941ffbc3b7d5","ok":false,"reason":"no_product_ssot_row","context":null}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"feature_extractor","status":"started","at":"2026-06-14T08:16:40.570Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"feature_extractor","status":"completed","at":"2026-06-14T08:17:36.884Z","inventoryId":null,"pages":20,"components":312}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"design_synthesizer","status":"started","at":"2026-06-14T08:17:36.884Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"design_synthesizer","status":"completed","at":"2026-06-14T08:18:32.233Z","designSpecId":null,"components":312}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"codebase_generator","status":"started","at":"2026-06-14T08:18:32.233Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"codebase_generator","status":"READY","at":"2026-06-14T08:18:32.261Z","files":343,"platformDependencies":0}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"upgrade_repo_write","status":"started","at":"2026-06-14T08:18:32.261Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"upgrade_repo_write","status":"WRITE_FAILED","at":"2026-06-14T08:19:09.491Z","reason":"GITHUB_AUTH_FAILED","filesWritten":0,"failureStage":"deployment_adapter","previewUrl":null,"deploymentId":null,"previewAccessStatus":null}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"score_capture","status":"blocked","at":"2026-06-14T08:19:09.491Z","scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","previewAccessStatus":null,"baselineScore":null,"finalScore":null,"scoreDelta":null}}
+
+data: {"type":"final","final":true,"ok":false,"status":"failed","previewUrl":null,"previewAccessStatus":null,"scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","baselineScore":null,"finalScore":null,"scoreDelta":null,"governanceRecordId":"cto-path3-veusite-tokenbaked-20260614-0816","gtmReady":false,"exitReason":"GITHUB_AUTH_FAILED","failureStage":"deployment_adapter","failure":{"stage":"deployment_adapter","code":"GITHUB_AUTH_FAILED","message":"GitHub POST /repos/victor2081new-cloud/flowai/git/blobs failed with 403","deploymentId":null,"readyState":null,"attempts":null},"code":"GITHUB_AUTH_FAILED","error":"GitHub POST /repos/victor2081new-cloud/flowai/git/blobs failed with 403","deploymentId":null,"iterationsCompleted":0,"prUrl":null,"runMode":"FRESH_BUILD","freshBuild":{"status":"failed","reason":"GITHUB_AUTH_FAILED","featureFlag":"FLOWAI_ENABLE_FRESH_BUILD","evidence":{"featureInventoryId":null,"featureInventoryFieldCount":7,"designSpecId":null,"designSpecFieldCount":8,"designEvidence":{"primaryColors":["#10b981","#f59e0b","#3b82f6"],"fontFamilies":[],"fontSizes":[],"extractionConfidence":0.65,"componentVisualCount":312},"generatedFileCount":343,"platformDependenciesCount":0,"writeStatus":"WRITE_FAILED","previewUrl":null,"deploymentId":null,"previewAccessStatus":null,"previewAccess":null,"scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","baselineScore":null,"finalScore":null,"scoreDelta":null},"designEvidence":{"primaryColors":["#10b981","#f59e0b","#3b82f6"],"fontFamilies":[],"fontSizes":[],"extractionConfidence":0.65,"componentVisualCount":312},"previewAccessStatus":null,"previewAccess":null,"scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","baselineScore":null,"finalScore":null,"scoreDelta":null,"platformDependencies":[],"writeResult":{"ok":false,"status":"WRITE_FAILED","reason":"GITHUB_AUTH_FAILED","message":"GitHub POST /repos/victor2081new-cloud/flowai/git/blobs failed with 403","previewUrl":null,"failureStage":"deployment_adapter","failure":{"stage":"deployment_adapter","code":"GITHUB_AUTH_FAILED","message":"GitHub POST /repos/victor2081new-cloud/flowai/git/blobs failed with 403","deploymentId":null,"readyState":null,"attempts":null}},"failure":{"stage":"deployment_adapter","code":"GITHUB_AUTH_FAILED","message":"GitHub POST /repos/victor2081new-cloud/flowai/git/blobs failed with 403","deploymentId":null,"readyState":null,"attempts":null}},"runId":"cto-path3-veusite-tokenbaked-20260614-0816"}
+
+data: [DONE]

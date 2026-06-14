@@ -244,6 +244,62 @@ function routeForPage(page, index) {
   return safeRoute.startsWith('/') ? safeRoute : `/${safeRoute}`;
 }
 
+function pageNameFor(page, index) {
+  return index === 0 ? 'HomePage' : toPascalCase(page.title || page.purpose || `Page ${index + 1}`, `Page${index + 1}`);
+}
+
+function uniqueName(baseName, usedNames) {
+  if (!usedNames.has(baseName)) {
+    usedNames.add(baseName);
+    return baseName;
+  }
+  let suffix = 2;
+  let nextName = `${baseName}${suffix}`;
+  while (usedNames.has(nextName)) {
+    suffix += 1;
+    nextName = `${baseName}${suffix}`;
+  }
+  usedNames.add(nextName);
+  return nextName;
+}
+
+function normalizeRouteKey(route) {
+  return String(route || '/').replace(/\/+$/g, '') || '/';
+}
+
+function createPageDescriptors(pages) {
+  const descriptors = [];
+  const descriptorsByRoute = new Map();
+  const usedNames = new Set();
+
+  for (const [index, page] of pages.entries()) {
+    const route = routeForPage(page, index);
+    const routeKey = normalizeRouteKey(route);
+    const existing = descriptorsByRoute.get(routeKey);
+    if (existing) {
+      if (page?.url) existing.sourceUrls.push(page.url);
+      continue;
+    }
+
+    const pageName = uniqueName(pageNameFor(page, index), usedNames);
+    const descriptor = {
+      page,
+      pageName,
+      route,
+      sourceUrls: page?.url ? [page.url] : [],
+    };
+    descriptors.push(descriptor);
+    descriptorsByRoute.set(routeKey, descriptor);
+  }
+
+  return descriptors.length ? descriptors : [{
+    page: pages[0],
+    pageName: 'HomePage',
+    route: '/',
+    sourceUrls: pages[0]?.url ? [pages[0].url] : [],
+  }];
+}
+
 function componentNameFor(component, index) {
   return toPascalCase(`${component.type || 'component'} ${component.id || index}`, `GeneratedComponent${index + 1}`);
 }
@@ -268,8 +324,8 @@ export default function ${componentName}() {
 `);
 }
 
-function buildPageFile(page, index, componentImports) {
-  const pageName = index === 0 ? 'HomePage' : toPascalCase(page.title || page.purpose || `Page ${index + 1}`, `Page${index + 1}`);
+function buildPageFile(descriptor, componentImports) {
+  const { page, pageName } = descriptor;
   const title = safeGeneratedText(page.title, 'Untitled page');
   const purpose = safeGeneratedText(page.purpose || UNKNOWN);
   const primaryContent = safeGeneratedText(page.primaryContent, 'No primary content detected.');
@@ -312,11 +368,8 @@ export default function ${pageName}() {
 `);
 }
 
-function buildAppFile(pages) {
-  const pageImports = pages.map((page, index) => {
-    const pageName = index === 0 ? 'HomePage' : toPascalCase(page.title || page.purpose || `Page ${index + 1}`, `Page${index + 1}`);
-    return { pageName, route: routeForPage(page, index) };
-  });
+function buildAppFile(pageDescriptors) {
+  const pageImports = pageDescriptors.map(({ pageName, route }) => ({ pageName, route }));
   return createFile('src/App.jsx', `
 ${pageImports.map((item) => `import ${item.pageName} from './pages/${item.pageName}.jsx';`).join('\n')}
 
@@ -542,14 +595,15 @@ function buildGeneratedFiles(featureInventory, designSpec, productName) {
   const pages = Array.isArray(featureInventory.pages) && featureInventory.pages.length
     ? featureInventory.pages
     : [{ url: featureInventory.url, title: productName, purpose: UNKNOWN, primaryContent: UNKNOWN, navigation: [] }];
+  const pageDescriptors = createPageDescriptors(pages);
   const components = Array.isArray(featureInventory.components) ? featureInventory.components : [];
   const componentNameById = new Map(components.map((component, index) => [component.id, componentNameFor(component, index)]));
   const componentFiles = components.map(buildComponentFile);
-  const pageFiles = pages.map((page, pageIndex) => {
+  const pageFiles = pageDescriptors.map((descriptor) => {
     const pageComponents = components
-      .filter((component) => Array.isArray(component.pages) && component.pages.includes(page.url))
+      .filter((component) => Array.isArray(component.pages) && component.pages.some((pageUrl) => descriptor.sourceUrls.includes(pageUrl)))
       .map((component) => ({ name: componentNameById.get(component.id) }));
-    return buildPageFile(page, pageIndex, pageComponents);
+    return buildPageFile(descriptor, pageComponents);
   });
 
   return [
@@ -582,7 +636,7 @@ createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 );
 `),
-    buildAppFile(pages),
+    buildAppFile(pageDescriptors),
     buildGlobalCss(designSpec),
     buildTailwindConfig(designSpec),
     createFile('postcss.config.js', `
@@ -613,7 +667,10 @@ export function validateGeneratedCodebase(codebase) {
   if (Array.isArray(codebase.platformDependencies) && codebase.platformDependencies.length !== 0) {
     errors.push('platformDependencies must be empty');
   }
+  const seenPaths = new Set();
   for (const file of codebase.files || []) {
+    if (seenPaths.has(file?.path)) errors.push(`Duplicate generated file path: ${file.path}`);
+    seenPaths.add(file?.path);
     errors.push(...validateGeneratedFile(file));
   }
   return { ok: errors.length === 0, errors };
@@ -635,11 +692,12 @@ export function generateCodebase(featureInventory, designSpec, options = {}) {
   }
 
   const files = buildGeneratedFiles(featureInventory, designSpec, productName);
+  const generatedPageCount = files.filter((file) => String(file?.path || '').startsWith('src/pages/')).length;
   const codebase = {
     status: 'READY',
     files,
     stack: options.targetStack || DEFAULT_TARGET_STACK,
-    pageCount: featureInventory.pages.length,
+    pageCount: generatedPageCount,
     componentCount: featureInventory.components.length,
     flowCount: featureInventory.userFlows.length,
     platformDependencies: [],

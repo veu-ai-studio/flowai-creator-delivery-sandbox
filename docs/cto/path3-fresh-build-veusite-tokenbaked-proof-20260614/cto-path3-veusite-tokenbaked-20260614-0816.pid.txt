@@ -1,0 +1,5 @@
+﻿PID=27320
+StartedAt=2026-06-14T04:16:36.5307895-04:00
+RunId=cto-path3-veusite-tokenbaked-20260614-0816
+Output=docs\cto\path3-fresh-build-veusite-tokenbaked-proof-20260614\cto-path3-veusite-tokenbaked-20260614-0816.sse
+Error=docs\cto\path3-fresh-build-veusite-tokenbaked-proof-20260614\cto-path3-veusite-tokenbaked-20260614-0816.stderr.txt
