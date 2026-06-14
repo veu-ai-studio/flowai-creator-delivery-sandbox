@@ -1,0 +1,9 @@
+﻿{
+    "ok":  true,
+    "at":  "2026-06-14T07:26:49.5590584Z",
+    "productId":  "url-416b941ffbc3b7d5",
+    "github_repo_url":  "https://github.com/victor2081new-cloud/flowai",
+    "self_renewal_branch":  "main",
+    "construction_eligible":  true,
+    "note":  "Temporary Path 3 proof target uses existing FlowAI repo; Fresh Build writes isolated generated branches only."
+}

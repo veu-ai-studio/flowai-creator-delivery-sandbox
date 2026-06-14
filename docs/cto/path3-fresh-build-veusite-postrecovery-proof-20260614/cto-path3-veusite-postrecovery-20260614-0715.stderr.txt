@@ -1,0 +1,2 @@
+curl: (6) Could not resolve host: text
+curl: (6) Could not resolve host: application
