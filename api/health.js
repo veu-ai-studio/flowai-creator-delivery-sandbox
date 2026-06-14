@@ -60,7 +60,7 @@ export default async function handler(req, res) {
       env: report.checks.build.env,
       region: report.checks.build.region,
       commit: report.checks.build.commit,
-      clerkReady: report.checks.auth?.clerkConfigured === true,
+      clerkReady: report.checks.auth?.status === 'PASS',
       githubAppReady: report.checks.githubApp?.status === 'PASS',
       inngestReady: isInngestEnabled(),
       timestamp: report.timestamp,

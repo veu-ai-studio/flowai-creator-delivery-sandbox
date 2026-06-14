@@ -51,8 +51,9 @@ VERIFIED movement: no
 ## Browser Test Instructions For CT2
 
 1. Open production or preview `/api/health`.
-   - Expected: response includes `clerkReady:true` when `CLERK_SECRET_KEY` is present.
-   - Expected: `checks.auth` includes `status`, `clerkConfigured:true`, `frontendPublishableKeyPresent:true`, and `authRequired:false`.
+   - Expected: response includes `clerkReady:true` only when backend Clerk and frontend Clerk readiness are both present: `checks.auth.status:"PASS"`, `clerkConfigured:true`, and `frontendPublishableKeyPresent:true`.
+   - Expected: if `CLERK_SECRET_KEY` is present but `VITE_CLERK_PUBLISHABLE_KEY` is missing, `clerkReady:false` and `checks.auth.status:"DEGRADED"`.
+   - Expected: `checks.auth` includes `status`, `clerkConfigured`, `frontendPublishableKeyPresent`, and `authRequired:false`.
    - Expected: no secret or publishable key values appear in the response, only booleans.
 2. Open `/sign-up`.
    - Expected: a real Clerk sign-up UI renders, not the SPA fallback, not marketing content, and not the internal `/api/auth/sign-up` form.

@@ -139,6 +139,23 @@ describe('GET /api/health', () => {
     expect(serialized).not.toContain(process.env.VITE_CLERK_PUBLISHABLE_KEY);
   });
 
+  it('does not report clerkReady when the frontend publishable key is missing', async () => {
+    process.env.CLERK_SECRET_KEY = 'sk_test_backend_present';
+    delete process.env.VITE_CLERK_PUBLISHABLE_KEY;
+    delete process.env.AUTH_REQUIRED;
+    const req = { method: 'GET', headers: {} };
+    const res = makeRes();
+    await handler(req, res);
+    const body = res._get().body;
+    expect(body.clerkReady).toBe(false);
+    expect(body.checks.auth).toMatchObject({
+      status: 'DEGRADED',
+      clerkConfigured: true,
+      frontendPublishableKeyPresent: false,
+      authRequired: false,
+    });
+  });
+
   it('keeps AUTH_REQUIRED false by default in health auth readiness', async () => {
     process.env.CLERK_SECRET_KEY = 'sk_test_configured';
     process.env.VITE_CLERK_PUBLISHABLE_KEY = 'pk_test_configured';
