@@ -91,12 +91,16 @@ Constrained Production proof after Anthropic credit restoration:
 Path 2 token/upgrade-target patch:
 
 - Branch: `fix/path2-production-token-upgrade-target`.
-- Commit: `5a66bee` (`fix/forge | harden path2 token and upgrade target gates`).
+- Current head: `acebaa1`.
+- Runtime patch commit: `5a66bee` (`fix/forge | harden path2 token and upgrade target gates`).
+- Branch has been merged with current main proof evidence and refreshed review docs.
 - Review prompts: `docs/cto/cd-review-path2-token-upgrade-target-20260614.md` and `docs/cto/cr-review-path2-token-upgrade-target-20260614.md` on that branch.
 - Evidence: `docs/cto/path2-token-upgrade-target-fix-evidence-20260614.md` on that branch.
 - Focused verification: `139/139` resolver + orchestrator tests PASS.
 - Static checks: lane discipline PASS; SSOT traceability PASS.
-- Full `npm run preflight`: stopped on existing/external smoke failure `tests/smoke/api-health.test.js > POST /api/test-claude`, expected `200` but received `500`; lint/build and 3732 tests passed before that single failure.
+- Full `npm run preflight`: PASS after Anthropic credits were restored; lint, build, 236 test files / 3733 tests, lane discipline, SSOT traceability, and matrix generation all passed.
+- CTO local review: PASS-WITH-GATE; no blocking code issue found.
+- Formal gate: CD/CR external CLI review could not be run from this session because the app privacy guard rejected transmitting private branch code/review material to external model services. Do not merge until CD/CR PASS, W04 waiver, or explicit approval for external reviewer CLI transmission after privacy-risk disclosure.
 
 ## Current Packets
 
@@ -118,9 +122,9 @@ No matrixArtifact edit has been made. W04/CEO must authorize exact row movement 
 ## Next Starting Point
 
 1. Submit the row-mapping proposal to W04/CEO with the acceleration packet.
-2. Await CD/CR review on `fix/path2-production-token-upgrade-target`; if PASS, merge and redeploy/promote production.
+2. Resolve the formal review gate on `fix/path2-production-token-upgrade-target`: CD/CR PASS, W04 waiver, or explicit external-review authorization. If cleared, merge and redeploy/promote production.
 3. Rerun RelTwin Path 2 after the token/upgrade-target fix lands; the target proof is branch creation and preview deployment, since pre-fix scoring is now proven past the prior blocker.
-4. Resolve or formally quarantine the `/api/test-claude` smoke boundary so full preflight no longer obscures branch health.
+4. Keep an eye on `/api/test-claude`, but the prior smoke blocker is currently cleared by the green Path 2 preflight.
 5. Keep accumulating CT2-confirmed evidence, but do not move VERIFIED until W04/CEO authorizes the exact rows.
 
 Victor action required:

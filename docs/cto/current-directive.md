@@ -22,7 +22,8 @@ This folder is an executive coordination layer. Canonical authority remains `doc
   - Path 2 Production: no CT2-confirmed deployed URL yet.
 - Latest Path 2 reruns: SAIGE v2 ended honestly with `HONEST_GATE_REFUSAL_ALREADY_PASSING` at score `98`; RelTwin is the active below-target Production candidate.
 - Latest constrained RelTwin Production proof after Anthropic credit restoration: pre-fix scoring PASS at score `69`, step 5 to step 6 handoff observed, branch creation not observed, preview URL not produced, terminal stop `STEP_8` `GITHUB_AUTH_FAILED` from GitHub App PEM signing failure. Unsafe same original/upgrade repo resolution remains visible behind that gate.
-- Path 2 token/upgrade-target runtime fix is pushed at branch `fix/path2-production-token-upgrade-target`, commit `5a66bee`, with CD/CR review prompts committed to that branch.
+- Path 2 token/upgrade-target runtime fix is pushed at branch `fix/path2-production-token-upgrade-target`, head `acebaa1`. Runtime patch commit `5a66bee` is now merged with current main proof evidence and refreshed review docs.
+- Path 2 verification status: focused tests PASS, full `npm run preflight` PASS, CTO local review PASS-WITH-GATE. Formal CD/CR CLI review was blocked by the app privacy guard because it would transmit private branch code/review material to external model services. Do not merge until CD/CR PASS, W04 waiver, or explicit approval for that external transmission after privacy-risk disclosure.
 - Four-axis UI and run propagation are CT2-confirmed at the evidence level: Structural Layer, Operational Mode, Analysis Depth, and Flow Hub Path are visible, independently selectable, and appear in live run payload/log evidence.
 - Clerk ticket/session is CT2-confirmed at the evidence level: app-owned `/sign-in-token` flow lands on Flow Hub Production, scrubs the ticket, establishes a signed-in Clerk app session, and app-origin `/api/me` returns authenticated Clerk state. This does not prove `AUTH_REQUIRED=true`, paid-user onboarding, or organization enforcement.
 - TIM Build Codex ranking is CT2/CB2-confirmed as visible with Codex ranked first. Live Step 3 Codex invocation is not yet proven.
@@ -33,8 +34,8 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 ## Current Priority Order
 
 1. Keep the batch VERIFIED promotion packet current and add exact row-mapping guidance for W04/CEO. Do not edit `matrixArtifact` until authorized.
-2. Get CD/CR review on `fix/path2-production-token-upgrade-target`; after PASS, merge, redeploy/promote, and rerun RelTwin Path 2.
-3. Resolve or formally document the live `/api/test-claude` smoke boundary that blocks full `npm run preflight` on otherwise passing branches.
+2. Resolve the formal review gate on `fix/path2-production-token-upgrade-target`; after CD/CR PASS or W04 waiver, merge, redeploy/promote, and rerun RelTwin Path 2.
+3. Keep an eye on `/api/test-claude`, but the prior smoke blocker is currently cleared: the Path 2 branch full `npm run preflight` passed after Anthropic credits were restored.
 4. Continue Fresh Build hardening after the public URL milestone: same-origin generated routes, broader submissions, and live Step 3 Build evidence.
 5. Prepare Path 4 three-URL synthesis only as a proposal. Execution requires W04/CEO approval of the three URLs and product direction.
 
