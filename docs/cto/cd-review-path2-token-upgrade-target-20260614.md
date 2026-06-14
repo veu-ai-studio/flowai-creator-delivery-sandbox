@@ -3,7 +3,7 @@
 Reviewer: CD
 Supervisor: CTO
 Branch: `fix/path2-production-token-upgrade-target`
-Base: `origin/main` at `7bc95bb`
+Base: `origin/main` at `b118ad7`
 
 ## Review Scope
 
@@ -28,7 +28,6 @@ Confirm:
 Read:
 - `docs/cto/path2-token-upgrade-target-fix-evidence-20260614.md`
 
-Verification currently includes focused PASS and static PASS, with full preflight stopped by an unrelated Claude smoke 500. State whether that smoke failure is blocking or non-blocking for this branch.
+Verification now includes focused PASS and full `npm run preflight` PASS. Confirm whether this is sufficient for merge clearance or report any blocking finding.
 
 Return: `PASS`, `PASS-WITH-FINDINGS`, or `BLOCK`.
-

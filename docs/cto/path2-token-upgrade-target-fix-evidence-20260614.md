@@ -1,7 +1,7 @@
 # Path 2 Token + Upgrade Target Fix Evidence - 2026-06-14
 
 Branch: `fix/path2-production-token-upgrade-target`
-Base: `origin/main` at `7bc95bb`
+Base: `origin/main` at `b118ad7` after merging current main proof evidence into this branch.
 
 ## Scope
 
@@ -34,6 +34,13 @@ PASS:
 - `npx vitest run tests\products-upgrade-target-resolver.test.js tests\agents\renewal\orchestrator.test.js`
   - 2 files passed
   - 139 tests passed
+- `npm run preflight`
+  - lint PASS
+  - build:preflight PASS
+  - full Vitest PASS: 236 files passed; 3733 tests passed; 3 skipped
+  - lane discipline PASS: checked files 654, checked commits 389
+  - SSOT traceability PASS with existing warnings
+  - matrix artifact generation PASS; generated timestamp-only working-tree churn was discarded because this branch makes no matrixArtifact movement.
 - `node scripts\checkLaneDiscipline.js`
   - `lane_discipline_passed`
   - checked files: 644
@@ -41,13 +48,6 @@ PASS:
 - `node scripts\check-ssot-traceability.mjs`
   - result: PASS
   - warnings remain existing traceability warnings, not introduced by this patch.
-
-PARTIAL / BLOCKED:
-- `npm run preflight` reached lint, build, and full Vitest, then failed one smoke test:
-  - `tests/smoke/api-health.test.js > POST /api/test-claude > returns Claude response`
-  - expected `200`, received `500`
-  - full Vitest tally before stop: 235 files passed, 1 failed; 3732 tests passed, 1 failed, 3 skipped.
-  - This appears external/Claude smoke environment related and outside touched paths. It is not waived here; CD/CR should decide whether it is blocking for this runtime branch.
 
 ## No Movement
 
@@ -57,4 +57,3 @@ No changes were made to:
 - `docs/IMPLEMENTATION_PLAN.md`
 - `matrixArtifact`
 - VERIFIED/WIRED statuses
-
