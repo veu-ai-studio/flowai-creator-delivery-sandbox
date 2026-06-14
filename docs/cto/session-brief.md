@@ -111,6 +111,7 @@ Universal input and delivery architecture:
 - Universal input audit: `docs/cto/universal-input-journey-audit-20260614.md`.
 - Auto-repo infrastructure audit: `docs/cto/auto-repo-provisioning-infrastructure-audit-20260614.md`.
 - W04 clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
+- Paste-ready W04 decision packet: `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md`.
 - CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
 - Finding: Type 1 is partial; Type 2 and Type 3 are not end-to-end in the active forge. The active system still assumes preconfigured delivery targets in key paths.
 - Status: diagnosis complete, runtime build not dispatched, canonical docs untouched, matrixArtifact untouched.
@@ -122,6 +123,7 @@ Universal input and delivery architecture:
 - Legacy batch filename now points to the acceleration packet: `docs/cto/verified-promotion-packet-batch-20260614.md`.
 - Exact row mapping proposal: `docs/cto/verified-promotion-row-mapping-proposal-20260614.md`.
 - Universal Delivery Workspace clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
+- Universal Delivery Workspace decision packet: `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md`.
 - Universal Delivery Workspace CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
 
 No matrixArtifact edit has been made. W04/CEO must authorize exact row movement before promotion.
@@ -140,7 +142,7 @@ No matrixArtifact edit has been made. W04/CEO must authorize exact row movement 
 
 ## Next Starting Point
 
-1. W04 reviews `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md` and clears, revises, or blocks the Universal Delivery Workspace direction.
+1. W04 reviews `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md` and clears, revises, or blocks the Universal Delivery Workspace direction.
 2. If cleared, CTO issues a `CLEAR TO EXECUTE` follow-up from `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`; CB first commits diagnosis before runtime patching.
 3. Keep the VERIFIED row-mapping packet ready, but do not edit `matrixArtifact` until W04/CEO authorizes exact rows.
 4. Hold additional manually preconfigured Production proof runs unless W04 explicitly instructs; the newly identified gap says universal delivery must come first.

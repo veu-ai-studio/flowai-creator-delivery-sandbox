@@ -56,6 +56,7 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 - Universal input audit: `docs/cto/universal-input-journey-audit-20260614.md`.
 - Auto-repo infrastructure audit: `docs/cto/auto-repo-provisioning-infrastructure-audit-20260614.md`.
 - Universal Delivery Workspace W04 clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
+- Universal Delivery Workspace W04 decision packet: `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md`.
 - Universal Delivery Workspace CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
 
 ## Anti-Drift Rules
