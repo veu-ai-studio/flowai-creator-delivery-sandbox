@@ -111,6 +111,13 @@ CB build status:
   - `docs/cto/clerk-session-propagation-step5-result-20260614.md`
   - CD PASS.
   - CR PASS.
+- Merge/deploy status:
+  - Merged to `main` at `021212d2ebf52511493869e7fea9270a7865db31`.
+  - Production deployment promoted: `https://flowai-799ng2frz-veu-ai-studio.vercel.app`.
+  - Public `/api/health` now reports commit `021212d2ebf5`, `clerkReady:true`, auth `PASS`, and `authRequired:false`.
+  - Public `/api/me` remains anonymous/open in a no-session context.
+- CT2 live proof dispatch:
+  - `docs/cto/ct2-clerk-session-live-proof-dispatch-20260614.md`
 
 ## VERIFIED Promotion State
 
@@ -126,7 +133,7 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Merge `fix/clerk-session-propagation`.
-4. Deploy, promote, and dispatch CT2 app-origin Clerk session proof.
+3. Wait for CT2 live proof result from `docs/cto/ct2-clerk-session-live-proof-dispatch-20260614.md`.
+4. If CT2 PASS, record Clerk session propagation as live-proofed evidence, but do not move VERIFIED without W04/CEO clearance.
 5. If CT2 BLOCKS, send same-branch patch request to CB.
 6. Do not move VERIFIED without W04/CEO clearance.
