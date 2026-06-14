@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useClerk, useSignIn } from '@clerk/clerk-react';
 import { AlertTriangle, Loader2, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +24,13 @@ export function resolveTicketRedirectUrl(search = '', fallback = DEFAULT_TICKET_
 export function readTicketFromSearch(search = '') {
   const params = new URLSearchParams(search);
   return params.get('ticket') || '';
+}
+
+export function resolveInitialTicketRequest(search = currentSearch()) {
+  return {
+    ticket: readTicketFromSearch(search),
+    redirectPath: resolveTicketRedirectUrl(search),
+  };
 }
 
 export function buildScrubbedTicketUrl({ pathname = '/sign-in-token', search = '', hash = '' } = {}) {
@@ -100,9 +107,7 @@ function ClerkTicketSignInWorker() {
   const { isLoaded, signIn } = useSignIn();
   const { setActive } = useClerk();
   const navigate = useNavigate();
-  const search = currentSearch();
-  const ticket = useMemo(() => readTicketFromSearch(search), [search]);
-  const redirectPath = useMemo(() => resolveTicketRedirectUrl(search), [search]);
+  const [{ ticket, redirectPath }] = useState(() => resolveInitialTicketRequest());
   const [status, setStatus] = useState({ tone: 'loading', message: 'Completing secure sign-in.' });
 
   useEffect(() => {
