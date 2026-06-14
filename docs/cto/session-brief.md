@@ -164,6 +164,7 @@ Universal input and delivery architecture:
   - `docs/cto/cb2-review-universal-delivery-workspace-dispatch-20260614.md`
 - Final review-sync correction: CB merged latest `origin/main` through `f9c5706` into `feature/universal-delivery-workspace` and pushed final review head `6e1372a855d23cb21055afc98752cd3913cf294c`. CTO confirmed `origin/main..origin/feature/universal-delivery-workspace` now shows only CB diagnosis/evidence plus runtime/test files. Review packets now target base `f9c570601febae842d02e12faea0e5fce4dcf6be` and head `6e1372a855d23cb21055afc98752cd3913cf294c`.
 - CTO focused review addendum: PASS-WITH-FINDINGS pending CD/CR/CB2. Focused tests passed locally for 3 files / 40 tests. Evidence: `docs/cto/cto-review-universal-delivery-workspace-20260614.md`.
+- CTO fallback gate check: full preflight passed locally on Universal Delivery head `6e1372a855d23cb21055afc98752cd3913cf294c` with 236 files / 3740 tests passed / 3 skipped. This does not replace formal CD/CR/CB2 unless W04 accepts it. Evidence: `docs/cto/universal-delivery-review-gate-status-20260614.md`.
 
 ## Current Packets
 
@@ -179,6 +180,7 @@ Universal input and delivery architecture:
 - Universal Delivery Workspace CR review draft: `docs/cto/cr-review-universal-delivery-workspace-prompt-draft-20260614.md`.
 - Universal Delivery Workspace CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
 - Universal Delivery Workspace CTO review note: `docs/cto/cto-review-universal-delivery-workspace-20260614.md`.
+- Universal Delivery Workspace gate status: `docs/cto/universal-delivery-review-gate-status-20260614.md`.
 
 W04/CEO authorized applying the batch VERIFIED packet. CTO applied the narrow exact-row set in `src/lib/orchestratorFramework/matrixArtifact.json`: `10 VERIFIED`, `0` missing evidence fields. Evidence note: `docs/cto/verified-promotion-applied-20260614.md`.
 
@@ -212,7 +214,7 @@ Path 4 URL selection:
 
 ## Next Starting Point
 
-1. Collect CD, CR, and CB2 verdicts for `feature/universal-delivery-workspace` at `6e1372a855d23cb21055afc98752cd3913cf294c` against base `f9c570601febae842d02e12faea0e5fce4dcf6be`.
+1. Collect CD, CR, and CB2 verdicts for `feature/universal-delivery-workspace` at `6e1372a855d23cb21055afc98752cd3913cf294c` against base `f9c570601febae842d02e12faea0e5fce4dcf6be`; CTO fallback full-preflight evidence is available but does not clear the gate by itself.
 2. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
 3. If Universal Delivery passes review, merge, promote production, and dispatch CT2 for a Type 2 description-only Fresh Build URL proof.
 4. Resolve whether SAIGE product-card score visibility is a data-path bug or an authenticated/org-scoped acceptance-context requirement.
