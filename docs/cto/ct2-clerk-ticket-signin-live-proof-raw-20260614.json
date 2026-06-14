@@ -1,0 +1,246 @@
+{
+  "startedAt": "2026-06-14T04:57:24.095Z",
+  "completedAt": "2026-06-14T04:57:52.684Z",
+  "productionUrl": "https://flowai-dun.vercel.app",
+  "expectedCommit": "34268c9d76399e10ec6c25cd485cf8fae1afd0a1",
+  "expectedDeployment": "https://flowai-7ufisvpk3-veu-ai-studio.vercel.app",
+  "context": "LIVE_PRODUCTION Clerk ticket sign-in proof using FlowAI-owned /sign-in-token route only",
+  "tool": "Playwright Chromium fresh contexts; in-app Browser unavailable in local Windows sandbox",
+  "secretHandling": {
+    "dopplerReadAttempted": true,
+    "clerkSecretPresentInProcess": true,
+    "hostedSignInTokenUrlOpened": false,
+    "secretPrintedOrCommitted": false,
+    "rawTicketPrintedOrCommitted": false,
+    "tokenUrlPrintedOrCommitted": false,
+    "bearerTokenPrintedOrCommitted": false,
+    "authorizationHeaderValuePrintedOrCommitted": false,
+    "cookiesPrintedOrCommitted": false,
+    "passwordPrintedOrCommitted": false,
+    "rawClerkUserIdPrintedOrCommitted": false
+  },
+  "health": {
+    "url": "https://flowai-dun.vercel.app/api/health",
+    "status": 200,
+    "json": {
+      "ok": true,
+      "status": "ready",
+      "commit": "34268c9d7639",
+      "clerkReady": true,
+      "checks": {
+        "build": {
+          "status": "PASS",
+          "commitFull": "34268c9d76399e10ec6c25cd485cf8fae1afd0a1",
+          "branch": "main",
+          "deploymentUrl": "https://flowai-7ufisvpk3-veu-ai-studio.vercel.app"
+        },
+        "auth": {
+          "status": "PASS",
+          "clerkConfigured": true,
+          "frontendPublishableKeyPresent": true,
+          "authRequired": false,
+          "reason": null
+        }
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-signin-api-health-2026-06-14T04-57-24-095Z.png"
+  },
+  "version": {
+    "url": "https://flowai-dun.vercel.app/api/version",
+    "status": 200,
+    "json": {
+      "commitFull": "34268c9d76399e10ec6c25cd485cf8fae1afd0a1",
+      "commit": "34268c9d7639",
+      "featureFlags": {
+        "clerkReady": true,
+        "authRequired": false
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-signin-api-version-2026-06-14T04-57-24-095Z.png"
+  },
+  "signInTokenShell": {
+    "status": 200,
+    "finalUrlClass": "https://flowai-dun.vercel.app/sign-in-token",
+    "servedFlowAiShell": true,
+    "ticketVisible": false,
+    "visibleTextExcerpt": "Sign-in link is incomplete This sign-in link is missing its required ticket.",
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-signin-sign-in-token-shell-no-ticket-2026-06-14T04-57-24-095Z.png"
+  },
+  "anonymousApiMeBefore": {
+    "url": "https://flowai-dun.vercel.app/api/me",
+    "status": 200,
+    "json": {
+      "authenticated": false,
+      "authMode": "anonymous",
+      "userId": null,
+      "orgId": null,
+      "productId": null,
+      "config": {
+        "authRequired": false,
+        "clerkConfigured": true
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-signin-api-me-anonymous-before-2026-06-14T04-57-24-095Z.png"
+  },
+  "disposableUser": {
+    "created": true,
+    "emailIdentifier": "flowai.ct2.ticket.20260614045735.[redacted]@example.com",
+    "rawUserIdPresent": true,
+    "rawUserId": "[redacted]",
+    "signInTokenCreated": true,
+    "rawTicketPresent": true,
+    "hostedUrlPresentButNotOpened": true
+  },
+  "ticketRoute": {
+    "status": 200,
+    "finalUrlClass": "https://flowai-dun.vercel.app/sign-in-token",
+    "sameOriginFinal": true,
+    "finalPathIsFlowHub": false,
+    "finalUrlHasTicket": false,
+    "visibleTextContainsTicket": false,
+    "pageDoesNotExposeTicket": true,
+    "addressBarScrubbed": true,
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-signin-post-ticket-route-2026-06-14T04-57-24-095Z.png",
+    "screenshotSkipped": false,
+    "screenshotSkipReason": null,
+    "visibleTextExcerpt": "Sign-in link is incomplete This sign-in link is missing its required ticket."
+  },
+  "app": {
+    "flowHubLoaded": false,
+    "clerkStateRedacted": {
+      "clerkLoaded": true,
+      "signedIn": true,
+      "sessionPresent": true,
+      "userPresent": true,
+      "tokenPresent": true,
+      "tokenError": null
+    },
+    "apiMeNetworkEventsRedacted": [
+      {
+        "type": "request",
+        "url": "/api/me",
+        "method": "GET",
+        "authorizationHeaderPresent": false
+      },
+      {
+        "type": "response",
+        "url": "/api/me",
+        "status": 200,
+        "redactedJson": {
+          "authenticated": false,
+          "authMode": "anonymous",
+          "userId": null,
+          "orgId": null,
+          "productId": null,
+          "config": {
+            "authRequired": false,
+            "clerkConfigured": true
+          }
+        }
+      },
+      {
+        "type": "request",
+        "url": "/api/me",
+        "method": "GET",
+        "authorizationHeaderPresent": true
+      },
+      {
+        "type": "response",
+        "url": "/api/me",
+        "status": 200,
+        "redactedJson": {
+          "authenticated": true,
+          "authMode": "clerk",
+          "userId": "[redacted-present]",
+          "orgId": null,
+          "productId": null,
+          "config": {
+            "authRequired": false,
+            "clerkConfigured": true
+          }
+        }
+      },
+      {
+        "type": "request",
+        "url": "/api/me",
+        "method": "GET",
+        "authorizationHeaderPresent": true
+      },
+      {
+        "type": "response",
+        "url": "/api/me",
+        "status": 200,
+        "redactedJson": {
+          "authenticated": true,
+          "authMode": "clerk",
+          "userId": "[redacted-present]",
+          "orgId": null,
+          "productId": null,
+          "config": {
+            "authRequired": false,
+            "clerkConfigured": true
+          }
+        }
+      }
+    ]
+  },
+  "appOriginApiMe": {
+    "approach": "FlowAI app-origin JavaScript obtained Clerk session token when present and fetched /api/me with Authorization header; token value redacted and not stored",
+    "ok": true,
+    "status": 200,
+    "tokenPresent": true,
+    "redactedJson": {
+      "authenticated": true,
+      "authMode": "clerk",
+      "userId": "[redacted-present]",
+      "orgId": null,
+      "productId": null,
+      "config": {
+        "authRequired": false,
+        "clerkConfigured": true
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-signin-app-origin-api-me-after-fetch-2026-06-14T04-57-24-095Z.png",
+    "screenshotSkipped": false,
+    "screenshotSkipReason": null
+  },
+  "anonymousApiMeAfter": {
+    "url": "https://flowai-dun.vercel.app/api/me",
+    "status": 200,
+    "json": {
+      "authenticated": false,
+      "authMode": "anonymous",
+      "userId": null,
+      "orgId": null,
+      "productId": null,
+      "config": {
+        "authRequired": false,
+        "clerkConfigured": true
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-signin-api-me-anonymous-after-2026-06-14T04-57-24-095Z.png"
+  },
+  "cleanup": {
+    "attempted": true,
+    "userDeleted": true,
+    "error": null
+  },
+  "verdictInputs": {
+    "productionIdentityMatches": true,
+    "deploymentUrlMatches": true,
+    "clerkReady": true,
+    "signInTokenShellServesApp": true,
+    "anonymousBeforeOpen": true,
+    "userAndRawTicketCreated": true,
+    "hostedUrlNotOpened": true,
+    "ticketScrubbedFromUrl": true,
+    "ticketNotVisible": true,
+    "sameOriginRedirect": true,
+    "finalPathFlowHub": false,
+    "flowHubLoaded": false,
+    "clerkAppSessionEstablished": true,
+    "appOriginApiMeAuthenticated": true,
+    "anonymousAfterOpen": true,
+    "cleanupSucceeded": true
+  }
+}
