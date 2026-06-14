@@ -303,6 +303,14 @@ function FlowHubAxisControls({ location, navigate }) {
     setAxes(axesForLocation(location));
   }, [location.pathname, location.search]);
 
+  useEffect(() => {
+    const handler = (event) => {
+      setAxes(normalizeFlowHubAxes(event?.detail ?? axesForLocation(location)));
+    };
+    window.addEventListener('flowai:flow-hub-axes-change', handler);
+    return () => window.removeEventListener('flowai:flow-hub-axes-change', handler);
+  }, [location]);
+
   const updateAxes = (patch) => {
     const next = writeStoredFlowHubAxes(normalizeFlowHubAxes({ ...axes, ...patch }));
     setAxes(next);

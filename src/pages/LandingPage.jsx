@@ -15,6 +15,7 @@ import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProd
 import {
   ANALYSIS_DEPTH_OPTIONS,
   analysisDepthLabel,
+  axesToSearchParams,
   analysisDepthValue,
   flowHubPathFromPathname,
   flowHubPathOption,
@@ -745,8 +746,10 @@ export default function LandingPage() {
     const nextAxes = persistAxesPatch({ flowHubPath: nextPath });
     setFlowHubPath(nextAxes.flowHubPath);
     const option = flowHubPathOption(nextAxes.flowHubPath);
-    if (location.pathname !== option.path) {
-      navigate({ pathname: option.path, search: location.search }, { replace: false });
+    const params = axesToSearchParams(nextAxes, location.search);
+    const search = `?${params.toString()}`;
+    if (location.pathname !== option.path || location.search !== search) {
+      navigate({ pathname: option.path, search }, { replace: false });
     }
   };
 

@@ -80,6 +80,8 @@ describe('FlowAI unified operating system shell', () => {
     expect(landingSrc).toContain("new URLSearchParams(location.search).get('flowHubPath') === 'migration'");
     expect(landingSrc).toContain("location.pathname === '/flow-hub/migration'");
     expect(sidebarSrc).toContain('path: "/flow-hub/fresh-build"');
+    expect(sidebarSrc).toContain('flowai:flow-hub-axes-change');
+    expect(landingSrc).toContain('axesToSearchParams(nextAxes, location.search)');
     expect(landingSrc).toContain("setFlowHubPath('migration')");
     expect(landingSrc).toContain('Flow Hub');
     expect(landingSrc).toContain('currentPathOption.label');
@@ -118,6 +120,8 @@ describe('FlowAI unified operating system shell', () => {
     const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
 
     expect(sidebarSrc).toContain('path: "/flow-hub/fresh-build"');
+    expect(sidebarSrc).toContain('flowai:flow-hub-axes-change');
+    expect(landingSrc).toContain('axesToSearchParams(nextAxes, location.search)');
     expect(landingSrc).toContain('currentPathOption.description');
     expect(landingSrc).toContain('Flow Hub - {currentPathOption.label}');
     expect(landingSrc).toContain('Enter your product URL...');

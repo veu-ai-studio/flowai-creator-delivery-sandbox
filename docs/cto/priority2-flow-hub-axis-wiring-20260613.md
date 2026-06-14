@@ -31,6 +31,10 @@ Codex TIM Build status was rechecked on current main and is already present: Cod
   - Quick/Deep analysis depth maps into crawl and Phase B effort overrides.
 - Updated `orchestrator.js` to record the normalized Flow Hub axis envelope on state, step logs, and final result metadata.
 
+
+## Post-Dispatch Self-Review Fix
+
+After the initial review dispatch, CTO local sanity review found and fixed a query synchronization issue: LandingPage path cards could navigate to Migration/Fresh Build while preserving a stale `flowHubPath` search parameter. The branch now rewrites search params through `axesToSearchParams(nextAxes, location.search)` and emits `flowai:flow-hub-axes-change` so the sidebar reflects same-page axis changes.
 ## Verification
 
 Passed:

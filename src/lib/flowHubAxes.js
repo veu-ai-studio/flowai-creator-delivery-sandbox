@@ -155,8 +155,13 @@ export function readStoredFlowHubAxes() {
 
 export function writeStoredFlowHubAxes(axes) {
   const normalized = normalizeFlowHubAxes(axes);
-  if (typeof window !== 'undefined' && window.localStorage) {
-    try { window.localStorage.setItem(FLOW_HUB_AXIS_STORAGE_KEY, JSON.stringify(normalized)); } catch { /* best effort */ }
+  if (typeof window !== 'undefined') {
+    if (window.localStorage) {
+      try { window.localStorage.setItem(FLOW_HUB_AXIS_STORAGE_KEY, JSON.stringify(normalized)); } catch { /* best effort */ }
+    }
+    try {
+      window.dispatchEvent(new CustomEvent('flowai:flow-hub-axes-change', { detail: normalized }));
+    } catch { /* best effort */ }
   }
   return normalized;
 }
