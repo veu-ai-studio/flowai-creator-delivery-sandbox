@@ -5,14 +5,14 @@ TO: CR
 DATE: 2026-06-13
 ACTION: Adversarial Step 5 review for UI label clarity patch
 Branch: `fix/priority2-axis-label-clarity`
-Head: `b78cfc6`
+Head: `3504d7f`
 Base: `origin/main` at docs commit `c10abf8`
 Runtime deployment currently live before this patch: `54422549044c5ff8e4e187a155c25bfc38462e10`
 VERIFIED movement: no
 
 ## Context
 
-A CTO production smoke found the Priority 2 controls present, but the sidebar labels were abbreviated enough to confuse axes:
+CT2 production proof found the Priority 2 controls present, including route switching, run request payload, and run log axis envelope, but the sidebar labels were abbreviated enough to confuse axes:
 
 - Structural Layer appeared as `LAYER`, with `Auto` as the autonomous option.
 - Operational Mode appeared as `MODE`, also with `Auto`.
@@ -25,9 +25,13 @@ The patch is intended to prevent UI evidence inflation: if users or CT2 cannot c
 Changed files:
 
 - `src/components/layout/Sidebar.jsx`
+  - Canonical axis titles and two-column axis grid.
 - `src/lib/flowHubAxes.js`
+  - Structural `autonomous` displays as `Autonomous`, not `Auto`.
 - `src/pages/LandingPage.jsx`
+  - Header summary includes `Path: {currentPathOption.label}`.
 - `tests/ui/flowAIUnifiedShell.test.js`
+  - Source guard for canonical labels and two-column axis grid.
 
 Behavior boundary:
 
@@ -42,7 +46,8 @@ Behavior boundary:
 - `npx vitest run tests/flowHubAxes.test.js tests/ui/flowAIUnifiedShell.test.js tests/ui/landingPageRunConstructionMode.test.js` PASS: 3 files / 29 tests.
 - `npm run build:preflight` PASS.
 - `npm run lint` PASS with existing ESLintEnvWarning warnings only.
-- `git diff --check` PASS before commit.
+- `git diff --check` PASS before runtime commits.
+- Local browser smoke after fresh build observed canonical axis labels and no overflow for the axis labels/options.
 
 ## Adversarial Review Focus
 
