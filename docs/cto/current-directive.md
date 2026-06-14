@@ -31,7 +31,7 @@ The five VEU AI Studio products are proof-of-concept targets only. They are not 
 - Three Flow Hub paths with deployed URLs: 1 of 3 at the URL-evidence level. Path 1 Migration has CT2-confirmed `https://saige-v2.vercel.app`.
 - Four axes wired end to end: CT2 live browser/run proof PASS on production commit `65f46a0c96930a207e7cd0c0160cf51317c89822`.
 - Forge completing full 8-step runs: not yet proven.
-- Clerk auth: not enabled in production health.
+- Clerk auth: backend environment active in production; `/api/version` reports `clerkReady:true` and `/api/me` reports `clerkConfigured:true`. `/api/health` readiness visibility and CT2-proven user sign-up/sign-in remain incomplete.
 - Real external users: 0.
 
 Honest progress estimate: infrastructure is materially built, but production-verified behavior remains early. Treat FlowAI as evidence-in-progress until live runs prove each claim.
@@ -115,17 +115,18 @@ Do not apply any VERIFIED entry without W04/CEO clearance. Target after clearanc
 
 ## Milestone 3 - Clerk Auth
 
-`clerkReady` is currently not confirmed true in production. No real external user path is complete until Clerk is live.
+`clerkReady` is confirmed true in production `/api/version` after environment activation and redeploy. No real external user path is complete until `/api/health` exposes auth readiness and CT2 proves sign-up/sign-in end to end.
 
 Steps:
 
-1. Check Doppler for `CLERK_SECRET_KEY` and `VITE_CLERK_PUBLISHABLE_KEY` under `flowai/prd`.
-2. If keys exist, add them to Vercel production env vars and redeploy.
-3. If keys do not exist, document exact Clerk setup steps and signal W04 for Victor action.
-4. After keys are live, verify `/api/health` reports `clerkReady:true`.
-5. Dispatch CT2 to confirm a new-user sign-up flow works end to end.
+1. Check Doppler for `CLERK_SECRET_KEY` and `VITE_CLERK_PUBLISHABLE_KEY` under `flowai/prd`. COMPLETE: `CLERK_SECRET_KEY` exists; `VITE_CLERK_PUBLISHABLE_KEY` was absent in Doppler but Vercel Production was populated from Doppler `CLERK_PUBLISHABLE_KEY`.
+2. If keys exist, add them to Vercel production env vars and redeploy. COMPLETE: promoted deployment `https://flowai-4134cifwb-veu-ai-studio.vercel.app` at commit `a38c865ed9fbadfc9dde23e7a41cc6c528018533`.
+3. If keys do not exist, document exact Clerk setup steps and signal W04 for Victor action. NOT NEEDED for backend env; frontend/dashboard proof still may reveal Clerk setup needs.
+4. After keys are live, verify `/api/health` reports `clerkReady:true`. INCOMPLETE: `/api/version` reports `clerkReady:true`, but `/api/health` does not expose an auth check yet.
+5. Dispatch CB to add `/api/health` auth readiness and real sign-up/sign-in UX. PREPARED: `docs/cto/cb-clerk-auth-completion-dispatch-20260613.md`.
+6. Dispatch CT2 to confirm a new-user sign-up flow works end to end after CB build/review/merge.
 
-Credential discovery can run as a non-code audit while another milestone waits on deployment, but no unrelated runtime branch should start until Milestone 1 is closed.
+No unrelated runtime branch should start until the Clerk auth completion branch is either finished or formally deferred by W04.
 
 ## Milestone 4 - All Three Flow Hub Paths Producing URLs
 
