@@ -79,7 +79,7 @@ CTO interpretation:
 
 ## Priority 2 - Flow Hub Axis Wiring
 
-Status: implemented on branch `fix/priority2-flow-hub-axes`; not yet merged to main.
+Status: CD PASS + CR PASS on branch `fix/priority2-flow-hub-axes` at `c1deb3e`; clear to merge under standing authorization.
 
 What is now wired on the branch:
 
@@ -98,6 +98,7 @@ Verification on the branch:
 - `npm run lint`: PASS with existing flat-config warnings only.
 
 Evidence note: `docs/cto/priority2-flow-hub-axis-wiring-20260613.md`.
+Review result: `docs/cto/priority2-flow-hub-axis-wiring-step5-result-20260613.md`.
 
 ## Immediate Next Actions
 
