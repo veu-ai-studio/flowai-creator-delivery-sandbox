@@ -24,6 +24,9 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 - Latest constrained RelTwin Production proof after Anthropic credit restoration: pre-fix scoring PASS at score `69`, step 5 to step 6 handoff observed, branch creation not observed, preview URL not produced, terminal stop `STEP_8` `GITHUB_AUTH_FAILED` from GitHub App PEM signing failure. Unsafe same original/upgrade repo resolution remains visible behind that gate.
 - Path 2 token/upgrade-target runtime fix is pushed at branch `fix/path2-production-token-upgrade-target`, head `acebaa1`. Runtime patch commit `5a66bee` is now merged with current main proof evidence and refreshed review docs.
 - Path 2 verification status: focused tests PASS, full `npm run preflight` PASS, CTO local review PASS-WITH-GATE. Formal CD/CR CLI review was blocked by the app privacy guard because it would transmit private branch code/review material to external model services. Do not merge until CD/CR PASS, W04 waiver, or explicit approval for that external transmission after privacy-risk disclosure.
+- W04 identified a larger universal delivery gap: FlowAI cannot assume preconfigured upgrade repos or Vercel projects for real users. CTO completed diagnosis on branch `docs/cto-auto-repo-provisioning-plan`, latest commit `b8d94ec`, and pushed a W04 clearance request plus CB draft dispatch. No runtime build has been dispatched.
+- Universal input state: Type 1 single URL is partial; Type 2 description-only is not end-to-end in the active forge; Type 3 multi-URL synthesis is not end-to-end in the active forge.
+- Universal infrastructure state: repo/project provisioning helpers exist, but the active forge does not yet create a FlowAI-owned GitHub repo, write code, create/import a Vercel project, deploy, return a URL, and bind ProductSSOT evidence for arbitrary user input.
 - Four-axis UI and run propagation are CT2-confirmed at the evidence level: Structural Layer, Operational Mode, Analysis Depth, and Flow Hub Path are visible, independently selectable, and appear in live run payload/log evidence.
 - Clerk ticket/session is CT2-confirmed at the evidence level: app-owned `/sign-in-token` flow lands on Flow Hub Production, scrubs the ticket, establishes a signed-in Clerk app session, and app-origin `/api/me` returns authenticated Clerk state. This does not prove `AUTH_REQUIRED=true`, paid-user onboarding, or organization enforcement.
 - TIM Build Codex ranking is CT2/CB2-confirmed as visible with Codex ranked first. Live Step 3 Codex invocation is not yet proven.
@@ -33,11 +36,11 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 
 ## Current Priority Order
 
-1. Keep the batch VERIFIED promotion packet current and add exact row-mapping guidance for W04/CEO. Do not edit `matrixArtifact` until authorized.
-2. Resolve the formal review gate on `fix/path2-production-token-upgrade-target`; after CD/CR PASS or W04 waiver, merge, redeploy/promote, and rerun RelTwin Path 2.
-3. Keep an eye on `/api/test-claude`, but the prior smoke blocker is currently cleared: the Path 2 branch full `npm run preflight` passed after Anthropic credits were restored.
-4. Continue Fresh Build hardening after the public URL milestone: same-origin generated routes, broader submissions, and live Step 3 Build evidence.
-5. Prepare Path 4 three-URL synthesis only as a proposal. Execution requires W04/CEO approval of the three URLs and product direction.
+1. Get W04 decision on the Universal Delivery Workspace clearance request. Do not dispatch CB runtime implementation until W04 clears or revises the architecture.
+2. Keep the batch VERIFIED promotion packet current and exact. Do not edit `matrixArtifact` until W04/CEO authorizes row movement.
+3. Hold additional manually preconfigured Production proof runs unless W04 explicitly instructs. The active architecture gap says FlowAI-owned universal delivery must be designed before more product-specific proofs are treated as representative.
+4. Resolve the formal review gate on `fix/path2-production-token-upgrade-target` only if W04 decides it remains relevant before or alongside Universal Delivery Workspace work.
+5. Continue docs-only preparation for Fresh Build hardening, live Step 3 Build evidence, and Path 4 synthesis proposal. Execution of Path 4 requires W04/CEO approval of the URLs and product direction.
 
 ## Active Evidence Packets
 
@@ -50,6 +53,10 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 - Latest RelTwin Production proof result: `docs/cto/production-path-proof-reltwin-result-20260614.md`.
 - CB Path 2 dispatch: `docs/cto/cb-path2-production-token-and-upgrade-target-dispatch-20260614.md`.
 - Path 2 runtime fix evidence on branch `fix/path2-production-token-upgrade-target`: `docs/cto/path2-token-upgrade-target-fix-evidence-20260614.md`.
+- Universal input audit: `docs/cto/universal-input-journey-audit-20260614.md`.
+- Auto-repo infrastructure audit: `docs/cto/auto-repo-provisioning-infrastructure-audit-20260614.md`.
+- Universal Delivery Workspace W04 clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
+- Universal Delivery Workspace CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
 
 ## Anti-Drift Rules
 
@@ -88,6 +95,7 @@ CTO dispatches through repo files in `docs/cto/`, promotes deployments, merges d
 
 - Any change to canonical docs.
 - Any VERIFIED movement.
+- Universal Delivery Workspace architecture clearance or revision.
 - Path 4 three-URL synthesis execution approval.
 - New product or business direction decisions.
 - Any human-only dashboard/auth action after the technical bench proves it cannot be safely automated.

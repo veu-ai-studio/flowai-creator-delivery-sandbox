@@ -19,6 +19,8 @@ No VERIFIED movement has been applied. The batch packet is prepared and now need
 
 Path 2 was rerun after the Fresh Build milestone. SAIGE v2 ended with an honest no-mutation result because it scored `98`; RelTwin is the better below-target candidate. After Anthropic credits were restored, the constrained RelTwin Production proof passed pre-fix scoring and reached step 6, then blocked before branch creation on GitHub credential acquisition. Unsafe same-repo upgrade-target resolution is also visible behind that gate. A runtime fix branch for that chain is now pushed for CD/CR review.
 
+W04 then identified the larger infrastructure gap: FlowAI cannot require preconfigured upgrade repos or Vercel projects for real users. CTO completed the requested diagnosis and pushed a Universal Delivery Workspace clearance packet. No build has been dispatched. The next architecture decision is whether W04 clears the FlowAI-owned workspace model for auto-created GitHub repos, committed code, Vercel projects/deployments, returned URLs, and ProductSSOT evidence. Until that is cleared, do not run more Production proofs that depend on manually preconfigured products except by explicit W04 instruction.
+
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
@@ -102,18 +104,35 @@ Path 2 token/upgrade-target patch:
 - CTO local review: PASS-WITH-GATE; no blocking code issue found.
 - Formal gate: CD/CR external CLI review could not be run from this session because the app privacy guard rejected transmitting private branch code/review material to external model services. Do not merge until CD/CR PASS, W04 waiver, or explicit approval for external reviewer CLI transmission after privacy-risk disclosure.
 
+Universal input and delivery architecture:
+
+- Branch: `docs/cto-auto-repo-provisioning-plan`.
+- Latest pushed commit: `b8d94ec` (`docs/cto | request universal delivery workspace clearance`).
+- Universal input audit: `docs/cto/universal-input-journey-audit-20260614.md`.
+- Auto-repo infrastructure audit: `docs/cto/auto-repo-provisioning-infrastructure-audit-20260614.md`.
+- W04 clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
+- CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
+- Finding: Type 1 is partial; Type 2 and Type 3 are not end-to-end in the active forge. The active system still assumes preconfigured delivery targets in key paths.
+- Status: diagnosis complete, runtime build not dispatched, canonical docs untouched, matrixArtifact untouched.
+- Decision needed: W04 must clear or revise the Universal Delivery Workspace direction before CB implements it.
+
 ## Current Packets
 
 - Batch VERIFIED packet: `docs/cto/verified-promotion-packet-acceleration-20260614.md`.
 - Legacy batch filename now points to the acceleration packet: `docs/cto/verified-promotion-packet-batch-20260614.md`.
 - Exact row mapping proposal: `docs/cto/verified-promotion-row-mapping-proposal-20260614.md`.
+- Universal Delivery Workspace clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
+- Universal Delivery Workspace CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
 
 No matrixArtifact edit has been made. W04/CEO must authorize exact row movement before promotion.
 
 ## Known Gaps
 
+- FlowAI does not yet have a universal delivery workspace that creates a FlowAI-owned GitHub repo, writes code, creates/imports a Vercel project, deploys, returns a URL, and binds ProductSSOT evidence for arbitrary user inputs.
 - Path 2 Production has no CT2-confirmed deployed URL.
 - Path 2 RelTwin is blocked by GitHub token fallback and upgrade-target safety.
+- Type 2 description-only cannot enter the active construction route without a URL.
+- Type 3 multi-URL synthesis is not wired into the active Flow Hub forge as a deployed URL path.
 - Full 8-step forge completion is not proven.
 - Codex live Build invocation is not proven.
 - `/api/test-claude` live smoke returns HTTP 500 and blocks full `npm run preflight` for otherwise scoped passing branches.
@@ -121,14 +140,15 @@ No matrixArtifact edit has been made. W04/CEO must authorize exact row movement 
 
 ## Next Starting Point
 
-1. Submit the row-mapping proposal to W04/CEO with the acceleration packet.
-2. Resolve the formal review gate on `fix/path2-production-token-upgrade-target`: CD/CR PASS, W04 waiver, or explicit external-review authorization. If cleared, merge and redeploy/promote production.
-3. Rerun RelTwin Path 2 after the token/upgrade-target fix lands; the target proof is branch creation and preview deployment, since pre-fix scoring is now proven past the prior blocker.
-4. Keep an eye on `/api/test-claude`, but the prior smoke blocker is currently cleared by the green Path 2 preflight.
-5. Keep accumulating CT2-confirmed evidence, but do not move VERIFIED until W04/CEO authorizes the exact rows.
+1. W04 reviews `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md` and clears, revises, or blocks the Universal Delivery Workspace direction.
+2. If cleared, CTO issues a `CLEAR TO EXECUTE` follow-up from `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`; CB first commits diagnosis before runtime patching.
+3. Keep the VERIFIED row-mapping packet ready, but do not edit `matrixArtifact` until W04/CEO authorizes exact rows.
+4. Hold additional manually preconfigured Production proof runs unless W04 explicitly instructs; the newly identified gap says universal delivery must come first.
+5. Resolve the formal review gate on `fix/path2-production-token-upgrade-target` only if W04 decides that branch remains relevant before or alongside Universal Delivery Workspace work.
 
 Victor action required:
 
 - W04/CEO authorization for exact VERIFIED row mapping.
+- W04 decision on Universal Delivery Workspace architecture.
 - Path 4 three-URL synthesis approval.
 - Canonical doc changes, if W04/CEO chooses to add new canonical surface rows instead of only updating matrixArtifact evidence state.
