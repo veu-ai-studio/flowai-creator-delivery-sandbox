@@ -5,6 +5,9 @@ function firstNonEmpty(...values) {
 }
 
 export function resolveProductUpgradeTargets(product = {}) {
+  if (product.__upgradeTargets && typeof product.__upgradeTargets === 'object') {
+    return product.__upgradeTargets;
+  }
   const state = normalizeUpgradeTargetState(product);
   const originalRepo = firstNonEmpty(
     state.original_repo_url,
@@ -14,13 +17,14 @@ export function resolveProductUpgradeTargets(product = {}) {
     product.github_repo_url,
     product.githubRepoUrl,
   );
-  const upgradeRepo = firstNonEmpty(
+  const explicitUpgradeRepo = firstNonEmpty(
     state.upgrade_repo_url,
     product.upgrade_repo,
     product.upgradeRepo,
     product.write_repo,
     product.writeRepo,
-  ) ?? originalRepo;
+  );
+  const upgradeRepo = explicitUpgradeRepo ?? originalRepo;
   const originalUrl = firstNonEmpty(
     state.original_url,
     product.original_url,
@@ -49,6 +53,23 @@ export function resolveProductUpgradeTargets(product = {}) {
     product.self_renewal_branch,
     product.branch,
   ) ?? 'main';
+  const explicitReadOnlyOriginal = product.original_read_only === true
+    || product.original_status === 'read_only_baseline'
+    || product.originalStatus === 'read_only_baseline';
+  const explicitForkArchitecture = product.upgrade_architecture === 'fork_based_upgrade'
+    || product.upgradeArchitecture === 'fork_based_upgrade';
+  const upgradeRepoRequired = explicitReadOnlyOriginal
+    || explicitForkArchitecture
+    || !!firstNonEmpty(product.original_repo, product.originalRepo, product.original_repo_url)
+    || !!explicitUpgradeRepo;
+  const writesOriginalRepo = !!originalRepo && !!upgradeRepo && originalRepo === upgradeRepo;
+  const writeSafetyCode = !upgradeRepoRequired
+    ? null
+    : !explicitUpgradeRepo
+      ? 'UPGRADE_REPO_REQUIRED'
+      : writesOriginalRepo
+        ? 'UPGRADE_TARGET_UNSAFE'
+        : null;
 
   return Object.freeze({
     architecture: 'fork_based_upgrade',
@@ -59,9 +80,20 @@ export function resolveProductUpgradeTargets(product = {}) {
     upgradeUrl,
     upgradeBranch,
     state,
-    writesOriginalRepo: !!originalRepo && !!upgradeRepo && originalRepo === upgradeRepo,
+    upgradeRepoExplicit: !!explicitUpgradeRepo,
+    upgradeRepoRequired,
+    writesOriginalRepo,
     originalReadOnly: true,
     rollbackTarget: originalRepo,
+    writeSafety: Object.freeze({
+      ok: !writeSafetyCode,
+      code: writeSafetyCode,
+      reason: writeSafetyCode === 'UPGRADE_REPO_REQUIRED'
+        ? 'missing_explicit_upgrade_repo'
+        : writeSafetyCode === 'UPGRADE_TARGET_UNSAFE'
+          ? 'upgrade_repo_matches_original_repo'
+          : null,
+    }),
   });
 }
 

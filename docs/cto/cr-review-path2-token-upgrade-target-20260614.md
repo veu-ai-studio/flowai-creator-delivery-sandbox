@@ -1,0 +1,34 @@
+# CR Review Prompt - Path 2 Token + Upgrade Target Fix
+
+Reviewer: CR
+Supervisor: CTO
+Branch: `fix/path2-production-token-upgrade-target`
+Base: `origin/main` at `7bc95bb`
+
+## Review Scope
+
+Review for correctness, safety, evidence honesty, and regression risk:
+- `src/lib/agents/renewal/orchestrator.js`
+- `src/lib/products/upgradeTargetResolver.js`
+- `tests/agents/renewal/orchestrator.test.js`
+- `tests/products-upgrade-target-resolver.test.js`
+
+## Findings To Confirm Or Block
+
+Confirm:
+- Fallback from failed GitHub App signing to operator token is logged as fallback context, not fabricated GitHub App success.
+- No token value can appear in Step 6 or Step 8 logs, including the tree `sha` field.
+- Unsafe RelTwin-shaped target resolution stops before `createRenewalBranch`.
+- The patch does not relabel fallback context as observed deployment/branch evidence.
+- No ProductSSOT, matrixArtifact, VERIFIED, WIRED, or canonical SSOT changes are made.
+- Test additions cover the exact CR risk: same-repo read-only write block and operator-token redaction.
+
+## Evidence To Review
+
+Read:
+- `docs/cto/path2-token-upgrade-target-fix-evidence-20260614.md`
+
+Verification currently includes focused PASS and static PASS, with full preflight stopped by an unrelated Claude smoke 500. State whether that smoke failure is blocking or non-blocking for this branch.
+
+Return: `PASS`, `PASS-WITH-FINDINGS`, or `BLOCK`.
+
