@@ -90,6 +90,28 @@ function splitNameAndDescription(rawBody) {
   return { name: body, description: body };
 }
 
+function parseEvidenceMetadata(rawBody) {
+  const body = normalizeMojibake(rawBody);
+  const metadata = {};
+  const fields = [
+    ['evidenceUrl', /\bevidenceUrl\s*[:=]\s*([^;\]\)]+)/i],
+    ['verifiedAt', /\bverifiedAt\s*[:=]\s*([^;\]\)]+)/i],
+    ['verifiedBy', /\bverifiedBy\s*[:=]\s*([^;\]\)]+)/i],
+  ];
+
+  for (const [field, pattern] of fields) {
+    const match = body.match(pattern);
+    const value = match?.[1]?.trim();
+    if (value) metadata[field] = value;
+  }
+
+  const noteMatch = body.match(/\bnote\s*[:=]\s*([^;\]\)]+)/i);
+  const note = noteMatch?.[1]?.trim();
+  if (note) metadata.note = note;
+
+  return metadata;
+}
+
 function parseBullet(line, layer) {
   const normalizedLine = normalizeMojibake(line);
   const rawBody = normalizedLine.replace(/^[-*]\s+/, '').trim();
@@ -112,6 +134,7 @@ function parseBullet(line, layer) {
     description,
     status: statusFromText(rawBody),
     tier,
+    ...parseEvidenceMetadata(rawBody),
   };
 
   if (/\bPENDING-RATIFICATION\b/i.test(rawBody)) {

@@ -43,4 +43,23 @@ describe('v0.2A matrix artifact generator', () => {
     });
     expect(parsed.surfaceTierMap['persistence-claim']).toBe('A');
   });
+
+  it('extracts evidence metadata for VERIFIED rows', () => {
+    const parsed = parseSsotMarkdown(`
+### 12.1 Evidence Claims (Layer 1 \u2014 Matrix Status)
+
+### 12.2 Capability Planning (Layer 2)
+- \`axis-structural-layer-live-propagation\` \u2014 Structural Layer axis live propagation \u2014 VERIFIED (evidenceUrl: https://example.com/evidence.md; verifiedAt: 2026-06-14; verifiedBy: CT2 browser acceptance)
+
+### 12.3 Production Evidence
+`);
+
+    expect(parsed.layer2[0]).toMatchObject({
+      surfaceId: 'axis-structural-layer-live-propagation',
+      status: 'VERIFIED',
+      evidenceUrl: 'https://example.com/evidence.md',
+      verifiedAt: '2026-06-14',
+      verifiedBy: 'CT2 browser acceptance',
+    });
+  });
 });

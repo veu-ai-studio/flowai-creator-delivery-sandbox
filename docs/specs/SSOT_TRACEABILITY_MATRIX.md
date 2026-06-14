@@ -432,8 +432,8 @@ SSOT completion against Gate B 95% target: **0 / 11 release-critical Layer-1 cla
 - Fresh Build Design Synthesizer: EXPERIMENTAL/LOCAL VALIDATION
 - Fresh Build Codebase Generator: EXPERIMENTAL/LOCAL VALIDATION
 - Fresh Build Orchestrator: EXPERIMENTAL/PARALLEL MODE WIRED
-- Fresh Build Deployment Adapter: EXPERIMENTAL/LOCAL VALIDATION
-- Fresh Build Vercel Config Resolution: EXPERIMENTAL/LOCAL VALIDATION
+- Fresh Build Deployment Adapter: VERIFIED (evidenceUrl: https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-path3-publictarget-acceptance-result-20260614.md; verifiedAt: 2026-06-14; verifiedBy: CT2 browser acceptance + FlowAI runtime proof)
+- Fresh Build Vercel Config Resolution: VERIFIED (evidenceUrl: https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-path3-publictarget-acceptance-result-20260614.md; verifiedAt: 2026-06-14; verifiedBy: CT2 browser acceptance + FlowAI runtime proof)
 - Fresh Build Crawler Handoff: EXPERIMENTAL/LOCAL VALIDATION
 - Fresh Build SSE Evidence: EXPERIMENTAL/LOCAL VALIDATION
 - Multi-modal inputs: ROADMAP
@@ -444,6 +444,14 @@ SSOT completion against Gate B 95% target: **0 / 11 release-critical Layer-1 cla
 - Fresh codebase generation: TARGET
 - Mobile/native desktop app output: ROADMAP
 - Domain/tier/access model: ROADMAP
+- `flow-hub-migration-public-url` - Flow Hub Migration path public deployed URL - VERIFIED (evidenceUrl: https://saige-v2.vercel.app; verifiedAt: 2026-06-13; verifiedBy: CT2 browser acceptance)
+- `axis-structural-layer-live-propagation` - Structural Layer axis live propagation - VERIFIED (evidenceUrl: https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md; verifiedAt: 2026-06-14; verifiedBy: CT2 browser acceptance + live /api/run-construction payload + run log)
+- `axis-operational-mode-live-propagation` - Operational Mode axis live propagation - VERIFIED (evidenceUrl: https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md; verifiedAt: 2026-06-14; verifiedBy: CT2 browser acceptance + live /api/run-construction payload + run log)
+- `axis-analysis-depth-live-propagation` - Analysis Depth axis live propagation - VERIFIED (evidenceUrl: https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md; verifiedAt: 2026-06-14; verifiedBy: CT2 browser acceptance + live /api/run-construction payload + run log)
+- `axis-flow-hub-path-live-propagation` - Flow Hub Path axis live propagation - VERIFIED (evidenceUrl: https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md; verifiedAt: 2026-06-14; verifiedBy: CT2 browser acceptance + route switching proof + live /api/run-construction payload)
+- `tim-build-codex-ranked-first-live` - TIM Build lane Codex ranked first - VERIFIED (evidenceUrl: https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-priority2-axis-live-proof-rerun-result-20260613.md; verifiedAt: 2026-06-13; verifiedBy: CT2 browser acceptance + CB2 production audit)
+- `clerk-ticket-app-origin-session-live` - Clerk ticket redirect and app-origin session - VERIFIED (evidenceUrl: https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md; verifiedAt: 2026-06-14; verifiedBy: CT2 live production browser acceptance)
+- `fresh-build-public-url-live` - Fresh Build path public deployed URL - VERIFIED (evidenceUrl: https://flowai-fresh-public-veusite.vercel.app; verifiedAt: 2026-06-14; verifiedBy: CT2 browser acceptance + FlowAI runtime proof)
 
 ### 12.3 Production Evidence (W09)
 
