@@ -2,7 +2,7 @@
 
 Date: 2026-06-14 UTC
 Owner: CTO
-Scope: Comprehensive directive buy-in, evidence correction, and next technical starting point
+Scope: Comprehensive directive buy-in, evidence correction, CT2 Clerk session block, and next technical starting point
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`
 
 ## Executive Summary
@@ -16,13 +16,14 @@ The active CTO operating directive is now:
 Review/buy-in evidence:
 
 - `docs/cto/comprehensive-directive-buy-in-review-20260614.md`
+- `docs/cto/comprehensive-directive-implementation-revision-20260614.md`
 
 Most important corrected state:
 
 - Active matrixArtifact remains `0 VERIFIED`, `0 WIRED`, `2 CURRENT` out of `39`.
 - Path 1 Migration has a CT2-confirmed public URL, `https://saige-v2.vercel.app`, but no VERIFIED movement has been applied.
 - Milestone 1 axis wiring is CT2-proven at the live-production evidence level.
-- Clerk readiness/routes are live, but full authenticated user-session proof is still blocked.
+- Clerk readiness/routes and bearer-token propagation code are live, but full authenticated user-session proof is still blocked at hosted redirect/session establishment.
 - Codex TIM Build rank/callability code exists, but live Step 3 Build use is not yet proven.
 
 ## Current Runtime Evidence
@@ -33,15 +34,15 @@ FlowAI production URL:
 
 Latest runtime production commit:
 
-- `dabdce72e13e8ceee9cdd6965b9c0fe9b6a79a9c`
+- `021212d2ebf52511493869e7fea9270a7865db31`
 
 Latest origin/main after docs evidence commits:
 
-- `847396c17152d70269979c819ca1b4a159cf9a04`
+- `ce3ef12accd2ecb367c60cb9b604f5f3265c275c`
 
 Interpretation:
 
-- Origin/main is ahead of the runtime deployment because docs-only CT2 evidence commits were added after the Clerk runtime merge.
+- Origin/main is ahead of the runtime deployment because docs-only CT2 evidence commits were added after the Clerk session runtime merge.
 - Runtime claims must cite the exact deployment/commit under test.
 - Future code-bearing runtime changes should be deployed/promoted before live proof.
 
@@ -64,6 +65,11 @@ Interpretation:
    - CD is Claude Code reviewer on PowerShell.
    - CR is Codex reviewer on PowerShell.
 
+6. Added implementation-revision addendum:
+   - `docs/cto/comprehensive-directive-implementation-revision-20260614.md`
+
+7. Updated the active directive to include CT2's Clerk session live-proof BLOCK.
+
 ## Clerk Auth State
 
 Completed:
@@ -78,7 +84,9 @@ Completed:
 Blocked:
 
 - Public sign-up hit Cloudflare human verification.
-- Backend-created disposable user plus sign-in token did not result in `/api/me` returning authenticated Clerk context.
+- Backend-created disposable user plus sign-in token did not establish a signed-in Clerk session in the FlowAI app.
+- CT2 observed hosted Clerk token landing text: `Development mode. You are signed in, but Clerk cannot redirect to your application`.
+- CT2 observed FlowAI app Clerk state: `clerkLoaded:true`, `signedIn:false`, `sessionPresent:false`, `userPresent:false`, `tokenPresent:false`.
 
 Evidence:
 
@@ -92,10 +100,16 @@ Boundary analysis and dispatch now filed:
 
 Finding:
 
+Prior boundary finding:
+
 - The server already accepts `Authorization: Bearer <token>` and `__session` cookie fallback.
-- The frontend `AuthContext` calls `/api/me` with cookies only and does not call Clerk React `getToken()`.
-- The next patch should make a Clerk-authenticated SPA session attach a bearer token to `/api/me`.
-- CT2 should prove an app-origin authenticated fetch or app state, not only direct address-bar navigation to `/api/me`.
+- The frontend `AuthContext` previously called `/api/me` with cookies only and did not call Clerk React `getToken()`.
+
+Patch result:
+
+- The Clerk bearer-token propagation patch merged and promoted.
+- CT2 still blocked because no active Clerk app session existed after the sign-in-token flow.
+- The remaining issue is earlier than `/api/me` bearer propagation: hosted redirect/session establishment.
 
 CB build status:
 
@@ -118,6 +132,14 @@ CB build status:
   - Public `/api/me` remains anonymous/open in a no-session context.
 - CT2 live proof dispatch:
   - `docs/cto/ct2-clerk-session-live-proof-dispatch-20260614.md`
+- CT2 live proof result:
+  - `docs/cto/ct2-clerk-session-live-proof-result-20260614.md`
+  - Verdict: BLOCK.
+  - Production identity PASS.
+  - Health/version/anonymous `/api/me` PASS.
+  - Disposable Clerk user and sign-in token creation PASS.
+  - Flow Hub app load PASS.
+  - App-origin authenticated `/api/me` BLOCK because Clerk session/token were unavailable.
 
 ## VERIFIED Promotion State
 
@@ -133,7 +155,8 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Wait for CT2 live proof result from `docs/cto/ct2-clerk-session-live-proof-dispatch-20260614.md`.
-4. If CT2 PASS, record Clerk session propagation as live-proofed evidence, but do not move VERIFIED without W04/CEO clearance.
-5. If CT2 BLOCKS, send same-branch patch request to CB.
-6. Do not move VERIFIED without W04/CEO clearance.
+3. Map the Clerk hosted redirect/session-establishment boundary before dispatching CB again.
+4. Inspect Clerk SDK sign-in-token redirect/transfer support, FlowAI Clerk route/config, and Doppler/Vercel key/domain mapping without printing secrets.
+5. If code controls the fix, dispatch CB with one complete patch and CT2 proof instructions.
+6. If Clerk dashboard/domain config controls the fix, write a paste-and-approve Victor action packet and stop runtime patching until that action is complete.
+7. Do not move VERIFIED without W04/CEO clearance.

@@ -15,8 +15,8 @@ The W04/CEO comprehensive directive to reach 95/100 SSOT is accepted as the cont
 - Path 1 Migration has one CT2-confirmed public deployed URL, `https://saige-v2.vercel.app`, but no matrixArtifact VERIFIED movement has been applied.
 - Milestone 1 axis wiring is complete at the live-production evidence level. CT2 confirmed four-axis visibility, independent selection, request propagation, and run-log axis envelope on production commit `65f46a0c96930a207e7cd0c0160cf51317c89822`.
 - Codex TIM Build rank/callability code is present on main, but live Step 3 Build evidence is still required before counting it as verified behavior.
-- Clerk readiness/routes are live on production runtime commit `dabdce72e13e8ceee9cdd6965b9c0fe9b6a79a9c`: `/api/health` reports `clerkReady:true`, `/sign-up` and `/sign-in` render real Clerk UI, and `/api/me` remains anonymous/open while `AUTH_REQUIRED=false`.
-- Full authenticated Clerk session proof is not complete. CT2 hit Cloudflare human verification during public sign-up, and the backend-created user plus sign-in-token proof did not propagate an authenticated Clerk session to `/api/me`.
+- Clerk readiness/routes are live. Latest Clerk runtime proof ran on production runtime commit `021212d2ebf52511493869e7fea9270a7865db31`: `/api/health` reports `clerkReady:true`, `/api/version` matches the runtime commit, and `/api/me` remains anonymous/open while `AUTH_REQUIRED=false`.
+- Full authenticated Clerk session proof is still blocked. CT2 confirmed the app loads after a backend-created user/sign-in-token flow, but the hosted Clerk token landing displayed `Development mode. You are signed in, but Clerk cannot redirect to your application`; the FlowAI app then had `clerkLoaded:true` but `signedIn:false`, `sessionPresent:false`, and no Clerk token available for app-origin `/api/me`.
 - Latest origin/main may include docs-only evidence commits after the deployed runtime commit. Runtime claims must cite the exact deployment and commit under test.
 - Future VERIFIED movement requires W04/CEO clearance and the claim-promotion checklist. The CTO may prepare packets but must not apply promotion unilaterally.
 
@@ -69,8 +69,8 @@ Honest progress estimate: FlowAI has substantial infrastructure built, but produ
 1. VERIFIED Promotion First Batch - waiting on W04/CEO clearance.
    The packet `docs/cto/verified-promotion-packet-milestone1-20260613.md` is prepared. Do not apply matrixArtifact VERIFIED movement until W04/CEO explicitly authorizes it.
 
-2. Clerk Session Boundary - active technical blocker to map before the next CB dispatch.
-   The env/key route work is merged and live. The remaining blocker is authenticated session propagation to `/api/me`, not Clerk account creation. Boundary analysis is filed at `docs/cto/clerk-session-boundary-analysis-20260614.md`; CB dispatch is filed at `docs/cto/cb-clerk-session-propagation-dispatch-20260614.md`.
+2. Clerk Hosted Redirect / Session Boundary - active technical blocker to map before the next CB dispatch.
+   Env/key readiness, Clerk routes, and bearer-token propagation code are merged and live. CT2 still blocks because the hosted Clerk sign-in-token flow does not establish a signed-in FlowAI app session. Map whether this is a Clerk dashboard/domain/redirect configuration issue, a sign-in-token redirect parameter issue, or a remaining app-code issue before dispatching CB again. Evidence is filed at `docs/cto/ct2-clerk-session-live-proof-result-20260614.md`.
 
 3. Flow Hub URL Proofs - next runtime path after Clerk boundary is either fixed or formally deferred.
    Continue with Path 2 Production against an app-layer-owned target, then Path 3 Fresh Build, then Path 4 Three-URL Synthesis after CEO approval of the three selected URLs.
@@ -120,7 +120,7 @@ Do not apply any VERIFIED entry without W04/CEO clearance.
 
 ## Milestone 3 - Clerk Auth
 
-Status: route/readiness wired; full authenticated session proof blocked.
+Status: route/readiness wired and bearer-token propagation code merged; full authenticated session proof blocked at hosted redirect/session establishment.
 
 Completed:
 
@@ -133,20 +133,28 @@ Completed:
 - `/api/me` reports anonymous/open mode with Clerk configured while `AUTH_REQUIRED=false`.
 - CT2 confirmed `/sign-up` renders real Clerk sign-up UI.
 - CT2 confirmed `/sign-in` renders real Clerk sign-in UI.
+- Runtime branch `fix/clerk-session-propagation` merged to main at `021212d2ebf52511493869e7fea9270a7865db31`.
+- Production deployment `https://flowai-799ng2frz-veu-ai-studio.vercel.app` promoted.
+- CD and CR Step 5 reviews for session propagation passed.
+- CT2 confirmed production identity, health, version, anonymous `/api/me`, disposable Clerk user creation, sign-in-token creation, Flow Hub app load, and disposable user cleanup.
 
 Blocked:
 
 - Public sign-up attempt is blocked by Cloudflare human verification.
-- Backend-created disposable Clerk user plus sign-in token URL did not produce an authenticated `/api/me` response in the same browser context.
+- Backend-created disposable Clerk user plus sign-in token URL still did not establish a signed-in FlowAI app session.
+- Hosted Clerk token landing showed `Development mode. You are signed in, but Clerk cannot redirect to your application`.
+- FlowAI app page showed `clerkLoaded:true`, `signedIn:false`, `sessionPresent:false`, `userPresent:false`, and `tokenPresent:false`.
+- App-origin `/api/me` authenticated proof could not run because `Clerk session getToken unavailable`.
 
 Next technical action:
 
-Dispatch CB from the prepared session-propagation packet:
+Map the full hosted redirect/session-establishment chain before dispatching CB again:
 
-1. Read `docs/cto/clerk-session-boundary-analysis-20260614.md`.
-2. Build from `docs/cto/cb-clerk-session-propagation-dispatch-20260614.md`.
-3. Fix the full known bearer-token propagation chain in one branch.
-4. Return CB DoD with tests and CT2 app-origin proof instructions.
+1. Inspect Clerk SDK support for sign-in-token redirect or transfer parameters without printing secrets.
+2. Inspect FlowAI Clerk route/config code for redirect URL, publishable-key, and domain handling.
+3. Inspect Doppler/Vercel key shapes and public environment mapping without printing secret values.
+4. If the fix is code-controlled, dispatch CB with one complete patch branch and CT2 proof instructions.
+5. If the fix is Clerk dashboard/domain-controlled, write a paste-and-approve Victor action packet with exact clicks/fields and stop runtime patching until that action is complete.
 
 No VERIFIED movement is allowed from Clerk work until CT2 proves a real authenticated user session and W04/CEO clears the promotion packet.
 
