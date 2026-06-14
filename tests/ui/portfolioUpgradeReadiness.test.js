@@ -26,11 +26,15 @@ describe('portfolio upgrade readiness UI', () => {
   });
 
   it('surfaces ProductSSOT-backed scores in Product Registry and Main Dashboard', () => {
-    expect(registrySrc).toContain("import { normalizeScore } from '@/lib/products/registry'");
+    expect(registrySrc).toContain("import { deriveSlug, normalizeScore } from '@/lib/products/registry'");
+    expect(registrySrc).toContain('function productFromApiRow(product = {})');
     expect(registrySrc).toContain('Array.isArray(apiProducts?.items) ? apiProducts.items : asArray(apiProducts)');
+    expect(registrySrc).toContain('setProducts(apiProductRows.map(productFromApiRow))');
     expect(registrySrc).toContain('const productScore = (product, registryRow) => {');
     expect(registrySrc).toContain('const score = productScore(p, reg)');
     expect(registrySrc).toContain('{score}/10');
+    expect(registrySrc).not.toContain('const VEU_SEED');
+    expect(registrySrc).not.toContain('https://saigeplatform.com');
 
     expect(mainDashboardSrc).toContain("import { listProducts, normalizeScore, deriveSlug } from '@/lib/products/registry'");
     expect(mainDashboardSrc).toContain('function dashboardProductFromRegistry(product)');

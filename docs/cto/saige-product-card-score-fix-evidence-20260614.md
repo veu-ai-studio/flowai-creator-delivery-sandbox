@@ -25,6 +25,8 @@ This branch keeps the fix product-agnostic:
 4. Numeric scores are surfaced only from score-bearing ProductSSOT governance records. If no score exists, the score remains null.
 5. `/dashboard` now reads product cards through the same `/api/products` boundary instead of the Base44 ProductRegistry mirror.
 6. `/products` correctly consumes `/api/products` response shape `{ items: [...] }` and normalizes scores from either registry mirror or ProductSSOT-backed API rows.
+7. `/products` normalizes raw API product rows before rendering so missing `slug` or `org` fields do not break card keys, displays, or run actions.
+8. The hardcoded `VEU_SEED` fallback was removed; empty API results now show the existing empty state instead of proof-target fixtures.
 
 No canonical docs, ProductSSOT rows, matrixArtifact evidence status, scoring logic, governance writes, forge pipeline behavior, branch creation, or deployment logic changed.
 
@@ -37,6 +39,7 @@ No canonical docs, ProductSSOT rows, matrixArtifact evidence status, scoring log
 - `tests/api-products-ssot-fallback.test.js`
 - `tests/api-products-handler.test.js`
 - `tests/ui/portfolioUpgradeReadiness.test.js`
+- `docs/cto/saige-product-card-score-audit-followup-20260614.md`
 
 ## Verification
 
@@ -45,6 +48,11 @@ Focused checks:
 - `node --check api/_lib/db.js` PASS
 - `node --check api/products.js` PASS
 - `npx vitest run tests/api-products-ssot-fallback.test.js tests/api-products-handler.test.js tests/products-registry.test.js tests/ui/portfolioUpgradeReadiness.test.js` PASS, 4 files / 51 tests
+
+Follow-up checks after CTO-delegated audit:
+
+- `npx vitest run tests/ui/portfolioUpgradeReadiness.test.js tests/ui/productRegistryRunAction.test.js tests/api-products-ssot-fallback.test.js tests/api-products-handler.test.js` PASS, 4 files / 23 tests
+- `node --check src/pages/ProductRegistry.jsx` was attempted and rejected by Node as an unsupported `.jsx` extension, so Vite/Vitest/preflight remain the valid verifier for this file.
 
 Full preflight:
 
@@ -62,6 +70,8 @@ The preflight-generated `matrixArtifact.json` timestamp-only diff was restored b
 
 - Confirm the fallback does not fabricate product rows or scores.
 - Confirm text org ids no longer trigger a UUID filter against `products.org_id`.
+- Confirm raw `/api/products.items` rows missing `slug` or `org` are normalized before UI use.
+- Confirm the removed `VEU_SEED` fallback does not leave hardcoded proof-target products in `/products`.
 - Confirm `/api/products` public read fallback is acceptable for the current internal proof mode and should be reassessed before broad external tenant exposure.
 - Confirm this is a visual/data-path fix only and does not claim CT2 acceptance until deployed and browser-confirmed.
 

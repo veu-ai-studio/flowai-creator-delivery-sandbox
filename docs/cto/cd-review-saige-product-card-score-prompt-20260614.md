@@ -28,6 +28,19 @@ Review only this branch's runtime/test/docs changes:
 - `tests/api-products-handler.test.js`
 - `tests/ui/portfolioUpgradeReadiness.test.js`
 - `docs/cto/saige-product-card-score-fix-evidence-20260614.md`
+- `docs/cto/saige-product-card-score-audit-followup-20260614.md`
+
+## Audit Follow-Up
+
+A CTO-delegated branch audit returned `PASS-WITH-FINDINGS`.
+
+The blocking implementation concern was that `/products` consumed raw `/api/products.items` rows directly even though raw `products` table rows are not guaranteed to provide `slug` or `org`. This branch now normalizes API rows inside `ProductRegistry.jsx`, deriving a slug from stable product identity fields and preserving `org` only when the API supplies one.
+
+The audit also flagged the hardcoded `VEU_SEED` fallback in `/products` as a pre-existing honesty risk. This branch removes that fallback so an empty API result shows the existing empty state rather than seeded proof-target fixtures.
+
+Follow-up focused verification after the audit patch:
+
+- `npx vitest run tests/ui/portfolioUpgradeReadiness.test.js tests/ui/productRegistryRunAction.test.js tests/api-products-ssot-fallback.test.js tests/api-products-handler.test.js` PASS, 4 files / 23 tests
 
 ## Questions
 
@@ -35,7 +48,8 @@ Review only this branch's runtime/test/docs changes:
 2. Does it avoid treating text org ids as UUIDs?
 3. Does it avoid fabricated scores by using only score-bearing ProductSSOT governance records?
 4. Are `/portfolio`, `/dashboard`, and `/products` now aligned on the same product read boundary and score normalization?
-5. Are there any security or tenant-boundary concerns that should block this branch before merge?
+5. Does `/products` safely handle raw API rows that lack `slug` or `org`?
+6. Are there any security or tenant-boundary concerns that should block this branch before merge?
 
 ## Verification Already Run
 
@@ -43,6 +57,7 @@ Review only this branch's runtime/test/docs changes:
 - `node --check api/products.js` PASS
 - `npx vitest run tests/api-products-ssot-fallback.test.js tests/api-products-handler.test.js tests/products-registry.test.js tests/ui/portfolioUpgradeReadiness.test.js` PASS, 4 files / 51 tests
 - `npm run preflight` PASS, 237 files / 3741 tests passed / 3 skipped
+- Follow-up focused tests after audit patch PASS, 4 files / 23 tests
 
 ## Required Result
 
