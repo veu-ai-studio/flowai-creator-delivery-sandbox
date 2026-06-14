@@ -1,7 +1,7 @@
 # CB Clerk Ticket Redirect Completion Evidence - 2026-06-14
 
 Branch: `fix/clerk-ticket-redirect-completion`
-HEAD: `7db09f3ff64034cea37b960c26eec5332e61fddd`
+HEAD: `dbeeb454c129cd47be982b02820adcd1064040d7`
 Dispatch: `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`
 Canonical authority read at session start: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`
 Supporting evidence read: `docs/cto/current-directive.md`, `docs/cto/session-brief.md`, `docs/cto/ct2-clerk-ticket-signin-live-proof-result-20260614.md`, `docs/cto/ct2-clerk-ticket-signin-live-proof-raw-20260614.json`
