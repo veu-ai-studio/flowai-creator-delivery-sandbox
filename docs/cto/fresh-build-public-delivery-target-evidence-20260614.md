@@ -56,6 +56,8 @@ npx vitest run tests/freshBuild tests/agents/renewal/vercelBranchDeploy.test.js
 npm run build:preflight
 npm run lint
 git diff --check
+npm run preflight
+npx vitest run tests/smoke/api-health.test.js -t "returns Claude response"
 ```
 
 Results:
@@ -65,6 +67,18 @@ Results:
 - `npm run build:preflight`: PASS.
 - `npm run lint`: PASS with existing flat-config `eslint-env` warnings only.
 - `git diff --check`: PASS.
+- Full `npm run preflight`: BLOCKED by one live production smoke failure unrelated to this branch surface.
+- Isolated rerun of `tests/smoke/api-health.test.js -t "returns Claude response"`: FAIL, live `POST /api/test-claude` returned HTTP `500` instead of `200`.
+
+## Preflight Boundary
+
+The full preflight failure is a live production provider smoke against `https://flowai-dun.vercel.app/api/test-claude`. This branch changes only Vercel deploy target/alias handling and Fresh Build deployment adapter behavior; it does not touch Claude provider code or `/api/test-claude`.
+
+Treat this as a merge/process finding for CD/CR/W04:
+
+- It should not be hidden.
+- It should not be counted as branch-local Fresh Build regression without additional evidence.
+- If W04/CD/CR require completely green full preflight before merge, this branch must wait for the live Claude smoke to recover or be quarantined by an explicit protocol waiver.
 
 ## Important Boundary
 
