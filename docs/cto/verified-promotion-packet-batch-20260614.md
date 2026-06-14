@@ -175,12 +175,43 @@ Recommended matrix treatment:
 - Promote only an exact visibility/ranking row if one exists or is authorized.
 - Do not promote "Codex callable Build execution" until a live Step 3 Build run proves Codex was selected and invoked.
 
+## Candidate 7 - Clerk Ticket Redirect And App-Origin Session
+
+Claim scope:
+
+The FlowAI-owned Clerk ticket route consumes a Clerk sign-in token without exposing the ticket, redirects to Flow Hub Production, establishes a signed-in Clerk app session, and allows app-origin `/api/me` to return authenticated Clerk state.
+
+Evidence:
+
+- Evidence URL: `https://github.com/victor2081new-cloud/flowai/blob/8a9389a71e1409e8dd7f2426d11450a2e89b2509/docs/cto/ct2-clerk-ticket-redirect-live-rerun-result-20260614.md`
+- Raw redacted evidence: `https://github.com/victor2081new-cloud/flowai/blob/8a9389a71e1409e8dd7f2426d11450a2e89b2509/docs/cto/ct2-clerk-ticket-redirect-live-rerun-raw-20260614.json`
+- CT2 result: PASS
+- `verifiedAt`: `2026-06-14`
+- `verifiedBy`: `CT2 live production browser acceptance`
+
+Observed by CT2:
+
+- Production identity was coherent on current main, with `clerkReady: true`.
+- FlowAI-owned `/sign-in-token?ticket=<redacted>&redirect_url=/flow-hub/production` was used.
+- Clerk hosted `signInToken.url` was not opened.
+- Final browser route landed on `https://flowai-dun.vercel.app/flow-hub/production`.
+- Address bar and visible text did not expose the ticket.
+- Clerk frontend state showed signed-in session and token present.
+- App-origin `/api/me` returned `authenticated: true`, `authMode: "clerk"`, and redacted user ID present.
+- Fresh no-session `/api/me` before and after proof remained anonymous while `AUTH_REQUIRED=false`.
+- Disposable Clerk user was cleaned up.
+
+Recommended matrix treatment:
+
+- Promote only an exact auth row scoped to Clerk ticket redirect/session propagation if one exists or is authorized.
+- Do not use this to claim full auth-required gating, organization membership enforcement, paid-user onboarding, or production user signup completion.
+
 ## Not Included In This Batch
 
 Clerk ticket sign-in:
 
-- CT2 proved session establishment and app-origin `/api/me` authentication on 2026-06-14, but the full proof verdict was BLOCK because final redirect to `/flow-hub/production` failed before the patch.
-- Do not promote until CT2 reruns against the merged redirect fix and returns PASS.
+- The earlier 2026-06-14 proof remains BLOCK because final redirect to `/flow-hub/production` failed before the patch.
+- The later rerun is now included above as Candidate 7. Keep the claim scoped to the passing rerun only.
 
 Fresh Build:
 
@@ -206,6 +237,7 @@ Recommended safe batch:
 - 1 deployed-URL promotion for Path 1 Migration.
 - 4 Flow Hub axis behavior promotions.
 - optional 1 TIM Build Codex visibility/ranking promotion if mapped to a narrow exact row.
+- optional 1 Clerk ticket redirect/session promotion if mapped to a narrow exact row.
 
 Required implementation guardrails:
 
