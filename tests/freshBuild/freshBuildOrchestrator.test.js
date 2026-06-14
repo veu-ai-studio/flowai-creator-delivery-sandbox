@@ -235,26 +235,83 @@ describe('freshBuild Orchestrator', () => {
 
   it('does not write generated files when code generation is blocked', async () => {
     const writeGeneratedCodebase = vi.fn();
+    const blockedCodebase = mockGeneratedCodebase({
+      status: 'BLOCKED',
+      reason: 'GENERATED_CODEBASE_INVALID',
+      failureStage: 'codebase_generator',
+      failure: {
+        stage: 'codebase_generator',
+        code: 'GENERATED_CODEBASE_INVALID',
+        message: 'GeneratedCodebase failed safety validation: src/components/ListListXlrmdf.jsx has unbalanced ()',
+        invalidFilePath: 'src/components/ListListXlrmdf.jsx',
+        validationReason: 'unbalanced ()',
+        deploymentId: null,
+        readyState: null,
+        attempts: null,
+      },
+      files: [],
+      platformDependencies: [],
+    });
     const result = await runFreshBuild({ url: 'https://example.com' }, {
       env: { FLOWAI_ENABLE_FRESH_BUILD: 'true' },
       extractFeatures: vi.fn(async () => mockFeatureInventory()),
       synthesizeDesign: vi.fn(async () => mockDesignSpec()),
-      generateCodebase: vi.fn(async () => mockGeneratedCodebase({
-        status: 'BLOCKED',
-        reason: 'API_CALL_CAP_EXCEEDED',
-        files: [],
-      })),
+      generateCodebase: vi.fn(async () => blockedCodebase),
       writeGeneratedCodebase,
     });
 
     expect(result).toMatchObject({
       ok: false,
       status: 'BLOCKED',
-      reason: 'API_CALL_CAP_EXCEEDED',
+      reason: 'GENERATED_CODEBASE_INVALID',
+      failureStage: 'codebase_generator',
+      failure: {
+        stage: 'codebase_generator',
+        code: 'GENERATED_CODEBASE_INVALID',
+        invalidFilePath: 'src/components/ListListXlrmdf.jsx',
+        validationReason: 'unbalanced ()',
+      },
       previewUrl: null,
+      scoreStatus: 'SCORE_NOT_ATTEMPTED',
       platformDependencies: [],
     });
     expect(writeGeneratedCodebase).not.toHaveBeenCalled();
+  });
+
+  it('returns an honest blocked result when the generator throws safety validation', async () => {
+    const writeGeneratedCodebase = vi.fn();
+    const scoreFreshBuildPreview = vi.fn();
+    const onStep = vi.fn();
+
+    const result = await runFreshBuild({ url: 'https://example.com', runId: 'run-validation-block' }, {
+      env: { FLOWAI_ENABLE_FRESH_BUILD: 'true' },
+      extractFeatures: vi.fn(async () => mockFeatureInventory()),
+      synthesizeDesign: vi.fn(async () => mockDesignSpec()),
+      generateCodebase: vi.fn(async () => {
+        throw new Error('GeneratedCodebase failed safety validation: src/components/ListListXlrmdf.jsx has unbalanced ()');
+      }),
+      writeGeneratedCodebase,
+      scoreFreshBuildPreview,
+      onStep,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 'BLOCKED',
+      previewUrl: null,
+      previewAccessStatus: null,
+      scoreStatus: 'SCORE_NOT_ATTEMPTED',
+    });
+    expect(result.failureStage).toBe('codebase_generator');
+    expect(result.failure.message).toContain('ListListXlrmdf.jsx has unbalanced ()');
+    expect(result.writeResult).toBeUndefined();
+    expect(writeGeneratedCodebase).not.toHaveBeenCalled();
+    expect(scoreFreshBuildPreview).not.toHaveBeenCalled();
+    expect(onStep).toHaveBeenCalledWith(expect.objectContaining({
+      stage: 'codebase_generator',
+      status: 'blocked',
+      failureStage: 'codebase_generator',
+    }));
   });
 
   it('returns partial evidence when deployment fails after branch write', async () => {

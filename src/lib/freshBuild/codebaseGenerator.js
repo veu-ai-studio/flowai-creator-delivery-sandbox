@@ -70,6 +70,35 @@ function escapeJsString(value) {
   return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, '\\n');
 }
 
+function escapeGeneratedText(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/\(/g, '&#40;')
+    .replace(/\)/g, '&#41;')
+    .replace(/\[/g, '&#91;')
+    .replace(/\]/g, '&#93;')
+    .replace(/\{/g, '&#123;')
+    .replace(/\}/g, '&#125;');
+}
+
+function encodeGeneratedUrlValue(value) {
+  return String(value ?? '')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29')
+    .replace(/\[/g, '%5B')
+    .replace(/\]/g, '%5D')
+    .replace(/\{/g, '%7B')
+    .replace(/\}/g, '%7D');
+}
+
+function safeGeneratedText(value, fallback = UNKNOWN) {
+  return escapeGeneratedText(safeText(value, fallback));
+}
+
 function stripPlatformTerms(value) {
   let out = String(value ?? '');
   for (const pattern of FORBIDDEN_PLATFORM_PATTERNS) {
@@ -167,6 +196,26 @@ function validateSyntax(file) {
   return errors;
 }
 
+function parseValidationError(error) {
+  const text = String(error || '');
+  const match = text.match(/^(.+?) has (.+)$/);
+  return {
+    filePath: match?.[1] || null,
+    reason: match?.[2] || text,
+  };
+}
+
+function summarizeValidationErrors(errors) {
+  const first = parseValidationError(errors?.[0] || 'GeneratedCodebase failed safety validation');
+  return {
+    stage: 'codebase_generator',
+    code: 'GENERATED_CODEBASE_INVALID',
+    invalidFilePath: first.filePath,
+    validationReason: first.reason,
+    validationErrors: (errors || []).slice(0, 10),
+  };
+}
+
 function validateGeneratedFile(file) {
   const errors = [];
   if (!validatePath(file.path)) errors.push(`Invalid generated file path: ${file.path}`);
@@ -191,7 +240,8 @@ function routeForPage(page, index) {
     pathname = `/${toKebabCase(page.title || page.purpose || `page-${index}`)}`;
   }
   const route = pathname && pathname !== '/' ? pathname : `/${toKebabCase(page.title || page.purpose || `page-${index}`)}`;
-  return route.startsWith('/') ? route : `/${route}`;
+  const safeRoute = encodeGeneratedUrlValue(route);
+  return safeRoute.startsWith('/') ? safeRoute : `/${safeRoute}`;
 }
 
 function componentNameFor(component, index) {
@@ -200,8 +250,8 @@ function componentNameFor(component, index) {
 
 function buildComponentFile(component, index) {
   const componentName = componentNameFor(component, index);
-  const content = safeText(component.content, 'Content unavailable');
-  const purpose = safeText(component.purpose, 'Purpose unavailable');
+  const content = safeGeneratedText(component.content, 'Content unavailable');
+  const purpose = safeGeneratedText(component.purpose, 'Purpose unavailable');
   const interactive = component.interactive === true;
   const body = interactive
     ? `<button className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90">${escapeJsString(content)}</button>`
@@ -220,8 +270,9 @@ export default function ${componentName}() {
 
 function buildPageFile(page, index, componentImports) {
   const pageName = index === 0 ? 'HomePage' : toPascalCase(page.title || page.purpose || `Page ${index + 1}`, `Page${index + 1}`);
-  const title = safeText(page.title, 'Untitled page');
-  const primaryContent = safeText(page.primaryContent, 'No primary content detected.');
+  const title = safeGeneratedText(page.title, 'Untitled page');
+  const purpose = safeGeneratedText(page.purpose || UNKNOWN);
+  const primaryContent = safeGeneratedText(page.primaryContent, 'No primary content detected.');
   const navLinks = Array.isArray(page.navigation) ? page.navigation.slice(0, 8) : [];
   const componentsMarkup = componentImports.length
     ? componentImports.map((item) => `<${item.name} />`).join('\n        ')
@@ -232,14 +283,14 @@ ${componentImports.map((item) => `import ${item.name} from '../components/${item
 
 export default function ${pageName}() {
   const links = ${JSON.stringify(navLinks.map((link) => ({
-    label: safeText(link.label, 'Link'),
-    target: safeText(link.target, '#'),
+    label: safeGeneratedText(link.label, 'Link'),
+    target: encodeGeneratedUrlValue(safeText(link.target, '#')),
   })), null, 2)};
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">${escapeJsString(page.purpose || UNKNOWN)}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">${escapeJsString(purpose)}</p>
         <h1 className="text-4xl font-bold text-slate-950">${escapeJsString(title)}</h1>
         <p className="max-w-3xl text-base leading-7 text-slate-700">${escapeJsString(primaryContent)}</p>
       </header>
@@ -319,7 +370,8 @@ export default {
 
 function buildGlobalCss(designSpec) {
   const palette = extractPalette(designSpec);
-  const fontFamily = safeText(designSpec?.typography?.fontFamilies?.[0]?.family, 'Inter, system-ui, sans-serif');
+  const fontFamily = safeText(designSpec?.typography?.fontFamilies?.[0]?.family, 'Inter, system-ui, sans-serif')
+    .replace(/[()[\]{}]/g, '');
   return createFile('src/index.css', `
 @tailwind base;
 @tailwind components;
@@ -394,9 +446,9 @@ pnpm-debug.log*
 }
 
 function buildReadme(productName, featureInventory) {
-  const description = safeText(featureInventory?.pages?.[0]?.primaryContent, 'Generated platform-free product.');
+  const description = safeGeneratedText(featureInventory?.pages?.[0]?.primaryContent, 'Generated platform-free product.');
   return createFile('README.md', `
-# ${safeText(productName, 'Fresh Build Output')}
+# ${safeGeneratedText(productName, 'Fresh Build Output')}
 
 ${description}
 
@@ -452,6 +504,40 @@ function createBlockedResult({ featureInventory, designSpec, productName, apiCal
   };
 }
 
+function createValidationBlockedResult({ featureInventory, designSpec, productName, errors, now }) {
+  const validation = summarizeValidationErrors(errors);
+  return {
+    status: 'BLOCKED',
+    reason: validation.code,
+    failureStage: validation.stage,
+    failure: {
+      stage: validation.stage,
+      code: validation.code,
+      message: `GeneratedCodebase failed safety validation: ${errors.join('; ')}`.slice(0, 400),
+      invalidFilePath: validation.invalidFilePath,
+      validationReason: validation.validationReason,
+      deploymentId: null,
+      readyState: null,
+      attempts: null,
+    },
+    files: [],
+    stack: DEFAULT_TARGET_STACK,
+    pageCount: 0,
+    componentCount: 0,
+    flowCount: 0,
+    platformDependencies: [],
+    generatedAt: isoTimestamp(now),
+    sourceInventoryId: featureInventory?.id || featureInventory?.metadata?.id || featureInventory?.url || UNKNOWN,
+    sourceDesignId: designSpec?.id || designSpec?.metadata?.id || designSpec?.url || UNKNOWN,
+    productName: safeText(productName, 'Fresh Build Output'),
+    metadata: {
+      blocked: true,
+      version: FRESH_BUILD_VERSION,
+      validation,
+    },
+  };
+}
+
 function buildGeneratedFiles(featureInventory, designSpec, productName) {
   const pages = Array.isArray(featureInventory.pages) && featureInventory.pages.length
     ? featureInventory.pages
@@ -476,7 +562,7 @@ function buildGeneratedFiles(featureInventory, designSpec, productName) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${safeText(productName, 'Fresh Build Output')}</title>
+    <title>${safeGeneratedText(productName, 'Fresh Build Output')}</title>
   </head>
   <body>
     <div id="root"></div>
@@ -576,7 +662,21 @@ export function generateCodebase(featureInventory, designSpec, options = {}) {
 
   const validation = validateGeneratedCodebase(codebase);
   if (!validation.ok) {
-    throw new Error(`GeneratedCodebase failed safety validation: ${validation.errors.join('; ')}`);
+    return createValidationBlockedResult({
+      featureInventory,
+      designSpec,
+      productName,
+      errors: validation.errors,
+      now: options.now,
+    });
   }
   return codebase;
 }
+
+export const __test = Object.freeze({
+  encodeGeneratedUrlValue,
+  escapeGeneratedText,
+  parseValidationError,
+  safeGeneratedText,
+  summarizeValidationErrors,
+});
