@@ -211,6 +211,53 @@ describe('Fresh Build deployment adapter', () => {
     }));
   });
 
+  it('accepts product_registry github_repo_url as the Fresh Build upgrade target', async () => {
+    const githubClient = {
+      createCommit: vi.fn(async () => ({
+        commitSha: 'registry123',
+        filesWritten: 3,
+        branchUrl: 'https://github.com/victor2081new-cloud/flowai/tree/flowai/fresh-build-veusite-run-1',
+      })),
+    };
+    const deployPreviewImpl = vi.fn(async () => ({
+      deploymentId: 'dep_registry',
+      previewUrl: 'https://flowai-veusite-preview.vercel.app',
+    }));
+    const probePreviewAccessImpl = browserClearProbe();
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase(),
+      productName: 'VEU AI Studio Website',
+      runId: 'veusite-run-1',
+      productConfig: {
+        product_id: 'url-416b941ffbc3b7d5',
+        product_url: 'https://victorudo.com',
+        github_repo_url: 'https://github.com/victor2081new-cloud/flowai',
+      },
+      env: {
+        VERCEL_TOKEN: 'standard-token',
+        VERCEL_PROJECT_ID: 'prj_flowai',
+        VERCEL_ORG_ID: 'team_flowai',
+      },
+      githubClient,
+      deployPreviewImpl,
+      probePreviewAccessImpl,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'WRITTEN_AND_DEPLOYED',
+      owner: 'victor2081new-cloud',
+      repo: 'flowai',
+      previewUrl: 'https://flowai-veusite-preview.vercel.app',
+    });
+    expect(githubClient.createCommit).toHaveBeenCalledWith(expect.objectContaining({
+      owner: 'victor2081new-cloud',
+      repo: 'flowai',
+      branchName: 'flowai/fresh-build-veu-ai-studio-website-veusite-run-1',
+    }));
+  });
+
   it('resolves Vercel args from existing operator envs without Fresh Build-specific env vars', async () => {
     const githubClient = {
       createCommit: vi.fn(async () => ({

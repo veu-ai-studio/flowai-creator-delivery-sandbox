@@ -382,7 +382,11 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     });
   }
 
-  const upgradeRepoUrl = firstNonEmpty(productConfig?.upgrade_repo, productConfig?.upgradeRepo);
+  const upgradeRepoUrl = firstNonEmpty(
+    productConfig?.upgrade_repo,
+    productConfig?.upgradeRepo,
+    productConfig?.github_repo_url,
+  );
   if (!upgradeRepoUrl) {
     return buildBlockedResult('UPGRADE_REPO_REQUIRED', 'Fresh Build writes require an authorized upgrade_repo');
   }

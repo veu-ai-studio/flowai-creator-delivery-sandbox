@@ -1,0 +1,27 @@
+data: {"type":"start","runId":"cto-path3-veusite-postrecovery-20260614-0718","url":"https://victorudo.com","mode":"FRESH_BUILD","flowHubAxes":{"structuralLayer":"autonomous","operationalMode":"auto","analysisDepth":"standard","flowHubPath":"fresh_build"},"gtmTarget":95,"supabase":"connected","at":"2026-06-14T07:16:37.031Z"}
+
+data: {"type":"registry","action":"reused","productId":"url-416b941ffbc3b7d5"}
+
+data: {"type":"symbiotic_context","productId":"url-416b941ffbc3b7d5","ok":false,"reason":"no_product_ssot_row","context":null}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"feature_extractor","status":"started","at":"2026-06-14T07:16:37.272Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"feature_extractor","status":"completed","at":"2026-06-14T07:16:56.852Z","inventoryId":null,"pages":18,"components":160}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"design_synthesizer","status":"started","at":"2026-06-14T07:16:56.852Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"design_synthesizer","status":"completed","at":"2026-06-14T07:16:57.104Z","designSpecId":null,"components":160}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"codebase_generator","status":"started","at":"2026-06-14T07:16:57.104Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"codebase_generator","status":"READY","at":"2026-06-14T07:16:57.118Z","files":189,"platformDependencies":0}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"upgrade_repo_write","status":"started","at":"2026-06-14T07:16:57.118Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"upgrade_repo_write","status":"BLOCKED","at":"2026-06-14T07:16:57.121Z","reason":"UPGRADE_REPO_REQUIRED","filesWritten":0,"failureStage":null,"previewUrl":null,"deploymentId":null,"previewAccessStatus":null}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"score_capture","status":"blocked","at":"2026-06-14T07:16:57.121Z","scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","previewAccessStatus":null,"baselineScore":null,"finalScore":null,"scoreDelta":null}}
+
+data: {"type":"final","final":true,"ok":false,"status":"partial","previewUrl":null,"previewAccessStatus":null,"scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","baselineScore":null,"finalScore":null,"scoreDelta":null,"governanceRecordId":"cto-path3-veusite-postrecovery-20260614-0718","gtmReady":false,"exitReason":"UPGRADE_REPO_REQUIRED","failureStage":"deployment_adapter","failure":{"stage":"deployment_adapter","code":"UPGRADE_REPO_REQUIRED","message":"Fresh Build writes require an authorized upgrade_repo","deploymentId":null,"readyState":null,"attempts":null},"code":"UPGRADE_REPO_REQUIRED","error":"Fresh Build writes require an authorized upgrade_repo","deploymentId":null,"iterationsCompleted":0,"prUrl":null,"runMode":"FRESH_BUILD","freshBuild":{"status":"partial","reason":"UPGRADE_REPO_REQUIRED","featureFlag":"FLOWAI_ENABLE_FRESH_BUILD","evidence":{"featureInventoryId":null,"featureInventoryFieldCount":7,"designSpecId":null,"designSpecFieldCount":8,"designEvidence":{"primaryColors":[],"fontFamilies":[],"fontSizes":[],"extractionConfidence":0,"componentVisualCount":160},"generatedFileCount":189,"platformDependenciesCount":0,"writeStatus":"BLOCKED","previewUrl":null,"deploymentId":null,"previewAccessStatus":null,"previewAccess":null,"scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","baselineScore":null,"finalScore":null,"scoreDelta":null},"designEvidence":{"primaryColors":[],"fontFamilies":[],"fontSizes":[],"extractionConfidence":0,"componentVisualCount":160},"previewAccessStatus":null,"previewAccess":null,"scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","baselineScore":null,"finalScore":null,"scoreDelta":null,"platformDependencies":[],"writeResult":{"ok":false,"status":"BLOCKED","reason":"UPGRADE_REPO_REQUIRED","message":"Fresh Build writes require an authorized upgrade_repo","previewUrl":null,"filesWritten":0},"failure":{"stage":"deployment_adapter","code":"UPGRADE_REPO_REQUIRED","message":"Fresh Build writes require an authorized upgrade_repo","deploymentId":null,"readyState":null,"attempts":null}},"runId":"cto-path3-veusite-postrecovery-20260614-0718"}
+
+data: [DONE]
