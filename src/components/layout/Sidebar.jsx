@@ -275,7 +275,7 @@ function AxisGroup({ title, icon: Icon, options, value, onChange }) {
         <Icon className="h-3 w-3" />
         <span>{title}</span>
       </div>
-      <div className="grid grid-cols-3 gap-1">
+      <div className="grid grid-cols-2 gap-1">
         {options.map((option) => (
           <Tooltip key={option.value} content={option.description}>
             <button

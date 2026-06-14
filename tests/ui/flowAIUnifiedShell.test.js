@@ -49,6 +49,7 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toContain('title="Operational Mode"');
     expect(sidebarSrc).toContain('title="Analysis Depth"');
     expect(sidebarSrc).toContain('title="Flow Hub Path"');
+    expect(sidebarSrc).toContain('grid grid-cols-2 gap-1');
     expect(sidebarSrc).toMatch(/label:\s*"Research Forge"/);
     expect(sidebarSrc).toMatch(/label:\s*"Design Forge"/);
     expect(sidebarSrc).toMatch(/label:\s*"Build Forge"/);
