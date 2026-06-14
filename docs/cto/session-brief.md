@@ -109,6 +109,38 @@ Path 2 token/upgrade-target patch:
 - Formal gate: CD/CR external CLI review could not be run from this session because the app privacy guard rejected transmitting private branch code/review material to external model services. Do not merge until CD/CR PASS, W04 waiver, or explicit approval for external reviewer CLI transmission after privacy-risk disclosure.
 - W04/CEO final directive cleared this branch for merge. Production promotion completed; CT2 post-merge proof dispatched in `docs/cto/ct2-path2-postmerge-production-proof-dispatch-20260614.md`.
 
+CT2 RelTwin post-merge Path 2 proof:
+
+- Result: PASS with one caution.
+- Run ID: `ct2-path2-reltwin-postmerge-20260614`.
+- Production SHA tested: `d6b92d54e1693fd18f37b5549df9d68285204449`.
+- Pre-fix scoring passed again: final score `56`, raw score `56`, effective trust score `33.6`, 8 findings.
+- Prior GitHub App PEM signing hard failure did not recur.
+- Explicit redacted fallback to `GITHUB_OPERATOR_TOKEN` was observed with `tokenRedacted:true`.
+- Unsafe same-repo target was detected before branch creation: `UPGRADE_TARGET_UNSAFE`, `upgrade_repo_matches_original_repo`, original and upgrade repo both `https://github.com/veu-ai-studio/rel-twin`.
+- No branch, PR, commit, preview URL, deployed URL, or VERIFIED movement occurred.
+- Caution: final terminal reason was `NO_FIXES_GENERATED`; unsafe same-repo target appeared as clear step-level guard evidence rather than the final terminal exit reason.
+- Evidence: `docs/cto/ct2-path2-postmerge-production-proof-result-20260614.md`.
+
+CT2 SAIGE background forge acceptance progress after production promotion:
+
+- Production SHA tested: `d6b92d54e1693fd18f37b5549df9d68285204449`.
+- Target URL: `https://saigeplatform.com`.
+- Run ID: `907d8781-c71a-40b5-a68f-7c7e89185cf9`.
+- CT2 reported the background forge returned `202`, progressed past Five-Layer Scoring, reached terminal `completed`, wrote `final:true`, persisted ProductSSOT, and completed all 8 user-facing steps in complete/degraded state.
+- CT2 did not signal full guided-browser readiness because three visual checks remain unverified: Launch Forge SAIGE context, all 8 sidebar steps visible, and SAIGE product cards with scores.
+- Evidence note: `docs/cto/ct2-saige-forge-acceptance-progress-20260614.md`.
+
+CTO visual follow-up on the three missing SAIGE checks:
+
+- Result: `BLOCK`.
+- Evidence: `docs/cto/ct2-saige-visual-acceptance-result-20260614.md`.
+- Raw evidence: `docs/cto/ct2-saige-visual-acceptance-evidence-20260614/ct2-saige-visual-acceptance-raw-20260614.json`.
+- PASS: `/flow-hub/production` rendered and all 8 sidebar forge steps were visible.
+- PASS: `/flowai` rendered, accepted `https://saigeplatform.com`, showed SAIGE upgrade-target context, and enabled `Launch Forge`.
+- BLOCK: SAIGE product card with a numeric score was not visible on `/portfolio` or `/dashboard`; both rendered as empty/no registered products in the observed browser context.
+- Additional browser diagnostic: page error `g.filter is not a function` was observed, matching the known dashboard regression family.
+
 Universal input and delivery architecture:
 
 - Branch: `docs/cto-auto-repo-provisioning-plan`.
@@ -161,21 +193,22 @@ Path 4 URL selection:
 
 - FlowAI does not yet have a universal delivery workspace that creates a FlowAI-owned GitHub repo, writes code, creates/imports a Vercel project, deploys, returns a URL, and binds ProductSSOT evidence for arbitrary user inputs.
 - Path 2 Production has no CT2-confirmed deployed URL.
-- Path 2 RelTwin is blocked by GitHub token fallback and upgrade-target safety.
+- Path 2 RelTwin is no longer blocked by the prior GitHub App PEM signing failure. It is now honestly blocked before branch creation by unsafe same-repo upgrade-target resolution.
 - Type 2 description-only cannot enter the active construction route without a URL.
 - Type 3 multi-URL synthesis is not wired into the active Flow Hub forge as a deployed URL path.
-- Full 8-step forge completion is not proven.
+- Full browser acceptance is not proven. CT2 reported one SAIGE background run completed all 8 user-facing steps and persisted ProductSSOT, but three visual criteria remain unverified.
+- SAIGE visual acceptance still blocks on product-card score visibility. CTO closed two of the three visual checks, but `/portfolio` and `/dashboard` did not show a SAIGE numeric score card in the observed production context.
 - Codex live Build invocation is not proven.
 - `/api/test-claude` live smoke returns HTTP 500 and blocks full `npm run preflight` for otherwise scoped passing branches.
-- Path 4 three-URL synthesis requires W04/CEO approval of the selected URLs and product direction before execution.
+- Path 4 three-URL synthesis selection is documented; execution still depends on the active run target supporting multi-URL synthesis honestly.
 
 ## Next Starting Point
 
-1. Commit and push the post-merge dispatch/session brief updates.
-2. Send CT2 and CB2 thread prompts pointing to their dispatch files.
-3. Send CB thread prompt pointing to the active Universal Delivery Workspace dispatch.
-4. Run or dispatch the Path 4 synthesis proof when the active run target is ready.
-5. Record CT2/CB2/CB results back under `docs/cto/`.
+1. Commit and push the CT2 progress plus CTO visual BLOCK evidence.
+2. Send CB2 the CT2 RelTwin PASS/caution and SAIGE visual BLOCK evidence paths so both are included in the production regression audit.
+3. Poll CT2 RelTwin Path 2 proof result, CB2 production regression audit, and CB Universal Delivery Workspace diagnosis.
+4. Decide whether SAIGE product-card score visibility is a data-path bug or an authenticated/org-scoped acceptance-context requirement.
+5. Run or dispatch the Path 4 synthesis proof when the active run target supports it honestly.
 
 Victor action required:
 

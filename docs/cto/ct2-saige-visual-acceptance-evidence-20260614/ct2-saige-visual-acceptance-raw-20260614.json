@@ -1,0 +1,131 @@
+{
+  "productionUrl": "https://flowai-dun.vercel.app",
+  "checkedAt": "2026-06-14T20:57:26.212Z",
+  "verdict": "BLOCK",
+  "checks": {
+    "flowHubStatusOk": true,
+    "allEightSidebarStepsVisible": true,
+    "launchForgeVisible": true,
+    "launchForgeEnabled": true,
+    "launchForgeSaigeContextVisible": true,
+    "saigeProductCardNumericScoreVisible": false
+  },
+  "pages": {
+    "flowHub": {
+      "path": "/flow-hub/production",
+      "url": "https://flowai-dun.vercel.app/flow-hub/production",
+      "status": 200,
+      "ok": true,
+      "title": "FlowAI — VEU AI Studio",
+      "text": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Flow Hub - Production Upgrade an existing product URL in its owned delivery path. FlowAI Ready · Layer: Autonomous · Mode: Auto · Depth: Standard · Path: Production Choose how you want to work with your product, then select your operation mode. PRE-RELEASE · INTERNAL USE ONLY v0.1 · VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch) Analyze a Live Product FlowAI will fetch and analyze the public-facing pages of your product. Test Fetch Note: URL must be publicly accessible. Authenticated or private apps use Card B or C. Describe Your Product Type or speak a description. Best for authenticated apps, internal tools, or early-stage products. 🔒 Credentials are used only for this session and are never stored. Voice Input Paste Content or Upload Screenshots Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly. Drop screenshots here or click to upload — PNG, JPG, PDF Combine with Card B for best results on authenticated products. SETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH? Audit for prospect demo readiness Prepare for investor review Full governance and clearance cycle Compare two or more products Combine inputs into a unified specification Benchmark against competitors Launch readiness check Custom — I will describe my objective SETUP 3 OF 3 — SELECT OPERATION MODE Auto SELECTED FlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings. Analysis Depth Quick Standard Deep Guided FlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes. Minutes to hours · 8 approval gates across the execution pipeline Manual You direct each step. FlowAI executes what you specify and assists on demand. Hours to days · Full operator control Fresh Build EXPERIMENTAL FlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo. Fresh Build is enabled for this environment. Existing modes remain unchanged. Migrate FlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback. Plan File count and dependency count before execution Progress Per-file migration status during execution Summary Files migrated, dependencies removed, upgrade URL Select an input above to enable launch Launch Auto Run → QUICK ACCESS My Products Session History Clearance Protocol Governance Dashboard Release Notes FlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio · Patent pending Privacy Policy · Terms of Use · About FlowAI → FlowAI is a pre-release internal engine. It does not hold SOC 2, ISO 27001, or any third-party compliance certification at this time, and there are no external customer case studies published. Use is limited to VEU AI Studio personnel and licensed pilots until those gates are cleared. FlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited. © 2026 VEU AI Studio. All rights reserved. Patent pending. Terms of Use · Privacy Policy",
+      "screenshot": "docs/cto/ct2-saige-visual-acceptance-evidence-20260614/screenshots/flow-hub-production-2026-06-14T20-56-37-489Z.png",
+      "stepVisibility": {
+        "Research Forge": true,
+        "Design Forge": true,
+        "Build Forge": true,
+        "Quality Audit": true,
+        "Deploy Forge": true,
+        "Self-Renewal Forge": true,
+        "GTM Forge": true,
+        "Monitor Forge": true
+      }
+    },
+    "flowai": {
+      "path": "/flowai",
+      "url": "https://flowai-dun.vercel.app/flowai",
+      "status": 200,
+      "ok": true,
+      "title": "FlowAI — VEU AI Studio",
+      "text": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K FlowAI Dashboard Product-Agnostic AI Operating System NEW RUN Analyze any product from one operating surface ENTER URL Test Fetch DESCRIBE PRODUCT Paste Content Add context MODE Auto Run end-to-end without pauses Guided Pause at each checkpoint; continue to advance Manual Pause at every step; user drives GTM TARGET: 95/100 50 100 ITERATION BUDGET: 100 10 1000 START NEW RUN Launch Forge FlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited. © 2026 VEU AI Studio. All rights reserved. Patent pending. Terms of Use · Privacy Policy",
+      "screenshot": "docs/cto/ct2-saige-visual-acceptance-evidence-20260614/screenshots/flowai-before-saige-fill-2026-06-14T20-56-37-489Z.png",
+      "inputVisible": true,
+      "afterFillScreenshot": "docs/cto/ct2-saige-visual-acceptance-evidence-20260614/screenshots/flowai-after-saige-fill-2026-06-14T20-56-37-489Z.png",
+      "afterFillExcerpt": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K FlowAI Dashboard Product-Agnostic AI Operating System NEW RUN Analyze any product from one operating surface ENTER URL Test Fetch SAIGE upgrade architecture active. OLD repo github.com/veu-ai-studio/saige is read-only rollback/baseline. NEW repo github.com/veu-ai-studio/saige-v2 is the FlowAI upgrade target for U5/U6 fixes. DESCRIBE PRODUCT Paste Content Add context MODE Auto Run end-to-end without pauses Guided Pause at each checkpoint; continue to advance Manual Pause at every step; user drives GTM TARGET: 95/100 50 100 ITERATION BUDGET: 100 10 1000 START NEW RUN Launch Forge FlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited. © 2026 VEU AI Studio. All rights reserved. Patent pending. Terms of Use · Privacy Policy"
+    },
+    "portfolio": {
+      "path": "/portfolio",
+      "url": "https://flowai-dun.vercel.app/portfolio",
+      "status": 200,
+      "ok": true,
+      "title": "FlowAI — VEU AI Studio",
+      "text": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Portfolio Dashboard AI portfolio control center Refresh Add Product Total Products 0 Registered in portfolio Active Runs 0 Last 24 hours Demo-Ready 0 Cleared for launch Upgrade Ready 0 Repo + deployment Total Cost (30d) — Across all products No products registered Register your first product to start tracking portfolio health. Register First Product FlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited. © 2026 VEU AI Studio. All rights reserved. Patent pending. Terms of Use · Privacy Policy",
+      "screenshot": "docs/cto/ct2-saige-visual-acceptance-evidence-20260614/screenshots/portfolio-dashboard-2026-06-14T20-56-37-489Z.png",
+      "saigeScore": {
+        "found": false,
+        "excerpt": ""
+      }
+    },
+    "dashboard": {
+      "path": "/dashboard",
+      "url": "https://flowai-dun.vercel.app/dashboard",
+      "status": 200,
+      "ok": true,
+      "title": "FlowAI — VEU AI Studio",
+      "text": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Dashboard Command center — product health, sessions, gates, and quick actions Complete Setup → MY PRODUCTS HEALTH No products registered yet Create your first product from Workspace to start tracking health, scores, and session history here. Create Your First Product ACTIVE SESSIONS 0 active Clear Completed No active sessions Start an Auto or Guided operation to see live session progress here. PENDING GATES No gates pending RECENT ACTIVITY No activity yet Run a QA audit or self-test to see results here. QUICK ACTIONS Start Auto Operation Start Guided Operation Run Quality Audit Check Product Health PLATFORM HEALTH Checking platform health… USAGE AND BILLING Plan FlowAI Pro Token usage today Usage data unavailable View Billing Details FlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited. © 2026 VEU AI Studio. All rights reserved. Patent pending. Terms of Use · Privacy Policy",
+      "screenshot": "docs/cto/ct2-saige-visual-acceptance-evidence-20260614/screenshots/main-dashboard-2026-06-14T20-56-37-489Z.png",
+      "saigeScore": {
+        "found": false,
+        "excerpt": ""
+      }
+    }
+  },
+  "browserDiagnostics": {
+    "consoleMessages": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 ()"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 ()"
+      },
+      {
+        "type": "warning",
+        "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 ()"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 ()"
+      },
+      {
+        "type": "warning",
+        "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 ()"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 ()"
+      },
+      {
+        "type": "warning",
+        "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 ()"
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 405 ()"
+      },
+      {
+        "type": "warning",
+        "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview"
+      },
+      {
+        "type": "error",
+        "text": "Fetch API cannot load file:///C:/Program%20Files/Git/api/health. URL scheme \"file\" is not supported."
+      }
+    ],
+    "pageErrors": [
+      "g.filter is not a function"
+    ]
+  }
+}
