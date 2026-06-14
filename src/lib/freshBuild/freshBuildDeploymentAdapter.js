@@ -189,11 +189,52 @@ function normalizePreviewUrl(value) {
   return /^https?:\/\//i.test(text) ? text : `https://${text}`;
 }
 
-function previewProbeHeaders() {
+function isVercelDeploymentUrl(url) {
+  if (typeof url !== 'string' || url.length === 0) return false;
+  try {
+    return /\.vercel\.app$/i.test(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
+export function resolveVercelBypassSecret(productId, env = globalThis.process?.env || {}) {
+  for (const suffix of productEnvSuffixes(productId)) {
+    const scoped = firstNonEmpty(env?.[`VERCEL_BYPASS_SECRET_${suffix}`]);
+    if (scoped) {
+      return {
+        secret: scoped,
+        source: `VERCEL_BYPASS_SECRET_${suffix}`,
+      };
+    }
+  }
+  const automation = firstNonEmpty(env?.VERCEL_AUTOMATION_BYPASS_SECRET);
+  if (automation) {
+    return {
+      secret: automation,
+      source: 'VERCEL_AUTOMATION_BYPASS_SECRET',
+    };
+  }
   return {
+    secret: '',
+    source: null,
+  };
+}
+
+function previewProbeHeaders({ previewUrl, productId, env } = {}) {
+  const headers = {
     Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'User-Agent': 'FlowAI-FreshBuild-PreviewProbe/1.0',
   };
+  if (!isVercelDeploymentUrl(previewUrl)) {
+    return { headers, bypassAttempted: false, bypassSource: null };
+  }
+  const bypass = resolveVercelBypassSecret(productId, env);
+  if (!bypass.secret) {
+    return { headers, bypassAttempted: false, bypassSource: null };
+  }
+  headers['x-vercel-protection-bypass'] = bypass.secret;
+  return { headers, bypassAttempted: true, bypassSource: bypass.source };
 }
 
 function classifyPreviewResponse(response) {
@@ -223,7 +264,13 @@ function classifyPreviewResponse(response) {
   return server ? PREVIEW_ACCESS_STATUS.NOT_BROWSER_CLEAR : PREVIEW_ACCESS_STATUS.UNKNOWN;
 }
 
-export async function probePreviewAccess({ previewUrl, deploymentId = null, fetchImpl = globalThis.fetch } = {}) {
+export async function probePreviewAccess({
+  previewUrl,
+  deploymentId = null,
+  fetchImpl = globalThis.fetch,
+  productId = null,
+  env = globalThis.process?.env || {},
+} = {}) {
   const normalizedUrl = normalizePreviewUrl(previewUrl);
   if (!normalizedUrl) {
     return {
@@ -232,6 +279,8 @@ export async function probePreviewAccess({ previewUrl, deploymentId = null, fetc
       previewAccessStatus: PREVIEW_ACCESS_STATUS.NOT_BROWSER_CLEAR,
       httpStatus: null,
       reason: 'PREVIEW_URL_MISSING',
+      bypassAttempted: false,
+      bypassSource: null,
     };
   }
   if (typeof fetchImpl !== 'function') {
@@ -241,15 +290,22 @@ export async function probePreviewAccess({ previewUrl, deploymentId = null, fetc
       previewAccessStatus: PREVIEW_ACCESS_STATUS.UNKNOWN,
       httpStatus: null,
       reason: 'FETCH_UNAVAILABLE',
+      bypassAttempted: false,
+      bypassSource: null,
     };
   }
 
+  const probeHeaders = previewProbeHeaders({
+    previewUrl: normalizedUrl,
+    productId,
+    env,
+  });
   let response;
   try {
     response = await fetchImpl(normalizedUrl, {
       method: 'GET',
       redirect: 'manual',
-      headers: previewProbeHeaders(),
+      headers: probeHeaders.headers,
     });
   } catch (error) {
     return {
@@ -259,6 +315,8 @@ export async function probePreviewAccess({ previewUrl, deploymentId = null, fetc
       httpStatus: null,
       reason: 'PREVIEW_PROBE_FAILED',
       message: String(error?.message ?? error).slice(0, 200),
+      bypassAttempted: probeHeaders.bypassAttempted,
+      bypassSource: probeHeaders.bypassSource,
     };
   }
 
@@ -273,6 +331,8 @@ export async function probePreviewAccess({ previewUrl, deploymentId = null, fetc
       : previewAccessStatus === PREVIEW_ACCESS_STATUS.BROWSER_CLEAR
         ? null
         : 'PREVIEW_NOT_BROWSER_CLEAR',
+    bypassAttempted: probeHeaders.bypassAttempted,
+    bypassSource: probeHeaders.bypassSource,
   };
 }
 
@@ -531,6 +591,8 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       previewUrl: deployment?.previewUrl || null,
       deploymentId: deployment?.deploymentId || null,
       fetchImpl: globalThis.fetch,
+      productId: firstNonEmpty(productConfig?.product_id, productConfig?.productId, productName, repoTarget.repo),
+      env,
     });
   } catch (error) {
     return {
@@ -596,4 +658,5 @@ export const __test = Object.freeze({
   resolveGitHubWriteTokenCandidates,
   normalizePreviewUrl,
   classifyPreviewResponse,
+  isVercelDeploymentUrl,
 });
