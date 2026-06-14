@@ -1,13 +1,32 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { useAuth as useClerkAuth } from '@clerk/clerk-react';
 
 const AuthContext = createContext();
 
-async function fetchRequestContext({ signal } = {}) {
-  const res = await fetch('/api/me', {
+export function buildRequestContextFetchInit({ signal, token } = {}) {
+  const headers = { accept: 'application/json' };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return {
     method: 'GET',
     credentials: 'include',
-    headers: { accept: 'application/json' },
+    headers,
     signal,
+  };
+}
+
+export async function resolveClerkBearerToken(clerkAuth) {
+  if (!clerkAuth?.isLoaded || !clerkAuth?.isSignedIn || typeof clerkAuth.getToken !== 'function') {
+    return null;
+  }
+  return clerkAuth.getToken();
+}
+
+async function fetchRequestContext({ signal, clerkAuth } = {}) {
+  const token = await resolveClerkBearerToken(clerkAuth);
+  const res = await fetch('/api/me', {
+    ...buildRequestContextFetchInit({ signal, token }),
   });
   if (!res.ok) {
     throw new Error(`/api/me returned ${res.status}`);
@@ -20,7 +39,7 @@ function currentReturnUrl() {
   return `${window.location.pathname}${window.location.search}${window.location.hash}` || '/';
 }
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children, clerkAuth = null }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -30,12 +49,19 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings, setAppPublicSettings] = useState(null);
 
   const checkUserAuth = useCallback(async ({ signal } = {}) => {
+    if (clerkAuth && !clerkAuth.isLoaded) {
+      setIsLoadingAuth(true);
+      setIsLoadingPublicSettings(true);
+      setAuthError(null);
+      return;
+    }
+
     setIsLoadingAuth(true);
     setIsLoadingPublicSettings(true);
     setAuthError(null);
 
     try {
-      const context = await fetchRequestContext({ signal });
+      const context = await fetchRequestContext({ signal, clerkAuth });
       const authenticated = context.authenticated === true;
       const authRequired = context.config?.authRequired === true;
 
@@ -66,7 +92,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingPublicSettings(false);
       setAuthChecked(true);
     }
-  }, []);
+  }, [clerkAuth]);
 
   const checkAppState = useCallback((options) => checkUserAuth(options), [checkUserAuth]);
 
@@ -114,6 +140,11 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const ClerkAwareAuthProvider = ({ children }) => {
+  const clerkAuth = useClerkAuth();
+  return <AuthProvider clerkAuth={clerkAuth}>{children}</AuthProvider>;
 };
 
 export const useAuth = () => {
