@@ -6,6 +6,33 @@ Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `d
 VERIFIED movement: no
 matrixArtifact edited: no
 
+## Acceleration Update - 2026-06-14
+
+W04/Victor acceleration directive is in progress across all tracks.
+
+Completed / current evidence:
+
+- CB Clerk track: `PASS-WITH-FINDINGS`, no code patch needed. Current main already contains Clerk session propagation and ticket redirect completion fixes; focused Clerk tests passed, 5 files / 69 tests.
+- CB2 production audit: `PASS` on `https://flowai-dun.vercel.app`, commit `7aaea6d1f13a68b78fbd629b357cdbd9c5d2d1a4`. Flow Hub routes, four axes, Clerk routes, anonymous `/api/me`, and TIM Build `1. Codex` remained non-regressed.
+- CT2 live sweep: overall `BLOCK` because Fresh Build public candidate failed. Axis current production `PASS`; Clerk ticket/session current production `PASS`; Fresh Build public URL candidate `BLOCK`.
+- Fresh Build public candidate `https://flowai-fresh-veusite.vercel.app/` is public HTTP 200 but renders the FlowAI operator app, not generated VEU/Victor content. Do not count it as a Fresh Build deployed URL.
+- Batch VERIFIED packet is submitted at `docs/cto/verified-promotion-packet-acceleration-20260614.md`. It includes Path 1 Migration URL, four axes, narrow TIM Build Codex ranking visibility, and Clerk ticket/session. It explicitly excludes Fresh Build public URL. No matrixArtifact edit has been made.
+- Runtime branch `fix/fresh-build-public-delivery-target` is pushed. It adds explicit Fresh Build public-delivery target support, stable production alias handling, and no-bypass public probing.
+- CR review for the runtime branch returned `PASS-WITH-FINDINGS`; the docs whitespace finding was fixed at branch tip `9066f14`. CD review is still pending.
+- Full `npm run preflight` on the branch is blocked by live production smoke `POST /api/test-claude` returning HTTP 500. Branch-local Fresh Build suites, deploy helper tests, `npm run build:preflight`, `npm run lint`, and branch-range `git diff --check` passed.
+
+Next:
+
+1. Wait for CD result on `fix/fresh-build-public-delivery-target`.
+2. If CD passes or only non-blocking findings remain, decide whether W04 accepts the documented `/api/test-claude` live-smoke boundary or requires that provider smoke fixed/quarantined before merge.
+3. After merge, configure a public generated-site Vercel project that will not be overwritten by FlowAI operator-app `main` deployments.
+4. Run a new Path 3 Fresh Build proof and dispatch CT2. Fresh Build only counts when CT2 sees generated content anonymously in browser.
+
+Victor action required:
+
+- W04/CEO authorization is required before any VERIFIED movement.
+- No Victor action is required for the current build/review/audit flow.
+
 ## Executive Summary
 
 Tonight produced the strongest FlowAI proof so far:
