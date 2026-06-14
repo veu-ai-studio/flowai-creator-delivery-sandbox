@@ -107,6 +107,10 @@ CB build status:
 - Step 5 prompts are filed:
   - `docs/cto/cd-review-clerk-session-propagation-prompt-20260614.md`
   - `docs/cto/cr-review-clerk-session-propagation-prompt-20260614.md`
+- Step 5 result is filed:
+  - `docs/cto/clerk-session-propagation-step5-result-20260614.md`
+  - CD PASS.
+  - CR PASS.
 
 ## VERIFIED Promotion State
 
@@ -122,7 +126,7 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Wait for CD and CR Step 5 results on `fix/clerk-session-propagation`.
-4. If both PASS, merge, deploy, promote, and dispatch CT2 app-origin Clerk session proof.
-5. If either BLOCKS, send same-branch patch request to CB.
+3. Merge `fix/clerk-session-propagation`.
+4. Deploy, promote, and dispatch CT2 app-origin Clerk session proof.
+5. If CT2 BLOCKS, send same-branch patch request to CB.
 6. Do not move VERIFIED without W04/CEO clearance.
