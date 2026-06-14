@@ -19,6 +19,10 @@ No VERIFIED movement has been applied. The batch packet is prepared and now need
 
 Path 2 was rerun after the Fresh Build milestone. SAIGE v2 ended with an honest no-mutation result because it scored `98`; RelTwin is the better below-target candidate. After Anthropic credits were restored, the constrained RelTwin Production proof passed pre-fix scoring and reached step 6, then blocked before branch creation on GitHub credential acquisition. Unsafe same-repo upgrade-target resolution is also visible behind that gate. A runtime fix branch for that chain is now pushed for CD/CR review.
 
+W04 then identified the larger infrastructure gap: FlowAI cannot require preconfigured upgrade repos or Vercel projects for real users. CTO completed the requested diagnosis and pushed a Universal Delivery Workspace clearance packet. No build has been dispatched. The next architecture decision is whether W04 clears the FlowAI-owned workspace model for auto-created GitHub repos, committed code, Vercel projects/deployments, returned URLs, and ProductSSOT evidence. Until that is cleared, do not run more Production proofs that depend on manually preconfigured products except by explicit W04 instruction.
+
+Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
+
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
@@ -102,18 +106,46 @@ Path 2 token/upgrade-target patch:
 - CTO local review: PASS-WITH-GATE; no blocking code issue found.
 - Formal gate: CD/CR external CLI review could not be run from this session because the app privacy guard rejected transmitting private branch code/review material to external model services. Do not merge until CD/CR PASS, W04 waiver, or explicit approval for external reviewer CLI transmission after privacy-risk disclosure.
 
+Universal input and delivery architecture:
+
+- Branch: `docs/cto-auto-repo-provisioning-plan`.
+- Latest pushed commit before final-directive integration: `d575b4d` (`docs/cto | add universal delivery decision packet`).
+- Universal input audit: `docs/cto/universal-input-journey-audit-20260614.md`.
+- Auto-repo infrastructure audit: `docs/cto/auto-repo-provisioning-infrastructure-audit-20260614.md`.
+- W04 clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
+- Paste-ready W04 decision packet: `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md`.
+- CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
+- Active CB dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
+- Post-clearance runbook: `docs/cto/universal-delivery-workspace-postclearance-runbook-20260614.md`.
+- CD review draft: `docs/cto/cd-review-universal-delivery-workspace-prompt-draft-20260614.md`.
+- CR review draft: `docs/cto/cr-review-universal-delivery-workspace-prompt-draft-20260614.md`.
+- CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
+- Finding: Type 1 is partial; Type 2 and Type 3 are not end-to-end in the active forge. The active system still assumes preconfigured delivery targets in key paths.
+- Status: diagnosis complete, CB dispatch prepared, canonical docs untouched. Runtime build now authorized by final directive; matrixArtifact promotion is separately authorized by the batch packet.
+
 ## Current Packets
 
 - Batch VERIFIED packet: `docs/cto/verified-promotion-packet-acceleration-20260614.md`.
 - Legacy batch filename now points to the acceleration packet: `docs/cto/verified-promotion-packet-batch-20260614.md`.
 - Exact row mapping proposal: `docs/cto/verified-promotion-row-mapping-proposal-20260614.md`.
+- Universal Delivery Workspace clearance request: `docs/cto/w04-universal-delivery-workspace-clearance-request-20260614.md`.
+- Universal Delivery Workspace decision packet: `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md`.
+- Universal Delivery Workspace CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
+- Universal Delivery Workspace active CB dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
+- Universal Delivery Workspace post-clearance runbook: `docs/cto/universal-delivery-workspace-postclearance-runbook-20260614.md`.
+- Universal Delivery Workspace CD review draft: `docs/cto/cd-review-universal-delivery-workspace-prompt-draft-20260614.md`.
+- Universal Delivery Workspace CR review draft: `docs/cto/cr-review-universal-delivery-workspace-prompt-draft-20260614.md`.
+- Universal Delivery Workspace CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
 
-No matrixArtifact edit has been made. W04/CEO must authorize exact row movement before promotion.
+W04/CEO authorized applying the batch VERIFIED packet. CTO applied the narrow exact-row set in `src/lib/orchestratorFramework/matrixArtifact.json`: `10 VERIFIED`, `0` missing evidence fields. Evidence note: `docs/cto/verified-promotion-applied-20260614.md`.
 
 ## Known Gaps
 
+- FlowAI does not yet have a universal delivery workspace that creates a FlowAI-owned GitHub repo, writes code, creates/imports a Vercel project, deploys, returns a URL, and binds ProductSSOT evidence for arbitrary user inputs.
 - Path 2 Production has no CT2-confirmed deployed URL.
 - Path 2 RelTwin is blocked by GitHub token fallback and upgrade-target safety.
+- Type 2 description-only cannot enter the active construction route without a URL.
+- Type 3 multi-URL synthesis is not wired into the active Flow Hub forge as a deployed URL path.
 - Full 8-step forge completion is not proven.
 - Codex live Build invocation is not proven.
 - `/api/test-claude` live smoke returns HTTP 500 and blocks full `npm run preflight` for otherwise scoped passing branches.
@@ -121,14 +153,13 @@ No matrixArtifact edit has been made. W04/CEO must authorize exact row movement 
 
 ## Next Starting Point
 
-1. Submit the row-mapping proposal to W04/CEO with the acceleration packet.
-2. Resolve the formal review gate on `fix/path2-production-token-upgrade-target`: CD/CR PASS, W04 waiver, or explicit external-review authorization. If cleared, merge and redeploy/promote production.
-3. Rerun RelTwin Path 2 after the token/upgrade-target fix lands; the target proof is branch creation and preview deployment, since pre-fix scoring is now proven past the prior blocker.
-4. Keep an eye on `/api/test-claude`, but the prior smoke blocker is currently cleared by the green Path 2 preflight.
-5. Keep accumulating CT2-confirmed evidence, but do not move VERIFIED until W04/CEO authorizes the exact rows.
+1. Commit and push the final-directive integration docs.
+2. Commit and push the VERIFIED matrixArtifact promotion.
+3. Merge `fix/path2-production-token-upgrade-target`, promote production, and dispatch CT2.
+4. Dispatch CB on `feature/universal-delivery-workspace` from `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
+5. Select and document three external Path 4 synthesis URLs, then execute when the run target is ready.
 
 Victor action required:
 
-- W04/CEO authorization for exact VERIFIED row mapping.
-- Path 4 three-URL synthesis approval.
+- No action required for the four immediate authorizations in the final directive.
 - Canonical doc changes, if W04/CEO chooses to add new canonical surface rows instead of only updating matrixArtifact evidence state.
