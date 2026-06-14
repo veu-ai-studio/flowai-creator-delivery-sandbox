@@ -1,21 +1,26 @@
 # CTO Current Directive
 
-Date: 2026-06-13
+Date: 2026-06-14 UTC
 Owner: CTO
 Status: Active operating directive; replaces all prior `docs/cto/current-directive.md` content.
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`.
 
 This folder is an executive coordination layer. Canonical authority remains `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, and `docs/IMPLEMENTATION_PLAN.md`.
 
-## CTO Acceptance Revisions
+## CTO Buy-In And Evidence Corrections
 
-I accept this directive as the operating plan with the following evidence corrections so the repo does not drift:
+The W04/CEO comprehensive directive to reach 95/100 SSOT is accepted as the controlling operating strategy with these evidence-preserving corrections:
 
-- Actual matrixArtifact status count on current main before this docs update: `VERIFIED=0`, `WIRED status=0`, `CURRENT=2`, total entries `39`.
-- Path 1 Migration has one CT2-confirmed deployed public URL, `https://saige-v2.vercel.app`, but no matrixArtifact VERIFIED movement has been applied.
-- Priority 2 axis wiring is merged, patched for label clarity, promoted to production at commit `65f46a0c96930a207e7cd0c0160cf51317c89822`, and CT2 PASS confirmed. Milestone 1 is complete at the evidence level.
+- Active matrixArtifact status on current main: `VERIFIED=0`, `WIRED=0`, `CURRENT=2`, total entries `39`.
+- Path 1 Migration has one CT2-confirmed public deployed URL, `https://saige-v2.vercel.app`, but no matrixArtifact VERIFIED movement has been applied.
+- Milestone 1 axis wiring is complete at the live-production evidence level. CT2 confirmed four-axis visibility, independent selection, request propagation, and run-log axis envelope on production commit `65f46a0c96930a207e7cd0c0160cf51317c89822`.
 - Codex TIM Build rank/callability code is present on main, but live Step 3 Build evidence is still required before counting it as verified behavior.
-- Any future VERIFIED movement requires W04/CEO clearance and the claim-promotion checklist. The CTO may prepare packets but must not apply promotion unilaterally.
+- Clerk readiness/routes are live on production runtime commit `dabdce72e13e8ceee9cdd6965b9c0fe9b6a79a9c`: `/api/health` reports `clerkReady:true`, `/sign-up` and `/sign-in` render real Clerk UI, and `/api/me` remains anonymous/open while `AUTH_REQUIRED=false`.
+- Full authenticated Clerk session proof is not complete. CT2 hit Cloudflare human verification during public sign-up, and the backend-created user plus sign-in-token proof did not propagate an authenticated Clerk session to `/api/me`.
+- Latest origin/main may include docs-only evidence commits after the deployed runtime commit. Runtime claims must cite the exact deployment and commit under test.
+- Future VERIFIED movement requires W04/CEO clearance and the claim-promotion checklist. The CTO may prepare packets but must not apply promotion unilaterally.
+
+Any pasted or prior directive fact that conflicts with this section is superseded by the evidence-corrected state above.
 
 ## Mission
 
@@ -29,16 +34,14 @@ The five VEU AI Studio products are proof-of-concept targets only. They are not 
 - WIRED matrixArtifact status entries: 0.
 - Max matrixArtifact status currently attained: CURRENT, 2 of 39 entries.
 - Three Flow Hub paths with deployed URLs: 1 of 3 at the URL-evidence level. Path 1 Migration has CT2-confirmed `https://saige-v2.vercel.app`.
-- Four axes wired end to end: CT2 live browser/run proof PASS on production commit `65f46a0c96930a207e7cd0c0160cf51317c89822`.
+- Four axes wired end to end: CT2 live browser/run proof PASS at the evidence level; no VERIFIED movement applied.
 - Forge completing full 8-step runs: not yet proven.
-- Clerk auth: backend environment active in production; `/api/version` reports `clerkReady:true` and `/api/me` reports `clerkConfigured:true`. `/api/health` readiness visibility and CT2-proven user sign-up/sign-in remain incomplete.
+- Clerk auth: environment, health readiness, and Clerk-rendered sign-up/sign-in routes are live; full authenticated session proof is blocked.
 - Real external users: 0.
 
-Honest progress estimate: infrastructure is materially built, but production-verified behavior remains early. Treat FlowAI as evidence-in-progress until live runs prove each claim.
+Honest progress estimate: FlowAI has substantial infrastructure built, but production-verified behavior remains early. Treat every claim as evidence-in-progress until live proof and matrix promotion both exist.
 
 ## Anti-Drift Rules
-
-These rules exist because the project has cycled, drifted, and hallucinated progress multiple times. Every window must follow them without exception.
 
 1. No fabrication.
    Never claim a URL is deployed unless CT2 independently confirms it in a browser. Never claim a feature works unless a live run proves it. Never move VERIFIED without `evidenceUrl`, `verifiedAt`, and `verifiedBy`.
@@ -53,13 +56,24 @@ These rules exist because the project has cycled, drifted, and hallucinated prog
    Do not report progress that cannot be independently verified. Do not claim an axis is wired live unless a live run confirms the selector affects run behavior. Do not claim a path works unless CT2 confirms the deployed URL.
 
 5. No retrogression.
-   Before merging any runtime branch, run full preflight or a documented equivalent cleared by CD/CR for the branch scope. Before deploying, confirm no new regression is known from CB2/CT2 evidence. If a merge introduces regressions, fix them before starting unrelated work.
+   Before merging any runtime branch, run full preflight or a documented equivalent accepted by CD/CR for the branch scope. Before deploying, confirm no new regression is known from CB2/CT2 evidence. If a merge introduces regressions, fix them before starting unrelated work.
 
-6. One milestone at a time.
-   Complete the active milestone before starting another runtime track. Do not work on axes and Fresh Build simultaneously. Do not touch SAIGE product completion while building FlowAI core features unless that is the active milestone.
+6. One runtime milestone at a time.
+   Code-bearing runtime branches stay one active branch at a time unless W04/CEO declares a hotfix or explicit exception. Docs, review prompts, evidence packets, and read-only diagnostics may proceed in parallel.
 
 7. Product-agnostic code.
    Never put a product name, URL, or product-specific rule in FlowAI core code. SAIGE is a test subject. Every fix must work for any product submission.
+
+## Active Queue
+
+1. VERIFIED Promotion First Batch - waiting on W04/CEO clearance.
+   The packet `docs/cto/verified-promotion-packet-milestone1-20260613.md` is prepared. Do not apply matrixArtifact VERIFIED movement until W04/CEO explicitly authorizes it.
+
+2. Clerk Session Boundary - active technical blocker to map before the next CB dispatch.
+   The env/key route work is merged and live. The remaining blocker is authenticated session propagation to `/api/me`, not Clerk account creation. Map the full boundary before any new build dispatch.
+
+3. Flow Hub URL Proofs - next runtime path after Clerk boundary is either fixed or formally deferred.
+   Continue with Path 2 Production against an app-layer-owned target, then Path 3 Fresh Build, then Path 4 Three-URL Synthesis after CEO approval of the three selected URLs.
 
 ## Milestone 1 - Axis Wiring Live Proof
 
@@ -67,85 +81,97 @@ Status: COMPLETE at the evidence level. No VERIFIED movement applied.
 
 Completed:
 
-1. Priority 2 axis wiring branch built.
-2. Focused tests passed.
-3. `npm run build:preflight` passed.
-4. `npm run lint` passed with existing warnings only.
-5. CD review passed.
-6. CR review passed.
-7. Branch merged to main at `c6a2d97c1f1b2f160887ba7dafc4551c105a1515`.
-8. Current main promoted to production at `54422549044c5ff8e4e187a155c25bfc38462e10`.
-9. `https://flowai-dun.vercel.app/api/health` reports the promoted main SHA.
-10. `https://flowai-dun.vercel.app/flow-hub/production` returns `200 OK`.
-11. CT2 BLOCK found sidebar label ambiguity on that first production proof.
-12. Runtime clarity patch merged at `65f46a0c96930a207e7cd0c0160cf51317c89822`.
-13. Patched production promoted and `/api/health` reports `65f46a0c9693`.
-14. CT2 rerun PASS confirmed:
-   - all four axes visible and unambiguous in the sidebar;
-   - each axis independently selectable;
-   - route switching preserves path state;
-   - live `/api/run-construction` payload includes all four axis values;
-   - run log includes the Flow Hub axis envelope.
-15. VERIFIED promotion packet prepared at `docs/cto/verified-promotion-packet-milestone1-20260613.md`.
+- Axis wiring branch merged and promoted.
+- Runtime clarity patch merged and promoted.
+- CT2 rerun PASS confirmed all four axes visible and unambiguous in the sidebar.
+- CT2 confirmed each axis independently selectable.
+- CT2 confirmed route switching preserves path state.
+- CT2 confirmed live `/api/run-construction` payload includes all four axis values.
+- CT2 confirmed run log includes the Flow Hub axis envelope.
+- CT2 observed no false deployed URL, branch, preview URL, or VERIFIED claim.
+- VERIFIED promotion packet prepared at `docs/cto/verified-promotion-packet-milestone1-20260613.md`.
 
-Acceptance criteria:
+Acceptance condition met at evidence level:
 
 Victor can open `https://flowai-dun.vercel.app`, see four independent axis selectors in the sidebar, change each one, launch a forge run, and see the run log confirm all four normalized axis values were used.
 
-## Active Milestone 2 - VERIFIED Promotion First Batch
+## Milestone 2 - VERIFIED Promotion First Batch
 
-Milestone 1 CT2 PASS is complete. A claim-promotion packet has been prepared for explicit W04/CEO clearance:
+Status: packet prepared; W04/CEO clearance required before application.
 
-- `docs/cto/verified-promotion-packet-milestone1-20260613.md`
+Candidate evidence:
 
-The packet covers only claims with independent evidence:
+- Path 1 Migration deployed URL: `https://saige-v2.vercel.app`.
+- Structural Layer axis behavior.
+- Operational Mode axis behavior.
+- Analysis Depth request propagation and run-log envelope. Crawl-depth delta requires separate proof if that is the claim being promoted.
+- Flow Hub Path selector behavior.
 
-- Migration path deployed URL: `https://saige-v2.vercel.app`, already CT2 PASS at the URL-evidence level.
-- Each axis behavior confirmed in a live run.
-- Codex TIM Build rank/callability confirmed in a live run, if CT2 observes it.
+Codex TIM Build is not included unless a live Step 3 Build run proves Codex was selected and used.
 
-Each candidate entry requires:
+Each promoted entry requires:
 
 - `evidenceUrl`: live URL, production run transcript, or durable proof artifact.
 - `verifiedAt`: date/time of CT2 or production confirmation.
 - `verifiedBy`: CT2 browser acceptance, production run log, or named reviewer evidence.
 - Evidence label: `LIVE_PRODUCTION` or `LIVE_PREVIEW`.
 
-Do not apply any VERIFIED entry without W04/CEO clearance. Target after clearance: 5-8 VERIFIED entries, only if each entry has evidence.
+Do not apply any VERIFIED entry without W04/CEO clearance.
 
 ## Milestone 3 - Clerk Auth
 
-`clerkReady` is confirmed true in production `/api/version` after environment activation and redeploy. No real external user path is complete until `/api/health` exposes auth readiness and CT2 proves sign-up/sign-in end to end.
+Status: route/readiness wired; full authenticated session proof blocked.
 
-Steps:
+Completed:
 
-1. Check Doppler for `CLERK_SECRET_KEY` and `VITE_CLERK_PUBLISHABLE_KEY` under `flowai/prd`. COMPLETE: `CLERK_SECRET_KEY` exists; `VITE_CLERK_PUBLISHABLE_KEY` was absent in Doppler but Vercel Production was populated from Doppler `CLERK_PUBLISHABLE_KEY`.
-2. If keys exist, add them to Vercel production env vars and redeploy. COMPLETE: promoted deployment `https://flowai-4134cifwb-veu-ai-studio.vercel.app` at commit `a38c865ed9fbadfc9dde23e7a41cc6c528018533`.
-3. If keys do not exist, document exact Clerk setup steps and signal W04 for Victor action. NOT NEEDED for backend env; frontend/dashboard proof still may reveal Clerk setup needs.
-4. After keys are live, verify `/api/health` reports `clerkReady:true`. INCOMPLETE: `/api/version` reports `clerkReady:true`, but `/api/health` does not expose an auth check yet.
-5. Dispatch CB to add `/api/health` auth readiness and real sign-up/sign-in UX. PREPARED: `docs/cto/cb-clerk-auth-completion-dispatch-20260613.md`.
-6. Dispatch CT2 to confirm a new-user sign-up flow works end to end after CB build/review/merge.
+- Doppler/Vercel Clerk env diagnostic completed without printing secret values.
+- Vercel Production has `CLERK_SECRET_KEY` and `VITE_CLERK_PUBLISHABLE_KEY` populated.
+- Runtime branch `fix/clerk-auth-completion` merged to main at `dabdce72e13e8ceee9cdd6965b9c0fe9b6a79a9c`.
+- Production deployment `https://flowai-mmprr7n0l-veu-ai-studio.vercel.app` promoted.
+- `/api/health` reports `clerkReady:true` and auth check `PASS`.
+- `/api/version` reports Clerk readiness true.
+- `/api/me` reports anonymous/open mode with Clerk configured while `AUTH_REQUIRED=false`.
+- CT2 confirmed `/sign-up` renders real Clerk sign-up UI.
+- CT2 confirmed `/sign-in` renders real Clerk sign-in UI.
 
-No unrelated runtime branch should start until the Clerk auth completion branch is either finished or formally deferred by W04.
+Blocked:
+
+- Public sign-up attempt is blocked by Cloudflare human verification.
+- Backend-created disposable Clerk user plus sign-in token URL did not produce an authenticated `/api/me` response in the same browser context.
+
+Next technical action:
+
+Map the session boundary before dispatching CB:
+
+1. Identify how Clerk frontend session state is expected to reach `/api/me`.
+2. Determine whether app API calls need a Clerk bearer token from Clerk React instead of relying on cookies alone.
+3. Verify `api/_lib/auth.js` token extraction and Clerk verification semantics.
+4. Dispatch a single CB patch covering the full known chain, with tests and CT2 proof instructions.
+
+No VERIFIED movement is allowed from Clerk work until CT2 proves a real authenticated user session and W04/CEO clears the promotion packet.
 
 ## Milestone 4 - All Three Flow Hub Paths Producing URLs
+
+Flow Hub UI path labels: Production, Migration, Fresh Build.
+
+Canonical SSOT input modes remain distinct: Clone & Improve, Describe & Build, Paste/Upload, Synthesize & Build. The UI path labels do not amend canonical input-mode names.
 
 Path 1 - Migration: SAIGE.
 
 - Status: URL milestone complete.
 - Confirmed URL: `https://saige-v2.vercel.app`.
-- Boundary: remaining SAIGE typecheck debt is tracked separately and does not erase the URL evidence. Do not overclaim migration completion beyond the CT2-confirmed public URL.
+- Boundary: remaining SAIGE typecheck or product cleanup debt is tracked separately and does not erase the URL evidence. Do not overclaim migration completion beyond the CT2-confirmed public URL.
 
 Path 2 - Production: app-layer-owned product.
 
 - Preferred target: migrated `saige-v2.vercel.app`, because the codebase is app-layer owned and should not hit the Base44 platform boundary.
-- Target: forge scores it, proposes app-layer fixes, creates a GitHub branch, deploys a preview URL, and records honest governance evidence.
-- Accept `HONEST_GATE_REFUSAL` if the score is already high enough and the forge correctly declines mutation. That is correct behavior, not a failure.
+- Target: forge scores it, proposes app-layer fixes if warranted, creates a GitHub branch, deploys a preview URL, and records honest governance evidence.
+- Accept `HONEST_GATE_REFUSAL` if the score is already high enough and the forge correctly declines mutation. That is correct behavior, not failure.
 - If `saige-v2` is too high-scoring for Production to act, identify a real public product with genuine app-layer issues. Do not fabricate a low-scoring product.
 
 Path 3 - Fresh Build.
 
-- Enable `FLOWAI_ENABLE_FRESH_BUILD=true` in Vercel production env before live proof.
+- Enable `FLOWAI_ENABLE_FRESH_BUILD=true` in Vercel Production env before live proof if not already set.
 - Submit this description and synthesis sources:
   - Description: `VEU AI Studio - the organization behind FlowAI, a universal AI product upgrade engine serving underserved organizations worldwide.`
   - URL 1: `https://victorudo.com`
@@ -197,6 +223,15 @@ This is weeks of systematic work, not days. Do not rush VERIFIED promotion. Ever
 ## Bench Coordination Rules
 
 CTO owns the technical bench. W04 owns governance. Victor approves CEO-level decisions only.
+
+Window roster:
+
+- CB: Codex builder/fixer in the same Codex environment as CTO.
+- CB2: Codex auditor in the same Codex environment as CTO.
+- CT2: Codex browser acceptance tester in the same Codex environment as CTO.
+- CD: Claude Code reviewer on PowerShell.
+- CR: Codex reviewer on PowerShell.
+- W04: Claude strategic orchestration and governance adjudication.
 
 CTO responsibilities:
 
@@ -255,8 +290,9 @@ Only these items require Victor's explicit action:
 - Changes to `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, or `docs/IMPLEMENTATION_PLAN.md`.
 - VERIFIED movement authorization.
 - New business or strategic direction decisions.
-- Anything outside this directive.
 - Path 4 three-URL synthesis approval.
+- Human-only auth/dashboard action, if CT2/CB prove it cannot be automated safely.
+- Anything outside this directive.
 
 Everything else runs autonomously under CTO supervision.
 
@@ -267,9 +303,10 @@ Session start:
 1. Read `docs/cto/current-directive.md`.
 2. Read `docs/cto/session-brief.md`.
 3. Pull current main.
-4. Confirm production SHA matches main HEAD.
-5. Check CB2/CT2 evidence for open regressions.
-6. Continue from exactly where the last session ended.
+4. Identify the latest origin/main commit and latest production runtime commit. If docs-only commits are ahead of runtime, record that explicitly rather than treating it as a runtime mismatch.
+5. For any live proof, confirm `/api/health` or Vercel deployment metadata matches the runtime commit under test.
+6. Check CB2/CT2 evidence for open regressions.
+7. Continue from exactly where the last session ended.
 
 Session end:
 

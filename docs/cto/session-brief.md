@@ -1,137 +1,110 @@
 # CTO Session Brief
 
-Date: 2026-06-13
+Date: 2026-06-14 UTC
 Owner: CTO
-Scope: Milestone 1 axis proof closure, promotion packet preparation, and Clerk auth environment activation
+Scope: Comprehensive directive buy-in, evidence correction, and next technical starting point
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`
 
 ## Executive Summary
 
-Priority 1 remains achieved through Path 1 - Migration: SAIGE.
+The W04/CEO comprehensive directive to reach 95/100 SSOT is accepted, but it has been integrated with current repo evidence rather than copied verbatim.
 
-Victor-facing URL:
+The active CTO operating directive is now:
 
-- `https://saige-v2.vercel.app`
+- `docs/cto/current-directive.md`
 
-Milestone 1 is now complete at the evidence level: FlowAI production has CT2-confirmed four-axis live proof.
+Review/buy-in evidence:
+
+- `docs/cto/comprehensive-directive-buy-in-review-20260614.md`
+
+Most important corrected state:
+
+- Active matrixArtifact remains `0 VERIFIED`, `0 WIRED`, `2 CURRENT` out of `39`.
+- Path 1 Migration has a CT2-confirmed public URL, `https://saige-v2.vercel.app`, but no VERIFIED movement has been applied.
+- Milestone 1 axis wiring is CT2-proven at the live-production evidence level.
+- Clerk readiness/routes are live, but full authenticated user-session proof is still blocked.
+- Codex TIM Build rank/callability code exists, but live Step 3 Build use is not yet proven.
+
+## Current Runtime Evidence
 
 FlowAI production URL:
 
 - `https://flowai-dun.vercel.app`
 
-Patched runtime production health:
+Latest runtime production commit:
 
-- `/api/health` reports commit `a38c865ed9fb`
-- full runtime commit `a38c865ed9fbadfc9dde23e7a41cc6c528018533`
-- deployment `https://flowai-4134cifwb-veu-ai-studio.vercel.app`
-- GitHub App ready: true
-- Inngest ready: true
-- Codex orchestra member: PASS, credentials present
-- `/api/version` reports `clerkReady:true`
-- `/api/me` reports `clerkConfigured:true`
+- `dabdce72e13e8ceee9cdd6965b9c0fe9b6a79a9c`
 
-Important boundary: CT2 PASS proves axis visibility, independent selection, route switching, request propagation, and run-log axis envelope. No matrixArtifact entry has been moved to VERIFIED.
+Latest origin/main after docs evidence commits:
+
+- `847396c17152d70269979c819ca1b4a159cf9a04`
+
+Interpretation:
+
+- Origin/main is ahead of the runtime deployment because docs-only CT2 evidence commits were added after the Clerk runtime merge.
+- Runtime claims must cite the exact deployment/commit under test.
+- Future code-bearing runtime changes should be deployed/promoted before live proof.
 
 ## What Completed
 
-Priority 2 axis wiring was already merged and deployed. CT2 first ran the live proof on production commit `54422549044c5ff8e4e187a155c25bfc38462e10` and returned BLOCK because the sidebar labels were ambiguous:
+1. Read the canonical authority docs:
+   - `docs/CANONICAL_REFERENCE.md`
+   - `docs/BUILD_PROTOCOL.md`
+   - `docs/IMPLEMENTATION_PLAN.md`
 
-- `LAYER` with `Auto`
-- `MODE` with `Auto`
-- `DEPTH`
-- `PATH`
+2. Reviewed the pasted W04/CEO comprehensive directive and accepted it with evidence-preserving revisions.
 
-The same CT2 run proved the wiring worked:
+3. Added buy-in review:
+   - `docs/cto/comprehensive-directive-buy-in-review-20260614.md`
 
-- route reachability PASS for Production, Migration, and Fresh Build;
-- independent axis selection PASS;
-- live request payload included `structuralLayer`, `operationalMode`, `analysisDepth`, and `flowHubPath`;
-- run log included the Flow Hub axis envelope.
+4. Replaced `docs/cto/current-directive.md` with the refreshed operating directive.
 
-I patched the clarity blocker on branch `fix/priority2-axis-label-clarity`, received CD PASS and CR PASS, merged to main, deployed, and promoted the patched production SHA.
+5. Corrected the bench roster in the directive:
+   - CB, CB2, and CT2 are Codex-environment workers under CTO.
+   - CD is Claude Code reviewer on PowerShell.
+   - CR is Codex reviewer on PowerShell.
 
-CT2 rerun result: PASS.
+## Clerk Auth State
 
-CT2 confirmed:
+Completed:
 
-- `STRUCTURAL LAYER`: `Autonomous`, `Supervised`, `Controlled`
-- `OPERATIONAL MODE`: `Auto`, `Guided`, `Manual`
-- `ANALYSIS DEPTH`: `Quick`, `Standard`, `Deep`
-- `FLOW HUB PATH`: `Production`, `Migration`, `Fresh Build`
-- no desktop clipping/overflow at `1440 x 1100`
-- route switching works and preserves selected state
-- constrained run POST body includes the four selected axis values
-- run log includes `Flow Hub axis envelope`
-- no false deployed URL, branch, preview URL, or VERIFIED claim observed
+- Clerk production envs are active.
+- `/api/health` reports `clerkReady:true` and auth readiness `PASS`.
+- `/api/version` reports Clerk readiness true.
+- `/api/me` remains anonymous/open while `AUTH_REQUIRED=false`.
+- CT2 confirmed `/sign-up` renders real Clerk UI.
+- CT2 confirmed `/sign-in` renders real Clerk UI.
 
-## Evidence
+Blocked:
 
-CT2 PASS:
+- Public sign-up hit Cloudflare human verification.
+- Backend-created disposable user plus sign-in token did not result in `/api/me` returning authenticated Clerk context.
 
-- `docs/cto/ct2-priority2-axis-live-proof-rerun-result-20260613.md`
-- `docs/cto/ct2-priority2-axis-live-proof-rerun-browser-evidence-20260613.json`
-- `docs/cto/ct2-priority2-axis-live-proof-rerun-screenshots-20260613/`
+Evidence:
 
-Patch and review:
+- `docs/cto/ct2-clerk-auth-live-proof-result-20260613.md`
+- `docs/cto/ct2-clerk-auth-token-session-proof-result-20260613.md`
 
-- `docs/cto/priority2-axis-label-clarity-patch-evidence-20260613.md`
-- `docs/cto/priority2-axis-label-clarity-step5-result-20260613.md`
+Next technical starting point:
 
-Promotion packet:
+- Map the Clerk session boundary before dispatching CB again.
+- Determine whether app API calls need to attach a Clerk bearer token from Clerk React instead of relying on browser cookies.
+- Dispatch one full session-propagation fix, not a layer-by-layer patch loop.
 
-- `docs/cto/verified-promotion-packet-milestone1-20260613.md`
-
-Directive buy-in review:
-
-- `docs/cto/directive-buy-in-review-20260613.md`
-- CTO accepted the comprehensive W04/CEO directive with evidence-preserving revisions: active matrixArtifact remains `0 VERIFIED`, Path 1 Migration URL evidence is a promotion candidate only, and Milestone 1 axis wiring is CT2-proven but not yet promoted to VERIFIED.
-
-Clerk auth diagnostic:
-
-- `docs/cto/clerk-auth-diagnostic-20260613.md`
-- `docs/cto/cb-clerk-auth-completion-dispatch-20260613.md`
-- Clerk envs were added to Vercel Production and a fresh deployment was promoted. Backend config is now visible through `/api/version` and `/api/me`.
-- Remaining gap: `/api/health` does not expose auth readiness, `AUTH_REQUIRED` remains false by design, and CT2 has not yet proven a real Clerk sign-up/sign-in flow.
-
-## VERIFIED Promotion Status
+## VERIFIED Promotion State
 
 No VERIFIED movement has been applied.
 
-A promotion packet is prepared for W04/CEO clearance. It recommends a conservative first batch:
+Prepared packet:
 
-- Path 1 Migration deployed URL, if the chosen matrix row is scoped to deployed-url evidence only.
-- Structural Layer axis behavior.
-- Operational Mode axis behavior.
-- Analysis Depth axis propagation, with caution that crawl-budget deltas need separate proof if that is the intended claim.
-- Flow Hub Path selector behavior, preferably as a new exact matrix row because the current matrix does not have an obvious one-to-one row.
+- `docs/cto/verified-promotion-packet-milestone1-20260613.md`
 
-Codex TIM Build is not recommended for VERIFIED in this batch. Health shows Codex credentials and adapter readiness, but no live Step 3 Build run has proven Codex selection yet.
+Requires W04/CEO clearance before any matrixArtifact edit.
 
-## Current Main vs Production
+## Next Session Starts Here
 
-Runtime production commit:
-
-- `a38c865ed9fbadfc9dde23e7a41cc6c528018533`
-
-Latest `origin/main`:
-
-- `a38c865ed9fbadfc9dde23e7a41cc6c528018533`
-
-Production now matches latest `origin/main`. This deployment was promoted to pick up Clerk Production env vars.
-
-## Immediate Next Actions
-
-1. W04/CEO review `docs/cto/verified-promotion-packet-milestone1-20260613.md`.
-2. If cleared, dispatch a narrow matrix cleanup branch for CD/CR review. Do not edit matrixArtifact directly without clearance.
-3. If not cleared, record W04 mapping decision and continue to the next directive milestone.
-4. Next implementation milestone: dispatch CB from `docs/cto/cb-clerk-auth-completion-dispatch-20260613.md` unless W04 formally defers Clerk to resume Path 2/Path 3 URL proofs.
-
-## Standing Rules Observed
-
-- No fabricated deployed claim.
-- No VERIFIED movement.
-- No canonical SSOT edits.
-- CD and CR reviewed runtime patch before merge.
-- CT2 independently confirmed live production behavior.
-- Clerk env activation completed without exposing secret values.
-- Victor's only needed action is W04/CEO-level VERIFIED promotion clearance when ready, plus any Clerk dashboard action only if CB/CT2 later proves it is required.
+1. Pull current main.
+2. Read `docs/cto/current-directive.md` and this file.
+3. Map the Clerk session propagation chain in code.
+4. Prepare a CB dispatch for the full known Clerk session propagation fix, or document the exact Victor-only dashboard/human action if the blocker is outside code.
+5. Do not move VERIFIED without W04/CEO clearance.
