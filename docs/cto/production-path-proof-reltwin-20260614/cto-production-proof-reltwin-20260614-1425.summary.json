@@ -1,0 +1,62 @@
+{
+  "verdict": "TERMINAL_FINAL_INCOMPLETE_MILESTONES",
+  "acceptedTerminal": true,
+  "endToEndComplete": false,
+  "eventCount": 49,
+  "typeCounts": {
+    "start": 1,
+    "step": 35,
+    "iteration": 1,
+    "heartbeat": 10,
+    "final": 1,
+    "done": 1
+  },
+  "hasDone": true,
+  "hasFinal": true,
+  "hasTimeout": false,
+  "hasError": false,
+  "lastAt": "2026-06-14T18:28:46.000Z",
+  "lastEventType": "done",
+  "lastEventPreview": "[DONE]",
+  "runId": "cto-production-proof-reltwin-20260614-1425",
+  "baseUrl": "https://flowai-dun.vercel.app",
+  "request": {
+    "endpoint": "https://flowai-dun.vercel.app/api/agent/3/execute",
+    "productScope": "reltwin",
+    "httpStatus": 200,
+    "gtmTarget": 95,
+    "url": "https://reltwin.com",
+    "maxIterations": 1,
+    "runId": "cto-production-proof-reltwin-20260614-1425",
+    "mode": "auto"
+  },
+  "milestones": {
+    "credentialMode": true,
+    "productDiscovery": true,
+    "operatorReadiness": true,
+    "upgradeTargetResolved": true,
+    "upgradeTargetProvisioned": true,
+    "repoProbe": true,
+    "rateCap": true,
+    "crawlComplete": true,
+    "branchCreation": false,
+    "previewDeployment": false,
+    "postFixScoring": true,
+    "finalGovernanceWrite": false,
+    "productSsotPersistence": false
+  },
+  "observed": {
+    "branchName": null,
+    "previewUrl": null,
+    "finalScore": 69,
+    "exitReason": "STEP_FAILED",
+    "productSsotPersisted": false
+  },
+  "note": "No VERIFIED movement is justified by this summary alone; use live production evidence and SSOT gates.",
+  "files": {
+    "requestPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\production-path-proof-reltwin-20260614\\cto-production-proof-reltwin-20260614-1425.request.json",
+    "transcriptPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\production-path-proof-reltwin-20260614\\cto-production-proof-reltwin-20260614-1425.sse",
+    "summaryPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\production-path-proof-reltwin-20260614\\cto-production-proof-reltwin-20260614-1425.summary.json",
+    "markdownPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\production-path-proof-reltwin-20260614\\cto-production-proof-reltwin-20260614-1425.summary.md"
+  }
+}
