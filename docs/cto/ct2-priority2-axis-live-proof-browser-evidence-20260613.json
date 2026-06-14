@@ -1,0 +1,1781 @@
+{
+  "health": {
+    "status": 200,
+    "body": {
+      "ok": true,
+      "status": "ready",
+      "service": "flowai",
+      "version": "1.0.0",
+      "env": "production",
+      "region": "iad1",
+      "commit": "54422549044c",
+      "githubAppReady": true,
+      "inngestReady": true,
+      "timestamp": "2026-06-14T00:39:56.370Z",
+      "durationMs": 419,
+      "checks": {
+        "build": {
+          "status": "PASS",
+          "commit": "54422549044c",
+          "commitFull": "54422549044c5ff8e4e187a155c25bfc38462e10",
+          "branch": "main",
+          "buildIdentitySource": "env:VERCEL_GIT_COMMIT_SHA",
+          "buildIdentityGeneratedAt": "2026-06-14T00:21:42.270Z",
+          "env": "production",
+          "region": "iad1",
+          "deploymentUrl": "https://flowai-b7ogb5gbi-veu-ai-studio.vercel.app",
+          "nodeVersion": "24.14.1",
+          "reason": null
+        },
+        "supabase": {
+          "status": "PASS",
+          "httpStatus": 200
+        },
+        "vercelKv": {
+          "status": "PASS",
+          "httpStatus": 200
+        },
+        "orchestra": {
+          "members": [
+            {
+              "id": "codex",
+              "label": "Codex",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "OPENAI_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "src/lib/orchestra/codex.js code-patch/generate-from-scratch runtime adapter"
+            },
+            {
+              "id": "claude-code",
+              "label": "Claude Code",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "ANTHROPIC_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "src/lib/orchestra/claudeCode.js analyze/design/score/code-patch runtime adapter"
+            },
+            {
+              "id": "base44",
+              "label": "Base44",
+              "status": "DEGRADED",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "BASE44_API_BASE_URL",
+                "BASE44_API_TOKEN"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "api/_lib/orchestrator/agents/base44.js + src/api/base44Client.js"
+            },
+            {
+              "id": "lovable",
+              "label": "Lovable",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [],
+              "credentialsPresent": null,
+              "adapterHint": "archived (scripts/lib/headless/archive/lovable-chat.mjs.archived-2026-05-13)"
+            },
+            {
+              "id": "v0",
+              "label": "Vercel v0",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [
+                "VERCEL_V0_TOKEN"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "scripts/lib/peer-review.mjs callVercelV0Adapter (Panel reviewer only — no /api/* runtime adapter)"
+            },
+            {
+              "id": "cursor",
+              "label": "Cursor",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [],
+              "credentialsPresent": null,
+              "adapterHint": "developer-IDE only; no runtime adapter expected in /api/*"
+            },
+            {
+              "id": "openrouter",
+              "label": "OpenRouter",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [
+                "OPENROUTER_API_KEY"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "scripts/lib/peer-review.mjs (Panel reviewer; no /api/* runtime adapter)"
+            },
+            {
+              "id": "browserless",
+              "label": "Browserless",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "BROWSERLESS_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "api/_lib/crawler.js viaBrowserless + richCapture"
+            },
+            {
+              "id": "anthropic",
+              "label": "Anthropic API (direct)",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "ANTHROPIC_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "api/_lib/claude.js callClaude"
+            },
+            {
+              "id": "replit",
+              "label": "Replit",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [],
+              "credentialsPresent": null,
+              "adapterHint": "archived (scripts/lib/headless/archive/replit-agent.mjs.archived-2026-05-13)"
+            },
+            {
+              "id": "playwright",
+              "label": "Playwright",
+              "status": "DEGRADED",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "PLAYWRIGHT_ENDPOINT"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "api/_lib/orchestrator/agents/playwright.js + api/_lib/crawler.js viaPlaywright"
+            }
+          ],
+          "summary": {
+            "total": 11,
+            "runtimeAdapters": 6,
+            "live": 4,
+            "degraded": 2,
+            "notWired": 5
+          }
+        },
+        "observability": {
+          "status": "NOT_WIRED",
+          "pino": {
+            "ready": true,
+            "level": "info"
+          },
+          "sentry": {
+            "configured": false,
+            "initialized": false,
+            "tracesSampleRate": 0
+          },
+          "axiomBridge": {
+            "configured": false
+          }
+        },
+        "githubApp": {
+          "status": "PASS",
+          "configured": true,
+          "patFallback": true,
+          "installationIdAlias": "GITHUB_APP_INSTALLATION_ID"
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "route": "/flow-hub/production",
+      "url": "https://flowai-dun.vercel.app/flow-hub/production",
+      "status": 200
+    },
+    {
+      "route": "/flow-hub/migration",
+      "url": "https://flowai-dun.vercel.app/flow-hub/migration",
+      "status": 200
+    },
+    {
+      "route": "/flow-hub/fresh-build",
+      "url": "https://flowai-dun.vercel.app/flow-hub/fresh-build",
+      "status": 200
+    },
+    {
+      "route": "/flow-hub/production",
+      "url": "https://flowai-dun.vercel.app/flow-hub/production",
+      "status": 200
+    }
+  ],
+  "initial": {
+    "url": "https://flowai-dun.vercel.app/flow-hub/production",
+    "text": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nLAYER\nAuto\nSupervised\nControlled\nMODE\nAuto\nGuided\nManual\nDEPTH\nQuick\nStandard\nDeep\nPATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub - Production\nUpgrade an existing product URL in its owned delivery path.\nFlowAI Ready\n·\nLayer: Autonomous\n·\nMode: Auto\n·\nDepth: Standard\n\nChoose how you want to work with your product, then select your operation mode.\n\nPRE-RELEASE · INTERNAL USE ONLY\nv0.1 · VEU AI Studio personnel + licensed pilots\n\nFlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target.\n\nWhat you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score.\n\nSETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch)\n\nAnalyze a Live Product\n\nFlowAI will fetch and analyze the public-facing pages of your product.\n\nTest Fetch\n\nNote: URL must be publicly accessible. Authenticated or private apps use Card B or C.\n\nDescribe Your Product\n\nType or speak a description. Best for authenticated apps, internal tools, or early-stage products.\n\n🔒 Credentials are used only for this session and are never stored.\n\nVoice Input\n\nPaste Content or Upload Screenshots\n\nPaste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly.\n\nDrop screenshots here or click to upload — PNG, JPG, PDF\n\nCombine with Card B for best results on authenticated products.\n\nSETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH?\n\nAudit for prospect demo readiness\nPrepare for investor review\nFull governance and clearance cycle\nCompare two or more products\nCombine inputs into a unified specification\nBenchmark against competitors\nLaunch readiness check\nCustom — I will describe my objective\n\nSETUP 3 OF 3 — SELECT OPERATION MODE\n\nAuto\nSELECTED\n\nFlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings.\n\nAnalysis Depth\n\nQuick\nStandard\nDeep\nGuided\n\nFlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes.\n\nMinutes to hours · 8 approval gates across the execution pipeline\n\nManual\n\nYou direct each step. FlowAI executes what you specify and assists on demand.\n\nHours to days · Full operator control\n\nFresh Build\nEXPERIMENTAL\n\nFlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.\n\nFresh Build is off by default. Victor must enable FLOWAI_ENABLE_FRESH_BUILD before execution.\nMigrate\n\nFlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.\n\nPlan\n\nFile count and dependency count before execution\n\nProgress\n\nPer-file migration status during execution\n\nSummary\n\nFiles migrated, dependencies removed, upgrade URL\n\nSelect an input above to enable launch\nLaunch Auto Run →\n\nQUICK ACCESS\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nFlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio · Patent pending\nPrivacy Policy\n·\nTerms of Use\n·\nAbout FlowAI →\nFlowAI is a pre-release internal engine. It does not hold SOC 2, ISO 27001, or any third-party compliance certification at this time, and there are no external customer case studies published. Use is limited to VEU AI Studio personnel and licensed pilots until those gates are cleared.\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy",
+    "controls": [
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Back",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Auto",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Supervised",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Controlled",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Auto",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Guided",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Manual",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Quick",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Standard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Deep",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Production",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Migration",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Fresh Build",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Home",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/dashboard",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Workspace",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/workspace",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Landing Page",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/landing",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Portfolio Dashboard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/portfolio",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Product Registry",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/products",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Session History",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/runs",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Production",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/flow-hub/production",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Migration",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/flow-hub/migration",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Fresh Build",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/flow-hub/fresh-build",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Research Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/research",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Design Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/design",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Build Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/build",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Quality Audit",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/quality-audit",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Deploy Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/deploy",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Self-Renewal Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/self-renewal",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "GTM Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/gtm",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Monitor Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/monitor",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "My Products",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/my-products",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Session History",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/runs",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Clearance Protocol",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/clearance",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Governance Dashboard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/governance",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Release Notes",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/release-notes",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Objective & Settings",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/configuration",
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "View",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Pause",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Back",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Home",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Workspace",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Landing",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Search\n⌘K",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Test Fetch",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Voice Input",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "select",
+        "role": null,
+        "text": "Audit for prospect demo readiness\nPrepare for investor review\nFull governance and clearance cycle\nCompare two or more products\nCombine inputs into a unified specification\nBenchmark against competitors\nLaunch readiness check\nCustom — I will describe my objective",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Auto\nSELECTED\n\nFlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings.\n\nAnalysis Depth\n\nQuick\nStandard\nDeep",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Quick",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Standard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Deep",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Guided\n\nFlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes.\n\nMinutes to hours · 8 approval gates across the execution pipeline",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Manual\n\nYou direct each step. FlowAI executes what you specify and assists on demand.\n\nHours to days · Full operator control",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Fresh Build\nEXPERIMENTAL\n\nFlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.\n\nFresh Build is off by default. Victor must enable FLOWAI_ENABLE_FRESH_BUILD before execution.",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Migrate\n\nFlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.\n\nPlan\n\nFile count and dependency count before execution\n\nProgress\n\nPer-file migration status during execution\n\nSummary\n\nFiles migrated, dependencies removed, upgrade URL",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Launch Auto Run →",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "My Products",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Session History",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Clearance Protocol",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Governance Dashboard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Release Notes",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Privacy Policy",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Terms of Use",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "About FlowAI →",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Terms of Use",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/terms-of-use",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Privacy Policy",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/privacy-policy",
+        "visible": true
+      }
+    ]
+  },
+  "afterSelections": {
+    "productionUrl": "https://flowai-dun.vercel.app/flow-hub/production?structuralLayer=controlled&operationalMode=manual&analysisDepth=quick&flowHubPath=production",
+    "productionText": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nLAYER\nAuto\nSupervised\nControlled\nMODE\nAuto\nGuided\nManual\nDEPTH\nQuick\nStandard\nDeep\nPATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub - Production\nUpgrade an existing product URL in its owned delivery path.\nFlowAI Ready\n·\nLayer: Controlled\n·\nMode: Manual\n·\nDepth: Quick\n\nChoose how you want to work with your product, then select your operation mode.\n\nPRE-RELEASE · INTERNAL USE ONLY\nv0.1 · VEU AI Studio personnel + licensed pilots\n\nFlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target.\n\nWhat you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score.\n\nSETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch)\n\nAnalyze a Live Product\n\nFlowAI will fetch and analyze the public-facing pages of your product.\n\nTest Fetch\n\nNote: URL must be publicly accessible. Authenticated or private apps use Card B or C.\n\nDescribe Your Product\n\nType or speak a description. Best for authenticated apps, internal tools, or early-stage products.\n\n🔒 Credentials are used only for this session and are never stored.\n\nVoice Input\n\nPaste Content or Upload Screenshots\n\nPaste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly.\n\nDrop screenshots here or click to upload — PNG, JPG, PDF\n\nCombine with Card B for best results on authenticated products.\n\nSETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH?\n\nAudit for prospect demo readiness\nPrepare for investor review\nFull governance and clearance cycle\nCompare two or more products\nCombine inputs into a unified specification\nBenchmark against competitors\nLaunch readiness check\nCustom — I will describe my objective\n\nSETUP 3 OF 3 — SELECT OPERATION MODE\n\nAuto\n\nFlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings.\n\nAnalysis Depth\n\nQuick\nStandard\nDeep\nGuided\n\nFlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes.\n\nMinutes to hours · 8 approval gates across the execution pipeline\n\nManual\nSELECTED\n\nYou direct each step. FlowAI executes what you specify and assists on demand.\n\nHours to days · Full operator control\n\nFresh Build\nEXPERIMENTAL\n\nFlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.\n\nFresh Build is off by default. Victor must enable FLOWAI_ENABLE_FRESH_BUILD before execution.\nMigrate\n\nFlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.\n\nPlan\n\nFile count and dependency count before execution\n\nProgress\n\nPer-file migration status during execution\n\nSummary\n\nFiles migrated, dependencies removed, upgrade URL\n\nSelect an input above to enable launch\nStart Manual Session →\n\nQUICK ACCESS\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nFlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio · Patent pending\nPrivacy Policy\n·\nTerms of Use\n·\nAbout FlowAI →\nFlowAI is a pre-release internal engine. It does not hold SOC 2, ISO 27001, or any third-party compliance certification at this time, and there are no external customer case studies published. Use is limited to VEU AI Studio personnel and licensed pilots until those gates are cleared.\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy",
+    "productionControls": [
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Back",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Auto",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Supervised",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Controlled",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Auto",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Guided",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Manual",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Quick",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Standard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Deep",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Production",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Migration",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Fresh Build",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Home",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/dashboard",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Workspace",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/workspace",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Landing Page",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/landing",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Portfolio Dashboard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/portfolio",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Product Registry",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/products",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Session History",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/runs",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Production",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/flow-hub/production",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Migration",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/flow-hub/migration",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Fresh Build",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/flow-hub/fresh-build",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Research Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/research",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Design Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/design",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Build Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/build",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Quality Audit",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/quality-audit",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Deploy Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/deploy",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Self-Renewal Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/self-renewal",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "GTM Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/gtm",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Monitor Forge",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/forge/monitor",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "My Products",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/my-products",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Session History",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/runs",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Clearance Protocol",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/clearance",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Governance Dashboard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/governance",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Release Notes",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/release-notes",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Objective & Settings",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/configuration",
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "View",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Pause",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Back",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Home",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Workspace",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Landing",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Search\n⌘K",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Test Fetch",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Voice Input",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "select",
+        "role": null,
+        "text": "Audit for prospect demo readiness\nPrepare for investor review\nFull governance and clearance cycle\nCompare two or more products\nCombine inputs into a unified specification\nBenchmark against competitors\nLaunch readiness check\nCustom — I will describe my objective",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Auto\n\nFlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings.\n\nAnalysis Depth\n\nQuick\nStandard\nDeep",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Quick",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Standard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Deep",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Guided\n\nFlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes.\n\nMinutes to hours · 8 approval gates across the execution pipeline",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Manual\nSELECTED\n\nYou direct each step. FlowAI executes what you specify and assists on demand.\n\nHours to days · Full operator control",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Fresh Build\nEXPERIMENTAL\n\nFlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.\n\nFresh Build is off by default. Victor must enable FLOWAI_ENABLE_FRESH_BUILD before execution.",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "div",
+        "role": "button",
+        "text": "Migrate\n\nFlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.\n\nPlan\n\nFile count and dependency count before execution\n\nProgress\n\nPer-file migration status during execution\n\nSummary\n\nFiles migrated, dependencies removed, upgrade URL",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Start Manual Session →",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "My Products",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Session History",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Clearance Protocol",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Governance Dashboard",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Release Notes",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Privacy Policy",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "Terms of Use",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "button",
+        "role": null,
+        "text": "About FlowAI →",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": null,
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Terms of Use",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/terms-of-use",
+        "visible": true
+      },
+      {
+        "tag": "a",
+        "role": null,
+        "text": "Privacy Policy",
+        "ariaLabel": null,
+        "ariaPressed": null,
+        "ariaChecked": null,
+        "dataState": null,
+        "href": "/privacy-policy",
+        "visible": true
+      }
+    ],
+    "migrationUrl": "https://flowai-dun.vercel.app/flow-hub/migration?structuralLayer=controlled&operationalMode=manual&analysisDepth=quick&flowHubPath=migration",
+    "migrationText": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nLAYER\nAuto\nSupervised\nControlled\nMODE\nAuto\nGuided\nManual\nDEPTH\nQuick\nStandard\nDeep\nPATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub — Migration\nFlow Hub platform dependency migration setup.\n\nSTEP 1 - SELECT YOUR PRODUCT\n\nWhich product do you want to migrate?\n\nSTEP 3 - CONFIRM AND START\n\nMigration execution\nMigration Mode enabled. FlowAI will migrate only the upgrade target.\nDisable\nStart Migration\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy\nMove a platform-bound product into a standalone v2 codebase.",
+    "freshBuildUrl": "https://flowai-dun.vercel.app/flow-hub/fresh-build?structuralLayer=controlled&operationalMode=manual&analysisDepth=quick&flowHubPath=fresh_build",
+    "freshBuildText": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nLAYER\nAuto\nSupervised\nControlled\nMODE\nAuto\nGuided\nManual\nDEPTH\nQuick\nStandard\nDeep\nPATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub - Fresh Build\nGenerate a new platform-free codebase from product description.\nFlowAI Ready\n·\nLayer: Controlled\n·\nMode: Manual\n·\nDepth: Quick\n\nChoose how you want to work with your product, then select your operation mode.\n\nPRE-RELEASE · INTERNAL USE ONLY\nv0.1 · VEU AI Studio personnel + licensed pilots\n\nFlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target.\n\nWhat you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score.\n\nSETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch)\n\nAnalyze a Live Product\n\nSELECTED\n\nFlowAI will fetch and analyze the public-facing pages of your product.\n\nTest Fetch\n\nNote: URL must be publicly accessible. Authenticated or private apps use Card B or C.\n\nDescribe Your Product\n\nType or speak a description. Best for authenticated apps, internal tools, or early-stage products.\n\n🔒 Credentials are used only for this session and are never stored.\n\nVoice Input\n\nPaste Content or Upload Screenshots\n\nPaste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly.\n\nDrop screenshots here or click to upload — PNG, JPG, PDF\n\nCombine with Card B for best results on authenticated products.\n\nSETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH?\n\nAudit for prospect demo readiness\nPrepare for investor review\nFull governance and clearance cycle\nCompare two or more products\nCombine inputs into a unified specification\nBenchmark against competitors\nLaunch readiness check\nCustom — I will describe my objective\n\nSETUP 3 OF 3 — SELECT OPERATION MODE\n\nAuto\n\nFlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings.\n\nAnalysis Depth\n\nQuick\nStandard\nDeep\nGuided\n\nFlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes.\n\nMinutes to hours · 8 approval gates across the execution pipeline\n\nManual\nSELECTED\n\nYou direct each step. FlowAI executes what you specify and assists on demand.\n\nHours to days · Full operator control\n\nFresh Build\nEXPERIMENTAL\nSELECTED\n\nFlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.\n\nFresh Build is off by default. Victor must enable FLOWAI_ENABLE_FRESH_BUILD before execution.\nMigrate\n\nFlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.\n\nPlan\n\nFile count and dependency count before execution\n\nProgress\n\nPer-file migration status during execution\n\nSummary\n\nFiles migrated, dependencies removed, upgrade URL\n\nSelect an input above to enable launch\nStart Manual Session →\nFresh Build is currently disabled. Victor must enable FLOWAI_ENABLE_FRESH_BUILD.\n\nQUICK ACCESS\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nFlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio · Patent pending\nPrivacy Policy\n·\nTerms of Use\n·\nAbout FlowAI →\nFlowAI is a pre-release internal engine. It does not hold SOC 2, ISO 27001, or any third-party compliance certification at this time, and there are no external customer case studies published. Use is limited to VEU AI Studio personnel and licensed pilots until those gates are cleared.\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy\nGenerate a new platform-free codebase from product description."
+  },
+  "screenshots": [
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/01-production-initial.png",
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/02-controlled-manual-quick.png",
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/03-migration-selected.png",
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/04-fresh-build-selected.png",
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/05-route-migration.png",
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/06-route-fresh-build.png",
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/07-before-run.png",
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/08-before-run-filled.png",
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/09-after-run-launch.png",
+    "C:/Users/victo/Documents/Codex/flowai-cto-docs-20260612/docs/cto/ct2-priority2-axis-live-proof-screenshots-20260613/10-after-run-wait.png"
+  ],
+  "networkPosts": [
+    {
+      "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+      "method": "POST",
+      "postData": "{\"events\":[{\"event_name\":\"__initialization_event__\",\"properties\":{\"referrer\":\"\"},\"timestamp\":\"2026-06-14T00:39:53.610Z\",\"page_url\":\"/flow-hub/production\",\"session_id\":\"nxwnf5r4fvlngcdqagpq\"}]}",
+      "headers": {
+        "x-origin-url": "https://flowai-dun.vercel.app/flow-hub/production",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "https://flowai-dun.vercel.app/flow-hub/production",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+        "sec-ch-ua-mobile": "?0",
+        "x-app-id": "69ea46fc5fdfa434dddf11fa",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+        "accept": "application/json",
+        "content-type": "application/json"
+      }
+    },
+    {
+      "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+      "method": "POST",
+      "postData": "{\"events\":[{\"event_name\":\"__initialization_event__\",\"properties\":{\"referrer\":\"\"},\"timestamp\":\"2026-06-14T00:40:08.453Z\",\"page_url\":\"/flow-hub/migration\",\"session_id\":\"nxwnf5r4fvlngcdqagpq\"}]}",
+      "headers": {
+        "x-origin-url": "https://flowai-dun.vercel.app/flow-hub/migration",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "https://flowai-dun.vercel.app/flow-hub/migration",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+        "sec-ch-ua-mobile": "?0",
+        "x-app-id": "69ea46fc5fdfa434dddf11fa",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+        "accept": "application/json",
+        "content-type": "application/json"
+      }
+    },
+    {
+      "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+      "method": "POST",
+      "postData": "{\"events\":[{\"event_name\":\"__initialization_event__\",\"properties\":{\"referrer\":\"\"},\"timestamp\":\"2026-06-14T00:40:17.696Z\",\"page_url\":\"/flow-hub/fresh-build\",\"session_id\":\"nxwnf5r4fvlngcdqagpq\"}]}",
+      "headers": {
+        "x-origin-url": "https://flowai-dun.vercel.app/flow-hub/fresh-build",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "https://flowai-dun.vercel.app/flow-hub/fresh-build",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+        "sec-ch-ua-mobile": "?0",
+        "x-app-id": "69ea46fc5fdfa434dddf11fa",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+        "accept": "application/json",
+        "content-type": "application/json"
+      }
+    },
+    {
+      "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+      "method": "POST",
+      "postData": "{\"events\":[{\"event_name\":\"__initialization_event__\",\"properties\":{\"referrer\":\"\"},\"timestamp\":\"2026-06-14T00:40:26.885Z\",\"page_url\":\"/flow-hub/production\",\"session_id\":\"nxwnf5r4fvlngcdqagpq\"}]}",
+      "headers": {
+        "x-origin-url": "https://flowai-dun.vercel.app/flow-hub/production",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "https://flowai-dun.vercel.app/flow-hub/production",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+        "sec-ch-ua-mobile": "?0",
+        "x-app-id": "69ea46fc5fdfa434dddf11fa",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+        "accept": "application/json",
+        "content-type": "application/json"
+      }
+    },
+    {
+      "url": "https://flowai-dun.vercel.app/api/run-construction",
+      "method": "POST",
+      "postData": "{\"url\":\"https://saige-v2.vercel.app\",\"mode\":\"MANUAL\",\"operationalMode\":\"manual\",\"structuralLayer\":\"controlled\",\"analysisDepth\":\"quick\",\"flowHubPath\":\"production\"}",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "https://flowai-dun.vercel.app/flow-hub/production?structuralLayer=controlled&operationalMode=manual&analysisDepth=quick&flowHubPath=production",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+        "accept": "text/event-stream",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+        "content-type": "application/json",
+        "sec-ch-ua-mobile": "?0"
+      }
+    },
+    {
+      "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+      "method": "POST",
+      "postData": "{\"events\":[{\"event_name\":\"__user_heartbeat_event__\",\"timestamp\":\"2026-06-14T00:41:26.892Z\",\"page_url\":\"/flow-hub/production\",\"session_id\":\"nxwnf5r4fvlngcdqagpq\"}]}",
+      "headers": {
+        "x-origin-url": "https://flowai-dun.vercel.app/flow-hub/production?structuralLayer=controlled&operationalMode=manual&analysisDepth=quick&flowHubPath=production",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "https://flowai-dun.vercel.app/flow-hub/production?structuralLayer=controlled&operationalMode=manual&analysisDepth=quick&flowHubPath=production",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+        "sec-ch-ua-mobile": "?0",
+        "x-app-id": "69ea46fc5fdfa434dddf11fa",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+        "accept": "application/json",
+        "content-type": "application/json"
+      }
+    }
+  ],
+  "runLogText": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nLAYER\nAuto\nSupervised\nControlled\nMODE\nAuto\nGuided\nManual\nDEPTH\nQuick\nStandard\nDeep\nPATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub - Production\nUpgrade an existing product URL in its owned delivery path.\nFlowAI Ready\n·\nLayer: Controlled\n·\nMode: Manual\n·\nDepth: Quick\n\nChoose how you want to work with your product, then select your operation mode.\n\nPRE-RELEASE · INTERNAL USE ONLY\nv0.1 · VEU AI Studio personnel + licensed pilots\n\nFlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target.\n\nWhat you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score.\n\nSETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch)\n\nAnalyze a Live Product\n\nSELECTED\n\nFlowAI will fetch and analyze the public-facing pages of your product.\n\nTest Fetch\n\nNote: URL must be publicly accessible. Authenticated or private apps use Card B or C.\n\nDescribe Your Product\n\nType or speak a description. Best for authenticated apps, internal tools, or early-stage products.\n\n🔒 Credentials are used only for this session and are never stored.\n\nVoice Input\n\nPaste Content or Upload Screenshots\n\nPaste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly.\n\nDrop screenshots here or click to upload — PNG, JPG, PDF\n\nCombine with Card B for best results on authenticated products.\n\nSETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH?\n\nAudit for prospect demo readiness\nPrepare for investor review\nFull governance and clearance cycle\nCompare two or more products\nCombine inputs into a unified specification\nBenchmark against competitors\nLaunch readiness check\nCustom — I will describe my objective\n\nSETUP 3 OF 3 — SELECT OPERATION MODE\n\nAuto\n\nFlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings.\n\nAnalysis Depth\n\nQuick\nStandard\nDeep\nGuided\n\nFlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes.\n\nMinutes to hours · 8 approval gates across the execution pipeline\n\nManual\nSELECTED\n\nYou direct each step. FlowAI executes what you specify and assists on demand.\n\nHours to days · Full operator control\n\nFresh Build\nEXPERIMENTAL\n\nFlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.\n\nFresh Build is off by default. Victor must enable FLOWAI_ENABLE_FRESH_BUILD before execution.\nMigrate\n\nFlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.\n\nPlan\n\nFile count and dependency count before execution\n\nProgress\n\nPer-file migration status during execution\n\nSummary\n\nFiles migrated, dependencies removed, upgrade URL\n\nRun FlowAI on this URL\nRUNNING...\n\nhttps://saige-v2.vercel.app\n\nCancel\nClose\n\n8-STEP PROGRESS\n\nActive: Design\n\nRUNNING...\n1\n\nResearch\n\n1. BrowserlessAUTOCALLABLE\n2. Anthropic ClaudeAUTOCALLABLE\n3. Perplexity AIAUTOUNAVAILABLE\n2\n\nDesign\n\n1. Anthropic ClaudeAUTOCALLABLE\n2. v0 by VercelAUTOSTUB UNAVAILABLE\n3. LovableAUTOSTUB UNAVAILABLE\n3\n\nBuild\n\n1. CodexAUTOSERVER CHECK PENDING\n2. Claude CodeAUTOPENDING APPROVAL\n3. CursorAUTOSTUB UNAVAILABLE\n4. BoltAUTOSTUB UNAVAILABLE\n5. WindsurfAUTOSTUB UNAVAILABLE\n6. ReplitAUTOSTUB UNAVAILABLE\n7. Base44AUTOSTUB UNAVAILABLE\n4\n\nQuality Audit\n\n1. PlaywrightAUTOCALLABLE\n2. BrowserlessAUTOCALLABLE\n3. Anthropic ClaudeAUTOCALLABLE\n5\n\nDeploy\n\n1. VercelAUTODEFERRED\n2. ReplitAUTOSTUB UNAVAILABLE\n6\n\nSelf-Renewal\n\n1. Claude CodeAUTOPENDING APPROVAL\n2. PlaywrightAUTOCALLABLE\n7\n\nGTM\n\n1. Anthropic ClaudeAUTOCALLABLE\n2. Perplexity AIAUTOUNAVAILABLE\n8\n\nMonitor\n\n1. BrowserlessAUTOCALLABLE\n2. PlaywrightAUTOCALLABLE\n3. Anthropic ClaudeAUTOCALLABLE\nSTATUS\nCODE\nNAMED STEP\nDETAILS\n[r?][S?]\nRegistry reused\n— complete\n[r?][S?]\nProductSSOT Context\n— complete\nProductSSOT context loaded\nSymbiotic Loop: run N+1 reads prior ProductSSOT state before execution\n[r0][S0]\nstep_0\n— complete\nGitHub operator credential mode\nselect repo-write capability mode from GITHUB_OPERATOR_TOKEN availability\n[r0][S0]\nstep_0\n— complete\nFlowAI unified input context\nSSOT §10/§12 - every 8-step run receives the same URL, description, and attachment context with explicit usage accounting\n[r0][S0]\nstep_0\n— complete\nFlow Hub axis envelope\nFlow Hub axes are normalized before execution; structural layer sets checkpoint ceiling and analysis depth sets crawl/scoring effort\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService (lazy-imported)\nCA-18 §6 — record per-step tool selection for governance trail\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for research\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: research\n1.\nPerplexity AI\n- ai_research\nscore: n/a\n2.\nTavily\n- search_api\nscore: n/a\n3.\nExa\n- search_api\nscore: n/a\n4.\nSerpAPI\n- search_api\nscore: n/a\n5.\nYou.com\n- search_api\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for design\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: design\n1.\nv0 by Vercel\n- ai_ui_gen\nscore: n/a\n2.\nFigma\n- design_tool\nscore: n/a\n3.\nFramer\n- visual_builder\nscore: n/a\n4.\nLovable\n- ai_app_gen\nscore: n/a\n5.\nCanva\n- visual_assets\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for build\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: build\n1.\nCodex\n- code\nscore: n/a\n2.\nClaude Code\n- code\nscore: n/a\n3.\nCursor\n- code\nscore: n/a\n4.\nBolt\n- ai_fullstack\nscore: n/a\n5.\nWindsurf\n- code\nscore: n/a\n6.\nReplit\n- cloud_ide\nscore: n/a\n7.\nBase44\n- source\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for qa_audit\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: qa_audit\n1.\nPlaywright\n- e2e_testing\nscore: n/a\n2.\nVitest\n- unit_testing\nscore: n/a\n3.\nCypress\n- e2e_testing\nscore: n/a\n4.\nJest\n- unit_testing\nscore: n/a\n5.\nPostman\n- api_testing\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for deploy\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: deploy\n1.\nVercel\n- edge_hosting\nscore: n/a\n2.\nRailway\n- fullstack_host\nscore: n/a\n3.\nFly.io\n- global_host\nscore: n/a\n4.\nNetlify\n- frontend_host\nscore: n/a\n5.\nRender\n- cloud_host\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for monitor\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: monitor\n1.\nSentry\n- error_tracking\nscore: n/a\n2.\nPostHog\n- product_analytics\nscore: n/a\n3.\nDatadog\n- apm_full_stack\nscore: n/a\n4.\nLogRocket\n- session_replay\nscore: n/a\n5.\nUptime Robot\n- uptime_checks\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for govern\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: govern\n1.\nFlowAI\n- self_governance\nscore: n/a\n2.\nGitHub\n- pr_workflow\nscore: n/a\n3.\nVercel\n- preview_deploy\nscore: n/a\n4.\nSentry\n- error_tracking\nscore: n/a\n5.\nPostHog\n- product_analytics\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for gtm\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: gtm\n1.\nPostHog\n- product_analytics\nscore: n/a\n2.\nStripe\n- payments\nscore: n/a\n3.\nSendGrid\n- email\nscore: n/a\n4.\nMailchimp\n- email_marketing\nscore: n/a\n5.\nBrevo\n- multichannel\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService — per-step ranked candidates\nCA-18 §6 — expose ranked tool candidates for operator visibility before live execution\n[r0][S1]\nProduct Discovery\nResearch\n— complete\nproduct_registry lookup\ncheck if this URL is a known registered product\n[r0][S1]\nProduct Discovery\nResearch\n— complete\noperator credential readiness\npreflight governance record for registered-product operator credentials\n[r0][S1]\nProduct Discovery\nResearch\n— complete\nupgradeTargetResolver.js\nenforce fork-based upgrade architecture: original repo is read-only, writes target upgrade repo\n[r0][S5]\nFive-Layer Scoring (Pre-Fix)\nQuality Audit\n— complete\nupgradeTargetProvisioner.js\nSSOT §9/§10 - determine whether upgrade repo and deployment can be auto-provisioned without touching the original\n[r0][S1]\nProduct Discovery\nResearch\n— complete\ngithubOperatorRepoProbe.js\nverify GITHUB_OPERATOR_TOKEN can read/write the active upgrade repo without exposing secrets\n[r0][S2]\nRate Cap + Runaway Check\nResearch\n— complete\nrateCap.js\nverify product has not exceeded daily renewal limit (iteration 1 only)\n[r0][S0]\nstep_0\n— complete\nhonest_gate historical context (CA-18 §1)\nhistorical ProductSSOT scores are context only; current-run evidence decides refusal\n[r0][S0]\nstep_0\n— complete\nmultiPageCrawler.crawlSite (W6 STEP 5)\nwhole-site BFS — per-page signal flows into gate inputs\n[r?][S?]\nIteration 0 complete\n— complete\niteration_complete\n[r0][S0]\nstep_0\n— complete\nmultiPageCrawler.crawlSite (W6 STEP 5)\nwhole-site BFS complete — honest pagesActuallyCrawled + reasonStopped\n[r1][S3]\nDeep Crawl\nResearch\n— complete\nAgent #21 AggressiveCrawlConductor → crawlOutputAdapter\nstructured crawl output for downstream scoring + monitor producer\n\nQUICK ACCESS\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nFlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio · Patent pending\nPrivacy Policy\n·\nTerms of Use\n·\nAbout FlowAI →\nFlowAI is a pre-release internal engine. It does not hold SOC 2, ISO 27001, or any third-party compliance certification at this time, and there are no external customer case studies published. Use is limited to VEU AI Studio personnel and licensed pilots until those gates are cleared.\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy",
+  "errors": [],
+  "runConstructionRequest": {
+    "url": "https://flowai-dun.vercel.app/api/run-construction",
+    "postData": "{\"url\":\"https://saige-v2.vercel.app\",\"mode\":\"MANUAL\",\"operationalMode\":\"manual\",\"structuralLayer\":\"controlled\",\"analysisDepth\":\"quick\",\"flowHubPath\":\"production\"}",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://flowai-dun.vercel.app/flow-hub/production?structuralLayer=controlled&operationalMode=manual&analysisDepth=quick&flowHubPath=production",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+      "accept": "text/event-stream",
+      "sec-ch-ua": "\"HeadlessChrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    }
+  },
+  "runLogTextAfterWait": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nLAYER\nAuto\nSupervised\nControlled\nMODE\nAuto\nGuided\nManual\nDEPTH\nQuick\nStandard\nDeep\nPATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub - Production\nUpgrade an existing product URL in its owned delivery path.\nFlowAI Ready\n·\nLayer: Controlled\n·\nMode: Manual\n·\nDepth: Quick\n\nChoose how you want to work with your product, then select your operation mode.\n\nPRE-RELEASE · INTERNAL USE ONLY\nv0.1 · VEU AI Studio personnel + licensed pilots\n\nFlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target.\n\nWhat you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score.\n\nSETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch)\n\nAnalyze a Live Product\n\nSELECTED\n\nFlowAI will fetch and analyze the public-facing pages of your product.\n\nTest Fetch\n\nNote: URL must be publicly accessible. Authenticated or private apps use Card B or C.\n\nDescribe Your Product\n\nType or speak a description. Best for authenticated apps, internal tools, or early-stage products.\n\n🔒 Credentials are used only for this session and are never stored.\n\nVoice Input\n\nPaste Content or Upload Screenshots\n\nPaste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly.\n\nDrop screenshots here or click to upload — PNG, JPG, PDF\n\nCombine with Card B for best results on authenticated products.\n\nSETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH?\n\nAudit for prospect demo readiness\nPrepare for investor review\nFull governance and clearance cycle\nCompare two or more products\nCombine inputs into a unified specification\nBenchmark against competitors\nLaunch readiness check\nCustom — I will describe my objective\n\nSETUP 3 OF 3 — SELECT OPERATION MODE\n\nAuto\n\nFlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings.\n\nAnalysis Depth\n\nQuick\nStandard\nDeep\nGuided\n\nFlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes.\n\nMinutes to hours · 8 approval gates across the execution pipeline\n\nManual\nSELECTED\n\nYou direct each step. FlowAI executes what you specify and assists on demand.\n\nHours to days · Full operator control\n\nFresh Build\nEXPERIMENTAL\n\nFlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.\n\nFresh Build is off by default. Victor must enable FLOWAI_ENABLE_FRESH_BUILD before execution.\nMigrate\n\nFlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.\n\nPlan\n\nFile count and dependency count before execution\n\nProgress\n\nPer-file migration status during execution\n\nSummary\n\nFiles migrated, dependencies removed, upgrade URL\n\nRun FlowAI on this URL\nRUNNING...\n\nhttps://saige-v2.vercel.app\n\nCancel\nClose\n\n8-STEP PROGRESS\n\nActive: Design\n\nRUNNING...\n1\n\nResearch\n\n1. BrowserlessAUTOCALLABLE\n2. Anthropic ClaudeAUTOCALLABLE\n3. Perplexity AIAUTOUNAVAILABLE\n2\n\nDesign\n\n1. Anthropic ClaudeAUTOCALLABLE\n2. v0 by VercelAUTOSTUB UNAVAILABLE\n3. LovableAUTOSTUB UNAVAILABLE\n3\n\nBuild\n\n1. CodexAUTOSERVER CHECK PENDING\n2. Claude CodeAUTOPENDING APPROVAL\n3. CursorAUTOSTUB UNAVAILABLE\n4. BoltAUTOSTUB UNAVAILABLE\n5. WindsurfAUTOSTUB UNAVAILABLE\n6. ReplitAUTOSTUB UNAVAILABLE\n7. Base44AUTOSTUB UNAVAILABLE\n4\n\nQuality Audit\n\n1. PlaywrightAUTOCALLABLE\n2. BrowserlessAUTOCALLABLE\n3. Anthropic ClaudeAUTOCALLABLE\n5\n\nDeploy\n\n1. VercelAUTODEFERRED\n2. ReplitAUTOSTUB UNAVAILABLE\n6\n\nSelf-Renewal\n\n1. Claude CodeAUTOPENDING APPROVAL\n2. PlaywrightAUTOCALLABLE\n7\n\nGTM\n\n1. Anthropic ClaudeAUTOCALLABLE\n2. Perplexity AIAUTOUNAVAILABLE\n8\n\nMonitor\n\n1. BrowserlessAUTOCALLABLE\n2. PlaywrightAUTOCALLABLE\n3. Anthropic ClaudeAUTOCALLABLE\nSTATUS\nCODE\nNAMED STEP\nDETAILS\n[r?][S?]\nRegistry reused\n— complete\n[r?][S?]\nProductSSOT Context\n— complete\nProductSSOT context loaded\nSymbiotic Loop: run N+1 reads prior ProductSSOT state before execution\n[r0][S0]\nstep_0\n— complete\nGitHub operator credential mode\nselect repo-write capability mode from GITHUB_OPERATOR_TOKEN availability\n[r0][S0]\nstep_0\n— complete\nFlowAI unified input context\nSSOT §10/§12 - every 8-step run receives the same URL, description, and attachment context with explicit usage accounting\n[r0][S0]\nstep_0\n— complete\nFlow Hub axis envelope\nFlow Hub axes are normalized before execution; structural layer sets checkpoint ceiling and analysis depth sets crawl/scoring effort\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService (lazy-imported)\nCA-18 §6 — record per-step tool selection for governance trail\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for research\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: research\n1.\nPerplexity AI\n- ai_research\nscore: n/a\n2.\nTavily\n- search_api\nscore: n/a\n3.\nExa\n- search_api\nscore: n/a\n4.\nSerpAPI\n- search_api\nscore: n/a\n5.\nYou.com\n- search_api\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for design\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: design\n1.\nv0 by Vercel\n- ai_ui_gen\nscore: n/a\n2.\nFigma\n- design_tool\nscore: n/a\n3.\nFramer\n- visual_builder\nscore: n/a\n4.\nLovable\n- ai_app_gen\nscore: n/a\n5.\nCanva\n- visual_assets\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for build\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: build\n1.\nCodex\n- code\nscore: n/a\n2.\nClaude Code\n- code\nscore: n/a\n3.\nCursor\n- code\nscore: n/a\n4.\nBolt\n- ai_fullstack\nscore: n/a\n5.\nWindsurf\n- code\nscore: n/a\n6.\nReplit\n- cloud_ide\nscore: n/a\n7.\nBase44\n- source\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for qa_audit\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: qa_audit\n1.\nPlaywright\n- e2e_testing\nscore: n/a\n2.\nVitest\n- unit_testing\nscore: n/a\n3.\nCypress\n- e2e_testing\nscore: n/a\n4.\nJest\n- unit_testing\nscore: n/a\n5.\nPostman\n- api_testing\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for deploy\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: deploy\n1.\nVercel\n- edge_hosting\nscore: n/a\n2.\nRailway\n- fullstack_host\nscore: n/a\n3.\nFly.io\n- global_host\nscore: n/a\n4.\nNetlify\n- frontend_host\nscore: n/a\n5.\nRender\n- cloud_host\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for monitor\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: monitor\n1.\nSentry\n- error_tracking\nscore: n/a\n2.\nPostHog\n- product_analytics\nscore: n/a\n3.\nDatadog\n- apm_full_stack\nscore: n/a\n4.\nLogRocket\n- session_replay\nscore: n/a\n5.\nUptime Robot\n- uptime_checks\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for govern\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: govern\n1.\nFlowAI\n- self_governance\nscore: n/a\n2.\nGitHub\n- pr_workflow\nscore: n/a\n3.\nVercel\n- preview_deploy\nscore: n/a\n4.\nSentry\n- error_tracking\nscore: n/a\n5.\nPostHog\n- product_analytics\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService\nCA-18 §6 — ranked tool candidates for gtm\nRANKED TOOLS\nmode: MANUAL-ORCHESTRA\nstep: gtm\n1.\nPostHog\n- product_analytics\nscore: n/a\n2.\nStripe\n- payments\nscore: n/a\n3.\nSendGrid\n- email\nscore: n/a\n4.\nMailchimp\n- email_marketing\nscore: n/a\n5.\nBrevo\n- multichannel\nscore: n/a\n[r0][S0]\nstep_0\n— complete\nToolIntelligenceService — per-step ranked candidates\nCA-18 §6 — expose ranked tool candidates for operator visibility before live execution\n[r0][S1]\nProduct Discovery\nResearch\n— complete\nproduct_registry lookup\ncheck if this URL is a known registered product\n[r0][S1]\nProduct Discovery\nResearch\n— complete\noperator credential readiness\npreflight governance record for registered-product operator credentials\n[r0][S1]\nProduct Discovery\nResearch\n— complete\nupgradeTargetResolver.js\nenforce fork-based upgrade architecture: original repo is read-only, writes target upgrade repo\n[r0][S5]\nFive-Layer Scoring (Pre-Fix)\nQuality Audit\n— complete\nupgradeTargetProvisioner.js\nSSOT §9/§10 - determine whether upgrade repo and deployment can be auto-provisioned without touching the original\n[r0][S1]\nProduct Discovery\nResearch\n— complete\ngithubOperatorRepoProbe.js\nverify GITHUB_OPERATOR_TOKEN can read/write the active upgrade repo without exposing secrets\n[r0][S2]\nRate Cap + Runaway Check\nResearch\n— complete\nrateCap.js\nverify product has not exceeded daily renewal limit (iteration 1 only)\n[r0][S0]\nstep_0\n— complete\nhonest_gate historical context (CA-18 §1)\nhistorical ProductSSOT scores are context only; current-run evidence decides refusal\n[r0][S0]\nstep_0\n— complete\nmultiPageCrawler.crawlSite (W6 STEP 5)\nwhole-site BFS — per-page signal flows into gate inputs\n[r?][S?]\nIteration 0 complete\n— complete\niteration_complete\n[r0][S0]\nstep_0\n— complete\nmultiPageCrawler.crawlSite (W6 STEP 5)\nwhole-site BFS complete — honest pagesActuallyCrawled + reasonStopped\n[r1][S3]\nDeep Crawl\nResearch\n— complete\nAgent #21 AggressiveCrawlConductor → crawlOutputAdapter\nstructured crawl output for downstream scoring + monitor producer\n\nQUICK ACCESS\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nFlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio · Patent pending\nPrivacy Policy\n·\nTerms of Use\n·\nAbout FlowAI →\nFlowAI is a pre-release internal engine. It does not hold SOC 2, ISO 27001, or any third-party compliance certification at this time, and there are no external customer case studies published. Use is limited to VEU AI Studio personnel and licensed pilots until those gates are cleared.\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy"
+}
