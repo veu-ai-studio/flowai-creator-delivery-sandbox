@@ -4,7 +4,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/clerk-react';
 import PageNotFound from './lib/PageNotFound';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { AuthProvider, ClerkAwareAuthProvider, useAuth } from '@/lib/AuthContext';
 import { OrchestrationProvider } from '@/lib/OrchestrationContext';
 import { AgenticModeProvider } from '@/lib/AgenticModeContext';
 import { JobProvider } from '@/lib/JobContext';
@@ -125,9 +125,11 @@ function BaseAgentTestRoute() {
   return showBaseAgentTest ? <BaseAgentTest /> : <PageNotFound />;
 }
 
-function ClerkRuntimeProvider({ children }) {
+function AppAuthProvider({ children }) {
   const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-  if (!publishableKey) return children;
+  if (!publishableKey) {
+    return <AuthProvider>{children}</AuthProvider>;
+  }
   return (
     <ClerkProvider
       publishableKey={publishableKey}
@@ -135,7 +137,7 @@ function ClerkRuntimeProvider({ children }) {
       signUpUrl="/sign-up"
       afterSignOutUrl="/sign-in"
     >
-      {children}
+      <ClerkAwareAuthProvider>{children}</ClerkAwareAuthProvider>
     </ClerkProvider>
   );
 }
@@ -295,20 +297,18 @@ function App() {
   return (
     <QueryClientProvider client={queryClientInstance}>
       <Router>
-        <ClerkRuntimeProvider>
-          <AuthProvider>
-            <OrchestrationProvider>
-            <AgenticModeProvider>
-            <JobProvider>
-            <SessionProvider>
-              <AuthenticatedApp />
-              <Toaster />
-            </SessionProvider>
-            </JobProvider>
-            </AgenticModeProvider>
-            </OrchestrationProvider>
-          </AuthProvider>
-        </ClerkRuntimeProvider>
+        <AppAuthProvider>
+          <OrchestrationProvider>
+          <AgenticModeProvider>
+          <JobProvider>
+          <SessionProvider>
+            <AuthenticatedApp />
+            <Toaster />
+          </SessionProvider>
+          </JobProvider>
+          </AgenticModeProvider>
+          </OrchestrationProvider>
+        </AppAuthProvider>
       </Router>
     </QueryClientProvider>
   )
