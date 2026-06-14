@@ -36,6 +36,8 @@ import ClerkTicketSignInPage, {
   buildScrubbedTicketUrl,
   completeTicketSignIn,
   navigateAfterTicketSignIn,
+  readTicketFromSearch,
+  resolveInitialTicketRequest,
   resolveTicketRedirectUrl,
   scrubTicketFromCurrentUrl,
 } from '../src/pages/ClerkTicketSignInPage.jsx';
@@ -148,6 +150,27 @@ describe('Clerk ticket sign-in route', () => {
       search: '?ticket=%3Credacted-ticket%3E&redirectUrl=%2Fdashboard',
       hash: '',
     })).toBe('/sign-in-token?redirectUrl=%2Fdashboard');
+  });
+
+  it('captures the initial ticket and redirect before scrubbed rerenders can look ticketless', () => {
+    const initialSearch = '?ticket=%3Credacted-ticket%3E&redirect_url=%2Fflow-hub%2Fproduction';
+    const initialRequest = resolveInitialTicketRequest(initialSearch);
+    const scrubbedUrl = buildScrubbedTicketUrl({
+      pathname: '/sign-in-token',
+      search: initialSearch,
+      hash: '',
+    });
+    const scrubbedSearch = scrubbedUrl.slice(scrubbedUrl.indexOf('?'));
+    const pageSource = readFileSync(resolve(process.cwd(), 'src/pages/ClerkTicketSignInPage.jsx'), 'utf8');
+
+    expect(initialRequest).toEqual({
+      ticket: '<redacted-ticket>',
+      redirectPath: '/flow-hub/production',
+    });
+    expect(readTicketFromSearch(scrubbedSearch)).toBe('');
+    expect(pageSource).toContain('const [{ ticket, redirectPath }] = useState(() => resolveInitialTicketRequest());');
+    expect(pageSource).not.toContain('const search = currentSearch();');
+    expect(pageSource).not.toContain('useMemo');
   });
 
   it('navigates to the default or supplied same-origin redirect after successful activation', () => {
