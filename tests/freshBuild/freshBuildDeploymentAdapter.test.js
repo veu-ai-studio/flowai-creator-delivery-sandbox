@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   probePreviewAccess,
   parseGitHubRepoUrl,
+  resolveVercelBypassSecret,
   resolveGitHubWriteTokenCandidates,
   writeGeneratedCodebaseToUpgradeRepo,
 } from '../../src/lib/freshBuild/freshBuildDeploymentAdapter.js';
@@ -77,6 +78,23 @@ describe('Fresh Build deployment adapter', () => {
       { source: 'GITHUB_OPERATOR_TOKEN', token: 'same-token' },
       { source: 'GITHUB_TOKEN', token: 'ambient-token' },
     ]);
+  });
+
+  it('resolves product-scoped Vercel bypass secrets before the automation fallback', () => {
+    expect(resolveVercelBypassSecret('saige-v2', {
+      VERCEL_BYPASS_SECRET_SAIGE: 'product-secret',
+      VERCEL_AUTOMATION_BYPASS_SECRET: 'automation-secret',
+    })).toEqual({
+      secret: 'product-secret',
+      source: 'VERCEL_BYPASS_SECRET_SAIGE',
+    });
+
+    expect(resolveVercelBypassSecret('new-url-product', {
+      VERCEL_AUTOMATION_BYPASS_SECRET: 'automation-secret',
+    })).toEqual({
+      secret: 'automation-secret',
+      source: 'VERCEL_AUTOMATION_BYPASS_SECRET',
+    });
   });
 
   it('requires an authorized upgrade repo before writing', async () => {
@@ -680,6 +698,7 @@ describe('Fresh Build deployment adapter', () => {
       previewUrl: 'saige-v2-auth.vercel.app',
       deploymentId: 'dep_auth',
       fetchImpl,
+      env: {},
     });
 
     expect(result).toMatchObject({
@@ -693,6 +712,35 @@ describe('Fresh Build deployment adapter', () => {
       method: 'GET',
       redirect: 'manual',
     }));
+  });
+
+  it('injects the Vercel automation bypass header for protected Fresh Build previews without returning the secret', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      status: 200,
+      headers: { get: () => null },
+      text: vi.fn(),
+    }));
+
+    const result = await probePreviewAccess({
+      previewUrl: 'flowai-preview.vercel.app',
+      deploymentId: 'dep_preview',
+      productId: 'url-416b941ffbc3b7d5',
+      env: { VERCEL_AUTOMATION_BYPASS_SECRET: 'automation-secret-never-log' },
+      fetchImpl,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith('https://flowai-preview.vercel.app', expect.objectContaining({
+      headers: expect.objectContaining({
+        'x-vercel-protection-bypass': 'automation-secret-never-log',
+      }),
+    }));
+    expect(result).toMatchObject({
+      previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+      httpStatus: 200,
+      bypassAttempted: true,
+      bypassSource: 'VERCEL_AUTOMATION_BYPASS_SECRET',
+    });
+    expect(JSON.stringify(result)).not.toContain('automation-secret-never-log');
   });
 
   it('returns deployment configuration required after a successful safe branch write when Vercel is not configured', async () => {
