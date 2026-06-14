@@ -61,6 +61,52 @@ function firstProductEnv(env, prefix, suffixes) {
   return '';
 }
 
+export function resolveGitHubWriteTokenCandidates(env = {}) {
+  const candidates = [
+    { source: 'GITHUB_OPERATOR_TOKEN', token: env?.GITHUB_OPERATOR_TOKEN },
+    { source: 'GITHUB_PAT', token: env?.GITHUB_PAT },
+    { source: 'GITHUB_TOKEN', token: env?.GITHUB_TOKEN },
+  ];
+  const seen = new Set();
+  return candidates
+    .map((candidate) => ({
+      source: candidate.source,
+      token: firstNonEmpty(candidate.token),
+    }))
+    .filter((candidate) => {
+      if (!candidate.token || seen.has(candidate.token)) return false;
+      seen.add(candidate.token);
+      return true;
+    });
+}
+
+function githubWriteFailureResult(error, credentialSource = null) {
+  const code = error?.code || 'GITHUB_WRITE_FAILED';
+  const githubDetail = firstNonEmpty(error?.githubError);
+  const message = `${String(error?.message || 'Fresh Build GitHub write failed')}${githubDetail ? `: ${githubDetail}` : ''}`.slice(0, 400);
+  return {
+    ok: false,
+    status: 'WRITE_FAILED',
+    reason: code,
+    message,
+    previewUrl: null,
+    filesWritten: 0,
+    failureStage: 'deployment_adapter',
+    credentialSource,
+    failure: {
+      stage: 'deployment_adapter',
+      code,
+      message,
+      githubStatus: Number.isFinite(error?.status) ? error.status : null,
+      githubError: githubDetail || null,
+      credentialSource,
+      deploymentId: null,
+      readyState: null,
+      attempts: null,
+    },
+  };
+}
+
 export function parseGitHubRepoUrl(value) {
   const text = nonEmptyString(value).replace(/\.git$/i, '');
   if (!text) return null;
@@ -416,17 +462,46 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   }
 
   const baseBranch = firstNonEmpty(productConfig?.upgrade_base_branch, productConfig?.base_branch, productConfig?.branch, 'main');
-  const client = githubClient || createGitHubTreeCommitClient({
-    token: firstNonEmpty(env?.GITHUB_OPERATOR_TOKEN, env?.GITHUB_TOKEN, env?.GITHUB_PAT),
-  });
-  const commitResult = await client.createCommit({
-    owner: repoTarget.owner,
-    repo: repoTarget.repo,
-    baseBranch,
-    branchName: targetBranch,
-    files: generatedCodebase.files,
-    message: `FlowAI Fresh Build output${runId ? ` (${runId})` : ''}`,
-  });
+  const tokenCandidates = githubClient ? [] : resolveGitHubWriteTokenCandidates(env);
+  if (!githubClient && tokenCandidates.length === 0) {
+    return githubWriteFailureResult(
+      makeGitHubError('GITHUB_TOKEN_REQUIRED', 'GitHub token required for Fresh Build upgrade repo write'),
+      null,
+    );
+  }
+
+  const clients = githubClient
+    ? [{ client: githubClient, source: 'injected_github_client' }]
+    : tokenCandidates.map((candidate) => ({
+      client: createGitHubTreeCommitClient({ token: candidate.token }),
+      source: candidate.source,
+    }));
+  let commitResult = null;
+  let credentialSource = null;
+  let lastGitHubError = null;
+  for (const [index, candidate] of clients.entries()) {
+    try {
+      commitResult = await candidate.client.createCommit({
+        owner: repoTarget.owner,
+        repo: repoTarget.repo,
+        baseBranch,
+        branchName: targetBranch,
+        files: generatedCodebase.files,
+        message: `FlowAI Fresh Build output${runId ? ` (${runId})` : ''}`,
+      });
+      credentialSource = candidate.source;
+      break;
+    } catch (error) {
+      lastGitHubError = error;
+      if (error?.code === 'GITHUB_AUTH_FAILED' && index < clients.length - 1) {
+        continue;
+      }
+      return githubWriteFailureResult(error, candidate.source);
+    }
+  }
+  if (!commitResult) {
+    return githubWriteFailureResult(lastGitHubError, credentialSource);
+  }
 
   const vercelArgs = resolveVercelArgs({
     productConfig,
@@ -450,6 +525,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       commitSha: commitResult.commitSha,
       branchUrl: commitResult.branchUrl,
       previewUrl: null,
+      credentialSource,
     };
   }
 
@@ -479,6 +555,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       deploymentId: error?.deploymentId || null,
       previewAccessStatus: error?.previewAccessStatus || null,
       previewAccess: error?.previewAccess || null,
+      credentialSource,
       failureStage: 'vercel_deploy',
       failure: {
         stage: 'vercel_deploy',
@@ -487,6 +564,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
         deploymentId: error?.deploymentId || null,
         readyState: error?.readyState || null,
         attempts: Number.isFinite(error?.attempts) ? error.attempts : null,
+        credentialSource,
       },
     };
   }
@@ -510,6 +588,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     inspectorUrl: deployment?.inspectorUrl || null,
     previewAccessStatus: previewAccess?.previewAccessStatus || PREVIEW_ACCESS_STATUS.UNKNOWN,
     previewAccess,
+    credentialSource,
   };
 }
 
@@ -520,6 +599,7 @@ export const __test = Object.freeze({
   makeBranchName,
   productEnvSuffixes,
   resolveVercelArgs,
+  resolveGitHubWriteTokenCandidates,
   normalizePreviewUrl,
   classifyPreviewResponse,
 });

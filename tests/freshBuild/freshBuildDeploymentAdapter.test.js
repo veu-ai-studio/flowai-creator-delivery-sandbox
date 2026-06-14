@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   probePreviewAccess,
   parseGitHubRepoUrl,
+  resolveGitHubWriteTokenCandidates,
   writeGeneratedCodebaseToUpgradeRepo,
 } from '../../src/lib/freshBuild/freshBuildDeploymentAdapter.js';
 
@@ -28,6 +29,13 @@ function browserClearProbe() {
   }));
 }
 
+function githubJsonResponse(status, body) {
+  return {
+    status,
+    text: vi.fn(async () => JSON.stringify(body)),
+  };
+}
+
 describe('Fresh Build deployment adapter', () => {
   it('parses supported GitHub repo URL forms', () => {
     expect(parseGitHubRepoUrl('https://github.com/veu-ai-studio/saige-v2')).toEqual({
@@ -42,6 +50,33 @@ describe('Fresh Build deployment adapter', () => {
       owner: 'veu-ai-studio',
       repo: 'saige-v2',
     });
+  });
+
+  it('prefers explicit write credentials before ambient GitHub tokens', () => {
+    const candidates = resolveGitHubWriteTokenCandidates({
+      GITHUB_TOKEN: 'ambient-read-token',
+      GITHUB_PAT: 'pat-write-token',
+      GITHUB_OPERATOR_TOKEN: 'operator-write-token',
+    });
+
+    expect(candidates.map((candidate) => candidate.source)).toEqual([
+      'GITHUB_OPERATOR_TOKEN',
+      'GITHUB_PAT',
+      'GITHUB_TOKEN',
+    ]);
+  });
+
+  it('deduplicates identical GitHub write token values without exposing them', () => {
+    const candidates = resolveGitHubWriteTokenCandidates({
+      GITHUB_OPERATOR_TOKEN: 'same-token',
+      GITHUB_PAT: 'same-token',
+      GITHUB_TOKEN: 'ambient-token',
+    });
+
+    expect(candidates).toEqual([
+      { source: 'GITHUB_OPERATOR_TOKEN', token: 'same-token' },
+      { source: 'GITHUB_TOKEN', token: 'ambient-token' },
+    ]);
   });
 
   it('requires an authorized upgrade repo before writing', async () => {
@@ -256,6 +291,109 @@ describe('Fresh Build deployment adapter', () => {
       repo: 'flowai',
       branchName: 'flowai/fresh-build-veu-ai-studio-website-veusite-run-1',
     }));
+  });
+
+  it('retries Fresh Build GitHub writes with PAT when an earlier token is rejected', async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchCalls = [];
+    const fetchImpl = vi.fn(async (url, options = {}) => {
+      const auth = options.headers?.Authorization || '';
+      fetchCalls.push({ url: String(url), auth });
+      if (auth === 'Bearer rejected-token') {
+        return githubJsonResponse(403, { message: 'Bad credentials' });
+      }
+      if (String(url).includes('/git/ref/heads/main')) {
+        return githubJsonResponse(200, { object: { sha: 'base_sha' } });
+      }
+      if (String(url).includes('/git/blobs')) {
+        return githubJsonResponse(201, { sha: `blob_${fetchCalls.length}` });
+      }
+      if (String(url).includes('/git/trees')) {
+        return githubJsonResponse(201, { sha: 'tree_sha' });
+      }
+      if (String(url).includes('/git/commits')) {
+        return githubJsonResponse(201, { sha: 'commit_sha' });
+      }
+      if (String(url).includes('/git/refs')) {
+        return githubJsonResponse(201, { ref: 'refs/heads/flowai/fresh-build-veu-run' });
+      }
+      return githubJsonResponse(404, { message: 'unexpected path' });
+    });
+    globalThis.fetch = fetchImpl;
+    const deployPreviewImpl = vi.fn(async () => ({
+      deploymentId: 'dep_retry',
+      previewUrl: 'https://flowai-retry.vercel.app',
+    }));
+    const probePreviewAccessImpl = browserClearProbe();
+
+    try {
+      const result = await writeGeneratedCodebaseToUpgradeRepo({
+        generatedCodebase: generatedCodebase(),
+        productName: 'VEU AI Studio Website',
+        runId: 'run-token-retry',
+        productConfig: {
+          product_id: 'url-416b941ffbc3b7d5',
+          product_url: 'https://victorudo.com',
+          github_repo_url: 'https://github.com/victor2081new-cloud/flowai',
+          vercel_project_id: 'prj_flowai',
+          vercel_org_id: 'team_flowai',
+        },
+        env: {
+          GITHUB_OPERATOR_TOKEN: 'rejected-token',
+          GITHUB_PAT: 'working-pat-token',
+          VERCEL_OPERATOR_TOKEN: 'vercel-token',
+        },
+        deployPreviewImpl,
+        probePreviewAccessImpl,
+      });
+
+      expect(result).toMatchObject({
+        ok: true,
+        status: 'WRITTEN_AND_DEPLOYED',
+        credentialSource: 'GITHUB_PAT',
+        commitSha: 'commit_sha',
+        previewUrl: 'https://flowai-retry.vercel.app',
+      });
+      expect(fetchCalls.some((call) => call.auth === 'Bearer rejected-token')).toBe(true);
+      expect(fetchCalls.some((call) => call.auth === 'Bearer working-pat-token')).toBe(true);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('returns non-secret GitHub diagnostics when every write credential fails', async () => {
+    const githubError = new Error('GitHub POST /repos/acme/app/git/blobs failed with 403');
+    githubError.code = 'GITHUB_AUTH_FAILED';
+    githubError.status = 403;
+    githubError.githubError = 'Resource not accessible by personal access token';
+    const githubClient = {
+      createCommit: vi.fn(async () => { throw githubError; }),
+    };
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase(),
+      productName: 'VEU AI Studio Website',
+      runId: 'run-token-failure',
+      productConfig: {
+        product_id: 'url-416b941ffbc3b7d5',
+        github_repo_url: 'https://github.com/victor2081new-cloud/flowai',
+      },
+      githubClient,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 'WRITE_FAILED',
+      reason: 'GITHUB_AUTH_FAILED',
+      credentialSource: 'injected_github_client',
+      failure: {
+        githubStatus: 403,
+        githubError: 'Resource not accessible by personal access token',
+        credentialSource: 'injected_github_client',
+      },
+    });
+    expect(JSON.stringify(result)).not.toContain('ghp_');
+    expect(JSON.stringify(result)).not.toContain('github_pat_');
   });
 
   it('resolves Vercel args from existing operator envs without Fresh Build-specific env vars', async () => {
