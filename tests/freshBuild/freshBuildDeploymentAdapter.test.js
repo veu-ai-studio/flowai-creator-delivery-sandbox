@@ -382,7 +382,7 @@ describe('Fresh Build deployment adapter', () => {
     }
   });
 
-  it('uses a single create-tree request with inline file content instead of per-file blob writes', async () => {
+  it('uses a clean create-tree request with inline file content instead of retaining base repo files', async () => {
     const originalFetch = globalThis.fetch;
     const fetchCalls = [];
     const fetchImpl = vi.fn(async (url, options = {}) => {
@@ -395,9 +395,6 @@ describe('Fresh Build deployment adapter', () => {
       }
       if (String(url).includes('/git/ref/heads/main')) {
         return githubJsonResponse(200, { object: { sha: 'base_sha' } });
-      }
-      if (String(url).includes('/git/commits/base_sha')) {
-        return githubJsonResponse(200, { tree: { sha: 'base_tree_sha' } });
       }
       if (String(url).includes('/git/trees')) {
         return githubJsonResponse(201, { sha: 'tree_sha' });
@@ -435,6 +432,7 @@ describe('Fresh Build deployment adapter', () => {
         probePreviewAccessImpl,
       });
       const blobCall = fetchCalls.find((call) => call.url.includes('/git/blobs'));
+      const baseCommitRead = fetchCalls.find((call) => call.url.includes('/git/commits/base_sha'));
       const treeCall = fetchCalls.find((call) => call.url.includes('/git/trees'));
       const commitCall = fetchCalls.find((call) => call.url.includes('/git/commits') && call.body);
       const treeBody = JSON.parse(treeCall.body);
@@ -446,7 +444,8 @@ describe('Fresh Build deployment adapter', () => {
         credentialSource: 'GITHUB_PAT',
       });
       expect(blobCall).toBeUndefined();
-      expect(treeBody.base_tree).toBe('base_tree_sha');
+      expect(baseCommitRead).toBeUndefined();
+      expect(treeBody.base_tree).toBeUndefined();
       expect(treeBody.tree).toEqual(expect.arrayContaining([
         expect.objectContaining({
           path: 'src/App.jsx',
