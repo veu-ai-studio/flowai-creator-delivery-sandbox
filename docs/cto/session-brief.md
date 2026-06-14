@@ -8,179 +8,124 @@ matrixArtifact edited: no
 
 ## Executive Summary
 
-Tonight's acceleration tracks produced real progress and one honest blocker:
+Tonight produced the strongest FlowAI proof so far:
 
-- Production is healthy on the merged Clerk redirect runtime path.
-- CB2 production regression audit: PASS.
-- CT2 axis wiring rerun: PASS.
-- CT2 Clerk ticket redirect/session rerun: PASS.
-- Batch VERIFIED promotion packet is submitted for W04/CEO authorization only.
-- Path 3 Fresh Build proof ran live and blocked honestly at code-generation safety validation before any branch/deploy.
-- CB has been dispatched to repair Fresh Build codegen recovery.
+- Path 3 Fresh Build now generates a clean 342-file codebase.
+- FlowAI creates a GitHub branch for that generated codebase.
+- FlowAI deploys it to Vercel.
+- FlowAI accesses the protected preview through the automation bypass header.
+- FlowAI captures scoring: baseline `93`, final `100`, delta `+7`.
+- CT2 independently confirmed the generated site opens in a browser with the bypass header.
 
-No VERIFIED promotion has been applied. No canonical SSOT edit has been made.
+Important boundary:
 
-## Current Runtime
+- The Fresh Build URL is still not anonymously public. Anonymous browser access returns `401`.
+- CT2 verdict is `PASS_WITH_BYPASS_NOT_PUBLIC`, not `PASS_PUBLIC`.
+- No VERIFIED movement is authorized from this proof alone.
 
-Production URL:
+## Current Production
+
+FlowAI production:
 
 - `https://flowai-dun.vercel.app`
 
-Production health currently observed:
+Latest runtime commit used for the clean-tree proof:
 
-- commitFull: `717b6777e9c1ac8836f63c11637778dfead4ee27`
-- deploymentUrl: `https://flowai-arh3fkpzb-veu-ai-studio.vercel.app`
-- branch: `main`
-- `clerkReady`: true
-- `githubAppReady`: true
-- `inngestReady`: true
-- auth status: PASS
+- `747ae221f0501ca51d74dc33c00735e98e44da3a`
 
-Origin/main latest docs state:
+Latest repo evidence commit:
 
-- `c0b0c2d docs/cto | update batch verified packet`
+- `21c951d3bcdf24627946730f8e8e5341660502d0`
 
-Note: `c0b0c2d` is docs-only. Runtime proof should cite the production deployment actually observed, currently `717b6777...`.
+Production was redeployed after the evidence commit so `/api/health` can be kept aligned with current main.
 
-## Completed Tracks
+## Path 3 Fresh Build Result
 
-### Track 1 - Clerk Session/Redirect Fix
+Run:
 
-Status: PASS.
+- run ID: `cto-path3-veusite-cleantree-20260614-1109`
+- input URL: `https://victorudo.com`
+- mode: `FRESH_BUILD`
 
-Runtime path merged and promoted:
+Generated output:
 
-- Merge commit: `7c7e978f5451aa96c1db6ffb7689a122230f2d52`
-- Production later advanced to docs commit `717b6777e9c1ac8836f63c11637778dfead4ee27`
+- branch: `flowai/fresh-build-url-416b941ffbc3b7d5-cto-path3-veusite-cleantree-20260614-1109`
+- branch commit: `d6d779f1b7b21083e4dbe01c63bcb84276da8bcd`
+- generated branch file count: `342`
+- retained FlowAI platform paths: none found
+- Vercel deployment ID: `dpl_VRFEWdn8K5Egp5Y37J6Y3F4gSkzB`
+- preview URL: `https://flowai-qia5zr2ag-veu-ai-studio.vercel.app`
 
-CT2 rerun result:
+Score:
 
-- `docs/cto/ct2-clerk-ticket-redirect-live-rerun-result-20260614.md`
+- baseline score: `93`
+- final score: `100`
+- score delta: `7`
+- score status: `SCORE_CAPTURED`
 
-CT2 confirmed:
+Evidence:
 
-- FlowAI-owned `/sign-in-token` route used.
-- Clerk hosted `signInToken.url` not opened.
-- Ticket scrubbed from address bar and visible text.
-- Final route landed on `/flow-hub/production`.
-- Flow Hub Production loaded.
-- Clerk frontend state became signed in.
-- App-origin `/api/me` returned `authenticated:true`, `authMode:"clerk"`.
-- Fresh no-session `/api/me` remained anonymous while `AUTH_REQUIRED=false`.
-- Disposable Clerk user was cleaned up.
+- `docs/cto/path3-fresh-build-veusite-cleantree-result-20260614.md`
+- `docs/cto/path3-fresh-build-veusite-cleantree-proof-20260614/`
+- `docs/cto/ct2-path3-fresh-build-clean-tree-acceptance-result-20260614.md`
 
-### Track 2 - CB2 Production Regression Audit
+## Fixes Merged
 
-Status: PASS.
+Fresh Build GitHub tree batching:
 
-Result:
+- avoids per-file GitHub blob creation;
+- fixed GitHub secondary rate-limit blocker.
 
-- `docs/cto/cb2-production-regression-audit-result-20260614.md`
+Fresh Build preview bypass:
 
-CB2 confirmed:
+- injects `x-vercel-protection-bypass` only for `*.vercel.app` previews when an authorized bypass secret exists;
+- records only `bypassAttempted` and `bypassSource`, never secret values.
 
-- `/api/health`, `/api/version`, and `/api/me` coherent.
-- Flow Hub Production/Migration/Fresh Build routes load.
-- Clerk `/sign-in`, `/sign-up`, `/sign-in-token` routes render honestly.
-- Forge Build surface does not overclaim deployed URL, preview URL, branch, upgrade success, or VERIFIED status.
-- TIM Build panel shows Codex ranked first.
+Fresh Build clean tree:
 
-Non-blocking finding:
+- creates generated-output branches without `base_tree`;
+- keeps base commit as parent for traceability;
+- prevents old FlowAI platform files from being inherited into Fresh Build outputs.
 
-- Repeated telemetry 405s from `/app-logs/.../log-user-in-app/...` and `/api/apps/.../analytics/track/batch`.
-- Page rendering and audit gates were not blocked.
+## CT2 Result
 
-### Track 3 - CT2 Axis Wiring Rerun
+CT2 verdict:
 
-Status: PASS.
-
-Result:
-
-- `docs/cto/ct2-axis-wiring-live-rerun-result-20260614.md`
+- `PASS_WITH_BYPASS_NOT_PUBLIC`
 
 CT2 confirmed:
 
-- All four sidebar axes are visible.
-- Axis values are independently selectable.
-- Production/Migration/Fresh Build path switching works.
-- Selected axis envelope reaches `/api/run-construction`.
-- Run log includes Flow Hub axis envelope.
-- No false deployed URL or VERIFIED claim was observed.
+- anonymous browser: HTTP `401`, Vercel login/protection page;
+- bypass-header browser: HTTP `200`, generated Victor Udo / VEU AI Studio / FlowAI-positioning site loaded;
+- branch has exactly `342` files;
+- no retained forbidden platform path prefixes;
+- Vercel inspect shows root/static build only, no FlowAI API functions.
 
-### Track 4 - Batch VERIFIED Promotion Packet
+CT2 evidence commit:
 
-Status: submitted for W04/CEO authorization only.
+- `21c951d3bcdf24627946730f8e8e5341660502d0`
 
-Packet:
+## Current Blocker
+
+The remaining blocker to the CEO-facing success definition is public delivery:
+
+- Fresh Build can generate, branch, deploy, access, and score the generated site.
+- Victor cannot open the preview anonymously because Vercel preview protection returns `401`.
+
+The next implementation choice is to produce a public URL without replacing FlowAI production. Likely path:
+
+- deploy Fresh Build output to a separate generated Vercel project or another public hosting target;
+- or configure an approved public delivery route/alias that does not weaken FlowAI operator app protection.
+
+Do not promote the protected preview as a public deployed URL.
+
+## VERIFIED Packet
+
+Batch VERIFIED packet remains submitted for W04/CEO authorization only:
 
 - `docs/cto/verified-promotion-packet-batch-20260614.md`
 
-Candidate claims included:
-
-1. Path 1 Migration deployed URL: `https://saige-v2.vercel.app`
-2. Structural Layer axis behavior
-3. Operational Mode axis behavior
-4. Analysis Depth axis behavior
-5. Flow Hub Path axis behavior
-6. TIM Build Step Codex visibility/ranking
-7. Clerk ticket redirect and app-origin session
-
-Guardrail:
-
-- Do not edit matrixArtifact until W04/CEO authorizes exact row mapping and CD/CR review.
-
-### Track 5 - Fresh Build Flag And Path 3 Proof
-
-Status: BLOCK, honest fail-safe.
-
-Production env changes completed:
-
-- `FLOWAI_ENABLE_FRESH_BUILD=true`
-- `VITE_FLOWAI_ENABLE_FRESH_BUILD=true`
-
-Live proof:
-
-- `docs/cto/path3-fresh-build-veusite-proof-20260614.md`
-- Run ID: `cto-path3-veusite-20260614-0615`
-- Endpoint: `POST https://flowai-dun.vercel.app/api/run-construction`
-- Mode: `FRESH_BUILD`
-- Input: `https://victorudo.com`
-- Description synthesized Victor's site plus FlowAI positioning.
-
-Observed:
-
-- Feature extractor completed: 20 pages, 312 components.
-- Design synthesizer completed.
-- Codebase generator started.
-- Safety validation blocked invalid generated code.
-
-Final blocker:
-
-`GeneratedCodebase failed safety validation: src/components/ListListXlrmdf.jsx has unbalanced ()`
-
-No branch, PR, deployment, preview URL, post-fix score, or ProductSSOT persistence was produced.
-
-CB dispatch:
-
-- `docs/cto/cb-path3-fresh-build-codegen-recovery-dispatch-20260614.md`
-- Target branch: `fix/path3-fresh-build-codegen-recovery`
-- Goal: keep validation strict while repairing deterministic codegen/recovery.
-
-## Current Truth State
-
-- First real deployed URL remains Path 1 Migration: `https://saige-v2.vercel.app`.
-- Full end-to-end forge run with branch, deployed URL, post-fix score, governance write, and ProductSSOT persistence is still not proven.
-- Path 3 is enabled but blocked at generated-code validation.
-- Path 4 still requires CEO approval of the three-URL synthesis direction before execution.
-- Matrix artifact VERIFIED count remains unchanged until CEO/W04 authorization and reviewed matrix edit.
-
-## Next Actions
-
-1. W04/CEO: decide whether to authorize the batch VERIFIED promotion mapping.
-2. CB: build `fix/path3-fresh-build-codegen-recovery`.
-3. CTO: dispatch CD/CR after CB returns Fresh Build recovery branch.
-4. CTO/CT2: rerun Path 3 proof after recovery merge/deploy.
-5. CTO: keep production identity coherent after final docs/runtime merges.
+No matrix edit has been made.
 
 ## Victor Action Required
 
@@ -188,7 +133,7 @@ None right now.
 
 Victor is needed only for:
 
-- VERIFIED promotion authorization and exact claim appetite;
+- VERIFIED promotion authorization and exact row mapping;
 - Path 4 three-URL synthesis approval;
 - canonical SSOT document changes;
 - new product/business direction decisions.
