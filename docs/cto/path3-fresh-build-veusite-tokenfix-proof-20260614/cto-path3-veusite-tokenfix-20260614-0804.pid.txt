@@ -1,0 +1,5 @@
+﻿PID=27792
+StartedAt=2026-06-14T04:04:02.5738256-04:00
+RunId=cto-path3-veusite-tokenfix-20260614-0804
+Output=docs\cto\path3-fresh-build-veusite-tokenfix-proof-20260614\cto-path3-veusite-tokenfix-20260614-0804.sse
+Error=docs\cto\path3-fresh-build-veusite-tokenfix-proof-20260614\cto-path3-veusite-tokenfix-20260614-0804.stderr.txt

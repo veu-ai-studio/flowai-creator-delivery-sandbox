@@ -1,0 +1,5 @@
+﻿PID=26844
+StartedAt=2026-06-14T03:54:50.3175316-04:00
+RunId=cto-path3-veusite-registryfallback-20260614-0755
+Output=docs\cto\path3-fresh-build-veusite-registryfallback-proof-20260614\cto-path3-veusite-registryfallback-20260614-0755.sse
+Error=docs\cto\path3-fresh-build-veusite-registryfallback-proof-20260614\cto-path3-veusite-registryfallback-20260614-0755.stderr.txt
