@@ -305,6 +305,9 @@ describe('Fresh Build deployment adapter', () => {
       if (String(url).includes('/git/ref/heads/main')) {
         return githubJsonResponse(200, { object: { sha: 'base_sha' } });
       }
+      if (String(url).includes('/git/commits/base_sha')) {
+        return githubJsonResponse(200, { tree: { sha: 'base_tree_sha' } });
+      }
       if (String(url).includes('/git/blobs')) {
         return githubJsonResponse(201, { sha: `blob_${fetchCalls.length}` });
       }
@@ -356,6 +359,84 @@ describe('Fresh Build deployment adapter', () => {
       });
       expect(fetchCalls.some((call) => call.auth === 'Bearer rejected-token')).toBe(true);
       expect(fetchCalls.some((call) => call.auth === 'Bearer working-pat-token')).toBe(true);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('uses a single create-tree request with inline file content instead of per-file blob writes', async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchCalls = [];
+    const fetchImpl = vi.fn(async (url, options = {}) => {
+      fetchCalls.push({
+        url: String(url),
+        body: options.body || null,
+      });
+      if (String(url).includes('/git/blobs')) {
+        return githubJsonResponse(403, { message: 'secondary rate limit' });
+      }
+      if (String(url).includes('/git/ref/heads/main')) {
+        return githubJsonResponse(200, { object: { sha: 'base_sha' } });
+      }
+      if (String(url).includes('/git/commits/base_sha')) {
+        return githubJsonResponse(200, { tree: { sha: 'base_tree_sha' } });
+      }
+      if (String(url).includes('/git/trees')) {
+        return githubJsonResponse(201, { sha: 'tree_sha' });
+      }
+      if (String(url).includes('/git/commits')) {
+        return githubJsonResponse(201, { sha: 'commit_sha' });
+      }
+      if (String(url).includes('/git/refs')) {
+        return githubJsonResponse(201, { ref: 'refs/heads/flowai/fresh-build-tree-batch' });
+      }
+      return githubJsonResponse(404, { message: 'unexpected path' });
+    });
+    globalThis.fetch = fetchImpl;
+    const deployPreviewImpl = vi.fn(async () => ({
+      deploymentId: 'dep_tree',
+      previewUrl: 'https://flowai-tree.vercel.app',
+    }));
+    const probePreviewAccessImpl = browserClearProbe();
+
+    try {
+      const result = await writeGeneratedCodebaseToUpgradeRepo({
+        generatedCodebase: generatedCodebase(),
+        productName: 'VEU AI Studio Website',
+        runId: 'run-tree-batch',
+        productConfig: {
+          github_repo_url: 'https://github.com/victor2081new-cloud/flowai',
+          vercel_project_id: 'prj_flowai',
+          vercel_org_id: 'team_flowai',
+        },
+        env: {
+          GITHUB_PAT: 'working-pat-token',
+          VERCEL_OPERATOR_TOKEN: 'vercel-token',
+        },
+        deployPreviewImpl,
+        probePreviewAccessImpl,
+      });
+      const blobCall = fetchCalls.find((call) => call.url.includes('/git/blobs'));
+      const treeCall = fetchCalls.find((call) => call.url.includes('/git/trees'));
+      const commitCall = fetchCalls.find((call) => call.url.includes('/git/commits') && call.body);
+      const treeBody = JSON.parse(treeCall.body);
+      const commitBody = JSON.parse(commitCall.body);
+
+      expect(result).toMatchObject({
+        ok: true,
+        status: 'WRITTEN_AND_DEPLOYED',
+        credentialSource: 'GITHUB_PAT',
+      });
+      expect(blobCall).toBeUndefined();
+      expect(treeBody.base_tree).toBe('base_tree_sha');
+      expect(treeBody.tree).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          path: 'src/App.jsx',
+          type: 'blob',
+          content: expect.stringContaining('Fresh Build'),
+        }),
+      ]));
+      expect(commitBody.parents).toEqual(['base_sha']);
     } finally {
       globalThis.fetch = originalFetch;
     }

@@ -312,28 +312,17 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
         method: 'GET',
         path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/ref/heads/${encodeURIComponent(baseBranch)}`,
       });
-      const baseSha = baseRef?.object?.sha;
-      if (!baseSha) throw makeGitHubError('GITHUB_WRITE_FAILED', 'Base branch ref did not include a commit sha');
+      const baseCommitSha = baseRef?.object?.sha;
+      if (!baseCommitSha) throw makeGitHubError('GITHUB_WRITE_FAILED', 'Base branch ref did not include a commit sha');
 
-      const blobs = [];
-      for (const file of files) {
-        const blob = await githubRequest({
-          fetchImpl,
-          token,
-          method: 'POST',
-          path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/blobs`,
-          body: {
-            content: file.content,
-            encoding: 'utf-8',
-          },
-        });
-        blobs.push({
-          path: file.path,
-          mode: '100644',
-          type: 'blob',
-          sha: blob.sha,
-        });
-      }
+      const baseCommit = await githubRequest({
+        fetchImpl,
+        token,
+        method: 'GET',
+        path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/commits/${encodeURIComponent(baseCommitSha)}`,
+      });
+      const baseTreeSha = baseCommit?.tree?.sha;
+      if (!baseTreeSha) throw makeGitHubError('GITHUB_WRITE_FAILED', 'Base commit did not include a tree sha');
 
       const tree = await githubRequest({
         fetchImpl,
@@ -341,8 +330,13 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
         method: 'POST',
         path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees`,
         body: {
-          base_tree: baseSha,
-          tree: blobs,
+          base_tree: baseTreeSha,
+          tree: files.map((file) => ({
+            path: file.path,
+            mode: '100644',
+            type: 'blob',
+            content: file.content,
+          })),
         },
       });
 
@@ -354,7 +348,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
         body: {
           message,
           tree: tree.sha,
-          parents: [baseSha],
+          parents: [baseCommitSha],
         },
       });
 
