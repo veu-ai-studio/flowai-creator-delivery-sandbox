@@ -305,6 +305,9 @@ describe('Fresh Build deployment adapter', () => {
       if (String(url).includes('/git/ref/heads/main')) {
         return githubJsonResponse(200, { object: { sha: 'base_sha' } });
       }
+      if (String(url).includes('/git/commits/base_sha')) {
+        return githubJsonResponse(200, { tree: { sha: 'base_tree_sha' } });
+      }
       if (String(url).includes('/git/blobs')) {
         return githubJsonResponse(201, { sha: `blob_${fetchCalls.length}` });
       }
@@ -375,6 +378,9 @@ describe('Fresh Build deployment adapter', () => {
       if (String(url).includes('/git/ref/heads/main')) {
         return githubJsonResponse(200, { object: { sha: 'base_sha' } });
       }
+      if (String(url).includes('/git/commits/base_sha')) {
+        return githubJsonResponse(200, { tree: { sha: 'base_tree_sha' } });
+      }
       if (String(url).includes('/git/trees')) {
         return githubJsonResponse(201, { sha: 'tree_sha' });
       }
@@ -412,7 +418,9 @@ describe('Fresh Build deployment adapter', () => {
       });
       const blobCall = fetchCalls.find((call) => call.url.includes('/git/blobs'));
       const treeCall = fetchCalls.find((call) => call.url.includes('/git/trees'));
+      const commitCall = fetchCalls.find((call) => call.url.includes('/git/commits') && call.body);
       const treeBody = JSON.parse(treeCall.body);
+      const commitBody = JSON.parse(commitCall.body);
 
       expect(result).toMatchObject({
         ok: true,
@@ -420,6 +428,7 @@ describe('Fresh Build deployment adapter', () => {
         credentialSource: 'GITHUB_PAT',
       });
       expect(blobCall).toBeUndefined();
+      expect(treeBody.base_tree).toBe('base_tree_sha');
       expect(treeBody.tree).toEqual(expect.arrayContaining([
         expect.objectContaining({
           path: 'src/App.jsx',
@@ -427,6 +436,7 @@ describe('Fresh Build deployment adapter', () => {
           content: expect.stringContaining('Fresh Build'),
         }),
       ]));
+      expect(commitBody.parents).toEqual(['base_sha']);
     } finally {
       globalThis.fetch = originalFetch;
     }
