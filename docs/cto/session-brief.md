@@ -85,11 +85,17 @@ Evidence:
 - `docs/cto/ct2-clerk-auth-live-proof-result-20260613.md`
 - `docs/cto/ct2-clerk-auth-token-session-proof-result-20260613.md`
 
-Next technical starting point:
+Boundary analysis and dispatch now filed:
 
-- Map the Clerk session boundary before dispatching CB again.
-- Determine whether app API calls need to attach a Clerk bearer token from Clerk React instead of relying on browser cookies.
-- Dispatch one full session-propagation fix, not a layer-by-layer patch loop.
+- `docs/cto/clerk-session-boundary-analysis-20260614.md`
+- `docs/cto/cb-clerk-session-propagation-dispatch-20260614.md`
+
+Finding:
+
+- The server already accepts `Authorization: Bearer <token>` and `__session` cookie fallback.
+- The frontend `AuthContext` calls `/api/me` with cookies only and does not call Clerk React `getToken()`.
+- The next patch should make a Clerk-authenticated SPA session attach a bearer token to `/api/me`.
+- CT2 should prove an app-origin authenticated fetch or app state, not only direct address-bar navigation to `/api/me`.
 
 ## VERIFIED Promotion State
 
@@ -105,6 +111,6 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Map the Clerk session propagation chain in code.
-4. Prepare a CB dispatch for the full known Clerk session propagation fix, or document the exact Victor-only dashboard/human action if the blocker is outside code.
+3. Dispatch CB using `docs/cto/cb-clerk-session-propagation-dispatch-20260614.md`.
+4. After CB pushes, dispatch CD and CR Step 5 review through repo prompts.
 5. Do not move VERIFIED without W04/CEO clearance.

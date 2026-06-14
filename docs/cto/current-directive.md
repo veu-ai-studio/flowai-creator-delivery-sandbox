@@ -70,7 +70,7 @@ Honest progress estimate: FlowAI has substantial infrastructure built, but produ
    The packet `docs/cto/verified-promotion-packet-milestone1-20260613.md` is prepared. Do not apply matrixArtifact VERIFIED movement until W04/CEO explicitly authorizes it.
 
 2. Clerk Session Boundary - active technical blocker to map before the next CB dispatch.
-   The env/key route work is merged and live. The remaining blocker is authenticated session propagation to `/api/me`, not Clerk account creation. Map the full boundary before any new build dispatch.
+   The env/key route work is merged and live. The remaining blocker is authenticated session propagation to `/api/me`, not Clerk account creation. Boundary analysis is filed at `docs/cto/clerk-session-boundary-analysis-20260614.md`; CB dispatch is filed at `docs/cto/cb-clerk-session-propagation-dispatch-20260614.md`.
 
 3. Flow Hub URL Proofs - next runtime path after Clerk boundary is either fixed or formally deferred.
    Continue with Path 2 Production against an app-layer-owned target, then Path 3 Fresh Build, then Path 4 Three-URL Synthesis after CEO approval of the three selected URLs.
@@ -141,12 +141,12 @@ Blocked:
 
 Next technical action:
 
-Map the session boundary before dispatching CB:
+Dispatch CB from the prepared session-propagation packet:
 
-1. Identify how Clerk frontend session state is expected to reach `/api/me`.
-2. Determine whether app API calls need a Clerk bearer token from Clerk React instead of relying on cookies alone.
-3. Verify `api/_lib/auth.js` token extraction and Clerk verification semantics.
-4. Dispatch a single CB patch covering the full known chain, with tests and CT2 proof instructions.
+1. Read `docs/cto/clerk-session-boundary-analysis-20260614.md`.
+2. Build from `docs/cto/cb-clerk-session-propagation-dispatch-20260614.md`.
+3. Fix the full known bearer-token propagation chain in one branch.
+4. Return CB DoD with tests and CT2 app-origin proof instructions.
 
 No VERIFIED movement is allowed from Clerk work until CT2 proves a real authenticated user session and W04/CEO clears the promotion packet.
 
