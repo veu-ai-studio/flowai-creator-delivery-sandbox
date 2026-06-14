@@ -45,6 +45,10 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toMatch(/title:\s*"FLOW HUB"/);
     expect(sidebarSrc).toMatch(/label:\s*"Production"/);
     expect(sidebarSrc).toMatch(/label:\s*"Migration"/);
+    expect(sidebarSrc).toContain('title="Structural Layer"');
+    expect(sidebarSrc).toContain('title="Operational Mode"');
+    expect(sidebarSrc).toContain('title="Analysis Depth"');
+    expect(sidebarSrc).toContain('title="Flow Hub Path"');
     expect(sidebarSrc).toMatch(/label:\s*"Research Forge"/);
     expect(sidebarSrc).toMatch(/label:\s*"Design Forge"/);
     expect(sidebarSrc).toMatch(/label:\s*"Build Forge"/);

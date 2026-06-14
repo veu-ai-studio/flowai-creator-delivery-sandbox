@@ -325,10 +325,10 @@ function FlowHubAxisControls({ location, navigate }) {
         <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Flow Controls</p>
         <span className="text-[9px] font-semibold text-primary">wired</span>
       </div>
-      <AxisGroup title="Layer" icon={Bot} options={STRUCTURAL_LAYER_OPTIONS} value={axes.structuralLayer} onChange={(value) => updateAxes({ structuralLayer: value })} />
-      <AxisGroup title="Mode" icon={MousePointerClick} options={OPERATIONAL_MODE_OPTIONS} value={axes.operationalMode} onChange={(value) => updateAxes({ operationalMode: value })} />
-      <AxisGroup title="Depth" icon={Gauge} options={ANALYSIS_DEPTH_OPTIONS} value={axes.analysisDepth} onChange={(value) => updateAxes({ analysisDepth: value })} />
-      <AxisGroup title="Path" icon={Rocket} options={FLOW_HUB_PATH_OPTIONS} value={axes.flowHubPath} onChange={(value) => updateAxes({ flowHubPath: value })} />
+      <AxisGroup title="Structural Layer" icon={Bot} options={STRUCTURAL_LAYER_OPTIONS} value={axes.structuralLayer} onChange={(value) => updateAxes({ structuralLayer: value })} />
+      <AxisGroup title="Operational Mode" icon={MousePointerClick} options={OPERATIONAL_MODE_OPTIONS} value={axes.operationalMode} onChange={(value) => updateAxes({ operationalMode: value })} />
+      <AxisGroup title="Analysis Depth" icon={Gauge} options={ANALYSIS_DEPTH_OPTIONS} value={axes.analysisDepth} onChange={(value) => updateAxes({ analysisDepth: value })} />
+      <AxisGroup title="Flow Hub Path" icon={Rocket} options={FLOW_HUB_PATH_OPTIONS} value={axes.flowHubPath} onChange={(value) => updateAxes({ flowHubPath: value })} />
     </section>
   );
 }

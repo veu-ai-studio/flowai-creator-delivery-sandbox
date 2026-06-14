@@ -4,7 +4,7 @@ export const STRUCTURAL_LAYER_OPTIONS = Object.freeze([
   Object.freeze({
     value: 'autonomous',
     label: 'Autonomous',
-    shortLabel: 'Auto',
+    shortLabel: 'Autonomous',
     description: 'Runs without an added checkpoint ceiling.',
   }),
   Object.freeze({

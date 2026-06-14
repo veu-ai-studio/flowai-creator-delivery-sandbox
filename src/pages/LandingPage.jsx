@@ -1007,6 +1007,8 @@ export default function LandingPage() {
             <span className="text-muted-foreground">Mode: <span className="text-foreground font-semibold capitalize">{mode}</span></span>
             <span className="text-muted-foreground">·</span>
             <span className="text-muted-foreground">Depth: <span className="text-foreground font-semibold">{depth}</span></span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground">Path: <span className="text-foreground font-semibold">{currentPathOption.label}</span></span>
             {userName && (
               <>
                 <span className="text-muted-foreground">·</span>
