@@ -79,6 +79,11 @@ Promotion packet:
 
 - `docs/cto/verified-promotion-packet-milestone1-20260613.md`
 
+Directive buy-in review:
+
+- `docs/cto/directive-buy-in-review-20260613.md`
+- CTO accepted the comprehensive W04/CEO directive with evidence-preserving revisions: active matrixArtifact remains `0 VERIFIED`, Path 1 Migration URL evidence is a promotion candidate only, and Milestone 1 axis wiring is CT2-proven but not yet promoted to VERIFIED.
+
 ## VERIFIED Promotion Status
 
 No VERIFIED movement has been applied.
