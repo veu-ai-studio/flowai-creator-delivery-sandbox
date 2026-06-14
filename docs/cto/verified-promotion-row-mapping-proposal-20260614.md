@@ -3,9 +3,9 @@
 FROM: CTO
 TO: W04 / Victor Udo, FNSE, PhD - CEO
 DATE: 2026-06-14 UTC
-STATUS: SUBMITTED FOR ROW-MAPPING AUTHORIZATION
-VERIFIED movement applied: no
-matrixArtifact edited: no
+STATUS: AUTHORIZED BY W04/CEO FINAL DIRECTIVE AND APPLIED
+VERIFIED movement applied: yes
+matrixArtifact edited: yes
 canonical docs edited: no
 
 ## Purpose
@@ -22,7 +22,7 @@ The CTO recommendation is to avoid broad-row overclaiming. If a current row does
 - Current `CURRENT` rows: `workflow-1-sub-1a-analysis-scoring`, `workflow-4-migration`
 - Total rows: 39
 
-No `matrixArtifact` edit has been made in this packet.
+The original proposal was submitted without editing `matrixArtifact`. W04/CEO final directive later authorized applying the exact-row set. CTO applied it and recorded the result in `docs/cto/verified-promotion-applied-20260614.md`.
 
 ## Candidate Mapping
 
@@ -39,9 +39,9 @@ No `matrixArtifact` edit has been made in this packet.
 
 ## Recommended Authorization Set
 
-Best SSOT-safe path:
+Applied SSOT-safe path:
 
-1. Authorize creation of exact evidence rows for:
+1. Created exact evidence rows for:
    - `flow-hub-migration-public-url`
    - `axis-structural-layer-live-propagation`
    - `axis-operational-mode-live-propagation`
@@ -50,10 +50,10 @@ Best SSOT-safe path:
    - `tim-build-codex-ranked-first-live`
    - `clerk-ticket-app-origin-session-live`
    - `fresh-build-public-url-live`
-2. Authorize existing-row VERIFIED movement only where the row scope is exactly satisfied:
+2. Promoted existing rows only where the row scope was exactly satisfied:
    - `fresh-build-deployment-adapter`
    - `fresh-build-vercel-config-resolution`
-3. Keep these rows unpromoted for now:
+3. Kept these rows unpromoted:
    - `orchestra-automatic-selection`: Codex ranking is visible, but live automatic invocation is unproven.
    - `domain-tier-access-model`: Clerk ticket/session works, but access model enforcement is broader.
    - `workflow-1-sub-1a-analysis-scoring`: Analysis Depth propagation is proven, but scoring/crawl-depth behavior is broader.
@@ -91,4 +91,4 @@ If W04/CEO treats `matrixArtifact` surface creation as a canonical surface-list 
 
 ## CTO Call
 
-Do not promote broad rows merely to reach a count. The fastest honest route to 95 VERIFIED is to add exact rows for exact evidence and keep broad platform claims pending until the proof actually covers them.
+Do not promote broad rows merely to reach a count. The fastest honest route to 95 VERIFIED is to add exact rows for exact evidence and keep broad platform claims pending until the proof actually covers them. This principle controlled the applied 10-row promotion.

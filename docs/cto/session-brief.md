@@ -3,8 +3,8 @@
 Date: 2026-06-14 UTC
 Owner: CTO
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`
-VERIFIED movement: no
-matrixArtifact edited: no
+VERIFIED movement: yes - W04/CEO final directive authorized the batch packet
+matrixArtifact edited: yes - narrow exact-row promotion applied
 
 ## Executive Summary
 
@@ -15,11 +15,11 @@ FlowAI has now produced two CT2-confirmed public deployed URLs across the Flow H
 
 The Path 3 result is the strongest proof so far: FlowAI generated a 342-file platform-free VEU AI Studio site, created a GitHub branch, deployed it to a dedicated public Vercel project, scored baseline `93` to final `100`, and CT2 opened the public URL anonymously without a bypass header. The remaining highest-value gap is Path 2 Production producing its own deployed URL from an app-layer-owned product.
 
-No VERIFIED movement has been applied. The batch packet is prepared and now needs W04/CEO exact row authorization before any `matrixArtifact` edit. The stale batch-packet filename now points to the current acceleration packet so there is only one active promotion packet.
+The batch VERIFIED promotion has now been applied under W04/CEO final-directive authorization. `matrixArtifact` contains `10 VERIFIED` rows, each with `evidenceUrl`, `verifiedAt`, and `verifiedBy`; missing evidence-field count is `0`. The stale batch-packet filename now points to the current acceleration packet so there is only one active promotion packet.
 
 Path 2 was rerun after the Fresh Build milestone. SAIGE v2 ended with an honest no-mutation result because it scored `98`; RelTwin is the better below-target candidate. After Anthropic credits were restored, the constrained RelTwin Production proof passed pre-fix scoring and reached step 6, then blocked before branch creation on GitHub credential acquisition. Unsafe same-repo upgrade-target resolution is also visible behind that gate. A runtime fix branch for that chain is now pushed for CD/CR review.
 
-W04 then identified the larger infrastructure gap: FlowAI cannot require preconfigured upgrade repos or Vercel projects for real users. CTO completed the requested diagnosis and pushed a Universal Delivery Workspace clearance packet. No build has been dispatched. The next architecture decision is whether W04 clears the FlowAI-owned workspace model for auto-created GitHub repos, committed code, Vercel projects/deployments, returned URLs, and ProductSSOT evidence. Until that is cleared, do not run more Production proofs that depend on manually preconfigured products except by explicit W04 instruction.
+W04 then identified the larger infrastructure gap: FlowAI cannot require preconfigured upgrade repos or Vercel projects for real users. CTO completed the requested diagnosis, W04/CEO cleared execution in the final directive, and CB is active on `feature/universal-delivery-workspace`. Until that substrate exists, do not treat manually preconfigured products as proof of universal delivery.
 
 Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
 
@@ -29,7 +29,7 @@ Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 
 - Last production identity verified after final directive merge/promotion: `d6b92d54e1693fd18f37b5549df9d68285204449`.
 - Current production deployment: `https://flowai-22fb3bmld-veu-ai-studio.vercel.app`.
 - `/api/health` reports branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
-- `main` is pushed to origin at `d6b92d5`; production `/api/health` reports the same commit family.
+- `origin/main` is pushed to `7492879`; production `/api/health` reports deployed runtime commit `d6b92d54e1693fd18f37b5549df9d68285204449`. The delta is docs/evidence coordination commits, not a newer runtime fix.
 
 ## Completed Evidence
 
@@ -157,6 +157,7 @@ Universal input and delivery architecture:
 - CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
 - Finding: Type 1 is partial; Type 2 and Type 3 are not end-to-end in the active forge. The active system still assumes preconfigured delivery targets in key paths.
 - Status: diagnosis complete, CB dispatch prepared, canonical docs untouched. Runtime build now authorized by final directive; matrixArtifact promotion is separately authorized by the batch packet.
+- CB runtime branch `feature/universal-delivery-workspace` is now pushed at `0dd2177` with diagnosis commit `1290110`, implementation evidence, focused tests PASS, and full preflight PASS according to CB. CTO review found the branch is based on older `main` and would delete newer CT2/SAIGE evidence files if merged as-is. Sync request added: `docs/cto/cb-universal-delivery-workspace-sync-request-20260614.md`. CD/CR/CB2 review waits until CB merges current `origin/main`, preserves evidence files, reruns tests/preflight, and pushes a clean branch.
 
 ## Current Packets
 
@@ -204,11 +205,12 @@ Path 4 URL selection:
 
 ## Next Starting Point
 
-1. Commit and push the CT2 progress plus CTO visual BLOCK evidence.
-2. Send CB2 the CT2 RelTwin PASS/caution and SAIGE visual BLOCK evidence paths so both are included in the production regression audit.
-3. Poll CT2 RelTwin Path 2 proof result, CB2 production regression audit, and CB Universal Delivery Workspace diagnosis.
-4. Decide whether SAIGE product-card score visibility is a data-path bug or an authenticated/org-scoped acceptance-context requirement.
-5. Run or dispatch the Path 4 synthesis proof when the active run target supports it honestly.
+1. Poll CB on `feature/universal-delivery-workspace` and integrate its diagnosis or runtime branch when ready.
+2. Confirm CB syncs `feature/universal-delivery-workspace` with current `origin/main` and preserves all CT2/SAIGE evidence before dispatching CD/CR/CB2 review.
+3. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
+4. Resolve whether SAIGE product-card score visibility is a data-path bug or an authenticated/org-scoped acceptance-context requirement.
+5. Use the Universal Delivery Workspace to unblock Path 2 Production URL creation without relying on manually preconfigured upgrade repos.
+6. Run or dispatch the Path 4 synthesis proof only when the active run target supports multi-URL synthesis honestly.
 
 Victor action required:
 

@@ -3,9 +3,9 @@
 FROM: CTO
 TO: W04 / Victor Udo, FNSE, PhD - CEO
 DATE: 2026-06-14 UTC
-STATUS: SUBMITTED FOR W04/CEO AUTHORIZATION
-VERIFIED movement applied: no
-matrixArtifact edited: no
+STATUS: AUTHORIZED BY W04/CEO FINAL DIRECTIVE AND APPLIED
+VERIFIED movement applied: yes
+matrixArtifact edited: yes
 canonical docs edited: no
 
 ## Eligibility Rule
@@ -16,7 +16,7 @@ This packet includes only claims meeting all three W04 criteria:
 - CT2 independently confirmed the behavior in a browser;
 - `verifiedAt` and `verifiedBy` can be populated honestly.
 
-This packet requests authorization only. It does not edit `matrixArtifact`, canonical docs, ProductSSOT, or any VERIFIED state.
+This packet was originally submitted for authorization. W04/CEO final directive on 2026-06-14 authorized applying it, and CTO applied the narrow exact-row set recorded in `docs/cto/verified-promotion-applied-20260614.md`. Canonical docs and ProductSSOT were not edited.
 
 ## Candidate 1 - Migration Path Produced A Public URL
 
@@ -221,7 +221,7 @@ Full 8-step forge completion:
 
 ## CTO Recommendation
 
-Authorize matrix movement only after W04/CEO approves exact row mapping.
+W04/CEO final directive authorized matrix movement for the batch packet. CTO applied only the narrow exact-row set.
 
 Safe authorization set:
 
@@ -231,7 +231,7 @@ Safe authorization set:
 - Optional 1 narrow Clerk ticket/session claim.
 - Optional 1 narrow Fresh Build public URL claim.
 
-Do not authorize:
+Still not authorized / not promoted:
 
 - Path 2 URL production.
 - full 8-step forge completion.
