@@ -53,6 +53,23 @@ Authorized infrastructure gap queue:
 13. Codex confirmed as the live Step 3 Build tool with provider provenance.
 14. Grow matrixArtifact toward 95 VERIFIED entries through CT2-confirmed evidence.
 
+Detailed build requirements from the full CEO/W04 packet:
+
+- Auto repo creation must create a FlowAI-owned GitHub repo for every new product submission, write upgraded/generated code through the GitHub App, create or import the Vercel project, deploy, return the live URL as the only user-facing output, and be idempotent by `runId`.
+- Pre-flight validation must stop impossible runs before spending credits. It must check URL crawlability, Anthropic availability, GitHub App permissions, Vercel deployment availability, path-specific feasibility, and return plain-language messages instead of technical codes.
+- Type 2 New Build must work with no URL and no source repo by turning the user description into a product specification, selecting a stack based on product type, generating a complete codebase, creating delivery infrastructure, deploying, and returning a URL.
+- Type 3 synthesis must crawl two or more URLs independently, extract useful features and design patterns, reconcile conflicts, synthesize one coherent product specification, record source attribution, generate the new codebase, deploy, and return a URL.
+- Clerk completion requires a real user to sign up, verify email, log in, reach Flow Hub, launch a run, receive a URL, return later, see run history, and keep the session across refresh.
+- Product type is a fifth Flow Hub input, not metadata. It must affect build strategy, stack selection, code generation, and deployment behavior for Website, Native App, Mobile App, SaaS Platform, and Agentic AI System outputs.
+- Anonymous users may submit one preview run per day per IP and receive a preview URL; authenticated users get persistent history, multiple products, and saved configurations. Authentication adds value but must not block first use.
+- Run status must be human-readable across all 8 steps, including current step, plain-language findings, estimated time remaining, before/after scores, deployed URL, and failure explanations with no stack traces.
+- Score explanations must state what the score means, which issues were found, which were fixed, which need human attention, what to do next, and how the upgraded version compares to the original.
+- Deployment failures must explain what was attempted, what failed, whether auto-retry is possible, what the user can do next, and must preserve all completed work.
+- Multi-product management must let authenticated users submit multiple products, view scores, run forge on any product, inspect run history, compare scores over time, and see deployed improvements.
+- Four axes remain required in live runs: Structural Layer affects checkpoint behavior, Analysis Depth affects crawl/scoring depth, Operational Mode affects step execution, and Flow Hub Path selects Production, Migration, or New Build.
+- Full 8-step completion must finish Deploy, Self-Renewal, GTM, and Monitor after Research, Design, Build, and Quality Audit. CT2 confirmation is required step by step.
+- Codex must be proven as the live Step 3 Build tool, not merely listed in TIM. Provider provenance must be recorded in run evidence.
+
 Additive anti-drift rules:
 
 - No merge without CB2 PASS.
@@ -66,6 +83,15 @@ Additive anti-drift rules:
 - If one blocker affects multiple gaps, stop parallel tracks and resolve the shared blocker first.
 - Never hard-code product-specific logic in FlowAI core.
 - Additive directives only; do not replace prior ratified directives unless explicitly instructed.
+
+Execution controls from the full CEO/W04 packet:
+
+- Before any forge proof, confirm the product has a configured upgrade repo or auto-repo creation will handle delivery, the product has app-layer issues FlowAI can fix, and the target is publicly crawlable. If any answer is no, stop and fix the gap first.
+- Before any CB dispatch, map the full blocker chain and dispatch the complete fix surface rather than one layer at a time.
+- Do not stack more than two runtime branches in review at once.
+- A commit is not evidence. CT2 browser confirmation is evidence for user-facing completion.
+- Documentation commits coordinate the bench; only runtime commits on `main` count as implementation progress.
+- If any shared blocker affects multiple gaps, pause parallel tracks and resolve the shared blocker before continuing.
 
 ## Evidence-Corrected State
 
@@ -94,7 +120,7 @@ Additive anti-drift rules:
 - TIM Build Codex ranking is CT2/CB2-confirmed as visible with Codex ranked first. Live Step 3 Codex invocation is not yet proven.
 - Fresh Build public delivery is CT2-confirmed for one generated VEU AI Studio site. CT2 finding: sampled nav links leave the generated domain for `victorudo.com`; this is a polish/follow-up issue, not a URL proof blocker.
 - Full 8-step forge completion is not yet proven.
-- No VERIFIED movement is allowed until W04/CEO authorizes exact row mapping and required fields.
+- Further VERIFIED movement beyond the already-authorized exact-row batch requires W04/CEO authorization of the exact row mapping and required fields.
 
 ## Current Priority Order
 
@@ -181,4 +207,15 @@ End each session by committing evidence to `docs/cto/`, updating `docs/cto/sessi
 
 ## Finish Line
 
-FlowAI is delivered when all three Flow Hub paths have produced CT2-confirmed deployed URLs, all four axes are independently selectable and wired into real runs, the forge completes all 8 steps reliably across diverse product submissions, Clerk supports real users, and 95 matrixArtifact entries are VERIFIED with honest evidence.
+FlowAI is delivered when:
+
+1. Any user anywhere can open FlowAI, submit a URL, description, or multiple URLs, and receive a deployed upgraded URL without technical knowledge or manual setup.
+2. All three Flow Hub paths each produce at least one CT2-confirmed deployed URL from a real submission.
+3. All four axes are independently selectable and confirmed working in live forge runs by CT2.
+4. The forge completes all 8 steps reliably across at least three diverse submissions from different organizations.
+5. Clerk auth lets a new user sign up, submit a product, and receive a deployed URL in one session.
+6. Anonymous users can submit a product without signing up and receive a preview URL.
+7. `95` matrixArtifact entries are VERIFIED with real `evidenceUrl`, `verifiedAt`, and `verifiedBy`.
+8. Run status is human-readable and scores include plain-language explanations.
+9. Deployment failures are handled gracefully with plain-language messages and no lost work.
+10. Multi-product management works for authenticated users across multiple sessions.

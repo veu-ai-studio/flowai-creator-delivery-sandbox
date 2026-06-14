@@ -23,7 +23,7 @@ W04 then identified the larger infrastructure gap: FlowAI cannot require preconf
 
 Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
 
-Latest CTO runtime branch: `fix/portfolio-product-ssot-cards` addresses the remaining SAIGE visual acceptance blocker by making `/api/products` surface ProductSSOT-backed product cards when the legacy `products` table is empty. Full preflight passed. This is not CT2-accepted until merged, promoted, and browser-confirmed.
+Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md`. The SAIGE product-card score branch addresses the remaining visual acceptance blocker by making ProductSSOT-backed product cards visible without hardcoded seed fixtures. It has passed full preflight and now awaits CD/CR/CB2 clearance before merge, production promotion, and CT2 post-deploy confirmation.
 
 ## Current Production
 
@@ -151,11 +151,13 @@ SAIGE product-card score patch:
 - Audit follow-up: `docs/cto/saige-product-card-score-audit-followup-20260614.md`; raw-row shape finding addressed and hardcoded `VEU_SEED` fallback removed.
 - CD review prompt: `docs/cto/cd-review-saige-product-card-score-prompt-20260614.md`.
 - CR review prompt: `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`.
+- CB2 review dispatch: `docs/cto/cb2-review-saige-product-card-score-dispatch-20260614.md`.
 - CT2 post-deploy dispatch: `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`.
 - Patch scope: `/api/products` now prefers `products` rows but falls back to `product_registry` + `product_ssot`; `/dashboard` reads product cards from `/api/products`; `/products` consumes `{ items: [...] }` correctly and normalizes ProductSSOT-backed scores.
 - Focused verification: `node --check` for `api/_lib/db.js` and `api/products.js` PASS; focused Vitest PASS, 4 files / 51 tests.
 - Full verification: `npm run preflight` PASS, lint/build/preflight PASS, 237 files / 3741 tests passed / 3 skipped, lane discipline PASS, SSOT traceability PASS, matrix generation PASS.
 - Boundary: no canonical docs, ProductSSOT data, matrixArtifact evidence status, scoring logic, forge behavior, deployment logic, or VERIFIED movement changed.
+- Merge status: not merge-cleared yet; requires CD/CR and CB2 clearance or explicit W04 waiver.
 
 Universal input and delivery architecture:
 
