@@ -105,6 +105,7 @@ import ForgeMonitorForm from './pages/ForgeMonitorForm';
 import Workspace from './pages/Workspace';
 import Login from './pages/Login';
 import ClerkAuthPage from './pages/ClerkAuthPage';
+import ClerkTicketSignInPage from './pages/ClerkTicketSignInPage';
 import RequireAuth from '@/components/RequireAuth';
 
 function LegacyFlowHubRedirect() {
@@ -277,6 +278,7 @@ const AuthenticatedApp = () => {
       </Route>
       <Route path="/sign-up" element={<ClerkAuthPage mode="sign-up" />} />
       <Route path="/sign-in" element={<ClerkAuthPage mode="sign-in" />} />
+      <Route path="/sign-in-token" element={<ClerkTicketSignInPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/landing" element={<MarketingPage />} />
       {/* GTM Demo Tiers — public, no AppLayout */}
