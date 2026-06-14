@@ -1,0 +1,143 @@
+{
+  "startedAt": "2026-06-14T03:36:15.832Z",
+  "completedAt": "2026-06-14T03:36:43.979Z",
+  "productionUrl": "https://flowai-dun.vercel.app",
+  "expectedCommit": "021212d2ebf52511493869e7fea9270a7865db31",
+  "expectedDeployment": "https://flowai-799ng2frz-veu-ai-studio.vercel.app",
+  "tool": "Playwright Chromium fresh contexts; in-app Browser unavailable in local Windows sandbox",
+  "secretHandling": {
+    "dopplerReadAttempted": true,
+    "clerkSecretPresentInProcess": true,
+    "secretPrintedOrCommitted": false,
+    "signInTokenUrlPrintedOrCommitted": false,
+    "bearerTokenPrintedOrCommitted": false,
+    "cookiesPrintedOrCommitted": false,
+    "passwordPrintedOrCommitted": false,
+    "rawClerkUserIdPrintedOrCommitted": false
+  },
+  "health": {
+    "url": "https://flowai-dun.vercel.app/api/health",
+    "status": 200,
+    "json": {
+      "ok": true,
+      "status": "ready",
+      "commit": "021212d2ebf5",
+      "clerkReady": true,
+      "checks": {
+        "build": {
+          "status": "PASS",
+          "commitFull": "021212d2ebf52511493869e7fea9270a7865db31",
+          "branch": "main",
+          "deploymentUrl": "https://flowai-799ng2frz-veu-ai-studio.vercel.app"
+        },
+        "auth": {
+          "status": "PASS",
+          "clerkConfigured": true,
+          "frontendPublishableKeyPresent": true,
+          "authRequired": false,
+          "reason": null
+        }
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-session-api-health-2026-06-14T03-36-15-832Z.png"
+  },
+  "version": {
+    "url": "https://flowai-dun.vercel.app/api/version",
+    "status": 200,
+    "json": {
+      "commitFull": "021212d2ebf52511493869e7fea9270a7865db31",
+      "commit": "021212d2ebf5",
+      "featureFlags": {
+        "clerkReady": true,
+        "authRequired": false
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-session-api-version-2026-06-14T03-36-15-832Z.png"
+  },
+  "anonymousApiMe": {
+    "url": "https://flowai-dun.vercel.app/api/me",
+    "status": 200,
+    "json": {
+      "authenticated": false,
+      "authMode": "anonymous",
+      "userId": null,
+      "orgId": null,
+      "productId": null,
+      "config": {
+        "authRequired": false,
+        "clerkConfigured": true
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-session-api-me-anonymous-2026-06-14T03-36-15-832Z.png"
+  },
+  "disposableUser": {
+    "created": true,
+    "emailIdentifier": "flowai.ct2.session.20260614033622.[redacted]@example.com",
+    "rawUserIdPresent": true,
+    "rawUserId": "[redacted]",
+    "signInTokenCreated": true
+  },
+  "app": {
+    "tokenLandingScreenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-session-token-landing-redacted-2026-06-14T03-36-15-832Z.png",
+    "flowHubStatus": 200,
+    "flowHubFinalUrl": "https://flowai-dun.vercel.app/flow-hub/production",
+    "flowHubLoaded": true,
+    "visibleTextExcerpt": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Flow Hub - Production Upgrade an existing product URL in its owned delivery path. FlowAI Ready · Layer: Autonomous · Mode: Auto · Depth: Standard · Path: Production Choose how you want to work with your product, then select your operation mode. PRE-RELEASE · INTERNAL USE ONLY v0.1 · VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch) Analyze a Live Product FlowAI will fetch and analyze the public-facing pages of your product. Test Fetch Note: URL must be publicly accessible. Authenticated or private apps use Card B or C. Describe Your Product Type or speak a description. Best for authenticated apps, internal tools, or early-stage products. 🔒 Credentials are used only for this session and are never stored. Voice Input Paste Content or Upload Screenshots Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly. Drop screenshots here or click to upload — PNG, JPG, PDF Combine with Card B for best results on authenticated products. SETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH? Audit fo",
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-session-flow-hub-production-authenticated-context-2026-06-14T03-36-15-832Z.png",
+    "clerkStateRedacted": {
+      "clerkLoaded": true,
+      "signedIn": false,
+      "sessionPresent": false,
+      "userPresent": false,
+      "tokenPresent": false,
+      "tokenError": null
+    },
+    "apiMeNetworkEventsRedacted": [
+      {
+        "type": "request",
+        "url": "/api/me",
+        "method": "GET",
+        "authorizationHeaderPresent": false
+      },
+      {
+        "type": "response",
+        "url": "/api/me",
+        "status": 200,
+        "redactedJson": {
+          "authenticated": false,
+          "authMode": "anonymous",
+          "userId": null,
+          "orgId": null,
+          "productId": null,
+          "config": {
+            "authRequired": false,
+            "clerkConfigured": true
+          }
+        }
+      }
+    ]
+  },
+  "appOriginApiMe": {
+    "approach": "browser page JavaScript obtained a Clerk token in the app origin and fetched /api/me with Authorization header; token value redacted and not stored",
+    "ok": false,
+    "status": null,
+    "error": "Clerk session getToken unavailable",
+    "tokenPresent": false,
+    "redactedJson": null,
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-session-app-origin-api-me-after-fetch-2026-06-14T03-36-15-832Z.png"
+  },
+  "cleanup": {
+    "attempted": true,
+    "userDeleted": true,
+    "error": null
+  },
+  "verdictInputs": {
+    "productionIdentityMatches": true,
+    "deploymentUrlMatches": true,
+    "authHealthPass": true,
+    "anonymousModeOpen": true,
+    "clerkBrowserSessionEstablished": false,
+    "appOriginApiMeAuthenticated": false,
+    "cleanupSucceeded": true
+  }
+}
