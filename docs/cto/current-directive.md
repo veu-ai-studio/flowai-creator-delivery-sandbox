@@ -10,9 +10,9 @@ This folder is an executive coordination layer. Canonical authority remains `doc
 ## Evidence-Corrected State
 
 - Active repo: `C:\Users\victo\Documents\Codex\flowai-cto-docs-20260612`.
-- Current main at last CTO sync: `6f3067678a1193b1763a0936854bfcae1197d3b6`.
+- Last production identity verified before this docs refresh: `6f3067678a1193b1763a0936854bfcae1197d3b6`.
 - Production: `https://flowai-dun.vercel.app`.
-- Production `/api/health` was verified after the latest docs-only deploy to report commit `6f3067678a1193b1763a0936854bfcae1197d3b6`, branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
+- Production `/api/health` was verified at that identity to report branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS. Docs-only commits may move `main` ahead; verify `/api/health` again before runtime claims.
 - Active matrixArtifact state remains `VERIFIED=0`, `WIRED=0`; no matrixArtifact edit has been made.
 - Highest matrixArtifact status remains `CURRENT` on 2 of 39 entries.
 - Deployed URL evidence exists for 2 of 3 Flow Hub paths:

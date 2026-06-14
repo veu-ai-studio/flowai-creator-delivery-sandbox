@@ -20,8 +20,8 @@ No VERIFIED movement has been applied. The batch packet is prepared and now need
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
-- Current main at last CTO sync: `6f3067678a1193b1763a0936854bfcae1197d3b6`.
-- `/api/health` was verified after the latest deploy to report commit `6f3067678a1193b1763a0936854bfcae1197d3b6`, branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
+- Last production identity verified before this docs refresh: `6f3067678a1193b1763a0936854bfcae1197d3b6`.
+- `/api/health` was verified at that identity to report branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS. Docs-only commits may move `main` ahead; verify `/api/health` again before runtime claims.
 
 ## Completed Evidence
 
