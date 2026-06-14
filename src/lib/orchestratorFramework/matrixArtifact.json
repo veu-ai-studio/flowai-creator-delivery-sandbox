@@ -1,6 +1,6 @@
 {
-  "version": "5965a32",
-  "generatedAt": "2026-06-11T11:58:32.570Z",
+  "version": "5965a32-verified-20260614",
+  "generatedAt": "2026-06-14T20:45:00.000Z",
   "layer1": [
     {
       "layer": 1,
@@ -253,19 +253,27 @@
       "layer": 2,
       "surfaceId": "fresh-build-deployment-adapter",
       "name": "Fresh Build Deployment Adapter",
-      "description": "EXPERIMENTAL/LOCAL VALIDATION",
-      "status": "EXPERIMENTAL",
+      "description": "VERIFIED - Fresh Build deployment adapter produced a CT2-confirmed public deployed URL in the 2026-06-14 Path 3 public target proof; scope limited to that deployment-adapter behavior.",
+      "status": "VERIFIED",
       "tier": "B",
-      "ratificationState": "CANONICAL"
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-path3-publictarget-acceptance-result-20260614.md",
+      "verifiedAt": "2026-06-14",
+      "verifiedBy": "CT2 browser acceptance + FlowAI runtime proof",
+      "note": "Public URL observed: https://flowai-fresh-public-veusite.vercel.app. Does not prove every Fresh Build submission or full 8-step forge completion."
     },
     {
       "layer": 2,
       "surfaceId": "fresh-build-vercel-config-resolution",
       "name": "Fresh Build Vercel Config Resolution",
-      "description": "EXPERIMENTAL/LOCAL VALIDATION",
-      "status": "EXPERIMENTAL",
+      "description": "VERIFIED - Fresh Build resolved and used the configured public Vercel delivery target in the 2026-06-14 Path 3 public target proof; scope limited to public-target Vercel config resolution.",
+      "status": "VERIFIED",
       "tier": "B",
-      "ratificationState": "CANONICAL"
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-path3-publictarget-acceptance-result-20260614.md",
+      "verifiedAt": "2026-06-14",
+      "verifiedBy": "CT2 browser acceptance + FlowAI runtime proof",
+      "note": "Public target evidence: https://flowai-fresh-public-veusite.vercel.app. Does not prove all Vercel project types or all product submissions."
     },
     {
       "layer": 2,
@@ -356,6 +364,110 @@
       "status": "ROADMAP",
       "tier": "B",
       "ratificationState": "CANONICAL"
+    },
+    {
+      "layer": 2,
+      "surfaceId": "flow-hub-migration-public-url",
+      "name": "Flow Hub Migration path public deployed URL",
+      "description": "VERIFIED - CT2 confirmed one Migration path public deployed URL; scope limited to URL production evidence for the observed SAIGE migration target.",
+      "status": "VERIFIED",
+      "tier": "B",
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://saige-v2.vercel.app",
+      "verifiedAt": "2026-06-13",
+      "verifiedBy": "CT2 browser acceptance",
+      "note": "Supporting repo evidence: docs/cto/ct2-saige-production-acceptance-2026-06-13.md. Does not prove complete SAIGE typecheck cleanup or all migration submissions."
+    },
+    {
+      "layer": 2,
+      "surfaceId": "axis-structural-layer-live-propagation",
+      "name": "Structural Layer axis live propagation",
+      "description": "VERIFIED - CT2 confirmed Structural Layer is visible, independently selectable, and reaches live production run payload/log evidence.",
+      "status": "VERIFIED",
+      "tier": "B",
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md",
+      "verifiedAt": "2026-06-14",
+      "verifiedBy": "CT2 browser acceptance + live /api/run-construction payload + run log",
+      "note": "Observed Controlled selection and structuralLayer propagation. Does not prove every structural-layer behavior mode."
+    },
+    {
+      "layer": 2,
+      "surfaceId": "axis-operational-mode-live-propagation",
+      "name": "Operational Mode axis live propagation",
+      "description": "VERIFIED - CT2 confirmed Operational Mode is visible, independently selectable, and reaches live production run payload/log evidence.",
+      "status": "VERIFIED",
+      "tier": "B",
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md",
+      "verifiedAt": "2026-06-14",
+      "verifiedBy": "CT2 browser acceptance + live /api/run-construction payload + run log",
+      "note": "Observed Manual selection, operationalMode propagation, and transport mode mapping. Does not prove every execution branch."
+    },
+    {
+      "layer": 2,
+      "surfaceId": "axis-analysis-depth-live-propagation",
+      "name": "Analysis Depth axis live propagation",
+      "description": "VERIFIED - CT2 confirmed Analysis Depth is visible, independently selectable, and reaches live production run payload/log evidence.",
+      "status": "VERIFIED",
+      "tier": "B",
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md",
+      "verifiedAt": "2026-06-14",
+      "verifiedBy": "CT2 browser acceptance + live /api/run-construction payload + run log",
+      "note": "Observed Quick selection and analysisDepth propagation. Does not prove measured crawl-budget deltas across Quick/Standard/Deep."
+    },
+    {
+      "layer": 2,
+      "surfaceId": "axis-flow-hub-path-live-propagation",
+      "name": "Flow Hub Path axis live propagation",
+      "description": "VERIFIED - CT2 confirmed Flow Hub Path is visible, independently selectable, route-aware, and reaches live production payload evidence.",
+      "status": "VERIFIED",
+      "tier": "B",
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md",
+      "verifiedAt": "2026-06-14",
+      "verifiedBy": "CT2 browser acceptance + route switching proof + live /api/run-construction payload",
+      "note": "Does not prove all three Flow Hub paths have produced deployed URLs."
+    },
+    {
+      "layer": 2,
+      "surfaceId": "tim-build-codex-ranked-first-live",
+      "name": "TIM Build lane Codex ranked first",
+      "description": "VERIFIED - CT2/CB2 confirmed Codex is visibly ranked first in the live Build step candidate list.",
+      "status": "VERIFIED",
+      "tier": "B",
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-priority2-axis-live-proof-rerun-result-20260613.md",
+      "verifiedAt": "2026-06-13",
+      "verifiedBy": "CT2 browser acceptance + CB2 production audit",
+      "note": "Does not prove live Step 3 Codex invocation."
+    },
+    {
+      "layer": 2,
+      "surfaceId": "clerk-ticket-app-origin-session-live",
+      "name": "Clerk ticket redirect and app-origin session",
+      "description": "VERIFIED - CT2 confirmed the FlowAI-owned Clerk ticket route establishes a signed-in app session and app-origin /api/me returns authenticated Clerk state.",
+      "status": "VERIFIED",
+      "tier": "B",
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://github.com/victor2081new-cloud/flowai/blob/main/docs/cto/ct2-live-proof-sweep-acceleration-result-20260614.md",
+      "verifiedAt": "2026-06-14",
+      "verifiedBy": "CT2 live production browser acceptance",
+      "note": "Does not prove AUTH_REQUIRED=true, paid-user onboarding, or organization enforcement."
+    },
+    {
+      "layer": 2,
+      "surfaceId": "fresh-build-public-url-live",
+      "name": "Fresh Build path public deployed URL",
+      "description": "VERIFIED - FlowAI Fresh Build produced one CT2-confirmed public deployed URL for a generated platform-free VEU AI Studio website.",
+      "status": "VERIFIED",
+      "tier": "B",
+      "ratificationState": "CANONICAL",
+      "evidenceUrl": "https://flowai-fresh-public-veusite.vercel.app",
+      "verifiedAt": "2026-06-14",
+      "verifiedBy": "CT2 browser acceptance + FlowAI runtime proof",
+      "note": "Supporting evidence: docs/cto/path3-fresh-build-veusite-publictarget-result-20260614.md and docs/cto/ct2-path3-publictarget-acceptance-result-20260614.md. Does not prove all Fresh Build submissions or full 8-step forge completion."
     }
   ],
   "surfaceTierMap": {
@@ -397,6 +509,14 @@
     "level-2-flowai-on-itself": "B",
     "fresh-codebase-generation": "B",
     "mobile-native-desktop-app-output": "B",
-    "domain-tier-access-model": "B"
+    "domain-tier-access-model": "B",
+    "flow-hub-migration-public-url": "B",
+    "axis-structural-layer-live-propagation": "B",
+    "axis-operational-mode-live-propagation": "B",
+    "axis-analysis-depth-live-propagation": "B",
+    "axis-flow-hub-path-live-propagation": "B",
+    "tim-build-codex-ranked-first-live": "B",
+    "clerk-ticket-app-origin-session-live": "B",
+    "fresh-build-public-url-live": "B"
   }
 }

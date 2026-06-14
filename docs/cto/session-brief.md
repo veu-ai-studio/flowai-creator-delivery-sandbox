@@ -137,7 +137,7 @@ Universal input and delivery architecture:
 - Universal Delivery Workspace CR review draft: `docs/cto/cr-review-universal-delivery-workspace-prompt-draft-20260614.md`.
 - Universal Delivery Workspace CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
 
-W04/CEO has now authorized applying the batch VERIFIED packet. The next matrixArtifact edit must still stay within the exact evidence packet and populate `evidenceUrl`, `verifiedAt`, and `verifiedBy`.
+W04/CEO authorized applying the batch VERIFIED packet. CTO applied the narrow exact-row set in `src/lib/orchestratorFramework/matrixArtifact.json`: `10 VERIFIED`, `0` missing evidence fields. Evidence note: `docs/cto/verified-promotion-applied-20260614.md`.
 
 ## Known Gaps
 
@@ -154,7 +154,7 @@ W04/CEO has now authorized applying the batch VERIFIED packet. The next matrixAr
 ## Next Starting Point
 
 1. Commit and push the final-directive integration docs.
-2. Apply the authorized VERIFIED batch packet to `src/lib/orchestratorFramework/matrixArtifact.json` without broad-row overclaiming.
+2. Commit and push the VERIFIED matrixArtifact promotion.
 3. Merge `fix/path2-production-token-upgrade-target`, promote production, and dispatch CT2.
 4. Dispatch CB on `feature/universal-delivery-workspace` from `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
 5. Select and document three external Path 4 synthesis URLs, then execute when the run target is ready.
