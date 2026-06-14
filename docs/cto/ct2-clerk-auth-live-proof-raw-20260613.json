@@ -1,0 +1,282 @@
+{
+  "observedAt": "2026-06-14T02:31:00.332Z",
+  "base": "https://flowai-dun.vercel.app",
+  "expectedCommit": "dabdce72e13e8ceee9cdd6965b9c0fe9b6a79a9c",
+  "expectedDeployment": "https://flowai-mmprr7n0l-veu-ai-studio.vercel.app",
+  "health": {
+    "url": "https://flowai-dun.vercel.app/api/health",
+    "status": 200,
+    "bodyText": "{\"ok\":true,\"status\":\"ready\",\"service\":\"flowai\",\"version\":\"1.0.0\",\"env\":\"production\",\"region\":\"iad1\",\"commit\":\"dabdce72e13e\",\"clerkReady\":true,\"githubAppReady\":true,\"inngestReady\":true,\"timestamp\":\"2026-06-14T02:30:28.388Z\",\"durationMs\":547,\"checks\":{\"build\":{\"status\":\"PASS\",\"commit\":\"dabdce72e13e\",\"commitFull\":\"dabdce72e13e8ceee9cdd6965b9c0fe9b6a79a9c\",\"branch\":\"main\",\"buildIdentitySource\":\"env:VERCEL_GIT_COMMIT_SHA\",\"buildIdentityGeneratedAt\":\"2026-06-14T02:20:05.862Z\",\"env\":\"production\",\"region\":\"iad1\",\"deploymentUrl\":\"https://flowai-mmprr7n0l-veu-ai-studio.vercel.app\",\"nodeVersion\":\"24.14.1\",\"reason\":null},\"supabase\":{\"status\":\"PASS\",\"httpStatus\":200},\"vercelKv\":{\"status\":\"PASS\",\"httpStatus\":200},\"orchestra\":{\"members\":[{\"id\":\"codex\",\"label\":\"Codex\",\"status\":\"PASS\",\"runtimeAdapter\":true,\"credentialsRequired\":[\"OPENAI_API_KEY\"],\"credentialsPresent\":true,\"adapterHint\":\"src/lib/orchestra/codex.js code-patch/generate-from-scratch runtime adapter\"},{\"id\":\"claude-code\",\"label\":\"Claude Code\",\"status\":\"PASS\",\"runtimeAdapter\":true,\"credentialsRequired\":[\"ANTHROPIC_API_KEY\"],\"credentialsPresent\":true,\"adapterHint\":\"src/lib/orchestra/claudeCode.js analyze/design/score/code-patch runtime adapter\"},{\"id\":\"base44\",\"label\":\"Base44\",\"status\":\"DEGRADED\",\"runtimeAdapter\":true,\"credentialsRequired\":[\"BASE44_API_BASE_URL\",\"BASE44_API_TOKEN\"],\"credentialsPresent\":false,\"adapterHint\":\"api/_lib/orchestrator/agents/base44.js + src/api/base44Client.js\"},{\"id\":\"lovable\",\"label\":\"Lovable\",\"status\":\"NOT_WIRED\",\"runtimeAdapter\":false,\"credentialsRequired\":[],\"credentialsPresent\":null,\"adapterHint\":\"archived (scripts/lib/headless/archive/lovable-chat.mjs.archived-2026-05-13)\"},{\"id\":\"v0\",\"label\":\"Vercel v0\",\"status\":\"NOT_WIRED\",\"runtimeAdapter\":false,\"credentialsRequired\":[\"VERCEL_V0_TOKEN\"],\"credentialsPresent\":false,\"adapterHint\":\"scripts/lib/peer-review.mjs callVercelV0Adapter (Panel reviewer only — no /api/* runtime adapter)\"},{\"id\":\"cursor\",\"label\":\"Cursor\",\"status\":\"NOT_WIRED\",\"runtimeAdapter\":false,\"credentialsRequired\":[],\"credentialsPresent\":null,\"adapterHint\":\"developer-IDE only; no runtime adapter expected in /api/*\"},{\"id\":\"openrouter\",\"label\":\"OpenRouter\",\"status\":\"NOT_WIRED\",\"runtimeAdapter\":false,\"credentialsRequired\":[\"OPENROUTER_API_KEY\"],\"credentialsPresent\":false,\"adapterHint\":\"scripts/lib/peer-review.mjs (Panel reviewer; no /api/* runtime adapter)\"},{\"id\":\"browserless\",\"label\":\"Browserless\",\"status\":\"PASS\",\"runtimeAdapter\":true,\"credentialsRequired\":[\"BROWSERLESS_API_KEY\"],\"credentialsPresent\":true,\"adapterHint\":\"api/_lib/crawler.js viaBrowserless + richCapture\"},{\"id\":\"anthropic\",\"label\":\"Anthropic API (direct)\",\"status\":\"PASS\",\"runtimeAdapter\":true,\"credentialsRequired\":[\"ANTHROPIC_API_KEY\"],\"credentialsPresent\":true,\"adapterHint\":\"api/_lib/claude.js callClaude\"},{\"id\":\"replit\",\"label\":\"Replit\",\"status\":\"NOT_WIRED\",\"runtimeAdapter\":false,\"credentialsRequired\":[],\"credentialsPresent\":null,\"adapterHint\":\"archived (scripts/lib/headless/archive/replit-agent.mjs.archived-2026-05-13)\"},{\"id\":\"playwright\",\"label\":\"Playwright\",\"status\":\"DEGRADED\",\"runtimeAdapter\":true,\"credentialsRequired\":[\"PLAYWRIGHT_ENDPOINT\"],\"credentialsPresent\":false,\"adapterHint\":\"api/_lib/orchestrator/agents/playwright.js + api/_lib/crawler.js viaPlaywright\"}],\"summary\":{\"total\":11,\"runtimeAdapters\":6,\"live\":4,\"degraded\":2,\"notWired\":5}},\"observability\":{\"status\":\"NOT_WIRED\",\"pino\":{\"ready\":true,\"level\":\"info\"},\"sentry\":{\"configured\":false,\"initialized\":false,\"tracesSampleRate\":0},\"axiomBridge\":{\"configured\":false}},\"githubApp\":{\"status\":\"PASS\",\"configured\":true,\"patFallback\":true,\"installationIdAlias\":\"GITHUB_APP_INSTALLATION_ID\"},\"auth\":{\"status\":\"PASS\",\"clerkConfigured\":true,\"frontendPublishableKeyPresent\":true,\"authRequired\":false,\"reason\":null}}}",
+    "json": {
+      "ok": true,
+      "status": "ready",
+      "service": "flowai",
+      "version": "1.0.0",
+      "env": "production",
+      "region": "iad1",
+      "commit": "dabdce72e13e",
+      "clerkReady": true,
+      "githubAppReady": true,
+      "inngestReady": true,
+      "timestamp": "2026-06-14T02:30:28.388Z",
+      "durationMs": 547,
+      "checks": {
+        "build": {
+          "status": "PASS",
+          "commit": "dabdce72e13e",
+          "commitFull": "dabdce72e13e8ceee9cdd6965b9c0fe9b6a79a9c",
+          "branch": "main",
+          "buildIdentitySource": "env:VERCEL_GIT_COMMIT_SHA",
+          "buildIdentityGeneratedAt": "2026-06-14T02:20:05.862Z",
+          "env": "production",
+          "region": "iad1",
+          "deploymentUrl": "https://flowai-mmprr7n0l-veu-ai-studio.vercel.app",
+          "nodeVersion": "24.14.1",
+          "reason": null
+        },
+        "supabase": {
+          "status": "PASS",
+          "httpStatus": 200
+        },
+        "vercelKv": {
+          "status": "PASS",
+          "httpStatus": 200
+        },
+        "orchestra": {
+          "members": [
+            {
+              "id": "codex",
+              "label": "Codex",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "OPENAI_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "src/lib/orchestra/codex.js code-patch/generate-from-scratch runtime adapter"
+            },
+            {
+              "id": "claude-code",
+              "label": "Claude Code",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "ANTHROPIC_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "src/lib/orchestra/claudeCode.js analyze/design/score/code-patch runtime adapter"
+            },
+            {
+              "id": "base44",
+              "label": "Base44",
+              "status": "DEGRADED",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "BASE44_API_BASE_URL",
+                "BASE44_API_TOKEN"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "api/_lib/orchestrator/agents/base44.js + src/api/base44Client.js"
+            },
+            {
+              "id": "lovable",
+              "label": "Lovable",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [],
+              "credentialsPresent": null,
+              "adapterHint": "archived (scripts/lib/headless/archive/lovable-chat.mjs.archived-2026-05-13)"
+            },
+            {
+              "id": "v0",
+              "label": "Vercel v0",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [
+                "VERCEL_V0_TOKEN"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "scripts/lib/peer-review.mjs callVercelV0Adapter (Panel reviewer only — no /api/* runtime adapter)"
+            },
+            {
+              "id": "cursor",
+              "label": "Cursor",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [],
+              "credentialsPresent": null,
+              "adapterHint": "developer-IDE only; no runtime adapter expected in /api/*"
+            },
+            {
+              "id": "openrouter",
+              "label": "OpenRouter",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [
+                "OPENROUTER_API_KEY"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "scripts/lib/peer-review.mjs (Panel reviewer; no /api/* runtime adapter)"
+            },
+            {
+              "id": "browserless",
+              "label": "Browserless",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "BROWSERLESS_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "api/_lib/crawler.js viaBrowserless + richCapture"
+            },
+            {
+              "id": "anthropic",
+              "label": "Anthropic API (direct)",
+              "status": "PASS",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "ANTHROPIC_API_KEY"
+              ],
+              "credentialsPresent": true,
+              "adapterHint": "api/_lib/claude.js callClaude"
+            },
+            {
+              "id": "replit",
+              "label": "Replit",
+              "status": "NOT_WIRED",
+              "runtimeAdapter": false,
+              "credentialsRequired": [],
+              "credentialsPresent": null,
+              "adapterHint": "archived (scripts/lib/headless/archive/replit-agent.mjs.archived-2026-05-13)"
+            },
+            {
+              "id": "playwright",
+              "label": "Playwright",
+              "status": "DEGRADED",
+              "runtimeAdapter": true,
+              "credentialsRequired": [
+                "PLAYWRIGHT_ENDPOINT"
+              ],
+              "credentialsPresent": false,
+              "adapterHint": "api/_lib/orchestrator/agents/playwright.js + api/_lib/crawler.js viaPlaywright"
+            }
+          ],
+          "summary": {
+            "total": 11,
+            "runtimeAdapters": 6,
+            "live": 4,
+            "degraded": 2,
+            "notWired": 5
+          }
+        },
+        "observability": {
+          "status": "NOT_WIRED",
+          "pino": {
+            "ready": true,
+            "level": "info"
+          },
+          "sentry": {
+            "configured": false,
+            "initialized": false,
+            "tracesSampleRate": 0
+          },
+          "axiomBridge": {
+            "configured": false
+          }
+        },
+        "githubApp": {
+          "status": "PASS",
+          "configured": true,
+          "patFallback": true,
+          "installationIdAlias": "GITHUB_APP_INSTALLATION_ID"
+        },
+        "auth": {
+          "status": "PASS",
+          "clerkConfigured": true,
+          "frontendPublishableKeyPresent": true,
+          "authRequired": false,
+          "reason": null
+        }
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-auth-api-health-2026-06-14T02-30-20-540Z.png"
+  },
+  "anonMe": {
+    "url": "https://flowai-dun.vercel.app/api/me",
+    "status": 200,
+    "bodyText": "{\"authenticated\":false,\"authMode\":\"anonymous\",\"userId\":null,\"orgId\":null,\"productId\":null,\"config\":{\"authRequired\":false,\"clerkConfigured\":true}}",
+    "json": {
+      "authenticated": false,
+      "authMode": "anonymous",
+      "userId": null,
+      "orgId": null,
+      "productId": null,
+      "config": {
+        "authRequired": false,
+        "clerkConfigured": true
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-auth-api-me-anonymous-2026-06-14T02-30-20-540Z.png"
+  },
+  "flowHub": {
+    "url": "https://flowai-dun.vercel.app/flow-hub/production",
+    "finalUrl": "https://flowai-dun.vercel.app/flow-hub/production",
+    "status": 200,
+    "title": "FlowAI — VEU AI Studio",
+    "visibleText": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Flow Hub - Production Upgrade an existing product URL in its owned delivery path. FlowAI Ready · Layer: Autonomous · Mode: Auto · Depth: Standard · Path: Production Choose how you want to work with your product, then select your operation mode. PRE-RELEASE · INTERNAL USE ONLY v0.1 · VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch) Analyze a Live Product FlowAI will fetch and analyze the public-facing pages of your product. Test Fetch Note: URL must be publicly accessible. Authenticated or private apps use Card B or C. Describe Your Product Type or speak a description. Best for authenticated apps, internal tools, or early-stage products. 🔒 Credentials are used only for this session and are never stored. Voice Input Paste Content or Upload Screenshots Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly. Drop screenshots here or click to upload — PNG, JPG, PDF Combine with Card B for best results on authenticated products. SETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH? Audit for prospect demo readiness Prepare for investor review Full governance and clearance cycle Compare two or more products Combine inputs into a unified specification Benchmark against competitors Launch readiness check Custom — I will describe my objective SETUP 3 OF 3 — SELECT OPERATION MODE Auto SELECTED FlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance sco",
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-auth-flow-hub-production-2026-06-14T02-30-20-540Z.png"
+  },
+  "signup": {
+    "url": "https://flowai-dun.vercel.app/sign-up",
+    "finalUrl": "https://flowai-dun.vercel.app/sign-up",
+    "status": 200,
+    "title": "FlowAI — VEU AI Studio",
+    "visibleText": "Create your account Create your account Welcome! Please fill in the details to get started. Continue with Google or First name Optional Last name Optional Email address Password Continue Already have an account? Sign in Secured by Development mode",
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-auth-sign-up-2026-06-14T02-30-20-540Z.png"
+  },
+  "signin": {
+    "url": "https://flowai-dun.vercel.app/sign-in",
+    "finalUrl": "https://flowai-dun.vercel.app/sign-in",
+    "status": 200,
+    "title": "FlowAI — VEU AI Studio",
+    "visibleText": "Sign in to your account Sign in to FlowAI Welcome back! Please sign in to continue Continue with Google or Email address Password Continue Don’t have an account? Sign up Secured by Development mode",
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-auth-sign-in-2026-06-14T02-30-20-540Z.png"
+  },
+  "signupAttempt": {
+    "email": "flowai.ct2.20260614023052@example.com",
+    "events": [
+      "filled email test identity",
+      "filled generated password",
+      "filled first name",
+      "filled last name",
+      "clicked continue"
+    ],
+    "clicked": "continue",
+    "classification": "submitted-no-session-observed",
+    "visibleTextBefore": "Create your account Create your account Welcome! Please fill in the details to get started. Continue with Google or First name Optional Last name Optional Email address Password Continue Already have an account? Sign in Secured by Development mode",
+    "visibleTextAfter": "Create your account Create your account Welcome! Please fill in the details to get started. Continue with Google or First name Optional Last name Optional Email address Password Your password meets all the necessary requirements. Your password meets all the necessary requirements. Continue Already have an account? Sign in Secured by Development mode",
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-auth-signup-attempt-2026-06-14T02-30-20-540Z.png",
+    "apiMeAfterAttempt": {
+      "status": 200,
+      "json": {
+        "authenticated": false,
+        "authMode": "anonymous",
+        "userId": null,
+        "orgId": null,
+        "productId": null,
+        "config": {
+          "authRequired": false,
+          "clerkConfigured": true
+        }
+      },
+      "bodyText": "{\"authenticated\":false,\"authMode\":\"anonymous\",\"userId\":null,\"orgId\":null,\"productId\":null,\"config\":{\"authRequired\":false,\"clerkConfigured\":true}}",
+      "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-auth-api-me-after-signup-attempt-2026-06-14T02-30-20-540Z.png"
+    }
+  },
+  "secretLeakScan": {
+    "healthContainsSkTokenShape": false,
+    "healthContainsPkTokenShape": false,
+    "healthContainsJwtShape": false,
+    "healthContainsBearer": false
+  }
+}
