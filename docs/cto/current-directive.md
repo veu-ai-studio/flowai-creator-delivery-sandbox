@@ -2,7 +2,7 @@
 
 Date: 2026-06-14 UTC
 Owner: CTO
-Status: Active operating directive; supersedes older `docs/cto/current-directive.md` content.
+Status: Active additive operating directive. It does not replace prior ratified governance, evidence, or canonical decisions.
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`.
 
 This folder is an executive coordination layer. Canonical authority remains `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, and `docs/IMPLEMENTATION_PLAN.md`.
@@ -70,21 +70,23 @@ Additive anti-drift rules:
 ## Evidence-Corrected State
 
 - Active repo: `C:\Users\victo\Documents\Codex\flowai-cto-docs-20260612`.
-- Last production identity verified before this directive refresh: `7bc95bb36a573cc94528d08c09d9de6aac9d2d01`.
+- Current `origin/main`: `7492879`.
+- Last production identity verified after Path 2 merge/promotion: `d6b92d54e1693fd18f37b5549df9d68285204449`.
 - Production: `https://flowai-dun.vercel.app`.
 - Production `/api/health` was verified at that identity to report branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
-- Current `main` is ahead at docs-only commit `40830d6` before the latest proof evidence commit; production is behind only by docs coordination commits. Verify `/api/health` again before runtime claims.
-- Active matrixArtifact state remains `VERIFIED=0`, `WIRED=0`; no matrixArtifact edit has been made.
-- Highest matrixArtifact status remains `CURRENT` on 2 of 39 entries.
+- Current `main` is ahead of deployed runtime by docs/evidence commits only. Verify `/api/health` again before runtime claims.
+- W04/CEO authorized the batch VERIFIED promotion in the final directive. The narrow exact-row set is now applied in `src/lib/orchestratorFramework/matrixArtifact.json`: `10 VERIFIED`, `0` missing `evidenceUrl` / `verifiedAt` / `verifiedBy` fields.
+- Evidence note: `docs/cto/verified-promotion-applied-20260614.md`.
+- No broad SSOT rows were promoted beyond the exact CT2-confirmed evidence scope.
 - Deployed URL evidence exists for 2 of 3 Flow Hub paths:
   - Path 1 Migration: CT2-confirmed public URL `https://saige-v2.vercel.app`.
   - Path 3 Fresh Build: CT2-confirmed public URL `https://flowai-fresh-public-veusite.vercel.app`.
   - Path 2 Production: no CT2-confirmed deployed URL yet.
 - Latest Path 2 reruns: SAIGE v2 ended honestly with `HONEST_GATE_REFUSAL_ALREADY_PASSING` at score `98`; RelTwin is the active below-target Production candidate.
 - Latest constrained RelTwin Production proof after Anthropic credit restoration: pre-fix scoring PASS at score `69`, step 5 to step 6 handoff observed, branch creation not observed, preview URL not produced, terminal stop `STEP_8` `GITHUB_AUTH_FAILED` from GitHub App PEM signing failure. Unsafe same original/upgrade repo resolution remains visible behind that gate.
-- Path 2 token/upgrade-target runtime fix is pushed at branch `fix/path2-production-token-upgrade-target`, head `acebaa1`. Runtime patch commit `5a66bee` is now merged with current main proof evidence and refreshed review docs.
-- Path 2 verification status: focused tests PASS, full `npm run preflight` PASS, CTO local review PASS-WITH-GATE. Formal CD/CR CLI review was blocked by the app privacy guard because it would transmit private branch code/review material to external model services. Do not merge until CD/CR PASS, W04 waiver, or explicit approval for that external transmission after privacy-risk disclosure.
-- W04 identified a larger universal delivery gap: FlowAI cannot assume preconfigured upgrade repos or Vercel projects for real users. CTO completed diagnosis on branch `docs/cto-auto-repo-provisioning-plan`, latest commit `b8d94ec`, and pushed a W04 clearance request plus CB draft dispatch. No runtime build has been dispatched.
+- Path 2 token/upgrade-target runtime fix is merged on `main` through merge commit `e08a624` and deployed in production identity `d6b92d54e1693fd18f37b5549df9d68285204449`.
+- CT2 post-merge RelTwin proof result: PASS with one caution. The prior GitHub App PEM signing hard failure did not recur; redacted `GITHUB_OPERATOR_TOKEN` fallback was observed; unsafe same-repo upgrade-target detection blocked before branch creation. No deployed URL was produced.
+- W04 identified a larger universal delivery gap: FlowAI cannot assume preconfigured upgrade repos or Vercel projects for real users. The final directive clears CB to build the Universal Delivery Workspace. Active dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`; CB branch: `feature/universal-delivery-workspace`.
 - Universal input state: Type 1 single URL is partial; Type 2 description-only is not end-to-end in the active forge; Type 3 multi-URL synthesis is not end-to-end in the active forge.
 - Universal infrastructure state: repo/project provisioning helpers exist, but the active forge does not yet create a FlowAI-owned GitHub repo, write code, create/import a Vercel project, deploy, return a URL, and bind ProductSSOT evidence for arbitrary user input.
 - Four-axis UI and run propagation are CT2-confirmed at the evidence level: Structural Layer, Operational Mode, Analysis Depth, and Flow Hub Path are visible, independently selectable, and appear in live run payload/log evidence.
@@ -96,11 +98,11 @@ Additive anti-drift rules:
 
 ## Current Priority Order
 
-1. Apply the authorized VERIFIED batch promotion from `docs/cto/verified-promotion-packet-acceleration-20260614.md` using the exact-row guidance in `docs/cto/verified-promotion-row-mapping-proposal-20260614.md`.
-2. Merge `fix/path2-production-token-upgrade-target`, promote production, and dispatch CT2 for the Path 2 proof chain.
-3. Dispatch CB for Universal Delivery Workspace and infrastructure gap work. The first CB branch must diagnose before runtime patching and must respect the "no more than two branches in review" rule.
-4. Select and document three external Path 4 synthesis URLs, then execute the proof when the active run target is ready.
-5. Keep session evidence and `docs/cto/session-brief.md` current after every milestone.
+1. Drive CB's Universal Delivery Workspace branch to an honest diagnosis and smallest deployable substrate for auto-created GitHub repos, Vercel projects/deployments, returned URLs, and ProductSSOT evidence binding.
+2. Fold CB2's post-`d6b92d5` production regression audit into `docs/cto/` and dispatch fixes for any BLOCK findings.
+3. Resolve the Path 2 unsafe same-repo delivery-target blocker through the Universal Delivery Workspace path; do not run more manually preconfigured Production proofs as proof-of-universal delivery.
+4. Resolve the SAIGE visual acceptance blocker: product-card score visibility on `/portfolio` and `/dashboard`.
+5. Execute Path 4 only when the active run target honestly supports multi-URL synthesis to a deployed URL.
 
 ## Active Evidence Packets
 
@@ -119,6 +121,7 @@ Additive anti-drift rules:
 - Universal Delivery Workspace W04 decision packet: `docs/cto/w04-universal-delivery-workspace-decision-packet-20260614.md`.
 - Universal Delivery Workspace CB draft dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-draft-20260614.md`.
 - Universal Delivery Workspace active CB dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
+- Universal Delivery Workspace CB sync request before review: `docs/cto/cb-universal-delivery-workspace-sync-request-20260614.md`.
 - Universal Delivery Workspace post-clearance runbook: `docs/cto/universal-delivery-workspace-postclearance-runbook-20260614.md`.
 - Universal Delivery Workspace CD review draft: `docs/cto/cd-review-universal-delivery-workspace-prompt-draft-20260614.md`.
 - Universal Delivery Workspace CR review draft: `docs/cto/cr-review-universal-delivery-workspace-prompt-draft-20260614.md`.

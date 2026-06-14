@@ -1,0 +1,139 @@
+{
+  "runId": "ct2-path2-reltwin-postmerge-20260614",
+  "targetUrl": "https://reltwin.com",
+  "events": [
+    {
+      "step": 1,
+      "stepName": "Product Discovery",
+      "tool": "upgradeTargetResolver.js",
+      "status": "complete",
+      "why": "enforce fork-based upgrade architecture: original repo is read-only, writes target upgrade repo",
+      "result": {
+        "architecture": "fork_based_upgrade",
+        "originalRepo": "https://github.com/veu-ai-studio/rel-twin",
+        "originalUrl": "https://reltwin.com",
+        "originalBranch": "main",
+        "upgradeRepo": "https://github.com/veu-ai-studio/rel-twin",
+        "upgradeUrl": "https://reltwin.com",
+        "upgradeBranch": "main",
+        "upgradeRepoExplicit": true,
+        "upgradeRepoRequired": true,
+        "writesOriginalRepo": true,
+        "originalReadOnly": true,
+        "rollbackTarget": "https://github.com/veu-ai-studio/rel-twin",
+        "writeSafety": {
+          "ok": false,
+          "code": "UPGRADE_TARGET_UNSAFE",
+          "reason": "upgrade_repo_matches_original_repo"
+        }
+      }
+    },
+    {
+      "step": 5,
+      "stepName": "Five-Layer Scoring (Pre-Fix)",
+      "tool": "upgradeTargetProvisioner.js",
+      "status": "complete",
+      "why": "SSOT section 9/10 - determine whether upgrade repo and deployment can be auto-provisioned without touching the original",
+      "result": {
+        "ok": true,
+        "recommendation": "provisioning_required",
+        "tokenAvailability": {
+          "github": true,
+          "vercel": true
+        },
+        "state": {
+          "original_repo_url": "https://github.com/veu-ai-studio/rel-twin",
+          "original_url": "https://reltwin.com",
+          "upgrade_repo_url": "https://github.com/veu-ai-studio/rel-twin",
+          "upgrade_url": "https://reltwin.com",
+          "deployment_url": "https://reltwin.com",
+          "canonical_url": "https://reltwin.com",
+          "upgrade_repo_status": "provisioned",
+          "deployment_status": "missing"
+        }
+      }
+    },
+    {
+      "step": 1,
+      "stepName": "Product Discovery",
+      "tool": "githubOperatorRepoProbe.js",
+      "status": "degraded",
+      "why": "verify GITHUB_OPERATOR_TOKEN can read/write the active upgrade repo without exposing secrets",
+      "result": {
+        "kind": "github_operator_repo_probe",
+        "ok": false,
+        "canRead": false,
+        "canWrite": false,
+        "tokenPresent": true,
+        "tokenRedacted": true,
+        "owner": "veu-ai-studio",
+        "repo": "rel-twin",
+        "branch": "main",
+        "defaultBranch": null,
+        "permissions": {
+          "admin": false,
+          "maintain": false,
+          "push": false,
+          "pull": false
+        },
+        "reason": "github_404",
+        "status": 404,
+        "checkedAt": "2026-06-14T20:53:31.762Z"
+      }
+    },
+    {
+      "step": 8,
+      "stepName": "Credential Acquisition",
+      "tool": "GITHUB_OPERATOR_TOKEN",
+      "status": "complete",
+      "why": "repo-write credential for branch + PR writes",
+      "result": {
+        "tokenAcquired": true,
+        "operator_mode": "github_connected",
+        "credentialSource": "GITHUB_OPERATOR_TOKEN",
+        "tokenRedacted": true,
+        "expiresAt": null,
+        "reusedFromHoist": true,
+        "fallbackFrom": "github_app_installation",
+        "fallbackReason": "GITHUB_AUTH_FAILED",
+        "operatorRepoProbeOk": false,
+        "operatorRepoProbeReason": "github_404"
+      }
+    },
+    {
+      "step": 7,
+      "stepName": "Multi-File Fix Generation",
+      "tool": "fixGenerator.js (Claude Sonnet 4; full-file replacement)",
+      "status": "degraded",
+      "result": {
+        "filesFixed": 0,
+        "files": [],
+        "rejectedCount": 5,
+        "llmEnabled": true,
+        "llmCallsThisIteration": 0,
+        "llmAttemptsRecorded": 0,
+        "accepted": []
+      }
+    },
+    {
+      "step": 7,
+      "stepName": "Multi-File Fix Generation",
+      "tool": "remediationEngine.runRemediation (PHASE B2)",
+      "status": "complete",
+      "result": {
+        "totalFindings": 8,
+        "eligible": 3,
+        "escalated": 0,
+        "ineligible": 5,
+        "fixesAttempted": 3,
+        "fixesSucceeded": 0,
+        "fixesFailed": 3
+      }
+    }
+  ],
+  "redactionNotes": [
+    "No token values, private keys, PEM bodies, Authorization headers, cookies, or secret environment values are included.",
+    "Credential evidence is limited to booleans, redacted flags, non-secret reason codes, and public repository metadata."
+  ]
+}
+

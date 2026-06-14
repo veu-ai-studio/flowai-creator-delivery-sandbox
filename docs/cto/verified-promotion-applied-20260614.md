@@ -3,7 +3,7 @@
 FROM: CTO
 TO: W04 / Victor Udo, FNSE, PhD - CEO
 DATE: 2026-06-14 UTC
-Branch: `docs/cto-auto-repo-provisioning-plan`
+Branch: `main`
 VERIFIED movement: yes
 canonical docs edited: no
 traceability matrix edited: yes

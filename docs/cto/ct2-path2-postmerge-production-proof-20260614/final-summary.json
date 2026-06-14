@@ -1,0 +1,64 @@
+{
+  "ok": true,
+  "runStatus": "completed",
+  "runId": "ct2-path2-reltwin-postmerge-20260614",
+  "targetUrl": "https://reltwin.com",
+  "queuedAt": "2026-06-14T20:53:27.832Z",
+  "startedAt": "2026-06-14T20:53:28.866Z",
+  "completedAt": "2026-06-14T20:56:06.787Z",
+  "transport": "kv",
+  "eventCount": 53,
+  "final": true,
+  "finalOk": true,
+  "finalScore": 56,
+  "rawScore": 56,
+  "effectiveTrustScore": 33.6,
+  "gtmReady": false,
+  "exitReason": "NO_FIXES_GENERATED",
+  "failedStep": null,
+  "code": null,
+  "previewUrl": null,
+  "prUrl": null,
+  "deployUrl": null,
+  "deployedUrl": null,
+  "runMode": "PATH_A",
+  "operatorMode": "github_connected",
+  "branch": null,
+  "iterationsCompleted": 1,
+  "findingsCount": 8,
+  "findingsSeverity": {
+    "critical": 0,
+    "high": 2,
+    "medium": 6,
+    "low": 0
+  },
+  "symbioticLoop": {
+    "persisted": true,
+    "state": "persisted",
+    "version": 2,
+    "reason": null
+  },
+  "governanceRecordId": "ct2-path2-reltwin-postmerge-20260614",
+  "operatorRepoAccess": {
+    "kind": "github_operator_repo_probe",
+    "ok": false,
+    "canRead": false,
+    "canWrite": false,
+    "tokenPresent": true,
+    "tokenRedacted": true,
+    "owner": "veu-ai-studio",
+    "repo": "rel-twin",
+    "branch": "main",
+    "defaultBranch": null,
+    "permissions": {
+      "admin": false,
+      "maintain": false,
+      "push": false,
+      "pull": false
+    },
+    "reason": "github_404",
+    "status": 404,
+    "checkedAt": "2026-06-14T20:53:31.762Z"
+  }
+}
+
