@@ -63,6 +63,41 @@ describe('Fresh Build deployment adapter', () => {
     expect(githubClient.createCommit).not.toHaveBeenCalled();
   });
 
+  it('blocks invalid generated code before any GitHub write or Vercel deploy call', async () => {
+    const githubClient = { createCommit: vi.fn() };
+    const deployPreviewImpl = vi.fn();
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase({
+        files: [
+          {
+            path: 'src/components/ListListXlrmdf.jsx',
+            content: 'export default function ListListXlrmdf() { return (<div>Broken</div>; }\n',
+          },
+        ],
+      }),
+      productConfig: {
+        name: 'Generic Product',
+        upgrade_repo: 'https://github.com/acme/generated-product',
+      },
+      githubClient,
+      deployPreviewImpl,
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 'BLOCKED',
+      reason: 'GENERATED_CODEBASE_INVALID',
+      previewUrl: null,
+      filesWritten: 0,
+      validationErrors: [
+        'src/components/ListListXlrmdf.jsx has unbalanced ()',
+      ],
+    });
+    expect(githubClient.createCommit).not.toHaveBeenCalled();
+    expect(deployPreviewImpl).not.toHaveBeenCalled();
+  });
+
   it('blocks writes to the original repo', async () => {
     const githubClient = { createCommit: vi.fn() };
 

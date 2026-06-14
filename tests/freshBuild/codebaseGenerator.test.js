@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_TARGET_STACK,
   MAX_GENERATOR_API_CALLS,
+  __test as CODEBASE_GENERATOR_TEST,
   generateCodebase,
   validateGeneratedCodebase,
 } from '../../src/lib/freshBuild/codebaseGenerator.js';
@@ -223,6 +224,35 @@ describe('freshBuild Codebase Generator', () => {
     expect(codebase.platformDependencies).toEqual([]);
   });
 
+  it('covers the ListListXlrmdf unbalanced parenthesis regression with delimiter-safe generated JSX', () => {
+    const codebase = generateCodebase(mockFeatureInventory({
+      components: [
+        {
+          id: 'list-xlrmdf',
+          type: 'list',
+          content: 'Credibility signals (public profile, mission proof, operator notes',
+          purpose: 'VEU AI Studio positioning (proof-led website',
+          pages: ['https://example.com'],
+          interactive: false,
+          confidence: 0.8,
+        },
+      ],
+      metadata: {
+        ...mockFeatureInventory().metadata,
+        totalComponentsIdentified: 1,
+      },
+    }), mockDesignSpec(), {
+      productName: 'VEU AI Studio (Fresh Build proof',
+      now: '2026-06-14T00:00:00.000Z',
+    });
+    const file = codebase.files.find((item) => item.path === 'src/components/ListListXlrmdf.jsx');
+
+    expect(file).toBeTruthy();
+    expect(file.content).toContain('&#40;');
+    expect(file.content).not.toContain('signals (public');
+    expect(validateGeneratedCodebase(codebase)).toEqual({ ok: true, errors: [] });
+  });
+
   it('builds Tailwind config from DesignSpec colors', () => {
     const codebase = generateCodebase(mockFeatureInventory(), mockDesignSpec(), { productName: 'Example Product' });
     const tailwindConfig = codebase.files.find((file) => file.path === 'tailwind.config.js').content;
@@ -285,6 +315,28 @@ describe('freshBuild Codebase Generator', () => {
       expect.stringContaining('Generated file content is empty'),
       expect.stringContaining('unbalanced'),
     ]));
+  });
+
+  it('keeps validation strict for invalid generated files and summarizes blocked diagnostics', () => {
+    const codebase = generateCodebase(mockFeatureInventory(), mockDesignSpec(), { productName: 'Example Product' });
+    const invalidFile = {
+      path: 'src/components/ListListXlrmdf.jsx',
+      content: 'export default function ListListXlrmdf() { return (<div>Broken</div>; }\n',
+    };
+
+    const validation = validateGeneratedCodebase({ ...codebase, files: [invalidFile] });
+    const summary = CODEBASE_GENERATOR_TEST.summarizeValidationErrors(validation.errors);
+
+    expect(validation.ok).toBe(false);
+    expect(validation.errors).toEqual(expect.arrayContaining([
+      'src/components/ListListXlrmdf.jsx has unbalanced ()',
+    ]));
+    expect(summary).toMatchObject({
+      stage: 'codebase_generator',
+      code: 'GENERATED_CODEBASE_INVALID',
+      invalidFilePath: 'src/components/ListListXlrmdf.jsx',
+      validationReason: 'unbalanced ()',
+    });
   });
 
   it('hard-stops with BLOCKED when the API call cap is exceeded', () => {

@@ -247,6 +247,47 @@ function safeFailure(error, stage = 'deployment_adapter') {
   };
 }
 
+function buildGenerationBlockedResult({
+  url,
+  runId,
+  featureInventory,
+  designSpec,
+  generatedCodebase = null,
+  error = null,
+  now,
+}) {
+  const failure = generatedCodebase?.failure || safeFailure(
+    error || new Error(generatedCodebase?.reason || 'Fresh Build codebase generation blocked'),
+    generatedCodebase?.failureStage || 'codebase_generator',
+  );
+  return {
+    ok: false,
+    status: 'BLOCKED',
+    reason: generatedCodebase?.reason || failure.code || 'CODEBASE_GENERATION_BLOCKED',
+    failureStage: failure.stage || generatedCodebase?.failureStage || 'codebase_generator',
+    failure,
+    mode: FRESH_BUILD_MODE,
+    runId,
+    url,
+    featureInventory,
+    designSpec,
+    generatedCodebase,
+    platformDependencies: generatedCodebase?.platformDependencies || [],
+    previewUrl: null,
+    previewAccessStatus: null,
+    scoreStatus: SCORE_STATUS.NOT_ATTEMPTED,
+    baselineScore: null,
+    finalScore: null,
+    scoreDelta: null,
+    evidence: buildEvidence(featureInventory, designSpec, generatedCodebase, null),
+    metadata: {
+      version: FRESH_BUILD_VERSION,
+      featureFlagEnabled: true,
+      completedAt: isoTimestamp(now),
+    },
+  };
+}
+
 export async function runFreshBuild(input = {}, options = {}) {
   const url = requireHttpUrl(input.url || input.productUrl);
   const env = options.env || globalThis.process?.env || {};
@@ -311,12 +352,32 @@ export async function runFreshBuild(input = {}, options = {}) {
   });
 
   await emit(onStep, 'codebase_generator', 'started', { now });
-  const generatedCodebase = await generate(featureInventory, designSpec, {
-    ...(options.generatorOptions || {}),
-    productName: input.productName || options.productName,
-    targetStack: input.targetStack || options.targetStack,
-    now,
-  });
+  let generatedCodebase;
+  try {
+    generatedCodebase = await generate(featureInventory, designSpec, {
+      ...(options.generatorOptions || {}),
+      productName: input.productName || options.productName,
+      targetStack: input.targetStack || options.targetStack,
+      now,
+    });
+  } catch (error) {
+    const result = buildGenerationBlockedResult({
+      url,
+      runId,
+      featureInventory,
+      designSpec,
+      error,
+      now,
+    });
+    await emit(onStep, 'codebase_generator', 'blocked', {
+      reason: result.reason,
+      failureStage: result.failureStage,
+      invalidFilePath: result.failure?.invalidFilePath || null,
+      validationReason: result.failure?.validationReason || null,
+      now,
+    });
+    return result;
+  }
   await emit(onStep, 'codebase_generator', 'completed', {
     status: generatedCodebase?.status || 'UNKNOWN',
     files: Array.isArray(generatedCodebase?.files) ? generatedCodebase.files.length : 0,
@@ -327,30 +388,14 @@ export async function runFreshBuild(input = {}, options = {}) {
   });
 
   if (generatedCodebase?.status === 'BLOCKED') {
-    return {
-      ok: false,
-      status: 'BLOCKED',
-      reason: generatedCodebase.reason || 'CODEBASE_GENERATION_BLOCKED',
-      mode: FRESH_BUILD_MODE,
-      runId,
+    return buildGenerationBlockedResult({
       url,
+      runId,
       featureInventory,
       designSpec,
       generatedCodebase,
-      platformDependencies: generatedCodebase.platformDependencies || [],
-      previewUrl: null,
-      previewAccessStatus: null,
-      scoreStatus: SCORE_STATUS.NOT_ATTEMPTED,
-      baselineScore: null,
-      finalScore: null,
-      scoreDelta: null,
-      evidence: buildEvidence(featureInventory, designSpec, generatedCodebase, null),
-      metadata: {
-        version: FRESH_BUILD_VERSION,
-        featureFlagEnabled: true,
-        completedAt: isoTimestamp(now),
-      },
-    };
+      now,
+    });
   }
 
   await emit(onStep, 'upgrade_repo_write', 'started', { now });
@@ -450,5 +495,6 @@ export async function runFreshBuild(input = {}, options = {}) {
 export const __test = Object.freeze({
   buildEvidence,
   buildDesignEvidence,
+  buildGenerationBlockedResult,
   safeFailure,
 });
