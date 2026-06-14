@@ -158,6 +158,10 @@ Universal input and delivery architecture:
 - Finding: Type 1 is partial; Type 2 and Type 3 are not end-to-end in the active forge. The active system still assumes preconfigured delivery targets in key paths.
 - Status: diagnosis complete, CB dispatch prepared, canonical docs untouched. Runtime build now authorized by final directive; matrixArtifact promotion is separately authorized by the batch packet.
 - CB runtime branch `feature/universal-delivery-workspace` is now pushed at `0dd2177` with diagnosis commit `1290110`, implementation evidence, focused tests PASS, and full preflight PASS according to CB. CTO review found the branch is based on older `main` and would delete newer CT2/SAIGE evidence files if merged as-is. Sync request added: `docs/cto/cb-universal-delivery-workspace-sync-request-20260614.md`. CD/CR/CB2 review waits until CB merges current `origin/main`, preserves evidence files, reruns tests/preflight, and pushes a clean branch.
+- CB synced the branch with current `origin/main` and pushed `feature/universal-delivery-workspace` at `141c043`. CTO confirmed the diff against `origin/main` now contains only CB diagnosis/evidence plus runtime/test files; no CT2/SAIGE evidence deletion, no canonical docs, and no matrixArtifact. Review dispatches added for CD, CR, and CB2:
+  - `docs/cto/cd-review-universal-delivery-workspace-prompt-20260614.md`
+  - `docs/cto/cr-review-universal-delivery-workspace-prompt-20260614.md`
+  - `docs/cto/cb2-review-universal-delivery-workspace-dispatch-20260614.md`
 
 ## Current Packets
 
@@ -205,9 +209,9 @@ Path 4 URL selection:
 
 ## Next Starting Point
 
-1. Poll CB on `feature/universal-delivery-workspace` and integrate its diagnosis or runtime branch when ready.
-2. Confirm CB syncs `feature/universal-delivery-workspace` with current `origin/main` and preserves all CT2/SAIGE evidence before dispatching CD/CR/CB2 review.
-3. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
+1. Collect CD, CR, and CB2 verdicts for `feature/universal-delivery-workspace` at `141c043`.
+2. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
+3. If Universal Delivery passes review, merge, promote production, and dispatch CT2 for a Type 2 description-only Fresh Build URL proof.
 4. Resolve whether SAIGE product-card score visibility is a data-path bug or an authenticated/org-scoped acceptance-context requirement.
 5. Use the Universal Delivery Workspace to unblock Path 2 Production URL creation without relying on manually preconfigured upgrade repos.
 6. Run or dispatch the Path 4 synthesis proof only when the active run target supports multi-URL synthesis honestly.

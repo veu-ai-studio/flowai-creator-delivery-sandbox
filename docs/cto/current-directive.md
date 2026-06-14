@@ -125,6 +125,9 @@ Additive anti-drift rules:
 - Universal Delivery Workspace post-clearance runbook: `docs/cto/universal-delivery-workspace-postclearance-runbook-20260614.md`.
 - Universal Delivery Workspace CD review draft: `docs/cto/cd-review-universal-delivery-workspace-prompt-draft-20260614.md`.
 - Universal Delivery Workspace CR review draft: `docs/cto/cr-review-universal-delivery-workspace-prompt-draft-20260614.md`.
+- Universal Delivery Workspace CD review dispatch: `docs/cto/cd-review-universal-delivery-workspace-prompt-20260614.md`.
+- Universal Delivery Workspace CR review dispatch: `docs/cto/cr-review-universal-delivery-workspace-prompt-20260614.md`.
+- Universal Delivery Workspace CB2 branch audit dispatch: `docs/cto/cb2-review-universal-delivery-workspace-dispatch-20260614.md`.
 - Universal Delivery Workspace CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
 
 ## Anti-Drift Rules
