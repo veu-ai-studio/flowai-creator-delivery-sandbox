@@ -9,6 +9,7 @@
 //   - build:       commit + env metadata
 //   - supabase:    reachable + service-role key present
 //   - vercel_kv:   reachable (uses @vercel/kv if configured)
+//   - auth:        Clerk backend/frontend readiness booleans
 //   - orchestra:   per-member adapter status (11 members per parking-lot
 //                  ENTRY 004; reports adapter-code-present + credentials-
 //                  present per member; does NOT exercise the member at
@@ -292,6 +293,30 @@ function githubAppProbe() {
   };
 }
 
+function authProbe() {
+  const clerkConfigured = Boolean(process.env.CLERK_SECRET_KEY);
+  const frontendPublishableKeyPresent = Boolean(process.env.VITE_CLERK_PUBLISHABLE_KEY);
+  const authRequired = process.env.AUTH_REQUIRED === 'true';
+  let status = STATUSES.NOT_WIRED;
+  let reason = 'CLERK_SECRET_KEY not set';
+
+  if (clerkConfigured && frontendPublishableKeyPresent) {
+    status = STATUSES.PASS;
+    reason = null;
+  } else if (clerkConfigured) {
+    status = STATUSES.DEGRADED;
+    reason = 'VITE_CLERK_PUBLISHABLE_KEY not set';
+  }
+
+  return {
+    status,
+    clerkConfigured,
+    frontendPublishableKeyPresent,
+    authRequired,
+    reason,
+  };
+}
+
 // ─── Aggregate ──────────────────────────────────────────────────────────
 
 function aggregateStatus(checks) {
@@ -323,7 +348,8 @@ export async function runHealthChecks({ timeoutMs = DEFAULT_PROBE_TIMEOUT_MS } =
     const orchestra = orchestraProbe();
     const observability = observabilityProbe();
     const githubApp = githubAppProbe();
-    const checks = { build, supabase, vercelKv, orchestra, observability, githubApp };
+    const auth = authProbe();
+    const checks = { build, supabase, vercelKv, orchestra, observability, githubApp, auth };
     const status = aggregateStatus(checks);
     return {
       status,

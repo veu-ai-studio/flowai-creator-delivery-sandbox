@@ -119,6 +119,53 @@ describe('GET /api/health', () => {
     expect(res._get().body.inngestReady).toBe(false);
   });
 
+  it('reports Clerk auth readiness fields without leaking env values', async () => {
+    process.env.CLERK_SECRET_KEY = 'sk_test_health_secret_should_not_leak';
+    process.env.VITE_CLERK_PUBLISHABLE_KEY = 'pk_test_health_public_should_not_echo';
+    delete process.env.AUTH_REQUIRED;
+    const req = { method: 'GET', headers: {} };
+    const res = makeRes();
+    await handler(req, res);
+    const body = res._get().body;
+    expect(body.clerkReady).toBe(true);
+    expect(body.checks.auth).toMatchObject({
+      status: 'PASS',
+      clerkConfigured: true,
+      frontendPublishableKeyPresent: true,
+      authRequired: false,
+    });
+    const serialized = JSON.stringify(body);
+    expect(serialized).not.toContain(process.env.CLERK_SECRET_KEY);
+    expect(serialized).not.toContain(process.env.VITE_CLERK_PUBLISHABLE_KEY);
+  });
+
+  it('does not report clerkReady when the frontend publishable key is missing', async () => {
+    process.env.CLERK_SECRET_KEY = 'sk_test_backend_present';
+    delete process.env.VITE_CLERK_PUBLISHABLE_KEY;
+    delete process.env.AUTH_REQUIRED;
+    const req = { method: 'GET', headers: {} };
+    const res = makeRes();
+    await handler(req, res);
+    const body = res._get().body;
+    expect(body.clerkReady).toBe(false);
+    expect(body.checks.auth).toMatchObject({
+      status: 'DEGRADED',
+      clerkConfigured: true,
+      frontendPublishableKeyPresent: false,
+      authRequired: false,
+    });
+  });
+
+  it('keeps AUTH_REQUIRED false by default in health auth readiness', async () => {
+    process.env.CLERK_SECRET_KEY = 'sk_test_configured';
+    process.env.VITE_CLERK_PUBLISHABLE_KEY = 'pk_test_configured';
+    delete process.env.AUTH_REQUIRED;
+    const req = { method: 'GET', headers: {} };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res._get().body.checks.auth.authRequired).toBe(false);
+  });
+
   it('handles OPTIONS preflight with 204', () => {
     const req = { method: 'OPTIONS', headers: { origin: 'https://x.example' } };
     const res = makeRes();
