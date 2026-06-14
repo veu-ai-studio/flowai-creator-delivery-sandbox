@@ -121,6 +121,40 @@ describe('deployBranchPreview — happy path', () => {
     expect(postBody.target).toBeUndefined();
   });
 
+  it('can request production target and returns the stable production alias as previewUrl', async () => {
+    const fetchMock = sequencedFetch([
+      {
+        status: 200,
+        body: deploymentResponse('READY', {
+          url: 'my-preg-life-abc123-veu-ai-studio.vercel.app',
+          alias: [
+            'my-preg-life-git-flowai-renewal-test123-veu-ai-studio.vercel.app',
+            'my-preg-life-veu-ai-studio.vercel.app',
+            'my-preg-life.vercel.app',
+          ],
+        }),
+      },
+    ]);
+    const result = await deployBranchPreview({
+      ...HAPPY_ARGS,
+      target: 'production',
+      opts: { fetch: fetchMock, sleep: fastSleep },
+    });
+    const postBody = JSON.parse(fetchMock.calls[0].init.body);
+    expect(postBody.target).toBe('production');
+    expect(result).toMatchObject({
+      deploymentId: DEPLOYMENT_ID,
+      previewUrl: 'https://my-preg-life.vercel.app',
+      deploymentUrl: 'https://my-preg-life-abc123-veu-ai-studio.vercel.app',
+      aliases: [
+        'https://my-preg-life-git-flowai-renewal-test123-veu-ai-studio.vercel.app',
+        'https://my-preg-life-veu-ai-studio.vercel.app',
+        'https://my-preg-life.vercel.app',
+      ],
+      target: 'production',
+    });
+  });
+
   it('GET polls hit /v13/deployments/{id}?teamId=<orgId> with no body', async () => {
     const fetchMock = sequencedFetch([
       { status: 200, body: deploymentResponse('BUILDING') },
