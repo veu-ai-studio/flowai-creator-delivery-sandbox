@@ -20,9 +20,16 @@ describe('upgrade target resolver', () => {
       upgradeRepo: 'https://github.com/veu-ai-studio/saige-v2',
       upgradeUrl: 'https://saige-v2.vercel.app',
       upgradeBranch: 'main',
+      upgradeRepoExplicit: true,
+      upgradeRepoRequired: true,
       writesOriginalRepo: false,
       originalReadOnly: true,
       rollbackTarget: 'https://github.com/veu-ai-studio/saige',
+      writeSafety: {
+        ok: true,
+        code: null,
+        reason: null,
+      },
     });
   });
 
@@ -51,5 +58,45 @@ describe('upgrade target resolver', () => {
 
     expect(product.self_renewal_branch).toBe('main');
     expect(product.__upgradeTargets.upgradeBranch).toBe('main');
+  });
+
+  it('flags explicit read-only products with no separate upgrade repo before writes', () => {
+    const targets = resolveProductUpgradeTargets({
+      product_id: 'reltwin',
+      original_repo: 'https://github.com/veu-ai-studio/rel-twin',
+      upgrade_repo: 'https://github.com/veu-ai-studio/rel-twin',
+      original_status: 'read_only_baseline',
+      upgrade_architecture: 'fork_based_upgrade',
+    });
+
+    expect(targets).toMatchObject({
+      upgradeRepoExplicit: true,
+      upgradeRepoRequired: true,
+      writesOriginalRepo: true,
+      writeSafety: {
+        ok: false,
+        code: 'UPGRADE_TARGET_UNSAFE',
+        reason: 'upgrade_repo_matches_original_repo',
+      },
+    });
+  });
+
+  it('allows legacy single-repo products to keep existing behavior until explicitly fork-marked', () => {
+    const targets = resolveProductUpgradeTargets({
+      product_id: 'legacy',
+      github_repo_url: 'https://github.com/veu-ai-studio/legacy-product',
+    });
+
+    expect(targets).toMatchObject({
+      upgradeRepo: 'https://github.com/veu-ai-studio/legacy-product',
+      upgradeRepoExplicit: false,
+      upgradeRepoRequired: false,
+      writesOriginalRepo: true,
+      writeSafety: {
+        ok: true,
+        code: null,
+        reason: null,
+      },
+    });
   });
 });

@@ -1147,6 +1147,88 @@ describe('orchestrator - GitHub operator token mode', () => {
     }
   });
 
+  it('uses the operator token when GitHub App signing fails after a degraded repo probe', async () => {
+    clearVercelEnv();
+    const stepLogs = [];
+    const deps = happyDeps({ preScoreSequence: [60], postScoreSequence: [72] });
+    deps.githubOperatorToken = 'gho_operator_secret';
+    deps.discoverProduct = vi.fn(async () => null);
+    deps.probeGithubOperatorRepoAccess = vi.fn(async () => ({
+      kind: 'github_operator_repo_probe',
+      ok: false,
+      canRead: false,
+      canWrite: false,
+      tokenPresent: true,
+      tokenRedacted: true,
+      owner: 'veu-ai-studio',
+      repo: 'saige-v2',
+      branch: 'main',
+      reason: 'network:probe_unavailable',
+      status: 0,
+    }));
+    deps.getInstallationToken = vi.fn(async () => {
+      throw Object.assign(new Error('signAppJwt: RS256 signing failed'), { code: 'GITHUB_AUTH_FAILED' });
+    });
+    deps.fetchRepoFileList = vi.fn(async ({ token }) => ({
+      files: ['README.md', 'package.json', 'src/App.jsx'],
+      truncated: false,
+      sha: token,
+      error: null,
+    }));
+    deps.fetchFileContent = vi.fn(async ({ filePath }) => (
+      filePath === 'package.json'
+        ? JSON.stringify({ dependencies: { react: '^18.0.0' } })
+        : 'original-content'
+    ));
+    deps.parseCheckContent = vi.fn(async () => ({ ok: true }));
+
+    try {
+      const result = await runOrchestration({
+        url: 'https://saigeplatform.com',
+        mode: 'auto',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+        issue: {
+          filePath: 'README.md',
+          issue: 'Fix broken setup guidance',
+          fix: 'Update the README setup section with the missing production note.',
+          severity: 'medium',
+        },
+        onStep: (log) => stepLogs.push(log),
+      });
+
+      expect(result.runMode).toBe('PATH_A');
+      expect(deps.getInstallationToken).toHaveBeenCalledWith(expect.objectContaining({ pat: '' }));
+      expect(deps.fetchRepoFileList).toHaveBeenCalledWith(expect.objectContaining({
+        owner: 'veu-ai-studio',
+        repo: 'saige-v2',
+        token: 'gho_operator_secret',
+      }));
+      expect(stepLogs.find((log) => log.tool?.includes('fetchRepoFileList'))?.result).toMatchObject({
+        credentialSource: 'GITHUB_OPERATOR_TOKEN',
+        fallbackFrom: 'github_app_installation',
+        fallbackReason: 'GITHUB_AUTH_FAILED',
+        tokenRedacted: true,
+      });
+      expect(stepLogs.find((log) => log.step === 8)?.result).toMatchObject({
+        credentialSource: 'GITHUB_OPERATOR_TOKEN',
+        fallbackFrom: 'github_app_installation',
+        fallbackReason: 'GITHUB_AUTH_FAILED',
+        reusedFromHoist: true,
+        tokenRedacted: true,
+      });
+      expect(deps.createRenewalBranch).toHaveBeenCalledWith(expect.objectContaining({
+        owner: 'veu-ai-studio',
+        repo: 'saige-v2',
+        token: 'gho_operator_secret',
+      }));
+      expect(JSON.stringify(stepLogs)).not.toContain('gho_operator_secret');
+    } finally {
+      clearVercelEnv();
+    }
+  });
+
   it('uses GITHUB_OPERATOR_TOKEN for registered products without bypassing PR approval', async () => {
     clearVercelEnv();
     const stepLogs = [];
@@ -1353,6 +1435,65 @@ describe('runOrchestration — failure handling', () => {
         && log.result?.userStep === 8
         && log.result?.finalStatusReady === true
       ))).toBeDefined();
+      expect(deps.createRenewalBranch).not.toHaveBeenCalled();
+      expect(deps.deployBranchPreview).not.toHaveBeenCalled();
+      expect(deps.createRenewalPr).not.toHaveBeenCalled();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('blocks branch writes when an explicit upgrade target resolves to the read-only original repo', async () => {
+    withVercelEnv();
+    try {
+      const productWithUnsafeUpgradeTarget = Object.freeze({
+        ...PRODUCT,
+        product_id: 'reltwin',
+        product_url: 'https://reltwin.com',
+        github_repo_url: 'https://github.com/veu-ai-studio/rel-twin',
+        original_repo: 'https://github.com/veu-ai-studio/rel-twin',
+        original_url: 'https://reltwin.com',
+        original_status: 'read_only_baseline',
+        upgrade_repo: 'https://github.com/veu-ai-studio/rel-twin',
+        upgrade_url: 'https://reltwin.com',
+        upgrade_architecture: 'fork_based_upgrade',
+      });
+      const deps = happyDeps({ preScoreSequence: [60], postScoreSequence: [60] });
+      deps.discoverProduct = vi.fn(async () => productWithUnsafeUpgradeTarget);
+      deps.fetchRepoFileList = vi.fn(async () => ({
+        files: ['README.md', 'package.json'],
+        truncated: false,
+        sha: 'sha',
+        error: null,
+      }));
+      deps.fetchFileContent = vi.fn(async ({ filePath }) => (
+        filePath === 'package.json'
+          ? JSON.stringify({ dependencies: { react: '^18.0.0' } })
+          : 'original-content'
+      ));
+      deps.parseCheckContent = vi.fn(async () => ({ ok: true }));
+
+      const result = await runOrchestration({
+        url: 'https://reltwin.com',
+        mode: 'auto',
+        runId: 'unsafe-upgrade-target',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.exitReason).toBe('STEP_FAILED');
+      expect(result.failedStep).toBe('STEP_9');
+      expect(result.code).toBe('UPGRADE_TARGET_UNSAFE');
+      expect(result.orchestrationLog.find((log) => (
+        log.step === 9
+        && log.tool === 'upgradeTargetResolver.js (write-safety guard)'
+      ))?.result).toMatchObject({
+        code: 'UPGRADE_TARGET_UNSAFE',
+        writesOriginalRepo: true,
+        originalReadOnly: true,
+      });
       expect(deps.createRenewalBranch).not.toHaveBeenCalled();
       expect(deps.deployBranchPreview).not.toHaveBeenCalled();
       expect(deps.createRenewalPr).not.toHaveBeenCalled();

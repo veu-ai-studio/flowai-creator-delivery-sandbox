@@ -1123,6 +1123,61 @@ export async function runOrchestration(args = {}) {
     });
   };
 
+  const mintGithubInstallationCredential = async () => {
+    const minted = await withTimeout(
+      _getInstallationToken({
+        pat: '',
+        fetch: makeAbortableFetch({
+          timeoutMs: step5ToStep6Timeouts.getInstallationToken,
+          code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
+          message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
+        }),
+      }),
+      {
+        timeoutMs: step5ToStep6Timeouts.getInstallationToken,
+        code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
+        message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
+      },
+    );
+    return Object.freeze({
+      token: minted.token,
+      expiresAt: minted.expiresAt ?? null,
+      credentialSource: minted.source === 'pat' ? 'GITHUB_PAT' : 'github_app_installation',
+      tokenRedacted: true,
+      mintedWithGithubApp: minted.source !== 'pat',
+    });
+  };
+
+  const acquireRepoWriteCredential = async () => {
+    if (githubOperatorToken && state.operatorRepoAccess?.ok !== false) {
+      return Object.freeze({
+        token: githubOperatorToken,
+        expiresAt: null,
+        credentialSource: 'GITHUB_OPERATOR_TOKEN',
+        tokenRedacted: true,
+        reusedOperatorToken: true,
+      });
+    }
+    try {
+      return await mintGithubInstallationCredential();
+    } catch (e) {
+      if (githubOperatorToken) {
+        return Object.freeze({
+          token: githubOperatorToken,
+          expiresAt: null,
+          credentialSource: 'GITHUB_OPERATOR_TOKEN',
+          tokenRedacted: true,
+          reusedOperatorToken: true,
+          fallbackFrom: 'github_app_installation',
+          fallbackReason: e?.code ?? 'GITHUB_AUTH_FAILED',
+          operatorRepoProbeOk: state.operatorRepoAccess?.ok === true,
+          operatorRepoProbeReason: state.operatorRepoAccess?.reason ?? null,
+        });
+      }
+      throw e;
+    }
+  };
+
   const recordTerminalFailure = async ({ product: failureProduct, failedStep, error, code, diagnostics, remediation }) => {
     const safeDiagnostics = {
       ...pickSafeDiagnosticFields(diagnostics),
@@ -1954,6 +2009,7 @@ export async function runOrchestration(args = {}) {
   let exitReason = 'UNKNOWN';
   let noImprovementStreak = 0;
   let token = null;
+  let activeRepoCredential = null;
 
   // ── W6 INTEGRATION — STEP 5: Multi-page BFS crawl (CA-18 §5) ───────────────
   //
@@ -2740,29 +2796,15 @@ export async function runOrchestration(args = {}) {
       const parsed = parseGithubRepoUrl(githubRepoUrl);
       if (parsed) {
         try {
-          let credentialSource = 'github_app_installation';
-          if (githubOperatorToken && state.operatorRepoAccess?.ok !== false) {
-            token = githubOperatorToken;
-            credentialSource = 'GITHUB_OPERATOR_TOKEN';
-          } else {
-            const minted = await withTimeout(
-              _getInstallationToken({
-                pat: '',
-                fetch: makeAbortableFetch({
-                  timeoutMs: step5ToStep6Timeouts.getInstallationToken,
-                  code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
-                  message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
-                }),
-              }),
-              {
-                timeoutMs: step5ToStep6Timeouts.getInstallationToken,
-                code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
-                message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
-              },
-            );
-            token = minted.token;
-            credentialSource = minted.source === 'pat' ? 'GITHUB_PAT' : 'github_app_installation';
-          }
+          activeRepoCredential = await acquireRepoWriteCredential();
+          token = activeRepoCredential.token;
+          const credentialSource = activeRepoCredential.credentialSource;
+          const credentialTelemetry = {
+            credentialSource,
+            tokenRedacted: true,
+            fallbackFrom: activeRepoCredential.fallbackFrom ?? null,
+            fallbackReason: activeRepoCredential.fallbackReason ?? null,
+          };
           const treeResult = await withTimeout(
             _fetchRepoFileList({
               owner: parsed.owner, repo: parsed.repo, ref: productBranch, token,
@@ -2780,21 +2822,33 @@ export async function runOrchestration(args = {}) {
               message: `GitHub repo file list fetch exceeded ${step5ToStep6Timeouts.fetchRepoFileList}ms`,
             },
           );
+          const safeTreeSha = treeResult?.sha === token ? null : (treeResult?.sha ?? null);
           if (treeResult && treeResult.error) {
-            treesOutcome = { ok: false, reason: treeResult.error, filesCount: 0, sha: treeResult.sha ?? null };
+            treesOutcome = {
+              ok: false,
+              reason: treeResult.error,
+              filesCount: 0,
+              sha: safeTreeSha,
+              ...credentialTelemetry,
+            };
           } else if (treeResult && Array.isArray(treeResult.files)) {
             treesOutcome = {
               ok: treeResult.files.length > 0,
               reason: treeResult.files.length > 0 ? 'fetched' : 'empty_tree',
               filesCount: treeResult.files.length,
-              sha: treeResult.sha ?? null,
+              sha: safeTreeSha,
               truncated: !!treeResult.truncated,
-              credentialSource,
-              tokenRedacted: true,
+              ...credentialTelemetry,
             };
             if (treeResult.files.length > 0) repoFileList = treeResult.files;
           } else {
-            treesOutcome = { ok: false, reason: 'malformed_envelope', filesCount: 0, sha: null };
+            treesOutcome = {
+              ok: false,
+              reason: 'malformed_envelope',
+              filesCount: 0,
+              sha: null,
+              ...credentialTelemetry,
+            };
           }
         } catch (e) {
           const timedOut = e?.code === 'GITHUB_INSTALLATION_TOKEN_TIMEOUT'
@@ -3249,37 +3303,23 @@ export async function runOrchestration(args = {}) {
       // is honest. Only re-mint if `token` is still null (hoist failed).
       try {
         const t0 = Date.now();
-        let mintedNow = false;
-        let expiresAt = null;
-        let credentialSource = token === githubOperatorToken && githubOperatorToken
-          ? 'GITHUB_OPERATOR_TOKEN'
-          : 'github_app_installation';
+        const reusedFromHoist = !!token;
+        let credential = activeRepoCredential;
         if (!token) {
-          if (githubOperatorToken && state.operatorRepoAccess?.ok !== false) {
-            token = githubOperatorToken;
-            credentialSource = 'GITHUB_OPERATOR_TOKEN';
-          } else {
-            const minted = await withTimeout(
-              _getInstallationToken({
-                pat: '',
-                fetch: makeAbortableFetch({
-                  timeoutMs: step5ToStep6Timeouts.getInstallationToken,
-                  code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
-                  message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
-                }),
-              }),
-              {
-                timeoutMs: step5ToStep6Timeouts.getInstallationToken,
-                code: 'GITHUB_INSTALLATION_TOKEN_TIMEOUT',
-                message: `GitHub App token mint exceeded ${step5ToStep6Timeouts.getInstallationToken}ms`,
-              },
-            );
-            token = minted.token;
-            expiresAt = minted.expiresAt;
-            credentialSource = minted.source === 'pat' ? 'GITHUB_PAT' : 'github_app_installation';
-            mintedNow = true;
-          }
+          credential = await acquireRepoWriteCredential();
+          activeRepoCredential = credential;
+          token = credential.token;
+        } else if (!credential) {
+          credential = Object.freeze({
+            token,
+            expiresAt: null,
+            credentialSource: token === githubOperatorToken && githubOperatorToken
+              ? 'GITHUB_OPERATOR_TOKEN'
+              : 'github_app_installation',
+            tokenRedacted: true,
+          });
         }
+        const credentialSource = credential.credentialSource;
         const log = makeStepLog({
           iteration: iterationNumber, step: 8, status: 'complete',
           tool: credentialSource === 'GITHUB_OPERATOR_TOKEN' ? 'GITHUB_OPERATOR_TOKEN' : 'githubApp.js',
@@ -3289,8 +3329,12 @@ export async function runOrchestration(args = {}) {
             operator_mode: state.operatorMode,
             credentialSource,
             tokenRedacted: true,
-            expiresAt,
-            reusedFromHoist: !mintedNow,
+            expiresAt: credential.expiresAt ?? null,
+            reusedFromHoist,
+            fallbackFrom: credential.fallbackFrom ?? null,
+            fallbackReason: credential.fallbackReason ?? null,
+            operatorRepoProbeOk: credential.operatorRepoProbeOk ?? null,
+            operatorRepoProbeReason: credential.operatorRepoProbeReason ?? null,
           },
           durationMs: Date.now() - t0, mode: state.mode,
         });
@@ -4218,6 +4262,39 @@ export async function runOrchestration(args = {}) {
           iteration: iterationNumber, step: 9, status: 'failed',
           tool: 'rateCap.js (mutation guard)',
           why: 'rate-limited run reached branch/file write boundary',
+          result: block,
+          mode: state.mode,
+        }));
+        return failStep({
+          product,
+          failedStep: 'STEP_9',
+          error: block.detail,
+          code: block.code,
+          diagnostics: block,
+        });
+      }
+      if (upgradeTargets.writeSafety?.ok === false) {
+        const block = Object.freeze({
+          kind: 'upgrade_target_write_safety_block.v1',
+          blocked: true,
+          code: upgradeTargets.writeSafety.code,
+          reason: upgradeTargets.writeSafety.reason,
+          productId,
+          originalRepo: upgradeTargets.originalRepo,
+          upgradeRepo: upgradeTargets.upgradeRepo,
+          upgradeRepoExplicit: upgradeTargets.upgradeRepoExplicit === true,
+          upgradeRepoRequired: upgradeTargets.upgradeRepoRequired === true,
+          writesOriginalRepo: upgradeTargets.writesOriginalRepo === true,
+          originalReadOnly: upgradeTargets.originalReadOnly === true,
+          action: 'branch/file write',
+          detail: upgradeTargets.writeSafety.code === 'UPGRADE_REPO_REQUIRED'
+            ? 'FlowAI requires an explicit upgrade repo before branch/file writes; the original repo remains read-only rollback.'
+            : 'FlowAI resolved the upgrade repo to the original read-only repo; branch/file writes are blocked until a separate upgrade target is configured.',
+        });
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 9, status: 'failed',
+          tool: 'upgradeTargetResolver.js (write-safety guard)',
+          why: 'prevent branch/file writes against the original read-only repo',
           result: block,
           mode: state.mode,
         }));
