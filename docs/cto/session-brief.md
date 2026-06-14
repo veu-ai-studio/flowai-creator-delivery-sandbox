@@ -19,6 +19,7 @@ Review/buy-in evidence:
 - `docs/cto/comprehensive-directive-implementation-revision-20260614.md`
 - `docs/cto/clerk-hosted-redirect-boundary-analysis-20260614.md`
 - `docs/cto/ct2-clerk-session-live-proof-rerun-result-20260614.md`
+- `docs/cto/clerk-ticket-signin-step5-result-20260614.md`
 
 Most important corrected state:
 
@@ -27,6 +28,7 @@ Most important corrected state:
 - Milestone 1 axis wiring is CT2-proven at the live-production evidence level.
 - Clerk readiness/routes and bearer-token propagation code are live, but full authenticated user-session proof is still blocked at hosted redirect/session establishment.
 - Clerk redirect allow-list gap was machine-corrected through Clerk Backend API; CT2 rerun still BLOCKED on hosted-token session transfer. CB ticket-route dispatch is prepared.
+- CB built the ticket route and CD/CR Step 5 reviews both passed. Merge/deploy/CT2 proof is next.
 - Codex TIM Build rank/callability code exists, but live Step 3 Build use is not yet proven.
 
 ## Current Runtime Evidence
@@ -87,6 +89,13 @@ Interpretation:
 
 12. Prepared CB dispatch for FlowAI-owned ticket route:
    - `docs/cto/cb-clerk-ticket-signin-dispatch-20260614.md`
+
+13. CB completed branch `fix/clerk-ticket-signin` at `c65fa329a5ac3fd7f42253e0f862dba97b90775c`.
+
+14. CD and CR Step 5 review both returned PASS with no findings.
+
+15. Recorded combined Step 5 result:
+   - `docs/cto/clerk-ticket-signin-step5-result-20260614.md`
 
 ## Clerk Auth State
 
@@ -177,6 +186,12 @@ CB build status:
   - App-origin authenticated `/api/me`: BLOCK because no Clerk app session/token exists.
 - CB next dispatch:
   - `docs/cto/cb-clerk-ticket-signin-dispatch-20260614.md`
+- CB branch:
+  - `fix/clerk-ticket-signin`
+  - HEAD `c65fa329a5ac3fd7f42253e0f862dba97b90775c`
+  - CD PASS.
+  - CR PASS.
+  - Merge/deploy/CT2 proof next.
 
 ## VERIFIED Promotion State
 
@@ -192,8 +207,8 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Dispatch CB from `docs/cto/cb-clerk-ticket-signin-dispatch-20260614.md`.
-4. After CB pushes, dispatch CD and CR Step 5 prompts through repo.
-5. Merge/deploy/promote only after CD and CR PASS.
-6. CT2 reruns proof using FlowAI-owned `/sign-in-token?ticket=<redacted>` route, not Clerk hosted token URL.
+3. Merge `fix/clerk-ticket-signin` to `main`.
+4. Push, deploy/promote production, and verify `/api/health` runtime identity.
+5. Dispatch CT2 proof using FlowAI-owned `/sign-in-token?ticket=<redacted>` route, not Clerk hosted token URL.
+6. If CT2 PASS, prepare evidence packet only; do not move VERIFIED without W04/CEO clearance.
 7. Do not move VERIFIED without W04/CEO clearance.
