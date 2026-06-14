@@ -61,6 +61,10 @@ function firstProductEnv(env, prefix, suffixes) {
   return '';
 }
 
+function truthyEnv(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
 export function resolveGitHubWriteTokenCandidates(env = {}) {
   const candidates = [
     { source: 'GITHUB_OPERATOR_TOKEN', token: env?.GITHUB_OPERATOR_TOKEN },
@@ -221,12 +225,12 @@ export function resolveVercelBypassSecret(productId, env = globalThis.process?.e
   };
 }
 
-function previewProbeHeaders({ previewUrl, productId, env } = {}) {
+function previewProbeHeaders({ previewUrl, productId, env, allowBypass = true } = {}) {
   const headers = {
     Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'User-Agent': 'FlowAI-FreshBuild-PreviewProbe/1.0',
   };
-  if (!isVercelDeploymentUrl(previewUrl)) {
+  if (!allowBypass || !isVercelDeploymentUrl(previewUrl)) {
     return { headers, bypassAttempted: false, bypassSource: null };
   }
   const bypass = resolveVercelBypassSecret(productId, env);
@@ -270,6 +274,7 @@ export async function probePreviewAccess({
   fetchImpl = globalThis.fetch,
   productId = null,
   env = globalThis.process?.env || {},
+  allowBypass = true,
 } = {}) {
   const normalizedUrl = normalizePreviewUrl(previewUrl);
   if (!normalizedUrl) {
@@ -299,6 +304,7 @@ export async function probePreviewAccess({
     previewUrl: normalizedUrl,
     productId,
     env,
+    allowBypass,
   });
   let response;
   try {
@@ -437,17 +443,23 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
 
 function resolveVercelArgs({ productConfig, env, owner, repo, branchName, productName }) {
   const suffixes = productEnvSuffixes(productName, productConfig?.name, repo);
+  const publicDelivery = truthyEnv(env?.FLOWAI_FRESH_BUILD_PUBLIC_DELIVERY);
+  const publicProjectId = firstNonEmpty(env?.FLOWAI_FRESH_BUILD_PUBLIC_VERCEL_PROJECT_ID);
+  const publicProjectName = firstNonEmpty(env?.FLOWAI_FRESH_BUILD_PUBLIC_VERCEL_PROJECT_NAME);
   return {
-    projectId: firstNonEmpty(
-      productConfig?.vercel_project_id,
-      productConfig?.vercelProjectId,
-      env?.FLOWAI_FRESH_BUILD_VERCEL_PROJECT_ID,
-      firstProductEnv(env, 'VERCEL_PROJECT_ID_', suffixes),
-      env?.VERCEL_PROJECT_ID,
-    ),
+    projectId: publicDelivery
+      ? publicProjectId
+      : firstNonEmpty(
+        productConfig?.vercel_project_id,
+        productConfig?.vercelProjectId,
+        env?.FLOWAI_FRESH_BUILD_VERCEL_PROJECT_ID,
+        firstProductEnv(env, 'VERCEL_PROJECT_ID_', suffixes),
+        env?.VERCEL_PROJECT_ID,
+      ),
     orgId: firstNonEmpty(
       productConfig?.vercel_org_id,
       productConfig?.vercelOrgId,
+      env?.FLOWAI_FRESH_BUILD_PUBLIC_VERCEL_ORG_ID,
       env?.FLOWAI_FRESH_BUILD_VERCEL_ORG_ID,
       env?.VERCEL_ORG_ID,
       env?.VERCEL_TEAM_ID,
@@ -462,6 +474,9 @@ function resolveVercelArgs({ productConfig, env, owner, repo, branchName, produc
     owner,
     repo,
     branchName,
+    target: publicDelivery ? 'production' : null,
+    publicDelivery,
+    publicProjectName: publicDelivery ? publicProjectName : '',
   };
 }
 
@@ -584,6 +599,9 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       branchUrl: commitResult.branchUrl,
       previewUrl: null,
       credentialSource,
+      publicDelivery: vercelArgs.publicDelivery,
+      deliveryMode: vercelArgs.publicDelivery ? 'public_project_production_alias' : 'preview',
+      vercelTarget: vercelArgs.target || null,
     };
   }
 
@@ -597,6 +615,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       fetchImpl: globalThis.fetch,
       productId: firstNonEmpty(productConfig?.product_id, productConfig?.productId, productName, repoTarget.repo),
       env,
+      allowBypass: !vercelArgs.publicDelivery,
     });
   } catch (error) {
     return {
@@ -612,6 +631,10 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       commitSha: commitResult.commitSha,
       branchUrl: commitResult.branchUrl,
       previewUrl: null,
+      deploymentUrl: error?.deploymentUrl || null,
+      publicDelivery: vercelArgs.publicDelivery,
+      deliveryMode: vercelArgs.publicDelivery ? 'public_project_production_alias' : 'preview',
+      vercelTarget: vercelArgs.target || null,
       deploymentId: error?.deploymentId || null,
       previewAccessStatus: error?.previewAccessStatus || null,
       previewAccess: error?.previewAccess || null,
@@ -645,7 +668,13 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     branchUrl: commitResult.branchUrl,
     deploymentId: deployment?.deploymentId || null,
     previewUrl: deployment?.previewUrl || null,
+    deploymentUrl: deployment?.deploymentUrl || null,
+    aliases: Array.isArray(deployment?.aliases) ? deployment.aliases : [],
     inspectorUrl: deployment?.inspectorUrl || null,
+    publicDelivery: vercelArgs.publicDelivery,
+    deliveryMode: vercelArgs.publicDelivery ? 'public_project_production_alias' : 'preview',
+    publicProjectName: vercelArgs.publicProjectName || null,
+    vercelTarget: vercelArgs.target || null,
     previewAccessStatus: previewAccess?.previewAccessStatus || PREVIEW_ACCESS_STATUS.UNKNOWN,
     previewAccess,
     credentialSource,
@@ -658,6 +687,7 @@ export const __test = Object.freeze({
   sameRepo,
   makeBranchName,
   productEnvSuffixes,
+  truthyEnv,
   resolveVercelArgs,
   resolveGitHubWriteTokenCandidates,
   normalizePreviewUrl,

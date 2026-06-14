@@ -120,7 +120,60 @@ async function callVercel(method, pathAndQuery, token, opts = {}) {
 /**
  * POST the new deployment. Returns the deployment object on 2xx.
  */
-async function createDeployment({ projectId, orgId, owner, repo, branchName, token, opts }) {
+function nonEmptyString(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : '';
+}
+
+function normalizeDeploymentUrl(value) {
+  const text = nonEmptyString(value);
+  if (!text) return '';
+  return /^https?:\/\//i.test(text) ? text : `https://${text}`;
+}
+
+function deploymentAliases(deployment) {
+  const aliases = [];
+  const add = (value) => {
+    const url = normalizeDeploymentUrl(
+      typeof value === 'string'
+        ? value
+        : value?.url || value?.alias || value?.domain || value?.hostname,
+    );
+    if (url && !aliases.includes(url)) aliases.push(url);
+  };
+  const candidates = [
+    deployment?.alias,
+    deployment?.aliases,
+    deployment?.readySubstate?.aliases,
+  ];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      candidate.forEach(add);
+    } else {
+      add(candidate);
+    }
+  }
+  return aliases;
+}
+
+function chooseDeploymentUrl(deployment, target) {
+  const rawUrl = nonEmptyString(deployment?.url);
+  const aliases = deploymentAliases(deployment);
+  if (target === 'production' && aliases.length > 0) {
+    const stableAliases = aliases
+      .filter((url) => {
+        try {
+          return !new URL(url).hostname.includes('-git-');
+        } catch {
+          return false;
+        }
+      })
+      .sort((a, b) => a.length - b.length);
+    return stableAliases[0] || aliases[0] || normalizeDeploymentUrl(rawUrl);
+  }
+  return rawUrl;
+}
+
+async function createDeployment({ projectId, orgId, owner, repo, branchName, token, target, opts }) {
   const query = orgId ? `?teamId=${encodeURIComponent(orgId)}` : '';
   // NOTE: do NOT send `target: 'preview'` — Vercel /v13/deployments only
   // accepts `target` values of 'production', 'staging', or a custom env
@@ -136,6 +189,7 @@ async function createDeployment({ projectId, orgId, owner, repo, branchName, tok
       name: repo,
       project: projectId,
       gitSource: { type: 'github', org: owner, repo, ref: branchName },
+      ...(nonEmptyString(target) ? { target: nonEmptyString(target) } : {}),
     },
   });
   if (res.status >= 200 && res.status < 300) {
@@ -218,18 +272,22 @@ export async function deployBranchPreview(args) {
   }
 
   const { projectId, orgId, owner, repo, branchName, token } = args;
+  const target = nonEmptyString(args.target);
   const opts = args.opts ?? {};
 
   // 1. Create the deployment.
-  const created = await createDeployment({ projectId, orgId, owner, repo, branchName, token, opts });
+  const created = await createDeployment({ projectId, orgId, owner, repo, branchName, token, target, opts });
   const deploymentId = created.id;
 
   // 2. If the deployment is already READY synchronously, return immediately.
   if (created.readyState === 'READY') {
     return {
       deploymentId,
-      previewUrl: created.url ?? '',
+      previewUrl: chooseDeploymentUrl(created, target),
+      deploymentUrl: normalizeDeploymentUrl(created.url),
+      aliases: deploymentAliases(created),
       inspectorUrl: created.inspectorUrl ?? '',
+      target: target || null,
     };
   }
   if (created.readyState === 'ERROR' || created.readyState === 'CANCELED') {
@@ -249,8 +307,11 @@ export async function deployBranchPreview(args) {
     if (state === 'READY') {
       return {
         deploymentId,
-        previewUrl: last.url ?? '',
+        previewUrl: chooseDeploymentUrl(last, target),
+        deploymentUrl: normalizeDeploymentUrl(last.url),
+        aliases: deploymentAliases(last),
         inspectorUrl: last.inspectorUrl ?? '',
+        target: target || null,
       };
     }
     if (state === 'ERROR' || state === 'CANCELED') {
@@ -286,4 +347,8 @@ export const __internals = Object.freeze({
   createDeployment,
   getDeployment,
   sleep,
+  nonEmptyString,
+  normalizeDeploymentUrl,
+  deploymentAliases,
+  chooseDeploymentUrl,
 });

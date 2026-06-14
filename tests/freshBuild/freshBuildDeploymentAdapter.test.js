@@ -539,6 +539,79 @@ describe('Fresh Build deployment adapter', () => {
     }));
   });
 
+  it('routes Fresh Build public delivery to an explicit production alias project without bypass probing', async () => {
+    const githubClient = {
+      createCommit: vi.fn(async () => ({
+        commitSha: 'public123',
+        filesWritten: 3,
+        branchUrl: 'https://github.com/victor2081new-cloud/flowai/tree/flowai/fresh-build-public-run',
+      })),
+    };
+    const deployPreviewImpl = vi.fn(async () => ({
+      deploymentId: 'dep_public',
+      previewUrl: 'https://fresh-public.vercel.app',
+      deploymentUrl: 'https://fresh-public-hash-veu-ai-studio.vercel.app',
+      aliases: ['https://fresh-public.vercel.app'],
+      target: 'production',
+    }));
+    const probePreviewAccessImpl = vi.fn(async ({ previewUrl, deploymentId, allowBypass }) => ({
+      previewUrl,
+      deploymentId,
+      allowBypass,
+      previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+      httpStatus: 200,
+      reason: null,
+      bypassAttempted: false,
+    }));
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase(),
+      productName: 'VEU AI Studio Website',
+      runId: 'run-public-delivery',
+      productConfig: {
+        product_id: 'url-416b941ffbc3b7d5',
+        github_repo_url: 'https://github.com/victor2081new-cloud/flowai',
+      },
+      env: {
+        GITHUB_PAT: 'working-pat-token',
+        VERCEL_OPERATOR_TOKEN: 'operator-token',
+        VERCEL_ORG_ID: 'team_existing',
+        VERCEL_PROJECT_ID: 'prj_flowai_operator',
+        FLOWAI_FRESH_BUILD_PUBLIC_DELIVERY: 'true',
+        FLOWAI_FRESH_BUILD_PUBLIC_VERCEL_PROJECT_ID: 'prj_public_generated_site',
+        FLOWAI_FRESH_BUILD_PUBLIC_VERCEL_PROJECT_NAME: 'fresh-public',
+      },
+      githubClient,
+      deployPreviewImpl,
+      probePreviewAccessImpl,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'WRITTEN_AND_DEPLOYED',
+      previewUrl: 'https://fresh-public.vercel.app',
+      deploymentUrl: 'https://fresh-public-hash-veu-ai-studio.vercel.app',
+      publicDelivery: true,
+      deliveryMode: 'public_project_production_alias',
+      publicProjectName: 'fresh-public',
+      vercelTarget: 'production',
+      previewAccess: {
+        bypassAttempted: false,
+      },
+    });
+    expect(deployPreviewImpl).toHaveBeenCalledWith(expect.objectContaining({
+      projectId: 'prj_public_generated_site',
+      orgId: 'team_existing',
+      target: 'production',
+      token: 'operator-token',
+    }));
+    expect(probePreviewAccessImpl).toHaveBeenCalledWith(expect.objectContaining({
+      previewUrl: 'https://fresh-public.vercel.app',
+      deploymentId: 'dep_public',
+      allowBypass: false,
+    }));
+  });
+
   it('falls back to standard Vercel envs for products without per-product project envs', async () => {
     const githubClient = {
       createCommit: vi.fn(async () => ({
