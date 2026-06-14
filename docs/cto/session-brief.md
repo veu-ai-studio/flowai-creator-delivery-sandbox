@@ -151,6 +151,23 @@ Interpretation:
 
 26. CR review remains pending. Runtime merge remains blocked until CR returns PASS or an accepted PASS-WITH-FINDINGS.
 
+27. CR returned `BLOCK` in-thread:
+   - Finding: CB evidence `HEAD:` pointed to stale `7db09f3...` rather than reviewed runtime commit `dbeeb454...`.
+   - Runtime/security code review had no CR block.
+   - Required patch: set evidence `HEAD:` to `dbeeb454c129cd47be982b02820adcd1064040d7`.
+
+28. CTO patched the CR block on the same branch:
+   - Branch: `fix/clerk-ticket-redirect-completion`
+   - New branch head: `96a90c2c6ef76107ed76a04c0251c5f9ff953de8`
+   - Patch: `docs/cto/cb-clerk-ticket-redirect-completion-evidence-20260614.md`
+   - Verification after patch:
+     - `git diff --check`: PASS
+     - Focused Vitest: PASS, 5 files / 69 tests
+     - `npm run build:preflight`: PASS
+     - `npm run lint`: PASS with existing flat-config `eslint-env` warnings only
+
+29. CR re-review is dispatched and pending.
+
 ## Clerk Auth State
 
 Completed:
@@ -265,7 +282,7 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Obtain CR review result for `fix/clerk-ticket-redirect-completion`.
+3. Obtain CR re-review result for `fix/clerk-ticket-redirect-completion` at `96a90c2c6ef76107ed76a04c0251c5f9ff953de8`.
 4. If CR PASS or accepted PASS-WITH-FINDINGS, merge/promote and dispatch CT2 rerun.
 5. If CR BLOCK, patch the same branch.
 6. If CT2 PASS, prepare evidence packet only; do not move VERIFIED without W04/CEO clearance.

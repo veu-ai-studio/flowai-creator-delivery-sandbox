@@ -162,7 +162,10 @@ Completed:
 - CB pushed branch `fix/clerk-ticket-redirect-completion` at `dbeeb454c129cd47be982b02820adcd1064040d7`.
 - CD/CR review prompts are filed at `docs/cto/cd-review-clerk-ticket-redirect-completion-prompt-20260614.md` and `docs/cto/cr-review-clerk-ticket-redirect-completion-prompt-20260614.md`.
 - CD returned `PASS-WITH-FINDINGS` on branch `fix/clerk-ticket-redirect-completion`; the only finding is a non-blocking evidence metadata note. CD result is on the patch branch at `docs/cto/cd-review-clerk-ticket-redirect-completion-result-20260614.md`.
-- CR result is still pending. Runtime merge remains blocked until CR returns PASS or PASS-WITH-FINDINGS accepted by CTO/W04.
+- CR returned `BLOCK` on evidence metadata only: CB evidence line `HEAD:` still pointed at `7db09f3...` instead of reviewed runtime commit `dbeeb454...`.
+- CTO patched the same branch at `96a90c2c6ef76107ed76a04c0251c5f9ff953de8`; the evidence file now binds to `dbeeb454c129cd47be982b02820adcd1064040d7`.
+- CTO reran verification after the patch: focused Vitest PASS 5 files / 69 tests, `npm run build:preflight` PASS, `npm run lint` PASS with existing warnings only, and `git diff --check` PASS.
+- CR re-review is pending on branch `fix/clerk-ticket-redirect-completion` head `96a90c2c6ef76107ed76a04c0251c5f9ff953de8`.
 
 Blocked:
 
@@ -174,9 +177,9 @@ Blocked:
 
 Next technical action:
 
-1. Obtain CR result for `fix/clerk-ticket-redirect-completion`.
+1. Obtain CR re-review result for `fix/clerk-ticket-redirect-completion` at `96a90c2c6ef76107ed76a04c0251c5f9ff953de8`.
 2. If CR passes or returns accepted non-blocking findings, merge/promote and dispatch CT2 rerun.
-3. If CR blocks, patch the same branch.
+3. If CR blocks again, patch the same branch.
 4. If CT2 PASS, prepare an evidence packet only; do not move VERIFIED without W04/CEO clearance.
 
 No VERIFIED movement is allowed from Clerk work until CT2 proves a real authenticated user session and W04/CEO clears the promotion packet.
