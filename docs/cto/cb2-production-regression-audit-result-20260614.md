@@ -134,3 +134,95 @@ The preferred Codex in-app Browser setup failed before site interaction with loc
 No SSOT canonical edits were made. No production-changing commands were run. No VERIFIED movement was applied.
 
 VERIFIED movement: no
+---
+
+## Continuation After Production Advance
+
+CTO update reported production advanced after the first CB2 audit. CB2 continued against the newest production alias as instructed.
+
+Pre-continuation identity observed by CB2 at `2026-06-14T06:14:55.802Z` UTC:
+
+```json
+{
+  "commitFull": "7c7e978f5451aa96c1db6ffb7689a122230f2d52",
+  "deploymentUrl": "https://flowai-f69vbl126-veu-ai-studio.vercel.app",
+  "clerkReady": true
+}
+```
+
+Production then advanced before the browser run began. Continued audit start/end identity:
+
+```json
+{
+  "commitFull": "717b6777e9c1ac8836f63c11637778dfead4ee27",
+  "deploymentUrl": "https://flowai-arh3fkpzb-veu-ai-studio.vercel.app",
+  "clerkReady": true,
+  "githubAppReady": true,
+  "inngestReady": true,
+  "authStatus": "PASS"
+}
+```
+
+Result for newest production `717b6777e9c1ac8836f63c11637778dfead4ee27`: `PASS`.
+
+Continuation API checks:
+
+| Endpoint | Result | Evidence |
+|---|---:|---|
+| `/api/health` | `PASS` | HTTP 200; `commitFull:"717b6777e9c1ac8836f63c11637778dfead4ee27"`; `clerkReady:true`; `githubAppReady:true`; `inngestReady:true`; auth status `PASS`. |
+| `/api/version` | `PASS` | HTTP 200; version identity coherent with production commit. |
+| `/api/me` | `PASS` | HTTP 200; `authenticated:false`; `authMode:"anonymous"`; `userId:null`; `config.clerkConfigured:true`; `config.authRequired:false`. |
+
+Continuation browser route checks:
+
+| Route | Result |
+|---|---:|
+| `/flow-hub/production` | `PASS` |
+| `/flow-hub/migration` | `PASS` |
+| `/flow-hub/fresh-build` | `PASS` |
+| `/sign-in` | `PASS` |
+| `/sign-up` | `PASS` |
+| `/sign-in-token` | `PASS` |
+| `/forge/build` | `PASS` |
+| `/forge/build?productId=cb2-audit-7c7e978&productName=CB2%20Audit%207c7e978` | `PASS` |
+
+Continuation Forge checks:
+
+- no false deployed URL;
+- no false preview URL;
+- no false branch claim;
+- no upgrade-success claim;
+- no `VERIFIED` promotion claim;
+- Build Forge continued to show partial/blocked status where proof was absent;
+- TIM Build ranked-candidates panel showed Codex first, followed by Claude Code, Cursor, Bolt, Windsurf, Replit, and Base44.
+
+Continuation TIM Build panel excerpt:
+
+```text
+RANKED CANDIDATES (7)
+1. Codex - code 9.3 - Selected
+2. Claude Code - code 8.2
+3. Cursor - code 7.8
+4. Bolt - ai_fullstack 7.3
+5. Windsurf - code 7.3
+6. Replit - cloud_ide 6.0
+7. Base44 - source 7.8
+```
+
+Continuation console/network findings matched the prior non-blocking telemetry pattern: repeated 405s from `/app-logs/.../log-user-in-app/...` and `/api/apps/.../analytics/track/batch`, plus browser-teardown aborted requests. Page errors remained `0`; route rendering and audit criteria were not blocked.
+
+Continuation evidence files:
+
+- `docs/cto/cb2-production-regression-audit-raw-717b677-20260614.json`
+- `docs/cto/screenshots/cb2-production-regression-flow-hub-production-717b677-20260614.png`
+- `docs/cto/screenshots/cb2-production-regression-flow-hub-migration-717b677-20260614.png`
+- `docs/cto/screenshots/cb2-production-regression-flow-hub-fresh-build-717b677-20260614.png`
+- `docs/cto/screenshots/cb2-production-regression-sign-in-717b677-20260614.png`
+- `docs/cto/screenshots/cb2-production-regression-sign-up-717b677-20260614.png`
+- `docs/cto/screenshots/cb2-production-regression-sign-in-token-717b677-20260614.png`
+- `docs/cto/screenshots/cb2-production-regression-forge-build-717b677-20260614.png`
+- `docs/cto/screenshots/cb2-production-regression-forge-build-productid-717b677-20260614.png`
+
+No SSOT canonical edits were made. No production-changing commands were run. No VERIFIED movement was applied.
+
+VERIFIED movement: no
