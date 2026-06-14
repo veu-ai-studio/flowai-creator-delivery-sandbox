@@ -12,7 +12,7 @@
 //
 // Contract:
 //   POST /api/run-construction
-//   Body: { url: string, mode: 'FOREGROUND'|'BACKGROUND'|'GUIDED'|'MIGRATION'|'FRESH_BUILD' }
+//   Body: { url: string, mode: 'FOREGROUND'|'BACKGROUND'|'GUIDED'|'MANUAL'|'MIGRATION'|'FRESH_BUILD', structuralLayer?, operationalMode?, analysisDepth?, flowHubPath? }
 //
 //   Always responds as Server-Sent Events. Stream events:
 //     - { type: 'start',  runId, url, mode, gtmTarget, at }
@@ -57,6 +57,11 @@ import { findRegisteredProductConfigForUrl } from '../lib/products/registeredPro
 import { createGithubMigrationHooks } from '../lib/migration/githubMigrationHooks.js';
 import { pickSafeErrorFields } from '../lib/migration/safeErrorFields.js';
 import {
+  effortOverridesForAnalysisDepth,
+  normalizeFlowHubAxes,
+  orchestratorModeForAxes,
+} from '../lib/flowHubAxes.js';
+import {
   persistSymbioticRunSummary,
   readProductSsotRunContext,
 } from '../lib/forge/productSsotContinuity.js';
@@ -69,7 +74,7 @@ import {
   markForgeRunStarted,
 } from '../../api/_lib/forgeRunStatusBus.js';
 
-const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MIGRATION', 'FRESH_BUILD']);
+const ALLOWED_MODES = new Set(['FOREGROUND', 'BACKGROUND', 'GUIDED', 'MANUAL', 'MIGRATION', 'FRESH_BUILD']);
 const GTM_TARGET = 95;
 const RATE_LIMIT_CAPACITY = 10;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -337,7 +342,27 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
   const url = typeof body.url === 'string' ? body.url.trim() : '';
   const description = typeof body.description === 'string' ? body.description.trim() : '';
   const rawMode = typeof body.mode === 'string' ? body.mode.toUpperCase() : 'FOREGROUND';
-  const mode = ALLOWED_MODES.has(rawMode) ? rawMode : 'FOREGROUND';
+  let mode = ALLOWED_MODES.has(rawMode) ? rawMode : 'FOREGROUND';
+  let flowHubAxes = normalizeFlowHubAxes({
+    structuralLayer: body.structuralLayer ?? body.systemOperationLevel,
+    operationalMode: body.operationalMode ?? body.opsMode,
+    analysisDepth: body.analysisDepth ?? body.depth,
+    flowHubPath: body.flowHubPath,
+    mode,
+  });
+  if (flowHubAxes.flowHubPath === 'migration') {
+    mode = 'MIGRATION';
+  } else if (flowHubAxes.flowHubPath === 'fresh_build') {
+    mode = 'FRESH_BUILD';
+  } else if (mode === 'MANUAL') {
+    flowHubAxes = normalizeFlowHubAxes({ ...flowHubAxes, operationalMode: 'manual' });
+  } else if (mode === 'GUIDED') {
+    flowHubAxes = normalizeFlowHubAxes({ ...flowHubAxes, operationalMode: 'guided' });
+  } else if (flowHubAxes.structuralLayer === 'controlled' || flowHubAxes.operationalMode === 'manual') {
+    mode = 'MANUAL';
+  } else if (flowHubAxes.structuralLayer === 'supervised' || flowHubAxes.operationalMode === 'guided') {
+    mode = 'GUIDED';
+  }
 
   if (!url || !/^https?:\/\//i.test(url)) {
     res.setHeader('Content-Type', 'application/json');
@@ -405,6 +430,10 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
         url,
         description,
         mode: 'FOREGROUND',
+        structuralLayer: flowHubAxes.structuralLayer,
+        operationalMode: flowHubAxes.operationalMode,
+        analysisDepth: flowHubAxes.analysisDepth,
+        flowHubPath: flowHubAxes.flowHubPath,
       },
     });
     if (!queued.ok) {
@@ -432,6 +461,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
       statusUrl: `/api/run-construction-status?runId=${encodeURIComponent(queuedRunId)}`,
       transport: statusWrite.transport,
       inngestReady: true,
+      flowHubAxes,
       eventIds: queued.ids || [],
     }));
   }
@@ -477,7 +507,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
   if (mode === 'MIGRATION' && !migrationFlag.enabled) {
     send({
       type: 'start',
-      runId, url, mode, gtmTarget: GTM_TARGET,
+      runId, url, mode, flowHubAxes, gtmTarget: GTM_TARGET,
       supabase: 'not_used',
       at: new Date().toISOString(),
     });
@@ -504,7 +534,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
 
   send({
     type: 'start',
-    runId, url, mode, gtmTarget: GTM_TARGET,
+    runId, url, mode, flowHubAxes, gtmTarget: GTM_TARGET,
     supabase: supabase ? 'connected' : 'unavailable',
     at: new Date().toISOString(),
   });
@@ -689,9 +719,13 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     return done();
   }
 
-  const orchestratorMode = mode === 'GUIDED' ? 'guided'
-    : mode === 'MIGRATION' ? 'migration'
-    : 'auto';
+  const orchestratorMode = orchestratorModeForAxes({
+    transportMode: mode,
+    structuralLayer: flowHubAxes.structuralLayer,
+    operationalMode: flowHubAxes.operationalMode,
+    flowHubPath: flowHubAxes.flowHubPath,
+  });
+  const analysisDepthOverrides = effortOverridesForAnalysisDepth(flowHubAxes.analysisDepth);
 
   // If we have a registry row keyed by URL hash, hand the orchestrator a
   // discoverProduct override so it uses our row directly (no second
@@ -753,10 +787,17 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     const orchestrationPromise = runOrchestration({
       url,
       mode: orchestratorMode,
+      ...analysisDepthOverrides,
+      structuralLayer: flowHubAxes.structuralLayer,
+      systemOperationLevel: flowHubAxes.structuralLayer,
+      operationalMode: flowHubAxes.operationalMode,
+      analysisDepth: flowHubAxes.analysisDepth,
+      flowHubPath: flowHubAxes.flowHubPath,
       input: {
         url,
         description,
         productSsotContext,
+        flowHubAxes,
       },
       runId,
       supabase,

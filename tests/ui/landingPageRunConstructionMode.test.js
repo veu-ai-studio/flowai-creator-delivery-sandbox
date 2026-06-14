@@ -44,4 +44,30 @@ describe('LandingPage RunConstruction mode selection', () => {
       inngestReady: true,
     })).toBe('FRESH_BUILD');
   });
+
+  it('applies structural layer ceilings before background Auto', () => {
+    expect(resolveRunConstructionMode({
+      mode: 'auto',
+      structuralLayer: 'supervised',
+      inngestReady: true,
+    })).toBe('GUIDED');
+    expect(resolveRunConstructionMode({
+      mode: 'auto',
+      structuralLayer: 'controlled',
+      inngestReady: true,
+    })).toBe('MANUAL');
+  });
+
+  it('respects explicit guided and manual operational modes', () => {
+    expect(resolveRunConstructionMode({
+      operationalMode: 'guided',
+      structuralLayer: 'autonomous',
+      inngestReady: true,
+    })).toBe('GUIDED');
+    expect(resolveRunConstructionMode({
+      operationalMode: 'manual',
+      structuralLayer: 'autonomous',
+      inngestReady: true,
+    })).toBe('MANUAL');
+  });
 });

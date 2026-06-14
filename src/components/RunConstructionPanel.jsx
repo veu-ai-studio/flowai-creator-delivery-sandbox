@@ -996,6 +996,10 @@ function MigrationSummary({ migration, message }) {
 export default function RunConstructionPanel({
   url,
   mode = 'FOREGROUND',
+  operationalMode = 'auto',
+  structuralLayer = 'autonomous',
+  analysisDepth = 'standard',
+  flowHubPath = 'production',
   onClose,
   operatorSecret = '',
   setOperatorSecret,
@@ -1062,7 +1066,7 @@ export default function RunConstructionPanel({
           Accept: 'text/event-stream',
           ...(operatorSecret.trim() ? { 'x-flowai-operator-secret': operatorSecret.trim() } : {}),
         },
-        body: JSON.stringify({ url, mode }),
+        body: JSON.stringify({ url, mode, operationalMode, structuralLayer, analysisDepth, flowHubPath }),
         signal: ac.signal,
       });
       if (!res.ok) {

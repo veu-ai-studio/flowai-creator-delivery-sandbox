@@ -12,6 +12,17 @@ import {
 import { saveSessionConfig } from './Configuration';
 import RunConstructionPanel from '@/components/RunConstructionPanel';
 import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
+import {
+  ANALYSIS_DEPTH_OPTIONS,
+  analysisDepthLabel,
+  axesToSearchParams,
+  analysisDepthValue,
+  flowHubPathFromPathname,
+  flowHubPathOption,
+  normalizeFlowHubAxes,
+  readStoredFlowHubAxes,
+  writeStoredFlowHubAxes,
+} from '@/lib/flowHubAxes';
 
 const SPEECH_SUPPORTED = typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -27,7 +38,7 @@ const OBJECTIVES = [
   { value: 'custom',           label: 'Custom — I will describe my objective' },
 ];
 
-const DEPTHS = ['Quick', 'Standard', 'Deep'];
+const DEPTHS = ANALYSIS_DEPTH_OPTIONS.map((option) => option.label);
 const MIGRATION_MODE_ENABLED_FOR_UI =
   String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || '').toLowerCase() === 'true';
 const FRESH_BUILD_ENABLED_FOR_UI =
@@ -93,13 +104,19 @@ export function evaluateClientUrlSafety(value) {
 
 export function resolveRunConstructionMode({
   mode,
+  operationalMode,
+  structuralLayer = 'autonomous',
   isMigrationMode = false,
   isFreshBuildMode = false,
   inngestReady = false,
 } = {}) {
   if (isMigrationMode) return 'MIGRATION';
   if (isFreshBuildMode) return 'FRESH_BUILD';
-  if (mode === 'auto' && inngestReady === true) return 'BACKGROUND';
+  const effectiveMode = String(operationalMode ?? mode ?? 'auto').trim().toLowerCase();
+  const effectiveLayer = String(structuralLayer ?? 'autonomous').trim().toLowerCase().replace(/-/g, '_');
+  if (effectiveLayer === 'controlled' || effectiveMode === 'manual') return 'MANUAL';
+  if (effectiveLayer === 'supervised' || effectiveMode === 'guided') return 'GUIDED';
+  if (effectiveMode === 'auto' && inngestReady === true) return 'BACKGROUND';
   return 'FOREGROUND';
 }
 
@@ -147,7 +164,7 @@ function FocusedMigrationSetup({
   description,
   setDescription,
   setActiveCard,
-  setMode,
+  setFlowHubPath,
   runPanelUrl,
   setRunPanelUrl,
   migrationModeEnabled,
@@ -161,6 +178,10 @@ function FocusedMigrationSetup({
   detectedPlatform,
   upgradeTarget,
   estimatedFiles,
+  structuralLayer,
+  operationalMode,
+  analysisDepth,
+  flowHubPath,
 }) {
   return (
     <div className="min-h-screen bg-background text-foreground font-inter">
@@ -183,6 +204,10 @@ function FocusedMigrationSetup({
           <RunConstructionPanel
             url={runPanelUrl}
             mode="MIGRATION"
+            operationalMode={operationalMode}
+            structuralLayer={structuralLayer}
+            analysisDepth={analysisDepth}
+            flowHubPath={flowHubPath}
             autoStart
             onClose={() => setRunPanelUrl(null)}
             operatorSecret={operatorSecret}
@@ -273,7 +298,7 @@ function FocusedMigrationSetup({
                       Disable
                     </Button>
                     <Button
-                      onClick={() => { setMode('migration'); setActiveCard('A'); setRunPanelUrl(urlInput.trim()); }}
+                      onClick={() => { setFlowHubPath('migration'); setActiveCard('A'); setRunPanelUrl(urlInput.trim()); }}
                       disabled={!urlInput.trim()}
                       className="gap-2"
                     >
@@ -671,23 +696,62 @@ export default function LandingPage() {
   const objRecRef = useRef(null);
   const operationModeRef = useRef(null);
 
-  // Mode
+  // Flow Hub axes
   const [mode, setMode] = useState('auto');
   const [depth, setDepth] = useState('Standard');
+  const [structuralLayer, setStructuralLayer] = useState('autonomous');
+  const [flowHubPath, setFlowHubPath] = useState('production');
   const [inngestReady, setInngestReady] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (location.pathname === '/flow-hub/migration' || params.get('mode') === 'migration') {
-      setMode('migration');
+    const stored = readStoredFlowHubAxes();
+    const nextAxes = normalizeFlowHubAxes({
+      ...stored,
+      structuralLayer: params.get('structuralLayer') ?? stored.structuralLayer,
+      operationalMode: params.get('operationalMode') ?? params.get('mode') ?? stored.operationalMode,
+      analysisDepth: params.get('analysisDepth') ?? params.get('depth') ?? stored.analysisDepth,
+      flowHubPath: params.get('flowHubPath') ?? params.get('path') ?? params.get('mode') ?? flowHubPathFromPathname(location.pathname),
+    });
+    setMode(nextAxes.operationalMode);
+    setDepth(analysisDepthLabel(nextAxes.analysisDepth));
+    setStructuralLayer(nextAxes.structuralLayer);
+    setFlowHubPath(nextAxes.flowHubPath);
+    if (nextAxes.flowHubPath === 'migration') {
       setActiveCard('A');
       window.requestAnimationFrame(() => {
         operationModeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
-    } else if (location.pathname === '/flow-hub/production') {
-      setMode((current) => current === 'migration' ? 'auto' : current);
+    } else if (nextAxes.flowHubPath === 'fresh_build') {
+      setActiveCard((current) => current || 'B');
     }
   }, [location.pathname, location.search]);
+
+  const persistAxesPatch = (patch = {}) => writeStoredFlowHubAxes(normalizeFlowHubAxes({
+    structuralLayer,
+    operationalMode: mode,
+    analysisDepth: analysisDepthValue(depth),
+    flowHubPath,
+    ...patch,
+  }));
+  const setOperationalMode = (nextMode) => {
+    setMode(nextMode);
+    persistAxesPatch({ operationalMode: nextMode });
+  };
+  const setAnalysisDepthLabel = (nextDepth) => {
+    setDepth(nextDepth);
+    persistAxesPatch({ analysisDepth: analysisDepthValue(nextDepth) });
+  };
+  const setFlowHubPathSelection = (nextPath) => {
+    const nextAxes = persistAxesPatch({ flowHubPath: nextPath });
+    setFlowHubPath(nextAxes.flowHubPath);
+    const option = flowHubPathOption(nextAxes.flowHubPath);
+    const params = axesToSearchParams(nextAxes, location.search);
+    const search = `?${params.toString()}`;
+    if (location.pathname !== option.path || location.search !== search) {
+      navigate({ pathname: option.path, search }, { replace: false });
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -819,6 +883,9 @@ export default function LandingPage() {
       inputMethod,
       objective: effectiveObjective,
       opsMode: mode,
+      structuralLayer,
+      flowHubPath,
+      analysisDepth: analysisDepthValue(depth),
       autoParams: {
         depth: `${depth} (${depth === 'Quick' ? '3–5 min' : depth === 'Standard' ? '8–10 min' : '15–20 min'})`,
         benchmark: false,
@@ -837,22 +904,23 @@ export default function LandingPage() {
     // run via /api/run-construction (real SSE, real preview deploy,
     // real governance record). The legacy /auto-runner remains the
     // secondary "Advanced (legacy)" link below.
-    if (activeCard === 'A' && (mode === 'auto' || mode === 'migration' || mode === 'fresh_build') && urlInput.trim()) {
+    if (activeCard === 'A' && urlInput.trim()) {
       setRunPanelUrl(urlInput.trim());
       return;
     }
 
     if (mode === 'auto') navigate('/auto-runner');
     else if (mode === 'guided') navigate('/guided/research');
-    else if (mode === 'migration' || mode === 'fresh_build') setRunPanelUrl(urlInput.trim());
     else navigate('/manual/research');
   };
 
-  const isConstructionEnginePath = activeCard === 'A' && (mode === 'auto' || mode === 'migration' || mode === 'fresh_build') && !!urlInput.trim();
-  const isMigrationMode = mode === 'migration';
-  const isFreshBuildMode = mode === 'fresh_build';
+  const isConstructionEnginePath = activeCard === 'A' && !!urlInput.trim();
+  const isMigrationMode = flowHubPath === 'migration';
+  const isFreshBuildMode = flowHubPath === 'fresh_build';
+  const currentPathOption = flowHubPathOption(flowHubPath);
   const isFocusedMigrationSetup = location.pathname === '/flow-hub/migration'
-    || new URLSearchParams(location.search).get('mode') === 'migration';
+    || new URLSearchParams(location.search).get('mode') === 'migration'
+    || new URLSearchParams(location.search).get('flowHubPath') === 'migration';
   const isMigrationLaunchBlocked = isMigrationMode && !migrationModeEnabled;
   const isFreshBuildLaunchBlocked = isFreshBuildMode && !FRESH_BUILD_ENABLED_FOR_UI;
   const migrationProductConfig = isFocusedMigrationSetup
@@ -883,7 +951,7 @@ export default function LandingPage() {
         description={description}
         setDescription={setDescription}
         setActiveCard={setActiveCard}
-        setMode={setMode}
+        setFlowHubPath={setFlowHubPathSelection}
         runPanelUrl={runPanelUrl}
         setRunPanelUrl={setRunPanelUrl}
         migrationModeEnabled={migrationModeEnabled}
@@ -897,6 +965,10 @@ export default function LandingPage() {
         detectedPlatform={detectedPlatform}
         upgradeTarget={upgradeTarget}
         estimatedFiles={estimatedFiles}
+        structuralLayer={structuralLayer}
+        operationalMode={mode}
+        analysisDepth={analysisDepthValue(depth)}
+        flowHubPath={flowHubPath}
       />
     );
   }
@@ -919,9 +991,9 @@ export default function LandingPage() {
               <Zap className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-foreground leading-tight">{isMigrationMode ? 'Flow Hub — Migration' : 'Flow Hub — Production'}</h1>
+              <h1 className="text-sm font-bold text-foreground leading-tight">Flow Hub - {currentPathOption.label}</h1>
               <div className="text-[10px] text-muted-foreground leading-tight">
-                {isMigrationMode ? 'Standalone v2 migration setup.' : 'Start the standard product upgrade flow.'}
+                {currentPathOption.description}
               </div>
             </div>
           </div>
@@ -930,7 +1002,11 @@ export default function LandingPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> FlowAI Ready
             </span>
             <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground">Mode: <span className="text-foreground font-semibold">Supervised</span></span>
+            <span className="text-muted-foreground">Layer: <span className="text-foreground font-semibold capitalize">{structuralLayer}</span></span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground">Mode: <span className="text-foreground font-semibold capitalize">{mode}</span></span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground">Depth: <span className="text-foreground font-semibold">{depth}</span></span>
             {userName && (
               <>
                 <span className="text-muted-foreground">·</span>
@@ -1064,8 +1140,8 @@ export default function LandingPage() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setMode('auto')}
-              onKeyDown={e => e.key === 'Enter' && setMode('auto')}
+              onClick={() => setOperationalMode('auto')}
+              onKeyDown={e => e.key === 'Enter' && setOperationalMode('auto')}
               className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${mode === 'auto' ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-primary/30'}`}
             >
               <div className="flex items-center gap-2">
@@ -1084,7 +1160,7 @@ export default function LandingPage() {
                   {DEPTHS.map(d => (
                     <button
                       key={d}
-                      onClick={e => { e.stopPropagation(); setDepth(d); setMode('auto'); }}
+                      onClick={e => { e.stopPropagation(); setAnalysisDepthLabel(d); setOperationalMode('auto'); }}
                       className={`text-[10px] px-2 py-0.5 rounded border transition-all font-semibold ${depth === d && mode === 'auto' ? 'border-primary/50 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}
                     >
                       {d}
@@ -1098,8 +1174,8 @@ export default function LandingPage() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setMode('guided')}
-              onKeyDown={e => e.key === 'Enter' && setMode('guided')}
+              onClick={() => setOperationalMode('guided')}
+              onKeyDown={e => e.key === 'Enter' && setOperationalMode('guided')}
               className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${mode === 'guided' ? 'border-amber-500/60 bg-amber-500/5 ring-1 ring-amber-500/20' : 'border-border bg-card hover:border-amber-500/30'}`}
             >
               <div className="flex items-center gap-2">
@@ -1118,8 +1194,8 @@ export default function LandingPage() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setMode('manual')}
-              onKeyDown={e => e.key === 'Enter' && setMode('manual')}
+              onClick={() => setOperationalMode('manual')}
+              onKeyDown={e => e.key === 'Enter' && setOperationalMode('manual')}
               className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${mode === 'manual' ? 'border-border bg-secondary/30 ring-1 ring-border' : 'border-border bg-card hover:border-primary/30'}`}
             >
               <div className="flex items-center gap-2">
@@ -1136,10 +1212,10 @@ export default function LandingPage() {
               role="button"
               tabIndex={FRESH_BUILD_ENABLED_FOR_UI ? 0 : -1}
               aria-disabled={!FRESH_BUILD_ENABLED_FOR_UI}
-              onClick={() => FRESH_BUILD_ENABLED_FOR_UI && setMode('fresh_build')}
-              onKeyDown={e => e.key === 'Enter' && FRESH_BUILD_ENABLED_FOR_UI && setMode('fresh_build')}
+              onClick={() => FRESH_BUILD_ENABLED_FOR_UI && setFlowHubPathSelection('fresh_build')}
+              onKeyDown={e => e.key === 'Enter' && FRESH_BUILD_ENABLED_FOR_UI && setFlowHubPathSelection('fresh_build')}
               className={`rounded-xl border p-5 text-left space-y-3 transition-all ${
-                mode === 'fresh_build'
+                flowHubPath === 'fresh_build'
                   ? 'border-fuchsia-500/60 bg-fuchsia-500/5 ring-1 ring-fuchsia-500/20'
                   : FRESH_BUILD_ENABLED_FOR_UI
                     ? 'border-border bg-card hover:border-fuchsia-500/30 cursor-pointer'
@@ -1147,12 +1223,12 @@ export default function LandingPage() {
               }`}
             >
               <div className="flex items-center gap-2">
-                <Sparkles className={`h-4 w-4 ${mode === 'fresh_build' ? 'text-fuchsia-300' : 'text-muted-foreground'}`} />
-                <span className={`text-sm font-bold ${mode === 'fresh_build' ? 'text-fuchsia-300' : 'text-foreground'}`}>Fresh Build</span>
+                <Sparkles className={`h-4 w-4 ${flowHubPath === 'fresh_build' ? 'text-fuchsia-300' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-bold ${flowHubPath === 'fresh_build' ? 'text-fuchsia-300' : 'text-foreground'}`}>Fresh Build</span>
                 <span className="ml-auto text-[10px] font-bold text-fuchsia-200 bg-fuchsia-500/10 border border-fuchsia-500/20 px-2 py-0.5 rounded-full">
                   EXPERIMENTAL
                 </span>
-                {mode === 'fresh_build' && <span className="text-[10px] font-bold text-fuchsia-300 bg-fuchsia-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+                {flowHubPath === 'fresh_build' && <span className="text-[10px] font-bold text-fuchsia-300 bg-fuchsia-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 FlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.
@@ -1168,14 +1244,14 @@ export default function LandingPage() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setMode('migration')}
-              onKeyDown={e => e.key === 'Enter' && setMode('migration')}
-              className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${mode === 'migration' ? 'border-cyan-500/60 bg-cyan-500/5 ring-1 ring-cyan-500/20' : 'border-border bg-card hover:border-cyan-500/30'}`}
+              onClick={() => setFlowHubPathSelection('migration')}
+              onKeyDown={e => e.key === 'Enter' && setFlowHubPathSelection('migration')}
+              className={`rounded-xl border p-5 text-left space-y-3 transition-all cursor-pointer ${flowHubPath === 'migration' ? 'border-cyan-500/60 bg-cyan-500/5 ring-1 ring-cyan-500/20' : 'border-border bg-card hover:border-cyan-500/30'}`}
             >
               <div className="flex items-center gap-2">
-                <GitBranch className={`h-4 w-4 ${mode === 'migration' ? 'text-cyan-300' : 'text-muted-foreground'}`} />
-                <span className={`text-sm font-bold ${mode === 'migration' ? 'text-cyan-300' : 'text-foreground'}`}>Migrate</span>
-                {mode === 'migration' && <span className="ml-auto text-[10px] font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
+                <GitBranch className={`h-4 w-4 ${flowHubPath === 'migration' ? 'text-cyan-300' : 'text-muted-foreground'}`} />
+                <span className={`text-sm font-bold ${flowHubPath === 'migration' ? 'text-cyan-300' : 'text-foreground'}`}>Migrate</span>
+                {flowHubPath === 'migration' && <span className="ml-auto text-[10px] font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full">SELECTED</span>}
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 FlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.
@@ -1236,10 +1312,16 @@ export default function LandingPage() {
               url={runPanelUrl}
               mode={resolveRunConstructionMode({
                 mode,
+                operationalMode: mode,
+                structuralLayer,
                 isMigrationMode,
                 isFreshBuildMode,
                 inngestReady,
               })}
+              operationalMode={mode}
+              structuralLayer={structuralLayer}
+              analysisDepth={analysisDepthValue(depth)}
+              flowHubPath={flowHubPath}
               autoStart
               onClose={() => setRunPanelUrl(null)}
             />

@@ -4,26 +4,44 @@ import Tooltip from "@/components/ui/Tooltip";
 import {
   ArrowLeft,
   BarChart3,
+  Bot,
   BookOpen,
   Boxes,
   ClipboardList,
   Activity,
   FolderKanban,
+  Gauge,
   Globe,
   GitBranch,
   Home,
   History,
   Megaphone,
+  MousePointerClick,
   RefreshCw,
   Rocket,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Zap,
 } from "lucide-react";
 import { listActiveFlowAIRuns, subscribeFlowAIRuns } from "@/lib/flowaiRunStore";
+import {
+  ANALYSIS_DEPTH_OPTIONS,
+  FLOW_HUB_PATH_OPTIONS,
+  OPERATIONAL_MODE_OPTIONS,
+  STRUCTURAL_LAYER_OPTIONS,
+  axesToSearchParams,
+  flowHubPathFromPathname,
+  flowHubPathOption,
+  normalizeFlowHubAxes,
+  readStoredFlowHubAxes,
+  writeStoredFlowHubAxes,
+} from "@/lib/flowHubAxes";
 
 const MIGRATION_MODE_ENABLED_FOR_UI =
   String(import.meta.env?.VITE_FLOWAI_ENABLE_MIGRATION_MODE || "").toLowerCase() === "true";
+const FRESH_BUILD_ENABLED_FOR_UI =
+  String(import.meta.env?.VITE_FLOWAI_ENABLE_FRESH_BUILD || "").toLowerCase() === "true";
 
 function getNavSections({ migrationModeEnabled = MIGRATION_MODE_ENABLED_FOR_UI } = {}) {
   return [
@@ -92,6 +110,13 @@ function getNavSections({ migrationModeEnabled = MIGRATION_MODE_ENABLED_FOR_UI }
         disabledMessage: "Migration Mode requires operator enablement.",
         activeWhen: ({ pathname, searchParams }) =>
           pathname === "/flow-hub/migration" || (pathname === "/" && searchParams.get("mode") === "migration"),
+      },
+      {
+        label: "Fresh Build",
+        path: "/flow-hub/fresh-build",
+        icon: Sparkles,
+        tooltip: FRESH_BUILD_ENABLED_FOR_UI ? "Open Flow Hub Fresh Build." : "Fresh Build is visible but execution requires FLOWAI_ENABLE_FRESH_BUILD.",
+        activeWhen: ({ pathname }) => pathname === "/flow-hub/fresh-build",
       },
       {
         label: "Research Forge",
@@ -231,8 +256,86 @@ function NavSection({ title, items }) {
   );
 }
 
+function axesForLocation(location) {
+  const params = new URLSearchParams(location.search);
+  const stored = readStoredFlowHubAxes();
+  return normalizeFlowHubAxes({
+    ...stored,
+    structuralLayer: params.get("structuralLayer") ?? stored.structuralLayer,
+    operationalMode: params.get("operationalMode") ?? params.get("mode") ?? stored.operationalMode,
+    analysisDepth: params.get("analysisDepth") ?? params.get("depth") ?? stored.analysisDepth,
+    flowHubPath: params.get("flowHubPath") ?? params.get("path") ?? params.get("mode") ?? flowHubPathFromPathname(location.pathname),
+  });
+}
+
+function AxisGroup({ title, icon: Icon, options, value, onChange }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 px-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+        <Icon className="h-3 w-3" />
+        <span>{title}</span>
+      </div>
+      <div className="grid grid-cols-3 gap-1">
+        {options.map((option) => (
+          <Tooltip key={option.value} content={option.description}>
+            <button
+              type="button"
+              onClick={() => onChange(option.value)}
+              className={`min-h-8 rounded-md border px-1.5 text-[10px] font-semibold leading-tight transition-colors ${
+                value === option.value
+                  ? "border-primary/50 bg-primary/10 text-primary"
+                  : "border-border bg-background/40 text-muted-foreground hover:text-foreground hover:border-primary/30"
+              }`}
+            >
+              {option.shortLabel || option.label}
+            </button>
+          </Tooltip>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FlowHubAxisControls({ location, navigate }) {
+  const [axes, setAxes] = useState(() => axesForLocation(location));
+
+  useEffect(() => {
+    setAxes(axesForLocation(location));
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    const handler = (event) => {
+      setAxes(normalizeFlowHubAxes(event?.detail ?? axesForLocation(location)));
+    };
+    window.addEventListener('flowai:flow-hub-axes-change', handler);
+    return () => window.removeEventListener('flowai:flow-hub-axes-change', handler);
+  }, [location]);
+
+  const updateAxes = (patch) => {
+    const next = writeStoredFlowHubAxes(normalizeFlowHubAxes({ ...axes, ...patch }));
+    setAxes(next);
+    const params = axesToSearchParams(next, location.search);
+    const path = patch.flowHubPath ? flowHubPathOption(next.flowHubPath).path : location.pathname;
+    navigate({ pathname: path, search: `?${params.toString()}` }, { replace: !patch.flowHubPath });
+  };
+
+  return (
+    <section className="space-y-3 rounded-md border border-border bg-background/30 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Flow Controls</p>
+        <span className="text-[9px] font-semibold text-primary">wired</span>
+      </div>
+      <AxisGroup title="Layer" icon={Bot} options={STRUCTURAL_LAYER_OPTIONS} value={axes.structuralLayer} onChange={(value) => updateAxes({ structuralLayer: value })} />
+      <AxisGroup title="Mode" icon={MousePointerClick} options={OPERATIONAL_MODE_OPTIONS} value={axes.operationalMode} onChange={(value) => updateAxes({ operationalMode: value })} />
+      <AxisGroup title="Depth" icon={Gauge} options={ANALYSIS_DEPTH_OPTIONS} value={axes.analysisDepth} onChange={(value) => updateAxes({ analysisDepth: value })} />
+      <AxisGroup title="Path" icon={Rocket} options={FLOW_HUB_PATH_OPTIONS} value={axes.flowHubPath} onChange={(value) => updateAxes({ flowHubPath: value })} />
+    </section>
+  );
+}
+
 export default function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeRuns, setActiveRuns] = useState(() => listActiveFlowAIRuns());
   const [migrationModeEnabled, setMigrationModeEnabled] = useState(MIGRATION_MODE_ENABLED_FOR_UI);
   const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns.filter((run) => run && typeof run === 'object') : [];
@@ -305,6 +408,7 @@ export default function Sidebar() {
             <span className="truncate">Back</span>
           </button>
         </Tooltip>
+        <FlowHubAxisControls location={location} navigate={navigate} />
         {navSections.map((section) => <NavSection key={section.title} {...section} />)}
       </nav>
 

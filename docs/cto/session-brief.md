@@ -76,6 +76,30 @@ CTO interpretation:
 - The next product priority is Priority 2: wire the remaining three axes and Codex TIM Build candidate.
 - The next evidence priority is a separate VERIFIED promotion packet with `evidenceUrl`, `verifiedAt`, and `verifiedBy` populated, after explicit clearance.
 
+
+## Priority 2 - Flow Hub Axis Wiring
+
+Status: CD PASS + CR PASS on branch `fix/priority2-flow-hub-axes` at `c1deb3e`; clear to merge under standing authorization.
+
+What is now wired on the branch:
+
+- Structural Layer: Autonomous / Supervised / Controlled is visible in the sidebar and affects run behavior.
+- Operational Mode: Auto / Guided / Manual remains independently selectable.
+- Analysis Depth: Quick / Standard / Deep is visible in the sidebar and maps to crawl and Phase B effort overrides.
+- Flow Hub Path: Production / Migration / Fresh Build is visible in the sidebar as a unified path axis.
+- Fresh Build has a first-class `/flow-hub/fresh-build` route.
+- The run-construction request body now carries `structuralLayer`, `operationalMode`, `analysisDepth`, and `flowHubPath`.
+- The orchestrator records the normalized axis envelope in step logs and final result metadata.
+
+Verification on the branch:
+
+- Focused tests: 6 files / 51 tests PASS.
+- `npm run build:preflight`: PASS.
+- `npm run lint`: PASS with existing flat-config warnings only.
+
+Evidence note: `docs/cto/priority2-flow-hub-axis-wiring-20260613.md`.
+Review result: `docs/cto/priority2-flow-hub-axis-wiring-step5-result-20260613.md`.
+
 ## Immediate Next Actions
 
 1. Begin Priority 2 axis wiring dispatch: Structural Layer, Analysis Depth, Flow Hub Path selector, and Codex TIM Build rank/callability if not already merged.

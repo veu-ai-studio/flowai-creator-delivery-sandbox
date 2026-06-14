@@ -77,12 +77,14 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toContain('fetch("/api/operator/migration-mode"');
     expect(sidebarSrc).toContain('setMigrationModeEnabled(data.enabled)');
     expect(sidebarSrc).toContain('disabled: !migrationModeEnabled');
-    expect(landingSrc).toContain("params.get('mode') === 'migration'");
+    expect(landingSrc).toContain("new URLSearchParams(location.search).get('flowHubPath') === 'migration'");
     expect(landingSrc).toContain("location.pathname === '/flow-hub/migration'");
-    expect(landingSrc).toContain("location.pathname === '/flow-hub/production'");
-    expect(landingSrc).toContain("setMode('migration')");
-    expect(landingSrc).toContain('Flow Hub — Production');
-    expect(landingSrc).toContain('Flow Hub — Migration');
+    expect(sidebarSrc).toContain('path: "/flow-hub/fresh-build"');
+    expect(sidebarSrc).toContain('flowai:flow-hub-axes-change');
+    expect(landingSrc).toContain('axesToSearchParams(nextAxes, location.search)');
+    expect(landingSrc).toContain("setFlowHubPath('migration')");
+    expect(landingSrc).toContain('Flow Hub');
+    expect(landingSrc).toContain('currentPathOption.label');
     expect(landingSrc).toContain('isFocusedMigrationSetup');
     expect(landingSrc).toContain('Step 1 - Select Your Product');
     expect(landingSrc).toContain('Which product do you want to migrate?');
@@ -117,9 +119,11 @@ describe('FlowAI unified operating system shell', () => {
   it('keeps Flow Hub Production setup separate from focused migration setup', () => {
     const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
 
-    expect(landingSrc).toContain("location.pathname === '/flow-hub/production'");
-    expect(landingSrc).toContain('Start the standard product upgrade flow.');
-    expect(landingSrc).toContain('Flow Hub — Production');
+    expect(sidebarSrc).toContain('path: "/flow-hub/fresh-build"');
+    expect(sidebarSrc).toContain('flowai:flow-hub-axes-change');
+    expect(landingSrc).toContain('axesToSearchParams(nextAxes, location.search)');
+    expect(landingSrc).toContain('currentPathOption.description');
+    expect(landingSrc).toContain('Flow Hub - {currentPathOption.label}');
     expect(landingSrc).toContain('Enter your product URL...');
   });
 
