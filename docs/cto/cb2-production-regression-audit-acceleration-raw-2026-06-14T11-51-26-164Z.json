@@ -1,0 +1,535 @@
+{
+  "audit": "cb2-production-regression-audit-acceleration-20260614",
+  "auditedAt": "2026-06-14T11:51:26.381Z",
+  "baseUrl": "https://flowai-dun.vercel.app",
+  "expectedCommitFullFromDispatch": "7aaea6d1f13a68b78fbd629b357cdbd9c5d2d1a4",
+  "method": "repo-local Playwright; in-app browser connector failed before audit with Windows sandbox setup error",
+  "api": {
+    "health": {
+      "route": "/api/health",
+      "url": "https://flowai-dun.vercel.app/api/health",
+      "status": 200,
+      "ok": true,
+      "json": {
+        "ok": true,
+        "status": "ready",
+        "service": "flowai",
+        "version": "1.0.0",
+        "env": "production",
+        "region": "iad1",
+        "commit": "7aaea6d1f13a",
+        "clerkReady": true,
+        "githubAppReady": true,
+        "inngestReady": true,
+        "timestamp": "2026-06-14T11:51:30.723Z",
+        "durationMs": 897,
+        "checks": {
+          "build": {
+            "status": "PASS",
+            "commit": "7aaea6d1f13a",
+            "commitFull": "7aaea6d1f13a68b78fbd629b357cdbd9c5d2d1a4",
+            "branch": "main",
+            "buildIdentitySource": "generated:git-or-env",
+            "buildIdentityGeneratedAt": "2026-06-14T11:33:28.420Z",
+            "env": "production",
+            "region": "iad1",
+            "deploymentUrl": "https://flowai-6vir8d0tf-veu-ai-studio.vercel.app",
+            "nodeVersion": "24.14.1",
+            "reason": null
+          },
+          "supabase": {
+            "status": "PASS",
+            "httpStatus": 200
+          },
+          "vercelKv": {
+            "status": "PASS",
+            "httpStatus": 200
+          },
+          "orchestra": {
+            "members": [
+              {
+                "id": "codex",
+                "label": "Codex",
+                "status": "PASS",
+                "runtimeAdapter": true,
+                "credentialsRequired": [
+                  "OPENAI_API_KEY"
+                ],
+                "credentialsPresent": true,
+                "adapterHint": "src/lib/orchestra/codex.js code-patch/generate-from-scratch runtime adapter"
+              },
+              {
+                "id": "claude-code",
+                "label": "Claude Code",
+                "status": "PASS",
+                "runtimeAdapter": true,
+                "credentialsRequired": [
+                  "ANTHROPIC_API_KEY"
+                ],
+                "credentialsPresent": true,
+                "adapterHint": "src/lib/orchestra/claudeCode.js analyze/design/score/code-patch runtime adapter"
+              },
+              {
+                "id": "base44",
+                "label": "Base44",
+                "status": "DEGRADED",
+                "runtimeAdapter": true,
+                "credentialsRequired": [
+                  "BASE44_API_BASE_URL",
+                  "BASE44_API_TOKEN"
+                ],
+                "credentialsPresent": false,
+                "adapterHint": "api/_lib/orchestrator/agents/base44.js + src/api/base44Client.js"
+              },
+              {
+                "id": "lovable",
+                "label": "Lovable",
+                "status": "NOT_WIRED",
+                "runtimeAdapter": false,
+                "credentialsRequired": [],
+                "credentialsPresent": null,
+                "adapterHint": "archived (scripts/lib/headless/archive/lovable-chat.mjs.archived-2026-05-13)"
+              },
+              {
+                "id": "v0",
+                "label": "Vercel v0",
+                "status": "NOT_WIRED",
+                "runtimeAdapter": false,
+                "credentialsRequired": [
+                  "VERCEL_V0_TOKEN"
+                ],
+                "credentialsPresent": false,
+                "adapterHint": "scripts/lib/peer-review.mjs callVercelV0Adapter (Panel reviewer only — no /api/* runtime adapter)"
+              },
+              {
+                "id": "cursor",
+                "label": "Cursor",
+                "status": "NOT_WIRED",
+                "runtimeAdapter": false,
+                "credentialsRequired": [],
+                "credentialsPresent": null,
+                "adapterHint": "developer-IDE only; no runtime adapter expected in /api/*"
+              },
+              {
+                "id": "openrouter",
+                "label": "OpenRouter",
+                "status": "NOT_WIRED",
+                "runtimeAdapter": false,
+                "credentialsRequired": [
+                  "OPENROUTER_API_KEY"
+                ],
+                "credentialsPresent": false,
+                "adapterHint": "scripts/lib/peer-review.mjs (Panel reviewer; no /api/* runtime adapter)"
+              },
+              {
+                "id": "browserless",
+                "label": "Browserless",
+                "status": "PASS",
+                "runtimeAdapter": true,
+                "credentialsRequired": [
+                  "BROWSERLESS_API_KEY"
+                ],
+                "credentialsPresent": true,
+                "adapterHint": "api/_lib/crawler.js viaBrowserless + richCapture"
+              },
+              {
+                "id": "anthropic",
+                "label": "Anthropic API (direct)",
+                "status": "PASS",
+                "runtimeAdapter": true,
+                "credentialsRequired": [
+                  "ANTHROPIC_API_KEY"
+                ],
+                "credentialsPresent": true,
+                "adapterHint": "api/_lib/claude.js callClaude"
+              },
+              {
+                "id": "replit",
+                "label": "Replit",
+                "status": "NOT_WIRED",
+                "runtimeAdapter": false,
+                "credentialsRequired": [],
+                "credentialsPresent": null,
+                "adapterHint": "archived (scripts/lib/headless/archive/replit-agent.mjs.archived-2026-05-13)"
+              },
+              {
+                "id": "playwright",
+                "label": "Playwright",
+                "status": "DEGRADED",
+                "runtimeAdapter": true,
+                "credentialsRequired": [
+                  "PLAYWRIGHT_ENDPOINT"
+                ],
+                "credentialsPresent": false,
+                "adapterHint": "api/_lib/orchestrator/agents/playwright.js + api/_lib/crawler.js viaPlaywright"
+              }
+            ],
+            "summary": {
+              "total": 11,
+              "runtimeAdapters": 6,
+              "live": 4,
+              "degraded": 2,
+              "notWired": 5
+            }
+          },
+          "observability": {
+            "status": "NOT_WIRED",
+            "pino": {
+              "ready": true,
+              "level": "info"
+            },
+            "sentry": {
+              "configured": false,
+              "initialized": false,
+              "tracesSampleRate": 0
+            },
+            "axiomBridge": {
+              "configured": false
+            }
+          },
+          "githubApp": {
+            "status": "PASS",
+            "configured": true,
+            "patFallback": true,
+            "installationIdAlias": "GITHUB_APP_INSTALLATION_ID"
+          },
+          "auth": {
+            "status": "PASS",
+            "clerkConfigured": true,
+            "frontendPublishableKeyPresent": true,
+            "authRequired": false,
+            "reason": null
+          }
+        }
+      }
+    },
+    "version": {
+      "route": "/api/version",
+      "url": "https://flowai-dun.vercel.app/api/version",
+      "status": 200,
+      "ok": true,
+      "json": {
+        "name": "flowai-platform",
+        "version": "0.0.0",
+        "commit": "7aaea6d1f13a",
+        "commitFull": "7aaea6d1f13a68b78fbd629b357cdbd9c5d2d1a4",
+        "branch": "main",
+        "buildIdentitySource": "generated:git-or-env",
+        "buildIdentityGeneratedAt": "2026-06-14T11:33:28.420Z",
+        "env": "production",
+        "region": "iad1",
+        "deployUrl": "flowai-6vir8d0tf-veu-ai-studio.vercel.app",
+        "startedAt": "2026-06-14T11:36:48.376Z",
+        "nowAt": "2026-06-14T11:51:30.834Z",
+        "runtime": {
+          "node": "24.14.1",
+          "v8": "13.6.233.17-node.44",
+          "platform": "linux",
+          "arch": "x64"
+        },
+        "sdks": {
+          "anthropic": "rest@2023-06-01",
+          "@supabase/supabase-js": "^2.105.3",
+          "inngest": "^4.2.6",
+          "@clerk/clerk-sdk-node": "^4.13.23",
+          "resend": "^6.12.2",
+          "voyageai": "^0.2.1",
+          "@axiomhq/js": "^1.6.0"
+        },
+        "featureFlags": {
+          "anthropicReady": true,
+          "browserlessReady": true,
+          "githubAppReady": true,
+          "supabaseReady": true,
+          "inngestReady": true,
+          "clerkReady": true,
+          "resendReady": false,
+          "voyageReady": false,
+          "axiomReady": false,
+          "authRequired": false,
+          "dbBackend": "supabase",
+          "inngestBackend": "inngest",
+          "emailTestEnabled": false,
+          "emailDryRun": false,
+          "axiomDryRun": false,
+          "replitProxyDisabled": false,
+          "logLevel": "info"
+        }
+      }
+    },
+    "meAnonymous": {
+      "route": "/api/me",
+      "url": "https://flowai-dun.vercel.app/api/me",
+      "status": 200,
+      "ok": true,
+      "json": {
+        "authenticated": false,
+        "authMode": "anonymous",
+        "userId": null,
+        "orgId": null,
+        "productId": null,
+        "config": {
+          "authRequired": false,
+          "clerkConfigured": true
+        }
+      }
+    }
+  },
+  "pages": {
+    "flow-hub-production": {
+      "route": "/flow-hub/production",
+      "finalUrl": "https://flowai-dun.vercel.app/flow-hub/production",
+      "status": 200,
+      "title": "FlowAI — VEU AI Studio",
+      "bodyTextSample": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub - Production\nUpgrade an existing product URL in its owned delivery path.\nFlowAI Ready\n·\nLayer: Autonomous\n·\nMode: Auto\n·\nDepth: Standard\n·\nPath: Production\n\nChoose how you want to work with your product, then select your operation mode.\n\nPRE-RELEASE · INTERNAL USE ONLY\nv0.1 · VEU AI Studio personnel + licensed pilots\n\nFlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target.\n\nWhat you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score.\n\nSETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch)\n\nAnalyze a Live Product\n\nFlowAI will fetch and analyze the public-facing pages of your product.\n\nTest Fetch\n\nNote: URL must be publicly accessible. Authenticated or private apps use Card B or C.\n\nDescribe Your Product\n\nType or speak a description. Best for authenticated apps, internal tools, or early-stage products.\n\n🔒 Credentials are used only for this session and are",
+      "bodyTextLength": 4754,
+      "bodyHtmlLength": 58851,
+      "blank": false,
+      "screenshot": "docs/cto/screenshots/cb2-production-regression-acceleration-flow-hub-production-2026-06-14T11-51-26-164Z.png",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 405 ()",
+        "Failed to load resource: the server responded with a status of 405 ()"
+      ],
+      "failedRequests": [
+        {
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://flowai-dun.vercel.app/api/health",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "serverResponses": []
+    },
+    "flow-hub-migration": {
+      "route": "/flow-hub/migration",
+      "finalUrl": "https://flowai-dun.vercel.app/flow-hub/migration",
+      "status": 200,
+      "title": "FlowAI — VEU AI Studio",
+      "bodyTextSample": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub — Migration\nFlow Hub platform dependency migration setup.\n\nSTEP 1 - SELECT YOUR PRODUCT\n\nWhich product do you want to migrate?\n\nSTEP 3 - CONFIRM AND START\n\nMigration execution\nMigration Mode enabled. FlowAI will migrate only the upgrade target.\nDisable\nStart Migration\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy",
+      "bodyTextLength": 1323,
+      "bodyHtmlLength": 39502,
+      "blank": false,
+      "screenshot": "docs/cto/screenshots/cb2-production-regression-acceleration-flow-hub-migration-2026-06-14T11-51-26-164Z.png",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 405 ()",
+        "Failed to load resource: the server responded with a status of 405 ()"
+      ],
+      "failedRequests": [
+        {
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://flowai-dun.vercel.app/api/health",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "serverResponses": []
+    },
+    "flow-hub-fresh-build": {
+      "route": "/flow-hub/fresh-build",
+      "finalUrl": "https://flowai-dun.vercel.app/flow-hub/fresh-build",
+      "status": 200,
+      "title": "FlowAI — VEU AI Studio",
+      "bodyTextSample": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub - Fresh Build\nGenerate a new platform-free codebase from product description.\nFlowAI Ready\n·\nLayer: Autonomous\n·\nMode: Auto\n·\nDepth: Standard\n·\nPath: Fresh Build\n\nChoose how you want to work with your product, then select your operation mode.\n\nPRE-RELEASE · INTERNAL USE ONLY\nv0.1 · VEU AI Studio personnel + licensed pilots\n\nFlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target.\n\nWhat you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score.\n\nSETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch)\n\nAnalyze a Live Product\n\nFlowAI will fetch and analyze the public-facing pages of your product.\n\nTest Fetch\n\nNote: URL must be publicly accessible. Authenticated or private apps use Card B or C.\n\nDescribe Your Product\n\nSELECTED\n\nType or speak a description. Best for authenticated apps, internal tools, or early-stage products.\n\n🔒 Credentials are used only for this",
+      "bodyTextLength": 4779,
+      "bodyHtmlLength": 59061,
+      "blank": false,
+      "screenshot": "docs/cto/screenshots/cb2-production-regression-acceleration-flow-hub-fresh-build-2026-06-14T11-51-26-164Z.png",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 405 ()",
+        "Failed to load resource: the server responded with a status of 405 ()"
+      ],
+      "failedRequests": [
+        {
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://flowai-dun.vercel.app/api/health",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "serverResponses": []
+    }
+  },
+  "axis": {
+    "labelsVisible": {
+      "Structural Layer": true,
+      "Operational Mode": true,
+      "Analysis Depth": true,
+      "Flow Hub Path": true
+    },
+    "beforeUrl": "https://flowai-dun.vercel.app/flow-hub/production",
+    "clicks": [
+      {
+        "axis": "structural-layer",
+        "clicked": "text=Structural",
+        "currentUrl": "https://flowai-dun.vercel.app/flow-hub/production"
+      },
+      {
+        "axis": "operational-mode",
+        "clicked": "text=Guided",
+        "currentUrl": "https://flowai-dun.vercel.app/flow-hub/production?structuralLayer=autonomous&operationalMode=guided&analysisDepth=standard&flowHubPath=production"
+      },
+      {
+        "axis": "analysis-depth",
+        "clicked": "text=Deep",
+        "currentUrl": "https://flowai-dun.vercel.app/flow-hub/production?structuralLayer=autonomous&operationalMode=guided&analysisDepth=deep&flowHubPath=production"
+      },
+      {
+        "axis": "flow-hub-path",
+        "clicked": "text=Migration",
+        "currentUrl": "https://flowai-dun.vercel.app/flow-hub/migration?structuralLayer=autonomous&operationalMode=guided&analysisDepth=deep&flowHubPath=migration"
+      }
+    ],
+    "afterUrl": "https://flowai-dun.vercel.app/flow-hub/migration?structuralLayer=autonomous&operationalMode=guided&analysisDepth=deep&flowHubPath=migration",
+    "afterTextSample": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub — Migration\nFlow Hub platform dependency migration setup.\n\nSTEP 1 - SELECT YOUR PRODUCT\n\nWhich product do you want to migrate?\n\nSTEP 3 - CONFIRM AND START\n\nMigration execution\nMigration Mode enabled. FlowAI will migrate only the upgrade target.\nDisable\nStart Migration\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy\nMove a platform-bound product into a standalone v2 codebase.",
+    "errors": {
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 405 ()",
+        "Failed to load resource: the server responded with a status of 405 ()",
+        "Failed to load resource: the server responded with a status of 405 ()"
+      ],
+      "failedRequests": [
+        {
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://flowai-dun.vercel.app/api/health",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "serverResponses": []
+    }
+  },
+  "timBuild": {
+    "launchClicked": "button:has-text(\"Run\")",
+    "finalUrl": "https://flowai-dun.vercel.app/flow-hub/production",
+    "textSample": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub - Production\nUpgrade an existing product URL in its owned delivery path.\nFlowAI Ready\n·\nLayer: Autonomous\n·\nMode: Auto\n·\nDepth: Standard\n·\nPath: Production\n\nChoose how you want to work with your product, then select your operation mode.\n\nPRE-RELEASE · INTERNAL USE ONLY\nv0.1 · VEU AI Studio personnel + licensed pilots\n\nFlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target.\n\nWhat you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score.\n\nSETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch)\n\nAnalyze a Live Product\n\nSELECTED\n\nFlowAI will fetch and analyze the public-facing pages of your product.\n\nTest Fetch\n\nNote: URL must be publicly accessible. Authenticated or private apps use Card B or C.\n\nDescribe Your Product\n\nType or speak a description. Best for authenticated apps, internal tools, or early-stage products.\n\n🔒 Credentials are used only for this session and are never stored.\n\nVoice Input\n\nPaste Content or Upload Screenshots\n\nPaste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly.\n\nDrop screenshots here or click to upload — PNG, JPG, PDF\n\nCombine with Card B for best results on authenticated products.\n\nSETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH?\n\nAudit for prospect demo readiness\nPrepare for investor review\nFull governance and clearance cycle\nCompare two or more products\nCombine inputs into a unified specification\nBenchmark against competitors\nLaunch readiness check\nCustom — I will describe my objective\n\nSETUP 3 OF 3 — SELECT OPERATION MODE\n\nAuto\nSELECTED\n\nFlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings.\n\nAnalysis Depth\n\nQuick\nStandard\nDeep\nGuided\n\nFlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes.\n\nMinutes to hours · 8 approval gates across the execution pipeline\n\nManual\n\nYou direct each step. FlowAI executes what you specify and assists on demand.\n\nHours to days · Full operator control\n\nFresh Build\nEXPERIMENTAL\n\nFlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.\n\nFresh Build is enabled for this environment. Existing modes remain unchanged.\nMigrate\n\nFlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.\n\nPlan\n\nFile count and dependency count before execution\n\nProgress\n\nPer-file migration status during execution\n\nSummary\n\nFiles migrated, dependencies removed, upgrade URL\n\nRun FlowAI on this URL\n\nhttps://example.com\n\nRetry\nClose\n\n8-STEP PROGRESS\n\nComplete\n\n1\n\nResearch\n\n1. BrowserlessAUTOCALLABLE\n2. Anthropic ClaudeAUTOCALLABLE\n3. Perplexity AIAUTOUNAVAILABLE\n2\n\nDesign\n\n1. Anthropic ClaudeAUTOCALLABLE\n2. v0 by VercelAUTOSTUB UNAVAILABLE\n3. LovableAUTOSTUB UNAVAILABLE\n3\n\nBuild\n\n1. CodexAUTOSERVER CHECK PENDING\n2. Claude CodeAUTOPENDING APPROVAL\n3. CursorAUTOSTUB UNAVAILABLE\n4. BoltAUTOSTUB UNAVAILABLE\n5. WindsurfAUTOSTUB UNAVAILABLE\n6. ReplitAUTOSTUB UNAVAILABLE\n7. Base44AUTOSTUB UNAVAILABLE\n4\n\nQuality Audit\n\n1. PlaywrightAUTOCALLABLE\n2. BrowserlessAUTOCALLABLE\n3. Anthropic ClaudeAUTOCALLABLE\n5\n\nDeploy\n\n1. VercelAUTODEFERRED\n2. ReplitAUTOSTUB UNAVAILABLE\n6\n\nSelf-Renewal\n\n1. Claude CodeAUTOPENDING APPROVAL\n2. PlaywrightAUTOCALLABLE\n7\n\nGTM\n\n1. Anthropic ClaudeAUTOCALLABLE\n2. Perplexity AIAUTOUNAVAILABLE\n8\n\nMonitor\n\n1. BrowserlessAUTOCALLABLE\n2. PlaywrightAUTOCALLABLE\n3. Anthropic ClaudeAUTOCALLABLE\nSTATUS\nCODE\nNAMED STEP\nDETAILS\n[r?][S?]\nRegistry reused\n— complete\n[r?][S?]\nProductSSOT Context\n— compl",
+    "codexRankedFirst": true,
+    "codexVisible": true,
+    "buildStepVisible": true,
+    "screenshot": "docs/cto/screenshots/cb2-production-regression-acceleration-tim-build-after-run-2026-06-14T11-51-26-164Z.png",
+    "errors": {
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 405 ()",
+        "Failed to load resource: the server responded with a status of 405 ()"
+      ],
+      "failedRequests": [
+        {
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://flowai-dun.vercel.app/api/health",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://flowai-dun.vercel.app/api/health",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "serverResponses": []
+    }
+  },
+  "clerk": {
+    "sign-in": {
+      "route": "/sign-in",
+      "finalUrl": "https://flowai-dun.vercel.app/sign-in",
+      "status": 200,
+      "title": "FlowAI — VEU AI Studio",
+      "bodyTextSample": "Sign in to your account\nSign in to FlowAI\n\nWelcome back! Please sign in to continue\n\nContinue with Google\n\nor\n\nEmail address\nPassword\nContinue\nDon’t have an account?\nSign up\n\nSecured by\n\nDevelopment mode",
+      "bodyTextLength": 203,
+      "bodyHtmlLength": 10802,
+      "blank": false,
+      "screenshot": "docs/cto/screenshots/cb2-production-regression-acceleration-sign-in-2026-06-14T11-51-26-164Z.png",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 405 ()",
+        "Failed to load resource: the server responded with a status of 405 ()"
+      ],
+      "failedRequests": [
+        {
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "serverResponses": []
+    },
+    "sign-up": {
+      "route": "/sign-up",
+      "finalUrl": "https://flowai-dun.vercel.app/sign-up",
+      "status": 200,
+      "title": "FlowAI — VEU AI Studio",
+      "bodyTextSample": "Create your account\nCreate your account\n\nWelcome! Please fill in the details to get started.\n\nContinue with Google\n\nor\n\nFirst name\nOptional\nLast name\nOptional\nEmail address\nPassword\nContinue\nAlready have an account?\nSign in\n\nSecured by\n\nDevelopment mode",
+      "bodyTextLength": 253,
+      "bodyHtmlLength": 13088,
+      "blank": false,
+      "screenshot": "docs/cto/screenshots/cb2-production-regression-acceleration-sign-up-2026-06-14T11-51-26-164Z.png",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 405 ()",
+        "Failed to load resource: the server responded with a status of 405 ()"
+      ],
+      "failedRequests": [
+        {
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-up",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "serverResponses": []
+    },
+    "sign-in-token": {
+      "route": "/sign-in-token",
+      "finalUrl": "https://flowai-dun.vercel.app/sign-in-token",
+      "status": 200,
+      "title": "FlowAI — VEU AI Studio",
+      "bodyTextSample": "Sign-in link is incomplete\n\nThis sign-in link is missing its required ticket.",
+      "bodyTextLength": 77,
+      "bodyHtmlLength": 1192,
+      "blank": false,
+      "screenshot": "docs/cto/screenshots/cb2-production-regression-acceleration-sign-in-token-2026-06-14T11-51-26-164Z.png",
+      "pageErrors": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 405 ()",
+        "Failed to load resource: the server responded with a status of 405 ()"
+      ],
+      "failedRequests": [
+        {
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in-token",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "serverResponses": []
+    }
+  },
+  "findings": [],
+  "screenshots": [
+    "docs/cto/screenshots/cb2-production-regression-acceleration-flow-hub-production-2026-06-14T11-51-26-164Z.png",
+    "docs/cto/screenshots/cb2-production-regression-acceleration-flow-hub-migration-2026-06-14T11-51-26-164Z.png",
+    "docs/cto/screenshots/cb2-production-regression-acceleration-flow-hub-fresh-build-2026-06-14T11-51-26-164Z.png",
+    "docs/cto/screenshots/cb2-production-regression-acceleration-sign-in-2026-06-14T11-51-26-164Z.png",
+    "docs/cto/screenshots/cb2-production-regression-acceleration-sign-up-2026-06-14T11-51-26-164Z.png",
+    "docs/cto/screenshots/cb2-production-regression-acceleration-sign-in-token-2026-06-14T11-51-26-164Z.png",
+    "docs/cto/screenshots/cb2-production-regression-acceleration-axis-selection-2026-06-14T11-51-26-164Z.png",
+    "docs/cto/screenshots/cb2-production-regression-acceleration-tim-build-before-run-2026-06-14T11-51-26-164Z.png",
+    "docs/cto/screenshots/cb2-production-regression-acceleration-tim-build-after-run-2026-06-14T11-51-26-164Z.png"
+  ],
+  "productionCommitObserved": "7aaea6d1f13a68b78fbd629b357cdbd9c5d2d1a4",
+  "deploymentUrlObserved": null,
+  "clerkReadyObserved": true,
+  "verdict": "PASS"
+}
