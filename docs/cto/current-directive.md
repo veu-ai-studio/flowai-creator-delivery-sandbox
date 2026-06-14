@@ -159,6 +159,8 @@ Completed:
 - CT2 live proof result filed at `docs/cto/ct2-clerk-ticket-signin-live-proof-result-20260614.md`.
 - CT2 result: `BLOCK`. Session establishment and authenticated app-origin `/api/me` passed; final route landing on `/flow-hub/production` blocked.
 - CB redirect-completion patch dispatch filed at `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`.
+- CB pushed branch `fix/clerk-ticket-redirect-completion` at `dbeeb454c129cd47be982b02820adcd1064040d7`.
+- CD/CR review prompts are filed at `docs/cto/cd-review-clerk-ticket-redirect-completion-prompt-20260614.md` and `docs/cto/cr-review-clerk-ticket-redirect-completion-prompt-20260614.md`.
 
 Blocked:
 
@@ -170,10 +172,10 @@ Blocked:
 
 Next technical action:
 
-1. CB patches redirect completion from `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`.
-2. CD and CR review the patch through repo prompts after CB pushes.
-3. After CD and CR PASS, merge/promote and dispatch CT2 rerun.
-4. If CT2 PASS, prepare an evidence packet only; do not move VERIFIED without W04/CEO clearance.
+1. CD and CR review `fix/clerk-ticket-redirect-completion`.
+2. After CD and CR PASS, merge/promote and dispatch CT2 rerun.
+3. If CT2 PASS, prepare an evidence packet only; do not move VERIFIED without W04/CEO clearance.
+4. If CD/CR BLOCK, patch the same branch.
 
 No VERIFIED movement is allowed from Clerk work until CT2 proves a real authenticated user session and W04/CEO clears the promotion packet.
 

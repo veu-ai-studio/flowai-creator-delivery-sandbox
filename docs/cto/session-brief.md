@@ -132,6 +132,15 @@ Interpretation:
 22. Filed CB redirect-completion patch dispatch:
    - `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`
 
+23. CB pushed patch branch:
+   - Branch: `fix/clerk-ticket-redirect-completion`
+   - HEAD: `dbeeb454c129cd47be982b02820adcd1064040d7`
+   - Changed: `src/pages/ClerkTicketSignInPage.jsx`, `tests/clerk-ticket-signin.test.js`, `docs/cto/cb-clerk-ticket-redirect-completion-evidence-20260614.md`
+
+24. Filed CD/CR review prompts:
+   - `docs/cto/cd-review-clerk-ticket-redirect-completion-prompt-20260614.md`
+   - `docs/cto/cr-review-clerk-ticket-redirect-completion-prompt-20260614.md`
+
 ## Clerk Auth State
 
 Completed:
@@ -230,7 +239,7 @@ CB build status:
 - Production deploy: Ready at `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`, aliased to `https://flowai-dun.vercel.app`.
 - Identity gate: PASS. `/api/health` and `/api/version` report `commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"`.
 - CT2 live proof: BLOCK only on final redirect/load.
-- Next action: CB patches stable initial ticket/redirect capture so URL scrubbing does not cancel navigation.
+- Next action: CD and CR Step 5 review branch `fix/clerk-ticket-redirect-completion`.
 
 ## VERIFIED Promotion State
 
@@ -246,8 +255,8 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Dispatch CB from `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`.
-4. After CB pushes, create CD/CR review prompts and route through repo.
-5. After CD/CR PASS, merge/promote and dispatch CT2 rerun.
+3. Wait for CD and CR review results for `fix/clerk-ticket-redirect-completion`.
+4. If CD/CR PASS, merge/promote and dispatch CT2 rerun.
+5. If CD/CR BLOCK, patch the same branch.
 6. If CT2 PASS, prepare evidence packet only; do not move VERIFIED without W04/CEO clearance.
 7. Do not move VERIFIED without W04/CEO clearance.
