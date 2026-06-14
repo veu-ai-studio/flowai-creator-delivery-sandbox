@@ -365,7 +365,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
   }
 
   return {
-    async createCommit({ owner, repo, baseBranch, branchName, files, message }) {
+    async createCommit({ owner, repo, baseBranch, branchName, files, message, cleanTree = false }) {
       const baseRef = await githubRequest({
         fetchImpl,
         token,
@@ -375,14 +375,17 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
       const baseCommitSha = baseRef?.object?.sha;
       if (!baseCommitSha) throw makeGitHubError('GITHUB_WRITE_FAILED', 'Base branch ref did not include a commit sha');
 
-      const baseCommit = await githubRequest({
-        fetchImpl,
-        token,
-        method: 'GET',
-        path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/commits/${encodeURIComponent(baseCommitSha)}`,
-      });
-      const baseTreeSha = baseCommit?.tree?.sha;
-      if (!baseTreeSha) throw makeGitHubError('GITHUB_WRITE_FAILED', 'Base commit did not include a tree sha');
+      let baseTreeSha = null;
+      if (!cleanTree) {
+        const baseCommit = await githubRequest({
+          fetchImpl,
+          token,
+          method: 'GET',
+          path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/commits/${encodeURIComponent(baseCommitSha)}`,
+        });
+        baseTreeSha = baseCommit?.tree?.sha;
+        if (!baseTreeSha) throw makeGitHubError('GITHUB_WRITE_FAILED', 'Base commit did not include a tree sha');
+      }
 
       const tree = await githubRequest({
         fetchImpl,
@@ -390,7 +393,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
         method: 'POST',
         path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees`,
         body: {
-          base_tree: baseTreeSha,
+          ...(baseTreeSha ? { base_tree: baseTreeSha } : {}),
           tree: files.map((file) => ({
             path: file.path,
             mode: '100644',
@@ -542,6 +545,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
         branchName: targetBranch,
         files: generatedCodebase.files,
         message: `FlowAI Fresh Build output${runId ? ` (${runId})` : ''}`,
+        cleanTree: true,
       });
       credentialSource = candidate.source;
       break;
