@@ -162,6 +162,7 @@ Universal input and delivery architecture:
   - `docs/cto/cd-review-universal-delivery-workspace-prompt-20260614.md`
   - `docs/cto/cr-review-universal-delivery-workspace-prompt-20260614.md`
   - `docs/cto/cb2-review-universal-delivery-workspace-dispatch-20260614.md`
+- Follow-up correction: the review packets now use fixed review base commit `7a13592312937b669d9422af0c26adf7a9a1827b` instead of the moving name `origin/main`, because `main` received docs-only review-packet commits after CB synced the branch. CB has also been asked to merge latest `origin/main` again so raw branch diffs stay easy for reviewers.
 
 ## Current Packets
 

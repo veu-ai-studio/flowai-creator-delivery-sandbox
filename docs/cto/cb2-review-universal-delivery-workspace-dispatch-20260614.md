@@ -10,7 +10,7 @@ STATUS: DISPATCHED
 
 - Branch: `feature/universal-delivery-workspace`
 - Review HEAD: `141c0431c7e86816091dafed481651e5b63b4d3c`
-- Base: `origin/main` at `7a13592312937b669d9422af0c26adf7a9a1827b`
+- Review base commit: `7a13592312937b669d9422af0c26adf7a9a1827b`
 
 ## Scope
 
@@ -44,7 +44,7 @@ Focus on:
 
 Run or inspect:
 
-- `git diff --name-status origin/main..origin/feature/universal-delivery-workspace`
+- `git diff --name-status 7a13592312937b669d9422af0c26adf7a9a1827b..origin/feature/universal-delivery-workspace`
 - `npx vitest run tests/provisioning/upgradeTargetProvisioner.test.js tests/freshBuild/freshBuildDeploymentAdapter.test.js tests/freshBuild/freshBuildOrchestrator.test.js`
 - `npm run preflight` if feasible in your environment
 

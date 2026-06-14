@@ -10,7 +10,7 @@ STATUS: DISPATCHED
 
 - Branch: `feature/universal-delivery-workspace`
 - Review HEAD: `141c0431c7e86816091dafed481651e5b63b4d3c`
-- Base: `origin/main` at `7a13592312937b669d9422af0c26adf7a9a1827b`
+- Review base commit: `7a13592312937b669d9422af0c26adf7a9a1827b`
 - Runtime patch commit: `0dd2177f7a397dc7782c10a9e9c148b3314b8fb5`
 - Pre-runtime diagnosis commit: `1290110`
 
@@ -27,7 +27,7 @@ CB merged current `origin/main` into the branch before review. CTO confirmed the
 - `docs/cto/cb-universal-delivery-workspace-implementation-evidence-20260614.md`
 - `docs/cto/cb-universal-delivery-workspace-sync-request-20260614.md`
 
-## Files Changed Against `origin/main`
+## Files Changed Against Review Base `7a13592312937b669d9422af0c26adf7a9a1827b`
 
 - `docs/cto/cb-universal-delivery-workspace-diagnosis-20260614.md`
 - `docs/cto/cb-universal-delivery-workspace-implementation-evidence-20260614.md`
@@ -64,7 +64,7 @@ Run at minimum:
 
 - `npx vitest run tests/provisioning/upgradeTargetProvisioner.test.js tests/freshBuild/freshBuildDeploymentAdapter.test.js tests/freshBuild/freshBuildOrchestrator.test.js`
 - `npm run preflight`
-- `git diff --name-status origin/main..origin/feature/universal-delivery-workspace`
+- `git diff --name-status 7a13592312937b669d9422af0c26adf7a9a1827b..origin/feature/universal-delivery-workspace`
 
 Confirm the branch diff excludes:
 
