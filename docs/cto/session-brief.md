@@ -18,6 +18,7 @@ Review/buy-in evidence:
 - `docs/cto/comprehensive-directive-buy-in-review-20260614.md`
 - `docs/cto/comprehensive-directive-implementation-revision-20260614.md`
 - `docs/cto/clerk-hosted-redirect-boundary-analysis-20260614.md`
+- `docs/cto/ct2-clerk-session-live-proof-rerun-result-20260614.md`
 
 Most important corrected state:
 
@@ -25,7 +26,7 @@ Most important corrected state:
 - Path 1 Migration has a CT2-confirmed public URL, `https://saige-v2.vercel.app`, but no VERIFIED movement has been applied.
 - Milestone 1 axis wiring is CT2-proven at the live-production evidence level.
 - Clerk readiness/routes and bearer-token propagation code are live, but full authenticated user-session proof is still blocked at hosted redirect/session establishment.
-- Clerk redirect allow-list gap was machine-corrected through Clerk Backend API; CT2 rerun is dispatched.
+- Clerk redirect allow-list gap was machine-corrected through Clerk Backend API; CT2 rerun still BLOCKED on hosted-token session transfer. CB ticket-route dispatch is prepared.
 - Codex TIM Build rank/callability code exists, but live Step 3 Build use is not yet proven.
 
 ## Current Runtime Evidence
@@ -38,9 +39,9 @@ Latest runtime production commit:
 
 - `021212d2ebf52511493869e7fea9270a7865db31`
 
-Latest origin/main after docs evidence commits:
+Origin/main docs state:
 
-- `9599dcbee4fea68e09e6bdb9a2b1a90b866ec5db`
+- Pull `origin/main` at session start and use `git rev-parse HEAD` for the exact latest docs commit. This brief is a docs artifact and may itself be followed by docs-only head refresh commits.
 
 Interpretation:
 
@@ -80,6 +81,12 @@ Interpretation:
 
 10. Dispatched CT2 rerun:
    - `docs/cto/ct2-clerk-session-live-proof-rerun-dispatch-20260614.md`
+
+11. Recorded CT2 rerun BLOCK:
+   - `docs/cto/ct2-clerk-session-live-proof-rerun-result-20260614.md`
+
+12. Prepared CB dispatch for FlowAI-owned ticket route:
+   - `docs/cto/cb-clerk-ticket-signin-dispatch-20260614.md`
 
 ## Clerk Auth State
 
@@ -129,6 +136,8 @@ Hosted redirect boundary result:
 - Before fix, Clerk redirect URL list did not contain FlowAI production.
 - After fix, Clerk redirect URL list contains `https://flowai-dun.vercel.app/` and `https://flowai-dun.vercel.app/flow-hub/production`.
 - No Victor dashboard action was required for this boundary.
+- CT2 rerun still blocked because Clerk's hosted sign-in-token landing did not redirect or establish a FlowAI app session.
+- Installed Clerk React types support `signIn.create({ strategy:"ticket", ticket })`, so the next code-controlled fix is an app-owned `/sign-in-token` route.
 
 CB build status:
 
@@ -161,6 +170,13 @@ CB build status:
   - App-origin authenticated `/api/me` BLOCK because Clerk session/token were unavailable.
 - CT2 rerun dispatch after redirect allow-list fix:
   - `docs/cto/ct2-clerk-session-live-proof-rerun-dispatch-20260614.md`
+- CT2 rerun result:
+  - `docs/cto/ct2-clerk-session-live-proof-rerun-result-20260614.md`
+  - Verdict: BLOCK.
+  - Hosted token redirect into FlowAI: BLOCK.
+  - App-origin authenticated `/api/me`: BLOCK because no Clerk app session/token exists.
+- CB next dispatch:
+  - `docs/cto/cb-clerk-ticket-signin-dispatch-20260614.md`
 
 ## VERIFIED Promotion State
 
@@ -176,8 +192,8 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Wait for CT2 result from `docs/cto/ct2-clerk-session-live-proof-rerun-dispatch-20260614.md`.
-4. If CT2 PASS, record Clerk session as live-proofed evidence and prepare a promotion packet only; do not move VERIFIED without W04/CEO clearance.
-5. If CT2 BLOCKS with the same hosted redirect message, escalate to a Clerk dashboard/domain action packet.
-6. If CT2 BLOCKS with a new app-code issue after session establishment, dispatch CB with the full mapped issue.
+3. Dispatch CB from `docs/cto/cb-clerk-ticket-signin-dispatch-20260614.md`.
+4. After CB pushes, dispatch CD and CR Step 5 prompts through repo.
+5. Merge/deploy/promote only after CD and CR PASS.
+6. CT2 reruns proof using FlowAI-owned `/sign-in-token?ticket=<redacted>` route, not Clerk hosted token URL.
 7. Do not move VERIFIED without W04/CEO clearance.
