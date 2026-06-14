@@ -1,0 +1,169 @@
+{
+  "startedAt": "2026-06-14T06:15:10.865Z",
+  "expectedMinimumCommit": "7c7e978f5451aa96c1db6ffb7689a122230f2d52",
+  "productionUrl": "https://flowai-dun.vercel.app",
+  "healthBefore": {
+    "status": 200,
+    "commitFull": "7c7e978f5451aa96c1db6ffb7689a122230f2d52",
+    "commit": "7c7e978f5451",
+    "deploymentUrl": "https://flowai-f69vbl126-veu-ai-studio.vercel.app",
+    "branch": "main",
+    "clerkReady": true,
+    "authStatus": "PASS",
+    "observedAt": "2026-06-14T06:15:11.497Z"
+  },
+  "healthAfter": {
+    "status": 200,
+    "commitFull": "7c7e978f5451aa96c1db6ffb7689a122230f2d52",
+    "commit": "7c7e978f5451",
+    "deploymentUrl": "https://flowai-f69vbl126-veu-ai-studio.vercel.app",
+    "branch": "main",
+    "clerkReady": true,
+    "authStatus": "PASS",
+    "observedAt": "2026-06-14T06:15:38.008Z"
+  },
+  "method": "Playwright Chromium fresh browser context; in-app Browser unavailable in local Windows sandbox",
+  "routeChecks": [
+    {
+      "clicked": "Migration",
+      "url": "/flow-hub/migration?structuralLayer=controlled&operationalMode=auto&analysisDepth=quick&flowHubPath=migration",
+      "matched": true
+    },
+    {
+      "clicked": "Fresh Build",
+      "url": "/flow-hub/fresh-build?structuralLayer=controlled&operationalMode=auto&analysisDepth=quick&flowHubPath=fresh_build",
+      "matched": true
+    },
+    {
+      "clicked": "Production",
+      "url": "/flow-hub/production?structuralLayer=controlled&operationalMode=auto&analysisDepth=quick&flowHubPath=production",
+      "matched": true
+    }
+  ],
+  "axisVisibility": {
+    "Structural Layer": false,
+    "Autonomous": true,
+    "Supervised": true,
+    "Controlled": true,
+    "Operational Mode": false,
+    "Auto": true,
+    "Guided": true,
+    "Manual": true,
+    "Analysis Depth": true,
+    "Quick": true,
+    "Standard": true,
+    "Deep": true,
+    "Flow Hub Path": false,
+    "Production": true,
+    "Migration": true,
+    "Fresh Build": true
+  },
+  "axisInteractions": [
+    {
+      "axis": "Structural Layer",
+      "selected": "Supervised",
+      "url": "/flow-hub/production?structuralLayer=supervised&operationalMode=auto&analysisDepth=standard&flowHubPath=production"
+    },
+    {
+      "axis": "Structural Layer",
+      "selected": "Controlled",
+      "url": "/flow-hub/production?structuralLayer=controlled&operationalMode=auto&analysisDepth=standard&flowHubPath=production"
+    },
+    {
+      "axis": "Operational Mode",
+      "selected": "Guided",
+      "url": "/flow-hub/production?structuralLayer=controlled&operationalMode=guided&analysisDepth=standard&flowHubPath=production"
+    },
+    {
+      "axis": "Operational Mode",
+      "selected": "Manual",
+      "url": "/flow-hub/production?structuralLayer=controlled&operationalMode=manual&analysisDepth=standard&flowHubPath=production"
+    },
+    {
+      "axis": "Operational Mode",
+      "selected": "Auto",
+      "url": "/flow-hub/production?structuralLayer=controlled&operationalMode=auto&analysisDepth=standard&flowHubPath=production"
+    },
+    {
+      "axis": "Analysis Depth",
+      "selected": "Quick",
+      "url": "/flow-hub/production?structuralLayer=controlled&operationalMode=auto&analysisDepth=quick&flowHubPath=production"
+    },
+    {
+      "axis": "Analysis Depth",
+      "selected": "Deep",
+      "url": "/flow-hub/production?structuralLayer=controlled&operationalMode=auto&analysisDepth=deep&flowHubPath=production"
+    },
+    {
+      "axis": "Analysis Depth",
+      "selected": "Quick",
+      "url": "/flow-hub/production?structuralLayer=controlled&operationalMode=auto&analysisDepth=quick&flowHubPath=production"
+    }
+  ],
+  "runConstruction": {
+    "requests": [
+      {
+        "url": "/api/run-construction",
+        "method": "POST",
+        "payload": {
+          "url": "https://example.com",
+          "mode": "MANUAL",
+          "operationalMode": "auto",
+          "structuralLayer": "controlled",
+          "analysisDepth": "quick",
+          "flowHubPath": "production"
+        },
+        "observedAt": "2026-06-14T06:15:34.033Z"
+      }
+    ],
+    "responses": [
+      {
+        "url": "/api/run-construction",
+        "status": 200,
+        "contentType": "text/event-stream",
+        "observedAt": "2026-06-14T06:15:34.088Z"
+      }
+    ],
+    "selectedRequest": {
+      "url": "/api/run-construction",
+      "method": "POST",
+      "payload": {
+        "url": "https://example.com",
+        "mode": "MANUAL",
+        "operationalMode": "auto",
+        "structuralLayer": "controlled",
+        "analysisDepth": "quick",
+        "flowHubPath": "production"
+      },
+      "observedAt": "2026-06-14T06:15:34.033Z"
+    }
+  },
+  "runLog": {
+    "excerpt": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Flow Hub - Production Upgrade an existing product URL in its owned delivery path. FlowAI Ready · Layer: Controlled · Mode: Auto · Depth: Quick · Path: Production Choose how you want to work with your product, then select your operation mode. PRE-RELEASE · INTERNAL USE ONLY v0.1 · VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch) Analyze a Live Product SELECTED FlowAI will fetch and analyze the public-facing pages of your product. Test Fetch Note: URL must be publicly accessible. Authenticated or private apps use Card B or C. Describe Your Product Type or speak a description. Best for authenticated apps, internal tools, or early-stage products. 🔒 Credentials are used only for this session and are never stored. Voice Input Paste Content or Upload Screenshots Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly. Drop screenshots here or click to upload — PNG, JPG, PDF Combine with Card B for best results on authenticated products. SETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH? Audit for prospect demo readiness Prepare for investor review Full governance and clearance cycle Compare two or more products Combine inputs into a unified specification Benchmark against competitors Launch readiness check Custom — I will describe my objective SETUP 3 OF 3 — SELECT OPERATION MODE Auto SELECTED FlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings. Analysis Depth Quick Standard Deep Guided FlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes. Minutes to hours · 8 approval gates across the execution pipeline Manual You direct each step. FlowAI executes what you specify and assists on demand. Hours to days · Full operator control Fresh Build EXPERIMENTAL FlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo. Fresh Build is enabled for this environment. Existing modes remain unchanged. Migrate FlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback. Plan File count and dependency count before execution Progress Per-file migration status during execution Summary Files migrated, dependencies removed, upgrade URL Run FlowAI on this URL RUNNING... https://example.com Cancel Close 8-STEP PROGRESS Active: Design RUNNING... 1 Research 1. BrowserlessAUTOCALLABLE 2. Anthropic ClaudeAUTOCALLABLE 3. Perplexity AIAUTOUNAVAILABLE 2 Design 1. Anthropic ClaudeAUTOCALLABLE 2. v0 by VercelAUTOSTUB UNAVAILABLE 3. LovableAUTOSTUB UNAVAILABLE 3 Build 1. CodexAUTOSERVER CHECK PENDING 2. Claude CodeAUTOPENDING APPROVAL 3. CursorAUTOSTUB UNAVAILABLE 4. BoltAUTOSTUB UNAVAILABLE 5. WindsurfAUTOSTUB UNAVAILABLE 6. ReplitAUTOSTUB UNAVAILABLE 7. Base44AUTOSTUB UNAVAILABLE 4 Quality Audit 1. PlaywrightAUTOCALLABLE 2. BrowserlessAUTOCALLABLE 3. Anthropic ClaudeAUTOCALLABLE 5 Deploy 1. VercelAUTODEFERRED 2. ReplitAUTOSTUB UNAVAILABLE 6 Self-Renewal 1. Claude CodeAUTOPENDING APPROVAL 2. PlaywrightAUTOCALLABLE 7 GTM 1. Anthropic ClaudeAUTOCALLABLE 2. Perplexity AIAUTOUNAVAILABLE 8 Monitor 1. BrowserlessAUTOCALLABLE 2. PlaywrightAUTOCALLABLE 3. Anthropic ClaudeAUTOCALLABLE STATUS CODE NAMED STEP DETAILS [r?][S?] Registry reused — complete [r?][S?] ProductSSOT Context — complete ProductSSOT context loaded Symbiotic Loop: run N+1 reads prior ProductSSOT state before execution [r0][S0] step_0 — complete GitHub operator credential mode select repo-write capability mode from GITHUB_OPERATOR_TOKEN availability [r0][S0] step_0 — complete FlowAI unified input context SSOT §10/§12 - every 8-step run receives the same URL, description, and attachment context with explicit usage accounting [r0][S0] step_0 — complete Flow Hub axis envelope Flow Hub axes are normalized before execution; structural layer sets checkpoint ceiling and analysis depth sets crawl/scoring effort [r0][S0] step_0 — complete ToolIntelligenceService (lazy-imported) CA-18 §6 — record per-step tool selection for governance trail [r0][S0] step_0 — complete ToolIntelligenceService CA-18 §6 — ranked tool candidates for research RANKED TOOLS mode: MANUAL-ORCHESTRA step: research 1. Perplexity AI - ai_research score: n/a 2. Tavily - search_api score: n/a 3. Exa - search_api score: n/a 4. SerpAPI - search_api score: n/a 5. You.com - search_api score: n/a [r0][S0] step_0 — complete ToolIntelligenceService CA-18 §6 — ranked tool candidates for design RANKED TOOLS mode: MANUAL-ORCHESTRA step: design 1. v0 by Vercel - ai_ui_gen score: n/a 2. Figma - design_tool score: n/a 3. Framer - visual_builder score: n/a 4. Lovable - ai_app_gen score: n/a 5. Canva - visual_assets score: n/a [r0][S0] step_0 — complete ToolIntelligenceService CA-18 §6 — ranked tool candidates for build RANKED TOOLS mode: MANUAL-ORCHESTRA step: build 1. Codex - code score: n/a 2. Claude Code - code score: n/a 3. Cursor - code score: n/a 4. Bolt - ai_fullstack score: n/a 5. Windsurf - code score: n/a 6. Replit - cloud_ide score: n/a 7. Base44 - source score: n/a [r0][S0] step_0 — complete ToolIntelligenceService CA-18 §6 — ranked tool candidates for qa_audit RANKED TOOLS mode: MANUAL-ORCHESTRA step: qa_audit 1. Playwright - e2e_testing score: n/a 2. Vitest - unit_testing score: n/a 3. Cypress - e2e_testing score: n/a 4. Jest - unit_testing score: n/a 5. Postman - api_testing score: n/a [r0][S0] step_0 — complete ToolIntelligenceService CA-18 §6 — ranked tool candidates for deploy RANKED TOOLS mode: MANUAL-ORCHESTRA step: deploy 1. Vercel - edge_hosting score: n/a 2. Railway - fullstack_host score: n/a 3. Fly.io - global_host score: n/a 4. Netlify - frontend_host score: n/a 5. Render - cloud_host score: n/a [r0][S0] step_0 — complete ToolIntelligenceService CA-18 §6 — ranked tool candidates for monitor RANKED TOOLS mode: MANUAL-ORCHESTRA step: monitor 1. Sentry - error_tracking score: n/a 2. PostHog - product_analytics score: n/a 3. Datadog - apm_full_stack score: n/a 4. LogRocket - session_replay score: n/a 5. Uptime Robot - uptime_checks score: n/a [r0][S0] step_0 — complete ToolIntelligenceService CA-18 §6 — ranked tool candidates for govern RANKED TOOLS mode: MANUAL-ORCHESTRA step: govern 1. FlowAI - self_governance score: n/a 2. GitHub - pr_workflow score: n/a 3. Vercel - preview_deploy score: n/a 4. Sentry - error_tracking score: n/a 5. PostHog - ",
+    "includesProgress": true,
+    "includesAxisEnvelopeText": true,
+    "includesSelectedStructural": true,
+    "includesSelectedOperational": true,
+    "includesSelectedDepth": true,
+    "includesSelectedPath": true,
+    "falseVerifiedClaimSeen": false,
+    "falseDeployedUrlClaimSeen": false
+  },
+  "screenshots": {
+    "initial": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-axis-rerun-initial-production-2026-06-14T06-15-10-864Z.png",
+    "afterAxes": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-axis-rerun-after-axis-selection-2026-06-14T06-15-10-864Z.png",
+    "afterRun": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-axis-rerun-after-run-launch-2026-06-14T06-15-10-864Z.png"
+  },
+  "verdictInputs": {
+    "productionCommitAtOrAfterTarget": true,
+    "allAxisLabelsVisible": false,
+    "independentAxisClicksRecorded": true,
+    "pathSwitchingPassed": true,
+    "runConstructionRequestSeen": true,
+    "runConstructionPayloadHasAxes": true,
+    "runLogIncludesAxisEnvelope": true,
+    "runLogNoFalseVerifiedClaim": true,
+    "runLogNoFalseDeployedUrlClaim": true
+  },
+  "completedAt": "2026-06-14T06:15:38.051Z"
+}

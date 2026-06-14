@@ -1,0 +1,210 @@
+{
+  "startedAt": "2026-06-14T06:17:04.496Z",
+  "expectedMinimumCommit": "7c7e978f5451aa96c1db6ffb7689a122230f2d52",
+  "productionUrl": "https://flowai-dun.vercel.app",
+  "method": "Playwright Chromium fresh browser context; in-app Browser unavailable in local Windows sandbox",
+  "healthBefore": {
+    "status": 200,
+    "commitFull": "717b6777e9c1ac8836f63c11637778dfead4ee27",
+    "commit": "717b6777e9c1",
+    "deploymentUrl": "https://flowai-arh3fkpzb-veu-ai-studio.vercel.app",
+    "branch": "main",
+    "clerkReady": true,
+    "authStatus": "PASS",
+    "authRequired": false,
+    "observedAt": "2026-06-14T06:17:05.026Z"
+  },
+  "healthAfter": {
+    "status": 200,
+    "commitFull": "717b6777e9c1ac8836f63c11637778dfead4ee27",
+    "commit": "717b6777e9c1",
+    "deploymentUrl": "https://flowai-arh3fkpzb-veu-ai-studio.vercel.app",
+    "branch": "main",
+    "clerkReady": true,
+    "authStatus": "PASS",
+    "authRequired": false,
+    "observedAt": "2026-06-14T06:17:21.776Z"
+  },
+  "anonymousBefore": {
+    "status": 200,
+    "json": {
+      "authenticated": false,
+      "authMode": "anonymous",
+      "userId": null,
+      "orgId": null,
+      "productId": null,
+      "config": {
+        "authRequired": false,
+        "clerkConfigured": true
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-redirect-rerun-api-me-anonymous-before-2026-06-14T06-17-04-495Z.png"
+  },
+  "anonymousAfter": {
+    "status": 200,
+    "json": {
+      "authenticated": false,
+      "authMode": "anonymous",
+      "userId": null,
+      "orgId": null,
+      "productId": null,
+      "config": {
+        "authRequired": false,
+        "clerkConfigured": true
+      }
+    },
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-redirect-rerun-api-me-anonymous-after-2026-06-14T06-17-04-495Z.png"
+  },
+  "disposableUser": {
+    "created": true,
+    "emailIdentifier": "flowai.ct2.redirect.20260614061707.[redacted]@example.com",
+    "rawUserIdPresent": true,
+    "rawUserId": "[redacted]",
+    "rawTicketPresent": true,
+    "hostedUrlPresentButNotOpened": true
+  },
+  "ticketRoute": {
+    "status": 200,
+    "finalUrlClass": "https://flowai-dun.vercel.app/flow-hub/production",
+    "sameOriginFinal": true,
+    "finalPathIsFlowHub": true,
+    "finalUrlHasTicket": false,
+    "visibleTextContainsTicket": false,
+    "pageDoesNotExposeTicket": true,
+    "addressBarScrubbed": true,
+    "flowHubLoaded": true,
+    "visibleTextExcerpt": "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective & Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: — View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search ⌘K Flow Hub - Production Upgrade an existing product URL in its owned delivery path. FlowAI Ready · Layer: Autonomous · Mode: Auto · Depth: Standard · Path: Production Choose how you want to work with your product, then select your operation mode. PRE-RELEASE · INTERNAL USE ONLY v0.1 · VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch) Analyze a Live Product FlowAI will fetch and analyze the public-facing pages of your product. Test Fetch Note: URL must be publicly accessible. Authenticated or private apps use Card B or C. Describe Your Product Type or speak a description. Best for authenticated apps, internal tools, or early-stage products. 🔒 Credentials are used only for this session and are never stored. Voice Input Paste Content or Upload Screenshots Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly. Drop screenshots here or click to upload — PNG, JPG, PDF Combine with Card B for best results on authenticated products. SETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH? Audit for prospect demo readiness Prepare for investor review Full governance and clearance cycle Compare two or more products Combine inputs into a unified specification Benchmark against competitors Launch readiness check Custom — I will describe my objective SETUP 3 OF 3 — SELECT OPERATION MODE Auto SELECTED FlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings. Analysis Depth Quick Standard Deep Guided FlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes. Minutes to hours · 8 approval gates across the execution pipeline Manual You direct each step. FlowAI executes what you specify and assists on demand. Hours to days · Full operator control Fresh Build EXPERIMENTAL FlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codeba",
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-redirect-rerun-post-ticket-final-2026-06-14T06-17-04-495Z.png",
+    "screenshotSkipped": false,
+    "screenshotSkipReason": null
+  },
+  "clerkState": {
+    "clerkLoaded": true,
+    "signedIn": true,
+    "sessionPresent": true,
+    "userPresent": true,
+    "tokenPresent": true,
+    "tokenError": null
+  },
+  "appOriginApiMe": {
+    "approach": "FlowAI app-origin JavaScript obtained Clerk session token and fetched /api/me with Authorization header; token value redacted and not stored",
+    "ok": true,
+    "status": 200,
+    "tokenPresent": true,
+    "redactedJson": {
+      "authenticated": true,
+      "authMode": "clerk",
+      "userId": "[redacted-present]",
+      "orgId": null,
+      "productId": null,
+      "config": {
+        "authRequired": false,
+        "clerkConfigured": true
+      }
+    },
+    "apiMeEventsRedacted": [
+      {
+        "type": "request",
+        "url": "/api/me",
+        "method": "GET",
+        "authorizationHeaderPresent": false
+      },
+      {
+        "type": "response",
+        "url": "/api/me",
+        "status": 200,
+        "redactedJson": {
+          "authenticated": false,
+          "authMode": "anonymous",
+          "userId": null,
+          "orgId": null,
+          "productId": null,
+          "config": {
+            "authRequired": false,
+            "clerkConfigured": true
+          }
+        }
+      },
+      {
+        "type": "request",
+        "url": "/api/me",
+        "method": "GET",
+        "authorizationHeaderPresent": true
+      },
+      {
+        "type": "response",
+        "url": "/api/me",
+        "status": 200,
+        "redactedJson": {
+          "authenticated": true,
+          "authMode": "clerk",
+          "userId": "[redacted-present]",
+          "orgId": null,
+          "productId": null,
+          "config": {
+            "authRequired": false,
+            "clerkConfigured": true
+          }
+        }
+      },
+      {
+        "type": "request",
+        "url": "/api/me",
+        "method": "GET",
+        "authorizationHeaderPresent": true
+      },
+      {
+        "type": "response",
+        "url": "/api/me",
+        "status": 200,
+        "redactedJson": {
+          "authenticated": true,
+          "authMode": "clerk",
+          "userId": "[redacted-present]",
+          "orgId": null,
+          "productId": null,
+          "config": {
+            "authRequired": false,
+            "clerkConfigured": true
+          }
+        }
+      }
+    ],
+    "screenshot": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\screenshots\\ct2-clerk-ticket-redirect-rerun-after-app-origin-api-me-2026-06-14T06-17-04-495Z.png",
+    "screenshotSkipped": false,
+    "screenshotSkipReason": null
+  },
+  "cleanup": {
+    "attempted": true,
+    "userDeleted": true,
+    "error": null
+  },
+  "secretHandling": {
+    "dopplerReadAttempted": true,
+    "clerkSecretPresentInProcess": true,
+    "hostedSignInTokenUrlOpened": false,
+    "rawTicketPrintedOrCommitted": false,
+    "secretPrintedOrCommitted": false,
+    "bearerTokenPrintedOrCommitted": false,
+    "authorizationHeaderValuePrintedOrCommitted": false,
+    "cookiesPrintedOrCommitted": false,
+    "passwordPrintedOrCommitted": false,
+    "rawClerkUserIdPrintedOrCommitted": false
+  },
+  "screenshots": {},
+  "verdictInputs": {
+    "productionCommitAtOrAfterTarget": true,
+    "productionCommitInterpretation": "Production advanced during the run from target 7c7e978f5451aa96c1db6ffb7689a122230f2d52 to newer main/docs dispatch commit 717b6777e9c1ac8836f63c11637778dfead4ee27; dispatch/user update allowed continuing on newest production commit.",
+    "hostedUrlNotOpened": true,
+    "ticketScrubbed": true,
+    "ticketNotVisible": true,
+    "finalRouteFlowHub": true,
+    "flowHubLoaded": true,
+    "clerkSessionEstablished": true,
+    "appOriginApiMeAuthenticated": true,
+    "anonymousBeforeOpen": true,
+    "anonymousAfterOpen": true,
+    "cleanupSucceeded": true
+  },
+  "completedAt": "2026-06-14T06:17:22.309Z"
+}

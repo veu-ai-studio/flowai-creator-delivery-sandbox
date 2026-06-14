@@ -1,0 +1,21 @@
+data: {"type":"start","runId":"cto-path3-veusite-20260614-0615","url":"https://victorudo.com","mode":"FRESH_BUILD","flowHubAxes":{"structuralLayer":"autonomous","operationalMode":"auto","analysisDepth":"standard","flowHubPath":"fresh_build"},"gtmTarget":95,"supabase":"connected","at":"2026-06-14T06:14:38.263Z"}
+
+data: {"type":"registry","action":"reused","productId":"url-416b941ffbc3b7d5"}
+
+data: {"type":"symbiotic_context","productId":"url-416b941ffbc3b7d5","ok":false,"reason":"no_product_ssot_row","context":null}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"feature_extractor","status":"started","at":"2026-06-14T06:14:38.915Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"feature_extractor","status":"completed","at":"2026-06-14T06:15:32.125Z","inventoryId":null,"pages":20,"components":312}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"design_synthesizer","status":"started","at":"2026-06-14T06:15:32.125Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"design_synthesizer","status":"completed","at":"2026-06-14T06:16:27.984Z","designSpecId":null,"components":312}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"codebase_generator","status":"started","at":"2026-06-14T06:16:27.985Z"}}
+
+data: {"type":"final","final":true,"ok":false,"status":"failed","previewUrl":null,"previewAccessStatus":null,"scoreStatus":"SCORE_NOT_ATTEMPTED","baselineScore":null,"finalScore":null,"scoreDelta":null,"governanceRecordId":"cto-path3-veusite-20260614-0615","gtmReady":false,"exitReason":"FRESH_BUILD_THREW","failureStage":"fresh_build","failure":{"stage":"fresh_build","code":"FRESH_BUILD_THREW","message":"GeneratedCodebase failed safety validation: src/components/ListListXlrmdf.jsx has unbalanced ()","deploymentId":null,"readyState":null,"attempts":null},"code":"FRESH_BUILD_THREW","error":"GeneratedCodebase failed safety validation: src/components/ListListXlrmdf.jsx has unbalanced ()","deploymentId":null,"iterationsCompleted":0,"prUrl":null,"runMode":"FRESH_BUILD","freshBuild":{"status":"failed","reason":"FRESH_BUILD_THREW","featureFlag":"FLOWAI_ENABLE_FRESH_BUILD","evidence":null,"designEvidence":null,"previewAccessStatus":null,"previewAccess":null,"scoreStatus":"SCORE_NOT_ATTEMPTED","baselineScore":null,"finalScore":null,"scoreDelta":null,"platformDependencies":[],"writeResult":null,"failure":{"stage":"fresh_build","code":"FRESH_BUILD_THREW","message":"GeneratedCodebase failed safety validation: src/components/ListListXlrmdf.jsx has unbalanced ()","deploymentId":null,"readyState":null,"attempts":null}},"runId":"cto-path3-veusite-20260614-0615"}
+
+data: {"type":"error","error":"GeneratedCodebase failed safety validation: src/components/ListListXlrmdf.jsx has unbalanced ()","code":"FRESH_BUILD_THREW"}
+
+data: [DONE]
