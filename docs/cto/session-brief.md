@@ -2,7 +2,7 @@
 
 Date: 2026-06-14 UTC
 Owner: CTO
-Scope: Comprehensive directive buy-in, evidence correction, CT2 Clerk session block, and next technical starting point
+Scope: Comprehensive directive buy-in, evidence correction, Clerk ticket-route merge/deploy state, and next technical starting point
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`
 
 ## Executive Summary
@@ -27,8 +27,9 @@ Most important corrected state:
 - Path 1 Migration has a CT2-confirmed public URL, `https://saige-v2.vercel.app`, but no VERIFIED movement has been applied.
 - Milestone 1 axis wiring is CT2-proven at the live-production evidence level.
 - Clerk readiness/routes and bearer-token propagation code are live, but full authenticated user-session proof is still blocked at hosted redirect/session establishment.
-- Clerk redirect allow-list gap was machine-corrected through Clerk Backend API; CT2 rerun still BLOCKED on hosted-token session transfer. CB ticket-route dispatch is prepared.
-- CB built the ticket route and CD/CR Step 5 reviews both passed. Merge/deploy/CT2 proof is next.
+- Clerk redirect allow-list gap was machine-corrected through Clerk Backend API; CT2 rerun still BLOCKED on hosted-token session transfer.
+- CB built the ticket route, CD/CR Step 5 reviews both passed, and the branch merged to `main` at `78672e5f28e763b17a6fda6b05b812c1781f16cc`.
+- Production deployment `https://flowai-opncymhub-veu-ai-studio.vercel.app` is Ready and aliased to `https://flowai-dun.vercel.app`, but build identity is degraded (`commitFull:null`) because the deployment came from the local Vercel CLI path. CT2 proof waits for a Git-backed production deployment.
 - Codex TIM Build rank/callability code exists, but live Step 3 Build use is not yet proven.
 
 ## Current Runtime Evidence
@@ -37,9 +38,16 @@ FlowAI production URL:
 
 - `https://flowai-dun.vercel.app`
 
-Latest runtime production commit:
+Latest acceptable runtime production commit:
 
 - `021212d2ebf52511493869e7fea9270a7865db31`
+
+Latest production deployment:
+
+- `https://flowai-opncymhub-veu-ai-studio.vercel.app`
+- Alias: `https://flowai-dun.vercel.app`
+- Status: Ready
+- Identity: degraded, `commitFull:null`
 
 Origin/main docs state:
 
@@ -96,6 +104,13 @@ Interpretation:
 
 15. Recorded combined Step 5 result:
    - `docs/cto/clerk-ticket-signin-step5-result-20260614.md`
+
+16. Merged `fix/clerk-ticket-signin` to `main` at `78672e5f28e763b17a6fda6b05b812c1781f16cc`.
+
+17. Deployed/promoted production deployment `https://flowai-opncymhub-veu-ai-studio.vercel.app`, now aliased to `https://flowai-dun.vercel.app`.
+
+18. Recorded deployment evidence and identity blocker:
+   - `docs/cto/clerk-ticket-signin-production-deploy-20260614.md`
 
 ## Clerk Auth State
 
@@ -191,7 +206,10 @@ CB build status:
   - HEAD `c65fa329a5ac3fd7f42253e0f862dba97b90775c`
   - CD PASS.
   - CR PASS.
-  - Merge/deploy/CT2 proof next.
+- Merge: complete at `78672e5f28e763b17a6fda6b05b812c1781f16cc`.
+- Production deploy: Ready at `https://flowai-opncymhub-veu-ai-studio.vercel.app`, aliased to `https://flowai-dun.vercel.app`.
+- Identity gate: BLOCKED for CT2 proof because `/api/health` and `/api/version` currently report `commitFull:null`.
+- Next action: push a Git-backed `main` docs/evidence refresh and wait for production to redeploy with commit identity.
 
 ## VERIFIED Promotion State
 
@@ -207,8 +225,8 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Merge `fix/clerk-ticket-signin` to `main`.
-4. Push, deploy/promote production, and verify `/api/health` runtime identity.
+3. Verify the next Git-backed production deployment after this docs/evidence refresh.
+4. PASS condition: `https://flowai-dun.vercel.app/api/health` reports `commitFull` equal to current `main` HEAD, `clerkReady:true`, and deployment URL equal to the active production deployment.
 5. Dispatch CT2 proof using FlowAI-owned `/sign-in-token?ticket=<redacted>` route, not Clerk hosted token URL.
 6. If CT2 PASS, prepare evidence packet only; do not move VERIFIED without W04/CEO clearance.
 7. Do not move VERIFIED without W04/CEO clearance.
