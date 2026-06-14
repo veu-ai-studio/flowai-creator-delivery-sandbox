@@ -26,9 +26,10 @@ Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
-- Last production identity verified after the packet refresh: `7bc95bb36a573cc94528d08c09d9de6aac9d2d01`.
+- Last production identity verified after final directive merge/promotion: `d6b92d54e1693fd18f37b5549df9d68285204449`.
+- Current production deployment: `https://flowai-22fb3bmld-veu-ai-studio.vercel.app`.
 - `/api/health` reports branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
-- `main` is now ahead at docs-only commit `40830d6` before this proof evidence commit; production runtime is therefore behind only by docs coordination commits. Do not use docs-only commits as runtime evidence until production is redeployed/promoted to that SHA.
+- `main` is pushed to origin at `d6b92d5`; production `/api/health` reports the same commit family.
 
 ## Completed Evidence
 
@@ -97,14 +98,16 @@ Path 2 token/upgrade-target patch:
 - Branch: `fix/path2-production-token-upgrade-target`.
 - Current head: `acebaa1`.
 - Runtime patch commit: `5a66bee` (`fix/forge | harden path2 token and upgrade target gates`).
-- Branch has been merged with current main proof evidence and refreshed review docs.
+- Branch has been merged to `main` via `e08a624`, then included in final pushed `main` at `d6b92d5`.
 - Review prompts: `docs/cto/cd-review-path2-token-upgrade-target-20260614.md` and `docs/cto/cr-review-path2-token-upgrade-target-20260614.md` on that branch.
 - Evidence: `docs/cto/path2-token-upgrade-target-fix-evidence-20260614.md` on that branch.
 - Focused verification: `139/139` resolver + orchestrator tests PASS.
 - Static checks: lane discipline PASS; SSOT traceability PASS.
 - Full `npm run preflight`: PASS after Anthropic credits were restored; lint, build, 236 test files / 3733 tests, lane discipline, SSOT traceability, and matrix generation all passed.
+- Final main preflight after the final directive and matrix generator fix: PASS; lint, build, 236 test files / 3734 tests, lane discipline, SSOT traceability, and matrix generation all passed.
 - CTO local review: PASS-WITH-GATE; no blocking code issue found.
 - Formal gate: CD/CR external CLI review could not be run from this session because the app privacy guard rejected transmitting private branch code/review material to external model services. Do not merge until CD/CR PASS, W04 waiver, or explicit approval for external reviewer CLI transmission after privacy-risk disclosure.
+- W04/CEO final directive cleared this branch for merge. Production promotion completed; CT2 post-merge proof dispatched in `docs/cto/ct2-path2-postmerge-production-proof-dispatch-20260614.md`.
 
 Universal input and delivery architecture:
 
@@ -139,6 +142,21 @@ Universal input and delivery architecture:
 
 W04/CEO authorized applying the batch VERIFIED packet. CTO applied the narrow exact-row set in `src/lib/orchestratorFramework/matrixArtifact.json`: `10 VERIFIED`, `0` missing evidence fields. Evidence note: `docs/cto/verified-promotion-applied-20260614.md`.
 
+Post-merge dispatches:
+
+- CT2 Path 2 proof dispatch: `docs/cto/ct2-path2-postmerge-production-proof-dispatch-20260614.md`.
+- CB2 regression audit dispatch: `docs/cto/cb2-production-regression-audit-postmerge-d6b92d5-dispatch-20260614.md`.
+- CB Universal Delivery Workspace dispatch: `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
+
+Path 4 URL selection:
+
+- Selection document: `docs/cto/path4-three-url-synthesis-selection-20260614.md`.
+- Selected URLs:
+  - `https://www.ready.gov/plan`
+  - `https://www.cdc.gov/prepare-your-health/index.html`
+  - `https://reliefweb.int/disasters`
+- All three returned `HTTP 200` to `curl.exe -I -L`.
+
 ## Known Gaps
 
 - FlowAI does not yet have a universal delivery workspace that creates a FlowAI-owned GitHub repo, writes code, creates/imports a Vercel project, deploys, returns a URL, and binds ProductSSOT evidence for arbitrary user inputs.
@@ -153,11 +171,11 @@ W04/CEO authorized applying the batch VERIFIED packet. CTO applied the narrow ex
 
 ## Next Starting Point
 
-1. Commit and push the final-directive integration docs.
-2. Commit and push the VERIFIED matrixArtifact promotion.
-3. Merge `fix/path2-production-token-upgrade-target`, promote production, and dispatch CT2.
-4. Dispatch CB on `feature/universal-delivery-workspace` from `docs/cto/cb-universal-delivery-workspace-dispatch-20260614.md`.
-5. Select and document three external Path 4 synthesis URLs, then execute when the run target is ready.
+1. Commit and push the post-merge dispatch/session brief updates.
+2. Send CT2 and CB2 thread prompts pointing to their dispatch files.
+3. Send CB thread prompt pointing to the active Universal Delivery Workspace dispatch.
+4. Run or dispatch the Path 4 synthesis proof when the active run target is ready.
+5. Record CT2/CB2/CB results back under `docs/cto/`.
 
 Victor action required:
 

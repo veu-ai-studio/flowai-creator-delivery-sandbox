@@ -7,6 +7,9 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 const matrixAuthorityPath = path.join(repoRoot, 'src/lib/orchestratorFramework/matrixAuthority.js');
+const GENERATED_SRC_ARTIFACTS = new Set([
+  'src/lib/orchestratorFramework/matrixArtifact.json',
+]);
 
 function git(args) {
   return execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8' });
@@ -54,7 +57,7 @@ const commits = commitRange();
 
 for (const commit of commits) {
   const commitFiles = changedFilesForCommit(commit);
-  const hasSrcChange = commitFiles.some(file => file.startsWith('src/'));
+  const hasSrcChange = commitFiles.some(file => file.startsWith('src/') && !GENERATED_SRC_ARTIFACTS.has(file));
   const docsSpecChanges = commitFiles.filter(file => file.startsWith('docs/specs/'));
 
   if (hasSrcChange && docsSpecChanges.length > 0) {
@@ -63,7 +66,7 @@ for (const commit of commits) {
 }
 
 if (commits.length === 0) {
-  const hasSrcChange = files.some(file => file.startsWith('src/'));
+  const hasSrcChange = files.some(file => file.startsWith('src/') && !GENERATED_SRC_ARTIFACTS.has(file));
   const docsSpecChanges = files.filter(file => file.startsWith('docs/specs/'));
 
   if (hasSrcChange && docsSpecChanges.length > 0) {
