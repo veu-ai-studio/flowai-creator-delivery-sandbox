@@ -1,0 +1,1100 @@
+{
+    "startedAt":  "2026-06-14T06:06:05.514Z",
+    "finishedAt":  "2026-06-14T06:09:29.436Z",
+    "baseUrl":  "https://flowai-dun.vercel.app",
+    "dispatch":  {
+                     "productionCommitAtDispatch":  "34268c9d76399e10ec6c25cd485cf8fae1afd0a1",
+                     "mainCommitWaitingPromotion":  "7c7e978f5451aa96c1db6ffb7689a122230f2d52"
+                 },
+    "http":  {
+                 "/api/health":  {
+                                     "status":  200,
+                                     "ok":  true,
+                                     "contentType":  "application/json; charset=utf-8",
+                                     "json":  {
+                                                  "ok":  true,
+                                                  "status":  "ready",
+                                                  "service":  "flowai",
+                                                  "version":  "1.0.0",
+                                                  "env":  "production",
+                                                  "region":  "iad1",
+                                                  "commit":  "34268c9d7639",
+                                                  "clerkReady":  true,
+                                                  "githubAppReady":  true,
+                                                  "inngestReady":  true,
+                                                  "timestamp":  "2026-06-14T06:06:09.447Z",
+                                                  "durationMs":  334,
+                                                  "checks":  {
+                                                                 "build":  {
+                                                                               "status":  "PASS",
+                                                                               "commit":  "34268c9d7639",
+                                                                               "commitFull":  "34268c9d76399e10ec6c25cd485cf8fae1afd0a1",
+                                                                               "branch":  "main",
+                                                                               "buildIdentitySource":  "env:VERCEL_GIT_COMMIT_SHA",
+                                                                               "buildIdentityGeneratedAt":  "2026-06-14T04:47:20.612Z",
+                                                                               "env":  "production",
+                                                                               "region":  "iad1",
+                                                                               "deploymentUrl":  "https://flowai-7ufisvpk3-veu-ai-studio.vercel.app",
+                                                                               "nodeVersion":  "24.14.1",
+                                                                               "reason":  null
+                                                                           },
+                                                                 "supabase":  {
+                                                                                  "status":  "PASS",
+                                                                                  "httpStatus":  200
+                                                                              },
+                                                                 "vercelKv":  {
+                                                                                  "status":  "PASS",
+                                                                                  "httpStatus":  200
+                                                                              },
+                                                                 "orchestra":  {
+                                                                                   "members":  [
+                                                                                                   {
+                                                                                                       "id":  "codex",
+                                                                                                       "label":  "Codex",
+                                                                                                       "status":  "PASS",
+                                                                                                       "runtimeAdapter":  true,
+                                                                                                       "credentialsRequired":  [
+                                                                                                                                   "OPENAI_API_KEY"
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  true,
+                                                                                                       "adapterHint":  "src/lib/orchestra/codex.js code-patch/generate-from-scratch runtime adapter"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "claude-code",
+                                                                                                       "label":  "Claude Code",
+                                                                                                       "status":  "PASS",
+                                                                                                       "runtimeAdapter":  true,
+                                                                                                       "credentialsRequired":  [
+                                                                                                                                   "ANTHROPIC_API_KEY"
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  true,
+                                                                                                       "adapterHint":  "src/lib/orchestra/claudeCode.js analyze/design/score/code-patch runtime adapter"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "base44",
+                                                                                                       "label":  "Base44",
+                                                                                                       "status":  "DEGRADED",
+                                                                                                       "runtimeAdapter":  true,
+                                                                                                       "credentialsRequired":  [
+                                                                                                                                   "BASE44_API_BASE_URL",
+                                                                                                                                   "BASE44_API_TOKEN"
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  false,
+                                                                                                       "adapterHint":  "api/_lib/orchestrator/agents/base44.js + src/api/base44Client.js"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "lovable",
+                                                                                                       "label":  "Lovable",
+                                                                                                       "status":  "NOT_WIRED",
+                                                                                                       "runtimeAdapter":  false,
+                                                                                                       "credentialsRequired":  [
+
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  null,
+                                                                                                       "adapterHint":  "archived (scripts/lib/headless/archive/lovable-chat.mjs.archived-2026-05-13)"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "v0",
+                                                                                                       "label":  "Vercel v0",
+                                                                                                       "status":  "NOT_WIRED",
+                                                                                                       "runtimeAdapter":  false,
+                                                                                                       "credentialsRequired":  [
+                                                                                                                                   "VERCEL_V0_TOKEN"
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  false,
+                                                                                                       "adapterHint":  "scripts/lib/peer-review.mjs callVercelV0Adapter (Panel reviewer only â€” no /api/* runtime adapter)"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "cursor",
+                                                                                                       "label":  "Cursor",
+                                                                                                       "status":  "NOT_WIRED",
+                                                                                                       "runtimeAdapter":  false,
+                                                                                                       "credentialsRequired":  [
+
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  null,
+                                                                                                       "adapterHint":  "developer-IDE only; no runtime adapter expected in /api/*"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "openrouter",
+                                                                                                       "label":  "OpenRouter",
+                                                                                                       "status":  "NOT_WIRED",
+                                                                                                       "runtimeAdapter":  false,
+                                                                                                       "credentialsRequired":  [
+                                                                                                                                   "OPENROUTER_API_KEY"
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  false,
+                                                                                                       "adapterHint":  "scripts/lib/peer-review.mjs (Panel reviewer; no /api/* runtime adapter)"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "browserless",
+                                                                                                       "label":  "Browserless",
+                                                                                                       "status":  "PASS",
+                                                                                                       "runtimeAdapter":  true,
+                                                                                                       "credentialsRequired":  [
+                                                                                                                                   "BROWSERLESS_API_KEY"
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  true,
+                                                                                                       "adapterHint":  "api/_lib/crawler.js viaBrowserless + richCapture"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "anthropic",
+                                                                                                       "label":  "Anthropic API (direct)",
+                                                                                                       "status":  "PASS",
+                                                                                                       "runtimeAdapter":  true,
+                                                                                                       "credentialsRequired":  [
+                                                                                                                                   "ANTHROPIC_API_KEY"
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  true,
+                                                                                                       "adapterHint":  "api/_lib/claude.js callClaude"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "replit",
+                                                                                                       "label":  "Replit",
+                                                                                                       "status":  "NOT_WIRED",
+                                                                                                       "runtimeAdapter":  false,
+                                                                                                       "credentialsRequired":  [
+
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  null,
+                                                                                                       "adapterHint":  "archived (scripts/lib/headless/archive/replit-agent.mjs.archived-2026-05-13)"
+                                                                                                   },
+                                                                                                   {
+                                                                                                       "id":  "playwright",
+                                                                                                       "label":  "Playwright",
+                                                                                                       "status":  "DEGRADED",
+                                                                                                       "runtimeAdapter":  true,
+                                                                                                       "credentialsRequired":  [
+                                                                                                                                   "PLAYWRIGHT_ENDPOINT"
+                                                                                                                               ],
+                                                                                                       "credentialsPresent":  false,
+                                                                                                       "adapterHint":  "api/_lib/orchestrator/agents/playwright.js + api/_lib/crawler.js viaPlaywright"
+                                                                                                   }
+                                                                                               ],
+                                                                                   "summary":  {
+                                                                                                   "total":  11,
+                                                                                                   "runtimeAdapters":  6,
+                                                                                                   "live":  4,
+                                                                                                   "degraded":  2,
+                                                                                                   "notWired":  5
+                                                                                               }
+                                                                               },
+                                                                 "observability":  {
+                                                                                       "status":  "NOT_WIRED",
+                                                                                       "pino":  {
+                                                                                                    "ready":  true,
+                                                                                                    "level":  "info"
+                                                                                                },
+                                                                                       "sentry":  {
+                                                                                                      "configured":  false,
+                                                                                                      "initialized":  false,
+                                                                                                      "tracesSampleRate":  0
+                                                                                                  },
+                                                                                       "axiomBridge":  {
+                                                                                                           "configured":  false
+                                                                                                       }
+                                                                                   },
+                                                                 "githubApp":  {
+                                                                                   "status":  "PASS",
+                                                                                   "configured":  true,
+                                                                                   "patFallback":  true,
+                                                                                   "installationIdAlias":  "GITHUB_APP_INSTALLATION_ID"
+                                                                               },
+                                                                 "auth":  {
+                                                                              "status":  "PASS",
+                                                                              "clerkConfigured":  true,
+                                                                              "frontendPublishableKeyPresent":  true,
+                                                                              "authRequired":  false,
+                                                                              "reason":  null
+                                                                          }
+                                                             }
+                                              }
+                                 },
+                 "/api/version":  {
+                                      "status":  200,
+                                      "ok":  true,
+                                      "contentType":  "application/json; charset=utf-8",
+                                      "json":  {
+                                                   "name":  "flowai-platform",
+                                                   "version":  "0.0.0",
+                                                   "commit":  "34268c9d7639",
+                                                   "commitFull":  "34268c9d76399e10ec6c25cd485cf8fae1afd0a1",
+                                                   "branch":  "main",
+                                                   "buildIdentitySource":  "env:VERCEL_GIT_COMMIT_SHA",
+                                                   "buildIdentityGeneratedAt":  "2026-06-14T04:47:20.612Z",
+                                                   "env":  "production",
+                                                   "region":  "iad1",
+                                                   "deployUrl":  "flowai-7ufisvpk3-veu-ai-studio.vercel.app",
+                                                   "startedAt":  "2026-06-14T04:50:40.280Z",
+                                                   "nowAt":  "2026-06-14T06:06:09.533Z",
+                                                   "runtime":  {
+                                                                   "node":  "24.14.1",
+                                                                   "v8":  "13.6.233.17-node.44",
+                                                                   "platform":  "linux",
+                                                                   "arch":  "x64"
+                                                               },
+                                                   "sdks":  {
+                                                                "anthropic":  "rest@2023-06-01",
+                                                                "@supabase/supabase-js":  "^2.105.3",
+                                                                "inngest":  "^4.2.6",
+                                                                "@clerk/clerk-sdk-node":  "^4.13.23",
+                                                                "resend":  "^6.12.2",
+                                                                "voyageai":  "^0.2.1",
+                                                                "@axiomhq/js":  "^1.6.0"
+                                                            },
+                                                   "featureFlags":  {
+                                                                        "anthropicReady":  true,
+                                                                        "browserlessReady":  true,
+                                                                        "githubAppReady":  true,
+                                                                        "supabaseReady":  true,
+                                                                        "inngestReady":  true,
+                                                                        "clerkReady":  true,
+                                                                        "resendReady":  false,
+                                                                        "voyageReady":  false,
+                                                                        "axiomReady":  false,
+                                                                        "authRequired":  false,
+                                                                        "dbBackend":  "supabase",
+                                                                        "inngestBackend":  "inngest",
+                                                                        "emailTestEnabled":  false,
+                                                                        "emailDryRun":  false,
+                                                                        "axiomDryRun":  false,
+                                                                        "replitProxyDisabled":  false,
+                                                                        "logLevel":  "info"
+                                                                    }
+                                               }
+                                  },
+                 "/api/me":  {
+                                 "status":  200,
+                                 "ok":  true,
+                                 "contentType":  "application/json; charset=utf-8",
+                                 "json":  {
+                                              "authenticated":  false,
+                                              "authMode":  "anonymous",
+                                              "userId":  null,
+                                              "orgId":  null,
+                                              "productId":  null,
+                                              "config":  {
+                                                             "authRequired":  false,
+                                                             "clerkConfigured":  true
+                                                         }
+                                          }
+                             }
+             },
+    "browser":  {
+                    "/flow-hub/production":  {
+                                                 "url":  "https://flowai-dun.vercel.app/flow-hub/production",
+                                                 "finalUrl":  "https://flowai-dun.vercel.app/flow-hub/production",
+                                                 "navStatus":  200,
+                                                 "title":  "FlowAI â€” VEU AI Studio",
+                                                 "navError":  null,
+                                                 "visible":  true,
+                                                 "textExcerpt":  "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective \u0026 Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: â€” View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search âŒ˜K Flow Hub - Production Upgrade an existing product URL in its owned delivery path. FlowAI Ready Â· Layer: Autonomous Â· Mode: Auto Â· Depth: Standard Â· Path: Production Choose how you want to work with your product, then select your operation mode. PRE-RELEASE Â· INTERNAL USE ONLY v0.1 Â· VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline â€” Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor â€” toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90â€“100 Â· Strong 75â€“89 Â· Developing 50â€“74 Â· Needs Work 25â€“49 Â· Critical 0â€“24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 â€” SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch) Analyze a Live Product FlowAI will fetch and analyze the public-facing pages of your product. Test Fetch Note: URL must be publicly accessible. Authenticated or private apps use Card B or C. Describe Your Product Type or speak a description. Best for authenticated apps, internal tools, or early-stage products. ðŸ”’ Credentials are used only for this session and are never stored. Voice Input Paste Content or Upload Screenshots Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly. Drop screenshots here or click to upload â€” PNG, JPG, PDF Combine with Card B for best results on authenticated products. SETUP 2 OF 3 â€” WHAT DO YOU WANT TO ACCOMPLISH? Audit fo...[truncated]",
+                                                 "checks":  {
+                                                                "forgeOverclaim":  {
+                                                                                       "hasVerifiedWord":  false,
+                                                                                       "hasFalseClaimPattern":  false,
+                                                                                       "matchedPatterns":  [
+
+                                                                                                           ]
+                                                                                   },
+                                                                "timBuildRanking":  {
+                                                                                        "labelsVisible":  false,
+                                                                                        "positions":  {
+                                                                                                          "Codex":  -1,
+                                                                                                          "Claude Code":  -1,
+                                                                                                          "Cursor":  -1,
+                                                                                                          "Bolt":  -1,
+                                                                                                          "Windsurf":  -1,
+                                                                                                          "Replit":  -1,
+                                                                                                          "Base44":  -1
+                                                                                                      },
+                                                                                        "codexAboveClaudeCursorBoltWindsurfReplitBase44":  false
+                                                                                    }
+                                                            }
+                                             },
+                    "/flow-hub/migration":  {
+                                                "url":  "https://flowai-dun.vercel.app/flow-hub/migration",
+                                                "finalUrl":  "https://flowai-dun.vercel.app/flow-hub/migration",
+                                                "navStatus":  200,
+                                                "title":  "FlowAI â€” VEU AI Studio",
+                                                "navError":  null,
+                                                "visible":  true,
+                                                "textExcerpt":  "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective \u0026 Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: â€” View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search âŒ˜K Flow Hub â€” Migration Flow Hub platform dependency migration setup. STEP 1 - SELECT YOUR PRODUCT Which product do you want to migrate? STEP 3 - CONFIRM AND START Migration execution Migration Mode enabled. FlowAI will migrate only the upgrade target. Disable Start Migration FlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited. Â© 2026 VEU AI Studio. All rights reserved. Patent pending. Terms of Use Â· Privacy Policy",
+                                                "checks":  {
+                                                               "forgeOverclaim":  {
+                                                                                      "hasVerifiedWord":  false,
+                                                                                      "hasFalseClaimPattern":  false,
+                                                                                      "matchedPatterns":  [
+
+                                                                                                          ]
+                                                                                  },
+                                                               "timBuildRanking":  {
+                                                                                       "labelsVisible":  false,
+                                                                                       "positions":  {
+                                                                                                         "Codex":  -1,
+                                                                                                         "Claude Code":  -1,
+                                                                                                         "Cursor":  -1,
+                                                                                                         "Bolt":  -1,
+                                                                                                         "Windsurf":  -1,
+                                                                                                         "Replit":  -1,
+                                                                                                         "Base44":  -1
+                                                                                                     },
+                                                                                       "codexAboveClaudeCursorBoltWindsurfReplitBase44":  false
+                                                                                   }
+                                                           }
+                                            },
+                    "/flow-hub/fresh-build":  {
+                                                  "url":  "https://flowai-dun.vercel.app/flow-hub/fresh-build",
+                                                  "finalUrl":  "https://flowai-dun.vercel.app/flow-hub/fresh-build",
+                                                  "navStatus":  200,
+                                                  "title":  "FlowAI â€” VEU AI Studio",
+                                                  "navError":  null,
+                                                  "visible":  true,
+                                                  "textExcerpt":  "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective \u0026 Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: â€” View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search âŒ˜K Flow Hub - Fresh Build Generate a new platform-free codebase from product description. FlowAI Ready Â· Layer: Autonomous Â· Mode: Auto Â· Depth: Standard Â· Path: Fresh Build Choose how you want to work with your product, then select your operation mode. PRE-RELEASE Â· INTERNAL USE ONLY v0.1 Â· VEU AI Studio personnel + licensed pilots FlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline â€” Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor â€” toward the CEO-defined 95/100 target. What you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90â€“100 Â· Strong 75â€“89 Â· Developing 50â€“74 Â· Needs Work 25â€“49 Â· Critical 0â€“24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score. SETUP 1 OF 3 â€” SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch) Analyze a Live Product FlowAI will fetch and analyze the public-facing pages of your product. Test Fetch Note: URL must be publicly accessible. Authenticated or private apps use Card B or C. Describe Your Product SELECTED Type or speak a description. Best for authenticated apps, internal tools, or early-stage products. ðŸ”’ Credentials are used only for this session and are never stored. Voice Input Paste Content or Upload Screenshots Paste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly. Drop screenshots here or click to upload â€” PNG, JPG, PDF Combine with Card B for best results on authenticated products. SETUP 2 OF 3 â€” WHAT DO YOU WANT TO ACCOM...[truncated]",
+                                                  "checks":  {
+                                                                 "forgeOverclaim":  {
+                                                                                        "hasVerifiedWord":  false,
+                                                                                        "hasFalseClaimPattern":  false,
+                                                                                        "matchedPatterns":  [
+
+                                                                                                            ]
+                                                                                    },
+                                                                 "timBuildRanking":  {
+                                                                                         "labelsVisible":  false,
+                                                                                         "positions":  {
+                                                                                                           "Codex":  -1,
+                                                                                                           "Claude Code":  -1,
+                                                                                                           "Cursor":  -1,
+                                                                                                           "Bolt":  -1,
+                                                                                                           "Windsurf":  -1,
+                                                                                                           "Replit":  -1,
+                                                                                                           "Base44":  -1
+                                                                                                       },
+                                                                                         "codexAboveClaudeCursorBoltWindsurfReplitBase44":  false
+                                                                                     }
+                                                             }
+                                              },
+                    "/sign-in":  {
+                                     "url":  "https://flowai-dun.vercel.app/sign-in",
+                                     "finalUrl":  "https://flowai-dun.vercel.app/sign-in",
+                                     "navStatus":  200,
+                                     "title":  "FlowAI â€” VEU AI Studio",
+                                     "navError":  null,
+                                     "visible":  true,
+                                     "textExcerpt":  "Sign in to your account Sign in to FlowAI Welcome back! Please sign in to continue Continue with Google or Email address Password Continue Donâ€™t have an account? Sign up Secured by Development mode",
+                                     "checks":  {
+
+                                                }
+                                 },
+                    "/sign-up":  {
+                                     "url":  "https://flowai-dun.vercel.app/sign-up",
+                                     "finalUrl":  "https://flowai-dun.vercel.app/sign-up",
+                                     "navStatus":  200,
+                                     "title":  "FlowAI â€” VEU AI Studio",
+                                     "navError":  null,
+                                     "visible":  true,
+                                     "textExcerpt":  "Create your account Create your account Welcome! Please fill in the details to get started. Continue with Google or First name Optional Last name Optional Email address Password Continue Already have an account? Sign in Secured by Development mode",
+                                     "checks":  {
+
+                                                }
+                                 },
+                    "/sign-in-token":  {
+                                           "url":  "https://flowai-dun.vercel.app/sign-in-token",
+                                           "finalUrl":  "https://flowai-dun.vercel.app/sign-in-token",
+                                           "navStatus":  200,
+                                           "title":  "FlowAI â€” VEU AI Studio",
+                                           "navError":  null,
+                                           "visible":  true,
+                                           "textExcerpt":  "Sign-in link is incomplete This sign-in link is missing its required ticket.",
+                                           "checks":  {
+
+                                                      }
+                                       },
+                    "/forge/build":  {
+                                         "url":  "https://flowai-dun.vercel.app/forge/build",
+                                         "finalUrl":  "https://flowai-dun.vercel.app/forge/build",
+                                         "navStatus":  200,
+                                         "title":  "FlowAI â€” VEU AI Studio",
+                                         "navError":  null,
+                                         "visible":  true,
+                                         "textExcerpt":  "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective \u0026 Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: â€” View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search âŒ˜K Build Forge No product selected BUILD EVIDENCE PARTIAL No product selected. Add ?productId= to the URL to continue. Auto-populated build plan Code task dispatches Build risks Build decision log Submit Build Plan Add at least one build decision to score Step 3. FlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited. Â© 2026 VEU AI Studio. All rights reserved. Patent pending. Terms of Use Â· Privacy Policy",
+                                         "checks":  {
+                                                        "forgeOverclaim":  {
+                                                                               "hasVerifiedWord":  false,
+                                                                               "hasFalseClaimPattern":  false,
+                                                                               "matchedPatterns":  [
+
+                                                                                                   ]
+                                                                           },
+                                                        "timBuildRanking":  {
+                                                                                "labelsVisible":  false,
+                                                                                "positions":  {
+                                                                                                  "Codex":  -1,
+                                                                                                  "Claude Code":  -1,
+                                                                                                  "Cursor":  -1,
+                                                                                                  "Bolt":  -1,
+                                                                                                  "Windsurf":  -1,
+                                                                                                  "Replit":  -1,
+                                                                                                  "Base44":  -1
+                                                                                              },
+                                                                                "codexAboveClaudeCursorBoltWindsurfReplitBase44":  false
+                                                                            }
+                                                    }
+                                     },
+                    "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit":  {
+                                                                                          "url":  "https://flowai-dun.vercel.app/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit",
+                                                                                          "finalUrl":  "https://flowai-dun.vercel.app/forge/build?productId=cb2-audit\u0026productName=CB2+Audit",
+                                                                                          "navStatus":  200,
+                                                                                          "title":  "FlowAI â€” VEU AI Studio",
+                                                                                          "visible":  true,
+                                                                                          "textExcerpt":  "FlowAI Product-Agnostic AI Operating System Back FLOW CONTROLS wired STRUCTURAL LAYER Autonomous Supervised Controlled OPERATIONAL MODE Auto Guided Manual ANALYSIS DEPTH Quick Standard Deep FLOW HUB PATH Production Migration Fresh Build NAVIGATION Home Workspace Landing Page PORTFOLIO Portfolio Dashboard Product Registry Session History FLOW HUB Production Migration Fresh Build Research Forge Design Forge Build Forge Quality Audit Deploy Forge Self-Renewal Forge GTM Forge Monitor Forge CONFIGURATION My Products Session History Clearance Protocol Governance Dashboard Release Notes Objective \u0026 Settings FlowAI Engine v0.1 One OS. Upgraded URLs. Session Active URLs: 0 Activity: â€” View Pause FlowAI Product-Agnostic AI Operating System All Systems Operational Back Home Workspace Landing Search âŒ˜K Build Forge Processing: CB2 Audit BUILD EVIDENCE PARTIAL BUILD_BLOCKED Neither PATH_A nor PATH_B conditions met. Add MINIMUM BUILD DIRECTIVE to design decision-log or configure AI design tool. Visit /forge/design to unlock Auto-populated build plan Build Entry Path Which entry path authorized this build? PATH_A (Victor directive) or PATH_B (complete design) Path BUILD_BLOCKED Flag BUILD_BLOCKED Reason Neither PATH_A nor PATH_B conditions met. Add MINIMUM BUILD DIRECTIVE to design decision-log or configure AI design tool. Action Visit /forge/design to unlock Base44 Dead Stub Deletions List of dead stubs identified in cb2-audit codebase (platform: unknown) for deletion. Auto-populated from known product surface audit. Surface Id cb2-audit-dead-stub-001 Reason dead stub Safe To Delete Pending Estimated Impact unknown Evidence BATCH_PLAN_APPROXIMATE - precise surface data pending cb2-audit matrix audit Surface Id cb2-audit-dead-stub-002 Reason dead stub Safe To Delete Pending Estimated Impact unknown Evidence BATCH_PLAN_APPROXIMATE - precise surface data pending cb2-audit matrix audit Surface Id cb2-audit-dead-stub-003 Reason dead stub Safe To Delete Pending Estimated Impact unknown Evidence BATCH_PLAN_APPROXIMATE - precise surface data pending cb2-audit matrix audit Surface Id cb2-audit-dead-stub-004 Reason dead stub Safe To Delete Pending Estimated Impact unknown Evidence BATCH_PLAN_APPROXIMATE - precise surface data pending cb2-audit matrix audit Surface Id cb2-audit-dead-stub-005 Reason dead stub Safe To Delete Pending Estimated Impact unknown Evidence BATCH_PLAN_APPROXIMATE - precise surface data pending cb2-audit matrix audit Surface Id cb2-audit-dead-stub-006 Reason dead stub Safe To Delete Pending Estimated Impact unknown Evidence BATCH_PLAN_APPROXIMATE - precise surface data pending cb2-audit matrix audit Surface Id cb2-audit-dead-stub-007 Reason dead stub Safe To Delete Pending Estimated Impact unknown Evidence BATCH_PLAN_APPROXIMATE - precise surface data pending cb2-audit matrix audit Surface Id cb2-audit-dead-stub-008 Reason dead stub Safe To Delete Pending Estimated Impact unknown Evidence BATCH_PLAN_APPROXIMATE - precise surface data pending cb2-aud...[truncated]",
+                                                                                          "checks":  {
+                                                                                                         "forgeOverclaim":  {
+                                                                                                                                "hasVerifiedWord":  false,
+                                                                                                                                "hasFalseClaimPattern":  false
+                                                                                                                            },
+                                                                                                         "timBuildRanking":  {
+                                                                                                                                 "labelsVisible":  true,
+                                                                                                                                 "positions":  {
+                                                                                                                                                   "Codex":  32423,
+                                                                                                                                                   "Claude Code":  32453,
+                                                                                                                                                   "Cursor":  32489,
+                                                                                                                                                   "Bolt":  32520,
+                                                                                                                                                   "Windsurf":  32557,
+                                                                                                                                                   "Replit":  32590,
+                                                                                                                                                   "Base44":  1392
+                                                                                                                                               },
+                                                                                                                                 "codexAboveClaudeCursorBoltWindsurfReplitBase44":  false
+                                                                                                                             },
+                                                                                                         "timBuildRankingPanel":  {
+                                                                                                                                      "route":  "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit",
+                                                                                                                                      "foundRankedCandidatesPanel":  true,
+                                                                                                                                      "labelsVisible":  true,
+                                                                                                                                      "positions":  {
+                                                                                                                                                        "Codex":  26,
+                                                                                                                                                        "Claude Code":  57,
+                                                                                                                                                        "Cursor":  83,
+                                                                                                                                                        "Bolt":  104,
+                                                                                                                                                        "Windsurf":  131,
+                                                                                                                                                        "Replit":  154,
+                                                                                                                                                        "Base44":  180
+                                                                                                                                                    },
+                                                                                                                                      "codexAboveClaudeCursorBoltWindsurfReplitBase44":  true,
+                                                                                                                                      "excerpt":  "RANKED CANDIDATES (7) 1. Codex - code 9.3 â˜… Selected 2. Claude Code - code 8.2 3. Cursor - code 7.8 4. Bolt - ai_fullstack 7.3 5. Windsurf - code 7.3 6. Replit - cloud_ide 6.0 7. Base44 - source 7.8"
+                                                                                                                                  }
+                                                                                                     }
+                                                                                      }
+                },
+    "consoleErrors":  [
+                          {
+                              "route":  "/flow-hub/production",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/flow-hub/production",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/flow-hub/migration",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/flow-hub/migration",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/flow-hub/fresh-build",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/flow-hub/fresh-build",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/sign-in",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/sign-in",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/sign-up",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/sign-up",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/sign-in-token",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/sign-in-token",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/forge/build",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/forge/build",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          },
+                          {
+                              "route":  "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit",
+                              "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                          }
+                      ],
+    "pageErrors":  [
+
+                   ],
+    "failedRequests":  [
+                           {
+                               "route":  "/flow-hub/production",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                               "resourceType":  "fetch",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/flow-hub/production",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/flow-hub/production",
+                               "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                               "resourceType":  "xhr",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/flow-hub/production",
+                               "url":  "https://flowai-dun.vercel.app/api/health",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/flow-hub/migration",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                               "resourceType":  "fetch",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/flow-hub/migration",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/flow-hub/migration",
+                               "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                               "resourceType":  "xhr",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/flow-hub/migration",
+                               "url":  "https://flowai-dun.vercel.app/api/health",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/flow-hub/fresh-build",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                               "resourceType":  "fetch",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/flow-hub/fresh-build",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/flow-hub/fresh-build",
+                               "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                               "resourceType":  "xhr",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/flow-hub/fresh-build",
+                               "url":  "https://flowai-dun.vercel.app/api/health",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/sign-in",
+                               "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                               "resourceType":  "xhr",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/sign-in",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in",
+                               "resourceType":  "fetch",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/sign-in",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/sign-up",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-up",
+                               "resourceType":  "fetch",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/sign-up",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-up",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/sign-up",
+                               "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                               "resourceType":  "xhr",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/sign-in-token",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in-token",
+                               "resourceType":  "fetch",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/sign-in-token",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in-token",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/sign-in-token",
+                               "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                               "resourceType":  "xhr",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/forge/build",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/forge",
+                               "resourceType":  "fetch",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/forge/build",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/forge",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/forge/build",
+                               "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                               "resourceType":  "xhr",
+                               "status":  405
+                           },
+                           {
+                               "route":  "/forge/build",
+                               "url":  "https://flowai-dun.vercel.app/api/health",
+                               "resourceType":  "fetch",
+                               "failure":  "net::ERR_ABORTED"
+                           },
+                           {
+                               "route":  "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/forge",
+                               "status":  405,
+                               "resourceType":  "fetch"
+                           },
+                           {
+                               "route":  "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit",
+                               "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/forge",
+                               "failure":  "net::ERR_ABORTED",
+                               "resourceType":  "fetch"
+                           },
+                           {
+                               "route":  "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit",
+                               "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                               "status":  405,
+                               "resourceType":  "xhr"
+                           },
+                           {
+                               "route":  "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit",
+                               "url":  "https://flowai-dun.vercel.app/api/health",
+                               "failure":  "net::ERR_ABORTED",
+                               "resourceType":  "fetch"
+                           }
+                       ],
+    "screenshots":  [
+                        "docs/cto/screenshots/cb2-production-regression-flow-hub-production-20260614.png",
+                        "docs/cto/screenshots/cb2-production-regression-flow-hub-migration-20260614.png",
+                        "docs/cto/screenshots/cb2-production-regression-flow-hub-fresh-build-20260614.png",
+                        "docs/cto/screenshots/cb2-production-regression-sign-in-20260614.png",
+                        "docs/cto/screenshots/cb2-production-regression-sign-up-20260614.png",
+                        "docs/cto/screenshots/cb2-production-regression-sign-in-token-20260614.png",
+                        "docs/cto/screenshots/cb2-production-regression-forge-build-20260614.png",
+                        "docs/cto/screenshots/cb2-production-regression-forge-build-productid-20260614.png"
+                    ],
+    "checks":  {
+                   "healthIdentity":  {
+                                          "status":  200,
+                                          "commitFull":  "34268c9d76399e10ec6c25cd485cf8fae1afd0a1",
+                                          "commitShort":  "34268c9d7639",
+                                          "clerkReady":  true,
+                                          "githubAppReady":  true,
+                                          "inngestReady":  true,
+                                          "authStatus":  "PASS"
+                                      },
+                   "versionIdentity":  {
+                                           "status":  200,
+                                           "json":  {
+                                                        "name":  "flowai-platform",
+                                                        "version":  "0.0.0",
+                                                        "commit":  "34268c9d7639",
+                                                        "commitFull":  "34268c9d76399e10ec6c25cd485cf8fae1afd0a1",
+                                                        "branch":  "main",
+                                                        "buildIdentitySource":  "env:VERCEL_GIT_COMMIT_SHA",
+                                                        "buildIdentityGeneratedAt":  "2026-06-14T04:47:20.612Z",
+                                                        "env":  "production",
+                                                        "region":  "iad1",
+                                                        "deployUrl":  "flowai-7ufisvpk3-veu-ai-studio.vercel.app",
+                                                        "startedAt":  "2026-06-14T04:50:40.280Z",
+                                                        "nowAt":  "2026-06-14T06:06:09.533Z",
+                                                        "runtime":  {
+                                                                        "node":  "24.14.1",
+                                                                        "v8":  "13.6.233.17-node.44",
+                                                                        "platform":  "linux",
+                                                                        "arch":  "x64"
+                                                                    },
+                                                        "sdks":  {
+                                                                     "anthropic":  "rest@2023-06-01",
+                                                                     "@supabase/supabase-js":  "^2.105.3",
+                                                                     "inngest":  "^4.2.6",
+                                                                     "@clerk/clerk-sdk-node":  "^4.13.23",
+                                                                     "resend":  "^6.12.2",
+                                                                     "voyageai":  "^0.2.1",
+                                                                     "@axiomhq/js":  "^1.6.0"
+                                                                 },
+                                                        "featureFlags":  {
+                                                                             "anthropicReady":  true,
+                                                                             "browserlessReady":  true,
+                                                                             "githubAppReady":  true,
+                                                                             "supabaseReady":  true,
+                                                                             "inngestReady":  true,
+                                                                             "clerkReady":  true,
+                                                                             "resendReady":  false,
+                                                                             "voyageReady":  false,
+                                                                             "axiomReady":  false,
+                                                                             "authRequired":  false,
+                                                                             "dbBackend":  "supabase",
+                                                                             "inngestBackend":  "inngest",
+                                                                             "emailTestEnabled":  false,
+                                                                             "emailDryRun":  false,
+                                                                             "axiomDryRun":  false,
+                                                                             "replitProxyDisabled":  false,
+                                                                             "logLevel":  "info"
+                                                                         }
+                                                    }
+                                       },
+                   "apiMeAnonymous":  {
+                                          "status":  200,
+                                          "authenticated":  false,
+                                          "authMode":  "anonymous",
+                                          "userId":  null,
+                                          "clerkConfigured":  true,
+                                          "authRequired":  false
+                                      },
+                   "routeSummary":  {
+                                        "/flow-hub/production":  {
+                                                                     "navStatus":  200,
+                                                                     "visible":  true,
+                                                                     "finalUrl":  "https://flowai-dun.vercel.app/flow-hub/production",
+                                                                     "navError":  null
+                                                                 },
+                                        "/flow-hub/migration":  {
+                                                                    "navStatus":  200,
+                                                                    "visible":  true,
+                                                                    "finalUrl":  "https://flowai-dun.vercel.app/flow-hub/migration",
+                                                                    "navError":  null
+                                                                },
+                                        "/flow-hub/fresh-build":  {
+                                                                      "navStatus":  200,
+                                                                      "visible":  true,
+                                                                      "finalUrl":  "https://flowai-dun.vercel.app/flow-hub/fresh-build",
+                                                                      "navError":  null
+                                                                  },
+                                        "/sign-in":  {
+                                                         "navStatus":  200,
+                                                         "visible":  true,
+                                                         "finalUrl":  "https://flowai-dun.vercel.app/sign-in",
+                                                         "navError":  null
+                                                     },
+                                        "/sign-up":  {
+                                                         "navStatus":  200,
+                                                         "visible":  true,
+                                                         "finalUrl":  "https://flowai-dun.vercel.app/sign-up",
+                                                         "navError":  null
+                                                     },
+                                        "/sign-in-token":  {
+                                                               "navStatus":  200,
+                                                               "visible":  true,
+                                                               "finalUrl":  "https://flowai-dun.vercel.app/sign-in-token",
+                                                               "navError":  null
+                                                           },
+                                        "/forge/build":  {
+                                                             "navStatus":  200,
+                                                             "visible":  true,
+                                                             "finalUrl":  "https://flowai-dun.vercel.app/forge/build",
+                                                             "navError":  null
+                                                         },
+                                        "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit":  {
+                                                                                                              "navStatus":  200,
+                                                                                                              "visible":  true,
+                                                                                                              "finalUrl":  "https://flowai-dun.vercel.app/forge/build?productId=cb2-audit\u0026productName=CB2+Audit",
+                                                                                                              "navError":  null
+                                                                                                          }
+                                    },
+                   "materialConsoleErrors":  [
+                                                 {
+                                                     "route":  "/flow-hub/production",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/flow-hub/production",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/flow-hub/migration",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/flow-hub/migration",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/flow-hub/fresh-build",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/flow-hub/fresh-build",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/sign-in",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/sign-in",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/sign-up",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/sign-up",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/sign-in-token",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/sign-in-token",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/forge/build",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 },
+                                                 {
+                                                     "route":  "/forge/build",
+                                                     "text":  "Failed to load resource: the server responded with a status of 405 ()"
+                                                 }
+                                             ],
+                   "materialFailedRequests":  [
+                                                  {
+                                                      "route":  "/flow-hub/production",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                                                      "resourceType":  "fetch",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/production",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/production",
+                                                      "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                                                      "resourceType":  "xhr",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/production",
+                                                      "url":  "https://flowai-dun.vercel.app/api/health",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/migration",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                                                      "resourceType":  "fetch",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/migration",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/migration",
+                                                      "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                                                      "resourceType":  "xhr",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/migration",
+                                                      "url":  "https://flowai-dun.vercel.app/api/health",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/fresh-build",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                                                      "resourceType":  "fetch",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/fresh-build",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/fresh-build",
+                                                      "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                                                      "resourceType":  "xhr",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/flow-hub/fresh-build",
+                                                      "url":  "https://flowai-dun.vercel.app/api/health",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/sign-in",
+                                                      "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                                                      "resourceType":  "xhr",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/sign-in",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in",
+                                                      "resourceType":  "fetch",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/sign-in",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/sign-up",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-up",
+                                                      "resourceType":  "fetch",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/sign-up",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-up",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/sign-up",
+                                                      "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                                                      "resourceType":  "xhr",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/sign-in-token",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in-token",
+                                                      "resourceType":  "fetch",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/sign-in-token",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/sign-in-token",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/sign-in-token",
+                                                      "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                                                      "resourceType":  "xhr",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/forge/build",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/forge",
+                                                      "resourceType":  "fetch",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/forge/build",
+                                                      "url":  "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/forge",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  },
+                                                  {
+                                                      "route":  "/forge/build",
+                                                      "url":  "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+                                                      "resourceType":  "xhr",
+                                                      "status":  405
+                                                  },
+                                                  {
+                                                      "route":  "/forge/build",
+                                                      "url":  "https://flowai-dun.vercel.app/api/health",
+                                                      "resourceType":  "fetch",
+                                                      "failure":  "net::ERR_ABORTED"
+                                                  }
+                                              ],
+                   "forgeRankingPanel":  {
+                                             "route":  "/forge/build?productId=cb2-audit\u0026productName=CB2%20Audit",
+                                             "foundRankedCandidatesPanel":  true,
+                                             "labelsVisible":  true,
+                                             "positions":  {
+                                                               "Codex":  26,
+                                                               "Claude Code":  57,
+                                                               "Cursor":  83,
+                                                               "Bolt":  104,
+                                                               "Windsurf":  131,
+                                                               "Replit":  154,
+                                                               "Base44":  180
+                                                           },
+                                             "codexAboveClaudeCursorBoltWindsurfReplitBase44":  true,
+                                             "excerpt":  "RANKED CANDIDATES (7) 1. Codex - code 9.3 â˜… Selected 2. Claude Code - code 8.2 3. Cursor - code 7.8 4. Bolt - ai_fullstack 7.3 5. Windsurf - code 7.3 6. Replit - cloud_ide 6.0 7. Base44 - source 7.8"
+                                         }
+               },
+    "tooling":  {
+                    "inAppBrowser":  "unavailable: windows sandbox failed: spawn setup refresh",
+                    "fallback":  "Playwright Chromium from repo dependency"
+                },
+    "finalProductionObservation":  {
+                                       "observedAt":  "2026-06-14T06:10:24.424Z",
+                                       "commitFull":  "34268c9d76399e10ec6c25cd485cf8fae1afd0a1",
+                                       "commitShort":  "34268c9d7639",
+                                       "deploymentUrl":  "https://flowai-7ufisvpk3-veu-ai-studio.vercel.app",
+                                       "changedDuringAudit":  false
+                                   }
+}
