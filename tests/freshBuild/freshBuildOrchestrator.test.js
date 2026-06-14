@@ -216,6 +216,83 @@ describe('freshBuild Orchestrator', () => {
     }));
   });
 
+  it('runs description-only Fresh Build without crawling a URL or fabricating baseline scoring', async () => {
+    const extractFeatures = vi.fn();
+    const synthesizeDesign = vi.fn();
+    const generateCodebase = vi.fn(async () => mockGeneratedCodebase());
+    const writeGeneratedCodebase = vi.fn(async () => ({
+      ok: true,
+      status: 'WRITTEN_AND_DEPLOYED',
+      filesWritten: 2,
+      deploymentId: 'dep_description',
+      previewUrl: 'https://description-build.vercel.app',
+      previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+      previewAccess: {
+        previewUrl: 'https://description-build.vercel.app',
+        deploymentId: 'dep_description',
+        previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+        httpStatus: 200,
+      },
+      deliveryWorkspace: {
+        workspaceId: 'dw_description',
+        github: { owner: 'flowai-owned', repo: 'flowai-description-run' },
+        vercel: { projectId: 'prj_description' },
+      },
+    }));
+    const onStep = vi.fn();
+
+    const result = await runFreshBuild({
+      description: 'Build a scheduling workspace for local service providers',
+      runId: 'description-run',
+      productName: 'Provider Scheduler',
+      productConfig: { inputMode: 'describe-build' },
+    }, {
+      env: { FLOWAI_ENABLE_FRESH_BUILD: 'true' },
+      now: '2026-06-14T00:00:00.000Z',
+      extractFeatures,
+      synthesizeDesign,
+      generateCodebase,
+      writeGeneratedCodebase,
+      onStep,
+    });
+
+    expect(extractFeatures).not.toHaveBeenCalled();
+    expect(synthesizeDesign).not.toHaveBeenCalled();
+    expect(generateCodebase).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'flowai-description://description-run',
+        metadata: expect.objectContaining({ source: 'description_build_brief' }),
+      }),
+      expect.objectContaining({
+        metadata: expect.objectContaining({ extractionMethod: 'description_build_brief' }),
+      }),
+      expect.objectContaining({ productName: 'Provider Scheduler' }),
+    );
+    expect(writeGeneratedCodebase).toHaveBeenCalledWith(expect.objectContaining({
+      url: 'flowai-description://description-run',
+      productConfig: expect.objectContaining({ inputMode: 'describe-build' }),
+    }));
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'READY',
+      url: 'flowai-description://description-run',
+      previewUrl: 'https://description-build.vercel.app',
+      scoreStatus: 'SCORE_NOT_CONFIGURED',
+      baselineScore: null,
+      finalScore: null,
+      scoreDelta: null,
+      evidence: {
+        generatedFileCount: 2,
+        previewUrl: 'https://description-build.vercel.app',
+        scoreStatus: 'SCORE_NOT_CONFIGURED',
+      },
+    });
+    expect(onStep).toHaveBeenCalledWith(expect.objectContaining({
+      stage: 'description_build_brief',
+      status: 'completed',
+    }));
+  });
+
   it('builds bounded Fresh Build design evidence for SSE without full design payloads', () => {
     const designEvidence = FRESH_BUILD_ORCHESTRATOR_TEST.buildDesignEvidence(mockDesignSpec());
 

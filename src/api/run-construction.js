@@ -364,24 +364,27 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     mode = 'GUIDED';
   }
 
-  if (!url || !/^https?:\/\//i.test(url)) {
+  const hasFreshBuildDescription = mode === 'FRESH_BUILD' && description.length > 0;
+  if ((!url || !/^https?:\/\//i.test(url)) && !hasFreshBuildDescription) {
     res.setHeader('Content-Type', 'application/json');
     res.statusCode = 400;
-    return res.end(JSON.stringify({ ok: false, error: 'invalid_url', detail: 'body.url must be an http(s) URL' }));
+    return res.end(JSON.stringify({ ok: false, error: 'invalid_input', detail: 'body.url must be an http(s) URL, or Fresh Build must include a description' }));
   }
 
-  const publicUrlVerdict = await assertPublicHttpUrl(url).catch((error) => ({
-    ok: false,
-    reason: error?.message ?? String(error),
-  }));
-  if (!publicUrlVerdict.ok) {
-    res.setHeader('Content-Type', 'application/json');
-    res.statusCode = 400;
-    return res.end(JSON.stringify({
+  if (url) {
+    const publicUrlVerdict = await assertPublicHttpUrl(url).catch((error) => ({
       ok: false,
-      error: 'ssrf_blocked_url',
-      detail: publicUrlVerdict.reason,
+      reason: error?.message ?? String(error),
     }));
+    if (!publicUrlVerdict.ok) {
+      res.setHeader('Content-Type', 'application/json');
+      res.statusCode = 400;
+      return res.end(JSON.stringify({
+        ok: false,
+        error: 'ssrf_blocked_url',
+        detail: publicUrlVerdict.reason,
+      }));
+    }
   }
 
   // ── SSE preamble ─────────────────────────────────────────────────────────
@@ -542,13 +545,15 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
   // ── ensureProductRegistryRow (upsert keyed by sha256(url)) ───────────────
   let registryRow = null;
   try {
-    registryRow = await ensureProductRegistryRow({ url, supabase });
+    registryRow = url ? await ensureProductRegistryRow({ url, supabase }) : null;
     if (registryRow) {
       send({
         type: 'registry',
         action: registryRow.__created ? 'created' : 'reused',
         productId: registryRow.product_id,
       });
+    } else if (!url) {
+      send({ type: 'registry', action: 'skipped', reason: 'description_only_fresh_build' });
     }
   } catch (e) {
     // Upsert failures are non-fatal — the orchestrator can still run via
@@ -598,11 +603,12 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     }
 
     try {
-      const productConfig = findRegisteredProductConfigForUrl(url);
+      const productConfig = url ? findRegisteredProductConfigForUrl(url) : null;
       const freshBuildResult = await runFreshBuild({
         url,
+        description,
         runId,
-        productName: productConfig?.name || registryRow?.product_name || registryRow?.product_id || null,
+        productName: productConfig?.name || registryRow?.product_name || registryRow?.product_id || body.productName || null,
         productConfig: productConfig || registryRow || null,
       }, {
         env: process.env,
