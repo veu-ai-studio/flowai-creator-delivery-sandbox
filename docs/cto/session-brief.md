@@ -30,7 +30,8 @@ Most important corrected state:
 - Clerk redirect allow-list gap was machine-corrected through Clerk Backend API; CT2 rerun still BLOCKED on hosted-token session transfer.
 - CB built the ticket route, CD/CR Step 5 reviews both passed, and the branch merged to `main` at `78672e5f28e763b17a6fda6b05b812c1781f16cc`.
 - Production deployment identity has been restored through Git-backed redeploy `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`, now aliased to `https://flowai-dun.vercel.app`. `/api/health` reports `commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"` and `clerkReady:true`.
-- CT2 live proof is dispatched for the FlowAI-owned `/sign-in-token` route.
+- CT2 live proof returned `BLOCK` on final route landing only. Clerk session establishment and authenticated app-origin `/api/me` passed.
+- CB redirect-completion patch dispatch is filed at `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`.
 - Codex TIM Build rank/callability code exists, but live Step 3 Build use is not yet proven.
 
 ## Current Runtime Evidence
@@ -121,6 +122,15 @@ Interpretation:
 
 20. Filed CT2 live proof dispatch:
    - `docs/cto/ct2-clerk-ticket-signin-live-proof-dispatch-20260614.md`
+
+21. Recorded CT2 live proof result:
+   - `docs/cto/ct2-clerk-ticket-signin-live-proof-result-20260614.md`
+   - Verdict: `BLOCK`.
+   - Passed: production identity, Clerk readiness, ticket creation, ticket scrubbing, signed-in Clerk app session, authenticated app-origin `/api/me`, anonymous fallback preservation, cleanup.
+   - Blocked: final path stayed `/sign-in-token` instead of `/flow-hub/production`.
+
+22. Filed CB redirect-completion patch dispatch:
+   - `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`
 
 ## Clerk Auth State
 
@@ -219,7 +229,8 @@ CB build status:
 - Merge: complete at `78672e5f28e763b17a6fda6b05b812c1781f16cc`.
 - Production deploy: Ready at `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`, aliased to `https://flowai-dun.vercel.app`.
 - Identity gate: PASS. `/api/health` and `/api/version` report `commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"`.
-- Next action: CT2 live production proof for the FlowAI-owned ticket route.
+- CT2 live proof: BLOCK only on final redirect/load.
+- Next action: CB patches stable initial ticket/redirect capture so URL scrubbing does not cancel navigation.
 
 ## VERIFIED Promotion State
 
@@ -235,7 +246,8 @@ Requires W04/CEO clearance before any matrixArtifact edit.
 
 1. Pull current main.
 2. Read `docs/cto/current-directive.md` and this file.
-3. Wait for CT2 result from `docs/cto/ct2-clerk-ticket-signin-live-proof-dispatch-20260614.md`.
-4. If CT2 PASS, prepare evidence packet only; do not move VERIFIED without W04/CEO clearance.
-5. If CT2 BLOCKS, map the full blocker chain before dispatching CB.
-6. Do not move VERIFIED without W04/CEO clearance.
+3. Dispatch CB from `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`.
+4. After CB pushes, create CD/CR review prompts and route through repo.
+5. After CD/CR PASS, merge/promote and dispatch CT2 rerun.
+6. If CT2 PASS, prepare evidence packet only; do not move VERIFIED without W04/CEO clearance.
+7. Do not move VERIFIED without W04/CEO clearance.

@@ -19,7 +19,9 @@ The W04/CEO comprehensive directive to reach 95/100 SSOT is accepted as the cont
 - Full authenticated Clerk session proof is still blocked. CT2 confirmed the app loads after a backend-created user/sign-in-token flow, but the hosted Clerk token landing displayed `Development mode. You are signed in, but Clerk cannot redirect to your application`; the FlowAI app then had `clerkLoaded:true` but `signedIn:false`, `sessionPresent:false`, and no Clerk token available for app-origin `/api/me`.
 - Clerk redirect allow-list gap was machine-corrected through Clerk Backend API, but CT2 rerun still BLOCKED on the hosted Clerk token landing.
 - CB built the app-owned `/sign-in-token` ticket route, CD and CR both passed, and the branch merged to `main` at `78672e5f28e763b17a6fda6b05b812c1781f16cc`.
-- Production deployment identity has been restored through Git-backed production redeploy `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`. `/api/health` reports `commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"`, branch `main`, and `clerkReady:true`. CT2 proof is dispatched at `docs/cto/ct2-clerk-ticket-signin-live-proof-dispatch-20260614.md`.
+- Production deployment identity has been restored through Git-backed production redeploy `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app`. `/api/health` reports `commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"`, branch `main`, and `clerkReady:true`.
+- CT2 live proof returned `BLOCK` only on post-ticket route completion: signed-in Clerk app session and authenticated app-origin `/api/me` passed, but the browser stayed on `/sign-in-token` instead of landing on `/flow-hub/production`.
+- CB redirect-completion patch dispatch is filed at `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`.
 - Latest origin/main may include docs-only evidence commits after the deployed runtime commit. Runtime claims must cite the exact deployment and commit under test.
 - Future VERIFIED movement requires W04/CEO clearance and the claim-promotion checklist. The CTO may prepare packets but must not apply promotion unilaterally.
 
@@ -72,8 +74,8 @@ Honest progress estimate: FlowAI has substantial infrastructure built, but produ
 1. VERIFIED Promotion First Batch - waiting on W04/CEO clearance.
    The packet `docs/cto/verified-promotion-packet-milestone1-20260613.md` is prepared. Do not apply matrixArtifact VERIFIED movement until W04/CEO explicitly authorizes it.
 
-2. Clerk App-Owned Ticket Sign-In - CT2 live proof.
-   Env/key readiness, Clerk routes, bearer-token propagation code, Clerk redirect allow-list entries, and the FlowAI-owned `/sign-in-token` route are live. CD and CR passed, and production identity is restored on commit `34268c9d76399e10ec6c25cd485cf8fae1afd0a1`. CT2 must now prove the route establishes a real signed-in Clerk app session and authenticated `/api/me` response without exposing the token.
+2. Clerk App-Owned Ticket Sign-In - redirect completion patch.
+   Env/key readiness, Clerk routes, bearer-token propagation code, Clerk redirect allow-list entries, and the FlowAI-owned `/sign-in-token` route are live. CT2 proved signed-in Clerk app session and authenticated `/api/me`, but blocked because the route did not land on `/flow-hub/production`. CB must patch stable initial ticket/redirect capture so URL scrubbing does not cancel navigation.
 
 3. Flow Hub URL Proofs - next runtime path after Clerk boundary is either fixed or formally deferred.
    Continue with Path 2 Production against an app-layer-owned target, then Path 3 Fresh Build, then Path 4 Three-URL Synthesis after CEO approval of the three selected URLs.
@@ -123,7 +125,7 @@ Do not apply any VERIFIED entry without W04/CEO clearance.
 
 ## Milestone 3 - Clerk Auth
 
-Status: route/readiness wired, bearer-token propagation code merged, Clerk redirect allow-list corrected, app-owned ticket route merged, and production commit identity restored. Hosted token flow remains blocked; app-owned ticket route is under CT2 live proof.
+Status: route/readiness wired, bearer-token propagation code merged, Clerk redirect allow-list corrected, app-owned ticket route merged, and production commit identity restored. Hosted token flow remains blocked. App-owned ticket route establishes a Clerk session, but redirect completion is blocked.
 
 Completed:
 
@@ -154,6 +156,9 @@ Completed:
 - Production redeploy `https://flowai-7ufisvpk3-veu-ai-studio.vercel.app` is Ready and aliased to `https://flowai-dun.vercel.app`.
 - Public `/api/health` and `/api/version` now report `commitFull:"34268c9d76399e10ec6c25cd485cf8fae1afd0a1"` and `clerkReady:true`.
 - CT2 dispatch filed at `docs/cto/ct2-clerk-ticket-signin-live-proof-dispatch-20260614.md`.
+- CT2 live proof result filed at `docs/cto/ct2-clerk-ticket-signin-live-proof-result-20260614.md`.
+- CT2 result: `BLOCK`. Session establishment and authenticated app-origin `/api/me` passed; final route landing on `/flow-hub/production` blocked.
+- CB redirect-completion patch dispatch filed at `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`.
 
 Blocked:
 
@@ -165,9 +170,10 @@ Blocked:
 
 Next technical action:
 
-1. CT2 reruns live proof using the FlowAI-owned ticket URL, not Clerk's hosted token URL.
-2. If CT2 PASS, prepare an evidence packet only; do not move VERIFIED without W04/CEO clearance.
-3. If CT2 BLOCKS, map the full blocker chain before dispatching CB.
+1. CB patches redirect completion from `docs/cto/cb-clerk-ticket-redirect-completion-dispatch-20260614.md`.
+2. CD and CR review the patch through repo prompts after CB pushes.
+3. After CD and CR PASS, merge/promote and dispatch CT2 rerun.
+4. If CT2 PASS, prepare an evidence packet only; do not move VERIFIED without W04/CEO clearance.
 
 No VERIFIED movement is allowed from Clerk work until CT2 proves a real authenticated user session and W04/CEO clears the promotion packet.
 
