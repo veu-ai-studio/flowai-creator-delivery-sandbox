@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { ClerkProvider } from '@clerk/clerk-react';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { OrchestrationProvider } from '@/lib/OrchestrationContext';
@@ -103,6 +104,7 @@ import ForgeGTMForm from './pages/ForgeGTMForm';
 import ForgeMonitorForm from './pages/ForgeMonitorForm';
 import Workspace from './pages/Workspace';
 import Login from './pages/Login';
+import ClerkAuthPage from './pages/ClerkAuthPage';
 import RequireAuth from '@/components/RequireAuth';
 
 function LegacyFlowHubRedirect() {
@@ -121,6 +123,21 @@ function BaseAgentTestRoute() {
   const showBaseAgentTest = import.meta.env.DEV
     || String(import.meta.env?.VITE_SHOW_BASE_AGENT_TEST || '').toLowerCase() === 'true';
   return showBaseAgentTest ? <BaseAgentTest /> : <PageNotFound />;
+}
+
+function ClerkRuntimeProvider({ children }) {
+  const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  if (!publishableKey) return children;
+  return (
+    <ClerkProvider
+      publishableKey={publishableKey}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      afterSignOutUrl="/sign-in"
+    >
+      {children}
+    </ClerkProvider>
+  );
 }
 
 const AuthenticatedApp = () => {
@@ -256,6 +273,8 @@ const AuthenticatedApp = () => {
         <Route path="/creator-studio" element={<Navigate to="/configuration" replace />} />
         <Route path="/my-creations" element={<MyCreations />} />
       </Route>
+      <Route path="/sign-up" element={<ClerkAuthPage mode="sign-up" />} />
+      <Route path="/sign-in" element={<ClerkAuthPage mode="sign-in" />} />
       <Route path="/login" element={<Login />} />
       <Route path="/landing" element={<MarketingPage />} />
       {/* GTM Demo Tiers — public, no AppLayout */}
@@ -274,22 +293,24 @@ const AuthenticatedApp = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <OrchestrationProvider>
-      <AgenticModeProvider>
-      <JobProvider>
-      <SessionProvider>
-        <QueryClientProvider client={queryClientInstance}>
-          <Router>
-            <AuthenticatedApp />
-          </Router>
-          <Toaster />
-        </QueryClientProvider>
-      </SessionProvider>
-      </JobProvider>
-      </AgenticModeProvider>
-      </OrchestrationProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClientInstance}>
+      <Router>
+        <ClerkRuntimeProvider>
+          <AuthProvider>
+            <OrchestrationProvider>
+            <AgenticModeProvider>
+            <JobProvider>
+            <SessionProvider>
+              <AuthenticatedApp />
+              <Toaster />
+            </SessionProvider>
+            </JobProvider>
+            </AgenticModeProvider>
+            </OrchestrationProvider>
+          </AuthProvider>
+        </ClerkRuntimeProvider>
+      </Router>
+    </QueryClientProvider>
   )
 }
 

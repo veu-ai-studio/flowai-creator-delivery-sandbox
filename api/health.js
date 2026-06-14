@@ -8,6 +8,7 @@
 //     ok, status, service, version, env, region, commit, timestamp,
 //     checks: {
 //       build:         { status, commit, branch, env, ... },
+//       auth:          { status, clerkConfigured, frontendPublishableKeyPresent, authRequired },
 //       supabase:      { status, httpStatus?, reason? },
 //       vercelKv:      { status, httpStatus?, reason? },
 //       orchestra:     { members: [...], summary: { live, degraded, ... } },
@@ -59,6 +60,7 @@ export default async function handler(req, res) {
       env: report.checks.build.env,
       region: report.checks.build.region,
       commit: report.checks.build.commit,
+      clerkReady: report.checks.auth?.clerkConfigured === true,
       githubAppReady: report.checks.githubApp?.status === 'PASS',
       inngestReady: isInngestEnabled(),
       timestamp: report.timestamp,
