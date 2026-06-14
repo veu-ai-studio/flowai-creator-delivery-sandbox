@@ -13,7 +13,7 @@ I accept this directive as the operating plan with the following evidence correc
 
 - Actual matrixArtifact status count on current main before this docs update: `VERIFIED=0`, `WIRED status=0`, `CURRENT=2`, total entries `39`.
 - Path 1 Migration has one CT2-confirmed deployed public URL, `https://saige-v2.vercel.app`, but no matrixArtifact VERIFIED movement has been applied.
-- Priority 2 axis wiring is merged to main and promoted to production at commit `54422549044c5ff8e4e187a155c25bfc38462e10`, with CD PASS and CR PASS. CT2 live proof is still required before it can be claimed live-wired.
+- Priority 2 axis wiring is merged, patched for label clarity, promoted to production at commit `65f46a0c96930a207e7cd0c0160cf51317c89822`, and CT2 PASS confirmed. Milestone 1 is complete at the evidence level.
 - Codex TIM Build rank/callability code is present on main, but live Step 3 Build evidence is still required before counting it as verified behavior.
 - Any future VERIFIED movement requires W04/CEO clearance and the claim-promotion checklist. The CTO may prepare packets but must not apply promotion unilaterally.
 
@@ -29,7 +29,7 @@ The five VEU AI Studio products are proof-of-concept targets only. They are not 
 - WIRED matrixArtifact status entries: 0.
 - Max matrixArtifact status currently attained: CURRENT, 2 of 39 entries.
 - Three Flow Hub paths with deployed URLs: 1 of 3 at the URL-evidence level. Path 1 Migration has CT2-confirmed `https://saige-v2.vercel.app`.
-- Four axes wired end to end: code merged and production deployed; CT2 live browser/run proof pending.
+- Four axes wired end to end: CT2 live browser/run proof PASS on production commit `65f46a0c96930a207e7cd0c0160cf51317c89822`.
 - Forge completing full 8-step runs: not yet proven.
 - Clerk auth: not enabled in production health.
 - Real external users: 0.
@@ -61,9 +61,9 @@ These rules exist because the project has cycled, drifted, and hallucinated prog
 7. Product-agnostic code.
    Never put a product name, URL, or product-specific rule in FlowAI core code. SAIGE is a test subject. Every fix must work for any product submission.
 
-## Active Milestone 1 - Axis Wiring Live Proof
+## Milestone 1 - Axis Wiring Live Proof
 
-Status: code built, reviewed, merged to main, and promoted to production. CT2 live proof is pending.
+Status: COMPLETE at the evidence level. No VERIFIED movement applied.
 
 Completed:
 
@@ -77,26 +77,28 @@ Completed:
 8. Current main promoted to production at `54422549044c5ff8e4e187a155c25bfc38462e10`.
 9. `https://flowai-dun.vercel.app/api/health` reports the promoted main SHA.
 10. `https://flowai-dun.vercel.app/flow-hub/production` returns `200 OK`.
-
-Remaining before claiming Milestone 1 complete:
-
-1. CT2 must verify in a live browser:
-   - All four axes are visible in the sidebar.
-   - Each axis is independently selectable.
-   - Changing Structural Layer changes run behavior.
-   - Changing Analysis Depth changes crawl/scoring depth.
-   - Changing Flow Hub Path changes which pipeline runs.
-   - All four axis values appear in a real forge run log.
-2. CT2 PASS is required before claiming live axis wiring complete.
-3. Prepare, but do not apply, a VERIFIED promotion packet for W04/CEO clearance.
+11. CT2 BLOCK found sidebar label ambiguity on that first production proof.
+12. Runtime clarity patch merged at `65f46a0c96930a207e7cd0c0160cf51317c89822`.
+13. Patched production promoted and `/api/health` reports `65f46a0c9693`.
+14. CT2 rerun PASS confirmed:
+   - all four axes visible and unambiguous in the sidebar;
+   - each axis independently selectable;
+   - route switching preserves path state;
+   - live `/api/run-construction` payload includes all four axis values;
+   - run log includes the Flow Hub axis envelope.
+15. VERIFIED promotion packet prepared at `docs/cto/verified-promotion-packet-milestone1-20260613.md`.
 
 Acceptance criteria:
 
 Victor can open `https://flowai-dun.vercel.app`, see four independent axis selectors in the sidebar, change each one, launch a forge run, and see the run log confirm all four normalized axis values were used.
 
-## Milestone 2 - VERIFIED Promotion First Batch
+## Active Milestone 2 - VERIFIED Promotion First Batch
 
-After Milestone 1 CT2 PASS, prepare a claim-promotion packet for explicit W04/CEO clearance. The packet should cover only claims with independent evidence:
+Milestone 1 CT2 PASS is complete. A claim-promotion packet has been prepared for explicit W04/CEO clearance:
+
+- `docs/cto/verified-promotion-packet-milestone1-20260613.md`
+
+The packet covers only claims with independent evidence:
 
 - Migration path deployed URL: `https://saige-v2.vercel.app`, already CT2 PASS at the URL-evidence level.
 - Each axis behavior confirmed in a live run.
