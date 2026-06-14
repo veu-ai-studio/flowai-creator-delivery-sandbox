@@ -253,6 +253,50 @@ describe('freshBuild Codebase Generator', () => {
     expect(validateGeneratedCodebase(codebase)).toEqual({ ok: true, errors: [] });
   });
 
+  it('deduplicates duplicate crawled routes before generating page imports', () => {
+    const codebase = generateCodebase(mockFeatureInventory({
+      pages: [
+        ...mockFeatureInventory().pages,
+        {
+          url: 'https://example.com/pricing',
+          title: 'Pricing',
+          purpose: 'pricing duplicate',
+          primaryContent: 'Duplicate crawler record for pricing.',
+          navigation: [],
+          hierarchy: { parent: 'https://example.com', children: [], confidence: 0.5 },
+          access: 'PUBLIC',
+          confidence: 0.75,
+        },
+        {
+          url: 'https://example.com/pricing-plus',
+          title: 'Pricing',
+          purpose: 'pricing variant',
+          primaryContent: 'A distinct pricing page with the same title.',
+          navigation: [],
+          hierarchy: { parent: 'https://example.com', children: [], confidence: 0.5 },
+          access: 'PUBLIC',
+          confidence: 0.75,
+        },
+      ],
+    }), mockDesignSpec(), { productName: 'Example Product' });
+
+    const pagePaths = codebase.files
+      .filter((file) => file.path.startsWith('src/pages/'))
+      .map((file) => file.path);
+    const appFile = codebase.files.find((file) => file.path === 'src/App.jsx').content;
+
+    expect(pagePaths).toEqual([
+      'src/pages/HomePage.jsx',
+      'src/pages/Pricing.jsx',
+      'src/pages/Pricing2.jsx',
+    ]);
+    expect(appFile.match(/import Pricing from/g)).toHaveLength(1);
+    expect(appFile.match(/import Pricing2 from/g)).toHaveLength(1);
+    expect(appFile.match(/"route": "\/pricing"/g)).toHaveLength(1);
+    expect(appFile).toContain('"route": "/pricing-plus"');
+    expect(validateGeneratedCodebase(codebase)).toEqual({ ok: true, errors: [] });
+  });
+
   it('builds Tailwind config from DesignSpec colors', () => {
     const codebase = generateCodebase(mockFeatureInventory(), mockDesignSpec(), { productName: 'Example Product' });
     const tailwindConfig = codebase.files.find((file) => file.path === 'tailwind.config.js').content;
@@ -307,6 +351,7 @@ describe('freshBuild Codebase Generator', () => {
     codebase.files.push({ path: '../escape.jsx', content: 'export default function Bad() { return <div />; }\n' });
     codebase.files.push({ path: 'src/empty.jsx', content: '   ' });
     codebase.files.push({ path: 'src/broken.jsx', content: 'export default function Broken() { return (<div>Broken</div>; }\n' });
+    codebase.files.push({ path: 'src/pages/HomePage.jsx', content: 'export default function Duplicate() { return <div />; }\n' });
 
     const validation = validateGeneratedCodebase(codebase);
     expect(validation.ok).toBe(false);
@@ -314,6 +359,7 @@ describe('freshBuild Codebase Generator', () => {
       expect.stringContaining('Invalid generated file path'),
       expect.stringContaining('Generated file content is empty'),
       expect.stringContaining('unbalanced'),
+      expect.stringContaining('Duplicate generated file path'),
     ]));
   });
 
