@@ -1,0 +1,1595 @@
+{
+  "checkedAt": "2026-06-15T04:54:06.043Z",
+  "baseUrl": "https://flowai-dun.vercel.app",
+  "targetUrl": "https://saigeplatform.com",
+  "apiVersion": {
+    "name": "flowai-platform",
+    "version": "0.0.0",
+    "commit": "829ea53d9933",
+    "commitFull": "829ea53d9933c09a003897d9b94a7e417ea46cd0",
+    "branch": "main",
+    "buildIdentitySource": "env:VERCEL_GIT_COMMIT_SHA",
+    "buildIdentityGeneratedAt": "2026-06-15T04:44:34.018Z",
+    "env": "production",
+    "region": "iad1",
+    "deployUrl": "flowai-c8un0m1m4-veu-ai-studio.vercel.app",
+    "startedAt": "2026-06-15T04:47:49.403Z",
+    "nowAt": "2026-06-15T04:53:43.615Z",
+    "runtime": {
+      "node": "24.14.1",
+      "v8": "13.6.233.17-node.44",
+      "platform": "linux",
+      "arch": "x64"
+    },
+    "sdks": {
+      "anthropic": "rest@2023-06-01",
+      "@supabase/supabase-js": "^2.105.3",
+      "inngest": "^4.2.6",
+      "@clerk/clerk-sdk-node": "^4.13.23",
+      "resend": "^6.12.2",
+      "voyageai": "^0.2.1",
+      "@axiomhq/js": "^1.6.0"
+    },
+    "featureFlags": {
+      "anthropicReady": true,
+      "browserlessReady": true,
+      "githubAppReady": true,
+      "supabaseReady": true,
+      "inngestReady": true,
+      "clerkReady": true,
+      "resendReady": false,
+      "voyageReady": false,
+      "axiomReady": false,
+      "authRequired": false,
+      "dbBackend": "supabase",
+      "inngestBackend": "inngest",
+      "emailTestEnabled": false,
+      "emailDryRun": false,
+      "axiomDryRun": false,
+      "replitProxyDisabled": false,
+      "logLevel": "info"
+    }
+  },
+  "apiHealth": {
+    "ok": true,
+    "status": "ready",
+    "commitFull": "829ea53d9933c09a003897d9b94a7e417ea46cd0",
+    "branch": "main",
+    "clerkReady": true,
+    "githubAppReady": true,
+    "inngestReady": true
+  },
+  "apiProducts": {
+    "ok": false,
+    "status": 500,
+    "bodySnippet": "{\"error\":\"column product_registry.original_repo does not exist\"}",
+    "hasSaige": false,
+    "numericScoreMatches": []
+  },
+  "pages": [
+    {
+      "path": "/portfolio",
+      "url": "https://flowai-dun.vercel.app/portfolio",
+      "screenshotPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\ct2-saige-product-card-score-postdeploy-evidence-20260615\\screenshots\\portfolio-2026-06-15T04-53-40-117Z.png",
+      "text": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nPortfolio Dashboard\n\nAI portfolio control center\n\nRefresh\nAdd Product\n\nTotal Products\n\n0\n\nRegistered in portfolio\n\nActive Runs\n\n0\n\nLast 24 hours\n\nDemo-Ready\n\n0\n\nCleared for launch\n\nUpgrade Ready\n\n0\n\nRepo + deployment\n\nTotal Cost (30d)\n\n—\n\nAcross all products\n\nCouldn’t load products\n\nHTTP 500\n\nThis is a service error, not an empty portfolio. Try Refresh; if it persists, check Platform Health.\n\nRetry\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy",
+      "containsSaige": false,
+      "numericScoreMatches": [],
+      "consoleMessages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/portfolio",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "warning",
+          "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview",
+          "location": {
+            "url": "https://ethical-firefly-15.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js",
+            "lineNumber": 18,
+            "columnNumber": 7047
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 500 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/api/products?sort=-updated_at&limit=100",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "pageErrors": [],
+      "responseErrors": [
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/portfolio"
+        },
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch"
+        },
+        {
+          "status": 500,
+          "url": "https://flowai-dun.vercel.app/api/products?sort=-updated_at&limit=100"
+        }
+      ],
+      "hasGFilterError": false,
+      "buttons": [
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Autonomous",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Supervised",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Controlled",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Auto",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Guided",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Manual",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Quick",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Standard",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Deep",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Production",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Migration",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Fresh Build",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "View",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Pause",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Home",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Workspace",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Landing",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Search\n⌘K",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Refresh",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Add Product",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Retry",
+          "disabled": false,
+          "ariaDisabled": null
+        }
+      ],
+      "links": [
+        {
+          "text": "Home",
+          "href": "https://flowai-dun.vercel.app/dashboard"
+        },
+        {
+          "text": "Workspace",
+          "href": "https://flowai-dun.vercel.app/workspace"
+        },
+        {
+          "text": "Landing Page",
+          "href": "https://flowai-dun.vercel.app/landing"
+        },
+        {
+          "text": "Portfolio Dashboard",
+          "href": "https://flowai-dun.vercel.app/portfolio"
+        },
+        {
+          "text": "Product Registry",
+          "href": "https://flowai-dun.vercel.app/products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Production",
+          "href": "https://flowai-dun.vercel.app/flow-hub/production"
+        },
+        {
+          "text": "Migration",
+          "href": "https://flowai-dun.vercel.app/flow-hub/migration"
+        },
+        {
+          "text": "Fresh Build",
+          "href": "https://flowai-dun.vercel.app/flow-hub/fresh-build"
+        },
+        {
+          "text": "Research Forge",
+          "href": "https://flowai-dun.vercel.app/forge/research"
+        },
+        {
+          "text": "Design Forge",
+          "href": "https://flowai-dun.vercel.app/forge/design"
+        },
+        {
+          "text": "Build Forge",
+          "href": "https://flowai-dun.vercel.app/forge/build"
+        },
+        {
+          "text": "Quality Audit",
+          "href": "https://flowai-dun.vercel.app/forge/quality-audit"
+        },
+        {
+          "text": "Deploy Forge",
+          "href": "https://flowai-dun.vercel.app/forge/deploy"
+        },
+        {
+          "text": "Self-Renewal Forge",
+          "href": "https://flowai-dun.vercel.app/forge/self-renewal"
+        },
+        {
+          "text": "GTM Forge",
+          "href": "https://flowai-dun.vercel.app/forge/gtm"
+        },
+        {
+          "text": "Monitor Forge",
+          "href": "https://flowai-dun.vercel.app/forge/monitor"
+        },
+        {
+          "text": "My Products",
+          "href": "https://flowai-dun.vercel.app/my-products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Clearance Protocol",
+          "href": "https://flowai-dun.vercel.app/clearance"
+        },
+        {
+          "text": "Governance Dashboard",
+          "href": "https://flowai-dun.vercel.app/governance"
+        },
+        {
+          "text": "Release Notes",
+          "href": "https://flowai-dun.vercel.app/release-notes"
+        },
+        {
+          "text": "Objective & Settings",
+          "href": "https://flowai-dun.vercel.app/configuration"
+        },
+        {
+          "text": "Terms of Use",
+          "href": "https://flowai-dun.vercel.app/terms-of-use"
+        },
+        {
+          "text": "Privacy Policy",
+          "href": "https://flowai-dun.vercel.app/privacy-policy"
+        }
+      ]
+    },
+    {
+      "path": "/dashboard",
+      "url": "https://flowai-dun.vercel.app/dashboard",
+      "screenshotPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\ct2-saige-product-card-score-postdeploy-evidence-20260615\\screenshots\\dashboard-2026-06-15T04-53-40-117Z.png",
+      "text": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nDashboard\n\nCommand center — product health, sessions, gates, and quick actions\n\nComplete Setup →\n\nMY PRODUCTS HEALTH\n\nNo products registered yet\n\nCreate your first product from Workspace to start tracking health, scores, and session history here.\n\nCreate Your First Product\n\nACTIVE SESSIONS\n\n0 active\nClear Completed\n\nNo active sessions\n\nStart an Auto or Guided operation to see live session progress here.\n\nPENDING GATES\n\nNo gates pending\n\nRECENT ACTIVITY\n\nNo activity yet\n\nRun a QA audit or self-test to see results here.\n\nQUICK ACTIONS\n\nStart Auto Operation\nStart Guided Operation\nRun Quality Audit\nCheck Product Health\n\nPLATFORM HEALTH\n\nChecking platform health…\n\nUSAGE AND BILLING\n\nPlan\nFlowAI Pro\nToken usage today\n\nUsage data unavailable\n\nView Billing Details\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy",
+      "containsSaige": false,
+      "numericScoreMatches": [],
+      "consoleMessages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/dashboard",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "warning",
+          "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview",
+          "location": {
+            "url": "https://ethical-firefly-15.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js",
+            "lineNumber": 18,
+            "columnNumber": 7047
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 500 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/api/products?sort=-updated_at&limit=20",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Fetch API cannot load file:///C:/Program%20Files/Git/api/health. URL scheme \"file\" is not supported.",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/assets/index-oThtdRi-.js",
+            "lineNumber": 2802,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "pageErrors": [
+        "g.filter is not a function"
+      ],
+      "responseErrors": [
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/dashboard"
+        },
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch"
+        },
+        {
+          "status": 500,
+          "url": "https://flowai-dun.vercel.app/api/products?sort=-updated_at&limit=20"
+        }
+      ],
+      "hasGFilterError": true,
+      "buttons": [
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Autonomous",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Supervised",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Controlled",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Auto",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Guided",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Manual",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Quick",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Standard",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Deep",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Production",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Migration",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Fresh Build",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "View",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Pause",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Home",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Workspace",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Landing",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Search\n⌘K",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Complete Setup →",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Create Your First Product",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Clear Completed",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Start Auto Operation",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Start Guided Operation",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Run Quality Audit",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Check Product Health",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "View Billing Details",
+          "disabled": false,
+          "ariaDisabled": null
+        }
+      ],
+      "links": [
+        {
+          "text": "Home",
+          "href": "https://flowai-dun.vercel.app/dashboard"
+        },
+        {
+          "text": "Workspace",
+          "href": "https://flowai-dun.vercel.app/workspace"
+        },
+        {
+          "text": "Landing Page",
+          "href": "https://flowai-dun.vercel.app/landing"
+        },
+        {
+          "text": "Portfolio Dashboard",
+          "href": "https://flowai-dun.vercel.app/portfolio"
+        },
+        {
+          "text": "Product Registry",
+          "href": "https://flowai-dun.vercel.app/products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Production",
+          "href": "https://flowai-dun.vercel.app/flow-hub/production"
+        },
+        {
+          "text": "Migration",
+          "href": "https://flowai-dun.vercel.app/flow-hub/migration"
+        },
+        {
+          "text": "Fresh Build",
+          "href": "https://flowai-dun.vercel.app/flow-hub/fresh-build"
+        },
+        {
+          "text": "Research Forge",
+          "href": "https://flowai-dun.vercel.app/forge/research"
+        },
+        {
+          "text": "Design Forge",
+          "href": "https://flowai-dun.vercel.app/forge/design"
+        },
+        {
+          "text": "Build Forge",
+          "href": "https://flowai-dun.vercel.app/forge/build"
+        },
+        {
+          "text": "Quality Audit",
+          "href": "https://flowai-dun.vercel.app/forge/quality-audit"
+        },
+        {
+          "text": "Deploy Forge",
+          "href": "https://flowai-dun.vercel.app/forge/deploy"
+        },
+        {
+          "text": "Self-Renewal Forge",
+          "href": "https://flowai-dun.vercel.app/forge/self-renewal"
+        },
+        {
+          "text": "GTM Forge",
+          "href": "https://flowai-dun.vercel.app/forge/gtm"
+        },
+        {
+          "text": "Monitor Forge",
+          "href": "https://flowai-dun.vercel.app/forge/monitor"
+        },
+        {
+          "text": "My Products",
+          "href": "https://flowai-dun.vercel.app/my-products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Clearance Protocol",
+          "href": "https://flowai-dun.vercel.app/clearance"
+        },
+        {
+          "text": "Governance Dashboard",
+          "href": "https://flowai-dun.vercel.app/governance"
+        },
+        {
+          "text": "Release Notes",
+          "href": "https://flowai-dun.vercel.app/release-notes"
+        },
+        {
+          "text": "Objective & Settings",
+          "href": "https://flowai-dun.vercel.app/configuration"
+        },
+        {
+          "text": "Terms of Use",
+          "href": "https://flowai-dun.vercel.app/terms-of-use"
+        },
+        {
+          "text": "Privacy Policy",
+          "href": "https://flowai-dun.vercel.app/privacy-policy"
+        }
+      ]
+    },
+    {
+      "path": "/products",
+      "url": "https://flowai-dun.vercel.app/products",
+      "screenshotPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\ct2-saige-product-card-score-postdeploy-evidence-20260615\\screenshots\\products-2026-06-15T04-53-40-117Z.png",
+      "text": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nProduct Registry\n\nAll registered products across VEU AI Studio\n\nNew Product\nAll Statuses\nActive\nBeta\nArchived\n\nNo products found\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy",
+      "containsSaige": false,
+      "numericScoreMatches": [],
+      "consoleMessages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/products",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "warning",
+          "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview",
+          "location": {
+            "url": "https://ethical-firefly-15.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js",
+            "lineNumber": 18,
+            "columnNumber": 7047
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 500 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/api/products",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "pageErrors": [],
+      "responseErrors": [
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/products"
+        },
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch"
+        },
+        {
+          "status": 500,
+          "url": "https://flowai-dun.vercel.app/api/products"
+        }
+      ],
+      "hasGFilterError": false,
+      "buttons": [
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Autonomous",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Supervised",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Controlled",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Auto",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Guided",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Manual",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Quick",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Standard",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Deep",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Production",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Migration",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Fresh Build",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "View",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Pause",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Home",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Workspace",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Landing",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Search\n⌘K",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "New Product",
+          "disabled": false,
+          "ariaDisabled": null
+        }
+      ],
+      "links": [
+        {
+          "text": "Home",
+          "href": "https://flowai-dun.vercel.app/dashboard"
+        },
+        {
+          "text": "Workspace",
+          "href": "https://flowai-dun.vercel.app/workspace"
+        },
+        {
+          "text": "Landing Page",
+          "href": "https://flowai-dun.vercel.app/landing"
+        },
+        {
+          "text": "Portfolio Dashboard",
+          "href": "https://flowai-dun.vercel.app/portfolio"
+        },
+        {
+          "text": "Product Registry",
+          "href": "https://flowai-dun.vercel.app/products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Production",
+          "href": "https://flowai-dun.vercel.app/flow-hub/production"
+        },
+        {
+          "text": "Migration",
+          "href": "https://flowai-dun.vercel.app/flow-hub/migration"
+        },
+        {
+          "text": "Fresh Build",
+          "href": "https://flowai-dun.vercel.app/flow-hub/fresh-build"
+        },
+        {
+          "text": "Research Forge",
+          "href": "https://flowai-dun.vercel.app/forge/research"
+        },
+        {
+          "text": "Design Forge",
+          "href": "https://flowai-dun.vercel.app/forge/design"
+        },
+        {
+          "text": "Build Forge",
+          "href": "https://flowai-dun.vercel.app/forge/build"
+        },
+        {
+          "text": "Quality Audit",
+          "href": "https://flowai-dun.vercel.app/forge/quality-audit"
+        },
+        {
+          "text": "Deploy Forge",
+          "href": "https://flowai-dun.vercel.app/forge/deploy"
+        },
+        {
+          "text": "Self-Renewal Forge",
+          "href": "https://flowai-dun.vercel.app/forge/self-renewal"
+        },
+        {
+          "text": "GTM Forge",
+          "href": "https://flowai-dun.vercel.app/forge/gtm"
+        },
+        {
+          "text": "Monitor Forge",
+          "href": "https://flowai-dun.vercel.app/forge/monitor"
+        },
+        {
+          "text": "My Products",
+          "href": "https://flowai-dun.vercel.app/my-products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Clearance Protocol",
+          "href": "https://flowai-dun.vercel.app/clearance"
+        },
+        {
+          "text": "Governance Dashboard",
+          "href": "https://flowai-dun.vercel.app/governance"
+        },
+        {
+          "text": "Release Notes",
+          "href": "https://flowai-dun.vercel.app/release-notes"
+        },
+        {
+          "text": "Objective & Settings",
+          "href": "https://flowai-dun.vercel.app/configuration"
+        },
+        {
+          "text": "Terms of Use",
+          "href": "https://flowai-dun.vercel.app/terms-of-use"
+        },
+        {
+          "text": "Privacy Policy",
+          "href": "https://flowai-dun.vercel.app/privacy-policy"
+        }
+      ]
+    },
+    {
+      "path": "/flow-hub/production",
+      "url": "https://flowai-dun.vercel.app/flow-hub/production",
+      "screenshotPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\ct2-saige-product-card-score-postdeploy-evidence-20260615\\screenshots\\flow-hub-production-2026-06-15T04-53-40-117Z.png",
+      "text": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlow Hub - Production\nUpgrade an existing product URL in its owned delivery path.\nFlowAI Ready\n·\nLayer: Autonomous\n·\nMode: Auto\n·\nDepth: Standard\n·\nPath: Production\n\nChoose how you want to work with your product, then select your operation mode.\n\nPRE-RELEASE · INTERNAL USE ONLY\nv0.1 · VEU AI Studio personnel + licensed pilots\n\nFlowAI is a universal product upgrade engine. Give it a product URL, description, or supporting context and it runs the 8-step pipeline — Research, Design, Build, Quality Audit, Deploy, Self-Renewal, Go-to-Market, Monitor — toward the CEO-defined 95/100 target.\n\nWhat you get: a per-step report, honest scoring evidence, and an upgraded URL when deployment succeeds. Display bands: Excellent 90–100 · Strong 75–89 · Developing 50–74 · Needs Work 25–49 · Critical 0–24. Human-only criteria remain unverified until evidence exists; FlowAI reports gaps instead of inflating the score.\n\nSETUP 1 OF 3 — SELECT YOUR INPUT(one of three setup steps; the 8-step pipeline runs after launch)\n\nAnalyze a Live Product\n\nFlowAI will fetch and analyze the public-facing pages of your product.\n\nTest Fetch\n\nNote: URL must be publicly accessible. Authenticated or private apps use Card B or C.\n\nDescribe Your Product\n\nType or speak a description. Best for authenticated apps, internal tools, or early-stage products.\n\n🔒 Credentials are used only for this session and are never stored.\n\nVoice Input\n\nPaste Content or Upload Screenshots\n\nPaste page text, copy, or upload screenshots. FlowAI analyzes what you give it directly.\n\nDrop screenshots here or click to upload — PNG, JPG, PDF\n\nCombine with Card B for best results on authenticated products.\n\nSETUP 2 OF 3 — WHAT DO YOU WANT TO ACCOMPLISH?\n\nAudit for prospect demo readiness\nPrepare for investor review\nFull governance and clearance cycle\nCompare two or more products\nCombine inputs into a unified specification\nBenchmark against competitors\nLaunch readiness check\nCustom — I will describe my objective\n\nSETUP 3 OF 3 — SELECT OPERATION MODE\n\nAuto\nSELECTED\n\nFlowAI executes all 8 pipeline steps automatically — Research → Design → Build → Quality Audit → Deploy → Self-Renewal → Go-to-Market → Monitor. You review the final report with the Clearance score and per-step findings.\n\nAnalysis Depth\n\nQuick\nStandard\nDeep\nGuided\n\nFlowAI proposes each of the 8 pipeline steps in turn. You approve, modify, or skip each one before it executes.\n\nMinutes to hours · 8 approval gates across the execution pipeline\n\nManual\n\nYou direct each step. FlowAI executes what you specify and assists on demand.\n\nHours to days · Full operator control\n\nFresh Build\nEXPERIMENTAL\n\nFlowAI runs Feature Extractor, Design Synthesizer, and Codebase Generator to create a platform-free codebase in the upgrade repo.\n\nFresh Build is enabled for this environment. Existing modes remain unchanged.\nMigrate\n\nFlowAI detects platform dependencies and migrates the product to a standalone v2. Original stays frozen as rollback.\n\nPlan\n\nFile count and dependency count before execution\n\nProgress\n\nPer-file migration status during execution\n\nSummary\n\nFiles migrated, dependencies removed, upgrade URL\n\nSelect an input above to enable launch\nLaunch Auto Run →\n\nQUICK ACCESS\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nFlowAI Engine v0.1 · VEU AI Studio Internal Platform · © 2026 VEU AI Studio · Patent pending\nPrivacy Policy\n·\nTerms of Use\n·\nAbout FlowAI →\nFlowAI is a pre-release internal engine. It does not hold SOC 2, ISO 27001, or any third-party compliance certification at this time, and there are no external customer case studies published. Use is limited to VEU AI Studio personnel and licensed pilots until those gates are cleared.\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy",
+      "containsSaige": false,
+      "numericScoreMatches": [
+        "95/100"
+      ],
+      "consoleMessages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "warning",
+          "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview",
+          "location": {
+            "url": "https://ethical-firefly-15.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js",
+            "lineNumber": 18,
+            "columnNumber": 7047
+          }
+        }
+      ],
+      "pageErrors": [],
+      "responseErrors": [
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flow-hub"
+        },
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch"
+        }
+      ],
+      "hasGFilterError": false,
+      "buttons": [
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Autonomous",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Supervised",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Controlled",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Auto",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Guided",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Manual",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Quick",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Standard",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Deep",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Production",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Migration",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Fresh Build",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "View",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Pause",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Home",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Workspace",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Landing",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Search\n⌘K",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Test Fetch",
+          "disabled": true,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Voice Input",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Quick",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Standard",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Deep",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Launch Auto Run →",
+          "disabled": true,
+          "ariaDisabled": null
+        },
+        {
+          "text": "My Products",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Session History",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Clearance Protocol",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Governance Dashboard",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Release Notes",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Privacy Policy",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Terms of Use",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "About FlowAI →",
+          "disabled": false,
+          "ariaDisabled": null
+        }
+      ],
+      "links": [
+        {
+          "text": "Home",
+          "href": "https://flowai-dun.vercel.app/dashboard"
+        },
+        {
+          "text": "Workspace",
+          "href": "https://flowai-dun.vercel.app/workspace"
+        },
+        {
+          "text": "Landing Page",
+          "href": "https://flowai-dun.vercel.app/landing"
+        },
+        {
+          "text": "Portfolio Dashboard",
+          "href": "https://flowai-dun.vercel.app/portfolio"
+        },
+        {
+          "text": "Product Registry",
+          "href": "https://flowai-dun.vercel.app/products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Production",
+          "href": "https://flowai-dun.vercel.app/flow-hub/production"
+        },
+        {
+          "text": "Migration",
+          "href": "https://flowai-dun.vercel.app/flow-hub/migration"
+        },
+        {
+          "text": "Fresh Build",
+          "href": "https://flowai-dun.vercel.app/flow-hub/fresh-build"
+        },
+        {
+          "text": "Research Forge",
+          "href": "https://flowai-dun.vercel.app/forge/research"
+        },
+        {
+          "text": "Design Forge",
+          "href": "https://flowai-dun.vercel.app/forge/design"
+        },
+        {
+          "text": "Build Forge",
+          "href": "https://flowai-dun.vercel.app/forge/build"
+        },
+        {
+          "text": "Quality Audit",
+          "href": "https://flowai-dun.vercel.app/forge/quality-audit"
+        },
+        {
+          "text": "Deploy Forge",
+          "href": "https://flowai-dun.vercel.app/forge/deploy"
+        },
+        {
+          "text": "Self-Renewal Forge",
+          "href": "https://flowai-dun.vercel.app/forge/self-renewal"
+        },
+        {
+          "text": "GTM Forge",
+          "href": "https://flowai-dun.vercel.app/forge/gtm"
+        },
+        {
+          "text": "Monitor Forge",
+          "href": "https://flowai-dun.vercel.app/forge/monitor"
+        },
+        {
+          "text": "My Products",
+          "href": "https://flowai-dun.vercel.app/my-products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Clearance Protocol",
+          "href": "https://flowai-dun.vercel.app/clearance"
+        },
+        {
+          "text": "Governance Dashboard",
+          "href": "https://flowai-dun.vercel.app/governance"
+        },
+        {
+          "text": "Release Notes",
+          "href": "https://flowai-dun.vercel.app/release-notes"
+        },
+        {
+          "text": "Objective & Settings",
+          "href": "https://flowai-dun.vercel.app/configuration"
+        },
+        {
+          "text": "Terms of Use",
+          "href": "https://flowai-dun.vercel.app/terms-of-use"
+        },
+        {
+          "text": "Privacy Policy",
+          "href": "https://flowai-dun.vercel.app/privacy-policy"
+        }
+      ]
+    },
+    {
+      "path": "/flowai",
+      "url": "https://flowai-dun.vercel.app/flowai",
+      "screenshotPath": "C:\\Users\\victo\\Documents\\Codex\\flowai-cto-docs-20260612\\docs\\cto\\ct2-saige-product-card-score-postdeploy-evidence-20260615\\screenshots\\flowai-2026-06-15T04-53-40-117Z.png",
+      "text": "FlowAI\nProduct-Agnostic AI Operating System\nBack\n\nFLOW CONTROLS\n\nwired\nSTRUCTURAL LAYER\nAutonomous\nSupervised\nControlled\nOPERATIONAL MODE\nAuto\nGuided\nManual\nANALYSIS DEPTH\nQuick\nStandard\nDeep\nFLOW HUB PATH\nProduction\nMigration\nFresh Build\n\nNAVIGATION\n\nHome\nWorkspace\nLanding Page\n\nPORTFOLIO\n\nPortfolio Dashboard\nProduct Registry\nSession History\n\nFLOW HUB\n\nProduction\nMigration\nFresh Build\nResearch Forge\nDesign Forge\nBuild Forge\nQuality Audit\nDeploy Forge\nSelf-Renewal Forge\nGTM Forge\nMonitor Forge\n\nCONFIGURATION\n\nMy Products\nSession History\nClearance Protocol\nGovernance Dashboard\nRelease Notes\nObjective & Settings\n\nFlowAI Engine v0.1\n\nOne OS. Upgraded URLs.\n\nSession Active\nURLs: 0\nActivity: —\nView\nPause\n\nFlowAI\n\nProduct-Agnostic AI Operating System\n\nAll Systems Operational\nBack\nHome\nWorkspace\nLanding\nSearch\n⌘K\nFlowAI Dashboard\n\nProduct-Agnostic AI Operating System\n\nNEW RUN\n\nAnalyze any product from one operating surface\n\nENTER URL\nTest Fetch\nSAIGE upgrade architecture active. OLD repo github.com/veu-ai-studio/saige is read-only rollback/baseline. NEW repo github.com/veu-ai-studio/saige-v2 is the FlowAI upgrade target for U5/U6 fixes.\nDESCRIBE PRODUCT\nPaste Content\nAdd context\nMODE\nAuto\nRun end-to-end without pauses\nGuided\nPause at each checkpoint; continue to advance\nManual\nPause at every step; user drives\nGTM TARGET: 95/100\n50\n100\nITERATION BUDGET: 100\n10\n1000\nSTART NEW RUN\nLaunch Forge\n\nFlowAI is proprietary technology of VEU AI Studio. Unauthorized access, scraping, reverse engineering, or redistribution is prohibited.\n\n© 2026 VEU AI Studio. All rights reserved. Patent pending.\n\nTerms of Use\n·\nPrivacy Policy",
+      "containsSaige": true,
+      "numericScoreMatches": [
+        "95/100"
+      ],
+      "consoleMessages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flowai",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        },
+        {
+          "type": "warning",
+          "text": "Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview",
+          "location": {
+            "url": "https://ethical-firefly-15.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js",
+            "lineNumber": 18,
+            "columnNumber": 7047
+          }
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 405 ()",
+          "location": {
+            "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "pageErrors": [],
+      "responseErrors": [
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/app-logs/69ea46fc5fdfa434dddf11fa/log-user-in-app/flowai"
+        },
+        {
+          "status": 405,
+          "url": "https://flowai-dun.vercel.app/api/apps/69ea46fc5fdfa434dddf11fa/analytics/track/batch"
+        }
+      ],
+      "hasGFilterError": false,
+      "buttons": [
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Autonomous",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Supervised",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Controlled",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Auto",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Guided",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Manual",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Quick",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Standard",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Deep",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Production",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Migration",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Fresh Build",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "View",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Pause",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Back",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Home",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Workspace",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Landing",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Search\n⌘K",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Test Fetch",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Paste Content\nAdd context",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "START NEW RUN",
+          "disabled": false,
+          "ariaDisabled": null
+        },
+        {
+          "text": "Launch Forge",
+          "disabled": false,
+          "ariaDisabled": null
+        }
+      ],
+      "links": [
+        {
+          "text": "Home",
+          "href": "https://flowai-dun.vercel.app/dashboard"
+        },
+        {
+          "text": "Workspace",
+          "href": "https://flowai-dun.vercel.app/workspace"
+        },
+        {
+          "text": "Landing Page",
+          "href": "https://flowai-dun.vercel.app/landing"
+        },
+        {
+          "text": "Portfolio Dashboard",
+          "href": "https://flowai-dun.vercel.app/portfolio"
+        },
+        {
+          "text": "Product Registry",
+          "href": "https://flowai-dun.vercel.app/products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Production",
+          "href": "https://flowai-dun.vercel.app/flow-hub/production"
+        },
+        {
+          "text": "Migration",
+          "href": "https://flowai-dun.vercel.app/flow-hub/migration"
+        },
+        {
+          "text": "Fresh Build",
+          "href": "https://flowai-dun.vercel.app/flow-hub/fresh-build"
+        },
+        {
+          "text": "Research Forge",
+          "href": "https://flowai-dun.vercel.app/forge/research"
+        },
+        {
+          "text": "Design Forge",
+          "href": "https://flowai-dun.vercel.app/forge/design"
+        },
+        {
+          "text": "Build Forge",
+          "href": "https://flowai-dun.vercel.app/forge/build"
+        },
+        {
+          "text": "Quality Audit",
+          "href": "https://flowai-dun.vercel.app/forge/quality-audit"
+        },
+        {
+          "text": "Deploy Forge",
+          "href": "https://flowai-dun.vercel.app/forge/deploy"
+        },
+        {
+          "text": "Self-Renewal Forge",
+          "href": "https://flowai-dun.vercel.app/forge/self-renewal"
+        },
+        {
+          "text": "GTM Forge",
+          "href": "https://flowai-dun.vercel.app/forge/gtm"
+        },
+        {
+          "text": "Monitor Forge",
+          "href": "https://flowai-dun.vercel.app/forge/monitor"
+        },
+        {
+          "text": "My Products",
+          "href": "https://flowai-dun.vercel.app/my-products"
+        },
+        {
+          "text": "Session History",
+          "href": "https://flowai-dun.vercel.app/runs"
+        },
+        {
+          "text": "Clearance Protocol",
+          "href": "https://flowai-dun.vercel.app/clearance"
+        },
+        {
+          "text": "Governance Dashboard",
+          "href": "https://flowai-dun.vercel.app/governance"
+        },
+        {
+          "text": "Release Notes",
+          "href": "https://flowai-dun.vercel.app/release-notes"
+        },
+        {
+          "text": "Objective & Settings",
+          "href": "https://flowai-dun.vercel.app/configuration"
+        },
+        {
+          "text": "Terms of Use",
+          "href": "https://flowai-dun.vercel.app/terms-of-use"
+        },
+        {
+          "text": "Privacy Policy",
+          "href": "https://flowai-dun.vercel.app/privacy-policy"
+        }
+      ]
+    }
+  ]
+}
