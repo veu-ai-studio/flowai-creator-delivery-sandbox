@@ -15,13 +15,14 @@ Do not dispatch another runtime build branch until one of the branches below is 
 ## Gate 1 - SAIGE Product Card Score Visibility
 
 - Branch: `fix/portfolio-product-ssot-cards`
-- Current review head: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`
+- Current branch head after docs-only sync: `7b3167491d3a27e419ea8052b97e1a25cf9d2b9e`
+- Runtime review head before docs-only sync: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`
 - Purpose: resolve the remaining SAIGE visual acceptance blocker by making ProductSSOT-backed product cards visible on `/portfolio`, `/dashboard`, and `/products` without fabricated rows or scores.
 - Required before merge: CD verdict and CR verdict, or explicit W04 waiver. CB2 has returned `PASS-WITH-FINDINGS`.
 - Current status: CB2 `PASS-WITH-FINDINGS`; CD pending; CR pending.
-- CB2 result: `docs/cto/cb2-review-saige-product-card-score-result-20260614.md` on branch `fix/portfolio-product-ssot-cards`, commit `291488e`.
+- CB2 result: `docs/cto/cb2-review-saige-product-card-score-result-20260614.md` on branch `fix/portfolio-product-ssot-cards`, commit `291488e`. Later product-card branch movement is docs-only sync unless separately stated.
 - Accepted CB2 finding: `/api/products` fallback increases public/no-org read surface while `AUTH_REQUIRED=false`; acceptable for current internal proof mode, but must be auth/tenant-gated or public-safe before broad external tenant exposure.
-- Preflight evidence: PASS on branch head after sync with `origin/main`; lint/build passed, `237` test files / `3741` tests passed / `3` skipped, lane discipline PASS, SSOT traceability PASS, matrix generation PASS.
+- Preflight evidence: PASS on branch head `7b3167491d3a27e419ea8052b97e1a25cf9d2b9e` after docs-only sync with `origin/main`; lint/build passed, `237` test files / `3741` tests passed / `3` skipped, lane discipline PASS, SSOT traceability PASS, matrix generation PASS.
 - Review packets on branch:
   - `docs/cto/cd-review-saige-product-card-score-prompt-20260614.md`
   - `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`
@@ -32,14 +33,19 @@ Do not dispatch another runtime build branch until one of the branches below is 
 ## Gate 2 - Universal Delivery Workspace
 
 - Branch: `feature/universal-delivery-workspace`
-- Current review head: `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`
+- Current branch head after resync: `3d98acf63d29eb38a1095bf17e4b7d737ea1be97`
+- Runtime review head before resync: `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`
 - Review base recorded in packets: `f9c570601febae842d02e12faea0e5fce4dcf6be`
 - Purpose: add the smallest honest Universal Delivery Workspace substrate for non-preconfigured user delivery, including Type 2 description-only entry foundations and delivery-state evidence boundaries.
-- Required before merge: branch resync patch, rerun focused tests plus full preflight, then CD verdict, CR verdict, CB2 re-review verdict, or explicit W04 waiver.
-- Current status: CB2 `BLOCK`; CD pending; CR pending.
-- CB2 result: `docs/cto/cb2-review-universal-delivery-workspace-result-20260614.md` on `main`.
-- Blocking finding: branch is stale against current `origin/main` and would delete current Universal Delivery review/gate evidence docs, including `docs/cto/cto-review-universal-delivery-workspace-20260614.md` and `docs/cto/universal-delivery-review-gate-status-20260614.md`.
-- Required CB action: resync `feature/universal-delivery-workspace` with current `origin/main`, preserve current review/gate docs and packet head/base `c19a8c4` / `f9c5706`, preserve the handler SSE test gate command, rerun focused tests plus full preflight, and request CB2 re-review.
+- Required before merge: CB2 re-review verdict, CD verdict, CR verdict, or explicit W04 waiver.
+- Current status: CB2 re-review `BLOCK`; CD pending; CR pending.
+- Prior CB2 result: `docs/cto/cb2-review-universal-delivery-workspace-result-20260614.md` on `main`.
+- CB2 re-review result: `docs/cto/cb2-review-universal-delivery-workspace-rereview-result-20260615.md` on `main`.
+- Resync result: `docs/cto/cb-universal-delivery-workspace-resync-result-20260615.md` on branch `feature/universal-delivery-workspace`, commit `3d98acf63d29eb38a1095bf17e4b7d737ea1be97`.
+- Former blocking finding: branch was stale against current `origin/main` and would delete current Universal Delivery review/gate evidence docs. CB reports those protected docs, packet head/base, and handler-level SSE gate command are now preserved.
+- Current blocking finding: branch head `3d98acf63d29eb38a1095bf17e4b7d737ea1be97` still predates newer `origin/main` CTO evidence and would delete `docs/cto/cb2-production-regression-audit-postmerge-d6b92d5-result-20260614.md` and `docs/cto/cb2-review-universal-delivery-workspace-rereview-dispatch-20260615.md` if merged as-is.
+- Required CB/CTO action: sync `feature/universal-delivery-workspace` with latest `origin/main`, preserve the two newer evidence files plus this re-review result, rerun verification as needed, and request CB2 re-review again.
+- Resync verification: focused tests PASS, `4` files / `53` tests; full preflight PASS, `236` files / `3741` tests passed / `3` skipped; no runtime behavior changes; timestamp-only `matrixArtifact.json` diff restored.
 - CB resync dispatch: `docs/cto/cb-universal-delivery-workspace-resync-dispatch-20260615.md`.
 - CTO fallback evidence: full preflight PASS recorded in `docs/cto/universal-delivery-review-gate-status-20260614.md`; this does not replace formal CD/CR/CB2 unless W04 explicitly accepts it.
 - Review packets on branch/main:
