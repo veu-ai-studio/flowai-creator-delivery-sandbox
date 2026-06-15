@@ -23,7 +23,11 @@ W04 then identified the larger infrastructure gap: FlowAI cannot require preconf
 
 Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
 
-Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md`. The SAIGE product-card score branch now has CB2 `PASS-WITH-FINDINGS`, was docs-synced to `origin/main`, passed full preflight, and is pushed at `7b3167491d3a27e419ea8052b97e1a25cf9d2b9e`; CD and CR remain pending before merge unless W04 waives them. Universal Delivery Workspace is now pushed at `99f918ef3e3b21a6332b588b0aa26f794a42c929`; CB2 re-review 2 returned `PASS`, so that gate now waits on CD and CR. Current CD/CR review instructions are centralized in `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
+Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md`. The SAIGE product-card score branch now has CB2 `PASS-WITH-FINDINGS`, was synced with current `origin/main` including the W04 waiver packet, passed focused product-card tests plus full preflight, and is pushed at `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece`; CD and CR remain pending before merge unless W04 waives them. Universal Delivery Workspace is now pushed at `e115b19e8f6e36dc676eee30f00940053bdac019`; CB2 re-review 2 returned `PASS`, the dispatch-board sync passed focused tests plus full preflight, and that gate now waits on CD and CR. Current CD/CR review instructions are centralized in `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
+
+Latest review-lane update: CTO attempted direct PowerShell execution of the CD/CR reviewer tools for the SAIGE product-card branch. `claude.exe` and `codex.ps1` are installed, but external CLI review with private branch context was denied by tenant policy after the required escalation path. No CD/CR verdict was produced. Evidence: `docs/cto/review-lane-execution-status-20260615.md`. The safe path remains repo-based dispatch: CD and CR pull origin, read `docs/cto/cd-cr-active-review-dispatch-20260615.md`, and commit result files to `docs/cto/`.
+
+W04 decision packet prepared: `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. CTO recommends a narrow W04 waiver for `fix/portfolio-product-ssot-cards` only, because the branch is a small ProductSSOT-backed product-card UI/API read-boundary fix with CB2 `PASS-WITH-FINDINGS`, accepted nonblocking finding tracked, full preflight passed, and no scoring/governance/deploy/canonical/VERIFIED movement. Universal Delivery Workspace remains gated on CD/CR or separate explicit waiver.
 
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
 
@@ -148,12 +152,13 @@ CTO visual follow-up on the three missing SAIGE checks:
 SAIGE product-card score patch:
 
 - Branch: `fix/portfolio-product-ssot-cards`.
-- Current pushed branch head after docs-only sync: `7b3167491d3a27e419ea8052b97e1a25cf9d2b9e`.
+- Current pushed branch head after W04-packet docs sync: `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece`.
 - Runtime review head before docs-only sync: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`.
 - Purpose: make ProductSSOT-backed product-card scores visible on `/portfolio`, `/dashboard`, and `/products` without fabricated rows or scores.
 - Audit follow-up: raw `/api/products.items` rows are normalized before UI use and hardcoded `VEU_SEED` fallback was removed.
 - Full preflight after follow-up patch: PASS; lint, build, 237 test files / 3741 tests, lane discipline, SSOT traceability, and matrix generation all passed.
-- Full preflight after docs-only sync with `origin/main`: PASS; lint, build, 237 test files / 3741 tests passed / 3 skipped, lane discipline, SSOT traceability, and matrix generation all passed.
+- Full preflight after dispatch-board sync with `origin/main`: PASS; lint, build, 237 test files / 3741 tests passed / 3 skipped, lane discipline, SSOT traceability, and matrix generation all passed.
+- Full preflight after W04-packet docs sync with current `origin/main`: PASS; focused product-card tests passed, 4 files / 23 tests; full preflight passed, 237 test files / 3741 tests passed / 3 skipped; delete-risk guard empty; no package, runtime, test, canonical, or matrix diffs from the sync.
 - Evidence, CD prompt, CR prompt, CT2 post-deploy dispatch, and CB2 branch-audit dispatch live on branch `fix/portfolio-product-ssot-cards`; they are not on `main` until that branch is merge-cleared.
 - CB2 result: `PASS-WITH-FINDINGS`, pushed on branch commit `291488e`; nonblocking finding is the known `/api/products` public/no-org read surface while `AUTH_REQUIRED=false`.
 - Merge status: not merge-cleared yet; requires CD and CR clearance or explicit W04 waiver. The branch is synced with `origin/main` and full preflight passed after the sync.
@@ -188,6 +193,7 @@ Universal input and delivery architecture:
 - CB2 re-review result: `BLOCK`. Evidence: `docs/cto/cb2-review-universal-delivery-workspace-rereview-result-20260615.md`. The original Universal Delivery review/gate docs, packet head/base, and handler SSE command are now preserved, and no runtime/package/test diffs were visible from the resync. Remaining blocker: the branch still predates newer `origin/main` CTO evidence files and would delete `docs/cto/cb2-production-regression-audit-postmerge-d6b92d5-result-20260614.md` and `docs/cto/cb2-review-universal-delivery-workspace-rereview-dispatch-20260615.md` if merged as-is.
 - Latest Universal Delivery sync: branch `feature/universal-delivery-workspace` is pushed at `99f918ef3e3b21a6332b588b0aa26f794a42c929`. Focused handler/provisioning/fresh-build tests PASS, 4 files / 53 tests. Full preflight PASS, 236 files / 3741 tests passed / 3 skipped. Generated `matrixArtifact.json` timestamp-only diff was restored before push.
 - CB2 re-review 2 result: `PASS`. Evidence: `docs/cto/cb2-review-universal-delivery-workspace-rereview2-result-20260615.md`. The prior delete-risk blocker is resolved, no current-main `docs/cto` deletions remain, no canonical or `matrixArtifact` diffs are present, and the latest sync introduced docs only.
+- Dispatch-board sync: branch `feature/universal-delivery-workspace` is pushed at `e115b19e8f6e36dc676eee30f00940053bdac019`. Focused handler/provisioning/fresh-build tests PASS, 4 files / 53 tests. Full preflight PASS, 236 files / 3741 tests passed / 3 skipped. Delete-risk, canonical/matrix, and runtime/test/package diff checks were clean before push.
 
 ## Current Packets
 
@@ -245,8 +251,8 @@ Path 4 URL selection:
 
 ## Next Starting Point
 
-1. Collect CD and CR verdicts for `fix/portfolio-product-ssot-cards`; CB2 is `PASS-WITH-FINDINGS` at `291488e`, and the branch is currently pushed at `7b3167491d3a27e419ea8052b97e1a25cf9d2b9e`. Merge only after CD/CR clearance or explicit W04 waiver, then promote production and dispatch CT2.
-2. Collect CD and CR verdicts for `feature/universal-delivery-workspace` at `99f918ef3e3b21a6332b588b0aa26f794a42c929`; CB2 re-review 2 is PASS.
+1. W04 decides `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. If W04 waives CD/CR for `fix/portfolio-product-ssot-cards`, the branch is already synced with current main at `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece`; rerun the delete-risk guard, merge, preflight, push, promote production, and dispatch CT2. If W04 does not waive, continue collecting CD/CR verdicts.
+2. Collect CD and CR verdicts for `feature/universal-delivery-workspace` at `e115b19e8f6e36dc676eee30f00940053bdac019`; CB2 re-review 2 is PASS.
 3. Before merging either runtime branch, do a final current-main delete-risk check so it will not remove CTO coordination artifacts.
 4. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
 5. If Universal Delivery passes review, merge, promote production, and dispatch CT2 for a Type 2 description-only Fresh Build URL proof.
