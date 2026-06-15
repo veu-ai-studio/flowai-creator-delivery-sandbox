@@ -50,7 +50,10 @@ The SAIGE product-card branch is merged and deployed. Universal Delivery Workspa
 - Hotfix review: CD `PASS-WITH-FINDINGS`; CR `PASS-WITH-FINDINGS`; no blocking findings. Result: `docs/cto/cd-cr-review-products-registry-optional-columns-hotfix-result-20260615.md`.
 - Hotfix production: `55a53f3cd3dd0ffae25b41eaa6fc5c3e5f12bf27` on `https://flowai-8mwbto1zq-veu-ai-studio.vercel.app`.
 - Hotfix API verification: `/api/products` returns HTTP `200` JSON, includes SAIGE with `last_audit_score:98`, and reports `stats.deliveryColumnsAvailable:false`.
-- Gate status: waiting on CT2 post-hotfix visual rerun. No VERIFIED movement authorized by this visual rerun alone.
+- CT2 post-hotfix rerun: `PASS-WITH-FINDINGS`. Result: `docs/cto/ct2-saige-product-card-score-posthotfix-rerun-result-20260615.md`.
+- Product-card gate decision: accepted. `/api/products` is HTTP `200`, SAIGE API score is ProductSSOT-backed at `98`, and `/portfolio`, `/dashboard`, and `/products` visibly show SAIGE numeric score as `10/10`.
+- Remaining findings: `/dashboard` still emits `g.filter is not a function` and a bad `file:///C:/Program%20Files/Git/api/health` request. Follow-up CB dispatch: `docs/cto/cb-dashboard-health-console-cleanup-dispatch-20260615.md`.
+- Gate status: product-card score visibility is closed as `PASS-WITH-FINDINGS`; dashboard console cleanup remains a separate follow-up. No VERIFIED movement authorized by this visual rerun alone.
 
 ## Gate 2 - Universal Delivery Workspace
 

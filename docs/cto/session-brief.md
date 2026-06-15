@@ -51,15 +51,17 @@ Products registry optional-column hotfix: branch `fix/products-registry-optional
 
 Hotfix postdeploy result: production is now `55a53f3cd3dd0ffae25b41eaa6fc5c3e5f12bf27` on deployment `https://flowai-8mwbto1zq-veu-ai-studio.vercel.app`. `/api/version` and `/api/health` confirm branch `main`, health `ready`, `clerkReady:true`, `githubAppReady:true`, and `inngestReady:true`. `/api/products` now returns HTTP `200` JSON with `16` items; the SAIGE row is present with `last_audit_score:98`; `stats.deliveryColumnsAvailable:false` confirms the fallback path is active against the current production schema. Evidence: `docs/cto/products-registry-optional-columns-hotfix-postdeploy-result-20260615.md`. CT2 has been dispatched for the visual rerun.
 
-Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `1`: Universal Delivery Workspace. The SAIGE product-card branch is out of CD/CR review and is now waiting on CT2 browser PASS/BLOCK.
+CT2 post-hotfix product-card rerun: `PASS-WITH-FINDINGS`. Evidence: `docs/cto/ct2-saige-product-card-score-posthotfix-rerun-result-20260615.md`. CT2 confirmed `/api/products` HTTP `200`, SAIGE API-backed score `98`, SAIGE visible with numeric `10/10` score on `/portfolio`, `/dashboard`, and `/products`, all 8 steps visible on `/flow-hub/production`, and `/flowai` accepting `https://saigeplatform.com` with Launch Forge enabled. Remaining findings: `/dashboard` still emits `g.filter is not a function` and a bad local-resource health request `file:///C:/Program%20Files/Git/api/health`. Follow-up CB dispatch: `docs/cto/cb-dashboard-health-console-cleanup-dispatch-20260615.md`.
+
+Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `1`: Universal Delivery Workspace. The SAIGE product-card score visibility gate is now closed as `PASS-WITH-FINDINGS`; dashboard console cleanup is dispatched separately.
 
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
-- Last production identity verified after product-card merge/promotion: `829ea53d9933c09a003897d9b94a7e417ea46cd0`.
-- Current production deployment: `https://flowai-c8un0m1m4-veu-ai-studio.vercel.app`.
+- Last production identity verified after products-registry optional-column hotfix promotion: `55a53f3cd3dd0ffae25b41eaa6fc5c3e5f12bf27`.
+- Current production deployment: `https://flowai-8mwbto1zq-veu-ai-studio.vercel.app`.
 - `/api/health` reports branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
-- Production `/api/health` reports deployed runtime commit `829ea53d9933c09a003897d9b94a7e417ea46cd0` on branch `main`.
+- Production `/api/health` reports deployed runtime commit `55a53f3cd3dd0ffae25b41eaa6fc5c3e5f12bf27` on branch `main`.
 
 ## Completed Evidence
 
