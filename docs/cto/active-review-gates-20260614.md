@@ -26,6 +26,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 - Latest docs-sync evidence: PASS on branch head `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece` after merging current `origin/main`; focused product-card tests PASS, `4` files / `23` tests; full preflight PASS, `237` test files / `3741` tests passed / `3` skipped; delete-risk guard empty; no package, runtime, test, canonical, or matrix diffs from the sync; timestamp-only `matrixArtifact.json` churn restored.
 - Direct PowerShell reviewer attempt: no verdict produced. `claude.exe` and `codex.ps1` are present, but external CLI review with private branch context was denied by tenant policy. Evidence: `docs/cto/review-lane-execution-status-20260615.md`.
 - W04 waiver decision packet prepared: `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. CTO recommends a narrow waiver for this product-card branch only; Universal Delivery Workspace remains separately gated.
+- Post-waiver runbook prepared: `docs/cto/product-card-post-waiver-execution-runbook-20260615.md`.
 - Review packets on branch:
   - `docs/cto/cd-review-saige-product-card-score-prompt-20260614.md`
   - `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`
@@ -37,7 +38,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 ## Gate 2 - Universal Delivery Workspace
 
 - Branch: `feature/universal-delivery-workspace`
-- Current branch head after dispatch-board sync: `e115b19e8f6e36dc676eee30f00940053bdac019`
+- Current branch head after current-main docs sync: `8fe413f142b06bf8d2b9669223506b12519286db`
 - Runtime review head before resync: `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`
 - Review base recorded in packets: `f9c570601febae842d02e12faea0e5fce4dcf6be`
 - Purpose: add the smallest honest Universal Delivery Workspace substrate for non-preconfigured user delivery, including Type 2 description-only entry foundations and delivery-state evidence boundaries.
@@ -52,6 +53,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 - Resync verification: focused tests PASS, `4` files / `53` tests; full preflight PASS, `236` files / `3741` tests passed / `3` skipped; no runtime behavior changes; timestamp-only `matrixArtifact.json` diff restored.
 - Latest sync verification: required CB2 deletion check PASS, no canonical or `matrixArtifact` diff, and no `package*`, `src`, or `tests` changes introduced after `3d98acf63d29eb38a1095bf17e4b7d737ea1be97`.
 - Dispatch-board sync verification: focused tests PASS, `4` files / `53` tests; full preflight PASS, `236` files / `3741` tests passed / `3` skipped; no current-main `docs/cto` deletion, no canonical or `matrixArtifact` diff, and no `package*`, `src`, or `tests` changes introduced by the sync.
+- Current-main docs-sync verification: focused tests PASS, `4` files / `53` tests; full preflight PASS, `236` files / `3741` tests passed / `3` skipped; no current-main `docs/cto` deletion, no package, runtime, test, canonical, or matrix diffs from the sync; timestamp-only `matrixArtifact.json` churn restored.
 - CB resync dispatch: `docs/cto/cb-universal-delivery-workspace-resync-dispatch-20260615.md`.
 - CTO fallback evidence: full preflight PASS recorded in `docs/cto/universal-delivery-review-gate-status-20260614.md`; this does not replace formal CD/CR/CB2 unless W04 explicitly accepts it.
 - Review packets on branch/main:
