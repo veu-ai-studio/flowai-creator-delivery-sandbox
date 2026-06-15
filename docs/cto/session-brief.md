@@ -39,6 +39,8 @@ Review-router dispatch: CTO routed the SAIGE product-card gate to the existing r
 
 Product-card review-router result: CD returned `BLOCK`; CR returned `PASS-WITH-FINDINGS`. The CD blocker is precise: `/products` can still prefer Base44 `ProductRegistry.last_score` over ProductSSOT-backed API scores. CTO created `docs/cto/cb-product-card-score-source-block-patch-dispatch-20260615.md` to patch the existing `fix/portfolio-product-ssot-cards` branch. No merge or promotion is authorized until the patch is pushed and re-reviewed or explicitly waived.
 
+Product-card blocker patch: `fix/portfolio-product-ssot-cards` is now patched and pushed at `33e491de42257024907e0e9b3271e1b2c7ab1100`. The patch removes `registryRow.last_score` from `/products` score display and adds a focused regression test. Focused tests passed (`4` files / `23` tests) and full branch preflight passed (`237` files / `3741` tests / `3` skipped). Evidence: `docs/cto/product-card-score-source-block-patch-result-20260615.md`. CD/CR re-review is dispatched in `docs/cto/cd-cr-product-card-score-source-rereview-dispatch-20260615.md`; no merge or production promotion is authorized until that re-review clears or W04 explicitly waives it.
+
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
 
 ## Current Production

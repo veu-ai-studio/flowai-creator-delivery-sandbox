@@ -16,10 +16,11 @@ Do not merge, promote production, or move VERIFIED. Return `PASS`, `PASS-WITH-FI
 ## Gate 1 - SAIGE Product Card Score Visibility
 
 - Branch: `fix/portfolio-product-ssot-cards`
-- Latest known branch head after CTO final-directive status refresh: `c78727b114ae2f00abcc67006b5fd1f467c7bf9f`
+- Latest known branch head after CD-block patch: `33e491de42257024907e0e9b3271e1b2c7ab1100`
 - Runtime review head before docs-only sync: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`
 - CB2 verdict: `PASS-WITH-FINDINGS`
 - CB2 result: `docs/cto/cb2-review-saige-product-card-score-result-20260614.md`
+- CD/CR re-review dispatch after CD block: `docs/cto/cd-cr-product-card-score-source-rereview-dispatch-20260615.md`
 - Existing prompts on the branch:
   - `docs/cto/cd-review-saige-product-card-score-prompt-20260614.md`
   - `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`
