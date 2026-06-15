@@ -61,7 +61,29 @@ Result:
 25 tests passed
 ```
 
-Full preflight pending before push.
+Full preflight:
+
+```text
+npm run preflight
+```
+
+Result:
+
+```text
+PASS
+237 files passed
+3743 tests passed
+3 tests skipped
+lane discipline PASS
+SSOT traceability PASS
+matrix generation PASS
+```
+
+Review:
+
+- CD: `PASS-WITH-FINDINGS`
+- CR: `PASS-WITH-FINDINGS`
+- Result: `docs/cto/cd-cr-review-products-registry-optional-columns-hotfix-result-20260615.md`
 
 ## Next Gate
 

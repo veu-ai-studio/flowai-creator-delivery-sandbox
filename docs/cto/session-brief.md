@@ -47,6 +47,8 @@ Product-card merge and promotion result: merged to `main` at `829ea53d9933c09a00
 
 CT2 postdeploy product-card result: `BLOCK`. Production identity passed at commit `829ea53d9933c09a003897d9b94a7e417ea46cd0`, but `/api/products` returns HTTP 500: `column product_registry.original_repo does not exist`. Because that endpoint fails, SAIGE/ProductSSOT-backed rows and numeric product-card scores do not render on `/portfolio`, `/dashboard`, or `/products`. Prior visual checks still pass with findings: `/flow-hub/production` shows all 8 forge steps and `/flowai` accepts `https://saigeplatform.com`, but `/dashboard` still reports `g.filter is not a function`. Evidence: `docs/cto/ct2-saige-product-card-score-postdeploy-result-20260615.md`.
 
+Products registry optional-column hotfix: branch `fix/products-registry-optional-columns` was built and merged locally. Runtime commit `6ba711d` makes `/api/products` retry `product_registry` with base columns when optional delivery columns such as `original_repo` are absent in production schema. Focused tests passed (`4` files / `25` tests) and full preflight passed (`237` files / `3743` tests / `3` skipped). CD and CR returned `PASS-WITH-FINDINGS` with only metadata/doc findings; no code blockers. Evidence: `docs/cto/products-registry-optional-columns-hotfix-evidence-20260615.md` and `docs/cto/cd-cr-review-products-registry-optional-columns-hotfix-result-20260615.md`. Pending: final main preflight, push, production promotion, and CT2 rerun.
+
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `1`: Universal Delivery Workspace. The SAIGE product-card branch is out of CD/CR review and is now waiting on CT2 browser PASS/BLOCK.
 
 ## Current Production

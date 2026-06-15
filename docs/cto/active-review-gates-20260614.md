@@ -46,7 +46,9 @@ The SAIGE product-card branch is merged and deployed. Universal Delivery Workspa
 - CT2 result: `docs/cto/ct2-saige-product-card-score-postdeploy-result-20260615.md`.
 - CT2 blocker: production `/api/products` returns HTTP 500 with `column product_registry.original_repo does not exist`; product cards cannot render ProductSSOT-backed rows or numeric score until the registry query tolerates unapplied optional delivery columns or the production schema is updated.
 - Evidence: `docs/cto/product-card-postdeploy-promotion-result-20260615.md`.
-- Gate status: out of CD/CR review, deployed, CT2 BLOCK. Requires a focused patch before CT2 can rerun. No VERIFIED movement authorized by this visual rerun alone.
+- Hotfix branch: `fix/products-registry-optional-columns`.
+- Hotfix review: CD `PASS-WITH-FINDINGS`; CR `PASS-WITH-FINDINGS`; no blocking findings. Result: `docs/cto/cd-cr-review-products-registry-optional-columns-hotfix-result-20260615.md`.
+- Gate status: local hotfix merge pending final main preflight, push, production promotion, and CT2 rerun. No VERIFIED movement authorized by this visual rerun alone.
 
 ## Gate 2 - Universal Delivery Workspace
 
