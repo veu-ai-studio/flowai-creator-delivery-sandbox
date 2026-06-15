@@ -37,7 +37,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 ## Gate 2 - Universal Delivery Workspace
 
 - Branch: `feature/universal-delivery-workspace`
-- Current branch head after dispatch-board sync: `e115b19e8f6e36dc676eee30f00940053bdac019`
+- Current branch head after current-main docs sync: `8fe413f142b06bf8d2b9669223506b12519286db`
 - Runtime review head before resync: `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`
 - Review base recorded in packets: `f9c570601febae842d02e12faea0e5fce4dcf6be`
 - Purpose: add the smallest honest Universal Delivery Workspace substrate for non-preconfigured user delivery, including Type 2 description-only entry foundations and delivery-state evidence boundaries.
@@ -52,6 +52,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 - Resync verification: focused tests PASS, `4` files / `53` tests; full preflight PASS, `236` files / `3741` tests passed / `3` skipped; no runtime behavior changes; timestamp-only `matrixArtifact.json` diff restored.
 - Latest sync verification: required CB2 deletion check PASS, no canonical or `matrixArtifact` diff, and no `package*`, `src`, or `tests` changes introduced after `3d98acf63d29eb38a1095bf17e4b7d737ea1be97`.
 - Dispatch-board sync verification: focused tests PASS, `4` files / `53` tests; full preflight PASS, `236` files / `3741` tests passed / `3` skipped; no current-main `docs/cto` deletion, no canonical or `matrixArtifact` diff, and no `package*`, `src`, or `tests` changes introduced by the sync.
+- Current-main docs-sync verification: focused tests PASS, `4` files / `53` tests; full preflight PASS, `236` files / `3741` tests passed / `3` skipped; no current-main `docs/cto` deletion, no package, runtime, test, canonical, or matrix diffs from the sync; timestamp-only `matrixArtifact.json` churn restored.
 - CB resync dispatch: `docs/cto/cb-universal-delivery-workspace-resync-dispatch-20260615.md`.
 - CTO fallback evidence: full preflight PASS recorded in `docs/cto/universal-delivery-review-gate-status-20260614.md`; this does not replace formal CD/CR/CB2 unless W04 explicitly accepts it.
 - Review packets on branch/main:
