@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import PlatformHealthWidget from '@/components/dashboard/PlatformHealthWidget';
 import { formatDistanceToNow } from 'date-fns';
+import { listProducts, normalizeScore, deriveSlug } from '@/lib/products/registry';
 import { asArray, resolveArray } from '@/lib/uiDataGuards';
 
 function Panel({ title, children, className = '' }) {
@@ -26,6 +27,20 @@ function TrafficLight({ score }) {
   if (score >= 7) return <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 inline-block" />;
   if (score >= 5) return <span className="h-2.5 w-2.5 rounded-full bg-amber-400 inline-block" />;
   return <span className="h-2.5 w-2.5 rounded-full bg-red-400 inline-block" />;
+}
+
+function dashboardProductFromRegistry(product) {
+  const rawScore = product?.last_score ?? product?.last_audit_score;
+  const score = typeof rawScore === 'number' && rawScore <= 10 ? rawScore : normalizeScore(rawScore);
+  const name = product?.name || product?.label || product?.product_name || product?.slug || 'Product';
+  return {
+    id: product?.id || product?.slug || deriveSlug(name),
+    label: name,
+    product_name: name,
+    url: product?.live_url || product?.url || product?.canonical_url || '',
+    last_score: score,
+    last_run_at: product?.last_run_at || product?.last_audit_at || product?.updated_at || null,
+  };
 }
 
 export default function MainDashboard() {
@@ -52,14 +67,15 @@ export default function MainDashboard() {
 
   useEffect(() => {
     const load = async () => {
-      const [prods, clearance, jobs, testReports, audits] = await Promise.all([
-        resolveArray(base44.entities.ProductRegistry.list('-last_run_at', 20)),
+      const [productsResult, clearance, jobs, testReports, audits] = await Promise.all([
+        listProducts({ sort: '-updated_at', limit: 20 }).catch((error) => ({ ok: false, error: error?.message || String(error) })),
         resolveArray(base44.entities.ClearanceRecord.list('-created_date')),
         resolveArray(base44.entities.Job.filter({ status: 'awaiting-review' }, '-created_date', 10)),
         resolveArray(base44.entities.TestReport.list('-created_date', 5)),
         resolveArray(base44.entities.QAAuditReport.list('-created_date', 5)),
       ]);
-      setPortfolio(prods);
+      const productItems = productsResult?.ok ? asArray(productsResult.items).map(dashboardProductFromRegistry) : [];
+      setPortfolio(productItems);
       const clMap = {};
       asArray(clearance).forEach(r => { clMap[r.product_name] = r; });
       setClearanceRecords(clMap);

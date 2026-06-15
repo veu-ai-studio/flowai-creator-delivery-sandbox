@@ -10,21 +10,47 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { productUpgradeReadiness } from '@/lib/products/portfolioReadiness';
+import { deriveSlug, normalizeScore } from '@/lib/products/registry';
 import { asArray, resolveArray } from '@/lib/uiDataGuards';
-
-const VEU_SEED = [
-  { name: 'SAIGE',       slug: 'saige',       live_url: 'https://saigeplatform.com',       description: 'Sustainability reporting for universities', org: 'VEU AI Studio', status: 'active' },
-  { name: 'PressAI',     slug: 'pressai',     live_url: 'https://ourpublishingai.com',     description: 'AI publishing for authors and publishers', org: 'VEU AI Studio', status: 'active' },
-  { name: 'ReachSMS',    slug: 'reachsms',    live_url: 'https://ourcommunitiesai.com',    description: 'SMS community engagement for nonprofits', org: 'VEU AI Studio', status: 'active' },
-  { name: 'RelTwin',     slug: 'reltwin',     live_url: 'https://reltwin.com',             description: 'Relationship intelligence for coaches and HR', org: 'VEU AI Studio', status: 'active' },
-  { name: 'MyPregLife', slug: 'mypreglife', live_url: 'https://preglife.com',            description: 'Maternal health platform for Africa', org: 'VEU AI Studio', status: 'active' },
-];
 
 const STATUS_STYLES = {
   active:   { label: 'Active',    color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-500/30' },
   beta:     { label: 'Beta',      color: 'text-amber-400',   bg: 'bg-amber-400/10',   border: 'border-amber-500/30' },
   archived: { label: 'Archived',  color: 'text-muted-foreground', bg: 'bg-secondary', border: 'border-border' },
 };
+
+const textValue = (value) => (typeof value === 'string' && value.trim() ? value.trim() : '');
+
+function productFromApiRow(product = {}) {
+  const name = textValue(product.name)
+    || textValue(product.label)
+    || textValue(product.product_name)
+    || textValue(product.slug)
+    || textValue(product.id)
+    || 'Product';
+  const slug = textValue(product.slug) || deriveSlug(name) || textValue(product.id);
+  const liveUrl = textValue(product.live_url)
+    || textValue(product.url)
+    || textValue(product.canonical_url)
+    || textValue(product.deployment_url)
+    || textValue(product.upgrade_url)
+    || textValue(product.base44_url);
+
+  return {
+    ...product,
+    id: textValue(product.id) || slug,
+    name,
+    slug,
+    org: textValue(product.org)
+      || textValue(product.org_name)
+      || textValue(product.organization)
+      || textValue(product.org_id),
+    live_url: liveUrl,
+    url: liveUrl || textValue(product.url),
+    description: textValue(product.description),
+    status: textValue(product.status) || 'active',
+  };
+}
 
 function AddProductModal({ onClose, onAdded }) {
   const [form, setForm] = useState({ name: '', slug: '', live_url: '', description: '', org: 'VEU AI Studio', org_id: 'veu-ai-studio', status: 'active' });
@@ -111,19 +137,23 @@ export default function ProductRegistry() {
     asArray(registry).forEach(r => { rm[r.product_name || r.label] = r; });
     setRegistryMap(rm);
 
-    // Use API products if any, otherwise seed with VEU defaults
-    const list = asArray(apiProducts).length > 0 ? asArray(apiProducts) : VEU_SEED;
-    setProducts(list);
+    const apiProductRows = Array.isArray(apiProducts?.items) ? apiProducts.items : asArray(apiProducts);
+    setProducts(apiProductRows.map(productFromApiRow));
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
   const handleAdded = (p) => {
-    setProducts(prev => [...prev, p]);
+    setProducts(prev => [...prev, productFromApiRow(p?.item || p)]);
   };
 
   const productUrl = (product) => product?.live_url || product?.url || product?.base44_url || '';
+  const productScore = (product) => {
+    const score = product?.last_score ?? product?.last_audit_score;
+    if (typeof score === 'number' && score <= 10) return score;
+    return normalizeScore(score);
+  };
 
   const runProduct = (product) => {
     const params = new URLSearchParams();
@@ -222,6 +252,7 @@ export default function ProductRegistry() {
                   const reg = registryMap[p.name];
                   const cleared = cl?.overall_status === 'cleared';
                   const readiness = productUpgradeReadiness(p, reg);
+                  const score = productScore(p);
                   return (
                     <tr
                       key={p.slug}
@@ -276,8 +307,8 @@ export default function ProductRegistry() {
                         {reg?.last_run_at ? formatDistanceToNow(new Date(reg.last_run_at), { addSuffix: true }) : '—'}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {reg?.last_score != null
-                          ? <span className={`font-bold ${reg.last_score >= 7 ? 'text-emerald-400' : reg.last_score >= 5 ? 'text-amber-400' : 'text-red-400'}`}>{reg.last_score}/10</span>
+                        {score != null
+                          ? <span className={`font-bold ${score >= 7 ? 'text-emerald-400' : score >= 5 ? 'text-amber-400' : 'text-red-400'}`}>{score}/10</span>
                           : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="px-5 py-3 text-right">

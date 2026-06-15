@@ -19,6 +19,30 @@ import * as memProducts from './products.js';
 import { append as appendAudit, readLog as readAuditLog } from './auditlog.js';
 import { recordCost as recordCostMem, readLog as readCostLog, summarise as summariseCost } from './cost.js';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const PRODUCT_REGISTRY_SELECT = [
+  'product_id',
+  'org_id',
+  'github_repo_url',
+  'vercel_project_id',
+  'product_url',
+  'environment',
+  'self_renewal_enabled',
+  'self_renewal_branch',
+  'created_at',
+  'updated_at',
+  'original_repo',
+  'original_url',
+  'original_status',
+  'upgrade_repo',
+  'upgrade_url',
+  'upgrade_status',
+  'upgrade_architecture',
+  'deployment_url',
+  'deployment_status',
+  'upgrade_repo_status',
+].join(',');
+
 export function selectedBackend() {
   const explicit = process.env.DB_BACKEND;
   if (explicit === 'supabase') return 'supabase';
@@ -37,24 +61,186 @@ function log(scope, msg, extra) {
 // Memory adapter doesn't natively scope by org_id. We tag the in-memory
 // product on create and filter on read so scoping behaviour matches Supabase.
 
+function isUuidString(value) {
+  return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
+function cleanString(value, fallback = '') {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  return trimmed || fallback;
+}
+
+function nameFromProductId(productId) {
+  const value = cleanString(productId);
+  if (!value) return 'Product';
+  return value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => {
+      if (part.length <= 2) return part.toUpperCase();
+      return part.slice(0, 1).toUpperCase() + part.slice(1);
+    })
+    .join(' ');
+}
+
+function latestScoreFromProductSsot(row) {
+  const records = Array.isArray(row?.governance_record) ? row.governance_record : [];
+  for (let index = records.length - 1; index >= 0; index -= 1) {
+    const record = records[index];
+    if (!record || typeof record !== 'object') continue;
+    const candidates = [
+      record.finalScore,
+      record.currentScore,
+      record.score,
+      record.artifact?.finalScore,
+      record.artifact?.currentScore,
+      record.artifact?.score,
+      record.artifact?.result?.finalScore,
+      record.artifact?.result?.currentScore,
+      record.result?.finalScore,
+      record.result?.currentScore,
+      record.scores?.current,
+      record.scores?.final,
+    ];
+    const score = candidates.find((value) => typeof value === 'number' && Number.isFinite(value));
+    if (score !== undefined) {
+      return {
+        score,
+        recordedAt: cleanString(record.recordedAt ?? record.completedAt ?? record.createdAt, null),
+      };
+    }
+  }
+  return { score: null, recordedAt: null };
+}
+
+function mapProductRegistryRowToProduct(row, ssotRow = null) {
+  const identity = ssotRow?.identity_block && typeof ssotRow.identity_block === 'object'
+    ? ssotRow.identity_block
+    : {};
+  const buildBrief = ssotRow?.build_brief && typeof ssotRow.build_brief === 'object'
+    ? ssotRow.build_brief
+    : {};
+  const latestScore = latestScoreFromProductSsot(ssotRow);
+  const productId = cleanString(row?.product_id, 'unknown-product');
+  const name = cleanString(identity.productName ?? identity.name, nameFromProductId(productId));
+  const canonicalUrl = cleanString(row?.product_url ?? identity.productUrl ?? row?.original_url ?? row?.deployment_url ?? row?.upgrade_url, '');
+
+  return {
+    id: productId,
+    org_id: cleanString(row?.org_id, null),
+    name,
+    slug: productId,
+    url: canonicalUrl,
+    live_url: canonicalUrl,
+    original_url: cleanString(row?.original_url ?? identity.productUrl ?? row?.product_url, null),
+    description: cleanString(buildBrief.normalizedConcept ?? buildBrief.description, ''),
+    type: 'web',
+    status: row?.self_renewal_enabled === false ? 'draft' : 'active',
+    tags: [],
+    last_audit_at: latestScore.recordedAt ?? row?.updated_at ?? ssotRow?.updated_at ?? null,
+    last_audit_score: latestScore.score,
+    cost_to_date_usd: 0,
+    created_at: row?.created_at ?? null,
+    updated_at: row?.updated_at ?? ssotRow?.updated_at ?? null,
+    github_repo_url: row?.github_repo_url ?? null,
+    original_repo_url: row?.original_repo ?? null,
+    upgrade_repo_url: row?.upgrade_repo ?? row?.github_repo_url ?? null,
+    upgrade_url: row?.upgrade_url ?? null,
+    deployment_url: row?.deployment_url ?? row?.upgrade_url ?? null,
+    canonical_url: canonicalUrl,
+    upgrade_repo_status: row?.upgrade_repo_status ?? (row?.upgrade_repo || row?.github_repo_url ? 'provisioned' : null),
+    deployment_status: row?.deployment_status ?? (row?.deployment_url || row?.upgrade_url ? 'deployed' : null),
+    source: 'product_registry',
+  };
+}
+
+async function listProductRegistryPortfolio({ supabase, orgId, status, q, limit = 1000, offset = 0 } = {}) {
+  let registryQuery = supabase
+    .from('product_registry')
+    .select(PRODUCT_REGISTRY_SELECT, { count: 'exact' });
+  if (orgId) registryQuery = registryQuery.eq('org_id', orgId);
+  if (status) {
+    const enabled = status === 'active' || status === 'audited';
+    if (enabled || status === 'draft') registryQuery = registryQuery.eq('self_renewal_enabled', enabled);
+  }
+  registryQuery = registryQuery.order('updated_at', { ascending: false });
+  registryQuery = registryQuery.range(offset, offset + limit - 1);
+
+  const { data: registryRows, count, error } = await registryQuery;
+  if (error) throw error;
+  const rows = Array.isArray(registryRows) ? registryRows : [];
+  if (rows.length === 0) {
+    return {
+      items: [],
+      total: count || 0,
+      limit,
+      offset,
+      stats: { total: count || 0, source: 'product_registry' },
+    };
+  }
+
+  const productIds = rows.map((row) => row.product_id).filter(Boolean);
+  const { data: ssotRows, error: ssotError } = await supabase
+    .from('product_ssot')
+    .select('product_id,environment,identity_block,build_brief,governance_record,updated_at')
+    .in('product_id', productIds);
+  if (ssotError) throw ssotError;
+  const ssotByProduct = new Map((Array.isArray(ssotRows) ? ssotRows : [])
+    .filter((row) => row?.environment === 'prd' || !row?.environment)
+    .map((row) => [row.product_id, row]));
+  let items = rows.map((row) => mapProductRegistryRowToProduct(row, ssotByProduct.get(row.product_id)));
+  if (q) {
+    const needle = String(q).toLowerCase();
+    items = items.filter((item) =>
+      (item.name || '').toLowerCase().includes(needle)
+      || (item.slug || '').toLowerCase().includes(needle)
+      || (item.url || '').toLowerCase().includes(needle)
+      || (item.description || '').toLowerCase().includes(needle));
+  }
+
+  return {
+    items,
+    total: typeof count === 'number' ? count : items.length,
+    limit,
+    offset,
+    stats: {
+      total: items.length,
+      active: items.filter((item) => item.status === 'active').length,
+      audited: items.filter((item) => typeof item.last_audit_score === 'number').length,
+      archived: 0,
+      draft: items.filter((item) => item.status === 'draft').length,
+      totalCostUSD: 0,
+      source: 'product_registry',
+    },
+  };
+}
+
 export async function listProducts({ orgId, status, q, sort, limit, offset } = {}) {
   if (selectedBackend() === 'supabase') {
     const sb = getSupabase();
-    let query = sb.from('products').select('*', { count: 'exact' });
-    if (orgId) query = query.eq('org_id', orgId);
-    if (status) query = query.eq('status', status);
-    if (q) query = query.or(`name.ilike.%${q}%,url.ilike.%${q}%,description.ilike.%${q}%`);
-    if (sort) {
-      const desc = sort.startsWith('-');
-      const col = desc ? sort.slice(1) : sort;
-      query = query.order(col, { ascending: !desc });
-    } else {
-      query = query.order('updated_at', { ascending: false });
+    const pageLimit = limit || 1000;
+    const pageOffset = offset || 0;
+    if (!orgId || isUuidString(orgId)) {
+      let query = sb.from('products').select('*', { count: 'exact' });
+      if (orgId) query = query.eq('org_id', orgId);
+      if (status) query = query.eq('status', status);
+      if (q) query = query.or(`name.ilike.%${q}%,url.ilike.%${q}%,description.ilike.%${q}%`);
+      if (sort) {
+        const desc = sort.startsWith('-');
+        const col = desc ? sort.slice(1) : sort;
+        query = query.order(col, { ascending: !desc });
+      } else {
+        query = query.order('updated_at', { ascending: false });
+      }
+      query = query.range(pageOffset, pageOffset + pageLimit - 1);
+      const { data, count, error } = await query;
+      if (error) throw error;
+      if ((data || []).length > 0) {
+        return { items: data || [], total: count || 0, limit: pageLimit, offset: pageOffset };
+      }
     }
-    query = query.range(offset || 0, (offset || 0) + (limit || 1000) - 1);
-    const { data, count, error } = await query;
-    if (error) throw error;
-    return { items: data || [], total: count || 0, limit: limit || 1000, offset: offset || 0 };
+    return listProductRegistryPortfolio({ supabase: sb, orgId, status, q, limit: pageLimit, offset: pageOffset });
   }
 
   // Memory adapter
@@ -353,3 +539,10 @@ export async function healthcheck() {
   }
   return result;
 }
+
+export const __internals = Object.freeze({
+  isUuidString,
+  latestScoreFromProductSsot,
+  mapProductRegistryRowToProduct,
+  nameFromProductId,
+});
