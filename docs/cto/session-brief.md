@@ -27,6 +27,8 @@ Latest CTO update: the full-detail version of the final directive has been integ
 
 Latest review-lane update: CTO attempted direct PowerShell execution of the CD/CR reviewer tools for the SAIGE product-card branch. `claude.exe` and `codex.ps1` are installed, but external CLI review with private branch context was denied by tenant policy after the required escalation path. No CD/CR verdict was produced. Evidence: `docs/cto/review-lane-execution-status-20260615.md`. The safe path remains repo-based dispatch: CD and CR pull origin, read `docs/cto/cd-cr-active-review-dispatch-20260615.md`, and commit result files to `docs/cto/`.
 
+W04 decision packet prepared: `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. CTO recommends a narrow W04 waiver for `fix/portfolio-product-ssot-cards` only, because the branch is a small ProductSSOT-backed product-card UI/API read-boundary fix with CB2 `PASS-WITH-FINDINGS`, accepted nonblocking finding tracked, full preflight passed, and no scoring/governance/deploy/canonical/VERIFIED movement. Universal Delivery Workspace remains gated on CD/CR or separate explicit waiver.
+
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
 
 ## Current Production
@@ -248,7 +250,7 @@ Path 4 URL selection:
 
 ## Next Starting Point
 
-1. Collect CD and CR verdicts for `fix/portfolio-product-ssot-cards`; CB2 is `PASS-WITH-FINDINGS` at `291488e`, and the branch is currently pushed at `a11db9737a0f4afcc74b9ad96c75a1ccfc18781f`. Merge only after CD/CR clearance or explicit W04 waiver, then promote production and dispatch CT2.
+1. W04 decides `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. If W04 waives CD/CR for `fix/portfolio-product-ssot-cards`, sync the branch with current main if needed, run the delete-risk guard, merge, preflight, push, promote production, and dispatch CT2. If W04 does not waive, continue collecting CD/CR verdicts.
 2. Collect CD and CR verdicts for `feature/universal-delivery-workspace` at `e115b19e8f6e36dc676eee30f00940053bdac019`; CB2 re-review 2 is PASS.
 3. Before merging either runtime branch, do a final current-main delete-risk check so it will not remove CTO coordination artifacts.
 4. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
