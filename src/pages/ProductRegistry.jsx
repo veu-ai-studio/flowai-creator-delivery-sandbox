@@ -149,8 +149,8 @@ export default function ProductRegistry() {
   };
 
   const productUrl = (product) => product?.live_url || product?.url || product?.base44_url || '';
-  const productScore = (product, registryRow) => {
-    const score = registryRow?.last_score ?? product?.last_score ?? product?.last_audit_score;
+  const productScore = (product) => {
+    const score = product?.last_score ?? product?.last_audit_score;
     if (typeof score === 'number' && score <= 10) return score;
     return normalizeScore(score);
   };
@@ -252,7 +252,7 @@ export default function ProductRegistry() {
                   const reg = registryMap[p.name];
                   const cleared = cl?.overall_status === 'cleared';
                   const readiness = productUpgradeReadiness(p, reg);
-                  const score = productScore(p, reg);
+                  const score = productScore(p);
                   return (
                     <tr
                       key={p.slug}

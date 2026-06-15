@@ -30,8 +30,11 @@ describe('portfolio upgrade readiness UI', () => {
     expect(registrySrc).toContain('function productFromApiRow(product = {})');
     expect(registrySrc).toContain('Array.isArray(apiProducts?.items) ? apiProducts.items : asArray(apiProducts)');
     expect(registrySrc).toContain('setProducts(apiProductRows.map(productFromApiRow))');
-    expect(registrySrc).toContain('const productScore = (product, registryRow) => {');
-    expect(registrySrc).toContain('const score = productScore(p, reg)');
+    expect(registrySrc).toContain('const productScore = (product) => {');
+    expect(registrySrc).toContain('const score = product?.last_score ?? product?.last_audit_score');
+    expect(registrySrc).toContain('const score = productScore(p)');
+    expect(registrySrc).not.toContain('registryRow?.last_score');
+    expect(registrySrc).not.toContain('productScore(p, reg)');
     expect(registrySrc).toContain('{score}/10');
     expect(registrySrc).not.toContain('const VEU_SEED');
     expect(registrySrc).not.toContain('https://saigeplatform.com');
