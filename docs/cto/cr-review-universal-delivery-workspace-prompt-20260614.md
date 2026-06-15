@@ -9,12 +9,12 @@ STATUS: DISPATCHED
 ## Branch Under Review
 
 - Branch: `feature/universal-delivery-workspace`
-- Review HEAD: `141c0431c7e86816091dafed481651e5b63b4d3c`
-- Review base commit: `7a13592312937b669d9422af0c26adf7a9a1827b`
+- Review HEAD: `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`
+- Review base commit: `f9c570601febae842d02e12faea0e5fce4dcf6be`
 - Runtime patch commit: `0dd2177f7a397dc7782c10a9e9c148b3314b8fb5`
 - Pre-runtime diagnosis commit: `1290110`
 
-CB merged current `origin/main` into the branch before review. CTO confirmed the diff against `origin/main` no longer deletes newer CT2/SAIGE evidence files.
+CB merged current `origin/main` into the branch before review. CTO confirmed the diff against current `origin/main` contains only CB diagnosis/evidence plus runtime/test files and no longer deletes newer CT2/SAIGE evidence files or review packets.
 
 ## Required Reading
 
@@ -27,7 +27,7 @@ CB merged current `origin/main` into the branch before review. CTO confirmed the
 - `docs/cto/cb-universal-delivery-workspace-implementation-evidence-20260614.md`
 - `docs/cto/cb-universal-delivery-workspace-sync-request-20260614.md`
 
-## Files Changed Against Review Base `7a13592312937b669d9422af0c26adf7a9a1827b`
+## Files Changed Against Review Base `f9c570601febae842d02e12faea0e5fce4dcf6be`
 
 - `docs/cto/cb-universal-delivery-workspace-diagnosis-20260614.md`
 - `docs/cto/cb-universal-delivery-workspace-implementation-evidence-20260614.md`
@@ -64,7 +64,7 @@ Run at minimum:
 
 - `npx vitest run tests/provisioning/upgradeTargetProvisioner.test.js tests/freshBuild/freshBuildDeploymentAdapter.test.js tests/freshBuild/freshBuildOrchestrator.test.js`
 - `npm run preflight`
-- `git diff --name-status 7a13592312937b669d9422af0c26adf7a9a1827b..origin/feature/universal-delivery-workspace`
+- `git diff --name-status f9c570601febae842d02e12faea0e5fce4dcf6be..origin/feature/universal-delivery-workspace`
 
 Confirm the branch diff excludes:
 

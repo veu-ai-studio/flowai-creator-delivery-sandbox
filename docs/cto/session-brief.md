@@ -23,13 +23,17 @@ W04 then identified the larger infrastructure gap: FlowAI cannot require preconf
 
 Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
 
+Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md`. The SAIGE product-card score branch now has CB2 `PASS-WITH-FINDINGS` at result commit `291488e`; CD and CR remain pending before merge unless W04 waives them. Universal Delivery Workspace has CB2 `BLOCK` because the branch is stale against current `origin/main` and would delete current review/gate evidence docs; CB must resync the same branch before re-review.
+
+Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
+
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
 - Last production identity verified after final directive merge/promotion: `d6b92d54e1693fd18f37b5549df9d68285204449`.
 - Current production deployment: `https://flowai-22fb3bmld-veu-ai-studio.vercel.app`.
 - `/api/health` reports branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
-- `origin/main` is pushed to `7492879`; production `/api/health` reports deployed runtime commit `d6b92d54e1693fd18f37b5549df9d68285204449`. The delta is docs/evidence coordination commits, not a newer runtime fix.
+- Reviewed `origin/main` baseline before this update: `7aadc1481a9f423bf01b094e3c4781c87b36fd1d`; production `/api/health` reports deployed runtime commit `d6b92d54e1693fd18f37b5549df9d68285204449`. The delta is docs/evidence coordination commits, not a newer runtime fix.
 
 ## Completed Evidence
 
@@ -141,6 +145,17 @@ CTO visual follow-up on the three missing SAIGE checks:
 - BLOCK: SAIGE product card with a numeric score was not visible on `/portfolio` or `/dashboard`; both rendered as empty/no registered products in the observed browser context.
 - Additional browser diagnostic: page error `g.filter is not a function` was observed, matching the known dashboard regression family.
 
+SAIGE product-card score patch:
+
+- Branch: `fix/portfolio-product-ssot-cards`.
+- Current pushed head: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`.
+- Purpose: make ProductSSOT-backed product-card scores visible on `/portfolio`, `/dashboard`, and `/products` without fabricated rows or scores.
+- Audit follow-up: raw `/api/products.items` rows are normalized before UI use and hardcoded `VEU_SEED` fallback was removed.
+- Full preflight after follow-up patch: PASS; lint, build, 237 test files / 3741 tests, lane discipline, SSOT traceability, and matrix generation all passed.
+- Evidence, CD prompt, CR prompt, CT2 post-deploy dispatch, and CB2 branch-audit dispatch live on branch `fix/portfolio-product-ssot-cards` at `cb03a20`; they are not on `main` until that branch is merge-cleared.
+- CB2 result: `PASS-WITH-FINDINGS`, pushed on branch commit `291488e`; nonblocking finding is the known `/api/products` public/no-org read surface while `AUTH_REQUIRED=false`.
+- Merge status: not merge-cleared yet; requires CD and CR clearance or explicit W04 waiver. The branch is synced with `origin/main` and full preflight passed after the sync.
+
 Universal input and delivery architecture:
 
 - Branch: `docs/cto-auto-repo-provisioning-plan`.
@@ -162,7 +177,10 @@ Universal input and delivery architecture:
   - `docs/cto/cd-review-universal-delivery-workspace-prompt-20260614.md`
   - `docs/cto/cr-review-universal-delivery-workspace-prompt-20260614.md`
   - `docs/cto/cb2-review-universal-delivery-workspace-dispatch-20260614.md`
-- Follow-up correction: the review packets now use fixed review base commit `7a13592312937b669d9422af0c26adf7a9a1827b` instead of the moving name `origin/main`, because `main` received docs-only review-packet commits after CB synced the branch. CB has also been asked to merge latest `origin/main` again so raw branch diffs stay easy for reviewers.
+- Final review-sync correction: CB merged latest `origin/main` through `f9c5706` into `feature/universal-delivery-workspace` and pushed review head `6e1372a855d23cb21055afc98752cd3913cf294c`. CTO then added a test-only handler coverage commit, producing current review head `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`. Review packets now target base `f9c570601febae842d02e12faea0e5fce4dcf6be` and head `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`.
+- CTO focused review addendum: PASS-WITH-FINDINGS pending CD/CR/CB2. Focused tests passed locally for 4 files / 53 tests. Evidence: `docs/cto/cto-review-universal-delivery-workspace-20260614.md`.
+- CTO fallback gate check: full preflight passed locally on Universal Delivery head `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3` with 236 files / 3741 tests passed / 3 skipped. This does not replace formal CD/CR/CB2 unless W04 accepts it. Evidence: `docs/cto/universal-delivery-review-gate-status-20260614.md`.
+- CB2 review result: `BLOCK`. Evidence: `docs/cto/cb2-review-universal-delivery-workspace-result-20260614.md`. Blocker is stale branch state against current `origin/main`, with deletion of current Universal Delivery review/gate evidence docs and rollback of review packet head/base plus handler SSE test gate.
 
 ## Current Packets
 
@@ -177,6 +195,11 @@ Universal input and delivery architecture:
 - Universal Delivery Workspace CD review draft: `docs/cto/cd-review-universal-delivery-workspace-prompt-draft-20260614.md`.
 - Universal Delivery Workspace CR review draft: `docs/cto/cr-review-universal-delivery-workspace-prompt-draft-20260614.md`.
 - Universal Delivery Workspace CT2 proof draft: `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`.
+- Universal Delivery Workspace CTO review note: `docs/cto/cto-review-universal-delivery-workspace-20260614.md`.
+- Universal Delivery Workspace gate status: `docs/cto/universal-delivery-review-gate-status-20260614.md`.
+- Universal Delivery Workspace CB2 result: `docs/cto/cb2-review-universal-delivery-workspace-result-20260614.md`.
+- Universal Delivery Workspace CB resync dispatch: `docs/cto/cb-universal-delivery-workspace-resync-dispatch-20260615.md`.
+- Active review gates: `docs/cto/active-review-gates-20260614.md`.
 
 W04/CEO authorized applying the batch VERIFIED packet. CTO applied the narrow exact-row set in `src/lib/orchestratorFramework/matrixArtifact.json`: `10 VERIFIED`, `0` missing evidence fields. Evidence note: `docs/cto/verified-promotion-applied-20260614.md`.
 
@@ -200,7 +223,7 @@ Path 4 URL selection:
 - FlowAI does not yet have a universal delivery workspace that creates a FlowAI-owned GitHub repo, writes code, creates/imports a Vercel project, deploys, returns a URL, and binds ProductSSOT evidence for arbitrary user inputs.
 - Path 2 Production has no CT2-confirmed deployed URL.
 - Path 2 RelTwin is no longer blocked by the prior GitHub App PEM signing failure. It is now honestly blocked before branch creation by unsafe same-repo upgrade-target resolution.
-- Type 2 description-only cannot enter the active construction route without a URL.
+- Type 2 description-only cannot enter the deployed production construction route without a URL. The Universal Delivery Workspace branch adds this path pending review, merge, deploy, and CT2 proof.
 - Type 3 multi-URL synthesis is not wired into the active Flow Hub forge as a deployed URL path.
 - Full browser acceptance is not proven. CT2 reported one SAIGE background run completed all 8 user-facing steps and persisted ProductSSOT, but three visual criteria remain unverified.
 - SAIGE visual acceptance still blocks on product-card score visibility. CTO closed two of the three visual checks, but `/portfolio` and `/dashboard` did not show a SAIGE numeric score card in the observed production context.
@@ -210,12 +233,13 @@ Path 4 URL selection:
 
 ## Next Starting Point
 
-1. Collect CD, CR, and CB2 verdicts for `feature/universal-delivery-workspace` at `141c043`.
-2. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
-3. If Universal Delivery passes review, merge, promote production, and dispatch CT2 for a Type 2 description-only Fresh Build URL proof.
-4. Resolve whether SAIGE product-card score visibility is a data-path bug or an authenticated/org-scoped acceptance-context requirement.
-5. Use the Universal Delivery Workspace to unblock Path 2 Production URL creation without relying on manually preconfigured upgrade repos.
-6. Run or dispatch the Path 4 synthesis proof only when the active run target supports multi-URL synthesis honestly.
+1. Collect CD and CR verdicts for `fix/portfolio-product-ssot-cards`; CB2 is `PASS-WITH-FINDINGS` at `291488e`. Merge only after CD/CR clearance or explicit W04 waiver, then promote production and dispatch CT2.
+2. Dispatch CB to resync `feature/universal-delivery-workspace` with current `origin/main`, preserve current review/gate evidence docs and packet head/base, rerun focused tests plus full preflight, and request CB2 re-review.
+3. After the Universal Delivery resync clears CB2, collect CD and CR verdicts; CTO fallback full-preflight evidence is available but does not clear the gate by itself.
+4. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
+5. If Universal Delivery passes review, merge, promote production, and dispatch CT2 for a Type 2 description-only Fresh Build URL proof.
+6. Use the Universal Delivery Workspace to unblock Path 2 Production URL creation without relying on manually preconfigured upgrade repos.
+7. Run or dispatch the Path 4 synthesis proof only when the active run target supports multi-URL synthesis honestly.
 
 Victor action required:
 
