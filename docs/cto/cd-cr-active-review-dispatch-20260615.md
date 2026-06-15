@@ -16,7 +16,7 @@ Do not merge, promote production, or move VERIFIED. Return `PASS`, `PASS-WITH-FI
 ## Gate 1 - SAIGE Product Card Score Visibility
 
 - Branch: `fix/portfolio-product-ssot-cards`
-- Latest known branch head before this dispatch: `7b3167491d3a27e419ea8052b97e1a25cf9d2b9e`
+- Latest known branch head after CTO final-directive status refresh: `c78727b114ae2f00abcc67006b5fd1f467c7bf9f`
 - Runtime review head before docs-only sync: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`
 - CB2 verdict: `PASS-WITH-FINDINGS`
 - CB2 result: `docs/cto/cb2-review-saige-product-card-score-result-20260614.md`
@@ -41,7 +41,7 @@ Expected result files:
 ## Gate 2 - Universal Delivery Workspace
 
 - Branch: `feature/universal-delivery-workspace`
-- Latest known branch head before this dispatch: `99f918ef3e3b21a6332b588b0aa26f794a42c929`
+- Latest known branch head after CTO final-directive status refresh: `80a7d52aa994591476c5f2245f4d8adec347ed42`
 - Runtime review head before docs-only sync: `c19a8c4e89bb6cdf99d675e8c61d40997a55d7b3`
 - Review base recorded in original packets: `f9c570601febae842d02e12faea0e5fce4dcf6be`
 - CB2 re-review 2 verdict: `PASS`

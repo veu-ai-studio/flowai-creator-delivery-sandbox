@@ -4,12 +4,14 @@ FROM: CTO
 TO: W04 / Victor Udo, FNSE, PhD - CEO
 DATE: 2026-06-15 UTC
 Branch: `fix/portfolio-product-ssot-cards`
-Current branch head: `a11db9737a0f4afcc74b9ad96c75a1ccfc18781f`
-Current main when packet written: `a0741b10b53c0119cc5691392158f4572ea43051`
+Current branch head: `c78727b114ae2f00abcc67006b5fd1f467c7bf9f`
+Current main when refreshed: `80fddc556f393ec5da7786ec6f90dff7d4c00964`
 Status: ready for W04 decision
 Runtime work: built, pushed, not merged
 VERIFIED movement: no
 Canonical docs: not edited
+
+Refresh note: this packet was updated after the CTO continuation check so W04 can clear the live remote branch head, not an older docs-sync SHA. The scope and recommendation are unchanged.
 
 ## Decision Needed
 

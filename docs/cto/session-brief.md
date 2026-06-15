@@ -33,6 +33,8 @@ Post-waiver execution packet prepared: `docs/cto/product-card-post-waiver-execut
 
 Continuation check after rereading the attached W04/CEO final directive: `origin/main` is clean at `24f68dde661ff4d1290a670d613e1570ddd6f3a9`. The final directive is already integrated in `docs/cto/current-directive.md`; the authorized VERIFIED batch remains applied at `10 VERIFIED` rows with `0` missing evidence fields; `fix/path2-production-token-upgrade-target` is already merged; and Path 4 URL selection is already documented in `docs/cto/path4-three-url-synthesis-selection-20260614.md`. Current active runtime heads are `fix/portfolio-product-ssot-cards` at `c78727b114ae2f00abcc67006b5fd1f467c7bf9f` and `feature/universal-delivery-workspace` at `80a7d52aa994591476c5f2245f4d8adec347ed42`. Both pass the current-main `docs/cto` delete-risk guard. No CD/CR result files or W04 product-card waiver clearance were present on `main` or either branch at this check, so no runtime merge or production promotion was performed.
 
+Follow-up coordination refresh: the CD/CR dispatch board, active review gate tracker, product-card waiver decision packet, and product-card post-waiver runbook now name the current live branch heads above so W04/CD/CR do not clear older docs-sync SHAs.
+
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
 
 ## Current Production
