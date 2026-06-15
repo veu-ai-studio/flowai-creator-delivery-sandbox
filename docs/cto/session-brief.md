@@ -43,15 +43,19 @@ Product-card blocker patch: `fix/portfolio-product-ssot-cards` is now patched an
 
 Product-card re-review result: CD `PASS`; CR `PASS` for the score-source blocker patch. Result files: `docs/cto/cd-rereview-saige-product-card-score-source-result-20260615.md` and `docs/cto/cr-rereview-saige-product-card-score-source-result-20260615.md`. Product-card is now review-cleared pending final synced-branch guard, final preflight, merge to `main`, production promotion, and CT2 post-deploy visual acceptance.
 
-Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
+Product-card merge and promotion result: merged to `main` at `829ea53d9933c09a003897d9b94a7e417ea46cd0`, pushed, and promoted to production deployment `https://flowai-c8un0m1m4-veu-ai-studio.vercel.app`. `https://flowai-dun.vercel.app/api/version` and `/api/health` both report commit `829ea53d9933` on branch `main`, health `ready`, `clerkReady:true`, `githubAppReady:true`, and `inngestReady:true`. Final pre-push preflight passed: `237` test files, `3741` passed, `3` skipped. Evidence: `docs/cto/product-card-postdeploy-promotion-result-20260615.md`. CT2 has been dispatched for postdeploy visual acceptance using `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`.
+
+CT2 postdeploy product-card result: `BLOCK`. Production identity passed at commit `829ea53d9933c09a003897d9b94a7e417ea46cd0`, but `/api/products` returns HTTP 500: `column product_registry.original_repo does not exist`. Because that endpoint fails, SAIGE/ProductSSOT-backed rows and numeric product-card scores do not render on `/portfolio`, `/dashboard`, or `/products`. Prior visual checks still pass with findings: `/flow-hub/production` shows all 8 forge steps and `/flowai` accepts `https://saigeplatform.com`, but `/dashboard` still reports `g.filter is not a function`. Evidence: `docs/cto/ct2-saige-product-card-score-postdeploy-result-20260615.md`.
+
+Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `1`: Universal Delivery Workspace. The SAIGE product-card branch is out of CD/CR review and is now waiting on CT2 browser PASS/BLOCK.
 
 ## Current Production
 
 - FlowAI production: `https://flowai-dun.vercel.app`.
-- Last production identity verified after final directive merge/promotion: `d6b92d54e1693fd18f37b5549df9d68285204449`.
-- Current production deployment: `https://flowai-22fb3bmld-veu-ai-studio.vercel.app`.
+- Last production identity verified after product-card merge/promotion: `829ea53d9933c09a003897d9b94a7e417ea46cd0`.
+- Current production deployment: `https://flowai-c8un0m1m4-veu-ai-studio.vercel.app`.
 - `/api/health` reports branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
-- Reviewed `origin/main` baseline before this update: `7aadc1481a9f423bf01b094e3c4781c87b36fd1d`; production `/api/health` reports deployed runtime commit `d6b92d54e1693fd18f37b5549df9d68285204449`. The delta is docs/evidence coordination commits, not a newer runtime fix.
+- Production `/api/health` reports deployed runtime commit `829ea53d9933c09a003897d9b94a7e417ea46cd0` on branch `main`.
 
 ## Completed Evidence
 

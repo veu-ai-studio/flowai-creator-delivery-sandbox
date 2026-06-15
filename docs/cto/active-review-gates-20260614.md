@@ -8,9 +8,9 @@ Canonical authority remains `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.
 
 No more than two runtime branches may be in review at the same time.
 
-Current active review count: `2`.
+Current active review count: `1`.
 
-Do not dispatch another runtime build branch until one of the branches below is merged, blocked, withdrawn, or explicitly waived by W04/CEO.
+The SAIGE product-card branch is merged and deployed. Universal Delivery Workspace is the only runtime branch still in review.
 
 ## Gate 1 - SAIGE Product Card Score Visibility
 
@@ -40,7 +40,13 @@ Do not dispatch another runtime build branch until one of the branches below is 
   - `docs/cto/cb2-review-saige-product-card-score-dispatch-20260614.md`
   - `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`
 - Current CD/CR dispatch board: `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
-- Merge path after final branch sync guard: merge to `main`, promote production, confirm `/api/health` commit identity, dispatch CT2 post-deploy visual acceptance.
+- Merge result: merged to `main` at `829ea53d9933c09a003897d9b94a7e417ea46cd0`.
+- Production result: promoted to `https://flowai-c8un0m1m4-veu-ai-studio.vercel.app`; `https://flowai-dun.vercel.app/api/version` and `/api/health` both report commit `829ea53d9933` on branch `main`.
+- CT2 status: `BLOCK`.
+- CT2 result: `docs/cto/ct2-saige-product-card-score-postdeploy-result-20260615.md`.
+- CT2 blocker: production `/api/products` returns HTTP 500 with `column product_registry.original_repo does not exist`; product cards cannot render ProductSSOT-backed rows or numeric score until the registry query tolerates unapplied optional delivery columns or the production schema is updated.
+- Evidence: `docs/cto/product-card-postdeploy-promotion-result-20260615.md`.
+- Gate status: out of CD/CR review, deployed, CT2 BLOCK. Requires a focused patch before CT2 can rerun. No VERIFIED movement authorized by this visual rerun alone.
 
 ## Gate 2 - Universal Delivery Workspace
 
