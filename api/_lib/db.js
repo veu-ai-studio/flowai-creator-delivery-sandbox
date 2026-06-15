@@ -20,7 +20,7 @@ import { append as appendAudit, readLog as readAuditLog } from './auditlog.js';
 import { recordCost as recordCostMem, readLog as readCostLog, summarise as summariseCost } from './cost.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const PRODUCT_REGISTRY_SELECT = [
+const PRODUCT_REGISTRY_BASE_SELECT = [
   'product_id',
   'org_id',
   'github_repo_url',
@@ -31,6 +31,9 @@ const PRODUCT_REGISTRY_SELECT = [
   'self_renewal_branch',
   'created_at',
   'updated_at',
+];
+
+const PRODUCT_REGISTRY_OPTIONAL_DELIVERY_SELECT = [
   'original_repo',
   'original_url',
   'original_status',
@@ -41,7 +44,14 @@ const PRODUCT_REGISTRY_SELECT = [
   'deployment_url',
   'deployment_status',
   'upgrade_repo_status',
+];
+
+const PRODUCT_REGISTRY_SELECT = [
+  ...PRODUCT_REGISTRY_BASE_SELECT,
+  ...PRODUCT_REGISTRY_OPTIONAL_DELIVERY_SELECT,
 ].join(',');
+
+const PRODUCT_REGISTRY_BASE_SELECT_STRING = PRODUCT_REGISTRY_BASE_SELECT.join(',');
 
 export function selectedBackend() {
   const explicit = process.env.DB_BACKEND;
@@ -114,6 +124,27 @@ function latestScoreFromProductSsot(row) {
   return { score: null, recordedAt: null };
 }
 
+function isMissingProductRegistryColumnError(error) {
+  if (!error) return false;
+  const message = String(error.message ?? error.details ?? '');
+  return error.code === '42703'
+    && /column\s+product_registry\.[a-z0-9_]+\s+does\s+not\s+exist/i.test(message);
+}
+
+function buildProductRegistryPortfolioQuery({ supabase, orgId, status, limit, offset }, selectColumns) {
+  let registryQuery = supabase
+    .from('product_registry')
+    .select(selectColumns, { count: 'exact' });
+  if (orgId) registryQuery = registryQuery.eq('org_id', orgId);
+  if (status) {
+    const enabled = status === 'active' || status === 'audited';
+    if (enabled || status === 'draft') registryQuery = registryQuery.eq('self_renewal_enabled', enabled);
+  }
+  return registryQuery
+    .order('updated_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+}
+
 function mapProductRegistryRowToProduct(row, ssotRow = null) {
   const identity = ssotRow?.identity_block && typeof ssotRow.identity_block === 'object'
     ? ssotRow.identity_block
@@ -156,18 +187,18 @@ function mapProductRegistryRowToProduct(row, ssotRow = null) {
 }
 
 async function listProductRegistryPortfolio({ supabase, orgId, status, q, limit = 1000, offset = 0 } = {}) {
-  let registryQuery = supabase
-    .from('product_registry')
-    .select(PRODUCT_REGISTRY_SELECT, { count: 'exact' });
-  if (orgId) registryQuery = registryQuery.eq('org_id', orgId);
-  if (status) {
-    const enabled = status === 'active' || status === 'audited';
-    if (enabled || status === 'draft') registryQuery = registryQuery.eq('self_renewal_enabled', enabled);
+  let deliveryColumnsAvailable = true;
+  let { data: registryRows, count, error } = await buildProductRegistryPortfolioQuery(
+    { supabase, orgId, status, limit, offset },
+    PRODUCT_REGISTRY_SELECT,
+  );
+  if (isMissingProductRegistryColumnError(error)) {
+    deliveryColumnsAvailable = false;
+    ({ data: registryRows, count, error } = await buildProductRegistryPortfolioQuery(
+      { supabase, orgId, status, limit, offset },
+      PRODUCT_REGISTRY_BASE_SELECT_STRING,
+    ));
   }
-  registryQuery = registryQuery.order('updated_at', { ascending: false });
-  registryQuery = registryQuery.range(offset, offset + limit - 1);
-
-  const { data: registryRows, count, error } = await registryQuery;
   if (error) throw error;
   const rows = Array.isArray(registryRows) ? registryRows : [];
   if (rows.length === 0) {
@@ -176,7 +207,7 @@ async function listProductRegistryPortfolio({ supabase, orgId, status, q, limit 
       total: count || 0,
       limit,
       offset,
-      stats: { total: count || 0, source: 'product_registry' },
+      stats: { total: count || 0, source: 'product_registry', deliveryColumnsAvailable },
     };
   }
 
@@ -212,6 +243,7 @@ async function listProductRegistryPortfolio({ supabase, orgId, status, q, limit 
       draft: items.filter((item) => item.status === 'draft').length,
       totalCostUSD: 0,
       source: 'product_registry',
+      deliveryColumnsAvailable,
     },
   };
 }
@@ -542,7 +574,9 @@ export async function healthcheck() {
 
 export const __internals = Object.freeze({
   isUuidString,
+  isMissingProductRegistryColumnError,
   latestScoreFromProductSsot,
+  listProductRegistryPortfolio,
   mapProductRegistryRowToProduct,
   nameFromProductId,
 });
