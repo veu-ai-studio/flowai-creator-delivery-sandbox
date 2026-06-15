@@ -48,7 +48,9 @@ The SAIGE product-card branch is merged and deployed. Universal Delivery Workspa
 - Evidence: `docs/cto/product-card-postdeploy-promotion-result-20260615.md`.
 - Hotfix branch: `fix/products-registry-optional-columns`.
 - Hotfix review: CD `PASS-WITH-FINDINGS`; CR `PASS-WITH-FINDINGS`; no blocking findings. Result: `docs/cto/cd-cr-review-products-registry-optional-columns-hotfix-result-20260615.md`.
-- Gate status: local hotfix merge pending final main preflight, push, production promotion, and CT2 rerun. No VERIFIED movement authorized by this visual rerun alone.
+- Hotfix production: `55a53f3cd3dd0ffae25b41eaa6fc5c3e5f12bf27` on `https://flowai-8mwbto1zq-veu-ai-studio.vercel.app`.
+- Hotfix API verification: `/api/products` returns HTTP `200` JSON, includes SAIGE with `last_audit_score:98`, and reports `stats.deliveryColumnsAvailable:false`.
+- Gate status: waiting on CT2 post-hotfix visual rerun. No VERIFIED movement authorized by this visual rerun alone.
 
 ## Gate 2 - Universal Delivery Workspace
 

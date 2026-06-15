@@ -49,6 +49,8 @@ CT2 postdeploy product-card result: `BLOCK`. Production identity passed at commi
 
 Products registry optional-column hotfix: branch `fix/products-registry-optional-columns` was built and merged locally. Runtime commit `6ba711d` makes `/api/products` retry `product_registry` with base columns when optional delivery columns such as `original_repo` are absent in production schema. Focused tests passed (`4` files / `25` tests) and full preflight passed (`237` files / `3743` tests / `3` skipped). CD and CR returned `PASS-WITH-FINDINGS` with only metadata/doc findings; no code blockers. Evidence: `docs/cto/products-registry-optional-columns-hotfix-evidence-20260615.md` and `docs/cto/cd-cr-review-products-registry-optional-columns-hotfix-result-20260615.md`. Pending: final main preflight, push, production promotion, and CT2 rerun.
 
+Hotfix postdeploy result: production is now `55a53f3cd3dd0ffae25b41eaa6fc5c3e5f12bf27` on deployment `https://flowai-8mwbto1zq-veu-ai-studio.vercel.app`. `/api/version` and `/api/health` confirm branch `main`, health `ready`, `clerkReady:true`, `githubAppReady:true`, and `inngestReady:true`. `/api/products` now returns HTTP `200` JSON with `16` items; the SAIGE row is present with `last_audit_score:98`; `stats.deliveryColumnsAvailable:false` confirms the fallback path is active against the current production schema. Evidence: `docs/cto/products-registry-optional-columns-hotfix-postdeploy-result-20260615.md`. CT2 has been dispatched for the visual rerun.
+
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `1`: Universal Delivery Workspace. The SAIGE product-card branch is out of CD/CR review and is now waiting on CT2 browser PASS/BLOCK.
 
 ## Current Production
