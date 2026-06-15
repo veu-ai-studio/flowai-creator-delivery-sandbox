@@ -23,7 +23,7 @@ W04 then identified the larger infrastructure gap: FlowAI cannot require preconf
 
 Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
 
-Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md`. The SAIGE product-card score branch now has CB2 `PASS-WITH-FINDINGS`, was docs-synced to `origin/main`, passed full preflight, and is pushed at `7b3167491d3a27e419ea8052b97e1a25cf9d2b9e`; CD and CR remain pending before merge unless W04 waives them. Universal Delivery Workspace is now pushed at `99f918ef3e3b21a6332b588b0aa26f794a42c929`; CB2 re-review 2 returned `PASS`, so that gate now waits on CD and CR.
+Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md`. The SAIGE product-card score branch now has CB2 `PASS-WITH-FINDINGS`, was docs-synced to `origin/main`, passed full preflight, and is pushed at `7b3167491d3a27e419ea8052b97e1a25cf9d2b9e`; CD and CR remain pending before merge unless W04 waives them. Universal Delivery Workspace is now pushed at `99f918ef3e3b21a6332b588b0aa26f794a42c929`; CB2 re-review 2 returned `PASS`, so that gate now waits on CD and CR. Current CD/CR review instructions are centralized in `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
 
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
 
@@ -210,6 +210,7 @@ Universal input and delivery architecture:
 - Universal Delivery Workspace CB2 re-review dispatch: `docs/cto/cb2-review-universal-delivery-workspace-rereview-dispatch-20260615.md`.
 - Universal Delivery Workspace CB2 re-review result: `docs/cto/cb2-review-universal-delivery-workspace-rereview-result-20260615.md`.
 - Universal Delivery Workspace CB2 re-review 2 result: `docs/cto/cb2-review-universal-delivery-workspace-rereview2-result-20260615.md`.
+- CD/CR active review dispatch board: `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
 - Active review gates: `docs/cto/active-review-gates-20260614.md`.
 
 W04/CEO authorized applying the batch VERIFIED packet. CTO applied the narrow exact-row set in `src/lib/orchestratorFramework/matrixArtifact.json`: `10 VERIFIED`, `0` missing evidence fields. Evidence note: `docs/cto/verified-promotion-applied-20260614.md`.

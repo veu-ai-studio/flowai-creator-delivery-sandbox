@@ -28,6 +28,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
   - `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`
   - `docs/cto/cb2-review-saige-product-card-score-dispatch-20260614.md`
   - `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`
+- Current CD/CR dispatch board: `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
 - Merge path after clearance: merge to `main`, promote production, confirm `/api/health` commit identity, dispatch CT2 post-deploy visual acceptance.
 
 ## Gate 2 - Universal Delivery Workspace
@@ -54,6 +55,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
   - `docs/cto/cr-review-universal-delivery-workspace-prompt-20260614.md`
   - `docs/cto/cb2-review-universal-delivery-workspace-dispatch-20260614.md`
   - `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`
+- Current CD/CR dispatch board: `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
 - Merge path after resync and clearance: merge to `main`, promote production, confirm `/api/health` commit identity, dispatch CT2 Type 2 description-only Fresh Build proof.
 
 ## Explicit Non-Actions
