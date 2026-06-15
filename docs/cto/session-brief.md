@@ -29,6 +29,8 @@ Latest review-lane update: CTO attempted direct PowerShell execution of the CD/C
 
 W04 decision packet prepared: `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. CTO recommends a narrow W04 waiver for `fix/portfolio-product-ssot-cards` only, because the branch is a small ProductSSOT-backed product-card UI/API read-boundary fix with CB2 `PASS-WITH-FINDINGS`, accepted nonblocking finding tracked, full preflight passed, and no scoring/governance/deploy/canonical/VERIFIED movement. Universal Delivery Workspace remains gated on CD/CR or separate explicit waiver.
 
+Post-waiver execution packet prepared: `docs/cto/product-card-post-waiver-execution-runbook-20260615.md`. It contains the exact delete-risk guard, merge/preflight/push sequence, Vercel promotion shape, production identity checks, and CT2 dispatch path for the product-card branch if W04 waives CD/CR.
+
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
 
 ## Current Production
@@ -252,7 +254,7 @@ Path 4 URL selection:
 
 ## Next Starting Point
 
-1. W04 decides `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. If W04 waives CD/CR for `fix/portfolio-product-ssot-cards`, the branch is already synced with current main at `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece`; rerun the delete-risk guard, merge, preflight, push, promote production, and dispatch CT2. If W04 does not waive, continue collecting CD/CR verdicts.
+1. W04 decides `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. If W04 waives CD/CR for `fix/portfolio-product-ssot-cards`, follow `docs/cto/product-card-post-waiver-execution-runbook-20260615.md`. If W04 does not waive, continue collecting CD/CR verdicts.
 2. Collect CD and CR verdicts for `feature/universal-delivery-workspace` at `8fe413f142b06bf8d2b9669223506b12519286db`; CB2 re-review 2 is PASS.
 3. Before merging either runtime branch, do a final current-main delete-risk check so it will not remove CTO coordination artifacts.
 4. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.

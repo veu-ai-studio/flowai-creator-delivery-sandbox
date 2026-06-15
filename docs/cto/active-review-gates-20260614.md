@@ -26,6 +26,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 - Latest docs-sync evidence: PASS on branch head `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece` after merging current `origin/main`; focused product-card tests PASS, `4` files / `23` tests; full preflight PASS, `237` test files / `3741` tests passed / `3` skipped; delete-risk guard empty; no package, runtime, test, canonical, or matrix diffs from the sync; timestamp-only `matrixArtifact.json` churn restored.
 - Direct PowerShell reviewer attempt: no verdict produced. `claude.exe` and `codex.ps1` are present, but external CLI review with private branch context was denied by tenant policy. Evidence: `docs/cto/review-lane-execution-status-20260615.md`.
 - W04 waiver decision packet prepared: `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. CTO recommends a narrow waiver for this product-card branch only; Universal Delivery Workspace remains separately gated.
+- Post-waiver runbook prepared: `docs/cto/product-card-post-waiver-execution-runbook-20260615.md`.
 - Review packets on branch:
   - `docs/cto/cd-review-saige-product-card-score-prompt-20260614.md`
   - `docs/cto/cr-review-saige-product-card-score-prompt-20260614.md`
