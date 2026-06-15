@@ -10,8 +10,8 @@ STATUS: READY IF W04 WAIVES CD/CR
 This runbook applies only to:
 
 - Branch: `fix/portfolio-product-ssot-cards`
-- Current branch head: `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece`
-- Current main when written: `823a1a7cd879a00d3c5a65effdcebcb5916dfcb2`
+- Current branch head: `c78727b114ae2f00abcc67006b5fd1f467c7bf9f`
+- Current main when refreshed: `80fddc556f393ec5da7786ec6f90dff7d4c00964`
 
 This runbook is not merge clearance by itself.
 
