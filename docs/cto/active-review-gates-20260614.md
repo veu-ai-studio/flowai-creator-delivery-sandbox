@@ -19,7 +19,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 - Runtime review head before docs-only sync: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`
 - Purpose: resolve the remaining SAIGE visual acceptance blocker by making ProductSSOT-backed product cards visible on `/portfolio`, `/dashboard`, and `/products` without fabricated rows or scores.
 - Required before merge: CD verdict and CR verdict, or explicit W04 waiver. CB2 has returned `PASS-WITH-FINDINGS`.
-- Current status: CD blocker patched; CD/CR re-review pending; prior CR `PASS-WITH-FINDINGS`; CB2 `PASS-WITH-FINDINGS`.
+- Current status: CD re-review `PASS`; CR re-review `PASS`; CB2 `PASS-WITH-FINDINGS`.
 - CB2 result: `docs/cto/cb2-review-saige-product-card-score-result-20260614.md` on branch `fix/portfolio-product-ssot-cards`, commit `291488e`. Later product-card branch movement is docs-only sync unless separately stated.
 - Accepted CB2 finding: `/api/products` fallback increases public/no-org read surface while `AUTH_REQUIRED=false`; acceptable for current internal proof mode, but must be auth/tenant-gated or public-safe before broad external tenant exposure.
 - Preflight evidence: PASS on branch head `a11db9737a0f4afcc74b9ad96c75a1ccfc18781f` after dispatch-board sync with `origin/main`; lint/build passed, `237` test files / `3741` tests passed / `3` skipped, lane discipline PASS, SSOT traceability PASS, matrix generation PASS.
@@ -31,6 +31,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 - Active patch dispatch: `docs/cto/cb-product-card-score-source-block-patch-dispatch-20260615.md`.
 - Patch result: `docs/cto/product-card-score-source-block-patch-result-20260615.md`; patched branch head `33e491de42257024907e0e9b3271e1b2c7ab1100`.
 - Re-review dispatch: `docs/cto/cd-cr-product-card-score-source-rereview-dispatch-20260615.md`.
+- Re-review results: `docs/cto/cd-rereview-saige-product-card-score-source-result-20260615.md` and `docs/cto/cr-rereview-saige-product-card-score-source-result-20260615.md`, both `PASS`.
 - W04 waiver decision packet prepared: `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. CTO recommends a narrow waiver for this product-card branch only; Universal Delivery Workspace remains separately gated.
 - Post-waiver runbook prepared: `docs/cto/product-card-post-waiver-execution-runbook-20260615.md`.
 - Review packets on branch:
@@ -39,7 +40,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
   - `docs/cto/cb2-review-saige-product-card-score-dispatch-20260614.md`
   - `docs/cto/ct2-saige-product-card-score-postdeploy-dispatch-20260614.md`
 - Current CD/CR dispatch board: `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
-- Merge path after clearance: merge to `main`, promote production, confirm `/api/health` commit identity, dispatch CT2 post-deploy visual acceptance.
+- Merge path after final branch sync guard: merge to `main`, promote production, confirm `/api/health` commit identity, dispatch CT2 post-deploy visual acceptance.
 
 ## Gate 2 - Universal Delivery Workspace
 
