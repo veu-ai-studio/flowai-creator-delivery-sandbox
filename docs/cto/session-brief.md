@@ -35,6 +35,10 @@ Continuation check after rereading the attached W04/CEO final directive: `origin
 
 Follow-up coordination refresh: the CD/CR dispatch board, active review gate tracker, product-card waiver decision packet, and product-card post-waiver runbook now name the current live branch heads above so W04/CD/CR do not clear older docs-sync SHAs.
 
+Review-router dispatch: CTO routed the SAIGE product-card gate to the existing repo/in-app review-router lane so Victor does not need to relay prompts. Dispatch evidence: `docs/cto/review-router-product-card-dispatch-20260615.md`. The requested outputs are `docs/cto/cd-review-saige-product-card-score-result-20260615.md` and `docs/cto/cr-review-saige-product-card-score-result-20260615.md`; until those land, or W04 explicitly waives them, no product-card merge or production promotion is authorized.
+
+Product-card review-router result: CD returned `BLOCK`; CR returned `PASS-WITH-FINDINGS`. The CD blocker is precise: `/products` can still prefer Base44 `ProductRegistry.last_score` over ProductSSOT-backed API scores. CTO created `docs/cto/cb-product-card-score-source-block-patch-dispatch-20260615.md` to patch the existing `fix/portfolio-product-ssot-cards` branch. No merge or promotion is authorized until the patch is pushed and re-reviewed or explicitly waived.
+
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
 
 ## Current Production
