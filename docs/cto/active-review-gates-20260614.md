@@ -15,7 +15,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 ## Gate 1 - SAIGE Product Card Score Visibility
 
 - Branch: `fix/portfolio-product-ssot-cards`
-- Current branch head after dispatch-board sync: `a11db9737a0f4afcc74b9ad96c75a1ccfc18781f`
+- Current branch head after W04-packet docs sync: `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece`
 - Runtime review head before docs-only sync: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`
 - Purpose: resolve the remaining SAIGE visual acceptance blocker by making ProductSSOT-backed product cards visible on `/portfolio`, `/dashboard`, and `/products` without fabricated rows or scores.
 - Required before merge: CD verdict and CR verdict, or explicit W04 waiver. CB2 has returned `PASS-WITH-FINDINGS`.
@@ -23,6 +23,7 @@ Do not dispatch another runtime build branch until one of the branches below is 
 - CB2 result: `docs/cto/cb2-review-saige-product-card-score-result-20260614.md` on branch `fix/portfolio-product-ssot-cards`, commit `291488e`. Later product-card branch movement is docs-only sync unless separately stated.
 - Accepted CB2 finding: `/api/products` fallback increases public/no-org read surface while `AUTH_REQUIRED=false`; acceptable for current internal proof mode, but must be auth/tenant-gated or public-safe before broad external tenant exposure.
 - Preflight evidence: PASS on branch head `a11db9737a0f4afcc74b9ad96c75a1ccfc18781f` after dispatch-board sync with `origin/main`; lint/build passed, `237` test files / `3741` tests passed / `3` skipped, lane discipline PASS, SSOT traceability PASS, matrix generation PASS.
+- Latest docs-sync evidence: PASS on branch head `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece` after merging current `origin/main`; focused product-card tests PASS, `4` files / `23` tests; full preflight PASS, `237` test files / `3741` tests passed / `3` skipped; delete-risk guard empty; no package, runtime, test, canonical, or matrix diffs from the sync; timestamp-only `matrixArtifact.json` churn restored.
 - Direct PowerShell reviewer attempt: no verdict produced. `claude.exe` and `codex.ps1` are present, but external CLI review with private branch context was denied by tenant policy. Evidence: `docs/cto/review-lane-execution-status-20260615.md`.
 - W04 waiver decision packet prepared: `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. CTO recommends a narrow waiver for this product-card branch only; Universal Delivery Workspace remains separately gated.
 - Review packets on branch:

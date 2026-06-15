@@ -23,7 +23,7 @@ W04 then identified the larger infrastructure gap: FlowAI cannot require preconf
 
 Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 Comprehensive Final Directive authorizes applying the VERIFIED batch packet, merging `fix/path2-production-token-upgrade-target`, selecting Path 4 external synthesis URLs autonomously, and dispatching CB on the infrastructure gap queue. `docs/cto/current-directive.md` now contains the additive final directive; prior ratified governance and evidence standards remain in force.
 
-Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md`. The SAIGE product-card score branch now has CB2 `PASS-WITH-FINDINGS`, was synced with the current CD/CR dispatch board, passed full preflight, and is pushed at `a11db9737a0f4afcc74b9ad96c75a1ccfc18781f`; CD and CR remain pending before merge unless W04 waives them. Universal Delivery Workspace is now pushed at `e115b19e8f6e36dc676eee30f00940053bdac019`; CB2 re-review 2 returned `PASS`, the dispatch-board sync passed focused tests plus full preflight, and that gate now waits on CD and CR. Current CD/CR review instructions are centralized in `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
+Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md`. The SAIGE product-card score branch now has CB2 `PASS-WITH-FINDINGS`, was synced with current `origin/main` including the W04 waiver packet, passed focused product-card tests plus full preflight, and is pushed at `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece`; CD and CR remain pending before merge unless W04 waives them. Universal Delivery Workspace is now pushed at `e115b19e8f6e36dc676eee30f00940053bdac019`; CB2 re-review 2 returned `PASS`, the dispatch-board sync passed focused tests plus full preflight, and that gate now waits on CD and CR. Current CD/CR review instructions are centralized in `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
 
 Latest review-lane update: CTO attempted direct PowerShell execution of the CD/CR reviewer tools for the SAIGE product-card branch. `claude.exe` and `codex.ps1` are installed, but external CLI review with private branch context was denied by tenant policy after the required escalation path. No CD/CR verdict was produced. Evidence: `docs/cto/review-lane-execution-status-20260615.md`. The safe path remains repo-based dispatch: CD and CR pull origin, read `docs/cto/cd-cr-active-review-dispatch-20260615.md`, and commit result files to `docs/cto/`.
 
@@ -152,12 +152,13 @@ CTO visual follow-up on the three missing SAIGE checks:
 SAIGE product-card score patch:
 
 - Branch: `fix/portfolio-product-ssot-cards`.
-- Current pushed branch head after dispatch-board sync: `a11db9737a0f4afcc74b9ad96c75a1ccfc18781f`.
+- Current pushed branch head after W04-packet docs sync: `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece`.
 - Runtime review head before docs-only sync: `cb03a203dddc2a5f033a1c3222cd7896f72452ef`.
 - Purpose: make ProductSSOT-backed product-card scores visible on `/portfolio`, `/dashboard`, and `/products` without fabricated rows or scores.
 - Audit follow-up: raw `/api/products.items` rows are normalized before UI use and hardcoded `VEU_SEED` fallback was removed.
 - Full preflight after follow-up patch: PASS; lint, build, 237 test files / 3741 tests, lane discipline, SSOT traceability, and matrix generation all passed.
 - Full preflight after dispatch-board sync with `origin/main`: PASS; lint, build, 237 test files / 3741 tests passed / 3 skipped, lane discipline, SSOT traceability, and matrix generation all passed.
+- Full preflight after W04-packet docs sync with current `origin/main`: PASS; focused product-card tests passed, 4 files / 23 tests; full preflight passed, 237 test files / 3741 tests passed / 3 skipped; delete-risk guard empty; no package, runtime, test, canonical, or matrix diffs from the sync.
 - Evidence, CD prompt, CR prompt, CT2 post-deploy dispatch, and CB2 branch-audit dispatch live on branch `fix/portfolio-product-ssot-cards`; they are not on `main` until that branch is merge-cleared.
 - CB2 result: `PASS-WITH-FINDINGS`, pushed on branch commit `291488e`; nonblocking finding is the known `/api/products` public/no-org read surface while `AUTH_REQUIRED=false`.
 - Merge status: not merge-cleared yet; requires CD and CR clearance or explicit W04 waiver. The branch is synced with `origin/main` and full preflight passed after the sync.
@@ -250,7 +251,7 @@ Path 4 URL selection:
 
 ## Next Starting Point
 
-1. W04 decides `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. If W04 waives CD/CR for `fix/portfolio-product-ssot-cards`, sync the branch with current main if needed, run the delete-risk guard, merge, preflight, push, promote production, and dispatch CT2. If W04 does not waive, continue collecting CD/CR verdicts.
+1. W04 decides `docs/cto/w04-product-card-review-waiver-decision-packet-20260615.md`. If W04 waives CD/CR for `fix/portfolio-product-ssot-cards`, the branch is already synced with current main at `11797648f9b4c9b7a5be6dc3dab69a4fb23c4ece`; rerun the delete-risk guard, merge, preflight, push, promote production, and dispatch CT2. If W04 does not waive, continue collecting CD/CR verdicts.
 2. Collect CD and CR verdicts for `feature/universal-delivery-workspace` at `e115b19e8f6e36dc676eee30f00940053bdac019`; CB2 re-review 2 is PASS.
 3. Before merging either runtime branch, do a final current-main delete-risk check so it will not remove CTO coordination artifacts.
 4. Poll CB2's post-`d6b92d5` production regression audit and dispatch fixes for any BLOCK result.
