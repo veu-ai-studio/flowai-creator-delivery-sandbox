@@ -25,6 +25,8 @@ Update after W04/CEO final directive: the waiting state is over. The 2026-06-14 
 
 Latest CTO update: the full-detail version of the final directive has been integrated additively into `docs/cto/current-directive.md`. The SAIGE product-card score branch now has CB2 `PASS-WITH-FINDINGS`, was synced with the current CD/CR dispatch board, passed full preflight, and is pushed at `a11db9737a0f4afcc74b9ad96c75a1ccfc18781f`; CD and CR remain pending before merge unless W04 waives them. Universal Delivery Workspace is now pushed at `e115b19e8f6e36dc676eee30f00940053bdac019`; CB2 re-review 2 returned `PASS`, the dispatch-board sync passed focused tests plus full preflight, and that gate now waits on CD and CR. Current CD/CR review instructions are centralized in `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
 
+Latest review-lane update: CTO attempted direct PowerShell execution of the CD/CR reviewer tools for the SAIGE product-card branch. `claude.exe` and `codex.ps1` are installed, but external CLI review with private branch context was denied by tenant policy after the required escalation path. No CD/CR verdict was produced. Evidence: `docs/cto/review-lane-execution-status-20260615.md`. The safe path remains repo-based dispatch: CD and CR pull origin, read `docs/cto/cd-cr-active-review-dispatch-20260615.md`, and commit result files to `docs/cto/`.
+
 Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current active runtime review count is `2`: SAIGE product-card score visibility and Universal Delivery Workspace. Do not dispatch a third runtime branch until one gate clears, blocks, withdraws, or receives an explicit W04/CEO waiver.
 
 ## Current Production
