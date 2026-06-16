@@ -9,6 +9,7 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `roster.md` - Active window roster and role boundaries.
 - `current-directive.md` - Active priorities and standing rules for CB, CD, and CR.
 - `github-app-admin-permission-action-20260616.md` - Paste/approve action packet for the GitHub App permission required to finish Universal Delivery Type 2 proof.
+- `universal-delivery-resume-after-github-approval-20260616.md` - CTO runbook to resume the Type 2 proof immediately after GitHub App approval.
 - `forge-run-state-architecture.md` - CTO architecture plan for durable ForgeRunState execution.
 - `bench-standing-directives-dispatch-20260612.md` - Bench-wide dispatch pointing each role to its standing goal.
 - `standing-goal-cb.md` - Standing autonomous operating goal for CB.

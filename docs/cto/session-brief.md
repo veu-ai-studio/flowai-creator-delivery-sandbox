@@ -12,7 +12,7 @@ Latest update, 2026-06-16 UTC: W04/CEO narrowed the active task to one thing onl
 
 The Type 2 proof reached Fresh Build generation and produced `14` files from description-only input, but blocked at delivery repo creation before any URL existed. Latest run: `cto-type2-description-only-20260615-2324`. Terminal code: `ACCESS_BLOCKED`. Terminal message: `Resource not accessible by personal access token`. CT2 has not been dispatched because there is no returned URL to verify.
 
-Root cause: GitHub App `flowai-self-renewal` is healthy and installed on `veu-ai-studio` with all-repository access, but the installation token currently has `contents:write`, `pull_requests:write`, and `workflows:write`; it does not have `administration:write`. Universal Delivery correctly requires repo creation, so this permission is mandatory. Action packet for Victor/W04 paste/approve: `docs/cto/github-app-admin-permission-action-20260616.md`. No runtime code changes or VERIFIED movement are included in that packet.
+Root cause: GitHub App `flowai-self-renewal` is healthy and installed on `veu-ai-studio` with all-repository access, but the installation token currently has `contents:write`, `pull_requests:write`, and `workflows:write`; it does not have `administration:write`. Universal Delivery correctly requires repo creation, so this permission is mandatory. Action packet for Victor/W04 paste/approve: `docs/cto/github-app-admin-permission-action-20260616.md`. Resume runbook after approval: `docs/cto/universal-delivery-resume-after-github-approval-20260616.md`. No runtime code changes or VERIFIED movement are included in those packets.
 
 FlowAI has now produced two CT2-confirmed public deployed URLs across the Flow Hub proof strategy:
 
