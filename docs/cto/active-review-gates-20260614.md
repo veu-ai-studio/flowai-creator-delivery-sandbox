@@ -8,9 +8,9 @@ Canonical authority remains `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.
 
 No more than two runtime branches may be in review at the same time.
 
-Current active review count: `1`.
+Current active review count: `2`.
 
-The SAIGE product-card branch is merged and deployed. Universal Delivery Workspace is the only runtime branch still in review.
+The SAIGE product-card branch is merged and deployed. Dashboard Health Console Cleanup is in review. Universal Delivery Workspace is paused for current-main resync before CD/CR review proceeds.
 
 ## Gate 1 - SAIGE Product Card Score Visibility
 
@@ -63,7 +63,7 @@ The SAIGE product-card branch is merged and deployed. Universal Delivery Workspa
 - Review base recorded in packets: `f9c570601febae842d02e12faea0e5fce4dcf6be`
 - Purpose: add the smallest honest Universal Delivery Workspace substrate for non-preconfigured user delivery, including Type 2 description-only entry foundations and delivery-state evidence boundaries.
 - Required before merge: CD verdict and CR verdict, or explicit W04 waiver.
-- Current status: CB2 re-review 2 `PASS`; CD pending; CR pending.
+- Current status: resync required before CD/CR review proceeds. Prior CB2 re-review 2 `PASS` is stale because current `origin/main` now contains newer CTO evidence and dashboard-cleanup dispatch files not preserved by the branch.
 - Prior CB2 result: `docs/cto/cb2-review-universal-delivery-workspace-result-20260614.md` on `main`.
 - CB2 re-review result: `docs/cto/cb2-review-universal-delivery-workspace-rereview-result-20260615.md` on `main`.
 - CB2 re-review 2 result: `docs/cto/cb2-review-universal-delivery-workspace-rereview2-result-20260615.md` on `main`.
@@ -83,7 +83,25 @@ The SAIGE product-card branch is merged and deployed. Universal Delivery Workspa
   - `docs/cto/cb2-review-universal-delivery-workspace-dispatch-20260614.md`
   - `docs/cto/ct2-universal-delivery-workspace-proof-draft-20260614.md`
 - Current CD/CR dispatch board: `docs/cto/cd-cr-active-review-dispatch-20260615.md`.
-- Merge path after resync and clearance: merge to `main`, promote production, confirm `/api/health` commit identity, dispatch CT2 Type 2 description-only Fresh Build proof.
+- Current stale-branch finding: `git diff --name-status origin/main..origin/feature/universal-delivery-workspace` shows current-main `docs/cto` evidence deletions, including product-card hotfix evidence, dashboard cleanup dispatch files, and `tests/api-products-ssot-fallback.test.js`.
+- Current resync dispatch: `docs/cto/cb-universal-delivery-workspace-resync-current-main-dispatch-20260616.md`.
+- Merge path after resync and clearance: CB resyncs current `origin/main`, CB2 rechecks delete-risk, CD/CR review current head, merge to `main`, promote production, confirm `/api/health` commit identity, dispatch CT2 Type 2 description-only Fresh Build proof.
+
+## Gate 3 - Dashboard Health Console Cleanup
+
+- Branch: `fix/dashboard-health-console-cleanup`
+- Current branch head: `4370b8b66bf418a76ce7c1504c691cb5d8b488ee`
+- Runtime patch commit: `9d826253afd738cee693306673e7eb1236aa0621`
+- Base: `c9ebc42d63f2448b4d9af7534c8c426d3aa2c3d2`
+- Purpose: resolve the remaining `/dashboard` console findings after the SAIGE product-card gate closed as `PASS-WITH-FINDINGS`.
+- Triggering findings: `/dashboard` emitted `g.filter is not a function`; production browser also attempted `file:///C:/Program%20Files/Git/api/health`.
+- CB result: `docs/cto/cb-dashboard-health-console-cleanup-result-20260615.md`.
+- CTO review: `docs/cto/cto-review-dashboard-health-console-cleanup-20260615.md` on the branch, result `PASS-WITH-REVIEW-GATE`.
+- CD/CR dispatch: `docs/cto/cd-cr-review-dashboard-health-console-cleanup-dispatch-20260615.md` on the branch.
+- CB2 dispatch: `docs/cto/cb2-review-dashboard-health-console-cleanup-dispatch-20260615.md` on the branch.
+- Verification: CB focused tests PASS, product score safety set PASS, and full `npm run preflight` PASS; CTO reran the product score safety set PASS, `5` files / `40` tests; CTO full branch preflight PASS, `237` files / `3748` tests passed / `3` skipped.
+- Current status: CD pending, CR pending, CB2 pending.
+- Merge path after clearance: merge to `main`, promote production, confirm `/api/health` commit identity, dispatch CT2 to confirm `/dashboard` has no `g.filter` pageerror, no `file:///.../api/health` request, and SAIGE score visibility remains intact.
 
 ## Explicit Non-Actions
 
