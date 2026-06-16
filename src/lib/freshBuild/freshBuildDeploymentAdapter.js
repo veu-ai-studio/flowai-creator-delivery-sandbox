@@ -1,5 +1,6 @@
 import { validateGeneratedCodebase } from './codebaseGenerator.js';
 import { deployBranchPreview } from '../agents/renewal/vercelBranchDeploy.js';
+import { provisionDeliveryWorkspace } from '../provisioning/upgradeTargetProvisioner.js';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const MAIN_BRANCHES = new Set(['main', 'master']);
@@ -362,6 +363,53 @@ async function githubRequest({ fetchImpl, token, method, path, body }) {
   return parsed;
 }
 
+async function createInitialCommit({ fetchImpl, token, owner, repo, branchName, files, message }) {
+  const tree = await githubRequest({
+    fetchImpl,
+    token,
+    method: 'POST',
+    path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees`,
+    body: {
+      tree: files.map((file) => ({
+        path: file.path,
+        mode: '100644',
+        type: 'blob',
+        content: file.content,
+      })),
+    },
+  });
+
+  const commit = await githubRequest({
+    fetchImpl,
+    token,
+    method: 'POST',
+    path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/commits`,
+    body: {
+      message,
+      tree: tree.sha,
+      parents: [],
+    },
+  });
+
+  await githubRequest({
+    fetchImpl,
+    token,
+    method: 'POST',
+    path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/refs`,
+    body: {
+      ref: `refs/heads/${branchName}`,
+      sha: commit.sha,
+    },
+  });
+
+  return {
+    commitSha: commit.sha,
+    filesWritten: files.length,
+    branchUrl: `https://github.com/${owner}/${repo}/tree/${encodeURIComponent(branchName)}`,
+    initializedRepo: true,
+  };
+}
+
 export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fetch } = {}) {
   if (typeof fetchImpl !== 'function') {
     throw makeGitHubError('GITHUB_WRITE_FAILED', 'Fresh Build deployment adapter requires fetch');
@@ -372,12 +420,20 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
 
   return {
     async createCommit({ owner, repo, baseBranch, branchName, files, message, cleanTree = false }) {
-      const baseRef = await githubRequest({
-        fetchImpl,
-        token,
-        method: 'GET',
-        path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/ref/heads/${encodeURIComponent(baseBranch)}`,
-      });
+      let baseRef;
+      try {
+        baseRef = await githubRequest({
+          fetchImpl,
+          token,
+          method: 'GET',
+          path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/ref/heads/${encodeURIComponent(baseBranch)}`,
+        });
+      } catch (error) {
+        if (error?.status === 404) {
+          return createInitialCommit({ fetchImpl, token, owner, repo, branchName, files, message });
+        }
+        throw error;
+      }
       const baseCommitSha = baseRef?.object?.sha;
       if (!baseCommitSha) throw makeGitHubError('GITHUB_WRITE_FAILED', 'Base branch ref did not include a commit sha');
 
@@ -436,6 +492,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
         commitSha: commit.sha,
         filesWritten: files.length,
         branchUrl: `https://github.com/${owner}/${repo}/tree/${encodeURIComponent(branchName)}`,
+        initializedRepo: false,
       };
     },
   };
@@ -489,6 +546,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   env = globalThis.process?.env || {},
   now,
   githubClient,
+  deliveryWorkspaceProvisioner = provisionDeliveryWorkspace,
   deployPreviewImpl = deployBranchPreview,
   probePreviewAccessImpl = probePreviewAccess,
   allowMainBranch = false,
@@ -500,16 +558,49 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     });
   }
 
-  const upgradeRepoUrl = firstNonEmpty(
+  let deliveryWorkspace = null;
+  let workspaceCredentials = null;
+  let effectiveProductConfig = productConfig || {};
+  let upgradeRepoUrl = firstNonEmpty(
     productConfig?.upgrade_repo,
     productConfig?.upgradeRepo,
     productConfig?.github_repo_url,
   );
   if (!upgradeRepoUrl) {
-    return buildBlockedResult('UPGRADE_REPO_REQUIRED', 'Fresh Build writes require an authorized upgrade_repo');
+    const shouldProvisionWorkspace = firstNonEmpty(
+      env?.FLOWAI_DELIVERY_GITHUB_OWNER,
+      env?.FLOWAI_OWNED_GITHUB_ORG,
+      env?.FLOWAI_GITHUB_OWNER,
+    );
+    if (!shouldProvisionWorkspace) {
+      return buildBlockedResult('UPGRADE_REPO_REQUIRED', 'Fresh Build writes require an authorized upgrade_repo');
+    }
+    deliveryWorkspace = await deliveryWorkspaceProvisioner({
+      runId,
+      productName: productName || productConfig?.name || productConfig?.product_name || 'fresh-build',
+      product: {
+        ...(productConfig || {}),
+        inputMode: productConfig?.inputMode || 'fresh_build',
+      },
+      env,
+    });
+    if (!deliveryWorkspace?.ok) {
+      return buildBlockedResult(deliveryWorkspace?.code || 'DELIVERY_WORKSPACE_BLOCKED', deliveryWorkspace?.detail || 'Delivery workspace could not be provisioned', {
+        deliveryWorkspace,
+      });
+    }
+    workspaceCredentials = deliveryWorkspace.credentials || null;
+    upgradeRepoUrl = deliveryWorkspace.github?.repoUrl || '';
+    effectiveProductConfig = {
+      ...(productConfig || {}),
+      upgrade_repo: upgradeRepoUrl,
+      vercel_project_id: deliveryWorkspace.vercel?.projectId || null,
+      vercel_org_id: deliveryWorkspace.vercel?.orgId || null,
+      vercel_token: workspaceCredentials?.vercelToken || null,
+    };
   }
 
-  const originalRepoUrl = firstNonEmpty(productConfig?.original_repo, productConfig?.source_repo);
+  const originalRepoUrl = firstNonEmpty(effectiveProductConfig?.original_repo, effectiveProductConfig?.source_repo);
   if (originalRepoUrl && sameRepo(upgradeRepoUrl, originalRepoUrl)) {
     return buildBlockedResult('ORIGINAL_REPO_WRITE_BLOCKED', 'Fresh Build cannot write to the original repo');
   }
@@ -521,7 +612,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
 
   const targetBranch = makeBranchName({
     branchName,
-    productName: productName || productConfig?.name || repoTarget.repo,
+    productName: productName || effectiveProductConfig?.name || repoTarget.repo,
     runId,
     now,
   });
@@ -533,9 +624,9 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     });
   }
 
-  const baseBranch = firstNonEmpty(productConfig?.upgrade_base_branch, productConfig?.base_branch, productConfig?.branch, 'main');
-  const tokenCandidates = githubClient ? [] : resolveGitHubWriteTokenCandidates(env);
-  if (!githubClient && tokenCandidates.length === 0) {
+  const baseBranch = firstNonEmpty(effectiveProductConfig?.upgrade_base_branch, effectiveProductConfig?.base_branch, effectiveProductConfig?.branch, 'main');
+  const tokenCandidates = githubClient || workspaceCredentials?.githubToken ? [] : resolveGitHubWriteTokenCandidates(env);
+  if (!githubClient && !workspaceCredentials?.githubToken && tokenCandidates.length === 0) {
     return githubWriteFailureResult(
       makeGitHubError('GITHUB_TOKEN_REQUIRED', 'GitHub token required for Fresh Build upgrade repo write'),
       null,
@@ -544,6 +635,8 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
 
   const clients = githubClient
     ? [{ client: githubClient, source: 'injected_github_client' }]
+    : workspaceCredentials?.githubToken
+      ? [{ client: createGitHubTreeCommitClient({ token: workspaceCredentials.githubToken }), source: deliveryWorkspace?.github?.credentialSource || 'delivery_workspace' }]
     : tokenCandidates.map((candidate) => ({
       client: createGitHubTreeCommitClient({ token: candidate.token }),
       source: candidate.source,
@@ -577,12 +670,12 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   }
 
   const vercelArgs = resolveVercelArgs({
-    productConfig,
+    productConfig: effectiveProductConfig,
     env,
     owner: repoTarget.owner,
     repo: repoTarget.repo,
     branchName: targetBranch,
-    productName: productName || productConfig?.name || repoTarget.repo,
+    productName: productName || effectiveProductConfig?.name || repoTarget.repo,
   });
   if (!vercelArgs.projectId || !vercelArgs.orgId || !vercelArgs.token) {
     return {
@@ -597,6 +690,8 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       filesWritten: commitResult.filesWritten,
       commitSha: commitResult.commitSha,
       branchUrl: commitResult.branchUrl,
+      initializedRepo: commitResult.initializedRepo === true,
+      deliveryWorkspace,
       previewUrl: null,
       credentialSource,
       publicDelivery: vercelArgs.publicDelivery,
@@ -613,7 +708,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       previewUrl: deployment?.previewUrl || null,
       deploymentId: deployment?.deploymentId || null,
       fetchImpl: globalThis.fetch,
-      productId: firstNonEmpty(productConfig?.product_id, productConfig?.productId, productName, repoTarget.repo),
+      productId: firstNonEmpty(effectiveProductConfig?.product_id, effectiveProductConfig?.productId, productName, repoTarget.repo),
       env,
       allowBypass: !vercelArgs.publicDelivery,
     });
@@ -630,6 +725,8 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       filesWritten: commitResult.filesWritten,
       commitSha: commitResult.commitSha,
       branchUrl: commitResult.branchUrl,
+      initializedRepo: commitResult.initializedRepo === true,
+      deliveryWorkspace,
       previewUrl: null,
       deploymentUrl: error?.deploymentUrl || null,
       publicDelivery: vercelArgs.publicDelivery,
@@ -666,6 +763,8 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     filesWritten: commitResult.filesWritten,
     commitSha: commitResult.commitSha,
     branchUrl: commitResult.branchUrl,
+    initializedRepo: commitResult.initializedRepo === true,
+    deliveryWorkspace,
     deploymentId: deployment?.deploymentId || null,
     previewUrl: deployment?.previewUrl || null,
     deploymentUrl: deployment?.deploymentUrl || null,

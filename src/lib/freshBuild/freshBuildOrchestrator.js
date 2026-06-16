@@ -30,6 +30,42 @@ function requireHttpUrl(url) {
   return trimmed;
 }
 
+function nonEmptyString(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : '';
+}
+
+function safeSlug(value, fallback = 'fresh-build') {
+  const slug = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+  return slug || fallback;
+}
+
+function normalizeFreshBuildSource(input = {}, options = {}) {
+  const candidateUrl = nonEmptyString(input.url || input.productUrl);
+  if (candidateUrl) {
+    return {
+      inputMode: 'url',
+      url: requireHttpUrl(candidateUrl),
+      baselineUrl: candidateUrl,
+      description: nonEmptyString(input.description || options.description),
+    };
+  }
+  const description = nonEmptyString(input.description || options.description);
+  if (!description) {
+    throw new TypeError('runFreshBuild requires an http(s) URL or a non-empty description');
+  }
+  const runId = nonEmptyString(input.runId || options.runId || 'description');
+  return {
+    inputMode: 'description',
+    url: `flowai-description://${safeSlug(runId)}`,
+    baselineUrl: null,
+    description,
+  };
+}
+
 function isoTimestamp(now) {
   return now ? new Date(now).toISOString() : new Date().toISOString();
 }
@@ -143,6 +179,13 @@ async function defaultScoreFreshBuildPreview({
   evaluationOptions,
   onStep,
 } = {}) {
+  if (!baselineUrl || !/^https?:\/\//i.test(String(baselineUrl))) {
+    return {
+      scoreStatus: SCORE_STATUS.NOT_CONFIGURED,
+      baselineScore: null,
+      finalScore: null,
+    };
+  }
   const [baseline, final] = await Promise.all([
     evaluateUrlScore({ url: baselineUrl, runId, evaluationOptions, onStep }),
     evaluateUrlScore({ url: previewUrl, runId, evaluationOptions, onStep }),
@@ -208,6 +251,14 @@ async function captureFreshBuildScore({
       evaluationOptions,
       onStep,
     });
+    if (score?.scoreStatus === SCORE_STATUS.NOT_CONFIGURED) {
+      return {
+        scoreStatus: SCORE_STATUS.NOT_CONFIGURED,
+        baselineScore: null,
+        finalScore: null,
+        scoreDelta: null,
+      };
+    }
     const baselineScore = numericScore(score?.baselineScore ?? score?.baseline);
     const finalScore = numericScore(score?.finalScore ?? score?.final);
     if (baselineScore === null || finalScore === null) {
@@ -288,12 +339,127 @@ function buildGenerationBlockedResult({
   };
 }
 
+function buildDescriptionFeatureInventory({ description, sourceUrl, runId, now, productName }) {
+  const timestamp = isoTimestamp(now);
+  const title = nonEmptyString(productName) || description.split(/\s+/).slice(0, 6).join(' ') || 'Fresh Build Product';
+  return {
+    id: `feature-inventory-description-${safeSlug(runId || title)}`,
+    url: sourceUrl,
+    pages: [{
+      url: sourceUrl,
+      title,
+      purpose: 'description-derived fresh build landing and workspace shell',
+      primaryContent: description,
+      navigation: [],
+      hierarchy: { parent: 'root', children: [], confidence: 0.7 },
+      access: 'UNKNOWN',
+      confidence: 0.72,
+    }],
+    components: [
+      {
+        id: 'description-hero',
+        type: 'hero',
+        content: description,
+        purpose: 'communicate the requested product concept',
+        pages: [sourceUrl],
+        interactive: false,
+        confidence: 0.72,
+      },
+      {
+        id: 'description-action-panel',
+        type: 'card',
+        content: 'Primary actions and next steps generated from the submitted description.',
+        purpose: 'give the product a usable first workflow surface',
+        pages: [sourceUrl],
+        interactive: true,
+        confidence: 0.64,
+      },
+    ],
+    userFlows: [{
+      id: 'description-primary-flow',
+      name: 'primary product journey',
+      steps: [{ label: 'Open generated product', url: sourceUrl, confidence: 0.7 }],
+      entryPoint: sourceUrl,
+      exitPoint: sourceUrl,
+      formFields: [],
+      states: { success: 'Generated product renders', error: 'No baseline URL exists for comparison', confidence: 0.65 },
+      confidence: 0.65,
+    }],
+    content: {
+      textByPage: { [sourceUrl]: description },
+      imageReferences: [],
+      ctas: [],
+      toneAndStyle: { descriptionDerived: true, confidence: 0.62 },
+      confidence: 0.68,
+    },
+    businessRules: {
+      accessControl: { observed: 'description_only', confidence: 0.5 },
+      pricing: { observed: 'unknown', confidence: 0.5 },
+      validationRules: [],
+      apiEndpoints: [],
+      dataEntities: [],
+      confidence: 0.5,
+    },
+    metadata: {
+      url: sourceUrl,
+      productName: title,
+      totalPagesDiscovered: 1,
+      totalComponentsIdentified: 2,
+      totalUserFlowsMapped: 1,
+      crawlTimestamp: timestamp,
+      version: FRESH_BUILD_VERSION,
+      confidence: 0.68,
+      source: 'description_build_brief',
+    },
+  };
+}
+
+function buildDescriptionDesignSpec({ sourceUrl, now }) {
+  const timestamp = isoTimestamp(now);
+  return {
+    url: sourceUrl,
+    visualSystem: {
+      primaryColors: [{ hex: '#1f2937' }, { hex: '#0ea5e9' }, { hex: '#f59e0b' }],
+      accentColors: [{ hex: '#10b981' }],
+      backgroundColors: [{ hex: '#f8fafc' }],
+      textColors: [{ hex: '#111827' }],
+    },
+    typography: {
+      fontFamilies: [{ family: 'Inter' }, { family: 'system-ui' }],
+      fontSizes: [{ value: '14px' }, { value: '16px' }, { value: '20px' }, { value: '32px' }],
+    },
+    layout: {
+      maxWidth: '1200px',
+      spacingScale: 'comfortable',
+      density: 'balanced',
+      confidence: 0.62,
+    },
+    components: [
+      { id: 'description-hero', visualStyle: 'filled', confidence: 0.68 },
+      { id: 'description-action-panel', visualStyle: 'outlined', confidence: 0.62 },
+    ],
+    uxPatterns: [{ name: 'guided overview', confidence: 0.64 }],
+    technologySignals: {
+      framework: { name: 'React/Vite generated target', confidence: 0.8 },
+      cssFramework: { name: 'Tailwind CSS generated target', confidence: 0.8 },
+    },
+    metadata: {
+      url: sourceUrl,
+      extractionMethod: 'description_build_brief',
+      timestamp,
+      version: FRESH_BUILD_VERSION,
+      confidence: 0.64,
+    },
+  };
+}
+
 export async function runFreshBuild(input = {}, options = {}) {
-  const url = requireHttpUrl(input.url || input.productUrl);
   const env = options.env || globalThis.process?.env || {};
   const now = options.now;
   const runId = input.runId || options.runId || null;
   const onStep = options.onStep;
+  const source = normalizeFreshBuildSource(input, options);
+  const url = source.url;
 
   if (!isFreshBuildEnabled(env)) {
     const result = {
@@ -327,29 +493,50 @@ export async function runFreshBuild(input = {}, options = {}) {
   const generate = options.generateCodebase || generateCodebase;
   const writeGeneratedCodebase = options.writeGeneratedCodebase || writeGeneratedCodebaseToUpgradeRepo;
 
-  await emit(onStep, 'feature_extractor', 'started', { now });
-  const featureInventory = await extract(url, {
-    ...(options.extractorOptions || {}),
-    runId,
-  });
-  await emit(onStep, 'feature_extractor', 'completed', {
-    inventoryId: featureInventory?.id || null,
-    pages: Array.isArray(featureInventory?.pages) ? featureInventory.pages.length : 0,
-    components: Array.isArray(featureInventory?.components) ? featureInventory.components.length : 0,
-    now,
-  });
+  let featureInventory;
+  let designSpec;
+  if (source.inputMode === 'description') {
+    await emit(onStep, 'description_build_brief', 'started', { now });
+    featureInventory = buildDescriptionFeatureInventory({
+      description: source.description,
+      sourceUrl: source.url,
+      runId,
+      now,
+      productName: input.productName || options.productName,
+    });
+    designSpec = buildDescriptionDesignSpec({ sourceUrl: source.url, now });
+    await emit(onStep, 'description_build_brief', 'completed', {
+      inventoryId: featureInventory.id,
+      designSpecId: designSpec.metadata?.url || source.url,
+      pages: featureInventory.pages.length,
+      components: featureInventory.components.length,
+      now,
+    });
+  } else {
+    await emit(onStep, 'feature_extractor', 'started', { now });
+    featureInventory = await extract(url, {
+      ...(options.extractorOptions || {}),
+      runId,
+    });
+    await emit(onStep, 'feature_extractor', 'completed', {
+      inventoryId: featureInventory?.id || null,
+      pages: Array.isArray(featureInventory?.pages) ? featureInventory.pages.length : 0,
+      components: Array.isArray(featureInventory?.components) ? featureInventory.components.length : 0,
+      now,
+    });
 
-  await emit(onStep, 'design_synthesizer', 'started', { now });
-  const designSpec = await synthesize(url, {
-    ...(options.designOptions || {}),
-    featureInventory,
-    runId,
-  });
-  await emit(onStep, 'design_synthesizer', 'completed', {
-    designSpecId: designSpec?.id || null,
-    components: Array.isArray(designSpec?.components) ? designSpec.components.length : 0,
-    now,
-  });
+    await emit(onStep, 'design_synthesizer', 'started', { now });
+    designSpec = await synthesize(url, {
+      ...(options.designOptions || {}),
+      featureInventory,
+      runId,
+    });
+    await emit(onStep, 'design_synthesizer', 'completed', {
+      designSpecId: designSpec?.id || null,
+      components: Array.isArray(designSpec?.components) ? designSpec.components.length : 0,
+      now,
+    });
+  }
 
   await emit(onStep, 'codebase_generator', 'started', { now });
   let generatedCodebase;
@@ -495,6 +682,9 @@ export async function runFreshBuild(input = {}, options = {}) {
 export const __test = Object.freeze({
   buildEvidence,
   buildDesignEvidence,
+  buildDescriptionFeatureInventory,
+  buildDescriptionDesignSpec,
   buildGenerationBlockedResult,
+  normalizeFreshBuildSource,
   safeFailure,
 });

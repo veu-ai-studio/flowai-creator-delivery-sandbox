@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   isInngestEnabled: vi.fn(),
   syncInngestRegistration: vi.fn(),
   sendEvent: vi.fn(),
+  runFreshBuild: vi.fn(),
 }));
 
 vi.mock('../../api/_lib/crawler.js', () => ({
@@ -33,6 +34,10 @@ vi.mock('../../api/_lib/inngest.js', () => ({
   isInngestEnabled: mocks.isInngestEnabled,
   syncInngestRegistration: mocks.syncInngestRegistration,
   sendEvent: mocks.sendEvent,
+}));
+
+vi.mock('../../src/lib/freshBuild/freshBuildOrchestrator.js', () => ({
+  runFreshBuild: mocks.runFreshBuild,
 }));
 
 const { default: handler, runConstructionToStatus } = await import('../../src/api/run-construction.js');
@@ -415,6 +420,98 @@ describe('run-construction handler SSE terminal framing', () => {
       originalProductUrl: 'https://example.com',
       finalScore: 72,
       exitReason: 'MAX_ITERATIONS',
+    });
+    expect(events.at(-1)).toBe('[DONE]');
+    expect(res.ended).toBe(true);
+  });
+
+  it('routes description-only Fresh Build through the handler without requiring a URL', async () => {
+    mocks.runFreshBuild.mockImplementation(async (_input, { onStep }) => {
+      await onStep({
+        mode: 'FRESH_BUILD',
+        stage: 'description_build_brief',
+        status: 'completed',
+      });
+      return {
+        ok: true,
+        status: 'READY',
+        reason: null,
+        previewUrl: 'https://description-build.vercel.app',
+        previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+        scoreStatus: 'SCORE_NOT_CONFIGURED',
+        baselineScore: null,
+        finalScore: null,
+        scoreDelta: null,
+        writeResult: {
+          deploymentId: 'dep_description',
+          previewUrl: 'https://description-build.vercel.app',
+        },
+        evidence: {
+          generatedFileCount: 2,
+          previewUrl: 'https://description-build.vercel.app',
+        },
+      };
+    });
+
+    const res = createResponse();
+    await handler(createRequest({
+      mode: 'FRESH_BUILD',
+      description: 'Build a scheduling workspace for local service providers',
+      productName: 'Provider Scheduler',
+      runId: '77777777-7777-4777-8777-777777777777',
+    }), res);
+
+    const events = parseSse(res.chunks);
+    expect(res.statusCode).toBe(200);
+    expect(mocks.assertPublicHttpUrl).not.toHaveBeenCalled();
+    expect(mocks.runFreshBuild).toHaveBeenCalledWith(expect.objectContaining({
+      url: '',
+      description: 'Build a scheduling workspace for local service providers',
+      runId: '77777777-7777-4777-8777-777777777777',
+      productName: 'Provider Scheduler',
+      productConfig: null,
+    }), expect.objectContaining({
+      runId: '77777777-7777-4777-8777-777777777777',
+      onStep: expect.any(Function),
+    }));
+    expect(events.find((event) => event.type === 'start')).toMatchObject({
+      runId: '77777777-7777-4777-8777-777777777777',
+      url: '',
+      mode: 'FRESH_BUILD',
+    });
+    expect(events.find((event) => event.type === 'registry')).toMatchObject({
+      action: 'skipped',
+      reason: 'description_only_fresh_build',
+    });
+    expect(events.find((event) => event.type === 'symbiotic_context')).toMatchObject({
+      productId: null,
+      ok: false,
+      reason: 'supabase_unavailable',
+    });
+    expect(events.find((event) => event.type === 'step')).toMatchObject({
+      log: {
+        mode: 'FRESH_BUILD',
+        stage: 'description_build_brief',
+        status: 'completed',
+      },
+    });
+    expect(events.at(-2)).toMatchObject({
+      type: 'final',
+      final: true,
+      ok: true,
+      status: 'succeeded',
+      previewUrl: 'https://description-build.vercel.app',
+      previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+      scoreStatus: 'SCORE_NOT_CONFIGURED',
+      baselineScore: null,
+      finalScore: null,
+      scoreDelta: null,
+      runMode: 'FRESH_BUILD',
+      freshBuild: {
+        status: 'READY',
+        previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+        scoreStatus: 'SCORE_NOT_CONFIGURED',
+      },
     });
     expect(events.at(-1)).toBe('[DONE]');
     expect(res.ended).toBe(true);
