@@ -8,6 +8,8 @@ matrixArtifact edited: yes - narrow exact-row promotion applied
 
 ## Executive Summary
 
+Latest update, 2026-06-16 UTC, Gate execution: CEO Step 0 diagnostic is complete and committed in `docs/cto/step0-diagnostic-20260616.md`. Gate 1 scope is confirmed: GitHub calls the needed grant `Repository permissions -> Administration -> Read and write`, and it must be approved on the `veu-ai-studio` organization installation of app `flowai-self-renewal` with repository access set to `All repositories`. Approval packet: `docs/cto/gate1-github-admin-grant-approval-20260616.md`. Gate 2 W13/T4 KEY phase-split routing is committed: spec `docs/cto/w13-inngest-phase-split-spec-20260616.md`, CB dispatch `docs/cto/cb-w13-inngest-phase-split-dispatch-20260616.md`, CD prompt `docs/cto/cd-review-w13-inngest-phase-split-prompt-20260616.md`, CR prompt `docs/cto/cr-review-w13-inngest-phase-split-prompt-20260616.md`. No runtime build or VERIFIED movement in these commits.
+
 Latest update, 2026-06-16 UTC: W04/CEO narrowed the active task to one thing only: prove Universal Delivery by merging and deploying `feature/universal-delivery-workspace`, then have CT2 confirm a Type 2 description-only Fresh Build returns a real URL. The branch is already merged into `main`, production is deployed at runtime commit `8b88d1b1410a8eb5f8cd452ffd2860007edf33a0`, and `/api/health` reports `ready`.
 
 The Type 2 proof reached Fresh Build generation and produced `14` files from description-only input, but blocked at delivery repo creation before any URL existed. Latest run: `cto-type2-description-only-20260615-2324`. Terminal code: `ACCESS_BLOCKED`. Terminal message: `Resource not accessible by personal access token`. CT2 has not been dispatched because there is no returned URL to verify.
