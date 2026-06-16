@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   probePreviewAccess,
+  createGitHubTreeCommitClient,
   parseGitHubRepoUrl,
   resolveVercelBypassSecret,
   resolveGitHubWriteTokenCandidates,
@@ -114,6 +115,113 @@ describe('Fresh Build deployment adapter', () => {
       previewUrl: null,
     });
     expect(githubClient.createCommit).not.toHaveBeenCalled();
+  });
+
+  it('provisions a delivery workspace when no upgrade repo is configured and records redacted metadata', async () => {
+    const workspace = {
+      ok: true,
+      status: 'ready',
+      workspaceId: 'dw_run_1',
+      github: {
+        owner: 'flowai-owned',
+        repo: 'flowai-demo-run-1',
+        repoUrl: 'https://github.com/flowai-owned/flowai-demo-run-1',
+        created: true,
+        private: true,
+        credentialSource: 'operator_token',
+      },
+      vercel: {
+        orgId: 'team_123',
+        projectId: 'prj_workspace',
+        projectName: 'flowai-demo-run-1',
+        created: true,
+        credentialSource: 'operator_token',
+      },
+    };
+    Object.defineProperty(workspace, 'credentials', {
+      enumerable: false,
+      value: { githubToken: 'github-secret', vercelToken: 'vercel-secret' },
+    });
+    const deliveryWorkspaceProvisioner = vi.fn(async () => workspace);
+    const githubClient = {
+      createCommit: vi.fn(async () => ({
+        commitSha: 'commit-workspace',
+        filesWritten: 3,
+        branchUrl: 'https://github.com/flowai-owned/flowai-demo-run-1/tree/flowai/fresh-build-demo-run-1',
+        initializedRepo: true,
+      })),
+    };
+    const deployPreviewImpl = vi.fn(async () => ({
+      deploymentId: 'dep_workspace',
+      previewUrl: 'https://flowai-demo-run-1.vercel.app',
+    }));
+    const probePreviewAccessImpl = browserClearProbe();
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase(),
+      productName: 'Demo',
+      runId: 'run-1',
+      productConfig: { name: 'Demo' },
+      env: { FLOWAI_DELIVERY_GITHUB_OWNER: 'flowai-owned' },
+      deliveryWorkspaceProvisioner,
+      githubClient,
+      deployPreviewImpl,
+      probePreviewAccessImpl,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'WRITTEN_AND_DEPLOYED',
+      owner: 'flowai-owned',
+      repo: 'flowai-demo-run-1',
+      initializedRepo: true,
+      deliveryWorkspace: {
+        workspaceId: 'dw_run_1',
+        github: { credentialSource: 'operator_token' },
+        vercel: { projectId: 'prj_workspace' },
+      },
+      deploymentId: 'dep_workspace',
+      previewUrl: 'https://flowai-demo-run-1.vercel.app',
+    });
+    expect(deliveryWorkspaceProvisioner).toHaveBeenCalledOnce();
+    expect(deployPreviewImpl).toHaveBeenCalledWith(expect.objectContaining({
+      projectId: 'prj_workspace',
+      orgId: 'team_123',
+      owner: 'flowai-owned',
+      repo: 'flowai-demo-run-1',
+      token: 'vercel-secret',
+    }));
+    expect(JSON.stringify(result)).not.toContain('github-secret');
+    expect(JSON.stringify(result)).not.toContain('vercel-secret');
+  });
+
+  it('initializes an empty GitHub repo when the base branch ref is missing', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(githubJsonResponse(404, { message: 'Not Found' }))
+      .mockResolvedValueOnce(githubJsonResponse(201, { sha: 'tree-sha' }))
+      .mockResolvedValueOnce(githubJsonResponse(201, { sha: 'commit-sha' }))
+      .mockResolvedValueOnce(githubJsonResponse(201, { ref: 'refs/heads/main' }));
+    const client = createGitHubTreeCommitClient({ token: 'github-secret', fetchImpl });
+
+    const result = await client.createCommit({
+      owner: 'flowai-owned',
+      repo: 'empty-repo',
+      baseBranch: 'main',
+      branchName: 'main',
+      files: generatedCodebase().files,
+      message: 'Initial FlowAI delivery workspace commit',
+      cleanTree: true,
+    });
+
+    expect(result).toMatchObject({
+      commitSha: 'commit-sha',
+      filesWritten: 3,
+      initializedRepo: true,
+    });
+    expect(fetchImpl.mock.calls[1][0]).toContain('/git/trees');
+    expect(fetchImpl.mock.calls[2][1].body).toContain('"parents":[]');
+    expect(fetchImpl.mock.calls[3][1].body).toContain('"refs/heads/main"');
+    expect(JSON.stringify(result)).not.toContain('github-secret');
   });
 
   it('blocks invalid generated code before any GitHub write or Vercel deploy call', async () => {

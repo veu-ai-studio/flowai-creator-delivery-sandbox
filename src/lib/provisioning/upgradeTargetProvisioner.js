@@ -1,7 +1,13 @@
 import { normalizeUpgradeTargetState } from '../products/upgradeTargetState.js';
+import { getInstallationToken } from '../agents/renewal/githubApp.js';
 
 const GITHUB_API = 'https://api.github.com';
 const VERCEL_API = 'https://api.vercel.com';
+const DEFAULT_REPO_VISIBILITY_PRIVATE = true;
+
+function nonEmptyString(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : '';
+}
 
 function tokenError(kind) {
   return Object.freeze({
@@ -28,13 +34,128 @@ function vercelHeaders(token) {
   };
 }
 
+function safeSlug(value, fallback = 'product') {
+  const slug = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 52);
+  return slug || fallback;
+}
+
+function shortRunId(runId) {
+  return safeSlug(runId, 'run').slice(0, 18) || 'run';
+}
+
 function repoNameForProduct(product = {}) {
   const source = product.product_id ?? product.slug ?? product.name ?? 'product';
-  return `${String(source).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '')}-v2`;
+  return `${safeSlug(source)}-v2`;
+}
+
+function repoNameForWorkspace({ productName, runId } = {}) {
+  return `flowai-${safeSlug(productName, 'delivery')}-${shortRunId(runId)}`.slice(0, 96).replace(/-+$/g, '');
 }
 
 function githubRepoUrl(owner, repo) {
   return `https://github.com/${owner}/${repo}`;
+}
+
+function configuredGithubOwner(env = {}) {
+  return nonEmptyString(
+    env.FLOWAI_DELIVERY_GITHUB_OWNER
+      || env.FLOWAI_OWNED_GITHUB_ORG
+      || env.FLOWAI_GITHUB_OWNER,
+  );
+}
+
+function credentialSourceLabel(source) {
+  if (source === 'github_app') return 'github_app';
+  if (source === 'pat' || source === 'GITHUB_OPERATOR_TOKEN' || source === 'GITHUB_PAT') return 'operator_token';
+  return source || 'unknown';
+}
+
+function permissionValue(permissions, key) {
+  if (!permissions || typeof permissions !== 'object') return null;
+  return permissions[key] ?? permissions[String(key).toLowerCase()] ?? null;
+}
+
+function validateGithubAppPermissions(tokenInfo = {}) {
+  const permissions = tokenInfo.permissions || {};
+  const administration = permissionValue(permissions, 'administration');
+  const contents = permissionValue(permissions, 'contents');
+  const repositorySelection = tokenInfo.repositorySelection ?? tokenInfo.repository_selection ?? null;
+  const missing = [];
+  if (administration !== 'write') missing.push('Administration: write');
+  if (contents !== 'write') missing.push('Contents: write');
+  if (repositorySelection !== 'all') missing.push('all-repository access');
+  return {
+    ok: missing.length === 0,
+    missing,
+    permissions: {
+      administration,
+      contents,
+    },
+    repositorySelection,
+  };
+}
+
+async function resolveGithubWorkspaceCredential({ env = {}, opts = {} } = {}) {
+  if (opts.githubCredential?.token) {
+    return {
+      ok: true,
+      token: opts.githubCredential.token,
+      source: credentialSourceLabel(opts.githubCredential.source),
+      permissionEvidence: opts.githubCredential.permissionEvidence || null,
+    };
+  }
+
+  try {
+    const tokenInfo = await (opts.getInstallationToken || getInstallationToken)({
+      appId: env.GITHUB_APP_ID,
+      privateKey: env.GITHUB_APP_PRIVATE_KEY,
+      installationId: env.GITHUB_APP_INSTALLATION_ID || env.GITHUB_INSTALLATION_ID,
+      pat: null,
+      fetch: opts.fetch,
+    });
+    const evidence = validateGithubAppPermissions(tokenInfo);
+    if (!evidence.ok) {
+      return {
+        ok: false,
+        status: 'blocked',
+        code: 'GITHUB_APP_PERMISSION_REQUIRED',
+        detail: `GitHub App is missing ${evidence.missing.join(', ')}`,
+        credentialSource: 'github_app',
+        permissionEvidence: evidence,
+      };
+    }
+    return {
+      ok: true,
+      token: tokenInfo.token,
+      source: 'github_app',
+      expiresAt: tokenInfo.expiresAt || null,
+      permissionEvidence: evidence,
+    };
+  } catch (error) {
+    const fallback = nonEmptyString(env.GITHUB_OPERATOR_TOKEN || env.GITHUB_PAT);
+    if (!fallback) {
+      return {
+        ok: false,
+        status: 'blocked',
+        code: error?.code || 'GITHUB_APP_TOKEN_UNAVAILABLE',
+        detail: String(error?.message ?? error).slice(0, 300),
+        credentialSource: 'github_app',
+      };
+    }
+    return {
+      ok: true,
+      token: fallback,
+      source: 'operator_token',
+      permissionEvidence: {
+        fallback: true,
+        reason: error?.code || 'github_app_token_unavailable',
+      },
+    };
+  }
 }
 
 async function readJson(response) {
@@ -68,11 +189,12 @@ async function vercelFetch(path, token, opts = {}) {
 export async function ensureUpgradeRepo({
   product,
   org,
+  repoName,
   token,
   opts = {},
 } = {}) {
   if (!token) return tokenError('github');
-  const repo = repoNameForProduct(product);
+  const repo = nonEmptyString(repoName) || repoNameForProduct(product);
   const owner = org ?? product?.org_id ?? 'veu-ai-studio';
   try {
     const existing = await githubFetch(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, token, opts);
@@ -100,7 +222,7 @@ export async function ensureUpgradeRepo({
       method: 'POST',
       body: {
         name: repo,
-        private: true,
+        private: opts.privateRepo !== false ? DEFAULT_REPO_VISIBILITY_PRIVATE : false,
         description: 'FlowAI upgrade target',
         auto_init: false,
       },
@@ -230,12 +352,13 @@ export async function ensureVercelProject({
   product,
   owner,
   repo,
+  projectName: explicitProjectName,
   token,
   teamId,
   opts = {},
 } = {}) {
   if (!token) return tokenError('vercel');
-  const projectName = repo ?? repoNameForProduct(product);
+  const projectName = nonEmptyString(explicitProjectName) || repo || repoNameForProduct(product);
   const teamQuery = teamId ? `?teamId=${encodeURIComponent(teamId)}` : '';
   try {
     const existing = await vercelFetch(`/v9/projects/${encodeURIComponent(projectName)}${teamQuery}`, token, opts);
@@ -256,7 +379,7 @@ export async function ensureVercelProject({
         detail: existing.body?.error?.message ?? existing.body?.message ?? `Vercel project check returned ${existing.response.status}`,
       });
     }
-    const created = await vercelFetch(`/v10/projects${teamQuery}`, token, {
+    const created = await vercelFetch(`/v11/projects${teamQuery}`, token, {
       ...opts,
       method: 'POST',
       body: {
@@ -285,6 +408,110 @@ export async function ensureVercelProject({
   }
 }
 
+export async function provisionDeliveryWorkspace({
+  runId,
+  productName,
+  product = {},
+  env = globalThis.process?.env ?? {},
+  opts = {},
+} = {}) {
+  const owner = configuredGithubOwner(env);
+  if (!owner) {
+    return Object.freeze({
+      ok: false,
+      status: 'blocked',
+      code: 'FLOWAI_DELIVERY_GITHUB_OWNER_REQUIRED',
+      detail: 'FlowAI-owned GitHub organization is not configured',
+    });
+  }
+
+  const requestedOwner = nonEmptyString(opts.owner || product.github_owner || product.owner);
+  if (requestedOwner && requestedOwner.toLowerCase() !== owner.toLowerCase()) {
+    return Object.freeze({
+      ok: false,
+      status: 'blocked',
+      code: 'DELIVERY_OWNER_OUTSIDE_FLOWAI_ORG',
+      detail: 'Delivery workspaces may only be created under the configured FlowAI-owned GitHub organization',
+      requestedOwner,
+      allowedOwner: owner,
+    });
+  }
+
+  const repo = nonEmptyString(opts.repoName) || repoNameForWorkspace({
+    productName: productName || product.name || product.product_name || product.product_id,
+    runId,
+  });
+  const vercelToken = nonEmptyString(env.VERCEL_OPERATOR_TOKEN || env.VERCEL_TOKEN);
+  const vercelOrgId = nonEmptyString(env.FLOWAI_DELIVERY_VERCEL_ORG_ID || env.VERCEL_ORG_ID || env.VERCEL_TEAM_ID);
+  if (!vercelToken || !vercelOrgId) {
+    return Object.freeze({
+      ok: false,
+      status: 'blocked',
+      code: 'VERCEL_WORKSPACE_CREDENTIALS_REQUIRED',
+      detail: 'FlowAI-owned Vercel team and operator token are required to create a delivery workspace',
+      credentialSource: vercelToken ? 'operator_token' : null,
+    });
+  }
+
+  const githubCredential = await resolveGithubWorkspaceCredential({ env, opts });
+  if (!githubCredential.ok) {
+    return Object.freeze(githubCredential);
+  }
+
+  const repoResult = await ensureUpgradeRepo({
+    product,
+    org: owner,
+    repoName: repo,
+    token: githubCredential.token,
+    opts,
+  });
+  if (!repoResult.ok) return Object.freeze({ ...repoResult, credentialSource: githubCredential.source });
+
+  const projectResult = await ensureVercelProject({
+    product,
+    owner,
+    repo,
+    projectName: repo,
+    token: vercelToken,
+    teamId: vercelOrgId,
+    opts,
+  });
+  if (!projectResult.ok) return Object.freeze({ ...projectResult, credentialSource: 'operator_token' });
+
+  const workspace = {
+    ok: true,
+    status: 'ready',
+    workspaceId: `dw_${shortRunId(runId)}_${repo}`.slice(0, 120),
+    runId: nonEmptyString(runId) || null,
+    inputMode: product.inputMode || null,
+    github: {
+      owner,
+      repo,
+      repoUrl: repoResult.upgrade_repo_url || githubRepoUrl(owner, repo),
+      created: repoResult.created === true,
+      private: true,
+      credentialSource: githubCredential.source,
+      permissionEvidence: githubCredential.permissionEvidence || null,
+    },
+    vercel: {
+      orgId: vercelOrgId,
+      projectId: projectResult.projectId,
+      projectName: projectResult.projectName,
+      created: projectResult.created === true,
+      credentialSource: 'operator_token',
+    },
+  };
+  Object.defineProperty(workspace, 'credentials', {
+    enumerable: false,
+    configurable: false,
+    value: {
+      githubToken: githubCredential.token,
+      vercelToken,
+    },
+  });
+  return Object.freeze(workspace);
+}
+
 export async function provisionUpgradeTarget({ product, mode = 'auto', env = globalThis.process?.env ?? {}, opts = {} } = {}) {
   const state = normalizeUpgradeTargetState(product);
   if (mode === 'manual') {
@@ -306,7 +533,10 @@ export async function provisionUpgradeTarget({ product, mode = 'auto', env = glo
 
 export const __internals = Object.freeze({
   repoNameForProduct,
+  repoNameForWorkspace,
   githubRepoUrl,
   githubFetch,
   vercelFetch,
+  validateGithubAppPermissions,
+  configuredGithubOwner,
 });
