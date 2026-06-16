@@ -1,12 +1,18 @@
 # CTO Session Brief
 
-Date: 2026-06-14 UTC
+Date: 2026-06-16 UTC
 Owner: CTO
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`
 VERIFIED movement: yes - W04/CEO final directive authorized the batch packet
 matrixArtifact edited: yes - narrow exact-row promotion applied
 
 ## Executive Summary
+
+Latest update, 2026-06-16 UTC: W04/CEO narrowed the active task to one thing only: prove Universal Delivery by merging and deploying `feature/universal-delivery-workspace`, then have CT2 confirm a Type 2 description-only Fresh Build returns a real URL. The branch is already merged into `main`, production is deployed at runtime commit `8b88d1b1410a8eb5f8cd452ffd2860007edf33a0`, and `/api/health` reports `ready`.
+
+The Type 2 proof reached Fresh Build generation and produced `14` files from description-only input, but blocked at delivery repo creation before any URL existed. Latest run: `cto-type2-description-only-20260615-2324`. Terminal code: `ACCESS_BLOCKED`. Terminal message: `Resource not accessible by personal access token`. CT2 has not been dispatched because there is no returned URL to verify.
+
+Root cause: GitHub App `flowai-self-renewal` is healthy and installed on `veu-ai-studio` with all-repository access, but the installation token currently has `contents:write`, `pull_requests:write`, and `workflows:write`; it does not have `administration:write`. Universal Delivery correctly requires repo creation, so this permission is mandatory. Action packet for Victor/W04 paste/approve: `docs/cto/github-app-admin-permission-action-20260616.md`. No runtime code changes or VERIFIED movement are included in that packet.
 
 FlowAI has now produced two CT2-confirmed public deployed URLs across the Flow Hub proof strategy:
 
@@ -66,6 +72,13 @@ Active review gate tracker: `docs/cto/active-review-gates-20260614.md`. Current 
 - Current production deployment: `https://flowai-8mwbto1zq-veu-ai-studio.vercel.app`.
 - `/api/health` reports branch `main`, `clerkReady:true`, GitHub ready, Inngest ready, and Codex orchestra member PASS.
 - Production `/api/health` reports deployed runtime commit `55a53f3cd3dd0ffae25b41eaa6fc5c3e5f12bf27` on branch `main`.
+
+2026-06-16 update:
+
+- Current runtime commit: `8b88d1b1410a8eb5f8cd452ffd2860007edf33a0`.
+- Current deployment URL: `https://flowai-onq1pw0xp-veu-ai-studio.vercel.app`.
+- `/api/health` reports `ready`, branch `main`, `clerkReady:true`, GitHub App ready, and Inngest ready.
+- Universal Delivery Type 2 proof is blocked on GitHub App `administration:write`, not on another code merge.
 
 ## Completed Evidence
 
