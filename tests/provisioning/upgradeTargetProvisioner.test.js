@@ -136,6 +136,61 @@ describe('upgrade target provisioner', () => {
     expect(JSON.stringify(result)).not.toContain('github-secret');
   });
 
+  it('uses explicitly enabled operator fallback when GitHub App permission evidence is insufficient', async () => {
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(response(404, { message: 'not found' }))
+      .mockResolvedValueOnce(response(201, { html_url: 'https://github.com/flowai-owned/flowai-demo-run-123' }))
+      .mockResolvedValueOnce(response(404, { error: { message: 'not found' } }))
+      .mockResolvedValueOnce(response(200, { id: 'prj_workspace' }));
+
+    const result = await provisionDeliveryWorkspace({
+      runId: 'run-123',
+      productName: 'Demo',
+      env: {
+        FLOWAI_DELIVERY_GITHUB_OWNER: 'flowai-owned',
+        FLOWAI_ALLOW_GITHUB_OPERATOR_FALLBACK_FOR_DELIVERY: 'true',
+        VERCEL_OPERATOR_TOKEN: 'vercel-secret',
+        VERCEL_ORG_ID: 'team_123',
+        GITHUB_PAT: 'github-pat-secret',
+        GITHUB_APP_ID: '1',
+        GITHUB_APP_PRIVATE_KEY: 'pem',
+        GITHUB_APP_INSTALLATION_ID: '2',
+      },
+      opts: {
+        fetch,
+        getInstallationToken: vi.fn(async () => ({
+          token: 'github-app-secret',
+          permissions: { administration: 'read', contents: 'write' },
+          repositorySelection: 'selected',
+        })),
+      },
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'ready',
+      github: {
+        owner: 'flowai-owned',
+        credentialSource: 'operator_token',
+        permissionEvidence: {
+          fallback: true,
+          reason: 'github_app_permission_insufficient',
+          appPermissionEvidence: {
+            ok: false,
+            repositorySelection: 'selected',
+          },
+        },
+      },
+      vercel: {
+        projectId: 'prj_workspace',
+      },
+    });
+    expect(JSON.stringify(result)).not.toContain('github-pat-secret');
+    expect(JSON.stringify(result)).not.toContain('github-app-secret');
+    expect(JSON.stringify(result)).not.toContain('vercel-secret');
+    expect(result.credentials.githubToken).toBe('github-pat-secret');
+  });
+
   it('creates a redacted delivery workspace with GitHub App and Vercel project metadata', async () => {
     const fetch = vi.fn()
       .mockResolvedValueOnce(response(404, { message: 'not found' }))

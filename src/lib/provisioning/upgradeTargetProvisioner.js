@@ -74,6 +74,25 @@ function credentialSourceLabel(source) {
   return source || 'unknown';
 }
 
+function truthyEnv(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
+}
+
+function operatorGithubCredential(env = {}, permissionEvidence = null, reason = 'github_app_token_unavailable') {
+  const fallback = nonEmptyString(env.GITHUB_OPERATOR_TOKEN || env.GITHUB_PAT);
+  if (!fallback) return null;
+  return {
+    ok: true,
+    token: fallback,
+    source: 'operator_token',
+    permissionEvidence: {
+      fallback: true,
+      reason,
+      appPermissionEvidence: permissionEvidence || null,
+    },
+  };
+}
+
 function permissionValue(permissions, key) {
   if (!permissions || typeof permissions !== 'object') return null;
   return permissions[key] ?? permissions[String(key).toLowerCase()] ?? null;
@@ -119,6 +138,10 @@ async function resolveGithubWorkspaceCredential({ env = {}, opts = {} } = {}) {
     });
     const evidence = validateGithubAppPermissions(tokenInfo);
     if (!evidence.ok) {
+      if (truthyEnv(env.FLOWAI_ALLOW_GITHUB_OPERATOR_FALLBACK_FOR_DELIVERY)) {
+        const fallback = operatorGithubCredential(env, evidence, 'github_app_permission_insufficient');
+        if (fallback) return fallback;
+      }
       return {
         ok: false,
         status: 'blocked',
@@ -136,7 +159,7 @@ async function resolveGithubWorkspaceCredential({ env = {}, opts = {} } = {}) {
       permissionEvidence: evidence,
     };
   } catch (error) {
-    const fallback = nonEmptyString(env.GITHUB_OPERATOR_TOKEN || env.GITHUB_PAT);
+    const fallback = operatorGithubCredential(env, null, error?.code || 'github_app_token_unavailable');
     if (!fallback) {
       return {
         ok: false,
@@ -146,15 +169,7 @@ async function resolveGithubWorkspaceCredential({ env = {}, opts = {} } = {}) {
         credentialSource: 'github_app',
       };
     }
-    return {
-      ok: true,
-      token: fallback,
-      source: 'operator_token',
-      permissionEvidence: {
-        fallback: true,
-        reason: error?.code || 'github_app_token_unavailable',
-      },
-    };
+    return fallback;
   }
 }
 
