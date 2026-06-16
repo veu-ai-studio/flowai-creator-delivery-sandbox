@@ -238,4 +238,47 @@ describe('upgrade target provisioner', () => {
     expect(JSON.stringify(result)).not.toContain('vercel-secret');
     expect(result.credentials.githubToken).toBe('github-secret');
   });
+
+  it('creates a redacted delivery workspace in a configured user-owned namespace', async () => {
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(response(404, { message: 'not found' }))
+      .mockResolvedValueOnce(response(201, { html_url: 'https://github.com/flowai-user/flowai-demo-run-123' }))
+      .mockResolvedValueOnce(response(404, { error: { message: 'not found' } }))
+      .mockResolvedValueOnce(response(200, { id: 'prj_workspace' }));
+
+    const result = await provisionDeliveryWorkspace({
+      runId: 'run-123',
+      productName: 'Demo',
+      env: {
+        FLOWAI_DELIVERY_GITHUB_OWNER: 'flowai-user',
+        FLOWAI_DELIVERY_GITHUB_OWNER_TYPE: 'user',
+        VERCEL_OPERATOR_TOKEN: 'vercel-secret',
+        VERCEL_ORG_ID: 'team_123',
+        GITHUB_PAT: 'github-pat-secret',
+      },
+      opts: {
+        fetch,
+        getInstallationToken: vi.fn(async () => {
+          throw Object.assign(new Error('app unavailable'), { code: 'APP_UNAVAILABLE' });
+        }),
+      },
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'ready',
+      github: {
+        owner: 'flowai-user',
+        ownerType: 'user',
+        repoUrl: 'https://github.com/flowai-user/flowai-demo-run-123',
+        credentialSource: 'operator_token',
+      },
+      vercel: {
+        projectId: 'prj_workspace',
+      },
+    });
+    expect(fetch.mock.calls[1][0]).toBe('https://api.github.com/user/repos');
+    expect(JSON.stringify(result)).not.toContain('github-pat-secret');
+    expect(JSON.stringify(result)).not.toContain('vercel-secret');
+  });
 });

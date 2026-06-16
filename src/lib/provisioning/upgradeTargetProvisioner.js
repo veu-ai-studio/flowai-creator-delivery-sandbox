@@ -68,6 +68,13 @@ function configuredGithubOwner(env = {}) {
   );
 }
 
+function configuredGithubOwnerType(env = {}) {
+  const value = String(env.FLOWAI_DELIVERY_GITHUB_OWNER_TYPE || env.FLOWAI_GITHUB_OWNER_TYPE || 'org')
+    .trim()
+    .toLowerCase();
+  return value === 'user' ? 'user' : 'org';
+}
+
 function credentialSourceLabel(source) {
   if (source === 'github_app') return 'github_app';
   if (source === 'pat' || source === 'GITHUB_OPERATOR_TOKEN' || source === 'GITHUB_PAT') return 'operator_token';
@@ -205,6 +212,7 @@ export async function ensureUpgradeRepo({
   product,
   org,
   repoName,
+  ownerType = 'org',
   token,
   opts = {},
 } = {}) {
@@ -232,7 +240,10 @@ export async function ensureUpgradeRepo({
       });
     }
 
-    const created = await githubFetch(`/orgs/${encodeURIComponent(owner)}/repos`, token, {
+    const createPath = ownerType === 'user'
+      ? '/user/repos'
+      : `/orgs/${encodeURIComponent(owner)}/repos`;
+    const created = await githubFetch(createPath, token, {
       ...opts,
       method: 'POST',
       body: {
@@ -255,6 +266,7 @@ export async function ensureUpgradeRepo({
       status: 'provisioned',
       repo,
       owner,
+      ownerType,
       upgrade_repo_url: created.body?.html_url ?? githubRepoUrl(owner, repo),
       created: true,
     });
@@ -431,6 +443,7 @@ export async function provisionDeliveryWorkspace({
   opts = {},
 } = {}) {
   const owner = configuredGithubOwner(env);
+  const ownerType = configuredGithubOwnerType(env);
   if (!owner) {
     return Object.freeze({
       ok: false,
@@ -477,6 +490,7 @@ export async function provisionDeliveryWorkspace({
     product,
     org: owner,
     repoName: repo,
+    ownerType,
     token: githubCredential.token,
     opts,
   });
@@ -501,6 +515,7 @@ export async function provisionDeliveryWorkspace({
     inputMode: product.inputMode || null,
     github: {
       owner,
+      ownerType,
       repo,
       repoUrl: repoResult.upgrade_repo_url || githubRepoUrl(owner, repo),
       created: repoResult.created === true,
