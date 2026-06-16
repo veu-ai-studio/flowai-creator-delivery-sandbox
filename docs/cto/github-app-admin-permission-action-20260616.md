@@ -63,6 +63,19 @@ FlowAI's delivery workspace guard correctly requires:
 
 That guard lives in `src/lib/provisioning/upgradeTargetProvisioner.js` and prevents FlowAI from pretending it can create universal delivery workspaces when GitHub will reject repo creation.
 
+## Latest Recheck
+
+2026-06-16 UTC recheck:
+
+- GitHub App installation token still returns `repository_selection: all`.
+- GitHub App installation token still has `contents: write`.
+- GitHub App installation token still does not have `administration: write`.
+- `GITHUB_OPERATOR_TOKEN` is not present in Doppler `flowai / prd`.
+- `GITHUB_PAT` is present, but authenticates as user `victor2081new-cloud` and returns no visible GitHub organizations from `/user/orgs`.
+- GitHub CLI is not installed in this environment, so there is no separate local `gh` operator session to use.
+
+Conclusion: there is no current machine-actionable credential path that can honestly create FlowAI-owned delivery repos under `veu-ai-studio`. The GitHub App permission approval remains the required action.
+
 ## Required Victor/W04 Approval
 
 Approve the GitHub permission change for:
@@ -102,4 +115,3 @@ Once the GitHub App permission prompt is approved:
 ## Stop Condition
 
 Do not claim Universal Delivery Type 2 proof complete until CT2 independently confirms a returned deployed URL.
-

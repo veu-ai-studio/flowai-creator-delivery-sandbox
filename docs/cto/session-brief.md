@@ -14,6 +14,8 @@ The Type 2 proof reached Fresh Build generation and produced `14` files from des
 
 Root cause: GitHub App `flowai-self-renewal` is healthy and installed on `veu-ai-studio` with all-repository access, but the installation token currently has `contents:write`, `pull_requests:write`, and `workflows:write`; it does not have `administration:write`. Universal Delivery correctly requires repo creation, so this permission is mandatory. Action packet for Victor/W04 paste/approve: `docs/cto/github-app-admin-permission-action-20260616.md`. Resume runbook after approval: `docs/cto/universal-delivery-resume-after-github-approval-20260616.md`. No runtime code changes or VERIFIED movement are included in those packets.
 
+Latest permission recheck: still blocked. `hasAdministrationWrite:false`; `GITHUB_OPERATOR_TOKEN` is absent; `GITHUB_PAT` authenticates but has no visible org memberships; GitHub CLI is not installed. There is no current machine-actionable credential path that satisfies the `veu-ai-studio` FlowAI-owned repo creation requirement.
+
 FlowAI has now produced two CT2-confirmed public deployed URLs across the Flow Hub proof strategy:
 
 - Path 1 Migration: `https://saige-v2.vercel.app`.
