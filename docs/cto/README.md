@@ -11,6 +11,11 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `github-app-admin-permission-action-20260616.md` - Paste/approve action packet for the GitHub App permission required to finish Universal Delivery Type 2 proof.
 - `universal-delivery-resume-after-github-approval-20260616.md` - CTO runbook to resume the Type 2 proof immediately after GitHub App approval.
 - `step0-diagnostic-20260616.md` - CEO Step 0 diagnostic before Gate 1/Gate 2 execution.
+- `gate1-github-admin-grant-approval-20260616.md` - Gate 1 GitHub App Administration approval path and post-grant smoke test.
+- `w13-inngest-phase-split-spec-20260616.md` - W13 five-phase Inngest split spec and DoD.
+- `cb-w13-inngest-phase-split-dispatch-20260616.md` - CB T4 KEY dispatch for W13 phase split.
+- `cd-review-w13-inngest-phase-split-prompt-20260616.md` - CD review prompt for W13 phase split.
+- `cr-review-w13-inngest-phase-split-prompt-20260616.md` - CR review prompt for W13 phase split.
 - `forge-run-state-architecture.md` - CTO architecture plan for durable ForgeRunState execution.
 - `bench-standing-directives-dispatch-20260612.md` - Bench-wide dispatch pointing each role to its standing goal.
 - `standing-goal-cb.md` - Standing autonomous operating goal for CB.
