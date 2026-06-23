@@ -1,11 +1,29 @@
 # CTO Current Directive
 
-Date: 2026-06-14 UTC
+Date: 2026-06-23 UTC
 Owner: CTO
 Status: Active additive operating directive. It does not replace prior ratified governance, evidence, or canonical decisions.
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`.
 
 This folder is an executive coordination layer. Canonical authority remains `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, and `docs/IMPLEMENTATION_PLAN.md`.
+
+## Additive Completion Charter - 2026-06-23
+
+Source: W04 final ratified FlowAI Capability Completion Charter.
+Implementation artifact: `docs/cto/flowai-capability-completion-charter-20260623.md`.
+Implementation result: `docs/cto/flowai-capability-completion-charter-implementation-result-20260623.md`.
+
+This charter now governs CTO claim movement and completion language. A FlowAI capability is complete only when behavior, evidence, and independent verification all exist. Deployed URLs, source code, architecture, passing tests, scores, candidate implementations, demos, and governance reports remain evidence, but do not constitute completion by themselves.
+
+Current governing states:
+
+- Build Execution: `MILESTONE 0 BLOCKED` because execution authority is unresolved.
+- Auditor: `RUNTIME_ACTIVE` and authorized to advance toward `AUDITOR_VERIFIED`.
+- Creator: `PARTIALLY PROVEN`; downstream of `BUILD_EXECUTION_VERIFIED`.
+- Upgrader: `NOT PROVEN`; frozen adjudication `UPGRADER_AUTONOMOUS_DISPROVEN` remains in force until Build Execution exists.
+- Universal Product Engine: `NOT PROVEN`; capstone claim only after Auditor, Build Execution, Creator, and Upgrader are verified.
+
+Immediate control rule: BuildExecutionWorker implementation does not proceed until GitHub workflow/actions authority or an equivalent FlowAI-controlled execution substrate is resolved and verified from origin. Auditor verification may proceed independently.
 
 ## Additive Final Directive - 2026-06-14
 

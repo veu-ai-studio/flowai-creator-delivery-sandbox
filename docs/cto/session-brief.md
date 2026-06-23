@@ -1,12 +1,14 @@
 # CTO Session Brief
 
-Date: 2026-06-16 UTC
+Date: 2026-06-23 UTC
 Owner: CTO
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`
-VERIFIED movement: yes - W04/CEO final directive authorized the batch packet
-matrixArtifact edited: yes - narrow exact-row promotion applied
+VERIFIED movement: no new movement in this update
+matrixArtifact edited: no
 
 ## Executive Summary
+
+Latest update, 2026-06-23 UTC: W04 issued the final ratified FlowAI Capability Completion Charter. CTO implemented it as `docs/cto/flowai-capability-completion-charter-20260623.md`, indexed it in `docs/cto/README.md`, and recorded the implementation result in `docs/cto/flowai-capability-completion-charter-implementation-result-20260623.md`. This is a governance/evidence implementation only, not product-code authorization. No capability claim moved. Build Execution remains `MILESTONE 0 BLOCKED` until machine-triggered GitHub workflow/actions authority or an equivalent FlowAI-controlled execution substrate is resolved and verified from origin. Auditor remains `RUNTIME_ACTIVE` and may advance toward `AUDITOR_VERIFIED` independently. Creator, Upgrader, and Universal Product Engine remain downstream of `BUILD_EXECUTION_VERIFIED`.
 
 Latest update, 2026-06-16 UTC, Gate execution: CEO Step 0 diagnostic is complete and committed in `docs/cto/step0-diagnostic-20260616.md`. Gate 1 scope is confirmed: GitHub calls the needed grant `Repository permissions -> Administration -> Read and write`, and it must be approved on the `veu-ai-studio` organization installation of app `flowai-self-renewal` with repository access set to `All repositories`. Approval packet: `docs/cto/gate1-github-admin-grant-approval-20260616.md`. Gate 2 W13/T4 KEY phase-split routing is committed: spec `docs/cto/w13-inngest-phase-split-spec-20260616.md`, CB dispatch `docs/cto/cb-w13-inngest-phase-split-dispatch-20260616.md`, CD prompt `docs/cto/cd-review-w13-inngest-phase-split-prompt-20260616.md`, CR prompt `docs/cto/cr-review-w13-inngest-phase-split-prompt-20260616.md`. No runtime build or VERIFIED movement in these commits.
 

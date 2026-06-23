@@ -8,6 +8,8 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 
 - `roster.md` - Active window roster and role boundaries.
 - `current-directive.md` - Active priorities and standing rules for CB, CD, and CR.
+- `flowai-capability-completion-charter-20260623.md` - Ratified completion charter defining `DONE`, claim movement, capability targets, and dependency gates.
+- `flowai-capability-completion-charter-implementation-result-20260623.md` - CTO implementation result and proof packet for the ratified completion charter.
 - `github-app-admin-permission-action-20260616.md` - Paste/approve action packet for the GitHub App permission required to finish Universal Delivery Type 2 proof.
 - `universal-delivery-resume-after-github-approval-20260616.md` - CTO runbook to resume the Type 2 proof immediately after GitHub App approval.
 - `step0-diagnostic-20260616.md` - CEO Step 0 diagnostic before Gate 1/Gate 2 execution.
