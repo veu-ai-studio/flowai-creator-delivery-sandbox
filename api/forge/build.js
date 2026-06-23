@@ -14,6 +14,7 @@ import {
   runBuildExecutionWorkerMutation,
   statusCodeForBuildExecutionWorkerResult,
 } from '../_lib/buildExecutionWorker.js';
+import { runDeployChainWorkerMutation } from '../_lib/deployChainWorker.js';
 import { runBuild } from '../../src/lib/forge/buildRunner.js';
 import { createToolIntelligenceService, MODES } from '../../src/lib/tools/ToolIntelligenceService.js';
 import { redactSecrets } from '../../src/lib/tools/toolDispatchContract.js';
@@ -61,6 +62,25 @@ function publicError(error) {
   };
 }
 
+function resolveMutationExecutor(body) {
+  if (body.deliveryMode === 'deploy-chain-sandbox') {
+    if (body.deployTarget && body.deployTarget !== 'flowai-deploy-execution-sandbox') {
+      block('Deploy Chain target is not the approved deployable sandbox.', 'DEPLOY_CHAIN_SANDBOX_BOUNDARY_STOP', 409, {
+        requestedTarget: body.deployTarget,
+        approvedTarget: 'flowai-deploy-execution-sandbox',
+      });
+    }
+    return {
+      executor: runDeployChainWorkerMutation,
+      label: 'DEPLOY_CHAIN_SANDBOX',
+    };
+  }
+  return {
+    executor: runBuildExecutionWorkerMutation,
+    label: 'BUILD_EXECUTION_WORKER_STAGE1',
+  };
+}
+
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -85,6 +105,7 @@ export default async function handler(req, res) {
       : block('designOutput is required for the real Build path.', 'DESIGN_OUTPUT_MISSING', 400);
     const manualInputs = body.manualInputs && typeof body.manualInputs === 'object' ? body.manualInputs : {};
     const toolService = createServerToolService();
+    const mutationMode = resolveMutationExecutor(body);
 
     const output = await runBuild(productId, designOutput, manualInputs, {
       productId,
@@ -97,8 +118,9 @@ export default async function handler(req, res) {
       targetFilePath,
       framework: body.framework || 'vite-react',
       env: process.env,
-      mutationExecutor: runBuildExecutionWorkerMutation,
+      mutationExecutor: mutationMode.executor,
     });
+    const deployChainCandidate = Boolean(output.evidenceSummary?.deployChainUrl);
 
     const response = {
       ok: true,
@@ -106,12 +128,23 @@ export default async function handler(req, res) {
       buildRequestId,
       proofRunId,
       productId,
+      deliveryMode: mutationMode.label,
       buildOutput: output,
       claimBoundary: {
-        maximumClaim: output.evidenceSummary?.sandboxMutations > 0
+        maximumClaim: deployChainCandidate
+          ? 'DEPLOY CHAIN DEMONSTRATED candidate evidence; runnable selected-tool output reached a public URL'
+          : output.evidenceSummary?.sandboxMutations > 0
           ? 'BUILD-PATH DISPATCH DEMONSTRATED; BuildExecutionWorker Stage 1 Complete'
           : 'Selected tool dispatched; no sandbox mutation claim moves',
-        excludedClaims: [
+        excludedClaims: deployChainCandidate ? [
+          'BUILD_EXECUTION_VERIFIED',
+          'CREATOR_VERIFIED',
+          'UPGRADER_VERIFIED',
+          'UNIVERSAL_ENGINE_VERIFIED',
+          'Production autonomous execution',
+          'Persistence proven',
+          'Behavioral product improvement proven',
+        ] : [
           'BUILD_EXECUTION_VERIFIED',
           'CREATOR_VERIFIED',
           'UPGRADER_VERIFIED',

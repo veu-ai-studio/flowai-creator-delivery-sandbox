@@ -10,6 +10,10 @@ const NO_BUILD_TOOL_REASON = 'No AI build tool configured; manual input required
 const P2_MAX_DISPATCHES_PER_RUN = 12;
 const CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION = 3;
 const CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION = 15;
+const APPROVED_MUTATION_SANDBOXES = new Set([
+  'veu-ai-studio/flowai-build-execution-sandbox',
+  'veu-ai-studio/flowai-deploy-execution-sandbox',
+]);
 
 function cloneSection(section, input) {
   return Object.freeze({ ...section, input });
@@ -204,7 +208,7 @@ function assertBuildMutationEvidence(evidence, proofRunId) {
   if (evidence.proofRunId !== proofRunId) {
     throw new Error('P2 live execution STOP: BuildExecutionWorker proofRunId mismatch');
   }
-  if (!evidence.sandbox?.approved || evidence.sandbox?.fullName !== 'veu-ai-studio/flowai-build-execution-sandbox') {
+  if (!evidence.sandbox?.approved || !APPROVED_MUTATION_SANDBOXES.has(evidence.sandbox?.fullName)) {
     throw new Error('P2 live execution STOP: BuildExecutionWorker mutation target is not the approved sandbox');
   }
   if (typeof evidence.commitSha !== 'string' || evidence.commitSha.trim().length === 0) {
@@ -367,6 +371,7 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
   const sandboxMutations = Array.isArray(codeTaskDispatches)
     ? codeTaskDispatches.map(task => task?.sandboxMutation).filter(Boolean)
     : [];
+  const firstMutation = sandboxMutations[0] ?? null;
 
   return Object.freeze({
     productId,
@@ -392,7 +397,10 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
       functionalizationTargets: batchPlan.functionalizationPlan?.length ?? 0,
       liveDispatches: budget.dispatchCount,
       sandboxMutations: sandboxMutations.length,
-      sandboxCommitSha: sandboxMutations[0]?.commitSha ?? null,
+      sandboxCommitSha: firstMutation?.commitSha ?? null,
+      deployChainUrl: firstMutation?.deployedUrl ?? null,
+      deploymentId: firstMutation?.deploymentId ?? null,
+      mutationKind: firstMutation?.kind ?? null,
       estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
     matrixArtifactVersion: String(designOutput.matrixArtifactVersion ?? 'unknown'),

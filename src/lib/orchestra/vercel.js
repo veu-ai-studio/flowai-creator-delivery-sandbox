@@ -73,12 +73,12 @@ async function deploy(payload) {
     encoding: 'base64',
   }));
 
-  const submitBody = {
-    name: projectName,
-    files: encodedFiles,
+  const submitBody = buildDeploymentSubmitBody({
+    projectName,
+    encodedFiles,
     target,
-    projectSettings: { framework },
-  };
+    framework,
+  });
 
   let submitRes;
   try {
@@ -244,7 +244,22 @@ function encodeBase64Utf8(str) {
   throw new Error('No base64 encoder available in this runtime');
 }
 
+function buildDeploymentSubmitBody({
+  projectName,
+  encodedFiles,
+  target = 'preview',
+  framework = null,
+}) {
+  return {
+    name: projectName,
+    files: encodedFiles,
+    ...(target === 'production' ? { target: 'production' } : {}),
+    projectSettings: { framework },
+  };
+}
+
 export const __internals = Object.freeze({
   sanitizeProjectName,
   encodeBase64Utf8,
+  buildDeploymentSubmitBody,
 });
