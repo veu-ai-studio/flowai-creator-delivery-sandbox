@@ -197,6 +197,25 @@ function assertLiveDispatchResult(result, action, expectedMemberId = null) {
   return result;
 }
 
+function assertBuildMutationEvidence(evidence, proofRunId) {
+  if (!evidence || evidence.ok !== true) {
+    throw new Error(`P2 live execution STOP: BuildExecutionWorker mutation failed (${evidence?.error ?? 'missing evidence'})`);
+  }
+  if (evidence.proofRunId !== proofRunId) {
+    throw new Error('P2 live execution STOP: BuildExecutionWorker proofRunId mismatch');
+  }
+  if (!evidence.sandbox?.approved || evidence.sandbox?.fullName !== 'veu-ai-studio/flowai-build-execution-sandbox') {
+    throw new Error('P2 live execution STOP: BuildExecutionWorker mutation target is not the approved sandbox');
+  }
+  if (typeof evidence.commitSha !== 'string' || evidence.commitSha.trim().length === 0) {
+    throw new Error('P2 live execution STOP: BuildExecutionWorker did not return a sandbox commit SHA');
+  }
+  if (typeof evidence.mutatedFilePath !== 'string' || !evidence.mutatedFilePath.includes(proofRunId)) {
+    throw new Error('P2 live execution STOP: BuildExecutionWorker mutated file path does not carry proofRunId');
+  }
+  return evidence;
+}
+
 function ensureBudget(budget) {
   if (budget.dispatchCount > P2_MAX_DISPATCHES_PER_RUN) {
     throw new Error(`P2 live execution STOP: dispatch count exceeded ${P2_MAX_DISPATCHES_PER_RUN}`);
@@ -206,10 +225,13 @@ function ensureBudget(budget) {
   }
 }
 
-async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config, selectedMemberId) {
+async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config, selectedMemberId, buildTool, toolSelection, productId) {
   if (!Array.isArray(tasks)) return tasks;
   if (typeof config.sourceContent !== 'string' || config.sourceContent.trim().length === 0 || containsPlaceholderText(config.sourceContent)) {
     throw new Error('P2 live execution STOP: real sourceContent is required for live build code-patch');
+  }
+  if (typeof config.mutationExecutor === 'function' && (typeof config.proofRunId !== 'string' || config.proofRunId.trim().length === 0)) {
+    throw new Error('P2 live execution STOP: proofRunId is required before BuildExecutionWorker mutation');
   }
   const liveTasks = [];
   for (const task of tasks) {
@@ -233,6 +255,22 @@ async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config
     }, { memberId: selectedMemberId }), 'code-patch', selectedMemberId);
     budget.costUsd += usageCostUsd(result.data);
     ensureBudget(budget);
+    const selectedToolOutput = result.data.patchedContent;
+    const sandboxMutation = typeof config.mutationExecutor === 'function'
+      ? assertBuildMutationEvidence(await config.mutationExecutor({
+        proofRunId: config.proofRunId,
+        buildRequestId: config.buildRequestId ?? config.runId ?? null,
+        productId,
+        runId: config.runId ?? null,
+        task,
+        targetFilePath: result.data.filePath ?? config.targetFilePath ?? 'src/App.jsx',
+        selectedTool: buildTool,
+        selectedMemberId,
+        toolSelection,
+        dispatchResult: result,
+        selectedToolOutput,
+      }), config.proofRunId)
+      : null;
     liveTasks.push(Object.freeze({
       ...task,
       complete: true,
@@ -242,7 +280,8 @@ async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config
       evidenceRef: result.data.filePath ?? config.targetFilePath ?? 'src/App.jsx',
       rationale: result.data.rationale,
       patchedContentPresent: typeof result.data.patchedContent === 'string' && result.data.patchedContent.trim().length > 0,
-      buildToolStatus: 'LIVE_BUILD_TOOL_DISPATCHED',
+      buildToolStatus: sandboxMutation ? 'LIVE_BUILD_TOOL_DISPATCHED_AND_MUTATED' : 'LIVE_BUILD_TOOL_DISPATCHED',
+      sandboxMutation: sandboxMutation ? Object.freeze(sandboxMutation) : null,
     }));
   }
   return Object.freeze(liveTasks);
@@ -302,7 +341,7 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
   const budget = { dispatchCount: 0, costUsd: 0 };
   const selectedMemberId = liveDispatch ? assertSelectedBuildMemberReady(buildTool, config.env ?? process.env) : null;
   const codeTaskDispatches = liveDispatch
-    ? await runLiveBuildTasks(generatedCodeTaskDispatches, designOutput, budget, dispatchFn, config, selectedMemberId)
+    ? await runLiveBuildTasks(generatedCodeTaskDispatches, designOutput, budget, dispatchFn, config, selectedMemberId, buildTool, toolSelection, productId)
     : shortCircuit && Array.isArray(generatedCodeTaskDispatches)
       ? Object.freeze(generatedCodeTaskDispatches.map(task => Object.freeze({
         ...task,
@@ -325,6 +364,9 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
   });
   const scorableSections = sections.filter(section => section.id !== 'selected-tool');
   const score = scoreBuildStep({ stepId: BUILD_STEP_ID, sections: scorableSections });
+  const sandboxMutations = Array.isArray(codeTaskDispatches)
+    ? codeTaskDispatches.map(task => task?.sandboxMutation).filter(Boolean)
+    : [];
 
   return Object.freeze({
     productId,
@@ -349,6 +391,8 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
       stubDeletions: batchPlan.stubDeletions?.length ?? 0,
       functionalizationTargets: batchPlan.functionalizationPlan?.length ?? 0,
       liveDispatches: budget.dispatchCount,
+      sandboxMutations: sandboxMutations.length,
+      sandboxCommitSha: sandboxMutations[0]?.commitSha ?? null,
       estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
     matrixArtifactVersion: String(designOutput.matrixArtifactVersion ?? 'unknown'),
