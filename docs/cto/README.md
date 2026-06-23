@@ -11,6 +11,7 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `cto-operating-reset-20260623.md` - CTO reset to reduce administrative drag, narrow Claude usage, separate AOL work, and return FlowAI to build/evidence/review/decision.
 - `cb-build-execution-worker-m1-implementation-dispatch-20260623.md` - CTO implementation dispatch for BuildExecutionWorker M1, requiring real Build-path selected-tool dispatch to sandbox mutation evidence.
 - `build-execution-worker-m1-evidence-20260623.md` - BuildExecutionWorker M1 implementation evidence, live core `runBuild` sandbox mutation proof, and deployed entrypoint caveat.
+- `cb-build-execution-worker-m1-deployed-entrypoint-dispatch-20260623.md` - CTO dispatch to close the deployed `POST /api/forge/build` finding without expanding M1 claims.
 - `flowai-capability-completion-charter-20260623.md` - Ratified completion charter defining `DONE`, claim movement, capability targets, and dependency gates.
 - `flowai-capability-completion-charter-implementation-result-20260623.md` - CTO implementation result and proof packet for the ratified completion charter.
 - `github-app-admin-permission-action-20260616.md` - Paste/approve action packet for the GitHub App permission required to finish Universal Delivery Type 2 proof.
