@@ -9,6 +9,7 @@ The purpose of this folder is to give every active FlowAI window a compact, curr
 - `roster.md` - Active window roster and role boundaries.
 - `current-directive.md` - Active priorities and standing rules for CB, CD, and CR.
 - `cto-operating-reset-20260623.md` - CTO reset to reduce administrative drag, narrow Claude usage, separate AOL work, and return FlowAI to build/evidence/review/decision.
+- `cb-build-execution-worker-m1-implementation-dispatch-20260623.md` - CTO implementation dispatch for BuildExecutionWorker M1, requiring real Build-path selected-tool dispatch to sandbox mutation evidence.
 - `flowai-capability-completion-charter-20260623.md` - Ratified completion charter defining `DONE`, claim movement, capability targets, and dependency gates.
 - `flowai-capability-completion-charter-implementation-result-20260623.md` - CTO implementation result and proof packet for the ratified completion charter.
 - `github-app-admin-permission-action-20260616.md` - Paste/approve action packet for the GitHub App permission required to finish Universal Delivery Type 2 proof.

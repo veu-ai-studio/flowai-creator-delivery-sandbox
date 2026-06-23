@@ -20,6 +20,10 @@ AOL UI Work-State Contract work is AOL work unless W04/CEO explicitly maps it to
 
 FlowAI's runtime lane remains BuildExecutionWorker M1 and product-engine proof. The Milestone 1 plan exists on origin at commit `0687c38` and is recommended PASS-WITH-FINDINGS. No further Milestone 1 gate documents are needed; next FlowAI technical action is implementation only when requested, with Codex-adapter claim boundary and fail-closed proofRunId continuity folded in.
 
+Implementation dispatch issued: `docs/cto/cb-build-execution-worker-m1-implementation-dispatch-20260623.md`.
+
+Key correction: the BuildExecutionWorker M1 proof must dispatch the actual tool returned by `getTopTool('build')`; it must not hardcode Codex. If Codex is selected, Codex must be invoked honestly through the OpenAI API Codex adapter boundary or the run must STOP/BLOCK. Evidence must include exact selected-tool output and proofRunId continuity through selection, dispatch, sandbox mutation, commit, response, and evidence packet.
+
 ## Additive Completion Charter - 2026-06-23
 
 Source: W04 final ratified FlowAI Capability Completion Charter.
