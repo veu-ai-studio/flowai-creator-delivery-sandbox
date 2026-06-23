@@ -130,6 +130,19 @@ function hasPlaceholderLanguage(text) {
   return /\b(simulated|demo|mock|placeholder)\b/i.test(String(text || ''));
 }
 
+function resolveGitHubDeployCredential(env) {
+  if (env.GITHUB_OPERATOR_TOKEN) {
+    return { token: env.GITHUB_OPERATOR_TOKEN, source: 'GITHUB_OPERATOR_TOKEN' };
+  }
+  if (env.GITHUB_PAT) {
+    return { token: env.GITHUB_PAT, source: 'GITHUB_PAT' };
+  }
+  if (env.GITHUB_WORKFLOW_TOKEN) {
+    return { token: env.GITHUB_WORKFLOW_TOKEN, source: 'GITHUB_WORKFLOW_TOKEN' };
+  }
+  return { token: null, source: null };
+}
+
 function escapeHtml(text) {
   return String(text || '')
     .replace(/&/g, '&amp;')
@@ -434,8 +447,8 @@ export async function runDeployChainWorkerMutation({
     });
   }
 
-  const githubToken = env.GITHUB_WORKFLOW_TOKEN || env.GITHUB_OPERATOR_TOKEN || env.GITHUB_PAT;
-  if (!githubToken) {
+  const githubCredential = resolveGitHubDeployCredential(env);
+  if (!githubCredential.token) {
     throw new BuildExecutionWorkerError('GitHub workflow credential is not configured for DeployChain.', {
       status: 503,
       code: 'DEPLOY_CHAIN_GITHUB_CREDENTIAL_MISSING',
@@ -469,9 +482,9 @@ export async function runDeployChainWorkerMutation({
     });
   }
 
-  const repo = await ensureDeploySandboxRepo({ token: githubToken, fetchImpl, sandbox });
+  const repo = await ensureDeploySandboxRepo({ token: githubCredential.token, fetchImpl, sandbox });
   const commit = await createTreeCommit({
-    token: githubToken,
+    token: githubCredential.token,
     fetchImpl,
     sandbox,
     branch: repo.defaultBranch,
@@ -479,7 +492,7 @@ export async function runDeployChainWorkerMutation({
     proofRunId,
   });
   const readBack = await readCommittedApp({
-    token: githubToken,
+    token: githubCredential.token,
     fetchImpl,
     sandbox,
     commitSha: commit.commitSha,
@@ -550,6 +563,7 @@ export async function runDeployChainWorkerMutation({
       fullName: sandbox.fullName,
       approved: sandbox.approved,
     },
+    githubCredentialSource: githubCredential.source,
     deployableSandboxCreation: repo.creationEvidence,
     flowaiCommit,
     createdAt: startedAt.toISOString(),
