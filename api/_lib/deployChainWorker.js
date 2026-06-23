@@ -143,6 +143,10 @@ function resolveGitHubDeployCredential(env) {
   return { token: null, source: null };
 }
 
+function resolveVercelDeployTarget(env) {
+  return env.FLOWAI_M2_DEPLOY_TARGET === 'production' ? 'production' : 'preview';
+}
+
 function escapeHtml(text) {
   return String(text || '')
     .replace(/&/g, '&amp;')
@@ -504,10 +508,11 @@ export async function runDeployChainWorkerMutation({
     });
   }
 
+  const vercelTarget = resolveVercelDeployTarget(env);
   const deploy = await vercelInvoke('deploy', {
     files,
     projectName: `flowai-m2-${proofRunId}`,
-    target: 'preview',
+    target: vercelTarget,
     framework: 'vite',
     teamId: env.VERCEL_ORG_ID || env.VERCEL_TEAM || null,
   });
@@ -554,7 +559,7 @@ export async function runDeployChainWorkerMutation({
     deployedUrl,
     deploymentId: deploy.data?.deploymentId || null,
     deploymentReadyState: deploy.data?.readyState || null,
-    deploymentTarget: deploy.data?.target || 'preview',
+    deploymentTarget: deploy.data?.target || vercelTarget,
     browserVerification: runtimeCheck,
     expectedText,
     sandbox: {
