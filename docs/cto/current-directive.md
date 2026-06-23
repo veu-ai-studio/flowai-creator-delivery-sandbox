@@ -7,6 +7,19 @@ Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `d
 
 This folder is an executive coordination layer. Canonical authority remains `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, and `docs/IMPLEMENTATION_PLAN.md`.
 
+## CTO Operating Reset - 2026-06-23
+
+Source: CTO synthesis after Victor/W04/Claude/ChatGPT feedback on administrative drag.
+Artifact: `docs/cto/cto-operating-reset-20260623.md`.
+
+FlowAI now returns to `Build -> Evidence -> Review -> Decision`.
+
+Claude is retained only as artifact-bound adversarial reviewer: plan adjudication, evidence verification, and claim discipline. No artifact means no Claude review. Do not send Claude draft dispatches, governance restatements, meta-governance, reviews of reviews, or dispatches about dispatches.
+
+AOL UI Work-State Contract work is AOL work unless W04/CEO explicitly maps it to a specific FlowAI runtime surface. The AOL Milestone A contract is routed to `docs/aol/work-state-contract-milestone-a-20260623.md`. Do not dispatch FlowAI CB to implement `NETWORK -> Connect Buyer` in FlowAI, and do not mix AOL UI evidence into FlowAI capability claims.
+
+FlowAI's runtime lane remains BuildExecutionWorker M1 and product-engine proof. The Milestone 1 plan exists on origin at commit `0687c38` and is recommended PASS-WITH-FINDINGS. No further Milestone 1 gate documents are needed; next FlowAI technical action is implementation only when requested, with Codex-adapter claim boundary and fail-closed proofRunId continuity folded in.
+
 ## Additive Completion Charter - 2026-06-23
 
 Source: W04 final ratified FlowAI Capability Completion Charter.
