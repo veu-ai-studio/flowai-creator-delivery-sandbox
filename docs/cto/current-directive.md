@@ -24,6 +24,8 @@ Implementation dispatch issued: `docs/cto/cb-build-execution-worker-m1-implement
 
 Key correction: the BuildExecutionWorker M1 proof must dispatch the actual tool returned by `getTopTool('build')`; it must not hardcode Codex. If Codex is selected, Codex must be invoked honestly through the OpenAI API Codex adapter boundary or the run must STOP/BLOCK. Evidence must include exact selected-tool output and proofRunId continuity through selection, dispatch, sandbox mutation, commit, response, and evidence packet.
 
+M1 implementation evidence packet: `docs/cto/build-execution-worker-m1-evidence-20260623.md`. Core `runBuild` wire live proof succeeded with sandbox commit `d4e7b583dc05784b7da7f30fc9384f32c5fea36c`; deployed `POST /api/forge/build` entrypoint proof remains caveated due preview POST empty 404.
+
 ## Additive Completion Charter - 2026-06-23
 
 Source: W04 final ratified FlowAI Capability Completion Charter.
