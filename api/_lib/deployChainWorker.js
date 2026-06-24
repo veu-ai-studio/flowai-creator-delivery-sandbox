@@ -148,6 +148,12 @@ function resolveVercelDeployTarget(env) {
   return env.FLOWAI_M2_DEPLOY_TARGET === 'production' ? 'production' : 'preview';
 }
 
+function resolveVercelProjectName(env, proofRunId) {
+  const configured = String(env.FLOWAI_M2_PROJECT_NAME || '').trim();
+  if (configured) return configured;
+  return `flowai-m2-${proofRunId}`;
+}
+
 function escapeHtml(text) {
   return String(text || '')
     .replace(/&/g, '&amp;')
@@ -560,9 +566,10 @@ export async function runDeployChainWorkerMutation({
   }
 
   const vercelTarget = resolveVercelDeployTarget(env);
+  const projectName = resolveVercelProjectName(env, proofRunId);
   const deploy = await vercelInvoke('deploy', {
     files,
-    projectName: `flowai-m2-${proofRunId}`,
+    projectName,
     target: vercelTarget,
     framework: null,
     teamId: env.VERCEL_ORG_ID || env.VERCEL_TEAM || null,
@@ -609,6 +616,7 @@ export async function runDeployChainWorkerMutation({
     appContentSha: readBack.contentSha,
     deployedUrl,
     deploymentId: deploy.data?.deploymentId || null,
+    deploymentProjectName: deploy.data?.projectName || projectName,
     deploymentReadyState: deploy.data?.readyState || null,
     deploymentTarget: deploy.data?.target || vercelTarget,
     browserVerification: runtimeCheck,
