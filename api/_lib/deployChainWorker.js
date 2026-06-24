@@ -570,6 +570,7 @@ export async function runDeployChainWorkerMutation({
   const deploy = await vercelInvoke('deploy', {
     files,
     projectName,
+    stableProjectName: Boolean(env.FLOWAI_M2_PROJECT_NAME),
     target: vercelTarget,
     framework: null,
     teamId: env.VERCEL_ORG_ID || env.VERCEL_TEAM || null,
