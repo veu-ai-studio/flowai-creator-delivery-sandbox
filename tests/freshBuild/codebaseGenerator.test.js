@@ -158,6 +158,49 @@ function mockDesignSpec(overrides = {}) {
   };
 }
 
+function mockDescriptionFeatureInventory(description, overrides = {}) {
+  return mockFeatureInventory({
+    id: 'feature-inventory-description-m4',
+    url: 'flowai-description://community-resource-navigator',
+    pages: [{
+      url: 'flowai-description://community-resource-navigator',
+      title: 'Community Resource Navigator',
+      purpose: 'description-derived fresh build landing and workspace shell',
+      primaryContent: description,
+      navigation: [],
+      hierarchy: { parent: 'root', children: [], confidence: 0.7 },
+      access: UNKNOWN,
+      confidence: 0.72,
+    }],
+    components: [{
+      id: 'description-action-panel',
+      type: 'card',
+      content: 'Primary actions and next steps generated from the submitted description.',
+      purpose: 'give the product a usable first workflow surface',
+      pages: ['flowai-description://community-resource-navigator'],
+      interactive: true,
+      confidence: 0.64,
+    }],
+    userFlows: [{
+      id: 'description-primary-flow',
+      name: 'primary product journey',
+      steps: [{ label: 'Open generated product', url: 'flowai-description://community-resource-navigator', confidence: 0.7 }],
+      entryPoint: 'flowai-description://community-resource-navigator',
+      exitPoint: 'flowai-description://community-resource-navigator',
+      formFields: [],
+      states: { success: 'Generated product renders', error: 'No baseline URL exists for comparison', confidence: 0.65 },
+      confidence: 0.65,
+    }],
+    metadata: {
+      ...mockFeatureInventory().metadata,
+      url: 'flowai-description://community-resource-navigator',
+      productName: 'Community Resource Navigator',
+      source: 'description_build_brief',
+    },
+    ...overrides,
+  });
+}
+
 describe('freshBuild Codebase Generator', () => {
   it('keeps Fresh Build disabled by default', () => {
     expect(isFreshBuildEnabled({})).toBe(false);
@@ -401,6 +444,60 @@ describe('freshBuild Codebase Generator', () => {
       apiCallsUsed: MAX_GENERATOR_API_CALLS + 1,
       apiCallCap: MAX_GENERATOR_API_CALLS,
       blocked: true,
+    });
+  });
+
+  it('generates an input-responsive description-only Creator app for resource navigation', () => {
+    const description = 'Community Resource Navigator for underserved users. Users describe a need, choose a resource category, and receive a recommended next step.';
+    const codebase = generateCodebase(
+      mockDescriptionFeatureInventory(description),
+      mockDesignSpec(),
+      {
+        productName: 'Community Resource Navigator',
+        now: '2026-06-24T00:00:00.000Z',
+      },
+    );
+    const appFile = codebase.files.find((file) => file.path === 'src/App.jsx');
+
+    expect(codebase.status).toBe('READY');
+    expect(codebase.metadata).toMatchObject({
+      creatorType: 'description-only',
+      persistence: {
+        requested: false,
+        supported: false,
+      },
+    });
+    expect(appFile?.content).toContain('Describe your need');
+    expect(appFile?.content).toContain('Recommend next step');
+    expect(appFile?.content).toContain('emergency rental assistance');
+    expect(appFile?.content).toContain('nearest food pantry intake desk');
+    expect(appFile?.content).toContain('FlowAI M4 Creator Type 2 verified description-only static path');
+    expect(appFile?.content).not.toMatch(/localStorage|indexedDB|sessionStorage/i);
+    expect(validateGeneratedCodebase(codebase)).toEqual({ ok: true, errors: [] });
+  });
+
+  it('stops description-only Creator persistence instead of faking backend storage', () => {
+    const description = 'Community Resource Navigator with persistence. Users must save requests, cold reload in a fresh session, and retrieve saved requests from server-side storage.';
+    const codebase = generateCodebase(
+      mockDescriptionFeatureInventory(description),
+      mockDesignSpec(),
+      {
+        productName: 'Community Resource Navigator',
+        now: '2026-06-24T00:00:00.000Z',
+      },
+    );
+
+    expect(codebase.status).toBe('BLOCKED');
+    expect(codebase.reason).toBe('PERSISTENCE_PROVISIONING_UNSUPPORTED');
+    expect(codebase.files).toEqual([]);
+    expect(codebase.platformDependencies).toEqual([]);
+    expect(codebase.metadata).toMatchObject({
+      creatorType: 'description-only',
+      persistence: {
+        requested: true,
+        supported: false,
+        reason: 'codebaseGenerator has no backend persistence substrate',
+      },
     });
   });
 
