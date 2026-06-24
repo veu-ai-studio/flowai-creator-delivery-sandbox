@@ -1,7 +1,10 @@
+import { generateKeyPairSync } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import {
+  APPROVED_DEPLOY_PROJECT_NAMES,
   APPROVED_DEPLOY_SANDBOX_FULL_NAME,
+  __test as deployChainTest,
   assertApprovedDeployChainSandbox,
   buildDeployableAppFiles,
   extractVisibleBodyText,
@@ -29,6 +32,44 @@ describe('DeployChainWorker M2 helper', () => {
       fullName: APPROVED_DEPLOY_SANDBOX_FULL_NAME,
       approved: true,
     });
+  });
+
+  it('keeps M2 and M3 as the only stable deploy proof projects', () => {
+    expect(APPROVED_DEPLOY_PROJECT_NAMES).toEqual([
+      'flowai-m2-deploy-chain-proof',
+      'flowai-m3-upgrader-proof',
+    ]);
+  });
+
+  it('mints a GitHub App installation token when no operator token is configured', async () => {
+    const { privateKey } = generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+      publicKeyEncoding: { type: 'spki', format: 'pem' },
+    });
+    const calls = [];
+    const credential = await deployChainTest.resolveGitHubDeployCredential({
+      GITHUB_APP_ID: '12345',
+      GITHUB_APP_INSTALLATION_ID: '67890',
+      GITHUB_APP_PRIVATE_KEY: privateKey,
+    }, async (url, init) => {
+      calls.push({ url, init });
+      return {
+        ok: true,
+        status: 201,
+        async text() {
+          return JSON.stringify({ token: 'installation-token' });
+        },
+      };
+    });
+
+    expect(credential).toEqual({
+      token: 'installation-token',
+      source: 'GITHUB_APP_INSTALLATION_TOKEN',
+    });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toContain('/app/installations/67890/access_tokens');
+    expect(calls[0].init.headers.Authorization).toMatch(/^Bearer /);
   });
 
   it('requires selected-tool output to be runnable app code, not proof JSON', () => {
@@ -64,6 +105,28 @@ describe('DeployChainWorker M2 helper', () => {
       flowaiCommit: 'abc123',
       browserMarker: 'FlowAI M2 deployed software verified',
     });
+  });
+
+  it('normalizes multi-element app output before comparing deployed visible text', () => {
+    const files = buildDeployableAppFiles({
+      proofRunId: 'flowai-build-m3-proof',
+      buildRequestId: 'flowai-build-request-m3',
+      selectedToolOutput: 'export default function App(){ return <main><h1>Community Aid Matcher</h1><p>FlowAI M3 deployed-endpoint upgrade verified a0f447a.</p><button>Generate outreach plan</button></main>; }',
+      selectedTool: { platform_name: 'Codex' },
+      selectedMemberId: 'codex',
+      flowaiCommit: 'a0f447a',
+    });
+    const byPath = new Map(files.map(file => [file.path, file.content]));
+    const proof = JSON.parse(byPath.get('flowai-deploy-proof.json'));
+
+    expect(proof.browserMarker).toBe('Community Aid Matcher FlowAI M3 deployed-endpoint upgrade verified a0f447a. Generate outreach plan');
+    expect(byPath.get('index.html')).toContain('<button>Generate outreach plan</button>');
+    expect(byPath.get('index.html')).not.toContain('<button disabled>');
+    expect(htmlHasVisibleBodyText(byPath.get('index.html'), proof.browserMarker)).toBe(true);
+    expect(htmlHasVisibleBodyText(
+      '<body><main><h1>Community Aid Matcher</h1><p>FlowAI M3 deployed-endpoint upgrade verified a0f447a.</p><button>Generate outreach plan</button></main></body>',
+      proof.browserMarker,
+    )).toBe(true);
   });
 
   it('visible-body checker does not accept title, script, or source-only markers', () => {

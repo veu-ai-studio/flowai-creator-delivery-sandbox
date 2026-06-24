@@ -19,6 +19,11 @@ import { runBuild } from '../../src/lib/forge/buildRunner.js';
 import { createToolIntelligenceService, MODES } from '../../src/lib/tools/ToolIntelligenceService.js';
 import { redactSecrets } from '../../src/lib/tools/toolDispatchContract.js';
 
+const APPROVED_DEPLOY_CHAIN_PROJECTS = new Set([
+  'flowai-m2-deploy-chain-proof',
+  'flowai-m3-upgrader-proof',
+]);
+
 function block(message, code, status = 503, details = null) {
   throw new BuildExecutionWorkerError(message, { status, code, details });
 }
@@ -81,6 +86,19 @@ function resolveMutationExecutor(body) {
   };
 }
 
+function resolveDeploymentProjectName(body) {
+  if (body.deliveryMode !== 'deploy-chain-sandbox') return null;
+  const value = typeof body.deploymentProjectName === 'string' ? body.deploymentProjectName.trim() : '';
+  if (!value) return null;
+  if (!APPROVED_DEPLOY_CHAIN_PROJECTS.has(value)) {
+    block('Deploy Chain Vercel project is not approved for proof execution.', 'DEPLOY_CHAIN_PROJECT_BOUNDARY_STOP', 409, {
+      requestedProjectName: value,
+      approvedProjectNames: Array.from(APPROVED_DEPLOY_CHAIN_PROJECTS),
+    });
+  }
+  return value;
+}
+
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -106,6 +124,7 @@ export default async function handler(req, res) {
     const manualInputs = body.manualInputs && typeof body.manualInputs === 'object' ? body.manualInputs : {};
     const toolService = createServerToolService();
     const mutationMode = resolveMutationExecutor(body);
+    const deploymentProjectName = resolveDeploymentProjectName(body);
 
     const output = await runBuild(productId, designOutput, manualInputs, {
       productId,
@@ -119,6 +138,7 @@ export default async function handler(req, res) {
       framework: body.framework || 'vite-react',
       env: process.env,
       mutationExecutor: mutationMode.executor,
+      deploymentProjectName,
     });
     const deployChainCandidate = Boolean(output.evidenceSummary?.deployChainUrl);
 

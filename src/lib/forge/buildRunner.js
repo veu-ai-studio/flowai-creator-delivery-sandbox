@@ -181,6 +181,17 @@ function containsPlaceholderText(value) {
   return /\b(simulated|demo|mock|placeholder)\b/i.test(text);
 }
 
+function containsPlaceholderGeneratedOutput(data = {}) {
+  const generated = [
+    data.patchedContent,
+    data.content,
+    data.code,
+    data.output,
+  ].filter(value => typeof value === 'string' && value.trim().length > 0);
+  if (generated.length === 0) return false;
+  return generated.some(containsPlaceholderText);
+}
+
 function assertLiveDispatchResult(result, action, expectedMemberId = null) {
   if (!result || result.ok !== true || result.deferred === true) {
     const status = typeof result?.status === 'number' ? ` status=${result.status}` : '';
@@ -192,7 +203,7 @@ function assertLiveDispatchResult(result, action, expectedMemberId = null) {
   if (semanticEmpty(result.data)) {
     throw new Error(`P2 live execution STOP: ${action} dispatch returned semantically empty output`);
   }
-  if (containsPlaceholderText(result.data)) {
+  if (containsPlaceholderGeneratedOutput(result.data)) {
     throw new Error(`P2 live execution STOP: ${action} dispatch returned placeholder output`);
   }
   if (expectedMemberId && result.member !== expectedMemberId) {
@@ -280,6 +291,7 @@ async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config
         runId: config.runId ?? null,
         task,
         targetFilePath: result.data.filePath ?? config.targetFilePath ?? 'src/App.jsx',
+        deploymentProjectName: config.deploymentProjectName ?? null,
         selectedTool: buildTool,
         selectedMemberId,
         toolSelection,

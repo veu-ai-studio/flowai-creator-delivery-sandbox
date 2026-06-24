@@ -1,0 +1,3776 @@
+{
+  "endpoint": "https://flowai-a20js24oa-veu-ai-studio.vercel.app/api/forge/build",
+  "startedAt": "2026-06-24T14:57:08.161Z",
+  "completedAt": "2026-06-24T14:58:45.386Z",
+  "httpStatus": 200,
+  "response": {
+    "ok": true,
+    "status": "SUCCESS",
+    "buildRequestId": "flowai-build-request-20260624T145706-680f917b",
+    "proofRunId": "flowai-build-20260624T145706-2f08872c",
+    "productId": "m3-upgrader-proof",
+    "deliveryMode": "DEPLOY_CHAIN_SANDBOX",
+    "buildOutput": {
+      "productId": "m3-upgrader-proof",
+      "stepId": "step-3-build",
+      "completedAt": "2026-06-24T14:58:43.024Z",
+      "sections": [
+        {
+          "id": "build-entry-path",
+          "label": "Build Entry Path",
+          "source": "auto",
+          "prompt": "Which entry path authorized this build? PATH_A (Victor directive) or PATH_B (complete design)",
+          "input": {
+            "path": "PATH_A",
+            "label": "Build authorized via Victor directive",
+            "reason": "MINIMUM BUILD DIRECTIVE found in design decision-log."
+          },
+          "evidenceTier": "B"
+        },
+        {
+          "id": "code-task-dispatches",
+          "label": "Code Task Dispatches",
+          "source": "orchestrated",
+          "prompt": "Specific code tasks to implement derived from design output or Victor directive. Orchestrated by AI build tool when configured.",
+          "input": [
+            {
+              "taskId": "path_a-build-task-001",
+              "title": "Implement Victor minimum build directive",
+              "description": "MINIMUM BUILD DIRECTIVE: implement the M3 Upgrader deployed-endpoint proof by replacing the disabled intake defect with a visible working Community Aid Matcher upgrade marker and enabled action.",
+              "priority": "P0",
+              "estimatedComplexity": "medium",
+              "targetFiles": [],
+              "acceptanceCriteria": [
+                "Implement only after branch/audit authorization",
+                "Do not touch platform client boundary or runtime files",
+                "Produce browser-verifiable evidence before marking complete"
+              ],
+              "buildToolStatus": "LIVE_BUILD_TOOL_DISPATCHED_AND_MUTATED",
+              "buildTool": {
+                "step_name": "build",
+                "rank": 1,
+                "platform_name": "Codex",
+                "platform_type": "code",
+                "performance_score": 10,
+                "cost_score": 7,
+                "speed_score": 9.5,
+                "reliability_score": 9.5,
+                "target_classes": [
+                  "web",
+                  "native_app",
+                  "mobile_app",
+                  "SaaS",
+                  "agentic_ai",
+                  "generic_url"
+                ],
+                "notes": "OpenAI-backed code patch and generate-from-scratch adapter; callable only with OPENAI_API_KEY.",
+                "registryEntry": {
+                  "name": "Codex",
+                  "category": "Build",
+                  "description": "OpenAI-backed coding agent path for code patching and generate-from-scratch build artifacts.",
+                  "performance_score": 10,
+                  "cost_tier": "freemium",
+                  "cost_details": "Requires OPENAI_API_KEY for API-backed dispatch; plan/API billing varies by account",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://openai.com/codex",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "code",
+                    "agentic",
+                    "low-resource"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 1,
+                "compositeScore": 9.25,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              "complete": true,
+              "verified": true,
+              "action": "code-patch",
+              "member": "codex",
+              "evidenceRef": "src/App.jsx",
+              "rationale": "The disabled button was enabled and the text was updated to reflect the successful upgrade, removing the defect notice and meeting the directive requirements.",
+              "patchedContentPresent": true,
+              "sandboxMutation": {
+                "ok": true,
+                "kind": "DEPLOY_CHAIN",
+                "proofRunId": "flowai-build-20260624T145706-2f08872c",
+                "buildRequestId": "flowai-build-request-20260624T145706-680f917b",
+                "productId": "m3-upgrader-proof",
+                "runId": "flowai-build-20260624T145706-2f08872c",
+                "targetFilePath": "src/App.jsx",
+                "selectedToolId": "Codex",
+                "selectedMemberId": "codex",
+                "selectedToolOutputSha256": "cd46a84bc6841d0bead487260502431f3dbc464277909d9d8506513a14be067c",
+                "commitSha": "b45cbe155c813ca5547309497660eee038601df9",
+                "commitUrl": "https://github.com/veu-ai-studio/flowai-deploy-execution-sandbox/commit/b45cbe155c813ca5547309497660eee038601df9",
+                "mutatedFilePath": "src/App.jsx",
+                "filesWritten": 3,
+                "appContentSha": "d3f2ff9923fe4fe456980a9c0ed6bbc6502a4a0c",
+                "deployedUrl": "https://flowai-m3-upgrader-proof-1loco6i3x-veu-ai-studio.vercel.app",
+                "deploymentId": "dpl_CvhcL6LxLZN9VKVN39LcpKc4Z5JV",
+                "deploymentProjectName": "flowai-m3-upgrader-proof",
+                "deploymentReadyState": "READY",
+                "deploymentTarget": "preview",
+                "browserVerification": {
+                  "status": "RUNTIME_URL_RENDER_CHECK_PASS",
+                  "httpStatus": 200,
+                  "renderedDomTextContainsExpectedText": true,
+                  "visibleBodyTextSample": "Community Aid Matcher FlowAI M3 deployed-endpoint upgrade verified c8e91cc Generate outreach plan FlowAI deploy-chain proof flowai-build-20260624T145706-2f08872c"
+                },
+                "expectedText": "Community Aid Matcher FlowAI M3 deployed-endpoint upgrade verified c8e91cc Generate outreach plan",
+                "sandbox": {
+                  "owner": "veu-ai-studio",
+                  "repo": "flowai-deploy-execution-sandbox",
+                  "fullName": "veu-ai-studio/flowai-deploy-execution-sandbox",
+                  "approved": true
+                },
+                "githubCredentialSource": "PRESENT",
+                "deployableSandboxCreation": null,
+                "flowaiCommit": "c8e91cc04bc425a39df4b7e1be16a18d65edbb00",
+                "createdAt": "2026-06-24T14:57:09.935Z",
+                "claimBoundary": "DEPLOY_CHAIN_DEMONSTRATED candidate evidence only; no persistence, Creator, Upgrader, or Universal Engine proof"
+              }
+            }
+          ],
+          "evidenceTier": "A"
+        },
+        {
+          "id": "base44-stub-deletions",
+          "label": "Base44 Dead Stub Deletions",
+          "source": "auto",
+          "prompt": "List of dead stubs identified in m3-upgrader-proof codebase (platform: unknown) for deletion. Auto-populated from known product surface audit.",
+          "input": [
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-001",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-002",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-003",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-004",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-005",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-006",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-007",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-008",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-009",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-010",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-011",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-012",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-013",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-014",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-015",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-016",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-017",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-018",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-019",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-020",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-021",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-022",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-023",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-024",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-025",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-026",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-027",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-028",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-029",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-030",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-031",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-032",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-033",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-034",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-035",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-036",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-037",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-038",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-039",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-040",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-041",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-042",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-043",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-044",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-045",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-046",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-047",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-048",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-049",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-050",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-051",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-052",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-053",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-054",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-055",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-056",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-057",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-058",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-059",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-060",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-061",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-062",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-063",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-064",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-065",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-066",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-067",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-068",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-069",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-070",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-071",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-072",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-073",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-074",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-075",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-076",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-077",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-078",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-079",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-080",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-081",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-082",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-083",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-084",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-085",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-086",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-087",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-088",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-089",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-090",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-091",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-092",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-093",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-094",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-095",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-096",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-097",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-098",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-099",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-100",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-101",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-102",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-103",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-104",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-105",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-106",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-107",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-108",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-109",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-110",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-111",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-112",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-113",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-114",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-115",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-116",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-117",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-118",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-119",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-dead-stub-120",
+              "reason": "dead stub",
+              "safeToDelete": false,
+              "estimatedImpact": "unknown",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            }
+          ],
+          "evidenceTier": "A"
+        },
+        {
+          "id": "base44-functionalization",
+          "label": "Base44 Surface Functionalization",
+          "source": "auto",
+          "prompt": "List of surfaces to functionalize in m3-upgrader-proof codebase (platform: unknown). Auto-populated from known product surface audit.",
+          "input": [
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-001",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 1,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-002",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 1,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-003",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 1,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-004",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 1,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-005",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 1,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-006",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 2,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-007",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 2,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-008",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 2,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-009",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 2,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-010",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 2,
+              "evidenceTier": "A",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-011",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 3,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-012",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 3,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-013",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 3,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-014",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 3,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-015",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 3,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-016",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 4,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-017",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 4,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-018",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 4,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-019",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 4,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-020",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 4,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-021",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 5,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-022",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 5,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-023",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 5,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-024",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 5,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            },
+            {
+              "surfaceId": "m3-upgrader-proof-functionalization-target-025",
+              "currentState": "stub",
+              "targetState": "functional",
+              "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+              "priority": 5,
+              "evidenceTier": "B",
+              "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+            }
+          ],
+          "evidenceTier": "A"
+        },
+        {
+          "id": "build-risks",
+          "label": "Build Risks",
+          "source": "derived",
+          "prompt": "Risks derived from design gaps carried forward from Step 2.",
+          "input": [
+            {
+              "riskId": "design-gap-1",
+              "risk": "Before product has a disabled action and no working outreach-plan path.",
+              "severity": "medium"
+            }
+          ],
+          "evidenceTier": "B"
+        },
+        {
+          "id": "build-decision-log",
+          "label": "Build Decision Log",
+          "source": "manual",
+          "prompt": "Victor build decisions that override or supplement orchestrated outputs.",
+          "input": [
+            "M3 Upgrader proof: live deployed endpoint must select the build tool, dispatch it, commit generated output, deploy it, and render the upgrade marker with enabled action."
+          ],
+          "evidenceTier": "A"
+        },
+        {
+          "id": "selected-tool",
+          "label": "Selected Build Tools",
+          "source": "auto",
+          "prompt": "Ordered build tool sequence. One tool per sub-step: plan, scaffold, install, test.",
+          "input": {
+            "mode": "AUTOMATIC",
+            "selection": [
+              {
+                "step_name": "build",
+                "rank": 1,
+                "platform_name": "Codex",
+                "platform_type": "code",
+                "performance_score": 10,
+                "cost_score": 7,
+                "speed_score": 9.5,
+                "reliability_score": 9.5,
+                "target_classes": [
+                  "web",
+                  "native_app",
+                  "mobile_app",
+                  "SaaS",
+                  "agentic_ai",
+                  "generic_url"
+                ],
+                "notes": "OpenAI-backed code patch and generate-from-scratch adapter; callable only with OPENAI_API_KEY.",
+                "registryEntry": {
+                  "name": "Codex",
+                  "category": "Build",
+                  "description": "OpenAI-backed coding agent path for code patching and generate-from-scratch build artifacts.",
+                  "performance_score": 10,
+                  "cost_tier": "freemium",
+                  "cost_details": "Requires OPENAI_API_KEY for API-backed dispatch; plan/API billing varies by account",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://openai.com/codex",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "code",
+                    "agentic",
+                    "low-resource"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 1,
+                "compositeScore": 9.25,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 2,
+                "platform_name": "Claude Code",
+                "platform_type": "code",
+                "performance_score": 9.8,
+                "cost_score": 7,
+                "speed_score": 9,
+                "reliability_score": 9,
+                "target_classes": [
+                  "web",
+                  "native_app",
+                  "mobile_app",
+                  "SaaS",
+                  "agentic_ai",
+                  "generic_url"
+                ],
+                "notes": "Anthropic-backed code patch and generation adapter; callable only with ANTHROPIC_API_KEY.",
+                "registryEntry": {
+                  "name": "Claude Code",
+                  "category": "Build",
+                  "description": "Anthropic-backed code patching and project generation adapter used by the Orchestra.",
+                  "performance_score": 9.8,
+                  "cost_tier": "freemium",
+                  "cost_details": "Requires ANTHROPIC_API_KEY for API-backed dispatch; plan/API billing varies by account",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://anthropic.com",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "code",
+                    "agentic"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 8.15,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 3,
+                "platform_name": "Cursor",
+                "platform_type": "code",
+                "performance_score": 9,
+                "cost_score": 8,
+                "speed_score": 9,
+                "reliability_score": 9,
+                "target_classes": [
+                  "web",
+                  "native_app",
+                  "mobile_app",
+                  "SaaS",
+                  "agentic_ai",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "Strong codebase context, fast iteration.",
+                "registryEntry": {
+                  "name": "Cursor",
+                  "category": "Build",
+                  "description": "AI-powered code editor with deep codebase understanding and autocomplete.",
+                  "performance_score": 9,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free Hobby; Pro $20/month",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://cursor.sh",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "editor",
+                    "ide"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 7.75,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 4,
+                "platform_name": "Bolt",
+                "platform_type": "ai_fullstack",
+                "performance_score": 8,
+                "cost_score": 8,
+                "speed_score": 9,
+                "reliability_score": 7,
+                "target_classes": [
+                  "web",
+                  "SaaS",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "AI full-stack web builder.",
+                "registryEntry": {
+                  "name": "Bolt",
+                  "category": "Build",
+                  "description": "AI full-stack web builder that generates and deploys complete applications.",
+                  "performance_score": 8.7,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free tier; Pro $20/month",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://bolt.new",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "fullstack",
+                    "deployment"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 7.25,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 5,
+                "platform_name": "Windsurf",
+                "platform_type": "code",
+                "performance_score": 8,
+                "cost_score": 8,
+                "speed_score": 8,
+                "reliability_score": 8,
+                "target_classes": [
+                  "web",
+                  "native_app",
+                  "mobile_app",
+                  "SaaS",
+                  "agentic_ai",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "Agentic coding environment.",
+                "registryEntry": {
+                  "name": "Windsurf",
+                  "category": "Build",
+                  "description": "AI-first coding environment with agentic coding capabilities.",
+                  "performance_score": 8.5,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free tier; Pro $15/month",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://codeium.com/windsurf",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "editor",
+                    "agentic"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 7.25,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 6,
+                "platform_name": "Replit",
+                "platform_type": "cloud_ide",
+                "performance_score": 8,
+                "cost_score": 9,
+                "speed_score": 7,
+                "reliability_score": 8,
+                "target_classes": [
+                  "web",
+                  "SaaS",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "Browser IDE + instant deploy.",
+                "registryEntry": {
+                  "name": "Replit",
+                  "category": "Build",
+                  "description": "Browser-based collaborative IDE with instant deployment capabilities.",
+                  "performance_score": 8.2,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free; Core $7/month; Teams $20/month",
+                  "underserved_accessible": "limited",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://replit.com",
+                  "tags": [
+                    "build",
+                    "ide",
+                    "collaboration",
+                    "deployment"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 0.5,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 6,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 7,
+                "platform_name": "Base44",
+                "platform_type": "source",
+                "performance_score": 9,
+                "cost_score": 8,
+                "speed_score": 8,
+                "reliability_score": 8,
+                "target_classes": [
+                  "web",
+                  "SaaS",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "Native FlowAI legacy substrate.",
+                "registryEntry": {
+                  "name": "Base44",
+                  "category": "Build",
+                  "description": "AI-native full-stack builder with built-in backend, auth, and database.",
+                  "performance_score": 7,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free tier; Pro $29/month",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "native",
+                  "production_compatible": true,
+                  "official_url": "https://base44.com",
+                  "tags": [
+                    "build",
+                    "fullstack",
+                    "ai",
+                    "no-code",
+                    "native"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 7.75,
+                "base44TieBreakScore": 0.5,
+                "underservedMetadataTarget": "underserved_market"
+              }
+            ],
+            "candidates": [
+              {
+                "step_name": "build",
+                "rank": 1,
+                "platform_name": "Codex",
+                "platform_type": "code",
+                "performance_score": 10,
+                "cost_score": 7,
+                "speed_score": 9.5,
+                "reliability_score": 9.5,
+                "target_classes": [
+                  "web",
+                  "native_app",
+                  "mobile_app",
+                  "SaaS",
+                  "agentic_ai",
+                  "generic_url"
+                ],
+                "notes": "OpenAI-backed code patch and generate-from-scratch adapter; callable only with OPENAI_API_KEY.",
+                "registryEntry": {
+                  "name": "Codex",
+                  "category": "Build",
+                  "description": "OpenAI-backed coding agent path for code patching and generate-from-scratch build artifacts.",
+                  "performance_score": 10,
+                  "cost_tier": "freemium",
+                  "cost_details": "Requires OPENAI_API_KEY for API-backed dispatch; plan/API billing varies by account",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://openai.com/codex",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "code",
+                    "agentic",
+                    "low-resource"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 1,
+                "compositeScore": 9.25,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 2,
+                "platform_name": "Claude Code",
+                "platform_type": "code",
+                "performance_score": 9.8,
+                "cost_score": 7,
+                "speed_score": 9,
+                "reliability_score": 9,
+                "target_classes": [
+                  "web",
+                  "native_app",
+                  "mobile_app",
+                  "SaaS",
+                  "agentic_ai",
+                  "generic_url"
+                ],
+                "notes": "Anthropic-backed code patch and generation adapter; callable only with ANTHROPIC_API_KEY.",
+                "registryEntry": {
+                  "name": "Claude Code",
+                  "category": "Build",
+                  "description": "Anthropic-backed code patching and project generation adapter used by the Orchestra.",
+                  "performance_score": 9.8,
+                  "cost_tier": "freemium",
+                  "cost_details": "Requires ANTHROPIC_API_KEY for API-backed dispatch; plan/API billing varies by account",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://anthropic.com",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "code",
+                    "agentic"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 8.15,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 3,
+                "platform_name": "Cursor",
+                "platform_type": "code",
+                "performance_score": 9,
+                "cost_score": 8,
+                "speed_score": 9,
+                "reliability_score": 9,
+                "target_classes": [
+                  "web",
+                  "native_app",
+                  "mobile_app",
+                  "SaaS",
+                  "agentic_ai",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "Strong codebase context, fast iteration.",
+                "registryEntry": {
+                  "name": "Cursor",
+                  "category": "Build",
+                  "description": "AI-powered code editor with deep codebase understanding and autocomplete.",
+                  "performance_score": 9,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free Hobby; Pro $20/month",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://cursor.sh",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "editor",
+                    "ide"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 7.75,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 4,
+                "platform_name": "Bolt",
+                "platform_type": "ai_fullstack",
+                "performance_score": 8,
+                "cost_score": 8,
+                "speed_score": 9,
+                "reliability_score": 7,
+                "target_classes": [
+                  "web",
+                  "SaaS",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "AI full-stack web builder.",
+                "registryEntry": {
+                  "name": "Bolt",
+                  "category": "Build",
+                  "description": "AI full-stack web builder that generates and deploys complete applications.",
+                  "performance_score": 8.7,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free tier; Pro $20/month",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://bolt.new",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "fullstack",
+                    "deployment"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 7.25,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 5,
+                "platform_name": "Windsurf",
+                "platform_type": "code",
+                "performance_score": 8,
+                "cost_score": 8,
+                "speed_score": 8,
+                "reliability_score": 8,
+                "target_classes": [
+                  "web",
+                  "native_app",
+                  "mobile_app",
+                  "SaaS",
+                  "agentic_ai",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "Agentic coding environment.",
+                "registryEntry": {
+                  "name": "Windsurf",
+                  "category": "Build",
+                  "description": "AI-first coding environment with agentic coding capabilities.",
+                  "performance_score": 8.5,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free tier; Pro $15/month",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://codeium.com/windsurf",
+                  "tags": [
+                    "build",
+                    "ai",
+                    "editor",
+                    "agentic"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 7.25,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 6,
+                "platform_name": "Replit",
+                "platform_type": "cloud_ide",
+                "performance_score": 8,
+                "cost_score": 9,
+                "speed_score": 7,
+                "reliability_score": 8,
+                "target_classes": [
+                  "web",
+                  "SaaS",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "Browser IDE + instant deploy.",
+                "registryEntry": {
+                  "name": "Replit",
+                  "category": "Build",
+                  "description": "Browser-based collaborative IDE with instant deployment capabilities.",
+                  "performance_score": 8.2,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free; Core $7/month; Teams $20/month",
+                  "underserved_accessible": "limited",
+                  "base44_compatible": "api",
+                  "production_compatible": true,
+                  "official_url": "https://replit.com",
+                  "tags": [
+                    "build",
+                    "ide",
+                    "collaboration",
+                    "deployment"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 0.5,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 6,
+                "base44TieBreakScore": 0.25,
+                "underservedMetadataTarget": "underserved_market"
+              },
+              {
+                "step_name": "build",
+                "rank": 7,
+                "platform_name": "Base44",
+                "platform_type": "source",
+                "performance_score": 9,
+                "cost_score": 8,
+                "speed_score": 8,
+                "reliability_score": 8,
+                "target_classes": [
+                  "web",
+                  "SaaS",
+                  "generic_url"
+                ],
+                "last_updated": "2026-05-20T01:50:57.125317+00:00",
+                "notes": "Native FlowAI legacy substrate.",
+                "registryEntry": {
+                  "name": "Base44",
+                  "category": "Build",
+                  "description": "AI-native full-stack builder with built-in backend, auth, and database.",
+                  "performance_score": 7,
+                  "cost_tier": "freemium",
+                  "cost_details": "Free tier; Pro $29/month",
+                  "underserved_accessible": "yes",
+                  "base44_compatible": "native",
+                  "production_compatible": true,
+                  "official_url": "https://base44.com",
+                  "tags": [
+                    "build",
+                    "fullstack",
+                    "ai",
+                    "no-code",
+                    "native"
+                  ]
+                },
+                "metadataStatus": "REGISTRY_METADATA_FOUND",
+                "dataGapWarning": false,
+                "underservedAccessibilityScore": 1,
+                "costScore": 0.5,
+                "resourceScore": 0,
+                "compositeScore": 7.75,
+                "base44TieBreakScore": 0.5,
+                "underservedMetadataTarget": "underserved_market"
+              }
+            ],
+            "recorded": false,
+            "stepKey": "PRESENT",
+            "selectionMode": "pipeline",
+            "undServedFirstApplied": true,
+            "undServedAccessWarning": false,
+            "underservedConstraintSatisfied": true,
+            "dataGapWarnings": [],
+            "targetClass": "generic_url",
+            "underservedMetadataTarget": "underserved_market",
+            "underservedFirstApplied": true
+          },
+          "evidenceTier": "B",
+          "undServedFirstEnforced": true,
+          "selectionMode": "pipeline"
+        }
+      ],
+      "toolSelection": {
+        "mode": "AUTOMATIC",
+        "selection": [
+          {
+            "step_name": "build",
+            "rank": 1,
+            "platform_name": "Codex",
+            "platform_type": "code",
+            "performance_score": 10,
+            "cost_score": 7,
+            "speed_score": 9.5,
+            "reliability_score": 9.5,
+            "target_classes": [
+              "web",
+              "native_app",
+              "mobile_app",
+              "SaaS",
+              "agentic_ai",
+              "generic_url"
+            ],
+            "notes": "OpenAI-backed code patch and generate-from-scratch adapter; callable only with OPENAI_API_KEY.",
+            "registryEntry": {
+              "name": "Codex",
+              "category": "Build",
+              "description": "OpenAI-backed coding agent path for code patching and generate-from-scratch build artifacts.",
+              "performance_score": 10,
+              "cost_tier": "freemium",
+              "cost_details": "Requires OPENAI_API_KEY for API-backed dispatch; plan/API billing varies by account",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://openai.com/codex",
+              "tags": [
+                "build",
+                "ai",
+                "code",
+                "agentic",
+                "low-resource"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 1,
+            "compositeScore": 9.25,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 2,
+            "platform_name": "Claude Code",
+            "platform_type": "code",
+            "performance_score": 9.8,
+            "cost_score": 7,
+            "speed_score": 9,
+            "reliability_score": 9,
+            "target_classes": [
+              "web",
+              "native_app",
+              "mobile_app",
+              "SaaS",
+              "agentic_ai",
+              "generic_url"
+            ],
+            "notes": "Anthropic-backed code patch and generation adapter; callable only with ANTHROPIC_API_KEY.",
+            "registryEntry": {
+              "name": "Claude Code",
+              "category": "Build",
+              "description": "Anthropic-backed code patching and project generation adapter used by the Orchestra.",
+              "performance_score": 9.8,
+              "cost_tier": "freemium",
+              "cost_details": "Requires ANTHROPIC_API_KEY for API-backed dispatch; plan/API billing varies by account",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://anthropic.com",
+              "tags": [
+                "build",
+                "ai",
+                "code",
+                "agentic"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 8.15,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 3,
+            "platform_name": "Cursor",
+            "platform_type": "code",
+            "performance_score": 9,
+            "cost_score": 8,
+            "speed_score": 9,
+            "reliability_score": 9,
+            "target_classes": [
+              "web",
+              "native_app",
+              "mobile_app",
+              "SaaS",
+              "agentic_ai",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "Strong codebase context, fast iteration.",
+            "registryEntry": {
+              "name": "Cursor",
+              "category": "Build",
+              "description": "AI-powered code editor with deep codebase understanding and autocomplete.",
+              "performance_score": 9,
+              "cost_tier": "freemium",
+              "cost_details": "Free Hobby; Pro $20/month",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://cursor.sh",
+              "tags": [
+                "build",
+                "ai",
+                "editor",
+                "ide"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 7.75,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 4,
+            "platform_name": "Bolt",
+            "platform_type": "ai_fullstack",
+            "performance_score": 8,
+            "cost_score": 8,
+            "speed_score": 9,
+            "reliability_score": 7,
+            "target_classes": [
+              "web",
+              "SaaS",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "AI full-stack web builder.",
+            "registryEntry": {
+              "name": "Bolt",
+              "category": "Build",
+              "description": "AI full-stack web builder that generates and deploys complete applications.",
+              "performance_score": 8.7,
+              "cost_tier": "freemium",
+              "cost_details": "Free tier; Pro $20/month",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://bolt.new",
+              "tags": [
+                "build",
+                "ai",
+                "fullstack",
+                "deployment"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 7.25,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 5,
+            "platform_name": "Windsurf",
+            "platform_type": "code",
+            "performance_score": 8,
+            "cost_score": 8,
+            "speed_score": 8,
+            "reliability_score": 8,
+            "target_classes": [
+              "web",
+              "native_app",
+              "mobile_app",
+              "SaaS",
+              "agentic_ai",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "Agentic coding environment.",
+            "registryEntry": {
+              "name": "Windsurf",
+              "category": "Build",
+              "description": "AI-first coding environment with agentic coding capabilities.",
+              "performance_score": 8.5,
+              "cost_tier": "freemium",
+              "cost_details": "Free tier; Pro $15/month",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://codeium.com/windsurf",
+              "tags": [
+                "build",
+                "ai",
+                "editor",
+                "agentic"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 7.25,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 6,
+            "platform_name": "Replit",
+            "platform_type": "cloud_ide",
+            "performance_score": 8,
+            "cost_score": 9,
+            "speed_score": 7,
+            "reliability_score": 8,
+            "target_classes": [
+              "web",
+              "SaaS",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "Browser IDE + instant deploy.",
+            "registryEntry": {
+              "name": "Replit",
+              "category": "Build",
+              "description": "Browser-based collaborative IDE with instant deployment capabilities.",
+              "performance_score": 8.2,
+              "cost_tier": "freemium",
+              "cost_details": "Free; Core $7/month; Teams $20/month",
+              "underserved_accessible": "limited",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://replit.com",
+              "tags": [
+                "build",
+                "ide",
+                "collaboration",
+                "deployment"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 0.5,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 6,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 7,
+            "platform_name": "Base44",
+            "platform_type": "source",
+            "performance_score": 9,
+            "cost_score": 8,
+            "speed_score": 8,
+            "reliability_score": 8,
+            "target_classes": [
+              "web",
+              "SaaS",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "Native FlowAI legacy substrate.",
+            "registryEntry": {
+              "name": "Base44",
+              "category": "Build",
+              "description": "AI-native full-stack builder with built-in backend, auth, and database.",
+              "performance_score": 7,
+              "cost_tier": "freemium",
+              "cost_details": "Free tier; Pro $29/month",
+              "underserved_accessible": "yes",
+              "base44_compatible": "native",
+              "production_compatible": true,
+              "official_url": "https://base44.com",
+              "tags": [
+                "build",
+                "fullstack",
+                "ai",
+                "no-code",
+                "native"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 7.75,
+            "base44TieBreakScore": 0.5,
+            "underservedMetadataTarget": "underserved_market"
+          }
+        ],
+        "candidates": [
+          {
+            "step_name": "build",
+            "rank": 1,
+            "platform_name": "Codex",
+            "platform_type": "code",
+            "performance_score": 10,
+            "cost_score": 7,
+            "speed_score": 9.5,
+            "reliability_score": 9.5,
+            "target_classes": [
+              "web",
+              "native_app",
+              "mobile_app",
+              "SaaS",
+              "agentic_ai",
+              "generic_url"
+            ],
+            "notes": "OpenAI-backed code patch and generate-from-scratch adapter; callable only with OPENAI_API_KEY.",
+            "registryEntry": {
+              "name": "Codex",
+              "category": "Build",
+              "description": "OpenAI-backed coding agent path for code patching and generate-from-scratch build artifacts.",
+              "performance_score": 10,
+              "cost_tier": "freemium",
+              "cost_details": "Requires OPENAI_API_KEY for API-backed dispatch; plan/API billing varies by account",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://openai.com/codex",
+              "tags": [
+                "build",
+                "ai",
+                "code",
+                "agentic",
+                "low-resource"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 1,
+            "compositeScore": 9.25,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 2,
+            "platform_name": "Claude Code",
+            "platform_type": "code",
+            "performance_score": 9.8,
+            "cost_score": 7,
+            "speed_score": 9,
+            "reliability_score": 9,
+            "target_classes": [
+              "web",
+              "native_app",
+              "mobile_app",
+              "SaaS",
+              "agentic_ai",
+              "generic_url"
+            ],
+            "notes": "Anthropic-backed code patch and generation adapter; callable only with ANTHROPIC_API_KEY.",
+            "registryEntry": {
+              "name": "Claude Code",
+              "category": "Build",
+              "description": "Anthropic-backed code patching and project generation adapter used by the Orchestra.",
+              "performance_score": 9.8,
+              "cost_tier": "freemium",
+              "cost_details": "Requires ANTHROPIC_API_KEY for API-backed dispatch; plan/API billing varies by account",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://anthropic.com",
+              "tags": [
+                "build",
+                "ai",
+                "code",
+                "agentic"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 8.15,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 3,
+            "platform_name": "Cursor",
+            "platform_type": "code",
+            "performance_score": 9,
+            "cost_score": 8,
+            "speed_score": 9,
+            "reliability_score": 9,
+            "target_classes": [
+              "web",
+              "native_app",
+              "mobile_app",
+              "SaaS",
+              "agentic_ai",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "Strong codebase context, fast iteration.",
+            "registryEntry": {
+              "name": "Cursor",
+              "category": "Build",
+              "description": "AI-powered code editor with deep codebase understanding and autocomplete.",
+              "performance_score": 9,
+              "cost_tier": "freemium",
+              "cost_details": "Free Hobby; Pro $20/month",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://cursor.sh",
+              "tags": [
+                "build",
+                "ai",
+                "editor",
+                "ide"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 7.75,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 4,
+            "platform_name": "Bolt",
+            "platform_type": "ai_fullstack",
+            "performance_score": 8,
+            "cost_score": 8,
+            "speed_score": 9,
+            "reliability_score": 7,
+            "target_classes": [
+              "web",
+              "SaaS",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "AI full-stack web builder.",
+            "registryEntry": {
+              "name": "Bolt",
+              "category": "Build",
+              "description": "AI full-stack web builder that generates and deploys complete applications.",
+              "performance_score": 8.7,
+              "cost_tier": "freemium",
+              "cost_details": "Free tier; Pro $20/month",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://bolt.new",
+              "tags": [
+                "build",
+                "ai",
+                "fullstack",
+                "deployment"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 7.25,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 5,
+            "platform_name": "Windsurf",
+            "platform_type": "code",
+            "performance_score": 8,
+            "cost_score": 8,
+            "speed_score": 8,
+            "reliability_score": 8,
+            "target_classes": [
+              "web",
+              "native_app",
+              "mobile_app",
+              "SaaS",
+              "agentic_ai",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "Agentic coding environment.",
+            "registryEntry": {
+              "name": "Windsurf",
+              "category": "Build",
+              "description": "AI-first coding environment with agentic coding capabilities.",
+              "performance_score": 8.5,
+              "cost_tier": "freemium",
+              "cost_details": "Free tier; Pro $15/month",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://codeium.com/windsurf",
+              "tags": [
+                "build",
+                "ai",
+                "editor",
+                "agentic"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 7.25,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 6,
+            "platform_name": "Replit",
+            "platform_type": "cloud_ide",
+            "performance_score": 8,
+            "cost_score": 9,
+            "speed_score": 7,
+            "reliability_score": 8,
+            "target_classes": [
+              "web",
+              "SaaS",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "Browser IDE + instant deploy.",
+            "registryEntry": {
+              "name": "Replit",
+              "category": "Build",
+              "description": "Browser-based collaborative IDE with instant deployment capabilities.",
+              "performance_score": 8.2,
+              "cost_tier": "freemium",
+              "cost_details": "Free; Core $7/month; Teams $20/month",
+              "underserved_accessible": "limited",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://replit.com",
+              "tags": [
+                "build",
+                "ide",
+                "collaboration",
+                "deployment"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 0.5,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 6,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          {
+            "step_name": "build",
+            "rank": 7,
+            "platform_name": "Base44",
+            "platform_type": "source",
+            "performance_score": 9,
+            "cost_score": 8,
+            "speed_score": 8,
+            "reliability_score": 8,
+            "target_classes": [
+              "web",
+              "SaaS",
+              "generic_url"
+            ],
+            "last_updated": "2026-05-20T01:50:57.125317+00:00",
+            "notes": "Native FlowAI legacy substrate.",
+            "registryEntry": {
+              "name": "Base44",
+              "category": "Build",
+              "description": "AI-native full-stack builder with built-in backend, auth, and database.",
+              "performance_score": 7,
+              "cost_tier": "freemium",
+              "cost_details": "Free tier; Pro $29/month",
+              "underserved_accessible": "yes",
+              "base44_compatible": "native",
+              "production_compatible": true,
+              "official_url": "https://base44.com",
+              "tags": [
+                "build",
+                "fullstack",
+                "ai",
+                "no-code",
+                "native"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 0,
+            "compositeScore": 7.75,
+            "base44TieBreakScore": 0.5,
+            "underservedMetadataTarget": "underserved_market"
+          }
+        ],
+        "recorded": false,
+        "stepKey": "PRESENT",
+        "selectionMode": "pipeline",
+        "undServedFirstApplied": true,
+        "undServedAccessWarning": false,
+        "underservedConstraintSatisfied": true,
+        "dataGapWarnings": [],
+        "targetClass": "generic_url",
+        "underservedMetadataTarget": "underserved_market",
+        "underservedFirstApplied": true
+      },
+      "undServedAccessWarning": false,
+      "entryPath": {
+        "path": "PATH_A",
+        "label": "Build authorized via Victor directive",
+        "reason": "MINIMUM BUILD DIRECTIVE found in design decision-log."
+      },
+      "codeTaskDispatches": [
+        {
+          "taskId": "path_a-build-task-001",
+          "title": "Implement Victor minimum build directive",
+          "description": "MINIMUM BUILD DIRECTIVE: implement the M3 Upgrader deployed-endpoint proof by replacing the disabled intake defect with a visible working Community Aid Matcher upgrade marker and enabled action.",
+          "priority": "P0",
+          "estimatedComplexity": "medium",
+          "targetFiles": [],
+          "acceptanceCriteria": [
+            "Implement only after branch/audit authorization",
+            "Do not touch platform client boundary or runtime files",
+            "Produce browser-verifiable evidence before marking complete"
+          ],
+          "buildToolStatus": "LIVE_BUILD_TOOL_DISPATCHED_AND_MUTATED",
+          "buildTool": {
+            "step_name": "build",
+            "rank": 1,
+            "platform_name": "Codex",
+            "platform_type": "code",
+            "performance_score": 10,
+            "cost_score": 7,
+            "speed_score": 9.5,
+            "reliability_score": 9.5,
+            "target_classes": [
+              "web",
+              "native_app",
+              "mobile_app",
+              "SaaS",
+              "agentic_ai",
+              "generic_url"
+            ],
+            "notes": "OpenAI-backed code patch and generate-from-scratch adapter; callable only with OPENAI_API_KEY.",
+            "registryEntry": {
+              "name": "Codex",
+              "category": "Build",
+              "description": "OpenAI-backed coding agent path for code patching and generate-from-scratch build artifacts.",
+              "performance_score": 10,
+              "cost_tier": "freemium",
+              "cost_details": "Requires OPENAI_API_KEY for API-backed dispatch; plan/API billing varies by account",
+              "underserved_accessible": "yes",
+              "base44_compatible": "api",
+              "production_compatible": true,
+              "official_url": "https://openai.com/codex",
+              "tags": [
+                "build",
+                "ai",
+                "code",
+                "agentic",
+                "low-resource"
+              ]
+            },
+            "metadataStatus": "REGISTRY_METADATA_FOUND",
+            "dataGapWarning": false,
+            "underservedAccessibilityScore": 1,
+            "costScore": 0.5,
+            "resourceScore": 1,
+            "compositeScore": 9.25,
+            "base44TieBreakScore": 0.25,
+            "underservedMetadataTarget": "underserved_market"
+          },
+          "complete": true,
+          "verified": true,
+          "action": "code-patch",
+          "member": "codex",
+          "evidenceRef": "src/App.jsx",
+          "rationale": "The disabled button was enabled and the text was updated to reflect the successful upgrade, removing the defect notice and meeting the directive requirements.",
+          "patchedContentPresent": true,
+          "sandboxMutation": {
+            "ok": true,
+            "kind": "DEPLOY_CHAIN",
+            "proofRunId": "flowai-build-20260624T145706-2f08872c",
+            "buildRequestId": "flowai-build-request-20260624T145706-680f917b",
+            "productId": "m3-upgrader-proof",
+            "runId": "flowai-build-20260624T145706-2f08872c",
+            "targetFilePath": "src/App.jsx",
+            "selectedToolId": "Codex",
+            "selectedMemberId": "codex",
+            "selectedToolOutputSha256": "cd46a84bc6841d0bead487260502431f3dbc464277909d9d8506513a14be067c",
+            "commitSha": "b45cbe155c813ca5547309497660eee038601df9",
+            "commitUrl": "https://github.com/veu-ai-studio/flowai-deploy-execution-sandbox/commit/b45cbe155c813ca5547309497660eee038601df9",
+            "mutatedFilePath": "src/App.jsx",
+            "filesWritten": 3,
+            "appContentSha": "d3f2ff9923fe4fe456980a9c0ed6bbc6502a4a0c",
+            "deployedUrl": "https://flowai-m3-upgrader-proof-1loco6i3x-veu-ai-studio.vercel.app",
+            "deploymentId": "dpl_CvhcL6LxLZN9VKVN39LcpKc4Z5JV",
+            "deploymentProjectName": "flowai-m3-upgrader-proof",
+            "deploymentReadyState": "READY",
+            "deploymentTarget": "preview",
+            "browserVerification": {
+              "status": "RUNTIME_URL_RENDER_CHECK_PASS",
+              "httpStatus": 200,
+              "renderedDomTextContainsExpectedText": true,
+              "visibleBodyTextSample": "Community Aid Matcher FlowAI M3 deployed-endpoint upgrade verified c8e91cc Generate outreach plan FlowAI deploy-chain proof flowai-build-20260624T145706-2f08872c"
+            },
+            "expectedText": "Community Aid Matcher FlowAI M3 deployed-endpoint upgrade verified c8e91cc Generate outreach plan",
+            "sandbox": {
+              "owner": "veu-ai-studio",
+              "repo": "flowai-deploy-execution-sandbox",
+              "fullName": "veu-ai-studio/flowai-deploy-execution-sandbox",
+              "approved": true
+            },
+            "githubCredentialSource": "PRESENT",
+            "deployableSandboxCreation": null,
+            "flowaiCommit": "c8e91cc04bc425a39df4b7e1be16a18d65edbb00",
+            "createdAt": "2026-06-24T14:57:09.935Z",
+            "claimBoundary": "DEPLOY_CHAIN_DEMONSTRATED candidate evidence only; no persistence, Creator, Upgrader, or Universal Engine proof"
+          }
+        }
+      ],
+      "base44BatchPlan": {
+        "status": "BATCH_PLAN_APPROXIMATE",
+        "verified": false,
+        "reason": "Precise m3-upgrader-proof surface audit data not yet loaded into matrix",
+        "currentReachableSurface": "18-22%",
+        "targetReachableSurface": "60%+",
+        "knownDeadStubs": 120,
+        "knownFunctionalizationTargets": 25,
+        "stubDeletions": [
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-001",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-002",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-003",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-004",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-005",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-006",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-007",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-008",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-009",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-010",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-011",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-012",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-013",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-014",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-015",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-016",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-017",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-018",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-019",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-020",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-021",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-022",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-023",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-024",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-025",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-026",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-027",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-028",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-029",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-030",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-031",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-032",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-033",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-034",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-035",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-036",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-037",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-038",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-039",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-040",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-041",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-042",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-043",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-044",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-045",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-046",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-047",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-048",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-049",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-050",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-051",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-052",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-053",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-054",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-055",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-056",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-057",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-058",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-059",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-060",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-061",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-062",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-063",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-064",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-065",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-066",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-067",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-068",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-069",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-070",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-071",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-072",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-073",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-074",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-075",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-076",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-077",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-078",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-079",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-080",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-081",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-082",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-083",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-084",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-085",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-086",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-087",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-088",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-089",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-090",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-091",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-092",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-093",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-094",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-095",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-096",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-097",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-098",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-099",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-100",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-101",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-102",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-103",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-104",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-105",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-106",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-107",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-108",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-109",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-110",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-111",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-112",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-113",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-114",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-115",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-116",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-117",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-118",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-119",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-dead-stub-120",
+            "reason": "dead stub",
+            "safeToDelete": false,
+            "estimatedImpact": "unknown",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          }
+        ],
+        "functionalizationPlan": [
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-001",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 1,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-002",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 1,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-003",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 1,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-004",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 1,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-005",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 1,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-006",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 2,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-007",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 2,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-008",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 2,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-009",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 2,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-010",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 2,
+            "evidenceTier": "A",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-011",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 3,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-012",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 3,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-013",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 3,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-014",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 3,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-015",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 3,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-016",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 4,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-017",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 4,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-018",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 4,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-019",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 4,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-020",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 4,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-021",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 5,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-022",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 5,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-023",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 5,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-024",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 5,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          },
+          {
+            "surfaceId": "m3-upgrader-proof-functionalization-target-025",
+            "currentState": "stub",
+            "targetState": "functional",
+            "requiredWork": "Confirm surface identity, map to Base44 entity/function, wire persistence, and browser-verify reload evidence.",
+            "priority": 5,
+            "evidenceTier": "B",
+            "evidence": "BATCH_PLAN_APPROXIMATE - precise surface data pending m3-upgrader-proof matrix audit"
+          }
+        ]
+      },
+      "buildScore": 100,
+      "buildComplete": true,
+      "readyForQualityAudit": true,
+      "evidenceSummary": {
+        "codeTaskDispatchesStatus": "POPULATED",
+        "base44BatchPlanStatus": "BATCH_PLAN_APPROXIMATE",
+        "buildRisks": 1,
+        "stubDeletions": 120,
+        "functionalizationTargets": 25,
+        "liveDispatches": 1,
+        "sandboxMutations": 1,
+        "sandboxCommitSha": "b45cbe155c813ca5547309497660eee038601df9",
+        "deployChainUrl": "https://flowai-m3-upgrader-proof-1loco6i3x-veu-ai-studio.vercel.app",
+        "deploymentId": "dpl_CvhcL6LxLZN9VKVN39LcpKc4Z5JV",
+        "deploymentProjectName": "flowai-m3-upgrader-proof",
+        "deploymentTarget": "preview",
+        "mutationKind": "DEPLOY_CHAIN",
+        "estimatedCostUsd": 0
+      },
+      "matrixArtifactVersion": "m3-upgrader-proof-20260624"
+    },
+    "claimBoundary": {
+      "maximumClaim": "DEPLOY CHAIN DEMONSTRATED candidate evidence; runnable selected-tool output reached a public URL",
+      "excludedClaims": [
+        "BUILD_EXECUTION_VERIFIED",
+        "CREATOR_VERIFIED",
+        "UPGRADER_VERIFIED",
+        "UNIVERSAL_ENGINE_VERIFIED",
+        "Production autonomous execution",
+        "Persistence proven",
+        "Behavioral product improvement proven"
+      ]
+    }
+  }
+}

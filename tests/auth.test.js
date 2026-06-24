@@ -41,6 +41,12 @@ import {
   isValidEmail,
 } from '../api/_lib/authBackend.js';
 
+import {
+  getRequestContext,
+  isOperatorContext,
+  requireOperatorAuth,
+} from '../api/_lib/auth.js';
+
 import signUpHandler from '../api/auth/sign-up.js';
 import signInHandler from '../api/auth/sign-in.js';
 import sessionHandler from '../api/auth/session.js';
@@ -165,6 +171,44 @@ describe('authBackend / user store + sessions', () => {
 });
 
 // ─── /api/auth/sign-up ────────────────────────────────────────────────────
+
+describe('operator proof auth', () => {
+  it('accepts FLOWAI_INTERNAL_SECRET via x-flowai-operator-secret without a Clerk session', async () => {
+    const oldOperator = process.env.FLOWAI_OPERATOR_SECRET;
+    const oldInternal = process.env.FLOWAI_INTERNAL_SECRET;
+    const oldService = process.env.FLOWAI_SERVICE_KEY;
+    delete process.env.FLOWAI_OPERATOR_SECRET;
+    delete process.env.FLOWAI_SERVICE_KEY;
+    process.env.FLOWAI_INTERNAL_SECRET = 'internal-proof-secret';
+    try {
+      const req = makeReq({
+        headers: {
+          'x-flowai-operator-secret': 'internal-proof-secret',
+          'x-flowai-org-id': 'veu-ai-studio',
+        },
+        body: { productId: 'm3-upgrader-proof' },
+      });
+      const res = makeRes();
+      const ctx = await requireOperatorAuth(req, res);
+
+      expect(res.ended).toBe(false);
+      expect(ctx).toMatchObject({
+        authenticated: true,
+        authMode: 'operator-secret',
+        orgId: 'veu-ai-studio',
+        productId: 'm3-upgrader-proof',
+      });
+      expect(isOperatorContext(await getRequestContext(req))).toBe(false);
+    } finally {
+      if (oldOperator === undefined) delete process.env.FLOWAI_OPERATOR_SECRET;
+      else process.env.FLOWAI_OPERATOR_SECRET = oldOperator;
+      if (oldInternal === undefined) delete process.env.FLOWAI_INTERNAL_SECRET;
+      else process.env.FLOWAI_INTERNAL_SECRET = oldInternal;
+      if (oldService === undefined) delete process.env.FLOWAI_SERVICE_KEY;
+      else process.env.FLOWAI_SERVICE_KEY = oldService;
+    }
+  });
+});
 
 describe('/api/auth/sign-up handler', () => {
   it('OPTIONS returns 204', async () => {

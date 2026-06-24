@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, sign } from 'node:crypto';
 import { invoke as vercelInvoke } from '../../src/lib/orchestra/vercel.js';
 import {
   BuildExecutionWorkerError,
@@ -9,6 +9,10 @@ export const DEPLOY_CHAIN_KIND = 'DEPLOY_CHAIN';
 export const APPROVED_DEPLOY_SANDBOX_OWNER = 'veu-ai-studio';
 export const APPROVED_DEPLOY_SANDBOX_REPO = 'flowai-deploy-execution-sandbox';
 export const APPROVED_DEPLOY_SANDBOX_FULL_NAME = `${APPROVED_DEPLOY_SANDBOX_OWNER}/${APPROVED_DEPLOY_SANDBOX_REPO}`;
+export const APPROVED_DEPLOY_PROJECT_NAMES = Object.freeze([
+  'flowai-m2-deploy-chain-proof',
+  'flowai-m3-upgrader-proof',
+]);
 export const DEPLOY_CHAIN_APP_FILE = 'src/App.jsx';
 export const DEPLOY_CHAIN_HTML_FILE = 'index.html';
 export const DEPLOY_CHAIN_PROOF_FILE = 'flowai-deploy-proof.json';
@@ -33,6 +37,50 @@ function fromBase64(text = '') {
 
 function sha256(text) {
   return createHash('sha256').update(String(text), 'utf8').digest('hex');
+}
+
+function base64UrlJson(value) {
+  return Buffer.from(JSON.stringify(value)).toString('base64url');
+}
+
+function normalizePrivateKey(value = '') {
+  return String(value || '').replace(/\\n/g, '\n');
+}
+
+async function createGitHubAppInstallationToken(env, fetchImpl = fetch) {
+  const appId = env.GITHUB_APP_ID;
+  const installationId = env.GITHUB_APP_INSTALLATION_ID || env.GITHUB_INSTALLATION_ID;
+  const privateKey = normalizePrivateKey(env.GITHUB_APP_PRIVATE_KEY);
+  if (!appId || !installationId || !privateKey) return null;
+  const now = Math.floor(Date.now() / 1000);
+  const header = base64UrlJson({ alg: 'RS256', typ: 'JWT' });
+  const payload = base64UrlJson({ iat: now - 60, exp: now + 540, iss: appId });
+  const input = `${header}.${payload}`;
+  const signature = sign('RSA-SHA256', Buffer.from(input), privateKey).toString('base64url');
+  const response = await fetchImpl(`${GITHUB_API_BASE}/app/installations/${installationId}/access_tokens`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${input}.${signature}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'flowai-deploy-chain-worker',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+  });
+  const text = await response.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text.slice(0, 500) }; }
+  if (!response.ok || !data?.token) {
+    throw new BuildExecutionWorkerError('GitHub App installation token request failed.', {
+      status: response.status,
+      code: 'GITHUB_APP_TOKEN_FAILED',
+      details: {
+        status: response.status,
+        response: sanitizeGitHubErrorPayload(data),
+      },
+    });
+  }
+  return { token: data.token, source: 'GITHUB_APP_INSTALLATION_TOKEN' };
 }
 
 function assertSafeProofRunId(proofRunId) {
@@ -131,10 +179,12 @@ function hasPlaceholderLanguage(text) {
   return /\b(simulated|demo|mock|placeholder)\b/i.test(String(text || ''));
 }
 
-function resolveGitHubDeployCredential(env) {
+async function resolveGitHubDeployCredential(env, fetchImpl = fetch) {
   if (env.GITHUB_OPERATOR_TOKEN) {
     return { token: env.GITHUB_OPERATOR_TOKEN, source: 'GITHUB_OPERATOR_TOKEN' };
   }
+  const appToken = await createGitHubAppInstallationToken(env, fetchImpl);
+  if (appToken) return appToken;
   if (env.GITHUB_PAT) {
     return { token: env.GITHUB_PAT, source: 'GITHUB_PAT' };
   }
@@ -148,9 +198,30 @@ function resolveVercelDeployTarget(env) {
   return env.FLOWAI_M2_DEPLOY_TARGET === 'production' ? 'production' : 'preview';
 }
 
-function resolveVercelProjectName(env, proofRunId) {
+function assertApprovedDeployProjectName(projectName) {
+  if (!APPROVED_DEPLOY_PROJECT_NAMES.includes(projectName)) {
+    throw new BuildExecutionWorkerError('DeployChain target is not an approved Vercel proof project.', {
+      status: 409,
+      code: 'DEPLOY_CHAIN_PROJECT_BOUNDARY_STOP',
+      details: {
+        requestedProjectName: projectName,
+        approvedProjectNames: APPROVED_DEPLOY_PROJECT_NAMES,
+      },
+    });
+  }
+}
+
+function resolveVercelProjectName(env, proofRunId, deploymentProjectName = null) {
+  const requested = String(deploymentProjectName || '').trim();
+  if (requested) {
+    assertApprovedDeployProjectName(requested);
+    return requested;
+  }
   const configured = String(env.FLOWAI_M2_PROJECT_NAME || '').trim();
-  if (configured) return configured;
+  if (configured) {
+    assertApprovedDeployProjectName(configured);
+    return configured;
+  }
   return `flowai-m2-${proofRunId}`;
 }
 
@@ -186,8 +257,27 @@ export function extractVisibleBodyText(html) {
     .trim());
 }
 
+function normalizeVisibleText(text) {
+  return String(text || '').replace(/\s+/g, ' ').trim();
+}
+
 export function htmlHasVisibleBodyText(html, expectedText) {
-  return extractVisibleBodyText(html).includes(expectedText);
+  return normalizeVisibleText(extractVisibleBodyText(html)).includes(normalizeVisibleText(expectedText));
+}
+
+function extractMainInnerMarkup(appCode) {
+  const main = String(appCode || '').match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+  return main ? main[1].trim() : '';
+}
+
+function sanitizeDeployableMarkup(markup) {
+  return String(markup || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|{[^}]*}|[^\s>]+)/gi, '')
+    .replace(/\s(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi, '')
+    .replace(/\bclassName=/g, 'class=')
+    .trim();
 }
 
 export function normalizeRunnableAppOutput(selectedToolOutput) {
@@ -239,6 +329,8 @@ export function buildDeployableAppFiles({
     createdAt: new Date().toISOString(),
     claimBoundary: 'DEPLOY_CHAIN_DEMONSTRATED candidate evidence only; no persistence, Creator, Upgrader, or Universal Engine proof',
   };
+  const safeMainMarkup = sanitizeDeployableMarkup(extractMainInnerMarkup(appCode));
+  const renderedMainContent = safeMainMarkup || `<p>${escapeHtml(browserMarker)}</p>`;
   const renderedHtml = `<!doctype html>
 <html lang="en" data-flowai-proof-run-id="${escapeHtml(proofRunId)}">
   <head>
@@ -282,7 +374,7 @@ export function buildDeployableAppFiles({
   </head>
   <body>
     <main id="flowai-m2-output" data-selected-output-sha="${proof.selectedToolOutputSha256}">
-      <p>${escapeHtml(browserMarker)}</p>
+      ${renderedMainContent}
       <small>FlowAI deploy-chain proof ${escapeHtml(proofRunId)}</small>
     </main>
   </body>
@@ -440,9 +532,10 @@ async function verifyDeployedUrl({ url, expectedText, fetchImpl, sleepImpl, poll
       });
       const text = await response.text();
       const renderedText = extractVisibleBodyText(text);
+      const containsExpectedText = normalizeVisibleText(renderedText).includes(normalizeVisibleText(expectedText));
       last = {
         status: response.status,
-        containsExpectedTextInVisibleBody: renderedText.includes(expectedText),
+        containsExpectedTextInVisibleBody: containsExpectedText,
         visibleBodyTextSample: renderedText.slice(0, 240),
       };
       if (response.ok && last.containsExpectedTextInVisibleBody) {
@@ -467,9 +560,9 @@ async function verifyDeployedUrl({ url, expectedText, fetchImpl, sleepImpl, poll
 
 function markerFromOutput(appCode) {
   const main = appCode.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
-  if (main) return main[1].replace(/<[^>]+>/g, '').trim();
-  const quoted = appCode.match(/FlowAI M2[^'"<]+/);
-  return quoted ? quoted[0].trim() : '';
+  if (main) return normalizeVisibleText(main[1].replace(/<[^>]+>/g, ' '));
+  const quoted = appCode.match(/FlowAI\s+M\d[^'"<]+/);
+  return quoted ? normalizeVisibleText(quoted[0]) : '';
 }
 
 export async function runDeployChainWorkerMutation({
@@ -478,6 +571,7 @@ export async function runDeployChainWorkerMutation({
   productId = null,
   runId = null,
   targetFilePath,
+  deploymentProjectName = null,
   selectedTool,
   selectedMemberId,
   selectedToolOutput,
@@ -508,7 +602,7 @@ export async function runDeployChainWorkerMutation({
     });
   }
 
-  const githubCredential = resolveGitHubDeployCredential(env);
+  const githubCredential = await resolveGitHubDeployCredential(env, fetchImpl);
   if (!githubCredential.token) {
     throw new BuildExecutionWorkerError('GitHub workflow credential is not configured for DeployChain.', {
       status: 503,
@@ -566,11 +660,11 @@ export async function runDeployChainWorkerMutation({
   }
 
   const vercelTarget = resolveVercelDeployTarget(env);
-  const projectName = resolveVercelProjectName(env, proofRunId);
+  const projectName = resolveVercelProjectName(env, proofRunId, deploymentProjectName);
   const deploy = await vercelInvoke('deploy', {
     files,
     projectName,
-    stableProjectName: Boolean(env.FLOWAI_M2_PROJECT_NAME),
+    stableProjectName: Boolean(deploymentProjectName || env.FLOWAI_M2_PROJECT_NAME),
     target: vercelTarget,
     framework: null,
     teamId: env.VERCEL_ORG_ID || env.VERCEL_TEAM || null,
@@ -635,3 +729,8 @@ export async function runDeployChainWorkerMutation({
     claimBoundary: 'DEPLOY_CHAIN_DEMONSTRATED candidate evidence only; no persistence, Creator, Upgrader, or Universal Engine proof',
   };
 }
+
+export const __test = Object.freeze({
+  createGitHubAppInstallationToken,
+  resolveGitHubDeployCredential,
+});
