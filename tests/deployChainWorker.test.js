@@ -120,6 +120,8 @@ describe('DeployChainWorker M2 helper', () => {
     const proof = JSON.parse(byPath.get('flowai-deploy-proof.json'));
 
     expect(proof.browserMarker).toBe('Community Aid Matcher FlowAI M3 deployed-endpoint upgrade verified a0f447a. Generate outreach plan');
+    expect(byPath.get('index.html')).toContain('<button>Generate outreach plan</button>');
+    expect(byPath.get('index.html')).not.toContain('<button disabled>');
     expect(htmlHasVisibleBodyText(byPath.get('index.html'), proof.browserMarker)).toBe(true);
     expect(htmlHasVisibleBodyText(
       '<body><main><h1>Community Aid Matcher</h1><p>FlowAI M3 deployed-endpoint upgrade verified a0f447a.</p><button>Generate outreach plan</button></main></body>',

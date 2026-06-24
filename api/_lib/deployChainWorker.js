@@ -265,6 +265,21 @@ export function htmlHasVisibleBodyText(html, expectedText) {
   return normalizeVisibleText(extractVisibleBodyText(html)).includes(normalizeVisibleText(expectedText));
 }
 
+function extractMainInnerMarkup(appCode) {
+  const main = String(appCode || '').match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+  return main ? main[1].trim() : '';
+}
+
+function sanitizeDeployableMarkup(markup) {
+  return String(markup || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|{[^}]*}|[^\s>]+)/gi, '')
+    .replace(/\s(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi, '')
+    .replace(/\bclassName=/g, 'class=')
+    .trim();
+}
+
 export function normalizeRunnableAppOutput(selectedToolOutput) {
   let code = typeof selectedToolOutput === 'string'
     ? selectedToolOutput.trim()
@@ -314,6 +329,8 @@ export function buildDeployableAppFiles({
     createdAt: new Date().toISOString(),
     claimBoundary: 'DEPLOY_CHAIN_DEMONSTRATED candidate evidence only; no persistence, Creator, Upgrader, or Universal Engine proof',
   };
+  const safeMainMarkup = sanitizeDeployableMarkup(extractMainInnerMarkup(appCode));
+  const renderedMainContent = safeMainMarkup || `<p>${escapeHtml(browserMarker)}</p>`;
   const renderedHtml = `<!doctype html>
 <html lang="en" data-flowai-proof-run-id="${escapeHtml(proofRunId)}">
   <head>
@@ -357,7 +374,7 @@ export function buildDeployableAppFiles({
   </head>
   <body>
     <main id="flowai-m2-output" data-selected-output-sha="${proof.selectedToolOutputSha256}">
-      <p>${escapeHtml(browserMarker)}</p>
+      ${renderedMainContent}
       <small>FlowAI deploy-chain proof ${escapeHtml(proofRunId)}</small>
     </main>
   </body>
