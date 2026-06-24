@@ -517,6 +517,70 @@ describe('run-construction handler SSE terminal framing', () => {
     expect(res.ended).toBe(true);
   });
 
+  it('passes an env-configured Fresh Build delivery repo into the SSOT Creator path', async () => {
+    process.env.FLOWAI_FRESH_BUILD_DELIVERY_REPO = 'https://github.com/veu-ai-studio/flowai-creator-delivery-sandbox';
+    process.env.FLOWAI_FRESH_BUILD_DELIVERY_BASE_BRANCH = 'main';
+    process.env.FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_PROJECT_ID = 'prj_creator_delivery';
+    process.env.FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_ORG_ID = 'team_flowai';
+
+    mocks.runFreshBuild.mockImplementation(async (_input, { onStep }) => {
+      await onStep({
+        mode: 'FRESH_BUILD',
+        stage: 'description_build_brief',
+        status: 'completed',
+      });
+      return {
+        ok: true,
+        status: 'READY',
+        reason: null,
+        previewUrl: 'https://creator-delivery.vercel.app',
+        previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+        scoreStatus: 'SCORE_NOT_CONFIGURED',
+        baselineScore: null,
+        finalScore: null,
+        scoreDelta: null,
+        platformDependencies: [],
+        writeResult: {
+          deploymentId: 'dep_creator_delivery',
+          previewUrl: 'https://creator-delivery.vercel.app',
+        },
+        evidence: {
+          generatedFileCount: 4,
+          previewUrl: 'https://creator-delivery.vercel.app',
+        },
+      };
+    });
+
+    const res = createResponse();
+    await handler(createRequest({
+      mode: 'FRESH_BUILD',
+      description: 'Build a community resource navigator that saves requests',
+      productName: 'Community Resource Navigator',
+      runId: '88888888-8888-4888-8888-888888888888',
+    }), res);
+
+    expect(res.statusCode).toBe(200);
+    expect(mocks.runFreshBuild).toHaveBeenCalledWith(expect.objectContaining({
+      url: '',
+      description: 'Build a community resource navigator that saves requests',
+      runId: '88888888-8888-4888-8888-888888888888',
+      productName: 'Community Resource Navigator',
+      productConfig: expect.objectContaining({
+        name: 'Community Resource Navigator',
+        product_id: 'flowai-creator-delivery-sandbox',
+        upgrade_repo: 'https://github.com/veu-ai-studio/flowai-creator-delivery-sandbox',
+        github_repo_url: 'https://github.com/veu-ai-studio/flowai-creator-delivery-sandbox',
+        upgrade_base_branch: 'main',
+        vercel_project_id: 'prj_creator_delivery',
+        vercel_org_id: 'team_flowai',
+        inputMode: 'fresh_build',
+      }),
+    }), expect.objectContaining({
+      runId: '88888888-8888-4888-8888-888888888888',
+      onStep: expect.any(Function),
+    }));
+  });
+
   it('emits error then DONE when orchestration throws', async () => {
     mocks.runOrchestration.mockRejectedValue(Object.assign(new Error('orchestration failed'), {
       code: 'TEST_ORCHESTRATION_FAILED',

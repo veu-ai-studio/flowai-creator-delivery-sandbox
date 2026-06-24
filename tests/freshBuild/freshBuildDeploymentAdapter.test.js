@@ -56,12 +56,14 @@ describe('Fresh Build deployment adapter', () => {
 
   it('prefers explicit write credentials before ambient GitHub tokens', () => {
     const candidates = resolveGitHubWriteTokenCandidates({
+      GITHUB_DELIVERY_TOKEN: 'delivery-write-token',
       GITHUB_TOKEN: 'ambient-read-token',
       GITHUB_PAT: 'pat-write-token',
       GITHUB_OPERATOR_TOKEN: 'operator-write-token',
     });
 
     expect(candidates.map((candidate) => candidate.source)).toEqual([
+      'GITHUB_DELIVERY_TOKEN',
       'GITHUB_OPERATOR_TOKEN',
       'GITHUB_PAT',
       'GITHUB_TOKEN',
@@ -70,13 +72,14 @@ describe('Fresh Build deployment adapter', () => {
 
   it('deduplicates identical GitHub write token values without exposing them', () => {
     const candidates = resolveGitHubWriteTokenCandidates({
+      GITHUB_DELIVERY_TOKEN: 'same-token',
       GITHUB_OPERATOR_TOKEN: 'same-token',
       GITHUB_PAT: 'same-token',
       GITHUB_TOKEN: 'ambient-token',
     });
 
     expect(candidates).toEqual([
-      { source: 'GITHUB_OPERATOR_TOKEN', token: 'same-token' },
+      { source: 'GITHUB_DELIVERY_TOKEN', token: 'same-token' },
       { source: 'GITHUB_TOKEN', token: 'ambient-token' },
     ]);
   });
@@ -464,6 +467,87 @@ describe('Fresh Build deployment adapter', () => {
       previewUrl: 'https://saige-v2-fresh-build.vercel.app',
       deploymentId: 'dep_123',
     }));
+  });
+
+  it('configures generated backend env vars before deploying a persistence app to an existing delivery repo', async () => {
+    const githubClient = {
+      createCommit: vi.fn(async () => ({
+        commitSha: 'backend-commit',
+        filesWritten: 4,
+        branchUrl: 'https://github.com/veu-ai-studio/flowai-creator-delivery-sandbox/tree/flowai/fresh-build-run-backend',
+      })),
+    };
+    const deployPreviewImpl = vi.fn(async () => ({
+      deploymentId: 'dep_backend_existing',
+      previewUrl: 'https://creator-backend-preview.vercel.app',
+    }));
+    const ensureProjectEnvImpl = vi.fn(async ({ variables }) => ({
+      ok: true,
+      variables: variables.map((variable) => ({ key: variable.key, status: 'created' })),
+    }));
+    const probePreviewAccessImpl = browserClearProbe();
+
+    const result = await writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase({
+        metadata: {
+          persistence: {
+            requested: true,
+            supported: true,
+            substrate: 'vercel-serverless-supabase',
+          },
+        },
+        files: [
+          ...generatedCodebase().files,
+          {
+            path: 'api/resource-requests.js',
+            content: 'export default function handler(req, res) { res.status(200).json({ ok: true }); }',
+          },
+        ],
+      }),
+      productName: 'Community Resource Navigator',
+      runId: 'run-backend-existing',
+      productConfig: {
+        upgrade_repo: 'https://github.com/veu-ai-studio/flowai-creator-delivery-sandbox',
+        vercel_project_id: 'prj_creator_delivery',
+        vercel_org_id: 'team_flowai',
+      },
+      env: {
+        GITHUB_DELIVERY_TOKEN: 'delivery-token',
+        VERCEL_TOKEN: 'vercel-token',
+        SUPABASE_URL: 'https://supabase.example',
+        SUPABASE_SERVICE_ROLE_KEY: 'supabase-secret',
+      },
+      githubClient,
+      deployPreviewImpl,
+      ensureProjectEnvImpl,
+      probePreviewAccessImpl,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'WRITTEN_AND_DEPLOYED',
+      owner: 'veu-ai-studio',
+      repo: 'flowai-creator-delivery-sandbox',
+      commitSha: 'backend-commit',
+      backendEnv: [
+        { key: 'FLOWAI_GENERATED_SUPABASE_URL', status: 'created' },
+        { key: 'FLOWAI_GENERATED_SUPABASE_SERVICE_ROLE_KEY', status: 'created' },
+        { key: 'FLOWAI_GENERATED_PRODUCT_ID', status: 'created' },
+      ],
+    });
+    expect(ensureProjectEnvImpl).toHaveBeenCalledWith(expect.objectContaining({
+      projectId: 'prj_creator_delivery',
+      token: 'vercel-token',
+      teamId: 'team_flowai',
+      variables: expect.arrayContaining([
+        expect.objectContaining({ key: 'FLOWAI_GENERATED_SUPABASE_URL' }),
+        expect.objectContaining({ key: 'FLOWAI_GENERATED_SUPABASE_SERVICE_ROLE_KEY' }),
+        expect.objectContaining({ key: 'FLOWAI_GENERATED_PRODUCT_ID', value: 'flowai-creator-delivery-sandbox' }),
+      ]),
+    }));
+    expect(JSON.stringify(result)).not.toContain('supabase-secret');
+    expect(JSON.stringify(result)).not.toContain('delivery-token');
+    expect(JSON.stringify(result)).not.toContain('vercel-token');
   });
 
   it('accepts product_registry github_repo_url as the Fresh Build upgrade target', async () => {

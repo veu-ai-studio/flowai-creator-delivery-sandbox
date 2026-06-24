@@ -89,7 +89,7 @@ function vercelEnvTarget() {
   return ['production', 'preview', 'development'];
 }
 
-function generatedBackendEnvironment({ env = {}, productName, repo } = {}) {
+export function generatedBackendEnvironment({ env = {}, productName, repo } = {}) {
   const supabaseUrl = nonEmptyString(env.FLOWAI_GENERATED_SUPABASE_URL || env.SUPABASE_URL);
   const supabaseServiceRoleKey = nonEmptyString(
     env.FLOWAI_GENERATED_SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY,

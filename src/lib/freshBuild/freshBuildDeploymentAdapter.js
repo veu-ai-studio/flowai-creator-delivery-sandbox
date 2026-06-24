@@ -1,6 +1,10 @@
 import { validateGeneratedCodebase } from './codebaseGenerator.js';
 import { deployBranchPreview } from '../agents/renewal/vercelBranchDeploy.js';
-import { provisionDeliveryWorkspace } from '../provisioning/upgradeTargetProvisioner.js';
+import {
+  ensureVercelProjectEnvironmentVariables,
+  generatedBackendEnvironment,
+  provisionDeliveryWorkspace,
+} from '../provisioning/upgradeTargetProvisioner.js';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const MAIN_BRANCHES = new Set(['main', 'master']);
@@ -68,6 +72,7 @@ function truthyEnv(value) {
 
 export function resolveGitHubWriteTokenCandidates(env = {}) {
   const candidates = [
+    { source: 'GITHUB_DELIVERY_TOKEN', token: env?.GITHUB_DELIVERY_TOKEN },
     { source: 'GITHUB_OPERATOR_TOKEN', token: env?.GITHUB_OPERATOR_TOKEN },
     { source: 'GITHUB_PAT', token: env?.GITHUB_PAT },
     { source: 'GITHUB_TOKEN', token: env?.GITHUB_TOKEN },
@@ -556,6 +561,8 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   githubClient,
   deliveryWorkspaceProvisioner = provisionDeliveryWorkspace,
   deployPreviewImpl = deployBranchPreview,
+  ensureProjectEnvImpl = ensureVercelProjectEnvironmentVariables,
+  generatedBackendEnvResolver = generatedBackendEnvironment,
   probePreviewAccessImpl = probePreviewAccess,
   allowMainBranch = false,
 } = {}) {
@@ -709,6 +716,65 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     };
   }
 
+  let existingRepoBackendEnv = null;
+  if (!deliveryWorkspace && generatedBackendPersistenceRequired(generatedCodebase, effectiveProductConfig)) {
+    const backendEnv = generatedBackendEnvResolver({
+      env,
+      productName: productName || effectiveProductConfig?.name || repoTarget.repo,
+      repo: repoTarget.repo,
+    });
+    if (!backendEnv?.ok) {
+      return buildBlockedResult(
+        backendEnv?.code || 'GENERATED_BACKEND_CREDENTIALS_REQUIRED',
+        backendEnv?.detail || 'Generated-product backend persistence credentials are required',
+        {
+          owner: repoTarget.owner,
+          repo: repoTarget.repo,
+          branchName: targetBranch,
+          baseBranch,
+          filesWritten: commitResult.filesWritten,
+          commitSha: commitResult.commitSha,
+          branchUrl: commitResult.branchUrl,
+          initializedRepo: commitResult.initializedRepo === true,
+          deliveryWorkspace,
+          previewUrl: null,
+          credentialSource,
+          backendEnv: {
+            ok: false,
+            code: backendEnv?.code || 'GENERATED_BACKEND_CREDENTIALS_REQUIRED',
+            missing: backendEnv?.missing || null,
+          },
+        },
+      );
+    }
+    existingRepoBackendEnv = await ensureProjectEnvImpl({
+      projectId: vercelArgs.projectId,
+      token: vercelArgs.token,
+      teamId: vercelArgs.orgId,
+      variables: backendEnv.variables,
+    });
+    if (!existingRepoBackendEnv?.ok) {
+      return buildBlockedResult(
+        existingRepoBackendEnv?.code || 'VERCEL_PROJECT_ENV_CREATE_FAILED',
+        existingRepoBackendEnv?.detail || 'Generated-product backend persistence env vars could not be configured',
+        {
+          owner: repoTarget.owner,
+          repo: repoTarget.repo,
+          branchName: targetBranch,
+          baseBranch,
+          filesWritten: commitResult.filesWritten,
+          commitSha: commitResult.commitSha,
+          branchUrl: commitResult.branchUrl,
+          initializedRepo: commitResult.initializedRepo === true,
+          deliveryWorkspace,
+          previewUrl: null,
+          credentialSource,
+          backendEnv: existingRepoBackendEnv,
+        },
+      );
+    }
+  }
+
   let deployment;
   let previewAccess = null;
   try {
@@ -785,6 +851,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     vercelTarget: vercelArgs.target || null,
     previewAccessStatus: previewAccess?.previewAccessStatus || PREVIEW_ACCESS_STATUS.UNKNOWN,
     previewAccess,
+    backendEnv: existingRepoBackendEnv?.variables || deliveryWorkspace?.vercel?.backendEnv || [],
     credentialSource,
   };
 }

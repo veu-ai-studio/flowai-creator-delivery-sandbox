@@ -603,7 +603,9 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     }
 
     try {
-      const productConfig = url ? findRegisteredProductConfigForUrl(url) : null;
+      const productConfig = url
+        ? findRegisteredProductConfigForUrl(url)
+        : freshBuildDeliveryProductConfigFromEnv(process.env, body);
       const freshBuildResult = await runFreshBuild({
         url,
         description,
@@ -1187,6 +1189,46 @@ function firstNonEmpty(...values) {
   return '';
 }
 
+function freshBuildDeliveryProductConfigFromEnv(env = {}, body = {}) {
+  const upgradeRepo = firstNonEmpty(
+    env.FLOWAI_FRESH_BUILD_DELIVERY_REPO,
+    env.FLOWAI_CREATOR_DELIVERY_REPO,
+  );
+  if (!upgradeRepo) return null;
+  return {
+    name: firstNonEmpty(
+      body.productName,
+      env.FLOWAI_FRESH_BUILD_DELIVERY_PRODUCT_NAME,
+      env.FLOWAI_CREATOR_DELIVERY_PRODUCT_NAME,
+      'FlowAI Creator Delivery Sandbox',
+    ),
+    product_id: firstNonEmpty(
+      env.FLOWAI_FRESH_BUILD_DELIVERY_PRODUCT_ID,
+      env.FLOWAI_CREATOR_DELIVERY_PRODUCT_ID,
+      'flowai-creator-delivery-sandbox',
+    ),
+    product_url: '',
+    upgrade_repo: upgradeRepo,
+    github_repo_url: upgradeRepo,
+    upgrade_base_branch: firstNonEmpty(
+      env.FLOWAI_FRESH_BUILD_DELIVERY_BASE_BRANCH,
+      env.FLOWAI_CREATOR_DELIVERY_BASE_BRANCH,
+      'main',
+    ),
+    vercel_project_id: firstNonEmpty(
+      env.FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_PROJECT_ID,
+      env.FLOWAI_CREATOR_DELIVERY_VERCEL_PROJECT_ID,
+    ),
+    vercel_org_id: firstNonEmpty(
+      env.FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_ORG_ID,
+      env.FLOWAI_CREATOR_DELIVERY_VERCEL_ORG_ID,
+      env.VERCEL_ORG_ID,
+      env.VERCEL_TEAM_ID,
+    ),
+    inputMode: 'fresh_build',
+  };
+}
+
 function envKeyPart(value) {
   return String(value || '')
     .trim()
@@ -1455,6 +1497,7 @@ export const __test = Object.freeze({
   configuredRunConstructionBackgroundTimeoutMs,
   buildRunConstructionSoftTimeoutFinal,
   emitRunConstructionSoftTimeoutFinal,
+  freshBuildDeliveryProductConfigFromEnv,
   latestRunConstructionStep,
   userFacingForgeStepFromLog,
   statusEventCheckpointName,
