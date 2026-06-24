@@ -203,6 +203,15 @@ One of these must become true:
 - The `flowai-self-renewal` GitHub App has org-level `Administration: read/write`, `Contents: read/write`, and all-repository access for `veu-ai-studio`.
 - Or Victor provides an approved operator credential that can create repositories under `veu-ai-studio`.
 
+SSOT tension:
+
+- `src/lib/provisioning/upgradeTargetProvisioner.js` and the Universal Delivery evidence require `Administration: write` plus all-repository access for autonomous FlowAI-owned repo creation.
+- `docs/specs/SELF_RENEWAL_SPEC.md` still says the Self-Renewal GitHub App must not include `administration: *`.
+
+This means repo auto-creation is not only a credential issue. It is also a canonical authority decision: either the existing GitHub App permission model must be amended for Universal Delivery / Creator workspace provisioning, or a separate delivery-workspace GitHub App / operator credential must own repo creation.
+
+Do not silently broaden the current App without CEO approval.
+
 After that, rerun the exact Option A request through the deployed `/api/run-construction` endpoint and verify:
 
 ```text
