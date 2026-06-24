@@ -10,6 +10,7 @@ export const APPROVED_DEPLOY_SANDBOX_OWNER = 'veu-ai-studio';
 export const APPROVED_DEPLOY_SANDBOX_REPO = 'flowai-deploy-execution-sandbox';
 export const APPROVED_DEPLOY_SANDBOX_FULL_NAME = `${APPROVED_DEPLOY_SANDBOX_OWNER}/${APPROVED_DEPLOY_SANDBOX_REPO}`;
 export const DEPLOY_CHAIN_APP_FILE = 'src/App.jsx';
+export const DEPLOY_CHAIN_HTML_FILE = 'index.html';
 export const DEPLOY_CHAIN_PROOF_FILE = 'flowai-deploy-proof.json';
 
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -156,6 +157,33 @@ function escapeHtml(text) {
     .replace(/'/g, '&#39;');
 }
 
+function decodeHtmlEntities(text) {
+  return String(text || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+}
+
+export function extractVisibleBodyText(html) {
+  const source = String(html || '');
+  const bodyMatch = source.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  const body = bodyMatch ? bodyMatch[1] : source;
+  return decodeHtmlEntities(body
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim());
+}
+
+export function htmlHasVisibleBodyText(html, expectedText) {
+  return extractVisibleBodyText(html).includes(expectedText);
+}
+
 export function normalizeRunnableAppOutput(selectedToolOutput) {
   let code = typeof selectedToolOutput === 'string'
     ? selectedToolOutput.trim()
@@ -205,42 +233,59 @@ export function buildDeployableAppFiles({
     createdAt: new Date().toISOString(),
     claimBoundary: 'DEPLOY_CHAIN_DEMONSTRATED candidate evidence only; no persistence, Creator, Upgrader, or Universal Engine proof',
   };
-  return Object.freeze([
-    Object.freeze({
-      path: 'package.json',
-      content: JSON.stringify({
-        scripts: {
-          build: 'vite build',
-          preview: 'vite preview',
-        },
-        dependencies: {
-          '@vitejs/plugin-react': '^4.3.4',
-          vite: '^6.1.0',
-          react: '^18.2.0',
-          'react-dom': '^18.2.0',
-        },
-        devDependencies: {},
-      }, null, 2) + '\n',
-    }),
-    Object.freeze({
-      path: 'index.html',
-      content: `<!doctype html>
-<html>
+  const renderedHtml = `<!doctype html>
+<html lang="en" data-flowai-proof-run-id="${escapeHtml(proofRunId)}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FlowAI M2 Deploy Chain Proof</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f7faf8;
+        color: #17211b;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+      }
+      main {
+        width: min(720px, calc(100vw - 32px));
+        border: 1px solid #cbd8d0;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 32px;
+        box-shadow: 0 16px 40px rgba(23, 33, 27, 0.08);
+      }
+      p {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.35;
+        font-weight: 700;
+      }
+      small {
+        display: block;
+        margin-top: 16px;
+        color: #506057;
+        font-size: 13px;
+      }
+    </style>
   </head>
   <body>
-    <div id="root">${escapeHtml(browserMarker)}</div>
-    <script type="module" src="/src/main.jsx"></script>
+    <main id="flowai-m2-output" data-selected-output-sha="${proof.selectedToolOutputSha256}">
+      <p>${escapeHtml(browserMarker)}</p>
+      <small>FlowAI deploy-chain proof ${escapeHtml(proofRunId)}</small>
+    </main>
   </body>
 </html>
-`,
-    }),
+`;
+  return Object.freeze([
     Object.freeze({
-      path: 'src/main.jsx',
-      content: "import React from 'react';\nimport { createRoot } from 'react-dom/client';\nimport App from './App.jsx';\n\ncreateRoot(document.getElementById('root')).render(<App />);\n",
+      path: DEPLOY_CHAIN_HTML_FILE,
+      content: renderedHtml,
     }),
     Object.freeze({
       path: DEPLOY_CHAIN_APP_FILE,
@@ -388,12 +433,18 @@ async function verifyDeployedUrl({ url, expectedText, fetchImpl, sleepImpl, poll
         headers: { Accept: 'text/html,application/xhtml+xml' },
       });
       const text = await response.text();
-      last = { status: response.status, containsExpectedText: text.includes(expectedText) };
-      if (response.ok && last.containsExpectedText) {
+      const renderedText = extractVisibleBodyText(text);
+      last = {
+        status: response.status,
+        containsExpectedTextInVisibleBody: renderedText.includes(expectedText),
+        visibleBodyTextSample: renderedText.slice(0, 240),
+      };
+      if (response.ok && last.containsExpectedTextInVisibleBody) {
         return {
           status: 'RUNTIME_URL_RENDER_CHECK_PASS',
           httpStatus: response.status,
-          containsExpectedText: true,
+          renderedDomTextContainsExpectedText: true,
+          visibleBodyTextSample: renderedText.slice(0, 240),
         };
       }
     } catch (error) {
@@ -513,7 +564,7 @@ export async function runDeployChainWorkerMutation({
     files,
     projectName: `flowai-m2-${proofRunId}`,
     target: vercelTarget,
-    framework: 'vite',
+    framework: null,
     teamId: env.VERCEL_ORG_ID || env.VERCEL_TEAM || null,
   });
   if (!deploy?.ok) {

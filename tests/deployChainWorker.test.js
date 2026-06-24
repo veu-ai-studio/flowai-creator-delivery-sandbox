@@ -4,6 +4,8 @@ import {
   APPROVED_DEPLOY_SANDBOX_FULL_NAME,
   assertApprovedDeployChainSandbox,
   buildDeployableAppFiles,
+  extractVisibleBodyText,
+  htmlHasVisibleBodyText,
   normalizeRunnableAppOutput,
   resolveDeployChainSandbox,
 } from '../api/_lib/deployChainWorker.js';
@@ -36,7 +38,7 @@ describe('DeployChainWorker M2 helper', () => {
       .toContain('FlowAI M2 deployed software verified');
   });
 
-  it('builds a minimal Vite app where selected output is the rendered App file', () => {
+  it('builds a self-contained rendered app where selected output is visible in body text', () => {
     const files = buildDeployableAppFiles({
       proofRunId: 'flowai-build-m2-proof',
       buildRequestId: 'flowai-build-request-m2',
@@ -48,9 +50,12 @@ describe('DeployChainWorker M2 helper', () => {
     const byPath = new Map(files.map(file => [file.path, file.content]));
 
     expect(byPath.get('src/App.jsx')).toContain('FlowAI M2 deployed software verified');
+    expect(byPath.has('src/main.jsx')).toBe(false);
+    expect(byPath.has('package.json')).toBe(false);
     expect(byPath.get('index.html')).toContain('FlowAI M2 deployed software verified');
-    expect(byPath.get('index.html')).toContain('/src/main.jsx');
-    expect(byPath.get('src/main.jsx')).toContain("import App from './App.jsx'");
+    expect(byPath.get('index.html')).toContain('id="flowai-m2-output"');
+    expect(byPath.get('index.html')).not.toContain('/src/main.jsx');
+    expect(extractVisibleBodyText(byPath.get('index.html'))).toContain('FlowAI M2 deployed software verified');
     expect(JSON.parse(byPath.get('flowai-deploy-proof.json'))).toMatchObject({
       proofRunId: 'flowai-build-m2-proof',
       buildRequestId: 'flowai-build-request-m2',
@@ -59,5 +64,14 @@ describe('DeployChainWorker M2 helper', () => {
       flowaiCommit: 'abc123',
       browserMarker: 'FlowAI M2 deployed software verified',
     });
+  });
+
+  it('visible-body checker does not accept title, script, or source-only markers', () => {
+    expect(htmlHasVisibleBodyText('<title>FlowAI M2 deployed software verified</title><body></body>', 'FlowAI M2 deployed software verified'))
+      .toBe(false);
+    expect(htmlHasVisibleBodyText('<body><script>FlowAI M2 deployed software verified</script></body>', 'FlowAI M2 deployed software verified'))
+      .toBe(false);
+    expect(htmlHasVisibleBodyText('<body><main>FlowAI M2 deployed software verified</main></body>', 'FlowAI M2 deployed software verified'))
+      .toBe(true);
   });
 });
