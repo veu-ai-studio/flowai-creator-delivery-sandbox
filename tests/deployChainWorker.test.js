@@ -1,8 +1,10 @@
+import { generateKeyPairSync } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import {
   APPROVED_DEPLOY_PROJECT_NAMES,
   APPROVED_DEPLOY_SANDBOX_FULL_NAME,
+  __test as deployChainTest,
   assertApprovedDeployChainSandbox,
   buildDeployableAppFiles,
   extractVisibleBodyText,
@@ -37,6 +39,37 @@ describe('DeployChainWorker M2 helper', () => {
       'flowai-m2-deploy-chain-proof',
       'flowai-m3-upgrader-proof',
     ]);
+  });
+
+  it('mints a GitHub App installation token when no operator token is configured', async () => {
+    const { privateKey } = generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+      publicKeyEncoding: { type: 'spki', format: 'pem' },
+    });
+    const calls = [];
+    const credential = await deployChainTest.resolveGitHubDeployCredential({
+      GITHUB_APP_ID: '12345',
+      GITHUB_APP_INSTALLATION_ID: '67890',
+      GITHUB_APP_PRIVATE_KEY: privateKey,
+    }, async (url, init) => {
+      calls.push({ url, init });
+      return {
+        ok: true,
+        status: 201,
+        async text() {
+          return JSON.stringify({ token: 'installation-token' });
+        },
+      };
+    });
+
+    expect(credential).toEqual({
+      token: 'installation-token',
+      source: 'GITHUB_APP_INSTALLATION_TOKEN',
+    });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toContain('/app/installations/67890/access_tokens');
+    expect(calls[0].init.headers.Authorization).toMatch(/^Bearer /);
   });
 
   it('requires selected-tool output to be runnable app code, not proof JSON', () => {

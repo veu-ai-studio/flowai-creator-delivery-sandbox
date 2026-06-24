@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, sign } from 'node:crypto';
 import { invoke as vercelInvoke } from '../../src/lib/orchestra/vercel.js';
 import {
   BuildExecutionWorkerError,
@@ -37,6 +37,50 @@ function fromBase64(text = '') {
 
 function sha256(text) {
   return createHash('sha256').update(String(text), 'utf8').digest('hex');
+}
+
+function base64UrlJson(value) {
+  return Buffer.from(JSON.stringify(value)).toString('base64url');
+}
+
+function normalizePrivateKey(value = '') {
+  return String(value || '').replace(/\\n/g, '\n');
+}
+
+async function createGitHubAppInstallationToken(env, fetchImpl = fetch) {
+  const appId = env.GITHUB_APP_ID;
+  const installationId = env.GITHUB_APP_INSTALLATION_ID || env.GITHUB_INSTALLATION_ID;
+  const privateKey = normalizePrivateKey(env.GITHUB_APP_PRIVATE_KEY);
+  if (!appId || !installationId || !privateKey) return null;
+  const now = Math.floor(Date.now() / 1000);
+  const header = base64UrlJson({ alg: 'RS256', typ: 'JWT' });
+  const payload = base64UrlJson({ iat: now - 60, exp: now + 540, iss: appId });
+  const input = `${header}.${payload}`;
+  const signature = sign('RSA-SHA256', Buffer.from(input), privateKey).toString('base64url');
+  const response = await fetchImpl(`${GITHUB_API_BASE}/app/installations/${installationId}/access_tokens`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${input}.${signature}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'flowai-deploy-chain-worker',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+  });
+  const text = await response.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text.slice(0, 500) }; }
+  if (!response.ok || !data?.token) {
+    throw new BuildExecutionWorkerError('GitHub App installation token request failed.', {
+      status: response.status,
+      code: 'GITHUB_APP_TOKEN_FAILED',
+      details: {
+        status: response.status,
+        response: sanitizeGitHubErrorPayload(data),
+      },
+    });
+  }
+  return { token: data.token, source: 'GITHUB_APP_INSTALLATION_TOKEN' };
 }
 
 function assertSafeProofRunId(proofRunId) {
@@ -135,10 +179,12 @@ function hasPlaceholderLanguage(text) {
   return /\b(simulated|demo|mock|placeholder)\b/i.test(String(text || ''));
 }
 
-function resolveGitHubDeployCredential(env) {
+async function resolveGitHubDeployCredential(env, fetchImpl = fetch) {
   if (env.GITHUB_OPERATOR_TOKEN) {
     return { token: env.GITHUB_OPERATOR_TOKEN, source: 'GITHUB_OPERATOR_TOKEN' };
   }
+  const appToken = await createGitHubAppInstallationToken(env, fetchImpl);
+  if (appToken) return appToken;
   if (env.GITHUB_PAT) {
     return { token: env.GITHUB_PAT, source: 'GITHUB_PAT' };
   }
@@ -534,7 +580,7 @@ export async function runDeployChainWorkerMutation({
     });
   }
 
-  const githubCredential = resolveGitHubDeployCredential(env);
+  const githubCredential = await resolveGitHubDeployCredential(env, fetchImpl);
   if (!githubCredential.token) {
     throw new BuildExecutionWorkerError('GitHub workflow credential is not configured for DeployChain.', {
       status: 503,
@@ -661,3 +707,8 @@ export async function runDeployChainWorkerMutation({
     claimBoundary: 'DEPLOY_CHAIN_DEMONSTRATED candidate evidence only; no persistence, Creator, Upgrader, or Universal Engine proof',
   };
 }
+
+export const __test = Object.freeze({
+  createGitHubAppInstallationToken,
+  resolveGitHubDeployCredential,
+});
