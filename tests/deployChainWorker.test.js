@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  APPROVED_DEPLOY_PROJECT_NAMES,
   APPROVED_DEPLOY_SANDBOX_FULL_NAME,
   assertApprovedDeployChainSandbox,
   buildDeployableAppFiles,
@@ -29,6 +30,13 @@ describe('DeployChainWorker M2 helper', () => {
       fullName: APPROVED_DEPLOY_SANDBOX_FULL_NAME,
       approved: true,
     });
+  });
+
+  it('keeps M2 and M3 as the only stable deploy proof projects', () => {
+    expect(APPROVED_DEPLOY_PROJECT_NAMES).toEqual([
+      'flowai-m2-deploy-chain-proof',
+      'flowai-m3-upgrader-proof',
+    ]);
   });
 
   it('requires selected-tool output to be runnable app code, not proof JSON', () => {

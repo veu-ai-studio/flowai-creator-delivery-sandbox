@@ -489,6 +489,50 @@ describe('SAIGE forge Step 3 build', () => {
     }
   });
 
+  it('passes an approved deploymentProjectName into deploy-chain mutation evidence', async () => {
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    const mutationCalls = [];
+    try {
+      await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedBuildTools),
+        dispatch: dispatchReturning([]),
+        runId: 'build-m3-run',
+        buildRequestId: 'build-request-m3',
+        proofRunId: 'flowai-build-m3-proof',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+        deploymentProjectName: 'flowai-m3-upgrader-proof',
+        env: { OPENAI_API_KEY: 'test-openai-key' },
+        mutationExecutor: async (payload) => {
+          mutationCalls.push(payload);
+          return {
+            ok: true,
+            kind: 'DEPLOY_CHAIN',
+            proofRunId: payload.proofRunId,
+            commitSha: 'm3deploycommit',
+            mutatedFilePath: 'src/App.jsx',
+            deployedUrl: 'https://flowai-m3-upgrader-proof.vercel.app',
+            browserVerification: {
+              renderedDomTextContainsExpectedText: true,
+            },
+            sandbox: {
+              approved: true,
+              fullName: 'veu-ai-studio/flowai-deploy-execution-sandbox',
+            },
+          };
+        },
+      });
+
+      expect(mutationCalls).toHaveLength(1);
+      expect(mutationCalls[0].deploymentProjectName).toBe('flowai-m3-upgrader-proof');
+    } finally {
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
+    }
+  });
+
   it('BuildExecutionWorker proof is not hardcoded to Codex and dispatches the selected member', async () => {
     const oldOpenAIKey = process.env.OPENAI_API_KEY;
     const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;

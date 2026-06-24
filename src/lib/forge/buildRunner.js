@@ -280,6 +280,7 @@ async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config
         runId: config.runId ?? null,
         task,
         targetFilePath: result.data.filePath ?? config.targetFilePath ?? 'src/App.jsx',
+        deploymentProjectName: config.deploymentProjectName ?? null,
         selectedTool: buildTool,
         selectedMemberId,
         toolSelection,

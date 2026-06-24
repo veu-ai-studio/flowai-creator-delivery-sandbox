@@ -9,6 +9,10 @@ export const DEPLOY_CHAIN_KIND = 'DEPLOY_CHAIN';
 export const APPROVED_DEPLOY_SANDBOX_OWNER = 'veu-ai-studio';
 export const APPROVED_DEPLOY_SANDBOX_REPO = 'flowai-deploy-execution-sandbox';
 export const APPROVED_DEPLOY_SANDBOX_FULL_NAME = `${APPROVED_DEPLOY_SANDBOX_OWNER}/${APPROVED_DEPLOY_SANDBOX_REPO}`;
+export const APPROVED_DEPLOY_PROJECT_NAMES = Object.freeze([
+  'flowai-m2-deploy-chain-proof',
+  'flowai-m3-upgrader-proof',
+]);
 export const DEPLOY_CHAIN_APP_FILE = 'src/App.jsx';
 export const DEPLOY_CHAIN_HTML_FILE = 'index.html';
 export const DEPLOY_CHAIN_PROOF_FILE = 'flowai-deploy-proof.json';
@@ -148,9 +152,30 @@ function resolveVercelDeployTarget(env) {
   return env.FLOWAI_M2_DEPLOY_TARGET === 'production' ? 'production' : 'preview';
 }
 
-function resolveVercelProjectName(env, proofRunId) {
+function assertApprovedDeployProjectName(projectName) {
+  if (!APPROVED_DEPLOY_PROJECT_NAMES.includes(projectName)) {
+    throw new BuildExecutionWorkerError('DeployChain target is not an approved Vercel proof project.', {
+      status: 409,
+      code: 'DEPLOY_CHAIN_PROJECT_BOUNDARY_STOP',
+      details: {
+        requestedProjectName: projectName,
+        approvedProjectNames: APPROVED_DEPLOY_PROJECT_NAMES,
+      },
+    });
+  }
+}
+
+function resolveVercelProjectName(env, proofRunId, deploymentProjectName = null) {
+  const requested = String(deploymentProjectName || '').trim();
+  if (requested) {
+    assertApprovedDeployProjectName(requested);
+    return requested;
+  }
   const configured = String(env.FLOWAI_M2_PROJECT_NAME || '').trim();
-  if (configured) return configured;
+  if (configured) {
+    assertApprovedDeployProjectName(configured);
+    return configured;
+  }
   return `flowai-m2-${proofRunId}`;
 }
 
@@ -478,6 +503,7 @@ export async function runDeployChainWorkerMutation({
   productId = null,
   runId = null,
   targetFilePath,
+  deploymentProjectName = null,
   selectedTool,
   selectedMemberId,
   selectedToolOutput,
@@ -566,11 +592,11 @@ export async function runDeployChainWorkerMutation({
   }
 
   const vercelTarget = resolveVercelDeployTarget(env);
-  const projectName = resolveVercelProjectName(env, proofRunId);
+  const projectName = resolveVercelProjectName(env, proofRunId, deploymentProjectName);
   const deploy = await vercelInvoke('deploy', {
     files,
     projectName,
-    stableProjectName: Boolean(env.FLOWAI_M2_PROJECT_NAME),
+    stableProjectName: Boolean(deploymentProjectName || env.FLOWAI_M2_PROJECT_NAME),
     target: vercelTarget,
     framework: null,
     teamId: env.VERCEL_ORG_ID || env.VERCEL_TEAM || null,
