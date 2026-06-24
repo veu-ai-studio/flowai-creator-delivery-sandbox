@@ -441,6 +441,54 @@ describe('SAIGE forge Step 3 build', () => {
     }
   });
 
+  it('DeployChain mutation accepts src/App.jsx evidence when rendered URL is verified', async () => {
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    try {
+      const output = await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedBuildTools),
+        dispatch: dispatchReturning([]),
+        runId: 'build-m2-run',
+        buildRequestId: 'build-request-m2',
+        proofRunId: 'flowai-build-m2-proof',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+        mutationExecutor: async (payload) => ({
+          ok: true,
+          kind: 'DEPLOY_CHAIN',
+          proofRunId: payload.proofRunId,
+          commitSha: 'def456deploycommit',
+          mutatedFilePath: 'src/App.jsx',
+          deployedUrl: 'https://flowai-m2-deploy-chain-proof.vercel.app',
+          deploymentId: 'dpl_m2',
+          deploymentProjectName: 'flowai-m2-deploy-chain-proof',
+          deploymentTarget: 'production',
+          browserVerification: {
+            renderedDomTextContainsExpectedText: true,
+          },
+          sandbox: {
+            approved: true,
+            fullName: 'veu-ai-studio/flowai-deploy-execution-sandbox',
+          },
+        }),
+      });
+
+      expect(output.evidenceSummary).toMatchObject({
+        sandboxMutations: 1,
+        sandboxCommitSha: 'def456deploycommit',
+        deployChainUrl: 'https://flowai-m2-deploy-chain-proof.vercel.app',
+        deploymentId: 'dpl_m2',
+        deploymentProjectName: 'flowai-m2-deploy-chain-proof',
+        deploymentTarget: 'production',
+        mutationKind: 'DEPLOY_CHAIN',
+      });
+    } finally {
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
+    }
+  });
+
   it('BuildExecutionWorker proof is not hardcoded to Codex and dispatches the selected member', async () => {
     const oldOpenAIKey = process.env.OPENAI_API_KEY;
     const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;

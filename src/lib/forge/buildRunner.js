@@ -214,6 +214,18 @@ function assertBuildMutationEvidence(evidence, proofRunId) {
   if (typeof evidence.commitSha !== 'string' || evidence.commitSha.trim().length === 0) {
     throw new Error('P2 live execution STOP: BuildExecutionWorker did not return a sandbox commit SHA');
   }
+  if (evidence.kind === 'DEPLOY_CHAIN') {
+    if (evidence.mutatedFilePath !== 'src/App.jsx') {
+      throw new Error('P2 live execution STOP: DeployChain did not commit the selected app file');
+    }
+    if (typeof evidence.deployedUrl !== 'string' || !evidence.deployedUrl.startsWith('https://')) {
+      throw new Error('P2 live execution STOP: DeployChain did not return a deployed URL');
+    }
+    if (evidence.browserVerification?.renderedDomTextContainsExpectedText !== true) {
+      throw new Error('P2 live execution STOP: DeployChain did not verify rendered DOM output');
+    }
+    return evidence;
+  }
   if (typeof evidence.mutatedFilePath !== 'string' || !evidence.mutatedFilePath.includes(proofRunId)) {
     throw new Error('P2 live execution STOP: BuildExecutionWorker mutated file path does not carry proofRunId');
   }
