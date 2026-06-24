@@ -1,0 +1,24 @@
+data: {"type":"start","runId":"m4-creator-type2-backend-live-20260624-1728","url":"","mode":"FRESH_BUILD","flowHubAxes":{"structuralLayer":"autonomous","operationalMode":"auto","analysisDepth":"standard","flowHubPath":"fresh_build"},"gtmTarget":95,"supabase":"connected","at":"2026-06-24T17:28:13.600Z"}
+
+data: {"type":"registry","action":"skipped","reason":"description_only_fresh_build"}
+
+data: {"type":"symbiotic_context","productId":null,"ok":false,"reason":"no_product_registry_row","context":null}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"description_build_brief","status":"started","at":"2026-06-24T17:28:13.619Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"description_build_brief","status":"completed","at":"2026-06-24T17:28:13.620Z","inventoryId":"feature-inventory-description-m4-creator-type2-backend-live-20260624-1728","designSpecId":"flowai-description://m4-creator-type2-backend-live-20260624-1728","pages":1,"components":2}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"codebase_generator","status":"started","at":"2026-06-24T17:28:13.620Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"codebase_generator","status":"READY","at":"2026-06-24T17:28:13.624Z","files":12,"platformDependencies":0}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"upgrade_repo_write","status":"started","at":"2026-06-24T17:28:13.624Z"}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"upgrade_repo_write","status":"BLOCKED","at":"2026-06-24T17:28:13.864Z","reason":"ACCESS_BLOCKED","filesWritten":0,"failureStage":null,"previewUrl":null,"deploymentId":null,"previewAccessStatus":null}}
+
+data: {"type":"step","log":{"mode":"FRESH_BUILD","stage":"score_capture","status":"blocked","at":"2026-06-24T17:28:13.864Z","scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","previewAccessStatus":null,"baselineScore":null,"finalScore":null,"scoreDelta":null}}
+
+data: {"type":"final","final":true,"ok":false,"status":"partial","previewUrl":null,"previewAccessStatus":null,"scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","baselineScore":null,"finalScore":null,"scoreDelta":null,"governanceRecordId":"m4-creator-type2-backend-live-20260624-1728","gtmReady":false,"exitReason":"ACCESS_BLOCKED","failureStage":"deployment_adapter","failure":{"stage":"deployment_adapter","code":"ACCESS_BLOCKED","message":"You need admin access to the organization before adding a repository to it.","deploymentId":null,"readyState":null,"attempts":null},"code":"ACCESS_BLOCKED","error":"You need admin access to the organization before adding a repository to it.","deploymentId":null,"iterationsCompleted":0,"prUrl":null,"runMode":"FRESH_BUILD","freshBuild":{"status":"partial","reason":"ACCESS_BLOCKED","featureFlag":"FLOWAI_ENABLE_FRESH_BUILD","evidence":{"featureInventoryId":"feature-inventory-description-m4-creator-type2-backend-live-20260624-1728","featureInventoryFieldCount":8,"designSpecId":null,"designSpecFieldCount":8,"designEvidence":{"primaryColors":["#1f2937","#0ea5e9","#f59e0b"],"fontFamilies":["Inter","system-ui"],"fontSizes":["14px","16px","20px","32px"],"extractionConfidence":0.64,"componentVisualCount":2},"generatedFileCount":12,"platformDependenciesCount":0,"writeStatus":"BLOCKED","previewUrl":null,"deploymentId":null,"previewAccessStatus":null,"previewAccess":null,"scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","baselineScore":null,"finalScore":null,"scoreDelta":null},"designEvidence":{"primaryColors":["#1f2937","#0ea5e9","#f59e0b"],"fontFamilies":["Inter","system-ui"],"fontSizes":["14px","16px","20px","32px"],"extractionConfidence":0.64,"componentVisualCount":2},"previewAccessStatus":null,"previewAccess":null,"scoreStatus":"SCORE_BLOCKED_PREVIEW_ACCESS","baselineScore":null,"finalScore":null,"scoreDelta":null,"platformDependencies":[],"writeResult":{"ok":false,"status":"BLOCKED","reason":"ACCESS_BLOCKED","message":"You need admin access to the organization before adding a repository to it.","previewUrl":null,"filesWritten":0,"deliveryWorkspace":{"ok":false,"status":"access_blocked","code":"ACCESS_BLOCKED","detail":"You need admin access to the organization before adding a repository to it.","credentialSource":"operator_token"}},"failure":{"stage":"deployment_adapter","code":"ACCESS_BLOCKED","message":"You need admin access to the organization before adding a repository to it.","deploymentId":null,"readyState":null,"attempts":null}},"runId":"m4-creator-type2-backend-live-20260624-1728"}
+
+data: [DONE]
+
