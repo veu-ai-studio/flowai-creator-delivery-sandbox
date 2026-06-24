@@ -321,6 +321,35 @@ describe('Fresh Build deployment adapter', () => {
     expect(JSON.stringify(result)).not.toContain('github-secret');
   });
 
+  it('initializes an empty GitHub repo when GitHub returns 409 repository empty', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(githubJsonResponse(409, { message: 'Git Repository is empty.' }))
+      .mockResolvedValueOnce(githubJsonResponse(201, { sha: 'tree-sha-empty' }))
+      .mockResolvedValueOnce(githubJsonResponse(201, { sha: 'commit-sha-empty' }))
+      .mockResolvedValueOnce(githubJsonResponse(201, { ref: 'refs/heads/main' }));
+    const client = createGitHubTreeCommitClient({ token: 'github-secret', fetchImpl });
+
+    const result = await client.createCommit({
+      owner: 'flowai-owned',
+      repo: 'brand-new-empty-repo',
+      baseBranch: 'main',
+      branchName: 'main',
+      files: generatedCodebase().files,
+      message: 'Initial FlowAI delivery workspace commit',
+      cleanTree: true,
+    });
+
+    expect(result).toMatchObject({
+      commitSha: 'commit-sha-empty',
+      filesWritten: 3,
+      initializedRepo: true,
+    });
+    expect(fetchImpl.mock.calls[1][0]).toContain('/git/trees');
+    expect(fetchImpl.mock.calls[2][1].body).toContain('"parents":[]');
+    expect(fetchImpl.mock.calls[3][1].body).toContain('"refs/heads/main"');
+    expect(JSON.stringify(result)).not.toContain('github-secret');
+  });
+
   it('blocks invalid generated code before any GitHub write or Vercel deploy call', async () => {
     const githubClient = { createCommit: vi.fn() };
     const deployPreviewImpl = vi.fn();

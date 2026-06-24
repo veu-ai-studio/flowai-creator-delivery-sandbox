@@ -423,6 +423,10 @@ async function createInitialCommit({ fetchImpl, token, owner, repo, branchName, 
   };
 }
 
+function isEmptyRepoRefError(error) {
+  return error?.status === 409 && /git repository is empty/i.test(String(error?.githubError || error?.message || ''));
+}
+
 export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fetch } = {}) {
   if (typeof fetchImpl !== 'function') {
     throw makeGitHubError('GITHUB_WRITE_FAILED', 'Fresh Build deployment adapter requires fetch');
@@ -442,7 +446,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
           path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/ref/heads/${encodeURIComponent(baseBranch)}`,
         });
       } catch (error) {
-        if (error?.status === 404) {
+        if (error?.status === 404 || isEmptyRepoRefError(error)) {
           return createInitialCommit({ fetchImpl, token, owner, repo, branchName, files, message });
         }
         throw error;
