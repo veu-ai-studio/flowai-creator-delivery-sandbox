@@ -639,4 +639,38 @@ describe('SAIGE forge Step 3 build', () => {
       else process.env.OPENAI_API_KEY = oldKey;
     }
   });
-});
+
+  it('live build allows placeholder-family words in rationale when generated code is real', async () => {
+    const oldKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    try {
+      const output = await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedBuildTools),
+        dispatch: async () => ({
+          ok: true,
+          action: 'code-patch',
+          member: 'codex',
+          data: {
+            filePath: 'src/App.jsx',
+            patchedContent: 'export default function App() { return <main>Real generated output</main>; }',
+            rationale: 'Avoided placeholder wording in the generated component.',
+            usage: { input_tokens: 1, output_tokens: 1 },
+          },
+        }),
+        runId: 'build-placeholder-rationale-test',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+      });
+
+      expect(output.codeTaskDispatches[0]).toMatchObject({
+        complete: true,
+        member: 'codex',
+        patchedContentPresent: true,
+      });
+    } finally {
+      if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldKey;
+    }
+  });
+  });
