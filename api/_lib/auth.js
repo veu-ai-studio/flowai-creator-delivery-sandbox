@@ -65,6 +65,7 @@
 // and behaviour upgrades automatically.
 
 import { resolveOrgId, resolveProductId } from './tenant.js';
+import { timingSafeEqual } from 'node:crypto';
 
 let clerkClient = null;
 let clerkLoadFailed = false;
@@ -233,10 +234,19 @@ function getHeader(req, name) {
 }
 
 function hasValidOperatorSecret(req) {
-  const configured = process.env.FLOWAI_OPERATOR_SECRET;
-  if (!configured) return false;
+  const configuredValues = [
+    process.env.FLOWAI_OPERATOR_SECRET,
+    process.env.FLOWAI_INTERNAL_SECRET,
+  ].filter(value => typeof value === 'string' && value.length > 0);
+  if (configuredValues.length === 0) return false;
   const supplied = getHeader(req, 'x-flowai-operator-secret');
-  return Boolean(supplied && supplied === configured);
+  if (typeof supplied !== 'string' || supplied.length === 0) return false;
+  const suppliedBuffer = Buffer.from(supplied);
+  return configuredValues.some((configured) => {
+    const configuredBuffer = Buffer.from(configured);
+    return suppliedBuffer.length === configuredBuffer.length
+      && timingSafeEqual(suppliedBuffer, configuredBuffer);
+  });
 }
 
 export async function requireOperatorAuth(req, res) {
