@@ -73,6 +73,10 @@ const rankedBuildTools = [
   { rank: 1, platform_name: 'Codex', performance_score: 10, target_classes: ['generic_url'] },
 ];
 
+const rankedClaudeBuildTools = [
+  { rank: 1, platform_name: 'Claude Code', performance_score: 9.8, target_classes: ['generic_url'] },
+];
+
 function serviceReturning(selection) {
   return {
     async getTopTool() {
@@ -373,6 +377,165 @@ describe('SAIGE forge Step 3 build', () => {
       else process.env.OPENAI_API_KEY = oldOpenAIKey;
       if (oldAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = oldAnthropicKey;
+    }
+  });
+
+  it('BuildExecutionWorker hook commits selected-tool output with proofRunId continuity', async () => {
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    const dispatchCalls = [];
+    const mutationCalls = [];
+    try {
+      const output = await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedBuildTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        runId: 'build-m1-run',
+        buildRequestId: 'build-request-m1',
+        proofRunId: 'flowai-build-m1-proof',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+        mutationExecutor: async (payload) => {
+          mutationCalls.push(payload);
+          return {
+            ok: true,
+            proofRunId: payload.proofRunId,
+            commitSha: 'abc123sandboxcommit',
+            mutatedFilePath: `proof/build-execution/${payload.proofRunId}.json`,
+            sandbox: {
+              approved: true,
+              fullName: 'veu-ai-studio/flowai-build-execution-sandbox',
+            },
+          };
+        },
+      });
+
+      expect(dispatchCalls).toHaveLength(1);
+      expect(mutationCalls).toHaveLength(1);
+      expect(mutationCalls[0]).toMatchObject({
+        proofRunId: 'flowai-build-m1-proof',
+        buildRequestId: 'build-request-m1',
+        selectedMemberId: 'codex',
+      });
+      expect(mutationCalls[0].selectedTool).toMatchObject({ platform_name: 'Codex' });
+      expect(mutationCalls[0].selectedToolOutput).toContain('Built');
+      expect(output.codeTaskDispatches[0]).toMatchObject({
+        complete: true,
+        verified: true,
+        member: 'codex',
+        buildToolStatus: 'LIVE_BUILD_TOOL_DISPATCHED_AND_MUTATED',
+        sandboxMutation: {
+          ok: true,
+          proofRunId: 'flowai-build-m1-proof',
+          commitSha: 'abc123sandboxcommit',
+        },
+      });
+      expect(output.evidenceSummary).toMatchObject({
+        liveDispatches: 1,
+        sandboxMutations: 1,
+        sandboxCommitSha: 'abc123sandboxcommit',
+      });
+    } finally {
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
+    }
+  });
+
+  it('DeployChain mutation accepts src/App.jsx evidence when rendered URL is verified', async () => {
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    try {
+      const output = await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedBuildTools),
+        dispatch: dispatchReturning([]),
+        runId: 'build-m2-run',
+        buildRequestId: 'build-request-m2',
+        proofRunId: 'flowai-build-m2-proof',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+        mutationExecutor: async (payload) => ({
+          ok: true,
+          kind: 'DEPLOY_CHAIN',
+          proofRunId: payload.proofRunId,
+          commitSha: 'def456deploycommit',
+          mutatedFilePath: 'src/App.jsx',
+          deployedUrl: 'https://flowai-m2-deploy-chain-proof.vercel.app',
+          deploymentId: 'dpl_m2',
+          deploymentProjectName: 'flowai-m2-deploy-chain-proof',
+          deploymentTarget: 'production',
+          browserVerification: {
+            renderedDomTextContainsExpectedText: true,
+          },
+          sandbox: {
+            approved: true,
+            fullName: 'veu-ai-studio/flowai-deploy-execution-sandbox',
+          },
+        }),
+      });
+
+      expect(output.evidenceSummary).toMatchObject({
+        sandboxMutations: 1,
+        sandboxCommitSha: 'def456deploycommit',
+        deployChainUrl: 'https://flowai-m2-deploy-chain-proof.vercel.app',
+        deploymentId: 'dpl_m2',
+        deploymentProjectName: 'flowai-m2-deploy-chain-proof',
+        deploymentTarget: 'production',
+        mutationKind: 'DEPLOY_CHAIN',
+      });
+    } finally {
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
+    }
+  });
+
+  it('BuildExecutionWorker proof is not hardcoded to Codex and dispatches the selected member', async () => {
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedClaudeBuildTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        runId: 'build-selected-tool-test',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+      });
+
+      expect(dispatchCalls).toHaveLength(1);
+      expect(dispatchCalls[0].opts.memberId).toBe('claude-code');
+      expect(output.toolSelection.selection[0].platform_name).toBe('Claude Code');
+      expect(output.codeTaskDispatches[0]).toMatchObject({
+        member: 'claude-code',
+        buildToolStatus: 'LIVE_BUILD_TOOL_DISPATCHED',
+      });
+    } finally {
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
+      if (oldAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldAnthropicKey;
+    }
+  });
+
+  it('BuildExecutionWorker mutation STOPs when proofRunId is missing', async () => {
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    try {
+      await expect(runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedBuildTools),
+        dispatch: dispatchReturning([]),
+        runId: 'build-m1-missing-proof-run',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+        mutationExecutor: async () => ({ ok: true }),
+      })).rejects.toThrow(/proofRunId is required/);
+    } finally {
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
     }
   });
 

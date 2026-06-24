@@ -89,9 +89,30 @@ describe('vercel adapter — sanitization + encoding', () => {
     const a = vercelInternals.sanitizeProjectName('My Renewal #42');
     expect(a).toMatch(/^my-renewal-42-[a-z0-9]+$/);
   });
+  it('sanitizeProjectSlug lowercases without appending a suffix', () => {
+    expect(vercelInternals.sanitizeProjectSlug('FlowAI M2 Proof!!')).toBe('flowai-m2-proof');
+  });
   it('encodeBase64Utf8 round-trips a string', () => {
     const enc = vercelInternals.encodeBase64Utf8('hello world');
     expect(Buffer.from(enc, 'base64').toString('utf8')).toBe('hello world');
+  });
+  it('omits preview target from inline deployment request bodies', () => {
+    expect(vercelInternals.buildDeploymentSubmitBody({
+      projectName: 'flowai-m2-proof',
+      encodedFiles: [],
+      target: 'preview',
+      framework: 'vite',
+    })).toEqual({
+      name: 'flowai-m2-proof',
+      files: [],
+      projectSettings: { framework: 'vite' },
+    });
+    expect(vercelInternals.buildDeploymentSubmitBody({
+      projectName: 'flowai-prod-proof',
+      encodedFiles: [],
+      target: 'production',
+      framework: 'vite',
+    })).toMatchObject({ target: 'production' });
   });
 });
 

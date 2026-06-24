@@ -59,7 +59,9 @@ async function deploy(payload) {
   if (!files || files.length === 0) return memberError(id, 'deploy', 'files[] required');
 
   const target = payload.target === 'production' ? 'production' : 'preview';
-  const projectName = sanitizeProjectName(payload.projectName || 'flowai-renewed');
+  const projectName = payload.stableProjectName === true
+    ? sanitizeProjectSlug(payload.projectName || 'flowai-renewed')
+    : sanitizeProjectName(payload.projectName || 'flowai-renewed');
   const framework = payload.framework || null;
   const teamId = payload.teamId || process.env.VERCEL_TEAM || null;
   const teamQs = teamId ? `?teamId=${encodeURIComponent(teamId)}` : '';
@@ -73,12 +75,12 @@ async function deploy(payload) {
     encoding: 'base64',
   }));
 
-  const submitBody = {
-    name: projectName,
-    files: encodedFiles,
+  const submitBody = buildDeploymentSubmitBody({
+    projectName,
+    encodedFiles,
     target,
-    projectSettings: { framework },
-  };
+    framework,
+  });
 
   let submitRes;
   try {
@@ -220,12 +222,16 @@ async function sourceRetrieval(payload) {
 }
 
 function sanitizeProjectName(name) {
+  return sanitizeProjectSlug(name)
+    + '-' + Date.now().toString(36).slice(-6);
+}
+
+function sanitizeProjectSlug(name) {
   return String(name).toLowerCase()
     .replace(/[^a-z0-9-]+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
-    .slice(0, 52)
-    + '-' + Date.now().toString(36).slice(-6);
+    .slice(0, 52);
 }
 
 function encodeBase64Utf8(str) {
@@ -244,7 +250,23 @@ function encodeBase64Utf8(str) {
   throw new Error('No base64 encoder available in this runtime');
 }
 
+function buildDeploymentSubmitBody({
+  projectName,
+  encodedFiles,
+  target = 'preview',
+  framework = null,
+}) {
+  return {
+    name: projectName,
+    files: encodedFiles,
+    ...(target === 'production' ? { target: 'production' } : {}),
+    projectSettings: { framework },
+  };
+}
+
 export const __internals = Object.freeze({
   sanitizeProjectName,
+  sanitizeProjectSlug,
   encodeBase64Utf8,
+  buildDeploymentSubmitBody,
 });

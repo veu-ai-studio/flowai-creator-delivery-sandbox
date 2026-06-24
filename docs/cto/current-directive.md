@@ -1,11 +1,54 @@
 # CTO Current Directive
 
-Date: 2026-06-14 UTC
+Date: 2026-06-23 UTC
 Owner: CTO
 Status: Active additive operating directive. It does not replace prior ratified governance, evidence, or canonical decisions.
 Canonical authority: `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, `docs/IMPLEMENTATION_PLAN.md`.
 
 This folder is an executive coordination layer. Canonical authority remains `docs/CANONICAL_REFERENCE.md`, `docs/BUILD_PROTOCOL.md`, and `docs/IMPLEMENTATION_PLAN.md`.
+
+## CTO Operating Reset - 2026-06-23
+
+Source: CTO synthesis after Victor/W04/Claude/ChatGPT feedback on administrative drag.
+Artifact: `docs/cto/cto-operating-reset-20260623.md`.
+
+FlowAI now returns to `Build -> Evidence -> Review -> Decision`.
+
+Claude is retained only as artifact-bound adversarial reviewer: plan adjudication, evidence verification, and claim discipline. No artifact means no Claude review. Do not send Claude draft dispatches, governance restatements, meta-governance, reviews of reviews, or dispatches about dispatches.
+
+AOL UI Work-State Contract work is AOL work unless W04/CEO explicitly maps it to a specific FlowAI runtime surface. The AOL Milestone A contract is routed to `docs/aol/work-state-contract-milestone-a-20260623.md`. Do not dispatch FlowAI CB to implement `NETWORK -> Connect Buyer` in FlowAI, and do not mix AOL UI evidence into FlowAI capability claims.
+
+FlowAI's runtime lane remains BuildExecutionWorker M1 and product-engine proof. The Milestone 1 plan exists on origin at commit `0687c38` and is recommended PASS-WITH-FINDINGS. No further Milestone 1 gate documents are needed; next FlowAI technical action is implementation only when requested, with Codex-adapter claim boundary and fail-closed proofRunId continuity folded in.
+
+Implementation dispatch issued: `docs/cto/cb-build-execution-worker-m1-implementation-dispatch-20260623.md`.
+
+Key correction: the BuildExecutionWorker M1 proof must dispatch the actual tool returned by `getTopTool('build')`; it must not hardcode Codex. If Codex is selected, Codex must be invoked honestly through the OpenAI API Codex adapter boundary or the run must STOP/BLOCK. Evidence must include exact selected-tool output and proofRunId continuity through selection, dispatch, sandbox mutation, commit, response, and evidence packet.
+
+M1 implementation evidence packet: `docs/cto/build-execution-worker-m1-evidence-20260623.md`. Core `runBuild` wire live proof succeeded with sandbox commit `d4e7b583dc05784b7da7f30fc9384f32c5fea36c`; deployed `POST /api/forge/build` entrypoint proof remains caveated due preview POST empty 404.
+
+M1B deployed-entrypoint evidence is on origin at branch `fix/build-execution-worker-m1-deployed-entrypoint`, evidence commit `8a252bea802d494fff0a87f4a9a9f84e9268b520`.
+
+Current CTO recommendation: close `DEPLOYED_ENTRYPOINT_POST_BLOCK` and mark `BuildExecutionWorker Stage 1 Complete`. W04 final adjudication remains the controlling ruling.
+
+Next engineering milestone after M1B closure: M2 Deploy Chain Proof. Use `docs/cto/m2-deploy-chain-proof-plan-20260623.md`. M2 must deploy runnable selected-tool output to a public URL; deploying proof JSON does not count.
+
+## Additive Completion Charter - 2026-06-23
+
+Source: W04 final ratified FlowAI Capability Completion Charter.
+Implementation artifact: `docs/cto/flowai-capability-completion-charter-20260623.md`.
+Implementation result: `docs/cto/flowai-capability-completion-charter-implementation-result-20260623.md`.
+
+This charter now governs CTO claim movement and completion language. A FlowAI capability is complete only when behavior, evidence, and independent verification all exist. Deployed URLs, source code, architecture, passing tests, scores, candidate implementations, demos, and governance reports remain evidence, but do not constitute completion by themselves.
+
+Current governing states, as updated by later M0/M1/M1B evidence:
+
+- Build Execution: M0 runtime dispatch authority demonstrated; M1 build-path dispatch demonstrated; M1B deployed-entrypoint evidence submitted for W04 close. `BUILD_EXECUTION_VERIFIED` is still not earned.
+- Auditor: `RUNTIME_ACTIVE` and authorized to advance toward `AUDITOR_VERIFIED`.
+- Creator: `PARTIALLY PROVEN`; downstream of `BUILD_EXECUTION_VERIFIED`.
+- Upgrader: `NOT PROVEN`; frozen adjudication `UPGRADER_AUTONOMOUS_DISPROVEN` remains in force until Build Execution exists.
+- Universal Product Engine: `NOT PROVEN`; capstone claim only after Auditor, Build Execution, Creator, and Upgrader are verified.
+
+Immediate control rule: BuildExecutionWorker implementation does not proceed until GitHub workflow/actions authority or an equivalent FlowAI-controlled execution substrate is resolved and verified from origin. Auditor verification may proceed independently.
 
 ## Additive Final Directive - 2026-06-14
 
