@@ -476,7 +476,7 @@ describe('freshBuild Codebase Generator', () => {
     expect(validateGeneratedCodebase(codebase)).toEqual({ ok: true, errors: [] });
   });
 
-  it('stops description-only Creator persistence instead of faking backend storage', () => {
+  it('generates backend-wired description-only Creator persistence without client-side fake storage', () => {
     const description = 'Community Resource Navigator with persistence. Users must save requests, cold reload in a fresh session, and retrieve saved requests from server-side storage.';
     const codebase = generateCodebase(
       mockDescriptionFeatureInventory(description),
@@ -486,19 +486,35 @@ describe('freshBuild Codebase Generator', () => {
         now: '2026-06-24T00:00:00.000Z',
       },
     );
+    const filesByPath = new Map(codebase.files.map((file) => [file.path, file]));
+    const appFile = filesByPath.get('src/App.jsx');
+    const apiFile = filesByPath.get('api/resource-requests.js');
 
-    expect(codebase.status).toBe('BLOCKED');
-    expect(codebase.reason).toBe('PERSISTENCE_PROVISIONING_UNSUPPORTED');
-    expect(codebase.files).toEqual([]);
+    expect(codebase.status).toBe('READY');
+    expect([...filesByPath.keys()]).toEqual(expect.arrayContaining([
+      'src/App.jsx',
+      'api/resource-requests.js',
+      'package.json',
+      'vercel.json',
+    ]));
     expect(codebase.platformDependencies).toEqual([]);
     expect(codebase.metadata).toMatchObject({
       creatorType: 'description-only',
       persistence: {
         requested: true,
-        supported: false,
-        reason: 'codebaseGenerator has no backend persistence substrate',
+        supported: true,
+        substrate: 'vercel-serverless-supabase',
       },
     });
+    expect(appFile?.content).toContain('/api/resource-requests');
+    expect(appFile?.content).toContain('Save and recommend');
+    expect(appFile?.content).toContain('Saved requests loaded from backend');
+    expect(appFile?.content).toContain('Backend-retrieved recommendations');
+    expect(apiFile?.content).toContain('generated_product_records');
+    expect(apiFile?.content).toContain('FLOWAI_GENERATED_SUPABASE_SERVICE_ROLE_KEY');
+    expect(apiFile?.content).toContain('project_id');
+    expect(`${appFile?.content}\n${apiFile?.content}`).not.toMatch(/localStorage|indexedDB|sessionStorage/i);
+    expect(validateGeneratedCodebase(codebase)).toEqual({ ok: true, errors: [] });
   });
 
   it('does not import platform SDKs or product-specific logic', () => {

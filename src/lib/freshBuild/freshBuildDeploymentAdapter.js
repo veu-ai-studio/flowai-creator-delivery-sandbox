@@ -163,6 +163,14 @@ function buildBlockedResult(code, message, extra = {}) {
   };
 }
 
+function generatedBackendPersistenceRequired(generatedCodebase, productConfig = {}) {
+  if (productConfig?.backendPersistenceRequired === true || productConfig?.requiresBackendPersistence === true) {
+    return true;
+  }
+  const persistence = generatedCodebase?.metadata?.persistence || {};
+  return persistence.requested === true && persistence.supported === true;
+}
+
 function githubHeaders(token) {
   return {
     Accept: 'application/vnd.github+json',
@@ -581,6 +589,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       product: {
         ...(productConfig || {}),
         inputMode: productConfig?.inputMode || 'fresh_build',
+        backendPersistenceRequired: generatedBackendPersistenceRequired(generatedCodebase, productConfig),
       },
       env,
     });
