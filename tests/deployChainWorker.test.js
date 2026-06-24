@@ -107,6 +107,26 @@ describe('DeployChainWorker M2 helper', () => {
     });
   });
 
+  it('normalizes multi-element app output before comparing deployed visible text', () => {
+    const files = buildDeployableAppFiles({
+      proofRunId: 'flowai-build-m3-proof',
+      buildRequestId: 'flowai-build-request-m3',
+      selectedToolOutput: 'export default function App(){ return <main><h1>Community Aid Matcher</h1><p>FlowAI M3 deployed-endpoint upgrade verified a0f447a.</p><button>Generate outreach plan</button></main>; }',
+      selectedTool: { platform_name: 'Codex' },
+      selectedMemberId: 'codex',
+      flowaiCommit: 'a0f447a',
+    });
+    const byPath = new Map(files.map(file => [file.path, file.content]));
+    const proof = JSON.parse(byPath.get('flowai-deploy-proof.json'));
+
+    expect(proof.browserMarker).toBe('Community Aid Matcher FlowAI M3 deployed-endpoint upgrade verified a0f447a. Generate outreach plan');
+    expect(htmlHasVisibleBodyText(byPath.get('index.html'), proof.browserMarker)).toBe(true);
+    expect(htmlHasVisibleBodyText(
+      '<body><main><h1>Community Aid Matcher</h1><p>FlowAI M3 deployed-endpoint upgrade verified a0f447a.</p><button>Generate outreach plan</button></main></body>',
+      proof.browserMarker,
+    )).toBe(true);
+  });
+
   it('visible-body checker does not accept title, script, or source-only markers', () => {
     expect(htmlHasVisibleBodyText('<title>FlowAI M2 deployed software verified</title><body></body>', 'FlowAI M2 deployed software verified'))
       .toBe(false);

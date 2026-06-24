@@ -257,8 +257,12 @@ export function extractVisibleBodyText(html) {
     .trim());
 }
 
+function normalizeVisibleText(text) {
+  return String(text || '').replace(/\s+/g, ' ').trim();
+}
+
 export function htmlHasVisibleBodyText(html, expectedText) {
-  return extractVisibleBodyText(html).includes(expectedText);
+  return normalizeVisibleText(extractVisibleBodyText(html)).includes(normalizeVisibleText(expectedText));
 }
 
 export function normalizeRunnableAppOutput(selectedToolOutput) {
@@ -511,9 +515,10 @@ async function verifyDeployedUrl({ url, expectedText, fetchImpl, sleepImpl, poll
       });
       const text = await response.text();
       const renderedText = extractVisibleBodyText(text);
+      const containsExpectedText = normalizeVisibleText(renderedText).includes(normalizeVisibleText(expectedText));
       last = {
         status: response.status,
-        containsExpectedTextInVisibleBody: renderedText.includes(expectedText),
+        containsExpectedTextInVisibleBody: containsExpectedText,
         visibleBodyTextSample: renderedText.slice(0, 240),
       };
       if (response.ok && last.containsExpectedTextInVisibleBody) {
@@ -538,9 +543,9 @@ async function verifyDeployedUrl({ url, expectedText, fetchImpl, sleepImpl, poll
 
 function markerFromOutput(appCode) {
   const main = appCode.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
-  if (main) return main[1].replace(/<[^>]+>/g, '').trim();
-  const quoted = appCode.match(/FlowAI M2[^'"<]+/);
-  return quoted ? quoted[0].trim() : '';
+  if (main) return normalizeVisibleText(main[1].replace(/<[^>]+>/g, ' '));
+  const quoted = appCode.match(/FlowAI\s+M\d[^'"<]+/);
+  return quoted ? normalizeVisibleText(quoted[0]) : '';
 }
 
 export async function runDeployChainWorkerMutation({
