@@ -198,6 +198,12 @@ describe('upgrade target provisioner', () => {
       .mockResolvedValueOnce(response(404, { error: { message: 'not found' } }))
       .mockResolvedValueOnce(response(200, { id: 'prj_workspace' }));
 
+    const getInstallationToken = vi.fn(async () => ({
+      token: 'github-secret',
+      permissions: { administration: 'write', contents: 'write' },
+      repositorySelection: 'all',
+    }));
+
     const result = await provisionDeliveryWorkspace({
       runId: 'run-123',
       productName: 'Demo',
@@ -205,17 +211,14 @@ describe('upgrade target provisioner', () => {
         FLOWAI_DELIVERY_GITHUB_OWNER: 'flowai-owned',
         VERCEL_OPERATOR_TOKEN: 'vercel-secret',
         VERCEL_ORG_ID: 'team_123',
+        GITHUB_PAT: 'pat-should-not-short-circuit-app',
         GITHUB_APP_ID: '1',
         GITHUB_APP_PRIVATE_KEY: 'pem',
         GITHUB_APP_INSTALLATION_ID: '2',
       },
       opts: {
         fetch,
-        getInstallationToken: vi.fn(async () => ({
-          token: 'github-secret',
-          permissions: { administration: 'write', contents: 'write' },
-          repositorySelection: 'all',
-        })),
+        getInstallationToken,
       },
     });
 
@@ -232,10 +235,14 @@ describe('upgrade target provisioner', () => {
         credentialSource: 'operator_token',
       },
     });
+    expect(getInstallationToken).toHaveBeenCalledWith(expect.objectContaining({
+      pat: '',
+    }));
     expect(fetch.mock.calls[1][1].body).toContain('"private":true');
     expect(fetch.mock.calls[3][0]).toContain('/v11/projects');
     expect(JSON.stringify(result)).not.toContain('github-secret');
     expect(JSON.stringify(result)).not.toContain('vercel-secret');
+    expect(JSON.stringify(result)).not.toContain('pat-should-not-short-circuit-app');
     expect(result.credentials.githubToken).toBe('github-secret');
   });
 

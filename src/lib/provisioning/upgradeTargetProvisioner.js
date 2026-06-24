@@ -185,7 +185,7 @@ async function resolveGithubWorkspaceCredential({ env = {}, opts = {} } = {}) {
       appId: env.GITHUB_APP_ID,
       privateKey: env.GITHUB_APP_PRIVATE_KEY,
       installationId: env.GITHUB_APP_INSTALLATION_ID || env.GITHUB_INSTALLATION_ID,
-      pat: null,
+      pat: '',
       fetch: opts.fetch,
     });
     const evidence = validateGithubAppPermissions(tokenInfo);
