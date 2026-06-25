@@ -144,14 +144,49 @@ Finding from live attempt:
 - That correctly proved fail-fast/no-false-100, but it starved the external recovery adapter.
 - The current patch changes this so only the forced first browser attempt uses the short proof timeout; recovery candidates use the normal bounded structured-crawl timeout.
 
+## Corrected Deployed Preview Proof
+
+Preview identity gate:
+
+- URL: `https://flowai-obgbk4db6-veu-ai-studio.vercel.app`
+- `/api/version` reported commit `20732e04553f24ecdf558386b2049903b5dce6c4`.
+- Branch: `feature/research-recovery-failover`.
+- Environment: `preview`.
+
+Live forced-hang run:
+
+- `runId`: `research-recovery-live-20260625-20732e0`
+- Raw SSE evidence: `docs/cto/research-recovery-live-preview-20260625T140330Z.sse`
+- HTTP status: `200`.
+- Browserless selected, then timed out after `5000ms`.
+- Playwright was selected, then failed because it produced no usable crawl evidence.
+- Perplexity Research Recovery was selected with `OPENROUTER_API_KEY: PRESENT`.
+- Perplexity succeeded.
+- STEP 3 completed with:
+  - `kind: production_research_crawl_failover.v1`
+  - `selectedDispatchMemberId: perplexity`
+  - `evidenceRecovered: true`
+  - `evidenceRecoveryKind: external_research_to_crawl_report`
+  - `recoveryFindings: 2`
+- STEP 5 early scorer consumed `coverage: research_recovery_external_evidence`.
+- STEP 5 early scorer recorded `coverageDegraded: false` and `evidenceDegraded: false`.
+- Final run completed without `RESEARCH_EVIDENCE_UNAVAILABLE`.
+- Final run did not fire `ALREADY_AT_TARGET`.
+- Final score: `66`.
+- Effective trust score: `39.6`.
+- `gtmReady: false`.
+- Exit reason: `PLATFORM_BOUNDARY_BLOCKED`.
+
+This proves deployed-preview Research recovery, not production/main.
+
 ## Not Yet Proven
 
-This packet does not prove the deployed production route.
+This packet does not prove the production/main route or independent CT2 verification.
 
-Required live proof:
+Required production proof:
 
-1. Deploy this branch.
-2. Confirm `/api/version` reports the deployed branch commit.
+1. Merge/promote this branch after non-builder review.
+2. Confirm production `/api/version` reports the merge commit.
 3. Run production `POST /api/run-construction` on `https://victorudo.com`.
 4. Force the Research browser tool to hang.
 5. Confirm visible attempt history:
@@ -167,11 +202,15 @@ Required live proof:
 
 ## Claim Movement
 
-No claim moves from this implementation packet alone.
+No production claim moves from this implementation packet alone.
 
-Eligible only after live CT2 proof:
+Eligible only after production CT2 proof:
 
 `RESEARCH RECOVERY FAILOVER DEMONSTRATED (Production Research path, forced timeout -> alternate ranked tool -> usable evidence -> honest scoring)`
+
+Current evidence supports the narrower pre-review statement:
+
+`RESEARCH RECOVERY FAILOVER PREVIEW-DEMONSTRATED (deployed preview, forced timeout -> Perplexity recovery -> honest non-target final scoring)`
 
 Claims still not earned:
 
