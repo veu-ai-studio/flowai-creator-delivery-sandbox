@@ -85,6 +85,51 @@ function truthyEnv(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
 }
 
+function vercelEnvTarget() {
+  return ['production', 'preview', 'development'];
+}
+
+export function generatedBackendEnvironment({ env = {}, productName, repo } = {}) {
+  const supabaseUrl = nonEmptyString(env.FLOWAI_GENERATED_SUPABASE_URL || env.SUPABASE_URL);
+  const supabaseServiceRoleKey = nonEmptyString(
+    env.FLOWAI_GENERATED_SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY,
+  );
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return {
+      ok: false,
+      code: 'GENERATED_BACKEND_CREDENTIALS_REQUIRED',
+      detail: 'Generated-product backend persistence requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY',
+      missing: {
+        supabaseUrl: !supabaseUrl,
+        supabaseServiceRoleKey: !supabaseServiceRoleKey,
+      },
+    };
+  }
+  return {
+    ok: true,
+    variables: [
+      {
+        key: 'FLOWAI_GENERATED_SUPABASE_URL',
+        value: supabaseUrl,
+        type: 'encrypted',
+        target: vercelEnvTarget(),
+      },
+      {
+        key: 'FLOWAI_GENERATED_SUPABASE_SERVICE_ROLE_KEY',
+        value: supabaseServiceRoleKey,
+        type: 'encrypted',
+        target: vercelEnvTarget(),
+      },
+      {
+        key: 'FLOWAI_GENERATED_PRODUCT_ID',
+        value: safeSlug(repo || productName, 'generated-product'),
+        type: 'plain',
+        target: vercelEnvTarget(),
+      },
+    ],
+  };
+}
+
 function operatorGithubCredential(env = {}, permissionEvidence = null, reason = 'github_app_token_unavailable') {
   const fallback = nonEmptyString(env.GITHUB_OPERATOR_TOKEN || env.GITHUB_PAT);
   if (!fallback) return null;
@@ -140,7 +185,7 @@ async function resolveGithubWorkspaceCredential({ env = {}, opts = {} } = {}) {
       appId: env.GITHUB_APP_ID,
       privateKey: env.GITHUB_APP_PRIVATE_KEY,
       installationId: env.GITHUB_APP_INSTALLATION_ID || env.GITHUB_INSTALLATION_ID,
-      pat: null,
+      pat: '',
       fetch: opts.fetch,
     });
     const evidence = validateGithubAppPermissions(tokenInfo);
@@ -435,6 +480,59 @@ export async function ensureVercelProject({
   }
 }
 
+export async function ensureVercelProjectEnvironmentVariables({
+  projectId,
+  token,
+  teamId,
+  variables = [],
+  opts = {},
+} = {}) {
+  if (!variables.length) return Object.freeze({ ok: true, variables: [] });
+  if (!token) return tokenError('vercel');
+  if (!nonEmptyString(projectId)) {
+    return Object.freeze({
+      ok: false,
+      status: 'blocked',
+      code: 'VERCEL_PROJECT_ID_REQUIRED',
+      detail: 'Vercel project id is required before setting generated-product backend env vars',
+    });
+  }
+  const applied = [];
+  const teamQuery = teamId ? `?teamId=${encodeURIComponent(teamId)}` : '';
+  for (const variable of variables) {
+    const key = nonEmptyString(variable?.key);
+    const value = nonEmptyString(variable?.value);
+    if (!key || !value) continue;
+    const created = await vercelFetch(`/v10/projects/${encodeURIComponent(projectId)}/env${teamQuery}`, token, {
+      ...opts,
+      method: 'POST',
+      body: {
+        key,
+        value,
+        type: variable.type || 'encrypted',
+        target: Array.isArray(variable.target) && variable.target.length ? variable.target : vercelEnvTarget(),
+      },
+    });
+    const message = created.body?.error?.message ?? created.body?.message ?? '';
+    if (created.response.status >= 200 && created.response.status < 300) {
+      applied.push({ key, status: 'created' });
+      continue;
+    }
+    if (created.response.status === 409 || /already exists/i.test(message)) {
+      applied.push({ key, status: 'already_exists' });
+      continue;
+    }
+    return Object.freeze({
+      ok: false,
+      status: created.response.status === 401 || created.response.status === 403 ? 'access_blocked' : 'failed',
+      code: created.response.status === 401 || created.response.status === 403 ? 'ACCESS_BLOCKED' : 'VERCEL_PROJECT_ENV_CREATE_FAILED',
+      detail: message || `Vercel env create returned ${created.response.status}`,
+      variableKey: key,
+    });
+  }
+  return Object.freeze({ ok: true, variables: applied });
+}
+
 export async function provisionDeliveryWorkspace({
   runId,
   productName,
@@ -481,6 +579,22 @@ export async function provisionDeliveryWorkspace({
     });
   }
 
+  const backendRequired = product.backendPersistenceRequired === true
+    || product.requiresBackendPersistence === true;
+  const backendEnv = backendRequired
+    ? generatedBackendEnvironment({ env, productName, repo })
+    : null;
+  if (backendEnv && !backendEnv.ok) {
+    return Object.freeze({
+      ok: false,
+      status: 'blocked',
+      code: backendEnv.code,
+      detail: backendEnv.detail,
+      missing: backendEnv.missing,
+      credentialSource: 'operator_token',
+    });
+  }
+
   const githubCredential = await resolveGithubWorkspaceCredential({ env, opts });
   if (!githubCredential.ok) {
     return Object.freeze(githubCredential);
@@ -507,6 +621,20 @@ export async function provisionDeliveryWorkspace({
   });
   if (!projectResult.ok) return Object.freeze({ ...projectResult, credentialSource: 'operator_token' });
 
+  let backendEnvResult = null;
+  if (backendRequired) {
+    backendEnvResult = await ensureVercelProjectEnvironmentVariables({
+      projectId: projectResult.projectId,
+      token: vercelToken,
+      teamId: vercelOrgId,
+      variables: backendEnv.variables,
+      opts,
+    });
+    if (!backendEnvResult.ok) {
+      return Object.freeze({ ...backendEnvResult, credentialSource: 'operator_token' });
+    }
+  }
+
   const workspace = {
     ok: true,
     status: 'ready',
@@ -529,6 +657,7 @@ export async function provisionDeliveryWorkspace({
       projectName: projectResult.projectName,
       created: projectResult.created === true,
       credentialSource: 'operator_token',
+      backendEnv: backendRequired ? backendEnvResult?.variables || [] : [],
     },
   };
   Object.defineProperty(workspace, 'credentials', {
@@ -569,4 +698,5 @@ export const __internals = Object.freeze({
   vercelFetch,
   validateGithubAppPermissions,
   configuredGithubOwner,
+  generatedBackendEnvironment,
 });

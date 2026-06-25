@@ -61,12 +61,18 @@ function happyDeps({ preScoreSequence = [60], postScoreSequence = [72] } = {}) {
   let gtmIdx = 0;
   const synthGtm = (n) => ({
     score: n,
+    rawScore: n,
     counts: { critical: 0, high: 0, medium: 0, low: 0 },
     band: n >= 90 ? 'showcase-ready' : n >= 75 ? 'demo-ready' : n >= 60 ? 'internal-only' : 'not-demo-ready',
     label: 'synthetic',
+    confidence: 'HIGH',
+    coverageDegraded: false,
     penalty: 100 - n,
     formula: 'synthetic',
     issues: [],
+    verifiedScore: n,
+    potentialScore: n,
+    blockedScore: 0,
   });
   return {
     discoverProduct: vi.fn(async () => PRODUCT),
@@ -367,6 +373,189 @@ describe('runOrchestration — AUTO mode', () => {
         targetScore: 95,
       });
       expect(deps.createRenewalBranch).not.toHaveBeenCalled();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('does not fire ALREADY_AT_TARGET when degraded coverage has raw 100 but verifiedScore is below target', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [55] });
+      deps.scoreCrawlOutput = vi.fn(() => ({
+        score: 39.26,
+        rawScore: 100,
+        verifiedScore: 39.26,
+        potentialScore: 78,
+        blockedScore: 21.74,
+        counts: { critical: 0, high: 0, medium: 0, low: 0 },
+        band: 'low-confidence',
+        label: 'Low confidence',
+        confidence: 'LOW',
+        coverageDegraded: true,
+        reason: 'SCORE_ON_DEGRADED_EVIDENCE',
+        issues: [],
+        ceo95Criteria: { verifiedScore: 39.26, potentialScore: 78, blockedScore: 21.74 },
+      }));
+      const stepLogs = [];
+      const query = {
+        select: vi.fn(() => query),
+        eq: vi.fn(() => query),
+        maybeSingle: vi.fn(async () => ({ data: { governance_record: [] } })),
+      };
+
+      const result = await runOrchestration({
+        url: null,
+        mode: 'auto',
+        runId: 'run-degraded-current-false-100',
+        supabase: { from: vi.fn(() => query) },
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+        onStep: (log) => stepLogs.push(log),
+      });
+
+      expect(result.exitReason).not.toBe('HONEST_GATE_REFUSAL_ALREADY_PASSING');
+      expect(result.honestGateRefusal).toBeUndefined();
+      expect(deps.createRenewalBranch).toHaveBeenCalled();
+      expect(stepLogs).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          result: expect.objectContaining({
+            kind: 'honest_gate_continue',
+            reason: 'COVERAGE_DEGRADED_CANNOT_CONFIRM_TARGET',
+            verifiedScore: 39.26,
+            rawGtmScore: 100,
+          }),
+        }),
+      ]));
+    } finally { clearVercelEnv(); }
+  });
+
+  it('production STEP 3 crawl path times out first candidate and dispatches fallback before scoring', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [72] });
+      deps.env = { ...process.env, BROWSERLESS_API_KEY: 'browserless_fake', ANTHROPIC_API_KEY: 'anthropic_fake' };
+      let crawlCalls = 0;
+      deps.conductStructuredCrawl = vi.fn(async ({ url }) => {
+        crawlCalls += 1;
+        if (crawlCalls === 1) return new Promise(() => {});
+        return {
+          pagesCrawled: 1,
+          depth: 1,
+          pages: [{ url, title: 'fallback', headings: [{ tag: 'h1', text: 'Fallback' }], text: 'page text', statusCode: 200 }],
+          brokenLinks: [],
+          forms: [],
+          interactiveElements: [],
+          errors: [],
+          totalTextLength: 9,
+        };
+      });
+      const stepLogs = [];
+
+      const result = await runOrchestration({
+        url: 'https://flowai-m3-upgrader-before.vercel.app/',
+        mode: 'auto',
+        runId: 'production-step3-failover-unit',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        structuredCrawlTimeoutMs: 5,
+        deps,
+        onStep: (log) => stepLogs.push(log),
+      });
+
+      expect(result.ok).toBe(true);
+      expect(deps.conductStructuredCrawl).toHaveBeenCalledTimes(3);
+      const crawlLog = stepLogs.find((log) => log.result?.kind === 'production_research_crawl_failover.v1');
+      expect(crawlLog?.result?.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({ memberId: 'browserless', state: 'timeout' }),
+        expect.objectContaining({ memberId: 'playwright', state: 'succeeded' }),
+      ]));
+      expect(crawlLog?.result?.selectedDispatchMemberId).toBe('playwright');
+      expect(deps.scoreCrawlOutput).toHaveBeenCalled();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('production STEP 3 crawl path fails fast when every candidate lacks usable evidence', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [72] });
+      deps.env = { ...process.env, BROWSERLESS_API_KEY: 'browserless_fake' };
+      deps.conductStructuredCrawl = vi.fn(async () => ({
+        pagesCrawled: 0,
+        depth: 0,
+        pages: [],
+        brokenLinks: [],
+        forms: [],
+        interactiveElements: [],
+        errors: ['empty evidence'],
+        totalTextLength: 0,
+      }));
+      const result = await runOrchestration({
+        url: 'https://flowai-m3-upgrader-before.vercel.app/',
+        mode: 'auto',
+        runId: 'production-step3-failfast-unit',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        structuredCrawlTimeoutMs: 5,
+        deps,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.failedStep).toBe('STEP_3');
+      expect(result.code).toBe('RESEARCH_EVIDENCE_UNAVAILABLE');
+      expect(deps.scoreCrawlOutput).not.toHaveBeenCalled();
+    } finally { clearVercelEnv(); }
+  });
+
+  it('production Flow Hub Research proof times out a hung crawl attempt and fails over', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [96] });
+      deps.env = { ...process.env, BROWSERLESS_API_KEY: 'browserless_fake' };
+      const stepLogs = [];
+
+      const result = await runOrchestration({
+        url: 'https://flowai-m3-upgrader-before.vercel.app/',
+        mode: 'auto',
+        runId: 'spine-proof-unit',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 65,
+        maxIterations: 1,
+        spineReliabilityProof: {
+          enabled: true,
+          forceFirstCallableResearchHang: true,
+          timeoutMs: 5,
+        },
+        onStep: (log) => stepLogs.push(log),
+        deps,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(deps.crawlSite).toHaveBeenCalledTimes(1);
+      const attempts = stepLogs
+        .map((log) => log.result)
+        .filter((result) => result?.kind === 'spine_reliability_attempt.v1');
+      expect(attempts.map((attempt) => attempt.state)).toEqual([
+        'selected',
+        'timeout',
+        'selected',
+        'succeeded',
+      ]);
+      const selection = stepLogs.find((log) => log.result?.proofKind === 'spine_reliability_research_failover.v1')?.result;
+      expect(selection).toMatchObject({
+        proofRunId: 'spine-proof-unit',
+        selectedDispatchMemberId: 'playwright',
+        forcedHangConsumed: true,
+      });
+      expect(selection.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({ memberId: 'browserless', state: 'timeout' }),
+        expect.objectContaining({ memberId: 'playwright', state: 'succeeded' }),
+      ]));
     } finally { clearVercelEnv(); }
   });
 });
@@ -1368,7 +1557,7 @@ describe('runOrchestration — failure handling', () => {
     } finally { clearVercelEnv(); }
   });
 
-  it('degrades MONITOR_FETCH_FAILED during Step 5 and continues to final Monitor', async () => {
+  it('fails fast on MONITOR_FETCH_FAILED during Step 5 instead of scoring crawl-only degraded evidence', async () => {
     withVercelEnv();
     try {
       const deps = happyDeps();
@@ -1387,18 +1576,14 @@ describe('runOrchestration — failure handling', () => {
       const result = await runOrchestration({
         url: null, mode: 'auto', runId: 'monitor-fetch-degrade', supabase: null, deps,
       });
-      expect(result.ok).toBe(true);
-      expect(result.failedStep).toBeUndefined();
-      expect(result.code).toBeUndefined();
+      expect(result.ok).toBe(false);
+      expect(result.failedStep).toBe('STEP_5');
+      expect(result.code).toBe('MONITOR_TEXT_UNAVAILABLE');
       expect(result.orchestrationLog.find((log) => (
         log.step === 5
-        && log.status === 'degraded'
-        && log.result?.code === 'MONITOR_FETCH_FAILED'
-      ))).toBeDefined();
-      expect(result.orchestrationLog.find((log) => (
-        log.result?.kind === 'forge.user_step.v1'
-        && log.result?.userStep === 8
-        && log.result?.finalStatusReady === true
+        && log.status === 'failed'
+        && log.result?.code === 'MONITOR_TEXT_UNAVAILABLE'
+        && log.result?.attemptHistory?.some((attempt) => attempt.reason?.includes('fetchUrlContent network error'))
       ))).toBeDefined();
     } finally { clearVercelEnv(); }
   });
@@ -3241,7 +3426,7 @@ describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () =>
     } finally { clearVercelEnv(); }
   });
 
-  it('degrades timed-out pre-score monitor text and still reaches Step 6', async () => {
+  it('fails fast on timed-out pre-score monitor text before Step 6', async () => {
     withVercelEnv();
     try {
       const steps = [];
@@ -3259,12 +3444,16 @@ describe('orchestrator — scoped relaxation derivation (DISPATCH 33 T2)', () =>
         onStep: (log) => steps.push(log),
       });
 
-      expect(result.exitReason).not.toBe('STEP_FAILED');
-      expect(steps.some((log) => log.result?.reason === 'pre_score_monitor_text_timeout'
-        && log.result?.timeoutMs === 5)).toBe(true);
+      expect(result.ok).toBe(false);
+      expect(result.exitReason).toBe('STEP_FAILED');
+      expect(result.failedStep).toBe('STEP_5');
+      expect(result.code).toBe('MONITOR_TEXT_UNAVAILABLE');
+      expect(steps.some((log) => log.step === 5
+        && log.status === 'failed'
+        && log.result?.attemptHistory?.some((attempt) => attempt.state === 'timeout'))).toBe(true);
       expect(steps.some((log) => log.step === 6
         && log.status === 'complete'
-        && log.why === 'rank issues by Five-Layer impact for max score improvement per iteration')).toBe(true);
+        && log.why === 'rank issues by Five-Layer impact for max score improvement per iteration')).toBe(false);
     } finally { clearVercelEnv(); }
   });
 

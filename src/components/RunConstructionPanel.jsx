@@ -1059,6 +1059,10 @@ export default function RunConstructionPanel({
     abortRef.current = ac;
 
     try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const spineReliabilityProof = searchParams.get('spineReliabilityProof') === '1'
+        || searchParams.get('flowaiSpineProof') === '1';
+      const spineReliabilityProofTimeoutMs = Number(searchParams.get('spineReliabilityProofTimeoutMs'));
       const res = await fetch('/api/run-construction', {
         method: 'POST',
         headers: {
@@ -1066,7 +1070,21 @@ export default function RunConstructionPanel({
           Accept: 'text/event-stream',
           ...(operatorSecret.trim() ? { 'x-flowai-operator-secret': operatorSecret.trim() } : {}),
         },
-        body: JSON.stringify({ url, mode, operationalMode, structuralLayer, analysisDepth, flowHubPath }),
+        body: JSON.stringify({
+          url,
+          mode,
+          operationalMode,
+          structuralLayer,
+          analysisDepth,
+          flowHubPath,
+          ...(spineReliabilityProof ? {
+            spineReliabilityProof: true,
+            forceFirstCallableResearchHang: true,
+            ...(Number.isFinite(spineReliabilityProofTimeoutMs) && spineReliabilityProofTimeoutMs > 0
+              ? { spineReliabilityProofTimeoutMs }
+              : {}),
+          } : {}),
+        }),
         signal: ac.signal,
       });
       if (!res.ok) {

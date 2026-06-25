@@ -173,7 +173,43 @@ describe('authBackend / user store + sessions', () => {
 // ─── /api/auth/sign-up ────────────────────────────────────────────────────
 
 describe('operator proof auth', () => {
-  it('accepts FLOWAI_INTERNAL_SECRET via x-flowai-operator-secret without a Clerk session', async () => {
+  it('accepts FLOWAI_OPERATOR_SECRET via x-flowai-operator-secret without a Clerk session', async () => {
+    const oldOperator = process.env.FLOWAI_OPERATOR_SECRET;
+    const oldInternal = process.env.FLOWAI_INTERNAL_SECRET;
+    const oldService = process.env.FLOWAI_SERVICE_KEY;
+    process.env.FLOWAI_OPERATOR_SECRET = 'operator-proof-secret';
+    process.env.FLOWAI_INTERNAL_SECRET = 'internal-proof-secret';
+    delete process.env.FLOWAI_SERVICE_KEY;
+    try {
+      const req = makeReq({
+        headers: {
+          'x-flowai-operator-secret': 'operator-proof-secret',
+          'x-flowai-org-id': 'veu-ai-studio',
+        },
+        body: { productId: 'm3-upgrader-proof' },
+      });
+      const res = makeRes();
+      const ctx = await requireOperatorAuth(req, res);
+
+      expect(res.ended).toBe(false);
+      expect(ctx).toMatchObject({
+        authenticated: true,
+        authMode: 'operator-secret',
+        orgId: 'veu-ai-studio',
+        productId: 'm3-upgrader-proof',
+      });
+      expect(isOperatorContext(await getRequestContext(req))).toBe(false);
+    } finally {
+      if (oldOperator === undefined) delete process.env.FLOWAI_OPERATOR_SECRET;
+      else process.env.FLOWAI_OPERATOR_SECRET = oldOperator;
+      if (oldInternal === undefined) delete process.env.FLOWAI_INTERNAL_SECRET;
+      else process.env.FLOWAI_INTERNAL_SECRET = oldInternal;
+      if (oldService === undefined) delete process.env.FLOWAI_SERVICE_KEY;
+      else process.env.FLOWAI_SERVICE_KEY = oldService;
+    }
+  });
+
+  it('rejects FLOWAI_INTERNAL_SECRET via x-flowai-operator-secret without a Clerk session', async () => {
     const oldOperator = process.env.FLOWAI_OPERATOR_SECRET;
     const oldInternal = process.env.FLOWAI_INTERNAL_SECRET;
     const oldService = process.env.FLOWAI_SERVICE_KEY;
@@ -191,13 +227,9 @@ describe('operator proof auth', () => {
       const res = makeRes();
       const ctx = await requireOperatorAuth(req, res);
 
-      expect(res.ended).toBe(false);
-      expect(ctx).toMatchObject({
-        authenticated: true,
-        authMode: 'operator-secret',
-        orgId: 'veu-ai-studio',
-        productId: 'm3-upgrader-proof',
-      });
+      expect(res.statusCode).toBe(401);
+      expect(res.ended).toBe(true);
+      expect(ctx).toBeNull();
       expect(isOperatorContext(await getRequestContext(req))).toBe(false);
     } finally {
       if (oldOperator === undefined) delete process.env.FLOWAI_OPERATOR_SECRET;

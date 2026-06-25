@@ -77,6 +77,11 @@ const rankedClaudeBuildTools = [
   { rank: 1, platform_name: 'Claude Code', performance_score: 9.8, target_classes: ['generic_url'] },
 ];
 
+const rankedCodexThenClaudeBuildTools = [
+  { rank: 1, platform_name: 'Codex', performance_score: 10, target_classes: ['generic_url'] },
+  { rank: 2, platform_name: 'Claude Code', performance_score: 9.8, target_classes: ['generic_url'] },
+];
+
 function serviceReturning(selection) {
   return {
     async getTopTool() {
@@ -564,6 +569,95 @@ describe('SAIGE forge Step 3 build', () => {
     }
   });
 
+  it('live build times out a hanging selected member and fails over to the next ranked callable tool', async () => {
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedCodexThenClaudeBuildTools),
+        dispatch: async (action, payload, opts = {}) => {
+          dispatchCalls.push({ action, payload, opts });
+          if (opts.memberId === 'codex') return new Promise(() => {});
+          return {
+            ok: true,
+            action,
+            member: opts.memberId,
+            data: {
+              filePath: payload.filePath,
+              patchedContent: 'export default function App() { return <main>Built by fallback</main>; }',
+              rationale: 'Fallback tool completed after selected candidate timed out.',
+              usage: { input_tokens: 200, output_tokens: 100 },
+            },
+          };
+        },
+        runId: 'build-timeout-failover-test',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+        toolDispatchTimeoutMs: 5,
+      });
+
+      expect(dispatchCalls.map(call => call.opts.memberId)).toEqual(['codex', 'claude-code']);
+      expect(output.codeTaskDispatches[0]).toMatchObject({
+        complete: true,
+        verified: true,
+        member: 'claude-code',
+        selectedMemberId: 'claude-code',
+        buildToolStatus: 'LIVE_BUILD_TOOL_FAILOVER_DISPATCHED',
+      });
+      expect(output.toolSelection.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({ tool: 'Codex', state: 'timeout' }),
+        expect.objectContaining({ tool: 'Claude Code', state: 'succeeded' }),
+      ]));
+      expect(output.evidenceSummary).toMatchObject({
+        liveDispatches: 2,
+        timeoutAttempts: 1,
+      });
+    } finally {
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
+      if (oldAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldAnthropicKey;
+    }
+  });
+
+  it('live build fails over when the top-ranked member is missing credentials', async () => {
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedCodexThenClaudeBuildTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        runId: 'build-missing-codex-failover-test',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+      });
+
+      expect(dispatchCalls).toHaveLength(1);
+      expect(dispatchCalls[0].opts.memberId).toBe('claude-code');
+      expect(output.codeTaskDispatches[0]).toMatchObject({
+        member: 'claude-code',
+        buildToolStatus: 'LIVE_BUILD_TOOL_FAILOVER_DISPATCHED',
+      });
+      expect(output.toolSelection.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({ tool: 'Codex', state: 'unavailable' }),
+        expect.objectContaining({ tool: 'Claude Code', state: 'succeeded' }),
+      ]));
+    } finally {
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
+      if (oldAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldAnthropicKey;
+    }
+  });
+
   it('BuildExecutionWorker mutation STOPs when proofRunId is missing', async () => {
     const oldOpenAIKey = process.env.OPENAI_API_KEY;
     process.env.OPENAI_API_KEY = 'test-openai-key';
@@ -609,7 +703,15 @@ describe('SAIGE forge Step 3 build', () => {
       dispatch: dispatchReturning([]),
       runId: 'build-missing-codex-credential-test',
       env: {},
-    })).rejects.toThrow(/selected Build member "codex" is not callable.*OPENAI_API_KEY/s);
+    })).rejects.toMatchObject({
+      name: 'RankedToolFailoverError',
+      details: {
+        attemptHistory: expect.arrayContaining([
+          expect.objectContaining({ tool: 'Codex', state: 'unavailable' }),
+          expect.objectContaining({ state: 'final_failed' }),
+        ]),
+      },
+    });
   });
 
   it('live build STOPs when code-patch returns placeholder content', async () => {
@@ -633,7 +735,15 @@ describe('SAIGE forge Step 3 build', () => {
           },
         }),
         runId: 'build-placeholder-result-test',
-      })).rejects.toThrow(/placeholder output/);
+      })).rejects.toMatchObject({
+        name: 'RankedToolFailoverError',
+        details: {
+          attemptHistory: expect.arrayContaining([
+            expect.objectContaining({ state: 'failed', reason: expect.stringMatching(/placeholder output/) }),
+            expect.objectContaining({ state: 'final_failed' }),
+          ]),
+        },
+      });
     } finally {
       if (oldKey === undefined) delete process.env.OPENAI_API_KEY;
       else process.env.OPENAI_API_KEY = oldKey;

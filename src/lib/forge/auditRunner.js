@@ -7,10 +7,12 @@ import { selectForgeStepTool } from './toolSelection.js';
 import { dispatch as orchestraDispatch } from '../orchestra/index.js';
 import { MODES } from '../tools/ToolIntelligenceService.js';
 import { invokeForgeStepOwner } from './stepOwnerRecommendations.js';
+import { attachAttemptHistory, runRankedToolWithFailover } from './rankedToolFailover.js';
 
 const P2_MAX_DISPATCHES_PER_RUN = 12;
 const CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION = 3;
 const CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION = 15;
+const DEFAULT_AUDIT_TOOL_TIMEOUT_MS = 30_000;
 const QUALITY_AUDIT_DIMENSIONS = Object.freeze([
   'UI/UX',
   'API',
@@ -159,12 +161,6 @@ function isAutomaticToolSelection(toolSelection) {
   return toolSelection?.mode === MODES.AUTOMATIC;
 }
 
-function assertAnthropicReady() {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('P2 live execution STOP: ANTHROPIC_API_KEY is required for live audit scoring dispatch');
-  }
-}
-
 function usageCostUsd(data = {}) {
   const usage = data.usage ?? {};
   const inputTokens = Number(usage.input_tokens ?? usage.inputTokens ?? 0);
@@ -212,21 +208,47 @@ function promptForDimension(dimension) {
   return `${base} Score ${dimension} against the actual build evidence and audit checks.`;
 }
 
-async function runDimensionScores(buildOutput, config, budget, dispatchFn) {
+function auditDispatchCandidates(toolSelection) {
+  const selection = toolSelection?.selection;
+  if (Array.isArray(selection) && selection.length > 0) return Object.freeze(selection.filter(Boolean));
+  if (Array.isArray(toolSelection?.candidates) && toolSelection.candidates.length > 0) {
+    return Object.freeze(toolSelection.candidates.filter(Boolean));
+  }
+  return selection ? Object.freeze([selection]) : Object.freeze([]);
+}
+
+function dispatchedAttemptCount(failover) {
+  return (failover?.attemptHistory ?? []).filter(attempt =>
+    ['timeout', 'failed', 'succeeded'].includes(attempt.state)
+  ).length;
+}
+
+async function runDimensionScores(buildOutput, config, budget, dispatchFn, toolSelection) {
   const scores = [];
   for (const dimension of QUALITY_AUDIT_DIMENSIONS) {
-    budget.dispatchCount += 1;
     ensureBudget(budget);
-    const result = assertLiveDispatchResult(await dispatchFn('score', {
-      dimension,
-      prompt: promptForDimension(dimension),
-      context: {
-        productGoals: config.productGoals ?? null,
-        researchOutput: config.researchOutput ?? null,
-        designOutput: config.designOutput ?? null,
-        buildOutput,
+    const failover = await runRankedToolWithFailover({
+      action: 'score',
+      payload: {
+        dimension,
+        prompt: promptForDimension(dimension),
+        context: {
+          productGoals: config.productGoals ?? null,
+          researchOutput: config.researchOutput ?? null,
+          designOutput: config.designOutput ?? null,
+          buildOutput,
+        },
       },
-    }), 'score');
+      candidates: auditDispatchCandidates(toolSelection),
+      dispatchFn,
+      timeoutMs: config.toolDispatchTimeoutMs ?? DEFAULT_AUDIT_TOOL_TIMEOUT_MS,
+      env: config.env ?? process.env,
+      validateResult: result => assertLiveDispatchResult(result, 'score'),
+    });
+    budget.dispatchCount += dispatchedAttemptCount(failover);
+    budget.toolAttemptHistory.push(...(failover.attemptHistory ?? []));
+    ensureBudget(budget);
+    const result = failover.result;
     const data = result.data;
     if (typeof data.score !== 'number' || typeof data.justification !== 'string' || typeof data.evidenceRef !== 'string') {
       throw new Error(`P2 live execution STOP: score dispatch returned malformed schema for ${dimension}`);
@@ -274,12 +296,17 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
     pipelineSubSteps: ['static-analysis', 'browser-check', 'evidence-verify'],
   }), entryState.buildBlocked);
   const dispatchFn = config.dispatch ?? orchestraDispatch;
-  const budget = { dispatchCount: 0, costUsd: 0 };
+  const budget = { dispatchCount: 0, costUsd: 0, toolAttemptHistory: [] };
   const liveDimensionScoring = toolSelection && isAutomaticToolSelection(toolSelection) && entryState.buildBlocked !== true;
-  if (liveDimensionScoring) assertAnthropicReady();
   const dimensionScores = liveDimensionScoring
-    ? await runDimensionScores(buildOutput, config, budget, dispatchFn)
+    ? await runDimensionScores(buildOutput, config, budget, dispatchFn, toolSelection)
     : Object.freeze([]);
+  const toolSelectionWithAttempts = attachAttemptHistory(toolSelection, budget.toolAttemptHistory.length > 0 ? {
+    attemptHistory: budget.toolAttemptHistory,
+    candidates: auditDispatchCandidates(toolSelection),
+    memberId: dimensionScores[0]?.member ?? null,
+    candidate: null,
+  } : null);
   const codeChecks = codeCompletenessChecks(buildOutput);
   const evidenceChecks = evidenceCompletenessChecks(buildOutput);
   const gateChecks = await gateValidityChecks(buildOutput, config);
@@ -302,7 +329,7 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
     if (section.id === 'renewal-output-compatibility') return cloneSection(section, renewalOutputCompatibility);
     if (section.id === 'audit-findings') return cloneSection(section, auditFindings);
     if (section.id === 'audit-decision-log') return cloneSection(section, decisionLog);
-    if (section.id === 'selected-tool') return cloneSection(section, toolSelection);
+    if (section.id === 'selected-tool') return cloneSection(section, toolSelectionWithAttempts);
     return cloneSection(section, section.input ?? null);
   });
   const baseOutput = {
@@ -310,11 +337,11 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
     stepId: AUDIT_STEP_ID,
     completedAt: new Date().toISOString(),
     sections,
-    toolSelection,
+    toolSelection: toolSelectionWithAttempts,
     toolSelectionAdvisory: entryState.buildBlocked === true,
-    pipelineNullAt: toolSelection?.pipelineNullAt,
-    undServedAccessWarning: toolSelection?.undServedAccessWarning === true,
-    undServedAccessWarningReason: toolSelection?.undServedAccessWarningReason,
+    pipelineNullAt: toolSelectionWithAttempts?.pipelineNullAt,
+    undServedAccessWarning: toolSelectionWithAttempts?.undServedAccessWarning === true,
+    undServedAccessWarningReason: toolSelectionWithAttempts?.undServedAccessWarningReason,
     buildOutput,
     buildComplete: buildOutput.buildComplete,
     buildBlocked: isBuildBlocked(buildOutput),
@@ -349,6 +376,8 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
       notApplicableItems: renewalOutputCompatibility.status === 'NOT_APPLICABLE' ? 1 : 0,
       failedChecks: score.failedChecks.length,
       liveDispatches: budget.dispatchCount,
+      toolAttemptHistory: budget.toolAttemptHistory.length,
+      timeoutAttempts: budget.toolAttemptHistory.filter(attempt => attempt.state === 'timeout').length,
       estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
     stepOwnerRecommendation,

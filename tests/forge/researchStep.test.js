@@ -287,7 +287,9 @@ describe('SAIGE forge Step 1 research', () => {
 
   it('AUTOMATIC research with URL dispatches crawl and populates crawl-result', async () => {
     const oldKey = process.env.ANTHROPIC_API_KEY;
+    const oldBrowserlessKey = process.env.BROWSERLESS_API_KEY;
     process.env.ANTHROPIC_API_KEY = 'test-key';
+    process.env.BROWSERLESS_API_KEY = 'browserless-test-key';
     const dispatchCalls = [];
     const dispatch = async (action, payload) => {
       dispatchCalls.push({ action, payload });
@@ -343,12 +345,83 @@ describe('SAIGE forge Step 1 research', () => {
     } finally {
       if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = oldKey;
+      if (oldBrowserlessKey === undefined) delete process.env.BROWSERLESS_API_KEY;
+      else process.env.BROWSERLESS_API_KEY = oldBrowserlessKey;
+    }
+  });
+
+  it('AUTOMATIC research times out a hanging crawl candidate and fails over', async () => {
+    const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;
+    const oldBrowserlessKey = process.env.BROWSERLESS_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    process.env.BROWSERLESS_API_KEY = 'browserless-test-key';
+    const dispatchCalls = [];
+
+    try {
+      const output = await runResearch('neutral-product', {}, {
+        matrixArtifact,
+        toolService: serviceReturning([
+          { rank: 1, platform_name: 'Playwright', platform_type: 'crawl', performance_score: 9, target_classes: ['generic_url'] },
+          { rank: 2, platform_name: 'Browserless', platform_type: 'crawl', performance_score: 8, target_classes: ['generic_url'] },
+        ]),
+        dispatch: async (action, payload, opts = {}) => {
+          dispatchCalls.push({ action, payload, opts });
+          if (action === 'crawl' && opts.memberId === 'playwright') return new Promise(() => {});
+          if (action === 'crawl') {
+            return {
+              ok: true,
+              action,
+              member: opts.memberId,
+              data: {
+                html: '<main>Fallback product page</main>',
+                text: 'Fallback product page',
+                url: payload.url,
+              },
+            };
+          }
+          return {
+            ok: true,
+            action,
+            member: opts.memberId,
+            data: {
+              summary: 'Live analysis output',
+              findings: ['Fallback crawl-informed finding'],
+              evidenceRef: 'analysis-fixture',
+              usage: { input_tokens: 100, output_tokens: 50 },
+            },
+          };
+        },
+        url: 'https://example.com',
+        runId: 'research-crawl-timeout-failover-test',
+        toolDispatchTimeoutMs: 5,
+      });
+
+      expect(dispatchCalls.slice(0, 2).map(call => call.opts.memberId)).toEqual(['playwright', 'browserless']);
+      const crawlResult = output.sections.find(section => section.id === 'crawl-result').input;
+      expect(crawlResult).toMatchObject({
+        complete: true,
+        verified: true,
+        member: 'browserless',
+        selectedTool: 'Browserless',
+      });
+      expect(output.toolSelection.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({ tool: 'Playwright', state: 'timeout' }),
+        expect.objectContaining({ tool: 'Browserless', state: 'succeeded' }),
+      ]));
+      expect(output.evidenceSummary.timeoutAttempts).toBe(1);
+    } finally {
+      if (oldAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldAnthropicKey;
+      if (oldBrowserlessKey === undefined) delete process.env.BROWSERLESS_API_KEY;
+      else process.env.BROWSERLESS_API_KEY = oldBrowserlessKey;
     }
   });
 
   it('Browserless 401, 5xx, and deferred crawl results STOP research', async () => {
     const oldKey = process.env.ANTHROPIC_API_KEY;
+    const oldBrowserlessKey = process.env.BROWSERLESS_API_KEY;
     process.env.ANTHROPIC_API_KEY = 'test-key';
+    process.env.BROWSERLESS_API_KEY = 'browserless-test-key';
     const blockedResults = [
       { ok: false, action: 'crawl', member: 'browserless', status: 401, error: 'unauthorized' },
       { ok: false, action: 'crawl', member: 'browserless', status: 503, error: 'service unavailable' },
@@ -370,6 +443,8 @@ describe('SAIGE forge Step 1 research', () => {
     } finally {
       if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = oldKey;
+      if (oldBrowserlessKey === undefined) delete process.env.BROWSERLESS_API_KEY;
+      else process.env.BROWSERLESS_API_KEY = oldBrowserlessKey;
     }
   });
 

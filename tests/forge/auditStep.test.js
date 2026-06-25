@@ -70,6 +70,11 @@ const rankedAuditTools = [
   { rank: 1, platform_name: 'Claude Code', performance_score: 9, target_classes: ['generic_url'] },
 ];
 
+const rankedUnavailableThenAuditTools = [
+  { rank: 1, platform_name: 'v0 by Vercel', performance_score: 10, target_classes: ['generic_url'] },
+  { rank: 2, platform_name: 'Claude Code', performance_score: 9, target_classes: ['generic_url'] },
+];
+
 function serviceReturning(selection) {
   return {
     async getTopTool() {
@@ -378,6 +383,67 @@ describe('SAIGE forge Step 4 quality audit', () => {
       expect(output.auditScore).toBe(100);
       expect(output.readyForDeploy).toBe(true);
       expect(output.evidenceSummary.liveDispatches).toBe(5);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('live audit fails over when the top-ranked score tool is unavailable', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runAudit('neutral-product', liveReadyBuildOutput, {
+        'audit-decision-log': 'Neutral audit decision: accept P2 dimension evidence.',
+      }, {
+        toolService: serviceReturning(rankedUnavailableThenAuditTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        productGoals: ['prove the main user path'],
+        researchOutput: { stepId: 'step-1-research' },
+        designOutput: { stepId: 'step-2-design' },
+        runId: 'audit-unavailable-failover-test',
+      });
+
+      expect(dispatchCalls).toHaveLength(5);
+      expect(dispatchCalls.every(call => call.action === 'score')).toBe(true);
+      expect(output.toolSelection.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({ tool: 'v0 by Vercel', state: 'unavailable' }),
+        expect.objectContaining({ tool: 'Claude Code', state: 'succeeded' }),
+      ]));
+      expect(output.evidenceSummary).toMatchObject({
+        liveDispatches: 5,
+        timeoutAttempts: 0,
+      });
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('live audit times out a hanging selected score member and fails fast', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    try {
+      await expect(runAudit('neutral-product', liveReadyBuildOutput, {
+        'audit-decision-log': 'Neutral audit decision: accept P2 dimension evidence.',
+      }, {
+        toolService: serviceReturning(rankedAuditTools),
+        dispatch: async () => new Promise(() => {}),
+        productGoals: ['prove the main user path'],
+        researchOutput: { stepId: 'step-1-research' },
+        designOutput: { stepId: 'step-2-design' },
+        runId: 'audit-timeout-failfast-test',
+        toolDispatchTimeoutMs: 5,
+      })).rejects.toMatchObject({
+        name: 'RankedToolFailoverError',
+        details: {
+          attemptHistory: expect.arrayContaining([
+            expect.objectContaining({ tool: 'Claude Code', state: 'timeout' }),
+            expect.objectContaining({ state: 'final_failed' }),
+          ]),
+        },
+      });
     } finally {
       if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = oldKey;

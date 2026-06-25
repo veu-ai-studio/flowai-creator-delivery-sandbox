@@ -322,6 +322,24 @@ function Envelope({ value }) {
             </ol>
           </div>
         )}
+      {Array.isArray(value.attemptHistory) && value.attemptHistory.length > 0 && (
+        <div className="space-y-1.5 rounded-md border border-border bg-card/50 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Tool attempts ({value.attemptHistory.length})
+          </p>
+          <ol className="space-y-1 text-sm">
+            {value.attemptHistory.map((attempt, index) => (
+              <li key={`${attempt.tool ?? 'tool'}-${attempt.state ?? 'state'}-${index}`} className="grid gap-1 md:grid-cols-[8rem_1fr]">
+                <span className="font-mono text-xs text-muted-foreground">{attempt.state ?? 'unknown'}</span>
+                <span className="text-muted-foreground">
+                  {attempt.tool ?? attempt.memberId ?? 'unknown tool'}
+                  {attempt.reason ? ` - ${attempt.reason}` : ''}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }

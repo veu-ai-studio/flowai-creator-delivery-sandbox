@@ -62,6 +62,8 @@ export function rankedToolsForStepCard(stepKey, override = null) {
     platform_type: tool.platform_type ?? tool.type ?? 'tool',
     dispatchState: tool.dispatchState ?? tool.eligibilityState ?? 'unavailable',
     note: tool.note ?? tool.dispatchReason ?? '',
+    lastAttemptState: tool.lastAttemptState ?? null,
+    lastAttemptReason: tool.lastAttemptReason ?? null,
     compositeScore: tool.compositeScore,
   }));
 }

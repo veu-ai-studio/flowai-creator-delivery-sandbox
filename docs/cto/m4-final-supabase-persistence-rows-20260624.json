@@ -1,0 +1,128 @@
+{
+  "status": 200,
+  "capturedAt": "2026-06-24T20:36:07.589Z",
+  "projectId": "flowai-creator-delivery-sandbox",
+  "count": 12,
+  "rows": [
+    {
+      "id": "bdc6e2d5-120d-4642-b004-58be72ea9422",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "work",
+      "need": "M4-latest-20260624203559 work: I need resume help and transportation for a warehouse job interview.",
+      "nextStep": "Book a workforce center intake and ask for resume review, transportation support, and training eligibility in the same visit.",
+      "followUp": "Ask for rapid placement employers if income is urgent.",
+      "created_at": "2026-06-24T20:36:03.426537+00:00"
+    },
+    {
+      "id": "35ea6329-8bff-4909-9cbc-3cb162329d93",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "food",
+      "need": "M4-latest-20260624203559 food: My children need groceries and formula before the weekend.",
+      "nextStep": "Visit the nearest food pantry intake desk this week and bring an ID plus proof of household size if available.",
+      "followUp": "Ask about mobile pantry routes if transportation is difficult.",
+      "created_at": "2026-06-24T20:36:00.290889+00:00"
+    },
+    {
+      "id": "ef1c2f62-a5f6-4a4a-afd8-7e238050c2c4",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "food",
+      "need": "M4 final proof 2026-06-24T20-35-47-493Z: My family needs groceries this week.",
+      "nextStep": "Visit the nearest food pantry intake desk this week and bring an ID plus proof of household size if available.",
+      "followUp": "Ask about mobile pantry routes if transportation is difficult.",
+      "created_at": "2026-06-24T20:35:48.335477+00:00"
+    },
+    {
+      "id": "c4bed82a-7be1-4715-9c11-041b7b4e2a74",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "housing",
+      "need": "M4 final proof 2026-06-24T20-35-47-493Z: I need help paying rent before an eviction hearing.",
+      "nextStep": "Call 211 and ask for emergency rental assistance, then collect your lease, notice, and proof of income before the appointment.",
+      "followUp": "Ask for same-day legal aid screening if eviction is mentioned.",
+      "created_at": "2026-06-24T20:35:47.48346+00:00"
+    },
+    {
+      "id": "f814ea99-cd4d-4a90-8893-3d0d7dc210a3",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "work",
+      "need": "I need help preparing a resume for a warehouse job.",
+      "nextStep": "Book a workforce center intake and ask for resume review, transportation support, and training eligibility in the same visit.",
+      "followUp": "Ask for rapid placement employers if income is urgent.",
+      "created_at": "2026-06-24T20:33:18.758146+00:00"
+    },
+    {
+      "id": "2d11dc51-d3c9-44ee-b12b-285f178e6347",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "work",
+      "need": "I need help preparing a resume for a warehouse job.",
+      "nextStep": "Book a workforce center intake and ask for resume review, transportation support, and training eligibility in the same visit.",
+      "followUp": "Ask for rapid placement employers if income is urgent.",
+      "created_at": "2026-06-24T20:32:58.741702+00:00"
+    },
+    {
+      "id": "60fc0cbf-f28b-4bdb-bbd0-f5599fa15fd3",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "health",
+      "need": "M4-20260624203237 health: I need a clinic appointment and medicine for my child tonight.",
+      "nextStep": "Contact a community health center and request a sliding-scale appointment or benefits navigator intake.",
+      "followUp": "Ask about same-day pharmacy assistance if medication is urgent.",
+      "created_at": "2026-06-24T20:32:46.793518+00:00"
+    },
+    {
+      "id": "31778778-98d3-4484-9486-9f6a650d92db",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "housing",
+      "need": "M4-20260624203237 housing: I need help paying rent before eviction court next week.",
+      "nextStep": "Call 211 and ask for emergency rental assistance, then collect your lease, notice, and proof of income before the appointment.",
+      "followUp": "Ask for same-day legal aid screening if eviction is mentioned.",
+      "created_at": "2026-06-24T20:32:44.211462+00:00"
+    },
+    {
+      "id": "288c7361-4866-4f60-834c-0b78c9610af5",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "work",
+      "need": "I need help preparing a resume for a warehouse job.",
+      "nextStep": "Book a workforce center intake and ask for resume review, transportation support, and training eligibility in the same visit.",
+      "followUp": "Ask for rapid placement employers if income is urgent.",
+      "created_at": "2026-06-24T20:32:36.926151+00:00"
+    },
+    {
+      "id": "0de65c25-680c-4e4e-a7cb-a2af432ef92e",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "health",
+      "need": "I need a clinic visit for a child with a fever tonight.",
+      "nextStep": "Contact a community health center and request a sliding-scale appointment or benefits navigator intake.",
+      "followUp": "Ask about same-day pharmacy assistance if medication is urgent.",
+      "created_at": "2026-06-24T20:30:30.257487+00:00"
+    },
+    {
+      "id": "ea4710f6-7dee-4d28-bb2a-d6b73bee1852",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "food",
+      "need": "My family needs groceries for the next three days.",
+      "nextStep": "Visit the nearest food pantry intake desk this week and bring an ID plus proof of household size if available.",
+      "followUp": "Ask about mobile pantry routes if transportation is difficult.",
+      "created_at": "2026-06-24T20:29:02.732559+00:00"
+    },
+    {
+      "id": "ba740d84-8e1e-4951-8f46-009d955402e3",
+      "project_id": "flowai-creator-delivery-sandbox",
+      "record_type": "resource_request",
+      "category": "housing",
+      "need": "I need help paying rent before an eviction notice deadline.",
+      "nextStep": "Call 211 and ask for emergency rental assistance, then collect your lease, notice, and proof of income before the appointment.",
+      "followUp": "Ask for same-day legal aid screening if eviction is mentioned.",
+      "created_at": "2026-06-24T20:28:54.921257+00:00"
+    }
+  ]
+}

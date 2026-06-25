@@ -198,6 +198,12 @@ describe('upgrade target provisioner', () => {
       .mockResolvedValueOnce(response(404, { error: { message: 'not found' } }))
       .mockResolvedValueOnce(response(200, { id: 'prj_workspace' }));
 
+    const getInstallationToken = vi.fn(async () => ({
+      token: 'github-secret',
+      permissions: { administration: 'write', contents: 'write' },
+      repositorySelection: 'all',
+    }));
+
     const result = await provisionDeliveryWorkspace({
       runId: 'run-123',
       productName: 'Demo',
@@ -205,6 +211,97 @@ describe('upgrade target provisioner', () => {
         FLOWAI_DELIVERY_GITHUB_OWNER: 'flowai-owned',
         VERCEL_OPERATOR_TOKEN: 'vercel-secret',
         VERCEL_ORG_ID: 'team_123',
+        GITHUB_PAT: 'pat-should-not-short-circuit-app',
+        GITHUB_APP_ID: '1',
+        GITHUB_APP_PRIVATE_KEY: 'pem',
+        GITHUB_APP_INSTALLATION_ID: '2',
+      },
+      opts: {
+        fetch,
+        getInstallationToken,
+      },
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'ready',
+      github: {
+        owner: 'flowai-owned',
+        credentialSource: 'github_app',
+        private: true,
+      },
+      vercel: {
+        projectId: 'prj_workspace',
+        credentialSource: 'operator_token',
+      },
+    });
+    expect(getInstallationToken).toHaveBeenCalledWith(expect.objectContaining({
+      pat: '',
+    }));
+    expect(fetch.mock.calls[1][1].body).toContain('"private":true');
+    expect(fetch.mock.calls[3][0]).toContain('/v11/projects');
+    expect(JSON.stringify(result)).not.toContain('github-secret');
+    expect(JSON.stringify(result)).not.toContain('vercel-secret');
+    expect(JSON.stringify(result)).not.toContain('pat-should-not-short-circuit-app');
+    expect(result.credentials.githubToken).toBe('github-secret');
+  });
+
+  it('blocks generated-product backend provisioning before network work when Supabase credentials are missing', async () => {
+    const fetch = vi.fn();
+    const getInstallationToken = vi.fn();
+
+    const result = await provisionDeliveryWorkspace({
+      runId: 'run-123',
+      productName: 'Demo',
+      product: { backendPersistenceRequired: true },
+      env: {
+        FLOWAI_DELIVERY_GITHUB_OWNER: 'flowai-owned',
+        VERCEL_OPERATOR_TOKEN: 'vercel-secret',
+        VERCEL_ORG_ID: 'team_123',
+        GITHUB_APP_ID: '1',
+        GITHUB_APP_PRIVATE_KEY: 'pem',
+        GITHUB_APP_INSTALLATION_ID: '2',
+      },
+      opts: {
+        fetch,
+        getInstallationToken,
+      },
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 'blocked',
+      code: 'GENERATED_BACKEND_CREDENTIALS_REQUIRED',
+      missing: {
+        supabaseUrl: true,
+        supabaseServiceRoleKey: true,
+      },
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(getInstallationToken).not.toHaveBeenCalled();
+    expect(JSON.stringify(result)).not.toContain('vercel-secret');
+  });
+
+  it('sets redacted generated-product backend env vars on the delivery Vercel project', async () => {
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(response(404, { message: 'not found' }))
+      .mockResolvedValueOnce(response(201, { html_url: 'https://github.com/flowai-owned/flowai-demo-run-123' }))
+      .mockResolvedValueOnce(response(404, { error: { message: 'not found' } }))
+      .mockResolvedValueOnce(response(200, { id: 'prj_workspace' }))
+      .mockResolvedValueOnce(response(200, { id: 'env_supabase_url' }))
+      .mockResolvedValueOnce(response(409, { error: { message: 'Environment Variable already exists' } }))
+      .mockResolvedValueOnce(response(200, { id: 'env_product_id' }));
+
+    const result = await provisionDeliveryWorkspace({
+      runId: 'run-123',
+      productName: 'Demo',
+      product: { backendPersistenceRequired: true },
+      env: {
+        FLOWAI_DELIVERY_GITHUB_OWNER: 'flowai-owned',
+        VERCEL_OPERATOR_TOKEN: 'vercel-secret',
+        VERCEL_ORG_ID: 'team_123',
+        SUPABASE_URL: 'https://example.supabase.co',
+        SUPABASE_SERVICE_ROLE_KEY: 'supabase-service-role-secret',
         GITHUB_APP_ID: '1',
         GITHUB_APP_PRIVATE_KEY: 'pem',
         GITHUB_APP_INSTALLATION_ID: '2',
@@ -222,21 +319,23 @@ describe('upgrade target provisioner', () => {
     expect(result).toMatchObject({
       ok: true,
       status: 'ready',
-      github: {
-        owner: 'flowai-owned',
-        credentialSource: 'github_app',
-        private: true,
-      },
       vercel: {
         projectId: 'prj_workspace',
-        credentialSource: 'operator_token',
+        backendEnv: [
+          { key: 'FLOWAI_GENERATED_SUPABASE_URL', status: 'created' },
+          { key: 'FLOWAI_GENERATED_SUPABASE_SERVICE_ROLE_KEY', status: 'already_exists' },
+          { key: 'FLOWAI_GENERATED_PRODUCT_ID', status: 'created' },
+        ],
       },
     });
-    expect(fetch.mock.calls[1][1].body).toContain('"private":true');
-    expect(fetch.mock.calls[3][0]).toContain('/v11/projects');
+    const envBodies = fetch.mock.calls.slice(4).map(([, options]) => options.body).join('\n');
+    expect(fetch.mock.calls[4][0]).toContain('/v10/projects/prj_workspace/env');
+    expect(envBodies).toContain('FLOWAI_GENERATED_SUPABASE_URL');
+    expect(envBodies).toContain('FLOWAI_GENERATED_SUPABASE_SERVICE_ROLE_KEY');
+    expect(envBodies).toContain('FLOWAI_GENERATED_PRODUCT_ID');
+    expect(JSON.stringify(result)).not.toContain('supabase-service-role-secret');
     expect(JSON.stringify(result)).not.toContain('github-secret');
     expect(JSON.stringify(result)).not.toContain('vercel-secret');
-    expect(result.credentials.githubToken).toBe('github-secret');
   });
 
   it('creates a redacted delivery workspace in a configured user-owned namespace', async () => {

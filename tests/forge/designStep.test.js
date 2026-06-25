@@ -53,6 +53,11 @@ const rankedDesignTools = [
   { rank: 1, platform_name: 'Claude Code', performance_score: 9, target_classes: ['generic_url'] },
 ];
 
+const rankedUnavailableThenDesignTools = [
+  { rank: 1, platform_name: 'v0 by Vercel', performance_score: 10, target_classes: ['generic_url'] },
+  { rank: 2, platform_name: 'Claude Code', performance_score: 9, target_classes: ['generic_url'] },
+];
+
 function serviceReturning(selection) {
   return {
     async getTopTool() {
@@ -62,12 +67,12 @@ function serviceReturning(selection) {
 }
 
 function dispatchReturning(calls = []) {
-  return async (action, payload) => {
-    calls.push({ action, payload });
+  return async (action, payload, opts = {}) => {
+    calls.push({ action, payload, opts });
     return {
       ok: true,
       action,
-      member: 'claude-code',
+      member: opts.memberId ?? 'claude-code',
       data: {
         principles: ['Use evidence-led design'],
         featurePriorities: ['Ship the highest-value path first'],
@@ -288,6 +293,58 @@ describe('SAIGE forge Step 2 design', () => {
         input: ['Ship the highest-value path first'],
       });
       expect(output.evidenceSummary.liveDispatches).toBe(1);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('live design fails over when the top-ranked design tool is unavailable', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runDesign('neutral-product', researchOutput, {}, {
+        toolService: serviceReturning(rankedUnavailableThenDesignTools),
+        dispatch: dispatchReturning(dispatchCalls),
+        runId: 'design-unavailable-failover-test',
+      });
+
+      expect(dispatchCalls).toHaveLength(1);
+      expect(dispatchCalls[0].action).toBe('design');
+      expect(dispatchCalls[0].opts.memberId).toBe('claude-code');
+      expect(output.toolSelection.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({ tool: 'v0 by Vercel', state: 'unavailable' }),
+        expect.objectContaining({ tool: 'Claude Code', state: 'succeeded' }),
+      ]));
+      expect(output.evidenceSummary).toMatchObject({
+        liveDispatches: 1,
+        timeoutAttempts: 0,
+      });
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
+  it('live design times out a hanging selected member and fails fast', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    try {
+      await expect(runDesign('neutral-product', researchOutput, {}, {
+        toolService: serviceReturning(rankedDesignTools),
+        dispatch: async () => new Promise(() => {}),
+        runId: 'design-timeout-failfast-test',
+        toolDispatchTimeoutMs: 5,
+      })).rejects.toMatchObject({
+        name: 'RankedToolFailoverError',
+        details: {
+          attemptHistory: expect.arrayContaining([
+            expect.objectContaining({ tool: 'Claude Code', state: 'timeout' }),
+            expect.objectContaining({ state: 'final_failed' }),
+          ]),
+        },
+      });
     } finally {
       if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = oldKey;

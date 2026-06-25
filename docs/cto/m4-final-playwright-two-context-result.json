@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "url": "https://flowai-creator-delivery-sandbox-ju9u4hslt-veu-ai-studio.vercel.app",
+  "unique": "M4 final proof 2026-06-24T20-35-47-493Z",
+  "housingNeed": "M4 final proof 2026-06-24T20-35-47-493Z: I need help paying rent before an eviction hearing.",
+  "foodNeed": "M4 final proof 2026-06-24T20-35-47-493Z: My family needs groceries this week.",
+  "context1": {
+    "savedFromBackend": true,
+    "containsHousingNeed": true,
+    "containsFoodNeed": true,
+    "housingRecommendation": "HousingM4 final proof 2026-06-24T20-35-47-493Z: I need help paying rent before an eviction hearing.Call 211 and ask for emergency rental assistance, then collect your lease, notice, and proof of income before the appointment.Ask for same-day legal aid screening if eviction is mentioned.",
+    "foodRecommendation": "FoodM4 final proof 2026-06-24T20-35-47-493Z: My family needs groceries this week.Visit the nearest food pantry intake desk this week and bring an ID plus proof of household size if available.Ask about mobile pantry routes if transportation is difficult."
+  },
+  "context2": {
+    "freshContextContainsHousingNeed": true,
+    "freshContextContainsFoodNeed": true,
+    "housingRecommendation": "HousingM4 final proof 2026-06-24T20-35-47-493Z: I need help paying rent before an eviction hearing.Call 211 and ask for emergency rental assistance, then collect your lease, notice, and proof of income before the appointment.Ask for same-day legal aid screening if eviction is mentioned.",
+    "foodRecommendation": "FoodM4 final proof 2026-06-24T20-35-47-493Z: My family needs groceries this week.Visit the nearest food pantry intake desk this week and bring an ID plus proof of household size if available.Ask about mobile pantry routes if transportation is difficult."
+  },
+  "recommendationsDiffer": true,
+  "screenshots": [
+    "docs/cto/m4-final-context1-write.png",
+    "docs/cto/m4-final-context2-fresh-retrieve.png"
+  ]
+}

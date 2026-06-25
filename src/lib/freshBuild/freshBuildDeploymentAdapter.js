@@ -1,6 +1,10 @@
 import { validateGeneratedCodebase } from './codebaseGenerator.js';
 import { deployBranchPreview } from '../agents/renewal/vercelBranchDeploy.js';
-import { provisionDeliveryWorkspace } from '../provisioning/upgradeTargetProvisioner.js';
+import {
+  ensureVercelProjectEnvironmentVariables,
+  generatedBackendEnvironment,
+  provisionDeliveryWorkspace,
+} from '../provisioning/upgradeTargetProvisioner.js';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const MAIN_BRANCHES = new Set(['main', 'master']);
@@ -68,6 +72,7 @@ function truthyEnv(value) {
 
 export function resolveGitHubWriteTokenCandidates(env = {}) {
   const candidates = [
+    { source: 'GITHUB_DELIVERY_TOKEN', token: env?.GITHUB_DELIVERY_TOKEN },
     { source: 'GITHUB_OPERATOR_TOKEN', token: env?.GITHUB_OPERATOR_TOKEN },
     { source: 'GITHUB_PAT', token: env?.GITHUB_PAT },
     { source: 'GITHUB_TOKEN', token: env?.GITHUB_TOKEN },
@@ -161,6 +166,14 @@ function buildBlockedResult(code, message, extra = {}) {
     filesWritten: 0,
     ...extra,
   };
+}
+
+function generatedBackendPersistenceRequired(generatedCodebase, productConfig = {}) {
+  if (productConfig?.backendPersistenceRequired === true || productConfig?.requiresBackendPersistence === true) {
+    return true;
+  }
+  const persistence = generatedCodebase?.metadata?.persistence || {};
+  return persistence.requested === true && persistence.supported === true;
 }
 
 function githubHeaders(token) {
@@ -410,6 +423,10 @@ async function createInitialCommit({ fetchImpl, token, owner, repo, branchName, 
   };
 }
 
+function isEmptyRepoRefError(error) {
+  return error?.status === 409 && /git repository is empty/i.test(String(error?.githubError || error?.message || ''));
+}
+
 export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fetch } = {}) {
   if (typeof fetchImpl !== 'function') {
     throw makeGitHubError('GITHUB_WRITE_FAILED', 'Fresh Build deployment adapter requires fetch');
@@ -429,7 +446,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
           path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/ref/heads/${encodeURIComponent(baseBranch)}`,
         });
       } catch (error) {
-        if (error?.status === 404) {
+        if (error?.status === 404 || isEmptyRepoRefError(error)) {
           return createInitialCommit({ fetchImpl, token, owner, repo, branchName, files, message });
         }
         throw error;
@@ -548,6 +565,8 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   githubClient,
   deliveryWorkspaceProvisioner = provisionDeliveryWorkspace,
   deployPreviewImpl = deployBranchPreview,
+  ensureProjectEnvImpl = ensureVercelProjectEnvironmentVariables,
+  generatedBackendEnvResolver = generatedBackendEnvironment,
   probePreviewAccessImpl = probePreviewAccess,
   allowMainBranch = false,
 } = {}) {
@@ -581,6 +600,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       product: {
         ...(productConfig || {}),
         inputMode: productConfig?.inputMode || 'fresh_build',
+        backendPersistenceRequired: generatedBackendPersistenceRequired(generatedCodebase, productConfig),
       },
       env,
     });
@@ -700,6 +720,65 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     };
   }
 
+  let existingRepoBackendEnv = null;
+  if (!deliveryWorkspace && generatedBackendPersistenceRequired(generatedCodebase, effectiveProductConfig)) {
+    const backendEnv = generatedBackendEnvResolver({
+      env,
+      productName: productName || effectiveProductConfig?.name || repoTarget.repo,
+      repo: repoTarget.repo,
+    });
+    if (!backendEnv?.ok) {
+      return buildBlockedResult(
+        backendEnv?.code || 'GENERATED_BACKEND_CREDENTIALS_REQUIRED',
+        backendEnv?.detail || 'Generated-product backend persistence credentials are required',
+        {
+          owner: repoTarget.owner,
+          repo: repoTarget.repo,
+          branchName: targetBranch,
+          baseBranch,
+          filesWritten: commitResult.filesWritten,
+          commitSha: commitResult.commitSha,
+          branchUrl: commitResult.branchUrl,
+          initializedRepo: commitResult.initializedRepo === true,
+          deliveryWorkspace,
+          previewUrl: null,
+          credentialSource,
+          backendEnv: {
+            ok: false,
+            code: backendEnv?.code || 'GENERATED_BACKEND_CREDENTIALS_REQUIRED',
+            missing: backendEnv?.missing || null,
+          },
+        },
+      );
+    }
+    existingRepoBackendEnv = await ensureProjectEnvImpl({
+      projectId: vercelArgs.projectId,
+      token: vercelArgs.token,
+      teamId: vercelArgs.orgId,
+      variables: backendEnv.variables,
+    });
+    if (!existingRepoBackendEnv?.ok) {
+      return buildBlockedResult(
+        existingRepoBackendEnv?.code || 'VERCEL_PROJECT_ENV_CREATE_FAILED',
+        existingRepoBackendEnv?.detail || 'Generated-product backend persistence env vars could not be configured',
+        {
+          owner: repoTarget.owner,
+          repo: repoTarget.repo,
+          branchName: targetBranch,
+          baseBranch,
+          filesWritten: commitResult.filesWritten,
+          commitSha: commitResult.commitSha,
+          branchUrl: commitResult.branchUrl,
+          initializedRepo: commitResult.initializedRepo === true,
+          deliveryWorkspace,
+          previewUrl: null,
+          credentialSource,
+          backendEnv: existingRepoBackendEnv,
+        },
+      );
+    }
+  }
+
   let deployment;
   let previewAccess = null;
   try {
@@ -776,6 +855,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
     vercelTarget: vercelArgs.target || null,
     previewAccessStatus: previewAccess?.previewAccessStatus || PREVIEW_ACCESS_STATUS.UNKNOWN,
     previewAccess,
+    backendEnv: existingRepoBackendEnv?.variables || deliveryWorkspace?.vercel?.backendEnv || [],
     credentialSource,
   };
 }

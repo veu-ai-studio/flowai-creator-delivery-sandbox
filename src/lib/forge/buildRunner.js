@@ -5,11 +5,13 @@ import { selectForgeStepTool } from './toolSelection.js';
 import { dispatch as orchestraDispatch } from '../orchestra/index.js';
 import { MODES } from '../tools/ToolIntelligenceService.js';
 import { DISPATCH_STATES, normalizeToolCandidate } from '../tools/toolDispatchContract.js';
+import { attachAttemptHistory, runRankedToolWithFailover } from './rankedToolFailover.js';
 
 const NO_BUILD_TOOL_REASON = 'No AI build tool configured; manual input required';
 const P2_MAX_DISPATCHES_PER_RUN = 12;
 const CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION = 3;
 const CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION = 15;
+const DEFAULT_BUILD_TOOL_TIMEOUT_MS = 30_000;
 const APPROVED_MUTATION_SANDBOXES = new Set([
   'veu-ai-studio/flowai-build-execution-sandbox',
   'veu-ai-studio/flowai-deploy-execution-sandbox',
@@ -252,7 +254,31 @@ function ensureBudget(budget) {
   }
 }
 
-async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config, selectedMemberId, buildTool, toolSelection, productId) {
+function buildDispatchCandidates(toolSelection, buildTool) {
+  const selection = toolSelection?.selection;
+  if (Array.isArray(selection) && selection.length > 0) return Object.freeze(selection.filter(Boolean));
+  if (Array.isArray(toolSelection?.candidates) && toolSelection.candidates.length > 0) {
+    return Object.freeze(toolSelection.candidates.filter(Boolean));
+  }
+  return buildTool ? Object.freeze([buildTool]) : Object.freeze([]);
+}
+
+function dispatchedAttemptCount(failover) {
+  return (failover?.attemptHistory ?? []).filter(attempt =>
+    ['timeout', 'failed', 'succeeded'].includes(attempt.state)
+  ).length;
+}
+
+function usedFailover(failover) {
+  const attempts = failover?.attemptHistory ?? [];
+  const successIndex = attempts.findIndex(attempt => attempt.state === 'succeeded');
+  if (successIndex <= 0) return false;
+  return attempts.slice(0, successIndex).some(attempt =>
+    ['unavailable', 'timeout', 'failed'].includes(attempt.state)
+  );
+}
+
+async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config, buildTool, toolSelection, productId) {
   if (!Array.isArray(tasks)) return tasks;
   if (typeof config.sourceContent !== 'string' || config.sourceContent.trim().length === 0 || containsPlaceholderText(config.sourceContent)) {
     throw new Error('P2 live execution STOP: real sourceContent is required for live build code-patch');
@@ -262,24 +288,36 @@ async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config
   }
   const liveTasks = [];
   for (const task of tasks) {
-    budget.dispatchCount += 1;
     ensureBudget(budget);
-    const result = assertLiveDispatchResult(await dispatchFn('code-patch', {
-      filePath: config.targetFilePath ?? 'src/App.jsx',
-      sourceContent: config.sourceContent,
-      timeoutMs: 30000,
-      framework: config.framework ?? 'vite-react',
-      issueSpec: {
-        category: 'flowai-build-task',
-        severity: 'medium',
-        evidence: task.description,
-        fixSpec: {
-          taskId: task.taskId,
-          title: task.title,
-          designOutput,
+    const failover = await runRankedToolWithFailover({
+      action: 'code-patch',
+      payload: {
+        filePath: config.targetFilePath ?? 'src/App.jsx',
+        sourceContent: config.sourceContent,
+        timeoutMs: config.toolDispatchTimeoutMs ?? DEFAULT_BUILD_TOOL_TIMEOUT_MS,
+        framework: config.framework ?? 'vite-react',
+        issueSpec: {
+          category: 'flowai-build-task',
+          severity: 'medium',
+          evidence: task.description,
+          fixSpec: {
+            taskId: task.taskId,
+            title: task.title,
+            designOutput,
+          },
         },
       },
-    }, { memberId: selectedMemberId }), 'code-patch', selectedMemberId);
+      candidates: buildDispatchCandidates(toolSelection, buildTool),
+      dispatchFn,
+      timeoutMs: config.toolDispatchTimeoutMs ?? DEFAULT_BUILD_TOOL_TIMEOUT_MS,
+      env: config.env ?? process.env,
+      validateResult: (result, candidate) => assertLiveDispatchResult(result, 'code-patch', candidate.memberId),
+    });
+    budget.dispatchCount += dispatchedAttemptCount(failover);
+    ensureBudget(budget);
+    const selectedMemberId = failover.memberId;
+    const dispatchedBuildTool = failover.candidate;
+    const result = failover.result;
     budget.costUsd += usageCostUsd(result.data);
     ensureBudget(budget);
     const selectedToolOutput = result.data.patchedContent;
@@ -292,7 +330,7 @@ async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config
         task,
         targetFilePath: result.data.filePath ?? config.targetFilePath ?? 'src/App.jsx',
         deploymentProjectName: config.deploymentProjectName ?? null,
-        selectedTool: buildTool,
+        selectedTool: dispatchedBuildTool,
         selectedMemberId,
         toolSelection,
         dispatchResult: result,
@@ -308,7 +346,12 @@ async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config
       evidenceRef: result.data.filePath ?? config.targetFilePath ?? 'src/App.jsx',
       rationale: result.data.rationale,
       patchedContentPresent: typeof result.data.patchedContent === 'string' && result.data.patchedContent.trim().length > 0,
-      buildToolStatus: sandboxMutation ? 'LIVE_BUILD_TOOL_DISPATCHED_AND_MUTATED' : 'LIVE_BUILD_TOOL_DISPATCHED',
+      buildToolStatus: sandboxMutation
+        ? usedFailover(failover) ? 'LIVE_BUILD_TOOL_FAILOVER_DISPATCHED_AND_MUTATED' : 'LIVE_BUILD_TOOL_DISPATCHED_AND_MUTATED'
+        : usedFailover(failover) ? 'LIVE_BUILD_TOOL_FAILOVER_DISPATCHED' : 'LIVE_BUILD_TOOL_DISPATCHED',
+      selectedTool: dispatchedBuildTool,
+      selectedMemberId,
+      toolAttemptHistory: failover.attemptHistory,
       sandboxMutation: sandboxMutation ? Object.freeze(sandboxMutation) : null,
     }));
   }
@@ -367,9 +410,8 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
   const shortCircuit = shouldShortCircuitToolSelection(toolSelection);
   const dispatchFn = config.dispatch ?? orchestraDispatch;
   const budget = { dispatchCount: 0, costUsd: 0 };
-  const selectedMemberId = liveDispatch ? assertSelectedBuildMemberReady(buildTool, config.env ?? process.env) : null;
   const codeTaskDispatches = liveDispatch
-    ? await runLiveBuildTasks(generatedCodeTaskDispatches, designOutput, budget, dispatchFn, config, selectedMemberId, buildTool, toolSelection, productId)
+    ? await runLiveBuildTasks(generatedCodeTaskDispatches, designOutput, budget, dispatchFn, config, buildTool, toolSelection, productId)
     : shortCircuit && Array.isArray(generatedCodeTaskDispatches)
       ? Object.freeze(generatedCodeTaskDispatches.map(task => Object.freeze({
         ...task,
@@ -380,6 +422,15 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
       : generatedCodeTaskDispatches;
   const batchPlan = generateBase44BatchPlan(config.auditData, { productId });
   const buildRisks = deriveBuildRisks(designOutput);
+  const toolAttemptHistory = Array.isArray(codeTaskDispatches)
+    ? codeTaskDispatches.flatMap(task => task?.toolAttemptHistory ?? [])
+    : [];
+  const toolSelectionWithAttempts = attachAttemptHistory(toolSelection, {
+    attemptHistory: toolAttemptHistory,
+    candidates: buildDispatchCandidates(toolSelection, buildTool),
+    memberId: codeTaskDispatches?.[0]?.selectedMemberId ?? null,
+    candidate: codeTaskDispatches?.[0]?.selectedTool ?? null,
+  });
   const sections = template.sections.map(section => {
     if (section.id === 'build-entry-path') return cloneSection(section, entryPath);
     if (section.id === 'code-task-dispatches') return cloneSection(section, codeTaskDispatches);
@@ -387,7 +438,7 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
     if (section.id === 'base44-functionalization') return cloneSection(section, batchPlan.functionalizationPlan ?? batchPlan);
     if (section.id === 'build-risks') return cloneSection(section, buildRisks);
     if (section.id === 'build-decision-log') return cloneSection(section, decisionLogInput(manualInputs));
-    if (section.id === 'selected-tool') return cloneSection(section, toolSelection);
+    if (section.id === 'selected-tool') return cloneSection(section, toolSelectionWithAttempts);
     return cloneSection(section, section.input ?? null);
   });
   const scorableSections = sections.filter(section => section.id !== 'selected-tool');
@@ -396,13 +447,12 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
     ? codeTaskDispatches.map(task => task?.sandboxMutation).filter(Boolean)
     : [];
   const firstMutation = sandboxMutations[0] ?? null;
-
   return Object.freeze({
     productId,
     stepId: BUILD_STEP_ID,
     completedAt: new Date().toISOString(),
     sections: Object.freeze(sections),
-    toolSelection,
+    toolSelection: toolSelectionWithAttempts,
     pipelineNullAt: toolSelection?.pipelineNullAt,
     undServedAccessWarning: toolSelection?.undServedAccessWarning === true,
     undServedAccessWarningReason: toolSelection?.undServedAccessWarningReason,
@@ -420,6 +470,8 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
       stubDeletions: batchPlan.stubDeletions?.length ?? 0,
       functionalizationTargets: batchPlan.functionalizationPlan?.length ?? 0,
       liveDispatches: budget.dispatchCount,
+      toolAttemptHistory: toolAttemptHistory.length,
+      timeoutAttempts: toolAttemptHistory.filter(attempt => attempt.state === 'timeout').length,
       sandboxMutations: sandboxMutations.length,
       sandboxCommitSha: firstMutation?.commitSha ?? null,
       deployChainUrl: firstMutation?.deployedUrl ?? null,

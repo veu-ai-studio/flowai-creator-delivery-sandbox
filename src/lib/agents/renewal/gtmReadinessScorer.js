@@ -111,6 +111,7 @@ function labelFor(band) {
     case 'showcase-ready': return 'Showcase-ready';
     case 'demo-ready':     return 'Demo-ready';
     case 'internal-only':  return 'Internal-only';
+    case 'low-confidence': return 'Low confidence';
     default:               return 'Not demo-ready';
   }
 }
@@ -168,6 +169,41 @@ export function computeGtmReadiness({ issues = [] } = {}) {
     label: labelFor(band),
     formula: 'score = 100 − 10·critical − 5·high − 2·medium − 0.5·low; clamped [0,100]',
   };
+}
+
+function finiteOrNull(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function hasCoverageSignal(options, key) {
+  return Object.prototype.hasOwnProperty.call(options ?? {}, key);
+}
+
+function degradedCoverageReason({ options = {}, crawlOutput = null } = {}) {
+  if (options.coverageDegraded === true || options.evidenceDegraded === true) {
+    return 'SCORE_ON_DEGRADED_EVIDENCE';
+  }
+  if (options.coverage === 'crawl_only_early_baseline') {
+    return 'SCORE_ON_DEGRADED_EVIDENCE';
+  }
+  const phaseBContribution = finiteOrNull(options.phaseBContribution);
+  if (hasCoverageSignal(options, 'phaseBContribution') && phaseBContribution === 0) {
+    return 'SCORE_ON_DEGRADED_EVIDENCE';
+  }
+  const aggregatedFindings = finiteOrNull(options.aggregatedFindings);
+  const pagesActuallyCrawled = finiteOrNull(options.pagesActuallyCrawled)
+    ?? finiteOrNull(crawlOutput?.pagesCrawled)
+    ?? (Array.isArray(crawlOutput?.pages) ? crawlOutput.pages.length : null);
+  if (
+    hasCoverageSignal(options, 'aggregatedFindings')
+    && aggregatedFindings === 0
+    && Number.isFinite(pagesActuallyCrawled)
+    && pagesActuallyCrawled > 0
+  ) {
+    return 'SCORE_ON_DEGRADED_EVIDENCE';
+  }
+  return null;
 }
 
 // ── Crawl → issues mapping ────────────────────────────────────────────
@@ -568,7 +604,7 @@ export function deriveIssuesFromCrawl(crawlOutput) {
  * @param {object} crawlOutput
  * @returns {{score:number, counts:object, band:string, label:string, penalty:number, formula:string, issues:Array}}
  */
-export function scoreCrawlOutput(crawlOutput, extraFindings = null) {
+export function scoreCrawlOutput(crawlOutput, extraFindings = null, options = {}) {
   const phaseAIssues = deriveIssuesFromCrawl(crawlOutput);
   // D39 — Phase B adversarial-surface findings union with Phase A.
   // Both are §7.6-shaped { severity, category, location, evidence }.
@@ -580,8 +616,19 @@ export function scoreCrawlOutput(crawlOutput, extraFindings = null) {
   const issues = [...phaseAIssues, ...phaseBIssues];
   const verdict = computeGtmReadiness({ issues });
   const ceo95Criteria = computeCeo95Criteria({ crawlOutput, issues });
+  const degradedReason = degradedCoverageReason({ options, crawlOutput });
+  const score = degradedReason ? ceo95Criteria.verifiedScore : verdict.score;
+  const band = degradedReason ? 'low-confidence' : verdict.band;
   return {
     ...verdict,
+    score,
+    rawScore: verdict.score,
+    band,
+    label: labelFor(band),
+    confidence: degradedReason ? 'LOW' : 'HIGH',
+    coverage: options.coverage ?? null,
+    coverageDegraded: !!degradedReason,
+    reason: degradedReason,
     issues,
     phaseACount: phaseAIssues.length,
     phaseBCount: phaseBIssues.length,

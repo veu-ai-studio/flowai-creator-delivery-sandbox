@@ -3,6 +3,11 @@ import { rankedToolsForStepCard } from '../../lib/tools/stepToolVisibility';
 
 const TONES = {
   callable: 'border-emerald-500/30 bg-emerald-500/5 text-emerald-300',
+  selected: 'border-blue-500/30 bg-blue-500/5 text-blue-300',
+  timeout: 'border-amber-500/30 bg-amber-500/5 text-amber-300',
+  failed: 'border-red-500/30 bg-red-500/5 text-red-300',
+  succeeded: 'border-emerald-500/30 bg-emerald-500/5 text-emerald-300',
+  final_failed: 'border-red-500/30 bg-red-500/5 text-red-300',
   missing_credentials: 'border-amber-500/30 bg-amber-500/5 text-amber-300',
   unavailable: 'border-slate-500/30 bg-slate-500/5 text-slate-300',
   stub_unavailable: 'border-slate-500/30 bg-slate-500/5 text-slate-300',
@@ -14,6 +19,11 @@ const TONES = {
 
 const LABELS = {
   callable: 'callable',
+  selected: 'selected',
+  timeout: 'timeout',
+  failed: 'failed',
+  succeeded: 'succeeded',
+  final_failed: 'final failed',
   missing_credentials: 'missing credentials',
   unavailable: 'unavailable',
   stub_unavailable: 'stub unavailable',
@@ -31,12 +41,12 @@ export default function StepToolStatusList({ stepKey, toolSelection = null, comp
   return (
     <div className={compact ? 'mt-2 flex flex-wrap gap-1.5' : 'mt-3 grid gap-2'}>
       {tools.map((tool) => {
-        const state = tool.dispatchState ?? 'unavailable';
+        const state = tool.lastAttemptState ?? tool.dispatchState ?? 'unavailable';
         return (
           <div
             key={`${stepKey}-${tool.rank}-${tool.platform_name}`}
             className={`rounded-md border px-2 py-1 ${TONES[state] ?? TONES.unavailable}`}
-            title={tool.note || LABELS[state] || state}
+            title={tool.lastAttemptReason || tool.note || LABELS[state] || state}
           >
             <span className="text-[10px] font-semibold">
               {tool.rank}. {tool.platform_name}
