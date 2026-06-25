@@ -202,7 +202,6 @@ function getHeader(req, name) {
 function hasValidRunConstructionOperatorSecret(req) {
   const configuredValues = [
     process.env.FLOWAI_OPERATOR_SECRET,
-    process.env.FLOWAI_INTERNAL_SECRET,
   ].filter(value => typeof value === 'string' && value.length > 0);
   if (configuredValues.length === 0) return false;
   const supplied = getHeader(req, 'x-flowai-operator-secret');
@@ -431,7 +430,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     return res.end(JSON.stringify({
       ok: false,
       error: 'operator_secret_required',
-      detail: 'spineReliabilityProof requires x-flowai-operator-secret matching FLOWAI_OPERATOR_SECRET or FLOWAI_INTERNAL_SECRET.',
+      detail: 'spineReliabilityProof requires x-flowai-operator-secret matching FLOWAI_OPERATOR_SECRET.',
     }));
   }
 

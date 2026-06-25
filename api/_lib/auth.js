@@ -236,7 +236,6 @@ function getHeader(req, name) {
 function hasValidOperatorSecret(req) {
   const configuredValues = [
     process.env.FLOWAI_OPERATOR_SECRET,
-    process.env.FLOWAI_INTERNAL_SECRET,
   ].filter(value => typeof value === 'string' && value.length > 0);
   if (configuredValues.length === 0) return false;
   const supplied = getHeader(req, 'x-flowai-operator-secret');
