@@ -11,6 +11,7 @@ const FORGE_STEP_OWNERS = Object.freeze({
   gtm: Object.freeze({ agentId: 9, name: 'Go-To-Market' }),
   monitor: Object.freeze({ agentId: 10, name: 'Monitor' }),
 });
+const DEFAULT_STEP_OWNER_TIMEOUT_MS = 30_000;
 
 function observedFields(value) {
   if (!value || typeof value !== 'object') return [];
@@ -51,16 +52,38 @@ export function createForgeStepOwnerHub(opts = {}) {
   return hub;
 }
 
+function normalizeTimeoutMs(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return DEFAULT_STEP_OWNER_TIMEOUT_MS;
+  return Math.max(250, Math.min(numeric, DEFAULT_STEP_OWNER_TIMEOUT_MS));
+}
+
+async function invokeWithTimeout(hub, stepKey, payload, timeoutMs) {
+  let timeoutId = null;
+  const timeout = new Promise((resolve) => {
+    timeoutId = setTimeout(() => resolve(null), timeoutMs);
+    timeoutId.unref?.();
+  });
+  try {
+    return await Promise.race([
+      hub.invokeStepOwner(stepKey, payload),
+      timeout,
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
 export async function invokeForgeStepOwner(config = {}, stepKey, ctx = {}) {
   const hub = config.orchestratorHub ??
     (config.enableStepOwnerRecommendations === true ? createForgeStepOwnerHub() : null);
   if (!hub || typeof hub.invokeStepOwner !== 'function') return null;
   try {
-    return await hub.invokeStepOwner(stepKey, {
+    return await invokeWithTimeout(hub, stepKey, {
       runId: config.runId ?? ctx.runId ?? `${stepKey}-run`,
       productId: ctx.productId,
       stepInputs: ctx.stepInputs,
-    });
+    }, normalizeTimeoutMs(config.stepOwnerTimeoutMs));
   } catch {
     return null;
   }
@@ -68,5 +91,6 @@ export async function invokeForgeStepOwner(config = {}, stepKey, ctx = {}) {
 
 export const __test = Object.freeze({
   FORGE_STEP_OWNERS,
+  DEFAULT_STEP_OWNER_TIMEOUT_MS,
   observedFields,
 });

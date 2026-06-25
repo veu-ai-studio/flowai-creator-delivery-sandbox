@@ -47,6 +47,22 @@ describe('P11 forge step-owner graduation', () => {
     expect(recommendation).toBeNull();
   });
 
+  it('times out a stalled step-owner recommendation without hanging the forge', async () => {
+    const startedAt = Date.now();
+    const recommendation = await invokeForgeStepOwner({
+      runId: 'p11-timeout',
+      stepOwnerTimeoutMs: 5,
+      orchestratorHub: {
+        async invokeStepOwner() {
+          return new Promise(() => {});
+        },
+      },
+    }, 'research', { productId: 'neutral-product', stepInputs: {} });
+
+    expect(recommendation).toBeNull();
+    expect(Date.now() - startedAt).toBeLessThan(1000);
+  });
+
   it('vertical slice emits recommendations for P11 target agents', async () => {
     const result = await runReferenceVerticalSlice({
       productId: 'neutral-reference',

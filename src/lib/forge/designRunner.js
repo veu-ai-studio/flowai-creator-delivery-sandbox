@@ -4,11 +4,13 @@ import { selectForgeStepTool } from './toolSelection.js';
 import { dispatch as orchestraDispatch } from '../orchestra/index.js';
 import { MODES } from '../tools/ToolIntelligenceService.js';
 import { invokeForgeStepOwner } from './stepOwnerRecommendations.js';
+import { attachAttemptHistory, runRankedToolWithFailover } from './rankedToolFailover.js';
 
 const NO_DESIGN_TOOL_REASON = 'No AI design tool configured; manual input required';
 const P2_MAX_DISPATCHES_PER_RUN = 12;
 const CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION = 3;
 const CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION = 15;
+const DEFAULT_DESIGN_TOOL_TIMEOUT_MS = 30_000;
 
 function cloneSection(section, input) {
   return Object.freeze({ ...section, input });
@@ -136,12 +138,6 @@ function shouldShortCircuitToolSelection(toolSelection) {
   return toolSelection && !isAutomaticToolSelection(toolSelection);
 }
 
-function assertAnthropicReady() {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('P2 live execution STOP: ANTHROPIC_API_KEY is required for live design dispatch');
-  }
-}
-
 function usageCostUsd(data = {}) {
   const usage = data.usage ?? {};
   const inputTokens = Number(usage.input_tokens ?? usage.inputTokens ?? 0);
@@ -181,10 +177,26 @@ function ensureBudget(budget) {
   }
 }
 
-async function runLiveDesign(researchOutput, selectedTool, budget, dispatchFn) {
-  budget.dispatchCount += 1;
+function designDispatchCandidates(toolSelection, selectedTool) {
+  const selection = toolSelection?.selection;
+  if (Array.isArray(selection) && selection.length > 0) return Object.freeze(selection.filter(Boolean));
+  if (Array.isArray(toolSelection?.candidates) && toolSelection.candidates.length > 0) {
+    return Object.freeze(toolSelection.candidates.filter(Boolean));
+  }
+  return selectedTool ? Object.freeze([selectedTool]) : Object.freeze([]);
+}
+
+function dispatchedAttemptCount(failover) {
+  return (failover?.attemptHistory ?? []).filter(attempt =>
+    ['timeout', 'failed', 'succeeded'].includes(attempt.state)
+  ).length;
+}
+
+async function runLiveDesign(researchOutput, selectedTool, toolSelection, budget, dispatchFn, config = {}) {
   ensureBudget(budget);
-  const result = assertLiveDispatchResult(await dispatchFn('design', {
+  const failover = await runRankedToolWithFailover({
+    action: 'design',
+    payload: {
     spec: {
       productId: researchOutput.productId ?? null,
       targetCustomer: targetCustomerFrom(researchOutput),
@@ -194,13 +206,25 @@ async function runLiveDesign(researchOutput, selectedTool, budget, dispatchFn) {
       researchOutput,
       selectedTool,
     },
-  }), 'design');
+    },
+    candidates: designDispatchCandidates(toolSelection, selectedTool),
+    dispatchFn,
+    timeoutMs: config.toolDispatchTimeoutMs ?? DEFAULT_DESIGN_TOOL_TIMEOUT_MS,
+    env: config.env ?? process.env,
+    validateResult: result => assertLiveDispatchResult(result, 'design'),
+  });
+  budget.dispatchCount += dispatchedAttemptCount(failover);
+  ensureBudget(budget);
+  const result = failover.result;
   budget.costUsd += usageCostUsd(result.data);
   ensureBudget(budget);
   return Object.freeze({
     action: result.action,
     member: result.member,
     data: result.data,
+    selectedTool: failover.candidate,
+    selectedMemberId: failover.memberId,
+    attemptHistory: failover.attemptHistory,
   });
 }
 
@@ -230,15 +254,21 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
   let liveDesignData = null;
 
   if (liveDispatch) {
-    assertAnthropicReady();
-    liveDesignData = await runLiveDesign(researchOutput, selectedTool, budget, dispatchFn);
+    liveDesignData = await runLiveDesign(researchOutput, selectedTool, toolSelection, budget, dispatchFn, config);
   }
+
+  const toolSelectionWithAttempts = attachAttemptHistory(toolSelection, liveDesignData ? {
+    attemptHistory: liveDesignData.attemptHistory,
+    candidates: designDispatchCandidates(toolSelection, selectedTool),
+    memberId: liveDesignData.selectedMemberId,
+    candidate: liveDesignData.selectedTool,
+  } : null);
 
   const sections = template.sections.map(section => {
     if (section.id === 'design-principles') return cloneSection(section, deriveDesignPrinciples(researchOutput));
     if (section.id === 'design-gaps') return cloneSection(section, deriveDesignGaps(researchOutput));
     if (section.id === 'design-decision-log') return cloneSection(section, decisionLogInput(manualInputs));
-    if (section.id === 'selected-tool') return cloneSection(section, toolSelection);
+    if (section.id === 'selected-tool') return cloneSection(section, toolSelectionWithAttempts);
     if (section.source === 'orchestrated') {
       const manualValue = manualInputs?.[section.id];
       if (manualValue !== undefined && manualValue !== null && !(typeof manualValue === 'string' && manualValue.trim() === '')) {
@@ -264,7 +294,7 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
           verified: true,
           input: valueBySection[section.id],
           evidenceRef: liveDesignData.data.evidenceRef,
-          selectedTool: selectedTool?.platform_name ?? selectedTool?.toolName ?? null,
+          selectedTool: liveDesignData.selectedTool?.platform_name ?? liveDesignData.selectedTool?.toolName ?? null,
           action: liveDesignData.action,
           member: liveDesignData.member,
         }));
@@ -280,9 +310,9 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
     stepId: DESIGN_STEP_ID,
     completedAt: new Date().toISOString(),
     sections: Object.freeze(sections),
-    toolSelection,
-    undServedAccessWarning: toolSelection?.undServedAccessWarning === true,
-    undServedAccessWarningReason: toolSelection?.undServedAccessWarningReason,
+    toolSelection: toolSelectionWithAttempts,
+    undServedAccessWarning: toolSelectionWithAttempts?.undServedAccessWarning === true,
+    undServedAccessWarningReason: toolSelectionWithAttempts?.undServedAccessWarningReason,
     designScore: score.designScore,
     designComplete: score.designComplete,
     readyForBuild: score.readyForBuild,
@@ -296,6 +326,8 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
       manualSections: sections.filter(section => section.source === 'manual').length,
       researchGaps: deriveDesignGaps(researchOutput).length,
       liveDispatches: budget.dispatchCount,
+      toolAttemptHistory: liveDesignData?.attemptHistory?.length ?? 0,
+      timeoutAttempts: (liveDesignData?.attemptHistory ?? []).filter(attempt => attempt.state === 'timeout').length,
       estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
     matrixArtifactVersion: String(researchOutput.matrixArtifactVersion ?? 'unknown'),
