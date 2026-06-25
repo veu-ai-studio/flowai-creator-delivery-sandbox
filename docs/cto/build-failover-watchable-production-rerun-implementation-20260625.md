@@ -28,7 +28,8 @@ Victor action after production identity is confirmed:
 - The endpoint keeps credentials server-side and enters the real `runBuild` path.
 - The endpoint forces the selected Codex `code-patch` dispatch to hang once.
 - `runBuild` now accepts `onToolAttempt` and forwards it into `runRankedToolWithFailover`.
-- Flow Hub renders `BuildFailoverProofPanel` only when `?buildFailoverProof=1` is present.
+- Flow Hub renders `BuildFailoverProofPanel` only on `/flow-hub/production?buildFailoverProof=1`.
+- The proof endpoint uses `requireOperatorAuth`; the browser may use an operator session or paste the operator secret into the panel for this internal proof.
 - Fixed stale generated deploy title from `FlowAI M2 Deploy Chain Proof` to `FlowAI Deploy Chain Proof`.
 
 ## Claim Boundary

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { CheckCircle2, ExternalLink, Loader2, Play, RotateCcw, XCircle } from 'lucide-react';
 
 function parseSseBlock(block) {
@@ -38,6 +39,7 @@ export default function BuildFailoverProofPanel() {
   const [events, setEvents] = useState([]);
   const [final, setFinal] = useState(null);
   const [error, setError] = useState('');
+  const [operatorSecret, setOperatorSecret] = useState('');
 
   const attempts = useMemo(
     () => events.filter(item => item.event === 'attempt').map(item => item.data),
@@ -53,7 +55,10 @@ export default function BuildFailoverProofPanel() {
     try {
       const response = await fetch('/api/forge/build-failover-proof', {
         method: 'POST',
-        headers: { Accept: 'text/event-stream' },
+        headers: {
+          Accept: 'text/event-stream',
+          ...(operatorSecret.trim() ? { 'x-flowai-operator-secret': operatorSecret.trim() } : {}),
+        },
         credentials: 'include',
       });
 
@@ -117,6 +122,17 @@ export default function BuildFailoverProofPanel() {
             {status === 'success' ? 'Run Again' : 'Run Proof'}
           </Button>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Input
+          type="password"
+          value={operatorSecret}
+          onChange={(event) => setOperatorSecret(event.target.value)}
+          placeholder="Operator secret if your session is not operator-authenticated"
+          autoComplete="off"
+          className="h-9 text-xs"
+        />
       </div>
 
       <div className="grid gap-2">

@@ -973,7 +973,8 @@ export default function LandingPage() {
       />
     );
   }
-  const showBuildFailoverProof = new URLSearchParams(location.search).get('buildFailoverProof') === '1';
+  const showBuildFailoverProof = location.pathname === '/flow-hub/production'
+    && new URLSearchParams(location.search).get('buildFailoverProof') === '1';
   const launchLabel = isConstructionEnginePath
     ? 'Run FlowAI on this URL →'
     : mode === 'auto'

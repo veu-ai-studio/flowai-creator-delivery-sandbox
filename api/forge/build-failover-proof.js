@@ -6,7 +6,7 @@
 // the Claude Code recovery output to the approved deploy-chain sandbox.
 
 import { setCorsHeaders } from '../_lib/claude.js';
-import { requireAuthHard } from '../_lib/auth.js';
+import { requireOperatorAuth } from '../_lib/auth.js';
 import { getSupabase } from '../_lib/supabase.js';
 import { runDeployChainWorkerMutation } from '../_lib/deployChainWorker.js';
 import { createBuildProofRunId, createBuildRequestId } from '../_lib/buildExecutionWorker.js';
@@ -162,7 +162,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Use POST' });
 
-  const ctx = await requireAuthHard(req, res);
+  const ctx = await requireOperatorAuth(req, res);
   if (!ctx) return;
 
   res.statusCode = 200;
