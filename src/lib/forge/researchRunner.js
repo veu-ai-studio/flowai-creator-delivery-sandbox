@@ -5,11 +5,29 @@ import { selectForgeStepTool } from './toolSelection.js';
 import { dispatch as orchestraDispatch } from '../orchestra/index.js';
 import { MODES } from '../tools/ToolIntelligenceService.js';
 import { invokeForgeStepOwner } from './stepOwnerRecommendations.js';
+import { attachAttemptHistory, runRankedToolWithFailover } from './rankedToolFailover.js';
 
 const NO_RESEARCH_TOOL_REASON = 'No AI research tools configured; manual input required for orchestrated sections';
 const P2_MAX_DISPATCHES_PER_RUN = 12;
 const CLAUDE_SONNET_4_6_INPUT_USD_PER_MILLION = 3;
 const CLAUDE_SONNET_4_6_OUTPUT_USD_PER_MILLION = 15;
+const DEFAULT_RESEARCH_TOOL_TIMEOUT_MS = 30_000;
+const CANONICAL_ANALYSIS_FALLBACK = Object.freeze({
+  rank: 999,
+  platform_name: 'Claude Code',
+  platform_type: 'analysis',
+  performance_score: 9.8,
+  target_classes: Object.freeze(['generic_url']),
+  fallbackReason: 'canonical-analysis-fallback',
+});
+const CANONICAL_CRAWL_FALLBACK = Object.freeze({
+  rank: 998,
+  platform_name: 'Browserless',
+  platform_type: 'crawl',
+  performance_score: 8.5,
+  target_classes: Object.freeze(['generic_url']),
+  fallbackReason: 'canonical-crawl-fallback',
+});
 
 function cloneSection(section, input) {
   return Object.freeze({ ...section, input });
@@ -117,12 +135,6 @@ function shouldShortCircuitToolSelection(toolSelection) {
   return toolSelection && !isAutomaticToolSelection(toolSelection);
 }
 
-function assertAnthropicReady() {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('P2 live execution STOP: ANTHROPIC_API_KEY is required for live research dispatch');
-  }
-}
-
 function usageCostUsd(data = {}) {
   const usage = data.usage ?? {};
   const inputTokens = Number(usage.input_tokens ?? usage.inputTokens ?? 0);
@@ -153,13 +165,6 @@ function assertLiveDispatchResult(result, action) {
   return result;
 }
 
-function isCrawlClassTool(tool) {
-  if (!tool) return false;
-  const caps = Array.isArray(tool.capabilities) ? tool.capabilities.join(' ') : '';
-  const text = `${tool.platform_type ?? ''} ${tool.platform_name ?? ''} ${tool.toolName ?? ''} ${tool.name ?? ''} ${caps}`;
-  return /crawl|browser|browserless|playwright|spider|scrape/i.test(text);
-}
-
 function researchUrlFromConfig(config = {}) {
   return config.url ?? config.productUrl ?? config.productContext?.url ?? config.normalizedInput?.url ?? null;
 }
@@ -173,13 +178,54 @@ function ensureBudget(budget) {
   }
 }
 
-async function runLiveResearchSection(section, context, budget, dispatchFn) {
-  budget.dispatchCount += 1;
+function candidateName(candidate) {
+  return candidate?.platform_name ?? candidate?.toolName ?? candidate?.name ?? candidate?.memberId ?? null;
+}
+
+function candidateExists(candidates, name) {
+  return candidates.some(candidate => candidateName(candidate) === name);
+}
+
+function appendFallbackCandidate(candidates, fallback) {
+  const list = Array.isArray(candidates) ? [...candidates].filter(Boolean) : [];
+  return candidateExists(list, fallback.platform_name)
+    ? Object.freeze(list)
+    : Object.freeze([...list, fallback]);
+}
+
+function researchDispatchCandidates(toolSelection, fallback) {
+  const base = Array.isArray(toolSelection?.candidates)
+    ? toolSelection.candidates
+    : toolSelection?.selection
+      ? [toolSelection.selection]
+      : [];
+  return appendFallbackCandidate(base, fallback);
+}
+
+function dispatchedAttemptCount(failover) {
+  return (failover?.attemptHistory ?? []).filter(attempt =>
+    ['timeout', 'failed', 'succeeded'].includes(attempt.state)
+  ).length;
+}
+
+async function runLiveResearchSection(section, context, budget, dispatchFn, config, failoverEvents) {
   ensureBudget(budget);
-  const result = assertLiveDispatchResult(await dispatchFn('analyze', {
-    prompt: section.prompt,
-    context,
-  }), 'analyze');
+  const failover = await runRankedToolWithFailover({
+    action: 'analyze',
+    payload: {
+      prompt: section.prompt,
+      context,
+    },
+    candidates: researchDispatchCandidates(context.toolSelection, CANONICAL_ANALYSIS_FALLBACK),
+    dispatchFn,
+    timeoutMs: config.toolDispatchTimeoutMs ?? DEFAULT_RESEARCH_TOOL_TIMEOUT_MS,
+    env: config.env ?? process.env,
+    validateResult: result => assertLiveDispatchResult(result, 'analyze'),
+  });
+  budget.dispatchCount += dispatchedAttemptCount(failover);
+  ensureBudget(budget);
+  failoverEvents.push(...failover.attemptHistory);
+  const result = failover.result;
   budget.costUsd += usageCostUsd(result.data);
   ensureBudget(budget);
   return Object.freeze({
@@ -188,16 +234,28 @@ async function runLiveResearchSection(section, context, budget, dispatchFn) {
     summary: result.data.summary,
     findings: result.data.findings,
     evidenceRef: result.data.evidenceRef,
-    selectedTool: context.selectedTool?.platform_name ?? context.selectedTool?.toolName ?? null,
+    selectedTool: failover.candidate?.platform_name ?? failover.candidate?.toolName ?? context.selectedTool?.platform_name ?? null,
     action: result.action,
     member: result.member,
+    attemptHistory: failover.attemptHistory,
   });
 }
 
-async function runLiveCrawl(url, budget, dispatchFn) {
-  budget.dispatchCount += 1;
+async function runLiveCrawl(url, budget, dispatchFn, config, toolSelection, failoverEvents) {
   ensureBudget(budget);
-  const result = assertLiveDispatchResult(await dispatchFn('crawl', { url }), 'crawl');
+  const failover = await runRankedToolWithFailover({
+    action: 'crawl',
+    payload: { url },
+    candidates: researchDispatchCandidates(toolSelection, CANONICAL_CRAWL_FALLBACK),
+    dispatchFn,
+    timeoutMs: config.toolDispatchTimeoutMs ?? DEFAULT_RESEARCH_TOOL_TIMEOUT_MS,
+    env: config.env ?? process.env,
+    validateResult: result => assertLiveDispatchResult(result, 'crawl'),
+  });
+  budget.dispatchCount += dispatchedAttemptCount(failover);
+  ensureBudget(budget);
+  failoverEvents.push(...failover.attemptHistory);
+  const result = failover.result;
   budget.costUsd += usageCostUsd(result.data);
   ensureBudget(budget);
   return Object.freeze({
@@ -207,6 +265,16 @@ async function runLiveCrawl(url, budget, dispatchFn) {
     action: result.action,
     member: result.member,
     content: result.data,
+    selectedTool: failover.candidate?.platform_name ?? null,
+    attemptHistory: failover.attemptHistory,
+  });
+}
+
+function failoverEnvelope(toolSelection, failoverEvents) {
+  if (!toolSelection || failoverEvents.length === 0) return toolSelection;
+  return attachAttemptHistory(toolSelection, {
+    attemptHistory: failoverEvents,
+    candidates: researchDispatchCandidates(toolSelection, CANONICAL_ANALYSIS_FALLBACK),
   });
 }
 
@@ -275,11 +343,10 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
   const budget = { dispatchCount: 0, costUsd: 0 };
   const researchUrl = researchUrlFromConfig(config);
   let crawlResult = null;
+  const failoverEvents = [];
 
-  if (liveDispatch) assertAnthropicReady();
-
-  if (liveDispatch && researchUrl && isCrawlClassTool(toolSelection?.selection)) {
-    crawlResult = await runLiveCrawl(researchUrl, budget, dispatchFn);
+  if (liveDispatch && researchUrl) {
+    crawlResult = await runLiveCrawl(researchUrl, budget, dispatchFn, config, toolSelection, failoverEvents);
   }
 
   for (const section of template.sections) {
@@ -291,7 +358,7 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
     } else if (section.id === 'crawl-result') {
       populated.push(cloneSection(section, crawlResult));
     } else if (section.id === 'selected-tool') {
-      populated.push(cloneSection(section, toolSelection));
+      populated.push(cloneSection(section, failoverEnvelope(toolSelection, failoverEvents)));
     } else if (section.source === 'manual') {
       populated.push(cloneSection(section, manualInputFor(section, manualInputs)));
     } else if (section.source === 'orchestrated') {
@@ -313,7 +380,8 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
           crawlResult,
           targetCustomer: populated.find(item => item.id === 'target-customer')?.input ?? null,
           selectedTool,
-        }, budget, dispatchFn)));
+          toolSelection,
+        }, budget, dispatchFn, config, failoverEvents)));
       } else {
         populated.push(cloneSection(section, orchestratedInputFor(section, manualInputs, selectedTool)));
       }
@@ -333,7 +401,7 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
     stepId: RESEARCH_STEP_ID,
     completedAt: new Date().toISOString(),
     sections: Object.freeze(populated),
-    toolSelection,
+    toolSelection: failoverEnvelope(toolSelection, failoverEvents),
     undServedAccessWarning: toolSelection?.undServedAccessWarning === true,
     undServedAccessWarningReason: toolSelection?.undServedAccessWarningReason,
     completionPct,
@@ -344,6 +412,8 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
       derivedSections: populated.filter(section => section.source === 'derived').length,
       allComplete: manualComplete && completionPct === 100,
       liveDispatches: budget.dispatchCount,
+      toolAttemptHistory: failoverEvents.length,
+      timeoutAttempts: failoverEvents.filter(attempt => attempt.state === 'timeout').length,
       estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
     matrixArtifactVersion: String(artifact.version ?? 'unknown'),
