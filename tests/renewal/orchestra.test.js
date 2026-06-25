@@ -22,15 +22,16 @@ describe('OrchestraMember interface', () => {
 });
 
 describe('Orchestra registry', () => {
-  it('lists 11 members including 5 wired (codex + claudeCode + vercel + browserless + playwright)', () => {
+  it('lists 12 members including 6 wired (codex + claudeCode + vercel + browserless + playwright + perplexity)', () => {
     const members = listMembers();
-    expect(members.length).toBe(11);
+    expect(members.length).toBe(12);
     const wired = members.filter((m) => m.wired).map((m) => m.id);
     expect(wired).toContain('codex');
     expect(wired).toContain('claude-code');
     expect(wired).toContain('vercel');
     expect(wired).toContain('browserless');
     expect(wired).toContain('playwright');
+    expect(wired).toContain('perplexity');
     const notWired = members.filter((m) => !m.wired).map((m) => m.id);
     expect(notWired).toEqual(expect.arrayContaining(['base44', 'lovable', 'v0', 'cursor', 'replit', 'openrouter']));
   });

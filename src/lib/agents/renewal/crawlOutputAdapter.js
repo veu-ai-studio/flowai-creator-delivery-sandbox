@@ -368,6 +368,9 @@ export async function conductStructuredCrawl(args) {
 
   return {
     pagesCrawled:        typeof report.pagesCrawled === 'number' ? report.pagesCrawled : pages.length,
+    pagesActuallyCrawled: typeof report.pagesActuallyCrawled === 'number' ? report.pagesActuallyCrawled : pages.length,
+    pagesDiscovered:     typeof report.pagesDiscovered === 'number' ? report.pagesDiscovered : pages.length,
+    reasonStopped:       typeof report.reasonStopped === 'string' ? report.reasonStopped : undefined,
     depth:               typeof report.depth === 'number' ? report.depth : depth,
     pages,
     brokenLinks:         extractBrokenLinks(report),
@@ -375,6 +378,10 @@ export async function conductStructuredCrawl(args) {
     interactiveElements: extractInteractiveElements(report),
     errors:              extractErrors(report),
     totalTextLength,
+    evidenceRecovered:   report.evidenceRecovered === true,
+    evidenceRecoveryKind: typeof report.evidenceRecoveryKind === 'string' ? report.evidenceRecoveryKind : null,
+    evidenceSource:      typeof report.evidenceSource === 'string' ? report.evidenceSource : null,
+    recoveryFindings:    Array.isArray(report.findings) ? report.findings : [],
   };
 }
 
