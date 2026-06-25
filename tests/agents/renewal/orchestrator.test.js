@@ -369,6 +369,54 @@ describe('runOrchestration — AUTO mode', () => {
       expect(deps.createRenewalBranch).not.toHaveBeenCalled();
     } finally { clearVercelEnv(); }
   });
+
+  it('production Flow Hub Research proof times out a hung crawl attempt and fails over', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [96] });
+      deps.env = { ...process.env, BROWSERLESS_API_KEY: 'browserless_fake' };
+      const stepLogs = [];
+
+      const result = await runOrchestration({
+        url: 'https://flowai-m3-upgrader-before.vercel.app/',
+        mode: 'auto',
+        runId: 'spine-proof-unit',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 65,
+        maxIterations: 1,
+        spineReliabilityProof: {
+          enabled: true,
+          forceFirstCallableResearchHang: true,
+          timeoutMs: 5,
+        },
+        onStep: (log) => stepLogs.push(log),
+        deps,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(deps.crawlSite).toHaveBeenCalledTimes(1);
+      const attempts = stepLogs
+        .map((log) => log.result)
+        .filter((result) => result?.kind === 'spine_reliability_attempt.v1');
+      expect(attempts.map((attempt) => attempt.state)).toEqual([
+        'selected',
+        'timeout',
+        'selected',
+        'succeeded',
+      ]);
+      const selection = stepLogs.find((log) => log.result?.proofKind === 'spine_reliability_research_failover.v1')?.result;
+      expect(selection).toMatchObject({
+        proofRunId: 'spine-proof-unit',
+        selectedDispatchMemberId: 'playwright',
+        forcedHangConsumed: true,
+      });
+      expect(selection.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({ memberId: 'browserless', state: 'timeout' }),
+        expect.objectContaining({ memberId: 'playwright', state: 'succeeded' }),
+      ]));
+    } finally { clearVercelEnv(); }
+  });
 });
 
 // ── GUIDED mode pauses at checkpoints ───────────────────────────────────────

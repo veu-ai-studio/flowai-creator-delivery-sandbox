@@ -75,6 +75,10 @@ import { classifyPatchEffects } from '../../verification/patchEffectClassifier.j
 import { runRegressionGate } from '../../verification/regressionGate.js';
 import { runMigration } from '../../migration/migrationOrchestrator.js';
 import {
+  attachAttemptHistory,
+  runRankedToolWithFailover,
+} from '../../forge/rankedToolFailover.js';
+import {
   computeCapabilityWeightedScore,
   decideGtmGate,
   MINIMUM_SCORED_DIMENSIONS_FOR_GTM,
@@ -198,6 +202,81 @@ function boundedTimeoutMs(value, fallback = PHASE_B_ENRICHMENT_TIMEOUT_MS) {
 function boundedOperationTimeoutMs(value, fallback) {
   if (!Number.isFinite(value) || value <= 0) return fallback;
   return Math.max(1, Math.min(value, fallback));
+}
+
+function normalizeSpineReliabilityProofOptions(value = {}) {
+  const config = value === true ? { enabled: true } : (value && typeof value === 'object' ? value : {});
+  return Object.freeze({
+    enabled: config.enabled === true,
+    forceFirstCallableResearchHang: config.forceFirstCallableResearchHang !== false,
+    timeoutMs: boundedOperationTimeoutMs(Number(config.timeoutMs), 5_000),
+  });
+}
+
+function toolName(candidate) {
+  return candidate?.platform_name
+    ?? candidate?.toolName
+    ?? candidate?.name
+    ?? candidate?.memberId
+    ?? null;
+}
+
+function makeFallbackCandidate(rank, platformName, memberId, platformType = 'crawl') {
+  return Object.freeze({
+    rank,
+    platform_name: platformName,
+    platform_type: platformType,
+    memberId,
+    rank_score: null,
+  });
+}
+
+function buildProductionResearchCrawlCandidates(selectionRecord = null) {
+  const source = selectionRecord && typeof selectionRecord === 'object' ? selectionRecord : {};
+  const raw = Array.isArray(source.candidates) ? source.candidates : [];
+  const seen = new Set();
+  const candidates = [];
+  for (const candidate of raw) {
+    const name = toolName(candidate);
+    if (!name) continue;
+    const key = String(name).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    candidates.push(Object.freeze({ ...candidate }));
+  }
+  const addFallback = (name, memberId, type) => {
+    const key = name.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push(makeFallbackCandidate(candidates.length + 1, name, memberId, type));
+  };
+  addFallback('Browserless', 'browserless', 'crawl');
+  addFallback('Playwright', 'playwright', 'crawl');
+  return Object.freeze(candidates.map((candidate, index) => Object.freeze({
+    ...candidate,
+    rank: candidate.rank ?? index + 1,
+  })));
+}
+
+function makeProductionResearchSelectionForUi({ baseSelection = null, candidates = [], failover = null, mode, internalMode }) {
+  const base = Object.freeze({
+    kind: 'tool_intelligence_selection',
+    stepKey: 'research',
+    mode,
+    internalMode,
+    selected: failover?.candidate ?? baseSelection?.selected ?? candidates[0] ?? null,
+    candidates: Object.freeze(candidates.map((candidate, index) => Object.freeze({
+      platform_name: candidate?.platform_name ?? candidate?.toolName ?? candidate?.name ?? candidate?.memberId ?? null,
+      platform_type: candidate?.platform_type ?? candidate?.type ?? 'tool',
+      rank: candidate?.rank ?? index + 1,
+      rank_score: candidate?.rank_score ?? candidate?.rankScore ?? candidate?.compositeScore ?? null,
+      memberId: candidate?.memberId ?? null,
+      dispatchState: candidate?.dispatchState ?? null,
+      dispatchReason: candidate?.dispatchReason ?? null,
+      credentialStatus: candidate?.credentialStatus ?? null,
+    }))),
+  });
+  return attachAttemptHistory(base, failover);
 }
 
 function withTimeout(promise, { timeoutMs, code, message }) {
@@ -938,6 +1017,7 @@ export async function runOrchestration(args = {}) {
     governanceWrite: boundedOperationTimeoutMs(args.governanceWriteTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.governanceWrite),
     toolSelections: boundedOperationTimeoutMs(args.toolSelectionsTimeoutMs, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.toolSelections),
   });
+  const spineReliabilityProof = normalizeSpineReliabilityProofOptions(args.spineReliabilityProof);
   const migrationFlag = mode === 'migration'
     ? await isMigrationModeExecutionEnabled(deps.env || process.env)
     : { enabled: false, source: 'not_checked' };
@@ -1329,6 +1409,8 @@ export async function runOrchestration(args = {}) {
     });
   };
 
+  const visibleToolSelectionByStep = new Map();
+
   const _emitToolSelections = async ({ emitVisible = true, writeGovernance = true } = {}) => {
     if (!toolIntelligenceService) return { written: 0, visible: 0, skipped: 'service_unavailable' };
     const STEP_KEYS = ['research', 'design', 'build', 'qa_audit', 'deploy', 'monitor', 'govern', 'gtm'];
@@ -1341,6 +1423,7 @@ export async function runOrchestration(args = {}) {
           ? await toolIntelligenceService.getRankings(stepKey, undefined)
           : (Array.isArray(selection) ? selection : (selection ? [selection] : []));
         const envelope = toolSelectionEnvelope({ stepKey, selection, candidates });
+        visibleToolSelectionByStep.set(stepKey, { selection, candidates, envelope });
         if (emitVisible) {
           emit(makeStepLog({
             iteration: iterations.length, step: 0, status: 'complete',
@@ -2027,7 +2110,7 @@ export async function runOrchestration(args = {}) {
   if (initialUrl && /^https?:\/\//i.test(initialUrl)) {
     try {
       const _multiPageCrawler = deps.crawlSite || (await import('../../crawl/multiPageCrawler.js')).crawlSite;
-      const crawlSiteResult = await _multiPageCrawler(initialUrl, {
+      const crawlOptions = {
         maxPages: effortProfile.crawlMaxPages,
         maxDepth: effortProfile.crawlDepth,
         sameOriginOnly: true,
@@ -2046,7 +2129,93 @@ export async function runOrchestration(args = {}) {
             mode: state.mode,
           }));
         },
-      });
+      };
+      let crawlSiteResult;
+      if (spineReliabilityProof.enabled) {
+        const researchSelectionRecord = visibleToolSelectionByStep.get('research') ?? null;
+        const researchCandidates = buildProductionResearchCrawlCandidates(researchSelectionRecord?.envelope);
+        let forcedHangConsumed = false;
+        const failover = await runRankedToolWithFailover({
+          action: 'crawl',
+          payload: {
+            url: initialUrl,
+            proofRunId: runId,
+            productionPath: '/api/run-construction -> runOrchestration -> multiPageCrawler.crawlSite',
+          },
+          candidates: researchCandidates,
+          timeoutMs: spineReliabilityProof.timeoutMs,
+          env: deps.env || process.env,
+          dispatchFn: async (_action, _payload, opts = {}) => {
+            if (spineReliabilityProof.forceFirstCallableResearchHang && !forcedHangConsumed) {
+              forcedHangConsumed = true;
+              return new Promise(() => {});
+            }
+            const result = await _multiPageCrawler(initialUrl, crawlOptions);
+            return Object.freeze({
+              ok: result?.ok !== false,
+              action: 'crawl',
+              member: opts.memberId ?? 'production-crawler',
+              data: result,
+              productionCrawler: true,
+            });
+          },
+          validateResult: (result) => {
+            if (!result?.data || typeof result.data !== 'object') {
+              throw new Error('production crawler failover did not return a crawl result');
+            }
+            if (!Number.isFinite(Number(result.data.pagesDiscovered))) {
+              throw new Error('production crawler failover result missing pagesDiscovered');
+            }
+          },
+          onAttempt: (attempt) => {
+            emit(makeStepLog({
+              iteration: 0, step: 0,
+              status: attempt.state === 'succeeded'
+                ? 'complete'
+                : attempt.state === 'final_failed'
+                  ? 'failed'
+                  : ['timeout', 'failed', 'unavailable'].includes(attempt.state)
+                    ? 'degraded'
+                    : 'running',
+              tool: 'Production Research failover',
+              why: 'Live spine-reliability proof: selected Research crawl candidate must timeout/fail over instead of hanging.',
+              result: {
+                kind: 'spine_reliability_attempt.v1',
+                proofRunId: runId,
+                stepKey: 'research',
+                productionPath: '/api/run-construction',
+                ...attempt,
+              },
+              mode: state.mode,
+            }));
+          },
+        });
+        crawlSiteResult = failover.result.data;
+        const toolSelection = makeProductionResearchSelectionForUi({
+          baseSelection: researchSelectionRecord?.envelope ?? null,
+          candidates: researchCandidates,
+          failover,
+          mode: ssotOrchestraExecutionMode,
+          internalMode: state.mode,
+        });
+        emit(makeStepLog({
+          iteration: 0, step: 1, status: 'complete',
+          tool: 'Production Research failover',
+          why: 'Live proof ran inside the production Flow Hub path; hung crawl attempt timed out and fallback completed the production crawl.',
+          result: {
+            ...toolSelection,
+            kind: 'tool_intelligence_selection',
+            proofKind: 'spine_reliability_research_failover.v1',
+            proofRunId: runId,
+            timeoutMs: spineReliabilityProof.timeoutMs,
+            forcedHangConsumed,
+            productionPath: '/api/run-construction -> runOrchestration -> multiPageCrawler.crawlSite',
+          },
+          mode: state.mode,
+        }));
+      } else {
+        crawlSiteResult = await _multiPageCrawler(initialUrl, crawlOptions);
+      }
       // DISPATCH (production runtime fixes) — the two crawl entry
       // points measure different things and a single-page run can
       // legitimately produce divergent counts:

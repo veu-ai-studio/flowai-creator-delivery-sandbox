@@ -46,7 +46,7 @@
 //   without a persisted governance record (governanceRecordId still
 //   returned as runId for SSE-consumer correlation).
 
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -192,6 +192,33 @@ function statusEventCheckpointName(event) {
   if (!mapped) return null;
   if (!['complete', 'degraded', 'scaffold'].includes(mapped.status)) return null;
   return `forge-user-step-${mapped.userStep}-${sanitizeCheckpointKey(mapped.key)}`;
+}
+
+function getHeader(req, name) {
+  const value = req.headers?.[name] || req.headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function hasValidRunConstructionOperatorSecret(req) {
+  const configuredValues = [
+    process.env.FLOWAI_OPERATOR_SECRET,
+    process.env.FLOWAI_INTERNAL_SECRET,
+  ].filter(value => typeof value === 'string' && value.length > 0);
+  if (configuredValues.length === 0) return false;
+  const supplied = getHeader(req, 'x-flowai-operator-secret');
+  if (typeof supplied !== 'string' || supplied.length === 0) return false;
+  const suppliedBuffer = Buffer.from(supplied);
+  return configuredValues.some((configured) => {
+    const configuredBuffer = Buffer.from(configured);
+    return suppliedBuffer.length === configuredBuffer.length
+      && timingSafeEqual(suppliedBuffer, configuredBuffer);
+  });
+}
+
+function proofTimeoutMs(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return 5_000;
+  return Math.max(250, Math.min(numeric, 15_000));
 }
 
 function buildRunConstructionSoftTimeoutFinal({
@@ -388,6 +415,26 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
   }
 
   // ── SSE preamble ─────────────────────────────────────────────────────────
+  const spineReliabilityProofRequested = body.spineReliabilityProof === true
+    || body.forceSpineReliabilityProof === true
+    || body.forceResearchToolHang === true;
+  const spineReliabilityProof = spineReliabilityProofRequested
+    ? Object.freeze({
+      enabled: true,
+      forceFirstCallableResearchHang: body.forceFirstCallableResearchHang !== false,
+      timeoutMs: proofTimeoutMs(body.spineReliabilityProofTimeoutMs),
+    })
+    : null;
+  if (spineReliabilityProofRequested && !hasValidRunConstructionOperatorSecret(req)) {
+    res.setHeader('Content-Type', 'application/json');
+    res.statusCode = 401;
+    return res.end(JSON.stringify({
+      ok: false,
+      error: 'operator_secret_required',
+      detail: 'spineReliabilityProof requires x-flowai-operator-secret matching FLOWAI_OPERATOR_SECRET or FLOWAI_INTERNAL_SECRET.',
+    }));
+  }
+
   if (!internalBackgroundJob && mode === 'BACKGROUND') {
     if (!isInngestEnabled()) {
       res.setHeader('Content-Type', 'application/json');
@@ -437,6 +484,11 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
         operationalMode: flowHubAxes.operationalMode,
         analysisDepth: flowHubAxes.analysisDepth,
         flowHubPath: flowHubAxes.flowHubPath,
+        ...(spineReliabilityProof ? {
+          spineReliabilityProof: true,
+          forceFirstCallableResearchHang: spineReliabilityProof.forceFirstCallableResearchHang,
+          spineReliabilityProofTimeoutMs: spineReliabilityProof.timeoutMs,
+        } : {}),
       },
     });
     if (!queued.ok) {
@@ -539,6 +591,11 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     type: 'start',
     runId, url, mode, flowHubAxes, gtmTarget: GTM_TARGET,
     supabase: supabase ? 'connected' : 'unavailable',
+    spineReliabilityProof: spineReliabilityProof ? {
+      enabled: true,
+      forceFirstCallableResearchHang: spineReliabilityProof.forceFirstCallableResearchHang,
+      timeoutMs: spineReliabilityProof.timeoutMs,
+    } : null,
     at: new Date().toISOString(),
   });
 
@@ -807,6 +864,7 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
         productSsotContext,
         flowHubAxes,
       },
+      ...(spineReliabilityProof ? { spineReliabilityProof } : {}),
       runId,
       supabase,
       environment,
