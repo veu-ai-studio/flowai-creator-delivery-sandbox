@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { saveSessionConfig } from './Configuration';
 import RunConstructionPanel from '@/components/RunConstructionPanel';
+import BuildFailoverProofPanel from '@/components/BuildFailoverProofPanel';
 import { findRegisteredProductConfigForUrl } from '@/lib/products/registeredProductConfig';
 import {
   ANALYSIS_DEPTH_OPTIONS,
@@ -972,6 +973,8 @@ export default function LandingPage() {
       />
     );
   }
+  const showBuildFailoverProof = location.pathname === '/flow-hub/production'
+    && new URLSearchParams(location.search).get('buildFailoverProof') === '1';
   const launchLabel = isConstructionEnginePath
     ? 'Run FlowAI on this URL →'
     : mode === 'auto'
@@ -1023,6 +1026,7 @@ export default function LandingPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {showBuildFailoverProof && <BuildFailoverProofPanel />}
 
         {/* ── SECTION 0: HONEST VALUE PROPOSITION + RELEASE-STATE DISCLOSURE ── */}
         {/* Plain, accurate description of what this tool actually does.

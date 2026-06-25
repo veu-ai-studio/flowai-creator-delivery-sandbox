@@ -624,6 +624,52 @@ describe('SAIGE forge Step 3 build', () => {
     }
   });
 
+  it('streams live build failover attempt history through onToolAttempt', async () => {
+    const oldOpenAIKey = process.env.OPENAI_API_KEY;
+    const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
+    const attemptEvents = [];
+    try {
+      const output = await runBuild('neutral-product', directiveDesignOutput, {
+        'build-decision-log': 'Neutral build decision: proceed via directive.',
+      }, {
+        toolService: serviceReturning(rankedCodexThenClaudeBuildTools),
+        dispatch: async (action, payload, opts = {}) => {
+          if (opts.memberId === 'codex') return new Promise(() => {});
+          return {
+            ok: true,
+            action,
+            member: opts.memberId,
+            data: {
+              filePath: payload.filePath,
+              patchedContent: 'export default function App() { return <main>Recovered by Claude Code</main>; }',
+              rationale: 'Fallback recovered after timeout.',
+              usage: { input_tokens: 200, output_tokens: 100 },
+            },
+          };
+        },
+        runId: 'build-streaming-failover-test',
+        sourceContent: 'export default function App() { return <main>Current</main>; }',
+        toolDispatchTimeoutMs: 5,
+        onToolAttempt: (attempt) => attemptEvents.push(attempt),
+      });
+
+      expect(attemptEvents.map(attempt => `${attempt.tool}:${attempt.state}`)).toEqual([
+        'Codex:selected',
+        'Codex:timeout',
+        'Claude Code:selected',
+        'Claude Code:succeeded',
+      ]);
+      expect(output.codeTaskDispatches[0].buildToolStatus).toBe('LIVE_BUILD_TOOL_FAILOVER_DISPATCHED');
+    } finally {
+      if (oldOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = oldOpenAIKey;
+      if (oldAnthropicKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldAnthropicKey;
+    }
+  });
+
   it('live build fails over when the top-ranked member is missing credentials', async () => {
     const oldOpenAIKey = process.env.OPENAI_API_KEY;
     const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;

@@ -34,10 +34,11 @@ describe('DeployChainWorker M2 helper', () => {
     });
   });
 
-  it('keeps M2 and M3 as the only stable deploy proof projects', () => {
+  it('keeps only approved stable deploy proof projects', () => {
     expect(APPROVED_DEPLOY_PROJECT_NAMES).toEqual([
       'flowai-m2-deploy-chain-proof',
       'flowai-m3-upgrader-proof',
+      'flowai-build-failover-proof',
     ]);
   });
 
@@ -94,6 +95,7 @@ describe('DeployChainWorker M2 helper', () => {
     expect(byPath.has('src/main.jsx')).toBe(false);
     expect(byPath.has('package.json')).toBe(false);
     expect(byPath.get('index.html')).toContain('FlowAI M2 deployed software verified');
+    expect(byPath.get('index.html')).toContain('<title>FlowAI Deploy Chain Proof</title>');
     expect(byPath.get('index.html')).toContain('id="flowai-m2-output"');
     expect(byPath.get('index.html')).not.toContain('/src/main.jsx');
     expect(extractVisibleBodyText(byPath.get('index.html'))).toContain('FlowAI M2 deployed software verified');

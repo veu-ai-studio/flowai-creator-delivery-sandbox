@@ -12,6 +12,7 @@ export const APPROVED_DEPLOY_SANDBOX_FULL_NAME = `${APPROVED_DEPLOY_SANDBOX_OWNE
 export const APPROVED_DEPLOY_PROJECT_NAMES = Object.freeze([
   'flowai-m2-deploy-chain-proof',
   'flowai-m3-upgrader-proof',
+  'flowai-build-failover-proof',
 ]);
 export const DEPLOY_CHAIN_APP_FILE = 'src/App.jsx';
 export const DEPLOY_CHAIN_HTML_FILE = 'index.html';
@@ -336,7 +337,7 @@ export function buildDeployableAppFiles({
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FlowAI M2 Deploy Chain Proof</title>
+    <title>FlowAI Deploy Chain Proof</title>
     <style>
       :root {
         color-scheme: light;
