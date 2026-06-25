@@ -36,13 +36,13 @@ function existingGeneratedFile() {
 }
 
 const commitFull = firstNonEmpty(
+  process.env.FLOWAI_EXPECTED_HEAD,
+  process.env.EXPECTED_HEAD,
   process.env.VERCEL_GIT_COMMIT_SHA,
   process.env.VITE_VERCEL_GIT_COMMIT_SHA,
   process.env.VITE_GIT_COMMIT_SHA,
   process.env.GIT_COMMIT_SHA,
   process.env.COMMIT_SHA,
-  process.env.FLOWAI_EXPECTED_HEAD,
-  process.env.EXPECTED_HEAD,
   git(['rev-parse', 'HEAD']),
 );
 
