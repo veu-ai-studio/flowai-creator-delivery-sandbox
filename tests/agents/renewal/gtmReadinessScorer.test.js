@@ -304,6 +304,28 @@ describe('scoreCrawlOutput — end-to-end convenience', () => {
     expect(out.band).toBe('showcase-ready');
   });
 
+  it('marks crawl-only degraded coverage low-confidence instead of returning a false showcase-ready 100', () => {
+    const out = scoreCrawlOutput({
+      pagesCrawled: 1,
+      pages: [{ url: 'https://x/', statusCode: 200, headings: [{ tag: 'h1', text: 't' }], text: 'hi' }],
+      errors: [],
+      brokenLinks: [],
+    }, null, {
+      coverage: 'crawl_only_early_baseline',
+      phaseBContribution: 0,
+      aggregatedFindings: 0,
+      pagesActuallyCrawled: 1,
+    });
+
+    expect(out.rawScore).toBe(100);
+    expect(out.score).toBe(out.verifiedScore);
+    expect(out.score).toBeLessThan(95);
+    expect(out.band).toBe('low-confidence');
+    expect(out.confidence).toBe('LOW');
+    expect(out.coverageDegraded).toBe(true);
+    expect(out.reason).toBe('SCORE_ON_DEGRADED_EVIDENCE');
+  });
+
   it('canonical mid-band example: a few real-world failures bring score below 95', () => {
     const out = scoreCrawlOutput({
       pages: [

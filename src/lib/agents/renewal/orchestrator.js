@@ -78,6 +78,7 @@ import {
   attachAttemptHistory,
   runRankedToolWithFailover,
 } from '../../forge/rankedToolFailover.js';
+import { dispatch as orchestraDispatch } from '../../orchestra/index.js';
 import {
   computeCapabilityWeightedScore,
   decideGtmGate,
@@ -258,10 +259,57 @@ function buildProductionResearchCrawlCandidates(selectionRecord = null) {
   })));
 }
 
-function makeProductionResearchSelectionForUi({ baseSelection = null, candidates = [], failover = null, mode, internalMode }) {
+function buildProductionMonitorTextCandidates(selectionRecord = null) {
+  const source = selectionRecord && typeof selectionRecord === 'object' ? selectionRecord : {};
+  const raw = Array.isArray(source.candidates) ? source.candidates : [];
+  const seen = new Set();
+  const candidates = [];
+  for (const candidate of raw) {
+    const name = toolName(candidate);
+    if (!name) continue;
+    const key = String(name).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    candidates.push(Object.freeze({ ...candidate }));
+  }
+  const addFallback = (name, memberId, type) => {
+    const key = name.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push(makeFallbackCandidate(candidates.length + 1, name, memberId, type));
+  };
+  addFallback('Anthropic Claude', 'claude-code', 'analysis');
+  return Object.freeze(candidates.map((candidate, index) => Object.freeze({
+    ...candidate,
+    rank: candidate.rank ?? index + 1,
+  })));
+}
+
+function makeFailoverEnv(deps = {}, baseEnv = process.env) {
+  const env = { ...(baseEnv ?? {}), ...(deps.env ?? {}) };
+  if (typeof deps.conductStructuredCrawl === 'function' && !env.BROWSERLESS_API_KEY) {
+    env.BROWSERLESS_API_KEY = '__flowai_test_injected_browserless__';
+  }
+  if (typeof deps.produceMonitorText === 'function' && !env.ANTHROPIC_API_KEY) {
+    env.ANTHROPIC_API_KEY = '__flowai_test_injected_anthropic__';
+  }
+  return env;
+}
+
+function hasUsableCrawlOutput(crawlOutput) {
+  if (!crawlOutput || typeof crawlOutput !== 'object') return false;
+  const pagesCrawled = Number(crawlOutput.pagesCrawled);
+  const pages = Array.isArray(crawlOutput.pages) ? crawlOutput.pages : [];
+  const totalTextLength = Number(crawlOutput.totalTextLength);
+  return (Number.isFinite(pagesCrawled) && pagesCrawled > 0)
+    || pages.length > 0
+    || (Number.isFinite(totalTextLength) && totalTextLength > 0);
+}
+
+function makeProductionSelectionForUi({ stepKey, baseSelection = null, candidates = [], failover = null, mode, internalMode }) {
   const base = Object.freeze({
     kind: 'tool_intelligence_selection',
-    stepKey: 'research',
+    stepKey,
     mode,
     internalMode,
     selected: failover?.candidate ?? baseSelection?.selected ?? candidates[0] ?? null,
@@ -277,6 +325,14 @@ function makeProductionResearchSelectionForUi({ baseSelection = null, candidates
     }))),
   });
   return attachAttemptHistory(base, failover);
+}
+
+function makeProductionResearchSelectionForUi(args) {
+  return makeProductionSelectionForUi({ ...args, stepKey: 'research' });
+}
+
+function makeProductionMonitorSelectionForUi(args) {
+  return makeProductionSelectionForUi({ ...args, stepKey: 'monitor' });
 }
 
 function withTimeout(promise, { timeoutMs, code, message }) {
@@ -1055,6 +1111,7 @@ export async function runOrchestration(args = {}) {
   const _aggressiveCrawl          = deps.aggressiveCrawl          || aggressiveCrawl;
   const _conductStructuredCrawl   = deps.conductStructuredCrawl   || conductStructuredCrawl;
   const _produceMonitorText     = deps.produceMonitorText     || produceMonitorText;
+  const _dispatchTool           = deps.dispatchTool           || deps.dispatch || orchestraDispatch;
   const _computeScore           = deps.computeScore           || computeScore;
   const _generateFix            = deps.generateFix            || generateFix;
   const _getInstallationToken   = deps.getInstallationToken   || getInstallationToken;
@@ -2288,7 +2345,7 @@ export async function runOrchestration(args = {}) {
     let crawlOutput;
     try {
       const t0 = Date.now();
-      crawlOutput = await withTimeout(_conductStructuredCrawl({
+      const crawlArgs = {
         url: currentUrl,
         maxPages: effortProfile.structuredCrawlMaxPages,
         depth: effortProfile.structuredCrawlDepth,
@@ -2298,17 +2355,71 @@ export async function runOrchestration(args = {}) {
         // to the crawler so auth-gated pages are reachable when the
         // ENTRY-007 stack is wired into richCapture/Browserless.
         storageState: args.storageState ?? state.storageState ?? undefined,
-      }), {
+      };
+      const researchSelectionRecord = visibleToolSelectionByStep.get('research') ?? null;
+      const researchCandidates = buildProductionResearchCrawlCandidates(researchSelectionRecord?.envelope);
+      const failover = await runRankedToolWithFailover({
+        action: 'crawl',
+        payload: {
+          url: currentUrl,
+          runId,
+          productionPath: '/api/run-construction -> runOrchestration -> conductStructuredCrawl',
+        },
+        candidates: researchCandidates,
         timeoutMs: step5ToStep6Timeouts.structuredCrawl,
-        code: 'STRUCTURED_CRAWL_TIMEOUT',
-        message: `structured crawl exceeded ${step5ToStep6Timeouts.structuredCrawl}ms`,
+        env: makeFailoverEnv(deps),
+        dispatchFn: async (action, payload, opts = {}) => {
+          let structured;
+          if (typeof deps.conductStructuredCrawl === 'function') {
+            structured = await _conductStructuredCrawl(crawlArgs);
+          } else {
+            const dispatched = await _dispatchTool(action, {
+              url: payload.url,
+              force: true,
+              maxPages: effortProfile.structuredCrawlMaxPages,
+              depth: effortProfile.structuredCrawlDepth,
+              storageState: args.storageState ?? state.storageState ?? undefined,
+            }, opts);
+            if (!dispatched || dispatched.ok !== true) return dispatched;
+            structured = await _conductStructuredCrawl({
+              ...crawlArgs,
+              conductCrawlFn: async () => dispatched.data,
+            });
+          }
+          return Object.freeze({
+            ok: true,
+            action,
+            member: opts.memberId ?? 'production-structured-crawl',
+            data: structured,
+            structuredCrawl: true,
+          });
+        },
+        validateResult: (result) => {
+          if (!hasUsableCrawlOutput(result?.data)) {
+            throw new Error('structured crawl produced no usable evidence');
+          }
+        },
       });
+      crawlOutput = failover.result.data;
       state.crawlOutput = crawlOutput;
+      const toolSelection = makeProductionResearchSelectionForUi({
+        baseSelection: researchSelectionRecord?.envelope ?? null,
+        candidates: researchCandidates,
+        failover,
+        mode: ssotOrchestraExecutionMode,
+        internalMode: state.mode,
+      });
+      visibleToolSelectionByStep.set('research', {
+        selection: toolSelection.selected,
+        candidates: toolSelection.candidates,
+        envelope: toolSelection,
+      });
       const log = makeStepLog({
         iteration: iterationNumber, step: 3, status: 'complete',
         tool: 'Agent #21 AggressiveCrawlConductor → crawlOutputAdapter',
-        why: 'structured crawl output for downstream scoring + monitor producer',
+        why: 'ranked Research crawl dispatch produced structured crawl output for downstream scoring + monitor producer',
         result: {
+          kind: 'production_research_crawl_failover.v1',
           pagesCrawled: crawlOutput.pagesCrawled,
           // DISPATCH (production runtime fixes) — explicit label so the
           // UI can render this side-by-side with W6 STEP 5's
@@ -2322,37 +2433,36 @@ export async function runOrchestration(args = {}) {
           interactiveElements: crawlOutput.interactiveElements.length,
           totalTextLength: crawlOutput.totalTextLength,
           errors: crawlOutput.errors.length,
+          selectedDispatchMemberId: failover.memberId ?? null,
+          attemptHistory: failover.attemptHistory,
         },
         durationMs: Date.now() - t0, mode: state.mode,
       });
       emit(log); iterLog.steps.push(log);
     } catch (e) {
-      if (e?.code === 'STRUCTURED_CRAWL_TIMEOUT') {
-        recordPipelineError(state, 'structured_crawl', `timeout:${step5ToStep6Timeouts.structuredCrawl}ms`);
-        crawlOutput = {
-          pagesCrawled: 0,
-          depth: 0,
-          pages: [],
-          brokenLinks: [],
-          forms: [],
-          interactiveElements: [],
-          errors: [{ phase: 'crawl', url: currentUrl, reason: 'structured_crawl_timeout' }],
-          totalTextLength: 0,
-        };
-        state.crawlOutput = crawlOutput;
-        emit(makeStepLog({
-          iteration: iterationNumber, step: 3, status: 'degraded',
-          tool: 'Agent #21 AggressiveCrawlConductor -> crawlOutputAdapter',
-          why: 'structured crawl timed out; continuing with degraded empty crawl evidence',
-          result: {
-            degraded: true,
-            reason: 'structured_crawl_timeout',
-            timeoutMs: step5ToStep6Timeouts.structuredCrawl,
-            code: e.code,
-          },
-          mode: state.mode,
-        }));
-      } else {
+      recordPipelineError(state, 'structured_crawl', `research_evidence_unavailable:${(e?.message ?? String(e)).slice(0, 160)}`);
+      emit(makeStepLog({
+        iteration: iterationNumber,
+        step: 3,
+        status: 'failed',
+        tool: 'Ranked Research crawl dispatch -> crawlOutputAdapter',
+        why: 'research evidence unavailable; refusing to score degraded empty crawl evidence',
+        result: {
+          kind: 'research_evidence_unavailable',
+          error: e?.message,
+          code: e?.code ?? 'RESEARCH_EVIDENCE_UNAVAILABLE',
+          attemptHistory: e?.details?.attemptHistory ?? null,
+        },
+        mode: state.mode,
+      }));
+      return failStep({
+        product,
+        failedStep: 'STEP_3',
+        error: e?.message ?? String(e),
+        code: e?.code ?? 'RESEARCH_EVIDENCE_UNAVAILABLE',
+        diagnostics: e?.details ?? e,
+      });
+      if (false) {
       emit(makeStepLog({ iteration: iterationNumber, step: 3, status: 'failed',
         tool: 'Agent #21 → crawlOutputAdapter', why: 'deep crawl', result: { error: e?.message }, mode: state.mode }));
       return failStep({ product, failedStep: 'STEP_3',
@@ -2374,52 +2484,95 @@ export async function runOrchestration(args = {}) {
       const t0 = Date.now();
       let monitor;
       try {
-        monitor = await withTimeout(
-          _produceMonitorText({
+        const monitorSelectionRecord = visibleToolSelectionByStep.get('monitor') ?? null;
+        const monitorCandidates = buildProductionMonitorTextCandidates(monitorSelectionRecord?.envelope);
+        const failover = await runRankedToolWithFailover({
+          action: 'analyze',
+          payload: {
             url: currentUrl, productId, runId,
             githubRepoUrl: githubRepoUrl || undefined,
             token: token || undefined,
             crawlReport: crawlOutput,
-          }),
-          {
-            timeoutMs: step5ToStep6Timeouts.monitorText,
-            code: 'PRE_SCORE_MONITOR_TEXT_TIMEOUT',
-            message: `Pre-score monitor text exceeded ${step5ToStep6Timeouts.monitorText}ms`,
           },
-        );
+          candidates: monitorCandidates,
+          timeoutMs: step5ToStep6Timeouts.monitorText,
+          env: makeFailoverEnv(deps),
+          dispatchFn: async (action, payload, opts = {}) => {
+            const data = await _produceMonitorText({
+              url: payload.url,
+              productId: payload.productId,
+              runId: payload.runId,
+              githubRepoUrl: payload.githubRepoUrl,
+              token: payload.token,
+              crawlReport: payload.crawlReport,
+            });
+            return Object.freeze({
+              ok: true,
+              action,
+              member: opts.memberId ?? 'monitorTextProducer',
+              data,
+            });
+          },
+          validateResult: (result) => {
+            const text = result?.data?.monitorText;
+            if (typeof text !== 'string' || text.trim().length === 0 || /^\[degraded\]/i.test(text.trim())) {
+              throw new Error('monitor text producer returned no usable evidence');
+            }
+          },
+        });
+        monitor = failover.result.data;
+        const toolSelection = makeProductionMonitorSelectionForUi({
+          baseSelection: monitorSelectionRecord?.envelope ?? null,
+          candidates: monitorCandidates,
+          failover,
+          mode: ssotOrchestraExecutionMode,
+          internalMode: state.mode,
+        });
+        visibleToolSelectionByStep.set('monitor', {
+          selection: toolSelection.selected,
+          candidates: toolSelection.candidates,
+          envelope: toolSelection,
+        });
+        emit(makeStepLog({
+          iteration: iterationNumber,
+          step: 5,
+          status: 'complete',
+          tool: 'Ranked Monitor text dispatch',
+          why: 'ranked monitor candidates produced usable text for Five-Layer Scoring',
+          result: {
+            kind: 'production_monitor_text_failover.v1',
+            selectedDispatchMemberId: failover.memberId ?? null,
+            attemptHistory: failover.attemptHistory,
+          },
+          durationMs: Date.now() - t0,
+          mode: state.mode,
+        }));
       } catch (monitorErr) {
-        const monitorFetchFailed = monitorErr?.code === 'MONITOR_FETCH_FAILED';
-        if (monitorErr?.code !== 'PRE_SCORE_MONITOR_TEXT_TIMEOUT' && !monitorFetchFailed) throw monitorErr;
-        const reason = monitorFetchFailed ? 'monitor_fetch_failed' : 'pre_score_monitor_text_timeout';
         recordPipelineError(
           state,
           'pre_score_monitor_text',
-          monitorFetchFailed
-            ? `fetch_failed:${(monitorErr?.message ?? String(monitorErr)).slice(0, 160)}`
-            : `timeout:${step5ToStep6Timeouts.monitorText}ms`,
+          `monitor_evidence_unavailable:${(monitorErr?.message ?? String(monitorErr)).slice(0, 160)}`,
         );
-        monitor = {
-          monitorText: `[degraded] ${reason}; using structured crawl evidence only for baseline scoring.`,
-          degraded: true,
-          reason,
-        };
         emit(makeStepLog({
-          iteration: iterationNumber, step: 5, status: 'degraded',
-          tool: 'monitorTextProducer (early baseline)',
-          why: 'monitor text unavailable before Five-Layer Scoring; continuing with crawl-only degraded baseline',
+          iteration: iterationNumber, step: 5, status: 'failed',
+          tool: 'Ranked Monitor text dispatch',
+          why: 'monitor evidence unavailable; refusing to score degraded crawl-only evidence',
           result: {
-            degraded: true,
-            reason,
+            kind: 'monitor_evidence_unavailable',
             targetUrl: currentUrl,
-            timeoutMs: monitorErr?.code === 'PRE_SCORE_MONITOR_TEXT_TIMEOUT' ? step5ToStep6Timeouts.monitorText : null,
             code: monitorErr.code ?? 'MONITOR_TEXT_UNAVAILABLE',
-            remediation: monitorFetchFailed
-              ? 'Retry the monitor fetch or verify target network availability; forge continued with crawl evidence.'
-              : 'Increase monitor-text budget only through a bounded dispatch; forge continued with crawl evidence.',
             error: (monitorErr?.message ?? String(monitorErr)).slice(0, 240),
+            attemptHistory: monitorErr?.details?.attemptHistory ?? null,
           },
           durationMs: Date.now() - t0, mode: state.mode,
         }));
+        return failStep({
+          product,
+          failedStep: 'STEP_5',
+          error: monitorErr?.message ?? String(monitorErr),
+          code: monitorErr?.code ?? 'MONITOR_TEXT_UNAVAILABLE',
+          diagnostics: monitorErr?.details ?? monitorErr,
+        });
       }
       try {
         preScoreEnvelope = await withTimeout(
@@ -2434,7 +2587,13 @@ export async function runOrchestration(args = {}) {
         );
       } catch (scoreErr) {
         if (scoreErr?.code !== 'PRE_SCORE_COMPUTE_SCORE_TIMEOUT') throw scoreErr;
-        const fallbackGtm = _scoreCrawlOutput(crawlOutput, null);
+        const fallbackGtm = _scoreCrawlOutput(crawlOutput, null, {
+          coverage: 'crawl_only_early_baseline',
+          phaseBContribution: 0,
+          aggregatedFindings: 0,
+          pagesActuallyCrawled: crawlOutput?.pagesCrawled ?? (Array.isArray(crawlOutput?.pages) ? crawlOutput.pages.length : 0),
+          evidenceDegraded: true,
+        });
         preScoreEnvelope = makeDegradedScoreEnvelope({
           productId,
           url: currentUrl,
@@ -2459,7 +2618,13 @@ export async function runOrchestration(args = {}) {
       if (originalScore === null) originalScore = preScoreEnvelope.total;
       preScoreEvidenceDegraded = preScoreEvidenceDegraded || preScoreEnvelope?.degraded === true;
 
-      const preGtm = _scoreCrawlOutput(crawlOutput, null);
+      const preGtm = _scoreCrawlOutput(crawlOutput, null, {
+        coverage: 'crawl_only_early_baseline',
+        phaseBContribution: 0,
+        aggregatedFindings: 0,
+        pagesActuallyCrawled: crawlOutput?.pagesCrawled ?? (Array.isArray(crawlOutput?.pages) ? crawlOutput.pages.length : 0),
+        evidenceDegraded: hasDegradedScoreEvidence(preScoreEnvelope),
+      });
       if (originalGtmScore === null) originalGtmScore = preGtm.score;
       iterLog.preGtm = preGtm;
       iterLog.preGtmSurfaceOnly = preGtm;
@@ -2469,7 +2634,11 @@ export async function runOrchestration(args = {}) {
         why: 'establish canonical GTM Readiness score immediately after crawl before long browser/evaluator work',
         result: {
           gtmScore: preGtm.score,
+          rawGtmScore: preGtm.rawScore ?? preGtm.score,
           gtmBand: preGtm.band,
+          confidence: preGtm.confidence ?? null,
+          coverageDegraded: preGtm.coverageDegraded === true,
+          verifiedScore: preGtm.verifiedScore ?? preGtm.ceo95Criteria?.verifiedScore ?? null,
           gtmCounts: preGtm.counts,
           ceo95Criteria: preGtm.ceo95Criteria ?? null,
           surfaceOnlyGtmScore: preGtm.score,
@@ -2484,6 +2653,7 @@ export async function runOrchestration(args = {}) {
           },
           label: preGtm.label,
           coverage: 'crawl_only_early_baseline',
+          coverageReason: preGtm.reason ?? null,
         },
         durationMs: Date.now() - t0, mode: state.mode,
         scores: {
@@ -2492,16 +2662,42 @@ export async function runOrchestration(args = {}) {
         },
       });
       emit(log); iterLog.steps.push(log);
-      const currentRunScore = typeof preGtm?.score === 'number' ? preGtm.score : null;
-      const currentRunScoreIsDegraded = hasDegradedScoreEvidence(preScoreEnvelope) || preGtm?.degraded === true;
+      const currentRunRawScore = typeof preGtm?.score === 'number' ? preGtm.score : null;
+      const currentRunVerifiedScore = typeof preGtm?.verifiedScore === 'number'
+        ? preGtm.verifiedScore
+        : (typeof preGtm?.ceo95Criteria?.verifiedScore === 'number' ? preGtm.ceo95Criteria.verifiedScore : null);
+      const currentRunScoreIsDegraded = hasDegradedScoreEvidence(preScoreEnvelope)
+        || preGtm?.degraded === true
+        || preGtm?.coverageDegraded === true
+        || preGtm?.band === 'low-confidence'
+        || preGtm?.confidence === 'LOW';
+      if (iterationNumber === 1 && currentRunScoreIsDegraded) {
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 5, status: 'degraded',
+          tool: 'honest_gate (CA-18 §1 current-run assessment)',
+          why: 'coverage is degraded or low-confidence; cannot confirm product is already at target',
+          result: {
+            kind: 'honest_gate_continue',
+            reason: 'COVERAGE_DEGRADED_CANNOT_CONFIRM_TARGET',
+            evidenceSource: 'current_run',
+            verifiedScore: currentRunVerifiedScore,
+            rawGtmScore: preGtm?.rawScore ?? currentRunRawScore,
+            gtmScore: currentRunRawScore,
+            gtmBand: preGtm?.band ?? null,
+            targetScore: gtmTarget,
+            degraded: true,
+          },
+          mode: state.mode,
+        }));
+      }
       if (
         iterationNumber === 1
         && supabase
         && typeof supabase.from === 'function'
         && product?.product_id
-        && currentRunScore !== null
+        && currentRunVerifiedScore !== null
         && !currentRunScoreIsDegraded
-        && currentRunScore >= gtmTarget
+        && currentRunVerifiedScore >= gtmTarget
       ) {
         try {
           await _appendGovernanceEntry({
@@ -2512,7 +2708,8 @@ export async function runOrchestration(args = {}) {
               productId: product.product_id,
               reason: 'ALREADY_AT_TARGET',
               evidenceSource: 'current_run',
-              currentScore: currentRunScore,
+              currentScore: currentRunVerifiedScore,
+              rawGtmScore: preGtm?.rawScore ?? currentRunRawScore,
               targetScore: gtmTarget,
               historicalContext: historicalHonestGateContext,
               at: new Date().toISOString(),
@@ -2528,7 +2725,8 @@ export async function runOrchestration(args = {}) {
             kind: 'honest_gate_refusal',
             reason: 'ALREADY_AT_TARGET',
             evidenceSource: 'current_run',
-            currentScore: currentRunScore,
+            currentScore: currentRunVerifiedScore,
+            rawGtmScore: preGtm?.rawScore ?? currentRunRawScore,
             targetScore: gtmTarget,
             degraded: false,
           },
@@ -2540,8 +2738,8 @@ export async function runOrchestration(args = {}) {
           gtmBand: preGtm.band ?? 'showcase-ready',
           gtmCounts: preGtm.counts ?? null,
           exitReason: 'HONEST_GATE_REFUSAL_ALREADY_PASSING',
-          originalScore: currentRunScore,
-          finalScore: currentRunScore,
+          originalScore: currentRunVerifiedScore,
+          finalScore: currentRunVerifiedScore,
           totalDelta: 0,
           fiveLayerOriginalScore: preScoreEnvelope?.total ?? 0,
           fiveLayerFinalScore: preScoreEnvelope?.total ?? 0,
@@ -2569,7 +2767,7 @@ export async function runOrchestration(args = {}) {
           honestGateRefusal: {
             reason: 'ALREADY_AT_TARGET',
             evidenceSource: 'current_run',
-            currentScore: currentRunScore,
+            currentScore: currentRunVerifiedScore,
             targetScore: gtmTarget,
           },
         });
