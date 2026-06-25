@@ -1,0 +1,47 @@
+{
+    "manualInputs":  {
+                         "build-decision-log":  "Reliability Result 1 proof: force Codex hang, require ranked failover to Claude Code."
+                     },
+    "deliveryMode":  "deploy-chain-sandbox",
+    "buildRequestId":  "request-flowai-build-failover-20260625T173025Z-78b1558",
+    "toolDispatchTimeoutMs":  5000,
+    "designOutput":  {
+                         "readyForBuild":  false,
+                         "stepId":  "step-2-design",
+                         "productId":  "build-failover-production-proof",
+                         "matrixArtifactVersion":  "reliability-result-1",
+                         "sections":  [
+                                          {
+                                              "label":  "Design Gaps",
+                                              "input":  [
+                                                            {
+                                                                "sectionId":  "reliability-gap",
+                                                                "downstreamRisk":  "Build selected tool can hang unless failover recovers."
+                                                            }
+                                                        ],
+                                              "source":  "derived",
+                                              "id":  "design-gaps"
+                                          },
+                                          {
+                                              "label":  "Design Decision Log",
+                                              "input":  [
+                                                            "MINIMUM BUILD DIRECTIVE: produce a runnable Vite React App component for proofRunId flowai-build-failover-20260625T173025Z-78b1558. The visible page must include the exact text FlowAI Build Failover recovered by Claude Code and the proofRunId. Keep it simple and usable."
+                                                        ],
+                                              "source":  "manual",
+                                              "id":  "design-decision-log"
+                                          }
+                                      ]
+                     },
+    "proofRunId":  "flowai-build-failover-20260625T173025Z-78b1558",
+    "buildProofControls":  {
+                               "forceHangOnce":  {
+                                                     "reason":  "Reliability Result 1 forced Build hang proof",
+                                                     "action":  "code-patch",
+                                                     "memberId":  "codex"
+                                                 }
+                           },
+    "productId":  "build-failover-production-proof",
+    "deploymentProjectName":  "flowai-build-failover-proof",
+    "targetFilePath":  "src/App.jsx",
+    "sourceContent":  "export default function App() { return \u003cmain\u003e\u003ch1\u003eBuild failover proof input\u003c/h1\u003e\u003cp\u003eBefore failover.\u003c/p\u003e\u003cbutton\u003eBefore action\u003c/button\u003e\u003c/main\u003e; }"
+}
