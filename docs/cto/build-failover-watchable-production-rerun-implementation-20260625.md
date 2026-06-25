@@ -55,5 +55,17 @@ The production claim requires:
 - `node --check src/lib/forge/buildRunner.js` PASS
 - `node --check api/_lib/deployChainWorker.js` PASS
 - `npx vitest run tests/forge/rankedToolFailover.test.js tests/forge/buildStep.test.js tests/deployChainWorker.test.js tests/forgeBuildApi.test.js` PASS, 48/48
+- `npx vitest run tests/forge/rankedToolFailover.test.js tests/forge/buildStep.test.js tests/deployChainWorker.test.js tests/forgeBuildApi.test.js tests/forgeBuildFailoverProofApi.test.js` PASS, 52/52
+- `npx vitest run tests/auth.test.js tests/forgeBuildFailoverProofApi.test.js` PASS, 41/41
 - `npm run lint:evidence` PASS
 - `npm run build:preflight` PASS
+
+## Non-Builder Review Status
+
+Second-pass non-builder review found the code blockers closed:
+
+- operator-auth boundary PASS
+- production-path-only UI exposure PASS
+- current generated title cleanup PASS
+
+The historical M3 browser evidence file still records the title served by that old deployment. That historical evidence is intentionally not rewritten.
