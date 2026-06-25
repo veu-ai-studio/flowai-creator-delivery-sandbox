@@ -628,6 +628,7 @@ export function scoreCrawlOutput(crawlOutput, extraFindings = null, options = {}
     confidence: degradedReason ? 'LOW' : 'HIGH',
     coverage: options.coverage ?? null,
     coverageDegraded: !!degradedReason,
+    evidenceDegraded: options.evidenceDegraded === true,
     reason: degradedReason,
     issues,
     phaseACount: phaseAIssues.length,

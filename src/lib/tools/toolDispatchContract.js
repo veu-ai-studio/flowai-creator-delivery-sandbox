@@ -64,7 +64,7 @@ const CREDENTIAL_REQUIREMENTS = Object.freeze({
   vercel: ['VERCEL_OPERATOR_TOKEN', 'VERCEL_TOKEN'],
   browserless: ['BROWSERLESS_API_KEY'],
   playwright: ['BROWSERLESS_API_KEY'],
-  perplexity: ['PERPLEXITY_API_KEY'],
+  perplexity: ['OPENROUTER_API_KEY'],
 });
 
 const SECRET_KEY_PATTERN = /(TOKEN|KEY|SECRET|PASSWORD|CREDENTIAL)/i;

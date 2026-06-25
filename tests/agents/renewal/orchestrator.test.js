@@ -8,6 +8,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { runOrchestration, GTM_READY_SCORE, STEP_NAMES, __internals }
   from '../../../src/lib/agents/renewal/orchestrator.js';
+import { scoreCrawlOutput } from '../../../src/lib/agents/renewal/gtmReadinessScorer.js';
+import { normalizeResearchRecoveryToCrawlerReport } from '../../../src/lib/forge/researchRecoveryAdapters.js';
 
 const PRODUCT = Object.freeze({
   product_id: 'mypreglife',
@@ -556,6 +558,106 @@ describe('runOrchestration — AUTO mode', () => {
         expect.objectContaining({ memberId: 'browserless', state: 'timeout' }),
         expect.objectContaining({ memberId: 'playwright', state: 'succeeded' }),
       ]));
+    } finally { clearVercelEnv(); }
+  });
+
+  it('production STEP 3 recovers from a hung browser crawl through external research evidence and scores non-degraded', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [72] });
+      delete deps.conductStructuredCrawl;
+      deps.env = {
+        ...process.env,
+        BROWSERLESS_API_KEY: 'browserless_fake',
+        OPENROUTER_API_KEY: 'openrouter_fake',
+        ANTHROPIC_API_KEY: 'anthropic_fake',
+      };
+      deps.scoreCrawlOutput = vi.fn(scoreCrawlOutput);
+      deps.dispatchTool = vi.fn(async (action, payload, opts = {}) => {
+        if (opts.memberId === 'playwright') {
+          return { ok: false, action, member: 'playwright', error: 'playwright recovery unavailable' };
+        }
+        if (opts.memberId === 'perplexity') {
+          return {
+            ok: true,
+            action,
+            member: 'perplexity',
+            data: normalizeResearchRecoveryToCrawlerReport({
+              title: 'Victor Udo',
+              summary: 'Victor Udo public site presents AI studio leadership, product strategy, and contact paths for external users.',
+              pages: [{
+                url: payload.url,
+                title: 'Victor Udo',
+                bodyText: 'Victor Udo public site includes FlowAI, VEU AI Studio, founder profile, product strategy, public contact paths, and visible proof points for AI product orchestration.',
+                headings: ['h1: Victor Udo', 'h2: VEU AI Studio'],
+                links: ['https://victorudo.com/contact'],
+                buttons: ['Contact'],
+              }],
+              findings: [{
+                severity: 'medium',
+                category: 'gtm-evidence',
+                location: payload.url,
+                evidence: 'Public content shows product strategy and contact signal, but deeper operational proof still requires verification.',
+              }],
+              evidenceRef: 'perplexity-openrouter-recovery-test',
+            }, { url: payload.url }, { member: 'perplexity', model: 'perplexity/sonar' }),
+          };
+        }
+        return { ok: false, action, member: opts.memberId, error: 'unexpected member' };
+      });
+      const stepLogs = [];
+
+      const result = await runOrchestration({
+        url: 'https://victorudo.com/',
+        mode: 'auto',
+        runId: 'research-recovery-failover-unit',
+        supabase: null,
+        environment: 'prd',
+        gtmTarget: 95,
+        maxIterations: 1,
+        structuredCrawlTimeoutMs: 5,
+        spineReliabilityProof: {
+          enabled: true,
+          forceFirstCallableResearchHang: true,
+          timeoutMs: 5,
+        },
+        deps,
+        onStep: (log) => stepLogs.push(log),
+      });
+
+      expect(result.ok).toBe(true);
+      const crawlLog = stepLogs.find((log) => log.result?.kind === 'production_research_crawl_failover.v1');
+      expect(crawlLog?.result).toMatchObject({
+        selectedDispatchMemberId: 'perplexity',
+        evidenceRecovered: true,
+        evidenceRecoveryKind: 'external_research_to_crawl_report',
+      });
+      expect(crawlLog.result.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({ memberId: 'browserless', state: 'timeout' }),
+        expect.objectContaining({ memberId: 'playwright', state: 'failed' }),
+        expect.objectContaining({ memberId: 'perplexity', state: 'succeeded' }),
+      ]));
+      const scoreLog = stepLogs.find((log) => log.step === 5 && log.result?.gtmScore !== undefined);
+      expect(scoreLog?.result).toMatchObject({
+        coverage: 'research_recovery_external_evidence',
+        coverageDegraded: false,
+        evidenceDegraded: false,
+      });
+      expect(scoreLog.result.coverage).not.toBe('crawl_only_early_baseline');
+      expect(deps.scoreCrawlOutput).toHaveBeenCalledWith(
+        expect.objectContaining({
+          evidenceRecovered: true,
+          evidenceRecoveryKind: 'external_research_to_crawl_report',
+          recoveryFindings: expect.arrayContaining([
+            expect.objectContaining({ category: 'gtm-evidence' }),
+          ]),
+        }),
+        null,
+        expect.objectContaining({
+          coverage: 'research_recovery_external_evidence',
+          evidenceDegraded: false,
+        }),
+      );
     } finally { clearVercelEnv(); }
   });
 });

@@ -232,6 +232,21 @@ function makeFallbackCandidate(rank, platformName, memberId, platformType = 'cra
   });
 }
 
+const BROWSER_CRAWL_MEMBER_IDS = new Set(['browserless', 'playwright']);
+
+function candidateMemberId(candidate = {}) {
+  const explicit = candidate?.memberId;
+  if (typeof explicit === 'string' && explicit.trim().length > 0) return explicit.trim();
+  const name = String(toolName(candidate) ?? '').trim().toLowerCase();
+  if (name.includes('browserless')) return 'browserless';
+  if (name.includes('playwright')) return 'playwright';
+  return null;
+}
+
+function isBrowserCrawlMember(memberId) {
+  return BROWSER_CRAWL_MEMBER_IDS.has(String(memberId ?? '').trim());
+}
+
 function buildProductionResearchCrawlCandidates(selectionRecord = null) {
   const source = selectionRecord && typeof selectionRecord === 'object' ? selectionRecord : {};
   const raw = Array.isArray(source.candidates) ? source.candidates : [];
@@ -240,19 +255,22 @@ function buildProductionResearchCrawlCandidates(selectionRecord = null) {
   for (const candidate of raw) {
     const name = toolName(candidate);
     if (!name) continue;
-    const key = String(name).toLowerCase();
+    const memberId = candidateMemberId(candidate);
+    if (!isBrowserCrawlMember(memberId)) continue;
+    const key = String(memberId ?? name).toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    candidates.push(Object.freeze({ ...candidate }));
+    candidates.push(Object.freeze({ ...candidate, memberId }));
   }
   const addFallback = (name, memberId, type) => {
-    const key = name.toLowerCase();
+    const key = String(memberId ?? name).toLowerCase();
     if (seen.has(key)) return;
     seen.add(key);
     candidates.push(makeFallbackCandidate(candidates.length + 1, name, memberId, type));
   };
   addFallback('Browserless', 'browserless', 'crawl');
   addFallback('Playwright', 'playwright', 'crawl');
+  addFallback('Perplexity Research Recovery', 'perplexity', 'research');
   return Object.freeze(candidates.map((candidate, index) => Object.freeze({
     ...candidate,
     rank: candidate.rank ?? index + 1,
@@ -292,6 +310,9 @@ function makeFailoverEnv(deps = {}, baseEnv = process.env) {
   }
   if (typeof deps.produceMonitorText === 'function' && !env.ANTHROPIC_API_KEY) {
     env.ANTHROPIC_API_KEY = '__flowai_test_injected_anthropic__';
+  }
+  if (typeof deps.dispatchTool === 'function' && !env.OPENROUTER_API_KEY) {
+    env.OPENROUTER_API_KEY = '__flowai_test_injected_openrouter__';
   }
   return env;
 }
@@ -2201,6 +2222,11 @@ export async function runOrchestration(args = {}) {
           },
           candidates: researchCandidates,
           timeoutMs: spineReliabilityProof.timeoutMs,
+          timeoutMsForCandidate: (candidate, index, { defaultTimeoutMs }) => (
+            index === 0 && isBrowserCrawlMember(candidate?.memberId)
+              ? defaultTimeoutMs
+              : step5ToStep6Timeouts.structuredCrawl
+          ),
           env: deps.env || process.env,
           dispatchFn: async (_action, _payload, opts = {}) => {
             if (spineReliabilityProof.forceFirstCallableResearchHang && !forcedHangConsumed) {
@@ -2358,6 +2384,7 @@ export async function runOrchestration(args = {}) {
       };
       const researchSelectionRecord = visibleToolSelectionByStep.get('research') ?? null;
       const researchCandidates = buildProductionResearchCrawlCandidates(researchSelectionRecord?.envelope);
+      let forcedStructuredResearchHangConsumed = false;
       const failover = await runRankedToolWithFailover({
         action: 'crawl',
         payload: {
@@ -2366,9 +2393,27 @@ export async function runOrchestration(args = {}) {
           productionPath: '/api/run-construction -> runOrchestration -> conductStructuredCrawl',
         },
         candidates: researchCandidates,
-        timeoutMs: step5ToStep6Timeouts.structuredCrawl,
+        timeoutMs: spineReliabilityProof.enabled
+          ? spineReliabilityProof.timeoutMs
+          : step5ToStep6Timeouts.structuredCrawl,
+        timeoutMsForCandidate: spineReliabilityProof.enabled
+          ? (candidate, index, { defaultTimeoutMs }) => (
+              index === 0 && isBrowserCrawlMember(candidate?.memberId)
+                ? defaultTimeoutMs
+                : step5ToStep6Timeouts.structuredCrawl
+            )
+          : null,
         env: makeFailoverEnv(deps),
         dispatchFn: async (action, payload, opts = {}) => {
+          if (
+            spineReliabilityProof.enabled
+            && spineReliabilityProof.forceFirstCallableResearchHang
+            && !forcedStructuredResearchHangConsumed
+            && isBrowserCrawlMember(opts.memberId)
+          ) {
+            forcedStructuredResearchHangConsumed = true;
+            return new Promise(() => {});
+          }
           let structured;
           if (typeof deps.conductStructuredCrawl === 'function') {
             structured = await _conductStructuredCrawl(crawlArgs);
@@ -2433,6 +2478,9 @@ export async function runOrchestration(args = {}) {
           interactiveElements: crawlOutput.interactiveElements.length,
           totalTextLength: crawlOutput.totalTextLength,
           errors: crawlOutput.errors.length,
+          evidenceRecovered: crawlOutput.evidenceRecovered === true,
+          evidenceRecoveryKind: crawlOutput.evidenceRecoveryKind ?? null,
+          recoveryFindings: Array.isArray(crawlOutput.recoveryFindings) ? crawlOutput.recoveryFindings.length : 0,
           selectedDispatchMemberId: failover.memberId ?? null,
           attemptHistory: failover.attemptHistory,
         },
@@ -2618,13 +2666,29 @@ export async function runOrchestration(args = {}) {
       if (originalScore === null) originalScore = preScoreEnvelope.total;
       preScoreEvidenceDegraded = preScoreEvidenceDegraded || preScoreEnvelope?.degraded === true;
 
-      const preGtm = _scoreCrawlOutput(crawlOutput, null, {
-        coverage: 'crawl_only_early_baseline',
-        phaseBContribution: 0,
-        aggregatedFindings: 0,
-        pagesActuallyCrawled: crawlOutput?.pagesCrawled ?? (Array.isArray(crawlOutput?.pages) ? crawlOutput.pages.length : 0),
-        evidenceDegraded: hasDegradedScoreEvidence(preScoreEnvelope),
-      });
+      const recoveredResearchEvidence = crawlOutput?.evidenceRecovered === true;
+      const recoveryFindingsCount = Array.isArray(crawlOutput?.recoveryFindings)
+        ? crawlOutput.recoveryFindings.length
+        : null;
+      const pagesActuallyCrawled = crawlOutput?.pagesCrawled ?? (Array.isArray(crawlOutput?.pages) ? crawlOutput.pages.length : 0);
+      const preGtmCoverage = recoveredResearchEvidence
+        ? 'research_recovery_external_evidence'
+        : 'crawl_only_early_baseline';
+      const preGtmOptions = recoveredResearchEvidence
+        ? {
+            coverage: preGtmCoverage,
+            pagesActuallyCrawled,
+            ...(recoveryFindingsCount > 0 ? { aggregatedFindings: recoveryFindingsCount } : {}),
+            evidenceDegraded: hasDegradedScoreEvidence(preScoreEnvelope),
+          }
+        : {
+            coverage: preGtmCoverage,
+            phaseBContribution: 0,
+            aggregatedFindings: 0,
+            pagesActuallyCrawled,
+            evidenceDegraded: hasDegradedScoreEvidence(preScoreEnvelope),
+          };
+      const preGtm = _scoreCrawlOutput(crawlOutput, null, preGtmOptions);
       if (originalGtmScore === null) originalGtmScore = preGtm.score;
       iterLog.preGtm = preGtm;
       iterLog.preGtmSurfaceOnly = preGtm;
@@ -2638,6 +2702,7 @@ export async function runOrchestration(args = {}) {
           gtmBand: preGtm.band,
           confidence: preGtm.confidence ?? null,
           coverageDegraded: preGtm.coverageDegraded === true,
+          evidenceDegraded: preGtm.evidenceDegraded === true,
           verifiedScore: preGtm.verifiedScore ?? preGtm.ceo95Criteria?.verifiedScore ?? null,
           gtmCounts: preGtm.counts,
           ceo95Criteria: preGtm.ceo95Criteria ?? null,
@@ -2652,7 +2717,7 @@ export async function runOrchestration(args = {}) {
             l4: preScoreEnvelope.l4, l5: preScoreEnvelope.l5,
           },
           label: preGtm.label,
-          coverage: 'crawl_only_early_baseline',
+          coverage: preGtmCoverage,
           coverageReason: preGtm.reason ?? null,
         },
         durationMs: Date.now() - t0, mode: state.mode,

@@ -11,6 +11,7 @@ import * as claudeCode from './claudeCode.js';
 import * as vercel     from './vercel.js';
 import * as browserless from './browserless.js';
 import * as playwright from './playwright.js';
+import * as perplexity from './perplexity.js';
 import * as stubs       from './stubs.js';
 
 const MEMBERS = [
@@ -19,6 +20,7 @@ const MEMBERS = [
   vercel,
   browserless,
   playwright,
+  perplexity,
   stubs.base44,
   stubs.lovable,
   stubs.v0,
