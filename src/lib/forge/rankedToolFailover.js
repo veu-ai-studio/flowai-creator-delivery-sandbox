@@ -105,6 +105,7 @@ export async function runRankedToolWithFailover({
   selectedTool = null,
   dispatchFn,
   timeoutMs = 30_000,
+  timeoutMsForCandidate = null,
   env = process.env,
   validateResult = defaultValidateResult,
   onAttempt = null,
@@ -144,7 +145,19 @@ export async function runRankedToolWithFailover({
       continue;
     }
 
-    const result = await invokeWithTimeout({ action, payload, dispatchFn, candidate, timeoutMs });
+    const candidateTimeoutMs = typeof timeoutMsForCandidate === 'function'
+      ? timeoutMsForCandidate(candidate, index, { defaultTimeoutMs: timeoutMs })
+      : timeoutMs;
+    const boundedCandidateTimeoutMs = Number.isFinite(candidateTimeoutMs) && candidateTimeoutMs > 0
+      ? candidateTimeoutMs
+      : timeoutMs;
+    const result = await invokeWithTimeout({
+      action,
+      payload,
+      dispatchFn,
+      candidate,
+      timeoutMs: boundedCandidateTimeoutMs,
+    });
     if (!result || result.ok !== true || result.deferred === true || result.timeout === true) {
       const failed = attemptSnapshot(candidate, index, {
         state: resultFailureState(result),

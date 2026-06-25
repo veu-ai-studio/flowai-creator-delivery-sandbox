@@ -48,8 +48,12 @@ Files changed:
 - `src/lib/agents/renewal/orchestrator.js`
   - Production Research crawl candidates now execute browser crawl members first, then `Perplexity Research Recovery`.
   - Forced proof hang now reaches the actual STEP 3 structured crawl seam, not only the pre-walk proof seam.
+  - Forced-hang proof timeout applies only to the first browser crawl attempt; recovery candidates keep the normal bounded structured-crawl timeout.
   - Recovered external research evidence is scored under coverage `research_recovery_external_evidence`, not `crawl_only_early_baseline`.
   - Recovered evidence is not marked degraded unless the underlying score envelope is degraded.
+
+- `src/lib/forge/rankedToolFailover.js`
+  - Added per-candidate timeout selection so a deliberately short hang detector does not starve slower recovery tools.
 
 ## Code-Level Proof
 
@@ -63,6 +67,13 @@ Focused tests:
 
 - `npx vitest run tests\forge\rankedToolFailover.test.js tests\forge\researchStep.test.js tests\agents\renewal\orchestrator.test.js`
 - Result: 3 files PASS, 167 tests PASS.
+
+Focused timeout-correction tests:
+
+- `node --check src\lib\forge\rankedToolFailover.js` PASS.
+- `node --check src\lib\agents\renewal\orchestrator.js` PASS.
+- `npx vitest run tests\forge\rankedToolFailover.test.js tests\agents\renewal\orchestrator.test.js`
+- Result: 2 files PASS, 144 tests PASS.
 
 Adjacent registry/selection tests:
 
@@ -93,6 +104,45 @@ The test proves:
 - `coverageDegraded === false`.
 - `evidenceDegraded === false`.
 - Coverage is not `crawl_only_early_baseline`.
+
+Added timeout-regression proof:
+
+`can use a short forced-hang timeout without starving the recovery candidate`
+
+The test proves:
+
+- Browserless receives the short forced-hang timeout.
+- Browserless times out.
+- Perplexity receives a longer recovery timeout.
+- Perplexity succeeds instead of being starved by the proof timeout.
+
+## Deployed Preview Attempt
+
+Preview identity gate:
+
+- URL: `https://flowai-c7vfb448e-veu-ai-studio.vercel.app`
+- `/api/version` reported commit `98019ccca015fe4bd1d86f36b5fa93f1c441c2bb`.
+- Branch: `feature/research-recovery-failover`.
+- Environment: `preview`.
+
+Live forced-hang run:
+
+- `runId`: `research-recovery-live-20260625-98019cc`
+- Raw SSE evidence: `docs/cto/research-recovery-live-preview-20260625T135006Z.sse`
+- HTTP status: `200`.
+- Browserless selected, then timed out after `5000ms`.
+- Playwright was attempted.
+- Perplexity Research Recovery was attempted with `OPENROUTER_API_KEY: PRESENT`.
+- Run failed fast with `RESEARCH_EVIDENCE_UNAVAILABLE`.
+- It did not hang.
+- It did not continue into degraded empty-evidence scoring.
+- It did not report `100`, `showcase-ready`, or `ALREADY_AT_TARGET`.
+
+Finding from live attempt:
+
+- The original implementation applied the proof's `5000ms` timeout to every candidate.
+- That correctly proved fail-fast/no-false-100, but it starved the external recovery adapter.
+- The current patch changes this so only the forced first browser attempt uses the short proof timeout; recovery candidates use the normal bounded structured-crawl timeout.
 
 ## Not Yet Proven
 

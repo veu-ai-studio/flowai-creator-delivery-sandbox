@@ -2222,6 +2222,11 @@ export async function runOrchestration(args = {}) {
           },
           candidates: researchCandidates,
           timeoutMs: spineReliabilityProof.timeoutMs,
+          timeoutMsForCandidate: (candidate, index, { defaultTimeoutMs }) => (
+            index === 0 && isBrowserCrawlMember(candidate?.memberId)
+              ? defaultTimeoutMs
+              : step5ToStep6Timeouts.structuredCrawl
+          ),
           env: deps.env || process.env,
           dispatchFn: async (_action, _payload, opts = {}) => {
             if (spineReliabilityProof.forceFirstCallableResearchHang && !forcedHangConsumed) {
@@ -2391,6 +2396,13 @@ export async function runOrchestration(args = {}) {
         timeoutMs: spineReliabilityProof.enabled
           ? spineReliabilityProof.timeoutMs
           : step5ToStep6Timeouts.structuredCrawl,
+        timeoutMsForCandidate: spineReliabilityProof.enabled
+          ? (candidate, index, { defaultTimeoutMs }) => (
+              index === 0 && isBrowserCrawlMember(candidate?.memberId)
+                ? defaultTimeoutMs
+                : step5ToStep6Timeouts.structuredCrawl
+            )
+          : null,
         env: makeFailoverEnv(deps),
         dispatchFn: async (action, payload, opts = {}) => {
           if (
