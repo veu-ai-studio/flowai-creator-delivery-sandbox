@@ -34,10 +34,11 @@ describe('DeployChainWorker M2 helper', () => {
     });
   });
 
-  it('keeps M2 and M3 as the only stable deploy proof projects', () => {
+  it('keeps only approved stable deploy proof projects', () => {
     expect(APPROVED_DEPLOY_PROJECT_NAMES).toEqual([
       'flowai-m2-deploy-chain-proof',
       'flowai-m3-upgrader-proof',
+      'flowai-build-failover-proof',
     ]);
   });
 

@@ -16,13 +16,18 @@ import {
 } from '../_lib/buildExecutionWorker.js';
 import { runDeployChainWorkerMutation } from '../_lib/deployChainWorker.js';
 import { runBuild } from '../../src/lib/forge/buildRunner.js';
+import { dispatch as orchestraDispatch } from '../../src/lib/orchestra/index.js';
 import { createToolIntelligenceService, MODES } from '../../src/lib/tools/ToolIntelligenceService.js';
 import { redactSecrets } from '../../src/lib/tools/toolDispatchContract.js';
 
 const APPROVED_DEPLOY_CHAIN_PROJECTS = new Set([
   'flowai-m2-deploy-chain-proof',
   'flowai-m3-upgrader-proof',
+  'flowai-build-failover-proof',
 ]);
+
+const MIN_PROOF_TIMEOUT_MS = 1_000;
+const MAX_PROOF_TIMEOUT_MS = 60_000;
 
 function block(message, code, status = 503, details = null) {
   throw new BuildExecutionWorkerError(message, { status, code, details });
@@ -99,6 +104,67 @@ function resolveDeploymentProjectName(body) {
   return value;
 }
 
+function resolveToolDispatchTimeoutMs(body) {
+  if (body.toolDispatchTimeoutMs == null) return undefined;
+  const value = Number(body.toolDispatchTimeoutMs);
+  if (!Number.isFinite(value) || value < MIN_PROOF_TIMEOUT_MS || value > MAX_PROOF_TIMEOUT_MS) {
+    block('toolDispatchTimeoutMs must be between 1000 and 60000 milliseconds.', 'TOOL_DISPATCH_TIMEOUT_OUT_OF_RANGE', 400, {
+      min: MIN_PROOF_TIMEOUT_MS,
+      max: MAX_PROOF_TIMEOUT_MS,
+    });
+  }
+  return Math.round(value);
+}
+
+function resolveBuildProofControls(body) {
+  const controls = body.buildProofControls;
+  if (!controls || typeof controls !== 'object') {
+    return Object.freeze({
+      enabled: false,
+      forceHangOnce: null,
+    });
+  }
+
+  const forceHangOnce = controls.forceHangOnce;
+  if (!forceHangOnce) {
+    return Object.freeze({
+      enabled: false,
+      forceHangOnce: null,
+    });
+  }
+  const action = forceHangOnce.action || 'code-patch';
+  const memberId = forceHangOnce.memberId;
+  if (action !== 'code-patch') {
+    block('Build proof forced hangs are limited to code-patch dispatch.', 'BUILD_PROOF_FORCE_HANG_ACTION_BLOCKED', 400, {
+      action,
+    });
+  }
+  if (typeof memberId !== 'string' || memberId.trim().length === 0) {
+    block('buildProofControls.forceHangOnce.memberId is required.', 'BUILD_PROOF_FORCE_HANG_MEMBER_MISSING', 400);
+  }
+  return Object.freeze({
+    enabled: true,
+    forceHangOnce: Object.freeze({
+      action,
+      memberId: memberId.trim(),
+      reason: typeof forceHangOnce.reason === 'string' ? forceHangOnce.reason.slice(0, 240) : 'forced proof hang',
+    }),
+  });
+}
+
+function createBuildProofDispatch(proofControls, baseDispatch = orchestraDispatch) {
+  const forced = proofControls?.forceHangOnce;
+  if (!forced) return baseDispatch;
+  let consumed = false;
+  return async function dispatchWithForcedHang(action, payload, opts = {}) {
+    if (!consumed && action === forced.action && opts?.memberId === forced.memberId) {
+      consumed = true;
+      return new Promise(() => {});
+    }
+    return baseDispatch(action, payload, opts);
+  };
+}
+
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -125,6 +191,8 @@ export default async function handler(req, res) {
     const toolService = createServerToolService();
     const mutationMode = resolveMutationExecutor(body);
     const deploymentProjectName = resolveDeploymentProjectName(body);
+    const buildProofControls = resolveBuildProofControls(body);
+    const toolDispatchTimeoutMs = resolveToolDispatchTimeoutMs(body);
 
     const output = await runBuild(productId, designOutput, manualInputs, {
       productId,
@@ -137,6 +205,8 @@ export default async function handler(req, res) {
       targetFilePath,
       framework: body.framework || 'vite-react',
       env: process.env,
+      dispatch: createBuildProofDispatch(buildProofControls),
+      toolDispatchTimeoutMs,
       mutationExecutor: mutationMode.executor,
       deploymentProjectName,
     });
@@ -149,6 +219,7 @@ export default async function handler(req, res) {
       proofRunId,
       productId,
       deliveryMode: mutationMode.label,
+      buildProofControls: buildProofControls.enabled ? buildProofControls : null,
       buildOutput: output,
       claimBoundary: {
         maximumClaim: deployChainCandidate
@@ -186,3 +257,9 @@ export default async function handler(req, res) {
     return res.status(status).json(response);
   }
 }
+
+export const __test = Object.freeze({
+  createBuildProofDispatch,
+  resolveBuildProofControls,
+  resolveToolDispatchTimeoutMs,
+});
