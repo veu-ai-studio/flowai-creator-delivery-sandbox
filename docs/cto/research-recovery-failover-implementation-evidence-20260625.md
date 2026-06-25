@@ -212,6 +212,44 @@ Current evidence supports the narrower pre-review statement:
 
 `RESEARCH RECOVERY FAILOVER PREVIEW-DEMONSTRATED (deployed preview, forced timeout -> Perplexity recovery -> honest non-target final scoring)`
 
+## Production Proof
+
+Production identity gate:
+
+- URL: `https://flowai-dun.vercel.app`
+- `/api/version` reported commit `bc7ca51446e01cad8ff21a2f784d32d8e66ebb3b`.
+- Branch: `main`.
+- Environment: `production`.
+- Deploy URL: `flowai-fdm551qlx-veu-ai-studio.vercel.app`.
+
+Live forced-hang run:
+
+- `runId`: `research-recovery-prod-20260625-bc7ca51-rerun`
+- Raw SSE evidence: `docs/cto/research-recovery-production-20260625T144130Z.sse`
+- HTTP status: `200`.
+- Browserless selected, then timed out after `5000ms`.
+- Playwright was selected, then failed because it produced no usable crawl evidence.
+- Perplexity Research Recovery was selected.
+- Perplexity succeeded.
+- STEP 3 completed with:
+  - `kind: production_research_crawl_failover.v1`
+  - `selectedDispatchMemberId: perplexity`
+  - `evidenceRecovered: true`
+  - `evidenceRecoveryKind: external_research_to_crawl_report`
+  - `recoveryFindings: 2`
+- STEP 5 early scorer consumed `coverage: research_recovery_external_evidence`.
+- STEP 5 early scorer recorded `coverageDegraded: false` and `evidenceDegraded: false`.
+- Enriched score: `66`.
+- Final run did not fire `ALREADY_AT_TARGET`.
+- Final run did not end with `RESEARCH_EVIDENCE_UNAVAILABLE`.
+- Final run failed later with `MONITOR_TEXT_UNAVAILABLE` at `STEP_5`.
+
+Claim boundary:
+
+- This production proof demonstrates Research recovery failover in production.
+- It does not demonstrate full-run completion.
+- It does not demonstrate Creator, Upgrader, Universal Engine, Build failover, or VERIFIED matrix movement.
+
 Claims still not earned:
 
 - Creator
