@@ -2,6 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     { "source": "/api/forge/build", "destination": "/api/forge-build" },
+    { "source": "/api/forge/build-failover-proof", "destination": "/api/forge-build-failover-proof" },
     { "source": "/api/orchestrator/status/:run_id", "destination": "/api/orchestrator/status/[run_id]?run_id=:run_id" },
     { "source": "/api/audits/super-customer/status/:run_id", "destination": "/api/audits/super-customer/status/[run_id]?run_id=:run_id" },
     { "source": "/api/audits/super-customer/results/:run_id", "destination": "/api/audits/super-customer/results/[run_id]?run_id=:run_id" },
@@ -17,6 +18,9 @@
   ],
   "functions": {
     "api/forge-build.js": {
+      "maxDuration": 800
+    },
+    "api/forge-build-failover-proof.js": {
       "maxDuration": 800
     },
     "api/inngest.js": {

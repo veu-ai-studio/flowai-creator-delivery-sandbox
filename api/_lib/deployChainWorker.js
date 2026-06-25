@@ -337,7 +337,7 @@ export function buildDeployableAppFiles({
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FlowAI M2 Deploy Chain Proof</title>
+    <title>FlowAI Deploy Chain Proof</title>
     <style>
       :root {
         color-scheme: light;

@@ -312,6 +312,7 @@ async function runLiveBuildTasks(tasks, designOutput, budget, dispatchFn, config
       timeoutMs: config.toolDispatchTimeoutMs ?? DEFAULT_BUILD_TOOL_TIMEOUT_MS,
       env: config.env ?? process.env,
       validateResult: (result, candidate) => assertLiveDispatchResult(result, 'code-patch', candidate.memberId),
+      onAttempt: typeof config.onToolAttempt === 'function' ? config.onToolAttempt : null,
     });
     budget.dispatchCount += dispatchedAttemptCount(failover);
     ensureBudget(budget);
