@@ -6,6 +6,29 @@ CODE / TEST READY ONLY.
 
 No reliability claim moves until CT2 verifies the deployed run.
 
+## Live Proof Blocker - 2026-06-25
+
+CT2 attempted the deployed forced-failover proof and hit `/api/run-construction` rate limiting before the 2-3 repeatable live runs could complete.
+
+Current blocker:
+
+- `CRON_SECRET` is absent in Doppler `flowai/prd` as of `2026-06-25T00:32:11-04:00`.
+- Without `CRON_SECRET`, CT2 cannot bypass the 10 requests/hour per-IP limit on `/api/run-construction`.
+- Result: live spine-reliability proof remains BLOCKED, not failed.
+
+Useful observation:
+
+- The endpoint returned a clean `429` with `retry-after`; that is good fail-fast behavior and confirms the run did not hang at the rate-limit layer.
+
+Product reliability note:
+
+- The current 10 requests/hour per-IP limit is a separate production reliability surface. It may be too tight for underserved users behind shared/NAT IPs, retry-heavy low-bandwidth networks, schools, clinics, libraries, and community organizations. This should be reviewed before any broad "reliable for worldwide users" claim.
+
+Unblock:
+
+- Add one secret: `CRON_SECRET` in Doppler `flowai/prd`.
+- Rerun the same deployed proof after the secret is present.
+
 ## Branch
 
 `feature/spine-reliability-failover`
