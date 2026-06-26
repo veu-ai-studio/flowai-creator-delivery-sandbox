@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CheckCircle2, ExternalLink, Loader2, Play, RotateCcw, XCircle } from 'lucide-react';
@@ -40,6 +40,7 @@ export default function BuildFailoverProofPanel() {
   const [final, setFinal] = useState(null);
   const [error, setError] = useState('');
   const [operatorSecret, setOperatorSecret] = useState('');
+  const operatorSecretRef = useRef(null);
 
   const attempts = useMemo(
     () => events.filter(item => item.event === 'attempt').map(item => item.data),
@@ -53,11 +54,12 @@ export default function BuildFailoverProofPanel() {
     setError('');
 
     try {
+      const secretForRequest = String(operatorSecretRef.current?.value || operatorSecret || '').trim();
       const response = await fetch('/api/forge/build-failover-proof', {
         method: 'POST',
         headers: {
           Accept: 'text/event-stream',
-          ...(operatorSecret.trim() ? { 'x-flowai-operator-secret': operatorSecret.trim() } : {}),
+          ...(secretForRequest ? { 'x-flowai-operator-secret': secretForRequest } : {}),
         },
         credentials: 'include',
       });
@@ -126,11 +128,24 @@ export default function BuildFailoverProofPanel() {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
+          ref={operatorSecretRef}
           type="password"
           value={operatorSecret}
           onChange={(event) => setOperatorSecret(event.target.value)}
+          onInput={(event) => setOperatorSecret(event.currentTarget.value)}
+          onPaste={(event) => {
+            const text = event.clipboardData?.getData('text/plain') || '';
+            if (!text) return;
+            event.preventDefault();
+            const next = text.trim();
+            setOperatorSecret(next);
+            window.requestAnimationFrame(() => {
+              if (operatorSecretRef.current) operatorSecretRef.current.value = next;
+            });
+          }}
           placeholder="Operator secret if your session is not operator-authenticated"
           autoComplete="off"
+          data-paste-behavior="replace"
           className="h-9 text-xs"
         />
       </div>

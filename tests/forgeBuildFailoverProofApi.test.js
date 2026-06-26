@@ -26,6 +26,13 @@ describe('api/forge/build-failover-proof boundary', () => {
     expect(source).not.toContain('FLOWAI_OPERATOR_SECRET');
   });
 
+  it('reads the operator secret from the input ref at click time for paste-handler safety', () => {
+    const source = readRepoFile('src/components/BuildFailoverProofPanel.jsx');
+    expect(source).toContain('useRef');
+    expect(source).toContain('operatorSecretRef.current?.value');
+    expect(source).toContain('data-paste-behavior="replace"');
+  });
+
   it('creates fixed-purpose proof requests for the approved deploy project', () => {
     const request = failoverProofTest.createBuildFailoverProofRequest(new Date('2026-06-25T18:00:00Z'));
     expect(request).toMatchObject({
