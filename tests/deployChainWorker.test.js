@@ -2,6 +2,7 @@ import { generateKeyPairSync } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import {
+  APPROVED_CREATOR_DELIVERY_SANDBOX_FULL_NAME,
   APPROVED_DEPLOY_PROJECT_NAMES,
   APPROVED_DEPLOY_SANDBOX_FULL_NAME,
   __test as deployChainTest,
@@ -31,6 +32,20 @@ describe('DeployChainWorker M2 helper', () => {
     expect(sandbox).toMatchObject({
       fullName: APPROVED_DEPLOY_SANDBOX_FULL_NAME,
       approved: true,
+      precreatedOnly: false,
+    });
+  });
+
+  it('approves the pre-created Creator delivery sandbox for proof delivery', () => {
+    const sandbox = resolveDeployChainSandbox({
+      FLOWAI_DEPLOY_CHAIN_SANDBOX_OWNER: 'veu-ai-studio',
+      FLOWAI_DEPLOY_CHAIN_SANDBOX_REPO: 'flowai-creator-delivery-sandbox',
+    });
+
+    expect(sandbox).toMatchObject({
+      fullName: APPROVED_CREATOR_DELIVERY_SANDBOX_FULL_NAME,
+      approved: true,
+      precreatedOnly: true,
     });
   });
 
@@ -71,6 +86,22 @@ describe('DeployChainWorker M2 helper', () => {
     expect(calls).toHaveLength(1);
     expect(calls[0].url).toContain('/app/installations/67890/access_tokens');
     expect(calls[0].init.headers.Authorization).toMatch(/^Bearer /);
+  });
+
+  it('uses the scoped delivery token for the pre-created Creator delivery sandbox', async () => {
+    const credential = await deployChainTest.resolveGitHubDeployCredential({
+      GITHUB_DELIVERY_TOKEN: 'repo-scoped-delivery-token',
+      GITHUB_OPERATOR_TOKEN: 'operator-token',
+    }, async () => {
+      throw new Error('GitHub App token mint should not be reached for pre-created delivery sandbox');
+    }, {
+      fullName: APPROVED_CREATOR_DELIVERY_SANDBOX_FULL_NAME,
+    });
+
+    expect(credential).toEqual({
+      token: 'repo-scoped-delivery-token',
+      source: 'GITHUB_DELIVERY_TOKEN',
+    });
   });
 
   it('requires selected-tool output to be runnable app code, not proof JSON', () => {

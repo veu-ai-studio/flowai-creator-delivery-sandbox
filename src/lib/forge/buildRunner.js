@@ -15,6 +15,7 @@ const DEFAULT_BUILD_TOOL_TIMEOUT_MS = 30_000;
 const APPROVED_MUTATION_SANDBOXES = new Set([
   'veu-ai-studio/flowai-build-execution-sandbox',
   'veu-ai-studio/flowai-deploy-execution-sandbox',
+  'veu-ai-studio/flowai-creator-delivery-sandbox',
 ]);
 
 function cloneSection(section, input) {

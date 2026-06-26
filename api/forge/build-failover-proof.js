@@ -17,6 +17,8 @@ import { redactSecrets } from '../../src/lib/tools/toolDispatchContract.js';
 
 const PROOF_PRODUCT_ID = 'build-failover-production-proof';
 const PROOF_DEPLOYMENT_PROJECT = 'flowai-build-failover-proof';
+const PROOF_DELIVERY_OWNER = 'veu-ai-studio';
+const PROOF_DELIVERY_REPO = 'flowai-creator-delivery-sandbox';
 const PROOF_TIMEOUT_MS = 5_000;
 
 function runtimeCommit() {
@@ -47,6 +49,17 @@ function createServerToolService() {
   return createToolIntelligenceService({ client });
 }
 
+function runPrecreatedDeliverySandboxMutation(args) {
+  return runDeployChainWorkerMutation({
+    ...args,
+    env: {
+      ...process.env,
+      FLOWAI_DEPLOY_CHAIN_SANDBOX_OWNER: PROOF_DELIVERY_OWNER,
+      FLOWAI_DEPLOY_CHAIN_SANDBOX_REPO: PROOF_DELIVERY_REPO,
+    },
+  });
+}
+
 function proofStamp(now = new Date()) {
   return now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 }
@@ -65,6 +78,8 @@ export function createBuildFailoverProofRequest(now = new Date()) {
     productId: PROOF_PRODUCT_ID,
     deliveryMode: 'deploy-chain-sandbox',
     deploymentProjectName: PROOF_DEPLOYMENT_PROJECT,
+    deliverySandboxFullName: `${PROOF_DELIVERY_OWNER}/${PROOF_DELIVERY_REPO}`,
+    deliveryCredentialSource: 'GITHUB_DELIVERY_TOKEN',
     toolDispatchTimeoutMs: PROOF_TIMEOUT_MS,
     targetFilePath: 'src/App.jsx',
     sourceContent: 'export default function App() { return <main><h1>Build failover proof input</h1><p>Before failover.</p><button>Before action</button></main>; }',
@@ -138,6 +153,7 @@ function finalSummary({ output, proofRequest, startedAt }) {
     runtimeCommit: proofRequest.runtimeCommit,
     deliveryMode: 'DEPLOY_CHAIN_SANDBOX',
     deploymentProjectName: PROOF_DEPLOYMENT_PROJECT,
+    deliverySandboxFullName: `${PROOF_DELIVERY_OWNER}/${PROOF_DELIVERY_REPO}`,
     toolDispatchTimeoutMs: PROOF_TIMEOUT_MS,
     attemptHistory,
     evidenceSummary: output?.evidenceSummary ?? null,
@@ -194,7 +210,7 @@ export default async function handler(req, res) {
       env: process.env,
       dispatch: createProofDispatch(),
       toolDispatchTimeoutMs: proofRequest.toolDispatchTimeoutMs,
-      mutationExecutor: runDeployChainWorkerMutation,
+      mutationExecutor: runPrecreatedDeliverySandboxMutation,
       deploymentProjectName: proofRequest.deploymentProjectName,
       onToolAttempt: (attempt) => {
         attempts.push(attempt);

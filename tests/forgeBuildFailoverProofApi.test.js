@@ -39,6 +39,8 @@ describe('api/forge/build-failover-proof boundary', () => {
       productId: 'build-failover-production-proof',
       deliveryMode: 'deploy-chain-sandbox',
       deploymentProjectName: 'flowai-build-failover-proof',
+      deliverySandboxFullName: 'veu-ai-studio/flowai-creator-delivery-sandbox',
+      deliveryCredentialSource: 'GITHUB_DELIVERY_TOKEN',
       toolDispatchTimeoutMs: 5000,
       buildProofControls: {
         forceHangOnce: {

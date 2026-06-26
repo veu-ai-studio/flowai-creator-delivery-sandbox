@@ -9,6 +9,13 @@ export const DEPLOY_CHAIN_KIND = 'DEPLOY_CHAIN';
 export const APPROVED_DEPLOY_SANDBOX_OWNER = 'veu-ai-studio';
 export const APPROVED_DEPLOY_SANDBOX_REPO = 'flowai-deploy-execution-sandbox';
 export const APPROVED_DEPLOY_SANDBOX_FULL_NAME = `${APPROVED_DEPLOY_SANDBOX_OWNER}/${APPROVED_DEPLOY_SANDBOX_REPO}`;
+export const APPROVED_CREATOR_DELIVERY_SANDBOX_OWNER = 'veu-ai-studio';
+export const APPROVED_CREATOR_DELIVERY_SANDBOX_REPO = 'flowai-creator-delivery-sandbox';
+export const APPROVED_CREATOR_DELIVERY_SANDBOX_FULL_NAME = `${APPROVED_CREATOR_DELIVERY_SANDBOX_OWNER}/${APPROVED_CREATOR_DELIVERY_SANDBOX_REPO}`;
+export const APPROVED_DEPLOY_CHAIN_SANDBOX_FULL_NAMES = Object.freeze([
+  APPROVED_DEPLOY_SANDBOX_FULL_NAME,
+  APPROVED_CREATOR_DELIVERY_SANDBOX_FULL_NAME,
+]);
 export const APPROVED_DEPLOY_PROJECT_NAMES = Object.freeze([
   'flowai-m2-deploy-chain-proof',
   'flowai-m3-upgrader-proof',
@@ -155,22 +162,24 @@ function normalizeRepoName(value) {
 export function resolveDeployChainSandbox(env = process.env) {
   const owner = normalizeRepoName(env.FLOWAI_DEPLOY_CHAIN_SANDBOX_OWNER || APPROVED_DEPLOY_SANDBOX_OWNER);
   const repo = normalizeRepoName(env.FLOWAI_DEPLOY_CHAIN_SANDBOX_REPO || APPROVED_DEPLOY_SANDBOX_REPO);
+  const fullName = `${owner}/${repo}`;
   return Object.freeze({
     owner,
     repo,
-    fullName: `${owner}/${repo}`,
-    approved: owner === APPROVED_DEPLOY_SANDBOX_OWNER && repo === APPROVED_DEPLOY_SANDBOX_REPO,
+    fullName,
+    approved: APPROVED_DEPLOY_CHAIN_SANDBOX_FULL_NAMES.includes(fullName),
+    precreatedOnly: fullName === APPROVED_CREATOR_DELIVERY_SANDBOX_FULL_NAME,
   });
 }
 
 export function assertApprovedDeployChainSandbox(sandbox) {
-  if (!sandbox?.approved || sandbox.fullName !== APPROVED_DEPLOY_SANDBOX_FULL_NAME) {
+  if (!sandbox?.approved || !APPROVED_DEPLOY_CHAIN_SANDBOX_FULL_NAMES.includes(sandbox.fullName)) {
     throw new BuildExecutionWorkerError('DeployChain target is not the approved deployable sandbox repository.', {
       status: 409,
       code: 'DEPLOY_CHAIN_SANDBOX_BOUNDARY_STOP',
       details: {
         requestedSandbox: sandbox?.fullName || null,
-        approvedSandbox: APPROVED_DEPLOY_SANDBOX_FULL_NAME,
+        approvedSandboxes: APPROVED_DEPLOY_CHAIN_SANDBOX_FULL_NAMES,
       },
     });
   }
@@ -180,7 +189,12 @@ function hasPlaceholderLanguage(text) {
   return /\b(simulated|demo|mock|placeholder)\b/i.test(String(text || ''));
 }
 
-async function resolveGitHubDeployCredential(env, fetchImpl = fetch) {
+async function resolveGitHubDeployCredential(env, fetchImpl = fetch, sandbox = null) {
+  if (sandbox?.fullName === APPROVED_CREATOR_DELIVERY_SANDBOX_FULL_NAME) {
+    return env.GITHUB_DELIVERY_TOKEN
+      ? { token: env.GITHUB_DELIVERY_TOKEN, source: 'GITHUB_DELIVERY_TOKEN' }
+      : { token: null, source: 'GITHUB_DELIVERY_TOKEN' };
+  }
   if (env.GITHUB_OPERATOR_TOKEN) {
     return { token: env.GITHUB_OPERATOR_TOKEN, source: 'GITHUB_OPERATOR_TOKEN' };
   }
@@ -410,6 +424,17 @@ async function ensureDeploySandboxRepo({ token, fetchImpl, sandbox }) {
     if (!(error instanceof BuildExecutionWorkerError) || error.status !== 404) throw error;
   }
 
+  if (sandbox.precreatedOnly) {
+    throw new BuildExecutionWorkerError('DeployChain pre-created delivery repository is not accessible; repo creation is intentionally disabled for this proof.', {
+      status: 503,
+      code: 'DEPLOY_CHAIN_PRECREATED_REPO_UNAVAILABLE',
+      details: {
+        requestedSandbox: sandbox.fullName,
+        requiredCredential: 'GITHUB_DELIVERY_TOKEN',
+      },
+    });
+  }
+
   const created = await githubRequest(`/orgs/${sandbox.owner}/repos`, {
     method: 'POST',
     token,
@@ -603,11 +628,17 @@ export async function runDeployChainWorkerMutation({
     });
   }
 
-  const githubCredential = await resolveGitHubDeployCredential(env, fetchImpl);
+  const sandbox = resolveDeployChainSandbox(env);
+  assertApprovedDeployChainSandbox(sandbox);
+  const githubCredential = await resolveGitHubDeployCredential(env, fetchImpl, sandbox);
   if (!githubCredential.token) {
     throw new BuildExecutionWorkerError('GitHub workflow credential is not configured for DeployChain.', {
       status: 503,
       code: 'DEPLOY_CHAIN_GITHUB_CREDENTIAL_MISSING',
+      details: {
+        requiredCredential: githubCredential.source || 'GitHub write credential',
+        requestedSandbox: sandbox.fullName,
+      },
     });
   }
   if (!(env.VERCEL_OPERATOR_TOKEN || env.VERCEL_TOKEN)) {
@@ -617,8 +648,6 @@ export async function runDeployChainWorkerMutation({
     });
   }
 
-  const sandbox = resolveDeployChainSandbox(env);
-  assertApprovedDeployChainSandbox(sandbox);
   const startedAt = now();
   const flowaiCommit = resolveFlowAiBuildCommit(env);
   const files = buildDeployableAppFiles({
