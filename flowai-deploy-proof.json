@@ -1,0 +1,11 @@
+{
+  "proofRunId": "flowai-build-failover-20260626T121346-26c451d",
+  "buildRequestId": "flowai-build-request-20260626T121346-26c451d",
+  "flowaiCommit": "26c451de855bb9cae78d433cfa70a61a0f98ce15",
+  "selectedToolId": "Claude Code",
+  "selectedMemberId": "claude-code",
+  "selectedToolOutputSha256": "b0b478dece451b54de32934c863440f88a21d4d4dcb9f6fcfb6f5fa947536c23",
+  "browserMarker": "FlowAI Build Failover recovered by Claude Code proofRunId: flowai-build-failover-20260626T121346-26c451d",
+  "createdAt": "2026-06-26T12:13:56.401Z",
+  "claimBoundary": "DEPLOY_CHAIN_DEMONSTRATED candidate evidence only; no persistence, Creator, Upgrader, or Universal Engine proof"
+}
