@@ -27,6 +27,7 @@ export const wired = true;
 const VERCEL_API = 'https://api.vercel.com';
 const POLL_INTERVAL_MS = 4000;
 const POLL_TIMEOUT_MS  = 120_000;
+const MAX_POLL_TIMEOUT_MS = 720_000;
 
 /**
  * @param {string} action
@@ -107,9 +108,10 @@ async function deploy(payload) {
   const deploymentId = submit.id;
   let url = submit.url ? `https://${submit.url}` : null;
   let readyState = submit.readyState;
+  const pollTimeoutMs = resolvePollTimeoutMs(payload.pollTimeoutMs);
 
   if (deploymentId && readyState !== 'READY') {
-    const polled = await pollUntilReady(deploymentId, token, teamQs);
+    const polled = await pollUntilReady(deploymentId, token, teamQs, pollTimeoutMs);
     if (polled.ready) {
       url = polled.url || url;
       readyState = 'READY';
@@ -142,8 +144,15 @@ async function deploy(payload) {
   });
 }
 
-async function pollUntilReady(deploymentId, token, teamQs) {
-  const deadline = Date.now() + POLL_TIMEOUT_MS;
+function resolvePollTimeoutMs(value) {
+  if (value == null) return POLL_TIMEOUT_MS;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return POLL_TIMEOUT_MS;
+  return Math.max(POLL_INTERVAL_MS, Math.min(Math.round(numeric), MAX_POLL_TIMEOUT_MS));
+}
+
+async function pollUntilReady(deploymentId, token, teamQs, pollTimeoutMs = POLL_TIMEOUT_MS) {
+  const deadline = Date.now() + resolvePollTimeoutMs(pollTimeoutMs);
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     const r = await fetch(`${VERCEL_API}/v13/deployments/${deploymentId}${teamQs}`, {
@@ -269,4 +278,5 @@ export const __internals = Object.freeze({
   sanitizeProjectSlug,
   encodeBase64Utf8,
   buildDeploymentSubmitBody,
+  resolvePollTimeoutMs,
 });

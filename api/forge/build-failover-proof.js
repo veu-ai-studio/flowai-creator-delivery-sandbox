@@ -20,6 +20,7 @@ const PROOF_DEPLOYMENT_PROJECT = 'flowai-build-failover-proof';
 const PROOF_DELIVERY_OWNER = 'veu-ai-studio';
 const PROOF_DELIVERY_REPO = 'flowai-creator-delivery-sandbox';
 const PROOF_TIMEOUT_MS = 5_000;
+const PROOF_DEPLOY_POLL_TIMEOUT_MS = 600_000;
 
 function runtimeCommit() {
   return String(
@@ -52,6 +53,7 @@ function createServerToolService() {
 function runPrecreatedDeliverySandboxMutation(args) {
   return runDeployChainWorkerMutation({
     ...args,
+    deployPollTimeoutMs: PROOF_DEPLOY_POLL_TIMEOUT_MS,
     env: {
       ...process.env,
       FLOWAI_DEPLOY_CHAIN_SANDBOX_OWNER: PROOF_DELIVERY_OWNER,
@@ -81,6 +83,7 @@ export function createBuildFailoverProofRequest(now = new Date()) {
     deliverySandboxFullName: `${PROOF_DELIVERY_OWNER}/${PROOF_DELIVERY_REPO}`,
     deliveryCredentialSource: 'GITHUB_DELIVERY_TOKEN',
     toolDispatchTimeoutMs: PROOF_TIMEOUT_MS,
+    deployPollTimeoutMs: PROOF_DEPLOY_POLL_TIMEOUT_MS,
     targetFilePath: 'src/App.jsx',
     sourceContent: 'export default function App() { return <main><h1>Build failover proof input</h1><p>Before failover.</p><button>Before action</button></main>; }',
     manualInputs: Object.freeze({
@@ -155,6 +158,7 @@ function finalSummary({ output, proofRequest, startedAt }) {
     deploymentProjectName: PROOF_DEPLOYMENT_PROJECT,
     deliverySandboxFullName: `${PROOF_DELIVERY_OWNER}/${PROOF_DELIVERY_REPO}`,
     toolDispatchTimeoutMs: PROOF_TIMEOUT_MS,
+    deployPollTimeoutMs: PROOF_DEPLOY_POLL_TIMEOUT_MS,
     attemptHistory,
     evidenceSummary: output?.evidenceSummary ?? null,
     deployedUrl: output?.evidenceSummary?.deployChainUrl ?? null,

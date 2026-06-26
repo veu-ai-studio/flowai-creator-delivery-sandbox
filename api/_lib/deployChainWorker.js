@@ -607,6 +607,7 @@ export async function runDeployChainWorkerMutation({
   sleepImpl = sleep,
   pollIntervalMs = DEFAULT_POLL_INTERVAL_MS,
   maxPollAttempts = DEFAULT_MAX_POLL_ATTEMPTS,
+  deployPollTimeoutMs = null,
 } = {}) {
   if (typeof fetchImpl !== 'function') {
     throw new BuildExecutionWorkerError('fetch implementation is unavailable.', {
@@ -698,6 +699,7 @@ export async function runDeployChainWorkerMutation({
     target: vercelTarget,
     framework: null,
     teamId: env.VERCEL_ORG_ID || env.VERCEL_TEAM || null,
+    pollTimeoutMs: (deployPollTimeoutMs ?? Number(env.FLOWAI_DEPLOY_CHAIN_POLL_TIMEOUT_MS || 0)) || undefined,
   });
   if (!deploy?.ok) {
     throw new BuildExecutionWorkerError('DeployChain Vercel deployment failed.', {

@@ -42,6 +42,7 @@ describe('api/forge/build-failover-proof boundary', () => {
       deliverySandboxFullName: 'veu-ai-studio/flowai-creator-delivery-sandbox',
       deliveryCredentialSource: 'GITHUB_DELIVERY_TOKEN',
       toolDispatchTimeoutMs: 5000,
+      deployPollTimeoutMs: 600000,
       buildProofControls: {
         forceHangOnce: {
           action: 'code-patch',
