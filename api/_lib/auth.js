@@ -146,10 +146,14 @@ export async function getRequestContext(req) {
   // 2. Verified Clerk session.
   const session = await verifySession(req);
   if (session) {
+    const activeOrgId = session.org_id || session.orgId || null;
+    const activeOrgRole = session.org_role || session.orgRole || null;
     return {
       authenticated: true,
       authMode: 'clerk',
-      orgId: session.org_id || session.orgId || resolveOrgId(req) || null,
+      // Tenant identity must come only from verified active-organization
+      // claims. Never fall back to caller-controlled headers/body/query.
+      orgId: activeOrgId && activeOrgRole ? activeOrgId : null,
       productId: resolveProductId(req),
       userId: session.sub || session.userId || null,
       clerkSession: session,
@@ -188,25 +192,12 @@ export async function requireAuth(req, res) {
 // endpoints leaked schema-error oracles to anon callers). Wired into the
 // affected endpoints in commit (this commit).
 export async function requireAuthHard(req, res) {
-  // TEMPORARY — internal-proof bypass. Reversible.
-  // Tracked: remove before any external exposure. See file header comment
-  // for full rationale + how to disable. Default OFF: unsetting the env
-  // var (or any value other than the exact literal) falls through to the
-  // normal 401-on-anonymous behavior preserved below.
-  if (process.env.FLOWAI_AUTH_BYPASS === 'PROVE_INTERNAL_2026') {
-    return {
-      authenticated: true,
-      authMode: 'bypass-internal-proof',
-      orgId: resolveOrgId(req) || null,
-      productId: resolveProductId(req),
-      userId: null,
-      clerkSession: null,
-    };
-  }
-
   const ctx = await getRequestContext(req);
-  if (!ctx.authenticated) {
-    res.status(401).json({ error: 'Authentication required', authMode: ctx.authMode });
+  if (!ctx.authenticated || !ctx.orgId || !ctx.userId) {
+    res.status(ctx.authenticated ? 403 : 401).json({
+      error: ctx.authenticated ? 'Active tenant membership required' : 'Authentication required',
+      authMode: ctx.authMode,
+    });
     return null;
   }
   return ctx;
