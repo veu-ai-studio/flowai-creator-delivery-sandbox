@@ -52,6 +52,17 @@ import { getOperationalRun, updateOperationalRun } from '../../_lib/operationalR
 const ALLOWED_COMMANDS = new Set(['pause', 'resume', 'switchMode', 'stop']);
 const ALLOWED_MODES = new Set(['auto', 'guided', 'manual']);
 
+function pendingStop(run) {
+  return run?.status === 'cancelling'
+    && run.stopCommand?.acknowledged === false
+    && run.stopCommand?.dispatchState === 'pending'
+    && typeof run.stopCommand.id === 'string';
+}
+
+function stopReplay(res, runId, commandId, replayed = true) {
+  return res.status(200).json({ ok: true, runId, command: 'stop', mode: null, transport: 'ledger', envelopeId: commandId, applied: 'queued', replayed });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -93,6 +104,7 @@ export default async function handler(req, res) {
   const ownedRun = await getOperationalRun(runId, auth);
   if (!ownedRun) return res.status(404).json({ ok: false, error: 'run_not_found' });
   if (['completed', 'failed', 'cancelled'].includes(ownedRun.status)) return res.status(409).json({ ok: false, error: 'run_not_active', status: ownedRun.status });
+  if (command === 'stop' && pendingStop(ownedRun)) return stopReplay(res, runId, ownedRun.stopCommand.id);
 
   let writeResult;
   const commandId = command === 'stop' ? randomUUID() : null;
@@ -104,7 +116,11 @@ export default async function handler(req, res) {
         stopCommand: { id: commandId, acknowledged: false, dispatchState: 'pending', reservedAt: new Date().toISOString() },
         progressLabel: 'Cancellation reserved',
       });
-      if (!reservation || reservation.transitionRejected) return res.status(409).json({ ok: false, error: 'run_state_conflict', status: reservation?.status });
+      if (!reservation || reservation.transitionRejected) {
+        const winner = await getOperationalRun(runId, auth);
+        if (pendingStop(winner)) return stopReplay(res, runId, winner.stopCommand.id);
+        return res.status(409).json({ ok: false, error: 'run_state_conflict', status: winner?.status || reservation?.status });
+      }
       // The ledger reservation is the durable transactional outbox. The worker
       // polls this exact row, so there is no second enqueue write or crash gap.
       writeResult = { transport: 'ledger', envelope: { id: commandId } };
@@ -127,6 +143,7 @@ export default async function handler(req, res) {
     // The dashboard sees this and can show "queued" → then watch the SSE
     // stream for evidence the command landed.
     applied: 'queued',
+    replayed: false,
   });
 }
 
@@ -157,4 +174,5 @@ export const __test = Object.freeze({
   resolveAuthContext,
   ALLOWED_COMMANDS,
   ALLOWED_MODES,
+  pendingStop,
 });
