@@ -17,7 +17,10 @@ vi.mock('@clerk/clerk-react', () => ({
   ),
 }));
 
-import ClerkAuthPage from '../src/pages/ClerkAuthPage.jsx';
+import ClerkAuthPage, {
+  DEFAULT_AUTH_REDIRECT,
+  resolveRedirectUrl,
+} from '../src/pages/ClerkAuthPage.jsx';
 
 describe('Clerk auth routes', () => {
   let originalKey;
@@ -61,5 +64,20 @@ describe('Clerk auth routes', () => {
     expect(html).toContain('data-auth-route="sign-up"');
     expect(html).toContain('Clerk auth is not configured');
     expect(html).not.toContain('data-testid="clerk-sign-up"');
+  });
+
+  it.each([
+    ['?redirect_url=%2Fruns', '/runs'],
+    ['?redirectUrl=%2Fdashboard%3Ftab%3Druns', '/dashboard?tab=runs'],
+  ])('accepts same-origin path redirects from %s', (search, expected) => {
+    expect(resolveRedirectUrl(search)).toBe(expected);
+  });
+
+  it.each([
+    '?redirect_url=https%3A%2F%2Fevil.example',
+    '?redirect_url=%2F%2Fevil.example',
+    '?redirect_url=%2Fsafe%5C..%5Cevil',
+  ])('rejects unsafe redirect target from %s', (search) => {
+    expect(resolveRedirectUrl(search)).toBe(DEFAULT_AUTH_REDIRECT);
   });
 });

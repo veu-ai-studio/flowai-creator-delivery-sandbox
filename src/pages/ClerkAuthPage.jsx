@@ -2,10 +2,19 @@ import React from 'react';
 import { SignIn, SignUp } from '@clerk/clerk-react';
 import { ShieldCheck } from 'lucide-react';
 
-function resolveRedirectUrl() {
-  if (typeof window === 'undefined') return '/flow-hub/production';
-  const params = new URLSearchParams(window.location.search);
-  return params.get('redirect_url') || params.get('redirectUrl') || '/flow-hub/production';
+export const DEFAULT_AUTH_REDIRECT = '/flow-hub/production';
+
+export function sanitizeAuthRedirectPath(candidate, fallback = DEFAULT_AUTH_REDIRECT) {
+  if (!candidate || typeof candidate !== 'string') return fallback;
+  if (!candidate.startsWith('/') || candidate.startsWith('//') || candidate.includes('\\')) {
+    return fallback;
+  }
+  return candidate;
+}
+
+export function resolveRedirectUrl(search = globalThis.window?.location?.search || '') {
+  const params = new URLSearchParams(search);
+  return sanitizeAuthRedirectPath(params.get('redirect_url') || params.get('redirectUrl'));
 }
 
 function MissingClerkConfig({ mode }) {

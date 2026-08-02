@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { useEffect } from 'react';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, ClerkAwareAuthProvider, useAuth } from '@/lib/AuthContext';
 import { OrchestrationProvider } from '@/lib/OrchestrationContext';
@@ -106,6 +107,7 @@ import Workspace from './pages/Workspace';
 import Login from './pages/Login';
 import ClerkAuthPage from './pages/ClerkAuthPage';
 import ClerkTicketSignInPage from './pages/ClerkTicketSignInPage';
+import { shouldRedirectToLogin } from './lib/authRoutePolicy';
 import RequireAuth from '@/components/RequireAuth';
 
 function LegacyFlowHubRedirect() {
@@ -145,6 +147,12 @@ function AppAuthProvider({ children }) {
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const location = useLocation();
+  const mustRedirectToLogin = shouldRedirectToLogin({ authError, pathname: location.pathname });
+
+  useEffect(() => {
+    if (mustRedirectToLogin) navigateToLogin();
+  }, [mustRedirectToLogin, navigateToLogin]);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -157,8 +165,7 @@ const AuthenticatedApp = () => {
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      navigateToLogin();
+    } else if (mustRedirectToLogin) {
       return null;
     }
   }
