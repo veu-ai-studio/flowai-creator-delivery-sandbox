@@ -70,7 +70,7 @@ export default function AppLayout() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background font-inter">
+    <div className="min-h-screen w-full overflow-x-hidden bg-background font-inter">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => setSidebarOpen(false)} />
@@ -81,11 +81,11 @@ export default function AppLayout() {
         <Sidebar />
       </div>
 
-      <div className="md:ml-64 flex flex-col min-h-screen">
+      <div className="md:ml-64 flex min-w-0 flex-col min-h-screen">
         <OrchestrationBar />
 
         {/* Top bar - utility controls only; primary navigation lives in the sidebar. */}
-        <div className="px-4 md:px-6 py-2 border-b border-border flex items-center justify-between gap-3">
+        <div className="min-w-0 px-4 md:px-6 py-2 border-b border-border flex items-center justify-between gap-3">
           {/* Mobile: hamburger on the left */}
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0 md:hidden shrink-0" onClick={() => setSidebarOpen(v => !v)}>
             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -110,7 +110,7 @@ export default function AppLayout() {
           </Button>
         </div>
 
-        <main className="flex-1">
+        <main className="min-w-0 flex-1 overflow-x-hidden">
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

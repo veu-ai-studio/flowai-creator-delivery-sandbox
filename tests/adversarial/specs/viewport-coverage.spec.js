@@ -31,13 +31,14 @@ for (const route of ROUTES) {
     const t0 = Date.now();
     const vpLabel = `${viewport?.width}x${viewport?.height}`;
     let verdict = 'FAIL', severity = 'medium', actual;
+    let status = 0, overflow = null;
     try {
       const resp = await page.goto(`/${route}`, { timeout: 20_000 });
-      const status = resp?.status() ?? 0;
+      status = resp?.status() ?? 0;
       // Detect basic clipping: horizontal scrollbar at sub-desktop widths is a smell.
       const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth).catch(() => null);
       const innerWidth  = await page.evaluate(() => window.innerWidth).catch(() => null);
-      const overflow = scrollWidth && innerWidth ? (scrollWidth > innerWidth + 4) : false;
+      overflow = scrollWidth && innerWidth ? (scrollWidth > innerWidth + 4) : false;
       verdict = (status >= 200 && status < 500) ? 'PASS' : 'FAIL';
       if (overflow && viewport.width <= 768) { verdict = 'FAIL'; severity = 'medium'; }
       else { severity = verdict === 'PASS' ? 'low' : 'high'; }
@@ -51,6 +52,8 @@ for (const route of ROUTES) {
       expected_behavior: 'no horizontal clipping at any viewport',
       actual_behavior: actual, latency_ms: Date.now() - t0,
       reproducer_steps: [`goto /${route} at viewport ${vpLabel}`, 'measure scrollWidth vs innerWidth'] });
-    expect(['PASS','FAIL','SKIP']).toContain(verdict);
+    expect(status, actual).toBeGreaterThanOrEqual(200);
+    expect(status, actual).toBeLessThan(500);
+    if (viewport.width <= 768) expect(overflow, actual).toBe(false);
   });
 }

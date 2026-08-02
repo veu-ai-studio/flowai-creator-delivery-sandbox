@@ -16,12 +16,12 @@ const BUILD_STEP_TOOLS = Object.freeze(canonicalBuildRankingRows().map(row => Ob
 
 const STEP_TOOLS = Object.freeze({
   research: [
-    { platform_name: 'Browserless', platform_type: 'crawl', dispatchState: 'callable', note: 'server-side credential checked at dispatch' },
-    { platform_name: 'Anthropic Claude', platform_type: 'analysis', dispatchState: 'callable', note: 'server-side credential checked at dispatch' },
+    { platform_name: 'Browserless', platform_type: 'crawl', dispatchState: 'pending_server_credential_check', note: 'server-side credential checked at dispatch' },
+    { platform_name: 'Anthropic Claude', platform_type: 'analysis', dispatchState: 'pending_server_credential_check', note: 'server-side credential checked at dispatch' },
     { platform_name: 'Perplexity AI', platform_type: 'research', dispatchState: 'unavailable', note: 'ranked marketplace tool, not executable until admitted and credentialed' },
   ],
   design: [
-    { platform_name: 'Anthropic Claude', platform_type: 'design', dispatchState: 'callable', note: 'server-side credential checked at dispatch' },
+    { platform_name: 'Anthropic Claude', platform_type: 'design', dispatchState: 'pending_server_credential_check', note: 'server-side credential checked at dispatch' },
     { platform_name: 'v0 by Vercel', platform_type: 'design', dispatchState: 'stub_unavailable', note: 'requires real callable API before execution' },
     { platform_name: 'Lovable', platform_type: 'design', dispatchState: 'stub_unavailable', note: 'requires real callable API before execution' },
   ],
@@ -29,9 +29,9 @@ const STEP_TOOLS = Object.freeze({
     ...BUILD_STEP_TOOLS,
   ],
   qa_audit: [
-    { platform_name: 'Playwright', platform_type: 'browser', dispatchState: 'callable', note: 'read-only browser interaction path' },
-    { platform_name: 'Browserless', platform_type: 'capture', dispatchState: 'callable', note: 'server-side credential checked at dispatch' },
-    { platform_name: 'Anthropic Claude', platform_type: 'score', dispatchState: 'callable', note: 'server-side credential checked at dispatch' },
+    { platform_name: 'Playwright', platform_type: 'browser', dispatchState: 'pending_server_credential_check', note: 'runtime endpoint checked at dispatch' },
+    { platform_name: 'Browserless', platform_type: 'capture', dispatchState: 'pending_server_credential_check', note: 'server-side credential checked at dispatch' },
+    { platform_name: 'Anthropic Claude', platform_type: 'score', dispatchState: 'pending_server_credential_check', note: 'server-side credential checked at dispatch' },
   ],
   deploy: [
     { platform_name: 'Vercel', platform_type: 'deployment', dispatchState: 'mutation_deferred_until_P13C', note: 'target deploy is deferred in P13-A' },
@@ -39,16 +39,16 @@ const STEP_TOOLS = Object.freeze({
   ],
   govern: [
     { platform_name: 'Claude Code', platform_type: 'renewal', dispatchState: 'pending_operator_gate', note: 'fix application deferred in P13-A' },
-    { platform_name: 'Playwright', platform_type: 'verification', dispatchState: 'callable', note: 'read-only verification only' },
+    { platform_name: 'Playwright', platform_type: 'verification', dispatchState: 'pending_server_credential_check', note: 'runtime endpoint checked at dispatch; read-only verification only' },
   ],
   gtm: [
-    { platform_name: 'Anthropic Claude', platform_type: 'analysis', dispatchState: 'callable', note: 'server-side credential checked at dispatch' },
+    { platform_name: 'Anthropic Claude', platform_type: 'analysis', dispatchState: 'pending_server_credential_check', note: 'server-side credential checked at dispatch' },
     { platform_name: 'Perplexity AI', platform_type: 'research', dispatchState: 'unavailable', note: 'ranked marketplace tool, not executable until admitted and credentialed' },
   ],
   monitor: [
-    { platform_name: 'Browserless', platform_type: 'monitoring capture', dispatchState: 'callable', note: 'server-side credential checked at dispatch' },
-    { platform_name: 'Playwright', platform_type: 'runtime check', dispatchState: 'callable', note: 'read-only browser interaction path' },
-    { platform_name: 'Anthropic Claude', platform_type: 'summary', dispatchState: 'callable', note: 'server-side credential checked at dispatch' },
+    { platform_name: 'Browserless', platform_type: 'monitoring capture', dispatchState: 'pending_server_credential_check', note: 'server-side credential checked at dispatch' },
+    { platform_name: 'Playwright', platform_type: 'runtime check', dispatchState: 'pending_server_credential_check', note: 'runtime endpoint checked at dispatch' },
+    { platform_name: 'Anthropic Claude', platform_type: 'summary', dispatchState: 'pending_server_credential_check', note: 'server-side credential checked at dispatch' },
   ],
 });
 

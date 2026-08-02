@@ -46,6 +46,12 @@ describe('P13-A step-card ranked tool visibility', () => {
     });
   });
 
+  it('does not claim static tools are callable before server runtime checks', () => {
+    for (const step of ['research', 'design', 'qa_audit', 'govern', 'gtm', 'monitor']) {
+      expect(rankedToolsForStepCard(step).some(tool => tool.dispatchState === 'callable')).toBe(false);
+    }
+  });
+
   it('Auto, Guided, and Manual step cards import the ranked tool list component', () => {
     const files = [
       'src/pages/AutoRunner.jsx',
