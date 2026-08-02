@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createOperationalRun, getOperationalRun, listOperationalRuns, resetOperationalRunsForTests, updateOperationalRun } from '../api/_lib/operationalRuns.js';
+import { __test, createOperationalRun, getOperationalRun, getPendingStopCommand, listOperationalRuns, resetOperationalRunsForTests, updateOperationalRun } from '../api/_lib/operationalRuns.js';
 
 const owner = { orgId: 'org_a', userId: 'user_a' };
 beforeEach(() => { process.env.NODE_ENV = 'test'; delete process.env.KV_REST_API_URL; delete process.env.KV_REST_API_TOKEN; resetOperationalRunsForTests(); });
@@ -35,5 +35,26 @@ describe('operational run ledger', () => {
   it('fails closed in production without durable storage', async () => {
     process.env.NODE_ENV = 'production'; resetOperationalRunsForTests();
     await expect(createOperationalRun({ ...owner, idempotency: 'durable-request' })).rejects.toMatchObject({ code: 'RUN_STORE_NOT_LIVE' });
+  });
+
+  it('reconciles an unacknowledged stale stop reservation without inferring cancellation', async () => {
+    const { run } = await createOperationalRun({ ...owner, idempotency: 'stale-control-request' });
+    await updateOperationalRun(run.id, owner, { status: 'running' });
+    const reservedAt = new Date(Date.now() - __test.CONTROL_RESERVATION_TIMEOUT_MS - 1).toISOString();
+    await updateOperationalRun(run.id, owner, {
+      status: 'cancelling', expectedStatus: 'running',
+      stopCommand: { id: 'stop-stale', acknowledged: false, dispatchState: 'pending', reservedAt },
+    });
+
+    const reconciled = await getOperationalRun(run.id, owner);
+    expect(reconciled.status).toBe('control_failed');
+    expect(reconciled.stopCommand.dispatchState).toBe('expired');
+    expect(await getPendingStopCommand(run.id, owner)).toBeNull();
+  });
+
+  it('defines Redis CAS for the outbox reservation in the same run-row write', () => {
+    expect(__test.UPDATE_LUA).toContain("redis.call('SET', KEYS[1], ARGV[5]");
+    expect(__test.UPDATE_LUA).toContain("row.status ~= ARGV[3]");
+    expect(__test.UPDATE_LUA).toContain("row.version or 0");
   });
 });

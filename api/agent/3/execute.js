@@ -363,6 +363,7 @@ async function runSseOrchestration(req, res, body, auth) {
   heartbeat.unref?.();
   try {
     const { readAndClearCommand } = await import('../../_lib/runControlBus.js');
+    const { getPendingStopCommand } = await import('../../_lib/operationalRuns.js');
     // Only poll when we have a runId to poll on. The orchestrator generates
     // one when null is passed; we don't have visibility into that pre-call,
     // so the no-runId case skips the poller and the dashboard's control
@@ -372,7 +373,10 @@ async function runSseOrchestration(req, res, body, auth) {
       controlPoller = setInterval(async () => {
         if (runFinished || !exposedState) return;
         let cmd;
-        try { cmd = await readAndClearCommand(pollRunId); } catch { return; }
+        try {
+          cmd = await getPendingStopCommand(pollRunId, auth);
+          if (!cmd) cmd = await readAndClearCommand(pollRunId);
+        } catch { return; }
         if (!cmd) return;
         try {
           if (cmd.command === 'pause') {

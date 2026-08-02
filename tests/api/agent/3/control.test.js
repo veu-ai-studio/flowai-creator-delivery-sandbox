@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import handler from '../../../../api/agent/3/control.js';
-import { createOperationalRun, getOperationalRun, resetOperationalRunsForTests, updateOperationalRun } from '../../../../api/_lib/operationalRuns.js';
+import { createOperationalRun, getOperationalRun, getPendingStopCommand, resetOperationalRunsForTests, setOperationalRunStoreForTests, updateOperationalRun } from '../../../../api/_lib/operationalRuns.js';
 import { readAndClearCommand, resetForTests } from '../../../../api/_lib/runControlBus.js';
 
 const owner = { orgId: 'org_test', userId: 'user_test' };
@@ -47,16 +47,20 @@ describe('tenant-owned run control', () => {
     });
   }
 
-  it('reserves a unique stop id before dispatch and exposes cancelling', async () => {
+  it('atomically reserves stop in the durable ledger outbox and survives bus restart', async () => {
     const run = await active('stop-owned-request');
     const response = res();
     await handler({ method: 'POST', headers: authHeaders, body: { runId: run.id, command: 'stop' } }, response);
     expect(response.statusCode).toBe(200);
-    const command = await readAndClearCommand(run.id);
+    expect(await readAndClearCommand(run.id)).toBeNull();
+    resetForTests();
+    const command = await getPendingStopCommand(run.id, owner);
     const ledger = await getOperationalRun(run.id, owner);
     expect(ledger.status).toBe('cancelling');
     expect(command.id).toBe(ledger.stopCommand.id);
     expect(ledger.stopCommand.acknowledged).toBe(false);
+    expect(ledger.stopCommand.dispatchState).toBe('pending');
+    expect(response.body.transport).toBe('ledger');
   });
 
   it('does not resurrect terminal runs', async () => {
@@ -65,5 +69,17 @@ describe('tenant-owned run control', () => {
     const response = res();
     await handler({ method: 'POST', headers: authHeaders, body: { runId: run.id, command: 'stop' } }, response);
     expect(response.statusCode).toBe(409);
+  });
+
+  it('leaves the run active when the Redis CAS reservation fails', async () => {
+    const run = await active('redis-reservation-failure');
+    setOperationalRunStoreForTests({
+      get: async () => run,
+      eval: async () => { throw new Error('simulated redis write failure'); },
+    });
+    const response = res();
+    await handler({ method: 'POST', headers: authHeaders, body: { runId: run.id, command: 'stop' } }, response);
+    expect(response.statusCode).toBe(500);
+    expect((await getOperationalRun(run.id, owner)).status).toBe('running');
   });
 });

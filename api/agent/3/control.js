@@ -47,7 +47,7 @@
 import { randomUUID } from 'node:crypto';
 import { writeCommand } from '../../_lib/runControlBus.js';
 import { requireAuthHard } from '../../_lib/auth.js';
-import { getOperationalRun, publicRunError, updateOperationalRun } from '../../_lib/operationalRuns.js';
+import { getOperationalRun, updateOperationalRun } from '../../_lib/operationalRuns.js';
 
 const ALLOWED_COMMANDS = new Set(['pause', 'resume', 'switchMode', 'stop']);
 const ALLOWED_MODES = new Set(['auto', 'guided', 'manual']);
@@ -101,14 +101,17 @@ export default async function handler(req, res) {
     if (command === 'stop') {
       reservation = await updateOperationalRun(runId, auth, {
         status: 'cancelling', expectedStatus: ownedRun.status,
-        stopCommand: { id: commandId, acknowledged: false, reservedAt: new Date().toISOString() },
+        stopCommand: { id: commandId, acknowledged: false, dispatchState: 'pending', reservedAt: new Date().toISOString() },
         progressLabel: 'Cancellation reserved',
       });
       if (!reservation || reservation.transitionRejected) return res.status(409).json({ ok: false, error: 'run_state_conflict', status: reservation?.status });
+      // The ledger reservation is the durable transactional outbox. The worker
+      // polls this exact row, so there is no second enqueue write or crash gap.
+      writeResult = { transport: 'ledger', envelope: { id: commandId } };
+    } else {
+      writeResult = await writeCommand(runId, command, { mode, envelopeId: commandId, requireDurable: process.env.NODE_ENV === 'production' });
     }
-    writeResult = await writeCommand(runId, command, { mode, envelopeId: commandId, requireDurable: process.env.NODE_ENV === 'production' });
   } catch (e) {
-    if (reservation) await updateOperationalRun(runId, auth, { status: 'control_failed', expectedControlCommandId: commandId, error: publicRunError('CONTROL_FAILED'), progressLabel: 'Control enqueue failed' });
     return res.status(500).json({
       ok: false, error: 'CONTROL_WRITE_FAILED',
     });
@@ -119,7 +122,7 @@ export default async function handler(req, res) {
     runId,
     command,
     mode: command === 'switchMode' ? mode : null,
-    transport: writeResult.transport,    // 'kv' | 'memory'
+    transport: writeResult.transport,    // 'ledger' for stop; 'kv' | 'memory' otherwise
     envelopeId: writeResult.envelope.id,
     // The dashboard sees this and can show "queued" → then watch the SSE
     // stream for evidence the command landed.

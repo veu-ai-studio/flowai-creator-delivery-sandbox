@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 
 const RETENTION_SECONDS = 30 * 24 * 60 * 60;
 const HEARTBEAT_TIMEOUT_MS = 120_000;
+const CONTROL_RESERVATION_TIMEOUT_MS = 120_000;
 const memory = new Map();
 let kvClient;
 
@@ -88,11 +89,34 @@ export async function createOperationalRun({ orgId, userId, idempotency, input =
 export async function getOperationalRun(id, owner) {
   const kv = await store();
   const run = decode(kv ? await kv.get(runKey(id)) : memory.get(runKey(id)));
-  return run && run.orgId === owner.orgId && run.userId === owner.userId ? run : null;
+  if (!run || run.orgId !== owner.orgId || run.userId !== owner.userId) return null;
+  return reconcileStaleCancellation(run, owner);
 }
 
-export async function updateOperationalRun(id, owner, patch) {
-  const current = await getOperationalRun(id, owner);
+async function reconcileStaleCancellation(run, owner, nowMs = Date.now()) {
+  const reservedAt = Date.parse(run?.stopCommand?.reservedAt || '');
+  if (run?.status !== 'cancelling' || run.stopCommand?.acknowledged !== false || !Number.isFinite(reservedAt) || nowMs - reservedAt < CONTROL_RESERVATION_TIMEOUT_MS) return run;
+  return updateOperationalRun(run.id, owner, {
+    status: 'control_failed',
+    expectedStatus: 'cancelling',
+    expectedControlCommandId: run.stopCommand.id,
+    error: publicRunError('CONTROL_FAILED'),
+    progressLabel: 'Cancellation acknowledgement timed out',
+    stopCommand: { ...run.stopCommand, dispatchState: 'expired', expiredAt: new Date(nowMs).toISOString() },
+  }, { skipReconcile: true });
+}
+
+export async function getPendingStopCommand(id, owner) {
+  const run = await getOperationalRun(id, owner);
+  if (run?.status !== 'cancelling' || run.stopCommand?.acknowledged !== false || run.stopCommand?.dispatchState !== 'pending') return null;
+  return { command: 'stop', id: run.stopCommand.id, writtenAt: run.stopCommand.reservedAt };
+}
+
+export async function updateOperationalRun(id, owner, patch, options = {}) {
+  const kv = await store();
+  const raw = decode(kv ? await kv.get(runKey(id)) : memory.get(runKey(id)));
+  let current = raw && raw.orgId === owner.orgId && raw.userId === owner.userId ? raw : null;
+  if (current && !options.skipReconcile) current = await reconcileStaleCancellation(current, owner);
   if (!current) return null;
   const { transitionReason, expectedStatus, expectedControlCommandId, ...persisted } = patch;
   if (expectedStatus && current.status !== expectedStatus) return { ...current, transitionRejected: true };
@@ -103,7 +127,6 @@ export async function updateOperationalRun(id, owner, patch) {
   if (current.status === 'cancelling' && nextStatus === 'cancelled' && !persisted.stopAcknowledgedAt) return { ...current, transitionRejected: true };
   if (TERMINAL.has(current.status)) return { ...current, transitionRejected: true };
   const next = { ...current, ...persisted, version: Number(current.version || 0) + 1, updatedAt: new Date().toISOString() };
-  const kv = await store();
   if (kv) {
     const result = await kv.eval(UPDATE_LUA, [runKey(id)], [owner.orgId, owner.userId, current.status, String(current.version || 0), JSON.stringify(next), String(RETENTION_SECONDS)]);
     if (Number(result[0]) !== 1) return { ...(await getOperationalRun(id, owner)), transitionRejected: true };
@@ -126,4 +149,5 @@ export async function listOperationalRuns(owner, limit = 100) {
 }
 
 export function resetOperationalRunsForTests() { memory.clear(); kvClient = undefined; }
-export const __test = { CREATE_LUA, UPDATE_LUA, TRANSITIONS, HEARTBEAT_TIMEOUT_MS };
+export function setOperationalRunStoreForTests(client) { kvClient = client; }
+export const __test = { CREATE_LUA, UPDATE_LUA, TRANSITIONS, HEARTBEAT_TIMEOUT_MS, CONTROL_RESERVATION_TIMEOUT_MS, reconcileStaleCancellation };
