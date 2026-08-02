@@ -44,7 +44,10 @@
 
 'use strict';
 
+import { randomUUID } from 'node:crypto';
 import { writeCommand } from '../../_lib/runControlBus.js';
+import { requireAuthHard } from '../../_lib/auth.js';
+import { getOperationalRun, publicRunError, updateOperationalRun } from '../../_lib/operationalRuns.js';
 
 const ALLOWED_COMMANDS = new Set(['pause', 'resume', 'switchMode', 'stop']);
 const ALLOWED_MODES = new Set(['auto', 'guided', 'manual']);
@@ -54,6 +57,8 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'method_not_allowed' });
   }
+  const auth = await requireAuthHard(req, res);
+  if (!auth) return;
 
   let body;
   try {
@@ -85,17 +90,27 @@ export default async function handler(req, res) {
 
   // Auth (relaxed — productScope-match check intentionally skipped for the
   // dashboard's universal-mode use case, matching the SSE path).
-  const auth = resolveAuthContext(req);
-  if (!auth.ok) {
-    return res.status(auth.status).json({ ok: false, error: auth.error });
-  }
+  const ownedRun = await getOperationalRun(runId, auth);
+  if (!ownedRun) return res.status(404).json({ ok: false, error: 'run_not_found' });
+  if (['completed', 'failed', 'cancelled'].includes(ownedRun.status)) return res.status(409).json({ ok: false, error: 'run_not_active', status: ownedRun.status });
 
   let writeResult;
+  const commandId = command === 'stop' ? randomUUID() : null;
+  let reservation = null;
   try {
-    writeResult = await writeCommand(runId, command, { mode });
+    if (command === 'stop') {
+      reservation = await updateOperationalRun(runId, auth, {
+        status: 'cancelling', expectedStatus: ownedRun.status,
+        stopCommand: { id: commandId, acknowledged: false, reservedAt: new Date().toISOString() },
+        progressLabel: 'Cancellation reserved',
+      });
+      if (!reservation || reservation.transitionRejected) return res.status(409).json({ ok: false, error: 'run_state_conflict', status: reservation?.status });
+    }
+    writeResult = await writeCommand(runId, command, { mode, envelopeId: commandId, requireDurable: process.env.NODE_ENV === 'production' });
   } catch (e) {
+    if (reservation) await updateOperationalRun(runId, auth, { status: 'control_failed', expectedControlCommandId: commandId, error: publicRunError('CONTROL_FAILED'), progressLabel: 'Control enqueue failed' });
     return res.status(500).json({
-      ok: false, error: 'control_write_failed', detail: String(e?.message ?? e),
+      ok: false, error: 'CONTROL_WRITE_FAILED',
     });
   }
 

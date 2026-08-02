@@ -88,7 +88,7 @@ function envelope(command, options = {}) {
     // Lightweight unique-ish id so two concurrent writers can be told
     // apart in the rare same-millisecond case. Not cryptographically
     // strong — just disambiguation.
-    id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    id: options.envelopeId || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
   };
 }
 
@@ -116,6 +116,7 @@ export async function writeCommand(runId, command, options = {}) {
       // function instance) will still see it.
     }
   }
+  if (options.requireDurable) throw Object.assign(new Error('Durable control unavailable'), { code: 'CONTROL_NOT_DURABLE' });
   memoryStore.set(k, env);
   // Best-effort TTL for the memory map so stale commands don't pile up.
   setTimeout(() => {

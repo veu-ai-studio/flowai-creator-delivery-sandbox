@@ -39,6 +39,8 @@ import * as remediationEngine from '../../_lib/remediationEngine.js';
 import verificationAdapters from '../../../src/lib/agents/verificationAdapters.js';
 import { getServerMessageBus } from '../../_lib/messageBus.js';
 import { normalizeFlowAIInput } from '../../../src/lib/flowai/unifiedRunInput.js';
+import { requireAuthHard } from '../../_lib/auth.js';
+import { createOperationalRun, getOperationalRun, publicRunError, updateOperationalRun } from '../../_lib/operationalRuns.js';
 
 const SYNC_TIMEOUT_MS = 25_000;
 const VERCEL_EXECUTE_HARD_TIMEOUT_MS = 800_000;
@@ -58,6 +60,8 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'method_not_allowed' });
   }
+  const auth = await requireAuthHard(req, res);
+  if (!auth) return;
 
   let body;
   try {
@@ -76,7 +80,7 @@ export default async function handler(req, res) {
   // to-end without an operator-registered product.
   const acceptHeader = String(req.headers?.accept || '').toLowerCase();
   if (acceptHeader.includes('text/event-stream')) {
-    return runSseOrchestration(req, res, body);
+    return runSseOrchestration(req, res, body, auth);
   }
 
   // Body validation.
@@ -111,17 +115,7 @@ export default async function handler(req, res) {
   }
 
   // RLS / auth gate.
-  const auth = resolveAuthContext(req);
-  if (!auth.ok) {
-    return res.status(auth.status).json({ ok: false, error: auth.error });
-  }
-  if (!auth.internal && auth.productScope !== productScope) {
-    return res.status(403).json({
-      ok: false,
-      error: 'productScope_mismatch',
-      detail: 'caller authenticated productScope differs from body productScope',
-    });
-  }
+  // productScope is workload input, never an authorization claim.
 
   // Async hand-off requested explicitly?
   const wantAsync = req.query?.async === '1' || req.query?.async === 1;
@@ -295,7 +289,19 @@ async function tryEnqueueInngest({ productScope, issue, mode, runId, sourceHints
 // the productScope-matching check is intentionally skipped here because
 // PATH B URLs have no registered product to match against. The dashboard
 // is the intended caller.
-async function runSseOrchestration(req, res, body) {
+async function runSseOrchestration(req, res, body, auth) {
+  let accepted;
+  try {
+    accepted = await createOperationalRun({
+      orgId: auth.orgId, userId: auth.userId,
+      idempotency: req.headers?.['idempotency-key'],
+      input: { mode: body.mode, url: body.url, product: body.productName || body.productDescription },
+    });
+  } catch (error) {
+    const status = error.code === 'IDEMPOTENCY_KEY_REQUIRED' ? 400 : 503;
+    return res.status(status).json({ ok: false, error: error.code || 'RUN_CREATE_FAILED' });
+  }
+  if (accepted.replayed) return res.status(409).json({ ok: false, error: 'RUN_ALREADY_ACCEPTED', run_id: accepted.run.id, status: accepted.run.status });
   // Set SSE headers BEFORE any writes so they're sent on first flush.
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -314,14 +320,6 @@ async function runSseOrchestration(req, res, body) {
     try { res.write('data: [DONE]\n\n'); res.end(); } catch { /* ignored */ }
   };
 
-  // Auth (relaxed for SSE — productScope-match check skipped).
-  const auth = resolveAuthContext(req);
-  if (!auth.ok) {
-    sendEvent({ type: 'error', error: auth.error, status: auth.status });
-    sendDone();
-    return;
-  }
-
   // Parse body fields with defaults per dispatch spec.
   const url = typeof body.url === 'string' && body.url.length > 0 ? body.url : null;
   const mode = ['auto', 'guided', 'manual'].includes(body.mode) ? body.mode : 'auto';
@@ -329,9 +327,7 @@ async function runSseOrchestration(req, res, body) {
     ? Math.min(body.maxIterations, SSE_MAX_ITERATIONS_HARD_CAP) : SSE_DEFAULT_MAX_ITERATIONS;
   const gtmTarget = Number.isFinite(body.gtmTarget) && body.gtmTarget >= 0 && body.gtmTarget <= 100
     ? body.gtmTarget : 95;
-  const runId = typeof body.runId === 'string' && body.runId.length > 0
-    ? body.runId
-    : `sse_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const runId = accepted.run.id;
   const runInput = buildSseRunInput(body, { url, mode });
 
   sendEvent({
@@ -345,6 +341,7 @@ async function runSseOrchestration(req, res, body) {
     },
     at: new Date().toISOString(),
   });
+  await updateOperationalRun(runId, auth, { status: 'running', startedAt: new Date().toISOString(), progressLabel: 'Worker started' });
 
   // ── Control bridge (DISPATCH 13 follow-up) ───────────────────────────────
   // The orchestrator exposes its OrchestrationState via deps.__exposeState;
@@ -382,15 +379,20 @@ async function runSseOrchestration(req, res, body) {
             // Pause = flip to guided so the orchestrator stops at next checkpoint.
             exposedState.switchMode('guided');
             sendEvent({ type: 'control_applied', command: 'pause', envelopeId: cmd.id, at: new Date().toISOString() });
+            await updateOperationalRun(runId, auth, { status: 'paused', progressLabel: 'Paused by operator' });
           } else if (cmd.command === 'resume') {
             exposedState.resume();
             sendEvent({ type: 'control_applied', command: 'resume', envelopeId: cmd.id, at: new Date().toISOString() });
+            await updateOperationalRun(runId, auth, { status: 'running', transitionReason: 'authorized_resume', progressLabel: 'Resumed by operator' });
           } else if (cmd.command === 'switchMode' && cmd.mode) {
             exposedState.switchMode(cmd.mode);
             sendEvent({ type: 'control_applied', command: 'switchMode', mode: cmd.mode, envelopeId: cmd.id, at: new Date().toISOString() });
           } else if (cmd.command === 'stop') {
+            const ledger = await getOperationalRun(runId, auth);
+            if (ledger?.status !== 'cancelling' || ledger.stopCommand?.id !== cmd.id || ledger.stopCommand?.acknowledged !== false) return;
             exposedState.stop();
             sendEvent({ type: 'control_applied', command: 'stop', envelopeId: cmd.id, at: new Date().toISOString() });
+            await updateOperationalRun(runId, auth, { status: 'cancelled', expectedControlCommandId: cmd.id, stopAcknowledgedAt: new Date().toISOString(), stopCommand: { ...ledger.stopCommand, acknowledged: true }, completedAt: new Date().toISOString(), progressLabel: 'Cancelled by operator' });
           }
         } catch { /* state method missing or already-disposed; ignore */ }
       }, 500);
@@ -454,7 +456,9 @@ async function runSseOrchestration(req, res, body) {
     if (controlPoller) clearInterval(controlPoller);
     if (heartbeat) clearInterval(heartbeat);
     if (softTimeout) clearTimeout(softTimeout);
-    sendEvent({ type: 'error', error: e?.message ?? String(e), code: e?.code ?? 'ORCHESTRATION_FAILED' });
+    const safeError = publicRunError(e?.code);
+    sendEvent({ type: 'error', error: safeError.message, code: safeError.code });
+    await updateOperationalRun(runId, auth, { status: 'failed', completedAt: new Date().toISOString(), error: safeError, progressLabel: 'Run failed' });
     sendDone();
     return;
   }
@@ -464,6 +468,7 @@ async function runSseOrchestration(req, res, body) {
   if (heartbeat) clearInterval(heartbeat);
   if (softTimeout) clearTimeout(softTimeout);
   sendEvent({ type: 'final', result });
+  await updateOperationalRun(runId, auth, { status: result?.ok === false ? 'failed' : 'completed', completedAt: new Date().toISOString(), error: result?.ok === false ? publicRunError(result?.code) : null, progressLabel: result?.ok === false ? 'Run failed' : 'Completed' });
   sendDone();
 }
 
