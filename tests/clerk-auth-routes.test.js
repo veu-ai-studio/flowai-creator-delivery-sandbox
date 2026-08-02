@@ -52,10 +52,10 @@ describe('Clerk auth routes', () => {
     expect(html).not.toMatch(/page not found|landing/i);
   });
 
-  it('wires /sign-up and /sign-in to ClerkAuthPage in the app router', () => {
+  it('wires Clerk base and nested auth paths to ClerkAuthPage in the app router', () => {
     const appSource = readFileSync(resolve(process.cwd(), 'src/App.jsx'), 'utf8');
-    expect(appSource).toContain('<Route path="/sign-up" element={<ClerkAuthPage mode="sign-up" />} />');
-    expect(appSource).toContain('<Route path="/sign-in" element={<ClerkAuthPage mode="sign-in" />} />');
+    expect(appSource).toContain('<Route path="/sign-up/*" element={<ClerkAuthPage mode="sign-up" />} />');
+    expect(appSource).toContain('<Route path="/sign-in/*" element={<ClerkAuthPage mode="sign-in" />} />');
   });
 
   it('fails visibly when the frontend publishable key is absent', () => {

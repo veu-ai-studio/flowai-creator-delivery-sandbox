@@ -283,8 +283,8 @@ const AuthenticatedApp = () => {
         <Route path="/creator-studio" element={<Navigate to="/configuration" replace />} />
         <Route path="/my-creations" element={<MyCreations />} />
       </Route>
-      <Route path="/sign-up" element={<ClerkAuthPage mode="sign-up" />} />
-      <Route path="/sign-in" element={<ClerkAuthPage mode="sign-in" />} />
+      <Route path="/sign-up/*" element={<ClerkAuthPage mode="sign-up" />} />
+      <Route path="/sign-in/*" element={<ClerkAuthPage mode="sign-in" />} />
       <Route path="/sign-in-token" element={<ClerkTicketSignInPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/landing" element={<MarketingPage />} />
