@@ -95,6 +95,14 @@ export function isClerkConfigured() {
   return Boolean(process.env.CLERK_SECRET_KEY);
 }
 
+export function extractActiveOrganization(session = {}) {
+  const compactOrg = session?.o && typeof session.o === 'object' ? session.o : {};
+  return {
+    id: session.org_id || session.orgId || compactOrg.id || null,
+    role: session.org_role || session.orgRole || compactOrg.rol || null,
+  };
+}
+
 function extractToken(req) {
   const auth = req.headers?.authorization || req.headers?.Authorization;
   if (auth && auth.startsWith('Bearer ')) return auth.slice(7);
@@ -146,8 +154,7 @@ export async function getRequestContext(req) {
   // 2. Verified Clerk session.
   const session = await verifySession(req);
   if (session) {
-    const activeOrgId = session.org_id || session.orgId || null;
-    const activeOrgRole = session.org_role || session.orgRole || null;
+    const { id: activeOrgId, role: activeOrgRole } = extractActiveOrganization(session);
     return {
       authenticated: true,
       authMode: 'clerk',
@@ -211,12 +218,16 @@ export function isOperatorContext(ctx) {
     session.role,
     session.org_role,
     session.orgRole,
+    session.o?.rol,
     session.publicMetadata?.role,
     session.privateMetadata?.role,
     session.metadata?.role,
     session.claims?.role,
   ].filter(Boolean);
-  return candidates.some((role) => ['admin', 'operator', 'owner'].includes(String(role).toLowerCase()));
+  return candidates.some((role) => {
+    const normalized = String(role).toLowerCase().replace(/^org:/, '');
+    return ['admin', 'operator', 'owner'].includes(normalized);
+  });
 }
 
 function getHeader(req, name) {

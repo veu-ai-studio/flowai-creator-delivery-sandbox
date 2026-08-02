@@ -79,6 +79,7 @@ describe('GET /api/me Clerk bearer path', () => {
     const verifyToken = vi.fn(async () => ({
       sub: 'redacted-user-id-for-test',
       org_id: 'redacted-org-id-for-test',
+      org_role: 'org:admin',
     }));
     vi.doMock('@clerk/clerk-sdk-node', () => ({
       createClerkClient: vi.fn(() => ({ verifyToken })),
@@ -103,6 +104,7 @@ describe('GET /api/me Clerk bearer path', () => {
     expect(out.body).toMatchObject({
       authenticated: true,
       authMode: 'clerk',
+      orgId: 'redacted-org-id-for-test',
       config: {
         authRequired: false,
         clerkConfigured: true,
@@ -110,6 +112,37 @@ describe('GET /api/me Clerk bearer path', () => {
     });
     expect(typeof out.body.userId).toBe('string');
     expect(verifyToken).toHaveBeenCalledWith('<redacted-clerk-session-token>');
+  });
+
+  it('accepts Clerk compact organization claims from current session tokens', async () => {
+    const verifyToken = vi.fn(async () => ({
+      sub: 'redacted-user-id-for-test',
+      o: { id: 'redacted-compact-org-id', rol: 'admin' },
+    }));
+    vi.doMock('@clerk/clerk-sdk-node', () => ({
+      createClerkClient: vi.fn(() => ({ verifyToken })),
+    }));
+    process.env.CLERK_SECRET_KEY = 'sk_test_redacted_for_unit';
+
+    const { default: handler } = await import('../api/me.js');
+    const req = {
+      method: 'GET',
+      headers: { authorization: 'Bearer <redacted-compact-session-token>' },
+      query: {},
+    };
+    const res = makeRes();
+
+    await handler(req, res);
+
+    expect(res._get()).toMatchObject({
+      statusCode: 200,
+      body: {
+        authenticated: true,
+        authMode: 'clerk',
+        userId: 'redacted-user-id-for-test',
+        orgId: 'redacted-compact-org-id',
+      },
+    });
   });
 
   it('preserves anonymous /api/me behavior when no bearer token is present', async () => {
