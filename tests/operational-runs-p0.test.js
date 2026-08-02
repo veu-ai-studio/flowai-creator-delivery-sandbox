@@ -1,0 +1,39 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { createOperationalRun, getOperationalRun, listOperationalRuns, resetOperationalRunsForTests, updateOperationalRun } from '../api/_lib/operationalRuns.js';
+
+const owner = { orgId: 'org_a', userId: 'user_a' };
+beforeEach(() => { process.env.NODE_ENV = 'test'; delete process.env.KV_REST_API_URL; delete process.env.KV_REST_API_TOKEN; resetOperationalRunsForTests(); });
+
+describe('operational run ledger', () => {
+  it('creates an immediately visible stable id and deduplicates owner replay', async () => {
+    const first = await createOperationalRun({ ...owner, idempotency: 'request-12345678', input: { mode: 'guided' } });
+    const replay = await createOperationalRun({ ...owner, idempotency: 'request-12345678', input: { mode: 'guided' } });
+    expect(replay.replayed).toBe(true);
+    expect(replay.run.id).toBe(first.run.id);
+    expect(await listOperationalRuns(owner)).toEqual([first.run]);
+  });
+
+  it('scopes replay and reads to tenant plus owning user', async () => {
+    const a = await createOperationalRun({ ...owner, idempotency: 'shared-request1' });
+    const b = await createOperationalRun({ orgId: owner.orgId, userId: 'user_b', idempotency: 'shared-request1' });
+    expect(b.run.id).not.toBe(a.run.id);
+    expect(await getOperationalRun(a.run.id, { ...owner, userId: 'user_b' })).toBeNull();
+  });
+
+  it('prevents implicit resume and terminal resurrection', async () => {
+    const { run } = await createOperationalRun({ ...owner, idempotency: 'state-request1' });
+    await updateOperationalRun(run.id, owner, { status: 'running' });
+    await updateOperationalRun(run.id, owner, { status: 'paused' });
+    expect((await updateOperationalRun(run.id, owner, { status: 'running' })).transitionRejected).toBe(true);
+    await updateOperationalRun(run.id, owner, { status: 'running', transitionReason: 'authorized_resume' });
+    await updateOperationalRun(run.id, owner, { status: 'completed' });
+    const late = await updateOperationalRun(run.id, owner, { status: 'failed' });
+    expect(late.status).toBe('completed');
+    expect(late.transitionRejected).toBe(true);
+  });
+
+  it('fails closed in production without durable storage', async () => {
+    process.env.NODE_ENV = 'production'; resetOperationalRunsForTests();
+    await expect(createOperationalRun({ ...owner, idempotency: 'durable-request' })).rejects.toMatchObject({ code: 'RUN_STORE_NOT_LIVE' });
+  });
+});
