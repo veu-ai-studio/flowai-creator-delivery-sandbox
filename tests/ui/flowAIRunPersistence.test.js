@@ -22,8 +22,11 @@ describe('FlowAI run persistence and active indicator', () => {
   });
 
   it('renders FlowAI runs on the /runs history page with required fields', () => {
-    expect(runsHistorySource).toContain('listFlowAIRuns');
-    expect(runsHistorySource).toContain('subscribeFlowAIRuns');
+    expect(runsHistorySource).toContain("fetch('/api/runs'");
+    expect(runsHistorySource).not.toContain('listFlowAIRuns');
+    expect(runsHistorySource).not.toContain('subscribeFlowAIRuns');
+    expect(runsHistorySource).not.toContain('base44.entities');
+    expect(runsHistorySource).toContain('History unavailable');
     expect(runsHistorySource).toContain('run_id');
     expect(runsHistorySource).toContain('ended_at');
     expect(runsHistorySource).toContain('branch_created');

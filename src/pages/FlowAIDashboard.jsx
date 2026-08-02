@@ -596,7 +596,8 @@ export default function FlowAIDashboard() {
       setErrorMsg('Add a product description or pasted content before launching this run.');
       return;
     }
-    const localRunId = `local_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const localRunId = `pending_${crypto.randomUUID()}`;
+    const idempotencyKey = crypto.randomUUID();
     let trackedRunId = localRunId;
     upsertFlowAIRun({
       id: localRunId,
@@ -625,7 +626,7 @@ export default function FlowAIDashboard() {
           // SSE branch in execute.js requires SOME auth context. The
           // dashboard claims its own scope; the SSE handler skips the
           // productScope-match enforcement that the JSON path does.
-          'x-product-scope': 'flowai-dashboard',
+          'Idempotency-Key': idempotencyKey,
         },
         body: JSON.stringify({
           url: inputPayload.url,
@@ -800,7 +801,7 @@ export default function FlowAIDashboard() {
     try {
       const resp = await fetch('/api/agent/3/control', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-product-scope': 'flowai-dashboard' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ runId, command, mode: modeArg }),
       });
       if (!resp.ok) {

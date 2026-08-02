@@ -169,35 +169,35 @@ const AuthenticatedApp = () => {
       <Route element={<AppLayout />}>
         <Route path="/" element={<LegacyFlowHubRedirect />} />
         <Route path="/flow-hub" element={<Navigate to="/flow-hub/production" replace />} />
-        <Route path="/flow-hub/production" element={<LandingPage />} />
+        <Route path="/flow-hub/production" element={<RequireAuth><LandingPage /></RequireAuth>} />
         <Route path="/flow-hub/migration" element={<LandingPage />} />
         <Route path="/flow-hub/fresh-build" element={<LandingPage />} />
-        <Route path="/flowai" element={<FlowAIDashboard />} />
-        <Route path="/forge/research" element={<ForgeResearchForm />} />
-        <Route path="/forge/design" element={<ForgeDesignForm />} />
-        <Route path="/forge/build" element={<ForgeBuildForm />} />
+        <Route path="/flowai" element={<RequireAuth><FlowAIDashboard /></RequireAuth>} />
+        <Route path="/forge/research" element={<RequireAuth><ForgeResearchForm /></RequireAuth>} />
+        <Route path="/forge/design" element={<RequireAuth><ForgeDesignForm /></RequireAuth>} />
+        <Route path="/forge/build" element={<RequireAuth><ForgeBuildForm /></RequireAuth>} />
         <Route path="/forge/audit" element={<Navigate to="/forge/quality-audit" replace />} />
-        <Route path="/forge/quality-audit" element={<ForgeAuditForm />} />
-        <Route path="/forge/deploy" element={<ForgeDeployForm />} />
-        <Route path="/forge/self-renewal" element={<ForgeRenewalForm />} />
-        <Route path="/forge/gtm" element={<ForgeGTMForm />} />
-        <Route path="/forge/monitor" element={<ForgeMonitorForm />} />
+        <Route path="/forge/quality-audit" element={<RequireAuth><ForgeAuditForm /></RequireAuth>} />
+        <Route path="/forge/deploy" element={<RequireAuth><ForgeDeployForm /></RequireAuth>} />
+        <Route path="/forge/self-renewal" element={<RequireAuth><ForgeRenewalForm /></RequireAuth>} />
+        <Route path="/forge/gtm" element={<RequireAuth><ForgeGTMForm /></RequireAuth>} />
+        <Route path="/forge/monitor" element={<RequireAuth><ForgeMonitorForm /></RequireAuth>} />
         <Route path="/old-dashboard" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="/flow-designer" element={<FlowDesigner />} />
-        <Route path="/run-flow" element={<RunFlow />} />
+        <Route path="/run-flow" element={<RequireAuth><RunFlow /></RequireAuth>} />
         <Route path="/flows" element={<Flows />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/run-history" element={<RunHistory />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/variables" element={<Variables />} />
         <Route path="/qa-audit" element={<QAAudit />} />
-        <Route path="/research" element={<Research />} />
-        <Route path="/design" element={<Design />} />
-        <Route path="/build" element={<Build />} />
-        <Route path="/pipeline" element={<Pipeline />} />
+        <Route path="/research" element={<RequireAuth><Research /></RequireAuth>} />
+        <Route path="/design" element={<RequireAuth><Design /></RequireAuth>} />
+        <Route path="/build" element={<RequireAuth><Build /></RequireAuth>} />
+        <Route path="/pipeline" element={<RequireAuth><Pipeline /></RequireAuth>} />
         <Route path="/gtm" element={<GTMPlatform />} />
-        <Route path="/realtime" element={<RealtimeDashboard />} />
+        <Route path="/realtime" element={<RequireAuth><RealtimeDashboard /></RequireAuth>} />
         <Route path="/templates-library" element={<ProjectTemplates />} />
         <Route path="/billing" element={<Billing />} />
         <Route path="/activity" element={<ActivityLog />} />
@@ -233,14 +233,14 @@ const AuthenticatedApp = () => {
         <Route path="/my-stack" element={<MyStack />} />
         <Route path="/clearance" element={<Clearance />} />
         {/* NEW ROUTES — UX-C */}
-        <Route path="/dashboard" element={<MainDashboard />} />
-        <Route path="/configuration" element={<Configuration />} />
-        <Route path="/workspace" element={<Workspace />} />
+        <Route path="/dashboard" element={<RequireAuth><MainDashboard /></RequireAuth>} />
+        <Route path="/configuration" element={<RequireAuth><Configuration /></RequireAuth>} />
+        <Route path="/workspace" element={<RequireAuth><Workspace /></RequireAuth>} />
         <Route path="/my-products" element={<MyCreations />} />
         <Route path="/auto-runner" element={<RequireAuth><AutoRunner /></RequireAuth>} />
-        <Route path="/renewal" element={<Renewal />} />
-        <Route path="/guided/:step" element={<GuidedStep />} />
-        <Route path="/manual/:step" element={<ManualStep />} />
+        <Route path="/renewal" element={<RequireAuth><Renewal /></RequireAuth>} />
+        <Route path="/guided/:step" element={<RequireAuth><GuidedStep /></RequireAuth>} />
+        <Route path="/manual/:step" element={<RequireAuth><ManualStep /></RequireAuth>} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/release-notes" element={<ReleaseNotes />} />
         <Route path="/users" element={<UsersStub />} />
@@ -260,7 +260,7 @@ const AuthenticatedApp = () => {
         <Route path="/products" element={<ProductRegistry />} />
         <Route path="/product-registry" element={<Navigate to="/products" replace />} />
         <Route path="/registry" element={<Navigate to="/products" replace />} />
-        <Route path="/runs" element={<RunsHistory />} />
+        <Route path="/runs" element={<RequireAuth><RunsHistory /></RequireAuth>} />
         <Route path="/session-history" element={<Navigate to="/runs" replace />} />
         <Route path="/sessions" element={<Navigate to="/runs" replace />} />
         <Route path="/settings" element={<OrgSettings />} />

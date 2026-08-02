@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import {
   Play, Search, ChevronDown, ChevronUp,
@@ -8,16 +7,20 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { FLOWAI_MACRO_STEPS, listFlowAIRuns, subscribeFlowAIRuns } from '@/lib/flowaiRunStore';
-import { asArray, resolveArray } from '@/lib/uiDataGuards';
+import { FLOWAI_MACRO_STEPS } from '@/lib/flowaiRunStore';
+import { asArray } from '@/lib/uiDataGuards';
 
 const STATUS_CFG = {
+  queued:    { label: 'Queued',       color: 'text-slate-400',    bg: 'bg-slate-400/10',    icon: Loader2 },
   running:   { label: 'Running',      color: 'text-blue-400',     bg: 'bg-blue-400/10',     icon: Loader2 },
   completed: { label: 'Completed',    color: 'text-emerald-400',  bg: 'bg-emerald-400/10',  icon: CheckCircle2 },
   failed:    { label: 'Failed',       color: 'text-red-400',      bg: 'bg-red-400/10',      icon: XCircle },
   timed_out: { label: 'Timed out',     color: 'text-amber-400',    bg: 'bg-amber-400/10',    icon: AlertTriangle },
   stopped:   { label: 'Stopped',       color: 'text-slate-400',    bg: 'bg-slate-400/10',    icon: XCircle },
   paused:    { label: 'Paused',       color: 'text-amber-400',    bg: 'bg-amber-400/10',    icon: AlertTriangle },
+  cancelling:{ label: 'Cancelling',   color: 'text-amber-400',    bg: 'bg-amber-400/10',    icon: Loader2 },
+  cancelled: { label: 'Cancelled',    color: 'text-slate-400',    bg: 'bg-slate-400/10',    icon: XCircle },
+  control_failed:{ label: 'Control failed', color: 'text-red-400', bg: 'bg-red-400/10', icon: AlertTriangle },
 };
 
 const VERDICT_CFG = {
@@ -147,6 +150,7 @@ export default function RunsHistory() {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [historyError, setHistoryError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
@@ -156,35 +160,28 @@ export default function RunsHistory() {
     const load = async () => {
       setLoading(true);
       try {
-        const flowai = asArray(listFlowAIRuns()).map(mapFlowAIRun);
-        const [auto, guided] = await Promise.all([
-          resolveArray(base44.entities.AutoSession.list('-started_at', 100)),
-          resolveArray(base44.entities.GuidedSession.list('-last_active_at', 100)),
-        ]);
+        const response = await fetch('/api/runs', { credentials: 'same-origin' });
+        if (!response.ok) throw new Error(`History unavailable (${response.status})`);
+        const payload = await response.json();
+        const flowai = asArray(payload.runs).map(run => mapFlowAIRun({
+          id: run.id, runId: run.id, product: run.product, productUrl: run.url,
+          startTime: run.startedAt || run.createdAt, endTime: run.completedAt,
+          status: run.status, progressLabel: run.progressLabel,
+        }));
         if (cancelled) return;
-        const all = [
-          ...flowai,
-          ...auto.map(s => ({ ...s, _type: 'auto' })),
-          ...guided.map(s => ({ ...s, _type: 'guided' })),
-        ].sort((a, b) => new Date(b.started_at || b.created_date || 0) - new Date(a.started_at || a.created_date || 0));
-        setSessions(all);
+        setSessions(flowai);
+        setHistoryError('');
+      } catch (error) {
+        if (!cancelled) setHistoryError(error?.message || 'Run history is unavailable.');
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
     load();
-    const unsubscribe = subscribeFlowAIRuns((runs) => {
-      setSessions((prev) => {
-        const nonFlowAI = asArray(prev).filter((session) => session._type !== 'flowai');
-        return [
-          ...asArray(runs).map(mapFlowAIRun),
-          ...nonFlowAI,
-        ].sort((a, b) => new Date(b.started_at || b.created_date || 0) - new Date(a.started_at || a.created_date || 0));
-      });
-    });
+    const refresh = window.setInterval(load, 5000);
     return () => {
       cancelled = true;
-      unsubscribe();
+      window.clearInterval(refresh);
     };
   }, []);
 
@@ -199,7 +196,7 @@ export default function RunsHistory() {
 
   const stats = {
     total: safeSessions.length,
-    running: safeSessions.filter(s => s.overall_status === 'running').length,
+    running: safeSessions.filter(s => ['queued', 'running', 'paused', 'cancelling'].includes(s.overall_status)).length,
     completed: safeSessions.filter(s => s.overall_status === 'completed').length,
     failed: safeSessions.filter(s => s.overall_status === 'failed').length,
     timedOut: safeSessions.filter(s => s.overall_status === 'timed_out').length,
@@ -240,14 +237,20 @@ export default function RunsHistory() {
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
           className="h-8 text-xs rounded-md border border-input bg-background px-2 text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
           <option value="all">All Statuses</option>
+          <option value="queued">Queued</option>
           <option value="running">Running</option>
           <option value="completed">Completed</option>
           <option value="failed">Failed</option>
           <option value="timed_out">Timed out</option>
           <option value="stopped">Stopped</option>
           <option value="paused">Paused</option>
+          <option value="cancelling">Cancelling</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="control_failed">Control failed</option>
         </select>
       </div>
+
+      {historyError && <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{historyError}</div>}
 
       {/* Table */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
