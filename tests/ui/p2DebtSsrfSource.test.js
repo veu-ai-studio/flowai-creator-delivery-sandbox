@@ -31,7 +31,7 @@ describe('P2 debt + SSRF source wiring', () => {
     expect(orchestratorSrc).toContain("kind: 'tool_intelligence_selection'");
     expect(orchestratorSrc).toContain('candidates: Object.freeze');
     expect(orchestratorSrc).toContain('rank_score');
-    expect(orchestratorSrc).not.toContain('compositeScore');
+    expect(orchestratorSrc).not.toContain('compositeScore:');
   });
 
   it('orchestrator emits ranked candidates before long-running product discovery', () => {

@@ -8,7 +8,7 @@ const runnerSrc = readFileSync('src/lib/forge/deployRunner.js', 'utf8');
 describe('Forge Deploy route and UI contract', () => {
   it('wires /forge/deploy to the Deploy Forge page', () => {
     expect(appSrc).toContain("import ForgeDeployForm from './pages/ForgeDeployForm'");
-    expect(appSrc).toContain('<Route path="/forge/deploy" element={<ForgeDeployForm />} />');
+    expect(appSrc).toContain('<Route path="/forge/deploy" element={<RequireAuth><ForgeDeployForm /></RequireAuth>} />');
   });
 
   it('requires operator approval before deploy handoff', () => {

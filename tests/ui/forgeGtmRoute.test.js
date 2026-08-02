@@ -8,7 +8,7 @@ const runnerSrc = readFileSync('src/lib/forge/gtmRunner.js', 'utf8');
 describe('Forge GTM route and UI contract', () => {
   it('wires /forge/gtm to the GTM Forge page', () => {
     expect(appSrc).toContain("import ForgeGTMForm from './pages/ForgeGTMForm'");
-    expect(appSrc).toContain('<Route path="/forge/gtm" element={<ForgeGTMForm />} />');
+    expect(appSrc).toContain('<Route path="/forge/gtm" element={<RequireAuth><ForgeGTMForm /></RequireAuth>} />');
   });
 
   it('uses the canonical readiness scorer and requires a human decision', () => {

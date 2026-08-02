@@ -26,11 +26,11 @@ describe('sidebar page data resilience', () => {
     vi.useRealTimers();
   });
 
-  it('keeps Pipeline Run History from spinning forever on Base44 list calls', () => {
+  it('keeps authoritative Pipeline Run History from spinning forever on API failure', () => {
     const source = read('src/pages/RunsHistory.jsx');
-    expect(source).toContain("import { asArray, resolveArray } from '@/lib/uiDataGuards';");
-    expect(source).toContain("resolveArray(base44.entities.AutoSession.list('-started_at', 100))");
-    expect(source).toContain("resolveArray(base44.entities.GuidedSession.list('-last_active_at', 100))");
+    expect(source).toContain("fetch('/api/runs'");
+    expect(source).not.toContain('base44.entities');
+    expect(source).toContain('setHistoryError');
     expect(source).toContain("finally");
     expect(source).toContain("if (!cancelled) setLoading(false)");
     expect(source).toContain("const safeSessions = asArray(sessions)");

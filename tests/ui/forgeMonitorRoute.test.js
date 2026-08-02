@@ -8,7 +8,7 @@ const runnerSrc = readFileSync('src/lib/forge/monitorRunner.js', 'utf8');
 describe('Forge Monitor route and UI contract', () => {
   it('wires /forge/monitor to the Monitor Forge page', () => {
     expect(appSrc).toContain("import ForgeMonitorForm from './pages/ForgeMonitorForm'");
-    expect(appSrc).toContain('<Route path="/forge/monitor" element={<ForgeMonitorForm />} />');
+    expect(appSrc).toContain('<Route path="/forge/monitor" element={<RequireAuth><ForgeMonitorForm /></RequireAuth>} />');
   });
 
   it('does not mark healthy without a monitor adapter live check', () => {

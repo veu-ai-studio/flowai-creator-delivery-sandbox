@@ -19,10 +19,10 @@ describe('FlowAI unified operating system shell', () => {
   it('splits Flow Hub Production and Workspace into distinct routes', () => {
     expect(appSrc).toMatch(/path="\/"\s+element=\{<LegacyFlowHubRedirect \/>/);
     expect(appSrc).toMatch(/path="\/flow-hub"\s+element=\{<Navigate to="\/flow-hub\/production" replace \/>/);
-    expect(appSrc).toMatch(/path="\/flow-hub\/production"\s+element=\{<LandingPage \/>/);
+    expect(appSrc).toMatch(/path="\/flow-hub\/production"\s+element=\{<RequireAuth><LandingPage \/><\/RequireAuth>/);
     expect(appSrc).toMatch(/path="\/flow-hub\/migration"\s+element=\{<LandingPage \/>/);
-    expect(appSrc).toMatch(/path="\/flowai"\s+element=\{<FlowAIDashboard \/>/);
-    expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<Workspace \/>/);
+    expect(appSrc).toMatch(/path="\/flowai"\s+element=\{<RequireAuth><FlowAIDashboard \/><\/RequireAuth>/);
+    expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<RequireAuth><Workspace \/><\/RequireAuth>/);
     expect(workspaceSrc).toContain('8-step upgrade pipeline');
     expect(workspaceSrc).toContain('Original Product');
     expect(workspaceSrc).toContain('Upgraded Version');
@@ -141,7 +141,7 @@ describe('FlowAI unified operating system shell', () => {
   it('guards Flow Hub route shell arrays before rendering active run and job panels', () => {
     const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
 
-    expect(appSrc).toMatch(/path="\/flow-hub\/production"\s+element=\{<LandingPage \/>/);
+    expect(appSrc).toMatch(/path="\/flow-hub\/production"\s+element=\{<RequireAuth><LandingPage \/><\/RequireAuth>/);
     expect(appSrc).toMatch(/path="\/flow-hub\/migration"\s+element=\{<LandingPage \/>/);
     expect(appLayoutSrc).toContain('<ActiveRunIndicator />');
     expect(appLayoutSrc).toContain('<ActiveJobsPanel />');
@@ -198,7 +198,7 @@ describe('FlowAI unified operating system shell', () => {
   });
 
   it('keeps the FlowAI run page inside AppLayout with visible 8-step run progress', () => {
-    expect(appSrc).toMatch(/<Route element=\{<AppLayout \/>\}>[\s\S]*path="\/flowai"\s+element=\{<FlowAIDashboard \/>/);
+    expect(appSrc).toMatch(/<Route element=\{<AppLayout \/>\}>[\s\S]*path="\/flowai"\s+element=\{<RequireAuth><FlowAIDashboard \/><\/RequireAuth>/);
     expect(dashboardSrc).toContain('PipelineProgressTracker');
     expect(dashboardSrc).toContain('8-Step Pipeline');
     expect(dashboardSrc).toContain('Research');

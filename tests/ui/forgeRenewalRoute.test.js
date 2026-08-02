@@ -8,7 +8,7 @@ const runnerSrc = readFileSync('src/lib/forge/renewalRunner.js', 'utf8');
 describe('Forge Self-Renewal route and UI contract', () => {
   it('wires /forge/self-renewal to the Self-Renewal Forge page', () => {
     expect(appSrc).toContain("import ForgeRenewalForm from './pages/ForgeRenewalForm'");
-    expect(appSrc).toContain('<Route path="/forge/self-renewal" element={<ForgeRenewalForm />} />');
+    expect(appSrc).toContain('<Route path="/forge/self-renewal" element={<RequireAuth><ForgeRenewalForm /></RequireAuth>} />');
   });
 
   it('wraps Agent #3 recommend-only behavior without silent mutation', () => {
