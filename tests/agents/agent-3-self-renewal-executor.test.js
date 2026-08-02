@@ -470,6 +470,17 @@ describe('GovernanceAuditLog emission', () => {
 // ────────────────────────────────────────────────────────────────────────────
 
 describe('/api/agent/3/execute sync endpoint', () => {
+  const authenticatedHeaders = {
+    'x-flowai-service-key': 'service-test',
+    'x-flowai-org-id': 'org-test',
+    'x-flowai-user-id': 'user-test',
+  };
+
+  beforeEach(() => {
+    process.env.NODE_ENV = 'test';
+    process.env.FLOWAI_SERVICE_KEY = 'service-test';
+  });
+
   function mockRes() {
     const r = {
       statusCode: 200,
@@ -492,7 +503,7 @@ describe('/api/agent/3/execute sync endpoint', () => {
     const res = mockRes();
     await handler({
       method: 'POST',
-      headers: { 'x-product-scope': 'flowai' },
+      headers: authenticatedHeaders,
       query: {},
       body: { issue: makeIssue(), mode: 'recommend_only' },
     }, res);
@@ -504,7 +515,7 @@ describe('/api/agent/3/execute sync endpoint', () => {
     const res = mockRes();
     await handler({
       method: 'POST',
-      headers: { 'x-product-scope': 'flowai' },
+      headers: authenticatedHeaders,
       query: {},
       body: { productScope: 'flowai', issue: makeIssue(), mode: 'rogue' },
     }, res);
@@ -523,7 +534,7 @@ describe('/api/agent/3/execute sync endpoint', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('T-E2: 403 when x-product-scope claim differs from body productScope', async () => {
+  it('T-E2: 401 when a request-controlled product scope is presented without auth', async () => {
     const res = mockRes();
     await handler({
       method: 'POST',
@@ -531,15 +542,15 @@ describe('/api/agent/3/execute sync endpoint', () => {
       query: {},
       body: { productScope: 'flowai', issue: makeIssue(), mode: 'recommend_only' },
     }, res);
-    expect(res.statusCode).toBe(403);
-    expect(res._body.error).toBe('productScope_mismatch');
+    expect(res.statusCode).toBe(401);
+    expect(res._body.error).toBe('Authentication required');
   });
 
   it('T-E3: 200 with envelope on recommend_only happy path', async () => {
     const res = mockRes();
     await handler({
       method: 'POST',
-      headers: { 'x-product-scope': 'flowai' },
+      headers: authenticatedHeaders,
       query: {},
       body: { productScope: 'flowai', issue: makeIssue(), mode: 'recommend_only' },
     }, res);
