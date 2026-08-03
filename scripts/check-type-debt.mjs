@@ -111,7 +111,7 @@ export function main(argv = process.argv.slice(2)) {
     const payload = {
       schemaVersion: 1,
       policy: 'Existing diagnostics are explicit debt. Any addition fails; any resolution requires a reviewed baseline ratchet before release.',
-      strictCommand: 'npm run typecheck:strict',
+      strictCommand: 'npm run typecheck',
       reviewRef,
       diagnostics: current,
     };

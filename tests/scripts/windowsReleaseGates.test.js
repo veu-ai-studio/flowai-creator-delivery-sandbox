@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
-import { runGate, runReleaseGates } from '../../scripts/run-windows-release-gates.mjs';
+import { RELEASE_GATES, runGate, runReleaseGates } from '../../scripts/run-windows-release-gates.mjs';
 
 function spawning(exitCodes) {
   const calls = [];
@@ -15,6 +15,12 @@ function spawning(exitCodes) {
 }
 
 describe('Windows release gate runner', () => {
+  it('runs debt non-regression separately before preserving strict typecheck truth', () => {
+    expect(RELEASE_GATES.slice(1, 3)).toEqual([
+      { name: 'typecheck:debt', command: 'npm', args: ['run', 'typecheck:debt'] },
+      { name: 'typecheck', command: 'npm', args: ['run', 'typecheck'] },
+    ]);
+  });
   it('uses Windows executables, terminates, and preserves a genuine failure code', async () => {
     const { calls, spawnImpl } = spawning([7]);
     const result = await runGate(

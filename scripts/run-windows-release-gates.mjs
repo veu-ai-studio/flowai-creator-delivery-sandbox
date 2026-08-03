@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 export const RELEASE_GATES = Object.freeze([
   { name: 'lint', command: 'npm', args: ['run', 'lint'] },
+  { name: 'typecheck:debt', command: 'npm', args: ['run', 'typecheck:debt'] },
   { name: 'typecheck', command: 'npm', args: ['run', 'typecheck'] },
   { name: 'build:preflight', command: 'npm', args: ['run', 'build:preflight'] },
   { name: 'vitest', command: 'npm', args: ['exec', '--no', '--', 'vitest', 'run'] },
