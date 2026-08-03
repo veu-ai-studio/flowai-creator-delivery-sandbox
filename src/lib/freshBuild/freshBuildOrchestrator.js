@@ -179,21 +179,17 @@ async function defaultScoreFreshBuildPreview({
   evaluationOptions,
   onStep,
 } = {}) {
-  if (!baselineUrl || !/^https?:\/\//i.test(String(baselineUrl))) {
-    return {
-      scoreStatus: SCORE_STATUS.NOT_CONFIGURED,
-      baselineScore: null,
-      finalScore: null,
-    };
-  }
+  const hasBaseline = Boolean(baselineUrl && /^https?:\/\//i.test(String(baselineUrl)));
   const [baseline, final] = await Promise.all([
-    evaluateUrlScore({ url: baselineUrl, runId, evaluationOptions, onStep }),
+    hasBaseline
+      ? evaluateUrlScore({ url: baselineUrl, runId, evaluationOptions, onStep })
+      : Promise.resolve(null),
     evaluateUrlScore({ url: previewUrl, runId, evaluationOptions, onStep }),
   ]);
   return {
-    baselineScore: baseline.score,
+    baselineScore: baseline?.score ?? null,
     finalScore: final.score,
-    baselineFindingsCount: baseline.findingsCount,
+    baselineFindingsCount: baseline?.findingsCount ?? null,
     finalFindingsCount: final.findingsCount,
   };
 }
@@ -261,7 +257,7 @@ async function captureFreshBuildScore({
     }
     const baselineScore = numericScore(score?.baselineScore ?? score?.baseline);
     const finalScore = numericScore(score?.finalScore ?? score?.final);
-    if (baselineScore === null || finalScore === null) {
+    if (finalScore === null) {
       return {
         scoreStatus: SCORE_STATUS.FAILED,
         baselineScore: null,
@@ -274,7 +270,7 @@ async function captureFreshBuildScore({
       scoreStatus: SCORE_STATUS.CAPTURED,
       baselineScore,
       finalScore,
-      scoreDelta: finalScore - baselineScore,
+      scoreDelta: baselineScore === null ? null : finalScore - baselineScore,
     };
   } catch (error) {
     if (error?.name === 'AbortError' || error?.code === 'RUN_CANCELLED') throw error;

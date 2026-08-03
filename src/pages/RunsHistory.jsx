@@ -53,6 +53,8 @@ function mapFlowAIRun(run) {
     verdict: run.verdict,
     run_id: run.runId,
     branch_created: run.branchCreated,
+    preview_url: run.previewUrl || run.upgradedUrl || null,
+    branch_url: run.branchUrl || null,
     progress_label: run.progressLabel,
     error: run.error || null,
     step_results: run.stepResults || {},
@@ -125,6 +127,12 @@ function RunRow({ session, onClick, isExpanded, onStop, stopping }) {
                     </div>
                   ))}
                 </div>
+                {session.preview_url && (
+                  <a href={session.preview_url} target="_blank" rel="noreferrer"
+                    className="inline-flex text-xs font-semibold text-cyan-300 underline underline-offset-2">
+                    Open deployed preview
+                  </a>
+                )}
                 {['queued', 'running', 'paused', 'cancelling', 'control_failed'].includes(status) && (
                   <button
                     type="button"
@@ -207,6 +215,8 @@ export default function RunsHistory() {
           id: run.id, runId: run.id, product: run.product, productUrl: run.url,
           startTime: run.startedAt || run.createdAt, endTime: run.completedAt,
           status: run.status, progressLabel: run.progressLabel, error: run.error,
+          score: run.score, verdict: run.verdict, branchCreated: run.branchCreated,
+          previewUrl: run.previewUrl, upgradedUrl: run.upgradedUrl, branchUrl: run.branchUrl,
           stepResults: run.stepResults, stepCount: run.stepCount,
         }));
         // The ledger create is atomic, but its cross-region index can take a

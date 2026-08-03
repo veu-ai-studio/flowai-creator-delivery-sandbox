@@ -764,13 +764,16 @@ export default function FlowAIDashboard() {
             setFinalResult(payload.result);
             if (payload.result?.runId && !runId) setRunId(payload.result.runId);
             const branchStep = [...(payload.result?.orchestrationLog ?? [])].reverse()
-              .find((log) => log?.step === 9 && log?.result?.branchName);
+              .find((log) => log?.result?.branchName);
             updateFlowAIRun(trackedRunId, {
               status: payload.result?.ok === false ? 'failed' : 'completed',
               endTime: new Date().toISOString(),
               score: payload.result?.ceo95Criteria?.verifiedScore ?? payload.result?.effectiveTrustScore ?? payload.result?.finalScore ?? null,
               verdict: runVerdictFromResult(payload.result),
-              branchCreated: branchStep?.result?.branchName ?? null,
+              branchCreated: payload.result?.branchName
+                ?? payload.result?.writeResult?.branchName
+                ?? branchStep?.result?.branchName
+                ?? null,
               originalUrl: payload.result?.originalUrl ?? inputPayload.url ?? null,
               upgradedUrl: payload.result?.upgradeDeployed === true
                 ? (payload.result?.upgradedUrl ?? payload.result?.previewUrl ?? null)

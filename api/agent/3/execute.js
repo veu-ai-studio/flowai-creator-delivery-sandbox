@@ -590,6 +590,7 @@ async function runSseOrchestration(req, res, body, auth) {
   }
   const terminalStepCount = Object.keys(evidenceLedger?.stepResults || {}).length;
   const terminalError = terminalLifecycleError(result, terminalStepCount);
+  const terminalEvidence = terminalEvidencePatch(result);
   const terminalLedger = await persistOperationalPatchWithRetry({
     runId,
     auth,
@@ -598,6 +599,7 @@ async function runSseOrchestration(req, res, body, auth) {
       completedAt: new Date().toISOString(),
       error: terminalError,
       progressLabel: terminalError ? 'Run failed' : 'Completed',
+      ...terminalEvidence,
     },
   });
   let finalResult = result;
@@ -716,7 +718,36 @@ function terminalLifecycleError(result = {}, terminalStepCount = 0) {
       message: 'Run ended without a durable deployed preview artifact.',
     };
   }
+  if (result?.scoreStatus && (
+    result.scoreStatus !== 'SCORE_CAPTURED'
+    || !Number.isFinite(result?.finalScore)
+    || result?.gtmReady !== true
+  )) {
+    return {
+      code: 'GTM_SCORE_NOT_CLEARED',
+      message: 'Run ended without a captured score meeting the configured GTM target.',
+    };
+  }
   return null;
+}
+
+function terminalEvidencePatch(result = {}) {
+  const write = result?.writeResult && typeof result.writeResult === 'object'
+    ? result.writeResult
+    : {};
+  const previewUrl = result?.previewUrl || result?.upgradedUrl || write.previewUrl || null;
+  const branchCreated = result?.branchName || write.branchName || null;
+  return {
+    score: Number.isFinite(result?.finalScore) ? result.finalScore : null,
+    scoreStatus: result?.scoreStatus || null,
+    verdict: result?.gtmReady === true ? 'CLEARED' : 'NOT CLEARED',
+    branchCreated,
+    branchUrl: result?.branchUrl || write.branchUrl || null,
+    commitSha: result?.commitSha || write.commitSha || null,
+    previewUrl,
+    upgradedUrl: previewUrl,
+    previewAccessStatus: result?.previewAccessStatus || write.previewAccessStatus || null,
+  };
 }
 
 async function persistOperationalPatchWithRetry({
@@ -813,6 +844,7 @@ export const __test = Object.freeze({
   scoreFromStepLogs,
   reconcileTerminalStepResults,
   terminalLifecycleError,
+  terminalEvidencePatch,
   persistOperationalPatchWithRetry,
   freshBuildEventToMacroLogs,
   freshBuildProductConfig,

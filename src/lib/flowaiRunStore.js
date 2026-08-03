@@ -96,9 +96,8 @@ function macroSummaryFromLog(log = {}) {
     orchestrationStep: Number.isFinite(Number(log.step)) ? Number(log.step) : null,
     tool: log.tool ?? null,
     at: log.at ?? nowIso(),
-    score: typeof result?.gtmScore === 'number'
-      ? result.gtmScore
-      : (typeof result?.postScore === 'number' ? result.postScore : null),
+    score: [result?.gtmScore, result?.postScore, result?.finalScore, result?.preScore]
+      .find((value) => typeof value === 'number' && Number.isFinite(value)) ?? null,
   };
 }
 

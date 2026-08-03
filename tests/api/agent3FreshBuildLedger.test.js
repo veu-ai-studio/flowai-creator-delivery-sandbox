@@ -17,6 +17,7 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
     expect(durableKeys).toEqual(FLOWAI_MACRO_STEPS);
     expect(logs.find((log) => log.step === 10)?.result.previewUrl).toBe('https://preview.example.com');
     expect(logs.find((log) => log.step === 14)?.result.finalScore).toBe(96);
+    expect(buildFlowAIStepPatchFromLog(logs.find((log) => log.step === 14)).stepResults.monitor.score).toBe(96);
   });
 
   it('maps description-driven Fresh Build design evidence across all eight public stages', () => {
@@ -127,6 +128,38 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
     expect(__test.terminalLifecycleError({ ok: false, reason: 'GITHUB_TOKEN_REQUIRED' }, 8)).toMatchObject({
       code: 'GITHUB_TOKEN_REQUIRED',
     });
+  });
+
+  it('persists terminal score, branch, and preview evidence atomically', () => {
+    const evidence = __test.terminalEvidencePatch({
+      finalScore: 97,
+      scoreStatus: 'SCORE_CAPTURED',
+      gtmReady: true,
+      previewUrl: 'https://preview.example.com',
+      writeResult: {
+        branchName: 'flowai/run-123',
+        branchUrl: 'https://github.com/example/repo/tree/flowai/run-123',
+        commitSha: 'abc123',
+      },
+    });
+    expect(evidence).toMatchObject({
+      score: 97,
+      verdict: 'CLEARED',
+      branchCreated: 'flowai/run-123',
+      commitSha: 'abc123',
+      previewUrl: 'https://preview.example.com',
+      upgradedUrl: 'https://preview.example.com',
+    });
+  });
+
+  it('fails closed when a captured Fresh Build score does not clear its target', () => {
+    expect(__test.terminalLifecycleError({
+      ok: true,
+      previewUrl: 'https://preview.example.com',
+      scoreStatus: 'SCORE_CAPTURED',
+      finalScore: 91,
+      gtmReady: false,
+    }, 8)).toMatchObject({ code: 'GTM_SCORE_NOT_CLEARED' });
   });
 
   it('uses the isolated delivery repo before a registered reference URL', () => {

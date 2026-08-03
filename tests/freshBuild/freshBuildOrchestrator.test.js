@@ -283,6 +283,10 @@ describe('freshBuild Orchestrator', () => {
       },
     }));
     const onStep = vi.fn();
+    const scoreFreshBuildPreview = vi.fn(async () => ({
+      baselineScore: null,
+      finalScore: 97,
+    }));
 
     const result = await runFreshBuild({
       description: 'Build a scheduling workspace for local service providers',
@@ -296,6 +300,7 @@ describe('freshBuild Orchestrator', () => {
       synthesizeDesign,
       generateCodebase,
       writeGeneratedCodebase,
+      scoreFreshBuildPreview,
       onStep,
     });
 
@@ -320,14 +325,14 @@ describe('freshBuild Orchestrator', () => {
       status: 'READY',
       url: 'flowai-description://description-run',
       previewUrl: 'https://description-build.vercel.app',
-      scoreStatus: 'SCORE_NOT_CONFIGURED',
+      scoreStatus: 'SCORE_CAPTURED',
       baselineScore: null,
-      finalScore: null,
+      finalScore: 97,
       scoreDelta: null,
       evidence: {
         generatedFileCount: 2,
         previewUrl: 'https://description-build.vercel.app',
-        scoreStatus: 'SCORE_NOT_CONFIGURED',
+        scoreStatus: 'SCORE_CAPTURED',
       },
     });
     expect(onStep).toHaveBeenCalledWith(expect.objectContaining({
