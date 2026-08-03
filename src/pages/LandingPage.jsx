@@ -896,9 +896,24 @@ export default function LandingPage() {
       },
       multiMode: null,
       product: null,
+      launchNonce: crypto.randomUUID(),
     };
 
     saveSessionConfig(config);
+
+    // Every Fresh Build input type must enter the authenticated operational
+    // runner. The legacy AutoRunner persists only to Base44 AutoSession and is
+    // therefore not atomically visible in the durable Session History ledger.
+    if (flowHubPath === 'fresh_build') {
+      const params = new URLSearchParams({
+        mode,
+        flowHubPath: 'fresh_build',
+        autoStart: '1',
+        sessionConfig: '1',
+      });
+      navigate(`/flowai?${params.toString()}`);
+      return;
+    }
 
     // Migration retains the construction-engine workflow. Fresh Build uses
     // the durable operational runner so it is immediately visible and can be
@@ -908,11 +923,6 @@ export default function LandingPage() {
     // controllable by stable run ID.
     if (activeCard === 'A' && urlInput.trim() && flowHubPath === 'migration') {
       setRunPanelUrl(urlInput.trim());
-      return;
-    }
-
-    if (activeCard === 'A' && urlInput.trim() && flowHubPath === 'fresh_build') {
-      navigate(`/flowai?url=${encodeURIComponent(urlInput.trim())}&mode=${encodeURIComponent(mode)}&flowHubPath=fresh_build`);
       return;
     }
 

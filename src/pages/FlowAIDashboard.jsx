@@ -36,6 +36,7 @@ import { extractBranchPrVisibility } from '@/lib/ui/branchVisibility';
 import { normalizeIterationHistoryRow } from '@/lib/ui/iterationHistory';
 import { resolveProductContext } from '@/lib/forge/resolveProductContext';
 import { normalizeFlowAIInput } from '@/lib/flowai/unifiedRunInput';
+import { consumeFlowAIAutoStart } from '@/lib/flowaiAutoStart';
 import {
   FLOWAI_RUN_HEARTBEAT_TIMEOUT_MS,
   FLOWAI_MACRO_STEPS,
@@ -378,14 +379,34 @@ export default function FlowAIDashboard() {
   const [gtmTarget, setGtmTarget] = useState(95);
   const [maxIterations, setMaxIterations] = useState(100);
   const [flowHubPath, setFlowHubPath] = useState('production');
+  const autoStartRef = useRef(false);
+  const [autoStartClaimed, setAutoStartClaimed] = useState(false);
+  const [claimedLaunchNonce, setClaimedLaunchNonce] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const selectedUrl = params.get('url');
+    const selectedDescription = params.get('description');
+    const selectedPastedContent = params.get('pastedContent');
+    const claimed = consumeFlowAIAutoStart({
+      location: window.location,
+      history: window.history,
+      storage: sessionStorage,
+    });
+    const storedConfig = claimed?.config || null;
+    const storedInput = storedConfig?.inputs?.[0];
     const selectedMode = params.get('mode');
     const selectedFlowHubPath = params.get('flowHubPath');
     if (selectedUrl) {
       setUrl(selectedUrl);
+    }
+    if (selectedDescription) setProductDescription(selectedDescription);
+    if (selectedPastedContent) setPastedContent(selectedPastedContent);
+    if (storedInput?.type === 'url' && storedInput.value) setUrl(storedInput.value);
+    if (storedInput?.type === 'description' && storedInput.value) setProductDescription(storedInput.value);
+    if (claimed) {
+      setClaimedLaunchNonce(claimed.launchNonce);
+      setAutoStartClaimed(true);
     }
     if (['auto', 'guided', 'manual'].includes(selectedMode)) {
       setMode(selectedMode);
@@ -564,6 +585,15 @@ export default function FlowAIDashboard() {
   }, [finalResult, liveMacroStepCount, stepLogs]);
   const canLaunch = Boolean(inputPayload.url || inputPayload.productDescription || inputPayload.pastedContent);
 
+  useEffect(() => {
+    if (!autoStartClaimed || !claimedLaunchNonce || autoStartRef.current || !canLaunch) return;
+    autoStartRef.current = true;
+    launch(claimedLaunchNonce);
+  // launch is intentionally gated by autoStartRef; input fields are the only
+  // dependencies so React StrictMode cannot create a duplicate run.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStartClaimed, canLaunch, claimedLaunchNonce, flowHubPath, mode, pastedContent, productDescription, url]);
+
   function productLabelForRun() {
     const registered = findRegisteredProductConfigForUrl(inputPayload.url);
     if (registered?.name) return registered.name;
@@ -598,13 +628,13 @@ export default function FlowAIDashboard() {
     });
   };
 
-  async function launch() {
+  async function launch(launchNonce = null) {
     if (!canLaunch) {
       setErrorMsg('Add a product description or pasted content before launching this run.');
       return;
     }
     const localRunId = `pending_${crypto.randomUUID()}`;
-    const idempotencyKey = crypto.randomUUID();
+    const idempotencyKey = launchNonce || crypto.randomUUID();
     let trackedRunId = localRunId;
     upsertFlowAIRun({
       id: localRunId,

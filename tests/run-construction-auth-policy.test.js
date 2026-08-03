@@ -23,7 +23,11 @@ describe('run-construction release policy', () => {
 
   it('routes Fresh Build through the durable operational runner', () => {
     expect(landingSource).toContain("flowHubPath === 'fresh_build'");
-    expect(landingSource).toContain('&flowHubPath=fresh_build`);');
+    expect(landingSource).toContain("flowHubPath: 'fresh_build'");
+    expect(landingSource).toContain("autoStart: '1'");
+    expect(landingSource).toContain("sessionConfig: '1'");
+    expect(landingSource).toContain("navigate(`/flowai?${params.toString()}`)");
+    expect(landingSource).not.toContain("params.set('description', description.trim())");
     expect(landingSource).not.toContain("['migration', 'fresh_build'].includes(flowHubPath)");
   });
 });

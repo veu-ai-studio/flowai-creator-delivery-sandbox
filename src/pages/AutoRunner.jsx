@@ -18,6 +18,7 @@ import { logAction } from '@/lib/auditLogger';
 import { OrchestratorHub, createMemoryHotStore, createMemoryColdStore } from '@/lib/agents/orchestrator/OrchestratorHub';
 import { MessageBus } from '@/lib/agents/MessageBus';
 import { shouldHaltOnBlock, applyBlockGate, serializeResultsForPersist } from '@/lib/runner/blockGate';
+import { cancelLegacyAutoSession } from '@/lib/legacyAutoSession';
 
 // PA #2.7b — Lazy-instantiated orchestrator bundle. Hub + MessageBus +
 // in-memory HotStore + ColdStore are created on first call to
@@ -301,6 +302,8 @@ export default function AutoRunner() {
   // when no block.  Set by the gate; reset on session start / abort.  Used
   // to drive the PIPELINE BLOCKED banner and the per-step SKIPPED labels.
   const [blockedAtIdx, setBlockedAtIdx] = useState(null);
+  const [legacyCancellationError, setLegacyCancellationError] = useState(null);
+  const [legacyCancellationSuccess, setLegacyCancellationSuccess] = useState(null);
   // Phase 1.3 Agent #3 graduation — step-6 async toggle.
   // CEO Q4 = (c) combined: sync endpoint (default) PLUS Inngest async path.
   // When true, the govern step fire-and-forgets a POST to
@@ -757,7 +760,19 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
     runStepsFrom(pausedAtStepRef.current, statuses, results, elapseds, allInputResults, config);
   };
 
-  const handleAbort = () => {
+  const handleAbort = async () => {
+    const sessionId = sessionDbIdRef.current;
+    setLegacyCancellationError(null);
+    setLegacyCancellationSuccess(null);
+    if (sessionId) {
+      try {
+        const cancelled = await cancelLegacyAutoSession({ base44Client: base44, sessionId, reason: 'operator_abort' });
+        setLegacyCancellationSuccess(`Legacy session ${cancelled.id || sessionId} confirmed cancelled.`);
+      } catch {
+        setLegacyCancellationError('Could not cancel the legacy session. Retry Abort; the session remains active.');
+        return;
+      }
+    }
     isPausedRef.current = true;
     clearInterval(timerRef.current);
     setSessionState('idle');
@@ -771,6 +786,23 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
     sessionDbIdRef.current = null;
     // Clear sessionStorage so returning to Workspace starts fresh
     try { sessionStorage.removeItem('flowai_session_config'); } catch {}
+  };
+
+  const handleDiscardResume = async () => {
+    setLegacyCancellationError(null);
+    setLegacyCancellationSuccess(null);
+    try {
+      const cancelled = await cancelLegacyAutoSession({
+        base44Client: base44,
+        sessionId: resumeSession?.id,
+        reason: 'discarded_stale_legacy_session',
+      });
+      setLegacyCancellationSuccess(`Legacy session ${cancelled.id || resumeSession.id} confirmed cancelled.`);
+    } catch {
+      setLegacyCancellationError('Could not discard the unfinished session. Retry Start New Session.');
+      return;
+    }
+    setResumeSession(null);
   };
 
   const handleReset = handleAbort;
@@ -791,13 +823,24 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
         </p>
       </motion.div>
 
+      {legacyCancellationError && (
+        <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {legacyCancellationError}
+        </p>
+      )}
+      {legacyCancellationSuccess && (
+        <p role="status" className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+          {legacyCancellationSuccess}
+        </p>
+      )}
+
       {/* Resume prompt */}
       {sessionState === 'idle' && resumeSession && (
         <SessionResumePrompt
           session={resumeSession}
           lastStepName={STEPS[Object.keys(resumeSession.step_results || {}).length - 1]?.label}
           onResume={() => setResumeSession(null)}
-          onStartNew={() => setResumeSession(null)}
+          onStartNew={handleDiscardResume}
         />
       )}
 

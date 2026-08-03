@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
 const dashboardSource = read('src/pages/FlowAIDashboard.jsx');
+const autoStartSource = read('src/lib/flowaiAutoStart.js');
+const autoRunnerSource = read('src/pages/AutoRunner.jsx');
 const runsHistorySource = read('src/pages/RunsHistory.jsx');
 const appLayoutSource = read('src/components/layout/AppLayout.jsx');
 const sidebarSource = read('src/components/layout/Sidebar.jsx');
@@ -14,6 +16,25 @@ const sessionContextSource = read('src/lib/SessionContext.jsx');
 const orchestrationBarSource = read('src/components/layout/OrchestrationBar.jsx');
 
 describe('FlowAI run persistence and active indicator', () => {
+  it('auto-starts prefilled Fresh Build inputs once through the operational executor', () => {
+    expect(dashboardSource).toContain('consumeFlowAIAutoStart');
+    expect(dashboardSource).toContain('autoStartRef.current = true');
+    expect(autoStartSource).toContain('storage.getItem(SESSION_CONFIG_KEY)');
+    expect(autoStartSource).toContain('storage.removeItem(SESSION_CONFIG_KEY)');
+    expect(dashboardSource).toContain("storedInput?.type === 'description'");
+    expect(dashboardSource).toContain('launch(claimedLaunchNonce)');
+    expect(dashboardSource).toContain('launchNonce || crypto.randomUUID()');
+    expect(dashboardSource).toContain("fetch('/api/agent/3/execute'");
+  });
+
+  it('durably disposes aborted or stale legacy AutoRunner sessions', () => {
+    expect(autoRunnerSource).toContain('await cancelLegacyAutoSession');
+    expect(autoRunnerSource).toContain('the session remains active');
+    expect(autoRunnerSource).toContain('Retry Start New Session');
+    expect(autoRunnerSource).toContain('confirmed cancelled');
+    expect(autoRunnerSource).toContain('onStartNew={handleDiscardResume}');
+  });
+
   it('records dashboard run lifecycle events into persistent run history', () => {
     expect(dashboardSource).toContain('upsertFlowAIRun');
     expect(dashboardSource).toContain('replaceFlowAIRunId');
