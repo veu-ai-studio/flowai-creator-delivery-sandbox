@@ -900,12 +900,11 @@ export default function LandingPage() {
 
     saveSessionConfig(config);
 
-    // W6 INTEGRATION — Track C: when the user picks Card A (live URL)
-    // + Auto mode, the primary path is the inline construction-engine
-    // run via /api/run-construction (real SSE, real preview deploy,
-    // real governance record). The legacy /auto-runner remains the
-    // secondary "Advanced (legacy)" link below.
-    if (activeCard === 'A' && urlInput.trim()) {
+    // Migration and Fresh Build retain the construction-engine workflow.
+    // Normal production runs must enter the operational runner so creation is
+    // authenticated, atomically visible in Session History, and durably
+    // controllable by stable run ID.
+    if (activeCard === 'A' && urlInput.trim() && ['migration', 'fresh_build'].includes(flowHubPath)) {
       setRunPanelUrl(urlInput.trim());
       return;
     }
@@ -915,7 +914,9 @@ export default function LandingPage() {
     else navigate('/manual/research');
   };
 
-  const isConstructionEnginePath = activeCard === 'A' && !!urlInput.trim();
+  const isConstructionEnginePath = activeCard === 'A'
+    && !!urlInput.trim()
+    && ['migration', 'fresh_build'].includes(flowHubPath);
   const isMigrationMode = flowHubPath === 'migration';
   const isFreshBuildMode = flowHubPath === 'fresh_build';
   const currentPathOption = flowHubPathOption(flowHubPath);

@@ -11,6 +11,11 @@ const mocks = vi.hoisted(() => ({
   syncInngestRegistration: vi.fn(),
   sendEvent: vi.fn(),
   runFreshBuild: vi.fn(),
+  requireAuthHard: vi.fn(),
+}));
+
+vi.mock('../../api/_lib/auth.js', () => ({
+  requireAuthHard: mocks.requireAuthHard,
 }));
 
 vi.mock('../../api/_lib/crawler.js', () => ({
@@ -134,6 +139,7 @@ describe('run-construction handler SSE terminal framing', () => {
     mocks.isInngestEnabled.mockReturnValue(false);
     mocks.syncInngestRegistration.mockResolvedValue({ ok: true, status: 200 });
     mocks.sendEvent.mockResolvedValue({ ok: true, ids: ['evt_test'] });
+    mocks.requireAuthHard.mockResolvedValue({ authenticated: true, orgId: 'org_test', userId: 'user_test' });
     resetForgeRunStatusForTests();
   });
 

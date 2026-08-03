@@ -66,6 +66,7 @@ import {
   readProductSsotRunContext,
 } from '../lib/forge/productSsotContinuity.js';
 import { assertPublicHttpUrl } from '../../api/_lib/crawler.js';
+import { requireAuthHard } from '../../api/_lib/auth.js';
 import { isInngestEnabled, sendEvent, syncInngestRegistration } from '../../api/_lib/inngest.js';
 import {
   appendForgeRunEvent,
@@ -331,10 +332,17 @@ export async function runConstructionHandler(req, res, { internalBackgroundJob =
     return res.end(JSON.stringify({ ok: false, error: 'method_not_allowed' }));
   }
 
+  // Construction can crawl URLs and start long-running orchestration. Keep the
+  // authentication gate ahead of rate limiting and body validation so anonymous
+  // callers cannot start work or use validation responses as an oracle.
+  if (!internalBackgroundJob) {
+    const auth = await requireAuthHard(req, res);
+    if (!auth) return;
+  }
+
   // ── Rate limit ────────────────────────────────────────────────────────────
-  // Anonymous public submit stays anonymous — we throttle by IP, never by
-  // session cookie. Internal callers bearing a valid CRON_SECRET bypass
-  // (Vercel Cron and operator-triggered re-runs).
+  // Authenticated submissions remain throttled by IP. Internal callers bearing
+  // a valid CRON_SECRET bypass (Vercel Cron and operator-triggered re-runs).
   const verdict = await rateLimit(req, {
     capacity: RATE_LIMIT_CAPACITY,
     windowMs: RATE_LIMIT_WINDOW_MS,
