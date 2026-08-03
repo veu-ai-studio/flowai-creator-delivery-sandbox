@@ -794,10 +794,10 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
           },
         });
         setLegacyCancellationSuccess(`Legacy session ${cancelled.id || sessionId} confirmed stopped.`);
-      } catch {
+      } catch (error) {
         sessionDbIdRef.current = sessionId;
         setSessionState('paused');
-        setLegacyCancellationError('Could not confirm legacy cancellation. Execution is paused; retry Abort.');
+        setLegacyCancellationError(`Could not confirm legacy cancellation (${error?.message || 'unknown_error'}). Execution is paused; retry Abort.`);
         return;
       }
     }
@@ -825,8 +825,8 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
         existingSession: resumeSession,
       });
       setLegacyCancellationSuccess(`Legacy session ${cancelled.id || resumeSession.id} confirmed stopped.`);
-    } catch {
-      setLegacyCancellationError('Could not discard the unfinished session. Retry Start New Session.');
+    } catch (error) {
+      setLegacyCancellationError(`Could not discard the unfinished session (${error?.message || 'unknown_error'}). Retry Start New Session.`);
       return;
     }
     setResumeSession(null);
