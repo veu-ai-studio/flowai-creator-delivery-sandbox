@@ -66,4 +66,64 @@ describe('legacy AutoSession durable cancellation', () => {
       reason: 'operator_abort',
     })).rejects.toThrow('legacy_session_disposition_unconfirmed');
   });
+
+  it('confirms through filter when the deployed entity API does not expose get', async () => {
+    const filter = vi.fn(async () => [{
+      id: 'legacy-1',
+      overall_status: 'failed',
+      deliverables: { disposition: 'cancelled_legacy_session' },
+    }]);
+    const base44Client = {
+      entities: { AutoSession: { update: vi.fn(async () => undefined), filter } },
+    };
+    const result = await cancelLegacyAutoSession({
+      base44Client,
+      sessionId: 'legacy-1',
+      reason: 'operator_abort',
+    });
+    expect(filter).toHaveBeenCalledWith({ id: 'legacy-1' }, '-updated_date', 1);
+    expect(result.deliverables.disposition).toBe('cancelled_legacy_session');
+  });
+
+  it('falls back to filter when get rejects in production', async () => {
+    const base44Client = {
+      entities: {
+        AutoSession: {
+          update: vi.fn(async () => undefined),
+          get: vi.fn(async () => { throw new Error('method unavailable'); }),
+          filter: vi.fn(async () => [{
+            id: 'legacy-1',
+            overall_status: 'failed',
+            deliverables: { disposition: 'cancelled_legacy_session' },
+          }]),
+        },
+      },
+    };
+    await expect(cancelLegacyAutoSession({
+      base44Client,
+      sessionId: 'legacy-1',
+      reason: 'operator_abort',
+    })).resolves.toMatchObject({ id: 'legacy-1', overall_status: 'failed' });
+  });
+
+  it('uses a fresher filter result when get returns a stale row', async () => {
+    const base44Client = {
+      entities: {
+        AutoSession: {
+          update: vi.fn(async () => undefined),
+          get: vi.fn(async () => ({ id: 'legacy-1', overall_status: 'running' })),
+          filter: vi.fn(async () => [{
+            id: 'legacy-1',
+            overall_status: 'failed',
+            deliverables: { disposition: 'cancelled_legacy_session' },
+          }]),
+        },
+      },
+    };
+    await expect(cancelLegacyAutoSession({
+      base44Client,
+      sessionId: 'legacy-1',
+      reason: 'operator_abort',
+    })).resolves.toMatchObject({ id: 'legacy-1', overall_status: 'failed' });
+  });
 });
