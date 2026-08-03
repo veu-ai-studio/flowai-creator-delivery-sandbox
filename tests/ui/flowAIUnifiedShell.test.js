@@ -286,4 +286,12 @@ describe('FlowAI unified operating system shell', () => {
     expect(dashboardSrc).toMatch(/registeredProductNote/);
     expect(dashboardSrc).toMatch(/\{registeredProductNote\}/);
   });
+
+  it('exposes durable Stop only while a Fresh Build run is active', () => {
+    expect(dashboardSrc).toContain("const supportsPauseResume = flowHubPath !== 'fresh_build'");
+    expect(dashboardSrc).toContain('isRunning && runId && supportsPauseResume && !isPaused');
+    expect(dashboardSrc).toContain('isRunning && runId && supportsPauseResume && isPaused');
+    expect(dashboardSrc).toContain('if (isRunning && runId && supportsPauseResume)');
+    expect(dashboardSrc).toContain('!isRunning || supportsPauseResume ? <button');
+  });
 });

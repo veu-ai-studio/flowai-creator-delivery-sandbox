@@ -297,7 +297,12 @@ async function runSseOrchestration(req, res, body, auth) {
     accepted = await createOperationalRun({
       orgId: auth.orgId, userId: auth.userId,
       idempotency: req.headers?.['idempotency-key'],
-      input: { mode: body.mode, url: body.url, product: body.productName || body.productDescription },
+      input: {
+        mode: body.mode,
+        url: body.url,
+        product: body.productName || body.productDescription,
+        flowHubPath: body.flowHubPath,
+      },
     });
   } catch (error) {
     const status = error.code === 'IDEMPOTENCY_KEY_REQUIRED' ? 400 : 503;
@@ -390,6 +395,16 @@ async function runSseOrchestration(req, res, body, auth) {
         } catch { return; }
         if (!cmd) return;
         try {
+          if (body.flowHubPath === 'fresh_build' && cmd.command !== 'stop') {
+            sendEvent({
+              type: 'control_rejected',
+              command: cmd.command,
+              code: 'FRESH_BUILD_STOP_ONLY',
+              envelopeId: cmd.id,
+              at: new Date().toISOString(),
+            });
+            return;
+          }
           if (cmd.command === 'pause') {
             // Pause = flip to guided so the orchestrator stops at next checkpoint.
             exposedState.switchMode('guided');
@@ -449,8 +464,6 @@ async function runSseOrchestration(req, res, body, auth) {
       const abortController = new AbortController();
       exposedState = {
         stop: () => abortController.abort(),
-        switchMode: () => {},
-        resume: () => {},
       };
       const productConfig = freshBuildProductConfig(url, body, process.env);
       orchestrationPromise = runFreshBuild({

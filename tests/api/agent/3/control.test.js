@@ -6,8 +6,8 @@ import { readAndClearCommand, resetForTests } from '../../../../api/_lib/runCont
 const owner = { orgId: 'org_test', userId: 'user_test' };
 const authHeaders = { 'x-flowai-service-key': 'service-test', 'x-flowai-org-id': owner.orgId, 'x-flowai-user-id': owner.userId };
 function res() { return { statusCode: 200, body: null, headers: {}, setHeader(k,v){this.headers[k]=v;}, status(c){this.statusCode=c;return this;}, json(v){this.body=v;return this;} }; }
-async function active(idem) {
-  const { run } = await createOperationalRun({ ...owner, idempotency: idem, input: { mode: 'auto' } });
+async function active(idem, input = {}) {
+  const { run } = await createOperationalRun({ ...owner, idempotency: idem, input: { mode: 'auto', ...input } });
   return updateOperationalRun(run.id, owner, { status: 'running' });
 }
 
@@ -46,6 +46,28 @@ describe('tenant-owned run control', () => {
       expect((await readAndClearCommand(run.id)).command).toBe(command);
     });
   }
+
+  for (const command of ['pause', 'resume', 'switchMode']) {
+    it(`rejects Fresh Build ${command} without changing durable running state`, async () => {
+      const run = await active(`fresh-build-${command}-request`, { flowHubPath: 'fresh_build' });
+      const response = res();
+      await handler({ method: 'POST', headers: authHeaders, body: { runId: run.id, command, mode: command === 'switchMode' ? 'guided' : undefined } }, response);
+      expect(response.statusCode).toBe(409);
+      expect(response.body).toEqual({ ok: false, error: 'FRESH_BUILD_STOP_ONLY', allowed: ['stop'] });
+      expect((await getOperationalRun(run.id, owner)).status).toBe('running');
+      expect(await readAndClearCommand(run.id)).toBeNull();
+    });
+  }
+
+  it('keeps durable Stop available for Fresh Build', async () => {
+    const run = await active('fresh-build-stop-request', { flowHubPath: 'fresh_build' });
+    const response = res();
+    await handler({ method: 'POST', headers: authHeaders, body: { runId: run.id, command: 'stop' } }, response);
+    expect(response.statusCode).toBe(200);
+    const ledger = await getOperationalRun(run.id, owner);
+    expect(ledger.status).toBe('cancelling');
+    expect((await getPendingStopCommand(run.id, owner)).id).toBe(ledger.stopCommand.id);
+  });
 
   it('atomically reserves stop in the durable ledger outbox and survives bus restart', async () => {
     const run = await active('stop-owned-request');

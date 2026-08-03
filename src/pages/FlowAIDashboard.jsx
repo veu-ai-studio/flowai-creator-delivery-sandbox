@@ -874,13 +874,14 @@ export default function FlowAIDashboard() {
   // PAUSE / RESUME wired through the back-channel.
   async function pauseRun() { await sendControl('pause'); }
   async function resumeRun() { await sendControl('resume'); }
+  const supportsPauseResume = flowHubPath !== 'fresh_build';
 
   // SWITCH MODE: when running, this propagates to the live orchestrator
   // via the back-channel; when idle, it just updates the form selector
   // for the next run.
   async function switchMode(next) {
     setMode(next);
-    if (isRunning && runId) await sendControl('switchMode', next);
+    if (isRunning && runId && supportsPauseResume) await sendControl('switchMode', next);
   }
 
   async function testFetchUrl() {
@@ -1120,27 +1121,27 @@ export default function FlowAIDashboard() {
                 {/* PAUSE / RESUME — only meaningful while running with a runId.
                     Bridged through /api/agent/3/control → runControlBus →
                     SSE handler's poller → OrchestrationState.{switchMode,resume}. */}
-                {isRunning && runId && !isPaused && (
+                {isRunning && runId && supportsPauseResume && !isPaused && (
                   <button type="button" onClick={pauseRun}
                           className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5"
                           title="Flip to guided mode so the orchestrator pauses at the next checkpoint">
                     PAUSE
                   </button>
                 )}
-                {isRunning && runId && isPaused && (
+                {isRunning && runId && supportsPauseResume && isPaused && (
                   <button type="button" onClick={resumeRun}
                           className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded text-sm font-bold flex items-center gap-1.5">
                     <Icon.Play className="w-3.5 h-3.5" />CONTINUE
                   </button>
                 )}
-                <button type="button"
+                {!isRunning || supportsPauseResume ? <button type="button"
                         onClick={() => switchMode(mode === 'auto' ? 'guided' : mode === 'guided' ? 'manual' : 'auto')}
                         className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-semibold"
                         title={isRunning && runId
                           ? 'Bridges to the live orchestrator via /api/agent/3/control'
                           : 'Updates the form selector for the next run'}>
                   Switch mode → {mode === 'auto' ? 'guided' : mode === 'guided' ? 'manual' : 'auto'}
-                </button>
+                </button> : null}
               </div>
             </div>
 

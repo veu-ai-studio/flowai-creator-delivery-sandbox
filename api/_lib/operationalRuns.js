@@ -74,7 +74,7 @@ export async function createOperationalRun({ orgId, userId, idempotency, input =
   if (typeof idempotency !== 'string' || idempotency.trim().length < 8) throw Object.assign(new Error('Idempotency required'), { code: 'IDEMPOTENCY_KEY_REQUIRED' });
   const id = stableId(orgId, userId, idempotency.trim());
   const now = new Date().toISOString();
-  const run = { id, orgId, userId, version: 1, status: 'queued', mode: input.mode || 'auto', url: input.url || null, product: input.product || 'FlowAI run', progressLabel: 'Accepted and queued', createdAt: now, updatedAt: now, lastHeartbeatAt: now, completedAt: null, error: null };
+  const run = { id, orgId, userId, version: 1, status: 'queued', mode: input.mode || 'auto', flowHubPath: input.flowHubPath || null, url: input.url || null, product: input.product || 'FlowAI run', progressLabel: 'Accepted and queued', createdAt: now, updatedAt: now, lastHeartbeatAt: now, completedAt: null, error: null };
   const kv = await store();
   if (kv) {
     const result = await kv.eval(CREATE_LUA, [idemKey(orgId, userId, idempotency.trim()), runKey(id), indexKey(orgId)], ['operational-run:', id, JSON.stringify(run), String(RETENTION_SECONDS), String(Date.now())]);

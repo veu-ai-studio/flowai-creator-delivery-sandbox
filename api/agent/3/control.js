@@ -104,6 +104,13 @@ export default async function handler(req, res) {
   const ownedRun = await getOperationalRun(runId, auth);
   if (!ownedRun) return res.status(404).json({ ok: false, error: 'run_not_found' });
   if (['completed', 'failed', 'cancelled'].includes(ownedRun.status)) return res.status(409).json({ ok: false, error: 'run_not_active', status: ownedRun.status });
+  if (ownedRun.flowHubPath === 'fresh_build' && command !== 'stop') {
+    return res.status(409).json({
+      ok: false,
+      error: 'FRESH_BUILD_STOP_ONLY',
+      allowed: ['stop'],
+    });
+  }
   if (command === 'stop' && pendingStop(ownedRun)) return stopReplay(res, runId, ownedRun.stopCommand.id);
 
   let writeResult;
