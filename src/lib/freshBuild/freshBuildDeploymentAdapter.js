@@ -71,6 +71,16 @@ function truthyEnv(value) {
 }
 
 export function resolveGitHubWriteTokenCandidates(env = {}) {
+  const configuredDeliveryRepo = firstNonEmpty(
+    env?.FLOWAI_FRESH_BUILD_DELIVERY_REPO,
+    env?.FLOWAI_CREATOR_DELIVERY_REPO,
+  );
+  if (configuredDeliveryRepo) {
+    const deliveryToken = firstNonEmpty(env?.GITHUB_DELIVERY_TOKEN);
+    return deliveryToken
+      ? [{ source: 'GITHUB_DELIVERY_TOKEN', token: deliveryToken }]
+      : [];
+  }
   const candidates = [
     { source: 'GITHUB_DELIVERY_TOKEN', token: env?.GITHUB_DELIVERY_TOKEN },
     { source: 'GITHUB_OPERATOR_TOKEN', token: env?.GITHUB_OPERATOR_TOKEN },

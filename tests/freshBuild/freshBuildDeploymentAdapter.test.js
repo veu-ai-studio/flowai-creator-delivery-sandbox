@@ -155,6 +155,25 @@ describe('Fresh Build deployment adapter', () => {
     ]);
   });
 
+  it('uses only the dedicated delivery token for a configured Fresh Build delivery repo', () => {
+    expect(resolveGitHubWriteTokenCandidates({
+      FLOWAI_FRESH_BUILD_DELIVERY_REPO: 'https://github.com/veu-ai-studio/delivery',
+      GITHUB_DELIVERY_TOKEN: 'delivery-only',
+      GITHUB_OPERATOR_TOKEN: 'operator-must-not-run',
+      GITHUB_PAT: 'pat-must-not-run',
+      GITHUB_TOKEN: 'ambient-must-not-run',
+    })).toEqual([
+      { source: 'GITHUB_DELIVERY_TOKEN', token: 'delivery-only' },
+    ]);
+
+    expect(resolveGitHubWriteTokenCandidates({
+      FLOWAI_FRESH_BUILD_DELIVERY_REPO: 'https://github.com/veu-ai-studio/delivery',
+      GITHUB_OPERATOR_TOKEN: 'operator-must-not-run',
+      GITHUB_PAT: 'pat-must-not-run',
+      GITHUB_TOKEN: 'ambient-must-not-run',
+    })).toEqual([]);
+  });
+
   it('resolves product-scoped Vercel bypass secrets before the automation fallback', () => {
     expect(resolveVercelBypassSecret('saige-v2', {
       VERCEL_BYPASS_SECRET_SAIGE: 'product-secret',
