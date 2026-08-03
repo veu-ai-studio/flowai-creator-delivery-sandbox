@@ -19,6 +19,19 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
     expect(logs.find((log) => log.step === 14)?.result.finalScore).toBe(96);
   });
 
+  it('maps description-driven Fresh Build design evidence across all eight public stages', () => {
+    const events = [
+      { stage: 'description_build_brief', status: 'completed' },
+      { stage: 'design_synthesizer', status: 'completed' },
+      { stage: 'codebase_generator', status: 'completed' },
+      { stage: 'upgrade_repo_write', status: 'completed', previewUrl: 'https://preview.example.com' },
+      { stage: 'score_capture', status: 'completed', finalScore: 96 },
+    ];
+    const logs = events.flatMap(__test.freshBuildEventToMacroLogs);
+    const durableKeys = logs.flatMap((log) => Object.keys(buildFlowAIStepPatchFromLog(log).stepResults || {}));
+    expect(durableKeys).toEqual(FLOWAI_MACRO_STEPS);
+  });
+
   it('keeps blocked deployment and monitoring stages visibly blocked', () => {
     const deploy = __test.freshBuildEventToMacroLogs({
       stage: 'upgrade_repo_write',
@@ -110,12 +123,18 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
     });
   });
 
-  it('reuses a registered FlowAI target and falls back to the authorized delivery repo', () => {
+  it('preserves a safe Fresh Build failure reason in the terminal ledger', () => {
+    expect(__test.terminalLifecycleError({ ok: false, reason: 'GITHUB_TOKEN_REQUIRED' }, 8)).toMatchObject({
+      code: 'GITHUB_TOKEN_REQUIRED',
+    });
+  });
+
+  it('uses the isolated delivery repo before a registered reference URL', () => {
     expect(__test.freshBuildProductConfig('https://flowai.flowaiplatform.com/landing', {}, {})).toMatchObject({
       name: 'FlowAI',
       upgrade_repo: 'https://github.com/victor2081new-cloud/flowai',
     });
-    expect(__test.freshBuildProductConfig('https://example.com', { productName: 'Pilot' }, {
+    expect(__test.freshBuildProductConfig('https://flowai.flowaiplatform.com/landing', { productName: 'Pilot' }, {
       FLOWAI_FRESH_BUILD_DELIVERY_REPO: 'https://github.com/veu-ai-studio/delivery',
       FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_PROJECT_ID: 'prj_delivery',
       FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_ORG_ID: 'team_flowai',

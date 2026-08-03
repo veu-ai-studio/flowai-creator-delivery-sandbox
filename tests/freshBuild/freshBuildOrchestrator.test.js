@@ -334,6 +334,11 @@ describe('freshBuild Orchestrator', () => {
       stage: 'description_build_brief',
       status: 'completed',
     }));
+    expect(onStep).toHaveBeenCalledWith(expect.objectContaining({
+      stage: 'design_synthesizer',
+      status: 'completed',
+      designSpecId: 'flowai-description://description-run',
+    }));
   });
 
   it('builds bounded Fresh Build design evidence for SSE without full design payloads', () => {

@@ -628,10 +628,11 @@ function firstFreshBuildValue(...values) {
 }
 
 function freshBuildProductConfig(url, body = {}, env = {}) {
-  const registered = url ? findRegisteredProductConfigForUrl(url) : null;
-  if (registered) return registered;
   const upgradeRepo = firstFreshBuildValue(env.FLOWAI_FRESH_BUILD_DELIVERY_REPO, env.FLOWAI_CREATOR_DELIVERY_REPO);
-  if (!upgradeRepo) return null;
+  if (!upgradeRepo) {
+    const registered = url ? findRegisteredProductConfigForUrl(url) : null;
+    return registered || null;
+  }
   return {
     name: firstFreshBuildValue(body.productName, env.FLOWAI_FRESH_BUILD_DELIVERY_PRODUCT_NAME, 'FlowAI Creator Delivery Sandbox'),
     product_id: firstFreshBuildValue(env.FLOWAI_FRESH_BUILD_DELIVERY_PRODUCT_ID, 'flowai-creator-delivery-sandbox'),
@@ -689,7 +690,7 @@ function isAbsoluteHttpUrl(value) {
 }
 
 function terminalLifecycleError(result = {}, terminalStepCount = 0) {
-  if (result?.ok === false) return publicRunError(result?.code);
+  if (result?.ok === false) return publicRunError(result?.code || result?.reason);
   if (terminalStepCount < 8) {
     return {
       code: 'INCOMPLETE_LIFECYCLE_EVIDENCE',

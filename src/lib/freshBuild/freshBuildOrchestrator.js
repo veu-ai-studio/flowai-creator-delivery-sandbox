@@ -517,12 +517,18 @@ export async function runFreshBuild(input = {}, options = {}) {
       now,
       productName: input.productName || options.productName,
     });
+    await emit(onStep, 'design_synthesizer', 'started', { now });
     designSpec = buildDescriptionDesignSpec({ sourceUrl: source.url, now });
     await emit(onStep, 'description_build_brief', 'completed', {
       inventoryId: featureInventory.id,
       designSpecId: designSpec.metadata?.url || source.url,
       pages: featureInventory.pages.length,
       components: featureInventory.components.length,
+      now,
+    });
+    await emit(onStep, 'design_synthesizer', 'completed', {
+      designSpecId: designSpec?.metadata?.url || source.url,
+      components: Array.isArray(designSpec?.components) ? designSpec.components.length : 0,
       now,
     });
   } else {
