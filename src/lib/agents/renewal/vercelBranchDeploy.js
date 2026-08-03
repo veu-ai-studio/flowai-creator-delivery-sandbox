@@ -102,8 +102,12 @@ async function callVercel(method, pathAndQuery, token, opts = {}) {
       method,
       headers,
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      signal: opts.signal,
     });
   } catch (e) {
+    if (e?.name === 'AbortError' || opts.signal?.aborted) {
+      throw makeError('RUN_CANCELLED', 'vercelBranchDeploy: cancelled', { stage: 'vercel_deploy' });
+    }
     throw makeError(
       'DEPLOY_FAILED',
       `vercelBranchDeploy: network error on ${method} ${pathAndQuery} — ${e?.message ?? String(e)}`,
@@ -241,9 +245,25 @@ async function getDeployment({ deploymentId, orgId, token, opts }) {
  * the 5 s × 60-poll budget without taking 5 minutes.
  */
 async function sleep(ms, opts = {}) {
+  if (opts.signal?.aborted) throw makeError('RUN_CANCELLED', 'vercelBranchDeploy: cancelled', { stage: 'vercel_deploy' });
   const impl = typeof opts.sleep === 'function' ? opts.sleep : null;
-  if (impl) return impl(ms);
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  if (impl) {
+    if (opts.signal) await impl(ms, opts.signal);
+    else await impl(ms);
+    if (opts.signal?.aborted) throw makeError('RUN_CANCELLED', 'vercelBranchDeploy: cancelled', { stage: 'vercel_deploy' });
+    return;
+  }
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      opts.signal?.removeEventListener?.('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(makeError('RUN_CANCELLED', 'vercelBranchDeploy: cancelled', { stage: 'vercel_deploy' }));
+    };
+    opts.signal?.addEventListener?.('abort', onAbort, { once: true });
+  });
 }
 
 /**
@@ -273,7 +293,7 @@ export async function deployBranchPreview(args) {
 
   const { projectId, orgId, owner, repo, branchName, token } = args;
   const target = nonEmptyString(args.target);
-  const opts = args.opts ?? {};
+  const opts = { ...(args.opts ?? {}), signal: args.signal ?? args.opts?.signal };
 
   // 1. Create the deployment.
   const created = await createDeployment({ projectId, orgId, owner, repo, branchName, token, target, opts });

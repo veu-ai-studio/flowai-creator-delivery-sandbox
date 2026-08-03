@@ -73,6 +73,27 @@ describe('operational run ledger', () => {
     expect(await getPendingStopCommand(run.id, owner)).toBeNull();
   });
 
+  it('does not redispatch or expire a stop acknowledged by a terminating worker', async () => {
+    const { run } = await createOperationalRun({ ...owner, idempotency: 'worker-terminating-request' });
+    await updateOperationalRun(run.id, owner, { status: 'running' });
+    const reservedAt = new Date(Date.now() - __test.CONTROL_RESERVATION_TIMEOUT_MS - 1).toISOString();
+    await updateOperationalRun(run.id, owner, {
+      status: 'cancelling',
+      expectedStatus: 'running',
+      stopCommand: {
+        id: 'stop-worker-terminating',
+        acknowledged: true,
+        dispatchState: 'worker_terminating',
+        reservedAt,
+      },
+    });
+
+    const terminating = await getOperationalRun(run.id, owner);
+    expect(terminating.status).toBe('cancelling');
+    expect(terminating.stopCommand.dispatchState).toBe('worker_terminating');
+    expect(await getPendingStopCommand(run.id, owner)).toBeNull();
+  });
+
   it('defines Redis CAS for the outbox reservation in the same run-row write', () => {
     expect(__test.UPDATE_LUA).toContain("redis.call('SET', KEYS[1], ARGV[5]");
     expect(__test.UPDATE_LUA).toContain("row.status ~= ARGV[3]");

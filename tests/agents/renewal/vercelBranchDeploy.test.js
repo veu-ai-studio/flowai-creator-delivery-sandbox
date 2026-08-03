@@ -68,6 +68,25 @@ const deploymentResponse = (state, extra = {}) => ({
 // ── Happy path ───────────────────────────────────────────────────────────────
 
 describe('deployBranchPreview — happy path', () => {
+  it('aborts a long polling deployment immediately without another network boundary', async () => {
+    const controller = new AbortController();
+    const fetchMock = sequencedFetch([
+      { status: 200, body: deploymentResponse('BUILDING') },
+    ]);
+    const abortingSleep = vi.fn(async (_ms, signal) => {
+      expect(signal).toBe(controller.signal);
+      controller.abort();
+    });
+
+    await expect(deployBranchPreview({
+      ...HAPPY_ARGS,
+      signal: controller.signal,
+      opts: { fetch: fetchMock, sleep: abortingSleep },
+    })).rejects.toMatchObject({ code: 'RUN_CANCELLED', stage: 'vercel_deploy' });
+    expect(fetchMock.calls).toHaveLength(1);
+    expect(fetchMock.calls[0].init.signal).toBe(controller.signal);
+  });
+
   it('returns { deploymentId, previewUrl, inspectorUrl } when deployment reaches READY via polling', async () => {
     const fetchMock = sequencedFetch([
       { status: 200, body: deploymentResponse('INITIALIZING') },  // POST create

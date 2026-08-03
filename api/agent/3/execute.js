@@ -405,7 +405,13 @@ async function runSseOrchestration(req, res, body, auth) {
             if (ledger?.status !== 'cancelling' || ledger.stopCommand?.id !== cmd.id || ledger.stopCommand?.acknowledged !== false) return;
             exposedState.stop();
             sendEvent({ type: 'control_applied', command: 'stop', envelopeId: cmd.id, at: new Date().toISOString() });
-            await updateOperationalRun(runId, auth, { status: 'cancelled', expectedControlCommandId: cmd.id, stopAcknowledgedAt: new Date().toISOString(), stopCommand: { ...ledger.stopCommand, acknowledged: true }, completedAt: new Date().toISOString(), progressLabel: 'Cancelled by operator' });
+            await updateOperationalRun(runId, auth, {
+              status: 'cancelling',
+              expectedControlCommandId: cmd.id,
+              stopAcknowledgedAt: new Date().toISOString(),
+              stopCommand: { ...ledger.stopCommand, acknowledged: true, dispatchState: 'worker_terminating' },
+              progressLabel: 'Stop acknowledged; waiting for worker termination',
+            });
           }
         } catch { /* state method missing or already-disposed; ignore */ }
       }, 500);
@@ -417,7 +423,6 @@ async function runSseOrchestration(req, res, body, auth) {
   let result;
   let softTimeout = null;
   try {
-    const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
     // Best-effort Supabase client — orchestrator gracefully handles null.
     let supabase = null;
     try {
@@ -425,18 +430,7 @@ async function runSseOrchestration(req, res, body, auth) {
       supabase = getSupabase();
     } catch { /* run without DB → PATH B fast path */ }
 
-    const orchestrationPromise = runOrchestration({
-      url, mode, runId, supabase,
-      input: runInput,
-      environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
-      gtmTarget, maxIterations,
-      phaseBOverallBudgetMs: SSE_PHASE_B_OVERALL_BUDGET_MS,
-      phaseBPerPageBudgetMs: SSE_PHASE_B_PER_PAGE_BUDGET_MS,
-      phaseBMaxInteractives: SSE_PHASE_B_MAX_INTERACTIVES,
-      evaluationTier: SSE_EVALUATION_TIER,
-      evaluationGotoTimeoutMs: 15_000,
-      evaluationPostNavWaitMs: 500,
-      onStep: (log) => {
+    const recordStep = (log) => {
         stepLogs.push(log);
         sendEvent({ type: 'step', log });
         const patch = buildFlowAIStepPatchFromLog(log);
@@ -446,7 +440,60 @@ async function runSseOrchestration(req, res, body, auth) {
           stepResults: durableStepResults,
           stepCount: Object.keys(durableStepResults).length,
         });
-      },
+    };
+    let orchestrationPromise;
+    if (body.flowHubPath === 'fresh_build') {
+      const { runFreshBuild } = await import('../../../src/lib/freshBuild/freshBuildOrchestrator.js');
+      const abortController = new AbortController();
+      exposedState = {
+        stop: () => abortController.abort(),
+        switchMode: () => {},
+        resume: () => {},
+      };
+      orchestrationPromise = runFreshBuild({
+        ...runInput,
+        url,
+        runId,
+        productName: body.productName || body.productDescription || 'Fresh Build product',
+      }, {
+        signal: abortController.signal,
+        onStep: (event) => {
+          for (const log of freshBuildEventToMacroLogs(event)) recordStep(log);
+        },
+      }).then((fresh) => {
+        const gtmReady = fresh.ok === true
+          && Boolean(fresh.previewUrl)
+          && fresh.previewAccessStatus === 'PREVIEW_BROWSER_CLEAR'
+          && fresh.scoreStatus === 'SCORE_CAPTURED'
+          && Number.isFinite(fresh.finalScore)
+          && fresh.finalScore >= gtmTarget;
+        return {
+          ...fresh,
+          runId,
+          originalUrl: url,
+          upgradedUrl: fresh.previewUrl || null,
+          upgradeDeployed: fresh.ok === true && Boolean(fresh.previewUrl),
+          upgradeDeployStatus: fresh.ok === true ? 'deployed' : (fresh.status || 'not_deployed'),
+          upgradeDeployReason: fresh.reason || null,
+          gtmReady,
+          exitReason: gtmReady ? 'FRESH_BUILD_GTM_READY' : (fresh.reason || 'FRESH_BUILD_NOT_GTM_READY'),
+          orchestrationLog: stepLogs,
+        };
+      });
+    } else {
+      const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
+      orchestrationPromise = runOrchestration({
+        url, mode, runId, supabase,
+        input: runInput,
+        environment: process.env.NODE_ENV === 'production' ? 'prd' : 'staging',
+        gtmTarget, maxIterations,
+        phaseBOverallBudgetMs: SSE_PHASE_B_OVERALL_BUDGET_MS,
+        phaseBPerPageBudgetMs: SSE_PHASE_B_PER_PAGE_BUDGET_MS,
+        phaseBMaxInteractives: SSE_PHASE_B_MAX_INTERACTIVES,
+        evaluationTier: SSE_EVALUATION_TIER,
+        evaluationGotoTimeoutMs: 15_000,
+        evaluationPostNavWaitMs: 500,
+        onStep: recordStep,
       onIteration: (iteration) => {
         iterations.push(iteration);
         sendEvent({ type: 'iteration', iteration });
@@ -456,7 +503,8 @@ async function runSseOrchestration(req, res, body, auth) {
         });
       },
       deps: { __exposeState: (state) => { exposedState = state; } },
-    });
+      });
+    }
     const timeoutPromise = new Promise((resolve) => {
       softTimeout = setTimeout(() => resolve({ __sseSoftTimeout: true }), SSE_SOFT_TIMEOUT_MS);
     });
@@ -481,6 +529,22 @@ async function runSseOrchestration(req, res, body, auth) {
     if (heartbeat) clearInterval(heartbeat);
     if (softTimeout) clearTimeout(softTimeout);
     await ledgerWrite;
+    const ledger = await getOperationalRun(runId, auth).catch(() => null);
+    if (ledger?.status === 'cancelled' || ledger?.status === 'cancelling' || e?.code === 'RUN_CANCELLED' || e?.name === 'AbortError') {
+      if (ledger?.status === 'cancelling') {
+        await updateOperationalRun(runId, auth, {
+          status: 'cancelled',
+          expectedControlCommandId: ledger.stopCommand?.id,
+          stopAcknowledgedAt: new Date().toISOString(),
+          stopCommand: ledger.stopCommand ? { ...ledger.stopCommand, acknowledged: true } : null,
+          completedAt: new Date().toISOString(),
+          progressLabel: 'Cancelled by operator',
+        });
+      }
+      sendEvent({ type: 'final', result: { ok: false, runId, code: 'RUN_CANCELLED', exitReason: 'Cancelled by operator' } });
+      sendDone();
+      return;
+    }
     const safeError = publicRunError(e?.code);
     sendEvent({ type: 'error', error: safeError.message, code: safeError.code });
     await updateOperationalRun(runId, auth, { status: 'failed', completedAt: new Date().toISOString(), error: safeError, progressLabel: 'Run failed' });
@@ -493,9 +557,37 @@ async function runSseOrchestration(req, res, body, auth) {
   if (heartbeat) clearInterval(heartbeat);
   if (softTimeout) clearTimeout(softTimeout);
   await ledgerWrite;
+  const terminalLedger = await getOperationalRun(runId, auth).catch(() => null);
+  if (terminalLedger?.status === 'cancelled') {
+    sendEvent({ type: 'final', result: { ok: false, runId, code: 'RUN_CANCELLED', exitReason: 'Cancelled by operator' } });
+    sendDone();
+    return;
+  }
   sendEvent({ type: 'final', result });
   await updateOperationalRun(runId, auth, { status: result?.ok === false ? 'failed' : 'completed', completedAt: new Date().toISOString(), error: result?.ok === false ? publicRunError(result?.code) : null, progressLabel: result?.ok === false ? 'Run failed' : 'Completed' });
   sendDone();
+}
+
+const FRESH_BUILD_STAGE_MACROS = Object.freeze({
+  description_build_brief: { started: [1], completed: [1] },
+  feature_extractor: { started: [1], completed: [1] },
+  design_synthesizer: { started: [6], completed: [6] },
+  codebase_generator: { started: [7], completed: [7, 4], blocked: [7, 4] },
+  upgrade_repo_write: { started: [10], completed: [10, 8], skipped: [10, 8] },
+  score_capture: { started: [12], completed: [12, 14], blocked: [12, 14] },
+});
+
+function freshBuildEventToMacroLogs(event = {}) {
+  const steps = FRESH_BUILD_STAGE_MACROS[event.stage]?.[event.status] || [];
+  const { mode: _mode, stage: _stage, status: _status, at: _at, ...details } = event;
+  return steps.map((step) => ({
+    step,
+    stepName: `Fresh Build: ${event.stage}`,
+    tool: event.stage,
+    status: event.status === 'completed' ? 'complete' : event.status,
+    at: event.at || new Date().toISOString(),
+    result: details,
+  }));
 }
 
 // Exported for tests — the handler closure isn't easily testable otherwise.
@@ -594,6 +686,7 @@ export const __test = Object.freeze({
   buildSseRunInput,
   buildSseSoftTimeoutResult,
   scoreFromStepLogs,
+  freshBuildEventToMacroLogs,
   SYNC_TIMEOUT_MS,
   SSE_SOFT_TIMEOUT_MS,
   VERCEL_EXECUTE_HARD_TIMEOUT_MS,

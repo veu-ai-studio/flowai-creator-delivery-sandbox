@@ -900,12 +900,19 @@ export default function LandingPage() {
 
     saveSessionConfig(config);
 
-    // Migration and Fresh Build retain the construction-engine workflow.
+    // Migration retains the construction-engine workflow. Fresh Build uses
+    // the durable operational runner so it is immediately visible and can be
+    // cancelled by stable run ID from Session History.
     // Normal production runs must enter the operational runner so creation is
     // authenticated, atomically visible in Session History, and durably
     // controllable by stable run ID.
-    if (activeCard === 'A' && urlInput.trim() && ['migration', 'fresh_build'].includes(flowHubPath)) {
+    if (activeCard === 'A' && urlInput.trim() && flowHubPath === 'migration') {
       setRunPanelUrl(urlInput.trim());
+      return;
+    }
+
+    if (activeCard === 'A' && urlInput.trim() && flowHubPath === 'fresh_build') {
+      navigate(`/flowai?url=${encodeURIComponent(urlInput.trim())}&mode=${encodeURIComponent(mode)}&flowHubPath=fresh_build`);
       return;
     }
 
@@ -919,7 +926,7 @@ export default function LandingPage() {
 
   const isConstructionEnginePath = activeCard === 'A'
     && !!urlInput.trim()
-    && ['migration', 'fresh_build'].includes(flowHubPath);
+    && flowHubPath === 'migration';
   const isMigrationMode = flowHubPath === 'migration';
   const isFreshBuildMode = flowHubPath === 'fresh_build';
   const currentPathOption = flowHubPathOption(flowHubPath);

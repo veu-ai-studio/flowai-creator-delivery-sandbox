@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ensureUpgradeRepo,
   ensureVercelProject,
+  ensureVercelProjectEnvironmentVariables,
   provisionDeliveryWorkspace,
   provisionUpgradeTarget,
 } from '../../src/lib/provisioning/upgradeTargetProvisioner.js';
@@ -14,6 +15,51 @@ function response(status, body = {}) {
 }
 
 describe('upgrade target provisioner', () => {
+  it('stops workspace provisioning after the current repository boundary', async () => {
+    const controller = new AbortController();
+    const fetch = vi.fn(async (_url, init) => {
+      expect(init.signal).toBe(controller.signal);
+      controller.abort();
+      return response(200, { html_url: 'https://github.com/flowai-owned/delivery' });
+    });
+
+    await expect(provisionDeliveryWorkspace({
+      runId: 'run-cancel-provision',
+      productName: 'Delivery',
+      env: {
+        FLOWAI_DELIVERY_GITHUB_OWNER: 'flowai-owned',
+        GITHUB_PAT: 'github-token',
+        VERCEL_OPERATOR_TOKEN: 'vercel-token',
+        VERCEL_ORG_ID: 'team-flowai',
+      },
+      opts: { fetch },
+      signal: controller.signal,
+    })).rejects.toMatchObject({ name: 'AbortError', code: 'RUN_CANCELLED', stage: 'github_repo' });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops multi-variable Vercel environment writes after cancellation', async () => {
+    const controller = new AbortController();
+    const fetch = vi.fn(async (_url, init) => {
+      expect(init.signal).toBe(controller.signal);
+      controller.abort();
+      return response(200, { id: 'env-first' });
+    });
+
+    await expect(ensureVercelProjectEnvironmentVariables({
+      projectId: 'prj-delivery',
+      token: 'vercel-token',
+      teamId: 'team-flowai',
+      variables: [
+        { key: 'FIRST', value: 'one' },
+        { key: 'SECOND', value: 'two' },
+      ],
+      opts: { fetch },
+      signal: controller.signal,
+    })).rejects.toMatchObject({ name: 'AbortError', code: 'RUN_CANCELLED', stage: 'vercel_environment' });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('classifies missing GitHub token as ACCESS_BLOCKED without throwing', async () => {
     await expect(ensureUpgradeRepo({ product: { name: 'Demo' }, org: 'acme' })).resolves.toMatchObject({
       ok: false,

@@ -377,17 +377,20 @@ export default function FlowAIDashboard() {
   const [mode, setMode] = useState('auto');
   const [gtmTarget, setGtmTarget] = useState(95);
   const [maxIterations, setMaxIterations] = useState(100);
+  const [flowHubPath, setFlowHubPath] = useState('production');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const selectedUrl = params.get('url');
     const selectedMode = params.get('mode');
+    const selectedFlowHubPath = params.get('flowHubPath');
     if (selectedUrl) {
       setUrl(selectedUrl);
     }
     if (['auto', 'guided', 'manual'].includes(selectedMode)) {
       setMode(selectedMode);
     }
+    if (selectedFlowHubPath) setFlowHubPath(selectedFlowHubPath);
   }, []);
 
   // ── Run state ────────────────────────────────────────────────────────────
@@ -641,6 +644,7 @@ export default function FlowAIDashboard() {
           mode,
           maxIterations,
           gtmTarget,
+          flowHubPath,
           input: {
             ...inputPayload,
             description: inputPayload.productDescription,

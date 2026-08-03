@@ -39,6 +39,77 @@ function githubJsonResponse(status, body) {
 }
 
 describe('Fresh Build deployment adapter', () => {
+  it('passes AbortSignal into the concrete GitHub client and stops on fetch abort', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const fetchImpl = vi.fn(async (_url, init) => {
+      expect(init.signal).toBe(controller.signal);
+      const error = new Error('aborted');
+      error.name = 'AbortError';
+      throw error;
+    });
+    const githubClient = createGitHubTreeCommitClient({ token: 'token', fetchImpl });
+
+    await expect(githubClient.createCommit({
+      owner: 'veu-ai-studio',
+      repo: 'delivery',
+      baseBranch: 'main',
+      branchName: 'flowai/cancelled',
+      files: generatedCodebase().files,
+      message: 'cancelled',
+      signal: controller.signal,
+    })).rejects.toMatchObject({ name: 'AbortError' });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes AbortSignal into the concrete preview probe and reports cancellation', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const fetchImpl = vi.fn(async (_url, init) => {
+      expect(init.signal).toBe(controller.signal);
+      const error = new Error('aborted');
+      error.name = 'AbortError';
+      throw error;
+    });
+
+    await expect(probePreviewAccess({
+      previewUrl: 'https://preview.example.com',
+      fetchImpl,
+      signal: controller.signal,
+    })).rejects.toMatchObject({ name: 'AbortError', code: 'RUN_CANCELLED', stage: 'preview_probe' });
+  });
+
+  it('stops after an acknowledged GitHub write cancellation and never starts Vercel deployment', async () => {
+    const controller = new AbortController();
+    const deployPreviewImpl = vi.fn();
+    const githubClient = {
+      createCommit: vi.fn(async () => {
+        controller.abort();
+        return {
+          commitSha: 'cancelled-after-commit',
+          filesWritten: 3,
+          branchUrl: 'https://github.com/veu-ai-studio/delivery/tree/flowai/cancelled',
+        };
+      }),
+    };
+
+    await expect(writeGeneratedCodebaseToUpgradeRepo({
+      generatedCodebase: generatedCodebase(),
+      productName: 'Cancelled build',
+      runId: 'cancel-mid-write',
+      productConfig: {
+        upgrade_repo: 'https://github.com/veu-ai-studio/delivery',
+        vercel_project_id: 'prj_delivery',
+        vercel_org_id: 'team_flowai',
+      },
+      env: { VERCEL_TOKEN: 'token' },
+      githubClient,
+      deployPreviewImpl,
+      signal: controller.signal,
+    })).rejects.toMatchObject({ name: 'AbortError', code: 'RUN_CANCELLED', stage: 'github_write' });
+    expect(deployPreviewImpl).not.toHaveBeenCalled();
+  });
+
   it('parses supported GitHub repo URL forms', () => {
     expect(parseGitHubRepoUrl('https://github.com/veu-ai-studio/saige-v2')).toEqual({
       owner: 'veu-ai-studio',

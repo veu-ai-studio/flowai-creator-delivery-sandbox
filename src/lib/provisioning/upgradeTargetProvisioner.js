@@ -231,6 +231,18 @@ async function readJson(response) {
   try { return JSON.parse(text); } catch { return { raw: text.slice(0, 500) }; }
 }
 
+function cancellationError(stage = 'workspace_provisioning') {
+  const error = new Error(`FlowAI delivery workspace cancelled during ${stage}`);
+  error.name = 'AbortError';
+  error.code = 'RUN_CANCELLED';
+  error.stage = stage;
+  return error;
+}
+
+function throwIfCancelled(signal, stage) {
+  if (signal?.aborted) throw cancellationError(stage);
+}
+
 async function githubFetch(path, token, opts = {}) {
   const fetchImpl = opts.fetch ?? globalThis.fetch;
   if (typeof fetchImpl !== 'function') throw new Error('fetch unavailable');
@@ -238,6 +250,7 @@ async function githubFetch(path, token, opts = {}) {
     method: opts.method ?? 'GET',
     headers: { ...authHeaders(token), ...(opts.body ? { 'Content-Type': 'application/json' } : {}) },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
+    signal: opts.signal,
   });
   return { response, body: await readJson(response) };
 }
@@ -249,6 +262,7 @@ async function vercelFetch(path, token, opts = {}) {
     method: opts.method ?? 'GET',
     headers: vercelHeaders(token),
     body: opts.body ? JSON.stringify(opts.body) : undefined,
+    signal: opts.signal,
   });
   return { response, body: await readJson(response) };
 }
@@ -316,6 +330,7 @@ export async function ensureUpgradeRepo({
       created: true,
     });
   } catch (error) {
+    if (error?.name === 'AbortError' || opts.signal?.aborted) throw cancellationError('github_repo');
     return Object.freeze({
       ok: false,
       status: 'failed',
@@ -416,6 +431,7 @@ export async function copyGithubDefaultBranch({
       detail: targetRef.body?.message ?? `Target ref create returned ${targetRef.response.status}`,
     });
   } catch (error) {
+    if (error?.name === 'AbortError' || opts.signal?.aborted) throw cancellationError('source_copy');
     return Object.freeze({ ok: false, status: 'failed', code: 'SOURCE_COPY_FAILED', detail: error?.message ?? String(error) });
   }
 }
@@ -476,6 +492,7 @@ export async function ensureVercelProject({
       created: true,
     });
   } catch (error) {
+    if (error?.name === 'AbortError' || opts.signal?.aborted) throw cancellationError('vercel_project');
     return Object.freeze({ ok: false, status: 'failed', code: 'VERCEL_PROVISION_FAILED', detail: error?.message ?? String(error) });
   }
 }
@@ -486,6 +503,7 @@ export async function ensureVercelProjectEnvironmentVariables({
   teamId,
   variables = [],
   opts = {},
+  signal,
 } = {}) {
   if (!variables.length) return Object.freeze({ ok: true, variables: [] });
   if (!token) return tokenError('vercel');
@@ -498,13 +516,16 @@ export async function ensureVercelProjectEnvironmentVariables({
     });
   }
   const applied = [];
+  const effectiveSignal = signal || opts.signal;
   const teamQuery = teamId ? `?teamId=${encodeURIComponent(teamId)}` : '';
   for (const variable of variables) {
+    throwIfCancelled(effectiveSignal, 'vercel_environment');
     const key = nonEmptyString(variable?.key);
     const value = nonEmptyString(variable?.value);
     if (!key || !value) continue;
     const created = await vercelFetch(`/v10/projects/${encodeURIComponent(projectId)}/env${teamQuery}`, token, {
       ...opts,
+      signal: effectiveSignal,
       method: 'POST',
       body: {
         key,
@@ -513,6 +534,7 @@ export async function ensureVercelProjectEnvironmentVariables({
         target: Array.isArray(variable.target) && variable.target.length ? variable.target : vercelEnvTarget(),
       },
     });
+    throwIfCancelled(effectiveSignal, 'vercel_environment');
     const message = created.body?.error?.message ?? created.body?.message ?? '';
     if (created.response.status >= 200 && created.response.status < 300) {
       applied.push({ key, status: 'created' });
@@ -539,7 +561,11 @@ export async function provisionDeliveryWorkspace({
   product = {},
   env = globalThis.process?.env ?? {},
   opts = {},
+  signal,
 } = {}) {
+  const effectiveSignal = signal || opts.signal;
+  const effectiveOpts = { ...opts, signal: effectiveSignal };
+  throwIfCancelled(effectiveSignal, 'workspace_validation');
   const owner = configuredGithubOwner(env);
   const ownerType = configuredGithubOwnerType(env);
   if (!owner) {
@@ -595,7 +621,8 @@ export async function provisionDeliveryWorkspace({
     });
   }
 
-  const githubCredential = await resolveGithubWorkspaceCredential({ env, opts });
+  const githubCredential = await resolveGithubWorkspaceCredential({ env, opts: effectiveOpts });
+  throwIfCancelled(effectiveSignal, 'workspace_credentials');
   if (!githubCredential.ok) {
     return Object.freeze(githubCredential);
   }
@@ -606,8 +633,9 @@ export async function provisionDeliveryWorkspace({
     repoName: repo,
     ownerType,
     token: githubCredential.token,
-    opts,
+    opts: effectiveOpts,
   });
+  throwIfCancelled(effectiveSignal, 'github_repo');
   if (!repoResult.ok) return Object.freeze({ ...repoResult, credentialSource: githubCredential.source });
 
   const projectResult = await ensureVercelProject({
@@ -617,8 +645,9 @@ export async function provisionDeliveryWorkspace({
     projectName: repo,
     token: vercelToken,
     teamId: vercelOrgId,
-    opts,
+    opts: effectiveOpts,
   });
+  throwIfCancelled(effectiveSignal, 'vercel_project');
   if (!projectResult.ok) return Object.freeze({ ...projectResult, credentialSource: 'operator_token' });
 
   let backendEnvResult = null;
@@ -628,8 +657,10 @@ export async function provisionDeliveryWorkspace({
       token: vercelToken,
       teamId: vercelOrgId,
       variables: backendEnv.variables,
-      opts,
+      opts: effectiveOpts,
+      signal: effectiveSignal,
     });
+    throwIfCancelled(effectiveSignal, 'vercel_environment');
     if (!backendEnvResult.ok) {
       return Object.freeze({ ...backendEnvResult, credentialSource: 'operator_token' });
     }

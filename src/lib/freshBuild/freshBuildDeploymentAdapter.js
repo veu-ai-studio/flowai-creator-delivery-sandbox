@@ -289,6 +289,7 @@ export async function probePreviewAccess({
   productId = null,
   env = globalThis.process?.env || {},
   allowBypass = true,
+  signal,
 } = {}) {
   const normalizedUrl = normalizePreviewUrl(previewUrl);
   if (!normalizedUrl) {
@@ -326,8 +327,16 @@ export async function probePreviewAccess({
       method: 'GET',
       redirect: 'manual',
       headers: probeHeaders.headers,
+      signal,
     });
   } catch (error) {
+    if (error?.name === 'AbortError' || signal?.aborted) {
+      const cancelled = new Error('Fresh Build preview probe cancelled');
+      cancelled.name = 'AbortError';
+      cancelled.code = 'RUN_CANCELLED';
+      cancelled.stage = 'preview_probe';
+      throw cancelled;
+    }
     return {
       previewUrl: normalizedUrl,
       deploymentId,
@@ -356,7 +365,7 @@ export async function probePreviewAccess({
   };
 }
 
-async function githubRequest({ fetchImpl, token, method, path, body }) {
+async function githubRequest({ fetchImpl, token, method, path, body, signal }) {
   const response = await fetchImpl(`${GITHUB_API_BASE}${path}`, {
     method,
     headers: {
@@ -364,6 +373,7 @@ async function githubRequest({ fetchImpl, token, method, path, body }) {
       ...(body ? { 'Content-Type': 'application/json' } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
+    signal,
   });
   const parsed = await parseJsonResponse(response);
   if (response.status < 200 || response.status >= 300) {
@@ -376,7 +386,7 @@ async function githubRequest({ fetchImpl, token, method, path, body }) {
   return parsed;
 }
 
-async function createInitialCommit({ fetchImpl, token, owner, repo, branchName, files, message }) {
+async function createInitialCommit({ fetchImpl, token, owner, repo, branchName, files, message, signal }) {
   const tree = await githubRequest({
     fetchImpl,
     token,
@@ -390,6 +400,7 @@ async function createInitialCommit({ fetchImpl, token, owner, repo, branchName, 
         content: file.content,
       })),
     },
+    signal,
   });
 
   const commit = await githubRequest({
@@ -402,6 +413,7 @@ async function createInitialCommit({ fetchImpl, token, owner, repo, branchName, 
       tree: tree.sha,
       parents: [],
     },
+    signal,
   });
 
   await githubRequest({
@@ -413,6 +425,7 @@ async function createInitialCommit({ fetchImpl, token, owner, repo, branchName, 
       ref: `refs/heads/${branchName}`,
       sha: commit.sha,
     },
+    signal,
   });
 
   return {
@@ -436,7 +449,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
   }
 
   return {
-    async createCommit({ owner, repo, baseBranch, branchName, files, message, cleanTree = false }) {
+    async createCommit({ owner, repo, baseBranch, branchName, files, message, cleanTree = false, signal }) {
       let baseRef;
       try {
         baseRef = await githubRequest({
@@ -444,10 +457,11 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
           token,
           method: 'GET',
           path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/ref/heads/${encodeURIComponent(baseBranch)}`,
+          signal,
         });
       } catch (error) {
         if (error?.status === 404 || isEmptyRepoRefError(error)) {
-          return createInitialCommit({ fetchImpl, token, owner, repo, branchName, files, message });
+          return createInitialCommit({ fetchImpl, token, owner, repo, branchName, files, message, signal });
         }
         throw error;
       }
@@ -461,6 +475,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
           token,
           method: 'GET',
           path: `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/commits/${encodeURIComponent(baseCommitSha)}`,
+          signal,
         });
         baseTreeSha = baseCommit?.tree?.sha;
         if (!baseTreeSha) throw makeGitHubError('GITHUB_WRITE_FAILED', 'Base commit did not include a tree sha');
@@ -480,6 +495,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
             content: file.content,
           })),
         },
+        signal,
       });
 
       const commit = await githubRequest({
@@ -492,6 +508,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
           tree: tree.sha,
           parents: [baseCommitSha],
         },
+        signal,
       });
 
       await githubRequest({
@@ -503,6 +520,7 @@ export function createGitHubTreeCommitClient({ token, fetchImpl = globalThis.fet
           ref: `refs/heads/${branchName}`,
           sha: commit.sha,
         },
+        signal,
       });
 
       return {
@@ -569,7 +587,17 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   generatedBackendEnvResolver = generatedBackendEnvironment,
   probePreviewAccessImpl = probePreviewAccess,
   allowMainBranch = false,
+  signal,
 } = {}) {
+  const throwIfCancelled = (stage) => {
+    if (!signal?.aborted) return;
+    const error = new Error(`Fresh Build cancelled during ${stage}`);
+    error.name = 'AbortError';
+    error.code = 'RUN_CANCELLED';
+    error.stage = stage;
+    throw error;
+  };
+  throwIfCancelled('deployment_validation');
   const validation = validateGeneratedCodebase(generatedCodebase);
   if (!validation.ok) {
     return buildBlockedResult('GENERATED_CODEBASE_INVALID', 'GeneratedCodebase failed validation', {
@@ -603,7 +631,9 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
         backendPersistenceRequired: generatedBackendPersistenceRequired(generatedCodebase, productConfig),
       },
       env,
+      signal,
     });
+    throwIfCancelled('delivery_workspace');
     if (!deliveryWorkspace?.ok) {
       return buildBlockedResult(deliveryWorkspace?.code || 'DELIVERY_WORKSPACE_BLOCKED', deliveryWorkspace?.detail || 'Delivery workspace could not be provisioned', {
         deliveryWorkspace,
@@ -665,6 +695,7 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   let credentialSource = null;
   let lastGitHubError = null;
   for (const [index, candidate] of clients.entries()) {
+    throwIfCancelled('github_write');
     try {
       commitResult = await candidate.client.createCommit({
         owner: repoTarget.owner,
@@ -674,10 +705,13 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
         files: generatedCodebase.files,
         message: `FlowAI Fresh Build output${runId ? ` (${runId})` : ''}`,
         cleanTree: true,
+        signal,
       });
+      throwIfCancelled('github_write');
       credentialSource = candidate.source;
       break;
     } catch (error) {
+      if (error?.name === 'AbortError' || error?.code === 'RUN_CANCELLED') throw error;
       lastGitHubError = error;
       if (error?.code === 'GITHUB_AUTH_FAILED' && index < clients.length - 1) {
         continue;
@@ -756,7 +790,9 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       token: vercelArgs.token,
       teamId: vercelArgs.orgId,
       variables: backendEnv.variables,
+      signal,
     });
+    throwIfCancelled('vercel_environment');
     if (!existingRepoBackendEnv?.ok) {
       return buildBlockedResult(
         existingRepoBackendEnv?.code || 'VERCEL_PROJECT_ENV_CREATE_FAILED',
@@ -782,7 +818,9 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
   let deployment;
   let previewAccess = null;
   try {
-    deployment = await deployPreviewImpl(vercelArgs);
+    throwIfCancelled('vercel_deploy');
+    deployment = await deployPreviewImpl({ ...vercelArgs, signal });
+    throwIfCancelled('vercel_deploy');
     previewAccess = await probePreviewAccessImpl({
       previewUrl: deployment?.previewUrl || null,
       deploymentId: deployment?.deploymentId || null,
@@ -790,8 +828,11 @@ export async function writeGeneratedCodebaseToUpgradeRepo({
       productId: firstNonEmpty(effectiveProductConfig?.product_id, effectiveProductConfig?.productId, productName, repoTarget.repo),
       env,
       allowBypass: !vercelArgs.publicDelivery,
+      signal,
     });
+    throwIfCancelled('preview_probe');
   } catch (error) {
+    if (error?.name === 'AbortError' || error?.code === 'RUN_CANCELLED') throw error;
     return {
       ok: false,
       status: 'WRITTEN_DEPLOY_FAILED',

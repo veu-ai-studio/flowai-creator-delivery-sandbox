@@ -78,6 +78,37 @@ function mockGeneratedCodebase(overrides = {}) {
 }
 
 describe('freshBuild Orchestrator', () => {
+  it('honours durable cancellation before external Fresh Build work begins', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const extractFeatures = vi.fn();
+
+    await expect(runFreshBuild({ url: 'https://example.com', runId: 'run-cancelled' }, {
+      env: { FLOWAI_ENABLE_FRESH_BUILD: 'true' },
+      signal: controller.signal,
+      extractFeatures,
+    })).rejects.toMatchObject({ name: 'AbortError', code: 'RUN_CANCELLED', stage: 'feature_flag' });
+    expect(extractFeatures).not.toHaveBeenCalled();
+  });
+
+  it('does not convert cancellation after generation into a blocked result or continue to repository writes', async () => {
+    const controller = new AbortController();
+    const writeGeneratedCodebase = vi.fn();
+
+    await expect(runFreshBuild({ url: 'https://example.com', runId: 'run-cancel-mid' }, {
+      env: { FLOWAI_ENABLE_FRESH_BUILD: 'true' },
+      signal: controller.signal,
+      extractFeatures: vi.fn(async () => mockFeatureInventory()),
+      synthesizeDesign: vi.fn(async () => mockDesignSpec()),
+      generateCodebase: vi.fn(async () => {
+        controller.abort();
+        return mockGeneratedCodebase();
+      }),
+      writeGeneratedCodebase,
+    })).rejects.toMatchObject({ name: 'AbortError', code: 'RUN_CANCELLED', stage: 'codebase_generator' });
+    expect(writeGeneratedCodebase).not.toHaveBeenCalled();
+  });
+
   it('keeps Fresh Build disabled by default and blocks without running modules', async () => {
     const extractFeatures = vi.fn();
     const synthesizeDesign = vi.fn();

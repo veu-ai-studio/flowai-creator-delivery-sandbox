@@ -277,6 +277,7 @@ async function captureFreshBuildScore({
       scoreDelta: finalScore - baselineScore,
     };
   } catch (error) {
+    if (error?.name === 'AbortError' || error?.code === 'RUN_CANCELLED') throw error;
     return {
       scoreStatus: SCORE_STATUS.FAILED,
       baselineScore: null,
@@ -458,6 +459,15 @@ export async function runFreshBuild(input = {}, options = {}) {
   const now = options.now;
   const runId = input.runId || options.runId || null;
   const onStep = options.onStep;
+  const signal = options.signal;
+  const throwIfCancelled = (stage) => {
+    if (!signal?.aborted) return;
+    const error = new Error(`Fresh Build cancelled during ${stage}`);
+    error.name = 'AbortError';
+    error.code = 'RUN_CANCELLED';
+    error.stage = stage;
+    throw error;
+  };
   const source = normalizeFreshBuildSource(input, options);
   const url = source.url;
 
@@ -488,6 +498,8 @@ export async function runFreshBuild(input = {}, options = {}) {
     return result;
   }
 
+  throwIfCancelled('feature_flag');
+
   const extract = options.extractFeatures || extractFeatures;
   const synthesize = options.synthesizeDesign || synthesizeDesign;
   const generate = options.generateCodebase || generateCodebase;
@@ -496,6 +508,7 @@ export async function runFreshBuild(input = {}, options = {}) {
   let featureInventory;
   let designSpec;
   if (source.inputMode === 'description') {
+    throwIfCancelled('description_build_brief');
     await emit(onStep, 'description_build_brief', 'started', { now });
     featureInventory = buildDescriptionFeatureInventory({
       description: source.description,
@@ -513,11 +526,14 @@ export async function runFreshBuild(input = {}, options = {}) {
       now,
     });
   } else {
+    throwIfCancelled('feature_extractor');
     await emit(onStep, 'feature_extractor', 'started', { now });
     featureInventory = await extract(url, {
       ...(options.extractorOptions || {}),
       runId,
+      signal,
     });
+    throwIfCancelled('feature_extractor');
     await emit(onStep, 'feature_extractor', 'completed', {
       inventoryId: featureInventory?.id || null,
       pages: Array.isArray(featureInventory?.pages) ? featureInventory.pages.length : 0,
@@ -530,7 +546,9 @@ export async function runFreshBuild(input = {}, options = {}) {
       ...(options.designOptions || {}),
       featureInventory,
       runId,
+      signal,
     });
+    throwIfCancelled('design_synthesizer');
     await emit(onStep, 'design_synthesizer', 'completed', {
       designSpecId: designSpec?.id || null,
       components: Array.isArray(designSpec?.components) ? designSpec.components.length : 0,
@@ -539,6 +557,7 @@ export async function runFreshBuild(input = {}, options = {}) {
   }
 
   await emit(onStep, 'codebase_generator', 'started', { now });
+  throwIfCancelled('codebase_generator');
   let generatedCodebase;
   try {
     generatedCodebase = await generate(featureInventory, designSpec, {
@@ -546,8 +565,11 @@ export async function runFreshBuild(input = {}, options = {}) {
       productName: input.productName || options.productName,
       targetStack: input.targetStack || options.targetStack,
       now,
+      signal,
     });
+    throwIfCancelled('codebase_generator');
   } catch (error) {
+    if (error?.name === 'AbortError' || error?.code === 'RUN_CANCELLED') throw error;
     const result = buildGenerationBlockedResult({
       url,
       runId,
@@ -586,6 +608,7 @@ export async function runFreshBuild(input = {}, options = {}) {
   }
 
   await emit(onStep, 'upgrade_repo_write', 'started', { now });
+  throwIfCancelled('upgrade_repo_write');
   let writeResult;
   try {
     writeResult = await writeGeneratedCodebase({
@@ -596,8 +619,11 @@ export async function runFreshBuild(input = {}, options = {}) {
       generatedCodebase,
       env,
       now,
+      signal,
     });
+    throwIfCancelled('upgrade_repo_write');
   } catch (error) {
+    if (error?.name === 'AbortError' || error?.code === 'RUN_CANCELLED') throw error;
     writeResult = error?.writeResult || {
       ok: false,
       status: 'WRITE_FAILED',
@@ -629,6 +655,7 @@ export async function runFreshBuild(input = {}, options = {}) {
     onStep,
     now,
   });
+  throwIfCancelled('score_capture');
   await emit(onStep, 'score_capture', scoreResult.scoreStatus === SCORE_STATUS.CAPTURED ? 'completed' : 'blocked', {
     scoreStatus: scoreResult.scoreStatus,
     previewAccessStatus: writeResult?.previewAccessStatus || null,
