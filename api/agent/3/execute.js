@@ -42,6 +42,7 @@ import { normalizeFlowAIInput } from '../../../src/lib/flowai/unifiedRunInput.js
 import { buildFlowAIStepPatchFromLog } from '../../../src/lib/flowaiRunStore.js';
 import { requireAuthHard } from '../../_lib/auth.js';
 import { createOperationalRun, getOperationalRun, publicRunError, updateOperationalRun } from '../../_lib/operationalRuns.js';
+import { findRegisteredProductConfigForUrl } from '../../../src/lib/products/registeredProductConfig.js';
 
 const SYNC_TIMEOUT_MS = 25_000;
 const VERCEL_EXECUTE_HARD_TIMEOUT_MS = 800_000;
@@ -450,11 +451,13 @@ async function runSseOrchestration(req, res, body, auth) {
         switchMode: () => {},
         resume: () => {},
       };
+      const productConfig = freshBuildProductConfig(url, body, process.env);
       orchestrationPromise = runFreshBuild({
         ...runInput,
         url,
         runId,
-        productName: body.productName || body.productDescription || 'Fresh Build product',
+        productName: productConfig?.name || body.productName || body.productDescription || 'Fresh Build product',
+        productConfig,
       }, {
         signal: abortController.signal,
         onStep: (event) => {
@@ -590,6 +593,30 @@ function freshBuildEventToMacroLogs(event = {}) {
   }));
 }
 
+function firstFreshBuildValue(...values) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
+function freshBuildProductConfig(url, body = {}, env = {}) {
+  const registered = url ? findRegisteredProductConfigForUrl(url) : null;
+  if (registered) return registered;
+  const upgradeRepo = firstFreshBuildValue(env.FLOWAI_FRESH_BUILD_DELIVERY_REPO, env.FLOWAI_CREATOR_DELIVERY_REPO);
+  if (!upgradeRepo) return null;
+  return {
+    name: firstFreshBuildValue(body.productName, env.FLOWAI_FRESH_BUILD_DELIVERY_PRODUCT_NAME, 'FlowAI Creator Delivery Sandbox'),
+    product_id: firstFreshBuildValue(env.FLOWAI_FRESH_BUILD_DELIVERY_PRODUCT_ID, 'flowai-creator-delivery-sandbox'),
+    upgrade_repo: upgradeRepo,
+    github_repo_url: upgradeRepo,
+    upgrade_base_branch: firstFreshBuildValue(env.FLOWAI_FRESH_BUILD_DELIVERY_BASE_BRANCH, 'main'),
+    vercel_project_id: firstFreshBuildValue(env.FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_PROJECT_ID),
+    vercel_org_id: firstFreshBuildValue(env.FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_ORG_ID, env.VERCEL_ORG_ID, env.VERCEL_TEAM_ID),
+    inputMode: 'fresh_build',
+  };
+}
+
 // Exported for tests — the handler closure isn't easily testable otherwise.
 function scoreFromStepLogs(stepLogs = []) {
   for (let i = stepLogs.length - 1; i >= 0; i -= 1) {
@@ -687,6 +714,7 @@ export const __test = Object.freeze({
   buildSseSoftTimeoutResult,
   scoreFromStepLogs,
   freshBuildEventToMacroLogs,
+  freshBuildProductConfig,
   SYNC_TIMEOUT_MS,
   SSE_SOFT_TIMEOUT_MS,
   VERCEL_EXECUTE_HARD_TIMEOUT_MS,

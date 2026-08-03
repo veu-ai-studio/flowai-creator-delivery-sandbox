@@ -183,6 +183,7 @@ describe('freshBuild Orchestrator', () => {
       baselineScore: 72,
       finalScore: 86,
     }));
+    const onStep = vi.fn();
 
     const result = await runFreshBuild({
       url: 'https://example.com',
@@ -197,6 +198,7 @@ describe('freshBuild Orchestrator', () => {
       generateCodebase,
       writeGeneratedCodebase,
       scoreFreshBuildPreview,
+      onStep,
     });
 
     expect(calls).toEqual(['extract', 'design', 'generate', 'write']);
@@ -243,6 +245,16 @@ describe('freshBuild Orchestrator', () => {
       baselineUrl: 'https://example.com',
       previewUrl: 'https://fresh-build-preview.vercel.app',
       runId: 'run-2',
+      previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
+    }));
+    expect(onStep).toHaveBeenCalledWith(expect.objectContaining({
+      stage: 'codebase_generator',
+      status: 'completed',
+      files: 2,
+    }));
+    expect(onStep).toHaveBeenCalledWith(expect.objectContaining({
+      stage: 'upgrade_repo_write',
+      status: 'completed',
       previewAccessStatus: 'PREVIEW_BROWSER_CLEAR',
     }));
   });

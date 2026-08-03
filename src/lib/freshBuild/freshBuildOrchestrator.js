@@ -108,11 +108,11 @@ async function emit(onStep, stage, status, details = {}) {
   if (typeof onStep !== 'function') return;
   const { now, ...rest } = details;
   await onStep({
+    ...rest,
     mode: FRESH_BUILD_MODE,
     stage,
     status,
     at: isoTimestamp(now),
-    ...rest,
   });
 }
 

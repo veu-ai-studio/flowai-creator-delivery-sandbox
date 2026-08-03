@@ -29,4 +29,21 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
     expect(deploy.every((log) => log.status === 'skipped')).toBe(true);
     expect(deploy[0].result.reason).toBe('DEPLOYMENT_ADAPTER_NOT_CONFIGURED');
   });
+
+  it('reuses a registered FlowAI target and falls back to the authorized delivery repo', () => {
+    expect(__test.freshBuildProductConfig('https://flowai.flowaiplatform.com/landing', {}, {})).toMatchObject({
+      name: 'FlowAI',
+      upgrade_repo: 'https://github.com/victor2081new-cloud/flowai',
+    });
+    expect(__test.freshBuildProductConfig('https://example.com', { productName: 'Pilot' }, {
+      FLOWAI_FRESH_BUILD_DELIVERY_REPO: 'https://github.com/veu-ai-studio/delivery',
+      FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_PROJECT_ID: 'prj_delivery',
+      FLOWAI_FRESH_BUILD_DELIVERY_VERCEL_ORG_ID: 'team_flowai',
+    })).toMatchObject({
+      name: 'Pilot',
+      upgrade_repo: 'https://github.com/veu-ai-studio/delivery',
+      vercel_project_id: 'prj_delivery',
+      vercel_org_id: 'team_flowai',
+    });
+  });
 });
