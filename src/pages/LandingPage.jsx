@@ -909,7 +909,10 @@ export default function LandingPage() {
       return;
     }
 
-    if (mode === 'auto') navigate('/auto-runner');
+    if (activeCard === 'A' && urlInput.trim()) {
+      navigate(`/flowai?url=${encodeURIComponent(urlInput.trim())}&mode=${encodeURIComponent(mode)}`);
+    }
+    else if (mode === 'auto') navigate('/auto-runner');
     else if (mode === 'guided') navigate('/guided/research');
     else navigate('/manual/research');
   };

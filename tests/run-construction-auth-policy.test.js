@@ -17,7 +17,7 @@ describe('run-construction release policy', () => {
 
   it('routes normal production URLs through the operational runner', () => {
     expect(landingSource).toContain("['migration', 'fresh_build'].includes(flowHubPath)");
-    expect(landingSource).toContain("if (mode === 'auto') navigate('/auto-runner')");
+    expect(landingSource).toContain("navigate(`/flowai?url=${encodeURIComponent(urlInput.trim())}&mode=${encodeURIComponent(mode)}`)");
     expect(landingSource).not.toContain("activeCard === 'A' && !!urlInput.trim();");
   });
 });

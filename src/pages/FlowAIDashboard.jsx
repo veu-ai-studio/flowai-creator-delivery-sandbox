@@ -381,8 +381,12 @@ export default function FlowAIDashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const selectedUrl = params.get('url');
+    const selectedMode = params.get('mode');
     if (selectedUrl) {
       setUrl(selectedUrl);
+    }
+    if (['auto', 'guided', 'manual'].includes(selectedMode)) {
+      setMode(selectedMode);
     }
   }, []);
 
