@@ -69,8 +69,8 @@ describe('registered product config', () => {
     expect(saige.systemNote).toContain('github.com/veu-ai-studio/saige-v2 is the FlowAI upgrade target');
   });
 
-  it('registers the full five-product portfolio without changing SAIGE', () => {
-    expect(REGISTERED_PRODUCT_CONFIG).toHaveLength(5);
+  it('registers FlowAI plus the full five-product portfolio without changing SAIGE', () => {
+    expect(REGISTERED_PRODUCT_CONFIG).toHaveLength(6);
     expect(REGISTERED_PRODUCT_CONFIG.find((product) => product.name === 'SAIGE')).toMatchObject({
       domain: 'saigeplatform.com',
       repo: 'https://github.com/veu-ai-studio/saige-v2',
@@ -82,6 +82,16 @@ describe('registered product config', () => {
     for (const product of portfolio) {
       expect(REGISTERED_PRODUCT_CONFIG.find((entry) => entry.name === product.name)).toEqual(product);
     }
+  });
+
+  it('resolves FlowAI production to its isolated-branch preview target', () => {
+    expect(findRegisteredProductConfigForUrl('https://flowai.flowaiplatform.com/landing')).toMatchObject({
+      name: 'FlowAI',
+      repo: 'https://github.com/victor2081new-cloud/flowai',
+      branch: 'codex/p0-external-mvp-recovery',
+      vercel_project_id: 'prj_qtqajKmblq1cZILD66jVbTVC4Uo5',
+      status: 'registered',
+    });
   });
 
   it('matches SAIGE URLs by host only', () => {

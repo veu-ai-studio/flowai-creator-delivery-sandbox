@@ -1,5 +1,22 @@
 export const REGISTERED_PRODUCT_CONFIG = Object.freeze([
   Object.freeze({
+    name: 'FlowAI',
+    domain: 'flowai.flowaiplatform.com',
+    aliases: ['flowai-veu-ai-studio.vercel.app', 'flowai.flowaiplatform.com'],
+    repo: 'https://github.com/victor2081new-cloud/flowai',
+    branch: 'codex/p0-external-mvp-recovery',
+    status: 'registered',
+    original_url: 'https://flowai.flowaiplatform.com',
+    upgrade_repo: 'https://github.com/victor2081new-cloud/flowai',
+    upgrade_url: 'https://flowai.flowaiplatform.com',
+    upgrade_status: 'active_upgrade_target',
+    upgrade_repo_status: 'provisioned',
+    deployment_url: 'https://flowai.flowaiplatform.com',
+    deployment_status: 'deployed',
+    vercel_project_id: 'prj_qtqajKmblq1cZILD66jVbTVC4Uo5',
+    systemNote: 'FlowAI self-renewal targets isolated branches in the authoritative repository; production promotion remains separately gated.',
+  }),
+  Object.freeze({
     name: 'SAIGE',
     domain: 'saigeplatform.com',
     aliases: ['saige-v2.vercel.app'],
