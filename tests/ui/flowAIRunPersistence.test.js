@@ -31,6 +31,8 @@ describe('FlowAI run persistence and active indicator', () => {
     expect(runsHistorySource).toContain('ended_at');
     expect(runsHistorySource).toContain('branch_created');
     expect(runsHistorySource).toContain('scoreLabel');
+    expect(runsHistorySource).toContain("body: JSON.stringify({ runId, command: 'stop' })");
+    expect(runsHistorySource).toContain('Stop run');
   });
 
   it('exposes active runs globally from the shared layout and sidebar', () => {

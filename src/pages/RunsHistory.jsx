@@ -59,7 +59,7 @@ function mapFlowAIRun(run) {
   };
 }
 
-function RunRow({ session, onClick, isExpanded }) {
+function RunRow({ session, onClick, isExpanded, onStop, stopping }) {
   const status = session.overall_status || 'completed';
   const cfg = STATUS_CFG[status] || STATUS_CFG.completed;
   const StatusIcon = cfg.icon;
@@ -110,6 +110,7 @@ function RunRow({ session, onClick, isExpanded }) {
             className="overflow-hidden bg-secondary/10 border-t border-border/30">
             <div className="px-5 py-4 space-y-3">
               {session._type === 'flowai' && (
+                <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                   {[
                     { label: 'Run ID', value: session.run_id || session.id },
@@ -123,6 +124,17 @@ function RunRow({ session, onClick, isExpanded }) {
                     </div>
                   ))}
                 </div>
+                {['queued', 'running', 'paused', 'cancelling', 'control_failed'].includes(status) && (
+                  <button
+                    type="button"
+                    disabled={stopping || status === 'cancelling'}
+                    onClick={(event) => { event.stopPropagation(); onStop(session); }}
+                    className="mt-3 rounded-md border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-300 disabled:opacity-50"
+                  >
+                    {stopping || status === 'cancelling' ? 'Stopping…' : 'Stop run'}
+                  </button>
+                )}
+                </>
               )}
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Step Results</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -154,6 +166,27 @@ export default function RunsHistory() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
+  const [stoppingId, setStoppingId] = useState(null);
+
+  const stopRun = async (session) => {
+    const runId = session?.run_id || session?.id;
+    if (!runId || stoppingId) return;
+    setStoppingId(runId);
+    setHistoryError('');
+    try {
+      const response = await fetch('/api/agent/3/control', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId, command: 'stop' }),
+      });
+      if (!response.ok) throw new Error(`Stop unavailable (${response.status})`);
+    } catch (error) {
+      setHistoryError(error?.message || 'Unable to stop run.');
+    } finally {
+      setStoppingId(null);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -282,6 +315,8 @@ export default function RunsHistory() {
               key={s.id}
               session={s}
               isExpanded={expandedId === s.id}
+              stopping={stoppingId === (s.run_id || s.id)}
+              onStop={stopRun}
               onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}
             />
           ))
