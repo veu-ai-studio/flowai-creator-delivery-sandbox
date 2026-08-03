@@ -1,8 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
-import { cancelLegacyAutoSession, quiesceLegacyAutoSessionExecution } from '../../src/lib/legacyAutoSession.js';
+import { cancelLegacyAutoSession, normalizeLegacyAutoSession, quiesceLegacyAutoSessionExecution } from '../../src/lib/legacyAutoSession.js';
 import fs from 'node:fs';
 
 describe('legacy AutoSession durable cancellation', () => {
+  it('normalizes legacy SDK wrapped and underscore-ID entity shapes', () => {
+    expect(normalizeLegacyAutoSession({
+      _id: 'legacy-1',
+      data: { product_name: 'Wrapped product', overall_status: 'running' },
+    })).toMatchObject({
+      id: 'legacy-1',
+      product_name: 'Wrapped product',
+      overall_status: 'running',
+    });
+    expect(normalizeLegacyAutoSession({ data: { _id: 'legacy-2' } })).toMatchObject({ id: 'legacy-2' });
+    expect(normalizeLegacyAutoSession(null)).toBeNull();
+    expect(normalizeLegacyAutoSession({ product_name: 'missing ID' })).toBeNull();
+    expect(normalizeLegacyAutoSession({ id: 'legacy-1', data: { id: 'legacy-2' } })).toBeNull();
+  });
+
   it('quiesces the writable session before an asynchronous cancellation can resolve', async () => {
     let resolveCancellation;
     const cancellationPending = new Promise(resolve => { resolveCancellation = resolve; });
@@ -220,6 +235,46 @@ describe('legacy AutoSession durable cancellation', () => {
             overall_status: 'failed',
             step_results: { cancellation: { disposition: 'cancelled_legacy_session' } },
           }]),
+        },
+      },
+    };
+    await expect(cancelLegacyAutoSession({
+      base44Client,
+      sessionId: 'legacy-1',
+      reason: 'operator_abort',
+    })).rejects.toThrow('legacy_session_identity_unconfirmed');
+  });
+
+  it('confirms a wrapped readback row only when its normalized ID matches', async () => {
+    const base44Client = {
+      entities: {
+        AutoSession: {
+          update: vi.fn(async () => undefined),
+          get: vi.fn(async () => ({ data: {
+            _id: 'legacy-1',
+            overall_status: 'failed',
+            step_results: { cancellation: { disposition: 'cancelled_legacy_session' } },
+          } })),
+        },
+      },
+    };
+    await expect(cancelLegacyAutoSession({
+      base44Client,
+      sessionId: 'legacy-1',
+      reason: 'operator_abort',
+    })).resolves.toMatchObject({ id: 'legacy-1', overall_status: 'failed' });
+  });
+
+  it('rejects a wrapped readback row for a different ID', async () => {
+    const base44Client = {
+      entities: {
+        AutoSession: {
+          update: vi.fn(async () => undefined),
+          get: vi.fn(async () => ({ data: {
+            id: 'legacy-2',
+            overall_status: 'failed',
+            step_results: { cancellation: { disposition: 'cancelled_legacy_session' } },
+          } })),
         },
       },
     };

@@ -18,7 +18,7 @@ import { logAction } from '@/lib/auditLogger';
 import { OrchestratorHub, createMemoryHotStore, createMemoryColdStore } from '@/lib/agents/orchestrator/OrchestratorHub';
 import { MessageBus } from '@/lib/agents/MessageBus';
 import { shouldHaltOnBlock, applyBlockGate, serializeResultsForPersist } from '@/lib/runner/blockGate';
-import { cancelLegacyAutoSession, quiesceLegacyAutoSessionExecution } from '@/lib/legacyAutoSession';
+import { cancelLegacyAutoSession, normalizeLegacyAutoSession, quiesceLegacyAutoSessionExecution } from '@/lib/legacyAutoSession';
 
 // PA #2.7b — Lazy-instantiated orchestrator bundle. Hub + MessageBus +
 // in-memory HotStore + ColdStore are created on first call to
@@ -341,7 +341,8 @@ export default function AutoRunner() {
       if (resumeId) {
         try { sessionStorage.removeItem('flowai_resume_session_id'); } catch {}
         try {
-          const sessions = await base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 10);
+          const sessions = (await base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 10))
+            .map(normalizeLegacyAutoSession).filter(Boolean);
           const match = sessions.find(s => s.id === resumeId) || sessions[0];
           if (match) { setResumeSession(match); return; }
         } catch {}
@@ -356,7 +357,8 @@ export default function AutoRunner() {
 
       // Always check DB for any running session — never show blank input panel if one exists
       try {
-        const sessions = await base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 1);
+        const sessions = (await base44.entities.AutoSession.filter({ overall_status: 'running' }, '-started_at', 1))
+          .map(normalizeLegacyAutoSession).filter(Boolean);
         if (sessions[0]) {
           setResumeSession(sessions[0]);
           return;

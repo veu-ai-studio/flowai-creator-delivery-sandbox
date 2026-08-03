@@ -1,3 +1,15 @@
+export function normalizeLegacyAutoSession(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const nested = raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)
+    ? raw.data
+    : {};
+  const ids = [raw.id, raw._id, nested.id, nested._id].filter(Boolean);
+  const uniqueIds = [...new Set(ids)];
+  if (uniqueIds.length !== 1) return null;
+  const [id] = uniqueIds;
+  return { ...raw, ...nested, id };
+}
+
 export function quiesceLegacyAutoSessionExecution({ sessionDbIdRef, isPausedRef, timerRef, clearTimer } = {}) {
   const sessionId = sessionDbIdRef?.current || null;
   if (isPausedRef) isPausedRef.current = true;
@@ -39,7 +51,7 @@ export async function cancelLegacyAutoSession({ base44Client, sessionId, reason,
   let updated = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      if (typeof get === 'function') updated = await get.call(entity, sessionId);
+      if (typeof get === 'function') updated = normalizeLegacyAutoSession(await get.call(entity, sessionId));
     } catch {
       updated = null;
     }
@@ -51,7 +63,9 @@ export async function cancelLegacyAutoSession({ base44Client, sessionId, reason,
     if (!getConfirmed && typeof filter === 'function') {
       try {
         const rows = await filter.call(entity, { id: sessionId }, '-updated_date', 1);
-        updated = Array.isArray(rows) ? rows.find(row => row?.id === sessionId) || null : null;
+        updated = Array.isArray(rows)
+          ? rows.map(normalizeLegacyAutoSession).filter(Boolean).find(row => row.id === sessionId) || null
+          : null;
       } catch {
         updated = null;
       }
