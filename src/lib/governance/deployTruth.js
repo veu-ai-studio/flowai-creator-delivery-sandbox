@@ -72,17 +72,35 @@ export async function fetchProductionVersion({ productionUrl, fetchImpl = fetch 
   }
   const base = String(productionUrl).replace(/\/+$/, '');
   try {
+    const headers = { Accept: 'application/json' };
     const response = await fetchImpl(`${base}/api/version`, {
-      headers: { Accept: 'application/json' },
+      headers,
     });
-    if (!response?.ok) {
+    if (response?.ok) return { ok: true, version: await response.json() };
+
+    // /api/version is intentionally authenticated in production. The public
+    // health contract exposes only non-secret build identity, so use it as the
+    // deploy-truth fallback without weakening the protected version route.
+    const healthResponse = await fetchImpl(`${base}/api/health`, { headers });
+    if (!healthResponse?.ok) {
       return {
         ok: false,
-        reason: `version_endpoint_http_${response?.status || 'unknown'}`,
+        reason: `version_endpoint_http_${response?.status || 'unknown'};health_endpoint_http_${healthResponse?.status || 'unknown'}`,
         version: null,
       };
     }
-    return { ok: true, version: await response.json() };
+    const health = await healthResponse.json();
+    const build = health?.checks?.build || {};
+    return {
+      ok: true,
+      version: {
+        commitFull: build.commitFull || health?.commit || null,
+        commit: build.commit || health?.commit || null,
+        branch: build.branch || null,
+        deployUrl: build.deploymentUrl || null,
+        env: build.env || health?.env || null,
+      },
+    };
   } catch (error) {
     return { ok: false, reason: error?.message || 'version_endpoint_failed', version: null };
   }

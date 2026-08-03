@@ -83,6 +83,46 @@ describe('deploy truth governance artifact', () => {
     });
   });
 
+  it('falls back to public health build identity when /api/version is authenticated', async () => {
+    const fetchImpl = vi.fn(async (url) => {
+      if (url.endsWith('/api/version')) return { ok: false, status: 401 };
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          env: 'production',
+          commit: 'abc123',
+          checks: {
+            build: {
+              commitFull: 'abc123def456',
+              branch: 'codex/release',
+              deploymentUrl: 'https://flowai-preview.vercel.app',
+            },
+          },
+        }),
+      };
+    });
+
+    const result = await fetchProductionVersion({
+      productionUrl: 'https://flowai.flowaiplatform.com',
+      fetchImpl,
+    });
+
+    expect(fetchImpl).toHaveBeenNthCalledWith(2, 'https://flowai.flowaiplatform.com/api/health', {
+      headers: { Accept: 'application/json' },
+    });
+    expect(result).toEqual({
+      ok: true,
+      version: {
+        commitFull: 'abc123def456',
+        commit: 'abc123',
+        branch: 'codex/release',
+        deployUrl: 'https://flowai-preview.vercel.app',
+        env: 'production',
+      },
+    });
+  });
+
   it('persists deploy truth artifacts to Supabase governance_record via appendGovernanceEntry', async () => {
     const artifact = buildDeployTruthArtifact({
       productionVersion: { commitFull: 'abc123', branch: 'flowai-v0.1' },
