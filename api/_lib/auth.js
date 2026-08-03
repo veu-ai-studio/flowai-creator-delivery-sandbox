@@ -1,39 +1,5 @@
-// Auth + multi-tenant context.
-//
-// ────────────────────────────────────────────────────────────────────────
-// ⚠️  TEMPORARY INTERNAL-PROOF AUTH BYPASS  —  REMOVE BEFORE EXTERNAL USE
-// ────────────────────────────────────────────────────────────────────────
-// Added 2026-05-16 (this W2 dispatch session). The `requireAuthHard()`
-// helper below checks `process.env.FLOWAI_AUTH_BYPASS` at the top of its
-// body. When the env var is set to the exact value `PROVE_INTERNAL_2026`,
-// the helper returns a synthetic authorized context instead of 401ing.
-// When the env var is unset (default), normal auth enforcement runs
-// unchanged — the S-3 fix from commit c7d5362 is FULLY PRESERVED.
-//
-// WHY this exists:
-//   FlowAI is internal AI Operating System infrastructure for VEU AI
-//   Studio (CANONICAL_REFERENCE §1: "Not a SaaS product"). During the
-//   internal-proof phase, the system needs to be reachable from a
-//   browser session that does not carry a verified Clerk JWT, so we can
-//   prove end-to-end pipeline behavior before wiring up Clerk-in-the-UI.
-//   The S-3 public-threat-model fix (anon-rejection on 11 endpoints)
-//   was correctly added — but it's premature to enforce against an
-//   internal proof workflow that hasn't yet been gated by Clerk on the
-//   front end.
-//
-// HOW to disable the bypass:
-//   1. Unset the FLOWAI_AUTH_BYPASS env var in Vercel (Settings → Env
-//      Vars → remove the entry for `production` AND `preview`).
-//   2. Redeploy. Anonymous callers immediately resume getting 401.
-//   The bypass requires the EXACT string `PROVE_INTERNAL_2026` — typos
-//   or any other value fall through to normal 401 behavior.
-//
-// WHEN to remove this entire block:
-//   Before any external exposure of FlowAI (public marketing site,
-//   external customer signup, public API gateway, etc.). Tracked by the
-//   commit message of the patch that added it. Search the repo for
-//   `FLOWAI_AUTH_BYPASS` to find the env-gated branch + this comment.
-// ────────────────────────────────────────────────────────────────────────
+// Auth + multi-tenant context. Tenant data and operational capabilities use
+// hard authentication gates; there is no environment-driven auth bypass.
 //
 // ── org_id flow ──────────────────────────────────────────────────────────
 // 1. Browser request hits /api/* with a Clerk session cookie or an
@@ -133,7 +99,12 @@ export async function verifySession(req) {
 // matching env. Used for cron jobs / Inngest dispatched work.
 function isServiceCall(req) {
   const supplied = req.headers?.['x-flowai-service-key'];
-  return Boolean(supplied && process.env.FLOWAI_SERVICE_KEY && supplied === process.env.FLOWAI_SERVICE_KEY);
+  const configured = process.env.FLOWAI_SERVICE_KEY;
+  if (typeof supplied !== 'string' || typeof configured !== 'string') return false;
+  const suppliedBuffer = Buffer.from(supplied);
+  const configuredBuffer = Buffer.from(configured);
+  return suppliedBuffer.length === configuredBuffer.length
+    && timingSafeEqual(suppliedBuffer, configuredBuffer);
 }
 
 // Main entry point: returns a request context object with everything
@@ -214,19 +185,18 @@ export function isOperatorContext(ctx) {
   if (!ctx?.authenticated) return false;
   if (ctx.authMode === 'service') return true;
   const session = ctx.clerkSession || {};
+  // Organization roles are tenant-local and must never grant authority over
+  // platform-global controls. Only an explicit platform role may do so.
   const candidates = [
-    session.role,
-    session.org_role,
-    session.orgRole,
-    session.o?.rol,
-    session.publicMetadata?.role,
-    session.privateMetadata?.role,
-    session.metadata?.role,
-    session.claims?.role,
+    session.flowai_platform_role,
+    session.publicMetadata?.flowaiPlatformRole,
+    session.privateMetadata?.flowaiPlatformRole,
+    session.metadata?.flowaiPlatformRole,
+    session.claims?.flowai_platform_role,
   ].filter(Boolean);
   return candidates.some((role) => {
-    const normalized = String(role).toLowerCase().replace(/^org:/, '');
-    return ['admin', 'operator', 'owner'].includes(normalized);
+    const normalized = String(role).toLowerCase();
+    return ['platform_admin', 'platform_operator'].includes(normalized);
   });
 }
 

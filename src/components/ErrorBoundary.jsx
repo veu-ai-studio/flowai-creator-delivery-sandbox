@@ -28,20 +28,9 @@ export default class ErrorBoundary extends Component {
                 <p className="text-xs text-muted-foreground mt-0.5">A rendering error occurred. You can try recovering.</p>
               </div>
             </div>
-            {this.state.error?.message && (
-              <pre className="text-[10px] text-red-400 bg-red-500/10 rounded p-3 overflow-auto max-h-32 font-mono">
-                {this.state.error.message}
-              </pre>
-            )}
-            <button
-              onClick={() => this.setState({ hasError: false, error: null })}
-              className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition"
-            >
-              Try to recover
-            </button>
             <button
               onClick={() => window.location.reload()}
-              className="w-full py-2 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground transition"
+              className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition"
             >
               Reload page
             </button>

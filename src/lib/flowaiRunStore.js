@@ -119,10 +119,24 @@ export function buildFlowAIStepPatchFromLog(log = {}) {
 }
 
 function mergeStepResults(existing, patch) {
-  return {
-    ...normalizeStepResults(existing),
-    ...normalizeStepResults(patch),
-  };
+  const current = normalizeStepResults(existing);
+  const incoming = normalizeStepResults(patch);
+  const merged = { ...current };
+  for (const [key, value] of Object.entries(incoming)) {
+    const previous = current[key];
+    if (!previous) {
+      merged[key] = value;
+      continue;
+    }
+    const previousEvidence = Array.isArray(previous.history)
+      ? previous.history
+      : [{ ...previous, history: undefined }];
+    merged[key] = {
+      ...value,
+      history: [...previousEvidence, { ...value, history: undefined }],
+    };
+  }
+  return merged;
 }
 
 function withStaleRunsReconciled(runs, now = Date.now(), timeoutMs = FLOWAI_RUN_HEARTBEAT_TIMEOUT_MS) {
@@ -154,7 +168,7 @@ function writeRuns(runs) {
 function normalizeRun(run) {
   const stepResults = backfillLegacyStepResults(run.stepResults, run.stepCount);
   return {
-    id: run.id ?? run.runId ?? `local_${Date.now()}`,
+    id: run.id ?? run.runId ?? `local_${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(36).slice(2)}`}`,
     runId: run.runId ?? run.id ?? null,
     product: run.product ?? 'Unknown product',
     productUrl: run.productUrl ?? null,
@@ -185,6 +199,15 @@ export function listFlowAIRuns() {
 
 export function listActiveFlowAIRuns() {
   return listFlowAIRuns().filter((run) => run.status === 'running' || run.status === 'paused');
+}
+
+// The browser ledger is an availability cache, not an authorization boundary.
+// Remove it when the authenticated principal changes so a subsequent user on
+// the same browser cannot see the previous tenant's run metadata.
+export function clearFlowAIRuns() {
+  if (!canUseStorage()) return;
+  window.localStorage.removeItem(STORAGE_KEY);
+  window.dispatchEvent(new CustomEvent(FLOWAI_RUNS_CHANGED, { detail: [] }));
 }
 
 export function upsertFlowAIRun(run) {

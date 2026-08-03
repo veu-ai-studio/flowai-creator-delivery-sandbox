@@ -173,6 +173,29 @@ describe('authBackend / user store + sessions', () => {
 // ─── /api/auth/sign-up ────────────────────────────────────────────────────
 
 describe('operator proof auth', () => {
+  it('does not elevate tenant owner or admin roles into platform operators', () => {
+    for (const role of ['org:owner', 'org:admin', 'owner', 'admin', 'operator']) {
+      expect(isOperatorContext({
+        authenticated: true,
+        authMode: 'clerk',
+        clerkSession: { org_role: role, role, o: { rol: role } },
+      })).toBe(false);
+    }
+  });
+
+  it('accepts only explicit platform operator claims', () => {
+    expect(isOperatorContext({
+      authenticated: true,
+      authMode: 'clerk',
+      clerkSession: { privateMetadata: { flowaiPlatformRole: 'platform_operator' } },
+    })).toBe(true);
+    expect(isOperatorContext({
+      authenticated: true,
+      authMode: 'clerk',
+      clerkSession: { claims: { flowai_platform_role: 'platform_admin' } },
+    })).toBe(true);
+  });
+
   it('accepts FLOWAI_OPERATOR_SECRET via x-flowai-operator-secret without a Clerk session', async () => {
     const oldOperator = process.env.FLOWAI_OPERATOR_SECRET;
     const oldInternal = process.env.FLOWAI_INTERNAL_SECRET;

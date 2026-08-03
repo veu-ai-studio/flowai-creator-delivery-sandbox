@@ -558,15 +558,15 @@ Create a production-ready build specification (no actual code files, just struct
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             className={`rounded-lg border p-4 text-xs font-mono space-y-2 ${
-              phaseReport.status === 'SUCCESS' ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30'
+              phaseReport.status === 'SUCCESS' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-red-500/10 border-red-500/30'
             }`}
           >
             <div className="flex items-center gap-2">
               {phaseReport.status === 'SUCCESS'
-                ? <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                ? <AlertCircle className="h-4 w-4 text-amber-400" />
                 : <AlertCircle className="h-4 w-4 text-red-400" />}
-              <span className={`font-bold ${phaseReport.status === 'SUCCESS' ? 'text-emerald-400' : 'text-red-400'}`}>
-                {phaseReport.status === 'SUCCESS' ? 'PHASE 4 COMPLETE — Build Engine Stub Active' : 'PHASE 4 FAILED — Auto-Stop'}
+              <span className={`font-bold ${phaseReport.status === 'SUCCESS' ? 'text-amber-400' : 'text-red-400'}`}>
+                {phaseReport.status === 'SUCCESS' ? 'LEGACY BUILD SIMULATION COMPLETE — No deployable artifact produced' : 'PHASE 4 FAILED — Auto-Stop'}
               </span>
             </div>
             <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap overflow-x-auto">

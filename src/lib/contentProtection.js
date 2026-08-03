@@ -1,5 +1,5 @@
 // ─── FLOWAI CONTENT PROTECTION — PHASE 1 ─────────────────────────────────────
-// Installs right-click disable, DevTools detection, and session security
+// Installs right-click disable and DevTools detection
 // Must be called once from AppLayout.
 //
 // PA #2.5a — Env Gate:
@@ -7,11 +7,8 @@
 //   `isAntiTamperEnabled()` from /src/lib/security/anti-tamper-gate. When the
 //   gate returns false (preview / development / unknown env), the installers
 //   short-circuit to a noop and return a noop cleanup so DevTools, F12, and
-//   right-click stay usable for development debugging. The session XOR
-//   storage helpers and audit/anomaly probes below are NOT gated — they are
-//   not anti-tamper protections; they are bookkeeping.
+//   right-click stay usable for development debugging.
 
-import { base44 } from '@/api/base44Client';
 import { isAntiTamperEnabled } from '@/lib/security/anti-tamper-gate';
 
 // ── Right-click disable ──
@@ -78,70 +75,12 @@ export function installDevToolsDetection() {
 }
 
 async function logDevToolsEvent() {
-  try {
-    const user = await base44.auth.me().catch(() => null);
-    await base44.entities.GovernanceAuditLog.create({
-      action_type: 'session_started', // using closest allowed enum
-      action_detail: 'DevTools opened during session — possible reverse engineering attempt',
-      user: user?.email || 'unknown',
-      timestamp: new Date().toISOString(),
-    });
-  } catch {}
-}
-
-// ── Session security: XOR cipher for sessionStorage ──
-const SESSION_KEY_NAME = '__fai_sk';
-
-function getOrCreateSessionKey() {
-  let key = sessionStorage.getItem(SESSION_KEY_NAME);
-  if (!key) {
-    key = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    sessionStorage.setItem(SESSION_KEY_NAME, key);
-  }
-  return key;
-}
-
-function xorCipher(text, key) {
-  return text.split('').map((ch, i) =>
-    String.fromCharCode(ch.charCodeAt(0) ^ key.charCodeAt(i % key.length))
-  ).join('');
-}
-
-export function secureStore(key, value) {
-  const sk = getOrCreateSessionKey();
-  const serialized = JSON.stringify({ value, ts: Date.now() });
-  const encoded = btoa(xorCipher(serialized, sk));
-  sessionStorage.setItem(key, encoded);
-}
-
-export function secureRead(key) {
-  const sk = getOrCreateSessionKey();
-  const encoded = sessionStorage.getItem(key);
-  if (!encoded) return null;
-  try {
-    const decrypted = xorCipher(atob(encoded), sk);
-    const { value, ts } = JSON.parse(decrypted);
-    // 8 hour expiry
-    if (Date.now() - ts > 8 * 60 * 60 * 1000) {
-      sessionStorage.removeItem(key);
-      return null;
-    }
-    return value;
-  } catch {
-    return null;
-  }
+  console.warn('[content-protection] DevTools-open signal observed');
 }
 
 // ── Bot detection logging ──
 export async function logBotDetection(signal) {
-  try {
-    await base44.entities.GovernanceAuditLog.create({
-      action_type: 'session_started',
-      action_detail: `bot_detected: ${signal}`,
-      user: 'system',
-      timestamp: new Date().toISOString(),
-    });
-  } catch {}
+  console.warn('[content-protection] Bot signal observed:', String(signal));
 }
 
 // ── Anomaly detection ──

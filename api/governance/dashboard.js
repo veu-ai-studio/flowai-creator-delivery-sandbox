@@ -5,16 +5,18 @@
 import { setCorsHeaders } from '../_lib/claude.js';
 import { listAuditEntries, costSummary } from '../_lib/db.js';
 import { stats as productStats } from '../_lib/products.js';
-import { resolveOrgId } from '../_lib/tenant.js';
+import { requireAuthHard } from '../_lib/auth.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+  const ctx = await requireAuthHard(req, res);
+  if (!ctx) return;
 
   const params = req.method === 'POST' ? (req.body || {}) : (req.query || {});
   const { since, sessionId, productId } = params;
   const sinceMs = since ? Number(since) : undefined;
-  const orgId = resolveOrgId(req);
+  const orgId = ctx.orgId;
 
   try {
     const auditEntries = await listAuditEntries({

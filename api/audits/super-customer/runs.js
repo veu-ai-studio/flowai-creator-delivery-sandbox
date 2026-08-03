@@ -5,17 +5,17 @@
 
 import { setCorsHeaders } from '../../_lib/claude.js';
 import { listRuns } from '../../_lib/configRegistry.js';
-import { resolveOrgId } from '../../_lib/tenant.js';
 import { withRequestLog } from '../../_lib/requestLog.js';
-
-const DEFAULT_ORG = 'veu-ai-studio';
+import { requireAuthHard } from '../../_lib/auth.js';
 
 async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+  const ctx = await requireAuthHard(req, res);
+  if (!ctx) return;
   if (req.method !== 'GET') return res.status(405).json({ error: 'Use GET' });
 
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const orgId = ctx.orgId;
   const { product_id: productId, status, limit } = req.query || {};
 
   // Filter only super-customer runs

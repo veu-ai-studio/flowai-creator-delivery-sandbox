@@ -25,6 +25,7 @@ import { isEmbeddingsConfigured, embeddingDimensions } from './_lib/embeddings.j
 import { isAxiomConfigured } from './_lib/logger.js';
 import { isSupabaseConfigured, getSupabase } from './_lib/supabase.js';
 import { withRequestLog } from './_lib/requestLog.js';
+import { requireAuthHard } from './_lib/auth.js';
 import { resolveBuildIdentity } from '../src/lib/observability/buildIdentity.js';
 
 // ─── Probe helpers ────────────────────────────────────────────────────
@@ -155,6 +156,8 @@ async function probeAxiom() {
 async function diagnosticHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+  const ctx = await requireAuthHard(req, res);
+  if (!ctx) return;
   if (req.method !== 'GET') return res.status(405).json({ error: 'Use GET' });
 
   const t0 = Date.now();

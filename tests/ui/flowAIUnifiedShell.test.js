@@ -20,7 +20,8 @@ describe('FlowAI unified operating system shell', () => {
     expect(appSrc).toMatch(/path="\/"\s+element=\{<LegacyFlowHubRedirect \/>/);
     expect(appSrc).toMatch(/path="\/flow-hub"\s+element=\{<Navigate to="\/flow-hub\/production" replace \/>/);
     expect(appSrc).toMatch(/path="\/flow-hub\/production"\s+element=\{<RequireAuth><LandingPage \/><\/RequireAuth>/);
-    expect(appSrc).toMatch(/path="\/flow-hub\/migration"\s+element=\{<LandingPage \/>/);
+    expect(appSrc).toMatch(/path="\/flow-hub\/migration"\s+element=\{<RequireAuth><LandingPage \/><\/RequireAuth>/);
+    expect(appSrc).toMatch(/path="\/flow-hub\/fresh-build"\s+element=\{<RequireAuth><LandingPage \/><\/RequireAuth>/);
     expect(appSrc).toMatch(/path="\/flowai"\s+element=\{<RequireAuth><FlowAIDashboard \/><\/RequireAuth>/);
     expect(appSrc).toMatch(/path="\/workspace"\s+element=\{<RequireAuth><Workspace \/><\/RequireAuth>/);
     expect(workspaceSrc).toContain('8-step upgrade pipeline');
@@ -84,6 +85,8 @@ describe('FlowAI unified operating system shell', () => {
     expect(sidebarSrc).toContain('disabled: !migrationModeEnabled');
     expect(landingSrc).toContain("new URLSearchParams(location.search).get('flowHubPath') === 'migration'");
     expect(landingSrc).toContain("location.pathname === '/flow-hub/migration'");
+    expect(appSrc).toContain('path="/flow-hub/migration" element={<RequireAuth><LandingPage /></RequireAuth>}');
+    expect(appSrc).toContain('path="/flow-hub/fresh-build" element={<RequireAuth><LandingPage /></RequireAuth>}');
     expect(sidebarSrc).toContain('path: "/flow-hub/fresh-build"');
     expect(sidebarSrc).toContain('flowai:flow-hub-axes-change');
     expect(landingSrc).toContain('axesToSearchParams(nextAxes, location.search)');
@@ -142,7 +145,8 @@ describe('FlowAI unified operating system shell', () => {
     const landingSrc = readFileSync(resolve(__dirname, '../../src/pages/LandingPage.jsx'), 'utf8');
 
     expect(appSrc).toMatch(/path="\/flow-hub\/production"\s+element=\{<RequireAuth><LandingPage \/><\/RequireAuth>/);
-    expect(appSrc).toMatch(/path="\/flow-hub\/migration"\s+element=\{<LandingPage \/>/);
+    expect(appSrc).toMatch(/path="\/flow-hub\/migration"\s+element=\{<RequireAuth><LandingPage \/><\/RequireAuth>/);
+    expect(appSrc).toMatch(/path="\/flow-hub\/fresh-build"\s+element=\{<RequireAuth><LandingPage \/><\/RequireAuth>/);
     expect(appLayoutSrc).toContain('<ActiveRunIndicator />');
     expect(appLayoutSrc).toContain('<ActiveJobsPanel />');
 

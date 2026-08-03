@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { searchFeatures } from '@/lib/searchIndex';
@@ -9,6 +9,41 @@ export default function SearchModal({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const navigate = useNavigate();
+  const dialogRef = useRef(null);
+  const inputRef = useRef(null);
+  const previousFocusRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    previousFocusRef.current = document.activeElement;
+    requestAnimationFrame(() => inputRef.current?.focus());
+    const handleDialogKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = [...(dialogRef.current?.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      ) || [])];
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleDialogKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleDialogKeyDown);
+      previousFocusRef.current?.focus?.();
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (query.length > 0) {
@@ -32,6 +67,7 @@ export default function SearchModal({ isOpen, onClose }) {
         <>
           {/* Backdrop */}
           <motion.div
+            aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -41,6 +77,10 @@ export default function SearchModal({ isOpen, onClose }) {
 
           {/* Modal */}
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Search FlowAI"
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
@@ -50,7 +90,7 @@ export default function SearchModal({ isOpen, onClose }) {
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
               <Search className="h-5 w-5 text-muted-foreground" />
               <input
-                autoFocus
+                ref={inputRef}
                 type="text"
                 placeholder="Search FlowAI pages, features, routes, reports…"
                 value={query}

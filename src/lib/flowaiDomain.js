@@ -5,7 +5,7 @@
 
 'use strict';
 
-export const FLOWAI_CANONICAL_DOMAIN = 'flowai.veuaistudio.com';
+export const FLOWAI_CANONICAL_DOMAIN = 'flowai.flowaiplatform.com';
 export const FLOWAI_CANONICAL_URL = `https://${FLOWAI_CANONICAL_DOMAIN}`;
 
 export const FLOWAI_LEGACY_DOMAIN = 'flowai-dun.vercel.app';

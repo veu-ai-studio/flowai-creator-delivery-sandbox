@@ -10,7 +10,7 @@ const SUITE = '2.2';
 // 30 endpoints — flattened from plan §10.3.
 const ENDPOINTS = [
   { path: '/api/health',                      method: 'GET',  id: 'api_health',                publicOk: true },
-  { path: '/api/diagnostic',                  method: 'GET',  id: 'api_diagnostic',            publicOk: true },
+  { path: '/api/diagnostic',                  method: 'GET',  id: 'api_diagnostic',            authed: true },
   { path: '/api/me',                          method: 'GET',  id: 'api_me',                    publicOk: true },
   { path: '/api/auth/sign-in',                method: 'POST', id: 'api_auth_sign-in',          publicOk: true },
   { path: '/api/auth/sign-up',                method: 'POST', id: 'api_auth_sign-up',          publicOk: true },

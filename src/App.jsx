@@ -15,13 +15,8 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 
 import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
-import FlowDesigner from './pages/FlowDesigner';
-import RunFlow from './pages/RunFlow';
-import Flows from './pages/Flows';
 import Analytics from './pages/Analytics';
-import RunHistory from './pages/RunHistory';
 import Templates from './pages/Templates';
-import Variables from './pages/Variables';
 import QAAudit from './pages/QAAudit';
 import Research from './pages/Research';
 import Design from './pages/Design';
@@ -39,7 +34,6 @@ import PlatformIntelligence from './pages/PlatformIntelligence';
 import SelfUpgrade from './pages/SelfUpgrade';
 import ExternalUpgrade from './pages/ExternalUpgrade';
 import SelfVerification from './pages/SelfVerification';
-import AutonomousEngine from './pages/AutonomousEngine';
 import PortfolioEngine from './pages/PortfolioEngine';
 import MasterOrchestrator from './pages/MasterOrchestrator';
 import ProductGenerator from './pages/ProductGenerator';
@@ -177,8 +171,8 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<LegacyFlowHubRedirect />} />
         <Route path="/flow-hub" element={<Navigate to="/flow-hub/production" replace />} />
         <Route path="/flow-hub/production" element={<RequireAuth><LandingPage /></RequireAuth>} />
-        <Route path="/flow-hub/migration" element={<LandingPage />} />
-        <Route path="/flow-hub/fresh-build" element={<LandingPage />} />
+        <Route path="/flow-hub/migration" element={<RequireAuth><LandingPage /></RequireAuth>} />
+        <Route path="/flow-hub/fresh-build" element={<RequireAuth><LandingPage /></RequireAuth>} />
         <Route path="/flowai" element={<RequireAuth><FlowAIDashboard /></RequireAuth>} />
         <Route path="/forge/research" element={<RequireAuth><ForgeResearchForm /></RequireAuth>} />
         <Route path="/forge/design" element={<RequireAuth><ForgeDesignForm /></RequireAuth>} />
@@ -191,13 +185,8 @@ const AuthenticatedApp = () => {
         <Route path="/forge/monitor" element={<RequireAuth><ForgeMonitorForm /></RequireAuth>} />
         <Route path="/old-dashboard" element={<Navigate to="/dashboard" replace />} />
 
-        <Route path="/flow-designer" element={<FlowDesigner />} />
-        <Route path="/run-flow" element={<RequireAuth><RunFlow /></RequireAuth>} />
-        <Route path="/flows" element={<Flows />} />
         <Route path="/analytics" element={<Analytics />} />
-        <Route path="/run-history" element={<RunHistory />} />
         <Route path="/templates" element={<Templates />} />
-        <Route path="/variables" element={<Variables />} />
         <Route path="/qa-audit" element={<QAAudit />} />
         <Route path="/research" element={<RequireAuth><Research /></RequireAuth>} />
         <Route path="/design" element={<RequireAuth><Design /></RequireAuth>} />
@@ -214,16 +203,13 @@ const AuthenticatedApp = () => {
         <Route path="/self-upgrade" element={<SelfUpgrade />} />
         <Route path="/external-upgrade" element={<ExternalUpgrade />} />
         <Route path="/self-verification" element={<SelfVerification />} />
-        <Route path="/autonomous-engine" element={<AutonomousEngine />} />
         <Route path="/portfolio-engine" element={<PortfolioEngine />} />
         <Route path="/master-orchestrator" element={<MasterOrchestrator />} />
         <Route path="/product-generator" element={<ProductGenerator />} />
         <Route path="/gtm-engine" element={<GTMEngine />} />
         <Route path="/self-protection" element={<SelfProtection />} />
         <Route path="/self-healing" element={<SelfHealing />} />
-        {/* TRACK-E PR4 — magic-link auth required for governance and the
-            autonomous runner. RequireAuth honors VITE_AUTH_BYPASS=1 so the
-            CEO demo path stays open until full enforcement flips on. */}
+        {/* Governance and autonomous operations require verified membership. */}
         <Route path="/governance" element={<RequireAuth><Governance /></RequireAuth>} />
         <Route path="/domain-manager" element={<DomainManager />} />
         <Route path="/brand-system" element={<BrandSystem />} />

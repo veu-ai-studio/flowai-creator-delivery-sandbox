@@ -6,10 +6,13 @@
 import { setCorsHeaders } from '../_lib/claude.js';
 import { agents } from '../_lib/orchestrator.js';
 import { selectedBackend } from '../_lib/db.js';
+import { requireAuthHard } from '../_lib/auth.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+  const ctx = await requireAuthHard(req, res);
+  if (!ctx) return;
 
   const t0 = Date.now();
   const detail = await agents.health();

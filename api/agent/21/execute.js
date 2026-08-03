@@ -45,6 +45,7 @@ import {
   buildAuthCrawlFailureAuditEntry,
 } from '../../../src/lib/agents/auth/auditEntry.js';
 import { getServerMessageBus } from '../../_lib/messageBus.js';
+import { requireOperatorAuth } from '../../_lib/auth.js';
 
 const SYNC_TIMEOUT_MS = 25_000;
 
@@ -54,6 +55,12 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'method_not_allowed' });
   }
+
+  // Credentialed browser automation is a privileged operator capability.
+  // Authenticate before parsing or validating caller input so anonymous
+  // requests cannot probe the schema or consume Browserless capacity.
+  const auth = await requireOperatorAuth(req, res);
+  if (!auth) return;
 
   let body;
   try {
@@ -95,19 +102,6 @@ export default async function handler(req, res) {
       ok: false,
       error: 'credentials_required',
       detail: 'this endpoint is the credentialed crawl path — use /api/research-url for unauthenticated runs',
-    });
-  }
-
-  // RLS / auth gate per the Phase 1 pattern.
-  const auth = resolveAuthContext(req);
-  if (!auth.ok) {
-    return res.status(auth.status).json({ ok: false, error: auth.error });
-  }
-  if (!auth.internal && auth.productScope !== productScope) {
-    return res.status(403).json({
-      ok: false,
-      error: 'productScope_mismatch',
-      detail: 'caller authenticated productScope differs from body productScope',
     });
   }
 
@@ -256,24 +250,6 @@ export default async function handler(req, res) {
 
 // ── Internals ────────────────────────────────────────────────────────────────
 
-function resolveAuthContext(req) {
-  const internalMarker = req.headers?.['x-flowai-internal'];
-  const authzHeader = req.headers?.authorization ?? '';
-  if (internalMarker === 'true' || internalMarker === '1') {
-    const expected = process.env.FLOWAI_INTERNAL_SECRET ?? '';
-    const presented = authzHeader.replace(/^Bearer\s+/i, '');
-    if (expected && presented === expected) {
-      return { ok: true, internal: true, productScope: '*' };
-    }
-    return { ok: false, status: 401, error: 'internal_auth_failed' };
-  }
-  const scopeHeader = req.headers?.['x-product-scope'];
-  if (typeof scopeHeader === 'string' && scopeHeader.length > 0) {
-    return { ok: true, internal: false, productScope: scopeHeader };
-  }
-  return { ok: false, status: 401, error: 'no_auth_context' };
-}
-
 function buildExecutor({ productScope, browser, options }) {
   // Minimal in-memory deps for the MVP endpoint path. Production wires
   // real HotStore / ColdStore / GovernanceAuditLog adapters (the
@@ -334,7 +310,6 @@ function safeOriginOf(url) {
 
 // Exported for tests.
 export const __test = Object.freeze({
-  resolveAuthContext,
   buildExecutor,
   safeOriginOf,
   SYNC_TIMEOUT_MS,

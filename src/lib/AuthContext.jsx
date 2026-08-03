@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useAuth as useClerkAuth } from '@clerk/clerk-react';
+import { clearFlowAIRuns } from './flowaiRunStore.js';
 
 const AuthContext = createContext();
 
@@ -108,6 +109,7 @@ export const AuthProvider = ({ children, clerkAuth = null }) => {
         await window.Clerk.signOut();
       }
     } finally {
+      clearFlowAIRuns();
       setUser(null);
       setIsAuthenticated(false);
       setAuthChecked(true);

@@ -224,22 +224,30 @@ function isActivePath(location, item) {
 function NavItem({ label, path, icon: Icon, tooltip, disabled, disabledMessage, activeWhen }) {
   const location = useLocation();
   const active = isActivePath(location, { path, activeWhen });
-  const inner = (
-    <Link
-      to={path}
-      className={`flex flex-col gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-        active
-          ? "bg-primary/10 text-primary"
-          : disabled
-          ? "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-      }`}
-    >
+  const content = (
+    <>
       <span className="flex items-center gap-3">
         <Icon className="h-4 w-4 shrink-0" />
         <span className="truncate">{label}</span>
       </span>
       {disabled && disabledMessage && <span className="pl-7 text-[10px] leading-tight text-amber-300">{disabledMessage}</span>}
+    </>
+  );
+  const className = `flex w-full flex-col gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+    active
+      ? "bg-primary/10 text-primary"
+      : disabled
+      ? "cursor-not-allowed text-muted-foreground"
+      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+  }`;
+  const inner = disabled ? (
+    <span aria-disabled="true" className={className}>{content}</span>
+  ) : (
+    <Link
+      to={path}
+      className={className}
+    >
+      {content}
     </Link>
   );
   return tooltip ? <Tooltip content={tooltip} className="block">{inner}</Tooltip> : inner;
@@ -340,17 +348,6 @@ export default function Sidebar() {
   const [migrationModeEnabled, setMigrationModeEnabled] = useState(MIGRATION_MODE_ENABLED_FOR_UI);
   const safeActiveRuns = Array.isArray(activeRuns) ? activeRuns.filter((run) => run && typeof run === 'object') : [];
   const navSections = getNavSections({ migrationModeEnabled });
-
-  useEffect(() => {
-    const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
-        e.preventDefault();
-        navigate("/");
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [navigate]);
 
   useEffect(() => subscribeFlowAIRuns(() => setActiveRuns(listActiveFlowAIRuns())), []);
 

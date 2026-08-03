@@ -76,6 +76,10 @@ describe('operator Migration Mode runtime flag API', () => {
     await disableMigrationMode(createReq('POST'), disableRes);
     expect(disableRes.statusCode).toBe(401);
     expect(JSON.stringify(disableRes.body)).not.toContain(secret);
+
+    const statusRes = createRes();
+    await migrationModeStatus(createReq('GET'), statusRes);
+    expect(statusRes.statusCode).toBe(401);
   });
 
   it('rejects invalid operator secret for enable and disable', async () => {
@@ -118,7 +122,7 @@ describe('operator Migration Mode runtime flag API', () => {
     await expect(getMigrationModeFlag()).resolves.toMatchObject({ enabled: true });
 
     const statusRes = createRes();
-    await migrationModeStatus(createReq('GET'), statusRes);
+    await migrationModeStatus(createReq('GET', headers), statusRes);
     expect(statusRes.body).toMatchObject({ ok: true, enabled: true });
 
     const disableRes = createRes();

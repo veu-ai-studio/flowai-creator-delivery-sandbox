@@ -6,13 +6,16 @@
 
 import { setCorsHeaders } from './_lib/claude.js';
 import { appendAuditEntry, listAuditEntries } from './_lib/db.js';
-import { resolveOrgId, resolveProductId } from './_lib/tenant.js';
+import { resolveProductId } from './_lib/tenant.js';
+import { requireAuthHard } from './_lib/auth.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+  const ctx = await requireAuthHard(req, res);
+  if (!ctx) return;
 
-  const orgId = resolveOrgId(req);
+  const orgId = ctx.orgId;
 
   try {
     if (req.method === 'GET') {

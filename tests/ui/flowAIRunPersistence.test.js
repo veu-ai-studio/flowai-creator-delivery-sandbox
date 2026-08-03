@@ -74,6 +74,17 @@ describe('FlowAI run persistence and active indicator', () => {
     expect(storeSource).toContain('window.dispatchEvent');
   });
 
+  it('clears browser-local run metadata at the authentication boundary', async () => {
+    installWindowStorage();
+    const store = await import('../../src/lib/flowaiRunStore.js');
+    store.upsertFlowAIRun({ id: 'run-private', product: 'Private product' });
+    expect(store.listFlowAIRuns()).toHaveLength(1);
+    store.clearFlowAIRuns();
+    expect(store.listFlowAIRuns()).toHaveLength(0);
+    const authSource = read('src/lib/AuthContext.jsx');
+    expect(authSource).toContain('clearFlowAIRuns();');
+  });
+
   it('maps orchestrator step logs into the 8 macro pipeline steps', async () => {
     installWindowStorage();
     const store = await import('../../src/lib/flowaiRunStore.js');
@@ -106,6 +117,17 @@ describe('FlowAI run persistence and active indicator', () => {
       'gtm',
       'monitor',
     ]);
+  });
+
+  it('preserves evidence when multiple orchestrator steps map to one macro stage', async () => {
+    installWindowStorage();
+    const store = await import('../../src/lib/flowaiRunStore.js');
+    store.upsertFlowAIRun({ id: 'run-evidence', status: 'running' });
+    store.updateFlowAIRun('run-evidence', store.buildFlowAIStepPatchFromLog({ step: 4, stepName: 'Static audit', status: 'complete' }));
+    store.updateFlowAIRun('run-evidence', store.buildFlowAIStepPatchFromLog({ step: 11, stepName: 'Preview audit', status: 'complete' }));
+    const [run] = store.listFlowAIRuns();
+    expect(run.stepResults.qa_audit.summary).toBe('Preview audit');
+    expect(run.stepResults.qa_audit.history.map((entry) => entry.summary)).toEqual(['Static audit', 'Preview audit']);
   });
 
   it('backfills legacy runs that only persisted a numeric step count', async () => {

@@ -8,7 +8,7 @@ import { setCorsHeaders } from './_lib/claude.js';
 import { withRequestLog } from './_lib/requestLog.js';
 import { selectedBackend } from './_lib/db.js';
 import { isInngestEnabled } from './_lib/inngest.js';
-import { isAuthRequired, isClerkConfigured } from './_lib/auth.js';
+import { isAuthRequired, isClerkConfigured, requireAuthHard } from './_lib/auth.js';
 import { isEmailConfigured } from './_lib/email.js';
 import { isEmbeddingsConfigured } from './_lib/embeddings.js';
 import { isAxiomConfigured } from './_lib/logger.js';
@@ -45,6 +45,8 @@ const STARTED_AT = new Date().toISOString();
 async function versionHandler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
+  const ctx = await requireAuthHard(req, res);
+  if (!ctx) return;
   if (req.method !== 'GET') return res.status(405).json({ error: 'Use GET' });
 
   const buildIdentity = resolveBuildIdentity(process.env);
