@@ -9,6 +9,7 @@ const appLayoutSource = read('src/components/layout/AppLayout.jsx');
 const sidebarSource = read('src/components/layout/Sidebar.jsx');
 const activeIndicatorSource = read('src/components/layout/ActiveRunIndicator.jsx');
 const storeSource = read('src/lib/flowaiRunStore.js');
+const executeSource = read('api/agent/3/execute.js');
 const sessionContextSource = read('src/lib/SessionContext.jsx');
 const orchestrationBarSource = read('src/components/layout/OrchestrationBar.jsx');
 
@@ -37,6 +38,14 @@ describe('FlowAI run persistence and active indicator', () => {
     expect(runsHistorySource).toContain('Stop run');
     expect(runsHistorySource).toContain('session.error.code');
     expect(runsHistorySource).toContain('serverIds.has(run.id)');
+    expect(runsHistorySource).toContain('stepResults: run.stepResults');
+  });
+
+  it('serializes live orchestration progress into the durable ledger', () => {
+    expect(executeSource).toContain('let ledgerWrite = Promise.resolve()');
+    expect(executeSource).toContain('queueLedgerPatch');
+    expect(executeSource).toContain('stepResults: durableStepResults');
+    expect(executeSource).toContain('await ledgerWrite');
   });
 
   it('does not present an empty stale governance record as an active pipeline session', () => {

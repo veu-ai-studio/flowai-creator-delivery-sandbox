@@ -32,6 +32,27 @@ describe('operational run ledger', () => {
     expect(late.transitionRejected).toBe(true);
   });
 
+  it('persists useful step progress through cancellation', async () => {
+    const { run } = await createOperationalRun({ ...owner, idempotency: 'progress-request1' });
+    await updateOperationalRun(run.id, owner, { status: 'running' });
+    await updateOperationalRun(run.id, owner, {
+      stepResults: { research: { summary: 'Product Discovery', status: 'complete' } },
+      stepCount: 1,
+      progressLabel: 'Product Discovery',
+    });
+    await updateOperationalRun(run.id, owner, {
+      status: 'cancelling',
+      stopCommand: { id: 'stop-progress', acknowledged: false, dispatchState: 'pending', reservedAt: new Date().toISOString() },
+    });
+    const cancelled = await updateOperationalRun(run.id, owner, {
+      status: 'cancelled',
+      expectedControlCommandId: 'stop-progress',
+      stopAcknowledgedAt: new Date().toISOString(),
+    });
+    expect(cancelled.stepCount).toBe(1);
+    expect(cancelled.stepResults.research.summary).toBe('Product Discovery');
+  });
+
   it('fails closed in production without durable storage', async () => {
     process.env.NODE_ENV = 'production'; resetOperationalRunsForTests();
     await expect(createOperationalRun({ ...owner, idempotency: 'durable-request' })).rejects.toMatchObject({ code: 'RUN_STORE_NOT_LIVE' });

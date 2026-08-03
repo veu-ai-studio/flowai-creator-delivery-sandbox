@@ -39,6 +39,7 @@ import * as remediationEngine from '../../_lib/remediationEngine.js';
 import verificationAdapters from '../../../src/lib/agents/verificationAdapters.js';
 import { getServerMessageBus } from '../../_lib/messageBus.js';
 import { normalizeFlowAIInput } from '../../../src/lib/flowai/unifiedRunInput.js';
+import { buildFlowAIStepPatchFromLog } from '../../../src/lib/flowaiRunStore.js';
 import { requireAuthHard } from '../../_lib/auth.js';
 import { createOperationalRun, getOperationalRun, publicRunError, updateOperationalRun } from '../../_lib/operationalRuns.js';
 
@@ -355,6 +356,14 @@ async function runSseOrchestration(req, res, body, auth) {
   let runFinished = false;
   const stepLogs = [];
   const iterations = [];
+  let durableStepResults = {};
+  let ledgerWrite = Promise.resolve();
+  const queueLedgerPatch = (patch) => {
+    ledgerWrite = ledgerWrite
+      .then(() => updateOperationalRun(runId, auth, patch))
+      .catch(() => null);
+    return ledgerWrite;
+  };
   heartbeat = setInterval(() => {
     if (!runFinished) {
       sendEvent({ type: 'heartbeat', at: new Date().toISOString() });
@@ -430,10 +439,21 @@ async function runSseOrchestration(req, res, body, auth) {
       onStep: (log) => {
         stepLogs.push(log);
         sendEvent({ type: 'step', log });
+        const patch = buildFlowAIStepPatchFromLog(log);
+        durableStepResults = { ...durableStepResults, ...(patch.stepResults || {}) };
+        queueLedgerPatch({
+          ...patch,
+          stepResults: durableStepResults,
+          stepCount: Object.keys(durableStepResults).length,
+        });
       },
       onIteration: (iteration) => {
         iterations.push(iteration);
         sendEvent({ type: 'iteration', iteration });
+        queueLedgerPatch({
+          progressLabel: `Iteration ${iteration?.number ?? iterations.length} complete`,
+          lastHeartbeatAt: new Date().toISOString(),
+        });
       },
       deps: { __exposeState: (state) => { exposedState = state; } },
     });
@@ -460,6 +480,7 @@ async function runSseOrchestration(req, res, body, auth) {
     if (controlPoller) clearInterval(controlPoller);
     if (heartbeat) clearInterval(heartbeat);
     if (softTimeout) clearTimeout(softTimeout);
+    await ledgerWrite;
     const safeError = publicRunError(e?.code);
     sendEvent({ type: 'error', error: safeError.message, code: safeError.code });
     await updateOperationalRun(runId, auth, { status: 'failed', completedAt: new Date().toISOString(), error: safeError, progressLabel: 'Run failed' });
@@ -471,6 +492,7 @@ async function runSseOrchestration(req, res, body, auth) {
   if (controlPoller) clearInterval(controlPoller);
   if (heartbeat) clearInterval(heartbeat);
   if (softTimeout) clearTimeout(softTimeout);
+  await ledgerWrite;
   sendEvent({ type: 'final', result });
   await updateOperationalRun(runId, auth, { status: result?.ok === false ? 'failed' : 'completed', completedAt: new Date().toISOString(), error: result?.ok === false ? publicRunError(result?.code) : null, progressLabel: result?.ok === false ? 'Run failed' : 'Completed' });
   sendDone();

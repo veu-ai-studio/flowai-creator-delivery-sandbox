@@ -207,6 +207,7 @@ export default function RunsHistory() {
           id: run.id, runId: run.id, product: run.product, productUrl: run.url,
           startTime: run.startedAt || run.createdAt, endTime: run.completedAt,
           status: run.status, progressLabel: run.progressLabel, error: run.error,
+          stepResults: run.stepResults, stepCount: run.stepCount,
         }));
         // The ledger create is atomic, but its cross-region index can take a
         // moment to become readable. Keep a just-launched local run visible
