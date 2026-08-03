@@ -50,7 +50,9 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
     expect(__test.terminalLifecycleError(terminal, 7)).toMatchObject({
       code: 'INCOMPLETE_LIFECYCLE_EVIDENCE',
     });
-    expect(__test.terminalLifecycleError(terminal, 8)).toBeNull();
+    expect(__test.terminalLifecycleError(terminal, 8)).toMatchObject({
+      code: 'NO_DEPLOYED_ARTIFACT',
+    });
   });
 
   it('retries a rejected durable evidence write and derives completion from persisted evidence', async () => {
@@ -75,7 +77,7 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
 
     expect(calls).toHaveLength(2);
     expect(Object.keys(persisted.stepResults)).toHaveLength(8);
-    expect(__test.terminalLifecycleError({ ok: true }, Object.keys(persisted.stepResults).length)).toBeNull();
+    expect(__test.terminalLifecycleError({ ok: true, previewUrl: 'https://preview.example.com' }, Object.keys(persisted.stepResults).length)).toBeNull();
   });
 
   it('never treats an unpersisted 7/8 row as completed', async () => {
@@ -95,6 +97,16 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
     expect(persistedCount).toBe(7);
     expect(__test.terminalLifecycleError({ ok: true }, persistedCount)).toMatchObject({
       code: 'INCOMPLETE_LIFECYCLE_EVIDENCE',
+    });
+  });
+
+  it('never treats eight stage labels without a deployed artifact as completed', () => {
+    expect(__test.terminalLifecycleError({ ok: true, previewUrl: null }, 8)).toEqual({
+      code: 'NO_DEPLOYED_ARTIFACT',
+      message: 'Run ended without a durable deployed preview artifact.',
+    });
+    expect(__test.terminalLifecycleError({ ok: true, previewUrl: 'preview.example.com' }, 8)).toMatchObject({
+      code: 'NO_DEPLOYED_ARTIFACT',
     });
   });
 

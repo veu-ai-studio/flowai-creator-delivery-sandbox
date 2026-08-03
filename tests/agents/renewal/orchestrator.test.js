@@ -1846,6 +1846,17 @@ describe('runOrchestration — failure handling', () => {
       expect(result.iterationsCompleted).toBe(1);
       expect(result.iterations[0].noFixReason).toBe('NO_FIXES_GENERATED');
       expect(deps.createRenewalBranch).not.toHaveBeenCalled();
+      const deployStage = result.orchestrationLog.find((log) => (
+        log.result?.kind === 'forge.user_step.v1'
+        && log.result?.key === 'deploy'
+      ));
+      expect(deployStage).toMatchObject({
+        status: 'degraded',
+        result: {
+          previewUrl: null,
+          reason: 'NO_FIXES_GENERATED',
+        },
+      });
     } finally { clearVercelEnv(); }
   });
 

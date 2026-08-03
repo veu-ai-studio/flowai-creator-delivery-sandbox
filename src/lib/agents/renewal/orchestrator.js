@@ -3658,6 +3658,28 @@ export async function runOrchestration(args = {}) {
       iterLog.path = pathB ? 'B' : 'A';
       iterLog.noFixReason = reason;
       iterLog.remediationSummary = remediationOutput?.summary ?? state.remediationSummary ?? null;
+      // A no-fix exit occurs before STEP 10, but Deploy is still a public
+      // lifecycle stage. Emit explicit degraded evidence so the ledger does
+      // not silently omit the stage. This is evidence of a blocked deploy,
+      // not evidence of a deployment; terminal acceptance separately
+      // requires a real preview URL.
+      const deployUserStepLog = makeForgeUserStepLog({
+        iteration: iterationNumber,
+        internalStep: 10.5,
+        userStep: 5,
+        key: 'deploy',
+        label: 'Deploy',
+        status: 'degraded',
+        why: 'Deploy was not attempted because no safe commit-ready artifact survived the repair loop',
+        result: {
+          deployDegraded: true,
+          previewUrl: null,
+          reason,
+          detail,
+        },
+        mode: state.mode,
+      });
+      emit(deployUserStepLog); iterLog.steps.push(deployUserStepLog);
       const log = makeStepLog({
         iteration: iterationNumber, step: 12, status: 'complete',
         tool: 'repair-loop transition guard',

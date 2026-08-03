@@ -678,12 +678,28 @@ function reconcileTerminalStepResults(existing = {}, terminalResult = {}) {
   return reconciled;
 }
 
+function isAbsoluteHttpUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return false;
+  try {
+    const parsed = new URL(value);
+    return (parsed.protocol === 'https:' || parsed.protocol === 'http:') && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function terminalLifecycleError(result = {}, terminalStepCount = 0) {
   if (result?.ok === false) return publicRunError(result?.code);
   if (terminalStepCount < 8) {
     return {
       code: 'INCOMPLETE_LIFECYCLE_EVIDENCE',
       message: `Run ended with ${terminalStepCount}/8 durable lifecycle stages.`,
+    };
+  }
+  if (!isAbsoluteHttpUrl(result?.previewUrl)) {
+    return {
+      code: 'NO_DEPLOYED_ARTIFACT',
+      message: 'Run ended without a durable deployed preview artifact.',
     };
   }
   return null;
