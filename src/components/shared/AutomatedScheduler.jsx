@@ -11,7 +11,7 @@ const INTERVAL_MS = { 'Every 1h': 3600000, 'Every 6h': 21600000, 'Every 12h': 43
 function nextRun(interval, lastRun) {
   if (!lastRun) return 'Now';
   const next = new Date(new Date(lastRun).getTime() + INTERVAL_MS[interval]);
-  const diff = next - Date.now();
+  const diff = next.getTime() - Date.now();
   if (diff <= 0) return 'Due now';
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);

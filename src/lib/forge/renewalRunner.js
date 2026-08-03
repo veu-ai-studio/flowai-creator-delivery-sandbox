@@ -198,7 +198,7 @@ export async function runRenewal(productId, deployOutput = {}, manualInputs = {}
     if (section.id === 'renewal-operator-approval') return cloneSection(section, approval);
     if (section.id === 'renewal-application') return cloneSection(section, application);
     if (section.id === 'renewal-verification') return cloneSection(section, verification);
-    return cloneSection(section, section.input ?? null);
+    return cloneSection(section, /** @type {any} */ (section).input ?? null);
   });
 
   const baseOutput = {

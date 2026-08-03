@@ -1,5 +1,6 @@
 export const FLOWAI_INPUT_TYPES = Object.freeze(['url', 'description', 'attachments']);
 
+/** @param {any} raw @param {number} index */
 function normalizeAttachment(raw, index) {
   if (!raw || typeof raw !== 'object') {
     return Object.freeze({
@@ -22,6 +23,7 @@ function normalizeAttachment(raw, index) {
   });
 }
 
+/** @param {any} input */
 function attachmentsFromLegacyInput(input = {}) {
   const explicit = Array.isArray(input.attachments) ? input.attachments : [];
   const fromPasted = typeof input.pastedContent === 'string' && input.pastedContent.trim()
@@ -30,6 +32,7 @@ function attachmentsFromLegacyInput(input = {}) {
   return [...explicit, ...fromPasted];
 }
 
+/** @param {any} input @param {any} fallback */
 export function normalizeFlowAIInput(input = {}, fallback = {}) {
   const source = input && typeof input === 'object' ? input : {};
   const url = typeof source.url === 'string' && source.url.trim()
@@ -58,6 +61,7 @@ export function normalizeFlowAIInput(input = {}, fallback = {}) {
   });
 }
 
+/** @param {any} context */
 export function summarizeFlowAIInputContext(context = {}) {
   const attachments = Array.isArray(context.attachments) ? context.attachments : [];
   const byType = attachments.reduce((acc, item) => {

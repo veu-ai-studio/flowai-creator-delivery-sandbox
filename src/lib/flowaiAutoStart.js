@@ -1,5 +1,6 @@
 const SESSION_CONFIG_KEY = 'flowai_session_config';
 
+/** @param {any} input */
 export function consumeFlowAIAutoStart({ location, history, storage } = {}) {
   if (!location || !history || !storage) return null;
   const params = new URLSearchParams(location.search || '');

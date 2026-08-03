@@ -24,6 +24,7 @@ export function detectReadinessScorer(candidate) {
   });
 }
 
+/** @param {any} input */
 export function buildCorrectiveDispatch({
   target,
   builderPlatform,
@@ -44,6 +45,7 @@ export function buildCorrectiveDispatch({
   });
 }
 
+/** @param {any} input */
 export async function evaluateSelfRenewalGate({
   target,
   scorer,

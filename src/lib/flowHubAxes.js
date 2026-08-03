@@ -111,6 +111,7 @@ export function flowHubPathOption(value) {
   return FLOW_HUB_PATH_OPTIONS.find((option) => option.value === normalized) ?? FLOW_HUB_PATH_OPTIONS[0];
 }
 
+/** @param {any} input */
 export function normalizeFlowHubAxes(input = {}) {
   const rawMode = String(input.mode ?? '').trim().toLowerCase();
   const flowHubPath = optionValue(
@@ -131,6 +132,7 @@ export function normalizeFlowHubAxes(input = {}) {
   });
 }
 
+/** @param {any} searchParams @param {string} pathname */
 export function axesFromSearchParams(searchParams, pathname = '') {
   const params = searchParams instanceof URLSearchParams
     ? searchParams
@@ -166,6 +168,7 @@ export function writeStoredFlowHubAxes(axes) {
   return normalized;
 }
 
+/** @param {any} axes @param {any} existingSearch */
 export function axesToSearchParams(axes, existingSearch = '') {
   const normalized = normalizeFlowHubAxes(axes);
   const params = existingSearch instanceof URLSearchParams
@@ -181,6 +184,7 @@ export function axesToSearchParams(axes, existingSearch = '') {
   return params;
 }
 
+/** @param {any} input */
 export function runConstructionModeForAxes({ structuralLayer, operationalMode, flowHubPath, inngestReady = false } = {}) {
   const axes = normalizeFlowHubAxes({ structuralLayer, operationalMode, flowHubPath });
   if (axes.flowHubPath === 'migration') return 'MIGRATION';
@@ -191,6 +195,7 @@ export function runConstructionModeForAxes({ structuralLayer, operationalMode, f
   return 'FOREGROUND';
 }
 
+/** @param {any} input */
 export function orchestratorModeForAxes({ transportMode, structuralLayer, operationalMode, flowHubPath } = {}) {
   const axes = normalizeFlowHubAxes({ structuralLayer, operationalMode, flowHubPath, mode: transportMode });
   const mode = String(transportMode ?? '').toUpperCase();

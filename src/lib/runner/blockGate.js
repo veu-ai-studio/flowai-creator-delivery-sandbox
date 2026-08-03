@@ -184,5 +184,5 @@ export function serializeResultsForPersist(results, steps) {
     }
     out[steps[i].key] = entry;
   }
-  return out;
+  return /** @type {any} */ (out);
 }

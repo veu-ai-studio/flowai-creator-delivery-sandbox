@@ -91,11 +91,11 @@ function _normalizeFields(fields) {
  *        Provide the empty array to disable redaction entirely.
  * @param {object} [opts.baseFields]
  *        Fields merged into every emit (correlation IDs etc.).
- * @returns {Logger}
+ * @returns {any}
  */
 export function makeLogger(opts = {}) {
   const sink = typeof opts.sink === 'function' ? opts.sink : () => {};
-  const redactKeys = Array.isArray(opts.redact) ? opts.redact : DEFAULT_REDACT_KEYS;
+  const redactKeys = Array.isArray(opts.redact) ? opts.redact : [...DEFAULT_REDACT_KEYS];
   const redactSet = new Set(redactKeys.filter((k) => typeof k === 'string' && k.length > 0));
   const baseFields = _isPlainObject(opts.baseFields) ? { ...opts.baseFields } : {};
 

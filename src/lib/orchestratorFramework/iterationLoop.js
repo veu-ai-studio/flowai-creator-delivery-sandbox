@@ -122,7 +122,7 @@ export async function runIteration(renewalInput = {}, config = {}) {
 
   const hotStore = await resolveHotStore(config);
   const lock = await acquireLock(hotStore, productId, runId);
-  if (lock.error) return lock;
+  if (/** @type {any} */ (lock).error) return lock;
 
   const maxIterations = Math.max(1, Math.trunc(Number(config.maxIterations ?? 10)));
   const approvalGate = typeof config.approvalGate === 'function' ? config.approvalGate : null;
@@ -172,7 +172,7 @@ export async function runIteration(renewalInput = {}, config = {}) {
         iterationCount,
         scoreBefore: scoreValue(currentInput),
         matrixArtifactVersion: scoreResult.matrixArtifactVersion ??
-          scannedMatrix.matrixArtifactVersion ??
+          /** @type {any} */ (scannedMatrix).matrixArtifactVersion ??
           currentInput.matrixArtifactVersion,
         flowaiSelfScore: scoreResult.flowaiSelfScore ?? currentInput.flowaiSelfScore,
       }, { logger });

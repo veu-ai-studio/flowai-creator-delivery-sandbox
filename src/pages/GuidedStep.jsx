@@ -106,7 +106,7 @@ export default function GuidedStep() {
   const [modifyListening, setModifyListening] = useState(false);
   const recognitionRef = useRef(null);
 
-  const [stepResult, setStepResult] = useState(null);
+  const [stepResult, setStepResult] = useState(/** @type {any} */ (null));
   const [compareResults, setCompareResults] = useState(null);
   const [stepRunning, setStepRunning] = useState(false);
   const [stepError, setStepError] = useState(null);
@@ -401,7 +401,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
 ━━━ END CRAWL DATA ━━━`;
               if (captureScreenshots && d?.screenshots) {
                 result = result || {};
-                result._screenshots = d.screenshots;
+                /** @type {any} */ (result)._screenshots = d.screenshots;
               }
             } else {
               setCrawlStatus({ state: 'failed', url: inp.value });
@@ -415,8 +415,8 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
             const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
             output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
           }
-          const screenshots = result?._screenshots;
-          result = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
+          const screenshots = /** @type {any} */ (result)?._screenshots;
+          result = /** @type {any} */ ({ full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') });
           if (screenshots) result._screenshots = screenshots;
         }
       }
@@ -728,9 +728,9 @@ Please revise and expand your findings incorporating the user's request. Maintai
                       onComplete={approveAndAdvance}
                     />
                   ) : compareResults ? (
-                    <StepResultPanel stepLabel={stepMeta.label} result={stepResult} isCompare compareResults={compareResults} />
+                    <StepResultPanel stepLabel={stepMeta.label} result={stepResult} inputName="" isCompare compareResults={compareResults} />
                   ) : (
-                    <StepResultPanel stepLabel={stepMeta.label} result={stepResult} />
+                    <StepResultPanel stepLabel={stepMeta.label} result={stepResult} inputName="" />
                   )}
 
                   {/* QA Audit screenshots — visual crawl evidence */}
@@ -818,6 +818,7 @@ Please revise and expand your findings incorporating the user's request. Maintai
                   multiMode={sessionConfig?.multiMode}
                   inputs={sessionConfig?.inputs || []}
                   stepResults={STEPS.map(s => ({ step: s.key, result: allStepResults[s.key] }))}
+                  allInputStepResults={[]}
                   onAccept={() => { setShowFinalReport(false); navigate('/dashboard'); }}
                 />
               )}

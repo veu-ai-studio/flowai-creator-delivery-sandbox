@@ -245,7 +245,7 @@ export default function Analytics() {
                 <BarChart data={flowData.filter((f) => f.avgMs > 0)}>
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
                   <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} unit="ms" />
-                  <Tooltip contentStyle={Tooltip_STYLE} formatter={(v) => [`${(v / 1000).toFixed(2)}s`, "Avg Duration"]} />
+                  <Tooltip contentStyle={Tooltip_STYLE} formatter={(v) => [`${(Number(v) / 1000).toFixed(2)}s`, "Avg Duration"]} />
                   <Bar dataKey="avgMs" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Avg ms" />
                 </BarChart>
               </ResponsiveContainer>

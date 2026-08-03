@@ -295,7 +295,7 @@ export default function ManualStep() {
                         onComplete={markComplete}
                       />
                     ) : (
-                      <StepResultPanel stepLabel={stepMeta.label} result={aiResult} />
+                      <StepResultPanel stepLabel={stepMeta.label} result={aiResult} inputName="" />
                     )}
                   </motion.div>
                 )}

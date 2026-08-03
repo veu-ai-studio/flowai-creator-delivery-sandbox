@@ -330,7 +330,7 @@ export async function runAudit(productId, buildOutput = {}, manualInputs = {}, c
     if (section.id === 'audit-findings') return cloneSection(section, auditFindings);
     if (section.id === 'audit-decision-log') return cloneSection(section, decisionLog);
     if (section.id === 'selected-tool') return cloneSection(section, toolSelectionWithAttempts);
-    return cloneSection(section, section.input ?? null);
+    return cloneSection(section, /** @type {any} */ (section).input ?? null);
   });
   const baseOutput = {
     productId,

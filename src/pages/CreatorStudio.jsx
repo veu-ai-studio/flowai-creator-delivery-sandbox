@@ -212,7 +212,7 @@ ${CITATION_NOTE}`,
       {showRegister && (
         <RegisterProductModal
           productName={form.product_name} clientName={form.client_name}
-          mode="describe" targetAudience={form.target_audience}
+          mode="describe" targetAudience={form.target_audience} sourceUrls={[]}
           strategy={outputs.strategy} architecture={outputs.architecture} sprint={outputs.sprint}
           onClose={() => setShowRegister(false)}
           onRegistered={(rec) => { onCreated(rec); setShowRegister(false); }}

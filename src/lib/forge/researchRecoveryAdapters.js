@@ -144,7 +144,7 @@ export function normalizeResearchRecoveryToCrawlerReport(rawOutput = {}, payload
   });
 }
 
-export function buildExternalResearchPrompt({ url, purpose = 'crawl' } = {}) {
+export function buildExternalResearchPrompt({ url, purpose = 'crawl' } = /** @type {any} */ ({})) {
   return `Research the public product URL below and return STRICT JSON only.
 
 URL: ${url}

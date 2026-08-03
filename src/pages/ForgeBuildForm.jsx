@@ -85,7 +85,7 @@ export default function ForgeBuildForm() {
     setPersistenceState({ state: 'pending' });
     const persisted = await persistForgeStepArtifactClient({
       productId,
-      runId: output.runId ?? `build-${Date.now()}`,
+      runId: /** @type {any} */ (output).runId ?? `build-${Date.now()}`,
       stepKey: 'build',
       stepLabel: 'Build Forge',
       artifact: output,

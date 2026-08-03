@@ -20,6 +20,7 @@ export async function invoke(action, payload = {}) {
   return memberError(id, action, `unsupported action "${action}"`);
 }
 
+/** @param {any} payload */
 function envFor(payload = {}) {
   return payload.env && typeof payload.env === 'object' ? payload.env : process.env;
 }
@@ -43,6 +44,7 @@ function safeJson(text) {
   }
 }
 
+/** @param {any} input */
 async function callOpenRouter({ prompt, payload = {}, maxTokens = 1800 }) {
   const env = envFor(payload);
   const apiKey = env.OPENROUTER_API_KEY;

@@ -1,4 +1,4 @@
-export const REGISTERED_PRODUCT_CONFIG = Object.freeze([
+export const REGISTERED_PRODUCT_CONFIG = /** @type {readonly any[]} */ (Object.freeze([
   Object.freeze({
     name: 'FlowAI',
     domain: 'flowai.flowaiplatform.com',
@@ -64,7 +64,7 @@ export const REGISTERED_PRODUCT_CONFIG = Object.freeze([
     branch: 'main',
     status: 'registered',
   }),
-]);
+]));
 
 export function findRegisteredProductConfigForUrl(url) {
   if (typeof url !== 'string' || !url.trim()) return null;

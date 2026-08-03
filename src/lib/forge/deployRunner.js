@@ -118,7 +118,7 @@ export async function runDeploy(productId, auditOutput = {}, manualInputs = {}, 
     if (section.id === 'distribution-adapter') return cloneSection(section, distribution);
     if (section.id === 'operator-approval') return cloneSection(section, approval);
     if (section.id === 'browser-proof') return cloneSection(section, browserProof);
-    return cloneSection(section, section.input ?? null);
+    return cloneSection(section, /** @type {any} */ (section).input ?? null);
   });
   const baseOutput = {
     productId,

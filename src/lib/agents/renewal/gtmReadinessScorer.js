@@ -180,6 +180,7 @@ function hasCoverageSignal(options, key) {
   return Object.prototype.hasOwnProperty.call(options ?? {}, key);
 }
 
+/** @param {any} input */
 function degradedCoverageReason({ options = {}, crawlOutput = null } = {}) {
   if (options.coverageDegraded === true || options.evidenceDegraded === true) {
     return 'SCORE_ON_DEGRADED_EVIDENCE';
@@ -602,7 +603,7 @@ export function deriveIssuesFromCrawl(crawlOutput) {
  * the §7.6 score in a single call.
  *
  * @param {object} crawlOutput
- * @returns {{score:number, counts:object, band:string, label:string, penalty:number, formula:string, issues:Array}}
+ * @returns {any}
  */
 export function scoreCrawlOutput(crawlOutput, extraFindings = null, options = {}) {
   const phaseAIssues = deriveIssuesFromCrawl(crawlOutput);

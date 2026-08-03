@@ -63,7 +63,7 @@ function ReadinessGauge({ score }) {
 
 export default function Architecture() {
   const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0]);
-  const [phase, setPhase] = useState('idle'); // idle | checking | checked | analyzing | analyzed | generating | generated
+  const [phase, setPhase] = useState(/** @type {string} */ ('idle')); // idle | checking | checked | analyzing | analyzed | generating | generated
   const [readiness, setReadiness] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [scaffold, setScaffold] = useState(null);
@@ -290,13 +290,13 @@ Return exactly: { readme, schema_sql, deploy_config, env_example, migration_chec
               {phase === 'checking' ? 'Checking...' : 'Run Readiness Check'}
             </Button>
             <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8"
-              disabled={!canAnalyze || phase === 'analyzing'}
+              disabled={!canAnalyze || String(phase) === 'analyzing'}
               onClick={runArchitectureAnalysis}>
               {phase === 'analyzing' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Server className="h-3.5 w-3.5" />}
               {phase === 'analyzing' ? 'Analyzing...' : 'Analyze Architecture'}
             </Button>
             <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8"
-              disabled={!canGenerate || phase === 'generating'}
+              disabled={!canGenerate || String(phase) === 'generating'}
               onClick={generateScaffold}>
               {phase === 'generating' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
               {phase === 'generating' ? 'Generating...' : 'Generate Scaffold'}
@@ -409,9 +409,9 @@ Return exactly: { readme, schema_sql, deploy_config, env_example, migration_chec
             </div>
 
             {canAnalyze && (
-              <Button className="gap-2 w-full" onClick={runArchitectureAnalysis} disabled={phase === 'analyzing'}>
-                {phase === 'analyzing' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Server className="h-4 w-4" />}
-                {phase === 'analyzing' ? 'Analyzing Architecture...' : 'Proceed to Architecture Analysis →'}
+              <Button className="gap-2 w-full" onClick={runArchitectureAnalysis} disabled={String(phase) === 'analyzing'}>
+                {String(phase) === 'analyzing' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Server className="h-4 w-4" />}
+                {String(phase) === 'analyzing' ? 'Analyzing Architecture...' : 'Proceed to Architecture Analysis →'}
               </Button>
             )}
           </motion.div>

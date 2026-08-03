@@ -22,7 +22,7 @@ export default function MasterOrchestrator() {
 
   // Step tracking
   const [stepStatuses, setStepStatuses] = useState({});
-  const [stepResults, setStepResults] = useState({});
+  const [stepResults, setStepResults] = useState(/** @type {any} */ ({}));
 
   // Accumulated context passed between steps
   const [context, setContext] = useState({});

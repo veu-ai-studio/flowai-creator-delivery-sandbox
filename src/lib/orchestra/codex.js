@@ -20,6 +20,7 @@ export async function invoke(action, payload) {
   return memberError(id, action, `unsupported action "${action}"`);
 }
 
+/** @param {any} payload */
 async function codePatch(payload) {
   const { filePath, sourceContent, issueSpec, framework, timeoutMs, env } = payload || {};
   if (typeof filePath !== 'string' || !filePath) return memberError(id, 'code-patch', 'filePath required');
@@ -50,6 +51,7 @@ async function codePatch(payload) {
   });
 }
 
+/** @param {any} payload */
 async function generateFromScratch(payload) {
   const { spec, framework, timeoutMs, env } = payload || {};
   if (!spec || typeof spec !== 'object') return memberError(id, 'generate-from-scratch', 'spec required');
@@ -85,10 +87,11 @@ async function generateFromScratch(payload) {
   });
 }
 
+/** @param {any} input */
 async function callOpenAIJson({ prompt, maxTokens, timeoutMs, env = globalThis.process?.env } = {}) {
   const apiKey = typeof env?.OPENAI_API_KEY === 'string' ? env.OPENAI_API_KEY.trim() : '';
   if (!apiKey) {
-    const error = new Error('OPENAI_API_KEY is required for Codex dispatch');
+    const error = /** @type {any} */ (new Error('OPENAI_API_KEY is required for Codex dispatch'));
     error.status = 401;
     throw error;
   }
@@ -131,7 +134,7 @@ async function callOpenAIJson({ prompt, maxTokens, timeoutMs, env = globalThis.p
     try { body = text ? JSON.parse(text) : null; } catch { body = null; }
 
     if (!response.ok) {
-      const error = new Error(`OpenAI Codex dispatch failed with HTTP ${response.status}`);
+      const error = /** @type {any} */ (new Error(`OpenAI Codex dispatch failed with HTTP ${response.status}`));
       error.status = response.status;
       error.details = body?.error?.message || text.slice(0, 600);
       throw error;

@@ -46,7 +46,7 @@ export function resolveForgeResearchRouteContext({
   productName,
   productUrl,
   productDescription,
-} = {}) {
+} = /** @type {any} */ ({})) {
   if (productId) {
     return {
       id: productId,
@@ -155,7 +155,7 @@ export default function ForgeResearchForm() {
     setPersistenceState({ state: 'pending' });
     const persisted = await persistForgeStepArtifactClient({
       productId,
-      runId: output.runId ?? `research-${Date.now()}`,
+      runId: /** @type {any} */ (output).runId ?? `research-${Date.now()}`,
       stepKey: 'research',
       stepLabel: 'Research Forge',
       artifact: output,

@@ -71,8 +71,9 @@ export default function EdgeLayer({ canvasRef }) {
               strokeWidth="12"
               className="cursor-pointer"
               onClick={() => removeEdge(edge.id)}
-              title="Click to remove connection"
-            />
+            >
+              <title>Click to remove connection</title>
+            </path>
             {/* Visible line */}
             <path
               d={path}

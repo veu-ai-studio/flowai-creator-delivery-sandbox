@@ -10,6 +10,7 @@ export function normalizeLegacyAutoSession(raw) {
   return { ...raw, ...nested, id };
 }
 
+/** @param {any} input */
 export function quiesceLegacyAutoSessionExecution({ sessionDbIdRef, isPausedRef, timerRef, clearTimer } = {}) {
   const sessionId = sessionDbIdRef?.current || null;
   if (isPausedRef) isPausedRef.current = true;
@@ -18,6 +19,7 @@ export function quiesceLegacyAutoSessionExecution({ sessionDbIdRef, isPausedRef,
   return sessionId;
 }
 
+/** @param {any} input */
 export async function cancelLegacyAutoSession({ base44Client, sessionId, reason, existingSession } = {}) {
   if (!sessionId) throw new Error('legacy_session_id_missing');
   const update = base44Client?.entities?.AutoSession?.update;

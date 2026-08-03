@@ -16,7 +16,7 @@ export default function CostChart() {
           <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
           <Tooltip
             contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11 }}
-            formatter={(v, n, p) => [`$${v.toFixed(2)} (${p.payload.runs} runs)`, 'Cost']}
+            formatter={(v, n, p) => [`$${Number(v).toFixed(2)} (${p.payload.runs} runs)`, 'Cost']}
           />
           <Bar dataKey="cost" radius={[4, 4, 0, 0]}>
             {costsData.by_product.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}

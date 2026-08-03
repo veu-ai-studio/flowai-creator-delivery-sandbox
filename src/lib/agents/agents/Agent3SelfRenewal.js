@@ -267,11 +267,7 @@ export class Agent3SelfRenewal extends BaseAgent {
    * envelope rather than throwing — the orchestrator never propagates
    * step-owner failures up to the caller.
    *
-   * @param {object} [ctx]
-   * @param {string} [ctx.runId]   — or ctx.run_id
-   * @param {string} [ctx.productId]   — or ctx.product_id
-   * @param {object} [ctx.run_summary]   — or ctx.runSummary, or ctx.stepInputs.run_summary
-   * @param {object} [ctx.step_results]   — or ctx.stepResults
+   * @param {any} [ctx]
    * @returns {Promise<{
    *   agent_id: 3,
    *   agent_name: 'Self-Renewal',
@@ -279,7 +275,7 @@ export class Agent3SelfRenewal extends BaseAgent {
    *   step: 6,
    *   authority: 'recommend_only',
    *   recommendation: string,
-   *   renewal_flags: string[],
+   *   renewal_flags: readonly string[],
    *   confidence: number,
    *   metadata: object,
    * }>}

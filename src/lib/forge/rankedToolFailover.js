@@ -98,6 +98,7 @@ function resultFailureReason(result) {
   return result?.error ?? 'tool dispatch failed';
 }
 
+/** @param {any} input */
 export async function runRankedToolWithFailover({
   action,
   payload = {},

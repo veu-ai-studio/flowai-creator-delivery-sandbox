@@ -577,7 +577,7 @@ export default function QAAudit() {
 
               {/* Historical & Configuration */}
               <HistoricalTrendDashboard url={url} />
-              <CustomRuleConfig />
+              <CustomRuleConfig onRulesChange={() => {}} />
               <AutonomousFixesPanel analysis={results} crawlData={crawlData} />
               <CompetitiveBenchmark currentResults={results} />
               <MultiPageCrawler url={url} />

@@ -170,10 +170,12 @@ function credentialStatus(value) {
   return typeof value === 'string' && value.trim().length > 0 ? 'PRESENT' : value;
 }
 
+/** @param {any} candidate @param {any} opts */
 export function normalizeToolCandidate(candidate, opts = {}) {
   const memberId = resolveMemberId(candidate);
   const member = memberId ? getMember(memberId) : null;
   const credentialStatusByName = credentialStatusesForMember(memberId, opts.env);
+  /** @type {string} */
   let state = DISPATCH_STATES.UNAVAILABLE;
   let reason = 'Tool is not an admitted Orchestra member for P13-A.';
 
@@ -198,11 +200,13 @@ export function normalizeToolCandidate(candidate, opts = {}) {
   });
 }
 
+/** @param {any} candidates @param {any} opts */
 export function normalizeDispatchCandidates(candidates = [], opts = {}) {
   const list = Array.isArray(candidates) ? candidates : (candidates ? [candidates] : []);
   return Object.freeze(list.map(candidate => normalizeToolCandidate(candidate, opts)));
 }
 
+/** @param {any} input */
 function selectedCandidate({ selectedTool, memberId, candidates, env }) {
   if (selectedTool) return normalizeToolCandidate(selectedTool, { env });
   if (memberId) return normalizeToolCandidate({ memberId, platform_name: memberId }, { env });
@@ -240,6 +244,7 @@ export function createMemoryApprovalStore(clock = Date) {
 
 export const defaultApprovalStore = createMemoryApprovalStore();
 
+/** @param {any} input */
 export async function createPendingApproval({
   store = defaultApprovalStore,
   operatorId = null,
@@ -269,6 +274,7 @@ export async function createPendingApproval({
   });
 }
 
+/** @param {any} input */
 export async function approvePendingAction({ store = defaultApprovalStore, approvalId: id, operatorId = null } = {}) {
   const current = await store.get(id);
   if (!current) return null;
@@ -279,6 +285,7 @@ export async function approvePendingAction({ store = defaultApprovalStore, appro
   });
 }
 
+/** @param {any} input */
 export async function resolveDispatchEligibility({
   mode = MODES.MANUAL,
   action,
@@ -334,6 +341,7 @@ export async function resolveDispatchEligibility({
   return Object.freeze({ ...base, state: DISPATCH_STATES.CALLABLE, callable: true, reason: 'Dispatch eligible.' });
 }
 
+/** @param {any} input */
 export async function dispatchToolAction({
   action,
   payload = {},

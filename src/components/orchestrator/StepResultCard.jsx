@@ -6,7 +6,7 @@ function Tag({ label, color = 'bg-secondary/50 text-muted-foreground' }) {
   return <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${color}`}>{label}</span>;
 }
 
-function Section({ title, items, color }) {
+function Section({ title, items, color = '' }) {
   if (!items?.length) return null;
   return (
     <div className="space-y-0.5">

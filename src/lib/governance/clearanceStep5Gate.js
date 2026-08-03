@@ -63,7 +63,7 @@ export function hasTerminalDecision(finding) {
  *
  * @param {object} args
  * @param {object|null}            args.gtmReadinessReport — { score, counts:{critical,high,medium,low}, ... } | null
- * @param {Array<object>}          [args.findings]         — issue list with .severity + .terminalDecision (or .decision/.status)
+ * @param {Array<object>}          [args.findings]         - issue list with .severity + .terminalDecision (or .decision/.status)
  * @param {boolean}                [args.limitationsPublished]
  * @param {object}                 [args.options]
  * @param {number}                 [args.options.minScore=95]
@@ -88,7 +88,7 @@ export function checkClearanceStep5({
   findings = [],
   limitationsPublished = false,
   options = {},
-} = {}) {
+} = /** @type {any} */ ({})) {
   const minScore = Number.isFinite(options.minScore) ? options.minScore : DEFAULT_MIN_SCORE;
   const blockedBy = [];
 

@@ -142,7 +142,7 @@ export default function CostUsage() {
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
               <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
               <ReTooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11 }}
-                formatter={(v) => [`$${v.toFixed(4)}`, 'Cost']} />
+                formatter={(v) => [`$${Number(v).toFixed(4)}`, 'Cost']} />
               <Bar dataKey="cost" radius={[4, 4, 0, 0]}>
                 {costByProduct.map((_, i) => <Cell key={i} fill="hsl(var(--primary))" opacity={0.7 + i * 0.06} />)}
               </Bar>

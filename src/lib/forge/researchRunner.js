@@ -403,7 +403,7 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
     sections: Object.freeze(populated),
     toolSelection: failoverEnvelope(toolSelection, failoverEvents),
     undServedAccessWarning: toolSelection?.undServedAccessWarning === true,
-    undServedAccessWarningReason: toolSelection?.undServedAccessWarningReason,
+    undServedAccessWarningReason: /** @type {any} */ (toolSelection)?.undServedAccessWarningReason,
     completionPct,
     evidenceSummary: Object.freeze({
       autoSections: populated.filter(section => section.source === 'auto').length,

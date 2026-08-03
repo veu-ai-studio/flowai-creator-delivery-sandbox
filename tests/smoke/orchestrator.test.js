@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-const BASE = process.env.FLOWAI_BASE_URL || 'https://flowai-dun.vercel.app';
+const BASE = process.env.FLOWAI_BASE_URL || 'https://flowai.flowaiplatform.com';
 const TIMEOUT_MS = 30000;
 
 async function getJson(path) {

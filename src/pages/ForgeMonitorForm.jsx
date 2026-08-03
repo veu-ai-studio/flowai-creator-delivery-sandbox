@@ -73,7 +73,7 @@ export default function ForgeMonitorForm() {
     setPersistenceState({ state: 'pending' });
     const persisted = await persistForgeStepArtifactClient({
       productId,
-      runId: output.runId ?? `monitor-${Date.now()}`,
+      runId: /** @type {any} */ (output).runId ?? `monitor-${Date.now()}`,
       stepKey: 'monitor',
       stepLabel: 'Monitor Forge',
       artifact: output,

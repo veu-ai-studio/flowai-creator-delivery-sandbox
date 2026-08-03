@@ -88,6 +88,7 @@ function deriveName(inputMode, url, urls, description) {
   return titleCase(String(description ?? '').slice(0, 40));
 }
 
+/** @param {any} input */
 export function resolveProductContext(input = {}) {
   const source = input && typeof input === 'object' ? input : {};
   const description = presentString(source.description);

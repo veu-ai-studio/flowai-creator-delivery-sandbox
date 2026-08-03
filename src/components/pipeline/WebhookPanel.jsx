@@ -48,7 +48,7 @@ export default function WebhookPanel() {
         ...logs,
         ...(await base44.entities.ErrorLog.filter({ source: 'webhook:vercel' }, '-created_date', 10)),
         ...(await base44.entities.ErrorLog.filter({ source: 'webhook:custom' }, '-created_date', 10)),
-      ].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      ].sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
       setEvents(all);
     } catch {} finally { setLoading(false); }
   };

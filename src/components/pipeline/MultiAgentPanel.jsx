@@ -18,7 +18,7 @@ const AGENT_CONFIGS = [
 
 function AgentCard({ result, index }) {
   const [expanded, setExpanded] = useState(false);
-  const cfg = AGENT_CONFIGS.find(a => a.key === result.agentKey) || {};
+  const cfg = AGENT_CONFIGS.find(a => a.key === result.agentKey) || { color: '', desc: '' };
 
   return (
     <motion.div

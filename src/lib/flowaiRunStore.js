@@ -159,7 +159,7 @@ function withStaleRunsReconciled(runs, now = Date.now(), timeoutMs = FLOWAI_RUN_
 
 function writeRuns(runs) {
   if (!canUseStorage()) return;
-  const sorted = [...runs].sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0));
+  const sorted = [...runs].sort((a, b) => new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime());
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sorted.slice(0, 200)));
   window.dispatchEvent(new CustomEvent(FLOWAI_RUNS_CHANGED, { detail: sorted }));
 }

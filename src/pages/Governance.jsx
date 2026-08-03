@@ -106,7 +106,7 @@ export default function Governance() {
       if (seen.has(j.id)) return false;
       seen.add(j.id);
       return true;
-    }).sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    }).sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
     setJobs(allJobs);
     setTestReports(asArray(t));
     setAuditReports(asArray(a));
@@ -245,7 +245,7 @@ export default function Governance() {
               {jobs.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-12">No governance history yet.</p>
               ) : (
-                [...jobs].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).map((job, i) => {
+                [...jobs].sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime()).map((job, i) => {
                   const g = GATE_LABELS[job.status];
                   return (
                     <div key={job.id} className="flex gap-3 items-start">
@@ -345,7 +345,7 @@ export default function Governance() {
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground mb-2">Paginated governance event log. All run starts, clearance decisions, product additions, and failures appear here.</p>
               {[...jobs, ...testReports.slice(0, 5), ...auditReports.slice(0, 5)]
-                .sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0))
+                .sort((a, b) => new Date(b.created_date || 0).getTime() - new Date(a.created_date || 0).getTime())
                 .slice(0, 20).map((item, i) => (
                   <div key={item.id || i} className="flex gap-3 items-start p-3 rounded-lg border border-border bg-card">
                     <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />

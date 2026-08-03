@@ -49,6 +49,7 @@ function isBlockedIp(address) {
   return true;
 }
 
+/** @param {any} input */
 export function createSsrGuardedLookup({ hostname, pinnedAddress = null, resolver = dns.lookup } = {}) {
   return async (_hostname, opts, callback) => {
     try {
@@ -62,7 +63,7 @@ export function createSsrGuardedLookup({ hostname, pinnedAddress = null, resolve
       const selected = candidates[0];
       if (!selected || blocked) {
         const address = blocked?.address ?? selected?.address ?? 'unresolved';
-        const error = new Error(`blocked_private_ip:${address || 'unresolved'}`);
+        const error = /** @type {any} */ (new Error(`blocked_private_ip:${address || 'unresolved'}`));
         error.code = 'ERR_FLOWAI_SSRF_BLOCKED';
         callback(error);
         return;
@@ -135,13 +136,13 @@ async function safeFetchUrlAsText(url, { timeoutMs = SIMPLE_FETCH_TIMEOUT_MS, re
   if (!verdict.ok) return { ok: false, reason: verdict.reason };
   const target = new URL(verdict.url);
   if (process.env.NODE_ENV === 'test') {
-    const response = await fetch(target.toString(), {
+    const response = /** @type {any} */ (await fetch(target.toString(), {
       headers: {
         'user-agent': 'Mozilla/5.0 (compatible; FlowAI/1.0; +https://flowai-dun.vercel.app)',
         accept: 'text/html,application/xhtml+xml',
       },
       redirect: 'manual',
-    }).catch((error) => ({ ok: false, __error: error }));
+    }).catch((error) => ({ ok: false, __error: error })));
     if (response.__error) return { ok: false, reason: response.__error?.message || String(response.__error) };
     const status = Number(response.status || 0);
     const location = response.headers?.get?.('location');
@@ -155,7 +156,7 @@ async function safeFetchUrlAsText(url, { timeoutMs = SIMPLE_FETCH_TIMEOUT_MS, re
   const pinnedAddress = verdict.pinnedAddress;
 
   return new Promise((resolve) => {
-    const requestOptions = {
+    const requestOptions = /** @type {any} */ ({
       protocol: target.protocol,
       hostname: target.hostname,
       port: target.port || undefined,
@@ -168,7 +169,7 @@ async function safeFetchUrlAsText(url, { timeoutMs = SIMPLE_FETCH_TIMEOUT_MS, re
       },
       servername: target.hostname,
       timeout: timeoutMs,
-    };
+    });
     requestOptions.lookup = createSsrGuardedLookup({ hostname: target.hostname, pinnedAddress });
     const req = transport.request(requestOptions, (response) => {
       const status = Number(response.statusCode || 0);
@@ -552,6 +553,7 @@ async function viaSimpleFetch(url) {
 //   - If a richer method is configured, try it first.
 //   - If a richer method fails (network, 5xx, timeout) we fall back to simple-fetch
 //     so the call still returns *something* the model can analyse.
+/** @param {string} url @param {any} options */
 export async function crawl(url, { force } = {}) {
   if (!url) return { ok: false, reason: 'No URL provided' };
 
@@ -572,6 +574,7 @@ export async function crawl(url, { force } = {}) {
 
   const attempts = [];
   for (const method of order) {
+    /** @type {any} */
     let result;
     if (method === 'browserless') {
       if (!browserlessKey) { attempts.push({ method, reason: 'BROWSERLESS_API_KEY not set' }); continue; }
@@ -779,12 +782,12 @@ function buildPageRecord({ url, normalisedUrl, depth, parent, capture, fallback 
  *
  * @param {string} startUrl
  * @param {object} [opts]
- * @param {number} [opts.depth=8]              — soft depth (clamped to hard cap)
- * @param {number} [opts.maxPages=200]         — soft pages (clamped to hard cap)
+ * @param {number} [opts.depth=8] - soft depth (clamped to hard cap)
+ * @param {number} [opts.maxPages=200] - soft pages (clamped to hard cap)
  * @param {boolean} [opts.includeScreenshot=false]
  * @param {number} [opts.perPageTimeoutMs=30000]
- * @param {number} [opts.totalWallClockMs=1200000]  — 20 min default
- * @param {string} [opts.force]                — pin a method (testing only)
+ * @param {number} [opts.totalWallClockMs=1200000] - 20 min default
+ * @param {string} [opts.force] - pin a method (testing only)
  * @returns {Promise<object>} CrawlReport
  */
 export async function aggressiveCrawl(startUrl, opts = {}) {

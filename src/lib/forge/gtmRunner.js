@@ -100,7 +100,7 @@ export async function runGtm(productId, context = {}, manualInputs = {}, config 
     if (section.id === 'gtm-channel-plan') return cloneSection(section, channels);
     if (section.id === 'gtm-launch-checklist') return cloneSection(section, checklist);
     if (section.id === 'gtm-human-decision-log') return cloneSection(section, decision);
-    return cloneSection(section, section.input ?? null);
+    return cloneSection(section, /** @type {any} */ (section).input ?? null);
   });
   const baseOutput = {
     productId,

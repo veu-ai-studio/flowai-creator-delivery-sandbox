@@ -92,7 +92,7 @@ export default function ForgeDeployForm() {
     setPersistenceState({ state: 'pending' });
     const persisted = await persistForgeStepArtifactClient({
       productId,
-      runId: output.runId ?? `deploy-${Date.now()}`,
+      runId: /** @type {any} */ (output).runId ?? `deploy-${Date.now()}`,
       stepKey: 'deploy',
       stepLabel: 'Deploy Forge',
       artifact: output,

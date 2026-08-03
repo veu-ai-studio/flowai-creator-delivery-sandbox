@@ -266,7 +266,7 @@ function UrlCard({ onRenew, disabled }) {
         value={url} onChange={(e) => setUrl(e.target.value)}
         placeholder="https://example.com" className="h-9 text-sm" disabled={disabled}
       />
-      <details className="text-[11px]" open={showSource} onToggle={(e) => setShowSource(e.target.open)}>
+      <details className="text-[11px]" open={showSource} onToggle={(e) => setShowSource(/** @type {HTMLDetailsElement} */ (e.currentTarget).open)}>
         <summary className="text-muted-foreground cursor-pointer">Optional: source for patching (GitHub URL / Vercel project / Base44 ID)</summary>
         <div className="mt-2 space-y-2">
           <Input value={gitUrl} onChange={(e) => setGitUrl(e.target.value)} placeholder="github.com/owner/repo (public or token-accessible)" className="h-8 text-xs" disabled={disabled} />

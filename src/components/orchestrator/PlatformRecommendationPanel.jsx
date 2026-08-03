@@ -52,26 +52,26 @@ function PlatformPill({ platform, selected }) {
 }
 
 export default function PlatformRecommendationPanel() {
-  const [structure, setStructure] = useState(DEFAULT_CONTROL_SCHEME.structure);
-  const [mode, setMode] = useState(DEFAULT_CONTROL_SCHEME.mode);
-  const [depth, setDepth] = useState(DEFAULT_CONTROL_SCHEME.depth);
-  const [initiationToken, setInitiationToken] = useState(null);
-  const [selections, setSelections] = useState({});
+  const [structure, setStructure] = useState(/** @type {string} */ (DEFAULT_CONTROL_SCHEME.structure));
+  const [mode, setMode] = useState(/** @type {string} */ (DEFAULT_CONTROL_SCHEME.mode));
+  const [depth, setDepth] = useState(/** @type {string} */ (DEFAULT_CONTROL_SCHEME.depth));
+  const [initiationToken, setInitiationToken] = useState(/** @type {any} */ (null));
+  const [selections, setSelections] = useState(/** @type {Record<string, any>} */ ({}));
 
-  const plan = useMemo(() => buildOrchestrationPlan({
-    mode,
+  const plan = /** @type {any[]} */ (useMemo(() => buildOrchestrationPlan({
+    mode: /** @type {any} */ (mode),
     registry: PLATFORM_REGISTRY,
     selections,
-  }), [mode, selections]);
+  }), [mode, selections]));
 
   const selectPlatform = (step, platformId) => {
     setSelections(current => ({ ...current, [step]: platformId }));
   };
 
-  const validation = validateRunStart({
+  const validation = /** @type {any} */ (validateRunStart({
     controlScheme: { structure, mode, depth },
     userInitiationToken: initiationToken,
-  });
+  }));
 
   const applyRecommended = () => {
     setStructure(DEFAULT_CONTROL_SCHEME.structure);

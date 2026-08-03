@@ -20,5 +20,5 @@ export function safeStr(v, fallback = '') {
  */
 export function safeStrArray(arr) {
   if (!Array.isArray(arr)) return [];
-  return arr.map(safeStr);
+  return arr.map((value) => safeStr(value));
 }

@@ -224,7 +224,7 @@ function DesignerInner() {
 
 export default function FlowDesigner() {
   return (
-    <FlowProvider>
+    <FlowProvider initialNodes={[]} initialEdges={[]} initialName="Untitled Flow">
       <DesignerInner />
     </FlowProvider>
   );

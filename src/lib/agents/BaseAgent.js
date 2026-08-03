@@ -99,6 +99,7 @@ export function isValidEnvironmentForScope(productScope, environment) {
 }
 
 export class BaseAgent {
+  /** @param {any} deps */
   constructor(deps = {}) {
     const required = ['logger', 'messageBus', 'auditLog', 'clock', 'productScope', 'environment'];
     for (const k of required) {
@@ -106,7 +107,7 @@ export class BaseAgent {
     }
     this.deps = deps;
 
-    const charter = this.constructor.charter?.();
+    const charter = /** @type {any} */ (this.constructor).charter?.();
     if (!charter) throw new Error(`${this.constructor.name}: static charter() not implemented`);
     BaseAgent._validateCharter(charter);
     this.charter = Object.freeze(charter);
@@ -129,6 +130,7 @@ export class BaseAgent {
     }
   }
 
+  /** @param {any} input */
   async run(input = {}) {
     const runId = this._mintRunId();
     const startedAt = this.deps.clock.now();
@@ -148,8 +150,9 @@ export class BaseAgent {
     });
 
     try {
-      if (typeof this.preflight === 'function') {
-        await this.preflight(ctx);
+      const agent = /** @type {any} */ (this);
+      if (typeof agent.preflight === 'function') {
+        await agent.preflight(ctx);
         await this.deps.auditLog.write({ runId, phase: 'preflight.ok', at: this.deps.clock.now() });
       }
 
@@ -172,8 +175,8 @@ export class BaseAgent {
         at: this.deps.clock.now(),
       });
 
-      if (typeof this.postflight === 'function') {
-        try { await this.postflight(ctx); }
+      if (typeof agent.postflight === 'function') {
+        try { await agent.postflight(ctx); }
         catch (e) {
           await this.deps.auditLog.write({
             runId, phase: 'postflight.error', error: String(e?.message ?? e), at: this.deps.clock.now(),
@@ -193,7 +196,9 @@ export class BaseAgent {
     }
   }
 
-  async emit(topic, payload, { runId } = {}) {
+  /** @param {string} topic @param {any} payload @param {any} options */
+  async emit(topic, payload, options = {}) {
+    const { runId } = options;
     if (!topic || typeof topic !== 'string') throw new Error('emit: topic required');
     return this.deps.messageBus.publish({
       topic,
@@ -232,8 +237,10 @@ export class BaseAgent {
     }
   }
 
-  async plan(/* ctx */) { throw new Error(`${this.constructor.name}: plan() not implemented`); }
-  async act(/* ctx, plan */) { throw new Error(`${this.constructor.name}: act() not implemented`); }
+  /** @param {any} _ctx @returns {Promise<any>} */
+  async plan(_ctx) { throw new Error(`${this.constructor.name}: plan() not implemented`); }
+  /** @param {any} _ctx @param {any} _plan @returns {Promise<any>} */
+  async act(_ctx, _plan) { throw new Error(`${this.constructor.name}: act() not implemented`); }
 
   _mintRunId() {
     const t = this.deps.clock.now();

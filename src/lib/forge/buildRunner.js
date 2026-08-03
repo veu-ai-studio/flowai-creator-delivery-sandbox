@@ -129,7 +129,7 @@ export function generateCodeTaskDispatches(designOutput = {}, entryPath = detect
       'Do not touch platform client boundary or runtime files',
       'Produce browser-verifiable evidence before marking complete',
     ]),
-    buildToolStatus: buildTool.verified === false ? 'HONEST_STUB_NO_BUILD_TOOL' : 'BUILD_TOOL_SELECTED',
+    buildToolStatus: /** @type {any} */ (buildTool).verified === false ? 'HONEST_STUB_NO_BUILD_TOOL' : 'BUILD_TOOL_SELECTED',
     buildTool,
   });
 
@@ -441,7 +441,7 @@ export async function runBuild(productId, designOutput = {}, manualInputs = {}, 
     if (section.id === 'build-risks') return cloneSection(section, buildRisks);
     if (section.id === 'build-decision-log') return cloneSection(section, decisionLogInput(manualInputs));
     if (section.id === 'selected-tool') return cloneSection(section, toolSelectionWithAttempts);
-    return cloneSection(section, section.input ?? null);
+    return cloneSection(section, /** @type {any} */ (section).input ?? null);
   });
   const scorableSections = sections.filter(section => section.id !== 'selected-tool');
   const score = scoreBuildStep({ stepId: BUILD_STEP_ID, sections: scorableSections });

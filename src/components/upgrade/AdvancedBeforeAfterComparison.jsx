@@ -4,7 +4,7 @@ import { TrendingUp, TrendingDown, GitCompare, CheckCircle2, AlertCircle, BarCha
 function MetricRow({ label, before, after, higherIsBetter = true }) {
   const delta = after - before;
   const improved = higherIsBetter ? delta > 0 : delta < 0;
-  const deltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : null;
+  const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : null;
   const deltaPercent = before > 0 ? Math.round((delta / before) * 100) : 0;
 
   return (
@@ -23,9 +23,9 @@ function MetricRow({ label, before, after, higherIsBetter = true }) {
           <p className="text-xs text-muted-foreground">After</p>
           <p className="text-sm font-bold text-emerald-400">{after}</p>
         </div>
-        {deltaIcon && (
+        {DeltaIcon && (
           <span className={`flex items-center gap-0.5 text-xs font-bold ${improved ? 'text-emerald-400' : 'text-amber-400'}`}>
-            {deltaIcon && <deltaIcon className="h-3 w-3" />}
+            <DeltaIcon className="h-3 w-3" />
             {delta > 0 ? '+' : ''}{delta} {before > 0 && `(${deltaPercent > 0 ? '+' : ''}${deltaPercent}%)`}
           </span>
         )}

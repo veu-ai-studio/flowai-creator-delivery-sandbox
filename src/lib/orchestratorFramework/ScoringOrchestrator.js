@@ -95,7 +95,7 @@ export async function orchestrateScore(matrixState = {}, productId, verification
     });
   }
 
-  const verifiedCount = scoredSurfaces.filter(surface => surface.verified === true && surface.tier !== 'C').length;
+  const verifiedCount = scoredSurfaces.filter(surface => surface.verified === true).length;
   const verifiedPct = surfaces.length === 0 ? 0 : Math.round((verifiedCount / surfaces.length) * 10000) / 100;
   const gtmFlag = verifiedPct >= SELF_RENEWAL_THRESHOLD ? 'GTM-ELIGIBLE' : 'GTM-BLOCKED';
 

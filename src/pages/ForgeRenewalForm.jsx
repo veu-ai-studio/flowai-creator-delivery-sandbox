@@ -73,7 +73,7 @@ export default function ForgeRenewalForm() {
     setPersistenceState({ state: 'pending' });
     const persisted = await persistForgeStepArtifactClient({
       productId,
-      runId: output.runId ?? `renewal-${Date.now()}`,
+      runId: /** @type {any} */ (output).runId ?? `renewal-${Date.now()}`,
       stepKey: 'self-renewal',
       stepLabel: 'Self-Renewal Forge',
       artifact: output,

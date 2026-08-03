@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, Zap } from 'lucide-react';
 
-function StatBlock({ label, value, sub, trend, color }) {
+function StatBlock({ label, value, sub = '', trend = undefined, color = '' }) {
   const TrendIcon = trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus;
   const trendColor = trend > 5 ? 'text-red-400' : trend < -5 ? 'text-emerald-400' : 'text-muted-foreground';
   return (

@@ -413,7 +413,7 @@ export default function AutoRunner() {
             const res = await base44.integrations.Core.InvokeLLM({ prompt, model: 'claude_sonnet_4_6' });
             output = typeof res === 'string' ? res : JSON.stringify(res, null, 2);
           }
-          stepResult = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
+          stepResult = /** @type {any} */ ({ full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') });
           results[i] = stepResult;
           inputs.forEach((_, idx) => { allInputResults[idx][i] = stepResult; });
         } else if (isMulti) {
@@ -576,7 +576,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
             const clearance = computeMonitorClearance(output);
             output = `${output}${formatMonitorClearanceFooter(clearance)}`;
           }
-          stepResult = { full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') };
+          stepResult = /** @type {any} */ ({ full_output: output, summary: output.slice(0, 120).replace(/\n/g, ' ') });
           // Carry screenshots forward for QA display
           if (results[i]?._screenshots) stepResult._screenshots = results[i]._screenshots;
           results[i] = stepResult;
@@ -1004,6 +1004,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
                 multiMode={sessionConfig?.multiMode}
                 inputs={sessionConfig?.inputs || []}
                 stepResults={finalStepResults}
+                allInputStepResults={[]}
                 onAccept={() => { setShowFinalReport(false); setShowClearancePrompt(true); handleReset(); }}
               />
             )}

@@ -237,6 +237,7 @@ export default function SelfVerification() {
       mode,
       maxCostPerRun: maxCostPerRun || null,
       maxCostPerApp: maxCostPerApp || null,
+      onAppDone: () => {},
     }).catch(() => {});
 
     for (const app of APPS) {

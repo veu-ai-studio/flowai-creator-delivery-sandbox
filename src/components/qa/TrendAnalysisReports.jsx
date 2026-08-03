@@ -113,7 +113,7 @@ export default function TrendAnalysisReports({ url, currentResults }) {
             trend > 0 ? 'text-emerald-400' : trend < 0 ? 'text-red-400' : 'text-blue-400'
           }`}>
             {trend > 0 ? <TrendingUp className="h-5 w-5" /> : trend < 0 ? <TrendingDown className="h-5 w-5" /> : <span>→</span>}
-            {Math.abs(trendPercent)}%
+            {Math.abs(Number(trendPercent))}%
           </div>
           <p className="text-xs text-muted-foreground">vs first run</p>
         </div>

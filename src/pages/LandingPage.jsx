@@ -110,7 +110,7 @@ export function resolveRunConstructionMode({
   isMigrationMode = false,
   isFreshBuildMode = false,
   inngestReady = false,
-} = {}) {
+} = /** @type {any} */ ({})) {
   if (isMigrationMode) return 'MIGRATION';
   if (isFreshBuildMode) return 'FRESH_BUILD';
   const effectiveMode = String(operationalMode ?? mode ?? 'auto').trim().toLowerCase();
@@ -1349,6 +1349,7 @@ export default function LandingPage() {
               structuralLayer={structuralLayer}
               analysisDepth={analysisDepthValue(depth)}
               flowHubPath={flowHubPath}
+              setOperatorSecret={setOperatorSecret}
               autoStart
               onClose={() => setRunPanelUrl(null)}
             />

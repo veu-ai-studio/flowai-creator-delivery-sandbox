@@ -301,7 +301,7 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
       }
       return cloneSection(section, orchestratedInputFor(section, manualInputs, selectedTool));
     }
-    return cloneSection(section, section.input ?? null);
+    return cloneSection(section, /** @type {any} */ (section).input ?? null);
   });
   const scorableSections = sections.filter(section => section.id !== 'selected-tool');
   const score = scoreDesignStep({ stepId: DESIGN_STEP_ID, sections: scorableSections });
@@ -327,7 +327,7 @@ export async function runDesign(productId, researchOutput = {}, manualInputs = {
       researchGaps: deriveDesignGaps(researchOutput).length,
       liveDispatches: budget.dispatchCount,
       toolAttemptHistory: liveDesignData?.attemptHistory?.length ?? 0,
-      timeoutAttempts: (liveDesignData?.attemptHistory ?? []).filter(attempt => attempt.state === 'timeout').length,
+      timeoutAttempts: (liveDesignData?.attemptHistory ?? []).filter(attempt => /** @type {any} */ (attempt).state === 'timeout').length,
       estimatedCostUsd: Math.round(budget.costUsd * 1_000_000) / 1_000_000,
     }),
     matrixArtifactVersion: String(researchOutput.matrixArtifactVersion ?? 'unknown'),

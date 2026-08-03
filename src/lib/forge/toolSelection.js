@@ -225,7 +225,7 @@ export async function selectForgeStepTool(opts = {}) {
     undServedAccessWarning: warning.undServedAccessWarning,
     undServedAccessWarningReason: warning.undServedAccessWarningReason,
     underservedConstraintSatisfied: warning.underservedConstraintSatisfied,
-    dataGapWarnings: Object.freeze([...(ranked.dataGapWarnings ?? [])]),
+    dataGapWarnings: Object.freeze([...(/** @type {any} */ (ranked).dataGapWarnings ?? [])]),
     pipelineNullAt: pipelineNullAt.length > 0 ? Object.freeze(pipelineNullAt) : undefined,
     targetClass: SERVICE_TARGET_CLASS,
     underservedMetadataTarget: UNDERSERVED_METADATA_TARGET,

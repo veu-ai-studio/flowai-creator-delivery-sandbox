@@ -75,7 +75,7 @@ export async function runMonitor(productId, context = {}, manualInputs = {}, con
     if (section.id === 'monitor-regression-signal') return cloneSection(section, regression);
     if (section.id === 'monitor-store-review-status') return cloneSection(section, store);
     if (section.id === 'monitor-renewal-trigger') return cloneSection(section, renewal);
-    return cloneSection(section, section.input ?? null);
+    return cloneSection(section, /** @type {any} */ (section).input ?? null);
   });
 
   const baseOutput = {

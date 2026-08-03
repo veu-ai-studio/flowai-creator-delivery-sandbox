@@ -74,7 +74,7 @@ export default function MainDashboard() {
         resolveArray(base44.entities.TestReport.list('-created_date', 5)),
         resolveArray(base44.entities.QAAuditReport.list('-created_date', 5)),
       ]);
-      const productItems = productsResult?.ok ? asArray(productsResult.items).map(dashboardProductFromRegistry) : [];
+      const productItems = productsResult?.ok ? asArray(/** @type {any} */ (productsResult).items).map(dashboardProductFromRegistry) : [];
       setPortfolio(productItems);
       const clMap = {};
       asArray(clearance).forEach(r => { clMap[r.product_name] = r; });
@@ -83,7 +83,7 @@ export default function MainDashboard() {
       const activity = [
         ...asArray(testReports).map(r => ({ type: 'Test', desc: `Self-test: ${r.target_url}`, score: `${r.test_score_percentage}%`, date: r.created_date })),
         ...asArray(audits).map(r => ({ type: 'Audit', desc: `Audit: ${r.url || 'unknown'}`, score: r.scores?.overall ? `${r.scores.overall}/10` : '—', date: r.created_date })),
-      ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 10);
+      ].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()).slice(0, 10);
       setRecentActivity(activity);
       await fetchSessions();
       setLoading(false);

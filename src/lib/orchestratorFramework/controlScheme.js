@@ -47,6 +47,7 @@ export function createUserInitiationToken(context = {}) {
   });
 }
 
+/** @param {any} input */
 export function validateRunStart({ controlScheme, userInitiationToken } = {}) {
   const normalized = normalizeControlScheme(controlScheme);
   if (normalized.structure === CONTROL_STRUCTURES.AUTONOMOUS && !userInitiationToken) {

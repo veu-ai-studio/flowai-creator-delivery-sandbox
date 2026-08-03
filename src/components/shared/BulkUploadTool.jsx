@@ -4,9 +4,9 @@ import { Upload, FileJson, FileText, CheckCircle2, AlertTriangle, X, Loader2 } f
 
 export default function BulkUploadTool({ onImported }) {
   const [dragging, setDragging] = useState(false);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState(/** @type {any[]} */ ([]));
   const [processing, setProcessing] = useState(false);
-  const inputRef = useRef();
+  const inputRef = useRef(/** @type {HTMLInputElement|null} */ (null));
 
   const processFiles = async (fileList) => {
     const accepted = Array.from(fileList).filter(f =>
@@ -18,7 +18,7 @@ export default function BulkUploadTool({ onImported }) {
     setFiles(entries);
     setProcessing(true);
 
-    const updated = [...entries];
+    const updated = /** @type {any[]} */ ([...entries]);
     for (let i = 0; i < accepted.length; i++) {
       const text = await accepted[i].text();
       let parsed = null;

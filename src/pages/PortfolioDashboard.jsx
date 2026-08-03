@@ -62,7 +62,7 @@ function AddProductModal({ onClose, onAdded }) {
     });
     setSaving(false);
     if (!r.ok) {
-      setError(r.error || 'Failed to register product');
+      setError(/** @type {any} */ (r).error || 'Failed to register product');
       return;
     }
     onAdded(r.item);
@@ -109,7 +109,7 @@ export default function PortfolioDashboard() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [clearanceRecords, setClearanceRecords] = useState({});
-  const [stats, setStats] = useState({ total: 0, activeRuns: 0, demoReady: 0, cost: null });
+  const [stats, setStats] = useState(/** @type {any} */ ({ total: 0, activeRuns: 0, demoReady: 0, upgradeReady: 0, cost: null }));
   // loadState distinguishes outage from empty per peer R6:
   // 'loading' | 'ok' | 'error'
   const [loadState, setLoadState] = useState('loading');
@@ -130,7 +130,7 @@ export default function PortfolioDashboard() {
     if (!productsResult.ok) {
       // Outage — do NOT silently render an empty state. Surface the error.
       setLoadState('error');
-      setLoadError(productsResult.error || 'Unable to load products');
+      setLoadError(/** @type {any} */ (productsResult).error || 'Unable to load products');
       return;
     }
 

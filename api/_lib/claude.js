@@ -58,7 +58,7 @@ export async function callClaude({
 
     if (!upstream.ok) {
       const details = await upstream.text();
-      const err = new Error(`Anthropic returned ${upstream.status}`);
+      const err = /** @type {any} */ (new Error(`Anthropic returned ${upstream.status}`));
       err.status = upstream.status;
       err.details = details;
       throw err;

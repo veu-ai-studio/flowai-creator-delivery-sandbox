@@ -60,9 +60,9 @@ export default function ForgeGTMForm() {
 
   const submitGtm = async () => {
     if (!productId) return;
-    const output = await runGtm(productId, gtmContextFromQuery(productId, productName, searchParams), {
+    const output = /** @type {any} */ (await runGtm(productId, gtmContextFromQuery(productId, productName, searchParams), {
       'gtm-human-decision-log': decisionText,
-    }, {});
+    }, {}));
     setGtmOutput(output);
     setScore(scoreGtmStep(output));
     setPersistenceState({ state: 'pending' });

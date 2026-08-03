@@ -54,6 +54,7 @@ function prApprovalGate(finalResult = {}) {
   ));
 }
 
+/** @param {any} input */
 export function extractBranchPrVisibility({ finalResult, repoConfig } = {}) {
   if (!finalResult || typeof finalResult !== 'object') return null;
 

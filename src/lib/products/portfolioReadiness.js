@@ -20,6 +20,7 @@ function withHttps(value) {
   return trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : `https://${trimmed}`;
 }
 
+/** @param {any} product @param {readonly any[]} configs */
 export function registeredConfigForProduct(product = {}, configs = REGISTERED_PRODUCT_CONFIG) {
   const productName = normalizeText(product.name ?? product.product_name ?? product.label);
   const productSlug = normalizeText(product.slug);
@@ -35,6 +36,7 @@ export function registeredConfigForProduct(product = {}, configs = REGISTERED_PR
   }) ?? null;
 }
 
+/** @param {any} product @param {any} registryRow */
 export function mergeProductUpgradeSources(product = {}, registryRow = {}) {
   const registered = registeredConfigForProduct(product) ?? {};
   const upgradeRepoDisplayUrl =
@@ -63,6 +65,7 @@ function labelFor(status) {
   return String(status ?? 'missing').replace(/_/g, ' ').replace(/^\w/, (letter) => letter.toUpperCase());
 }
 
+/** @param {any} product @param {any} registryRow */
 export function productUpgradeReadiness(product = {}, registryRow = {}) {
   const merged = mergeProductUpgradeSources(product, registryRow);
   const state = normalizeUpgradeTargetState(merged);
@@ -78,6 +81,7 @@ export function productUpgradeReadiness(product = {}, registryRow = {}) {
   });
 }
 
+/** @param {any[]} products @param {Record<string, any>} registryRowsByName */
 export function summarizePortfolioUpgradeReadiness(products = [], registryRowsByName = {}) {
   const rows = (Array.isArray(products) ? products : []).map((product) => {
     const registryRow = registryRowsByName[product.name] ?? registryRowsByName[product.product_name] ?? {};

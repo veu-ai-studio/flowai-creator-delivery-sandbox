@@ -85,6 +85,7 @@ export function buildSelectionReason(platform, step, rankingConfig = {}) {
   return `${platform.label} serves ${step}; cost rank ${costLabel}, performance rank ${performanceLabel}, status ${platform.status}, live calls ${platform.liveEnabled ? 'enabled' : 'stubbed'}.`;
 }
 
+/** @param {any} input */
 export function selectPlatformForStep({
   step,
   mode,
@@ -137,6 +138,7 @@ export function selectPlatformForStep({
   throw new Error(`Unknown orchestration mode "${mode}"`);
 }
 
+/** @param {any} input */
 export function buildOrchestrationPlan({
   mode = ORCHESTRATION_MODES.AUTO,
   registry = PLATFORM_REGISTRY,

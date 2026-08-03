@@ -10,6 +10,7 @@ export function resolvePlatform(registry, platformId) {
   return (registry ?? PLATFORM_REGISTRY).find(platform => platform.id === platformId) ?? null;
 }
 
+/** @param {any} input */
 export function createLiveCallEnvelope({
   platformId,
   action,
