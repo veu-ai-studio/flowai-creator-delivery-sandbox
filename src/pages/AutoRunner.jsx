@@ -767,7 +767,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
     if (sessionId) {
       try {
         const cancelled = await cancelLegacyAutoSession({ base44Client: base44, sessionId, reason: 'operator_abort' });
-        setLegacyCancellationSuccess(`Legacy session ${cancelled.id || sessionId} confirmed cancelled.`);
+        setLegacyCancellationSuccess(`Legacy session ${cancelled.id || sessionId} confirmed stopped.`);
       } catch {
         setLegacyCancellationError('Could not cancel the legacy session. Retry Abort; the session remains active.');
         return;
@@ -797,7 +797,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
         sessionId: resumeSession?.id,
         reason: 'discarded_stale_legacy_session',
       });
-      setLegacyCancellationSuccess(`Legacy session ${cancelled.id || resumeSession.id} confirmed cancelled.`);
+      setLegacyCancellationSuccess(`Legacy session ${cancelled.id || resumeSession.id} confirmed stopped.`);
     } catch {
       setLegacyCancellationError('Could not discard the unfinished session. Retry Start New Session.');
       return;

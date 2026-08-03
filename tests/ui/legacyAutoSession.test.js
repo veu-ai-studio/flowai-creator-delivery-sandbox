@@ -11,10 +11,10 @@ describe('legacy AutoSession durable cancellation', () => {
       reason: 'operator_abort',
     });
     expect(update).toHaveBeenCalledWith('legacy-1', expect.objectContaining({
-      overall_status: 'cancelled',
-      cancellation_reason: 'operator_abort',
+      overall_status: 'failed',
+      deliverables: expect.objectContaining({ cancellation_reason: 'operator_abort' }),
     }));
-    expect(result.overall_status).toBe('cancelled');
+    expect(result.overall_status).toBe('failed');
   });
 
   it('propagates rejection so the UI can retain the retryable session prompt', async () => {
