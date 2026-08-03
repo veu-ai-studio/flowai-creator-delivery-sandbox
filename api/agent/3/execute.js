@@ -365,6 +365,7 @@ async function runSseOrchestration(req, res, body, auth) {
       .catch(() => null);
     return ledgerWrite;
   };
+
   heartbeat = setInterval(() => {
     if (!runFinished) {
       sendEvent({ type: 'heartbeat', at: new Date().toISOString() });
@@ -560,14 +561,40 @@ async function runSseOrchestration(req, res, body, auth) {
   if (heartbeat) clearInterval(heartbeat);
   if (softTimeout) clearTimeout(softTimeout);
   await ledgerWrite;
-  const terminalLedger = await getOperationalRun(runId, auth).catch(() => null);
-  if (terminalLedger?.status === 'cancelled') {
+  durableStepResults = reconcileTerminalStepResults(durableStepResults, result);
+  const evidenceLedger = await persistOperationalPatchWithRetry({
+    runId,
+    auth,
+    patch: {
+    stepResults: durableStepResults,
+      stepCount: Object.keys(durableStepResults).length,
+    },
+  });
+  if (evidenceLedger?.status === 'cancelled' || evidenceLedger?.status === 'cancelling') {
     sendEvent({ type: 'final', result: { ok: false, runId, code: 'RUN_CANCELLED', exitReason: 'Cancelled by operator' } });
     sendDone();
     return;
   }
-  sendEvent({ type: 'final', result });
-  await updateOperationalRun(runId, auth, { status: result?.ok === false ? 'failed' : 'completed', completedAt: new Date().toISOString(), error: result?.ok === false ? publicRunError(result?.code) : null, progressLabel: result?.ok === false ? 'Run failed' : 'Completed' });
+  const terminalStepCount = Object.keys(evidenceLedger?.stepResults || {}).length;
+  const terminalError = terminalLifecycleError(result, terminalStepCount);
+  const terminalLedger = await persistOperationalPatchWithRetry({
+    runId,
+    auth,
+    patch: {
+      status: terminalError ? 'failed' : 'completed',
+      completedAt: new Date().toISOString(),
+      error: terminalError,
+      progressLabel: terminalError ? 'Run failed' : 'Completed',
+    },
+  });
+  let finalResult = result;
+  if (terminalLedger?.status === 'cancelled' || terminalLedger?.status === 'cancelling') {
+    finalResult = { ok: false, runId, code: 'RUN_CANCELLED', exitReason: 'Cancelled by operator' };
+  } else if (terminalLedger?.status !== 'completed') {
+    const error = terminalLedger?.error || terminalError || publicRunError('RUN_STORE_WRITE_CONFLICT');
+    finalResult = { ...result, ok: false, runId, code: error.code, exitReason: error.message };
+  }
+  sendEvent({ type: 'final', result: finalResult });
   sendDone();
 }
 
@@ -637,6 +664,47 @@ function scoreFromStepLogs(stepLogs = []) {
     }
   }
   return { score: 0, layers: null };
+}
+
+function reconcileTerminalStepResults(existing = {}, terminalResult = {}) {
+  let reconciled = existing && typeof existing === 'object' ? { ...existing } : {};
+  const logs = Array.isArray(terminalResult?.orchestrationLog)
+    ? terminalResult.orchestrationLog
+    : [];
+  for (const log of logs) {
+    const patch = buildFlowAIStepPatchFromLog(log);
+    reconciled = { ...reconciled, ...(patch.stepResults || {}) };
+  }
+  return reconciled;
+}
+
+function terminalLifecycleError(result = {}, terminalStepCount = 0) {
+  if (result?.ok === false) return publicRunError(result?.code);
+  if (terminalStepCount < 8) {
+    return {
+      code: 'INCOMPLETE_LIFECYCLE_EVIDENCE',
+      message: `Run ended with ${terminalStepCount}/8 durable lifecycle stages.`,
+    };
+  }
+  return null;
+}
+
+async function persistOperationalPatchWithRetry({
+  runId,
+  auth,
+  patch,
+  updateFn = updateOperationalRun,
+  getFn = getOperationalRun,
+  maxAttempts = 3,
+} = {}) {
+  let latest = null;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const written = await updateFn(runId, auth, patch);
+    if (written && written.transitionRejected !== true) return written;
+    latest = written || await getFn(runId, auth);
+    if (!latest || ['cancelling', 'cancelled', 'completed', 'failed'].includes(latest.status)) return latest;
+  }
+  return latest;
 }
 
 function buildSseSoftTimeoutResult({
@@ -713,6 +781,9 @@ export const __test = Object.freeze({
   buildSseRunInput,
   buildSseSoftTimeoutResult,
   scoreFromStepLogs,
+  reconcileTerminalStepResults,
+  terminalLifecycleError,
+  persistOperationalPatchWithRetry,
   freshBuildEventToMacroLogs,
   freshBuildProductConfig,
   SYNC_TIMEOUT_MS,

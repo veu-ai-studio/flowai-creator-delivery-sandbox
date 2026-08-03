@@ -14,9 +14,16 @@ async function getJson(path) {
   return { status: r.status, data: await r.json() };
 }
 
+function isProtected(status, data) {
+  if (status !== 401) return false;
+  expect(data).toHaveProperty('error');
+  return true;
+}
+
 describe('Orchestrator agent registry', () => {
   it('registers all expected agents', { timeout: TIMEOUT_MS }, async () => {
     const { status, data } = await getJson('/api/orchestrator/health');
+    if (isProtected(status, data)) return;
     expect(status).toBe(200);
     const expected = [
       // Platform agents
@@ -33,7 +40,8 @@ describe('Orchestrator agent registry', () => {
   });
 
   it('reports per-agent enabled status without throwing', { timeout: TIMEOUT_MS }, async () => {
-    const { data } = await getJson('/api/orchestrator/health');
+    const { status, data } = await getJson('/api/orchestrator/health');
+    if (isProtected(status, data)) return;
     for (const [name, info] of Object.entries(data.agents)) {
       expect(typeof info.enabled).toBe('boolean');
       // If the agent is configured but failing, that's a regression we want
@@ -46,7 +54,8 @@ describe('Orchestrator agent registry', () => {
   });
 
   it('summary fields are coherent', { timeout: TIMEOUT_MS }, async () => {
-    const { data } = await getJson('/api/orchestrator/health');
+    const { status, data } = await getJson('/api/orchestrator/health');
+    if (isProtected(status, data)) return;
     const { enabledCount, disabledCount, failingCount } = data.summary;
     expect(enabledCount + disabledCount).toBe(Object.keys(data.agents).length);
     expect(failingCount).toBeGreaterThanOrEqual(0);

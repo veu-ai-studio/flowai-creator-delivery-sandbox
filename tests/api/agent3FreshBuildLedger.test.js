@@ -30,6 +30,74 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
     expect(deploy[0].result.reason).toBe('DEPLOYMENT_ADAPTER_NOT_CONFIGURED');
   });
 
+  it('reconciles terminal orchestration evidence and rejects a false 7/8 completion', () => {
+    const existing = FLOWAI_MACRO_STEPS
+      .filter((key) => key !== 'deploy')
+      .reduce((acc, key) => ({ ...acc, [key]: { status: 'complete' } }), {});
+    const terminal = {
+      ok: true,
+      orchestrationLog: [{
+        step: 10.5,
+        stepName: 'Deploy',
+        status: 'degraded',
+        result: { kind: 'forge.user_step.v1', userStep: 5, key: 'deploy' },
+      }],
+    };
+
+    const reconciled = __test.reconcileTerminalStepResults(existing, terminal);
+    expect(new Set(Object.keys(reconciled))).toEqual(new Set(FLOWAI_MACRO_STEPS));
+    expect(reconciled.deploy.status).toBe('degraded');
+    expect(__test.terminalLifecycleError(terminal, 7)).toMatchObject({
+      code: 'INCOMPLETE_LIFECYCLE_EVIDENCE',
+    });
+    expect(__test.terminalLifecycleError(terminal, 8)).toBeNull();
+  });
+
+  it('retries a rejected durable evidence write and derives completion from persisted evidence', async () => {
+    const calls = [];
+    const sevenSteps = FLOWAI_MACRO_STEPS
+      .filter((key) => key !== 'deploy')
+      .reduce((acc, key) => ({ ...acc, [key]: { status: 'complete' } }), {});
+    const eightSteps = { ...sevenSteps, deploy: { status: 'degraded' } };
+    const updateFn = async (_runId, _auth, patch) => {
+      calls.push(patch);
+      if (calls.length === 1) return { status: 'running', stepResults: sevenSteps, transitionRejected: true };
+      return { status: 'running', stepResults: patch.stepResults, stepCount: patch.stepCount };
+    };
+
+    const persisted = await __test.persistOperationalPatchWithRetry({
+      runId: 'run-cas',
+      auth: { orgId: 'org', userId: 'user' },
+      patch: { stepResults: eightSteps, stepCount: 8 },
+      updateFn,
+      getFn: async () => null,
+    });
+
+    expect(calls).toHaveLength(2);
+    expect(Object.keys(persisted.stepResults)).toHaveLength(8);
+    expect(__test.terminalLifecycleError({ ok: true }, Object.keys(persisted.stepResults).length)).toBeNull();
+  });
+
+  it('never treats an unpersisted 7/8 row as completed', async () => {
+    const sevenSteps = FLOWAI_MACRO_STEPS
+      .filter((key) => key !== 'deploy')
+      .reduce((acc, key) => ({ ...acc, [key]: { status: 'complete' } }), {});
+    const rejected = { status: 'running', stepResults: sevenSteps, transitionRejected: true };
+    const persisted = await __test.persistOperationalPatchWithRetry({
+      runId: 'run-cas-failed',
+      auth: { orgId: 'org', userId: 'user' },
+      patch: { stepResults: { ...sevenSteps, deploy: { status: 'degraded' } }, stepCount: 8 },
+      updateFn: async () => rejected,
+      getFn: async () => rejected,
+    });
+
+    const persistedCount = Object.keys(persisted.stepResults).length;
+    expect(persistedCount).toBe(7);
+    expect(__test.terminalLifecycleError({ ok: true }, persistedCount)).toMatchObject({
+      code: 'INCOMPLETE_LIFECYCLE_EVIDENCE',
+    });
+  });
+
   it('reuses a registered FlowAI target and falls back to the authorized delivery repo', () => {
     expect(__test.freshBuildProductConfig('https://flowai.flowaiplatform.com/landing', {}, {})).toMatchObject({
       name: 'FlowAI',

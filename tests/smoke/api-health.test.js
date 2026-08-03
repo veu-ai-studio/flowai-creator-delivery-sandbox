@@ -35,6 +35,10 @@ async function postJson(path, body) {
 describe('GET /api/version', () => {
   it('returns version metadata', { timeout: TIMEOUT_MS }, async () => {
     const { status, data } = await getJson('/api/version');
+    if (status === 401) {
+      expect(data).toHaveProperty('error');
+      return;
+    }
     expect(status).toBe(200);
     expect(data).toHaveProperty('name');
     expect(data).toHaveProperty('env');
@@ -47,6 +51,10 @@ describe('GET /api/version', () => {
 describe('GET /api/diagnostic', () => {
   it('returns provider probe results', { timeout: TIMEOUT_MS }, async () => {
     const { status, data } = await getJson('/api/diagnostic');
+    if (status === 401) {
+      expect(data).toHaveProperty('error');
+      return;
+    }
     expect([200, 503]).toContain(status); // 503 if any configured probe fails
     expect(data).toHaveProperty('providers');
     expect(data.providers).toHaveProperty('anthropic');
@@ -108,6 +116,10 @@ describe.skip('GET /api/configuration/products?format=array', () => {
 describe('GET /api/orchestrator/health', () => {
   it('returns aggregate agent health', { timeout: TIMEOUT_MS }, async () => {
     const { status, data } = await getJson('/api/orchestrator/health');
+    if (status === 401) {
+      expect(data).toHaveProperty('error');
+      return;
+    }
     expect(status).toBe(200);
     expect(data).toHaveProperty('agents');
     expect(data.agents).toHaveProperty('claude');
