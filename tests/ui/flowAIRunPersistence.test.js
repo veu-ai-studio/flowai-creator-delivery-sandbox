@@ -9,6 +9,8 @@ const appLayoutSource = read('src/components/layout/AppLayout.jsx');
 const sidebarSource = read('src/components/layout/Sidebar.jsx');
 const activeIndicatorSource = read('src/components/layout/ActiveRunIndicator.jsx');
 const storeSource = read('src/lib/flowaiRunStore.js');
+const sessionContextSource = read('src/lib/SessionContext.jsx');
+const orchestrationBarSource = read('src/components/layout/OrchestrationBar.jsx');
 
 describe('FlowAI run persistence and active indicator', () => {
   it('records dashboard run lifecycle events into persistent run history', () => {
@@ -23,7 +25,7 @@ describe('FlowAI run persistence and active indicator', () => {
 
   it('renders FlowAI runs on the /runs history page with required fields', () => {
     expect(runsHistorySource).toContain("fetch('/api/runs'");
-    expect(runsHistorySource).not.toContain('listFlowAIRuns');
+    expect(runsHistorySource).toContain('listFlowAIRuns');
     expect(runsHistorySource).not.toContain('subscribeFlowAIRuns');
     expect(runsHistorySource).not.toContain('base44.entities');
     expect(runsHistorySource).toContain('History unavailable');
@@ -33,6 +35,16 @@ describe('FlowAI run persistence and active indicator', () => {
     expect(runsHistorySource).toContain('scoreLabel');
     expect(runsHistorySource).toContain("body: JSON.stringify({ runId, command: 'stop' })");
     expect(runsHistorySource).toContain('Stop run');
+    expect(runsHistorySource).toContain('session.error.code');
+    expect(runsHistorySource).toContain('serverIds.has(run.id)');
+  });
+
+  it('does not present an empty stale governance record as an active pipeline session', () => {
+    expect(sessionContextSource).toContain('isUsableGovernanceSession');
+    expect(sessionContextSource).toContain('session.urls.length > 0');
+    expect(sessionContextSource).toContain('session.selected_activities.length > 0');
+    expect(orchestrationBarSource).toContain('Governance Session Active');
+    expect(orchestrationBarSource).toContain('Pause governance');
   });
 
   it('exposes active runs globally from the shared layout and sidebar', () => {

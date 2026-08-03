@@ -3,6 +3,18 @@ import { base44 } from '@/api/base44Client';
 
 const SessionContext = createContext(null);
 
+export function isUsableGovernanceSession(session) {
+  return Boolean(
+    session
+    && session.status === 'active'
+    && Array.isArray(session.urls)
+    && session.urls.length > 0
+    && Array.isArray(session.selected_activities)
+    && session.selected_activities.length > 0
+    && session.current_activity
+  );
+}
+
 export function SessionProvider({ children }) {
   const [activeSession, setActiveSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -18,7 +30,7 @@ export function SessionProvider({ children }) {
           owner_email: user.email,
           status: 'active',
         }, '-created_date', 1);
-        if (sessions.length > 0) {
+        if (sessions.length > 0 && isUsableGovernanceSession(sessions[0])) {
           setActiveSession(sessions[0]);
           const startedAt = sessions[0].started_at ? new Date(sessions[0].started_at) : new Date();
           setElapsedSeconds(Math.floor((Date.now() - startedAt.getTime()) / 1000));

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { FLOWAI_MACRO_STEPS } from '@/lib/flowaiRunStore';
+import { FLOWAI_MACRO_STEPS, listFlowAIRuns } from '@/lib/flowaiRunStore';
 import { asArray } from '@/lib/uiDataGuards';
 
 const STATUS_CFG = {
@@ -54,6 +54,7 @@ function mapFlowAIRun(run) {
     run_id: run.runId,
     branch_created: run.branchCreated,
     progress_label: run.progressLabel,
+    error: run.error || null,
     step_results: run.stepResults || {},
     step_count: run.stepCount,
   };
@@ -134,6 +135,12 @@ function RunRow({ session, onClick, isExpanded, onStop, stopping }) {
                     {stopping || status === 'cancelling' ? 'Stopping…' : 'Stop run'}
                   </button>
                 )}
+                {session.error && (
+                  <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
+                    <p className="font-bold">{session.error.code || 'RUN_FAILED'}</p>
+                    <p className="mt-1 text-red-200/80">{session.error.message || session.progress_label || 'Run execution failed.'}</p>
+                  </div>
+                )}
                 </>
               )}
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Step Results</p>
@@ -196,11 +203,22 @@ export default function RunsHistory() {
         const response = await fetch('/api/runs', { credentials: 'same-origin' });
         if (!response.ok) throw new Error(`History unavailable (${response.status})`);
         const payload = await response.json();
-        const flowai = asArray(payload.runs).map(run => mapFlowAIRun({
+        const authoritative = asArray(payload.runs).map(run => mapFlowAIRun({
           id: run.id, runId: run.id, product: run.product, productUrl: run.url,
           startTime: run.startedAt || run.createdAt, endTime: run.completedAt,
-          status: run.status, progressLabel: run.progressLabel,
+          status: run.status, progressLabel: run.progressLabel, error: run.error,
         }));
+        // The ledger create is atomic, but its cross-region index can take a
+        // moment to become readable. Keep a just-launched local run visible
+        // until the authoritative row arrives, then de-duplicate by stable ID.
+        const now = Date.now();
+        const serverIds = new Set(authoritative.map(run => run.id));
+        const optimistic = listFlowAIRuns()
+          .filter(run => ['queued', 'running', 'paused', 'cancelling'].includes(run.status))
+          .filter(run => now - Date.parse(run.startTime || 0) < 15 * 60 * 1000)
+          .map(mapFlowAIRun)
+          .filter(run => !serverIds.has(run.id));
+        const flowai = [...optimistic, ...authoritative];
         if (cancelled) return;
         setSessions(flowai);
         setHistoryError('');

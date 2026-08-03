@@ -87,7 +87,7 @@ export default function OrchestrationBar() {
         /* ── SESSION ACTIVE: clean status bar ── */
         <>
           <Zap className="h-3.5 w-3.5 text-amber-400 shrink-0 animate-pulse" />
-          <span className="text-amber-400 font-bold text-sm shrink-0">Session Active</span>
+          <span className="text-amber-400 font-bold text-sm shrink-0">Governance Session Active</span>
           <Divider />
           <span className="text-sm text-muted-foreground shrink-0">
             URLs: <span className="text-foreground font-semibold">{urls.length}</span>
@@ -110,7 +110,7 @@ export default function OrchestrationBar() {
             </button>
             <button onClick={pauseSession}
               className="flex items-center gap-1 h-7 px-3 rounded border border-amber-500/40 text-sm text-amber-400 hover:bg-amber-500/10 transition-all">
-              <Pause className="h-3.5 w-3.5" /> Pause
+              <Pause className="h-3.5 w-3.5" /> Pause governance
             </button>
             <button onClick={cancelSession}
               className="flex items-center justify-center h-7 w-7 rounded border border-border text-muted-foreground hover:text-red-400 hover:border-red-500/40 transition-all">
