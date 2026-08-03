@@ -29,7 +29,7 @@ describe('FlowAI run persistence and active indicator', () => {
 
   it('durably disposes aborted or stale legacy AutoRunner sessions', () => {
     expect(autoRunnerSource).toContain('await cancelLegacyAutoSession');
-    expect(autoRunnerSource).toContain('the session remains active');
+    expect(autoRunnerSource).toContain('Execution is paused; retry Abort');
     expect(autoRunnerSource).toContain('Retry Start New Session');
     expect(autoRunnerSource).toContain('confirmed stopped');
     expect(autoRunnerSource).toContain('onStartNew={handleDiscardResume}');

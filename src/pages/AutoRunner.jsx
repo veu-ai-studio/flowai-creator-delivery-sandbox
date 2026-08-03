@@ -18,7 +18,7 @@ import { logAction } from '@/lib/auditLogger';
 import { OrchestratorHub, createMemoryHotStore, createMemoryColdStore } from '@/lib/agents/orchestrator/OrchestratorHub';
 import { MessageBus } from '@/lib/agents/MessageBus';
 import { shouldHaltOnBlock, applyBlockGate, serializeResultsForPersist } from '@/lib/runner/blockGate';
-import { cancelLegacyAutoSession } from '@/lib/legacyAutoSession';
+import { cancelLegacyAutoSession, quiesceLegacyAutoSessionExecution } from '@/lib/legacyAutoSession';
 
 // PA #2.7b — Lazy-instantiated orchestrator bundle. Hub + MessageBus +
 // in-memory HotStore + ColdStore are created on first call to
@@ -317,6 +317,18 @@ export default function AutoRunner() {
   const pausedAtStepRef = useRef(0);
   const savedStateRef = useRef(null);
   const sessionDbIdRef = useRef(null);
+  const persistenceQueueRef = useRef(Promise.resolve());
+
+  const persistLegacySessionUpdate = (sessionId, patch) => {
+    const queued = persistenceQueueRef.current
+      .catch(() => {})
+      .then(() => {
+        if (!sessionId || sessionDbIdRef.current !== sessionId) return null;
+        return base44.entities.AutoSession.update(sessionId, patch);
+      });
+    persistenceQueueRef.current = queued;
+    return queued;
+  };
 
   const formatTime = (s) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
 
@@ -467,7 +479,7 @@ export default function AutoRunner() {
               logAction({ actionType: 'step_completed', stepName: STEPS[i].label, sessionId: sessionDbIdRef.current || '', productUrl: config.inputs[0]?.value || '', outcome: 'blocked', mode: 'auto' });
               // Persist + apply gate immediately, then break out.
               if (sessionDbIdRef.current) {
-                base44.entities.AutoSession.update(sessionDbIdRef.current, {
+                persistLegacySessionUpdate(sessionDbIdRef.current, {
                   current_step: i + 1,
                   step_results: serializeResultsForPersist(results, STEPS),
                   overall_status: 'blocked',
@@ -490,7 +502,7 @@ export default function AutoRunner() {
               allInputResults[0][i] = stepResult;
               statuses[i] = 'complete';
               if (sessionDbIdRef.current) {
-                base44.entities.AutoSession.update(sessionDbIdRef.current, {
+                persistLegacySessionUpdate(sessionDbIdRef.current, {
                   current_step: i + 1,
                   step_results: Object.fromEntries(STEPS.map((s, si) => [s.key, results[si] ? { summary: results[si].summary, full_output: (results[si].full_output || '').slice(0, 2000) } : null])),
                   overall_status: 'running',
@@ -642,7 +654,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
       }
       // Persist step result to DB
       if (sessionDbIdRef.current) {
-        base44.entities.AutoSession.update(sessionDbIdRef.current, {
+        persistLegacySessionUpdate(sessionDbIdRef.current, {
           current_step: i + 1,
           step_results: Object.fromEntries(STEPS.map((s, si) => [s.key, results[si] ? { summary: results[si].summary, full_output: (results[si].full_output || '').slice(0, 2000) } : null])),
           overall_status: 'running',
@@ -676,7 +688,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
         setStepStatuses([...statuses]);
         setStepResults([...results]);
         if (sessionDbIdRef.current) {
-          base44.entities.AutoSession.update(sessionDbIdRef.current, {
+          persistLegacySessionUpdate(sessionDbIdRef.current, {
             current_step: i + 1,
             step_results: serializeResultsForPersist(results, STEPS),
             overall_status: 'blocked',
@@ -698,7 +710,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
     if (pipelineDone) {
       setShowFinalReport(true);
       if (sessionDbIdRef.current) {
-        base44.entities.AutoSession.update(sessionDbIdRef.current, {
+        persistLegacySessionUpdate(sessionDbIdRef.current, {
           overall_status: blocked ? 'blocked' : 'completed',
           completed_at: new Date().toISOString(),
         }).catch(() => {});
@@ -761,20 +773,34 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
   };
 
   const handleAbort = async () => {
-    const sessionId = sessionDbIdRef.current;
+    const sessionId = quiesceLegacyAutoSessionExecution({
+      sessionDbIdRef,
+      isPausedRef,
+      timerRef,
+      clearTimer: clearInterval,
+    });
     setLegacyCancellationError(null);
     setLegacyCancellationSuccess(null);
     if (sessionId) {
       try {
-        const cancelled = await cancelLegacyAutoSession({ base44Client: base44, sessionId, reason: 'operator_abort' });
+        await persistenceQueueRef.current.catch(() => {});
+        const cancelled = await cancelLegacyAutoSession({
+          base44Client: base44,
+          sessionId,
+          reason: 'operator_abort',
+          existingSession: {
+            id: sessionId,
+            step_results: serializeResultsForPersist(stepResults, STEPS),
+          },
+        });
         setLegacyCancellationSuccess(`Legacy session ${cancelled.id || sessionId} confirmed stopped.`);
       } catch {
-        setLegacyCancellationError('Could not cancel the legacy session. Retry Abort; the session remains active.');
+        sessionDbIdRef.current = sessionId;
+        setSessionState('paused');
+        setLegacyCancellationError('Could not confirm legacy cancellation. Execution is paused; retry Abort.');
         return;
       }
     }
-    isPausedRef.current = true;
-    clearInterval(timerRef.current);
     setSessionState('idle');
     setSessionConfig(null);
     setShowFinalReport(false);
@@ -796,6 +822,7 @@ ${captureScreenshots && d?.screenshots?.length ? `Screenshots captured: ${d.scre
         base44Client: base44,
         sessionId: resumeSession?.id,
         reason: 'discarded_stale_legacy_session',
+        existingSession: resumeSession,
       });
       setLegacyCancellationSuccess(`Legacy session ${cancelled.id || resumeSession.id} confirmed stopped.`);
     } catch {
