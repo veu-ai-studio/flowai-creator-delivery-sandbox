@@ -28,4 +28,9 @@ describe('active FlowAI run rehydration', () => {
     expect(dashboardSource).toContain('assessment only — not clearance');
     expect(dashboardSource).toMatch(/score:\s*payload\.result\?\.gtmReady === true/);
   });
+
+  it('does not pass the React click event as the run idempotency key', () => {
+    expect(dashboardSource).toContain('onClick={() => launch()}');
+    expect(dashboardSource).not.toContain('onClick={launch}');
+  });
 });

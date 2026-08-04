@@ -1134,7 +1134,7 @@ export default function FlowAIDashboard() {
           </div>
 
           <button
-            type="button" onClick={launch} disabled={isRunning || !canLaunch}
+            type="button" onClick={() => launch()} disabled={isRunning || !canLaunch}
             className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition">
             {isRunning ? <Icon.Refresh className="w-5 h-5 animate-spin" /> : <Icon.Rocket className="w-5 h-5" />}
             {isRunning ? `Running... ${liveMacroStepCount}/8 steps` : finalResult ? 'START ANOTHER RUN' : 'START NEW RUN'}
@@ -1357,7 +1357,7 @@ export default function FlowAIDashboard() {
                   Exit: <span className="font-mono">{finalResult.exitReason}</span> · {finalResult.iterationsCompleted} iterations
                 </span>
               </div>
-              <button type="button" onClick={launch} disabled={isRunning}
+              <button type="button" onClick={() => launch()} disabled={isRunning}
                       className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-semibold flex items-center gap-1.5">
                 <Icon.Refresh className="w-3.5 h-3.5" />Run Again
               </button>

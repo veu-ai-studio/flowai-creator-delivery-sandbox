@@ -49,6 +49,38 @@ test('legacy Auto Runner route cannot replay stored work on direct navigation or
   expect(executeCalls).toBe(0);
 });
 
+test('independent explicit Starts dispatch distinct UUID idempotency keys instead of click events', async ({ page }) => {
+  await mockAuth(page);
+  let executeCalls = 0;
+  const idempotencyKeys = [];
+  await page.route('**/api/runs', (route) => route.fulfill({ status: 200, json: { runs: [] } }));
+  await page.route('**/api/agent/3/execute', (route) => {
+    executeCalls += 1;
+    idempotencyKeys.push(route.request().headers()['idempotency-key'] || null);
+    const runId = `run_nonprod_idempotency_proof_${executeCalls}`;
+    return route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: [
+        `data: ${JSON.stringify({ type: 'start', runId })}\n\n`,
+        `data: ${JSON.stringify({ type: 'final', result: { ok: false, runId, code: 'PROOF_COMPLETE' } })}\n\n`,
+      ].join(''),
+    });
+  });
+
+  await page.goto(`/flowai?url=${encodeURIComponent(URL)}&mode=auto`, { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'START NEW RUN', exact: true }).click();
+  await expect.poll(() => executeCalls).toBe(1);
+  await page.getByRole('button', { name: 'START ANOTHER RUN', exact: true }).click();
+  await expect.poll(() => executeCalls).toBe(2);
+
+  for (const idempotencyKey of idempotencyKeys) {
+    expect(idempotencyKey).not.toBe('[object Object]');
+    expect(idempotencyKey).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  }
+  expect(idempotencyKeys[0]).not.toBe(idempotencyKeys[1]);
+});
+
 test('Run A: active controls rehydrate and Stop remains durable after remount and refresh', async ({ page }) => {
   await mockAuth(page);
   let status = 'running';
