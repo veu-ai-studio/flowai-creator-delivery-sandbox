@@ -107,26 +107,45 @@ function isServiceCall(req) {
     && timingSafeEqual(suppliedBuffer, configuredBuffer);
 }
 
+function attachVerifiedRequestContext(req, ctx) {
+  if (!ctx?.authenticated) return ctx;
+  if (!Object.prototype.hasOwnProperty.call(req, 'flowaiAuthContext')) {
+    Object.defineProperty(req, 'flowaiAuthContext', {
+      value: Object.freeze({
+        authenticated: true,
+        authMode: ctx.authMode,
+        orgId: ctx.orgId || null,
+        productId: ctx.productId || null,
+        userId: ctx.userId || null,
+      }),
+      enumerable: false,
+      configurable: false,
+      writable: false,
+    });
+  }
+  return ctx;
+}
+
 // Main entry point: returns a request context object with everything
 // downstream needs to scope reads/writes correctly.
 export async function getRequestContext(req) {
   // 1. Service-to-service path — trusted, supply org/user via headers.
   if (isServiceCall(req)) {
-    return {
+    return attachVerifiedRequestContext(req, {
       authenticated: true,
       authMode: 'service',
       orgId: resolveOrgId(req),
       productId: resolveProductId(req),
       userId: req.headers?.['x-flowai-user-id'] || null,
       clerkSession: null,
-    };
+    });
   }
 
   // 2. Verified Clerk session.
   const session = await verifySession(req);
   if (session) {
     const { id: activeOrgId, role: activeOrgRole } = extractActiveOrganization(session);
-    return {
+    return attachVerifiedRequestContext(req, {
       authenticated: true,
       authMode: 'clerk',
       // Tenant identity must come only from verified active-organization
@@ -135,7 +154,7 @@ export async function getRequestContext(req) {
       productId: resolveProductId(req),
       userId: session.sub || session.userId || null,
       clerkSession: session,
-    };
+    });
   }
 
   // 3. Anonymous fallback (still scope-able via header / body / query).

@@ -10,18 +10,19 @@
 // gets investor_review, MyPregLife always gets compliance constraints).
 
 import { setCorsHeaders } from '../_lib/claude.js';
-import { resolveOrgId } from '../_lib/tenant.js';
+import { requireAuthHard } from '../_lib/auth.js';
 import { listObjectives, upsertObjective, deleteObjective, getObjective } from '../_lib/configRegistry.js';
 import { logger } from '../_lib/logger.js';
 
-const DEFAULT_ORG = 'veu-ai-studio';
 const VALID_TYPES = new Set(['goal', 'constraint', 'preference']);
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const authCtx = await requireAuthHard(req, res);
+  if (!authCtx) return;
+  const orgId = authCtx.orgId;
 
   try {
     if (req.method === 'GET') {
@@ -37,6 +38,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: `type must be one of: ${[...VALID_TYPES].join(', ')}` });
       }
       const objective = upsertObjective(body, { orgId });
+      if (!objective) return res.status(404).json({ error: 'Not found' });
       logger.info('configuration.objectives.upsert', { orgId, productId: body.product_id, type: body.type, id: objective.id });
       return res.status(200).json({ ok: true, objective });
     }
@@ -44,7 +46,7 @@ export default async function handler(req, res) {
     if (req.method === 'DELETE') {
       const id = req.query?.id || req.body?.id;
       if (!id) return res.status(400).json({ error: 'id required' });
-      const existing = getObjective(id);
+      const existing = getObjective(id, { orgId });
       if (!existing) return res.status(404).json({ error: 'Not found' });
       const ok = deleteObjective(id, { orgId });
       logger.info('configuration.objectives.delete', { orgId, id, ok });

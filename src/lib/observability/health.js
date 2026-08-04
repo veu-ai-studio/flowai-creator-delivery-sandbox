@@ -320,16 +320,25 @@ function authProbe() {
 // ─── Aggregate ──────────────────────────────────────────────────────────
 
 function aggregateStatus(checks) {
-  // Aggregate is the worst single result, weighting:
-  //   FAIL on a core check (build/supabase/observability) → DEGRADED overall
-  //   FAIL on Orchestra → DEGRADED only if no Orchestra member is PASS
-  //   Else PASS
-  const buildFail = checks.build.status === STATUSES.FAIL;
-  const supabaseFail = checks.supabase.status === STATUSES.FAIL;
-  const observabilityFail = checks.observability.status === STATUSES.FAIL;
-  if (buildFail || supabaseFail || observabilityFail) return STATUSES.DEGRADED;
-  if (checks.orchestra.summary.live === 0) return STATUSES.DEGRADED;
-  if (checks.supabase.status === STATUSES.DEGRADED) return STATUSES.DEGRADED;
+  // Top-level readiness must not contradict the detailed checks. Any
+  // configured core integration that is degraded, failed, or not wired makes
+  // the service reachable-but-degraded rather than "all systems operational".
+  const coreChecks = [
+    checks.build,
+    checks.supabase,
+    checks.vercelKv,
+    checks.observability,
+    checks.githubApp,
+    checks.auth,
+  ];
+  if (coreChecks.some((check) => check?.status !== STATUSES.PASS)) {
+    return STATUSES.DEGRADED;
+  }
+  if (
+    checks.orchestra.summary.live === 0
+    || checks.orchestra.summary.degraded > 0
+    || checks.orchestra.summary.notWired > 0
+  ) return STATUSES.DEGRADED;
   return STATUSES.PASS;
 }
 
@@ -364,3 +373,4 @@ export async function runHealthChecks({ timeoutMs = DEFAULT_PROBE_TIMEOUT_MS } =
 
 // Re-exported for callers that want introspection without running probes.
 export { ORCHESTRA, STATUSES };
+export const __test = { aggregateStatus };

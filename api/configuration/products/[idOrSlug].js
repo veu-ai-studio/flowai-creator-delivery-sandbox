@@ -10,18 +10,18 @@ import { setCorsHeaders } from '../../_lib/claude.js';
 import {
   getProduct, updateProduct, deleteProduct, recordProductAudit, listRuns,
 } from '../../_lib/configRegistry.js';
-import { resolveOrgId } from '../../_lib/tenant.js';
+import { requireAuthHard } from '../../_lib/auth.js';
 import { logger } from '../../_lib/logger.js';
-
-const DEFAULT_ORG = 'veu-ai-studio';
 
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
 
+  const authCtx = await requireAuthHard(req, res);
+  if (!authCtx) return;
   const idOrSlug = req.query?.idOrSlug;
   if (!idOrSlug) return res.status(400).json({ error: 'Missing idOrSlug' });
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const orgId = authCtx.orgId;
 
   try {
     if (req.method === 'GET') {

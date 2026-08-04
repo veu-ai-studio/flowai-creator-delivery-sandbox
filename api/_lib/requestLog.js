@@ -20,7 +20,6 @@
 // chose to expose for telemetry-rich endpoints.
 
 import { logger } from './logger.js';
-import { resolveOrgId, resolveProductId } from './tenant.js';
 
 let _requestSeq = 0;
 function newRequestId() {
@@ -90,8 +89,6 @@ export function withRequestLog(handler, { endpoint } = {}) {
   return async function wrapped(req, res) {
     const t0 = Date.now();
     const requestId = newRequestId();
-    const orgId = resolveOrgId(req);
-    const productId = resolveProductId(req);
     const path = endpoint || req.url || 'unknown';
 
     // Set a request-id header so downstream logs / errors / clients can
@@ -104,8 +101,8 @@ export function withRequestLog(handler, { endpoint } = {}) {
       requestId,
       method: req.method,
       path,
-      orgId,
-      productId,
+      orgId: null,
+      productId: null,
       ip: clientIp(req),
       userAgent: req.headers?.['user-agent'] || null,
       endpoint: path,
@@ -126,6 +123,11 @@ export function withRequestLog(handler, { endpoint } = {}) {
     const telemetry = pickTelemetry(res._capturedBody);
     const durationMs = Date.now() - t0;
     const level = error ? 'error' : status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info';
+    const verifiedContext = req.flowaiAuthContext;
+    const orgId = verifiedContext?.authenticated ? verifiedContext.orgId || null : null;
+    const productId = verifiedContext?.authenticated ? verifiedContext.productId || null : null;
+    const userId = verifiedContext?.authenticated ? verifiedContext.userId || null : null;
+    const authMode = verifiedContext?.authMode || 'anonymous';
 
     logger[level]('request.completed', {
       requestId,
@@ -135,6 +137,8 @@ export function withRequestLog(handler, { endpoint } = {}) {
       durationMs,
       orgId,
       productId,
+      userId,
+      authMode,
       ip: clientIp(req),
       userAgent: req.headers?.['user-agent'] || null,
       endpoint: path,

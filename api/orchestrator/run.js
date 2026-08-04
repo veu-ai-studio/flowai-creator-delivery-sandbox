@@ -24,14 +24,11 @@
 
 import { setCorsHeaders } from '../_lib/claude.js';
 import { agents, isConfigurationMode } from '../_lib/orchestrator.js';
-import { resolveOrgId } from '../_lib/tenant.js';
 import { createRun, getRun, getSnapshot, updateRun } from '../_lib/configRegistry.js';
 import { isInngestEnabled, sendEvent } from '../_lib/inngest.js';
 import { logger } from '../_lib/logger.js';
 import { withRequestLog } from '../_lib/requestLog.js';
 import { requireAuthHard } from '../_lib/auth.js';
-
-const DEFAULT_ORG = 'veu-ai-studio';
 
 // Eta hint per agent (in seconds). Crude heuristic; refined via observation.
 function estimateEta(agent, payload) {
@@ -51,7 +48,9 @@ async function orchestratorRunHandler(req, res) {
   // S-3 fix (W4 adversarial bd2f923): auth gate BEFORE any body / query
   // handling so anon callers cannot poll for run status either. Covers
   // both GET (polling/pull-resume) and POST (dispatch) paths.
-  if (!(await requireAuthHard(req, res))) return;
+  const authCtx = await requireAuthHard(req, res);
+  if (!authCtx) return;
+  const orgId = authCtx.orgId;
 
   // ── GET path: status polling + pull-resume ─────────────────────────
   // On Vercel Node serverless, the function is killed once res.end() is
@@ -68,7 +67,6 @@ async function orchestratorRunHandler(req, res) {
     if (!runId) return res.status(400).json({ error: 'GET requires ?run_id=<id>' });
     let run = getRun(runId);
     if (!run) return res.status(404).json({ error: 'Not found', run_id: runId });
-    const orgId = resolveOrgId(req) || 'veu-ai-studio';
     if (run.org_id && run.org_id !== orgId) return res.status(404).json({ error: 'Not found', run_id: runId });
 
     // Pull-resume: queued → running → completed in this request.
@@ -117,8 +115,6 @@ async function orchestratorRunHandler(req, res) {
   if (!agents.get(agent)) {
     return res.status(400).json({ error: `Unknown agent "${agent}".` });
   }
-
-  const orgId = resolveOrgId(req) || payload.org_id || DEFAULT_ORG;
 
   // ─── Path A: configuration mode (long-running) ──────────────────────
   if (isConfigurationMode(agent)) {
@@ -192,7 +188,7 @@ async function orchestratorRunHandler(req, res) {
   // ─── Path B: short-lived agent (claude/voyage/clerk/etc) — sync OK ──
   // Most non-configuration agents finish in well under serverless limits.
   // We still allow a sync invocation here.
-  const result = await agents.run(agent, { ...payload, ctx: { orgId, productId, ...(payload.ctx || {}) } });
+  const result = await agents.run(agent, { ...payload, ctx: { ...(payload.ctx || {}), orgId, productId } });
   return res.status(result.ok ? 200 : 502).json({ ok: !!result.ok, agent, ...result });
 }
 

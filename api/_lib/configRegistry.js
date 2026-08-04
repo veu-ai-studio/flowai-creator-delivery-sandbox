@@ -149,8 +149,11 @@ export function listObjectives({ orgId, productId } = {}) {
   return arr;
 }
 
-export function getObjective(id) {
-  return objectives.get(id) || null;
+export function getObjective(id, { orgId } = {}) {
+  const objective = objectives.get(id) || null;
+  if (!objective) return null;
+  if (orgId && objective.org_id !== orgId) return null;
+  return objective;
 }
 
 export function upsertObjective(input, { orgId } = {}) {
@@ -159,7 +162,9 @@ export function upsertObjective(input, { orgId } = {}) {
   if (!input?.type) throw new Error('type required (goal|constraint|preference)');
   if (input?.id && objectives.has(input.id)) {
     const existing = objectives.get(input.id);
-    Object.assign(existing, input, { org_id: orgId || existing.org_id, updated_at: Date.now() });
+    if (orgId && existing.org_id !== orgId) return null;
+    const existingOrgId = existing.org_id;
+    Object.assign(existing, input, { org_id: existingOrgId, updated_at: Date.now() });
     return existing;
   }
   const obj = {

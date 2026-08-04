@@ -12,12 +12,9 @@ import { setCorsHeaders } from '../_lib/claude.js';
 import {
   listProducts, createProduct, productsStats,
 } from '../_lib/configRegistry.js';
-import { resolveOrgId } from '../_lib/tenant.js';
 import { requireAuthHard } from '../_lib/auth.js';
 import { logger } from '../_lib/logger.js';
 import { withRequestLog } from '../_lib/requestLog.js';
-
-const DEFAULT_ORG = 'veu-ai-studio';
 
 async function productsHandler(req, res) {
   setCorsHeaders(req, res);
@@ -31,7 +28,7 @@ async function productsHandler(req, res) {
   const authCtx = await requireAuthHard(req, res);
   if (!authCtx) return; // 401 already written
 
-  const orgId = resolveOrgId(req) || authCtx.orgId || DEFAULT_ORG;
+  const orgId = authCtx.orgId;
 
   try {
     if (req.method === 'GET') {

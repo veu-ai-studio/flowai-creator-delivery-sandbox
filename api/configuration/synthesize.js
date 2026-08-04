@@ -20,6 +20,7 @@
 
 import { setCorsHeaders } from '../_lib/claude.js';
 import { resolveOrgId } from '../_lib/tenant.js';
+import { requireAuthHard } from '../_lib/auth.js';
 import { crawl, summarisePageForPrompt } from '../_lib/crawler.js';
 import { embedBatch, isEmbeddingsConfigured } from '../_lib/embeddings.js';
 import { listObjectives } from '../_lib/configRegistry.js';
@@ -279,7 +280,9 @@ async function synthesizeHandler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
 
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const authCtx = await requireAuthHard(req, res);
+  if (!authCtx) return;
+  const orgId = authCtx.orgId;
   const result = await execute({ ...(req.body || {}), org_id: orgId });
   if (!result.ok && /required|each input/.test(result.error || '')) return res.status(400).json(result);
   if (!result.ok) return res.status(500).json(result);

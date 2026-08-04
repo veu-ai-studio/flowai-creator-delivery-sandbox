@@ -11,6 +11,7 @@
 
 import { setCorsHeaders } from '../_lib/claude.js';
 import { resolveOrgId } from '../_lib/tenant.js';
+import { requireAuthHard } from '../_lib/auth.js';
 import { runStart, runClaude, runComplete, runFail, setProgress, parseFencedJson, stripFencedJson, extractQualityScore } from '../_lib/configRunner.js';
 import { listObjectives, getProduct } from '../_lib/configRegistry.js';
 import { withRequestLog } from '../_lib/requestLog.js';
@@ -172,7 +173,9 @@ async function describeHandler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
 
-  const orgId = resolveOrgId(req) || DEFAULT_ORG;
+  const authCtx = await requireAuthHard(req, res);
+  if (!authCtx) return;
+  const orgId = authCtx.orgId;
   const result = await execute({ ...(req.body || {}), org_id: orgId });
   if (!result.ok && result.error === 'description is required (string)') return res.status(400).json(result);
   if (!result.ok) return res.status(500).json(result);
