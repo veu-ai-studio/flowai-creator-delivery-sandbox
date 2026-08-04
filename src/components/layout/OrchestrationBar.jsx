@@ -147,8 +147,8 @@ export default function OrchestrationBar() {
 
           {!showSettings && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />
-              <span className="text-emerald-400 font-semibold">FlowAI Ready</span>
+              <span className="h-2 w-2 rounded-full bg-amber-400 shrink-0" />
+              <span className="text-amber-400 font-semibold">See Health Status</span>
               <span className="text-muted-foreground/40">·</span>
               <span>Mode: <span className="text-foreground font-medium">{AGENTIC_MODE_LABELS[agenticMode]}</span></span>
               <span className="text-muted-foreground/40">·</span>

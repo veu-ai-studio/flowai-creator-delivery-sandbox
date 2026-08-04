@@ -1022,8 +1022,8 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="flex items-center gap-3 text-[11px]">
-            <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> FlowAI Ready
+            <span className="flex items-center gap-1 text-amber-400 font-semibold">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> See Health Status
             </span>
             <span className="text-muted-foreground">·</span>
             <span className="text-muted-foreground">Layer: <span className="text-foreground font-semibold capitalize">{structuralLayer}</span></span>
