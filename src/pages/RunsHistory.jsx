@@ -147,6 +147,13 @@ function RunRow({ session, onClick, isExpanded, onStop, stopping }) {
                   <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
                     <p className="font-bold">{session.error.code || 'RUN_FAILED'}</p>
                     <p className="mt-1 text-red-200/80">{session.error.message || session.progress_label || 'Run execution failed.'}</p>
+                    {session.error.failedStage && <p className="mt-2"><span className="font-semibold">Failed stage:</span> {session.error.failedStage}</p>}
+                    {session.error.missingPrerequisite && <p><span className="font-semibold">Missing prerequisite:</span> {session.error.missingPrerequisite}</p>}
+                    {session.error.whyBlocked && <p><span className="font-semibold">Why blocked:</span> {session.error.whyBlocked}</p>}
+                    {session.error.resolutionOwner && <p><span className="font-semibold">Resolution owner:</span> {session.error.resolutionOwner}</p>}
+                    {session.error.resolutionAction && <p><span className="font-semibold">Resolution action:</span> {session.error.resolutionAction}</p>}
+                    {session.error.retryInstruction && <p><span className="font-semibold">Retry:</span> {session.error.retryInstruction}</p>}
+                    {session.error.artifactConfirmation && <p className="mt-1 font-semibold">{session.error.artifactConfirmation}</p>}
                   </div>
                 )}
                 </>

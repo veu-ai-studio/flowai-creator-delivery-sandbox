@@ -115,12 +115,26 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
   });
 
   it('never treats eight stage labels without a deployed artifact as completed', () => {
-    expect(__test.terminalLifecycleError({ ok: true, previewUrl: null }, 8)).toEqual({
+    expect(__test.terminalLifecycleError({ ok: true, previewUrl: null }, 8)).toMatchObject({
       code: 'NO_DEPLOYED_ARTIFACT',
       message: 'Run ended without a durable deployed preview artifact.',
     });
     expect(__test.terminalLifecycleError({ ok: true, previewUrl: 'preview.example.com' }, 8)).toMatchObject({
       code: 'NO_DEPLOYED_ARTIFACT',
+    });
+  });
+
+  it('returns an actionable blocker contract without fabricating delivery', () => {
+    expect(__test.terminalLifecycleError({ ok: true, previewUrl: null }, 8)).toMatchObject({
+      code: 'NO_DEPLOYED_ARTIFACT',
+      failedStage: 'deploy',
+      missingPrerequisite: expect.any(String),
+      whyBlocked: expect.any(String),
+      resolutionOwner: expect.any(String),
+      resolutionAction: expect.any(String),
+      retrySafe: true,
+      retryInstruction: expect.any(String),
+      artifactConfirmation: expect.stringMatching(/No branch, preview, deployment, or public artifact/),
     });
   });
 
@@ -149,6 +163,33 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
       commitSha: 'abc123',
       previewUrl: 'https://preview.example.com',
       upgradedUrl: 'https://preview.example.com',
+    });
+  });
+
+  it('does not present a failed lifecycle score as release readiness', () => {
+    const blocker = { code: 'NO_DEPLOYED_ARTIFACT' };
+    expect(__test.terminalEvidencePatch({
+      finalScore: 100,
+      gtmReady: false,
+      previewUrl: null,
+    }, blocker)).toMatchObject({
+      score: null,
+      assessmentScore: 100,
+      scoreMeaning: 'QUALITY_ASSESSMENT_ONLY_NOT_CLEARANCE',
+      verdict: 'NOT CLEARED',
+      previewUrl: null,
+    });
+  });
+
+  it.each([
+    ['INCOMPLETE_LIFECYCLE_EVIDENCE', { ok: true, gtmReady: true, previewUrl: 'https://preview.example.com' }, 7],
+    ['NO_DEPLOYED_ARTIFACT', { ok: true, gtmReady: true, previewUrl: null }, 8],
+    ['GTM_SCORE_NOT_CLEARED', { ok: true, gtmReady: false, previewUrl: 'https://preview.example.com', scoreStatus: 'NOT_CAPTURED' }, 8],
+  ])('forces NOT CLEARED when hard blocker %s exists', (_code, result, stepCount) => {
+    const blocker = __test.terminalLifecycleError(result, stepCount);
+    expect(__test.terminalEvidencePatch({ ...result, finalScore: 100 }, blocker)).toMatchObject({
+      score: null,
+      verdict: 'NOT CLEARED',
     });
   });
 

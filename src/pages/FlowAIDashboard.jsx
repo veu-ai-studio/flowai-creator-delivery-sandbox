@@ -44,6 +44,7 @@ import {
   listFlowAIRuns,
   replaceFlowAIRunId,
   runVerdictFromResult,
+  selectRecoverableActiveRun,
   updateFlowAIRun,
   upsertFlowAIRun,
 } from '@/lib/flowaiRunStore';
@@ -431,6 +432,58 @@ export default function FlowAIDashboard() {
   const [controlApplied, setControlApplied] = useState(null);
   const abortRef = useRef(null);
 
+  // Durable run state is authoritative after navigation/remount. Rehydrate
+  // controls from the authenticated operational ledger instead of relying on
+  // the lifetime of this component's SSE connection.
+  useEffect(() => {
+    let cancelled = false;
+    const syncActiveRun = async () => {
+      try {
+        const response = await fetch('/api/runs', { credentials: 'same-origin' });
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (cancelled) return;
+        const runs = Array.isArray(payload?.runs) ? payload.runs : [];
+        const active = selectRecoverableActiveRun(runs, url.trim() || null);
+        if (active) {
+          const activeId = active.id || active.runId;
+          setRunId(activeId);
+          setIsRunning(true);
+          setIsPaused(active.status === 'paused');
+          setStartedAt(active.startedAt || active.createdAt || null);
+          upsertFlowAIRun({
+            id: activeId,
+            runId: activeId,
+            product: active.product || active.url || 'Active FlowAI run',
+            productUrl: active.url || null,
+            startTime: active.startedAt || active.createdAt,
+            status: active.status,
+            progressLabel: active.progressLabel,
+            stepResults: active.stepResults,
+            stepCount: active.stepCount,
+          });
+          return;
+        }
+        if (runId) {
+          const terminal = runs.find((run) => (run.id || run.runId) === runId);
+          if (terminal && !['queued', 'running', 'paused', 'cancelling', 'control_failed'].includes(terminal.status)) {
+            setIsRunning(false);
+            setIsPaused(false);
+          }
+        }
+      } catch {
+        // The live SSE path remains available; a transient history read must
+        // not overwrite or fabricate client state.
+      }
+    };
+    syncActiveRun();
+    const refresh = window.setInterval(syncActiveRun, 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(refresh);
+    };
+  }, [runId, url]);
+
   // Latest score envelope derived from the most recent scoring log.
   // DISPATCH (production runtime fixes) — the orchestrator emits
   // `gtmScore` (canonical §7.6) + `layers` (Five-Layer telemetry) on
@@ -768,7 +821,9 @@ export default function FlowAIDashboard() {
             updateFlowAIRun(trackedRunId, {
               status: payload.result?.ok === false ? 'failed' : 'completed',
               endTime: new Date().toISOString(),
-              score: payload.result?.ceo95Criteria?.verifiedScore ?? payload.result?.effectiveTrustScore ?? payload.result?.finalScore ?? null,
+              score: payload.result?.gtmReady === true
+                ? (payload.result?.ceo95Criteria?.verifiedScore ?? payload.result?.effectiveTrustScore ?? payload.result?.finalScore ?? null)
+                : null,
               verdict: runVerdictFromResult(payload.result),
               branchCreated: payload.result?.branchName
                 ?? payload.result?.writeResult?.branchName
@@ -862,13 +917,13 @@ export default function FlowAIDashboard() {
   // server stop, aborting the stream client-side would leave the
   // orchestrator running to completion in the background.
   async function stop() {
-    if (runId) await sendControl('stop');
+    if (!runId) return;
+    const reservation = await sendControl('stop');
+    if (!reservation?.ok) return;
     if (runId) {
       updateFlowAIRun(runId, {
-        status: 'stopped',
-        endTime: new Date().toISOString(),
-        verdict: 'USER_STOPPED',
-        progressLabel: 'Stopped by operator',
+        status: 'cancelling',
+        progressLabel: 'Stop accepted; awaiting durable cancellation',
       });
     }
     if (abortRef.current) abortRef.current.abort();
@@ -1295,7 +1350,7 @@ export default function FlowAIDashboard() {
                   </span>
                 ) : (
                   <span className="bg-amber-500 text-slate-950 px-4 py-2 rounded-md font-bold flex items-center gap-2">
-                    <Icon.Warning className="w-5 h-5" />BEST EFFORT
+                    <Icon.Warning className="w-5 h-5" />NOT CLEARED
                   </span>
                 )}
                 <span className="text-sm text-slate-300">
@@ -1310,14 +1365,14 @@ export default function FlowAIDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
               <div className="rounded-md bg-slate-900/60 px-3 py-2">
-                <p className="text-[10px] text-slate-500 uppercase">Raw score</p>
+                <p className="text-[10px] text-slate-500 uppercase">Quality assessment</p>
                 <p className="text-2xl font-bold">{finalRawScore}<span className="text-xs text-slate-500">/100</span></p>
-                <p className="text-[10px] text-slate-500">raw evaluator output - see Trust Score</p>
+                <p className="text-[10px] text-slate-500">assessment only — not clearance</p>
               </div>
               <div className="rounded-md bg-slate-900/60 px-3 py-2">
-                <p className="text-[10px] text-slate-500 uppercase">Trust Score</p>
-                <p className="text-2xl font-bold text-emerald-400">{finalTrustScore.toFixed(1)}<span className="text-xs text-slate-500">/100</span></p>
-                <p className="text-[10px] text-slate-500">raw {finalRawScore.toFixed(1)}</p>
+                <p className="text-[10px] text-slate-500 uppercase">Trust assessment</p>
+                <p className={`text-2xl font-bold ${gtmReady ? 'text-emerald-400' : 'text-amber-300'}`}>{finalTrustScore.toFixed(1)}<span className="text-xs text-slate-500">/100</span></p>
+                <p className="text-[10px] text-slate-500">{gtmReady ? 'clearance evidence satisfied' : 'not release clearance'}</p>
               </div>
               <div className="rounded-md bg-slate-900/60 px-3 py-2">
                 <p className="text-[10px] text-slate-500 uppercase">Total improvement</p>

@@ -590,7 +590,7 @@ async function runSseOrchestration(req, res, body, auth) {
   }
   const terminalStepCount = Object.keys(evidenceLedger?.stepResults || {}).length;
   const terminalError = terminalLifecycleError(result, terminalStepCount);
-  const terminalEvidence = terminalEvidencePatch(result);
+  const terminalEvidence = terminalEvidencePatch(result, terminalError);
   const terminalLedger = await persistOperationalPatchWithRetry({
     runId,
     auth,
@@ -710,12 +710,28 @@ function terminalLifecycleError(result = {}, terminalStepCount = 0) {
     return {
       code: 'INCOMPLETE_LIFECYCLE_EVIDENCE',
       message: `Run ended with ${terminalStepCount}/8 durable lifecycle stages.`,
+      failedStage: 'monitor',
+      missingPrerequisite: 'Durable evidence for all eight lifecycle stages',
+      whyBlocked: 'Clearance cannot be evaluated from incomplete lifecycle evidence.',
+      resolutionOwner: 'FlowAI operator',
+      resolutionAction: 'Inspect the last recorded stage, resolve its blocker, and restart from a supported checkpoint.',
+      retrySafe: false,
+      retryInstruction: 'Review the run evidence before deciding whether a new run is safe.',
+      artifactConfirmation: 'No branch, preview, deployment, or completed artifact is claimed.',
     };
   }
   if (!isAbsoluteHttpUrl(result?.previewUrl)) {
     return {
       code: 'NO_DEPLOYED_ARTIFACT',
       message: 'Run ended without a durable deployed preview artifact.',
+      failedStage: 'deploy',
+      missingPrerequisite: 'An absolute browser-accessible HTTP(S) preview URL backed by a durable deployment record',
+      whyBlocked: 'A quality score alone cannot prove that an external user can access the generated product.',
+      resolutionOwner: 'Authorized deployment operator',
+      resolutionAction: 'Configure the isolated delivery repository and preview deployment credentials, then run the non-production golden path again.',
+      retrySafe: true,
+      retryInstruction: 'Restart as a new non-production run after the delivery prerequisite is verified.',
+      artifactConfirmation: 'No branch, preview, deployment, or public artifact is claimed for this run.',
     };
   }
   if (result?.scoreStatus && (
@@ -726,21 +742,31 @@ function terminalLifecycleError(result = {}, terminalStepCount = 0) {
     return {
       code: 'GTM_SCORE_NOT_CLEARED',
       message: 'Run ended without a captured score meeting the configured GTM target.',
+      failedStage: 'gtm',
+      missingPrerequisite: 'A finite captured score and an affirmative hard-gate clearance decision',
+      whyBlocked: 'The available quality evidence does not satisfy the configured release threshold.',
+      resolutionOwner: 'FlowAI product operator',
+      resolutionAction: 'Resolve the recorded quality findings and run a new non-production assessment.',
+      retrySafe: true,
+      retryInstruction: 'Restart only after the failed quality criteria have changed.',
+      artifactConfirmation: 'No GTM clearance or production promotion is claimed.',
     };
   }
   return null;
 }
 
-function terminalEvidencePatch(result = {}) {
+function terminalEvidencePatch(result = {}, terminalError = null) {
   const write = result?.writeResult && typeof result.writeResult === 'object'
     ? result.writeResult
     : {};
   const previewUrl = result?.previewUrl || result?.upgradedUrl || write.previewUrl || null;
   const branchCreated = result?.branchName || write.branchName || null;
   return {
-    score: Number.isFinite(result?.finalScore) ? result.finalScore : null,
+    score: terminalError ? null : (Number.isFinite(result?.finalScore) ? result.finalScore : null),
+    assessmentScore: terminalError && Number.isFinite(result?.finalScore) ? result.finalScore : null,
+    scoreMeaning: terminalError && Number.isFinite(result?.finalScore) ? 'QUALITY_ASSESSMENT_ONLY_NOT_CLEARANCE' : null,
     scoreStatus: result?.scoreStatus || null,
-    verdict: result?.gtmReady === true ? 'CLEARED' : 'NOT CLEARED',
+    verdict: !terminalError && result?.gtmReady === true ? 'CLEARED' : 'NOT CLEARED',
     branchCreated,
     branchUrl: result?.branchUrl || write.branchUrl || null,
     commitSha: result?.commitSha || write.commitSha || null,

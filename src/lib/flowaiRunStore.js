@@ -200,6 +200,14 @@ export function listActiveFlowAIRuns() {
   return listFlowAIRuns().filter((run) => run.status === 'running' || run.status === 'paused');
 }
 
+export function selectRecoverableActiveRun(runs, preferredUrl = null) {
+  const active = (Array.isArray(runs) ? runs : [])
+    .filter((run) => ['queued', 'running', 'paused', 'cancelling', 'control_failed'].includes(run?.status))
+    .sort((a, b) => Date.parse(b?.startedAt || b?.createdAt || 0) - Date.parse(a?.startedAt || a?.createdAt || 0));
+  if (!preferredUrl) return active[0] || null;
+  return active.find((run) => (run?.url || run?.productUrl) === preferredUrl) || active[0] || null;
+}
+
 // The browser ledger is an availability cache, not an authorization boundary.
 // Remove it when the authenticated principal changes so a subsequent user on
 // the same browser cannot see the previous tenant's run metadata.

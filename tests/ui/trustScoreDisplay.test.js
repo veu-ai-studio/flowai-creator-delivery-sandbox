@@ -44,15 +44,17 @@ describe('UI trust score display (DISPATCH U1 ITEM 2)', () => {
     expect(componentSrc).toMatch(/coverage\s*\{?scoredDims\}\s*\/\s*\{?totalDims/);
   });
 
-  it('/flowai dashboard reads effectiveTrustScore as the completion-card headline', () => {
+  it('/flowai dashboard retains effectiveTrustScore as a labeled assessment', () => {
     expect(dashboardSrc).toMatch(/finalResult\?\.effectiveTrustScore/);
     expect(dashboardSrc).toMatch(/finalTrustScore\.toFixed/);
-    expect(dashboardSrc).toMatch(/raw\s*\{finalRawScore\.toFixed/);
+    expect(dashboardSrc).toMatch(/Trust assessment/);
+    expect(dashboardSrc).toMatch(/not release clearance/);
   });
 
-  it('/flowai dashboard labels the evaluator output as raw score', () => {
-    expect(dashboardSrc).toMatch(/Raw score/);
-    expect(dashboardSrc).toMatch(/raw evaluator output - see Trust Score/);
+  it('/flowai dashboard labels numerical output as assessment rather than clearance', () => {
+    expect(dashboardSrc).toMatch(/Quality assessment/);
+    expect(dashboardSrc).toMatch(/assessment only — not clearance/);
+    expect(dashboardSrc).toMatch(/NOT CLEARED/);
     expect(dashboardSrc).not.toMatch(/Original score/);
   });
 
