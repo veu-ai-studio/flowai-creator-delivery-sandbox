@@ -22,6 +22,33 @@ async function mockAuth(page) {
   await page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'degraded' } }));
 }
 
+test('legacy Auto Runner route cannot replay stored work on direct navigation or remount', async ({ page }) => {
+  await mockAuth(page);
+  let executeCalls = 0;
+  await page.route('**/api/runs', (route) => route.fulfill({ status: 200, json: { runs: [] } }));
+  await page.route('**/api/agent/3/execute', (route) => {
+    executeCalls += 1;
+    return route.fulfill({ status: 500, json: { ok: false, error: 'unexpected_dispatch' } });
+  });
+  await page.addInitScript(() => {
+    sessionStorage.setItem('flowai_session_config', JSON.stringify({
+      launchNonce: 'stale-legacy-nonce',
+      inputs: [{ id: 1, type: 'url', value: 'https://example.com', name: 'Input A' }],
+      objective: 'Stale legacy configuration must not execute',
+    }));
+  });
+
+  await page.goto('/auto-runner', { waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveURL(/\/flowai\?mode=auto$/);
+  await expect(page.getByRole('button', { name: 'START NEW RUN', exact: true })).toBeDisabled();
+  expect(executeCalls).toBe(0);
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveURL(/\/flowai\?mode=auto$/);
+  await expect(page.getByRole('button', { name: 'START NEW RUN', exact: true })).toBeDisabled();
+  expect(executeCalls).toBe(0);
+});
+
 test('Run A: active controls rehydrate and Stop remains durable after remount and refresh', async ({ page }) => {
   await mockAuth(page);
   let status = 'running';

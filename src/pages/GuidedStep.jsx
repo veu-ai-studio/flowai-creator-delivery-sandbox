@@ -547,7 +547,7 @@ Please revise and expand your findings incorporating the user's request. Maintai
                   onClick={() => { setSession(null); setSessionConfig(null); setStepResult(null); setAllStepResults({}); setPageContexts(null); setShowInputPanel(true); setPhase('propose'); }}>
                   ↩ New Session
                 </Button>
-                <Button size="sm" variant="outline" className="gap-1 h-8 text-xs" onClick={() => navigate('/auto-runner')}>
+                <Button size="sm" variant="outline" className="gap-1 h-8 text-xs" onClick={() => navigate('/flowai?mode=auto')}>
                   <Zap className="h-3 w-3" /> Switch to Auto
                 </Button>
                 <Button size="sm" variant="outline" className="gap-1 h-8 text-xs" onClick={() => navigate(`/manual/${stepMeta.key}`)}>

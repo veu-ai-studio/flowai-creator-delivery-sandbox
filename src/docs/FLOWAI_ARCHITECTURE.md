@@ -65,7 +65,7 @@ Routes fall into two categories:
 /portfolio           PortfolioDashboard
 /products            ProductRegistry
 /runs                RunsHistory
-/auto-runner         AutoRunner
+/auto-runner         Redirect → FlowAIDashboard (legacy executor quarantined)
 /guided/:step        GuidedStep
 /manual/:step        ManualStep
 /clearance           Clearance

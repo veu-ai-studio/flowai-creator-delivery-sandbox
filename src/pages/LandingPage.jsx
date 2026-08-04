@@ -774,8 +774,7 @@ export default function LandingPage() {
 
   // W6 INTEGRATION — Track C: inline construction-engine run panel.
   // Shown when the user clicks "Run FlowAI" from Card A + Auto mode.
-  // The legacy /auto-runner path is still available as the secondary
-  // "Advanced (legacy)" link.
+  // Operational execution is consolidated on the authenticated /flowai runner.
   const [runPanelUrl, setRunPanelUrl] = useState(null);
 
   // ── Test Fetch (Card A) ──
@@ -929,7 +928,7 @@ export default function LandingPage() {
     if (activeCard === 'A' && urlInput.trim()) {
       navigate(`/flowai?url=${encodeURIComponent(urlInput.trim())}&mode=${encodeURIComponent(mode)}`);
     }
-    else if (mode === 'auto') navigate('/auto-runner');
+    else if (mode === 'auto') navigate(`/flowai?mode=auto&flowHubPath=${encodeURIComponent(flowHubPath)}&autoStart=1&sessionConfig=1`);
     else if (mode === 'guided') navigate('/guided/research');
     else navigate('/manual/research');
   };
@@ -1382,17 +1381,16 @@ export default function LandingPage() {
                   Fresh Build is currently disabled. Victor must enable FLOWAI_ENABLE_FRESH_BUILD.
                 </div>
               )}
-              {/* Secondary legacy link: only shown when the construction-
-                  engine path is the active primary (URL+Auto). Otherwise
-                  this CTA already routes through /auto-runner. */}
+              {/* Construction-engine users can switch to the authenticated
+                  operational runner without entering the retired legacy path. */}
               {isConstructionEnginePath && (
                 <div className="text-[11px] text-muted-foreground text-right">
-                  Need the legacy multi-step pipeline?{' '}
+                  Need the operational runner?{' '}
                   <button
-                    onClick={() => navigate('/auto-runner')}
+                    onClick={() => navigate('/flowai?mode=auto')}
                     className="underline underline-offset-2 hover:text-foreground transition-colors"
                   >
-                    Advanced (legacy) →
+                    Open runner →
                   </button>
                 </div>
               )}
@@ -1406,7 +1404,7 @@ export default function LandingPage() {
           <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-5 sm:overflow-visible">
             {[
               { label: 'My Products',        path: '/my-products',    icon: Layers },
-              { label: 'Session History',    path: '/auto-runner',    icon: History },
+              { label: 'Session History',    path: '/runs',           icon: History },
               { label: 'Clearance Protocol', path: '/clearance',      icon: ShieldCheck },
               { label: 'Governance Dashboard', path: '/governance',   icon: BarChart3 },
               { label: 'Release Notes',      path: '/release-notes',  icon: BookOpen },

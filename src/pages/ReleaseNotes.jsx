@@ -41,7 +41,7 @@ const RELEASES = [
       'Clearance Protocol Prompt — after Accept and Lock in Auto Runner, a prompt to Start Clearance Protocol appears automatically',
       'ClearanceProtocolPrompt component stores session context for pre-population',
       'Legacy route redirects — /flows, /flow-designer, /run-flow, /run-history, /variables, /old-dashboard all redirect to /dashboard',
-      '/autonomous-engine redirects to /auto-runner — Auto Runner is now the single canonical auto-execution interface',
+      '/autonomous-engine and /auto-runner redirect to /flowai — the authenticated operational ledger is the single canonical auto-execution interface',
       'Self-Renewal Phase 6 — Re-run Self-Test to Verify Fixes button appears after Human Gate review completes',
       'Score improvement delta display — Functionality: 5 → 8 (+3) ✅ per dimension when Phase 1 re-runs',
       'Clearance Protocol added as fifth tool under Go To Market step in both Guided and Manual modes',

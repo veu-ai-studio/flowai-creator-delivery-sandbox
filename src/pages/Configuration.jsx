@@ -165,8 +165,9 @@ export default function Configuration() {
   const launch = (mode) => {
     const config = buildConfig();
     config.opsMode = mode;
+    config.launchNonce = crypto.randomUUID();
     saveSessionConfig(config);
-    if (mode === 'auto') navigate('/auto-runner');
+    if (mode === 'auto') navigate('/flowai?mode=auto&autoStart=1&sessionConfig=1');
     else if (mode === 'guided') navigate('/guided/research');
     else navigate('/manual/research');
   };

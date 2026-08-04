@@ -98,9 +98,12 @@ export default function MainDashboard() {
 
   // Navigate to session and store resume ID
   const resumeSession = (sessionId, type) => {
+    if (type === 'auto') {
+      navigate('/runs');
+      return;
+    }
     try { sessionStorage.setItem('flowai_resume_session_id', sessionId); } catch {}
-    if (type === 'auto') navigate('/auto-runner');
-    else if (type === 'guided') navigate('/guided/research');
+    if (type === 'guided') navigate('/guided/research');
     else navigate('/manual/research');
   };
 
@@ -173,7 +176,7 @@ export default function MainDashboard() {
                         <p className="text-[9px] text-muted-foreground/60">Last run: {formatDistanceToNow(new Date(p.last_run_at), { addSuffix: true })}</p>
                       )}
                       <div className="flex gap-1">
-                        <button onClick={() => navigate('/auto-runner')} className="flex-1 text-[9px] py-1 rounded border border-primary/30 text-primary hover:bg-primary/10 transition-all font-semibold">Auto</button>
+                        <button onClick={() => navigate('/flowai?mode=auto')} className="flex-1 text-[9px] py-1 rounded border border-primary/30 text-primary hover:bg-primary/10 transition-all font-semibold">Auto</button>
                         <button onClick={() => navigate('/guided/research')} className="flex-1 text-[9px] py-1 rounded border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-all font-semibold">Guided</button>
                         <button onClick={() => navigate('/manual/research')} className="flex-1 text-[9px] py-1 rounded border border-border text-muted-foreground hover:bg-secondary/30 transition-all font-semibold">Manual</button>
                       </div>
@@ -242,7 +245,7 @@ export default function MainDashboard() {
                   ))}
                   {hasMore && (
                     <button
-                      onClick={() => navigate('/auto-runner')}
+                      onClick={() => navigate('/flowai?mode=auto')}
                       className="w-full text-[10px] text-primary hover:text-primary/80 font-semibold py-1 text-center"
                     >
                       View All ({allSessions.length}) →
@@ -301,7 +304,7 @@ export default function MainDashboard() {
           <Panel title="Quick Actions">
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: 'Start Auto Operation', icon: Zap, color: 'bg-primary text-primary-foreground hover:bg-primary/90', route: '/auto-runner' },
+                { label: 'Start Auto Operation', icon: Zap, color: 'bg-primary text-primary-foreground hover:bg-primary/90', route: '/flowai?mode=auto' },
                 { label: 'Start Guided Operation', icon: Clock, color: 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20', route: '/guided/research' },
                 { label: 'Run Quality Audit', icon: Search, color: 'bg-secondary hover:bg-secondary/80 text-foreground border border-border', route: '/qa-audit' },
                 { label: 'Check Product Health', icon: MonitorCheck, color: 'bg-secondary hover:bg-secondary/80 text-foreground border border-border', route: '/production-monitor' },

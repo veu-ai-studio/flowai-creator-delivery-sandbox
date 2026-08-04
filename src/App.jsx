@@ -57,7 +57,6 @@ import MyStack from './pages/MyStack';
 import Clearance from './pages/Clearance';
 import CreatorStudio from './pages/CreatorStudio';
 import MyCreations from './pages/MyCreations';
-import AutoRunner from './pages/AutoRunner';
 import Renewal from './pages/Renewal';
 import GuidedStep from './pages/GuidedStep';
 import ManualStep from './pages/ManualStep';
@@ -230,7 +229,7 @@ const AuthenticatedApp = () => {
         <Route path="/configuration" element={<RequireAuth><Configuration /></RequireAuth>} />
         <Route path="/workspace" element={<RequireAuth><Workspace /></RequireAuth>} />
         <Route path="/my-products" element={<MyCreations />} />
-        <Route path="/auto-runner" element={<RequireAuth><AutoRunner /></RequireAuth>} />
+        <Route path="/auto-runner" element={<Navigate to="/flowai?mode=auto" replace />} />
         <Route path="/renewal" element={<RequireAuth><Renewal /></RequireAuth>} />
         <Route path="/guided/:step" element={<RequireAuth><GuidedStep /></RequireAuth>} />
         <Route path="/manual/:step" element={<RequireAuth><ManualStep /></RequireAuth>} />
@@ -264,7 +263,7 @@ const AuthenticatedApp = () => {
         <Route path="/run-history" element={<Navigate to="/dashboard" replace />} />
         <Route path="/variables" element={<Navigate to="/dashboard" replace />} />
         <Route path="/old-dashboard" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/autonomous-engine" element={<Navigate to="/auto-runner" replace />} />
+        <Route path="/autonomous-engine" element={<Navigate to="/flowai?mode=auto" replace />} />
         {/* Legacy aliases */}
         <Route path="/creator-studio" element={<Navigate to="/configuration" replace />} />
         <Route path="/my-creations" element={<MyCreations />} />

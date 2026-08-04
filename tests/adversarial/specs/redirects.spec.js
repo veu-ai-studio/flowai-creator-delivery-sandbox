@@ -10,7 +10,7 @@ const REDIRECTS = [
   { from: '/run-history',        to: '/dashboard',     id: 4 },
   { from: '/variables',          to: '/dashboard',     id: 5 },
   { from: '/old-dashboard',      to: '/dashboard',     id: 6 },
-  { from: '/autonomous-engine',  to: '/auto-runner',   id: 7 },
+  { from: '/autonomous-engine',  to: '/flowai?mode=auto', id: 7 },
   { from: '/creator-studio',     to: '/configuration', id: 8 },
 ];
 

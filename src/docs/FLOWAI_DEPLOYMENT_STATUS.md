@@ -32,7 +32,7 @@ All routes render correctly as of 2026-05-05:
 | `/portfolio` | PortfolioDashboard | ✅ |
 | `/products` | ProductRegistry | ✅ |
 | `/runs` | RunsHistory | ✅ |
-| `/auto-runner` | AutoRunner | ✅ |
+| `/auto-runner` | Redirect to authenticated `/flowai?mode=auto` | ✅ legacy executor quarantined |
 | `/guided/:step` | GuidedStep | ✅ |
 | `/manual/:step` | ManualStep | ✅ |
 | `/clearance` | Clearance | ✅ |

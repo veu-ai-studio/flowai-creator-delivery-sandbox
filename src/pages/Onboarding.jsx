@@ -77,7 +77,7 @@ export default function Onboarding() {
   const launchOperation = () => {
     const mode = selectedMode || getRecommendedMode();
     handleComplete();
-    if (mode === 'auto') navigate('/auto-runner');
+    if (mode === 'auto') navigate('/flowai?mode=auto');
     else if (mode === 'guided') navigate('/guided/research');
     else navigate('/manual/research');
   };
