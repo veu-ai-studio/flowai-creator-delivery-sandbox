@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { __test, createOperationalRun, getOperationalRun, getPendingStopCommand, listOperationalRuns, resetOperationalRunsForTests, updateOperationalRun } from '../api/_lib/operationalRuns.js';
+import { __test, buildActionableStageFailurePatch, createOperationalRun, getOperationalRun, getPendingStopCommand, listOperationalRuns, resetOperationalRunsForTests, updateOperationalRun } from '../api/_lib/operationalRuns.js';
 
 const owner = { orgId: 'org_a', userId: 'user_a' };
 beforeEach(() => { process.env.NODE_ENV = 'test'; delete process.env.KV_REST_API_URL; delete process.env.KV_REST_API_TOKEN; resetOperationalRunsForTests(); });
@@ -99,6 +99,39 @@ describe('operational run ledger', () => {
     expect(terminating.status).toBe('cancelling');
     expect(terminating.stopCommand.dispatchState).toBe('worker_terminating');
     expect(await getPendingStopCommand(run.id, owner)).toBeNull();
+  });
+
+  it('durably terminates an unrecoverable Step 2 exception without fabricating later stages', async () => {
+    const { run } = await createOperationalRun({ ...owner, idempotency: 'step-two-failure1' });
+    await updateOperationalRun(run.id, owner, {
+      status: 'running',
+      stepResults: { research: { summary: 'Rate Cap + Runaway Check', status: 'failed', tool: 'rateCap.js' } },
+      stepCount: 2,
+    });
+
+    const failed = await updateOperationalRun(run.id, owner, buildActionableStageFailurePatch({
+      stage: 'STEP_2',
+      tool: 'rateCap.js',
+      code: 'RATE_LIMIT_STORE_UNAVAILABLE',
+      error: 'Rate-cap ledger query failed.',
+      executionMayStillBeActive: false,
+    }));
+
+    expect(failed.status).toBe('control_failed');
+    expect(failed.stepResults).toEqual({
+      research: { summary: 'Rate Cap + Runaway Check', status: 'failed', tool: 'rateCap.js' },
+    });
+    expect(failed.error).toMatchObject({
+      code: 'RATE_LIMIT_STORE_UNAVAILABLE',
+      stage: 'STEP_2',
+      tool: 'rateCap.js',
+      detail: 'Rate-cap ledger query failed.',
+      executionMayStillBeActive: false,
+      retrySafe: true,
+      clearanceAllowed: false,
+    });
+    expect(failed.error.requiredOperatorAction).toContain('Correct rateCap.js');
+    expect(Object.keys(failed.stepResults)).toEqual(['research']);
   });
 
   it('defines Redis CAS for the outbox reservation in the same run-row write', () => {

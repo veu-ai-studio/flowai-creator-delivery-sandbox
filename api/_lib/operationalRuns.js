@@ -9,7 +9,7 @@ let kvClient;
 const TERMINAL = new Set(['cancelled', 'completed', 'failed']);
 const TRANSITIONS = {
   queued: new Set(['running', 'cancelling', 'failed']),
-  running: new Set(['paused', 'cancelling', 'completed', 'failed']),
+  running: new Set(['paused', 'cancelling', 'control_failed', 'completed', 'failed']),
   paused: new Set(['running', 'cancelling', 'failed']),
   cancelling: new Set(['cancelled', 'control_failed', 'failed']),
   control_failed: new Set(['running', 'paused', 'cancelling', 'completed', 'failed']),
@@ -67,6 +67,42 @@ export function publicRunError(code = 'ORCHESTRATION_FAILED') {
   };
   const safe = /^[A-Z0-9_]{2,64}$/.test(code) ? code : 'ORCHESTRATION_FAILED';
   return { code: safe, message: messages[safe] || 'Run execution failed.' };
+}
+
+export function buildActionableStageFailurePatch({
+  stage,
+  tool,
+  code = 'ORCHESTRATION_FAILED',
+  error,
+  executionMayStillBeActive = false,
+} = {}) {
+  const safeStage = typeof stage === 'string' && stage.trim() ? stage.trim().slice(0, 80) : 'UNKNOWN_STAGE';
+  const safeTool = typeof tool === 'string' && tool.trim() ? tool.trim().slice(0, 120) : 'unknown';
+  const safeCode = /^[A-Z0-9_]{2,64}$/.test(code) ? code : 'ORCHESTRATION_FAILED';
+  const safeDetail = typeof error === 'string' && error.trim()
+    ? error.trim().slice(0, 500)
+    : 'The stage ended without a usable error detail.';
+  const mayStillBeActive = executionMayStillBeActive === true;
+  return {
+    status: 'control_failed',
+    verdict: 'CONTROL_FAILED',
+    progressLabel: `${safeStage} failed in ${safeTool}`,
+    error: {
+      ...publicRunError(safeCode),
+      stage: safeStage,
+      tool: safeTool,
+      detail: safeDetail,
+      executionMayStillBeActive: mayStillBeActive,
+      requiredOperatorAction: mayStillBeActive
+        ? 'Verify worker activity before retrying this stage.'
+        : `Correct ${safeTool} for ${safeStage}, then start one authorized retry.`,
+      retrySafe: !mayStillBeActive,
+      retryInstruction: mayStillBeActive
+        ? 'Retry only after confirming the prior worker is no longer active.'
+        : 'Start a new authorized run; do not relabel or resume this failed execution.',
+      clearanceAllowed: false,
+    },
+  };
 }
 
 export async function createOperationalRun({ orgId, userId, idempotency, input = {} }) {
