@@ -1,0 +1,27 @@
+{
+  "verdict": "READY_FOR_INDEPENDENT_PRODUCT_SSOT_ACL_REVIEW",
+  "targetProjectRef": "rsulqkfweaxrhuzjhjrs",
+  "environment": "staging",
+  "applied": false,
+  "migration": {
+    "path": "supabase/migrations/0035_staging_product_ssot_service_role_acl.sql",
+    "sha256": "7B0B6CE822FF8DE185B9141B9829E43FF8EA5190C5FE89CCB1FF8599C16F5F04"
+  },
+  "scope": {
+    "relations": ["public.product_ssot", "public.product_ssot_version"],
+    "role": "service_role",
+    "productSsotAfter": ["SELECT", "INSERT", "UPDATE"],
+    "productSsotVersionAfter": ["SELECT", "INSERT", "DELETE"],
+    "globalDefaultPrivilegesChanged": false,
+    "functionsChanged": false,
+    "policiesChanged": false,
+    "schemaChanged": false,
+    "seedRows": 0
+  },
+  "verification": {
+    "command": "npm test -- --maxWorkers=1 tests/products/productSsotStagingAclMigration.test.js",
+    "assertions": "5/5 passed"
+  },
+  "credentialsAccessed": false,
+  "productionTouched": false
+}
