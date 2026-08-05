@@ -88,7 +88,9 @@ describe('registered product config', () => {
     expect(findRegisteredProductConfigForUrl('https://flowai.flowaiplatform.com/landing')).toMatchObject({
       name: 'FlowAI',
       repo: 'https://github.com/victor2081new-cloud/flowai',
+      repository_owned_and_allowlisted: true,
       branch: 'codex/p0-external-mvp-recovery',
+      branch_policy: 'isolated_nonproduction',
       vercel_project_id: 'prj_qtqajKmblq1cZILD66jVbTVC4Uo5',
       status: 'registered',
       environment: 'staging',
@@ -96,6 +98,10 @@ describe('registered product config', () => {
       supabase_url: 'https://rsulqkfweaxrhuzjhjrs.supabase.co',
       deployment_environment: 'preview',
       production_promotion_authorized: false,
+      productionPromotionAuthorized: false,
+      upgrade_url: null,
+      deployment_url: null,
+      deployment_status: 'preview_pending',
     });
   });
 

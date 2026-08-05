@@ -1,0 +1,47 @@
+{
+  "kind": "flowai.nonprod_registered_product_readiness.v1",
+  "capturedAt": "2026-08-05",
+  "productId": "flowai",
+  "organizationId": "veu-ai-studio",
+  "environment": "staging",
+  "supabaseProjectRef": "rsulqkfweaxrhuzjhjrs",
+  "repository": {
+    "url": "https://github.com/victor2081new-cloud/flowai",
+    "ownedAndAllowlisted": true,
+    "branch": "codex/p0-external-mvp-recovery",
+    "branchPolicy": "isolated_nonproduction"
+  },
+  "previewDestination": {
+    "provider": "vercel",
+    "projectId": "prj_qtqajKmblq1cZILD66jVbTVC4Uo5",
+    "bindingMatchesRegisteredProduct": true,
+    "environment": "preview",
+    "previewUrl": null,
+    "status": "preview_pending",
+    "aliasChangeAuthorized": false
+  },
+  "productionPromotionAuthorized": false,
+  "credentials": {
+    "githubPat": "CONFIGURED",
+    "githubAppId": "CONFIGURED",
+    "githubAppPrivateKey": "CONFIGURED",
+    "githubAppInstallationId": "CONFIGURED",
+    "vercelOperatorToken": "CONFIGURED",
+    "vercelOrgId": "CONFIGURED",
+    "anthropicApiKey": "CONFIGURED",
+    "kvRestApiUrl": "CONFIGURED",
+    "kvRestApiToken": "CONFIGURED",
+    "valuesRetained": false
+  },
+  "health": {
+    "credentialShape": "VERIFIED",
+    "repositoryWrite": "NOT_EXECUTED_IN_THIS_CHUNK",
+    "previewDeployment": "NOT_EXECUTED_IN_THIS_CHUNK",
+    "runtimeOverall": "UNPROVEN_UNTIL_GOLDEN_PATH"
+  },
+  "assertions": {
+    "productionUrlUsedAsPreviewDestination": false,
+    "separatePreviewRequired": true,
+    "productionTouched": false
+  }
+}
