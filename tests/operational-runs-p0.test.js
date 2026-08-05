@@ -70,6 +70,13 @@ describe('operational run ledger', () => {
     const reconciled = await getOperationalRun(run.id, owner);
     expect(reconciled.status).toBe('control_failed');
     expect(reconciled.stopCommand.dispatchState).toBe('expired');
+    expect(reconciled.error).toMatchObject({
+      code: 'CONTROL_FAILED',
+      cancellationConfirmed: false,
+      executionMayStillBeActive: true,
+      retrySafe: true,
+    });
+    expect(reconciled.error.requiredOperatorAction).toContain('Verify worker activity');
     expect(await getPendingStopCommand(run.id, owner)).toBeNull();
   });
 

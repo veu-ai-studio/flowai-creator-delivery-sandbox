@@ -100,7 +100,14 @@ async function reconcileStaleCancellation(run, owner, nowMs = Date.now()) {
     status: 'control_failed',
     expectedStatus: 'cancelling',
     expectedControlCommandId: run.stopCommand.id,
-    error: publicRunError('CONTROL_FAILED'),
+    error: {
+      ...publicRunError('CONTROL_FAILED'),
+      cancellationConfirmed: false,
+      executionMayStillBeActive: true,
+      requiredOperatorAction: 'Verify worker activity and retry Stop if execution is still active.',
+      retrySafe: true,
+      retryInstruction: 'Retry Stop; the durable ledger will reserve a new idempotent control command.',
+    },
     progressLabel: 'Cancellation acknowledgement timed out',
     stopCommand: { ...run.stopCommand, dispatchState: 'expired', expiredAt: new Date(nowMs).toISOString() },
   }, { skipReconcile: true });

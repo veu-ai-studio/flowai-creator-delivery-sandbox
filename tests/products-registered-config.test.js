@@ -91,6 +91,11 @@ describe('registered product config', () => {
       branch: 'codex/p0-external-mvp-recovery',
       vercel_project_id: 'prj_qtqajKmblq1cZILD66jVbTVC4Uo5',
       status: 'registered',
+      environment: 'staging',
+      supabase_project_ref: 'rsulqkfweaxrhuzjhjrs',
+      supabase_url: 'https://rsulqkfweaxrhuzjhjrs.supabase.co',
+      deployment_environment: 'preview',
+      production_promotion_authorized: false,
     });
   });
 
