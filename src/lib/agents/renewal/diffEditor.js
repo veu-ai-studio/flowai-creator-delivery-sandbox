@@ -124,8 +124,8 @@ export function parseUnifiedDiff(diffText) {
  * Apply a parsed diff to the original text. Validates that every
  * context (' ') and removal ('-') line in the diff exactly matches
  * the corresponding line in the original (or its nearby neighbors —
- * we tolerate ±2 line drift so a slightly-stale oldStart still
- * applies).
+ * we tolerate a bounded line-number drift only when the complete hunk
+ * context has one exact match. Missing or ambiguous context fails closed.
  *
  * Returns { ok, content?, stats?, reason? } where stats has
  * { hunks, linesAdded, linesRemoved, changeRatio, totalLines }.
@@ -159,7 +159,7 @@ export function applyDiff(originalText, parsed) {
       const body = l.slice(1);
       if (op === ' ' || op === '-') expectedLines.push(body);
     }
-    // Find best match position (drift tolerance ±3 lines).
+    // Find best match position (fast path: drift tolerance ±3 lines).
     let bestStart = -1;
     for (let d = 0; d <= 3 && bestStart < 0; d += 1) {
       for (const delta of (d === 0 ? [0] : [-d, d])) {
@@ -171,6 +171,27 @@ export function applyDiff(originalText, parsed) {
           if (origLines[tryStart + j] !== expectedLines[j]) { match = false; break; }
         }
         if (match) { bestStart = tryStart; break; }
+      }
+    }
+    // Live model-generated diffs can contain correct, exact context with
+    // stale line numbers after source-map or prompt formatting changes.
+    // Search a bounded window, but apply only when there is exactly one
+    // full-string match. This is relocation, not fuzzy patching.
+    if (bestStart < 0 && expectedLines.length > 0) {
+      const windowStart = Math.max(cursor, expectedStart - 200);
+      const windowEnd = Math.min(origLines.length - expectedLines.length, expectedStart + 200);
+      const exactMatches = [];
+      for (let tryStart = windowStart; tryStart <= windowEnd; tryStart += 1) {
+        let match = true;
+        for (let j = 0; j < expectedLines.length; j += 1) {
+          if (origLines[tryStart + j] !== expectedLines[j]) { match = false; break; }
+        }
+        if (match) exactMatches.push(tryStart);
+        if (exactMatches.length > 1) break;
+      }
+      if (exactMatches.length === 1) bestStart = exactMatches[0];
+      else if (exactMatches.length > 1) {
+        return { ok: false, reason: `hunk_context_ambiguous:oldStart=${hunk.oldStart}` };
       }
     }
     if (bestStart < 0) {

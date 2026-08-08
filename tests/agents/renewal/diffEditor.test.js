@@ -185,6 +185,34 @@ describe('applyDiff', () => {
     expect(r.content).toContain('<p>Drifted match.</p>');
   });
 
+  it('relocates one exact hunk context within a bounded 200-line window', () => {
+    const lines = Array.from({ length: 260 }, (_, index) => `line-${index + 1}`);
+    lines[149] = 'unique target line';
+    const original = `${lines.join('\n')}\n`;
+    const diff = parseUnifiedDiff([
+      '@@ -40,1 +40,1 @@',
+      '-unique target line',
+      '+corrected target line',
+    ].join('\n'));
+    const r = applyDiff(original, diff);
+    expect(r.ok).toBe(true);
+    expect(r.content).toContain('corrected target line');
+    expect(r.content).not.toContain('unique target line');
+  });
+
+  it('fails closed when relocated hunk context is ambiguous', () => {
+    const lines = Array.from({ length: 80 }, (_, index) => `line-${index + 1}`);
+    lines[20] = 'repeated target';
+    lines[60] = 'repeated target';
+    const diff = parseUnifiedDiff([
+      '@@ -40,1 +40,1 @@',
+      '-repeated target',
+      '+unsafe ambiguous replacement',
+    ].join('\n'));
+    const r = applyDiff(`${lines.join('\n')}\n`, diff);
+    expect(r).toMatchObject({ ok: false, reason: 'hunk_context_ambiguous:oldStart=40' });
+  });
+
   it('computes changeRatio correctly', () => {
     const diff = parseUnifiedDiff([
       '@@ -7,1 +7,1 @@',
