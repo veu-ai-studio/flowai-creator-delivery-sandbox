@@ -192,6 +192,40 @@ const branch = findFirst(['branchName', 'branch', 'renewalBranch']);
 const commit = findFirst(['commitSha', 'commit', 'sha']);
 const previewUrl = result?.previewUrl || findFirst(['previewUrl', 'deploymentUrl']);
 const artifactUrl = result?.prUrl || findFirst(['prUrl', 'artifactUrl', 'compareUrl']);
+if (!previewUrl) {
+  const safeLogs = logs.map((log) => ({
+    step: log?.step ?? null,
+    stepName: log?.stepName ?? null,
+    status: log?.status ?? null,
+    tool: log?.tool ?? null,
+    kind: log?.result?.kind ?? null,
+    code: log?.result?.code ?? null,
+    reason: log?.result?.reason ?? log?.result?.exitTrigger ?? null,
+    detail: typeof log?.result?.detail === 'string' ? log.result.detail.slice(0, 300) : null,
+    filesCommitted: log?.result?.filesCommitted ?? null,
+    previewUrl: log?.result?.previewUrl ?? null,
+  }));
+  console.error(JSON.stringify({
+    kind: 'golden_path_redacted_diagnostic.v1',
+    runId: run.id,
+    exitReason: result?.exitReason ?? null,
+    iterations: (result?.iterations ?? []).map((iteration) => ({
+      number: iteration?.number ?? null,
+      decision: iteration?.decision ?? null,
+      noFixReason: iteration?.noFixReason ?? null,
+      branchName: iteration?.branchName ?? null,
+      previewUrl: iteration?.previewUrl ?? null,
+      fixOutcomes: (iteration?.fixOutcomes ?? []).map((outcome) => ({
+        filePath: outcome?.filePath ?? null,
+        accepted: outcome?.accepted ?? null,
+        code: outcome?.code ?? null,
+        reason: outcome?.reason ?? outcome?.rejectionReason ?? null,
+        model: outcome?.model ?? null,
+      })),
+    })),
+    logs: safeLogs,
+  }, null, 2));
+}
 assert(FLOWAI_MACRO_STEPS.every((step) => macroAttempted.has(step)), 'EIGHT_STAGES_NOT_ATTEMPTED');
 assert(FLOWAI_MACRO_STEPS.every((step) => durableStepResults[step]?.artifacts?.some((artifact) => artifact?.id && artifact?.fingerprint)), 'EIGHT_STAGE_ARTIFACTS_NOT_RETAINED');
 assert(branch, 'CONTROLLED_BRANCH_MISSING');
