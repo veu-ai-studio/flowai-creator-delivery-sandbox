@@ -32,6 +32,12 @@ describe('bounded composite Monitor budget', () => {
   });
 });
 
+describe('bounded live-model Build budget', () => {
+  it('allows catalog resolution and deterministic model fallback within one bounded call', () => {
+    expect(FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.generateFix).toBe(120_000);
+  });
+});
+
 function withVercelEnv() {
   Object.assign(process.env, VERCEL_ENV);
 }
@@ -3110,7 +3116,7 @@ describe('orchestrator — primary root-cause LLM retry discipline', () => {
       expect(generateFix).toHaveBeenCalledTimes(1);
       expect(generateFix.mock.calls[0][0].opts.mode).toBe('diff');
       expect(deps.createRenewalBranch).toHaveBeenCalled();
-      expect(FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.generateFix).toBe(75_000);
+      expect(FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.generateFix).toBe(120_000);
     } finally { clearVercelEnv(); }
   });
 

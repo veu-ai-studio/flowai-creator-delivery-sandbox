@@ -116,7 +116,7 @@ export const FORGE_STEP5_TO_STEP6_TIMEOUTS_MS = Object.freeze({
   fetchRepoFileList: 15_000,
   fetchFileContent: 15_000,
   prioritizeIssuesWithClaude: 30_000,
-  generateFix: 75_000,
+  generateFix: 120_000,
   construction: 30_000,
   remediation: 30_000,
   createRenewalBranch: 15_000,
