@@ -25,6 +25,13 @@ const VERCEL_ENV = {
   VERCEL_TOKEN: 'vercel_fake',
 };
 
+describe('bounded composite Monitor budget', () => {
+  it('allows URL fetch, source enrichment, and LLM generation within one bounded call', () => {
+    expect(FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.monitorText).toBe(75_000);
+    expect(FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.postFixMonitorText).toBe(75_000);
+  });
+});
+
 function withVercelEnv() {
   Object.assign(process.env, VERCEL_ENV);
 }

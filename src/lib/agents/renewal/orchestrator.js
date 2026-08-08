@@ -106,7 +106,7 @@ export const PHASE_B_ENRICHMENT_TIMEOUT_MS = 45_000;
 export const MAX_PHASE_B_ENRICHMENT_TIMEOUT_MS = 60_000;
 export const LLM_LARGE_FILE_DIFF_THRESHOLD_CHARS = 12_000;
 export const FORGE_STEP5_TO_STEP6_TIMEOUTS_MS = Object.freeze({
-  monitorText: 45_000,
+  monitorText: 75_000,
   computeScore: 45_000,
   structuredCrawl: 30_000,
   probeAllPages: 45_000,
@@ -123,7 +123,7 @@ export const FORGE_STEP5_TO_STEP6_TIMEOUTS_MS = Object.freeze({
   commitFileToBranch: 15_000,
   deployBranchPreview: 60_000,
   postFixEvaluationPipeline: 45_000,
-  postFixMonitorText: 45_000,
+  postFixMonitorText: 75_000,
   postFixComputeScore: 45_000,
   postFixCrawl: 45_000,
   postFixProbeAllPages: 45_000,
