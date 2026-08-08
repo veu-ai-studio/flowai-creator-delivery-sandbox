@@ -69,6 +69,23 @@ const onStep = (log) => {
   }));
 };
 
+// This is a single operator-authorized staging execution. The persistent
+// disabled flag prevents autonomous Self-Renewal; it is not a production
+// promotion control. Temporarily enable only the exact registered staging
+// row, then restore its prior state before artifact/clearance evaluation.
+const registrySelector = (query) => query
+  .eq('product_id', 'flowai')
+  .eq('org_id', 'veu-ai-studio')
+  .eq('environment', 'stg');
+const { data: priorRenewalState, error: renewalStateError } = await registrySelector(
+  supabase.from('product_registry').select('self_renewal_enabled,self_renewal_disabled'),
+).maybeSingle();
+assert(!renewalStateError && priorRenewalState, 'STAGING_RENEWAL_STATE_UNAVAILABLE');
+const { error: renewalEnableError } = await registrySelector(
+  supabase.from('product_registry').update({ self_renewal_enabled: true, self_renewal_disabled: false }),
+);
+assert(!renewalEnableError, 'STAGING_RENEWAL_ENABLE_FAILED');
+
 const orchestration = runOrchestration({
   url: product.original_url,
   mode: 'auto',
@@ -83,8 +100,8 @@ const orchestration = runOrchestration({
       product_id: 'flowai',
       org_id: 'veu-ai-studio',
       environment: 'stg',
-      self_renewal_enabled: false,
-      self_renewal_disabled: true,
+      self_renewal_enabled: true,
+      self_renewal_disabled: false,
       product_url: product.original_url,
       github_repo_url: product.repo,
       self_renewal_branch: product.branch,
@@ -99,20 +116,30 @@ const orchestration = runOrchestration({
 const timeout = new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error('GOLDEN_PATH_TIMEOUT'), { code: 'GOLDEN_PATH_TIMEOUT' })), HARD_TIMEOUT_MS));
 let result;
 try {
-  result = await Promise.race([orchestration, timeout]);
-} catch (error) {
-  await ledgerWrite;
-  const failedLog = [...logs].reverse().find((log) => log?.status === 'failed');
-  await ledger.updateOperationalRun(run.id, owner, ledger.buildActionableStageFailurePatch({
-    stage: failedLog?.stepName || error?.failedStep || 'ORCHESTRATION_RUNTIME',
-    tool: failedLog?.tool || 'runOrchestration',
-    code: error?.code || 'ORCHESTRATION_FAILED',
-    error: error?.message || String(error),
-    executionMayStillBeActive: error?.code === 'GOLDEN_PATH_TIMEOUT',
-  }));
-  throw error;
+  try {
+    result = await Promise.race([orchestration, timeout]);
+  } catch (error) {
+    await ledgerWrite;
+    const failedLog = [...logs].reverse().find((log) => log?.status === 'failed');
+    await ledger.updateOperationalRun(run.id, owner, ledger.buildActionableStageFailurePatch({
+      stage: failedLog?.stepName || error?.failedStep || 'ORCHESTRATION_RUNTIME',
+      tool: failedLog?.tool || 'runOrchestration',
+      code: error?.code || 'ORCHESTRATION_FAILED',
+      error: error?.message || String(error),
+      executionMayStillBeActive: error?.code === 'GOLDEN_PATH_TIMEOUT',
+    }));
+    throw error;
+  } finally {
+    await ledgerWrite;
+  }
 } finally {
-  await ledgerWrite;
+  const { error: renewalRestoreError } = await registrySelector(
+    supabase.from('product_registry').update({
+      self_renewal_enabled: priorRenewalState.self_renewal_enabled,
+      self_renewal_disabled: priorRenewalState.self_renewal_disabled,
+    }),
+  );
+  assert(!renewalRestoreError, 'STAGING_RENEWAL_RESTORE_FAILED');
 }
 guardProofResources('continue');
 
