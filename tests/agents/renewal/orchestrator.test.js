@@ -38,6 +38,19 @@ describe('bounded live-model Build budget', () => {
   });
 });
 
+describe('inline sandbox Build artifact', () => {
+  it('disables inherited build/install commands for the static preview only', () => {
+    const files = __internals.buildInlineBuildPreview({
+      productId: 'flowai',
+      branchName: 'flowai/renewal-safe',
+      fileChanges: [{ filePath: 'src/safe.js', fileContent: 'export const safe = true;' }],
+    });
+    expect(files.map((file) => file.path)).toEqual(['index.html', 'vercel.json']);
+    expect(JSON.parse(files[1].content)).toEqual({ framework: null, buildCommand: null, installCommand: '' });
+    expect(files[0].content).toContain('flowai/renewal-safe');
+  });
+});
+
 function withVercelEnv() {
   Object.assign(process.env, VERCEL_ENV);
 }

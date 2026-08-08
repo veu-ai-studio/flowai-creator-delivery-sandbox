@@ -1127,7 +1127,13 @@ function buildInlineBuildPreview({ productId, branchName, fileChanges }) {
   const sections = fileChanges.map((file) => `
     <section><h2>${escapePreviewHtml(file.filePath)}</h2><pre>${escapePreviewHtml(file.fileContent)}</pre></section>`).join('');
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapePreviewHtml(productId)} Build Preview</title><style>body{font:16px system-ui;max-width:1100px;margin:auto;padding:2rem;color:#172033}header{border-bottom:1px solid #ccd5e0}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f7fa;padding:1rem;border-radius:.5rem}section{margin:2rem 0}</style></head><body><header><h1>${escapePreviewHtml(productId)} isolated build preview</h1><p>Controlled branch: <code>${escapePreviewHtml(branchName)}</code></p><p>${fileChanges.length} commit-ready source artifact(s), rendered from the exact accepted Build outputs.</p></header>${sections}</body></html>`;
-  return [{ path: 'index.html', content: html }];
+  return [
+    { path: 'index.html', content: html },
+    {
+      path: 'vercel.json',
+      content: JSON.stringify({ framework: null, buildCommand: null, installCommand: '' }),
+    },
+  ];
 }
 
 export async function runOrchestration(args = {}) {
@@ -7336,6 +7342,7 @@ export const __internals = Object.freeze({
   siteSizeFromCrawl,
   buildPipelineEffortProfile,
   buildResearchSynthesis,
+  buildInlineBuildPreview,
   latestMeasuredScore,
   discoverProduct,
   productIdFromRegisteredConfig,
