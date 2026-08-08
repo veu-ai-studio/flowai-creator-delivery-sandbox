@@ -86,6 +86,50 @@ function deriveMacroStepFromOrchestratorStep(step) {
   return ORCHESTRATOR_STEP_TO_MACRO[Math.floor(n)] ?? null;
 }
 
+function evidenceFingerprint(value) {
+  const text = JSON.stringify(value ?? null);
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function firstNonEmpty(result, keys) {
+  for (const key of keys) {
+    const value = result?.[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function stageArtifactFromLog(macroStep, log, result) {
+  if (!result) return null;
+  const fingerprint = evidenceFingerprint({
+    macroStep,
+    step: log.step ?? null,
+    at: log.at ?? null,
+    tool: log.tool ?? null,
+    result,
+  });
+  const url = firstNonEmpty(result, ['previewUrl', 'deploymentUrl', 'artifactUrl', 'prUrl', 'compareUrl']);
+  const path = firstNonEmpty(result, ['path', 'filePath', 'branchName', 'branch']);
+  const externalId = firstNonEmpty(result, ['artifactId', 'artifactRef', 'deploymentId', 'commitSha', 'commit', 'sha']);
+  return {
+    id: externalId || `flowai-artifact-${macroStep}-${fingerprint}`,
+    kind: result.kind || `flowai.${macroStep}.stage_evidence.v1`,
+    fingerprint,
+    source: 'orchestration_log',
+    status: log.status ?? 'running',
+    tool: log.tool ?? null,
+    orchestrationStep: Number.isFinite(Number(log.step)) ? Number(log.step) : null,
+    at: log.at ?? nowIso(),
+    url,
+    path,
+  };
+}
+
 function macroSummaryFromLog(log = {}) {
   const result = log.result && typeof log.result === 'object'
     ? log.result
@@ -106,6 +150,8 @@ function macroSummaryFromLog(log = {}) {
       guidedSetup: attempt?.guidedSetup ?? null,
     }))
     : null;
+  const macroStep = deriveMacroStepFromOrchestratorStep(log.step);
+  const artifact = macroStep ? stageArtifactFromLog(macroStep, log, result) : null;
   return {
     summary: log.stepName ?? log.tool ?? `Step ${log.step ?? ''}`,
     status: log.status ?? 'running',
@@ -117,6 +163,7 @@ function macroSummaryFromLog(log = {}) {
     evidenceKind: result?.kind ?? null,
     selectedDispatchMemberId: result?.selectedDispatchMemberId ?? null,
     attemptHistory,
+    artifacts: artifact ? [artifact] : [],
   };
 }
 

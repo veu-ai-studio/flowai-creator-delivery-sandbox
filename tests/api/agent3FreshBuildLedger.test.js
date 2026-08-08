@@ -39,6 +39,38 @@ describe('Agent 3 Fresh Build operational ledger mapping', () => {
       })],
     });
     expect(JSON.stringify(patch)).not.toContain('must-not-persist');
+    expect(patch.stepResults.research.artifacts).toEqual([
+      expect.objectContaining({
+        id: expect.stringMatching(/^flowai-artifact-research-/),
+        kind: 'production_research_crawl_failover.v1',
+        fingerprint: expect.stringMatching(/^[a-f0-9]{8}$/),
+        source: 'orchestration_log',
+      }),
+    ]);
+  });
+
+  it('retains real external artifact identity, path, and preview URL when emitted', () => {
+    const patch = buildFlowAIStepPatchFromLog({
+      step: 10,
+      status: 'complete',
+      tool: 'vercelBranchDeploy.js',
+      at: '2026-08-08T00:00:00.000Z',
+      result: {
+        kind: 'preview_deployment.v1',
+        deploymentId: 'dpl_preview_123',
+        previewUrl: 'https://preview.example.com',
+        branchName: 'flowai/renewal-run-123',
+      },
+    });
+
+    expect(patch.stepResults.deploy.artifacts).toEqual([
+      expect.objectContaining({
+        id: 'dpl_preview_123',
+        kind: 'preview_deployment.v1',
+        url: 'https://preview.example.com',
+        path: 'flowai/renewal-run-123',
+      }),
+    ]);
   });
 
   it('maps successful Fresh Build evidence across all eight public stages', () => {

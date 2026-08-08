@@ -61,7 +61,12 @@ const onStep = (log) => {
   logs.push(log);
   const patch = buildFlowAIStepPatchFromLog(log);
   for (const key of Object.keys(patch.stepResults || {})) macroAttempted.add(key);
-  durableStepResults = { ...durableStepResults, ...(patch.stepResults || {}) };
+  for (const [key, value] of Object.entries(patch.stepResults || {})) {
+    const previous = durableStepResults[key];
+    const artifacts = [...(previous?.artifacts || []), ...(value?.artifacts || [])]
+      .filter((artifact, index, all) => all.findIndex((item) => item.id === artifact.id) === index);
+    durableStepResults[key] = { ...previous, ...value, artifacts };
+  }
   ledgerWrite = ledgerWrite.then(() => ledger.updateOperationalRun(run.id, owner, {
     ...patch,
     stepResults: durableStepResults,
@@ -188,6 +193,7 @@ const commit = findFirst(['commitSha', 'commit', 'sha']);
 const previewUrl = result?.previewUrl || findFirst(['previewUrl', 'deploymentUrl']);
 const artifactUrl = result?.prUrl || findFirst(['prUrl', 'artifactUrl', 'compareUrl']);
 assert(FLOWAI_MACRO_STEPS.every((step) => macroAttempted.has(step)), 'EIGHT_STAGES_NOT_ATTEMPTED');
+assert(FLOWAI_MACRO_STEPS.every((step) => durableStepResults[step]?.artifacts?.some((artifact) => artifact?.id && artifact?.fingerprint)), 'EIGHT_STAGE_ARTIFACTS_NOT_RETAINED');
 assert(branch, 'CONTROLLED_BRANCH_MISSING');
 assert(artifactUrl || commit, 'DURABLE_ARTIFACT_MISSING');
 assert(/^https:\/\//.test(previewUrl || ''), 'PREVIEW_URL_MISSING');
@@ -236,6 +242,7 @@ const evidence = {
   score: Number.isFinite(result?.finalScore) ? result.finalScore : null,
   gtmReady: cleared,
   stagesAttempted: [...macroAttempted],
+  stageArtifacts: Object.fromEntries(FLOWAI_MACRO_STEPS.map((step) => [step, durableStepResults[step]?.artifacts || []])),
   toolUse: usedTools,
   assertions: {
     durableHistory: true,
