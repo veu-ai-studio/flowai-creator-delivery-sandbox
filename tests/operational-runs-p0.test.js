@@ -113,7 +113,10 @@ describe('operational run ledger', () => {
       stepCount: 1,
     });
     const persisted = await updateOperationalRun(run.id, owner, {
-      stepResults: { deploy: { summary: 'Preview deployed', status: 'complete', previewUrl: 'https://preview.example.com' } },
+      stepResults: {
+        research: { summary: 'Research scoring', status: 'complete', artifactId: 'research-2' },
+        deploy: { summary: 'Preview deployed', status: 'complete', previewUrl: 'https://preview.example.com' },
+      },
       stepCount: 2,
     });
 

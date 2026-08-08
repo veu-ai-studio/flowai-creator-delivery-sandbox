@@ -165,6 +165,12 @@ function mergeStepResults(currentResults, incomingResults) {
       merged[stage] = evidence;
       continue;
     }
+    const previousComparable = { ...previous, history: undefined };
+    const incomingComparable = { ...evidence, history: undefined };
+    if (JSON.stringify(previousComparable) === JSON.stringify(incomingComparable)) {
+      merged[stage] = previous;
+      continue;
+    }
     const history = Array.isArray(previous.history)
       ? previous.history
       : [{ ...previous, history: undefined }];
