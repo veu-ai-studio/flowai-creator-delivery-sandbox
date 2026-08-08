@@ -36,7 +36,7 @@ const HAPPY_ARGS = Object.freeze({
   runId: 'run_abc123',
 });
 
-function mockOk(text, usage = { input_tokens: 100, output_tokens: 50 }, model = 'claude-sonnet-4-20250514') {
+function mockOk(text, usage = { input_tokens: 100, output_tokens: 50 }, model = 'claude-sonnet-4-6') {
   return vi.fn(async (_url, init) => ({
     ok: true,
     status: 200,
@@ -158,7 +158,7 @@ describe('generateFix — happy path', () => {
       opts: { apiKey: API_KEY, fetch: fetchMock },
     });
     expect(result.fixedContent).toBe(FIXED_CONTENT);
-    expect(result.model).toBe('claude-sonnet-4-20250514');
+    expect(result.model).toBe('claude-sonnet-4-6');
     expect(result.promptTokens).toBe(100);
     expect(result.completionTokens).toBe(50);
   });
@@ -177,7 +177,7 @@ describe('generateFix — happy path', () => {
     expect(init.headers['anthropic-version']).toBe('2023-06-01');
     expect(init.headers['content-type']).toBe('application/json');
     const body = JSON.parse(init.body);
-    expect(body.model).toBe('claude-sonnet-4-20250514');
+    expect(body.model).toBe('claude-sonnet-4-6');
     expect(body.max_tokens).toBe(16384);
     expect(body.messages).toHaveLength(1);
     expect(body.messages[0].role).toBe('user');
@@ -949,7 +949,7 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
         }) }],
         usage: { input_tokens: 100, output_tokens: 80 },
         stop_reason: 'end_turn',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
       }),
       text: async () => '{}',
     }));

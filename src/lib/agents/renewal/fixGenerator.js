@@ -14,7 +14,7 @@
  *   fields are also truncated to MAX_EVIDENCE_CHARS so a malicious
  *   long-evidence finding cannot consume the full prompt budget.
  *
- * Model selection: `claude-sonnet-4-20250514` is the fix-generation model per
+ * Model selection: `claude-sonnet-4-6` is the fix-generation model per
  * Cluster F. The Cluster F primary cascade is consulted via opts.model
  * when wired by the orchestrator; absent that, this module uses the
  * fallback directly. (Per session rules: never hardcode "the" model
@@ -31,7 +31,7 @@ import { buildDiffPrompt, applyAndValidate as applyAndValidateDiff } from './dif
 
 const ANTHROPIC_API_BASE = 'https://api.anthropic.com';
 const ANTHROPIC_API_VERSION = '2023-06-01';
-const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-20250514';
+const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-6';
 // DISPATCH 29: bumped from 4096 → 16384 because real fix-target files
 // (BillingSubscriptionManager.jsx, HomeScreen.jsx) clocked in at >4K
 // tokens and Claude truncated mid-statement, producing files like

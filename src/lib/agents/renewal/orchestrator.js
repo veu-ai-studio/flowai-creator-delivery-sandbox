@@ -3970,7 +3970,7 @@ export async function runOrchestration(args = {}) {
             const runContextUrl = initialUrl ?? currentUrl ?? null;
             const sourceChars = typeof current === 'string' ? current.length : 0;
             const baseAttempt = {
-              model: 'claude-sonnet-4-20250514',
+              model: 'claude-sonnet-4-6',
               findingsSentCount: findingsForFile.length,
               filesSentCount: 1,
               sourceCharsSent: sourceChars,
@@ -4085,7 +4085,7 @@ export async function runOrchestration(args = {}) {
                     sourceContext,
                     productId, runId,
                     opts: {
-                      model: 'claude-sonnet-4-20250514',
+                      model: 'claude-sonnet-4-6',
                       mode,
                       requireStructured: mode !== 'diff',
                       userDescription: inputContext.description,
@@ -4214,7 +4214,7 @@ export async function runOrchestration(args = {}) {
             const reasonMatch = msg.match(/—\s+(.+)$/);
             const extracted = reasonMatch ? reasonMatch[1].trim() : null;
             recordLlmAttempt({
-              model: 'claude-sonnet-4-20250514',
+              model: 'claude-sonnet-4-6',
               findingsSentCount: 1,
               filesSentCount: 1,
               sourceCharsSent: typeof current === 'string' ? current.length : 0,
