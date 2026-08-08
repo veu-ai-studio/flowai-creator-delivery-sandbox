@@ -195,6 +195,17 @@ const branch = findFirst(['branchName', 'branch', 'renewalBranch']);
 const commit = findFirst(['commitSha', 'commit', 'sha']);
 const previewUrl = result?.previewUrl || findFirst(['previewUrl', 'deploymentUrl']);
 const artifactUrl = result?.prUrl || findFirst(['prUrl', 'artifactUrl', 'compareUrl']);
+const assertProofOutcome = async (condition, code, stage, tool) => {
+  if (condition) return;
+  await ledger.updateOperationalRun(run.id, owner, ledger.buildActionableStageFailurePatch({
+    stage,
+    tool,
+    code,
+    error: code,
+    executionMayStillBeActive: false,
+  }));
+  throw Object.assign(new Error(code), { code });
+};
 if (!previewUrl) {
   const safeLogs = logs.map((log) => ({
     step: log?.step ?? null,
@@ -229,11 +240,11 @@ if (!previewUrl) {
     logs: safeLogs,
   }, null, 2));
 }
-assert(FLOWAI_MACRO_STEPS.every((step) => macroAttempted.has(step)), 'EIGHT_STAGES_NOT_ATTEMPTED');
-assert(FLOWAI_MACRO_STEPS.every((step) => durableStepResults[step]?.artifacts?.some((artifact) => artifact?.id && artifact?.fingerprint)), 'EIGHT_STAGE_ARTIFACTS_NOT_RETAINED');
-assert(branch, 'CONTROLLED_BRANCH_MISSING');
-assert(artifactUrl || commit, 'DURABLE_ARTIFACT_MISSING');
-assert(/^https:\/\//.test(previewUrl || ''), 'PREVIEW_URL_MISSING');
+await assertProofOutcome(FLOWAI_MACRO_STEPS.every((step) => macroAttempted.has(step)), 'EIGHT_STAGES_NOT_ATTEMPTED', 'Golden proof evaluation', 'macro-stage ledger');
+await assertProofOutcome(FLOWAI_MACRO_STEPS.every((step) => durableStepResults[step]?.artifacts?.some((artifact) => artifact?.id && artifact?.fingerprint)), 'EIGHT_STAGE_ARTIFACTS_NOT_RETAINED', 'Golden proof evaluation', 'artifact ledger');
+await assertProofOutcome(branch, 'CONTROLLED_BRANCH_MISSING', 'Build', 'githubBranchWriter');
+await assertProofOutcome(artifactUrl || commit, 'DURABLE_ARTIFACT_MISSING', 'Build', 'artifact registry');
+await assertProofOutcome(/^https:\/\//.test(previewUrl || ''), 'PREVIEW_URL_MISSING', 'Deploy', 'vercelBranchDeploy');
 const previewResponse = await fetch(previewUrl, { redirect: 'follow', signal: AbortSignal.timeout(20_000) });
 assert(previewResponse.status >= 200 && previewResponse.status < 500, 'PREVIEW_NOT_BROWSER_ACCESSIBLE');
 
