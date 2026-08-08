@@ -1,0 +1,55 @@
+{
+  "kind": "flowai.gtm_closure.nonprod_stop_proof.v1",
+  "recordedAt": "2026-08-08T13:43:34.864Z",
+  "releaseHead": "f70d8be64c159ef40afdbd3df5d446ecf6f36c15",
+  "environment": "staging",
+  "supabaseProjectRef": "rsulqkfweaxrhuzjhjrs",
+  "evidenceId": "flowai-nonprod-stop-evidence-stop-proof-20260808134334864-bb3e6e69",
+  "proofId": "stop-proof-20260808134334864-bb3e6e69",
+  "cancelledRunId": "run_283e94060746639ee3c11333",
+  "timeoutRunId": "run_cf1dc2b350e3aa330cf98043",
+  "assertions": {
+    "requestPersistence": true,
+    "workerAcknowledgement": true,
+    "terminalCancelled": true,
+    "navigationRestore": true,
+    "remountRestore": true,
+    "refreshRestore": true,
+    "reloginRestore": true,
+    "tenantIsolation": true,
+    "timeoutControlFailed": true,
+    "timeoutTruthActionable": true,
+    "productionTouched": false
+  },
+  "resourceEvidence": {
+    "startFreeRamPercent": 25.7,
+    "proofReportedFreeRamPercent": 19.1,
+    "heavyWorkerConflict": false
+  },
+  "boundInputs": {
+    "closureContractSha256": "420C08F7EAA4CD0839C8D1E2F0978926E123CAFB0714287E26B6154A0FEE67E6",
+    "registeredProductReadinessSha256": "2DDB84E0B3A5BD69D57C4F422324D2EA49755E0275D650DE0B157D45A6E8E677",
+    "stopProofEntrypointSha256": "1FB36F09ABF438E0F77967C0364252DC0A77CDDAAC6EF1F5DDBC499770E95300",
+    "productSsotStagingApplySha256": "769223A61E2A0F094E275DD9A930B5E2B03ED7848EDF1BFFED6B6A2BE938AD3F",
+    "productSsotAclApplySha256": "E1029826C95A25F3BF84A2EA15ED2C5697058B2B6D85AAF6A91C0FD6C12206C5",
+    "productSsotAclReviewSha256": "081670F2175AD8830A5F5F378905F20D65C735B0EE9657B77349B05F43116253"
+  },
+  "scoreAccounting": {
+    "priorDefensiblePoints": 10,
+    "artifactProducingStages": "0/8",
+    "durableStopCriterion": "INDEPENDENTLY_CREDITABLE",
+    "numericStopPoints": null,
+    "reasonNumericPointsOmitted": "No retained scoring rubric assigns a numeric value to the Durable Stop criterion; no points are fabricated."
+  },
+  "nextStrategicBlocker": {
+    "category": "nonproduction_golden_path_delivery_credentials",
+    "missing": ["Vercel Access Token", "Anthropic API key"],
+    "availableButNotSubstitutable": ["Vercel OIDC token"],
+    "owner": "FlowAI staging credential owner",
+    "preciseRemedy": "Provide a preview-scoped Vercel Access Token and non-production Anthropic API key through an approved secure local credential source; do not use production credentials."
+  },
+  "secretsEmitted": false,
+  "productionPromotionAuthorized": false,
+  "productionTouched": false,
+  "originalProductionEvidenceMutated": false
+}
