@@ -98,7 +98,7 @@ describe('deployBranchPreview — happy path', () => {
       ...HAPPY_ARGS, opts: { fetch: fetchMock, sleep: fastSleep },
     });
     expect(result.deploymentId).toBe(DEPLOYMENT_ID);
-    expect(result.previewUrl).toBe(PREVIEW_URL);
+    expect(result.previewUrl).toBe(`https://${PREVIEW_URL}`);
     expect(result.inspectorUrl).toBe(INSPECTOR_URL);
     expect(fetchMock.calls.length).toBe(4);  // 1 create + 3 polls
   });
@@ -111,7 +111,7 @@ describe('deployBranchPreview — happy path', () => {
       ...HAPPY_ARGS, opts: { fetch: fetchMock, sleep: fastSleep },
     });
     expect(result.deploymentId).toBe(DEPLOYMENT_ID);
-    expect(result.previewUrl).toBe(PREVIEW_URL);
+    expect(result.previewUrl).toBe(`https://${PREVIEW_URL}`);
     expect(fetchMock.calls.length).toBe(1);  // POST only — no polls
     expect(fastSleep).not.toHaveBeenCalled();
   });
@@ -172,6 +172,21 @@ describe('deployBranchPreview — happy path', () => {
       ],
       target: 'production',
     });
+  });
+
+  it('returns an absolute preview alias when Vercel omits the deployment url field', async () => {
+    const fetchMock = sequencedFetch([{
+      status: 200,
+      body: deploymentResponse('READY', {
+        url: '',
+        alias: ['flowai-git-safe-preview-veu-ai-studio.vercel.app'],
+      }),
+    }]);
+    const result = await deployBranchPreview({
+      ...HAPPY_ARGS,
+      opts: { fetch: fetchMock, sleep: fastSleep },
+    });
+    expect(result.previewUrl).toBe('https://flowai-git-safe-preview-veu-ai-studio.vercel.app');
   });
 
   it('GET polls hit /v13/deployments/{id}?teamId=<orgId> with no body', async () => {

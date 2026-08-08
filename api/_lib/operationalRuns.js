@@ -155,6 +155,27 @@ export async function getPendingStopCommand(id, owner) {
   return { command: 'stop', id: run.stopCommand.id, writtenAt: run.stopCommand.reservedAt };
 }
 
+function mergeStepResults(currentResults, incomingResults) {
+  const current = currentResults && typeof currentResults === 'object' ? currentResults : {};
+  const incoming = incomingResults && typeof incomingResults === 'object' ? incomingResults : {};
+  const merged = { ...current };
+  for (const [stage, evidence] of Object.entries(incoming)) {
+    const previous = current[stage];
+    if (!previous) {
+      merged[stage] = evidence;
+      continue;
+    }
+    const history = Array.isArray(previous.history)
+      ? previous.history
+      : [{ ...previous, history: undefined }];
+    merged[stage] = {
+      ...evidence,
+      history: [...history, { ...evidence, history: undefined }],
+    };
+  }
+  return merged;
+}
+
 export async function updateOperationalRun(id, owner, patch, options = {}) {
   const kv = await store();
   const raw = decode(kv ? await kv.get(runKey(id)) : memory.get(runKey(id)));
@@ -169,7 +190,10 @@ export async function updateOperationalRun(id, owner, patch, options = {}) {
   if (expectedControlCommandId && current.stopCommand?.id !== expectedControlCommandId) return { ...current, transitionRejected: true };
   if (current.status === 'cancelling' && nextStatus === 'cancelled' && !persisted.stopAcknowledgedAt) return { ...current, transitionRejected: true };
   if (TERMINAL.has(current.status)) return { ...current, transitionRejected: true };
-  const next = { ...current, ...persisted, version: Number(current.version || 0) + 1, updatedAt: new Date().toISOString() };
+  const durablePatch = persisted.stepResults
+    ? { ...persisted, stepResults: mergeStepResults(current.stepResults, persisted.stepResults) }
+    : persisted;
+  const next = { ...current, ...durablePatch, version: Number(current.version || 0) + 1, updatedAt: new Date().toISOString() };
   if (kv) {
     const result = await kv.eval(UPDATE_LUA, [runKey(id)], [owner.orgId, owner.userId, current.status, String(current.version || 0), JSON.stringify(next), String(RETENTION_SECONDS)]);
     if (Number(result[0]) !== 1) return { ...(await getOperationalRun(id, owner)), transitionRejected: true };
@@ -193,4 +217,4 @@ export async function listOperationalRuns(owner, limit = 100) {
 
 export function resetOperationalRunsForTests() { memory.clear(); kvClient = undefined; }
 export function setOperationalRunStoreForTests(client) { kvClient = client; }
-export const __test = { CREATE_LUA, UPDATE_LUA, TRANSITIONS, HEARTBEAT_TIMEOUT_MS, CONTROL_RESERVATION_TIMEOUT_MS, reconcileStaleCancellation };
+export const __test = { CREATE_LUA, UPDATE_LUA, TRANSITIONS, HEARTBEAT_TIMEOUT_MS, CONTROL_RESERVATION_TIMEOUT_MS, reconcileStaleCancellation, mergeStepResults };

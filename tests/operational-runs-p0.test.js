@@ -101,6 +101,28 @@ describe('operational run ledger', () => {
     expect(await getPendingStopCommand(run.id, owner)).toBeNull();
   });
 
+  it('merges every stage artifact durably and retains same-stage history', async () => {
+    const { run } = await createOperationalRun({ ...owner, idempotency: 'stage-artifacts-merge' });
+    await updateOperationalRun(run.id, owner, { status: 'running' });
+    await updateOperationalRun(run.id, owner, {
+      stepResults: { research: { summary: 'Public crawl', status: 'complete', artifactId: 'research-1' } },
+      stepCount: 1,
+    });
+    await updateOperationalRun(run.id, owner, {
+      stepResults: { research: { summary: 'Research scoring', status: 'complete', artifactId: 'research-2' } },
+      stepCount: 1,
+    });
+    const persisted = await updateOperationalRun(run.id, owner, {
+      stepResults: { deploy: { summary: 'Preview deployed', status: 'complete', previewUrl: 'https://preview.example.com' } },
+      stepCount: 2,
+    });
+
+    expect(Object.keys(persisted.stepResults)).toEqual(['research', 'deploy']);
+    expect(persisted.stepResults.research.artifactId).toBe('research-2');
+    expect(persisted.stepResults.research.history.map((entry) => entry.artifactId)).toEqual(['research-1', 'research-2']);
+    expect(persisted.stepResults.deploy.previewUrl).toBe('https://preview.example.com');
+  });
+
   it('durably terminates an unrecoverable Step 2 exception without fabricating later stages', async () => {
     const { run } = await createOperationalRun({ ...owner, idempotency: 'step-two-failure1' });
     await updateOperationalRun(run.id, owner, {

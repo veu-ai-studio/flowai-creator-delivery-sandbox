@@ -174,7 +174,7 @@ function chooseDeploymentUrl(deployment, target) {
       .sort((a, b) => a.length - b.length);
     return stableAliases[0] || aliases[0] || normalizeDeploymentUrl(rawUrl);
   }
-  return rawUrl;
+  return normalizeDeploymentUrl(rawUrl) || aliases[0] || '';
 }
 
 async function createDeployment({ projectId, orgId, owner, repo, branchName, token, target, opts }) {
