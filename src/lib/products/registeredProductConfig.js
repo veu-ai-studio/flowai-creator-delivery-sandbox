@@ -21,7 +21,7 @@ export const REGISTERED_PRODUCT_CONFIG = /** @type {readonly any[]} */ (Object.f
     upgrade_repo_status: 'provisioned',
     deployment_url: null,
     deployment_status: 'preview_pending',
-    vercel_project_id: 'prj_qtqajKmblq1cZILD66jVbTVC4Uo5',
+    vercel_project_id: 'prj_GmyoYJ96Xni9Eyz9a0IF8dLjKMEX',
     systemNote: 'FlowAI self-renewal targets isolated branches with flowai-staging state and preview-only delivery; production promotion remains separately gated and unauthorized.',
   }),
   Object.freeze({

@@ -91,7 +91,7 @@ describe('registered product config', () => {
       repository_owned_and_allowlisted: true,
       branch: 'codex/p0-external-mvp-recovery',
       branch_policy: 'isolated_nonproduction',
-      vercel_project_id: 'prj_qtqajKmblq1cZILD66jVbTVC4Uo5',
+      vercel_project_id: 'prj_GmyoYJ96Xni9Eyz9a0IF8dLjKMEX',
       status: 'registered',
       environment: 'staging',
       supabase_project_ref: 'rsulqkfweaxrhuzjhjrs',
