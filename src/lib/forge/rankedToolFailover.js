@@ -30,14 +30,27 @@ function attemptSnapshot(candidate, index, patch = {}) {
     dispatchState: candidate?.dispatchState ?? DISPATCH_STATES.UNAVAILABLE,
     dispatchReason: candidate?.dispatchReason ?? null,
     credentialStatus: Object.freeze({ ...(candidate?.credentialStatus ?? {}) }),
+    executionMode: candidate?.executionMode ?? null,
+    selectionFactors: candidate?.selectionFactors ?? null,
+    selectionScores: candidate?.selectionScores ?? null,
+    selectionScore: candidate?.selectionScore ?? null,
+    guidedSetup: candidate?.guidedSetup ?? null,
     ...patch,
   });
 }
 
-function normalizeCandidateList({ candidates = [], selectedTool = null, env = process.env }) {
+function normalizeCandidateList({ action, candidates = [], selectedTool = null, env = process.env }) {
   const list = Array.isArray(candidates) ? candidates.filter(Boolean) : [];
-  if (list.length > 0) return normalizeDispatchCandidates(list, { env });
-  return selectedTool ? normalizeDispatchCandidates([selectedTool], { env }) : Object.freeze([]);
+  if (list.length > 0) {
+    const normalized = normalizeDispatchCandidates(list, { env, action });
+    if (action !== 'crawl' || !list.some(candidate => candidate?.selectionContext === 'research')) return normalized;
+    return Object.freeze([...normalized].sort((left, right) => (
+      Number(right.dispatchCallable) - Number(left.dispatchCallable)
+      || Number(right.selectionScore ?? 0) - Number(left.selectionScore ?? 0)
+      || Number(left.rank ?? 0) - Number(right.rank ?? 0)
+    )));
+  }
+  return selectedTool ? normalizeDispatchCandidates([selectedTool], { env, action }) : Object.freeze([]);
 }
 
 function supportsAction(candidate, action) {
@@ -118,7 +131,7 @@ export async function runRankedToolWithFailover({
     throw new TypeError('runRankedToolWithFailover: dispatchFn required');
   }
 
-  const normalizedCandidates = normalizeCandidateList({ candidates, selectedTool, env });
+  const normalizedCandidates = normalizeCandidateList({ action, candidates, selectedTool, env });
   const attemptHistory = [];
 
   for (const [index, candidate] of normalizedCandidates.entries()) {
@@ -203,9 +216,13 @@ export async function runRankedToolWithFailover({
   const final = Object.freeze({
     state: 'final_failed',
     action,
+    exhaustionKind: attemptHistory.some(attempt => (
+      attempt.executionMode === 'credential_free_public_fetch'
+      && ['failed', 'timeout'].includes(attempt.state)
+    )) ? 'internet_source_exhausted' : 'provider_exhausted',
     reason: normalizedCandidates.length > 0
-      ? 'All ranked candidates exhausted without a successful dispatch.'
-      : 'No ranked candidates were available for dispatch.',
+      ? 'All policy-allowed ranked candidates exhausted without a successful dispatch.'
+      : 'No policy-allowed ranked candidates were available for dispatch.',
   });
   attemptHistory.push(final);
   onAttempt?.(final);
@@ -213,6 +230,7 @@ export async function runRankedToolWithFailover({
     `P2 live execution STOP: ${action} exhausted ranked tool candidates`,
     {
       action,
+      exhaustionKind: final.exhaustionKind,
       attemptHistory: Object.freeze([...attemptHistory]),
       candidates: normalizedCandidates,
     },

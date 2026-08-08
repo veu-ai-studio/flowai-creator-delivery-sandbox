@@ -38,6 +38,46 @@ describe('P13-A tool dispatch contract', () => {
     expect(JSON.stringify(candidate)).not.toContain('browser-secret');
   });
 
+  it('allows only public crawl through the existing crawler when Browserless credentials are absent', () => {
+    const [crawl] = normalizeDispatchCandidates([
+      { platform_name: 'Browserless', rank: 1 },
+    ], { env: {}, action: 'crawl' });
+    const [screenshot] = normalizeDispatchCandidates([
+      { platform_name: 'Browserless', rank: 1 },
+    ], { env: {}, action: 'screenshot' });
+
+    expect(crawl).toMatchObject({
+      dispatchState: 'callable',
+      executionMode: 'credential_free_public_fetch',
+      credentialStatus: { BROWSERLESS_API_KEY: 'MISSING' },
+      selectionFactors: {
+        taskFit: 'crawl',
+        evidenceQuality: 'public_html',
+        availability: 'available',
+        privacy: 'direct_public_url_only',
+        cost: 'no_provider_charge',
+        latency: 'single_http_fetch',
+        credentialReadiness: 'missing',
+      },
+      selectionScores: {
+        taskFit: 10,
+        evidenceQuality: 6,
+        availability: 10,
+        privacy: 10,
+        cost: 10,
+        latency: 9,
+        credentialReadiness: 0,
+      },
+      guidedSetup: {
+        provider: 'Browserless',
+        consoleUrl: 'https://www.browserless.io/account',
+        secretName: 'BROWSERLESS_API_KEY',
+        resumeCheckpoint: 'research.structured_crawl',
+      },
+    });
+    expect(screenshot.dispatchState).toBe('missing_credentials');
+  });
+
   it('resolves Codex aliases to the codex member', () => {
     expect(resolveMemberId('Codex')).toBe('codex');
     expect(resolveMemberId('OpenAI Codex')).toBe('codex');

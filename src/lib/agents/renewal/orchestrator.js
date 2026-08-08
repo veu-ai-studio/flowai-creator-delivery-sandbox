@@ -274,6 +274,7 @@ function buildProductionResearchCrawlCandidates(selectionRecord = null) {
   return Object.freeze(candidates.map((candidate, index) => Object.freeze({
     ...candidate,
     rank: candidate.rank ?? index + 1,
+    selectionContext: 'research',
   })));
 }
 
@@ -305,9 +306,6 @@ function buildProductionMonitorTextCandidates(selectionRecord = null) {
 
 function makeFailoverEnv(deps = {}, baseEnv = process.env) {
   const env = { ...(baseEnv ?? {}), ...(deps.env ?? {}) };
-  if (typeof deps.conductStructuredCrawl === 'function' && !env.BROWSERLESS_API_KEY) {
-    env.BROWSERLESS_API_KEY = '__flowai_test_injected_browserless__';
-  }
   if (typeof deps.produceMonitorText === 'function' && !env.ANTHROPIC_API_KEY) {
     env.ANTHROPIC_API_KEY = '__flowai_test_injected_anthropic__';
   }
@@ -328,13 +326,14 @@ function hasUsableCrawlOutput(crawlOutput) {
 }
 
 function makeProductionSelectionForUi({ stepKey, baseSelection = null, candidates = [], failover = null, mode, internalMode }) {
+  const decisionCandidates = failover?.candidates ?? candidates;
   const base = Object.freeze({
     kind: 'tool_intelligence_selection',
     stepKey,
     mode,
     internalMode,
     selected: failover?.candidate ?? baseSelection?.selected ?? candidates[0] ?? null,
-    candidates: Object.freeze(candidates.map((candidate, index) => Object.freeze({
+    candidates: Object.freeze(decisionCandidates.map((candidate, index) => Object.freeze({
       platform_name: candidate?.platform_name ?? candidate?.toolName ?? candidate?.name ?? candidate?.memberId ?? null,
       platform_type: candidate?.platform_type ?? candidate?.type ?? 'tool',
       rank: candidate?.rank ?? index + 1,
@@ -343,6 +342,11 @@ function makeProductionSelectionForUi({ stepKey, baseSelection = null, candidate
       dispatchState: candidate?.dispatchState ?? null,
       dispatchReason: candidate?.dispatchReason ?? null,
       credentialStatus: candidate?.credentialStatus ?? null,
+      executionMode: candidate?.executionMode ?? null,
+      selectionFactors: candidate?.selectionFactors ?? null,
+      selectionScores: candidate?.selectionScores ?? null,
+      selectionScore: candidate?.selectionScore ?? null,
+      guidedSetup: candidate?.guidedSetup ?? null,
     }))),
   });
   return attachAttemptHistory(base, failover);
@@ -2384,6 +2388,7 @@ export async function runOrchestration(args = {}) {
       };
       const researchSelectionRecord = visibleToolSelectionByStep.get('research') ?? null;
       const researchCandidates = buildProductionResearchCrawlCandidates(researchSelectionRecord?.envelope);
+      const researchFailoverEnv = makeFailoverEnv(deps);
       let forcedStructuredResearchHangConsumed = false;
       const failover = await runRankedToolWithFailover({
         action: 'crawl',
@@ -2403,7 +2408,7 @@ export async function runOrchestration(args = {}) {
                 : step5ToStep6Timeouts.structuredCrawl
             )
           : null,
-        env: makeFailoverEnv(deps),
+        env: researchFailoverEnv,
         dispatchFn: async (action, payload, opts = {}) => {
           if (
             spineReliabilityProof.enabled
@@ -2415,7 +2420,7 @@ export async function runOrchestration(args = {}) {
             return new Promise(() => {});
           }
           let structured;
-          if (typeof deps.conductStructuredCrawl === 'function') {
+          if (typeof deps.conductStructuredCrawl === 'function' || opts.memberId === 'browserless') {
             structured = await _conductStructuredCrawl(crawlArgs);
           } else {
             const dispatched = await _dispatchTool(action, {

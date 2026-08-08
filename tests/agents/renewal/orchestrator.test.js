@@ -513,6 +513,49 @@ describe('runOrchestration — AUTO mode', () => {
     } finally { clearVercelEnv(); }
   });
 
+  it('production STEP 3 uses credential-free public Research evidence when paid providers are unavailable', async () => {
+    withVercelEnv();
+    try {
+      const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [72] });
+      deps.env = { ANTHROPIC_API_KEY: 'anthropic_fake' };
+      deps.conductStructuredCrawl = vi.fn(async ({ url }) => ({
+        pagesCrawled: 1,
+        depth: 1,
+        pages: [{ url, title: 'Public evidence', text: 'Credential-free public source evidence', statusCode: 200 }],
+        brokenLinks: [],
+        forms: [],
+        interactiveElements: [],
+        errors: [],
+        totalTextLength: 38,
+      }));
+      const stepLogs = [];
+
+      const result = await runOrchestration({
+        url: 'https://flowai-m3-upgrader-before.vercel.app/',
+        mode: 'auto',
+        runId: 'production-step3-public-source-unit',
+        supabase: null,
+        environment: 'stg',
+        gtmTarget: 95,
+        maxIterations: 1,
+        deps,
+        onStep: (log) => stepLogs.push(log),
+      });
+
+      expect(result.ok).toBe(true);
+      const crawlLog = stepLogs.find((log) => log.result?.kind === 'production_research_crawl_failover.v1');
+      expect(crawlLog?.result?.selectedDispatchMemberId).toBe('browserless');
+      expect(crawlLog?.result?.attemptHistory).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          memberId: 'browserless',
+          state: 'succeeded',
+          executionMode: 'credential_free_public_fetch',
+          credentialStatus: { BROWSERLESS_API_KEY: 'MISSING' },
+        }),
+      ]));
+    } finally { clearVercelEnv(); }
+  });
+
   it('production Flow Hub Research proof times out a hung crawl attempt and fails over', async () => {
     withVercelEnv();
     try {

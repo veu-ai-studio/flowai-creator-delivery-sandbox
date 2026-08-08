@@ -67,6 +67,48 @@ const CREDENTIAL_REQUIREMENTS = Object.freeze({
   perplexity: ['OPENROUTER_API_KEY'],
 });
 
+const GUIDED_CREDENTIAL_SETUP = Object.freeze({
+  browserless: Object.freeze({
+    provider: 'Browserless',
+    consoleUrl: 'https://www.browserless.io/account',
+    steps: Object.freeze([
+      'Sign in to the Browserless account scoped to FlowAI staging.',
+      'In the API Key section, click Copy next to the staging token.',
+      'Run the approved FlowAI DPAPI capture command for BROWSERLESS_API_KEY, then resume the recorded run checkpoint.',
+    ]),
+    secretName: 'BROWSERLESS_API_KEY',
+    scope: 'FlowAI staging Research browser rendering only',
+    dpapiCapturePath: '%LOCALAPPDATA%\\FlowAI\\credentials\\staging\\browserless\\flowai\\browserless-api-key.dpapi.json',
+    resumeCheckpoint: 'research.structured_crawl',
+  }),
+  playwright: Object.freeze({
+    provider: 'Browserless',
+    consoleUrl: 'https://www.browserless.io/account',
+    steps: Object.freeze([
+      'Sign in to the Browserless account scoped to FlowAI staging.',
+      'In the API Key section, click Copy next to the staging token.',
+      'Run the approved FlowAI DPAPI capture command for BROWSERLESS_API_KEY, then resume the recorded run checkpoint.',
+    ]),
+    secretName: 'BROWSERLESS_API_KEY',
+    scope: 'FlowAI staging Playwright-compatible rich capture only',
+    dpapiCapturePath: '%LOCALAPPDATA%\\FlowAI\\credentials\\staging\\browserless\\flowai\\browserless-api-key.dpapi.json',
+    resumeCheckpoint: 'research.structured_crawl',
+  }),
+  perplexity: Object.freeze({
+    provider: 'OpenRouter (Perplexity adapter)',
+    consoleUrl: 'https://openrouter.ai/settings/keys',
+    steps: Object.freeze([
+      'Sign in to the OpenRouter account scoped to FlowAI staging.',
+      'Create or select the least-privilege staging key and click Copy.',
+      'Run the approved FlowAI DPAPI capture command for OPENROUTER_API_KEY, then resume the recorded run checkpoint.',
+    ]),
+    secretName: 'OPENROUTER_API_KEY',
+    scope: 'FlowAI staging Research recovery only',
+    dpapiCapturePath: '%LOCALAPPDATA%\\FlowAI\\credentials\\staging\\openrouter\\flowai\\openrouter-api-key.dpapi.json',
+    resumeCheckpoint: 'research.structured_crawl',
+  }),
+});
+
 const SECRET_KEY_PATTERN = /(TOKEN|KEY|SECRET|PASSWORD|CREDENTIAL)/i;
 const DEFAULT_TIMEOUT_MS = 30_000;
 
@@ -133,7 +175,12 @@ export function credentialStatusesForMember(memberId, env = process.env) {
   ])));
 }
 
-export function hasRequiredCredential(memberId, env = process.env) {
+function supportsCredentialFreePublicCrawl(memberId, action) {
+  return memberId === 'browserless' && action === 'crawl';
+}
+
+export function hasRequiredCredential(memberId, env = process.env, action = null) {
+  if (supportsCredentialFreePublicCrawl(memberId, action)) return true;
   const names = CREDENTIAL_REQUIREMENTS[memberId] ?? [];
   if (names.length === 0) return true;
   if (memberId === 'vercel') {
@@ -182,13 +229,31 @@ export function normalizeToolCandidate(candidate, opts = {}) {
   if (member && member.wired === false) {
     state = DISPATCH_STATES.STUB_UNAVAILABLE;
     reason = 'Tool is ranked but adapter is stubbed and non-executable.';
-  } else if (member && !hasRequiredCredential(memberId, opts.env)) {
+  } else if (member && !hasRequiredCredential(memberId, opts.env, opts.action)) {
     state = DISPATCH_STATES.MISSING_CREDENTIALS;
     reason = 'Required server-side credential is missing.';
   } else if (member && member.wired === true) {
     state = DISPATCH_STATES.CALLABLE;
-    reason = 'Adapter is wired and required server-side credentials are present or not required.';
+    reason = supportsCredentialFreePublicCrawl(memberId, opts.action)
+      && credentialStatusByName.BROWSERLESS_API_KEY === 'MISSING'
+      ? 'Adapter is wired for credential-free public URL retrieval; rendered-browser features remain unavailable.'
+      : 'Adapter is wired and required server-side credentials are present or not required.';
   }
+
+  const missingCredential = Object.values(credentialStatusByName).includes('MISSING');
+  const publicSourceMode = supportsCredentialFreePublicCrawl(memberId, opts.action)
+    && credentialStatusByName.BROWSERLESS_API_KEY === 'MISSING';
+  const selectionScores = Object.freeze({
+    taskFit: memberId === 'browserless' ? 10 : memberId === 'playwright' ? 9 : memberId === 'perplexity' ? 7 : 5,
+    evidenceQuality: publicSourceMode ? 6 : memberId === 'perplexity' ? 8 : 10,
+    availability: state === DISPATCH_STATES.CALLABLE ? 10 : 0,
+    privacy: publicSourceMode ? 10 : 7,
+    cost: publicSourceMode ? 10 : 6,
+    latency: publicSourceMode ? 9 : 6,
+    credentialReadiness: missingCredential ? 0 : 10,
+  });
+  const selectionScore = Number((Object.values(selectionScores)
+    .reduce((sum, value) => sum + value, 0) / Object.keys(selectionScores).length).toFixed(2));
 
   return Object.freeze({
     ...candidate,
@@ -197,6 +262,19 @@ export function normalizeToolCandidate(candidate, opts = {}) {
     dispatchCallable: state === DISPATCH_STATES.CALLABLE,
     credentialStatus: credentialStatusByName,
     dispatchReason: reason,
+    executionMode: publicSourceMode ? 'credential_free_public_fetch' : 'provider_adapter',
+    selectionFactors: Object.freeze({
+      taskFit: candidate?.taskFit ?? (opts.action === 'crawl' ? 'crawl' : 'registered_capability'),
+      evidenceQuality: candidate?.evidenceQuality ?? (publicSourceMode ? 'public_html' : 'provider_enriched'),
+      availability: state === DISPATCH_STATES.CALLABLE ? 'available' : state,
+      privacy: candidate?.privacy ?? (publicSourceMode ? 'direct_public_url_only' : 'provider_bound'),
+      cost: candidate?.cost ?? (publicSourceMode ? 'no_provider_charge' : 'provider_metered_or_configured'),
+      latency: candidate?.latency ?? (publicSourceMode ? 'single_http_fetch' : 'provider_runtime'),
+      credentialReadiness: missingCredential ? 'missing' : 'ready',
+    }),
+    selectionScores,
+    selectionScore,
+    guidedSetup: missingCredential ? (GUIDED_CREDENTIAL_SETUP[memberId] ?? null) : null,
   });
 }
 

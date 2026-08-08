@@ -10,6 +10,65 @@ const env = {
 };
 
 describe('ranked tool failover contract', () => {
+  it('executes credential-free public crawl before blocking on paid Research providers', async () => {
+    const output = await runRankedToolWithFailover({
+      action: 'crawl',
+      candidates: [
+        { rank: 1, platform_name: 'Perplexity', selectionContext: 'research' },
+        { rank: 2, platform_name: 'Browserless', selectionContext: 'research' },
+        { rank: 3, platform_name: 'Playwright', selectionContext: 'research' },
+      ],
+      env: { OPENROUTER_API_KEY: 'openrouter-test-key' },
+      dispatchFn: async (action, _payload, opts) => ({
+        ok: true,
+        action,
+        member: opts.memberId,
+        data: { pagesCrawled: 1, totalTextLength: 24 },
+      }),
+      validateResult: (result) => {
+        if (!result?.data?.pagesCrawled) throw new Error('no public evidence');
+      },
+    });
+
+    expect(output.memberId).toBe('browserless');
+    expect(output.candidate.executionMode).toBe('credential_free_public_fetch');
+    expect(output.candidate.selectionScore).toBeGreaterThan(0);
+    expect(output.candidate.guidedSetup).toMatchObject({
+      provider: 'Browserless',
+      secretName: 'BROWSERLESS_API_KEY',
+    });
+    expect(output.attemptHistory).toEqual(expect.arrayContaining([
+      expect.objectContaining({ memberId: 'browserless', state: 'succeeded' }),
+    ]));
+  });
+
+  it('distinguishes public internet exhaustion from unavailable paid providers', async () => {
+    await expect(runRankedToolWithFailover({
+      action: 'crawl',
+      candidates: [
+        { rank: 1, platform_name: 'Browserless' },
+        { rank: 2, platform_name: 'Playwright' },
+        { rank: 3, platform_name: 'Perplexity' },
+      ],
+      env: {},
+      dispatchFn: async (action, _payload, opts) => ({
+        ok: false,
+        action,
+        member: opts.memberId,
+        error: 'public source unreachable',
+      }),
+    })).rejects.toMatchObject({
+      details: {
+        exhaustionKind: 'internet_source_exhausted',
+        attemptHistory: expect.arrayContaining([
+          expect.objectContaining({ memberId: 'browserless', state: 'failed' }),
+          expect.objectContaining({ memberId: 'playwright', state: 'unavailable' }),
+          expect.objectContaining({ memberId: 'perplexity', state: 'unavailable' }),
+        ]),
+      },
+    });
+  });
+
   it('fails over when the first candidate reports unavailable', async () => {
     const calls = [];
     const output = await runRankedToolWithFailover({

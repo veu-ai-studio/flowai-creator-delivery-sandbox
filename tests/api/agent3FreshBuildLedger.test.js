@@ -3,6 +3,44 @@ import { __test } from '../../api/agent/3/execute.js';
 import { FLOWAI_MACRO_STEPS, buildFlowAIStepPatchFromLog } from '../../src/lib/flowaiRunStore.js';
 
 describe('Agent 3 Fresh Build operational ledger mapping', () => {
+  it('durably retains redacted Research candidate decisions and classifications', () => {
+    const patch = buildFlowAIStepPatchFromLog({
+      step: 3,
+      status: 'complete',
+      tool: 'Ranked Research crawl dispatch',
+      result: {
+        kind: 'production_research_crawl_failover.v1',
+        selectedDispatchMemberId: 'browserless',
+        attemptHistory: [{
+          rank: 1,
+          tool: 'Browserless',
+          memberId: 'browserless',
+          state: 'succeeded',
+          dispatchState: 'callable',
+          credentialStatus: { BROWSERLESS_API_KEY: 'MISSING' },
+          executionMode: 'credential_free_public_fetch',
+          selectionFactors: { cost: 'no_provider_charge', privacy: 'direct_public_url_only' },
+          guidedSetup: {
+            provider: 'Browserless',
+            secretName: 'BROWSERLESS_API_KEY',
+            consoleUrl: 'https://www.browserless.io/account',
+          },
+          result: { secret: 'must-not-persist' },
+        }],
+      },
+    });
+
+    expect(patch.stepResults.research).toMatchObject({
+      evidenceKind: 'production_research_crawl_failover.v1',
+      selectedDispatchMemberId: 'browserless',
+      attemptHistory: [expect.objectContaining({
+        state: 'succeeded',
+        executionMode: 'credential_free_public_fetch',
+      })],
+    });
+    expect(JSON.stringify(patch)).not.toContain('must-not-persist');
+  });
+
   it('maps successful Fresh Build evidence across all eight public stages', () => {
     const events = [
       { stage: 'feature_extractor', status: 'completed' },

@@ -90,6 +90,22 @@ function macroSummaryFromLog(log = {}) {
   const result = log.result && typeof log.result === 'object'
     ? log.result
     : null;
+  const attemptHistory = Array.isArray(result?.attemptHistory)
+    ? result.attemptHistory.map((attempt) => ({
+      rank: attempt?.rank ?? null,
+      tool: attempt?.tool ?? null,
+      memberId: attempt?.memberId ?? null,
+      state: attempt?.state ?? null,
+      dispatchState: attempt?.dispatchState ?? null,
+      reason: attempt?.reason ?? null,
+      credentialStatus: attempt?.credentialStatus ?? {},
+      executionMode: attempt?.executionMode ?? null,
+      selectionFactors: attempt?.selectionFactors ?? null,
+      selectionScores: attempt?.selectionScores ?? null,
+      selectionScore: attempt?.selectionScore ?? null,
+      guidedSetup: attempt?.guidedSetup ?? null,
+    }))
+    : null;
   return {
     summary: log.stepName ?? log.tool ?? `Step ${log.step ?? ''}`,
     status: log.status ?? 'running',
@@ -98,6 +114,9 @@ function macroSummaryFromLog(log = {}) {
     at: log.at ?? nowIso(),
     score: [result?.gtmScore, result?.postScore, result?.finalScore, result?.preScore]
       .find((value) => typeof value === 'number' && Number.isFinite(value)) ?? null,
+    evidenceKind: result?.kind ?? null,
+    selectedDispatchMemberId: result?.selectedDispatchMemberId ?? null,
+    attemptHistory,
   };
 }
 
