@@ -325,6 +325,56 @@ function hasUsableCrawlOutput(crawlOutput) {
     || (Number.isFinite(totalTextLength) && totalTextLength > 0);
 }
 
+function buildResearchSynthesis(crawlOutput, minimumSources = 3) {
+  const pages = Array.isArray(crawlOutput?.pages) ? crawlOutput.pages : [];
+  const seen = new Set();
+  const sources = [];
+  for (const page of pages) {
+    if (typeof page?.url !== 'string' || !/^https?:\/\//i.test(page.url)) continue;
+    let normalized;
+    try {
+      const parsed = new URL(page.url);
+      parsed.hash = '';
+      normalized = parsed.toString();
+    } catch { continue; }
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    sources.push(Object.freeze({
+      sourceId: `research-source-${sources.length + 1}`,
+      url: normalized,
+      title: typeof page.title === 'string' ? page.title.slice(0, 160) : null,
+      statusCode: Number.isFinite(Number(page.statusCode)) ? Number(page.statusCode) : null,
+      textLength: typeof page.text === 'string' ? page.text.length : 0,
+      sourceType: 'independently_crawled_url',
+    }));
+  }
+  const valid = sources.filter((source) => source.statusCode === null || (source.statusCode >= 200 && source.statusCode < 400));
+  if (valid.length < minimumSources) {
+    return Object.freeze({
+      ok: false,
+      code: 'RESEARCH_SOURCE_INSUFFICIENT',
+      sourceCount: valid.length,
+      minimumSources,
+      sources: Object.freeze(valid),
+      operatorAction: `Provide or expose at least ${minimumSources} independently crawlable source URLs, then retry Research.`,
+    });
+  }
+  return Object.freeze({
+    ok: true,
+    kind: 'research.multi_source_synthesis.v1',
+    sourceCount: valid.length,
+    minimumSources,
+    sources: Object.freeze(valid),
+    synthesis: Object.freeze({
+      pagesCrawled: Number(crawlOutput?.pagesCrawled) || valid.length,
+      totalTextLength: Number(crawlOutput?.totalTextLength) || valid.reduce((sum, source) => sum + source.textLength, 0),
+      brokenLinks: Array.isArray(crawlOutput?.brokenLinks) ? crawlOutput.brokenLinks.length : 0,
+      forms: Array.isArray(crawlOutput?.forms) ? crawlOutput.forms.length : 0,
+      interactiveElements: Array.isArray(crawlOutput?.interactiveElements) ? crawlOutput.interactiveElements.length : 0,
+    }),
+  });
+}
+
 function makeProductionSelectionForUi({ stepKey, baseSelection = null, candidates = [], failover = null, mode, internalMode }) {
   const decisionCandidates = failover?.candidates ?? candidates;
   const base = Object.freeze({
@@ -2452,6 +2502,24 @@ export async function runOrchestration(args = {}) {
       });
       crawlOutput = failover.result.data;
       state.crawlOutput = crawlOutput;
+      const researchSynthesis = buildResearchSynthesis(crawlOutput, 3);
+      if (!researchSynthesis.ok) {
+        emit(makeStepLog({
+          iteration: iterationNumber, step: 3, status: 'failed',
+          tool: 'Research multi-source synthesis gate',
+          why: 'Research requires at least three independently identified sources before Build',
+          result: researchSynthesis,
+          mode: state.mode,
+        }));
+        return failStep({
+          product,
+          failedStep: 'STEP_3',
+          error: `${researchSynthesis.code}: ${researchSynthesis.sourceCount}/${researchSynthesis.minimumSources} valid sources`,
+          code: researchSynthesis.code,
+          diagnostics: researchSynthesis,
+        });
+      }
+      state.researchSynthesis = researchSynthesis;
       const toolSelection = makeProductionResearchSelectionForUi({
         baseSelection: researchSelectionRecord?.envelope ?? null,
         candidates: researchCandidates,
@@ -2488,6 +2556,9 @@ export async function runOrchestration(args = {}) {
           recoveryFindings: Array.isArray(crawlOutput.recoveryFindings) ? crawlOutput.recoveryFindings.length : 0,
           selectedDispatchMemberId: failover.memberId ?? null,
           attemptHistory: failover.attemptHistory,
+          sourceCount: researchSynthesis.sourceCount,
+          sourceAttribution: researchSynthesis.sources,
+          synthesis: researchSynthesis.synthesis,
         },
         durationMs: Date.now() - t0, mode: state.mode,
       });
@@ -3970,7 +4041,7 @@ export async function runOrchestration(args = {}) {
             const runContextUrl = initialUrl ?? currentUrl ?? null;
             const sourceChars = typeof current === 'string' ? current.length : 0;
             const baseAttempt = {
-              model: 'claude-sonnet-4-6',
+              model: 'anthropic_live_catalog',
               findingsSentCount: findingsForFile.length,
               filesSentCount: 1,
               sourceCharsSent: sourceChars,
@@ -4038,6 +4109,7 @@ export async function runOrchestration(args = {}) {
                 .filter(Boolean)
                 .join('; ') || '(none)'}`,
               `Fallback run URL context: ${runContextUrl || '(none)'}`,
+              `Research sources (${state.researchSynthesis?.sourceCount ?? 0}): ${(state.researchSynthesis?.sources ?? []).map((source) => source.url).join('; ') || '(none)'}`,
               `Source mapped proposals: ${(state.sourceMappedFixProposals ?? [])
                 .filter((proposal) => proposal?.filePath === filePath)
                 .map((proposal) => proposal.proposedFix)
@@ -4085,7 +4157,7 @@ export async function runOrchestration(args = {}) {
                     sourceContext,
                     productId, runId,
                     opts: {
-                      model: 'claude-sonnet-4-6',
+                      resolveAuthorizedModels: true,
                       mode,
                       requireStructured: mode !== 'diff',
                       userDescription: inputContext.description,
@@ -4186,6 +4258,7 @@ export async function runOrchestration(args = {}) {
             fileChanges.push({ filePath, fileContent: fix.fixedContent });
             recordLlmAttempt({
               ...baseAttempt,
+              model: fix.model ?? baseAttempt.model,
               accepted: true,
               rejectionReason: null,
               validationResult: { ok: true, reason: null },
@@ -4197,6 +4270,7 @@ export async function runOrchestration(args = {}) {
               severity: issue.severity ?? null,
               title: issue.title ?? issue.issue ?? null,
               mode: fix.mode ?? 'full',
+              model: fix.model ?? null,
               attempts: fix.attempts ?? 1,
               scoringDimension: fix.scoringDimension ?? null,
               rationale: fix.rationale ?? null,
@@ -4214,7 +4288,7 @@ export async function runOrchestration(args = {}) {
             const reasonMatch = msg.match(/—\s+(.+)$/);
             const extracted = reasonMatch ? reasonMatch[1].trim() : null;
             recordLlmAttempt({
-              model: 'claude-sonnet-4-6',
+              model: 'anthropic_live_catalog',
               findingsSentCount: 1,
               filesSentCount: 1,
               sourceCharsSent: typeof current === 'string' ? current.length : 0,
@@ -7205,6 +7279,7 @@ export const __internals = Object.freeze({
   buildUpgradeDeliveryEnvelope,
   siteSizeFromCrawl,
   buildPipelineEffortProfile,
+  buildResearchSynthesis,
   latestMeasuredScore,
   discoverProduct,
   productIdFromRegisteredConfig,

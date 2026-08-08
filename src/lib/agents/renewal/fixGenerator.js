@@ -32,6 +32,11 @@ import { buildDiffPrompt, applyAndValidate as applyAndValidateDiff } from './dif
 const ANTHROPIC_API_BASE = 'https://api.anthropic.com';
 const ANTHROPIC_API_VERSION = '2023-06-01';
 const FINAL_FALLBACK_MODEL = 'claude-sonnet-4-6';
+const AUTHORIZED_FIX_MODEL_PREFERENCE = Object.freeze([
+  'claude-sonnet-5',
+  'claude-sonnet-4-6',
+  'claude-sonnet-4-5-20250929',
+]);
 // DISPATCH 29: bumped from 4096 → 16384 because real fix-target files
 // (BillingSubscriptionManager.jsx, HomeScreen.jsx) clocked in at >4K
 // tokens and Claude truncated mid-statement, producing files like
@@ -77,6 +82,31 @@ function makeError(code, message, extra = {}) {
     }
   }
   return err;
+}
+
+export async function resolveAuthorizedFixModels({ apiKey, fetch: fetchImpl = globalThis.fetch } = {}) {
+  if (!apiKey || typeof fetchImpl !== 'function') {
+    throw makeError('FIX_MODEL_CATALOG_UNAVAILABLE', 'resolveAuthorizedFixModels: API key and fetch are required');
+  }
+  let response;
+  try {
+    response = await fetchImpl(`${ANTHROPIC_API_BASE}/v1/models?limit=100`, {
+      method: 'GET',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': ANTHROPIC_API_VERSION },
+    });
+  } catch (error) {
+    throw makeError('FIX_MODEL_CATALOG_UNAVAILABLE', `resolveAuthorizedFixModels: catalog network error — ${error?.message ?? String(error)}`);
+  }
+  if (!response.ok) {
+    throw makeError('FIX_MODEL_CATALOG_UNAVAILABLE', `resolveAuthorizedFixModels: catalog returned ${response.status}`, { status: response.status });
+  }
+  const payload = await response.json();
+  const available = new Set((Array.isArray(payload?.data) ? payload.data : []).map((entry) => entry?.id).filter(Boolean));
+  const selected = AUTHORIZED_FIX_MODEL_PREFERENCE.filter((model) => available.has(model)).slice(0, 2);
+  if (selected.length < 2) {
+    throw makeError('FIX_MODEL_FALLBACK_UNAVAILABLE', 'resolveAuthorizedFixModels: two authorized coding-capable Sonnet models are required');
+  }
+  return Object.freeze({ primary: selected[0], fallback: selected[1], candidates: Object.freeze(selected) });
 }
 
 /**
@@ -523,13 +553,17 @@ export async function generateFix(args) {
       'generateFix: ANTHROPIC_API_KEY is required. ' +
       'Set process.env.ANTHROPIC_API_KEY (Doppler key in production) or pass opts.apiKey.');
   }
-  const model = typeof opts.model === 'string' && opts.model ? opts.model : FINAL_FALLBACK_MODEL;
   const maxTokens = Number.isFinite(opts.maxTokens) ? opts.maxTokens : DEFAULT_MAX_TOKENS;
   const fetchImpl = typeof opts.fetch === 'function' ? opts.fetch : globalThis.fetch;
   if (typeof fetchImpl !== 'function') {
     throw makeError('FIX_GENERATION_FAILED',
       'generateFix: fetch is not available on globalThis and no opts.fetch was provided. Node 18+ required.');
   }
+  const resolvedModels = opts.resolveAuthorizedModels === true
+    ? await resolveAuthorizedFixModels({ apiKey, fetch: fetchImpl })
+    : null;
+  const modelCandidates = resolvedModels?.candidates
+    ?? Object.freeze([typeof opts.model === 'string' && opts.model ? opts.model : FINAL_FALLBACK_MODEL]);
 
   // Full-file replacement is the default. Earlier dispatches defaulted
   // precise instructions to diff-mode, which kept changes too narrow and
@@ -571,30 +605,34 @@ export async function generateFix(args) {
   // the explicit retry prompt if validation fails on the first.
   async function callClaude(currentPrompt) {
     let response;
-    try {
-      response = await fetchImpl(`${ANTHROPIC_API_BASE}/v1/messages`, {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': ANTHROPIC_API_VERSION,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: maxTokens,
-          messages: [{ role: 'user', content: currentPrompt }],
-        }),
-      });
-    } catch (e) {
-      throw makeError('FIX_GENERATION_FAILED',
-        `generateFix: network error calling Anthropic API — ${e?.message ?? String(e)}`);
-    }
-    if (!response.ok) {
+    let usedModel = modelCandidates[0];
+    for (let index = 0; index < modelCandidates.length; index += 1) {
+      usedModel = modelCandidates[index];
+      try {
+        response = await fetchImpl(`${ANTHROPIC_API_BASE}/v1/messages`, {
+          method: 'POST',
+          headers: {
+            'x-api-key': apiKey,
+            'anthropic-version': ANTHROPIC_API_VERSION,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: usedModel,
+            max_tokens: maxTokens,
+            messages: [{ role: 'user', content: currentPrompt }],
+          }),
+        });
+      } catch (e) {
+        if (index + 1 < modelCandidates.length) continue;
+        throw makeError('FIX_GENERATION_FAILED', `generateFix: network error calling Anthropic API — ${e?.message ?? String(e)}`);
+      }
+      if (response.ok) break;
+      if (index + 1 < modelCandidates.length && [404, 429, 529].includes(response.status)) continue;
       let bodyText = '';
       try { bodyText = await response.text(); } catch { /* ignore */ }
       throw makeError('FIX_GENERATION_FAILED',
         `generateFix: Anthropic returned ${response.status} ${response.statusText}. Body: ${bodyText.slice(0, 300)}`,
-        { status: response.status });
+        { status: response.status, model: usedModel });
     }
     let parsed;
     try {
@@ -603,7 +641,7 @@ export async function generateFix(args) {
       throw makeError('FIX_GENERATION_FAILED',
         `generateFix: Anthropic response was not JSON — ${e?.message ?? String(e)}`);
     }
-    return { text: extractText(parsed), parsed, stopReason: parsed?.stop_reason ?? null };
+    return { text: extractText(parsed), parsed, stopReason: parsed?.stop_reason ?? null, model: usedModel };
   }
 
   // DISPATCH 32 T2: diff-mode applies the model's response (a unified
@@ -781,7 +819,7 @@ export async function generateFix(args) {
 
   return {
     fixedContent,
-    model: parsed?.model ?? model,
+    model: parsed?.model ?? modelCandidates[0],
     promptTokens: parsed?.usage?.input_tokens ?? 0,
     completionTokens: parsed?.usage?.output_tokens ?? 0,
     attempts,
@@ -801,6 +839,7 @@ export const __internals = Object.freeze({
   ANTHROPIC_API_BASE,
   ANTHROPIC_API_VERSION,
   FINAL_FALLBACK_MODEL,
+  AUTHORIZED_FIX_MODEL_PREFERENCE,
   DEFAULT_SCORING_CRITERIA,
   DEFAULT_MAX_TOKENS,
   MAX_EVIDENCE_CHARS,

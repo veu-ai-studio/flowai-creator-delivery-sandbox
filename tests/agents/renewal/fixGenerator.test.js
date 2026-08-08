@@ -12,12 +12,55 @@ import {
   sanitiseFindings,
   buildPreciseInstructionPrompt,
   validateFixedContent,
+  resolveAuthorizedFixModels,
   __internals,
 } from '../../../src/lib/agents/renewal/fixGenerator.js';
 
 const API_KEY = 'sk-ant-TEST_KEY_SHOULD_NEVER_APPEAR_IN_LOGS_xxxxxxxxxxxxxx';
 
 const FIXED_CONTENT = 'export default function Home() { return <div>Hello</div>; }\n';
+
+describe('authorized Build model resolution', () => {
+  it('selects two currently authorized coding-capable Sonnet models in deterministic order', async () => {
+    const fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: [
+        { id: 'claude-sonnet-4-6' },
+        { id: 'claude-sonnet-5' },
+        { id: 'claude-haiku-4-5' },
+      ] }),
+    }));
+    await expect(resolveAuthorizedFixModels({ apiKey: API_KEY, fetch })).resolves.toEqual({
+      primary: 'claude-sonnet-5',
+      fallback: 'claude-sonnet-4-6',
+      candidates: ['claude-sonnet-5', 'claude-sonnet-4-6'],
+    });
+  });
+
+  it('falls back to the second authorized model when the primary is unavailable', async () => {
+    const calls = [];
+    const fetch = vi.fn(async (url, init = {}) => {
+      if (url.includes('/v1/models')) return {
+        ok: true, status: 200,
+        json: async () => ({ data: [{ id: 'claude-sonnet-5' }, { id: 'claude-sonnet-4-6' }] }),
+      };
+      const body = JSON.parse(init.body);
+      calls.push(body.model);
+      if (body.model === 'claude-sonnet-5') return {
+        ok: false, status: 404, statusText: 'Not Found', text: async () => '{"error":{"type":"not_found_error"}}',
+      };
+      return {
+        ok: true, status: 200,
+        json: async () => ({ content: [{ type: 'text', text: FIXED_CONTENT }], model: 'claude-sonnet-4-6', usage: {} }),
+      };
+    });
+    const result = await generateFix({ ...HAPPY_ARGS, opts: { apiKey: API_KEY, fetch, resolveAuthorizedModels: true } });
+    expect(calls).toEqual(['claude-sonnet-5', 'claude-sonnet-4-6']);
+    expect(result.model).toBe('claude-sonnet-4-6');
+    expect(result.fixedContent).toBe(FIXED_CONTENT);
+  });
+});
 const INPUT_CONTENT = 'export default function Home() { return <div>brokenrendered</div>; }\n';
 
 const HAPPY_ARGS = Object.freeze({

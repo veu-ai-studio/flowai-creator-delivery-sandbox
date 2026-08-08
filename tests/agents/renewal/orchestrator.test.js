@@ -35,6 +35,49 @@ function clearVercelEnv() {
   delete process.env.FLOWAI_ENABLE_LLM_FIXES;
 }
 
+describe('Research three-source synthesis contract', () => {
+  it('retains attribution and synthesis only when at least three valid sources exist', () => {
+    const synthesis = __internals.buildResearchSynthesis({
+      pagesCrawled: 3,
+      totalTextLength: 30,
+      pages: [
+        { url: 'https://example.com/', title: 'Home', text: 'home', statusCode: 200 },
+        { url: 'https://example.com/about', title: 'About', text: 'about', statusCode: 200 },
+        { url: 'https://docs.example.com/guide', title: 'Guide', text: 'guide', statusCode: 200 },
+      ],
+      brokenLinks: [], forms: [], interactiveElements: [],
+    });
+    expect(synthesis).toMatchObject({
+      ok: true,
+      kind: 'research.multi_source_synthesis.v1',
+      sourceCount: 3,
+      minimumSources: 3,
+      sources: [
+        expect.objectContaining({ sourceId: 'research-source-1', url: 'https://example.com/' }),
+        expect.objectContaining({ sourceId: 'research-source-2', url: 'https://example.com/about' }),
+        expect.objectContaining({ sourceId: 'research-source-3', url: 'https://docs.example.com/guide' }),
+      ],
+    });
+  });
+
+  it('returns an actionable insufficiency without fabricating synthesis', () => {
+    const synthesis = __internals.buildResearchSynthesis({
+      pages: [
+        { url: 'https://example.com/', text: 'one', statusCode: 200 },
+        { url: 'https://example.com/#duplicate', text: 'duplicate', statusCode: 200 },
+      ],
+    });
+    expect(synthesis).toMatchObject({
+      ok: false,
+      code: 'RESEARCH_SOURCE_INSUFFICIENT',
+      sourceCount: 1,
+      minimumSources: 3,
+      operatorAction: expect.stringMatching(/at least 3 independently crawlable source URLs/i),
+    });
+    expect(synthesis).not.toHaveProperty('synthesis');
+  });
+});
+
 function makeScoreEnvelope(total) {
   return {
     productId: 'mypreglife', url: 'https://x', runId: 'r',
@@ -87,8 +130,11 @@ function happyDeps({ preScoreSequence = [60], postScoreSequence = [72] } = {}) {
     // CrawlConductor in unit tests.
     conductStructuredCrawl: vi.fn(async ({ url }) => ({
       pagesCrawled: 5, depth: 2,
-      pages: [{ url, title: 'demo', headings: [], text: 'page text', links: [], forms: [],
-                hasModal: false, hasChatbot: false, hasAIAgent: false, statusCode: 200, loadTimeMs: 50 }],
+      pages: [
+        { url, title: 'demo', headings: [], text: 'page text', links: [], forms: [], hasModal: false, hasChatbot: false, hasAIAgent: false, statusCode: 200, loadTimeMs: 50 },
+        { url: `${url.replace(/\/$/, '')}/about`, title: 'about', headings: [], text: 'about evidence', links: [], forms: [], hasModal: false, hasChatbot: false, hasAIAgent: false, statusCode: 200, loadTimeMs: 40 },
+        { url: `${url.replace(/\/$/, '')}/docs`, title: 'docs', headings: [], text: 'docs evidence', links: [], forms: [], hasModal: false, hasChatbot: false, hasAIAgent: false, statusCode: 200, loadTimeMs: 45 },
+      ],
       brokenLinks: [], forms: [], interactiveElements: [], errors: [],
       totalTextLength: 9,
     })),
@@ -442,9 +488,13 @@ describe('runOrchestration — AUTO mode', () => {
         crawlCalls += 1;
         if (crawlCalls === 1) return new Promise(() => {});
         return {
-          pagesCrawled: 1,
+          pagesCrawled: 3,
           depth: 1,
-          pages: [{ url, title: 'fallback', headings: [{ tag: 'h1', text: 'Fallback' }], text: 'page text', statusCode: 200 }],
+          pages: [
+            { url, title: 'fallback', headings: [{ tag: 'h1', text: 'Fallback' }], text: 'page text', statusCode: 200 },
+            { url: `${url}about`, title: 'about', text: 'about evidence', statusCode: 200 },
+            { url: `${url}docs`, title: 'docs', text: 'docs evidence', statusCode: 200 },
+          ],
           brokenLinks: [],
           forms: [],
           interactiveElements: [],
@@ -519,9 +569,13 @@ describe('runOrchestration — AUTO mode', () => {
       const deps = happyDeps({ preScoreSequence: [50], postScoreSequence: [72] });
       deps.env = { ANTHROPIC_API_KEY: 'anthropic_fake' };
       deps.conductStructuredCrawl = vi.fn(async ({ url }) => ({
-        pagesCrawled: 1,
+        pagesCrawled: 3,
         depth: 1,
-        pages: [{ url, title: 'Public evidence', text: 'Credential-free public source evidence', statusCode: 200 }],
+        pages: [
+          { url, title: 'Public evidence', text: 'Credential-free public source evidence', statusCode: 200 },
+          { url: `${url}about`, title: 'About evidence', text: 'Public about evidence', statusCode: 200 },
+          { url: `${url}docs`, title: 'Docs evidence', text: 'Public docs evidence', statusCode: 200 },
+        ],
         brokenLinks: [],
         forms: [],
         interactiveElements: [],
@@ -628,14 +682,18 @@ describe('runOrchestration — AUTO mode', () => {
             data: normalizeResearchRecoveryToCrawlerReport({
               title: 'Victor Udo',
               summary: 'Victor Udo public site presents AI studio leadership, product strategy, and contact paths for external users.',
-              pages: [{
-                url: payload.url,
-                title: 'Victor Udo',
-                bodyText: 'Victor Udo public site includes FlowAI, VEU AI Studio, founder profile, product strategy, public contact paths, and visible proof points for AI product orchestration.',
-                headings: ['h1: Victor Udo', 'h2: VEU AI Studio'],
-                links: ['https://victorudo.com/contact'],
-                buttons: ['Contact'],
-              }],
+              pages: [
+                {
+                  url: payload.url,
+                  title: 'Victor Udo',
+                  bodyText: 'Victor Udo public site includes FlowAI, VEU AI Studio, founder profile, product strategy, public contact paths, and visible proof points for AI product orchestration.',
+                  headings: ['h1: Victor Udo', 'h2: VEU AI Studio'],
+                  links: ['https://victorudo.com/contact'],
+                  buttons: ['Contact'],
+                },
+                { url: 'https://victorudo.com/contact', title: 'Contact', bodyText: 'Public contact evidence', headings: [], links: [], buttons: [] },
+                { url: 'https://victorudo.com/about', title: 'About', bodyText: 'Public leadership evidence', headings: [], links: [], buttons: [] },
+              ],
               findings: [{
                 severity: 'medium',
                 category: 'gtm-evidence',
